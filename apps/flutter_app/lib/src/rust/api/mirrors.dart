@@ -1125,7 +1125,6 @@ sealed class VaultUnlockOutcome with _$VaultUnlockOutcome {
     required int identities,
     required int values,
   }) = VaultUnlockOutcome_Unlocked;
-  const factory VaultUnlockOutcome.wrongPassphrase({
-    required int attemptsLeft,
-  }) = VaultUnlockOutcome_WrongPassphrase;
+  const factory VaultUnlockOutcome.wrongPassphrase() =
+      VaultUnlockOutcome_WrongPassphrase;
 }

@@ -2866,9 +2866,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           values: dco_decode_u_32(raw[2]),
         );
       case 1:
-        return VaultUnlockOutcome_WrongPassphrase(
-          attemptsLeft: dco_decode_u_32(raw[1]),
-        );
+        return VaultUnlockOutcome_WrongPassphrase();
       default:
         throw Exception("unreachable");
     }
@@ -3825,10 +3823,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           values: var_values,
         );
       case 1:
-        var var_attemptsLeft = sse_decode_u_32(deserializer);
-        return VaultUnlockOutcome_WrongPassphrase(
-          attemptsLeft: var_attemptsLeft,
-        );
+        return VaultUnlockOutcome_WrongPassphrase();
       default:
         throw UnimplementedError('');
     }
@@ -4638,9 +4633,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(0, serializer);
         sse_encode_u_32(identities, serializer);
         sse_encode_u_32(values, serializer);
-      case VaultUnlockOutcome_WrongPassphrase(attemptsLeft: final attemptsLeft):
+      case VaultUnlockOutcome_WrongPassphrase():
         sse_encode_i_32(1, serializer);
-        sse_encode_u_32(attemptsLeft, serializer);
     }
   }
 }

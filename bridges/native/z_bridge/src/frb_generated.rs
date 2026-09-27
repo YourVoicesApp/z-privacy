@@ -1969,9 +1969,7 @@ const _: fn() = || {
             let _: u32 = identities;
             let _: u32 = values;
         }
-        crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase { attempts_left } => {
-            let _: u32 = attempts_left;
-        }
+        crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase => {}
     }
 };
 
@@ -3051,10 +3049,7 @@ impl SseDecode for crate::api::mirrors::VaultUnlockOutcome {
                 };
             }
             1 => {
-                let mut var_attemptsLeft = <u32>::sse_decode(deserializer);
-                return crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase {
-                    attempts_left: var_attemptsLeft,
-                };
+                return crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase;
             }
             _ => {
                 unimplemented!("");
@@ -4051,9 +4046,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::VaultUnlo
                 values.into_into_dart().into_dart(),
             ]
             .into_dart(),
-            crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase { attempts_left } => {
-                [1.into_dart(), attempts_left.into_into_dart().into_dart()].into_dart()
-            }
+            crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase => [1.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -4958,9 +4951,8 @@ impl SseEncode for crate::api::mirrors::VaultUnlockOutcome {
                 <u32>::sse_encode(identities, serializer);
                 <u32>::sse_encode(values, serializer);
             }
-            crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase { attempts_left } => {
+            crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase => {
                 <i32>::sse_encode(1, serializer);
-                <u32>::sse_encode(attempts_left, serializer);
             }
             _ => {
                 unimplemented!("");

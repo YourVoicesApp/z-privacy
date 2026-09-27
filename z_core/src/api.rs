@@ -614,10 +614,22 @@ pub struct RescanOutcome {
 }
 
 /// Opening the vault. No key appears here in either direction.
+///
+/// `WrongPassphrase` carries nothing, and that is deliberate. It used to carry
+/// `attempts_left`, which was always 0 — a field that looked like information
+/// and was not, and which a screen would have shown as «no tries left» to
+/// someone who had simply mistyped. (Task 032; the same family as the
+/// `open_suggestions` that was always 0.)
+///
+/// There is no attempt limit and there should not be one: locking a **local**
+/// file after three tries protects nobody — whoever has the file does not use
+/// our window — while a real person who mistypes would be shut out of their own
+/// vault forever. The cost of guessing is Argon2id at 64 MiB a try, which is a
+/// defence that cannot be walked around.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VaultUnlockOutcome {
     Unlocked { identities: u32, values: u32 },
-    WrongPassphrase { attempts_left: u32 },
+    WrongPassphrase,
 }
 
 // ---------------------------------------------------------------- G11: no text in Debug

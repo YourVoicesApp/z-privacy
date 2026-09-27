@@ -3387,11 +3387,11 @@ return wrongPassphrase(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int identities,  int values)?  unlocked,TResult Function( int attemptsLeft)?  wrongPassphrase,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int identities,  int values)?  unlocked,TResult Function()?  wrongPassphrase,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case VaultUnlockOutcome_Unlocked() when unlocked != null:
 return unlocked(_that.identities,_that.values);case VaultUnlockOutcome_WrongPassphrase() when wrongPassphrase != null:
-return wrongPassphrase(_that.attemptsLeft);case _:
+return wrongPassphrase();case _:
   return orElse();
 
 }
@@ -3409,11 +3409,11 @@ return wrongPassphrase(_that.attemptsLeft);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int identities,  int values)  unlocked,required TResult Function( int attemptsLeft)  wrongPassphrase,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int identities,  int values)  unlocked,required TResult Function()  wrongPassphrase,}) {final _that = this;
 switch (_that) {
 case VaultUnlockOutcome_Unlocked():
 return unlocked(_that.identities,_that.values);case VaultUnlockOutcome_WrongPassphrase():
-return wrongPassphrase(_that.attemptsLeft);}
+return wrongPassphrase();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -3427,11 +3427,11 @@ return wrongPassphrase(_that.attemptsLeft);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int identities,  int values)?  unlocked,TResult? Function( int attemptsLeft)?  wrongPassphrase,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int identities,  int values)?  unlocked,TResult? Function()?  wrongPassphrase,}) {final _that = this;
 switch (_that) {
 case VaultUnlockOutcome_Unlocked() when unlocked != null:
 return unlocked(_that.identities,_that.values);case VaultUnlockOutcome_WrongPassphrase() when wrongPassphrase != null:
-return wrongPassphrase(_that.attemptsLeft);case _:
+return wrongPassphrase();case _:
   return null;
 
 }
@@ -3511,66 +3511,32 @@ as int,
 
 
 class VaultUnlockOutcome_WrongPassphrase extends VaultUnlockOutcome {
-  const VaultUnlockOutcome_WrongPassphrase({required this.attemptsLeft}): super._();
+  const VaultUnlockOutcome_WrongPassphrase(): super._();
   
 
- final  int attemptsLeft;
 
-/// Create a copy of VaultUnlockOutcome
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$VaultUnlockOutcome_WrongPassphraseCopyWith<VaultUnlockOutcome_WrongPassphrase> get copyWith => _$VaultUnlockOutcome_WrongPassphraseCopyWithImpl<VaultUnlockOutcome_WrongPassphrase>(this, _$identity);
+
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VaultUnlockOutcome_WrongPassphrase&&(identical(other.attemptsLeft, attemptsLeft) || other.attemptsLeft == attemptsLeft));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VaultUnlockOutcome_WrongPassphrase);
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,attemptsLeft);
+int get hashCode => runtimeType.hashCode;
 
 @override
 String toString() {
-  return 'VaultUnlockOutcome.wrongPassphrase(attemptsLeft: $attemptsLeft)';
+  return 'VaultUnlockOutcome.wrongPassphrase()';
 }
 
 
 }
 
-/// @nodoc
-abstract mixin class $VaultUnlockOutcome_WrongPassphraseCopyWith<$Res> implements $VaultUnlockOutcomeCopyWith<$Res> {
-  factory $VaultUnlockOutcome_WrongPassphraseCopyWith(VaultUnlockOutcome_WrongPassphrase value, $Res Function(VaultUnlockOutcome_WrongPassphrase) _then) = _$VaultUnlockOutcome_WrongPassphraseCopyWithImpl;
-@useResult
-$Res call({
- int attemptsLeft
-});
 
 
-
-
-}
-/// @nodoc
-class _$VaultUnlockOutcome_WrongPassphraseCopyWithImpl<$Res>
-    implements $VaultUnlockOutcome_WrongPassphraseCopyWith<$Res> {
-  _$VaultUnlockOutcome_WrongPassphraseCopyWithImpl(this._self, this._then);
-
-  final VaultUnlockOutcome_WrongPassphrase _self;
-  final $Res Function(VaultUnlockOutcome_WrongPassphrase) _then;
-
-/// Create a copy of VaultUnlockOutcome
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? attemptsLeft = null,}) {
-  return _then(VaultUnlockOutcome_WrongPassphrase(
-attemptsLeft: null == attemptsLeft ? _self.attemptsLeft : attemptsLeft // ignore: cast_nullable_to_non_nullable
-as int,
-  ));
-}
-
-
-}
 
 // dart format on

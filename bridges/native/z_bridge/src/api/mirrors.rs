@@ -490,6 +490,6 @@ pub struct _RescanOutcome {
 #[frb(mirror(VaultUnlockOutcome))]
 pub enum _VaultUnlockOutcome {
     Unlocked { identities: u32, values: u32 },
-    WrongPassphrase { attempts_left: u32 },
+    WrongPassphrase,
 }
 

@@ -186,7 +186,7 @@ fn rule_four_the_passphrase_can_change_and_the_vault_still_opens() {
     // The old passphrase is dead; the new one opens the same contents.
     assert!(matches!(
         vault_unlock_with_passphrase(PASS.to_string()).expect("answer"),
-        VaultUnlockOutcome::WrongPassphrase { .. }
+        VaultUnlockOutcome::WrongPassphrase
     ));
     match vault_unlock_with_passphrase("ein anderes langes Passwort".to_string()).expect("unlock") {
         VaultUnlockOutcome::Unlocked { identities, values } => assert_eq!((identities, values), (1, 1)),
