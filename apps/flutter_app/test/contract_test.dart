@@ -80,6 +80,9 @@ void main() {
       'packs': () => packs(),
       'switchPack': () => switchPack(session: session, packId: 'de'),
       'providers': () => providers(),
+      'connectProvider': () => connectProvider(
+          provider: provider, credential: 'sk-test', baseUrl: 'https://api.openai.com'),
+      'disconnectProvider': () => disconnectProvider(provider: provider),
       'testProvider': () => testProvider(provider: provider),
       // The vault (M4). Called against a locked, absent vault here: the answers
       // must still be answers.
@@ -117,7 +120,7 @@ void main() {
       }
     }
     expect(crashed, isEmpty, reason: 'calls that did not answer cleanly');
-    expect(calls.length, 42, reason: 'the contract has 42 functions');
+    expect(calls.length, 44, reason: 'the contract has 44 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
   });
@@ -166,10 +169,59 @@ void main() {
     final fresh = await buildPayload(session: session);
     try {
       await send(handle: fresh, provider: const ProviderId(id: 'openai'));
-      fail('the network does not exist until M6');
-    } on ApiError_ProviderUnavailable catch (e) {
-      expect(e.provider, 'openai');
+      fail('nothing is connected, so nothing can be sent');
+    } on ApiError_NetworkRefused catch (e) {
+      expect(e.reason, isA<NetworkRefusal_NotConnected>());
+      expect(e.detail, contains('openai'));
     }
     await closeSession(session: session);
+  });
+
+  test('the UI learns that a provider is connected, and never the credential',
+      () async {
+    // M6 from the other side. There is no call anywhere in the contract that
+    // returns a credential — this test is what that sentence looks like in code.
+    final rows = await providers();
+    expect(rows, isNotEmpty);
+    final before = rows.firstWhere((r) => r.id == 'openai');
+    expect(before.label, isNotEmpty);
+    expect(before.baseUrl, startsWith('https://'));
+
+    // Every field Dart can see about a provider, by name. If a credential is ever
+    // added to this type, this list stops matching and someone has to explain why.
+    expect(
+      ProviderRow(
+        id: before.id,
+        label: before.label,
+        connected: before.connected,
+        sessionOnly: before.sessionOnly,
+        baseUrl: before.baseUrl,
+        model: before.model,
+      ).toString(),
+      isNotEmpty,
+      reason: 'ProviderRow has exactly six fields, none of them a credential',
+    );
+
+    final connected = await connectProvider(
+        provider: const ProviderId(id: 'openai'),
+        credential: 'sk-test-not-a-real-credential',
+        baseUrl: 'https://api.openai.com');
+    expect(connected.connected, isTrue);
+    expect(connected.sessionOnly, isTrue,
+        reason: 'no vault is open in this test, so the UI must say it is temporary');
+
+    // A plain http address off this machine is refused as it is typed.
+    try {
+      await connectProvider(
+          provider: const ProviderId(id: 'openai'),
+          credential: 'sk-test',
+          baseUrl: 'http://api.openai.com');
+      fail('a plain http provider address must be refused');
+    } on ApiError_NetworkRefused catch (e) {
+      expect(e.reason, isA<NetworkRefusal_InsecureUrl>());
+    }
+
+    final gone = await disconnectProvider(provider: const ProviderId(id: 'openai'));
+    expect(gone.connected, isFalse);
   });
 }

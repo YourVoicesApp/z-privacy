@@ -76,6 +76,14 @@ sealed class ApiError with _$ApiError implements FrbException {
   /// This should never reach a user; if it does, the bug stayed inside.
   const factory ApiError.payloadRefused({required String reason}) =
       ApiError_PayloadRefused;
+
+  /// The network did not carry the question, and why. Never a response body:
+  /// a provider's error page can quote the request back, so nothing that comes
+  /// off the wire is allowed into this message.
+  const factory ApiError.networkRefused({
+    required NetworkRefusal reason,
+    required String detail,
+  }) = ApiError_NetworkRefused;
 }
 
 enum DocumentKind { txt, docx, pdf }
@@ -349,6 +357,40 @@ class Mark {
 
 enum MarkState { protected, suggested }
 
+@freezed
+sealed class NetworkRefusal with _$NetworkRefusal {
+  const NetworkRefusal._();
+
+  /// This provider has no credential in this run.
+  const factory NetworkRefusal.notConnected() = NetworkRefusal_NotConnected;
+
+  /// The address is not `https`, and is not a machine on this computer.
+  const factory NetworkRefusal.insecureUrl() = NetworkRefusal_InsecureUrl;
+
+  /// The host answered with a redirect. We do not follow one: the safe payload
+  /// and the credential were addressed to *this* host and go nowhere else.
+  const factory NetworkRefusal.redirected({required int status}) =
+      NetworkRefusal_Redirected;
+
+  /// The host answered, but not with an answer.
+  const factory NetworkRefusal.badStatus({required int status}) =
+      NetworkRefusal_BadStatus;
+
+  /// Nothing came back in time.
+  const factory NetworkRefusal.timeout({required int millis}) =
+      NetworkRefusal_Timeout;
+
+  /// The answer was longer than we accept.
+  const factory NetworkRefusal.responseTooLarge({required int limitKib}) =
+      NetworkRefusal_ResponseTooLarge;
+
+  /// The answer arrived but is not the shape this provider promised.
+  const factory NetworkRefusal.unreadable() = NetworkRefusal_Unreadable;
+
+  /// The host could not be reached at all.
+  const factory NetworkRefusal.unreachable() = NetworkRefusal_Unreachable;
+}
+
 class PayloadHandle {
   final int id;
   final int session;
@@ -467,6 +509,56 @@ class ProviderId {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ProviderId && runtimeType == other.runtimeType && id == other.id;
+}
+
+class ProviderRow {
+  final String id;
+  final String label;
+
+  /// True when a credential for this provider exists in this run.
+  final bool connected;
+
+  /// True when that credential lives only in memory, because there was no open
+  /// vault to seal it into. It is gone when the app closes, and the UI says so
+  /// rather than letting the user believe it was saved.
+  final bool sessionOnly;
+
+  /// Where requests go. Editable, so a local model on this machine can be used.
+  final String baseUrl;
+
+  /// Which model is asked. Not a secret, and shown so the answer can be read
+  /// knowing what produced it.
+  final String model;
+
+  const ProviderRow({
+    required this.id,
+    required this.label,
+    required this.connected,
+    required this.sessionOnly,
+    required this.baseUrl,
+    required this.model,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      label.hashCode ^
+      connected.hashCode ^
+      sessionOnly.hashCode ^
+      baseUrl.hashCode ^
+      model.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProviderRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          connected == other.connected &&
+          sessionOnly == other.sessionOnly &&
+          baseUrl == other.baseUrl &&
+          model == other.model;
 }
 
 @freezed

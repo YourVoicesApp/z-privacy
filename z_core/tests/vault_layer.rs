@@ -311,7 +311,10 @@ fn the_golden_document_with_an_open_vault_asks_nothing() {
     assert!(!safe.contains("Müller"), "{safe}");
     assert!(matches!(
         send(handle, ProviderId { id: "openai".to_string() }),
-        Err(ApiError::ProviderUnavailable { .. })
+        Err(ApiError::NetworkRefused {
+            reason: NetworkRefusal::NotConnected,
+            ..
+        })
     ));
 
     // The by-layer summary now names three layers, the vault among them.

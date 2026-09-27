@@ -270,7 +270,10 @@ fn a_fresh_handle_reaches_the_provider_check() {
     // so a stale request never gets as far as a provider.
     let (_s, handle) = fresh_session_with_payload();
     match send(handle, ProviderId { id: "openai".to_string() }) {
-        Err(ApiError::ProviderUnavailable { provider }) => assert_eq!(provider, "openai"),
+        Err(ApiError::NetworkRefused {
+            reason: NetworkRefusal::NotConnected,
+            detail,
+        }) => assert!(detail.contains("openai"), "{detail}"),
         other => panic!("expected the provider door to be closed, got {other:?}"),
     }
 }

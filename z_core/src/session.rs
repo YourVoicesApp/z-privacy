@@ -210,6 +210,11 @@ pub(crate) struct Core {
     next_session: u32,
     /// One vault per device, shared by every session.
     pub vault: crate::vault::VaultStore,
+    /// Provider logins that exist only for this run, because there was no open
+    /// vault to seal them into. Memory only: there is deliberately no path from
+    /// here to a file. The owner's rule — no fallback to a text file; say the
+    /// credential is session-only instead — is this field and nothing else.
+    pub session_logins: std::collections::BTreeMap<String, crate::vault::model::ProviderLogin>,
 }
 
 impl Core {
@@ -218,6 +223,7 @@ impl Core {
             sessions: BTreeMap::new(),
             next_session: 1,
             vault: crate::vault::VaultStore::default(),
+            session_logins: std::collections::BTreeMap::new(),
         }
     }
 

@@ -8,13 +8,20 @@
 //!
 //! Adding a kind means adding a number at the end. Nothing else may move.
 
+use std::collections::BTreeMap;
+
 use crate::api::{ApiError, ApiResult, EntityKind, Kind, Policy};
 use crate::secret::Secret;
 
-use super::model::{Entity, Profile, ValueRecord, Vault};
+use super::model::{Entity, Profile, ProviderLogin, ValueRecord, Vault};
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
-pub(crate) const MODEL_VERSION: u16 = 1;
+///
+/// * 1 — identities, values, profiles.
+/// * 2 — provider credentials appended at the end (task 020). A version-1 vault
+///   simply stops before that section and opens with no credentials, which is
+///   why new sections go at the end and nothing already written ever moves.
+pub(crate) const MODEL_VERSION: u16 = 2;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -146,6 +153,15 @@ pub(crate) fn encode(vault: &Vault) -> Vec<u8> {
             }
         }
     }
+
+    // Model 2. Last, so that everything above stays byte-for-byte where it was.
+    out.extend_from_slice(&(vault.provider_logins.len() as u32).to_be_bytes());
+    for (id, login) in &vault.provider_logins {
+        put_str(&mut out, id);
+        put_str(&mut out, login.credential.expose());
+        put_str(&mut out, &login.base);
+        put_str(&mut out, &login.model);
+    }
     out
 }
 
@@ -217,11 +233,29 @@ pub(crate) fn decode(bytes: &[u8]) -> ApiResult<Vault> {
             values,
         });
     }
+    // A model-1 vault has nothing here, and that is not an error.
+    let mut provider_logins = BTreeMap::new();
+    if version >= 2 {
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        for _ in 0..count {
+            let id = r.string()?;
+            provider_logins.insert(
+                id,
+                ProviderLogin {
+                    credential: Secret::new(r.string()?),
+                    base: r.string()?,
+                    model: r.string()?,
+                },
+            );
+        }
+    }
+
     Ok(Vault {
         entities,
         profiles,
         next_entity,
         next_value,
+        provider_logins,
     })
 }
 
@@ -321,6 +355,34 @@ mod tests {
         assert_eq!(entity.values[0].aliases.len(), 2);
         assert_eq!(entity.values[0].policy, Policy::Always);
         assert_eq!(entity.values[1].kind, Kind::Bic, "a BIC is still a BIC after a reload");
+    }
+
+    #[test]
+    fn a_credential_survives_the_round_trip_and_an_older_vault_still_opens() {
+        let mut before = sample();
+        before.provider_logins.insert(
+            "openai".to_string(),
+            ProviderLogin {
+                credential: Secret::new("sk-not-a-real-key"),
+                base: "https://api.openai.com".to_string(),
+                model: "gpt-4o-mini".to_string(),
+            },
+        );
+        let bytes = encode(&before);
+        let after = decode(&bytes).expect("decode");
+        let login = after.provider_logins.get("openai").expect("the login");
+        assert_eq!(login.credential.expose(), "sk-not-a-real-key");
+        assert_eq!(login.base, "https://api.openai.com");
+        assert_eq!(login.model, "gpt-4o-mini");
+
+        // What a model-1 file looks like: the same bytes without the last section.
+        let plain = encode(&sample());
+        let mut old_file = plain.clone();
+        old_file.truncate(plain.len() - 4); // drop the (empty) credential count
+        old_file[0..2].copy_from_slice(&1u16.to_be_bytes());
+        let opened = decode(&old_file).expect("a model-1 vault still opens");
+        assert!(opened.provider_logins.is_empty(), "and simply has no credentials");
+        assert_eq!(opened.entities.len(), 1, "everything older than model 2 is intact");
     }
 
     #[test]

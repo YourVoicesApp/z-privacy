@@ -166,11 +166,15 @@ fn golden_answering_the_two_clears_the_way_to_send() {
     assert_eq!(after_second.suggested, 0);
     assert_eq!(after_second.auto, 8, "the confirmed one joined the protected set");
 
-    // A payload built after the answers may go as far as the provider door.
+    // A payload built after the answers may go as far as the provider door, where
+    // it stops for want of a credential and for no other reason.
     let fresh = build_payload(s).expect("build");
     assert!(matches!(
         send(fresh, ProviderId { id: "openai".to_string() }),
-        Err(ApiError::ProviderUnavailable { .. })
+        Err(ApiError::NetworkRefused {
+            reason: NetworkRefusal::NotConnected,
+            ..
+        })
     ));
 }
 

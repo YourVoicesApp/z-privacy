@@ -9,6 +9,8 @@
 //! After this, the app stops knowing only *the shape of a secret* and starts
 //! knowing *whose secret it is*.
 
+use std::collections::BTreeMap;
+
 use crate::api::{EntityKind, Kind, Policy};
 use crate::secret::Secret;
 use crate::text::nfc;
@@ -93,6 +95,23 @@ pub(crate) struct Vault {
     pub profiles: Vec<Profile>,
     pub next_entity: u32,
     pub next_value: u32,
+    /// How to reach each AI provider, by provider id. It lives here because the
+    /// vault is the one thing this program encrypts before writing, and because
+    /// nothing outside the core can read it back: `providers()` reports only
+    /// whether a row has a credential. Written in task 020.
+    pub provider_logins: BTreeMap<String, ProviderLogin>,
+}
+
+/// What it takes to reach one provider: a credential, an address, a model.
+///
+/// The three travel together and have one lifetime — a credential sealed in the
+/// vault keeps the address it was given for, and a credential that exists only
+/// for this run takes its address with it when the app closes.
+#[derive(Debug, Clone)]
+pub(crate) struct ProviderLogin {
+    pub credential: Secret,
+    pub base: String,
+    pub model: String,
 }
 
 /// One thing the vault can recognise, handed to the scanner.
@@ -118,6 +137,7 @@ impl Vault {
             profiles: Vec::new(),
             next_entity: 1,
             next_value: 1,
+            provider_logins: BTreeMap::new(),
         }
     }
 

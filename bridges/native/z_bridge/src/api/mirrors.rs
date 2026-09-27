@@ -41,6 +41,31 @@ pub enum _ApiError {
     /// The built payload failed the core's own leak audit and was thrown away.
     /// This should never reach a user; if it does, the bug stayed inside.
     PayloadRefused { reason: String },
+    /// The network did not carry the question, and why. Never a response body:
+    /// a provider's error page can quote the request back, so nothing that comes
+    /// off the wire is allowed into this message.
+    NetworkRefused { reason: NetworkRefusal, detail: String },
+}
+
+#[frb(mirror(NetworkRefusal))]
+pub enum _NetworkRefusal {
+    /// This provider has no credential in this run.
+    NotConnected,
+    /// The address is not `https`, and is not a machine on this computer.
+    InsecureUrl,
+    /// The host answered with a redirect. We do not follow one: the safe payload
+    /// and the credential were addressed to *this* host and go nowhere else.
+    Redirected { status: u32 },
+    /// The host answered, but not with an answer.
+    BadStatus { status: u32 },
+    /// Nothing came back in time.
+    Timeout { millis: u32 },
+    /// The answer was longer than we accept.
+    ResponseTooLarge { limit_kib: u32 },
+    /// The answer arrived but is not the shape this provider promised.
+    Unreadable,
+    /// The host could not be reached at all.
+    Unreachable,
 }
 
 #[frb(mirror(SessionId))]
@@ -63,6 +88,23 @@ pub struct _PayloadHandle {
 #[frb(mirror(ProviderId))]
 pub struct _ProviderId {
     pub id: String,
+}
+
+#[frb(mirror(ProviderRow))]
+pub struct _ProviderRow {
+    pub id: String,
+    pub label: String,
+    /// True when a credential for this provider exists in this run.
+    pub connected: bool,
+    /// True when that credential lives only in memory, because there was no open
+    /// vault to seal it into. It is gone when the app closes, and the UI says so
+    /// rather than letting the user believe it was saved.
+    pub session_only: bool,
+    /// Where requests go. Editable, so a local model on this machine can be used.
+    pub base_url: String,
+    /// Which model is asked. Not a secret, and shown so the answer can be read
+    /// knowing what produced it.
+    pub model: String,
 }
 
 #[frb(mirror(AnswerId))]

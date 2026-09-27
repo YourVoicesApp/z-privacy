@@ -55,7 +55,7 @@ extension ApiErrorPatterns on ApiError {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_ImportRefused value)?  importRefused,TResult Function( ApiError_DocumentRefused value)?  documentRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,TResult Function( ApiError_PayloadRefused value)?  payloadRefused,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_ImportRefused value)?  importRefused,TResult Function( ApiError_DocumentRefused value)?  documentRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,TResult Function( ApiError_PayloadRefused value)?  payloadRefused,TResult Function( ApiError_NetworkRefused value)?  networkRefused,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -71,7 +71,8 @@ return documentRefused(_that);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
-return payloadRefused(_that);case _:
+return payloadRefused(_that);case ApiError_NetworkRefused() when networkRefused != null:
+return networkRefused(_that);case _:
   return orElse();
 
 }
@@ -89,7 +90,7 @@ return payloadRefused(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_ImportRefused value)  importRefused,required TResult Function( ApiError_DocumentRefused value)  documentRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,required TResult Function( ApiError_PayloadRefused value)  payloadRefused,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_ImportRefused value)  importRefused,required TResult Function( ApiError_DocumentRefused value)  documentRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,required TResult Function( ApiError_PayloadRefused value)  payloadRefused,required TResult Function( ApiError_NetworkRefused value)  networkRefused,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
@@ -105,7 +106,8 @@ return documentRefused(_that);case ApiError_BadSpan():
 return badSpan(_that);case ApiError_UnknownToken():
 return unknownToken(_that);case ApiError_NothingToSend():
 return nothingToSend(_that);case ApiError_PayloadRefused():
-return payloadRefused(_that);}
+return payloadRefused(_that);case ApiError_NetworkRefused():
+return networkRefused(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -119,7 +121,7 @@ return payloadRefused(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_ImportRefused value)?  importRefused,TResult? Function( ApiError_DocumentRefused value)?  documentRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,TResult? Function( ApiError_PayloadRefused value)?  payloadRefused,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_ImportRefused value)?  importRefused,TResult? Function( ApiError_DocumentRefused value)?  documentRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,TResult? Function( ApiError_PayloadRefused value)?  payloadRefused,TResult? Function( ApiError_NetworkRefused value)?  networkRefused,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -135,7 +137,8 @@ return documentRefused(_that);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
-return payloadRefused(_that);case _:
+return payloadRefused(_that);case ApiError_NetworkRefused() when networkRefused != null:
+return networkRefused(_that);case _:
   return null;
 
 }
@@ -152,7 +155,7 @@ return payloadRefused(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  importRefused,TResult Function( Refusal reason,  String detail)?  documentRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,TResult Function( String reason)?  payloadRefused,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  importRefused,TResult Function( Refusal reason,  String detail)?  documentRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,TResult Function( String reason)?  payloadRefused,TResult Function( NetworkRefusal reason,  String detail)?  networkRefused,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -167,7 +170,8 @@ return documentRefused(_that.reason,_that.detail);case ApiError_BadSpan() when b
 return badSpan(_that.reason);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
-return payloadRefused(_that.reason);case _:
+return payloadRefused(_that.reason);case ApiError_NetworkRefused() when networkRefused != null:
+return networkRefused(_that.reason,_that.detail);case _:
   return orElse();
 
 }
@@ -185,7 +189,7 @@ return payloadRefused(_that.reason);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  importRefused,required TResult Function( Refusal reason,  String detail)  documentRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,required TResult Function( String reason)  payloadRefused,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  importRefused,required TResult Function( Refusal reason,  String detail)  documentRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,required TResult Function( String reason)  payloadRefused,required TResult Function( NetworkRefusal reason,  String detail)  networkRefused,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
 return notImplemented();case ApiError_InvalidSession():
@@ -200,7 +204,8 @@ return documentRefused(_that.reason,_that.detail);case ApiError_BadSpan():
 return badSpan(_that.reason);case ApiError_UnknownToken():
 return unknownToken();case ApiError_NothingToSend():
 return nothingToSend();case ApiError_PayloadRefused():
-return payloadRefused(_that.reason);}
+return payloadRefused(_that.reason);case ApiError_NetworkRefused():
+return networkRefused(_that.reason,_that.detail);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -214,7 +219,7 @@ return payloadRefused(_that.reason);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  importRefused,TResult? Function( Refusal reason,  String detail)?  documentRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,TResult? Function( String reason)?  payloadRefused,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  importRefused,TResult? Function( Refusal reason,  String detail)?  documentRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,TResult? Function( String reason)?  payloadRefused,TResult? Function( NetworkRefusal reason,  String detail)?  networkRefused,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -229,7 +234,8 @@ return documentRefused(_that.reason,_that.detail);case ApiError_BadSpan() when b
 return badSpan(_that.reason);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
-return payloadRefused(_that.reason);case _:
+return payloadRefused(_that.reason);case ApiError_NetworkRefused() when networkRefused != null:
+return networkRefused(_that.reason,_that.detail);case _:
   return null;
 
 }
@@ -903,6 +909,671 @@ as String,
 
 
 }
+
+/// @nodoc
+
+
+class ApiError_NetworkRefused extends ApiError {
+  const ApiError_NetworkRefused({required this.reason, required this.detail}): super._();
+  
+
+ final  NetworkRefusal reason;
+ final  String detail;
+
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ApiError_NetworkRefusedCopyWith<ApiError_NetworkRefused> get copyWith => _$ApiError_NetworkRefusedCopyWithImpl<ApiError_NetworkRefused>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ApiError_NetworkRefused&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.detail, detail) || other.detail == detail));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,reason,detail);
+
+@override
+String toString() {
+  return 'ApiError.networkRefused(reason: $reason, detail: $detail)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ApiError_NetworkRefusedCopyWith<$Res> implements $ApiErrorCopyWith<$Res> {
+  factory $ApiError_NetworkRefusedCopyWith(ApiError_NetworkRefused value, $Res Function(ApiError_NetworkRefused) _then) = _$ApiError_NetworkRefusedCopyWithImpl;
+@useResult
+$Res call({
+ NetworkRefusal reason, String detail
+});
+
+
+$NetworkRefusalCopyWith<$Res> get reason;
+
+}
+/// @nodoc
+class _$ApiError_NetworkRefusedCopyWithImpl<$Res>
+    implements $ApiError_NetworkRefusedCopyWith<$Res> {
+  _$ApiError_NetworkRefusedCopyWithImpl(this._self, this._then);
+
+  final ApiError_NetworkRefused _self;
+  final $Res Function(ApiError_NetworkRefused) _then;
+
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? reason = null,Object? detail = null,}) {
+  return _then(ApiError_NetworkRefused(
+reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as NetworkRefusal,detail: null == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$NetworkRefusalCopyWith<$Res> get reason {
+  
+  return $NetworkRefusalCopyWith<$Res>(_self.reason, (value) {
+    return _then(_self.copyWith(reason: value));
+  });
+}
+}
+
+/// @nodoc
+mixin _$NetworkRefusal {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'NetworkRefusal()';
+}
+
+
+}
+
+/// @nodoc
+class $NetworkRefusalCopyWith<$Res>  {
+$NetworkRefusalCopyWith(NetworkRefusal _, $Res Function(NetworkRefusal) __);
+}
+
+
+/// Adds pattern-matching-related methods to [NetworkRefusal].
+extension NetworkRefusalPatterns on NetworkRefusal {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( NetworkRefusal_NotConnected value)?  notConnected,TResult Function( NetworkRefusal_InsecureUrl value)?  insecureUrl,TResult Function( NetworkRefusal_Redirected value)?  redirected,TResult Function( NetworkRefusal_BadStatus value)?  badStatus,TResult Function( NetworkRefusal_Timeout value)?  timeout,TResult Function( NetworkRefusal_ResponseTooLarge value)?  responseTooLarge,TResult Function( NetworkRefusal_Unreadable value)?  unreadable,TResult Function( NetworkRefusal_Unreachable value)?  unreachable,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case NetworkRefusal_NotConnected() when notConnected != null:
+return notConnected(_that);case NetworkRefusal_InsecureUrl() when insecureUrl != null:
+return insecureUrl(_that);case NetworkRefusal_Redirected() when redirected != null:
+return redirected(_that);case NetworkRefusal_BadStatus() when badStatus != null:
+return badStatus(_that);case NetworkRefusal_Timeout() when timeout != null:
+return timeout(_that);case NetworkRefusal_ResponseTooLarge() when responseTooLarge != null:
+return responseTooLarge(_that);case NetworkRefusal_Unreadable() when unreadable != null:
+return unreadable(_that);case NetworkRefusal_Unreachable() when unreachable != null:
+return unreachable(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( NetworkRefusal_NotConnected value)  notConnected,required TResult Function( NetworkRefusal_InsecureUrl value)  insecureUrl,required TResult Function( NetworkRefusal_Redirected value)  redirected,required TResult Function( NetworkRefusal_BadStatus value)  badStatus,required TResult Function( NetworkRefusal_Timeout value)  timeout,required TResult Function( NetworkRefusal_ResponseTooLarge value)  responseTooLarge,required TResult Function( NetworkRefusal_Unreadable value)  unreadable,required TResult Function( NetworkRefusal_Unreachable value)  unreachable,}){
+final _that = this;
+switch (_that) {
+case NetworkRefusal_NotConnected():
+return notConnected(_that);case NetworkRefusal_InsecureUrl():
+return insecureUrl(_that);case NetworkRefusal_Redirected():
+return redirected(_that);case NetworkRefusal_BadStatus():
+return badStatus(_that);case NetworkRefusal_Timeout():
+return timeout(_that);case NetworkRefusal_ResponseTooLarge():
+return responseTooLarge(_that);case NetworkRefusal_Unreadable():
+return unreadable(_that);case NetworkRefusal_Unreachable():
+return unreachable(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( NetworkRefusal_NotConnected value)?  notConnected,TResult? Function( NetworkRefusal_InsecureUrl value)?  insecureUrl,TResult? Function( NetworkRefusal_Redirected value)?  redirected,TResult? Function( NetworkRefusal_BadStatus value)?  badStatus,TResult? Function( NetworkRefusal_Timeout value)?  timeout,TResult? Function( NetworkRefusal_ResponseTooLarge value)?  responseTooLarge,TResult? Function( NetworkRefusal_Unreadable value)?  unreadable,TResult? Function( NetworkRefusal_Unreachable value)?  unreachable,}){
+final _that = this;
+switch (_that) {
+case NetworkRefusal_NotConnected() when notConnected != null:
+return notConnected(_that);case NetworkRefusal_InsecureUrl() when insecureUrl != null:
+return insecureUrl(_that);case NetworkRefusal_Redirected() when redirected != null:
+return redirected(_that);case NetworkRefusal_BadStatus() when badStatus != null:
+return badStatus(_that);case NetworkRefusal_Timeout() when timeout != null:
+return timeout(_that);case NetworkRefusal_ResponseTooLarge() when responseTooLarge != null:
+return responseTooLarge(_that);case NetworkRefusal_Unreadable() when unreadable != null:
+return unreadable(_that);case NetworkRefusal_Unreachable() when unreachable != null:
+return unreachable(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notConnected,TResult Function()?  insecureUrl,TResult Function( int status)?  redirected,TResult Function( int status)?  badStatus,TResult Function( int millis)?  timeout,TResult Function( int limitKib)?  responseTooLarge,TResult Function()?  unreadable,TResult Function()?  unreachable,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case NetworkRefusal_NotConnected() when notConnected != null:
+return notConnected();case NetworkRefusal_InsecureUrl() when insecureUrl != null:
+return insecureUrl();case NetworkRefusal_Redirected() when redirected != null:
+return redirected(_that.status);case NetworkRefusal_BadStatus() when badStatus != null:
+return badStatus(_that.status);case NetworkRefusal_Timeout() when timeout != null:
+return timeout(_that.millis);case NetworkRefusal_ResponseTooLarge() when responseTooLarge != null:
+return responseTooLarge(_that.limitKib);case NetworkRefusal_Unreadable() when unreadable != null:
+return unreadable();case NetworkRefusal_Unreachable() when unreachable != null:
+return unreachable();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notConnected,required TResult Function()  insecureUrl,required TResult Function( int status)  redirected,required TResult Function( int status)  badStatus,required TResult Function( int millis)  timeout,required TResult Function( int limitKib)  responseTooLarge,required TResult Function()  unreadable,required TResult Function()  unreachable,}) {final _that = this;
+switch (_that) {
+case NetworkRefusal_NotConnected():
+return notConnected();case NetworkRefusal_InsecureUrl():
+return insecureUrl();case NetworkRefusal_Redirected():
+return redirected(_that.status);case NetworkRefusal_BadStatus():
+return badStatus(_that.status);case NetworkRefusal_Timeout():
+return timeout(_that.millis);case NetworkRefusal_ResponseTooLarge():
+return responseTooLarge(_that.limitKib);case NetworkRefusal_Unreadable():
+return unreadable();case NetworkRefusal_Unreachable():
+return unreachable();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notConnected,TResult? Function()?  insecureUrl,TResult? Function( int status)?  redirected,TResult? Function( int status)?  badStatus,TResult? Function( int millis)?  timeout,TResult? Function( int limitKib)?  responseTooLarge,TResult? Function()?  unreadable,TResult? Function()?  unreachable,}) {final _that = this;
+switch (_that) {
+case NetworkRefusal_NotConnected() when notConnected != null:
+return notConnected();case NetworkRefusal_InsecureUrl() when insecureUrl != null:
+return insecureUrl();case NetworkRefusal_Redirected() when redirected != null:
+return redirected(_that.status);case NetworkRefusal_BadStatus() when badStatus != null:
+return badStatus(_that.status);case NetworkRefusal_Timeout() when timeout != null:
+return timeout(_that.millis);case NetworkRefusal_ResponseTooLarge() when responseTooLarge != null:
+return responseTooLarge(_that.limitKib);case NetworkRefusal_Unreadable() when unreadable != null:
+return unreadable();case NetworkRefusal_Unreachable() when unreachable != null:
+return unreachable();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class NetworkRefusal_NotConnected extends NetworkRefusal {
+  const NetworkRefusal_NotConnected(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal_NotConnected);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'NetworkRefusal.notConnected()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class NetworkRefusal_InsecureUrl extends NetworkRefusal {
+  const NetworkRefusal_InsecureUrl(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal_InsecureUrl);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'NetworkRefusal.insecureUrl()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class NetworkRefusal_Redirected extends NetworkRefusal {
+  const NetworkRefusal_Redirected({required this.status}): super._();
+  
+
+ final  int status;
+
+/// Create a copy of NetworkRefusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NetworkRefusal_RedirectedCopyWith<NetworkRefusal_Redirected> get copyWith => _$NetworkRefusal_RedirectedCopyWithImpl<NetworkRefusal_Redirected>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal_Redirected&&(identical(other.status, status) || other.status == status));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,status);
+
+@override
+String toString() {
+  return 'NetworkRefusal.redirected(status: $status)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NetworkRefusal_RedirectedCopyWith<$Res> implements $NetworkRefusalCopyWith<$Res> {
+  factory $NetworkRefusal_RedirectedCopyWith(NetworkRefusal_Redirected value, $Res Function(NetworkRefusal_Redirected) _then) = _$NetworkRefusal_RedirectedCopyWithImpl;
+@useResult
+$Res call({
+ int status
+});
+
+
+
+
+}
+/// @nodoc
+class _$NetworkRefusal_RedirectedCopyWithImpl<$Res>
+    implements $NetworkRefusal_RedirectedCopyWith<$Res> {
+  _$NetworkRefusal_RedirectedCopyWithImpl(this._self, this._then);
+
+  final NetworkRefusal_Redirected _self;
+  final $Res Function(NetworkRefusal_Redirected) _then;
+
+/// Create a copy of NetworkRefusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? status = null,}) {
+  return _then(NetworkRefusal_Redirected(
+status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class NetworkRefusal_BadStatus extends NetworkRefusal {
+  const NetworkRefusal_BadStatus({required this.status}): super._();
+  
+
+ final  int status;
+
+/// Create a copy of NetworkRefusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NetworkRefusal_BadStatusCopyWith<NetworkRefusal_BadStatus> get copyWith => _$NetworkRefusal_BadStatusCopyWithImpl<NetworkRefusal_BadStatus>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal_BadStatus&&(identical(other.status, status) || other.status == status));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,status);
+
+@override
+String toString() {
+  return 'NetworkRefusal.badStatus(status: $status)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NetworkRefusal_BadStatusCopyWith<$Res> implements $NetworkRefusalCopyWith<$Res> {
+  factory $NetworkRefusal_BadStatusCopyWith(NetworkRefusal_BadStatus value, $Res Function(NetworkRefusal_BadStatus) _then) = _$NetworkRefusal_BadStatusCopyWithImpl;
+@useResult
+$Res call({
+ int status
+});
+
+
+
+
+}
+/// @nodoc
+class _$NetworkRefusal_BadStatusCopyWithImpl<$Res>
+    implements $NetworkRefusal_BadStatusCopyWith<$Res> {
+  _$NetworkRefusal_BadStatusCopyWithImpl(this._self, this._then);
+
+  final NetworkRefusal_BadStatus _self;
+  final $Res Function(NetworkRefusal_BadStatus) _then;
+
+/// Create a copy of NetworkRefusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? status = null,}) {
+  return _then(NetworkRefusal_BadStatus(
+status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class NetworkRefusal_Timeout extends NetworkRefusal {
+  const NetworkRefusal_Timeout({required this.millis}): super._();
+  
+
+ final  int millis;
+
+/// Create a copy of NetworkRefusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NetworkRefusal_TimeoutCopyWith<NetworkRefusal_Timeout> get copyWith => _$NetworkRefusal_TimeoutCopyWithImpl<NetworkRefusal_Timeout>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal_Timeout&&(identical(other.millis, millis) || other.millis == millis));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,millis);
+
+@override
+String toString() {
+  return 'NetworkRefusal.timeout(millis: $millis)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NetworkRefusal_TimeoutCopyWith<$Res> implements $NetworkRefusalCopyWith<$Res> {
+  factory $NetworkRefusal_TimeoutCopyWith(NetworkRefusal_Timeout value, $Res Function(NetworkRefusal_Timeout) _then) = _$NetworkRefusal_TimeoutCopyWithImpl;
+@useResult
+$Res call({
+ int millis
+});
+
+
+
+
+}
+/// @nodoc
+class _$NetworkRefusal_TimeoutCopyWithImpl<$Res>
+    implements $NetworkRefusal_TimeoutCopyWith<$Res> {
+  _$NetworkRefusal_TimeoutCopyWithImpl(this._self, this._then);
+
+  final NetworkRefusal_Timeout _self;
+  final $Res Function(NetworkRefusal_Timeout) _then;
+
+/// Create a copy of NetworkRefusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? millis = null,}) {
+  return _then(NetworkRefusal_Timeout(
+millis: null == millis ? _self.millis : millis // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class NetworkRefusal_ResponseTooLarge extends NetworkRefusal {
+  const NetworkRefusal_ResponseTooLarge({required this.limitKib}): super._();
+  
+
+ final  int limitKib;
+
+/// Create a copy of NetworkRefusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NetworkRefusal_ResponseTooLargeCopyWith<NetworkRefusal_ResponseTooLarge> get copyWith => _$NetworkRefusal_ResponseTooLargeCopyWithImpl<NetworkRefusal_ResponseTooLarge>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal_ResponseTooLarge&&(identical(other.limitKib, limitKib) || other.limitKib == limitKib));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,limitKib);
+
+@override
+String toString() {
+  return 'NetworkRefusal.responseTooLarge(limitKib: $limitKib)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NetworkRefusal_ResponseTooLargeCopyWith<$Res> implements $NetworkRefusalCopyWith<$Res> {
+  factory $NetworkRefusal_ResponseTooLargeCopyWith(NetworkRefusal_ResponseTooLarge value, $Res Function(NetworkRefusal_ResponseTooLarge) _then) = _$NetworkRefusal_ResponseTooLargeCopyWithImpl;
+@useResult
+$Res call({
+ int limitKib
+});
+
+
+
+
+}
+/// @nodoc
+class _$NetworkRefusal_ResponseTooLargeCopyWithImpl<$Res>
+    implements $NetworkRefusal_ResponseTooLargeCopyWith<$Res> {
+  _$NetworkRefusal_ResponseTooLargeCopyWithImpl(this._self, this._then);
+
+  final NetworkRefusal_ResponseTooLarge _self;
+  final $Res Function(NetworkRefusal_ResponseTooLarge) _then;
+
+/// Create a copy of NetworkRefusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? limitKib = null,}) {
+  return _then(NetworkRefusal_ResponseTooLarge(
+limitKib: null == limitKib ? _self.limitKib : limitKib // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class NetworkRefusal_Unreadable extends NetworkRefusal {
+  const NetworkRefusal_Unreadable(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal_Unreadable);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'NetworkRefusal.unreadable()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class NetworkRefusal_Unreachable extends NetworkRefusal {
+  const NetworkRefusal_Unreachable(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal_Unreachable);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'NetworkRefusal.unreachable()';
+}
+
+
+}
+
+
+
 
 /// @nodoc
 mixin _$ProtectOutcome {

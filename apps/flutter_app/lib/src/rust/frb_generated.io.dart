@@ -36,6 +36,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnswerId dco_decode_box_autoadd_answer_id(dynamic raw);
 
   @protected
+  NetworkRefusal dco_decode_box_autoadd_network_refusal(dynamic raw);
+
+  @protected
   PayloadHandle dco_decode_box_autoadd_payload_handle(dynamic raw);
 
   @protected
@@ -108,6 +111,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<ProviderRow> dco_decode_list_provider_row(dynamic raw);
+
+  @protected
   List<Segment> dco_decode_list_segment(dynamic raw);
 
   @protected
@@ -124,6 +130,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MarkState dco_decode_mark_state(dynamic raw);
+
+  @protected
+  NetworkRefusal dco_decode_network_refusal(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -151,6 +160,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProviderId dco_decode_provider_id(dynamic raw);
+
+  @protected
+  ProviderRow dco_decode_provider_row(dynamic raw);
 
   @protected
   Refusal dco_decode_refusal(dynamic raw);
@@ -223,6 +235,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   AnswerId sse_decode_box_autoadd_answer_id(SseDeserializer deserializer);
+
+  @protected
+  NetworkRefusal sse_decode_box_autoadd_network_refusal(
+    SseDeserializer deserializer,
+  );
 
   @protected
   PayloadHandle sse_decode_box_autoadd_payload_handle(
@@ -299,6 +316,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<ProviderRow> sse_decode_list_provider_row(SseDeserializer deserializer);
+
+  @protected
   List<Segment> sse_decode_list_segment(SseDeserializer deserializer);
 
   @protected
@@ -315,6 +335,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MarkState sse_decode_mark_state(SseDeserializer deserializer);
+
+  @protected
+  NetworkRefusal sse_decode_network_refusal(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -342,6 +365,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProviderId sse_decode_provider_id(SseDeserializer deserializer);
+
+  @protected
+  ProviderRow sse_decode_provider_row(SseDeserializer deserializer);
 
   @protected
   Refusal sse_decode_refusal(SseDeserializer deserializer);
@@ -417,6 +443,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_answer_id(
     AnswerId self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_network_refusal(
+    NetworkRefusal self,
     SseSerializer serializer,
   );
 
@@ -511,6 +543,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_provider_row(
+    List<ProviderRow> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_segment(List<Segment> self, SseSerializer serializer);
 
   @protected
@@ -527,6 +565,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_mark_state(MarkState self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_network_refusal(
+    NetworkRefusal self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
@@ -557,6 +601,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_provider_id(ProviderId self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_provider_row(ProviderRow self, SseSerializer serializer);
 
   @protected
   void sse_encode_refusal(Refusal self, SseSerializer serializer);

@@ -19,17 +19,60 @@ API_FILES="z_core/src/api.rs bridges/native/z_bridge/src/api/core.rs"
 ALLOW_PLAIN="core_version|init_app"
 FLUTTER_LIB=apps/flutter_app/lib
 PUBSPEC=apps/flutter_app/pubspec.yaml
+# The one HTTP client, and the one folder allowed to know it exists (G1, G16).
+CLIENT=ureq
+NET_DIR=providers
+# The echo provider only exists in a build made for the tests.
+TEST_FEATURES="--features fake_provider" 
 
 echo "Z Privacy gates"
 echo
 
 # ---------------------------------------------------------------- G1
-# No HTTP client anywhere outside z_core::providers (which does not exist yet).
-HITS=$(grep -RnE '^\s*(reqwest|hyper|ureq|curl|isahc|surf|attohttpc)\s*=' --include=Cargo.toml . || true)
+# Exactly one HTTP client, in one package, named in one folder.
+# G1a: no client but the one we chose.
+HITS=$(grep -RnE '^\s*(reqwest|hyper|curl|isahc|surf|attohttpc|awc)\s*=' --include=Cargo.toml . || true)
 if [ -n "$HITS" ]; then
-  fail "G1 HTTP client in a Cargo.toml:"; printf '        %s\n' "$HITS"
+  fail "G1a an HTTP client other than the chosen one:"; printf '        %s\n' "$HITS"
 else
-  pass "G1 no HTTP client in any Cargo.toml"
+  pass "G1a no HTTP client other than $CLIENT"
+fi
+
+# G1b: the chosen client appears in exactly one manifest, z_core's.
+WHERE=$(grep -RlE "^\s*$CLIENT\s*=" --include=Cargo.toml . | sed 's|^\./||' | sort)
+COUNT=$(printf '%s\n' "$WHERE" | grep -c . || true)
+if [ "$COUNT" = "1" ] && [ "$WHERE" = "z_core/Cargo.toml" ]; then
+  pass "G1b $CLIENT is declared once, in z_core/Cargo.toml"
+else
+  fail "G1b $CLIENT should be declared once in z_core/Cargo.toml, found:"; printf '        %s\n' "$WHERE"
+fi
+
+# G1c: it is named only inside the providers folder — nowhere else in any crate.
+BAD=$(grep -RnE "\b$CLIENT::" --include='*.rs' z_core/src bridges apps 2>/dev/null | grep -v "^z_core/src/$NET_DIR/" || true)
+if [ -n "$BAD" ]; then
+  fail "G1c $CLIENT named outside z_core/src/$NET_DIR:"; printf '        %s\n' "$BAD"
+else
+  NAMED=$(grep -RlE "\b$CLIENT::" --include='*.rs' "z_core/src/$NET_DIR" 2>/dev/null | wc -l)
+  pass "G1c $CLIENT is named in $NAMED file(s), all under z_core/src/$NET_DIR"
+fi
+
+# G1d: the echo provider is for tests. It must never be a default feature.
+if grep -A3 '^\[features\]' z_core/Cargo.toml | grep -q '^default = \[\]'; then
+  pass "G1d the echo provider is not in z_core's default features"
+else
+  fail "G1d z_core's default features are not empty — the echo provider may ship"
+fi
+
+# ---------------------------------------------------------------- G16
+# The outgoing text has exactly one reader. It was built in M2 and left without a
+# caller until M6 on purpose; the network stands behind it, not beside it.
+WIRE=$(grep -RnE '\bwire_text\b' --include='*.rs' z_core/src bridges apps 2>/dev/null \
+  | grep -v "^z_core/src/$NET_DIR/" | grep -v '^z_core/src/payload.rs:' || true)
+if [ -n "$WIRE" ]; then
+  fail "G16 the outgoing text is read outside z_core/src/$NET_DIR:"; printf '        %s\n' "$WIRE"
+else
+  CALLS=$(grep -RcE '\bwire_text\b' --include='*.rs' "z_core/src/$NET_DIR" 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
+  pass "G16 wire_text() is defined in payload.rs and read only in $NET_DIR ($CALLS place(s))"
 fi
 
 # ---------------------------------------------------------------- G13, G2, G7, G8
@@ -179,7 +222,7 @@ else
 fi
 
 if cargo clippy --version >/dev/null 2>&1; then
-  if cargo clippy -p z_core --all-targets --quiet -- -D warnings >/tmp/g4.$$ 2>&1; then
+  if cargo clippy -p z_core --all-targets $TEST_FEATURES --quiet -- -D warnings >/tmp/g4.$$ 2>&1; then
     pass "G4b clippy clean on z_core with -D warnings"
   else
     fail "G4b clippy:"; tail -25 /tmp/g4.$$ | sed 's/^/        /'
@@ -191,7 +234,7 @@ fi
 
 # ---------------------------------------------------------------- G3, G6, G9, G10
 # The invariants that live as tests.
-if cargo test --workspace --quiet >/tmp/gt.$$ 2>&1; then
+if cargo test --workspace $TEST_FEATURES --quiet >/tmp/gt.$$ 2>&1; then
   pass "G3/G6/G9/G10/G11/G12 cargo test"
 else
   fail "cargo test:"; tail -30 /tmp/gt.$$ | sed 's/^/        /'
@@ -215,7 +258,8 @@ else
 fi
 
 # A green run proves nothing unless the four invariant tests actually exist.
-for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty; do
+for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty \
+         the_server_receives the_whole_path a_redirect_is_refused never_by_its_body longer_than_the_limit; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

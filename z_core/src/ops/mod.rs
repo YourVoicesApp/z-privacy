@@ -12,10 +12,12 @@ use std::collections::BTreeMap;
 
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
-    Mark, MarkState, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, RevealedValue,
+    Mark, MarkState, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, ProviderRow, RevealedValue,
     RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome, TokenRow,
     UndoOutcome,
 };
+use crate::secret::Secret;
+use crate::vault::model::ProviderLogin;
 use crate::scanner;
 use crate::session::FindingRecord;
 use crate::payload::SafePayload;
@@ -173,16 +175,152 @@ pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<Ans
     if open > 0 {
         return Err(ApiError::OpenSuggestions { count: open });
     }
-    // M6 opens the network. Until then the door is honestly closed.
-    Err(ApiError::ProviderUnavailable {
-        provider: provider.id,
+    // Everything above held the core's lock briefly and let it go. From here the
+    // wire is open, and no lock is held while a provider takes its time.
+    let login = login_for(&provider.id)?;
+    let raw = crate::providers::ask(
+        handle,
+        &provider.id,
+        login.credential.expose(),
+        &login.base,
+        &login.model,
+    )?;
+
+    // The raw answer stays here. What the UI gets is an id; what it can then ask
+    // for is the restored view, or the model's own words, both from this store.
+    ingest_answer(SessionId { id: handle.session }, raw)
+}
+
+// ---------------------------------------------------------------- providers (M6)
+
+/// Every provider this build knows, and whether it can be used right now.
+///
+/// There is no function anywhere in the contract that returns a credential. This
+/// is the only thing the UI learns about one: that it exists, and whether it will
+/// still exist tomorrow.
+pub(crate) fn providers() -> ApiResult<Vec<ProviderRow>> {
+    let mut rows = Vec::new();
+    for provider in crate::providers::known() {
+        let sealed = login_in_vault(provider.id());
+        let in_session = with_core(|core| core.session_logins.get(provider.id()).cloned());
+        let login = sealed.clone().or_else(|| in_session.clone());
+        rows.push(ProviderRow {
+            id: provider.id().to_string(),
+            label: provider.label().to_string(),
+            connected: login.is_some(),
+            session_only: sealed.is_none() && in_session.is_some(),
+            base_url: login
+                .as_ref()
+                .map(|l| l.base.clone())
+                .unwrap_or_else(|| provider.default_base().to_string()),
+            model: login
+                .as_ref()
+                .map(|l| l.model.clone())
+                .unwrap_or_else(|| provider.default_model().to_string()),
+        });
+    }
+    Ok(rows)
+}
+
+/// Hand a provider its credential.
+///
+/// Where it goes is decided by one thing only: whether a vault is open.
+///
+/// * open   → into the vault, sealed, and it is there next time.
+/// * locked → into memory for this run, and the row says `session_only`.
+///
+/// There is no third case. The owner's rule was explicit: no fallback to a file,
+/// so either the credential is encrypted or it is told to the user as temporary.
+pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_url: Option<String>) -> ApiResult<ProviderRow> {
+    let known = crate::providers::find(&provider.id)?;
+    let credential = credential.trim().to_string();
+    if credential.is_empty() {
+        return Err(ApiError::ImportRefused {
+            reason: "a provider needs a credential; an empty one connects nothing".to_string(),
+        });
+    }
+    let base = base_url
+        .map(|b| b.trim().to_string())
+        .filter(|b| !b.is_empty())
+        .unwrap_or_else(|| known.default_base().to_string());
+    // The address is checked before the credential is stored, so that a typo is
+    // an error the user sees now rather than the first time they press Send.
+    crate::providers::check_url_for(&base)?;
+
+    let login = ProviderLogin {
+        credential: Secret::new(credential),
+        base,
+        model: known.default_model().to_string(),
+    };
+    let id = provider.id.clone();
+    let sealed = with_core(|core| {
+        core.vault
+            .with_open_mut(|vault| {
+                vault.provider_logins.insert(id.clone(), login.clone());
+                Ok(())
+            })
+            .is_ok()
+    });
+    if !sealed {
+        with_core(|core| core.session_logins.insert(provider.id.clone(), login));
+    } else {
+        // Sealed now, so the memory copy would only be a second place to leak from.
+        with_core(|core| core.session_logins.remove(&provider.id));
+    }
+    row_for(&provider.id)
+}
+
+/// Forget a credential — in the vault and in memory both, in one call.
+pub(crate) fn disconnect_provider(provider: ProviderId) -> ApiResult<ProviderRow> {
+    let _known = crate::providers::find(&provider.id)?;
+    let id = provider.id.clone();
+    with_core(|core| {
+        let _ = core.vault.with_open_mut(|vault| {
+            vault.provider_logins.remove(&id);
+            Ok(())
+        });
+        core.session_logins.remove(&id);
+    });
+    row_for(&provider.id)
+}
+
+/// Ask a provider to answer the word `ping`, and time it.
+pub(crate) fn test_provider(provider: ProviderId) -> ApiResult<u32> {
+    let login = login_for(&provider.id)?;
+    crate::providers::ping(
+        &provider.id,
+        login.credential.expose(),
+        &login.base,
+        &login.model,
+    )
+}
+
+/// The vault's copy, if the vault is open. A locked vault answers «nothing here»
+/// rather than an error: the credential simply is not available, which is the
+/// same shape as never having been given.
+fn login_in_vault(id: &str) -> Option<ProviderLogin> {
+    with_core(|core| core.vault.with_open(|vault| vault.provider_logins.get(id).cloned()).ok().flatten())
+}
+
+/// The credential to use: the vault's if it is open, this run's otherwise.
+fn login_for(id: &str) -> ApiResult<ProviderLogin> {
+    let found = login_in_vault(id).or_else(|| with_core(|core| core.session_logins.get(id).cloned()));
+    found.ok_or_else(|| {
+        crate::providers::not_connected(id)
     })
+}
+
+fn row_for(id: &str) -> ApiResult<ProviderRow> {
+    providers()?
+        .into_iter()
+        .find(|r| r.id == id)
+        .ok_or_else(|| ApiError::ProviderUnavailable { provider: id.to_string() })
 }
 
 /// Look a handle up and check it twice: the stored payload must be built on the
 /// session's current revision, and the handle itself must name that same
 /// revision. The store is trusted, never the handle.
-fn with_payload<R>(handle: PayloadHandle, f: impl FnOnce(&SafePayload) -> R) -> ApiResult<R> {
+pub(crate) fn with_payload<R>(handle: PayloadHandle, f: impl FnOnce(&SafePayload) -> R) -> ApiResult<R> {
     with_session(handle.session, |s| {
         let revision = s.revision;
         let payload = s.payloads.get(&handle.id).ok_or(ApiError::InvalidHandle)?;
@@ -814,10 +952,14 @@ mod tests {
         protect(s, Span { start: 5, end: 15 }, Scope::Conversation, Kind::Person).expect("protect");
         let handle = build_payload(s).expect("build");
 
-        // With nothing open, send gets as far as the provider door.
+        // With nothing open, send gets as far as the provider door and stops
+        // there because nothing is connected — not because of a suggestion.
         assert!(matches!(
             send(handle, ProviderId { id: "openai".to_string() }),
-            Err(ApiError::ProviderUnavailable { .. })
+            Err(ApiError::NetworkRefused {
+                reason: crate::api::NetworkRefusal::NotConnected,
+                ..
+            })
         ));
 
         // One unanswered suggestion, and the door is shut before that.
@@ -841,14 +983,18 @@ mod tests {
             other => panic!("a send with an open suggestion must be refused, got {other:?}"),
         }
 
-        // Answering it (here: marking it not sensitive) clears the way again.
+        // Answering it (here: marking it not sensitive) clears the way again, and
+        // the refusal goes back to being about the provider, not the review.
         with_session(s.id, |session| {
             session.findings.clear();
         })
         .expect("session");
         assert!(matches!(
             send(handle, ProviderId { id: "openai".to_string() }),
-            Err(ApiError::ProviderUnavailable { .. })
+            Err(ApiError::NetworkRefused {
+                reason: crate::api::NetworkRefusal::NotConnected,
+                ..
+            })
         ));
     }
 

@@ -54,6 +54,32 @@ pub enum ApiError {
     /// The built payload failed the core's own leak audit and was thrown away.
     /// This should never reach a user; if it does, the bug stayed inside.
     PayloadRefused { reason: String },
+    /// The network did not carry the question, and why. Never a response body:
+    /// a provider's error page can quote the request back, so nothing that comes
+    /// off the wire is allowed into this message.
+    NetworkRefused { reason: NetworkRefusal, detail: String },
+}
+
+/// Why a request did not complete. Numbers and names only, by construction.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NetworkRefusal {
+    /// This provider has no credential in this run.
+    NotConnected,
+    /// The address is not `https`, and is not a machine on this computer.
+    InsecureUrl,
+    /// The host answered with a redirect. We do not follow one: the safe payload
+    /// and the credential were addressed to *this* host and go nowhere else.
+    Redirected { status: u32 },
+    /// The host answered, but not with an answer.
+    BadStatus { status: u32 },
+    /// Nothing came back in time.
+    Timeout { millis: u32 },
+    /// The answer was longer than we accept.
+    ResponseTooLarge { limit_kib: u32 },
+    /// The answer arrived but is not the shape this provider promised.
+    Unreadable,
+    /// The host could not be reached at all.
+    Unreachable,
 }
 
 impl fmt::Display for ApiError {
@@ -76,6 +102,7 @@ impl fmt::Display for ApiError {
             Self::UnknownToken => write!(f, "no such token in this session"),
             Self::NothingToSend => write!(f, "there is nothing to send"),
             Self::PayloadRefused { reason } => write!(f, "this payload was refused by its own audit: {reason}"),
+            Self::NetworkRefused { reason, detail } => write!(f, "the request did not go through ({reason:?}): {detail}"),
         }
     }
 }
@@ -112,6 +139,26 @@ pub struct PayloadHandle {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProviderId {
     pub id: String,
+}
+
+/// A provider as the UI is allowed to see it: a name, and whether it is
+/// connected. The credential itself is not in this type and has no getter
+/// anywhere in the contract — once given, it never comes back out.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderRow {
+    pub id: String,
+    pub label: String,
+    /// True when a credential for this provider exists in this run.
+    pub connected: bool,
+    /// True when that credential lives only in memory, because there was no open
+    /// vault to seal it into. It is gone when the app closes, and the UI says so
+    /// rather than letting the user believe it was saved.
+    pub session_only: bool,
+    /// Where requests go. Editable, so a local model on this machine can be used.
+    pub base_url: String,
+    /// Which model is asked. Not a secret, and shown so the answer can be read
+    /// knowing what produced it.
+    pub model: String,
 }
 
 /// One answer that came back from a provider.
@@ -756,13 +803,25 @@ pub fn switch_pack(session: SessionId, pack_id: String) -> ApiResult<RescanOutco
 
 // ---------------------------------------------------------------- providers
 
-/// The providers and whether each is connected. M6.
-pub fn providers() -> ApiResult<Vec<String>> {
-    Err(ApiError::NotImplemented)
+/// The providers and whether each is connected.
+pub fn providers() -> ApiResult<Vec<ProviderRow>> {
+    crate::ops::providers()
+}
+
+/// Hand a provider its credential. It goes into the sealed vault if one is open,
+/// and otherwise stays in memory for this run only — never to a file in the
+/// clear, and never back across this boundary.
+pub fn connect_provider(provider: ProviderId, credential: String, base_url: Option<String>) -> ApiResult<ProviderRow> {
+    crate::ops::connect_provider(provider, credential, base_url)
+}
+
+/// Forget a provider's credential, here and in the vault.
+pub fn disconnect_provider(provider: ProviderId) -> ApiResult<ProviderRow> {
+    crate::ops::disconnect_provider(provider)
 }
 
 /// Send the word "ping" and nothing of yours, to see if a provider answers.
+/// Returns how many milliseconds the round trip took.
 pub fn test_provider(provider: ProviderId) -> ApiResult<u32> {
-    let _ = provider;
-    Err(ApiError::NotImplemented)
+    crate::ops::test_provider(provider)
 }

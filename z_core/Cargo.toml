@@ -26,6 +26,28 @@ zeroize = { version = "1", features = ["zeroize_derive"] }
 # content streams are deflate; both are read from memory, and the read loop is
 # ours so that the size limits of G15/rule 4 are enforced where the bytes arrive.
 flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
+# The network, added in task 020 and named in exactly one file,
+# `src/providers/http.rs` — gate G1 fails the build if it appears anywhere else.
+# No default features: rustls with its own root store (webpki-roots), no platform
+# verifier, no gzip. TLS is not something to hand-roll, which is the whole reason
+# a dependency is accepted here at all.
+ureq = { version = "3.4.2", default-features = false, features = ["rustls"] }
+# JSON, for the request body and the provider's answer (task 020). Hand-rolling an
+# escaper and a parser for untrusted input would be a correctness burden taken on
+# for no gain: unlike the PDF reader, the alternative here costs four crates.
+serde_json = "1.0.151"
+
+[dev-dependencies]
+# The tests read the request body a provider received, to prove it is the
+# SafePayload character for character. Already in the tree; no new cost.
+serde_json = "1.0.151"
+
+[features]
+default = []
+# The echo provider, for tests only. A release build has no such provider to pick:
+# `providers()` does not list it and nothing can select it. Gate G1c checks that
+# this never reaches `default`.
+fake_provider = []
 
 [lints]
 workspace = true
