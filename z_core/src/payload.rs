@@ -77,8 +77,12 @@ impl SafePayload {
             revision: session.revision,
             text,
             protected: applied,
-            // M3 fills this in; until the scanner exists nothing is suggested.
-            open_suggestions: 0,
+            // How many suggestions are still unanswered **at the moment this was
+            // built**. It was hard-coded to 0 from M2 until task 025, which meant
+            // `PayloadView` told the Safe column «this is exactly what the AI will
+            // receive» while `send` was refusing the same payload for open
+            // suggestions. Two screens, two answers, and the reassuring one wrong.
+            open_suggestions: session.open_suggestions(),
         }
     }
 

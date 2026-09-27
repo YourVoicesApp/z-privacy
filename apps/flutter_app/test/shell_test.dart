@@ -12,6 +12,8 @@
 //
 // Needs the native library, so run once:  flutter build linux --debug
 import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +22,7 @@ import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/protect_dialog.dart';
+import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -282,6 +285,79 @@ void main() {
     await tester.pumpAndSettle();
     expect(undone, isA<UndoOutcome_Undone>());
     expect(bench.canUndo, isFalse);
+
+    bench.dispose();
+  });
+
+  testWidgets('Review shows three groups, says where each sits, and Skip decides nothing',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    // A real document, so findings carry a page and a paragraph. Typed text is
+    // all one paragraph and would prove nothing about «page 17».
+    const doc = 'Angebot 2026\n\n'
+        'Kunde: Nordstern Consulting GmbH\n\n'
+        'Ansprechpartner: Herr Thomas Müller\n\n'
+        'IBAN: DE89370400440532013000\n\n'
+        'Bitte prüfen Sie den Vertrag und antworten Sie kurz.';
+
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importDocument(
+        session: session,
+        name: 'Angebot.txt',
+        bytes: Uint8List.fromList(utf8.encode(doc)),
+        kind: DocumentKind.txt,
+      );
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      bench.openReview();
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ReviewPanel), findsOneWidget);
+    expect(bench.suggested, isNotEmpty, reason: 'the pack is unsure about something here');
+    expect(bench.automatic, isNotEmpty, reason: 'and sure about something else');
+
+    // The two groups are named apart, because the difference is the whole point.
+    expect(find.text('WAITING FOR YOUR WORD'), findsOneWidget);
+    expect(find.text('PROTECTED AUTOMATICALLY'), findsOneWidget);
+
+    // Every finding says where it sits, and the place is the core's own.
+    final placed = bench.findings.where((f) => f.place != null).toList();
+    expect(placed, isNotEmpty, reason: 'a document gives every finding a place');
+    for (final f in placed.take(3)) {
+      expect(
+        find.text('Page ${f.place!.page} · ¶${f.place!.paragraph}'),
+        findsWidgets,
+        reason: 'the row shows the core\'s place, not a counted guess',
+      );
+    }
+    // And the paragraphs really differ, so the numbers mean something.
+    expect(placed.map((f) => f.place!.paragraph).toSet().length, greaterThan(1));
+
+    // SKIP decides nothing: still open, still counted, Send still shut.
+    final first = bench.suggested.first;
+    final openBefore = bench.openSuggestions;
+    await tester.runAsync(() async => bench.answer(first.id, FindingAnswer.skip));
+    await tester.pumpAndSettle();
+    expect(bench.openSuggestions, openBefore, reason: 'skipping is not deciding');
+    expect(bench.payload!.openSuggestions, openBefore);
+
+    // PROTECT does decide, and every number follows in one move.
+    await tester.runAsync(() async => bench.answer(first.id, FindingAnswer.protect));
+    await tester.pumpAndSettle();
+    expect(bench.openSuggestions, openBefore - 1);
+    expect(bench.report!.suggested, bench.openSuggestions);
+    expect(bench.payload!.openSuggestions, bench.openSuggestions);
 
     bench.dispose();
   });

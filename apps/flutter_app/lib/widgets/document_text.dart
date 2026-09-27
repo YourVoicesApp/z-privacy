@@ -53,6 +53,8 @@ class OriginalText extends StatelessWidget {
     required this.marks,
     this.selection,
     this.onSelection,
+    this.focus,
+    this.focusKey,
   });
 
   final String text;
@@ -64,6 +66,12 @@ class OriginalText extends StatelessWidget {
   /// Reported in UTF-16 code units — which is what the contract's `Span` means,
   /// so the offsets go straight to the core without conversion.
   final void Function(int start, int end)? onSelection;
+
+  /// The finding the review list is pointing at. Drawn stronger than the rest,
+  /// and given an anchor so the column can be scrolled to it — this is how
+  /// «page 17» becomes a place you actually arrive at.
+  final Span? focus;
+  final GlobalKey? focusKey;
 
   @override
   Widget build(BuildContext context) {
@@ -85,16 +93,35 @@ class OriginalText extends StatelessWidget {
     final sorted = [...marks]..sort((a, b) => a.span.start.compareTo(b.span.start));
     final out = <InlineSpan>[];
     var at = 0;
+    var anchored = false;
+
+    void upTo(int limit) {
+      // The anchor is a zero-size widget dropped in at the focused offset. It
+      // adds nothing to the text — `toPlainText` still returns the document —
+      // and gives `ensureVisible` something to aim at.
+      final f = focus;
+      if (!anchored && f != null && focusKey != null && f.start >= at && f.start <= limit) {
+        if (f.start > at) out.add(TextSpan(text: text.substring(at, f.start)));
+        out.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: SizedBox(key: focusKey, width: 0, height: 0),
+        ));
+        at = f.start;
+        anchored = true;
+      }
+      if (limit > at) out.add(TextSpan(text: text.substring(at, limit)));
+      at = limit;
+    }
 
     for (final m in sorted) {
       final start = m.span.start.clamp(0, text.length);
       final end = m.span.end.clamp(start, text.length);
       if (start < at) continue; // an overlap the core did not settle: skip, never double-draw
-      if (start > at) out.add(TextSpan(text: text.substring(at, start)));
+      upTo(start);
       out.add(_marked(text.substring(start, end), m));
       at = end;
     }
-    if (at < text.length) out.add(TextSpan(text: text.substring(at)));
+    upTo(text.length);
     return out;
   }
 
@@ -104,10 +131,14 @@ class OriginalText extends StatelessWidget {
   InlineSpan _marked(String slice, Mark m) {
     final suggested = m.state == MarkState.suggested;
     final tint = suggested ? Zc.amber : sourceTint(m.source);
+    final f = focus;
+    final isFocus = f != null && f.start == m.span.start && f.end == m.span.end;
     return TextSpan(
       text: slice,
       style: TextStyle(
-        backgroundColor: suggested ? Zc.amberWash : (m.source == Source.vault ? Zc.riverWash : Zc.clayWash),
+        backgroundColor: isFocus
+            ? tint.withValues(alpha: 0.30)
+            : (suggested ? Zc.amberWash : (m.source == Source.vault ? Zc.riverWash : Zc.clayWash)),
         color: tint,
         fontWeight: FontWeight.w600,
         decoration: suggested ? TextDecoration.underline : null,

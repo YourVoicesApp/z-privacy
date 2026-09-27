@@ -22,6 +22,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'package:zprivacy/widgets/review.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({
@@ -44,9 +45,34 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// flashed in a toast: a user should be able to look back at what happened.
   String? _said;
 
+  /// The anchor the Original column drops in at the focused finding.
+  final _focusKey = GlobalKey();
+  int? _wasFocused;
+
+  /// «Page 17» has to be a place you arrive at, not a label. When the review
+  /// list points somewhere new, the column scrolls there after the frame that
+  /// drew the anchor.
+  void _jumpIfMoved() {
+    final now = widget.bench.focused;
+    if (now == _wasFocused) return;
+    _wasFocused = now;
+    if (now == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _focusKey.currentContext;
+      if (target == null) return;
+      Scrollable.ensureVisible(
+        target,
+        alignment: 0.3,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final bench = widget.bench;
+    _jumpIfMoved();
     return ListenableBuilder(
       listenable: bench,
       builder: (context, _) => Scaffold(
@@ -60,10 +86,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 child: Trouble(bench.trouble!),
               ),
             Expanded(
-              child: _Columns(
-                bench: bench,
-                said: _said,
-                onSay: (line) => setState(() => _said = line),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _Columns(
+                      bench: bench,
+                      said: _said,
+                      focusKey: _focusKey,
+                      onSay: (line) => setState(() => _said = line),
+                    ),
+                  ),
+                  if (bench.reviewOpen) ReviewPanel(bench: bench),
+                ],
               ),
             ),
           ],
@@ -261,11 +295,17 @@ class _Band extends StatelessWidget {
 
 /// The two columns.
 class _Columns extends StatelessWidget {
-  const _Columns({required this.bench, required this.said, required this.onSay});
+  const _Columns({
+    required this.bench,
+    required this.said,
+    required this.onSay,
+    required this.focusKey,
+  });
 
   final Workbench bench;
   final String? said;
   final void Function(String) onSay;
+  final GlobalKey focusKey;
 
   @override
   Widget build(BuildContext context) {
@@ -293,6 +333,8 @@ class _Columns extends StatelessWidget {
                 : OriginalText(
                     text: doc.text,
                     marks: doc.marks,
+                    focus: bench.focusedFinding?.span,
+                    focusKey: focusKey,
                     onSelection: (start, end) =>
                         bench.select(end > start ? Span(start: start, end: end) : null),
                   ),

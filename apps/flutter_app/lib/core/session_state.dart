@@ -96,6 +96,30 @@ class Workbench extends ChangeNotifier {
   /// being disabled rather than pretending to be available.
   bool get canUndo => tokens.any((t) => t.source == Source.hand);
 
+  /// The review panel, and which finding it is pointing at.
+  bool reviewOpen = false;
+  int? focused;
+
+  /// Walking mode: one suggestion at a time, with its sentence around it.
+  bool walking = false;
+
+  List<Finding> get suggested =>
+      findings.where((f) => f.state == MarkState.suggested).toList(growable: false);
+  List<Finding> get automatic => findings
+      .where((f) => f.state == MarkState.protected && f.source != Source.hand)
+      .toList(growable: false);
+  List<Finding> get byHand =>
+      findings.where((f) => f.state == MarkState.protected && f.source == Source.hand).toList(growable: false);
+
+  Finding? get focusedFinding {
+    final id = focused;
+    if (id == null) return null;
+    for (final f in findings) {
+      if (f.id == id) return f;
+    }
+    return null;
+  }
+
   /// The three questions the owner says a user must always be able to answer by
   /// looking. These getters exist so a screen never has to work one out.
   ///
@@ -181,6 +205,45 @@ class Workbench extends ChangeNotifier {
       notifyListeners();
       return null;
     }
+  }
+
+  void openReview({bool? walk}) {
+    reviewOpen = true;
+    if (walk != null) walking = walk;
+    // Walking starts at the first thing still waiting, not at the top of a list
+    // the user has already been through.
+    if (walking) focused ??= suggested.isEmpty ? null : suggested.first.id;
+    notifyListeners();
+  }
+
+  void closeReview() {
+    reviewOpen = false;
+    notifyListeners();
+  }
+
+  void focusOn(int? id) {
+    focused = id;
+    notifyListeners();
+  }
+
+  /// Answer one suggestion. `Skip` is an answer that decides nothing: the core
+  /// keeps it open and still counts it, which is why Send stays shut.
+  Future<void> answer(int finding, FindingAnswer choice) async {
+    try {
+      report = await z.answerFinding(session: session, finding: finding, answer: choice);
+      trouble = null;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+    }
+    await refresh();
+    if (selection != null) await select(selection);
+    // Step on to the next one still waiting, so walking is a walk.
+    if (walking) {
+      final left = suggested;
+      focused = left.isEmpty ? null : (left.firstWhere((f) => f.id != finding, orElse: () => left.first)).id;
+      if (left.isEmpty) walking = false;
+    }
+    notifyListeners();
   }
 
   /// One step back. «Protect all 4 matches» came in as one act, so it goes out

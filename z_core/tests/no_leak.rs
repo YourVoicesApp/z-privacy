@@ -168,3 +168,44 @@ fn session_namespaces_keep_two_conversations_apart() {
     // Both still say what kind of thing they stand for: that part is deliberate.
     assert!(seen.iter().all(|t| t.contains("_PERSON_")), "{seen:?}");
 }
+
+/// The payload's own counters must agree with the session's. They are shown on
+/// two different parts of one screen, and a disagreement means the calmer of the
+/// two is lying: `PayloadView` said «nothing is waiting» while `send` refused the
+/// very same payload for open suggestions. (Found by the UI in task 025.)
+#[test]
+fn the_payload_counts_what_the_session_counts() {
+    let s = open_session(None, "de".to_string()).expect("open");
+    import_text(
+        s,
+        "Kunde: Nordstern Consulting GmbH\nAnsprechpartner: Herr Thomas Müller\nIBAN: DE89370400440532013000"
+            .to_string(),
+    )
+    .expect("import");
+    let report = scan(s).expect("scan");
+
+    // Control: this document really does leave something open, or the test below
+    // would pass on a pair of zeros.
+    assert!(report.suggested > 0, "the fixture must leave something unanswered");
+
+    let view = payload_view(build_payload(s).expect("build")).expect("view");
+    assert_eq!(
+        view.open_suggestions, report.suggested,
+        "the Safe column and the review badge must never disagree"
+    );
+    assert_eq!(view.protected_count, report.auto);
+
+    // Answer them all, and both numbers move together.
+    let open: Vec<u32> = list_findings(s)
+        .expect("findings")
+        .into_iter()
+        .filter(|f| f.state == MarkState::Suggested)
+        .map(|f| f.id)
+        .collect();
+    for id in open {
+        answer_finding(s, id, FindingAnswer::Protect).expect("answer");
+    }
+    let after = payload_view(build_payload(s).expect("build")).expect("view");
+    assert_eq!(after.open_suggestions, 0);
+    assert!(send(build_payload(s).expect("build"), ProviderId { id: "openai".to_string() }).is_err());
+}

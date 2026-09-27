@@ -60,6 +60,19 @@ class ActsBar extends StatelessWidget {
                 icon: Icons.refresh,
                 onPressed: bench.busy ? null : () => _rescan(context),
               ),
+              // The badge is how many are open. With none open the badge is
+              // **gone, not zero** — the boards are explicit about that, because
+              // a zero still looks like something is waiting.
+              ZButton(
+                label: 'Review',
+                icon: Icons.fact_check_outlined,
+                tint: bench.openSuggestions > 0 ? Zc.amber : null,
+                badge: bench.openSuggestions > 0 ? bench.openSuggestions : null,
+                onPressed: bench.findings.isEmpty
+                    ? null
+                    : () => bench.reviewOpen ? bench.closeReview() : bench.openReview(),
+                hint: bench.findings.isEmpty ? 'The scan found nothing to review' : null,
+              ),
             ],
           ),
           if (state == ProtectState.known) ...[
