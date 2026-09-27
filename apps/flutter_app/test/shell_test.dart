@@ -70,12 +70,19 @@ void main() {
         version: 'z_core 0.1.0',
         onImport: () {},
         onType: () {},
+        onVault: () {},
       ),
     ));
     await tester.pumpAndSettle();
 
     expect(find.text('Z Privacy'), findsOneWidget);
     expect(find.text('Import a document'), findsOneWidget);
+    expect(find.text('New private session'), findsOneWidget);
+    expect(find.text('Open Z Vault'), findsOneWidget);
+    // No invented history: a session lives in memory, and Home says so once.
+    expect(find.text('LOCAL CONVERSATIONS'), findsNothing);
+    expect(find.textContaining('Conversations are not saved after you close the app'),
+        findsOneWidget);
 
     // The pack's label is the pack's own, never a string typed into a screen.
     expect(packs, isNotEmpty, reason: 'this build carries a pack');

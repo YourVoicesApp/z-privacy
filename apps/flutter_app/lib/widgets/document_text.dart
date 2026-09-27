@@ -25,22 +25,27 @@ Color sourceTint(Source s) => switch (s) {
       _ => Zc.clay,
     };
 
-String kindName(Kind k) => switch (k) {
-      Kind.person => 'Person',
-      Kind.company => 'Company',
-      Kind.email => 'E-mail',
-      Kind.phone => 'Phone',
-      Kind.iban => 'IBAN',
-      Kind.bic => 'BIC',
-      Kind.account => 'Account',
-      Kind.taxId => 'Tax ID',
-      Kind.customerNo => 'Customer no.',
-      Kind.address => 'Address',
-      Kind.contract => 'Contract',
-      Kind.project => 'Project',
-      Kind.client => 'Client',
-      Kind.custom => 'Custom',
-    };
+/// The kinds, as the core hands them over — filled by `Ground.refresh()`.
+///
+/// This used to be a `switch` over every `Kind`, which is exactly the
+/// assumption the owner forbade on 27 September: a screen must not decide that
+/// Person, Company, IBAN and Phone are all the kinds there can be. Now the list
+/// comes from `kinds()`, and the day it has a user-made row in it, every screen
+/// below already draws it.
+final List<KindRow> kindRows = [];
+final Map<Kind, String> _kindLabels = {};
+
+void rememberKinds(List<KindRow> rows) {
+  kindRows
+    ..clear()
+    ..addAll(rows);
+  _kindLabels
+    ..clear()
+    ..addEntries(rows.map((r) => MapEntry(r.kind, r.label)));
+}
+
+/// Never invents a name: before the list has arrived it says nothing.
+String kindName(Kind k) => _kindLabels[k] ?? '…';
 
 /// The left column: the document as written, with what the scanner did to it
 /// drawn **over** the words rather than instead of them. Nothing here is

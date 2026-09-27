@@ -16,6 +16,7 @@ import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/new_session.dart';
+import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -70,6 +71,7 @@ class _ShellState extends State<_Shell> {
   final _ground = Ground();
   Workbench? _bench;
   String? _trouble;
+  bool _vaultOpen = false;
 
   @override
   void initState() {
@@ -162,6 +164,15 @@ class _ShellState extends State<_Shell> {
     if (bench != null) {
       return WorkspaceScreen(bench: bench, ground: _ground, onHome: _home);
     }
+    if (_vaultOpen) {
+      return VaultScreen(
+        ground: _ground,
+        onClose: () {
+          setState(() => _vaultOpen = false);
+          _ground.refresh();
+        },
+      );
+    }
     return Stack(
       children: [
         HomeScreen(
@@ -169,6 +180,7 @@ class _ShellState extends State<_Shell> {
           version: coreVersion(),
           onImport: () => _begin(typing: false),
           onType: () => _begin(typing: true),
+          onVault: () => setState(() => _vaultOpen = true),
         ),
         if (_trouble != null)
           Positioned(

@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 96969849;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1122271268;
 
 // Section: executor
 
@@ -394,6 +394,35 @@ fn wire__z_core__api__delete_entity_impl(
         },
     )
 }
+fn wire__z_core__api__delete_value_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "delete_value",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_entity = <u32>::sse_decode(&mut deserializer);
+            let api_value_id = <u32>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::delete_value(api_entity, api_value_id)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__z_core__api__disconnect_provider_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -682,6 +711,33 @@ fn wire__z_core__api__inspect_selection_impl(
         },
     )
 }
+fn wire__z_core__api__kinds_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "kinds",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::kinds()?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__z_core__api__list_findings_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -732,6 +788,35 @@ fn wire__z_core__api__list_tokens_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
                     let output_ok = z_core::api::list_tokens(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__move_entity_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "move_entity",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_entity_id = <u32>::sse_decode(&mut deserializer);
+            let api_profile_id = <Option<String>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::move_entity(api_entity_id, api_profile_id)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -938,6 +1023,65 @@ fn wire__z_core__api__providers_impl(
         },
     )
 }
+fn wire__z_core__api__remove_value_alias_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "remove_value_alias",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_entity = <u32>::sse_decode(&mut deserializer);
+            let api_value_id = <u32>::sse_decode(&mut deserializer);
+            let api_alias = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::remove_value_alias(api_entity, api_value_id, api_alias)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__rename_entity_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "rename_entity",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_entity_id = <u32>::sse_decode(&mut deserializer);
+            let api_label = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::rename_entity(api_entity_id, api_label)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__z_core__api__restored_view_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1047,6 +1191,34 @@ fn wire__z_core__api__scan_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
                     let output_ok = z_core::api::scan(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__search_vault_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "search_vault",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_query = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::search_vault(api_query)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -1504,6 +1676,12 @@ const _: fn() = || {
         let _: Option<crate::api::mirrors::Place> = Finding.place;
     }
     {
+        let KindRow = None::<crate::api::mirrors::KindRow>.unwrap();
+        let _: crate::api::mirrors::Kind = KindRow.kind;
+        let _: String = KindRow.label;
+        let _: bool = KindRow.custom;
+    }
+    {
         let LayerCount = None::<crate::api::mirrors::LayerCount>.unwrap();
         let _: crate::api::mirrors::Source = LayerCount.source;
         let _: String = LayerCount.detail;
@@ -1602,6 +1780,7 @@ const _: fn() = || {
         let _: bool = ProviderRow.session_only;
         let _: String = ProviderRow.base_url;
         let _: String = ProviderRow.model;
+        let _: bool = ProviderRow.credential_required;
     }
     match None::<crate::api::mirrors::Refusal>.unwrap() {
         crate::api::mirrors::Refusal::ScannedPdfNoTextLayer { pages } => {
@@ -1648,6 +1827,7 @@ const _: fn() = || {
         let RevealedValue = None::<crate::api::mirrors::RevealedValue>.unwrap();
         let _: String = RevealedValue.token;
         let _: String = RevealedValue.value;
+        let _: Vec<String> = RevealedValue.aliases;
         let _: u32 = RevealedValue.ttl_ms;
     }
     {
@@ -1982,6 +2162,20 @@ impl SseDecode for crate::api::mirrors::Kind {
     }
 }
 
+impl SseDecode for crate::api::mirrors::KindRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
+        let mut var_label = <String>::sse_decode(deserializer);
+        let mut var_custom = <bool>::sse_decode(deserializer);
+        return crate::api::mirrors::KindRow {
+            kind: var_kind,
+            label: var_label,
+            custom: var_custom,
+        };
+    }
+}
+
 impl SseDecode for crate::api::mirrors::LayerCount {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2027,6 +2221,18 @@ impl SseDecode for Vec<crate::api::mirrors::Finding> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::mirrors::Finding>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::mirrors::KindRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::KindRow>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -2416,6 +2622,7 @@ impl SseDecode for crate::api::mirrors::ProviderRow {
         let mut var_sessionOnly = <bool>::sse_decode(deserializer);
         let mut var_baseUrl = <String>::sse_decode(deserializer);
         let mut var_model = <String>::sse_decode(deserializer);
+        let mut var_credentialRequired = <bool>::sse_decode(deserializer);
         return crate::api::mirrors::ProviderRow {
             id: var_id,
             label: var_label,
@@ -2423,6 +2630,7 @@ impl SseDecode for crate::api::mirrors::ProviderRow {
             session_only: var_sessionOnly,
             base_url: var_baseUrl,
             model: var_model,
+            credential_required: var_credentialRequired,
         };
     }
 }
@@ -2519,10 +2727,12 @@ impl SseDecode for crate::api::mirrors::RevealedValue {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_token = <String>::sse_decode(deserializer);
         let mut var_value = <String>::sse_decode(deserializer);
+        let mut var_aliases = <Vec<String>>::sse_decode(deserializer);
         let mut var_ttlMs = <u32>::sse_decode(deserializer);
         return crate::api::mirrors::RevealedValue {
             token: var_token,
             value: var_value,
+            aliases: var_aliases,
             ttl_ms: var_ttlMs,
         };
     }
@@ -2786,42 +2996,48 @@ fn pde_ffi_dispatcher_primary_impl(
         10 => wire__z_core__api__create_entity_impl(port, ptr, rust_vec_len, data_len),
         11 => wire__z_core__api__create_profile_impl(port, ptr, rust_vec_len, data_len),
         12 => wire__z_core__api__delete_entity_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__z_core__api__disconnect_provider_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__z_core__api__document_view_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__z_core__api__entities_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__z_core__api__entity_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__z_core__api__hide_impl(port, ptr, rust_vec_len, data_len),
-        18 => wire__z_core__api__import_document_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__z_core__api__import_text_impl(port, ptr, rust_vec_len, data_len),
-        20 => wire__z_core__api__ingest_answer_impl(port, ptr, rust_vec_len, data_len),
-        21 => wire__crate__api__core__init_app_impl(port, ptr, rust_vec_len, data_len),
-        22 => wire__z_core__api__inspect_selection_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__z_core__api__list_findings_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__z_core__api__list_tokens_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__z_core__api__open_session_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__z_core__api__packs_impl(port, ptr, rust_vec_len, data_len),
-        27 => wire__z_core__api__payload_view_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__z_core__api__profiles_impl(port, ptr, rust_vec_len, data_len),
-        29 => wire__z_core__api__protect_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__z_core__api__protect_all_matches_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__z_core__api__providers_impl(port, ptr, rust_vec_len, data_len),
-        32 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__z_core__api__reveal_value_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
-        36 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
-        38 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
-        39 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
-        40 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
-        41 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
-        42 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
-        43 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
-        44 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        45 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        46 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
-        47 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
-        48 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__z_core__api__delete_value_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__z_core__api__disconnect_provider_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__z_core__api__document_view_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__z_core__api__entities_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__z_core__api__entity_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__z_core__api__hide_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__z_core__api__import_document_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__z_core__api__import_text_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__z_core__api__ingest_answer_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__core__init_app_impl(port, ptr, rust_vec_len, data_len),
+        23 => wire__z_core__api__inspect_selection_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__z_core__api__kinds_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__z_core__api__list_findings_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__z_core__api__list_tokens_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__z_core__api__move_entity_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__z_core__api__open_session_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__z_core__api__packs_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__z_core__api__payload_view_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__z_core__api__profiles_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__z_core__api__protect_impl(port, ptr, rust_vec_len, data_len),
+        33 => wire__z_core__api__protect_all_matches_impl(port, ptr, rust_vec_len, data_len),
+        34 => wire__z_core__api__providers_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__z_core__api__remove_value_alias_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__z_core__api__rename_entity_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__z_core__api__reveal_value_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
+        41 => wire__z_core__api__search_vault_impl(port, ptr, rust_vec_len, data_len),
+        42 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
+        43 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
+        45 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
+        46 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
+        49 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
+        50 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        52 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
+        53 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
+        54 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -3077,6 +3293,23 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Kind> {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Kind> {}
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Kind>> for crate::api::mirrors::Kind {
     fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Kind> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::KindRow> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.kind.into_into_dart().into_dart(),
+            self.0.label.into_into_dart().into_dart(),
+            self.0.custom.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::KindRow> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::KindRow>> for crate::api::mirrors::KindRow {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::KindRow> {
         self.into()
     }
 }
@@ -3349,6 +3582,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ProviderR
             self.0.session_only.into_into_dart().into_dart(),
             self.0.base_url.into_into_dart().into_dart(),
             self.0.model.into_into_dart().into_dart(),
+            self.0.credential_required.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -3443,6 +3677,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::RevealedV
         [
             self.0.token.into_into_dart().into_dart(),
             self.0.value.into_into_dart().into_dart(),
+            self.0.aliases.into_into_dart().into_dart(),
             self.0.ttl_ms.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -3949,6 +4184,15 @@ impl SseEncode for crate::api::mirrors::Kind {
     }
 }
 
+impl SseEncode for crate::api::mirrors::KindRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
+        <String>::sse_encode(self.label, serializer);
+        <bool>::sse_encode(self.custom, serializer);
+    }
+}
+
 impl SseEncode for crate::api::mirrors::LayerCount {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3984,6 +4228,16 @@ impl SseEncode for Vec<crate::api::mirrors::Finding> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::mirrors::Finding>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::mirrors::KindRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::KindRow>::sse_encode(item, serializer);
         }
     }
 }
@@ -4311,6 +4565,7 @@ impl SseEncode for crate::api::mirrors::ProviderRow {
         <bool>::sse_encode(self.session_only, serializer);
         <String>::sse_encode(self.base_url, serializer);
         <String>::sse_encode(self.model, serializer);
+        <bool>::sse_encode(self.credential_required, serializer);
     }
 }
 
@@ -4387,6 +4642,7 @@ impl SseEncode for crate::api::mirrors::RevealedValue {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.token, serializer);
         <String>::sse_encode(self.value, serializer);
+        <Vec<String>>::sse_encode(self.aliases, serializer);
         <u32>::sse_encode(self.ttl_ms, serializer);
     }
 }

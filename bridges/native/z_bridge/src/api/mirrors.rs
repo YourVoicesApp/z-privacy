@@ -118,6 +118,16 @@ pub struct _SelectionView {
     pub snaps_to: Vec<Span>,
 }
 
+#[frb(mirror(KindRow))]
+pub struct _KindRow {
+    pub kind: Kind,
+    /// What to call it. The core's word, not the screen's.
+    pub label: String,
+    /// True for a kind the user made. Always false today; the field exists so
+    /// that the day it is true, nothing above it needs rewriting.
+    pub custom: bool,
+}
+
 #[frb(mirror(ProfileRow))]
 pub struct _ProfileRow {
     pub id: String,
@@ -145,6 +155,12 @@ pub struct _ProviderRow {
     /// Which model is asked. Not a secret, and shown so the answer can be read
     /// knowing what produced it.
     pub model: String,
+    /// Whether this provider, **at this address**, needs a credential at all.
+    ///
+    /// A property of the provider, not a rule of the world (the owner, 27 Sep):
+    /// a model on this machine needs none, and a future provider may authorise
+    /// some other way. A screen asks this instead of assuming.
+    pub credential_required: bool,
 }
 
 #[frb(mirror(AnswerId))]
@@ -366,6 +382,10 @@ pub struct _TokenRow {
 pub struct _RevealedValue {
     pub token: String,
     pub value: String,
+    /// Every other spelling of the same value. Shown with it because they are
+    /// the same secret: a vault screen that listed a name but hid «Herr Müller»
+    /// would be keeping something from its owner for no reason.
+    pub aliases: Vec<String>,
     pub ttl_ms: u32,
 }
 

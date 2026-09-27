@@ -9,8 +9,8 @@
 use std::path::PathBuf;
 
 use crate::api::{
-    ApiError, ApiResult, EntityCard, EntityKind, EntityRow, Kind, Policy, ProfileRow, RevealedValue,
-    VaultState, VaultUnlockOutcome, ValueRow,
+    ApiError, ApiResult, EntityCard, EntityKind, EntityRow, Kind, KindRow, Policy, ProfileRow,
+    RevealedValue, VaultState, VaultUnlockOutcome, ValueRow,
 };
 use crate::secret::Secret;
 use crate::session::with_core;
@@ -220,10 +220,156 @@ pub(crate) fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValu
                 // conversation.
                 token: format!("{} · value {}", e.handle(), v.id),
                 value: v.value.expose().to_string(),
+                aliases: v.aliases.iter().map(|a| a.expose().to_string()).collect(),
                 ttl_ms: REVEAL_TTL_MS,
             })
         })
     })
+}
+
+/// Rename an identity.
+pub(crate) fn rename_entity(entity_id: u32, label: String) -> ApiResult<()> {
+    let label = label.trim().to_string();
+    if label.is_empty() {
+        return Err(ApiError::ImportRefused {
+            reason: "an identity needs a name".to_string(),
+        });
+    }
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let e = vault.entity_mut(entity_id).ok_or(ApiError::UnknownToken)?;
+            e.label = Secret::new(label);
+            Ok(())
+        })
+    })
+}
+
+/// Move an identity between profiles. `None` means everywhere.
+///
+/// It refuses a profile that does not exist rather than quietly making the
+/// identity invisible: an entity scoped to a profile nobody can select is a
+/// value the scanner will never find again.
+pub(crate) fn move_entity(entity_id: u32, profile_id: Option<String>) -> ApiResult<()> {
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            if let Some(wanted) = &profile_id {
+                if !vault.profiles.iter().any(|p| &p.id == wanted) {
+                    return Err(ApiError::ImportRefused {
+                        reason: format!("there is no profile «{wanted}»"),
+                    });
+                }
+            }
+            let e = vault.entity_mut(entity_id).ok_or(ApiError::UnknownToken)?;
+            e.profile_id = profile_id;
+            Ok(())
+        })
+    })
+}
+
+/// Forget one value, keeping its identity.
+pub(crate) fn delete_value(entity: u32, value_id: u32) -> ApiResult<()> {
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let e = vault.entity_mut(entity).ok_or(ApiError::UnknownToken)?;
+            let before = e.values.len();
+            e.values.retain(|v| v.id != value_id);
+            if e.values.len() == before {
+                return Err(ApiError::UnknownToken);
+            }
+            Ok(())
+        })
+    })
+}
+
+/// Forget one spelling. The value itself is never removed this way — a value
+/// with no spellings would be a value the scanner could not match.
+pub(crate) fn remove_value_alias(entity: u32, value_id: u32, alias: String) -> ApiResult<()> {
+    let wanted = crate::text::nfc(&alias);
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let e = vault.entity_mut(entity).ok_or(ApiError::UnknownToken)?;
+            let v = e
+                .values
+                .iter_mut()
+                .find(|v| v.id == value_id)
+                .ok_or(ApiError::UnknownToken)?;
+            let before = v.aliases.len();
+            v.aliases.retain(|a| crate::text::nfc(a.expose()) != wanted);
+            if v.aliases.len() == before {
+                return Err(ApiError::UnknownToken);
+            }
+            Ok(())
+        })
+    })
+}
+
+/// Search the vault, here, in memory.
+///
+/// It looks at labels, values and every spelling — so it reads secrets — and
+/// hands back **rows only**. Which field matched is deliberately not reported:
+/// a result that said «matched on its IBAN» would print a fact about a secret
+/// onto a screen that was only asked «who is this».
+pub(crate) fn search_vault(query: String) -> ApiResult<Vec<EntityRow>> {
+    let needle = crate::text::nfc(query.trim()).to_lowercase();
+    with_core(|core| {
+        core.vault.with_open(|vault| {
+            if needle.is_empty() {
+                return rows_of(vault.entities.iter());
+            }
+            let hit = |text: &str| crate::text::nfc(text).to_lowercase().contains(&needle);
+            rows_of(vault.entities.iter().filter(|e| {
+                hit(e.label.expose())
+                    || e.values
+                        .iter()
+                        .any(|v| v.spellings().iter().any(|s| hit(s)))
+            }))
+        })
+    })
+}
+
+fn rows_of<'a>(entities: impl Iterator<Item = &'a crate::vault::model::Entity>) -> Vec<EntityRow> {
+    entities
+        .map(|e| EntityRow {
+            id: e.id,
+            kind: e.kind,
+            label: e.label.expose().to_string(),
+            profile_id: e.profile_id.clone(),
+            values: e.values.len() as u32,
+            policy_summary: e.policy_summary(),
+        })
+        .collect()
+}
+
+/// Every kind this build knows, with the core's own label for it.
+///
+/// A list, not an enumeration a screen performs on `Kind::values`: the day a
+/// user-made kind exists it is one more row here and nothing above changes.
+pub(crate) fn kinds() -> ApiResult<Vec<KindRow>> {
+    Ok([
+        (Kind::Person, "Person"),
+        (Kind::Company, "Company"),
+        (Kind::Client, "Client"),
+        (Kind::Project, "Project"),
+        (Kind::Contract, "Contract"),
+        (Kind::Email, "E-mail"),
+        (Kind::Phone, "Phone"),
+        (Kind::Address, "Address"),
+        (Kind::Iban, "IBAN"),
+        (Kind::Bic, "BIC"),
+        (Kind::Account, "Account number"),
+        (Kind::TaxId, "Tax ID"),
+        (Kind::CustomerNo, "Customer number"),
+        (Kind::Custom, "Something else"),
+    ]
+    .into_iter()
+    .map(|(kind, label)| KindRow {
+        kind,
+        label: label.to_string(),
+        // No user-made kinds yet. The field is here so that the screen reading
+        // it is already written for the day there are.
+        custom: false,
+    })
+    .collect())
 }
 
 // ---------------------------------------------------------------- profiles

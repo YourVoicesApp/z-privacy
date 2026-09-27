@@ -320,3 +320,75 @@ fn the_golden_document_with_an_open_vault_asks_nothing() {
     // The by-layer summary now names three layers, the vault among them.
     assert!(report.by_layer.iter().any(|l| l.source == Source::Vault && l.count == 2), "{:?}", report.by_layer);
 }
+
+// ---------------------------------------------------------------- M7.8
+// The vault as a room the user manages, not only a layer the scanner reads.
+
+#[test]
+fn an_identity_can_be_renamed_moved_and_pruned() {
+    let _lock = serial();
+    fresh_vault("manage");
+    let profile = create_profile("Client A".to_string()).expect("profile");
+    let id = identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &["Nordstern"], Policy::Always);
+
+    rename_entity(id, "Nordstern Consulting".to_string()).expect("rename");
+    assert_eq!(entity(id).expect("card").label, "Nordstern Consulting");
+    assert!(rename_entity(id, "   ".to_string()).is_err(), "an identity needs a name");
+
+    // Moving to a profile that does not exist is refused, not silently done:
+    // an identity in a profile nobody can pick is a value never found again.
+    match move_entity(id, Some("p-does-not-exist".to_string())) {
+        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("profile"), "{reason}"),
+        other => panic!("expected a refusal, got {other:?}"),
+    }
+    move_entity(id, Some(profile.clone())).expect("move");
+    assert_eq!(entity(id).expect("card").profile_id, Some(profile));
+    move_entity(id, None).expect("back to everywhere");
+    assert_eq!(entity(id).expect("card").profile_id, None);
+
+    // One value, one spelling, each removable on its own.
+    let value = entity(id).expect("card").values[0].id;
+    add_value_alias(id, value, "NC GmbH".to_string()).expect("alias");
+    assert_eq!(reveal_value(id, value).expect("reveal").aliases.len(), 2);
+    remove_value_alias(id, value, "NC GmbH".to_string()).expect("forget a spelling");
+    assert_eq!(reveal_value(id, value).expect("reveal").aliases, vec!["Nordstern".to_string()]);
+    assert!(remove_value_alias(id, value, "never written".to_string()).is_err());
+
+    delete_value(id, value).expect("forget the value");
+    assert!(entity(id).expect("card").values.is_empty(), "the identity stays, the value goes");
+    assert!(delete_value(id, value).is_err(), "and twice is an error, not a silent no-op");
+}
+
+#[test]
+fn searching_the_vault_finds_by_value_and_says_nothing_about_why() {
+    let _lock = serial();
+    fresh_vault("search");
+    let nordstern = identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &["NC"], Policy::Always);
+    let mueller = identity("Müller", None, Kind::Person, "Thomas Müller", &["Herr Müller"], Policy::Always);
+    set_value(mueller, None, Kind::Iban, "DE89370400440532013000".to_string(), Policy::Always).expect("iban");
+
+    // By label, by value, by alias — and the IBAN, which no label mentions.
+    assert_eq!(search_vault("nordstern".to_string()).expect("search").len(), 1);
+    assert_eq!(search_vault("Thomas".to_string()).expect("search")[0].id, mueller);
+    assert_eq!(search_vault("herr".to_string()).expect("search")[0].id, mueller);
+    assert_eq!(search_vault("DE8937".to_string()).expect("search")[0].id, mueller);
+    assert_eq!(search_vault("NC".to_string()).expect("search")[0].id, nordstern);
+    assert!(search_vault("nothing like this".to_string()).expect("search").is_empty());
+    assert_eq!(search_vault("  ".to_string()).expect("search").len(), 2, "an empty query is everything");
+
+    // The row says who, and nothing about what matched — a result that read
+    // «matched on its IBAN» would print a fact about a secret.
+    let row = &search_vault("DE8937".to_string()).expect("search")[0];
+    assert!(!format!("{row:?}").contains("DE89"), "{row:?}");
+}
+
+#[test]
+fn the_kinds_are_a_list_the_core_hands_over_not_a_set_the_screen_knows() {
+    let rows = kinds().expect("kinds");
+    assert!(rows.len() >= 14, "every kind is listed");
+    assert!(rows.iter().all(|k| !k.label.is_empty()), "each one is named by the core");
+    assert!(rows.iter().all(|k| !k.custom), "no user-made kinds yet, and the field says so");
+    // The escape hatch exists and is named for a person, not for a programmer.
+    let other = rows.iter().find(|k| k.kind == Kind::Custom).expect("Custom is in the list");
+    assert_eq!(other.label, "Something else");
+}

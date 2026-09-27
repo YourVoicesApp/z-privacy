@@ -29,6 +29,10 @@ class ZMark extends StatelessWidget {
   }
 }
 
+/// «1 value» and «2 values». Small, and the first thing a person notices when
+/// it is wrong — a test caught «1 values» in the vault bar before anyone saw it.
+String plural(int n, String one, [String? many]) => '$n ${n == 1 ? one : (many ?? "${one}s")}';
+
 /// A small caps label, the boards' section marker.
 class Eyebrow extends StatelessWidget {
   const Eyebrow(this.text, {super.key, this.color});

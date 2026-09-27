@@ -12,6 +12,7 @@ import 'package:flutter/foundation.dart';
 // Prefixed on purpose: every line below that says `z.` is a call into Rust, and
 // the prefix makes that visible when reading the file rather than guessing.
 import 'package:zprivacy/src/rust/api/mirrors.dart';
+import 'package:zprivacy/widgets/document_text.dart' show rememberKinds;
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 /// What the app knows before any document exists: the ground the Workspace stands
@@ -32,6 +33,8 @@ class Ground extends ChangeNotifier {
       vault = await z.vaultState();
       packs = await z.packs();
       providers = await z.providers();
+      kinds = await z.kinds();
+      rememberKinds(kinds);
       // Both of these need an open vault; a locked one is not an error, it is a
       // state the UI shows in words.
       profiles = vault == VaultState.unlocked ? await z.profiles() : const [];
@@ -48,6 +51,18 @@ class Ground extends ChangeNotifier {
       trouble = e.toString();
     }
     notifyListeners();
+  }
+
+  /// Every kind the core knows, with its label. The UI never enumerates `Kind`
+  /// itself — the day there are user-made kinds, this list simply grows.
+  List<KindRow> kinds = const [];
+
+  String nameOfKind(Kind k) {
+    for (final row in kinds) {
+      if (row.kind == k) return row.label;
+    }
+    // Before the list has loaded. Never a made-up name for a kind.
+    return '…';
   }
 
   int get connectedProviders => providers.where((p) => p.connected).length;
@@ -73,6 +88,55 @@ class Ground extends ChangeNotifier {
       await refresh();
       return null;
     } on ApiError catch (e) {
+      return e.toString();
+    }
+  }
+
+  // ---------------------------------------------------------------- the vault
+  //
+  // Everything below reads and writes the vault through the core. The UI holds
+  // no value: a card is asked for when it is opened, and a revealed value lives
+  // in the same short-lived map the tokens panel uses.
+
+  List<EntityRow> vaultRows = const [];
+  String vaultQuery = '';
+
+  /// Read the vault's list again — the search is the list, with a query.
+  Future<void> readVault() async {
+    if (vault != VaultState.unlocked) {
+      vaultRows = const [];
+      notifyListeners();
+      return;
+    }
+    try {
+      vaultRows = await z.searchVault(query: vaultQuery);
+      trouble = null;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+    }
+    notifyListeners();
+  }
+
+  Future<void> searchVaultFor(String query) async {
+    vaultQuery = query;
+    await readVault();
+  }
+
+  /// Run one change against the vault and read everything back. Returns the
+  /// reason it did not work, or null.
+  ///
+  /// One path for every edit, because every edit has the same two obligations:
+  /// the vault is re-sealed by the core, and the screen is re-read from it
+  /// rather than patched in place.
+  Future<String?> vaultEdit(Future<void> Function() act) async {
+    try {
+      await act();
+      await refresh();
+      await readVault();
+      return null;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+      notifyListeners();
       return e.toString();
     }
   }

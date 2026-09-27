@@ -218,6 +218,13 @@ pub(crate) fn providers() -> ApiResult<Vec<ProviderRow>> {
                 .as_ref()
                 .map(|l| l.model.clone())
                 .unwrap_or_else(|| provider.default_model().to_string()),
+            // Asked of the provider, at this address. Not a rule of the world.
+            credential_required: provider.credential_required(
+                login
+                    .as_ref()
+                    .map(|l| l.base.as_str())
+                    .unwrap_or_else(|| provider.default_base()),
+            ),
         });
     }
     Ok(rows)
@@ -245,10 +252,12 @@ pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_ur
     // A model on this machine needs no credential, and refusing to connect to
     // one for want of a key would shut the most private door in the product.
     // Everywhere else, an empty credential connects nothing and says so.
-    if credential.is_empty() && !crate::providers::is_on_this_machine(&base) {
+    if credential.is_empty() && known.credential_required(&base) {
         return Err(ApiError::ImportRefused {
-            reason: "a provider needs a credential; only a model on this machine may go without one"
-                .to_string(),
+            reason: format!(
+                "{} needs a credential at that address; a model on this machine does not",
+                known.label()
+            ),
         });
     }
 
@@ -303,9 +312,9 @@ pub(crate) fn configure_provider(provider: ProviderId, base_url: Option<String>,
                 .filter(|m| !m.is_empty())
                 .unwrap_or(l.model),
         },
-        // Nothing stored yet. Only a model on this machine can be set up without
-        // a credential; anywhere else this is «connect first».
-        None if crate::providers::is_on_this_machine(&base) => ProviderLogin {
+        // Nothing stored yet. A provider that needs no credential at this
+        // address can be set up here; anywhere else this is «connect first».
+        None if !known.credential_required(&base) => ProviderLogin {
             credential: Secret::new(String::new()),
             base,
             model: model
@@ -784,6 +793,7 @@ pub(crate) fn reveal(session: SessionId, token: String) -> ApiResult<RevealedVal
             token,
             // Handed over because the user asked to see it, for a moment, locally.
             value: entry.value.expose().to_string(),
+            aliases: entry.aliases.iter().map(|a| a.expose().to_string()).collect(),
             ttl_ms: REVEAL_TTL_MS,
         }),
         None => Err(ApiError::UnknownToken),

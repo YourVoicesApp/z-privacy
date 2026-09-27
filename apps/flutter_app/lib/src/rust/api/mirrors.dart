@@ -284,6 +284,35 @@ enum Kind {
   custom,
 }
 
+class KindRow {
+  final Kind kind;
+
+  /// What to call it. The core's word, not the screen's.
+  final String label;
+
+  /// True for a kind the user made. Always false today; the field exists so
+  /// that the day it is true, nothing above it needs rewriting.
+  final bool custom;
+
+  const KindRow({
+    required this.kind,
+    required this.label,
+    required this.custom,
+  });
+
+  @override
+  int get hashCode => kind.hashCode ^ label.hashCode ^ custom.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is KindRow &&
+          runtimeType == other.runtimeType &&
+          kind == other.kind &&
+          label == other.label &&
+          custom == other.custom;
+}
+
 class LayerCount {
   final Source source;
   final String detail;
@@ -574,6 +603,13 @@ class ProviderRow {
   /// knowing what produced it.
   final String model;
 
+  /// Whether this provider, **at this address**, needs a credential at all.
+  ///
+  /// A property of the provider, not a rule of the world (the owner, 27 Sep):
+  /// a model on this machine needs none, and a future provider may authorise
+  /// some other way. A screen asks this instead of assuming.
+  final bool credentialRequired;
+
   const ProviderRow({
     required this.id,
     required this.label,
@@ -581,6 +617,7 @@ class ProviderRow {
     required this.sessionOnly,
     required this.baseUrl,
     required this.model,
+    required this.credentialRequired,
   });
 
   @override
@@ -590,7 +627,8 @@ class ProviderRow {
       connected.hashCode ^
       sessionOnly.hashCode ^
       baseUrl.hashCode ^
-      model.hashCode;
+      model.hashCode ^
+      credentialRequired.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -602,7 +640,8 @@ class ProviderRow {
           connected == other.connected &&
           sessionOnly == other.sessionOnly &&
           baseUrl == other.baseUrl &&
-          model == other.model;
+          model == other.model &&
+          credentialRequired == other.credentialRequired;
 }
 
 @freezed
@@ -691,16 +730,23 @@ class RescanOutcome {
 class RevealedValue {
   final String token;
   final String value;
+
+  /// Every other spelling of the same value. Shown with it because they are
+  /// the same secret: a vault screen that listed a name but hid «Herr Müller»
+  /// would be keeping something from its owner for no reason.
+  final List<String> aliases;
   final int ttlMs;
 
   const RevealedValue({
     required this.token,
     required this.value,
+    required this.aliases,
     required this.ttlMs,
   });
 
   @override
-  int get hashCode => token.hashCode ^ value.hashCode ^ ttlMs.hashCode;
+  int get hashCode =>
+      token.hashCode ^ value.hashCode ^ aliases.hashCode ^ ttlMs.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -709,6 +755,7 @@ class RevealedValue {
           runtimeType == other.runtimeType &&
           token == other.token &&
           value == other.value &&
+          aliases == other.aliases &&
           ttlMs == other.ttlMs;
 }
 

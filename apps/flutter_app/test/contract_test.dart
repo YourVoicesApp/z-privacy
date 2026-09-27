@@ -82,6 +82,14 @@ void main() {
       'providers': () => providers(),
       'connectProvider': () => connectProvider(
           provider: provider, credential: 'sk-test', baseUrl: 'https://api.openai.com'),
+      'configureProvider': () => configureProvider(provider: provider),
+      'renameEntity': () => renameEntity(entityId: 1, label: 'Test'),
+      'moveEntity': () => moveEntity(entityId: 1),
+      'deleteValue': () => deleteValue(entity: 1, valueId: 1),
+      'removeValueAlias': () => removeValueAlias(entity: 1, valueId: 1, alias: 'x'),
+      'searchVault': () => searchVault(query: 'x'),
+      'kinds': () => kinds(),
+      'inspectSelection': () => inspectSelection(session: session, span: span),
       'disconnectProvider': () => disconnectProvider(provider: provider),
       'testProvider': () => testProvider(provider: provider),
       // The vault (M4). Called against a locked, absent vault here: the answers
@@ -120,7 +128,7 @@ void main() {
       }
     }
     expect(crashed, isEmpty, reason: 'calls that did not answer cleanly');
-    expect(calls.length, 44, reason: 'the contract has 44 functions');
+    expect(calls.length, 52, reason: 'the contract has 52 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
   });
@@ -197,9 +205,10 @@ void main() {
         sessionOnly: before.sessionOnly,
         baseUrl: before.baseUrl,
         model: before.model,
+        credentialRequired: before.credentialRequired,
       ).toString(),
       isNotEmpty,
-      reason: 'ProviderRow has exactly six fields, none of them a credential',
+      reason: 'ProviderRow has exactly seven fields, none of them a credential',
     );
 
     final connected = await connectProvider(

@@ -108,14 +108,16 @@ class _ProtectDialogState extends State<ProtectDialog> {
                 spacing: 7,
                 runSpacing: 7,
                 children: [
-                  for (final k in Kind.values)
+                  // The list comes from the core. A screen that walked
+                  // `Kind.values` would be deciding what kinds exist.
+                  for (final row in kindRows)
                     _Pill(
-                      label: kindName(k),
-                      chosen: _kind == k,
+                      label: row.label,
+                      chosen: _kind == row.kind,
                       // The pack's guess is marked, so a user can see that the
                       // app had an opinion and that they are free to overrule it.
-                      hint: k == v.kind && k != Kind.custom,
-                      onTap: () => setState(() => _kind = k),
+                      hint: row.kind == v.kind && row.kind != Kind.custom,
+                      onTap: () => setState(() => _kind = row.kind),
                     ),
                 ],
               ),

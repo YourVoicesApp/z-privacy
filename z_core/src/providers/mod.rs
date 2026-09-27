@@ -41,6 +41,17 @@ pub(crate) trait Provider {
     fn max_request_bytes(&self) -> usize {
         DEFAULT_REQUEST_BYTES
     }
+
+    /// Does this provider need a credential **at this address**?
+    ///
+    /// A property of the provider, not an assumption made everywhere (the
+    /// owner, 27 September). The default says what is true today: a model on
+    /// this machine needs no key, and everything reachable over a network does.
+    /// A provider that authorises some other way overrides this and nothing
+    /// above it changes.
+    fn credential_required(&self, base: &str) -> bool {
+        !http::is_loopback_url(base)
+    }
     /// One question, one answer. `text` is the safe payload; there is no argument
     /// through which anything else could be passed.
     fn ask(&self, credential: &str, base: &str, model: &str, text: &str) -> ApiResult<String>;
@@ -108,12 +119,6 @@ pub(crate) fn ping(id: &str, credential: &str, base: &str, model: &str) -> ApiRe
 /// Check an address the way a request would, before a credential is stored.
 pub(crate) fn check_url_for(base: &str) -> ApiResult<()> {
     http::check_url(base)
-}
-
-/// Is this address a model running on this very machine? The one case where a
-/// provider may be used without a credential.
-pub(crate) fn is_on_this_machine(base: &str) -> bool {
-    http::is_loopback_url(base)
 }
 
 /// The one refusal that is not about the network at all: nothing was connected.

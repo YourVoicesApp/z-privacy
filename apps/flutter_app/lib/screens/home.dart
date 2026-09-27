@@ -1,9 +1,14 @@
 // Home — what stays on this device, and what leaves it.
 //
-// Every number on this screen was reported by z_core. Where the core has nothing
-// to report, the screen says so in words instead of showing a plausible number:
-// the list of past conversations is the clear case — nothing is stored between
-// runs yet, so Home says that rather than drawing five rows of invented history.
+// Every number on this screen was reported by z_core.
+//
+// Three acts and one sentence, by the owner's decision of 27 September. There is
+// deliberately **no list of past conversations**: a session lives in memory and
+// ends with the app, while the vault and the profiles are the permanent things.
+// Saving conversations would open a row of questions of its own — the original
+// or only the safe version, under which key, what happens to old tokens, can a
+// person erase every trace — and those deserve a stage of their own rather than
+// a feature slipped in here.
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
@@ -17,12 +22,14 @@ class HomeScreen extends StatelessWidget {
     required this.ground,
     required this.onImport,
     required this.onType,
+    required this.onVault,
     required this.version,
   });
 
   final Ground ground;
   final VoidCallback onImport;
   final VoidCallback onType;
+  final VoidCallback onVault;
   final String version;
 
   @override
@@ -55,23 +62,24 @@ class HomeScreen extends StatelessWidget {
                   style: Zc.body,
                 ),
                 const SizedBox(height: 24),
-                Row(
+                Wrap(
+                  spacing: 11,
+                  runSpacing: 11,
                   children: [
                     ZButton(label: 'Import a document', filled: true, icon: Icons.description_outlined, onPressed: onImport),
-                    const SizedBox(width: 11),
-                    ZButton(label: 'New private chat', icon: Icons.edit_outlined, onPressed: onType),
+                    ZButton(label: 'New private session', icon: Icons.edit_outlined, onPressed: onType),
+                    ZButton(label: 'Open Z Vault', icon: Icons.lock_outline, tint: Zc.river, onPressed: onVault),
                   ],
                 ),
                 const SizedBox(height: 9),
                 Text(
-                  'PDF · Word · TXT to begin with.   Nothing is uploaded to be read.',
+                  'PDF · Word · TXT to begin with.   Nothing is uploaded to be read.   '
+                  'Conversations are not saved after you close the app.',
                   style: Zc.small.copyWith(color: Zc.ink4),
                 ),
                 const SizedBox(height: 30),
                 if (ground.trouble != null) ...[Trouble(ground.trouble!), const SizedBox(height: 18)],
                 _ground(context),
-                const SizedBox(height: 22),
-                _conversations(),
               ],
             ),
           ),
@@ -136,25 +144,4 @@ class HomeScreen extends StatelessWidget {
         color: Zc.lineSoft,
       );
 
-  /// The boards show a list of local conversations here. The core keeps none
-  /// between runs, so this says that instead of showing history that is not there.
-  Widget _conversations() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: Zc.panel(fill: Zc.warmCard, edge: Zc.lineSoft),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Eyebrow('Local conversations'),
-          const SizedBox(height: 9),
-          Text(
-            'A conversation lives while the app is open and is not written anywhere. '
-            'Nothing from an earlier run is listed here because nothing was kept — '
-            'the vault is the only file this app writes.',
-            style: Zc.small,
-          ),
-        ],
-      ),
-    );
-  }
 }

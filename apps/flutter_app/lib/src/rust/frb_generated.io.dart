@@ -90,6 +90,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Kind dco_decode_kind(dynamic raw);
 
   @protected
+  KindRow dco_decode_kind_row(dynamic raw);
+
+  @protected
   LayerCount dco_decode_layer_count(dynamic raw);
 
   @protected
@@ -100,6 +103,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Finding> dco_decode_list_finding(dynamic raw);
+
+  @protected
+  List<KindRow> dco_decode_list_kind_row(dynamic raw);
 
   @protected
   List<LayerCount> dco_decode_list_layer_count(dynamic raw);
@@ -316,6 +322,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Kind sse_decode_kind(SseDeserializer deserializer);
 
   @protected
+  KindRow sse_decode_kind_row(SseDeserializer deserializer);
+
+  @protected
   LayerCount sse_decode_layer_count(SseDeserializer deserializer);
 
   @protected
@@ -326,6 +335,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Finding> sse_decode_list_finding(SseDeserializer deserializer);
+
+  @protected
+  List<KindRow> sse_decode_list_kind_row(SseDeserializer deserializer);
 
   @protected
   List<LayerCount> sse_decode_list_layer_count(SseDeserializer deserializer);
@@ -555,6 +567,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_kind(Kind self, SseSerializer serializer);
 
   @protected
+  void sse_encode_kind_row(KindRow self, SseSerializer serializer);
+
+  @protected
   void sse_encode_layer_count(LayerCount self, SseSerializer serializer);
 
   @protected
@@ -568,6 +583,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_finding(List<Finding> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_kind_row(List<KindRow> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_layer_count(

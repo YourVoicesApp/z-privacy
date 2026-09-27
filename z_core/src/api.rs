@@ -177,6 +177,23 @@ pub struct SelectionView {
     pub snaps_to: Vec<Span>,
 }
 
+/// One kind of value, as something to draw rather than something to enumerate.
+///
+/// The owner's rule of 27 September: **a screen must not assume that Person,
+/// Company, IBAN and Phone are all the kinds there can be.** So the list comes
+/// from here, with its labels, and a UI draws whatever it is handed. When
+/// user-made kinds arrive they appear as more rows with `custom: true`, and no
+/// screen has to change to show them.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KindRow {
+    pub kind: Kind,
+    /// What to call it. The core's word, not the screen's.
+    pub label: String,
+    /// True for a kind the user made. Always false today; the field exists so
+    /// that the day it is true, nothing above it needs rewriting.
+    pub custom: bool,
+}
+
 /// A profile, as a row rather than a packed string. The UI must never have to
 /// split a field out of text to draw a name. (Task 022.)
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -211,6 +228,12 @@ pub struct ProviderRow {
     /// Which model is asked. Not a secret, and shown so the answer can be read
     /// knowing what produced it.
     pub model: String,
+    /// Whether this provider, **at this address**, needs a credential at all.
+    ///
+    /// A property of the provider, not a rule of the world (the owner, 27 Sep):
+    /// a model on this machine needs none, and a future provider may authorise
+    /// some other way. A screen asks this instead of assuming.
+    pub credential_required: bool,
 }
 
 /// One answer that came back from a provider.
@@ -466,6 +489,10 @@ pub struct TokenRow {
 pub struct RevealedValue {
     pub token: String,
     pub value: String,
+    /// Every other spelling of the same value. Shown with it because they are
+    /// the same secret: a vault screen that listed a name but hid «Herr Müller»
+    /// would be keeping something from its owner for no reason.
+    pub aliases: Vec<String>,
     pub ttl_ms: u32,
 }
 
@@ -834,6 +861,41 @@ pub fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValue> {
 }
 
 /// A new profile — one client's dictionary.
+/// Rename an identity. The label is the only part of it a screen ever shows.
+pub fn rename_entity(entity_id: u32, label: String) -> ApiResult<()> {
+    crate::ops::rename_entity(entity_id, label)
+}
+
+/// Move an identity to another profile, or to none — `None` means everywhere.
+pub fn move_entity(entity_id: u32, profile_id: Option<String>) -> ApiResult<()> {
+    crate::ops::move_entity(entity_id, profile_id)
+}
+
+/// Forget one value, keeping the identity it belonged to.
+pub fn delete_value(entity: u32, value_id: u32) -> ApiResult<()> {
+    crate::ops::delete_value(entity, value_id)
+}
+
+/// Forget one spelling of a value.
+pub fn remove_value_alias(entity: u32, value_id: u32, alias: String) -> ApiResult<()> {
+    crate::ops::remove_value_alias(entity, value_id, alias)
+}
+
+/// Search the vault — **on this device, in memory, and nowhere else**.
+///
+/// The query is matched against labels, values and their spellings, which means
+/// it touches secrets; that is exactly why it happens here and returns only
+/// rows. Nothing about what matched is reported, so a search result says «this
+/// identity» and never «because its IBAN is …».
+pub fn search_vault(query: String) -> ApiResult<Vec<EntityRow>> {
+    crate::ops::search_vault(query)
+}
+
+/// Every kind of value this build knows, with its label.
+pub fn kinds() -> ApiResult<Vec<KindRow>> {
+    crate::ops::kinds()
+}
+
 pub fn create_profile(name: String) -> ApiResult<String> {
     crate::ops::create_profile(name)
 }

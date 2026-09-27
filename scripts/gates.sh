@@ -261,7 +261,8 @@ fi
 # that is quietly deleted takes its invariant with it and the suite still passes.
 for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty \
          the_server_receives the_whole_path a_redirect_is_refused never_by_its_body longer_than_the_limit \
-         each_purpose_gets_its_own a_format_one_vault a_literal_loopback ciphertext_even_inside; do
+         each_purpose_gets_its_own a_format_one_vault a_literal_loopback ciphertext_even_inside \
+         renamed_moved_and_pruned says_nothing_about_why not_a_set_the_screen_knows; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -273,7 +274,8 @@ done
 # is invented in Dart» to account, so their absence must be as loud.
 for t in "the core reports it" "the scan the core ran" "own two strings" "never the credential" \
          "not one Dart worked out" "Skip decides nothing" "does not touch what leaves" \
-         "the manual door needs no key" "as the model wrote it" "only the safe text arrives"; do
+         "the manual door needs no key" "as the model wrote it" "only the safe text arrives" \
+         "the vault room"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else
