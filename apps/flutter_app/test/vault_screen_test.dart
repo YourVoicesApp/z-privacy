@@ -229,8 +229,9 @@ void main() {
     expect(find.text('Kein Konto.'), findsOneWidget);
     expect(find.text('Keine Werbung.'), findsOneWidget);
     expect(find.text('Starten'), findsOneWidget);
-    // And it is honest about what the choice does today.
-    expect(find.textContaining('Die Oberfläche ist vorerst auf Englisch'), findsOneWidget);
+    // And it is honest about what the choice does today — the owner's own words.
+    expect(find.text('German privacy rules enabled.'), findsOneWidget);
+    expect(find.text('Interface translation is coming later.'), findsOneWidget);
 
     await tester.tap(find.text('Starten'));
     await settle(tester, rounds: 1);

@@ -17,7 +17,14 @@ use crate::session::with_core;
 use crate::vault::model::{Entity, StoredSettings, ValueRecord};
 
 pub(crate) fn set_data_dir(dir: String) -> ApiResult<()> {
-    with_core(|core| core.vault.set_dir(PathBuf::from(dir)))
+    let path = PathBuf::from(dir);
+    with_core(|core| {
+        core.vault.set_dir(path.clone())?;
+        // The settings file lives beside the vault, and is read at once so a
+        // first run is known before anything else is asked.
+        core.config.set_dir(&path);
+        Ok(())
+    })
 }
 
 pub(crate) fn vault_state() -> ApiResult<VaultState> {
@@ -377,10 +384,29 @@ pub(crate) fn kinds() -> ApiResult<Vec<KindRow>> {
 /// not survive the app closing.
 pub(crate) fn settings() -> ApiResult<Settings> {
     with_core(|core| {
-        match core.vault.with_open(|v| v.settings.clone()) {
-            Ok(stored) => Ok(wear(stored, false)),
-            Err(_) => Ok(wear(core.session_settings.clone(), true)),
-        }
+        let file = core.config.get();
+        let kept_for_this_run = core.vault.with_open(|v| v.settings.clone()).is_err();
+        let behaviour = match core.vault.with_open(|v| v.settings.clone()) {
+            Ok(stored) => stored,
+            Err(_) => core.session_settings.clone(),
+        };
+        Ok(Settings {
+            // From the vault, or from this run if there is none.
+            scan_on_import: behaviour.scan_on_import,
+            reveal_seconds: behaviour.reveal_seconds,
+            auto_lock_minutes: behaviour.auto_lock_minutes,
+            // From ZCFG, which does not need a vault — which is the whole
+            // reason the owner allowed the file: a person may use Z Privacy for
+            // years in copy-and-paste and never make a vault, and showing them
+            // the first-run page every launch would be loyalty to a rule at the
+            // user's expense.
+            pack_id: file.default_privacy_pack,
+            language: file.ui_language,
+            first_run_done: file.first_run_completed,
+            // Says only what it has always said: whether the settings that need
+            // a vault will survive the app closing. The three above always do.
+            session_only: kept_for_this_run,
+        })
     })
 }
 
@@ -396,6 +422,16 @@ pub(crate) fn save_settings(settings: Settings) -> ApiResult<Settings> {
         language: settings.language,
         first_run_done: settings.first_run_done,
     };
+    // The three non-secret ones go to ZCFG. It refuses a value that does not
+    // look like a setting, so a client's name cannot arrive through a field
+    // that happens to be on the list.
+    let file = crate::config::AppConfig {
+        first_run_completed: settings.first_run_done,
+        ui_language: stored.language.clone(),
+        default_privacy_pack: stored.pack_id.clone(),
+    };
+    let written = with_core(|core| core.config.save(file))?;
+
     let sealed = with_core(|core| {
         core.vault
             .with_open_mut(|vault| {
@@ -411,19 +447,15 @@ pub(crate) fn save_settings(settings: Settings) -> ApiResult<Settings> {
         core.session_settings = stored.clone();
         core.vault.set_idle_limit(stored.auto_lock_minutes);
     });
-    Ok(wear(stored, !sealed))
-}
-
-fn wear(stored: StoredSettings, session_only: bool) -> Settings {
-    Settings {
+    Ok(Settings {
         scan_on_import: stored.scan_on_import,
         reveal_seconds: stored.reveal_seconds,
         auto_lock_minutes: stored.auto_lock_minutes,
-        pack_id: stored.pack_id,
-        language: stored.language,
-        first_run_done: stored.first_run_done,
-        session_only,
-    }
+        pack_id: written.default_privacy_pack,
+        language: written.ui_language,
+        first_run_done: written.first_run_completed,
+        session_only: !sealed,
+    })
 }
 
 /// How long a revealed value may stand, as the settings say.

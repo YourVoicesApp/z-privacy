@@ -64,6 +64,60 @@ else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
 fi
 
+# ---------------------------------------------------------------- G19
+# A deadlock does not shout. The program stops, with no panic and no log — the
+# first one in this project hung the test suite for ten minutes. So the shape
+# that causes it is checked, not watched for.
+if [ -f scripts/check_locks.py ]; then
+  if OUT=$(python3 scripts/check_locks.py 2>&1); then
+    pass "$(printf '%s' "$OUT" | head -1)"
+  else
+    fail "$(printf '%s' "$OUT" | head -1)"; printf '%s\n' "$OUT" | tail -n +2
+  fi
+else
+  skip "G19 no nested lock in the core" "no checker yet"
+fi
+
+# ---------------------------------------------------------------- G18
+# ZCFG is the one unencrypted file, and it holds a closed list of four names.
+# The owner's rule: if a thing could say anything about the user's work or their
+# clients, it does not belong in it.
+CFG=z_core/src/config.rs
+if [ -f "$CFG" ]; then
+  # The allowlist is declared once, and is exactly four names long.
+  LIST=$(sed -n '/^const ALLOWED: \[&str; [0-9]*\]/,/^];/p' "$CFG" | grep -cE '^\s*"')
+  DECLARED=$(grep -oE 'const ALLOWED: \[&str; [0-9]+\]' "$CFG" | grep -oE '[0-9]+')
+  if [ "$LIST" = "$DECLARED" ] && [ -n "$LIST" ]; then
+    pass "G18a the settings allowlist is one list of $LIST names"
+  else
+    fail "G18a the settings allowlist says $DECLARED and holds $LIST"
+  fi
+
+  # No dynamic bag anywhere in it: a field that is not a field cannot be written.
+  BAG=$(grep -nE '\b(HashMap|BTreeMap|Vec<\(String|serde)' "$CFG" || true)
+  if [ -n "$BAG" ]; then
+    fail "G18b the settings file has a dynamic map, so anything could be written:"; printf '        %s\n' "$BAG"
+  else
+    pass "G18b the settings are four struct fields, not a map"
+  fi
+
+  # The struct's own fields, and only those, decide what can be written. A
+  # field that could name the user's work must never appear among them — and
+  # the check looks at the struct, not at the file, so a comment or a test
+  # fixture mentioning a forbidden word is not mistaken for a field.
+  FIELDS=$(sed -n '/^pub(crate) struct AppConfig {/,/^}/p' "$CFG" \
+    | grep -oE '^\s+pub [a-z_]+' | awk '{print $2}')
+  BAD_FIELD=$(printf '%s\n' "$FIELDS" | grep -Ei '(client|entity|profile|recent|document|token|credential|passphrase|query|search|path|text|file)' || true)
+  if [ -n "$BAD_FIELD" ]; then
+    fail "G18c a field that could name the user's work is a setting:"; printf '        %s\n' "$BAD_FIELD"
+  else
+    COUNT=$(printf '%s\n' "$FIELDS" | grep -c . || true)
+    pass "G18c the $COUNT settings fields name nothing of the user's work"
+  fi
+else
+  skip "G18 the settings allowlist" "no config.rs yet"
+fi
+
 # ---------------------------------------------------------------- G17
 # The Dart contract test must call the WHOLE contract. Its own count assertion
 # cannot notice a function nobody added to it — so the count is checked here,
@@ -217,7 +271,7 @@ while IFS= read -r line; do
   REST=${line#*:}
   NUM=${REST%%:*}
   PREV=$((NUM - 1))
-  if sed -n "${PREV}p" "$FILE" 2>/dev/null | grep -q 'G15-ok'; then
+  if sed -n "${PREV}p" "$FILE" 2>/dev/null | grep -qE 'G15-ok|G15-cfg'; then
     continue
   fi
   FS_BAD="$FS_BAD$line
@@ -228,8 +282,18 @@ EOF
 if [ -n "$FS_BAD" ]; then
   fail "G15 the core touches the filesystem without a stated reason:"; printf '        %s\n' "$FS_BAD"
 else
-  EXEMPT=$(grep -Rc 'G15-ok' z_core/src 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
-  pass "G15 no filesystem in z_core/src except $EXEMPT stated lines (the sealed vault)"
+  VAULT_LINES=$(grep -Rc 'G15-ok' z_core/src 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
+  CFG_LINES=$(grep -Rc 'G15-cfg' z_core/src 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
+  pass "G15 no filesystem in z_core/src except $VAULT_LINES vault lines and $CFG_LINES settings lines"
+fi
+
+# The settings file may only be touched from config.rs. Two kinds of file, and
+# each one written from exactly one place.
+CFG_ELSEWHERE=$(grep -Rln 'G15-cfg' z_core/src 2>/dev/null | grep -v '^z_core/src/config.rs$' || true)
+if [ -n "$CFG_ELSEWHERE" ]; then
+  fail "G15b the settings file is written outside config.rs:"; printf '        %s\n' "$CFG_ELSEWHERE"
+else
+  pass "G15b the settings file is touched in config.rs only"
 fi
 
 # ---------------------------------------------------------------- G4
@@ -280,7 +344,10 @@ fi
 for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty \
          the_server_receives the_whole_path a_redirect_is_refused never_by_its_body longer_than_the_limit \
          each_purpose_gets_its_own a_format_one_vault a_literal_loopback ciphertext_even_inside \
-         renamed_moved_and_pruned says_nothing_about_why not_a_set_the_screen_knows; do
+         renamed_moved_and_pruned says_nothing_about_why not_a_set_the_screen_knows \
+         reaches_the_settings_file could_name_a_client remembers_the_first_run \
+         two_places_report_agrees the_string_that_would_be_sent is_a_constant \
+         reports_nothing_it_does_not_know take_back_an_answer; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -294,7 +361,7 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "not one Dart worked out" "Skip decides nothing" "does not touch what leaves" \
          "the manual door needs no key" "as the model wrote it" "only the safe text arrives" \
          "the vault room" "say where they live" "in the language it is offering" \
-         "not on Home"; do
+         "not on Home" "word for word"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

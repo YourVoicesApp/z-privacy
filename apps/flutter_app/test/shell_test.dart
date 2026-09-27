@@ -683,9 +683,84 @@ void main() {
     });
     bench.dispose();
   });
+
+  // ------------------------------------------------------------ truthfulness
+  //
+  // The owner named this category on 27 September: every field a screen shows
+  // as a fact must have a real source of truth, because in a privacy product
+  // the honesty of the interface is part of the security. `truthfulness.rs`
+  // checks it inside the core; this checks the same thing where a person would
+  // read it — on the screen, in words.
+  testWidgets('what the screens say is what the core says, word for word', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1700, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    late final ScanReport report;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      report = bench.report!;
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await settle(tester, rounds: 2);
+
+    // The band's sentence, built from the core's three numbers.
+    expect(report.suggested, greaterThan(0), reason: 'the fixture leaves something open');
+    expect(
+      find.text('${report.auto} protected automatically · ${report.suggested} need your word · '
+          '${report.normal} normal'),
+      findsOneWidget,
+    );
+
+    // The Safe column may not say «exactly what the AI will receive» while
+    // anything is open. It says the open count instead, and the count is the
+    // core's — this is the sentence that was wrong for five milestones.
+    expect(find.textContaining('This is exactly what the AI will receive'), findsNothing);
+    expect(
+      find.textContaining(report.suggested == 1
+          ? 'One suggestion is still open'
+          : '${report.suggested} suggestions are still open'),
+      findsOneWidget,
+    );
+
+    // An open suggestion is drawn on the document, not only counted. Before
+    // task 033 the core never produced a suggested mark at all, so the badge
+    // said «3 need your word» over a document with nothing marked.
+    final suggestedMarks =
+        bench.document!.marks.where((m) => m.state == MarkState.suggested).length;
+    expect(suggestedMarks, report.suggested,
+        reason: 'the marks drawn and the number announced must be the same thing');
+
+    // Answer them, and every one of those statements changes together.
+    await tester.runAsync(() async {
+      for (final f in bench.suggested) {
+        await z.answerFinding(session: bench.session, finding: f.id, answer: FindingAnswer.protect);
+      }
+      await bench.refresh();
+      await bench.rescan();
+    });
+    await settle(tester, rounds: 2);
+
+    expect(bench.report!.suggested, 0);
+    expect(find.textContaining('suggestions are still open'), findsNothing);
+    expect(find.textContaining('This is exactly what the AI will receive'), findsOneWidget);
+    expect(
+      bench.document!.marks.where((m) => m.state == MarkState.suggested).length,
+      0,
+      reason: 'nothing is waiting, so nothing is marked as waiting',
+    );
+
+    bench.dispose();
+  });
 }
-
-
 /// `pumpAndSettle` never finishes while a real FFI future is in flight: the
 /// spinner waiting on it is an animation that does not stop. So give the future
 /// a real moment outside the fake-async zone, then settle.

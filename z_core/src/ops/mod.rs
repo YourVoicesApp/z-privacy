@@ -114,9 +114,19 @@ pub(crate) fn document_view(session: SessionId) -> ApiResult<DocumentView> {
     with_session(session.id, view_of).ok_or(ApiError::InvalidSession)?
 }
 
-/// The original text with one mark per protection, in UTF-16 spans for Dart.
+/// The original text with a mark for everything the scanner has to say about
+/// it, in UTF-16 spans for Dart.
+///
+/// Two kinds, and both matter:
+///
+/// * **Protected** — replaced on the way out, one per protection.
+/// * **Suggested** — an open finding, **still standing in the clear**. Until
+///   task 033 these were never emitted at all: `MarkState::Suggested` existed
+///   in the type and nothing ever produced one, so the review badge could say
+///   «3 need your word» while the document showed no sign of any of them. The
+///   truthfulness tests found it by comparing the count with the marks.
 fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
-    let mut marks = Vec::with_capacity(s.protections.len());
+    let mut marks = Vec::with_capacity(s.protections.len() + s.findings.len());
     for p in &s.protections {
         let span: Span = text::bytes_to_span(s.original_str(), p.start, p.end)?;
         marks.push(Mark {
@@ -127,6 +137,27 @@ fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
             source: p.source,
             source_detail: p.source_detail.clone(),
             place: s.place_of(p.start),
+        });
+    }
+    for f in &s.findings {
+        if f.state != MarkState::Suggested {
+            continue;
+        }
+        // Never over a protection: the drawing must not put two marks on one
+        // stretch, and a protected thing is not waiting for anything.
+        if s.protections.iter().any(|p| p.start < f.end && f.start < p.end) {
+            continue;
+        }
+        marks.push(Mark {
+            span: text::bytes_to_span(s.original_str(), f.start, f.end)?,
+            state: MarkState::Suggested,
+            // No token: an open suggestion has not been given one, and saying
+            // otherwise would be the same class of untruth.
+            token: None,
+            kind: f.kind,
+            source: f.source,
+            source_detail: f.source_detail.clone(),
+            place: s.place_of(f.start),
         });
     }
     marks.sort_by_key(|m| m.span.start);
@@ -619,6 +650,7 @@ fn protect_inner(
                 scope,
                 source: Source::Hand,
                 source_detail: "selected by you".to_string(),
+                decided: true,
             });
             applied = applied.saturating_add(1);
         }
@@ -649,6 +681,7 @@ fn protect_range(
     source: Source,
     detail: &str,
     act: u32,
+    decided: bool,
 ) -> Option<String> {
     let value = s.original_str().get(start..end)?.to_string();
     if s.protections.iter().any(|p| p.start < end && start < p.end) {
@@ -681,6 +714,7 @@ fn protect_range(
         scope,
         source,
         source_detail: detail.to_string(),
+        decided,
     });
     s.protections.sort_by_key(|p| p.start);
     Some(token)
@@ -765,6 +799,9 @@ pub(crate) fn add_alias(session: SessionId, token: String, alias: String) -> Api
                 scope,
                 source,
                 source_detail: detail.clone(),
+                // Adding a spelling is a person's act, and survives a rescan
+                // like every other one.
+                decided: true,
             });
             applied = applied.saturating_add(1);
         }
@@ -864,9 +901,12 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         let hints = vault.hints(s.profile_id.as_deref());
         let candidates = scanner::scan(s.original_str(), &pack, &hints);
 
-        // What you protected by hand is never touched by a rescan; what a layer
-        // decided is recomputed from scratch.
-        s.protections.retain(|p| p.source == Source::Hand);
+        // What a **person** decided is never touched by a rescan — whether they
+        // selected it themselves or answered a suggestion about it. Only what a
+        // layer decided on its own is recomputed. Before task 033 this read
+        // `source == Hand`, which threw away every answer given in the review
+        // the moment anyone pressed Rescan.
+        s.protections.retain(|p| p.decided);
         s.findings.clear();
         let act = s.take_act_id();
 
@@ -877,7 +917,7 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
             }
             let state = match c.confidence {
                 scanner::Confidence::Auto => {
-                    match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act) {
+                    match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act, false) {
                         Some(_) => MarkState::Protected,
                         // Already covered by something else: not reported twice.
                         None => continue,
@@ -1015,6 +1055,8 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
                     record.source,
                     &detail,
                     act,
+                    // A person answered. This is what keeps it through a rescan.
+                    true,
                 );
                 if protected.is_none() {
                     return Err(ApiError::BadSpan {
@@ -1075,7 +1117,7 @@ fn rescan_keeping(session: SessionId, pack: &str) -> ApiResult<(u32, u32)> {
             } else {
                 match c.confidence {
                     scanner::Confidence::Auto => {
-                        match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act) {
+                        match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act, false) {
                             Some(_) => MarkState::Protected,
                             None => continue,
                         }

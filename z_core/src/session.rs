@@ -28,9 +28,19 @@ pub(crate) struct Protection {
     pub kind: Kind,
     #[allow(dead_code)] // read by the tokens panel in 005
     pub scope: Scope,
-    /// Which layer decided — the "why" the UI shows beside the mark.
+    /// Which layer **found** it — the "why" the UI shows beside the mark.
     pub source: Source,
     pub source_detail: String,
+    /// True when a person decided this, rather than a layer.
+    ///
+    /// Kept apart from `source` because the two are different questions: the
+    /// pack may have *found* a name while *you* decided to protect it, and a
+    /// review list that said «you found this» would be wrong. It exists because
+    /// a rescan used to drop everything whose source was not `Hand` — so
+    /// pressing Rescan took back every answer given in the review, which is the
+    /// board's «a token once given is never silently taken back», broken.
+    /// (Task 033.)
+    pub decided: bool,
 }
 
 /// One thing the scanner found, and why. Carried whole so the UI can always say
@@ -210,6 +220,9 @@ pub(crate) struct Core {
     next_session: u32,
     /// One vault per device, shared by every session.
     pub vault: crate::vault::VaultStore,
+    /// The non-secret settings file — the only thing this program writes that
+    /// is not encrypted, and it holds four scalars from a closed list.
+    pub config: crate::config::ConfigStore,
     /// Provider logins that exist only for this run, because there was no open
     /// vault to seal them into. Memory only: there is deliberately no path from
     /// here to a file. The owner's rule — no fallback to a text file; say the
@@ -227,6 +240,7 @@ impl Core {
             sessions: BTreeMap::new(),
             next_session: 1,
             vault: crate::vault::VaultStore::default(),
+            config: crate::config::ConfigStore::default(),
             session_logins: std::collections::BTreeMap::new(),
             session_settings: crate::vault::model::StoredSettings::default(),
         }

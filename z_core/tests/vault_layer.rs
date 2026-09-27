@@ -451,3 +451,92 @@ fn auto_lock_is_the_vault_s_own_promise_not_a_timer_in_a_screen() {
     assert_eq!(vault_state().expect("state"), VaultState::Unlocked);
     assert_eq!(entities(None).expect("entities").len(), 1, "and the vault is still readable");
 }
+
+#[test]
+fn zcfg_remembers_the_first_run_on_a_device_with_no_vault() {
+    let _lock = serial();
+    let dir = std::env::temp_dir().join(format!("zprivacy-zcfg-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
+
+    // No vault, and none is going to be made. This is the case the owner
+    // allowed the file for: a person may work in copy-and-paste for years.
+    assert_eq!(vault_state().expect("state"), VaultState::Absent);
+    let before = settings().expect("settings");
+    assert!(!before.first_run_done);
+
+    let mut want = before;
+    want.first_run_done = true;
+    want.language = "de".to_string();
+    let saved = save_settings(want).expect("save");
+    assert!(saved.first_run_done);
+    assert!(saved.session_only, "the behaviour settings still need a vault, and say so");
+
+    // Point the core somewhere else and back: the file is read again from disk,
+    // which is as close to a restart as one process can get.
+    let elsewhere = dir.join("elsewhere");
+    set_data_dir(elsewhere.to_string_lossy().to_string()).expect("dir");
+    assert!(!settings().expect("settings").first_run_done, "a different folder knows nothing");
+    set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
+    let back = settings().expect("settings");
+    assert!(back.first_run_done, "and the first folder remembers");
+    assert_eq!(back.language, "de");
+
+    // The file itself: readable, and holding only the four allowed names.
+    let text = std::fs::read_to_string(dir.join("settings.zcfg")).expect("the file exists");
+    assert!(text.starts_with("ZCFG1"));
+    for name in ["schema_version", "first_run_completed", "ui_language", "default_privacy_pack"] {
+        assert!(text.contains(name), "{name} is missing from {text}");
+    }
+    assert_eq!(text.lines().count(), 5, "a header and four settings, nothing else:\n{text}");
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn zcfg_refuses_a_value_that_could_name_a_client() {
+    let _lock = serial();
+    let dir = std::env::temp_dir().join(format!("zprivacy-zcfg-bad-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
+
+    let mut want = settings().expect("settings");
+    want.language = "Nordstern Consulting GmbH".to_string();
+    match save_settings(want) {
+        Err(ApiError::ImportRefused { reason }) => {
+            assert!(reason.contains("plain tag"), "{reason}");
+        }
+        other => panic!("a client's name must not be writable to ZCFG, got {other:?}"),
+    }
+    assert!(
+        !dir.join("settings.zcfg").exists(),
+        "and nothing was written at all"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn a_wrong_passphrase_reports_nothing_it_does_not_know() {
+    let _lock = serial();
+    // The «0 tries left» lie, as a rule rather than a fix: the refusal carries
+    // no number, because there is no counter to carry one from.
+    let dir = std::env::temp_dir().join(format!("zprivacy-truth-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
+    vault_create_with_passphrase("ein gutes Passwort für den Test".to_string()).expect("create");
+    vault_lock().expect("lock");
+
+    // Wrong, three times. Nothing counts down, and the third try is as welcome
+    // as the first — which is the honest behaviour for a local file.
+    for _ in 0..3 {
+        assert_eq!(
+            vault_unlock_with_passphrase("falsch".to_string()).expect("unlock"),
+            VaultUnlockOutcome::WrongPassphrase
+        );
+    }
+    assert!(matches!(
+        vault_unlock_with_passphrase("ein gutes Passwort für den Test".to_string()).expect("unlock"),
+        VaultUnlockOutcome::Unlocked { .. }
+    ));
+    let _ = std::fs::remove_dir_all(&dir);
+}

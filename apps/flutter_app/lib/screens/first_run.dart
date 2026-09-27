@@ -77,15 +77,35 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
                     _Lang(label: 'English', on: !de, onTap: () => setState(() => _language = 'en')),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  de
-                      ? 'Wählt zunächst das Privacy Pack — die Regeln, nach denen gesucht wird. '
-                          'Die Oberfläche ist vorerst auf Englisch.'
-                      : 'This picks the privacy pack — the rules the scanner looks with. The '
-                          'interface is English for now.',
-                  style: Zc.tiny.copyWith(letterSpacing: 0),
-                ),
+                const SizedBox(height: 10),
+                // The owner's words, 27 September. Choosing Deutsch does
+                // something real today — it turns on the German rules — and the
+                // page says plainly what it does not do yet, rather than
+                // implying a half-translated interface is coming with it.
+                if (de)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: Zc.panel(fill: Zc.clayWash, edge: Zc.clayEdge, radius: 9),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'German privacy rules enabled.',
+                          style: Zc.small.copyWith(color: Zc.clayDeep, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Interface translation is coming later.',
+                          style: Zc.small.copyWith(color: Zc.clayDeep),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Text(
+                    'This picks the privacy pack — the rules the scanner looks with.',
+                    style: Zc.tiny.copyWith(letterSpacing: 0),
+                  ),
                 const SizedBox(height: 28),
                 ZButton(
                   label: de ? 'Starten' : 'Start',
