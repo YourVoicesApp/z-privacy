@@ -85,6 +85,17 @@ class Workbench extends ChangeNotifier {
   /// Chips or plain, on the Safe side. A drawing choice; the string is the same.
   bool chips = true;
 
+  /// What the user has selected on the Original side, and what the core says it
+  /// is. The view is **never** worked out here: the Protect button's five states
+  /// are `SelectionView`, decided in Rust by the same code that would do the
+  /// protecting.
+  Span? selection;
+  SelectionView? selected;
+
+  /// True once anything has been protected by hand, so Undo can be honest about
+  /// being disabled rather than pretending to be available.
+  bool get canUndo => tokens.any((t) => t.source == Source.hand);
+
   /// The three questions the owner says a user must always be able to answer by
   /// looking. These getters exist so a screen never has to work one out.
   ///
@@ -128,6 +139,63 @@ class Workbench extends ChangeNotifier {
   void showChips(bool on) {
     chips = on;
     notifyListeners();
+  }
+
+  /// The user drew a selection. Ask the core what it is before offering any act.
+  Future<void> select(Span? span) async {
+    selection = span;
+    if (span == null || span.end <= span.start) {
+      selected = null;
+      notifyListeners();
+      return;
+    }
+    try {
+      selected = await z.inspectSelection(session: session, span: span);
+      trouble = null;
+    } on ApiError catch (e) {
+      selected = null;
+      trouble = e.toString();
+    }
+    notifyListeners();
+  }
+
+  /// Protect what is selected. Returns what the core did, so the screen can say
+  /// it — «protected in 4 places», «it snapped to two whole items».
+  Future<ProtectOutcome?> protectSelection({
+    required Scope scope,
+    required Kind kind,
+    required bool allMatches,
+  }) async {
+    final span = selection;
+    if (span == null) return null;
+    try {
+      final outcome = allMatches
+          ? await z.protectAllMatches(session: session, span: span, scope: scope, kind: kind)
+          : await z.protect(session: session, span: span, scope: scope, kind: kind);
+      await refresh();
+      // The selection still stands, but what it *is* has changed.
+      await select(span);
+      return outcome;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// One step back. «Protect all 4 matches» came in as one act, so it goes out
+  /// as one act — that is the core's doing, not a loop here.
+  Future<UndoOutcome?> undo() async {
+    try {
+      final outcome = await z.undoLastProtection(session: session);
+      await refresh();
+      if (selection != null) await select(selection);
+      return outcome;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+      notifyListeners();
+      return null;
+    }
   }
 
   @override

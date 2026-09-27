@@ -54,6 +54,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SessionId dco_decode_box_autoadd_session_id(dynamic raw);
 
   @protected
+  Source dco_decode_box_autoadd_source(dynamic raw);
+
+  @protected
   Span dco_decode_box_autoadd_span(dynamic raw);
 
   @protected
@@ -147,6 +150,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Place? dco_decode_opt_box_autoadd_place(dynamic raw);
 
   @protected
+  Source? dco_decode_opt_box_autoadd_source(dynamic raw);
+
+  @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
@@ -196,6 +202,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Segment dco_decode_segment(dynamic raw);
+
+  @protected
+  SelectionView dco_decode_selection_view(dynamic raw);
 
   @protected
   SessionId dco_decode_session_id(dynamic raw);
@@ -269,6 +278,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SessionId sse_decode_box_autoadd_session_id(SseDeserializer deserializer);
+
+  @protected
+  Source sse_decode_box_autoadd_source(SseDeserializer deserializer);
 
   @protected
   Span sse_decode_box_autoadd_span(SseDeserializer deserializer);
@@ -364,6 +376,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Place? sse_decode_opt_box_autoadd_place(SseDeserializer deserializer);
 
   @protected
+  Source? sse_decode_opt_box_autoadd_source(SseDeserializer deserializer);
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
@@ -413,6 +428,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Segment sse_decode_segment(SseDeserializer deserializer);
+
+  @protected
+  SelectionView sse_decode_selection_view(SseDeserializer deserializer);
 
   @protected
   SessionId sse_decode_session_id(SseDeserializer deserializer);
@@ -499,6 +517,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     SessionId self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_source(Source self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_span(Span self, SseSerializer serializer);
@@ -612,6 +633,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_place(Place? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_source(
+    Source? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
@@ -664,6 +691,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_segment(Segment self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_selection_view(SelectionView self, SseSerializer serializer);
 
   @protected
   void sse_encode_session_id(SessionId self, SseSerializer serializer);

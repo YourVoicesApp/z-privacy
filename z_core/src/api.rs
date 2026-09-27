@@ -145,6 +145,38 @@ pub struct ProviderId {
     pub id: String,
 }
 
+/// What a selection is, before anything is done to it.
+///
+/// This type exists because the design boards give the Protect button **five**
+/// states, and a screen may not work out which one it is in. Every field below
+/// is a question the core is better placed to answer than a widget: is this
+/// already protected, does the vault know it, would protecting it snap to whole
+/// items, how many places would «all matches» take, and what kind does the pack
+/// think it is. (Task 024.)
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SelectionView {
+    /// Empty when the span holds nothing but space.
+    pub empty: bool,
+    /// The pack's guess. `Custom` when nothing recognised it.
+    pub kind: Kind,
+    /// How many places this exact value stands in this document, protected or
+    /// not. 1 means «all matches» is the same act as «protect», and the button
+    /// hides its count.
+    pub matches: u32,
+    /// The token, when this exact stretch is already protected. Then the only
+    /// act offered is Undo.
+    pub protected_as: Option<String>,
+    pub protected_by: Option<Source>,
+    /// «Z Vault · CLIENT #17», «de:salutation», «selected by you» — the why.
+    pub protected_detail: String,
+    /// The identity the vault knows this value under, when it knows one. Two or
+    /// more is a conflict the app must put to the user, never settle itself.
+    pub entities: Vec<String>,
+    /// The whole protected items this selection cuts into. Non-empty means
+    /// Protect would snap to these instead of taking the selection as drawn.
+    pub snaps_to: Vec<Span>,
+}
+
 /// A profile, as a row rather than a packed string. The UI must never have to
 /// split a field out of text to draw a name. (Task 022.)
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -641,6 +673,13 @@ pub fn scan(session: SessionId) -> ApiResult<ScanReport> {
 // ---------------------------------------------------------------- protect
 
 /// Protect a selection. The outcome says whether it was already known.
+/// What is this selection, and what would Protect do to it? Answered before
+/// anything is changed, so a button can show the right state instead of pressing
+/// blind and apologising afterwards.
+pub fn inspect_selection(session: SessionId, span: Span) -> ApiResult<SelectionView> {
+    crate::ops::inspect_selection(session, span)
+}
+
 pub fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
     crate::ops::protect(session, span, scope, kind)
 }

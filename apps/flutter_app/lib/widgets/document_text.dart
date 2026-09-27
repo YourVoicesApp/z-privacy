@@ -52,22 +52,30 @@ class OriginalText extends StatelessWidget {
     required this.text,
     required this.marks,
     this.selection,
-    this.onTapMark,
+    this.onSelection,
   });
 
   final String text;
   final List<Mark> marks;
 
-  /// The stretch the user has selected, if any. Drawn so a selection is visible
-  /// even while a dialog is open over the top of it.
+  /// The stretch the user has selected, if any.
   final TextRange? selection;
-  final void Function(Mark mark)? onTapMark;
+
+  /// Reported in UTF-16 code units — which is what the contract's `Span` means,
+  /// so the offsets go straight to the core without conversion.
+  final void Function(int start, int end)? onSelection;
 
   @override
   Widget build(BuildContext context) {
     return SelectableText.rich(
       TextSpan(children: _spans(), style: Zc.document),
       style: Zc.document,
+      onSelectionChanged: onSelection == null
+          ? null
+          : (sel, _) => onSelection!(
+                sel.start < 0 ? 0 : sel.start,
+                sel.end < 0 ? 0 : sel.end,
+              ),
     );
   }
 

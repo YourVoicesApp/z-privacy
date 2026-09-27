@@ -257,3 +257,68 @@ fn a_bad_selection_is_refused_with_a_reason() {
         }
     }
 }
+
+// ---------------------------------------------------------------- M7.3
+// `inspect_selection` is what makes the Protect button's five states real. Each
+// test below is one of those states, named after the board that asked for it.
+
+#[test]
+fn inspect_disabled_a_selection_of_nothing_says_so() {
+    let s = open_session(None, "de".to_string()).expect("open");
+    import_text(s, "Herr Thomas Müller ruft an.".to_string()).expect("import");
+    // The space between two words.
+    let view = inspect_selection(s, Span { start: 4, end: 5 }).expect("inspect");
+    assert!(view.empty, "a selection of whitespace is nothing to protect");
+    assert_eq!(view.matches, 0);
+}
+
+#[test]
+fn inspect_ready_offers_the_packs_own_guess_and_a_count() {
+    let s = open_session(None, "de".to_string()).expect("open");
+    import_text(s, "Herr Thomas Müller ruft an. Thomas Müller wartet.".to_string()).expect("import");
+    // Scanned on import, as the app does it — and that matters: «Thomas Müller»
+    // is a name because «Herr» stood before it, which is context the selection
+    // itself does not contain.
+    scan(s).expect("scan");
+    let view = inspect_selection(s, Span { start: 5, end: 18 }).expect("inspect");
+
+    assert!(!view.empty);
+    assert_eq!(view.kind, Kind::Person, "the pack recognised a name, and the screen did not");
+    assert_eq!(view.matches, 2, "«all matches» would take both places");
+    assert!(view.protected_as.is_none());
+    assert!(view.snaps_to.is_empty());
+}
+
+#[test]
+fn inspect_known_names_the_token_and_who_gave_it() {
+    let s = open_session(None, "de".to_string()).expect("open");
+    import_text(s, "Herr Thomas Müller ruft an.".to_string()).expect("import");
+    let span = Span { start: 5, end: 18 };
+    protect(s, span, Scope::Conversation, Kind::Person).expect("protect");
+
+    let view = inspect_selection(s, span).expect("inspect");
+    let token = view.protected_as.expect("it is protected, and says as what");
+    assert!(token.contains("_PERSON_"), "{token}");
+    assert_eq!(view.protected_by, Some(Source::Hand));
+    assert!(!view.protected_detail.is_empty(), "and by whom");
+    assert!(view.snaps_to.is_empty(), "an exact selection does not snap to itself");
+}
+
+#[test]
+fn inspect_snaps_hands_back_the_whole_items_it_would_take() {
+    let s = open_session(None, "de".to_string()).expect("open");
+    import_text(s, "Herr Thomas Müller ruft an.".to_string()).expect("import");
+    protect(s, Span { start: 5, end: 18 }, Scope::Once, Kind::Person).expect("protect");
+
+    // Half of the protected name, plus a word after it.
+    let view = inspect_selection(s, Span { start: 12, end: 23 }).expect("inspect");
+    assert!(view.protected_as.is_none(), "this is not the protected item itself");
+    assert_eq!(view.snaps_to.len(), 1, "it would snap to the whole name");
+    assert_eq!(view.snaps_to[0], Span { start: 5, end: 18 });
+
+    // And protect agrees with what inspect promised — the two must not drift.
+    match protect(s, Span { start: 12, end: 23 }, Scope::Once, Kind::Person).expect("protect") {
+        ProtectOutcome::Snapped { spans } => assert_eq!(spans, view.snaps_to),
+        other => panic!("expected a snap, got {other:?}"),
+    }
+}

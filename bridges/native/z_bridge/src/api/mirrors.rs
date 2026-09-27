@@ -94,6 +94,30 @@ pub struct _ProviderId {
     pub id: String,
 }
 
+#[frb(mirror(SelectionView))]
+pub struct _SelectionView {
+    /// Empty when the span holds nothing but space.
+    pub empty: bool,
+    /// The pack's guess. `Custom` when nothing recognised it.
+    pub kind: Kind,
+    /// How many places this exact value stands in this document, protected or
+    /// not. 1 means «all matches» is the same act as «protect», and the button
+    /// hides its count.
+    pub matches: u32,
+    /// The token, when this exact stretch is already protected. Then the only
+    /// act offered is Undo.
+    pub protected_as: Option<String>,
+    pub protected_by: Option<Source>,
+    /// «Z Vault · CLIENT #17», «de:salutation», «selected by you» — the why.
+    pub protected_detail: String,
+    /// The identity the vault knows this value under, when it knows one. Two or
+    /// more is a conflict the app must put to the user, never settle itself.
+    pub entities: Vec<String>,
+    /// The whole protected items this selection cuts into. Non-empty means
+    /// Protect would snap to these instead of taking the selection as drawn.
+    pub snaps_to: Vec<Span>,
+}
+
 #[frb(mirror(ProfileRow))]
 pub struct _ProfileRow {
     pub id: String,

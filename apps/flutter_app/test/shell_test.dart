@@ -19,6 +19,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'package:zprivacy/widgets/protect_dialog.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -204,7 +205,88 @@ void main() {
 
     bench.dispose();
   });
+
+  testWidgets('the Protect button is in the state the core says, not one Dart worked out',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    late final int nameStart;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      nameStart = _doc.indexOf('Thomas Müller');
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await tester.pumpAndSettle();
+
+    // DISABLED — nothing selected, and the hint says what to do about it.
+    expect(protectStateOf(bench.selected), ProtectState.disabled);
+    expect(find.text('Select text, then Protect'), findsOneWidget);
+    expect(find.text('Nothing protected by hand yet'), findsOneWidget);
+
+    // READY — a selection the core recognises. The kind is the pack's, and the
+    // count is the core's; neither is worked out in Dart.
+    await tester.runAsync(() async {
+      await bench.select(Span(start: nameStart, end: nameStart + 'Thomas Müller'.length));
+    });
+    await tester.pumpAndSettle();
+    expect(protectStateOf(bench.selected), ProtectState.ready);
+    expect(bench.selected!.kind, Kind.person, reason: 'the pack guessed, not the screen');
+    expect(find.text('Select text, then Protect'), findsNothing);
+
+    // Protect it, and the state the button reports changes to KNOWN — because
+    // the core now says so, not because a flag was set here.
+    late final ProtectOutcome? outcome;
+    await tester.runAsync(() async {
+      outcome = await bench.protectSelection(
+        scope: Scope.conversation,
+        kind: Kind.person,
+        allMatches: false,
+      );
+    });
+    await tester.pumpAndSettle();
+    expect(outcome, isA<ProtectOutcome_Applied>());
+    expect(protectStateOf(bench.selected), ProtectState.known);
+    expect(bench.selected!.protectedAs, isNotNull);
+    expect(bench.selected!.protectedBy, Source.hand);
+    expect(find.textContaining('Already protected as'), findsOneWidget);
+
+    // Undo is live now, and its hint is gone with it.
+    expect(bench.canUndo, isTrue);
+    expect(find.text('Nothing protected by hand yet'), findsNothing);
+
+    // SNAPS — a selection that cuts the protected name in half. The core names
+    // the whole item it would take instead, and nothing is changed by asking.
+    await tester.runAsync(() async {
+      await bench.select(Span(start: nameStart + 4, end: nameStart + 20));
+    });
+    await tester.pumpAndSettle();
+    expect(protectStateOf(bench.selected), ProtectState.snaps);
+    expect(bench.selected!.snapsTo, hasLength(1));
+    expect(find.textContaining('cuts into something already protected'), findsOneWidget);
+
+    // And undo takes the act back whole.
+    late final UndoOutcome? undone;
+    await tester.runAsync(() async {
+      undone = await bench.undo();
+    });
+    await tester.pumpAndSettle();
+    expect(undone, isA<UndoOutcome_Undone>());
+    expect(bench.canUndo, isFalse);
+
+    bench.dispose();
+  });
 }
+
 
 /// The plain text of one column, read out of the rendered span tree rather than
 /// out of the state object — so the test sees what a person would see.

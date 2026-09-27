@@ -20,9 +20,10 @@ import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
-class WorkspaceScreen extends StatelessWidget {
+class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({
     super.key,
     required this.bench,
@@ -35,20 +36,36 @@ class WorkspaceScreen extends StatelessWidget {
   final VoidCallback onHome;
 
   @override
+  State<WorkspaceScreen> createState() => _WorkspaceScreenState();
+}
+
+class _WorkspaceScreenState extends State<WorkspaceScreen> {
+  /// What the last act did, in the core's terms. Kept on screen rather than
+  /// flashed in a toast: a user should be able to look back at what happened.
+  String? _said;
+
+  @override
   Widget build(BuildContext context) {
+    final bench = widget.bench;
     return ListenableBuilder(
       listenable: bench,
       builder: (context, _) => Scaffold(
         body: Column(
           children: [
-            _TopBar(bench: bench, ground: ground, onHome: onHome),
+            _TopBar(bench: bench, ground: widget.ground, onHome: widget.onHome),
             _Band(bench: bench),
             if (bench.trouble != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
                 child: Trouble(bench.trouble!),
               ),
-            Expanded(child: _Columns(bench: bench)),
+            Expanded(
+              child: _Columns(
+                bench: bench,
+                said: _said,
+                onSay: (line) => setState(() => _said = line),
+              ),
+            ),
           ],
         ),
       ),
@@ -244,9 +261,11 @@ class _Band extends StatelessWidget {
 
 /// The two columns.
 class _Columns extends StatelessWidget {
-  const _Columns({required this.bench});
+  const _Columns({required this.bench, required this.said, required this.onSay});
 
   final Workbench bench;
+  final String? said;
+  final void Function(String) onSay;
 
   @override
   Widget build(BuildContext context) {
@@ -260,9 +279,23 @@ class _Columns extends StatelessWidget {
             eyebrow: 'Original — local only',
             rule: 'Never sent to AI · Send cannot read this side',
             tint: Zc.ink4,
+            footer: doc == null
+                ? null
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (said != null) _Said(said!),
+                      ActsBar(bench: bench, onSay: onSay),
+                    ],
+                  ),
             child: doc == null
                 ? const _Empty('Nothing is open.')
-                : OriginalText(text: doc.text, marks: doc.marks),
+                : OriginalText(
+                    text: doc.text,
+                    marks: doc.marks,
+                    onSelection: (start, end) =>
+                        bench.select(end > start ? Span(start: start, end: end) : null),
+                  ),
           ),
         ),
         Container(width: 1, color: Zc.line),
@@ -279,6 +312,32 @@ class _Columns extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// What the last act did. In the core's words, with its numbers.
+class _Said extends StatelessWidget {
+  const _Said(this.line);
+
+  final String line;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+      decoration: const BoxDecoration(
+        color: Zc.card,
+        border: Border(top: BorderSide(color: Zc.lineSoft)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_outline, size: 15, color: Zc.clay),
+          const SizedBox(width: 9),
+          Expanded(child: Text(line, style: Zc.small.copyWith(color: Zc.ink2))),
+        ],
+      ),
     );
   }
 }

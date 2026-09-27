@@ -12,7 +12,8 @@ use std::collections::BTreeMap;
 
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
-    Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, ProviderRow, RevealedValue,
+    Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, ProviderRow,
+    RevealedValue, SelectionView,
     RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome, TokenRow,
     UndoOutcome,
 };
@@ -337,6 +338,122 @@ pub(crate) fn with_payload<R>(handle: PayloadHandle, f: impl FnOnce(&SafePayload
 }
 
 // ---------------------------------------------------------------- protect
+
+/// Read a selection without touching it.
+///
+/// Everything the Protect button needs to choose among its five states, decided
+/// here rather than in a widget: the same code that would do the protecting
+/// answers what it *would* do.
+pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<SelectionView> {
+    with_core(|core| {
+        let vault_hints = {
+            let profile = core.get(session.id).and_then(|s| s.profile_id.clone());
+            core.vault.hints(profile.as_deref())
+        };
+        let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
+        let (start, end) = text::span_to_bytes(s.original_str(), span)?;
+        let selected = s
+            .original_str()
+            .get(start..end)
+            .ok_or_else(|| ApiError::BadSpan {
+                reason: "the selection is not on a character boundary".to_string(),
+            })?
+            .to_string();
+
+        if selected.trim().is_empty() {
+            return Ok(SelectionView {
+                empty: true,
+                kind: Kind::Custom,
+                matches: 0,
+                protected_as: None,
+                protected_by: None,
+                protected_detail: String::new(),
+                entities: Vec::new(),
+                snaps_to: Vec::new(),
+            });
+        }
+
+        // What it touches. Exactly one, exactly covering it, is «already
+        // protected»; anything else that overlaps means Protect would snap.
+        let touched: Vec<Protection> = s
+            .protections
+            .iter()
+            .filter(|p| p.start < end && start < p.end)
+            .cloned()
+            .collect();
+        let exact = touched
+            .iter()
+            .find(|p| p.start == start && p.end == end)
+            .filter(|_| touched.len() == 1);
+
+        let mut snaps_to = Vec::new();
+        if exact.is_none() {
+            for p in &touched {
+                snaps_to.push(text::bytes_to_span(s.original_str(), p.start, p.end)?);
+            }
+        }
+
+        // The pack's guess, from the pack — never from the screen. In order:
+        //
+        // 1. a finding or a protection that covers *exactly* this stretch. This
+        //    is the best answer because it came from a scan of the whole
+        //    document, and the German pack's rules are contextual: «Thomas
+        //    Müller» is a name because «Herr» stood before it, and that word is
+        //    outside the selection.
+        // 2. the scanner run over the selected text alone — which catches an
+        //    IBAN or an e-mail in text no scan has looked at.
+        // 3. a mark that merely overlaps, as a last resort.
+        //
+        // Anything else is `Custom`, and the user picks. A wrong guess is worse
+        // than no guess: the kind travels inside the token, and the model reads it.
+        let exact_kind = s
+            .protections
+            .iter()
+            .find(|p| p.start == start && p.end == end)
+            .map(|p| p.kind)
+            .or_else(|| {
+                s.findings
+                    .iter()
+                    .find(|f| f.start == start && f.end == end)
+                    .map(|f| f.kind)
+            });
+        let guessed = exact_kind.or_else(|| {
+            scanner::scan(&selected, &s.pack_id, &vault_hints)
+                .into_iter()
+                .find(|c| c.start == 0 && c.end == selected.len())
+                .map(|c| c.kind)
+        });
+
+        let from_mark = s
+            .protections
+            .iter()
+            .find(|p| p.start < end && start < p.end)
+            .map(|p| p.kind)
+            .or_else(|| {
+                s.findings
+                    .iter()
+                    .find(|f| f.start < end && start < f.end)
+                    .map(|f| f.kind)
+            });
+
+        let entities: Vec<String> = vault_hints
+            .iter()
+            .filter(|h| text::nfc(&h.text) == text::nfc(&selected))
+            .map(|h| h.entity_handle.clone())
+            .collect();
+
+        Ok(SelectionView {
+            empty: false,
+            kind: guessed.or(from_mark).unwrap_or(Kind::Custom),
+            matches: occurrences(s.original_str(), &selected).len() as u32,
+            protected_as: exact.map(|p| p.token.clone()),
+            protected_by: exact.map(|p| p.source),
+            protected_detail: exact.map(|p| p.source_detail.clone()).unwrap_or_default(),
+            entities,
+            snaps_to,
+        })
+    })
+}
 
 pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
     protect_inner(session, span, scope, kind, false)

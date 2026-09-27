@@ -794,6 +794,71 @@ class Segment {
           restored == other.restored;
 }
 
+class SelectionView {
+  /// Empty when the span holds nothing but space.
+  final bool empty;
+
+  /// The pack's guess. `Custom` when nothing recognised it.
+  final Kind kind;
+
+  /// How many places this exact value stands in this document, protected or
+  /// not. 1 means «all matches» is the same act as «protect», and the button
+  /// hides its count.
+  final int matches;
+
+  /// The token, when this exact stretch is already protected. Then the only
+  /// act offered is Undo.
+  final String? protectedAs;
+  final Source? protectedBy;
+
+  /// «Z Vault · CLIENT #17», «de:salutation», «selected by you» — the why.
+  final String protectedDetail;
+
+  /// The identity the vault knows this value under, when it knows one. Two or
+  /// more is a conflict the app must put to the user, never settle itself.
+  final List<String> entities;
+
+  /// The whole protected items this selection cuts into. Non-empty means
+  /// Protect would snap to these instead of taking the selection as drawn.
+  final List<Span> snapsTo;
+
+  const SelectionView({
+    required this.empty,
+    required this.kind,
+    required this.matches,
+    this.protectedAs,
+    this.protectedBy,
+    required this.protectedDetail,
+    required this.entities,
+    required this.snapsTo,
+  });
+
+  @override
+  int get hashCode =>
+      empty.hashCode ^
+      kind.hashCode ^
+      matches.hashCode ^
+      protectedAs.hashCode ^
+      protectedBy.hashCode ^
+      protectedDetail.hashCode ^
+      entities.hashCode ^
+      snapsTo.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SelectionView &&
+          runtimeType == other.runtimeType &&
+          empty == other.empty &&
+          kind == other.kind &&
+          matches == other.matches &&
+          protectedAs == other.protectedAs &&
+          protectedBy == other.protectedBy &&
+          protectedDetail == other.protectedDetail &&
+          entities == other.entities &&
+          snapsTo == other.snapsTo;
+}
+
 class SessionId {
   final int id;
 
