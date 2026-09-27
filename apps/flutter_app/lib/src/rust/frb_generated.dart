@@ -2049,8 +2049,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           limitKib: dco_decode_u_32(raw[1]),
         );
       case 6:
-        return NetworkRefusal_Unreadable();
+        return NetworkRefusal_PayloadTooLarge(
+          kib: dco_decode_u_32(raw[1]),
+          limitKib: dco_decode_u_32(raw[2]),
+        );
       case 7:
+        return NetworkRefusal_Unreadable();
+      case 8:
         return NetworkRefusal_Unreachable();
       default:
         throw Exception("unreachable");
@@ -2839,8 +2844,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         var var_limitKib = sse_decode_u_32(deserializer);
         return NetworkRefusal_ResponseTooLarge(limitKib: var_limitKib);
       case 6:
-        return NetworkRefusal_Unreadable();
+        var var_kib = sse_decode_u_32(deserializer);
+        var var_limitKib = sse_decode_u_32(deserializer);
+        return NetworkRefusal_PayloadTooLarge(
+          kib: var_kib,
+          limitKib: var_limitKib,
+        );
       case 7:
+        return NetworkRefusal_Unreadable();
+      case 8:
         return NetworkRefusal_Unreachable();
       default:
         throw UnimplementedError('');
@@ -3607,10 +3619,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case NetworkRefusal_ResponseTooLarge(limitKib: final limitKib):
         sse_encode_i_32(5, serializer);
         sse_encode_u_32(limitKib, serializer);
-      case NetworkRefusal_Unreadable():
+      case NetworkRefusal_PayloadTooLarge(
+        kib: final kib,
+        limitKib: final limitKib,
+      ):
         sse_encode_i_32(6, serializer);
-      case NetworkRefusal_Unreachable():
+        sse_encode_u_32(kib, serializer);
+        sse_encode_u_32(limitKib, serializer);
+      case NetworkRefusal_Unreadable():
         sse_encode_i_32(7, serializer);
+      case NetworkRefusal_Unreachable():
+        sse_encode_i_32(8, serializer);
     }
   }
 

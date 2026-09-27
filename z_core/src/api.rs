@@ -76,6 +76,10 @@ pub enum NetworkRefusal {
     Timeout { millis: u32 },
     /// The answer was longer than we accept.
     ResponseTooLarge { limit_kib: u32 },
+    /// The outgoing text is longer than this provider accepts. Checked **before**
+    /// a socket is opened, so a huge document is refused here rather than turned
+    /// into an unreasonable request. (Task 021.)
+    PayloadTooLarge { kib: u32, limit_kib: u32 },
     /// The answer arrived but is not the shape this provider promised.
     Unreadable,
     /// The host could not be reached at all.

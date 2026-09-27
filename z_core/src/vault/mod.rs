@@ -84,8 +84,13 @@ impl VaultStore {
             });
         }
         let model = Vault::new();
-        let body = format::encode(&model);
-        let (sealed, master) = SealedVault::create(passphrase, &body)?;
+        // The master key has to exist before the body can be encoded, because the
+        // body now holds things sealed with keys derived from it (task 021). So the
+        // envelope is made first and the body written into it immediately after.
+        let (mut sealed, master) = SealedVault::create(passphrase, &[])?;
+        let body = format::encode(&model, &master)?;
+        sealed.reseal_body(&master, &body)?;
+        crypto::wipe(body);
         self.sealed = Some(sealed);
         self.master = Some(master);
         self.open = Some(model);
@@ -101,7 +106,7 @@ impl VaultStore {
         })?;
         let master = sealed.unwrap_master(passphrase)?;
         let body = sealed.open_body(&master)?;
-        let model = format::decode(&body)?;
+        let model = format::decode(&body, &master, sealed.credentials_are_sealed())?;
         let counts = (
             model.entities.len() as u32,
             model.entities.iter().map(|e| e.values.len() as u32).sum(),
@@ -149,7 +154,7 @@ impl VaultStore {
             return Err(ApiError::VaultLocked);
         };
         let out = f(vault)?;
-        let body = format::encode(vault);
+        let body = format::encode(vault, master)?;
         let sealed = self.sealed.as_mut().ok_or(ApiError::VaultLocked)?;
         sealed.reseal_body(master, &body)?;
         crypto::wipe(body);

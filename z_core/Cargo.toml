@@ -21,6 +21,11 @@ unicode-normalization = "0.1"
 # the master key and the vault body; zeroize wipes key material on drop.
 argon2 = "0.5"
 chacha20poly1305 = "0.10"
+# Key derivation with domain separation (task 021): the master key derives one key
+# per purpose instead of being the single AEAD key forever. Pinned to 0.10 on
+# purpose — it is **already in the tree** under argon2, so this costs zero new
+# crates; 0.11 would drag a second copy of the whole digest stack (+7).
+blake2 = { version = "0.10", default-features = false }
 zeroize = { version = "1", features = ["zeroize_derive"] }
 # The only decompressor in the project (task 016). DOCX is a zip and a PDF's
 # content streams are deflate; both are read from memory, and the read loop is

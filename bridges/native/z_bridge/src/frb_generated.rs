@@ -1473,6 +1473,10 @@ const _: fn() = || {
         crate::api::mirrors::NetworkRefusal::ResponseTooLarge { limit_kib } => {
             let _: u32 = limit_kib;
         }
+        crate::api::mirrors::NetworkRefusal::PayloadTooLarge { kib, limit_kib } => {
+            let _: u32 = kib;
+            let _: u32 = limit_kib;
+        }
         crate::api::mirrors::NetworkRefusal::Unreadable => {}
         crate::api::mirrors::NetworkRefusal::Unreachable => {}
     }
@@ -2106,9 +2110,17 @@ impl SseDecode for crate::api::mirrors::NetworkRefusal {
                 };
             }
             6 => {
-                return crate::api::mirrors::NetworkRefusal::Unreadable;
+                let mut var_kib = <u32>::sse_decode(deserializer);
+                let mut var_limitKib = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::NetworkRefusal::PayloadTooLarge {
+                    kib: var_kib,
+                    limit_kib: var_limitKib,
+                };
             }
             7 => {
+                return crate::api::mirrors::NetworkRefusal::Unreadable;
+            }
+            8 => {
                 return crate::api::mirrors::NetworkRefusal::Unreachable;
             }
             _ => {
@@ -2975,8 +2987,14 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::NetworkRe
             crate::api::mirrors::NetworkRefusal::ResponseTooLarge { limit_kib } => {
                 [5.into_dart(), limit_kib.into_into_dart().into_dart()].into_dart()
             }
-            crate::api::mirrors::NetworkRefusal::Unreadable => [6.into_dart()].into_dart(),
-            crate::api::mirrors::NetworkRefusal::Unreachable => [7.into_dart()].into_dart(),
+            crate::api::mirrors::NetworkRefusal::PayloadTooLarge { kib, limit_kib } => [
+                6.into_dart(),
+                kib.into_into_dart().into_dart(),
+                limit_kib.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::NetworkRefusal::Unreadable => [7.into_dart()].into_dart(),
+            crate::api::mirrors::NetworkRefusal::Unreachable => [8.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -3880,11 +3898,16 @@ impl SseEncode for crate::api::mirrors::NetworkRefusal {
                 <i32>::sse_encode(5, serializer);
                 <u32>::sse_encode(limit_kib, serializer);
             }
-            crate::api::mirrors::NetworkRefusal::Unreadable => {
+            crate::api::mirrors::NetworkRefusal::PayloadTooLarge { kib, limit_kib } => {
                 <i32>::sse_encode(6, serializer);
+                <u32>::sse_encode(kib, serializer);
+                <u32>::sse_encode(limit_kib, serializer);
+            }
+            crate::api::mirrors::NetworkRefusal::Unreadable => {
+                <i32>::sse_encode(7, serializer);
             }
             crate::api::mirrors::NetworkRefusal::Unreachable => {
-                <i32>::sse_encode(7, serializer);
+                <i32>::sse_encode(8, serializer);
             }
             _ => {
                 unimplemented!("");

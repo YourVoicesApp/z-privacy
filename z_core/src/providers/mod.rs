@@ -22,12 +22,25 @@ use zeroize::Zeroizing;
 
 use crate::api::{ApiError, ApiResult, NetworkRefusal, PayloadHandle};
 
+/// How much outgoing text a provider accepts, before a socket is opened.
+///
+/// Not about leaking — the audit already answered that — but about not turning a
+/// large document into an unreasonable request, or into a second copy of itself in
+/// memory for no purpose. A provider may raise or lower it; this is the default.
+const DEFAULT_REQUEST_BYTES: usize = 512 * 1024;
+
 /// What every provider must be able to do, and nothing more.
 pub(crate) trait Provider {
     fn id(&self) -> &'static str;
     fn label(&self) -> &'static str;
     fn default_base(&self) -> &'static str;
     fn default_model(&self) -> &'static str;
+
+    /// The outgoing limit for this provider. One place to change per provider the
+    /// day a model's context makes a different number the right one.
+    fn max_request_bytes(&self) -> usize {
+        DEFAULT_REQUEST_BYTES
+    }
     /// One question, one answer. `text` is the safe payload; there is no argument
     /// through which anything else could be passed.
     fn ask(&self, credential: &str, base: &str, model: &str, text: &str) -> ApiResult<String>;
@@ -59,7 +72,29 @@ pub(crate) fn find(id: &str) -> ApiResult<Box<dyn Provider>> {
 pub(crate) fn ask(handle: PayloadHandle, id: &str, credential: &str, base: &str, model: &str) -> ApiResult<String> {
     let provider = find(id)?;
     let text = crate::ops::with_payload(handle, |p| Zeroizing::new(p.wire_text().to_string()))?;
+    check_size(text.len(), provider.as_ref())?;
     provider.ask(credential, base, model, &text)
+}
+
+/// The outgoing limit, checked before a socket is opened and before a body is
+/// built — so nothing large is copied in order to discover it was too large.
+fn check_size(bytes: usize, provider: &dyn Provider) -> ApiResult<()> {
+    let limit = provider.max_request_bytes();
+    if bytes > limit {
+        return Err(refuse(
+            NetworkRefusal::PayloadTooLarge {
+                kib: (bytes / 1024) as u32,
+                limit_kib: (limit / 1024) as u32,
+            },
+            format!(
+                "this text is {} KiB and {} accepts {} KiB in one request",
+                bytes / 1024,
+                provider.label(),
+                limit / 1024
+            ),
+        ));
+    }
+    Ok(())
 }
 
 /// The connection test. Sends the word `ping` — none of the user's words.
@@ -107,6 +142,24 @@ mod tests {
                 "provider {} defaults to {base}, which is neither https nor this machine",
                 p.id()
             );
+        }
+    }
+
+    #[test]
+    fn a_text_past_the_outgoing_limit_is_refused_before_any_socket() {
+        let provider = openai::OpenAiCompatible;
+        let limit = provider.max_request_bytes();
+        assert!(check_size(limit, &provider).is_ok(), "exactly at the limit is allowed");
+        match check_size(limit + 1, &provider) {
+            Err(ApiError::NetworkRefused {
+                reason: NetworkRefusal::PayloadTooLarge { kib, limit_kib },
+                detail,
+            }) => {
+                assert_eq!(limit_kib, (limit / 1024) as u32);
+                assert_eq!(kib, (limit / 1024) as u32, "one byte over rounds to the same KiB");
+                assert!(detail.contains("KiB"), "{detail}");
+            }
+            other => panic!("expected PayloadTooLarge, got {other:?}"),
         }
     }
 

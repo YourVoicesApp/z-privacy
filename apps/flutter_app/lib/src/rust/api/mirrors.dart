@@ -384,6 +384,14 @@ sealed class NetworkRefusal with _$NetworkRefusal {
   const factory NetworkRefusal.responseTooLarge({required int limitKib}) =
       NetworkRefusal_ResponseTooLarge;
 
+  /// The outgoing text is longer than this provider accepts. Checked **before**
+  /// a socket is opened, so a huge document is refused here rather than turned
+  /// into an unreasonable request. (Task 021.)
+  const factory NetworkRefusal.payloadTooLarge({
+    required int kib,
+    required int limitKib,
+  }) = NetworkRefusal_PayloadTooLarge;
+
   /// The answer arrived but is not the shape this provider promised.
   const factory NetworkRefusal.unreadable() = NetworkRefusal_Unreadable;
 

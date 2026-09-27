@@ -12,6 +12,7 @@ use std::collections::BTreeMap;
 
 use crate::api::{ApiError, ApiResult, EntityKind, Kind, Policy};
 use crate::secret::Secret;
+use crate::vault::crypto::{self, Purpose, SecretKey};
 
 use super::model::{Entity, Profile, ProviderLogin, ValueRecord, Vault};
 
@@ -21,6 +22,11 @@ use super::model::{Entity, Profile, ProviderLogin, ValueRecord, Vault};
 /// * 2 — provider credentials appended at the end (task 020). A version-1 vault
 ///   simply stops before that section and opens with no credentials, which is
 ///   why new sections go at the end and nothing already written ever moves.
+///
+/// Note that a **credential is sealed inside this body** with its own derived key
+/// (task 021), so the bytes written here are ciphertext even though the body as a
+/// whole is already encrypted. Whether they are sealed is decided by the *file's*
+/// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
 pub(crate) const MODEL_VERSION: u16 = 2;
 
 // ---------------------------------------------------------------- stable codes
@@ -117,7 +123,7 @@ fn policy_of(code: u8) -> ApiResult<Policy> {
 
 // ---------------------------------------------------------------- writing
 
-pub(crate) fn encode(vault: &Vault) -> Vec<u8> {
+pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
     let mut out = Vec::new();
     out.extend_from_slice(&MODEL_VERSION.to_be_bytes());
     out.extend_from_slice(&vault.next_entity.to_be_bytes());
@@ -158,11 +164,15 @@ pub(crate) fn encode(vault: &Vault) -> Vec<u8> {
     out.extend_from_slice(&(vault.provider_logins.len() as u32).to_be_bytes());
     for (id, login) in &vault.provider_logins {
         put_str(&mut out, id);
-        put_str(&mut out, login.credential.expose());
+        // The credential gets its own key. If the decoded body ever escapes — a
+        // stray dump, a bug, a core file — this is still ciphertext.
+        let sealed = crypto::seal_for(master, Purpose::Provider, login.credential.expose().as_bytes())?;
+        out.extend_from_slice(&(sealed.len() as u32).to_be_bytes());
+        out.extend_from_slice(&sealed);
         put_str(&mut out, &login.base);
         put_str(&mut out, &login.model);
     }
-    out
+    Ok(out)
 }
 
 fn put_str(out: &mut Vec<u8>, text: &str) {
@@ -173,7 +183,7 @@ fn put_str(out: &mut Vec<u8>, text: &str) {
 
 // ---------------------------------------------------------------- reading
 
-pub(crate) fn decode(bytes: &[u8]) -> ApiResult<Vault> {
+pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool) -> ApiResult<Vault> {
     let mut r = Reader::new(bytes);
     let version = u16::from_be_bytes(r.array::<2>()?);
     if version > MODEL_VERSION {
@@ -239,10 +249,20 @@ pub(crate) fn decode(bytes: &[u8]) -> ApiResult<Vault> {
         let count = u32::from_be_bytes(r.array::<4>()?);
         for _ in 0..count {
             let id = r.string()?;
+            // A format-1 file wrote this in the clear; from format 2 it is sealed.
+            let credential = if credentials_sealed {
+                let blob = r.block()?;
+                let plain = crypto::open_for(master, Purpose::Provider, &blob)?;
+                Secret::new(String::from_utf8(plain.to_vec()).map_err(|_| ApiError::PayloadRefused {
+                    reason: "a stored credential is not valid UTF-8".to_string(),
+                })?)
+            } else {
+                Secret::new(r.string()?)
+            };
             provider_logins.insert(
                 id,
                 ProviderLogin {
-                    credential: Secret::new(r.string()?),
+                    credential,
                     base: r.string()?,
                     model: r.string()?,
                 },
@@ -284,6 +304,11 @@ impl<'a> Reader<'a> {
         Ok(self.array::<1>()?[0])
     }
 
+    fn block(&mut self) -> ApiResult<Vec<u8>> {
+        let len = u32::from_be_bytes(self.array::<4>()?) as usize;
+        Ok(self.take(len)?.to_vec())
+    }
+
     fn string(&mut self) -> ApiResult<String> {
         let len = u32::from_be_bytes(self.array::<4>()?) as usize;
         let bytes = self.take(len)?;
@@ -302,6 +327,20 @@ fn truncated() -> ApiError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use zeroize::Zeroizing;
+
+    /// A fixed key, so a test's bytes are reproducible. Never a real master key.
+    fn test_master() -> SecretKey {
+        Zeroizing::new([7u8; 32])
+    }
+
+    fn enc(v: &Vault) -> Vec<u8> {
+        encode(v, &test_master()).expect("encode")
+    }
+
+    fn dec(bytes: &[u8]) -> ApiResult<Vault> {
+        decode(bytes, &test_master(), true)
+    }
 
     fn sample() -> Vault {
         let mut v = Vault::new();
@@ -339,8 +378,8 @@ mod tests {
     #[test]
     fn everything_survives_the_round_trip() {
         let before = sample();
-        let bytes = encode(&before);
-        let after = decode(&bytes).expect("decode");
+        let bytes = enc(&before);
+        let after = dec(&bytes).expect("decode");
 
         assert_eq!(after.next_entity, 18);
         assert_eq!(after.next_value, 3);
@@ -368,21 +407,57 @@ mod tests {
                 model: "gpt-4o-mini".to_string(),
             },
         );
-        let bytes = encode(&before);
-        let after = decode(&bytes).expect("decode");
+        let bytes = enc(&before);
+        let after = dec(&bytes).expect("decode");
         let login = after.provider_logins.get("openai").expect("the login");
         assert_eq!(login.credential.expose(), "sk-not-a-real-key");
         assert_eq!(login.base, "https://api.openai.com");
         assert_eq!(login.model, "gpt-4o-mini");
 
         // What a model-1 file looks like: the same bytes without the last section.
-        let plain = encode(&sample());
+        let plain = enc(&sample());
         let mut old_file = plain.clone();
         old_file.truncate(plain.len() - 4); // drop the (empty) credential count
         old_file[0..2].copy_from_slice(&1u16.to_be_bytes());
-        let opened = decode(&old_file).expect("a model-1 vault still opens");
+        let opened = dec(&old_file).expect("a model-1 vault still opens");
         assert!(opened.provider_logins.is_empty(), "and simply has no credentials");
         assert_eq!(opened.entities.len(), 1, "everything older than model 2 is intact");
+    }
+
+    #[test]
+    fn a_credential_is_ciphertext_even_inside_the_decrypted_body() {
+        // The point of the provider key (task 021). The body as a whole is already
+        // encrypted on disk; this is about what a *decoded* body holds, because
+        // that is what a stray dump or a bug would expose.
+        const CREDENTIAL: &str = "sk-live-0123456789abcdef";
+        let mut vault = sample();
+        vault.provider_logins.insert(
+            "openai".to_string(),
+            ProviderLogin {
+                credential: Secret::new(CREDENTIAL),
+                base: "https://api.openai.com".to_string(),
+                model: "gpt-4o-mini".to_string(),
+            },
+        );
+        let body = enc(&vault);
+
+        // Control string first: things that are meant to be readable *are*.
+        let readable = String::from_utf8_lossy(&body);
+        assert!(readable.contains("openai"), "the provider id is plain, so this search works");
+        assert!(readable.contains("api.openai.com"), "the address is not a secret");
+        // And the credential is not.
+        assert!(
+            !readable.contains(CREDENTIAL),
+            "the credential is readable inside the decrypted body"
+        );
+        assert!(
+            !body.windows(CREDENTIAL.len()).any(|w| w == CREDENTIAL.as_bytes()),
+            "the credential's bytes are in the decrypted body"
+        );
+
+        // And it comes back intact for the one thing allowed to read it.
+        let back = dec(&body).expect("decode");
+        assert_eq!(back.provider_logins["openai"].credential.expose(), CREDENTIAL);
     }
 
     #[test]
@@ -402,14 +477,14 @@ mod tests {
 
     #[test]
     fn truncated_or_future_contents_are_refused() {
-        let bytes = encode(&sample());
+        let bytes = enc(&sample());
         assert!(matches!(
-            decode(&bytes[..bytes.len() / 2]),
+            dec(&bytes[..bytes.len() / 2]),
             Err(ApiError::PayloadRefused { .. })
         ));
         let mut future = bytes.clone();
         future[0] = 0xFF;
-        match decode(&future) {
+        match dec(&future) {
             Err(ApiError::PayloadRefused { reason }) => assert!(reason.contains("newer version")),
             other => panic!("expected a refusal, got {other:?}"),
         }

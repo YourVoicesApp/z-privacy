@@ -5,7 +5,7 @@
 //! | rule | how |
 //! |---|---|
 //! | no blind redirects | `max_redirects(0)`, and a 3xx is refused by name |
-//! | `https`, or this machine | [`check_url`] before a socket is opened |
+//! | `https`, or a **literal** loopback address | [`check_url`] before a socket is opened |
 //! | timeouts | connect and whole-call, both set |
 //! | a bounded answer | the read loop below is ours, and stops at `RESPONSE_BYTES` |
 //! | nothing off the wire in an error | no response text is ever put in a detail |
@@ -42,9 +42,27 @@ pub(crate) struct Answer {
 /// Is this address on this very machine? Plain HTTP is allowed there and nowhere
 /// else, because a model running on your own computer is the most private
 /// provider there is — and because a loopback socket leaves no network.
+///
+/// The rule is deliberately dumb, by the owner's amendment of 27 September: the
+/// host must be a **literal loopback IP address**. A *name* that claims to be
+/// local is not accepted, because accepting one means trusting DNS to decide
+/// whether plaintext is safe — and `localhost` can be pointed anywhere in a hosts
+/// file. So `127.0.0.1` yes, `127.5.5.5` yes, `::1` yes; `localhost` no.
 pub(crate) fn is_loopback_url(url: &str) -> bool {
     match Uri::try_from(url) {
-        Ok(uri) => matches!(uri.host(), Some("localhost" | "127.0.0.1" | "::1" | "[::1]")),
+        Ok(uri) => uri.host().is_some_and(is_loopback_host),
+        Err(_) => false,
+    }
+}
+
+/// A literal loopback address, and nothing that merely looks like one.
+fn is_loopback_host(host: &str) -> bool {
+    // IPv6 arrives in brackets inside a URL authority.
+    let bare = host.strip_prefix('[').and_then(|h| h.strip_suffix(']')).unwrap_or(host);
+    match bare.parse::<std::net::IpAddr>() {
+        Ok(std::net::IpAddr::V4(v4)) => v4.is_loopback(),
+        Ok(std::net::IpAddr::V6(v6)) => v6.is_loopback(),
+        // Not an IP literal at all — a name. Names are never loopback here.
         Err(_) => false,
     }
 }
@@ -63,7 +81,7 @@ pub(crate) fn check_url(url: &str) -> ApiResult<()> {
         Some("http") if is_loopback_url(url) => Ok(()),
         _ => Err(refuse(
             NetworkRefusal::InsecureUrl,
-            "an address must be https, unless it is a model running on this machine".to_string(),
+            "an address must be https — plain http only for a literal loopback address such as http://127.0.0.1:11434".to_string(),
         )),
     }
 }
@@ -178,19 +196,31 @@ mod tests {
     use crate::api::ApiError;
 
     #[test]
-    fn plain_http_is_refused_unless_it_is_this_machine() {
+    fn plain_http_is_refused_unless_the_host_is_a_literal_loopback_address() {
         assert!(check_url("https://api.openai.com/v1/chat/completions").is_ok());
         assert!(check_url("http://127.0.0.1:11434/v1/chat/completions").is_ok());
-        assert!(check_url("http://localhost:8080/v1/chat/completions").is_ok());
+        assert!(check_url("http://127.0.0.1/v1").is_ok());
+        assert!(check_url("http://127.5.5.5:8080/v1").is_ok(), "the whole 127/8 range is this machine");
+        assert!(check_url("http://[::1]:8080/v1").is_ok());
+        // https is fine anywhere, including by name on this machine.
+        assert!(check_url("https://localhost:8443/v1").is_ok());
 
         for bad in [
             "http://api.openai.com/v1/chat/completions",
             "http://192.168.1.10/v1/chat/completions",
             "ftp://example.com/",
             "not a url at all",
-            // The old trick: a loopback-looking name that resolves elsewhere.
+            // A name is never trusted to mean «this machine», however it reads:
+            // a hosts file or a DNS answer would be deciding whether plaintext is
+            // safe, and that is not a decision we hand out.
+            "http://localhost:8080/v1/chat/completions",
+            "http://localhost.localdomain:8080/v1",
             "http://127.0.0.1.evil.example.com/v1",
             "http://localhost.evil.example.com/v1",
+            // Not loopback, however close it looks.
+            "http://126.0.0.1/v1",
+            "http://0.0.0.0/v1",
+            "http://[::2]/v1",
         ] {
             match check_url(bad) {
                 Err(ApiError::NetworkRefused { reason, .. }) => {

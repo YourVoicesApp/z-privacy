@@ -5,8 +5,17 @@
 //! ```text
 //! passphrase → Argon2id → key-encryption key → unwraps a random MASTER key
 //!                                                      ↓
-//!                                          the master key seals the vault body
+//!                                        the master key is a KDF root, never a
+//!                                        cipher key. From it, by domain:
+//!                                          ├── data      → seals the vault body
+//!                                          ├── provider  → seals a credential
+//!                                          └── profile   → reserved, task 021
 //! ```
+//!
+//! The owner's amendment of 27 September, and the reason: the master key must not
+//! become the one AEAD key behind every purpose in the vault forever. Each purpose
+//! gets its own key, derived with its own domain string, so a future purpose — or
+//! a future cipher — is added without any existing key doing two jobs.
 //!
 //! Changing the passphrase re-wraps **32 bytes**, not the whole vault. The body's
 //! ciphertext is not touched, and a test asserts those bytes are identical
@@ -18,6 +27,9 @@
 //! the numbers stored inside it.
 
 use argon2::{Algorithm, Argon2, Params, Version};
+use blake2::digest::consts::U32;
+use blake2::digest::Mac;
+use blake2::Blake2bMac;
 use chacha20poly1305::aead::{Aead, KeyInit};
 use chacha20poly1305::{ChaCha20Poly1305, Nonce};
 use zeroize::{Zeroize, Zeroizing};
@@ -26,7 +38,14 @@ use crate::api::{ApiError, ApiResult};
 
 /// Bumped only when the bytes on disk change shape. An old file keeps opening
 /// because its own version, salt and costs are read from it.
-pub(crate) const FORMAT_VERSION: u16 = 1;
+///
+/// * 1 — the master key sealed the body itself, and a credential sat in the body
+///   in the clear.
+/// * 2 — the master key derives per-purpose keys (task 021): the body is sealed by
+///   the **data** key, and each credential by the **provider** key, so a leak of
+///   the decoded body is still not a leak of a credential. A format-1 vault opens
+///   here and is written as format 2 the next time anything changes.
+pub(crate) const FORMAT_VERSION: u16 = 2;
 const MAGIC: &[u8; 4] = b"ZVLT";
 const KEY_LEN: usize = 32;
 const NONCE_LEN: usize = 12;
@@ -40,6 +59,63 @@ const DEFAULT_P_COST: u32 = 1;
 
 /// A key that wipes itself when it goes out of scope.
 pub(crate) type SecretKey = Zeroizing<[u8; KEY_LEN]>;
+
+/// What each derived key is *for*. The string is part of the format: changing one
+/// changes the key, so these are as fixed as the kind codes in `format.rs`.
+///
+/// A new purpose takes a new string. No string is ever reused for a second
+/// purpose, and no purpose ever borrows another's key.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Purpose {
+    /// Seals the vault body: identities, values, profiles.
+    Data,
+    /// Seals one provider credential, inside that body.
+    Provider,
+    /// Reserved. Named here so the string is claimed and cannot be re-used for
+    /// something else later — the owner's `future-profile key`.
+    #[allow(dead_code)]
+    Profile,
+}
+
+impl Purpose {
+    fn domain(self) -> &'static [u8] {
+        match self {
+            Self::Data => b"z-privacy/vault/1/data",
+            Self::Provider => b"z-privacy/vault/1/provider-credential",
+            Self::Profile => b"z-privacy/vault/1/profile",
+        }
+    }
+}
+
+/// One purpose's key, from the master key.
+///
+/// Keyed BLAKE2b — a PRF, used the way libsodium's `crypto_kdf` uses it: the
+/// master key is the key, the domain string is the message, the output is 32
+/// bytes. HKDF would do the same job; BLAKE2b is chosen because `blake2` is
+/// **already in the tree** (Argon2 is built on it), so domain separation costs
+/// zero new dependencies to audit. G1's rule about justified dependencies cuts
+/// both ways: the cheapest correct option wins.
+pub(crate) fn derive(master: &SecretKey, purpose: Purpose) -> ApiResult<SecretKey> {
+    let mut mac = <Blake2bMac<U32> as Mac>::new_from_slice(master.as_ref()).map_err(|_| ApiError::PayloadRefused {
+        reason: "the master key has the wrong length for key derivation".to_string(),
+    })?;
+    mac.update(purpose.domain());
+    let out = mac.finalize().into_bytes();
+    let bytes: [u8; KEY_LEN] = out.as_slice().try_into().map_err(|_| ApiError::PayloadRefused {
+        reason: "key derivation produced the wrong length".to_string(),
+    })?;
+    Ok(Zeroizing::new(bytes))
+}
+
+/// Seal something with a purpose's key. Used by `format.rs` for a credential.
+pub(crate) fn seal_for(master: &SecretKey, purpose: Purpose, plaintext: &[u8]) -> ApiResult<Vec<u8>> {
+    seal(&derive(master, purpose)?, plaintext)
+}
+
+/// Open something sealed with a purpose's key.
+pub(crate) fn open_for(master: &SecretKey, purpose: Purpose, sealed: &[u8]) -> ApiResult<Zeroizing<Vec<u8>>> {
+    open(&derive(master, purpose)?, sealed)
+}
 
 /// What the KDF was asked to do, kept with the vault so it can be repeated — and
 /// so the cost can rise for new vaults without breaking old ones.
@@ -134,7 +210,7 @@ impl SealedVault {
         let kek = derive_kek(passphrase, &params)?;
         let master: SecretKey = Zeroizing::new(random_array::<KEY_LEN>()?);
         let wrapped_master = seal(&kek, master.as_ref())?;
-        let body = seal(&master, body_plain)?;
+        let body = seal(&derive(&master, Purpose::Data)?, body_plain)?;
         Ok((
             Self {
                 params,
@@ -159,13 +235,28 @@ impl SealedVault {
         Ok(Zeroizing::new(bytes))
     }
 
+    /// Open the body with the key its own format says was used. A format-1 file
+    /// was sealed by the master key itself; from format 2 it is the data key.
     pub(crate) fn open_body(&self, master: &SecretKey) -> ApiResult<Zeroizing<Vec<u8>>> {
-        open(master, &self.body)
+        if self.params.format < 2 {
+            return open(master, &self.body);
+        }
+        open(&derive(master, Purpose::Data)?, &self.body)
     }
 
+    /// Write the body — always in today's format. A vault opened as format 1 is
+    /// upgraded here, on the first change, with no separate migration step and no
+    /// moment where the file says one thing and holds another.
     pub(crate) fn reseal_body(&mut self, master: &SecretKey, body_plain: &[u8]) -> ApiResult<()> {
-        self.body = seal(master, body_plain)?;
+        self.body = seal(&derive(master, Purpose::Data)?, body_plain)?;
+        self.params.format = FORMAT_VERSION;
         Ok(())
+    }
+
+    /// Whether a credential inside the body is sealed (format 2) or was written in
+    /// the clear (format 1). `format.rs` asks, so that an old vault still reads.
+    pub(crate) fn credentials_are_sealed(&self) -> bool {
+        self.params.format >= 2
     }
 
     /// Change the passphrase by re-wrapping the master key. The body is not read,
@@ -313,7 +404,8 @@ mod tests {
         let kek = derive_kek(PASS, &params).expect("kek");
         let master: SecretKey = Zeroizing::new(random_array::<KEY_LEN>().expect("master"));
         let wrapped_master = seal(&kek, master.as_ref()).expect("wrap");
-        let body = seal(&master, BODY).expect("seal body");
+        // Today's format: the body is sealed by the data key, not the master.
+        let body = seal(&derive(&master, Purpose::Data).expect("data key"), BODY).expect("seal body");
         (
             SealedVault {
                 params,
@@ -322,6 +414,80 @@ mod tests {
             },
             master,
         )
+    }
+
+    /// A vault as format 1 wrote one: the master key sealed the body itself.
+    fn format_one_vault() -> SealedVault {
+        let mut params = KdfParams::fresh().expect("params");
+        params.m_cost = 8;
+        params.t_cost = 1;
+        params.format = 1;
+        let kek = derive_kek(PASS, &params).expect("kek");
+        let master: SecretKey = Zeroizing::new(random_array::<KEY_LEN>().expect("master"));
+        let wrapped_master = seal(&kek, master.as_ref()).expect("wrap");
+        let body = seal(&master, BODY).expect("seal body");
+        SealedVault {
+            params,
+            wrapped_master,
+            body,
+        }
+    }
+
+    #[test]
+    fn each_purpose_gets_its_own_key_and_the_master_is_not_one_of_them() {
+        let master: SecretKey = Zeroizing::new([3u8; KEY_LEN]);
+        let data = derive(&master, Purpose::Data).expect("data");
+        let provider = derive(&master, Purpose::Provider).expect("provider");
+        let profile = derive(&master, Purpose::Profile).expect("profile");
+
+        assert_ne!(data.as_ref(), provider.as_ref(), "two purposes, two keys");
+        assert_ne!(data.as_ref(), profile.as_ref());
+        assert_ne!(provider.as_ref(), profile.as_ref());
+        assert_ne!(data.as_ref(), master.as_ref(), "the master key is a root, not a cipher key");
+
+        // Derivation is a function, not a random draw: the same vault must open
+        // tomorrow. This is what makes the domain strings part of the format.
+        assert_eq!(derive(&master, Purpose::Data).expect("again").as_ref(), data.as_ref());
+
+        // And a different master gives different keys, obviously — but say it, so
+        // that a constant accidentally left in place would fail here.
+        let other: SecretKey = Zeroizing::new([4u8; KEY_LEN]);
+        assert_ne!(derive(&other, Purpose::Data).expect("other").as_ref(), data.as_ref());
+    }
+
+    #[test]
+    fn something_sealed_for_one_purpose_does_not_open_with_another() {
+        let master: SecretKey = Zeroizing::new([9u8; KEY_LEN]);
+        let sealed = seal_for(&master, Purpose::Provider, b"sk-not-a-real-credential").expect("seal");
+        let back = open_for(&master, Purpose::Provider, &sealed).expect("open");
+        assert_eq!(back.as_slice(), b"sk-not-a-real-credential");
+
+        // The whole reason for domain separation, as a test.
+        match open_for(&master, Purpose::Data, &sealed) {
+            Err(ApiError::VaultLocked) => {}
+            other => panic!("a credential must not open with the data key: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_format_one_vault_still_opens_and_is_written_forward() {
+        let mut vault = format_one_vault();
+        let master = vault.unwrap_master(PASS).expect("unwrap");
+        assert!(!vault.credentials_are_sealed(), "format 1 held credentials in the clear");
+        assert_eq!(
+            vault.open_body(&master).expect("an old vault still opens").as_slice(),
+            BODY,
+            "nothing older is left behind"
+        );
+
+        // The first change upgrades it, with no migration step of its own.
+        vault.reseal_body(&master, BODY).expect("reseal");
+        assert_eq!(vault.params.format, FORMAT_VERSION);
+        assert!(vault.credentials_are_sealed());
+        assert_eq!(vault.open_body(&master).expect("body").as_slice(), BODY);
+
+        // And the upgraded body is no longer readable with the master key itself.
+        assert!(matches!(open(&master, &vault.body), Err(ApiError::VaultLocked)));
     }
 
     #[test]
