@@ -347,6 +347,8 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          renamed_moved_and_pruned says_nothing_about_why not_a_set_the_screen_knows \
          reaches_the_settings_file could_name_a_client remembers_the_first_run \
          two_places_report_agrees the_string_that_would_be_sent is_a_constant \
+         three_windows_on_one_truth not_sensitive_is_an_answer actually_reach_the_vault \
+         this_conversation_means_every_place need_the_vault_and_say_so \
          reports_nothing_it_does_not_know take_back_an_answer; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"

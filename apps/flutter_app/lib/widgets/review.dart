@@ -128,7 +128,7 @@ class _List extends StatelessWidget {
           const SizedBox(height: 16),
         ],
         if (byHand.isNotEmpty) ...[
-          _GroupTitle('Protected by you', byHand.length, Zc.ink3),
+          _GroupTitle('Decided by you', byHand.length, Zc.ink3),
           for (final f in byHand) _Row(bench: bench, finding: f, answerable: false),
         ],
       ],
@@ -216,17 +216,16 @@ class _Row extends StatelessWidget {
             const SizedBox(height: 5),
             Text(finding.reason, style: Zc.small.copyWith(color: Zc.ink3)),
             const SizedBox(height: 6),
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 5,
               children: [
-                _Tag(sourceName(finding.source), sourceTint(finding.source)),
-                if (finding.place != null) ...[
-                  const SizedBox(width: 6),
+                _Tag('found by ${sourceName(finding.source).toLowerCase()}', sourceTint(finding.source)),
+                if (finding.decided) _Tag('you decided', Zc.clay),
+                if (finding.place != null)
                   _Tag('Page ${finding.place!.page} · ¶${finding.place!.paragraph}', Zc.ink4),
-                ],
-                if (finding.entities.length > 1) ...[
-                  const SizedBox(width: 6),
+                if (finding.entities.length > 1)
                   _Tag('${finding.entities.length} identities claim it', Zc.river),
-                ],
               ],
             ),
             if (answerable) ...[
@@ -357,7 +356,7 @@ class _Walk extends StatelessWidget {
           children: [
             _Tag(kindName(current.kind), Zc.ink4),
             const SizedBox(width: 6),
-            _Tag(sourceName(current.source), sourceTint(current.source)),
+            _Tag('found by ${sourceName(current.source).toLowerCase()}', sourceTint(current.source)),
             if (current.place != null) ...[
               const SizedBox(width: 6),
               _Tag('Page ${current.place!.page} · ¶${current.place!.paragraph}', Zc.ink4),

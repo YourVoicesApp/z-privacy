@@ -231,11 +231,16 @@ class Workbench extends ChangeNotifier {
 
   List<Finding> get suggested =>
       findings.where((f) => f.state == MarkState.suggested).toList(growable: false);
+  /// Grouped by **who decided**, not by who found.
+  ///
+  /// Confirming the pack's suggestion is your decision, and a list that filed
+  /// it under «protected automatically» would be telling you the app did
+  /// something you did. Each row still names the layer that found it.
   List<Finding> get automatic => findings
-      .where((f) => f.state == MarkState.protected && f.source != Source.hand)
+      .where((f) => f.state == MarkState.protected && !f.decided)
       .toList(growable: false);
   List<Finding> get byHand =>
-      findings.where((f) => f.state == MarkState.protected && f.source == Source.hand).toList(growable: false);
+      findings.where((f) => f.state == MarkState.protected && f.decided).toList(growable: false);
 
   Finding? get focusedFinding {
     final id = focused;

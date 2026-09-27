@@ -1725,6 +1725,7 @@ const _: fn() = || {
         let _: crate::api::mirrors::Span = Finding.span;
         let _: crate::api::mirrors::Kind = Finding.kind;
         let _: crate::api::mirrors::Source = Finding.source;
+        let _: bool = Finding.decided;
         let _: String = Finding.reason;
         let _: crate::api::mirrors::MarkState = Finding.state;
         let _: Vec<String> = Finding.entities;
@@ -1749,6 +1750,7 @@ const _: fn() = || {
         let _: Option<String> = Mark.token;
         let _: crate::api::mirrors::Kind = Mark.kind;
         let _: crate::api::mirrors::Source = Mark.source;
+        let _: bool = Mark.decided;
         let _: String = Mark.source_detail;
         let _: Option<crate::api::mirrors::Place> = Mark.place;
     }
@@ -1943,6 +1945,7 @@ const _: fn() = || {
         let _: crate::api::mirrors::Kind = TokenRow.kind;
         let _: crate::api::mirrors::Scope = TokenRow.scope;
         let _: crate::api::mirrors::Source = TokenRow.source;
+        let _: bool = TokenRow.decided;
         let _: String = TokenRow.source_detail;
     }
     match None::<crate::api::mirrors::UndoOutcome>.unwrap() {
@@ -2163,6 +2166,7 @@ impl SseDecode for crate::api::mirrors::Finding {
         let mut var_span = <crate::api::mirrors::Span>::sse_decode(deserializer);
         let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
         let mut var_source = <crate::api::mirrors::Source>::sse_decode(deserializer);
+        let mut var_decided = <bool>::sse_decode(deserializer);
         let mut var_reason = <String>::sse_decode(deserializer);
         let mut var_state = <crate::api::mirrors::MarkState>::sse_decode(deserializer);
         let mut var_entities = <Vec<String>>::sse_decode(deserializer);
@@ -2172,6 +2176,7 @@ impl SseDecode for crate::api::mirrors::Finding {
             span: var_span,
             kind: var_kind,
             source: var_source,
+            decided: var_decided,
             reason: var_reason,
             state: var_state,
             entities: var_entities,
@@ -2429,6 +2434,7 @@ impl SseDecode for crate::api::mirrors::Mark {
         let mut var_token = <Option<String>>::sse_decode(deserializer);
         let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
         let mut var_source = <crate::api::mirrors::Source>::sse_decode(deserializer);
+        let mut var_decided = <bool>::sse_decode(deserializer);
         let mut var_sourceDetail = <String>::sse_decode(deserializer);
         let mut var_place = <Option<crate::api::mirrors::Place>>::sse_decode(deserializer);
         return crate::api::mirrors::Mark {
@@ -2437,6 +2443,7 @@ impl SseDecode for crate::api::mirrors::Mark {
             token: var_token,
             kind: var_kind,
             source: var_source,
+            decided: var_decided,
             source_detail: var_sourceDetail,
             place: var_place,
         };
@@ -2834,7 +2841,8 @@ impl SseDecode for crate::api::mirrors::Scope {
         return match inner {
             0 => crate::api::mirrors::Scope::Once,
             1 => crate::api::mirrors::Scope::Conversation,
-            2 => crate::api::mirrors::Scope::Always,
+            2 => crate::api::mirrors::Scope::Profile,
+            3 => crate::api::mirrors::Scope::Always,
             _ => unreachable!("Invalid variant for Scope: {}", inner),
         };
     }
@@ -2951,12 +2959,14 @@ impl SseDecode for crate::api::mirrors::TokenRow {
         let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
         let mut var_scope = <crate::api::mirrors::Scope>::sse_decode(deserializer);
         let mut var_source = <crate::api::mirrors::Source>::sse_decode(deserializer);
+        let mut var_decided = <bool>::sse_decode(deserializer);
         let mut var_sourceDetail = <String>::sse_decode(deserializer);
         return crate::api::mirrors::TokenRow {
             token: var_token,
             kind: var_kind,
             scope: var_scope,
             source: var_source,
+            decided: var_decided,
             source_detail: var_sourceDetail,
         };
     }
@@ -3318,6 +3328,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Finding> 
             self.0.span.into_into_dart().into_dart(),
             self.0.kind.into_into_dart().into_dart(),
             self.0.source.into_into_dart().into_dart(),
+            self.0.decided.into_into_dart().into_dart(),
             self.0.reason.into_into_dart().into_dart(),
             self.0.state.into_into_dart().into_dart(),
             self.0.entities.into_into_dart().into_dart(),
@@ -3425,6 +3436,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Mark> {
             self.0.token.into_into_dart().into_dart(),
             self.0.kind.into_into_dart().into_dart(),
             self.0.source.into_into_dart().into_dart(),
+            self.0.decided.into_into_dart().into_dart(),
             self.0.source_detail.into_into_dart().into_dart(),
             self.0.place.into_into_dart().into_dart(),
         ]
@@ -3814,7 +3826,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Scope> {
         match self.0 {
             crate::api::mirrors::Scope::Once => 0.into_dart(),
             crate::api::mirrors::Scope::Conversation => 1.into_dart(),
-            crate::api::mirrors::Scope::Always => 2.into_dart(),
+            crate::api::mirrors::Scope::Profile => 2.into_dart(),
+            crate::api::mirrors::Scope::Always => 3.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -3958,6 +3971,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::TokenRow>
             self.0.kind.into_into_dart().into_dart(),
             self.0.scope.into_into_dart().into_dart(),
             self.0.source.into_into_dart().into_dart(),
+            self.0.decided.into_into_dart().into_dart(),
             self.0.source_detail.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -4227,6 +4241,7 @@ impl SseEncode for crate::api::mirrors::Finding {
         <crate::api::mirrors::Span>::sse_encode(self.span, serializer);
         <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
         <crate::api::mirrors::Source>::sse_encode(self.source, serializer);
+        <bool>::sse_encode(self.decided, serializer);
         <String>::sse_encode(self.reason, serializer);
         <crate::api::mirrors::MarkState>::sse_encode(self.state, serializer);
         <Vec<String>>::sse_encode(self.entities, serializer);
@@ -4453,6 +4468,7 @@ impl SseEncode for crate::api::mirrors::Mark {
         <Option<String>>::sse_encode(self.token, serializer);
         <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
         <crate::api::mirrors::Source>::sse_encode(self.source, serializer);
+        <bool>::sse_encode(self.decided, serializer);
         <String>::sse_encode(self.source_detail, serializer);
         <Option<crate::api::mirrors::Place>>::sse_encode(self.place, serializer);
     }
@@ -4775,7 +4791,8 @@ impl SseEncode for crate::api::mirrors::Scope {
             match self {
                 crate::api::mirrors::Scope::Once => 0,
                 crate::api::mirrors::Scope::Conversation => 1,
-                crate::api::mirrors::Scope::Always => 2,
+                crate::api::mirrors::Scope::Profile => 2,
+                crate::api::mirrors::Scope::Always => 3,
                 _ => {
                     unimplemented!("");
                 }
@@ -4868,6 +4885,7 @@ impl SseEncode for crate::api::mirrors::TokenRow {
         <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
         <crate::api::mirrors::Scope>::sse_encode(self.scope, serializer);
         <crate::api::mirrors::Source>::sse_encode(self.source, serializer);
+        <bool>::sse_encode(self.decided, serializer);
         <String>::sse_encode(self.source_detail, serializer);
     }
 }

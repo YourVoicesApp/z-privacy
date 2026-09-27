@@ -303,3 +303,105 @@ fn a_rescan_does_not_take_back_an_answer_you_gave() {
 
     close_session(s).expect("close");
 }
+
+#[test]
+fn three_windows_on_one_truth_show_the_same_number() {
+    // The owner's invariant, written as he wrote it:
+    //
+    //     count(scan.suggested)
+    //     == count(document_view.marks where Suggested)
+    //     == count(list_findings where open)
+    //
+    // Not because the number matters, but because the three are three windows
+    // on the same truth. If any one of them differs, that is a lie — and one
+    // of them was, from M3 until task 033: `MarkState::Suggested` existed in
+    // the type and nothing ever produced one.
+    let s = open_session(None, "de".to_string()).expect("session");
+    import_text(s, DOC.to_string()).expect("import");
+
+    let windows = |report: &ScanReport| -> (u32, u32, u32) {
+        let marks = document_view(s)
+            .expect("document")
+            .marks
+            .into_iter()
+            .filter(|m| m.state == MarkState::Suggested)
+            .count() as u32;
+        let findings = list_findings(s)
+            .expect("findings")
+            .into_iter()
+            .filter(|f| f.state == MarkState::Suggested)
+            .count() as u32;
+        (report.suggested, marks, findings)
+    };
+
+    let report = scan(s).expect("scan");
+    let (a, b, c) = windows(&report);
+    assert!(a > 0, "the fixture leaves something open, or this proves nothing");
+    assert_eq!((a, b, c), (a, a, a), "scan={a} marks={b} findings={c}");
+
+    // And through every step of answering them, one at a time.
+    loop {
+        let open: Vec<u32> = list_findings(s)
+            .expect("findings")
+            .into_iter()
+            .filter(|f| f.state == MarkState::Suggested)
+            .map(|f| f.id)
+            .collect();
+        let Some(id) = open.first() else { break };
+        let report = answer_finding(s, *id, FindingAnswer::Protect).expect("answer");
+        let (a, b, c) = windows(&report);
+        assert_eq!((a, b, c), (a, a, a), "scan={a} marks={b} findings={c}");
+    }
+    let (a, b, c) = windows(&scan(s).expect("rescan"));
+    assert_eq!((a, b, c), (0, 0, 0), "nothing is waiting, and all three say so");
+
+    close_session(s).expect("close");
+}
+
+#[test]
+fn not_sensitive_is_an_answer_and_a_rescan_respects_it() {
+    // The other half of the continuity rule. «Not sensitive» used to remove the
+    // finding and nothing else, so the next rescan asked again as if the user
+    // had said nothing — and in a document where Rescan is one button away,
+    // that is the same question forever.
+    let s = open_session(None, "de".to_string()).expect("session");
+    import_text(s, DOC.to_string()).expect("import");
+    let first = scan(s).expect("scan");
+    assert!(first.suggested > 0);
+
+    let open: Vec<u32> = list_findings(s)
+        .expect("findings")
+        .into_iter()
+        .filter(|f| f.state == MarkState::Suggested)
+        .map(|f| f.id)
+        .collect();
+    let dismissed = open.len() as u32;
+    for id in &open {
+        answer_finding(s, *id, FindingAnswer::NotSensitive).expect("not sensitive");
+    }
+    assert_eq!(scan(s).expect("rescan").suggested, 0, "a rescan asked them all again");
+
+    // Twice, because a rule that holds once is not a rule.
+    assert_eq!(scan(s).expect("rescan again").suggested, 0);
+    assert!(dismissed > 0);
+
+    // And a decided protection is not reopened either — the two halves of the
+    // same rule: what a person settled stays settled until they unsettle it.
+    let s2 = open_session(None, "de".to_string()).expect("session");
+    import_text(s2, DOC.to_string()).expect("import");
+    scan(s2).expect("scan");
+    for f in list_findings(s2).expect("findings") {
+        if f.state == MarkState::Suggested {
+            answer_finding(s2, f.id, FindingAnswer::Protect).expect("protect");
+        }
+    }
+    let kept: Vec<String> = list_tokens(s2).expect("tokens").into_iter().map(|t| t.token).collect();
+    assert_eq!(scan(s2).expect("rescan").suggested, 0);
+    let after: Vec<String> = list_tokens(s2).expect("tokens").into_iter().map(|t| t.token).collect();
+    for token in &kept {
+        assert!(after.contains(token), "a rescan took back {token}");
+    }
+
+    close_session(s).expect("close");
+    close_session(s2).expect("close");
+}

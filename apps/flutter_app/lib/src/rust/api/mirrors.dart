@@ -207,7 +207,13 @@ class Finding {
   final int id;
   final Span span;
   final Kind kind;
+
+  /// Who found it.
   final Source source;
+
+  /// Whether a person decided it. The review list groups by this, not by
+  /// `source`: confirming the pack's suggestion is **your** decision.
+  final bool decided;
   final String reason;
   final MarkState state;
 
@@ -227,6 +233,7 @@ class Finding {
     required this.span,
     required this.kind,
     required this.source,
+    required this.decided,
     required this.reason,
     required this.state,
     required this.entities,
@@ -239,6 +246,7 @@ class Finding {
       span.hashCode ^
       kind.hashCode ^
       source.hashCode ^
+      decided.hashCode ^
       reason.hashCode ^
       state.hashCode ^
       entities.hashCode ^
@@ -253,6 +261,7 @@ class Finding {
           span == other.span &&
           kind == other.kind &&
           source == other.source &&
+          decided == other.decided &&
           reason == other.reason &&
           state == other.state &&
           entities == other.entities &&
@@ -342,7 +351,17 @@ class Mark {
   final MarkState state;
   final String? token;
   final Kind kind;
+
+  /// Who **found** it.
   final Source source;
+
+  /// Whether a person **decided** it, as against a layer deciding on its own.
+  ///
+  /// Two different questions, and mixing them wrote a false history: the pack
+  /// may have found a name while you chose to protect it, and a list that
+  /// said «you found this» would be wrong. It is also a rule and not only a
+  /// label — see [`Scope`] and the rescan behaviour. (Task 033/034.)
+  final bool decided;
 
   /// Pack id, entity id, or the rule's name — the "why" behind the mark.
   final String sourceDetail;
@@ -356,6 +375,7 @@ class Mark {
     this.token,
     required this.kind,
     required this.source,
+    required this.decided,
     required this.sourceDetail,
     this.place,
   });
@@ -367,6 +387,7 @@ class Mark {
       token.hashCode ^
       kind.hashCode ^
       source.hashCode ^
+      decided.hashCode ^
       sourceDetail.hashCode ^
       place.hashCode;
 
@@ -380,6 +401,7 @@ class Mark {
           token == other.token &&
           kind == other.kind &&
           source == other.source &&
+          decided == other.decided &&
           sourceDetail == other.sourceDetail &&
           place == other.place;
 }
@@ -813,13 +835,22 @@ class ScanReport {
 }
 
 enum Scope {
-  /// This place in this document only.
+  /// This one place, and nothing else.
   once,
 
-  /// Every appearance in this conversation, under one token.
+  /// Every appearance in this conversation, under one token. Gone when the
+  /// conversation is.
   conversation,
 
-  /// Kept in the vault and found by itself from now on.
+  /// Every appearance here, **and kept in the vault under the profile this
+  /// conversation is in** — so it is found by itself in that client's next
+  /// document, and in no other client's.
+  ///
+  /// The level a firm with several clients needs: what you learn about one of
+  /// them does not become a rule about all of them.
+  profile,
+
+  /// Every appearance here, and kept in the vault for **every** profile.
   always,
 }
 
@@ -1036,6 +1067,7 @@ class TokenRow {
   final Kind kind;
   final Scope scope;
   final Source source;
+  final bool decided;
   final String sourceDetail;
 
   const TokenRow({
@@ -1043,6 +1075,7 @@ class TokenRow {
     required this.kind,
     required this.scope,
     required this.source,
+    required this.decided,
     required this.sourceDetail,
   });
 
@@ -1052,6 +1085,7 @@ class TokenRow {
       kind.hashCode ^
       scope.hashCode ^
       source.hashCode ^
+      decided.hashCode ^
       sourceDetail.hashCode;
 
   @override
@@ -1063,6 +1097,7 @@ class TokenRow {
           kind == other.kind &&
           scope == other.scope &&
           source == other.source &&
+          decided == other.decided &&
           sourceDetail == other.sourceDetail;
 }
 

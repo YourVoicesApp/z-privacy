@@ -12,9 +12,10 @@ import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/protect_dialog.dart';
 
 class ActsBar extends StatelessWidget {
-  const ActsBar({super.key, required this.bench, required this.onSay});
+  const ActsBar({super.key, required this.bench, required this.ground, required this.onSay});
 
   final Workbench bench;
+  final Ground ground;
 
   /// How the screen reports what the core just did. Every act says its result
   /// out loud — «protected in 4 places», «it snapped to two whole items» —
@@ -141,6 +142,16 @@ class ActsBar extends StatelessWidget {
       builder: (_) => ProtectDialog(
         view: v,
         selectedText: doc.text.substring(span.start, span.end),
+        vault: ground.vault,
+        inAProfile: bench.profileId != null,
+        profileName: bench.profileId == null
+            ? 'this client'
+            : ground.profiles
+                .firstWhere(
+                  (p) => p.id == bench.profileId,
+                  orElse: () => ProfileRow(id: bench.profileId!, name: 'this client'),
+                )
+                .name,
       ),
     );
     if (wish == null) return;
@@ -148,7 +159,9 @@ class ActsBar extends StatelessWidget {
     final outcome = await bench.protectSelection(
       scope: wish.scope,
       kind: wish.kind,
-      allMatches: all || wish.allMatches,
+      // The scope decides the breadth now; «protect all matches» is the button
+      // that picks «this conversation» for you.
+      allMatches: all,
     );
     if (outcome == null) return;
     onSay(switch (outcome) {

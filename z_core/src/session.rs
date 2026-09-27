@@ -52,12 +52,28 @@ pub(crate) struct FindingRecord {
     pub start: usize,
     pub end: usize,
     pub kind: Kind,
+    /// Who found it.
     pub source: Source,
     pub source_detail: String,
     pub reason: String,
     pub state: MarkState,
+    /// Whether a person decided it. A decided finding survives a rescan with
+    /// its id, its reason and its place — the review row does not move under
+    /// the user's hand, and the decision is not asked again.
+    pub decided: bool,
     /// The vault identities that claim it; more than one is a conflict.
     pub entities: Vec<String>,
+}
+
+/// A value the user said is not sensitive, in this conversation.
+///
+/// Kept because a rescan would otherwise ask again as if nothing had been said
+/// — the owner's rule of 27 September: a `NotSensitive` answer must not come
+/// back in the same scope. The scope of this one is the conversation, which is
+/// where the answer was given.
+#[derive(Debug)]
+pub(crate) struct Dismissed {
+    pub value: crate::secret::Secret,
 }
 
 /// One conversation.
@@ -82,6 +98,8 @@ pub(crate) struct Session {
     /// What the scanner found: protected ones and open suggestions alike, so the
     /// review list can show all three states with their reasons.
     pub findings: Vec<FindingRecord>,
+    /// Values the user called not sensitive here. Survives a rescan.
+    pub dismissed: Vec<Dismissed>,
     /// Ordinary words left over at the last scan. Counted, never hard-coded.
     pub normal_words: u32,
     /// The id of the next finding.
@@ -115,6 +133,7 @@ impl Session {
             places: Vec::new(),
             protections: Vec::new(),
             findings: Vec::new(),
+            dismissed: Vec::new(),
             normal_words: 0,
             next_finding: 1,
             tokens: TokenStore::default(),
@@ -156,6 +175,21 @@ impl Session {
 
     /// How many suggestions are still unanswered. Invariant G12: a payload from a
     /// session with any of these cannot be sent, however it was built.
+    /// Did the user call this stretch's text not sensitive?
+    ///
+    /// Compared by **value**, not by place: saying «Anna Weber is not
+    /// sensitive» and then being asked about the second Anna Weber two lines
+    /// down would be the same answer demanded twice.
+    pub(crate) fn is_dismissed(&self, start: usize, end: usize) -> bool {
+        let Some(text) = self.original_str().get(start..end) else {
+            return false;
+        };
+        let wanted = crate::text::nfc(text);
+        self.dismissed
+            .iter()
+            .any(|d| crate::text::nfc(d.value.expose()) == wanted)
+    }
+
     pub(crate) fn open_suggestions(&self) -> u32 {
         self.findings
             .iter()

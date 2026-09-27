@@ -135,6 +135,7 @@ fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
             token: Some(p.token.clone()),
             kind: p.kind,
             source: p.source,
+            decided: p.decided,
             source_detail: p.source_detail.clone(),
             place: s.place_of(p.start),
         });
@@ -156,6 +157,9 @@ fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
             token: None,
             kind: f.kind,
             source: f.source,
+            // Nothing has been decided about an open suggestion — that is what
+            // makes it one.
+            decided: false,
             source_detail: f.source_detail.clone(),
             place: s.place_of(f.start),
         });
@@ -556,10 +560,52 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
 }
 
 pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
-    protect_inner(session, span, scope, kind, false)
+    // The scope decides the breadth. Until task 034 it was only a label — the
+    // breadth came from which function was called — so «this conversation»
+    // could protect one place and «always» could reach nothing at all.
+    let every_place = !matches!(scope, Scope::Once);
+    let outcome = protect_inner(session, span, scope, kind, every_place)?;
+    remember_in_vault(session, span, scope, kind)?;
+    Ok(outcome)
+}
+
+/// `Profile` and `Always` are promises about **tomorrow**, and a promise about
+/// tomorrow has to be written down. Both put the value in the vault; they differ
+/// only in whether it belongs to this profile or to every one.
+///
+/// The vault must be open, and the refusal says so rather than protecting here
+/// and quietly failing the part the user actually asked for.
+fn remember_in_vault(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<()> {
+    let profile_only = match scope {
+        Scope::Profile => true,
+        Scope::Always => false,
+        _ => return Ok(()),
+    };
+    let (text, profile) = with_session(session.id, |s| {
+        let (start, end) = text::span_to_bytes(s.original_str(), span)?;
+        let text = s
+            .original_str()
+            .get(start..end)
+            .ok_or_else(|| ApiError::BadSpan {
+                reason: "the selection is not on a character boundary".to_string(),
+            })?
+            .to_string();
+        Ok((text, s.profile_id.clone()))
+    })
+    .ok_or(ApiError::InvalidSession)??;
+
+    if profile_only && profile.is_none() {
+        return Err(ApiError::ImportRefused {
+            reason: "this conversation is not in a profile, so there is no profile to remember it                      for — choose «always», or open a profile first"
+                .to_string(),
+        });
+    }
+    let wanted = if profile_only { profile } else { None };
+    crate::ops::learn_value(wanted, kind, text)
 }
 
 pub(crate) fn protect_all_matches(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
+    remember_in_vault(session, span, scope, kind)?;
     protect_inner(session, span, scope, kind, true)
 }
 
@@ -620,6 +666,7 @@ fn protect_inner(
                         kind,
                         scope,
                         source: Source::Hand,
+                        decided: true,
                         source_detail: "selected by you".to_string(),
                     },
                 );
@@ -699,6 +746,7 @@ fn protect_range(
                     kind,
                     scope,
                     source,
+                    decided,
                     source_detail: detail.to_string(),
                 },
             );
@@ -907,11 +955,20 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         // `source == Hand`, which threw away every answer given in the review
         // the moment anyone pressed Rescan.
         s.protections.retain(|p| p.decided);
-        s.findings.clear();
+        // And the review row stays where it was: a decided finding keeps its id,
+        // its reason and its place, so the list does not shuffle under the hand
+        // of someone who has been answering it.
+        s.findings.retain(|f| f.decided);
         let act = s.take_act_id();
 
         for c in &candidates {
-            // Your word wins: a candidate under a hand protection is not reported.
+            // «Not sensitive» was an answer. Asking again after a rescan would
+            // treat it as if the user had said nothing.
+            if s.is_dismissed(c.start, c.end) {
+                continue;
+            }
+            // Your word wins: a candidate under a decided protection is not
+            // reported again, and its own finding is the one kept above.
             if s.protections.iter().any(|p| p.start < c.end && c.start < p.end) {
                 continue;
             }
@@ -935,6 +992,7 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
                 source_detail: c.source_detail.clone(),
                 reason: c.reason.clone(),
                 state,
+                decided: false,
                 entities: c.entities.clone(),
             });
         }
@@ -1000,6 +1058,7 @@ pub(crate) fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
         let mut out = Vec::with_capacity(s.findings.len());
         for f in &s.findings {
             out.push(Finding {
+                decided: f.decided,
                 id: f.id,
                 span: text::bytes_to_span(s.original_str(), f.start, f.end)?,
                 kind: f.kind,
@@ -1019,6 +1078,26 @@ pub(crate) fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
 
 pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAnswer) -> ApiResult<ScanReport> {
     let vault_state = vault_state()?;
+    // «Always» is a promise about tomorrow, so it is written to the vault — and
+    // **before** the session lock is taken, not inside it. Gate G19: the core's
+    // mutex is not re-entrant, and a lock taken under a lock does not fail, it
+    // stops the program.
+    if matches!(answer, FindingAnswer::Always) {
+        let learn = with_session(session.id, |s| {
+            s.findings
+                .iter()
+                .find(|f| f.id == finding && f.state == MarkState::Suggested)
+                .and_then(|f| {
+                    s.original_str()
+                        .get(f.start..f.end)
+                        .map(|t| (t.to_string(), f.kind))
+                })
+        })
+        .ok_or(ApiError::InvalidSession)?;
+        if let Some((text, kind)) = learn {
+            learn_value(None, kind, text)?;
+        }
+    }
     with_session(session.id, |s| {
         let Some(index) = s.findings.iter().position(|f| f.id == finding) else {
             return Err(ApiError::UnknownToken);
@@ -1037,14 +1116,18 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
                 Ok(report_of(s, vault_state))
             }
             FindingAnswer::NotSensitive => {
+                // Remember the answer, not only the removal. A rescan would
+                // otherwise ask again as if nothing had been said.
+                if let Some(text) = s.original_str().get(record.start..record.end) {
+                    let value = crate::secret::Secret::new(text.to_string());
+                    s.dismissed.push(crate::session::Dismissed { value });
+                }
                 s.findings.remove(index);
                 s.bump();
                 Ok(report_of(s, vault_state))
             }
             FindingAnswer::Protect | FindingAnswer::Always => {
                 let act = s.take_act_id();
-                // Note for M4: `Always` will also write a vault identity. Until
-                // the vault exists it protects here and says so in the reason.
                 let detail = record.source_detail.clone();
                 let protected = protect_range(
                     s,
@@ -1065,8 +1148,11 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
                 }
                 if let Some(f) = s.findings.get_mut(index) {
                     f.state = MarkState::Protected;
+                    // A person decided. This is what carries it through a
+                    // rescan, and what puts it under «protected by you».
+                    f.decided = true;
                     f.reason = match answer {
-                        FindingAnswer::Always => format!("{} · confirmed by you, to be kept in the vault (M4)", f.reason),
+                        FindingAnswer::Always => format!("{} · confirmed by you, and kept in the vault", f.reason),
                         _ => format!("{} · confirmed by you", f.reason),
                     };
                 }
@@ -1135,6 +1221,7 @@ fn rescan_keeping(session: SessionId, pack: &str) -> ApiResult<(u32, u32)> {
                 source_detail: c.source_detail.clone(),
                 reason: c.reason.clone(),
                 state,
+                decided: false,
                 entities: c.entities.clone(),
             });
         }
@@ -1207,6 +1294,7 @@ mod tests {
                 source_detail: "de".to_string(),
                 reason: "a word after «Frau»".to_string(),
                 state: MarkState::Suggested,
+                decided: false,
                 entities: Vec::new(),
             });
         })

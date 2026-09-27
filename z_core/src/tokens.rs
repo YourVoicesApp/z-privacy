@@ -104,7 +104,11 @@ pub(crate) struct TokenEntry {
     pub aliases: Vec<Secret>,
     pub kind: Kind,
     pub scope: Scope,
+    /// Who found the value.
     pub source: Source,
+    /// Whether a person decided to protect it. Shown in the tokens panel, and
+    /// the reason a rescan leaves it alone.
+    pub decided: bool,
     pub source_detail: String,
 }
 
@@ -175,6 +179,7 @@ impl TokenStore {
             .iter()
             .filter(|(t, _)| only.iter().any(|u| u == *t))
             .map(|(token, e)| TokenRow {
+                decided: e.decided,
                 token: token.clone(),
                 kind: e.kind,
                 scope: e.scope,
@@ -318,6 +323,7 @@ mod tests {
             kind,
             scope: Scope::Conversation,
             source: Source::Hand,
+            decided: true,
             source_detail: String::new(),
         }
     }

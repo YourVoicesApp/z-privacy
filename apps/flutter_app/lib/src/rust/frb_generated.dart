@@ -2254,17 +2254,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Finding dco_decode_finding(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return Finding(
       id: dco_decode_u_32(arr[0]),
       span: dco_decode_span(arr[1]),
       kind: dco_decode_kind(arr[2]),
       source: dco_decode_source(arr[3]),
-      reason: dco_decode_String(arr[4]),
-      state: dco_decode_mark_state(arr[5]),
-      entities: dco_decode_list_String(arr[6]),
-      place: dco_decode_opt_box_autoadd_place(arr[7]),
+      decided: dco_decode_bool(arr[4]),
+      reason: dco_decode_String(arr[5]),
+      state: dco_decode_mark_state(arr[6]),
+      entities: dco_decode_list_String(arr[7]),
+      place: dco_decode_opt_box_autoadd_place(arr[8]),
     );
   }
 
@@ -2406,16 +2407,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Mark dco_decode_mark(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return Mark(
       span: dco_decode_span(arr[0]),
       state: dco_decode_mark_state(arr[1]),
       token: dco_decode_opt_String(arr[2]),
       kind: dco_decode_kind(arr[3]),
       source: dco_decode_source(arr[4]),
-      sourceDetail: dco_decode_String(arr[5]),
-      place: dco_decode_opt_box_autoadd_place(arr[6]),
+      decided: dco_decode_bool(arr[5]),
+      sourceDetail: dco_decode_String(arr[6]),
+      place: dco_decode_opt_box_autoadd_place(arr[7]),
     );
   }
 
@@ -2790,14 +2792,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TokenRow dco_decode_token_row(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return TokenRow(
       token: dco_decode_String(arr[0]),
       kind: dco_decode_kind(arr[1]),
       scope: dco_decode_scope(arr[2]),
       source: dco_decode_source(arr[3]),
-      sourceDetail: dco_decode_String(arr[4]),
+      decided: dco_decode_bool(arr[4]),
+      sourceDetail: dco_decode_String(arr[5]),
     );
   }
 
@@ -3086,6 +3089,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_span = sse_decode_span(deserializer);
     var var_kind = sse_decode_kind(deserializer);
     var var_source = sse_decode_source(deserializer);
+    var var_decided = sse_decode_bool(deserializer);
     var var_reason = sse_decode_String(deserializer);
     var var_state = sse_decode_mark_state(deserializer);
     var var_entities = sse_decode_list_String(deserializer);
@@ -3095,6 +3099,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       span: var_span,
       kind: var_kind,
       source: var_source,
+      decided: var_decided,
       reason: var_reason,
       state: var_state,
       entities: var_entities,
@@ -3318,6 +3323,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_token = sse_decode_opt_String(deserializer);
     var var_kind = sse_decode_kind(deserializer);
     var var_source = sse_decode_source(deserializer);
+    var var_decided = sse_decode_bool(deserializer);
     var var_sourceDetail = sse_decode_String(deserializer);
     var var_place = sse_decode_opt_box_autoadd_place(deserializer);
     return Mark(
@@ -3326,6 +3332,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       token: var_token,
       kind: var_kind,
       source: var_source,
+      decided: var_decided,
       sourceDetail: var_sourceDetail,
       place: var_place,
     );
@@ -3736,12 +3743,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_kind = sse_decode_kind(deserializer);
     var var_scope = sse_decode_scope(deserializer);
     var var_source = sse_decode_source(deserializer);
+    var var_decided = sse_decode_bool(deserializer);
     var var_sourceDetail = sse_decode_String(deserializer);
     return TokenRow(
       token: var_token,
       kind: var_kind,
       scope: var_scope,
       source: var_source,
+      decided: var_decided,
       sourceDetail: var_sourceDetail,
     );
   }
@@ -4027,6 +4036,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_span(self.span, serializer);
     sse_encode_kind(self.kind, serializer);
     sse_encode_source(self.source, serializer);
+    sse_encode_bool(self.decided, serializer);
     sse_encode_String(self.reason, serializer);
     sse_encode_mark_state(self.state, serializer);
     sse_encode_list_String(self.entities, serializer);
@@ -4232,6 +4242,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.token, serializer);
     sse_encode_kind(self.kind, serializer);
     sse_encode_source(self.source, serializer);
+    sse_encode_bool(self.decided, serializer);
     sse_encode_String(self.sourceDetail, serializer);
     sse_encode_opt_box_autoadd_place(self.place, serializer);
   }
@@ -4566,6 +4577,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_kind(self.kind, serializer);
     sse_encode_scope(self.scope, serializer);
     sse_encode_source(self.source, serializer);
+    sse_encode_bool(self.decided, serializer);
     sse_encode_String(self.sourceDetail, serializer);
   }
 

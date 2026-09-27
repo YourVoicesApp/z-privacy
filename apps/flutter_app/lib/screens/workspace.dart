@@ -341,7 +341,7 @@ class _Columns extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (said != null) _Said(said!),
-                      ActsBar(bench: bench, onSay: onSay),
+                      ActsBar(bench: bench, ground: ground, onSay: onSay),
                     ],
                   ),
             child: doc == null

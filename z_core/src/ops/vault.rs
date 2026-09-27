@@ -469,6 +469,69 @@ pub(crate) fn reveal_ttl_ms() -> u32 {
     })
 }
 
+/// Put a value into the vault so it is found by itself from now on.
+///
+/// This is what `Scope::Profile` and `Scope::Always` are **for**. It goes into
+/// a catch-all identity — one per profile, and one for «everywhere» — because
+/// the Workspace does not know whose value it is and stopping to ask would turn
+/// one decision into two. The vault room can rename that identity, move it, or
+/// take values out of it; what matters here is that the promise is kept at the
+/// moment it is made, not at the moment the user gets round to tidying.
+pub(crate) fn learn_value(profile_id: Option<String>, kind: Kind, text: String) -> ApiResult<()> {
+    let text = text.trim().to_string();
+    if text.is_empty() {
+        return Ok(());
+    }
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            // Already known? Then it is already found by itself, and saying it
+            // twice would give one value two records.
+            if vault
+                .entities
+                .iter()
+                .filter(|e| e.profile_id == profile_id)
+                .any(|e| e.values.iter().any(|v| v.matches(&text)))
+            {
+                return Ok(());
+            }
+            let label = match &profile_id {
+                Some(_) => "Learned from this client's documents",
+                None => "Learned from your documents",
+            };
+            let entity_id = match vault
+                .entities
+                .iter()
+                .find(|e| e.profile_id == profile_id && e.label.expose() == label)
+                .map(|e| e.id)
+            {
+                Some(id) => id,
+                None => {
+                    let id = vault.take_entity_id();
+                    vault.entities.push(Entity {
+                        id,
+                        kind: EntityKind::Custom,
+                        label: Secret::new(label),
+                        profile_id: profile_id.clone(),
+                        values: Vec::new(),
+                    });
+                    id
+                }
+            };
+            let value_id = vault.take_value_id();
+            if let Some(e) = vault.entity_mut(entity_id) {
+                e.values.push(ValueRecord {
+                    id: value_id,
+                    kind,
+                    value: Secret::new(text),
+                    aliases: Vec::new(),
+                    policy: Policy::Always,
+                });
+            }
+            Ok(())
+        })
+    })
+}
+
 // ---------------------------------------------------------------- profiles
 
 pub(crate) fn create_profile(name: String) -> ApiResult<String> {

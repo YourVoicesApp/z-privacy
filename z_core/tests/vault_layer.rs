@@ -540,3 +540,66 @@ fn a_wrong_passphrase_reports_nothing_it_does_not_know() {
     ));
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn always_and_profile_actually_reach_the_vault() {
+    let _lock = serial();
+    fresh_vault("scope");
+    let profile = create_profile("Client Nordstern".to_string()).expect("profile");
+
+    // «Always» — every profile. The dialog has promised this since M7.3 and
+    // nothing wrote it down until task 034.
+    let s = open_session(None, "de".to_string()).expect("session");
+    import_text(s, "Ansprechpartner: Herr Thomas Müller ruft an.".to_string()).expect("import");
+    scan(s).expect("scan");
+    protect(s, Span { start: 22, end: 35 }, Scope::Always, Kind::Person).expect("always");
+    assert_eq!(
+        search_vault("Thomas Müller".to_string()).expect("search").len(),
+        1,
+        "«always» did not put the name in the vault"
+    );
+    close_session(s).expect("close");
+
+    // And the proof it was a promise about tomorrow: a **new** conversation,
+    // which has never seen this name, finds it by itself.
+    let tomorrow = open_session(None, "de".to_string()).expect("session");
+    import_text(tomorrow, "Thomas Müller hat angerufen.".to_string()).expect("import");
+    let report = scan(tomorrow).expect("scan");
+    assert!(
+        report.by_layer.iter().any(|l| l.source == Source::Vault && l.count > 0),
+        "the vault layer did not find what «always» taught it: {:?}",
+        report.by_layer
+    );
+    close_session(tomorrow).expect("close");
+
+    // «Profile» — this client only. The level a firm with several clients
+    // needs: what you learn about one does not become a rule about all.
+    let theirs = open_session(Some(profile.clone()), "de".to_string()).expect("session");
+    import_text(theirs, "Kunde: Nordstern Consulting GmbH ist zufrieden.".to_string()).expect("import");
+    scan(theirs).expect("scan");
+    protect(theirs, Span { start: 7, end: 32 }, Scope::Profile, Kind::Company).expect("profile");
+    close_session(theirs).expect("close");
+
+    // In that client's profile it is known.
+    let same_client = open_session(Some(profile), "de".to_string()).expect("session");
+    import_text(same_client, "Nordstern Consulting GmbH meldet sich.".to_string()).expect("import");
+    let inside = scan(same_client).expect("scan");
+    assert!(
+        inside.by_layer.iter().any(|l| l.source == Source::Vault && l.count > 0),
+        "the client's own profile does not know its own client: {:?}",
+        inside.by_layer
+    );
+    close_session(same_client).expect("close");
+
+    // In another client's, it is not — and that is the whole point of the scope.
+    let other = create_profile("Client B".to_string()).expect("profile");
+    let elsewhere = open_session(Some(other), "de".to_string()).expect("session");
+    import_text(elsewhere, "Nordstern Consulting GmbH meldet sich.".to_string()).expect("import");
+    let outside = scan(elsewhere).expect("scan");
+    assert!(
+        !outside.by_layer.iter().any(|l| l.source == Source::Vault && l.count > 0),
+        "one client's value became a rule about another: {:?}",
+        outside.by_layer
+    );
+    close_session(elsewhere).expect("close");
+}

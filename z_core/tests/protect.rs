@@ -32,12 +32,14 @@ fn payload_text(s: SessionId) -> String {
 #[test]
 fn protecting_once_replaces_that_place_only() {
     let s = session_with_doc();
-    let outcome = protect(s, span_of(DOC, "Thomas Müller"), Scope::Conversation, Kind::Person)
+    // `Once` means once. Before task 034 `Conversation` also took one place,
+    // which is why this test used to pass with either.
+    let outcome = protect(s, span_of(DOC, "Thomas Müller"), Scope::Once, Kind::Person)
         .expect("protect");
 
     let token = match outcome {
         ProtectOutcome::Applied { token, places } => {
-            assert_eq!(places, 1, "Protect takes one place; All Matches takes the rest");
+            assert_eq!(places, 1, "«once» takes one place");
             token
         }
         other => panic!("expected Applied, got {other:?}"),
@@ -152,7 +154,8 @@ fn different_values_get_different_tokens() {
 #[test]
 fn the_same_value_selected_twice_reuses_its_token() {
     let s = session_with_doc();
-    let first = match protect(s, span_of(DOC, "Thomas Müller"), Scope::Conversation, Kind::Person)
+    // Two separate hand selections, one at a time — so both are `Once`.
+    let first = match protect(s, span_of(DOC, "Thomas Müller"), Scope::Once, Kind::Person)
         .expect("first")
     {
         ProtectOutcome::Applied { token, .. } => token,
@@ -165,7 +168,7 @@ fn the_same_value_selected_twice_reuses_its_token() {
         start: start as u32,
         end: (start + "Thomas Müller".chars().map(char::len_utf16).sum::<usize>()) as u32,
     };
-    match protect(s, span, Scope::Conversation, Kind::Person).expect("second") {
+    match protect(s, span, Scope::Once, Kind::Person).expect("second") {
         ProtectOutcome::Applied { token, .. } => assert_eq!(token, first, "one value, one token"),
         other => panic!("expected Applied, got {other:?}"),
     }
@@ -320,5 +323,47 @@ fn inspect_snaps_hands_back_the_whole_items_it_would_take() {
     match protect(s, Span { start: 12, end: 23 }, Scope::Once, Kind::Person).expect("protect") {
         ProtectOutcome::Snapped { spans } => assert_eq!(spans, view.snaps_to),
         other => panic!("expected a snap, got {other:?}"),
+    }
+}
+
+// ---------------------------------------------------------------- M7 · 034
+// The scope has to **do** what it says. It used to be a label: the breadth came
+// from whether `protect` or `protect_all_matches` was called, and `Always`
+// promised the vault while nothing ever wrote to one.
+
+#[test]
+fn this_conversation_means_every_place_in_it() {
+    let s = session_with_doc();
+    let outcome = protect(s, span_of(DOC, "Thomas Müller"), Scope::Conversation, Kind::Person)
+        .expect("protect");
+    match outcome {
+        ProtectOutcome::Applied { places, .. } => {
+            assert!(places > 1, "«every appearance in this conversation» took {places}")
+        }
+        other => panic!("expected Applied, got {other:?}"),
+    }
+    assert!(
+        !payload_text(s).contains("Thomas Müller"),
+        "a second appearance was left standing after «this conversation»"
+    );
+}
+
+#[test]
+fn always_and_profile_need_the_vault_and_say_so() {
+    // The seventh lie, as a test. The dialog says «kept in the vault and found
+    // by itself from now on»; with no vault there is nothing to keep it in, and
+    // the honest answer is to refuse rather than to protect here and let the
+    // user believe tomorrow is handled.
+    let s = session_with_doc();
+    match protect(s, span_of(DOC, "Thomas Müller"), Scope::Always, Kind::Person) {
+        Err(ApiError::VaultLocked) => {}
+        other => panic!("«always» without a vault must be refused, got {other:?}"),
+    }
+    // And a profile scope in a conversation that is in no profile is refused
+    // with its own reason — there is no profile to remember it for.
+    match protect(s, span_of(DOC, "Thomas Müller"), Scope::Profile, Kind::Person) {
+        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("profile"), "{reason}"),
+        Err(ApiError::VaultLocked) => {}
+        other => panic!("expected a refusal, got {other:?}"),
     }
 }

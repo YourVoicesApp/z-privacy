@@ -26,18 +26,30 @@ ProtectState protectStateOf(SelectionView? v) {
 
 /// What the user chose in the dialog.
 class ProtectWish {
-  const ProtectWish({required this.scope, required this.kind, required this.allMatches});
+  const ProtectWish({required this.scope, required this.kind});
 
   final Scope scope;
   final Kind kind;
-  final bool allMatches;
 }
 
 class ProtectDialog extends StatefulWidget {
-  const ProtectDialog({super.key, required this.view, required this.selectedText});
+  const ProtectDialog({
+    super.key,
+    required this.view,
+    required this.selectedText,
+    required this.vault,
+    required this.inAProfile,
+    required this.profileName,
+  });
 
   final SelectionView view;
   final String selectedText;
+
+  /// The two widest scopes write to the vault, so they need one open. A closed
+  /// door says why it is closed — the boards' rule for every disabled control.
+  final VaultState vault;
+  final bool inAProfile;
+  final String profileName;
 
   @override
   State<ProtectDialog> createState() => _ProtectDialogState();
@@ -46,7 +58,6 @@ class ProtectDialog extends StatefulWidget {
 class _ProtectDialogState extends State<ProtectDialog> {
   late Scope _scope;
   late Kind _kind;
-  late bool _all;
 
   @override
   void initState() {
@@ -55,7 +66,6 @@ class _ProtectDialogState extends State<ProtectDialog> {
     // «this conversation» only when there is more than one place to cover.
     _scope = widget.view.matches > 1 ? Scope.conversation : Scope.once;
     _kind = widget.view.kind;
-    _all = widget.view.matches > 1;
   }
 
   @override
@@ -130,53 +140,50 @@ class _ProtectDialogState extends State<ProtectDialog> {
               const SizedBox(height: 18),
               const Eyebrow('How far'),
               const SizedBox(height: 8),
+              // Four steps, each wider than the last. The first two are about
+              // this conversation; the last two are promises about tomorrow,
+              // and a promise about tomorrow has to be written in the vault.
               _ScopeRow(
                 scope: Scope.once,
                 chosen: _scope,
-                title: 'Once',
-                what: 'This place in this document only.',
+                title: 'Just here',
+                what: 'This one place. The same words elsewhere are left alone.',
                 onTap: (s) => setState(() => _scope = s),
               ),
               _ScopeRow(
                 scope: Scope.conversation,
                 chosen: _scope,
                 title: 'This conversation',
-                what: 'Every appearance here, under one token.',
+                what: v.matches > 1
+                    ? 'All ${v.matches} places here, under one token. Gone when this '
+                        'conversation is.'
+                    : 'Every appearance here, under one token. Gone when this conversation is.',
+                onTap: (s) => setState(() => _scope = s),
+              ),
+              _ScopeRow(
+                scope: Scope.profile,
+                chosen: _scope,
+                title: 'Remember for ${widget.profileName}',
+                what: widget.inAProfile
+                    ? 'Kept in the vault under this client, so their next document finds it '
+                        'by itself — and no other client\u2019s does.'
+                    : 'This conversation is not in a profile, so there is no client to '
+                        'remember it for.',
+                enabled: widget.inAProfile && widget.vault == VaultState.unlocked,
+                why: !widget.inAProfile
+                    ? 'open a profile first'
+                    : 'the vault is closed, and this is kept in the vault',
                 onTap: (s) => setState(() => _scope = s),
               ),
               _ScopeRow(
                 scope: Scope.always,
                 chosen: _scope,
-                title: 'Always',
-                what: 'Kept in the vault and found by itself from now on.',
+                title: 'Remember everywhere',
+                what: 'Kept in the vault for every client, and found by itself from now on.',
+                enabled: widget.vault == VaultState.unlocked,
+                why: 'the vault is closed, and this is kept in the vault',
                 onTap: (s) => setState(() => _scope = s),
               ),
-              if (v.matches > 1) ...[
-                const SizedBox(height: 14),
-                InkWell(
-                  onTap: () => setState(() => _all = !_all),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: _all,
-                          onChanged: (on) => setState(() => _all = on ?? false),
-                          activeColor: Zc.clay,
-                        ),
-                        Expanded(
-                          child: Text(
-                            'Protect all ${v.matches} matches — all of them get the same token, '
-                            'otherwise the model reads them as different people.',
-                            style: Zc.small,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
               const SizedBox(height: 20),
               Row(
                 children: [
@@ -186,7 +193,7 @@ class _ProtectDialogState extends State<ProtectDialog> {
                     label: 'Protect',
                     filled: true,
                     onPressed: () => Navigator.of(context).pop(
-                      ProtectWish(scope: _scope, kind: _kind, allMatches: _all),
+                      ProtectWish(scope: _scope, kind: _kind),
                     ),
                   ),
                 ],
@@ -251,6 +258,8 @@ class _ScopeRow extends StatelessWidget {
     required this.title,
     required this.what,
     required this.onTap,
+    this.enabled = true,
+    this.why,
   });
 
   final Scope scope;
@@ -258,12 +267,19 @@ class _ScopeRow extends StatelessWidget {
   final String title;
   final String what;
   final void Function(Scope) onTap;
+  final bool enabled;
+
+  /// Why it cannot be chosen. A greyed row with no reason is the commonest way
+  /// an app lies about what it can do.
+  final String? why;
 
   @override
   Widget build(BuildContext context) {
-    final on = scope == chosen;
-    return InkWell(
-      onTap: () => onTap(scope),
+    final on = scope == chosen && enabled;
+    return Opacity(
+      opacity: enabled ? 1 : 0.55,
+      child: InkWell(
+      onTap: enabled ? () => onTap(scope) : null,
       borderRadius: BorderRadius.circular(9),
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
@@ -294,11 +310,20 @@ class _ScopeRow extends StatelessWidget {
                     ),
                   ),
                   Text(what, style: Zc.small.copyWith(color: Zc.ink3)),
+                  if (!enabled && why != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                        why!,
+                        style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.amber),
+                      ),
+                    ),
                 ],
               ),
             ),
           ],
         ),
+      ),
       ),
     );
   }

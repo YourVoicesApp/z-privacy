@@ -170,11 +170,15 @@ class _TokenRow extends StatelessWidget {
             children: [
               _Tag(kindName(row.kind), Zc.ink4),
               _Tag(sourceName(row.source), tint),
+              // Who found it and who decided it are two facts, and the panel
+              // shows both rather than letting one stand for the other.
+              if (row.decided) _Tag('you decided', Zc.clay),
               _Tag(
                 switch (row.scope) {
-                  Scope.once => 'Once',
+                  Scope.once => 'Just here',
                   Scope.conversation => 'This conversation',
-                  Scope.always => 'Always',
+                  Scope.profile => 'Remembered for this client',
+                  Scope.always => 'Remembered everywhere',
                 },
                 Zc.ink4,
               ),

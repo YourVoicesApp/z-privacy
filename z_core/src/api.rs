@@ -289,12 +289,29 @@ pub struct Span {
 
 /// How long a protection lasts.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// How far a protection reaches. Four steps, each one wider than the last, and
+/// each one **doing** what it says (task 034).
+///
+/// Until then `Conversation` and `Always` were labels: the breadth came from
+/// whether `protect` or `protect_all_matches` was called, and `Always` promised
+/// the vault while nothing ever wrote to it. The dialog said «kept in the vault
+/// and found by itself from now on» and the app did not do it — which is the
+/// worst kind of untruth a privacy product can tell, because the user stops
+/// watching for what they think is handled.
 pub enum Scope {
-    /// This place in this document only.
+    /// This one place, and nothing else.
     Once,
-    /// Every appearance in this conversation, under one token.
+    /// Every appearance in this conversation, under one token. Gone when the
+    /// conversation is.
     Conversation,
-    /// Kept in the vault and found by itself from now on.
+    /// Every appearance here, **and kept in the vault under the profile this
+    /// conversation is in** — so it is found by itself in that client's next
+    /// document, and in no other client's.
+    ///
+    /// The level a firm with several clients needs: what you learn about one of
+    /// them does not become a rule about all of them.
+    Profile,
+    /// Every appearance here, and kept in the vault for **every** profile.
     Always,
 }
 
@@ -481,7 +498,15 @@ pub struct Mark {
     pub state: MarkState,
     pub token: Option<String>,
     pub kind: Kind,
+    /// Who **found** it.
     pub source: Source,
+    /// Whether a person **decided** it, as against a layer deciding on its own.
+    ///
+    /// Two different questions, and mixing them wrote a false history: the pack
+    /// may have found a name while you chose to protect it, and a list that
+    /// said «you found this» would be wrong. It is also a rule and not only a
+    /// label — see [`Scope`] and the rescan behaviour. (Task 033/034.)
+    pub decided: bool,
     /// Pack id, entity id, or the rule's name — the "why" behind the mark.
     pub source_detail: String,
     /// The page and paragraph it sits on, when the text came from a document.
@@ -514,6 +539,7 @@ pub struct TokenRow {
     pub kind: Kind,
     pub scope: Scope,
     pub source: Source,
+    pub decided: bool,
     pub source_detail: String,
 }
 
@@ -563,7 +589,11 @@ pub struct Finding {
     pub id: u32,
     pub span: Span,
     pub kind: Kind,
+    /// Who found it.
     pub source: Source,
+    /// Whether a person decided it. The review list groups by this, not by
+    /// `source`: confirming the pack's suggestion is **your** decision.
+    pub decided: bool,
     pub reason: String,
     pub state: MarkState,
     /// The vault identities that claim this text.
