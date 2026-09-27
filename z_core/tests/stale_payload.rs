@@ -17,6 +17,23 @@ fn person_span() -> Span {
     Span { start: 5, end: 18 }
 }
 
+/// The id of the first suggestion still waiting for an answer.
+fn first_open(s: SessionId) -> u32 {
+    list_findings(s)
+        .expect("findings")
+        .into_iter()
+        .find(|f| f.state == MarkState::Suggested)
+        .expect("this document has an open suggestion")
+        .id
+}
+
+fn scan_counts(s: SessionId) -> (u32, u32) {
+    let found = list_findings(s).expect("findings");
+    let auto = found.iter().filter(|f| f.state == MarkState::Protected).count() as u32;
+    let open = found.iter().filter(|f| f.state == MarkState::Suggested).count() as u32;
+    (auto, open)
+}
+
 fn fresh_session_with_payload() -> (SessionId, PayloadHandle) {
     let s = open_session(None, "de".to_string()).expect("open");
     import_text(s, DOC.to_string()).expect("import");
@@ -106,12 +123,47 @@ fn stale_payload_after_every_mutating_call() {
                 Did::Changed
             },
         ),
-        ("answer_finding", |_| {}, |s| {
-            match answer_finding(s, 1, FindingAnswer::Protect) {
-                Err(ApiError::NotImplemented) => Did::Pending,
-                other => panic!("unexpected: {other:?}"),
-            }
+        ("scan", |_| {}, |s| {
+            let report = scan(s).expect("scan");
+            assert!(report.auto + report.suggested > 0, "this document has something in it");
+            Did::Changed
         }),
+        (
+            "answer_finding · protect",
+            |s| {
+                scan(s).expect("scan");
+            },
+            |s| {
+                let open = first_open(s);
+                answer_finding(s, open, FindingAnswer::Protect).expect("answer");
+                Did::Changed
+            },
+        ),
+        (
+            "answer_finding · not sensitive",
+            |s| {
+                scan(s).expect("scan");
+            },
+            |s| {
+                let open = first_open(s);
+                answer_finding(s, open, FindingAnswer::NotSensitive).expect("answer");
+                Did::Changed
+            },
+        ),
+        (
+            "answer_finding · skip",
+            |s| {
+                scan(s).expect("scan");
+            },
+            |s| {
+                // Skipping is not deciding: nothing changes, and the count stays.
+                let open = first_open(s);
+                let before = scan_counts(s);
+                answer_finding(s, open, FindingAnswer::Skip).expect("answer");
+                assert_eq!(scan_counts(s), before, "skip must leave the counts alone");
+                Did::Nothing
+            },
+        ),
         ("switch_profile", |_| {}, |s| match switch_profile(s, "p".to_string()) {
             Err(ApiError::NotImplemented) => Did::Pending,
             other => panic!("unexpected: {other:?}"),

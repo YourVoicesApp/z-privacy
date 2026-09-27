@@ -392,8 +392,7 @@ pub fn document_view(session: SessionId) -> ApiResult<DocumentView> {
 
 /// Run the detection layers over the whole document. M3.
 pub fn scan(session: SessionId) -> ApiResult<ScanReport> {
-    let _ = session;
-    Err(ApiError::NotImplemented)
+    crate::ops::scan(session)
 }
 
 // ---------------------------------------------------------------- protect
@@ -422,14 +421,12 @@ pub fn add_alias(session: SessionId, token: String, alias: String) -> ApiResult<
 
 /// Everything the scan found, in three states, each with its reason.
 pub fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
-    let _ = session;
-    Err(ApiError::NotImplemented)
+    crate::ops::list_findings(session)
 }
 
 /// Answer one suggestion. Skip leaves it in the clear, and still counted.
 pub fn answer_finding(session: SessionId, finding: u32, answer: FindingAnswer) -> ApiResult<ScanReport> {
-    let _ = (session, finding, answer);
-    Err(ApiError::NotImplemented)
+    crate::ops::answer_finding(session, finding, answer)
 }
 
 // ---------------------------------------------------------------- tokens
@@ -519,7 +516,7 @@ pub fn switch_profile(session: SessionId, profile_id: String) -> ApiResult<Switc
 
 /// The installed privacy packs. A pack is a detection engine, not a UI language.
 pub fn packs() -> ApiResult<Vec<String>> {
-    Err(ApiError::NotImplemented)
+    crate::ops::packs()
 }
 
 /// Override the pack for this session: app default → profile → session.

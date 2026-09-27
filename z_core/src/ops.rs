@@ -4,11 +4,15 @@
 //! gates can read every signature and so the contract is easy to see whole.
 //! What each call actually does lives here.
 
+use std::collections::BTreeMap;
+
 use crate::api::{
-    ApiError, ApiResult, AnswerId, Segment, DocumentView, Kind, Mark, MarkState, PayloadHandle, PayloadView,
-    ProtectOutcome, ProviderId, RevealedValue, Revision, Scope, SessionId, Source, Span, TokenRow,
-    UndoOutcome,
+    ApiError, ApiResult, AnswerId, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
+    Mark, MarkState, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, RevealedValue,
+    Revision, ScanReport, Scope, SessionId, Source, Span, TokenRow, UndoOutcome,
 };
+use crate::scanner;
+use crate::session::FindingRecord;
 use crate::payload::SafePayload;
 use crate::session::{with_core, with_session, Protection, Session};
 use crate::text;
@@ -249,6 +253,58 @@ fn protect_inner(
     .ok_or(ApiError::InvalidSession)?
 }
 
+/// Turn one range into a protection, for any layer.
+///
+/// The scanner does not have its own way of hiding something: it comes through
+/// here, exactly like a selection made by hand. One path to protection means one
+/// place for a bug to live.
+#[allow(clippy::too_many_arguments)]
+fn protect_range(
+    s: &mut Session,
+    start: usize,
+    end: usize,
+    kind: Kind,
+    scope: Scope,
+    source: Source,
+    detail: &str,
+    act: u32,
+) -> Option<String> {
+    let value = s.original_str().get(start..end)?.to_string();
+    if s.protections.iter().any(|p| p.start < end && start < p.end) {
+        return None;
+    }
+    let token = match s.tokens.token_for(&value) {
+        Some(existing) => existing.to_string(),
+        None => {
+            let minted = s.mint.mint(kind, &s.tokens);
+            s.tokens.insert(
+                minted.clone(),
+                TokenEntry {
+                    value: crate::secret::Secret::new(value),
+                    aliases: Vec::new(),
+                    kind,
+                    scope,
+                    source,
+                    source_detail: detail.to_string(),
+                },
+            );
+            minted
+        }
+    };
+    s.protections.push(Protection {
+        start,
+        end,
+        token: token.clone(),
+        act,
+        kind,
+        scope,
+        source,
+        source_detail: detail.to_string(),
+    });
+    s.protections.sort_by_key(|p| p.start);
+    Some(token)
+}
+
 /// Every place `needle` appears in `haystack`, as byte ranges, left to right and
 /// non-overlapping.
 fn occurrences(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
@@ -404,6 +460,186 @@ pub(crate) fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String>
         None => Err(ApiError::UnknownToken),
     })
     .ok_or(ApiError::InvalidSession)?
+}
+
+// ---------------------------------------------------------------- scan (M3)
+
+pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
+    with_session(session.id, |s| {
+        if s.original.is_empty() {
+            return Err(ApiError::NothingToSend);
+        }
+        let pack = s.pack_id.clone();
+        let candidates = scanner::scan(s.original_str(), &pack);
+
+        // What you protected by hand is never touched by a rescan; what a layer
+        // decided is recomputed from scratch.
+        s.protections.retain(|p| p.source == Source::Hand);
+        s.findings.clear();
+        let act = s.take_act_id();
+
+        for c in &candidates {
+            // Your word wins: a candidate under a hand protection is not reported.
+            if s.protections.iter().any(|p| p.start < c.end && c.start < p.end) {
+                continue;
+            }
+            let state = match c.confidence {
+                scanner::Confidence::Auto => {
+                    match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act) {
+                        Some(_) => MarkState::Protected,
+                        // Already covered by something else: not reported twice.
+                        None => continue,
+                    }
+                }
+                scanner::Confidence::Suggest => MarkState::Suggested,
+            };
+            let id = s.take_finding_id();
+            s.findings.push(FindingRecord {
+                id,
+                start: c.start,
+                end: c.end,
+                kind: c.kind,
+                source: c.source,
+                source_detail: c.source_detail.clone(),
+                reason: c.reason.clone(),
+                state,
+            });
+        }
+
+        s.normal_words = scanner::plain_word_count(s.original_str(), &candidates);
+        s.bump();
+        Ok(report_of(s))
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+/// The counts, as the band under the Original header reports them. Every number
+/// here is counted from the state; none of them is written into the code.
+fn report_of(s: &Session) -> ScanReport {
+    let auto = s.findings.iter().filter(|f| f.state == MarkState::Protected).count() as u32;
+    let suggested = s.findings.iter().filter(|f| f.state == MarkState::Suggested).count() as u32;
+
+    let mut per_layer: BTreeMap<(u8, String), u32> = BTreeMap::new();
+    for p in &s.protections {
+        let detail = match p.source {
+            Source::LanguagePack => s.pack_id.clone(),
+            _ => String::new(),
+        };
+        *per_layer.entry((layer_key(p.source), detail)).or_insert(0) += 1;
+    }
+    let by_layer = per_layer
+        .into_iter()
+        .map(|((key, detail), count)| LayerCount {
+            source: layer_of(key),
+            detail,
+            count,
+        })
+        .collect();
+
+    ScanReport {
+        auto,
+        suggested,
+        normal: s.normal_words,
+        by_layer,
+    }
+}
+
+fn layer_key(s: Source) -> u8 {
+    match s {
+        Source::GeneralRule => 0,
+        Source::LanguagePack => 1,
+        Source::Vault => 2,
+        Source::Hand => 3,
+    }
+}
+
+fn layer_of(key: u8) -> Source {
+    match key {
+        0 => Source::GeneralRule,
+        1 => Source::LanguagePack,
+        2 => Source::Vault,
+        _ => Source::Hand,
+    }
+}
+
+pub(crate) fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
+    with_session(session.id, |s| {
+        let mut out = Vec::with_capacity(s.findings.len());
+        for f in &s.findings {
+            out.push(Finding {
+                id: f.id,
+                span: text::bytes_to_span(s.original_str(), f.start, f.end)?,
+                kind: f.kind,
+                source: f.source,
+                reason: f.reason.clone(),
+                state: f.state,
+            });
+        }
+        Ok(out)
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAnswer) -> ApiResult<ScanReport> {
+    with_session(session.id, |s| {
+        let Some(index) = s.findings.iter().position(|f| f.id == finding) else {
+            return Err(ApiError::UnknownToken);
+        };
+        let Some(record) = s.findings.get(index).cloned() else {
+            return Err(ApiError::UnknownToken);
+        };
+        if record.state != MarkState::Suggested {
+            // Answering something already protected is not an error, and not a
+            // change either.
+            return Ok(report_of(s));
+        }
+        match answer {
+            FindingAnswer::Skip => {
+                // Skipping is not deciding: it stays open and stays counted.
+                Ok(report_of(s))
+            }
+            FindingAnswer::NotSensitive => {
+                s.findings.remove(index);
+                s.bump();
+                Ok(report_of(s))
+            }
+            FindingAnswer::Protect | FindingAnswer::Always => {
+                let act = s.take_act_id();
+                // Note for M4: `Always` will also write a vault identity. Until
+                // the vault exists it protects here and says so in the reason.
+                let detail = record.source_detail.clone();
+                let protected = protect_range(
+                    s,
+                    record.start,
+                    record.end,
+                    record.kind,
+                    Scope::Conversation,
+                    record.source,
+                    &detail,
+                    act,
+                );
+                if protected.is_none() {
+                    return Err(ApiError::BadSpan {
+                        reason: "that place is already covered by another protection".to_string(),
+                    });
+                }
+                if let Some(f) = s.findings.get_mut(index) {
+                    f.state = MarkState::Protected;
+                    f.reason = match answer {
+                        FindingAnswer::Always => format!("{} · confirmed by you, to be kept in the vault (M4)", f.reason),
+                        _ => format!("{} · confirmed by you", f.reason),
+                    };
+                }
+                s.bump();
+                Ok(report_of(s))
+            }
+        }
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) fn packs() -> ApiResult<Vec<String>> {
+    Ok(scanner::packs::installed())
 }
 
 #[cfg(test)]

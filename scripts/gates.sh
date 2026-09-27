@@ -183,7 +183,7 @@ else
 fi
 
 # A green run proves nothing unless the four invariant tests actually exist.
-for t in no_leak stale_payload round_trip session_namespace g11_ g12_; do
+for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

@@ -60,8 +60,13 @@ pub(crate) struct Session {
     /// never prints itself (G11).
     pub original: Secret,
     pub protections: Vec<Protection>,
-    /// What the scanner found and the user has not answered yet (M3 fills it).
+    /// What the scanner found: protected ones and open suggestions alike, so the
+    /// review list can show all three states with their reasons.
     pub findings: Vec<FindingRecord>,
+    /// Ordinary words left over at the last scan. Counted, never hard-coded.
+    pub normal_words: u32,
+    /// The id of the next finding.
+    next_finding: u32,
     /// What every token in this conversation stands for.
     pub tokens: TokenStore,
     /// This session's own token namespace and randomness.
@@ -87,6 +92,8 @@ impl Session {
             original: Secret::default(),
             protections: Vec::new(),
             findings: Vec::new(),
+            normal_words: 0,
+            next_finding: 1,
             tokens: TokenStore::default(),
             mint: TokenMint::new(),
             payloads: BTreeMap::new(),
@@ -116,6 +123,12 @@ impl Session {
             .iter()
             .filter(|f| f.state == MarkState::Suggested)
             .count() as u32
+    }
+
+    pub(crate) fn take_finding_id(&mut self) -> u32 {
+        let id = self.next_finding;
+        self.next_finding = self.next_finding.saturating_add(1);
+        id
     }
 
     pub(crate) fn take_act_id(&mut self) -> u32 {

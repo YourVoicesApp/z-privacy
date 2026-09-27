@@ -19,6 +19,7 @@
 pub mod api;
 mod ops;
 mod payload;
+mod scanner;
 mod secret;
 mod session;
 mod text;
