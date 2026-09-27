@@ -1,0 +1,319 @@
+// The vault as the fourth layer, and the owner's four rules for M4.
+//
+// The vault is one per device, so these tests share it: each one takes the lock
+// below, points the core at its own folder, and builds the vault it needs.
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing)]
+
+use std::sync::{Mutex, MutexGuard, OnceLock};
+
+use z_core::api::*;
+
+const PASS: &str = "ein gutes Passwort für den Test";
+
+fn serial() -> MutexGuard<'static, ()> {
+    static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+    let lock = LOCK.get_or_init(|| Mutex::new(()));
+    match lock.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(),
+    }
+}
+
+/// A fresh, empty vault in a folder of this test's own.
+fn fresh_vault(name: &str) -> String {
+    let dir = std::env::temp_dir().join(format!("zprivacy-{name}-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    let path = dir.to_string_lossy().to_string();
+    set_data_dir(path.clone()).expect("data dir");
+    assert_eq!(vault_state().expect("state"), VaultState::Absent);
+    match vault_create_with_passphrase(PASS.to_string()).expect("create") {
+        VaultUnlockOutcome::Unlocked { identities, values } => assert_eq!((identities, values), (0, 0)),
+        other => panic!("expected a new vault, got {other:?}"),
+    }
+    path
+}
+
+/// An identity holding one value, with its spellings.
+fn identity(label: &str, profile: Option<&str>, kind: Kind, value: &str, aliases: &[&str], policy: Policy) -> u32 {
+    let id = create_entity(EntityKind::Client, label.to_string(), profile.map(str::to_string)).expect("entity");
+    let value_id = set_value(id, None, kind, value.to_string(), policy).expect("value");
+    for alias in aliases {
+        add_value_alias(id, value_id, (*alias).to_string()).expect("alias");
+    }
+    id
+}
+
+const DOC: &str = "Kunde: Nordstern Consulting GmbH\nAnsprechpartner: Herr Thomas Müller\nFrau Anna Weber vertritt ihn.";
+
+fn scanned(profile: Option<&str>) -> (SessionId, ScanReport) {
+    let s = open_session(profile.map(str::to_string), "de".to_string()).expect("open");
+    import_text(s, DOC.to_string()).expect("import");
+    let report = scan(s).expect("scan");
+    (s, report)
+}
+
+fn states(s: SessionId) -> (Vec<String>, Vec<String>) {
+    let findings = list_findings(s).expect("findings");
+    let text_of = |f: &Finding| {
+        DOC.chars()
+            .skip(f.span.start as usize)
+            .take((f.span.end - f.span.start) as usize)
+            .collect::<String>()
+    };
+    let auto = findings
+        .iter()
+        .filter(|f| f.state == MarkState::Protected)
+        .map(text_of)
+        .collect();
+    let open = findings
+        .iter()
+        .filter(|f| f.state == MarkState::Suggested)
+        .map(text_of)
+        .collect();
+    (auto, open)
+}
+
+#[test]
+fn rule_one_a_locked_vault_skips_its_layer_and_says_so() {
+    let _guard = serial();
+    fresh_vault("rule-one");
+    identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+
+    // Open: the vault recognises its own client.
+    let (_s, open_report) = scanned(None);
+    assert_eq!(open_report.vault, VaultState::Unlocked);
+    assert!(open_report.auto >= 1, "the vault knows the company: {open_report:?}");
+
+    // Locked: the same document, the same rules and pack — but nobody is known.
+    vault_lock().expect("lock");
+    let (locked_session, locked_report) = scanned(None);
+    assert_eq!(locked_report.vault, VaultState::Locked, "the report says it out loud");
+    let (auto, open) = states(locked_session);
+    assert!(
+        auto.is_empty(),
+        "nothing in this document can be proven without the vault: {auto:?}"
+    );
+    assert_eq!(open.len(), 3, "the pack still guesses: two names and a company");
+}
+
+#[test]
+fn rule_two_only_what_the_vault_actually_holds_becomes_automatic() {
+    let _guard = serial();
+    fresh_vault("rule-two");
+    // The vault knows the company and Thomas Müller. It has never heard of Anna Weber.
+    identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+    identity("Kontakt", None, Kind::Person, "Thomas Müller", &["Herr Müller"], Policy::Always);
+
+    let (s, report) = scanned(None);
+    let (auto, open) = states(s);
+    assert_eq!(report.vault, VaultState::Unlocked);
+    assert!(auto.contains(&"Nordstern Consulting GmbH".to_string()), "{auto:?}");
+    assert!(auto.contains(&"Thomas Müller".to_string()), "{auto:?}");
+    assert_eq!(
+        open,
+        vec!["Anna Weber".to_string()],
+        "a name the vault does not hold stays a question: opening the vault is not a blank cheque"
+    );
+
+    // And the identity is named in the finding, so the UI can say «from CLIENT #1».
+    let company = list_findings(s)
+        .expect("findings")
+        .into_iter()
+        .find(|f| f.kind == Kind::Company)
+        .expect("the company");
+    assert_eq!(company.source, Source::Vault);
+    assert_eq!(company.entities, vec!["CLIENT #01".to_string()]);
+    assert!(company.reason.contains("your vault knows this"), "{}", company.reason);
+}
+
+#[test]
+fn rule_two_a_value_in_another_profile_is_not_loaded() {
+    let _guard = serial();
+    fresh_vault("rule-two-profile");
+    let other = create_profile("Client Andere".to_string()).expect("profile");
+    identity("Andere", Some(&other), Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+
+    // No profile active: an entity that belongs to one profile is not loaded.
+    let (s, _) = scanned(None);
+    let (auto, open) = states(s);
+    assert!(auto.is_empty(), "{auto:?}");
+    assert!(open.contains(&"Nordstern Consulting GmbH".to_string()), "still only a guess");
+
+    // With that profile active, the same value is recognised.
+    let (s2, _) = scanned(Some(&other));
+    let (auto2, _) = states(s2);
+    assert!(auto2.contains(&"Nordstern Consulting GmbH".to_string()), "{auto2:?}");
+}
+
+#[test]
+fn rule_three_one_spelling_two_identities_is_a_conflict_not_a_choice() {
+    let _guard = serial();
+    fresh_vault("rule-three");
+    // Two clients, and the same short spelling on both. A real case: two companies
+    // whose short name is the same word.
+    identity("Erste", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+    identity("Zweite", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+
+    let (s, report) = scanned(None);
+    let findings = list_findings(s).expect("findings");
+    let company = findings
+        .iter()
+        .find(|f| f.kind == Kind::Company && f.source == Source::Vault)
+        .expect("the company");
+
+    assert_eq!(company.state, MarkState::Suggested, "a conflict is never settled silently");
+    assert_eq!(company.entities.len(), 2, "both claimants are named: {:?}", company.entities);
+    assert!(company.reason.contains("two identities"), "{}", company.reason);
+    assert!(report.suggested >= 1);
+
+    // And because it is open, nothing can be sent yet — G12 covers the conflict too.
+    let handle = build_payload(s).expect("build");
+    assert!(matches!(
+        send(handle, ProviderId { id: "openai".to_string() }),
+        Err(ApiError::OpenSuggestions { .. })
+    ));
+}
+
+#[test]
+fn rule_four_the_passphrase_can_change_and_the_vault_still_opens() {
+    let _guard = serial();
+    let dir = fresh_vault("rule-four");
+    let id = identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &["Nordstern"], Policy::Always);
+
+    vault_change_passphrase(PASS.to_string(), "ein anderes langes Passwort".to_string()).expect("change");
+    vault_lock().expect("lock");
+
+    // The old passphrase is dead; the new one opens the same contents.
+    assert!(matches!(
+        vault_unlock_with_passphrase(PASS.to_string()).expect("answer"),
+        VaultUnlockOutcome::WrongPassphrase { .. }
+    ));
+    match vault_unlock_with_passphrase("ein anderes langes Passwort".to_string()).expect("unlock") {
+        VaultUnlockOutcome::Unlocked { identities, values } => assert_eq!((identities, values), (1, 1)),
+        other => panic!("expected the vault to open, got {other:?}"),
+    }
+
+    let card = entity(id).expect("the identity");
+    assert_eq!(card.label, "Nordstern");
+    assert_eq!(card.values.len(), 1);
+    assert_eq!(card.values[0].aliases, 1);
+    assert_eq!(card.values[0].policy, Policy::Always);
+
+    // The value itself needs asking for, by name.
+    let shown = reveal_value(id, card.values[0].id).expect("reveal");
+    assert_eq!(shown.value, "Nordstern Consulting GmbH");
+    assert!(shown.ttl_ms > 0);
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+#[test]
+fn a_manual_value_is_kept_but_never_hunted() {
+    let _guard = serial();
+    fresh_vault("manual");
+    identity("Eigene", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Manual);
+
+    let (s, _) = scanned(None);
+    let findings = list_findings(s).expect("findings");
+    assert!(
+        !findings.iter().any(|f| f.source == Source::Vault),
+        "Manual means: kept here, found by nobody"
+    );
+}
+
+#[test]
+fn the_vault_list_and_its_cards_never_print_a_value() {
+    let _guard = serial();
+    fresh_vault("redaction");
+    let id = identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+
+    // G11 again, at this level: the list and the card are safe to log.
+    let rows = entities(None).expect("entities");
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].policy_summary, "1 always");
+    assert!(!format!("{rows:?}").contains("Nordstern"), "{rows:?}");
+    let card = entity(id).expect("card");
+    assert!(!format!("{card:?}").contains("Nordstern"), "{card:?}");
+}
+
+#[test]
+fn switching_a_profile_keeps_the_tokens_already_given() {
+    let _guard = serial();
+    fresh_vault("switch");
+    let p1 = create_profile("Client Eins".to_string()).expect("profile");
+    let p2 = create_profile("Client Zwei".to_string()).expect("profile");
+    identity("Eins", Some(&p1), Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+
+    let (s, _) = scanned(Some(&p1));
+    let before = list_tokens(s).expect("tokens");
+    assert_eq!(before.len(), 1, "the company was recognised");
+    let token_before = before[0].token.clone();
+
+    // Switch to a profile that knows nothing: what was protected stays protected.
+    let outcome = switch_profile(s, p2.clone()).expect("switch");
+    assert_eq!(outcome.kept_tokens, 1);
+    let after = list_tokens(s).expect("tokens");
+    assert!(
+        after.iter().any(|t| t.token == token_before),
+        "a token once given is never silently taken back: {after:?}"
+    );
+    let safe = payload_view(build_payload(s).expect("build")).expect("view").text;
+    assert!(!safe.contains("Nordstern Consulting GmbH"));
+}
+
+/// The turn the owner described: with the vault open, the golden document has
+/// nothing left to ask about.
+#[test]
+fn the_golden_document_with_an_open_vault_asks_nothing() {
+    let _guard = serial();
+    fresh_vault("golden");
+    let fixture = include_str!("fixtures/Vertrag_Nordstern.txt");
+
+    let profile = create_profile("Client Nordstern".to_string()).expect("profile");
+    identity(
+        "Nordstern Consulting",
+        Some(&profile),
+        Kind::Company,
+        "Nordstern Consulting GmbH",
+        &["Nordstern"],
+        Policy::Always,
+    );
+    identity(
+        "Thomas Müller",
+        Some(&profile),
+        Kind::Person,
+        "Thomas Müller",
+        &["Herr Müller", "T. Müller"],
+        Policy::Always,
+    );
+
+    let s = open_session(Some(profile), "de".to_string()).expect("open");
+    import_text(s, fixture.to_string()).expect("import");
+    let report = scan(s).expect("scan");
+
+    assert_eq!(report.vault, VaultState::Unlocked);
+    assert_eq!(
+        (report.auto, report.suggested),
+        (9, 0),
+        "seven by arithmetic and label, two more because the vault knows them: {report:?}"
+    );
+
+    // The two that were questions in M3 are now answered by the vault itself.
+    let findings = list_findings(s).expect("findings");
+    let from_vault: Vec<&Finding> = findings.iter().filter(|f| f.source == Source::Vault).collect();
+    assert_eq!(from_vault.len(), 2, "{from_vault:?}");
+    assert!(from_vault.iter().all(|f| f.state == MarkState::Protected));
+    assert!(from_vault.iter().all(|f| f.entities.len() == 1));
+
+    // And so the document can go, with nothing left in the clear.
+    let handle = build_payload(s).expect("build");
+    let safe = payload_view(handle).expect("view").text;
+    assert!(!safe.contains("Nordstern"), "{safe}");
+    assert!(!safe.contains("Müller"), "{safe}");
+    assert!(matches!(
+        send(handle, ProviderId { id: "openai".to_string() }),
+        Err(ApiError::ProviderUnavailable { .. })
+    ));
+
+    // The by-layer summary now names three layers, the vault among them.
+    assert!(report.by_layer.iter().any(|l| l.source == Source::Vault && l.count == 2), "{:?}", report.by_layer);
+}

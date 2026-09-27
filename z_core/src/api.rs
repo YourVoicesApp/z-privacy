@@ -183,8 +183,64 @@ pub enum MarkState {
 /// Is the vault open?
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VaultState {
+    /// There is no vault on this device yet.
+    Absent,
+    /// It exists and is sealed. The vault layer is skipped entirely while it is.
     Locked,
     Unlocked,
+}
+
+/// What kind of identity an entity is — how the user thinks about it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EntityKind {
+    Client,
+    Person,
+    Company,
+    Project,
+    Custom,
+}
+
+/// How far the vault may act on one value by itself.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Policy {
+    /// Replaced the moment it appears.
+    Always,
+    /// Marked and counted, waiting for your word.
+    Suggest,
+    /// Never found by itself; kept here so its aliases and token stay stable.
+    Manual,
+}
+
+/// One identity in the vault list. The label is readable once the vault is open;
+/// the values inside it are not, and each needs its own [`reveal_value`].
+#[derive(Clone, PartialEq, Eq)]
+pub struct EntityRow {
+    pub id: u32,
+    pub kind: EntityKind,
+    pub label: String,
+    pub profile_id: Option<String>,
+    pub values: u32,
+    /// «4 always · 1 suggest», as the vault list shows it.
+    pub policy_summary: String,
+}
+
+/// One value inside an identity — without the value itself.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ValueRow {
+    pub id: u32,
+    pub kind: Kind,
+    pub aliases: u32,
+    pub policy: Policy,
+}
+
+/// An identity opened: what it is, and the values it holds.
+#[derive(Clone, PartialEq, Eq)]
+pub struct EntityCard {
+    pub id: u32,
+    pub kind: EntityKind,
+    pub label: String,
+    pub profile_id: Option<String>,
+    pub values: Vec<ValueRow>,
 }
 
 /// The four answers a suggestion can get. There is no fifth, and no "send anyway".
@@ -265,6 +321,10 @@ pub struct ScanReport {
     pub suggested: u32,
     pub normal: u32,
     pub by_layer: Vec<LayerCount>,
+    /// Said out loud, because a locked vault means the app cannot recognise your
+    /// own people: the general rules and the pack still run, the vault layer does
+    /// not, and the band under the header says so.
+    pub vault: VaultState,
 }
 
 /// Something the scanner is not sure about. It stays in the clear until answered.
@@ -276,6 +336,12 @@ pub struct Finding {
     pub source: Source,
     pub reason: String,
     pub state: MarkState,
+    /// The vault identities that claim this text.
+    ///
+    /// Empty when no identity is involved; one when the vault knows it; **more
+    /// than one is a conflict** — two identities claim the same spelling, and the
+    /// scanner refuses to choose silently. The app must ask.
+    pub entities: Vec<String>,
 }
 
 /// What happened when the user pressed Protect.
@@ -352,6 +418,28 @@ impl fmt::Debug for RevealedValue {
             .field("token", &self.token)
             .field("value", &format_args!("[REDACTED]"))
             .field("ttl_ms", &self.ttl_ms)
+            .finish()
+    }
+}
+
+impl fmt::Debug for EntityRow {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EntityRow")
+            .field("id", &self.id)
+            .field("kind", &self.kind)
+            .field("label", &format_args!("[REDACTED]"))
+            .field("values", &self.values)
+            .finish()
+    }
+}
+
+impl fmt::Debug for EntityCard {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EntityCard")
+            .field("id", &self.id)
+            .field("kind", &self.kind)
+            .field("label", &format_args!("[REDACTED]"))
+            .field("values", &self.values)
             .finish()
     }
 }
@@ -489,34 +577,88 @@ pub fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String> {
 
 // ---------------------------------------------------------------- vault
 
+/// Where this device keeps its vault. Called once at startup by the app.
+pub fn set_data_dir(dir: String) -> ApiResult<()> {
+    crate::ops::set_data_dir(dir)
+}
+
 /// Is it open? Locked means the vault layer is skipped, and the UI says so.
 pub fn vault_state() -> ApiResult<VaultState> {
-    Err(ApiError::NotImplemented)
+    crate::ops::vault_state()
+}
+
+/// Make a vault on this device: a random master key, sealed under this passphrase.
+pub fn vault_create_with_passphrase(passphrase: String) -> ApiResult<VaultUnlockOutcome> {
+    crate::ops::vault_create(passphrase)
+}
+
+/// Change the passphrase. Only the master key is re-wrapped; the vault's contents
+/// are not decrypted and not rewritten.
+pub fn vault_change_passphrase(old: String, replacement: String) -> ApiResult<()> {
+    crate::ops::vault_change_passphrase(old, replacement)
 }
 
 /// Open the vault with the user's passphrase. Argon2id and the master key stay
 /// inside this crate; neither ever crosses the bridge.
 pub fn vault_unlock_with_passphrase(passphrase: String) -> ApiResult<VaultUnlockOutcome> {
-    let _ = passphrase;
-    Err(ApiError::NotImplemented)
+    crate::ops::vault_unlock(passphrase)
 }
 
 /// Close it. Every revealed value re-hides.
 pub fn vault_lock() -> ApiResult<()> {
-    Err(ApiError::NotImplemented)
+    crate::ops::vault_lock()
+}
+
+/// The identities, as the vault list shows them. `None` means every profile.
+pub fn entities(profile_id: Option<String>) -> ApiResult<Vec<EntityRow>> {
+    crate::ops::entities(profile_id)
+}
+
+/// One identity opened, with the values inside it.
+pub fn entity(entity_id: u32) -> ApiResult<EntityCard> {
+    crate::ops::entity(entity_id)
+}
+
+/// A new identity: «CLIENT #17», and what you call it.
+pub fn create_entity(kind: EntityKind, label: String, profile_id: Option<String>) -> ApiResult<u32> {
+    crate::ops::create_entity(kind, label, profile_id)
+}
+
+/// Deleting an identity deletes the values inside it.
+pub fn delete_entity(entity_id: u32) -> ApiResult<()> {
+    crate::ops::delete_entity(entity_id)
+}
+
+/// Add a value to an identity, or change one. `value_id` is `None` for a new one.
+pub fn set_value(entity: u32, value_id: Option<u32>, kind: Kind, text: String, policy: Policy) -> ApiResult<u32> {
+    crate::ops::set_value(entity, value_id, kind, text, policy)
+}
+
+/// Teach a value another spelling of the same thing.
+pub fn add_value_alias(entity: u32, value_id: u32, alias: String) -> ApiResult<()> {
+    crate::ops::add_value_alias(entity, value_id, alias)
+}
+
+/// Show one stored value, for a moment, locally.
+pub fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValue> {
+    crate::ops::reveal_value(entity, value_id)
+}
+
+/// A new profile — one client's dictionary.
+pub fn create_profile(name: String) -> ApiResult<String> {
+    crate::ops::create_profile(name)
 }
 
 // ---------------------------------------------------------------- profiles, packs
 
-/// The profiles, as the switcher lists them. M4.
+/// The profiles, as the switcher lists them: `id\tname`.
 pub fn profiles() -> ApiResult<Vec<String>> {
-    Err(ApiError::NotImplemented)
+    crate::ops::profiles()
 }
 
 /// Switch profile. Tokens already given stand; only new matching follows.
 pub fn switch_profile(session: SessionId, profile_id: String) -> ApiResult<SwitchOutcome> {
-    let _ = (session, profile_id);
-    Err(ApiError::NotImplemented)
+    crate::ops::switch_profile(session, profile_id)
 }
 
 /// The installed privacy packs. A pack is a detection engine, not a UI language.
@@ -526,8 +668,7 @@ pub fn packs() -> ApiResult<Vec<String>> {
 
 /// Override the pack for this session: app default → profile → session.
 pub fn switch_pack(session: SessionId, pack_id: String) -> ApiResult<RescanOutcome> {
-    let _ = (session, pack_id);
-    Err(ApiError::NotImplemented)
+    crate::ops::switch_pack(session, pack_id)
 }
 
 // ---------------------------------------------------------------- providers

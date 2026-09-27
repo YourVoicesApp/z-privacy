@@ -164,13 +164,20 @@ fn stale_payload_after_every_mutating_call() {
                 Did::Nothing
             },
         ),
-        ("switch_profile", |_| {}, |s| match switch_profile(s, "p".to_string()) {
-            Err(ApiError::NotImplemented) => Did::Pending,
-            other => panic!("unexpected: {other:?}"),
+        ("switch_profile", |_| {}, |s| {
+            // A rescan under a different dictionary: the safe text can change, so
+            // every handle built before it must be stale.
+            switch_profile(s, "p-somewhere".to_string()).expect("switch");
+            Did::Changed
         }),
-        ("switch_pack", |_| {}, |s| match switch_pack(s, "en".to_string()) {
-            Err(ApiError::NotImplemented) => Did::Pending,
-            other => panic!("unexpected: {other:?}"),
+        ("switch_pack", |_| {}, |s| {
+            switch_pack(s, "de".to_string()).expect("switch");
+            Did::Changed
+        }),
+        ("switch_pack · unknown", |_| {}, |s| {
+            // A pack that does not exist changes nothing and says so.
+            assert!(matches!(switch_pack(s, "kl".to_string()), Err(ApiError::ImportRefused { .. })));
+            Did::Nothing
         }),
     ];
 

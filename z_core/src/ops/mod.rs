@@ -4,12 +4,17 @@
 //! gates can read every signature and so the contract is easy to see whole.
 //! What each call actually does lives here.
 
+mod vault;
+
+pub(crate) use vault::*;
+
 use std::collections::BTreeMap;
 
 use crate::api::{
     ApiError, ApiResult, AnswerId, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
     Mark, MarkState, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, RevealedValue,
-    Revision, ScanReport, Scope, SessionId, Source, Span, TokenRow, UndoOutcome,
+    RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome, TokenRow,
+    UndoOutcome,
 };
 use crate::scanner;
 use crate::session::FindingRecord;
@@ -465,12 +470,17 @@ pub(crate) fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String>
 // ---------------------------------------------------------------- scan (M3)
 
 pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
-    with_session(session.id, |s| {
+    with_core(|core| {
+        let vault_state = core.vault.state();
+        let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;
         if s.original.is_empty() {
             return Err(ApiError::NothingToSend);
         }
         let pack = s.pack_id.clone();
-        let candidates = scanner::scan(s.original_str(), &pack);
+        // Empty while the vault is locked: the layer is skipped by having nothing
+        // to say, not by a flag someone could forget to check.
+        let hints = vault.hints(s.profile_id.as_deref());
+        let candidates = scanner::scan(s.original_str(), &pack, &hints);
 
         // What you protected by hand is never touched by a rescan; what a layer
         // decided is recomputed from scratch.
@@ -503,19 +513,19 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
                 source_detail: c.source_detail.clone(),
                 reason: c.reason.clone(),
                 state,
+                entities: c.entities.clone(),
             });
         }
 
         s.normal_words = scanner::plain_word_count(s.original_str(), &candidates);
         s.bump();
-        Ok(report_of(s))
+        Ok(report_of(s, vault_state))
     })
-    .ok_or(ApiError::InvalidSession)?
 }
 
 /// The counts, as the band under the Original header reports them. Every number
 /// here is counted from the state; none of them is written into the code.
-fn report_of(s: &Session) -> ScanReport {
+fn report_of(s: &Session, vault: crate::api::VaultState) -> ScanReport {
     let auto = s.findings.iter().filter(|f| f.state == MarkState::Protected).count() as u32;
     let suggested = s.findings.iter().filter(|f| f.state == MarkState::Suggested).count() as u32;
 
@@ -541,6 +551,7 @@ fn report_of(s: &Session) -> ScanReport {
         suggested,
         normal: s.normal_words,
         by_layer,
+        vault,
     }
 }
 
@@ -573,6 +584,7 @@ pub(crate) fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
                 source: f.source,
                 reason: f.reason.clone(),
                 state: f.state,
+                entities: f.entities.clone(),
             });
         }
         Ok(out)
@@ -581,6 +593,7 @@ pub(crate) fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
 }
 
 pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAnswer) -> ApiResult<ScanReport> {
+    let vault_state = vault_state()?;
     with_session(session.id, |s| {
         let Some(index) = s.findings.iter().position(|f| f.id == finding) else {
             return Err(ApiError::UnknownToken);
@@ -591,17 +604,17 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
         if record.state != MarkState::Suggested {
             // Answering something already protected is not an error, and not a
             // change either.
-            return Ok(report_of(s));
+            return Ok(report_of(s, vault_state));
         }
         match answer {
             FindingAnswer::Skip => {
                 // Skipping is not deciding: it stays open and stays counted.
-                Ok(report_of(s))
+                Ok(report_of(s, vault_state))
             }
             FindingAnswer::NotSensitive => {
                 s.findings.remove(index);
                 s.bump();
-                Ok(report_of(s))
+                Ok(report_of(s, vault_state))
             }
             FindingAnswer::Protect | FindingAnswer::Always => {
                 let act = s.take_act_id();
@@ -631,7 +644,7 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
                     };
                 }
                 s.bump();
-                Ok(report_of(s))
+                Ok(report_of(s, vault_state))
             }
         }
     })
@@ -640,6 +653,94 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
 
 pub(crate) fn packs() -> ApiResult<Vec<String>> {
     Ok(scanner::packs::installed())
+}
+
+// ---------------------------------------------------------------- switching
+
+/// Rescan while keeping every protection that already exists.
+///
+/// The design board's rule for both switches: **a token once given is never
+/// silently taken back.** So nothing is cleared; the layers only add what is not
+/// already covered, and a protection whose layer no longer claims it becomes
+/// yours (manual) instead of disappearing.
+fn rescan_keeping(session: SessionId, pack: &str) -> ApiResult<(u32, u32)> {
+    with_core(|core| {
+        let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;
+        let hints = vault.hints(s.profile_id.as_deref());
+        let candidates = scanner::scan(s.original_str(), pack, &hints);
+        let kept_tokens = s.tokens_in_use().len() as u32;
+
+        // Anything a layer used to claim and no longer does becomes manual.
+        let mut changed_to_manual = 0u32;
+        for p in s.protections.iter_mut() {
+            let still_claimed = candidates.iter().any(|c| c.start == p.start && c.end == p.end);
+            if !still_claimed && p.source != Source::Hand {
+                p.source = Source::Hand;
+                p.source_detail = "kept from an earlier layer, now yours".to_string();
+                changed_to_manual = changed_to_manual.saturating_add(1);
+            }
+        }
+
+        s.findings.clear();
+        let act = s.take_act_id();
+        for c in &candidates {
+            let covered = s.protections.iter().any(|p| p.start < c.end && c.start < p.end);
+            let state = if covered {
+                MarkState::Protected
+            } else {
+                match c.confidence {
+                    scanner::Confidence::Auto => {
+                        match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act) {
+                            Some(_) => MarkState::Protected,
+                            None => continue,
+                        }
+                    }
+                    scanner::Confidence::Suggest => MarkState::Suggested,
+                }
+            };
+            let id = s.take_finding_id();
+            s.findings.push(FindingRecord {
+                id,
+                start: c.start,
+                end: c.end,
+                kind: c.kind,
+                source: c.source,
+                source_detail: c.source_detail.clone(),
+                reason: c.reason.clone(),
+                state,
+                entities: c.entities.clone(),
+            });
+        }
+        s.normal_words = scanner::plain_word_count(s.original_str(), &candidates);
+        s.bump();
+        Ok((kept_tokens, changed_to_manual))
+    })
+}
+
+pub(crate) fn switch_profile(session: SessionId, profile_id: String) -> ApiResult<SwitchOutcome> {
+    let pack = with_session(session.id, |s| {
+        s.profile_id = Some(profile_id);
+        s.pack_id.clone()
+    })
+    .ok_or(ApiError::InvalidSession)?;
+    let (kept_tokens, _) = rescan_keeping(session, &pack)?;
+    let revision = with_session(session.id, |s| s.revision).ok_or(ApiError::InvalidSession)?;
+    Ok(SwitchOutcome { kept_tokens, revision })
+}
+
+pub(crate) fn switch_pack(session: SessionId, pack_id: String) -> ApiResult<RescanOutcome> {
+    if !scanner::packs::installed().contains(&pack_id) {
+        return Err(ApiError::ImportRefused {
+            reason: format!("there is no privacy pack called «{pack_id}»"),
+        });
+    }
+    with_session(session.id, |s| s.pack_id = pack_id.clone()).ok_or(ApiError::InvalidSession)?;
+    let (_, changed_to_manual) = rescan_keeping(session, &pack_id)?;
+    let revision = with_session(session.id, |s| s.revision).ok_or(ApiError::InvalidSession)?;
+    Ok(RescanOutcome {
+        changed_to_manual,
+        revision,
+    })
 }
 
 #[cfg(test)]
@@ -675,6 +776,7 @@ mod tests {
                 source_detail: "de".to_string(),
                 reason: "a word after «Frau»".to_string(),
                 state: MarkState::Suggested,
+                entities: Vec::new(),
             });
         })
         .expect("session");

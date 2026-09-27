@@ -173,6 +173,7 @@ fn candidate(
         source: Source::LanguagePack,
         source_detail: format!("{PACK}:{rule}"),
         reason,
+        entities: Vec::new(),
     }
 }
 

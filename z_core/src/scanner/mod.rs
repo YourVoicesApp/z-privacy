@@ -12,7 +12,11 @@
 pub(crate) mod general_rules;
 pub(crate) mod packs;
 
-use crate::api::{Kind, Source};
+use std::collections::{BTreeMap, BTreeSet};
+
+use crate::api::{Kind, Policy, Source};
+use crate::text::nfc;
+use crate::vault::model::VaultHint;
 
 /// How sure the scanner is — and therefore whether it may act alone.
 ///
@@ -37,6 +41,9 @@ pub(crate) struct Candidate {
     pub source_detail: String,
     /// A sentence a person can read, shown in the review list.
     pub reason: String,
+    /// The vault identities that claim this text: none, one, or — when more than
+    /// one — a conflict the app must ask about rather than settle silently.
+    pub entities: Vec<String>,
 }
 
 impl Candidate {
@@ -46,10 +53,94 @@ impl Candidate {
 }
 
 /// Run every layer, then settle the overlaps into one finding each.
-pub(crate) fn scan(text: &str, pack: &str) -> Vec<Candidate> {
+///
+/// `hints` is what the vault can recognise **for the active profile**, and it is
+/// empty while the vault is locked — which is how «locked means the layer does not
+/// exist» is true without a flag anywhere.
+pub(crate) fn scan(text: &str, pack: &str, hints: &[VaultHint]) -> Vec<Candidate> {
     let mut all = general_rules::scan(text);
     all.extend(packs::scan(text, pack));
+    all.extend(vault_pass(text, hints));
     settle(all)
+}
+
+/// What the vault itself recognises. This is the only layer that knows *who*.
+fn vault_pass(text: &str, hints: &[VaultHint]) -> Vec<Candidate> {
+    // Group by spelling, so that one text claimed by two identities is seen as
+    // the conflict it is instead of becoming two overlapping protections.
+    let mut by_spelling: BTreeMap<String, Vec<&VaultHint>> = BTreeMap::new();
+    for hint in hints {
+        by_spelling.entry(nfc(&hint.text)).or_default().push(hint);
+    }
+
+    let mut out = Vec::new();
+    for group in by_spelling.values() {
+        let Some(first) = group.first() else { continue };
+        let claimants: BTreeSet<String> = group.iter().map(|h| h.entity_handle.clone()).collect();
+        let entities: Vec<String> = claimants.iter().cloned().collect();
+        let conflict = entities.len() > 1;
+
+        let confidence = if conflict {
+            // The owner's third rule: never choose silently.
+            Confidence::Suggest
+        } else {
+            match first.policy {
+                Policy::Always => Confidence::Auto,
+                Policy::Suggest => Confidence::Suggest,
+                // Kept in the vault so its aliases and token stay stable, but
+                // never found by itself.
+                Policy::Manual => continue,
+            }
+        };
+        let reason = if conflict {
+            format!(
+                "two identities in your vault claim this spelling ({}) — the app will not choose for you",
+                entities.join(", ")
+            )
+        } else {
+            format!("your vault knows this, under {}", first.entity_handle)
+        };
+        let detail = if conflict {
+            "vault:conflict".to_string()
+        } else {
+            format!("vault:{}", first.entity_handle)
+        };
+
+        for (start, end) in occurrences(text, &first.text) {
+            out.push(Candidate {
+                start,
+                end,
+                kind: first.kind,
+                confidence,
+                source: Source::Vault,
+                source_detail: detail.clone(),
+                reason: reason.clone(),
+                entities: entities.clone(),
+            });
+        }
+    }
+    out
+}
+
+/// Every place `needle` appears, left to right, without overlapping itself.
+fn occurrences(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
+    let mut out = Vec::new();
+    if needle.is_empty() {
+        return out;
+    }
+    let mut from = 0usize;
+    while let Some(rest) = haystack.get(from..) {
+        match rest.find(needle) {
+            Some(at) => {
+                let start = from + at;
+                let end = start + needle.len();
+                out.push((start, end));
+                from = end;
+            }
+            None => break,
+        }
+    }
+    out
 }
 
 /// One value, one finding.
@@ -74,6 +165,13 @@ fn settle(mut all: Vec<Candidate>) -> Vec<Candidate> {
             .find(|k| candidate.start < k.end && k.start < candidate.end);
         match clash {
             Some(keeper) => {
+                // Whoever wins, the identities that claimed this text are kept:
+                // the review list must be able to name them.
+                for entity in &candidate.entities {
+                    if !keeper.entities.contains(entity) {
+                        keeper.entities.push(entity.clone());
+                    }
+                }
                 if keeper.kind == candidate.kind {
                     // The same thing, seen twice. Say so once — and two layers
                     // agreeing is itself a reason to be sure.
@@ -103,11 +201,12 @@ fn rank_confidence(c: Confidence) -> u8 {
     }
 }
 
+/// Arithmetic first, then the vault (it knows *who*), then the language's habits.
 fn rank_source(s: Source) -> u8 {
     match s {
         Source::GeneralRule => 0,
-        Source::LanguagePack => 1,
-        Source::Vault => 2,
+        Source::Vault => 1,
+        Source::LanguagePack => 2,
         Source::Hand => 3,
     }
 }
@@ -144,7 +243,7 @@ mod tests {
         // "IBAN:" is a German-pack label, and the number itself passes the mod-97
         // check. Two layers, one thing — and the reason must name both.
         let text = "IBAN: DE89 3704 0044 0532 0130 00";
-        let found = scan(text, "de");
+        let found = scan(text, "de", &[]);
         assert_eq!(found.len(), 1, "{found:?}");
         let only = found.first().expect("one");
         assert_eq!(only.confidence, Confidence::Auto);
@@ -154,7 +253,7 @@ mod tests {
     #[test]
     fn plain_words_are_what_is_left() {
         let text = "Herr Thomas Müller hat die Nummer +49 171 2345678 genannt.";
-        let found = scan(text, "de");
+        let found = scan(text, "de", &[]);
         let plain = plain_word_count(text, &found);
         let words = text.split_whitespace().count() as u32;
         assert!(plain < words, "some words are inside findings");

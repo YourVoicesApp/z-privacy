@@ -45,6 +45,8 @@ pub(crate) struct FindingRecord {
     pub source_detail: String,
     pub reason: String,
     pub state: MarkState,
+    /// The vault identities that claim it; more than one is a conflict.
+    pub entities: Vec<String>,
 }
 
 /// One conversation.
@@ -180,6 +182,8 @@ impl Session {
 pub(crate) struct Core {
     sessions: BTreeMap<u32, Session>,
     next_session: u32,
+    /// One vault per device, shared by every session.
+    pub vault: crate::vault::VaultStore,
 }
 
 impl Core {
@@ -187,6 +191,7 @@ impl Core {
         Self {
             sessions: BTreeMap::new(),
             next_session: 1,
+            vault: crate::vault::VaultStore::default(),
         }
     }
 
@@ -203,6 +208,16 @@ impl Core {
 
     pub(crate) fn get(&mut self, id: u32) -> Option<&mut Session> {
         self.sessions.get_mut(&id)
+    }
+
+    /// Borrow one session and the vault together: the scan needs both, and they
+    /// live behind the same lock.
+    pub(crate) fn session_and_vault(
+        &mut self,
+        id: u32,
+    ) -> Option<(&mut Session, &mut crate::vault::VaultStore)> {
+        let session = self.sessions.get_mut(&id)?;
+        Some((session, &mut self.vault))
     }
 }
 

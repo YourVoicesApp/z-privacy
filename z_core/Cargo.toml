@@ -16,6 +16,12 @@ getrandom = "0.3"
 # NFC normalisation, so that a value written in two Unicode compositions is one
 # value to the scanner and to the leak audit. (task 008)
 unicode-normalization = "0.1"
+# The vault's crypto (task 013). Non-network, pinned, and each one justified:
+# Argon2id turns a passphrase into a key-encryption key; ChaCha20-Poly1305 seals
+# the master key and the vault body; zeroize wipes key material on drop.
+argon2 = "0.5"
+chacha20poly1305 = "0.10"
+zeroize = { version = "1", features = ["zeroize_derive"] }
 
 [lints]
 workspace = true

@@ -75,6 +75,23 @@ void main() {
       'switchPack': () => switchPack(session: session, packId: 'de'),
       'providers': () => providers(),
       'testProvider': () => testProvider(provider: provider),
+      // The vault (M4). Called against a locked, absent vault here: the answers
+      // must still be answers.
+      'setDataDir': () => setDataDir(dir: Directory.systemTemp.path),
+      'vaultCreateWithPassphrase': () =>
+          vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort'),
+      'vaultChangePassphrase': () =>
+          vaultChangePassphrase(old: 'ein gutes Passwort', replacement: 'ein anderes Passwort'),
+      'entities': () => entities(),
+      'entity': () => entity(entityId: 1),
+      'createEntity': () =>
+          createEntity(kind: EntityKind.client, label: 'Test', profileId: null),
+      'deleteEntity': () => deleteEntity(entityId: 1),
+      'setValue': () => setValue(
+          entity: 1, valueId: null, kind: Kind.company, text: 'Test GmbH', policy: Policy.always),
+      'addValueAlias': () => addValueAlias(entity: 1, valueId: 1, alias: 'Test'),
+      'revealValue': () => revealValue(entity: 1, valueId: 1),
+      'createProfile': () => createProfile(name: 'Test'),
     };
 
     final crashed = <String>[];
@@ -94,7 +111,7 @@ void main() {
       }
     }
     expect(crashed, isEmpty, reason: 'calls that did not answer cleanly');
-    expect(calls.length, 30, reason: 'the contract has 30 functions');
+    expect(calls.length, 41, reason: 'the contract has 41 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
   });

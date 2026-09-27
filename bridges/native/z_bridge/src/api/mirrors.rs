@@ -124,8 +124,58 @@ pub enum _MarkState {
 
 #[frb(mirror(VaultState))]
 pub enum _VaultState {
+    /// There is no vault on this device yet.
+    Absent,
+    /// It exists and is sealed. The vault layer is skipped entirely while it is.
     Locked,
     Unlocked,
+}
+
+#[frb(mirror(EntityKind))]
+pub enum _EntityKind {
+    Client,
+    Person,
+    Company,
+    Project,
+    Custom,
+}
+
+#[frb(mirror(Policy))]
+pub enum _Policy {
+    /// Replaced the moment it appears.
+    Always,
+    /// Marked and counted, waiting for your word.
+    Suggest,
+    /// Never found by itself; kept here so its aliases and token stay stable.
+    Manual,
+}
+
+#[frb(mirror(EntityRow))]
+pub struct _EntityRow {
+    pub id: u32,
+    pub kind: EntityKind,
+    pub label: String,
+    pub profile_id: Option<String>,
+    pub values: u32,
+    /// «4 always · 1 suggest», as the vault list shows it.
+    pub policy_summary: String,
+}
+
+#[frb(mirror(ValueRow))]
+pub struct _ValueRow {
+    pub id: u32,
+    pub kind: Kind,
+    pub aliases: u32,
+    pub policy: Policy,
+}
+
+#[frb(mirror(EntityCard))]
+pub struct _EntityCard {
+    pub id: u32,
+    pub kind: EntityKind,
+    pub label: String,
+    pub profile_id: Option<String>,
+    pub values: Vec<ValueRow>,
 }
 
 #[frb(mirror(FindingAnswer))]
@@ -195,6 +245,10 @@ pub struct _ScanReport {
     pub suggested: u32,
     pub normal: u32,
     pub by_layer: Vec<LayerCount>,
+    /// Said out loud, because a locked vault means the app cannot recognise your
+    /// own people: the general rules and the pack still run, the vault layer does
+    /// not, and the band under the header says so.
+    pub vault: VaultState,
 }
 
 #[frb(mirror(Finding))]
@@ -205,6 +259,12 @@ pub struct _Finding {
     pub source: Source,
     pub reason: String,
     pub state: MarkState,
+    /// The vault identities that claim this text.
+    ///
+    /// Empty when no identity is involved; one when the vault knows it; **more
+    /// than one is a conflict** — two identities claim the same spelling, and the
+    /// scanner refuses to choose silently. The app must ask.
+    pub entities: Vec<String>,
 }
 
 #[frb(mirror(ProtectOutcome))]

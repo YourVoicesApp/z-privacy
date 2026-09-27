@@ -24,6 +24,7 @@ mod secret;
 mod session;
 mod text;
 mod tokens;
+mod vault;
 
 /// Version of the core, shown by the UI so a build can be identified on sight.
 pub fn core_version() -> String {

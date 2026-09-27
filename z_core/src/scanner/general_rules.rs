@@ -38,6 +38,7 @@ fn candidate(
         source: Source::GeneralRule,
         source_detail: rule.to_string(),
         reason: reason.to_string(),
+        entities: Vec::new(),
     }
 }
 

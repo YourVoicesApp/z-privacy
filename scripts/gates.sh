@@ -100,7 +100,7 @@ else
 fi
 
 G11_MISSING=""
-for t in Secret SafePayload DocumentView PayloadView RevealedValue Segment; do
+for t in Secret SafePayload DocumentView PayloadView RevealedValue Segment EntityRow EntityCard; do
   grep -Rqs "impl fmt::Debug for $t" z_core/src || G11_MISSING="$G11_MISSING $t"
 done
 if [ -n "$G11_MISSING" ]; then
@@ -109,10 +109,13 @@ else
   pass "G11 every type holding the user's words redacts its own Debug"
 fi
 
-if grep -qs 'pub original: Secret' z_core/src/session.rs && grep -qs 'pub value: Secret' z_core/src/tokens.rs; then
-  pass "G11 the original and the token values are Secret, not String"
+if grep -qs 'pub original: Secret' z_core/src/session.rs \
+  && grep -qs 'pub value: Secret' z_core/src/tokens.rs \
+  && grep -qs 'pub value: Secret' z_core/src/vault/model.rs \
+  && grep -qs 'pub label: Secret' z_core/src/vault/model.rs; then
+  pass "G11 originals, token values and vault values are Secret, not String"
 else
-  fail "G11 the original or the token values are plain Strings again"
+  fail "G11 something that holds the user's words went back to being a String"
 fi
 
 # ---------------------------------------------------------------- G5
@@ -183,7 +186,7 @@ else
 fi
 
 # A green run proves nothing unless the four invariant tests actually exist.
-for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_; do
+for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

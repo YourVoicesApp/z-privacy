@@ -89,6 +89,84 @@ class DocumentView {
           marks == other.marks;
 }
 
+class EntityCard {
+  final int id;
+  final EntityKind kind;
+  final String label;
+  final String? profileId;
+  final List<ValueRow> values;
+
+  const EntityCard({
+    required this.id,
+    required this.kind,
+    required this.label,
+    this.profileId,
+    required this.values,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      kind.hashCode ^
+      label.hashCode ^
+      profileId.hashCode ^
+      values.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EntityCard &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          kind == other.kind &&
+          label == other.label &&
+          profileId == other.profileId &&
+          values == other.values;
+}
+
+enum EntityKind { client, person, company, project, custom }
+
+class EntityRow {
+  final int id;
+  final EntityKind kind;
+  final String label;
+  final String? profileId;
+  final int values;
+
+  /// «4 always · 1 suggest», as the vault list shows it.
+  final String policySummary;
+
+  const EntityRow({
+    required this.id,
+    required this.kind,
+    required this.label,
+    this.profileId,
+    required this.values,
+    required this.policySummary,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      kind.hashCode ^
+      label.hashCode ^
+      profileId.hashCode ^
+      values.hashCode ^
+      policySummary.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EntityRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          kind == other.kind &&
+          label == other.label &&
+          profileId == other.profileId &&
+          values == other.values &&
+          policySummary == other.policySummary;
+}
+
 class Finding {
   final int id;
   final Span span;
@@ -97,6 +175,13 @@ class Finding {
   final String reason;
   final MarkState state;
 
+  /// The vault identities that claim this text.
+  ///
+  /// Empty when no identity is involved; one when the vault knows it; **more
+  /// than one is a conflict** — two identities claim the same spelling, and the
+  /// scanner refuses to choose silently. The app must ask.
+  final List<String> entities;
+
   const Finding({
     required this.id,
     required this.span,
@@ -104,6 +189,7 @@ class Finding {
     required this.source,
     required this.reason,
     required this.state,
+    required this.entities,
   });
 
   @override
@@ -113,7 +199,8 @@ class Finding {
       kind.hashCode ^
       source.hashCode ^
       reason.hashCode ^
-      state.hashCode;
+      state.hashCode ^
+      entities.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -125,7 +212,8 @@ class Finding {
           kind == other.kind &&
           source == other.source &&
           reason == other.reason &&
-          state == other.state;
+          state == other.state &&
+          entities == other.entities;
 }
 
 enum FindingAnswer { protect, always, notSensitive, skip }
@@ -269,6 +357,17 @@ class PayloadView {
           openSuggestions == other.openSuggestions;
 }
 
+enum Policy {
+  /// Replaced the moment it appears.
+  always,
+
+  /// Marked and counted, waiting for your word.
+  suggest,
+
+  /// Never found by itself; kept here so its aliases and token stay stable.
+  manual,
+}
+
 @freezed
 sealed class ProtectOutcome with _$ProtectOutcome {
   const ProtectOutcome._();
@@ -373,16 +472,26 @@ class ScanReport {
   final int normal;
   final List<LayerCount> byLayer;
 
+  /// Said out loud, because a locked vault means the app cannot recognise your
+  /// own people: the general rules and the pack still run, the vault layer does
+  /// not, and the band under the header says so.
+  final VaultState vault;
+
   const ScanReport({
     required this.auto,
     required this.suggested,
     required this.normal,
     required this.byLayer,
+    required this.vault,
   });
 
   @override
   int get hashCode =>
-      auto.hashCode ^ suggested.hashCode ^ normal.hashCode ^ byLayer.hashCode;
+      auto.hashCode ^
+      suggested.hashCode ^
+      normal.hashCode ^
+      byLayer.hashCode ^
+      vault.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -392,7 +501,8 @@ class ScanReport {
           auto == other.auto &&
           suggested == other.suggested &&
           normal == other.normal &&
-          byLayer == other.byLayer;
+          byLayer == other.byLayer &&
+          vault == other.vault;
 }
 
 enum Scope {
@@ -537,7 +647,42 @@ sealed class UndoOutcome with _$UndoOutcome {
   }) = UndoOutcome_Undone;
 }
 
-enum VaultState { locked, unlocked }
+class ValueRow {
+  final int id;
+  final Kind kind;
+  final int aliases;
+  final Policy policy;
+
+  const ValueRow({
+    required this.id,
+    required this.kind,
+    required this.aliases,
+    required this.policy,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^ kind.hashCode ^ aliases.hashCode ^ policy.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ValueRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          kind == other.kind &&
+          aliases == other.aliases &&
+          policy == other.policy;
+}
+
+enum VaultState {
+  /// There is no vault on this device yet.
+  absent,
+
+  /// It exists and is sealed. The vault layer is skipped entirely while it is.
+  locked,
+  unlocked,
+}
 
 @freezed
 sealed class VaultUnlockOutcome with _$VaultUnlockOutcome {

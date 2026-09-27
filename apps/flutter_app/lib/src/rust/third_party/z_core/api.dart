@@ -7,7 +7,7 @@ import '../../api/mirrors.dart';
 import '../../frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Open a conversation. `pack_id` is the session's override; empty means the
 /// profile's pack, and failing that the app default.
@@ -142,8 +142,29 @@ Future<List<Segment>> restoredView({
 Future<String> aiView({required SessionId session, required AnswerId answer}) =>
     RustLib.instance.api.zCoreApiAiView(session: session, answer: answer);
 
+/// Where this device keeps its vault. Called once at startup by the app.
+Future<void> setDataDir({required String dir}) =>
+    RustLib.instance.api.zCoreApiSetDataDir(dir: dir);
+
 /// Is it open? Locked means the vault layer is skipped, and the UI says so.
 Future<VaultState> vaultState() => RustLib.instance.api.zCoreApiVaultState();
+
+/// Make a vault on this device: a random master key, sealed under this passphrase.
+Future<VaultUnlockOutcome> vaultCreateWithPassphrase({
+  required String passphrase,
+}) => RustLib.instance.api.zCoreApiVaultCreateWithPassphrase(
+  passphrase: passphrase,
+);
+
+/// Change the passphrase. Only the master key is re-wrapped; the vault's contents
+/// are not decrypted and not rewritten.
+Future<void> vaultChangePassphrase({
+  required String old,
+  required String replacement,
+}) => RustLib.instance.api.zCoreApiVaultChangePassphrase(
+  old: old,
+  replacement: replacement,
+);
 
 /// Open the vault with the user's passphrase. Argon2id and the master key stay
 /// inside this crate; neither ever crosses the bridge.
@@ -156,7 +177,67 @@ Future<VaultUnlockOutcome> vaultUnlockWithPassphrase({
 /// Close it. Every revealed value re-hides.
 Future<void> vaultLock() => RustLib.instance.api.zCoreApiVaultLock();
 
-/// The profiles, as the switcher lists them. M4.
+/// The identities, as the vault list shows them. `None` means every profile.
+Future<List<EntityRow>> entities({String? profileId}) =>
+    RustLib.instance.api.zCoreApiEntities(profileId: profileId);
+
+/// One identity opened, with the values inside it.
+Future<EntityCard> entity({required int entityId}) =>
+    RustLib.instance.api.zCoreApiEntity(entityId: entityId);
+
+/// A new identity: «CLIENT #17», and what you call it.
+Future<int> createEntity({
+  required EntityKind kind,
+  required String label,
+  String? profileId,
+}) => RustLib.instance.api.zCoreApiCreateEntity(
+  kind: kind,
+  label: label,
+  profileId: profileId,
+);
+
+/// Deleting an identity deletes the values inside it.
+Future<void> deleteEntity({required int entityId}) =>
+    RustLib.instance.api.zCoreApiDeleteEntity(entityId: entityId);
+
+/// Add a value to an identity, or change one. `value_id` is `None` for a new one.
+Future<int> setValue({
+  required int entity,
+  int? valueId,
+  required Kind kind,
+  required String text,
+  required Policy policy,
+}) => RustLib.instance.api.zCoreApiSetValue(
+  entity: entity,
+  valueId: valueId,
+  kind: kind,
+  text: text,
+  policy: policy,
+);
+
+/// Teach a value another spelling of the same thing.
+Future<void> addValueAlias({
+  required int entity,
+  required int valueId,
+  required String alias,
+}) => RustLib.instance.api.zCoreApiAddValueAlias(
+  entity: entity,
+  valueId: valueId,
+  alias: alias,
+);
+
+/// Show one stored value, for a moment, locally.
+Future<RevealedValue> revealValue({
+  required int entity,
+  required int valueId,
+}) =>
+    RustLib.instance.api.zCoreApiRevealValue(entity: entity, valueId: valueId);
+
+/// A new profile — one client's dictionary.
+Future<String> createProfile({required String name}) =>
+    RustLib.instance.api.zCoreApiCreateProfile(name: name);
+
+/// The profiles, as the switcher lists them: `id\tname`.
 Future<List<String>> profiles() => RustLib.instance.api.zCoreApiProfiles();
 
 /// Switch profile. Tokens already given stand; only new matching follows.
