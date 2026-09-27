@@ -40,8 +40,11 @@ pub enum ApiError {
     ProviderUnavailable { provider: String },
     /// Suggestions are still unanswered; there is no way past them.
     OpenSuggestions { count: u32 },
-    /// The file could not be read as text, and why.
+    /// A folder, a profile or a pack could not be used, and why.
     ImportRefused { reason: String },
+    /// A document was not imported, with the named reason and a detail for the
+    /// user («page 3 of 20 has no text layer»).
+    DocumentRefused { reason: Refusal, detail: String },
     /// A span outside the text, reversed, or inside a character.
     BadSpan { reason: String },
     /// No such token in this session.
@@ -65,7 +68,10 @@ impl fmt::Display for ApiError {
             Self::VaultLocked => write!(f, "the vault is locked"),
             Self::ProviderUnavailable { provider } => write!(f, "provider {provider} is not available"),
             Self::OpenSuggestions { count } => write!(f, "{count} suggestions are still unanswered"),
-            Self::ImportRefused { reason } => write!(f, "this document was not imported: {reason}"),
+            Self::ImportRefused { reason } => write!(f, "that could not be used: {reason}"),
+            Self::DocumentRefused { reason, detail } => {
+                write!(f, "this document was not imported ({reason:?}): {detail}")
+            }
             Self::BadSpan { reason } => write!(f, "bad selection: {reason}"),
             Self::UnknownToken => write!(f, "no such token in this session"),
             Self::NothingToSend => write!(f, "there is nothing to send"),
@@ -190,6 +196,52 @@ pub enum VaultState {
     Unlocked,
 }
 
+/// The formats a document may arrive in. More are added by adding a reader, not
+/// by loosening a rule.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DocumentKind {
+    Txt,
+    Docx,
+    Pdf,
+}
+
+/// Why a document was not imported. Named, never a general «it failed»: the user
+/// is owed the reason, and a scanned page is a different problem from a corrupt
+/// file or an encrypted one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Refusal {
+    /// Pages with no text layer at all — a photograph of a document. We do not
+    /// guess, and we do not send it anywhere to be read.
+    ScannedPdfNoTextLayer,
+    /// The file is encrypted. Opening it would need its password, which is a
+    /// different conversation.
+    EncryptedPdf,
+    /// The text is there but written in an encoding this build cannot read
+    /// faithfully. Refused rather than mangled.
+    UnsupportedEncoding,
+    /// The file does not hold together: a broken zip, a truncated PDF.
+    MalformedDocument,
+    /// Bigger than the limit. A document is untrusted input; one file may not eat
+    /// the machine.
+    DocumentTooLarge,
+    /// More pages than the limit.
+    TooManyPages,
+    /// The text after decompression is past the limit — a small file that swells.
+    TextTooLarge,
+    /// Reading it took longer than the limit.
+    TookTooLong,
+    /// Empty, or nothing but whitespace: there is nothing to protect.
+    EmptyDocument,
+}
+
+/// Where a piece of text sits in the document it came from, so that Review can
+/// say «page 17» instead of an offset into one enormous string.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Place {
+    pub page: u32,
+    pub paragraph: u32,
+}
+
 /// What kind of identity an entity is — how the user thinks about it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EntityKind {
@@ -264,6 +316,8 @@ pub struct Mark {
     pub source: Source,
     /// Pack id, entity id, or the rule's name — the "why" behind the mark.
     pub source_detail: String,
+    /// The page and paragraph it sits on, when the text came from a document.
+    pub place: Option<Place>,
 }
 
 /// The original text and its marks. Local only; this never leaves the device.
@@ -271,6 +325,10 @@ pub struct Mark {
 pub struct DocumentView {
     pub text: String,
     pub marks: Vec<Mark>,
+    /// What the user called it: a file name, or empty for text typed in.
+    pub name: String,
+    pub kind: DocumentKind,
+    pub pages: u32,
 }
 
 /// What the AI will receive, for showing in the right-hand column.
@@ -342,6 +400,9 @@ pub struct Finding {
     /// than one is a conflict** — two identities claim the same spelling, and the
     /// scanner refuses to choose silently. The app must ask.
     pub entities: Vec<String>,
+    /// Where it sits: page and paragraph. Kept through protection, so a review
+    /// list can still jump to page 17 after everything is replaced.
+    pub place: Option<Place>,
 }
 
 /// What happened when the user pressed Protect.
@@ -398,6 +459,9 @@ impl fmt::Debug for DocumentView {
         f.debug_struct("DocumentView")
             .field("text", &format_args!("[REDACTED {} bytes]", self.text.len()))
             .field("marks", &self.marks.len())
+            .field("name", &self.name)
+            .field("kind", &self.kind)
+            .field("pages", &self.pages)
             .finish()
     }
 }
@@ -473,9 +537,15 @@ pub fn session_revision(session: SessionId) -> ApiResult<Revision> {
 
 // ---------------------------------------------------------------- document
 
-/// Bring in a document as text. Bytes and formats arrive in M5.
+/// Bring in typed text. No file, no pages: one paragraph per blank line.
 pub fn import_text(session: SessionId, text: String) -> ApiResult<DocumentView> {
     crate::ops::import_text(session, text)
+}
+
+/// Bring in a file. Read here, from memory, with the limits of G15 — and refused
+/// by name when it cannot be read honestly.
+pub fn import_document(session: SessionId, name: String, bytes: Vec<u8>, kind: DocumentKind) -> ApiResult<DocumentView> {
+    crate::ops::import_document(session, name, bytes, kind)
 }
 
 /// The original text with its marks, for the left-hand column.

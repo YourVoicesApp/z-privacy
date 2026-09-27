@@ -55,7 +55,7 @@ extension ApiErrorPatterns on ApiError {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_ImportRefused value)?  importRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,TResult Function( ApiError_PayloadRefused value)?  payloadRefused,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_ImportRefused value)?  importRefused,TResult Function( ApiError_DocumentRefused value)?  documentRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,TResult Function( ApiError_PayloadRefused value)?  payloadRefused,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -66,7 +66,8 @@ return stalePayload(_that);case ApiError_VaultLocked() when vaultLocked != null:
 return vaultLocked(_that);case ApiError_ProviderUnavailable() when providerUnavailable != null:
 return providerUnavailable(_that);case ApiError_OpenSuggestions() when openSuggestions != null:
 return openSuggestions(_that);case ApiError_ImportRefused() when importRefused != null:
-return importRefused(_that);case ApiError_BadSpan() when badSpan != null:
+return importRefused(_that);case ApiError_DocumentRefused() when documentRefused != null:
+return documentRefused(_that);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
@@ -88,7 +89,7 @@ return payloadRefused(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_ImportRefused value)  importRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,required TResult Function( ApiError_PayloadRefused value)  payloadRefused,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_ImportRefused value)  importRefused,required TResult Function( ApiError_DocumentRefused value)  documentRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,required TResult Function( ApiError_PayloadRefused value)  payloadRefused,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
@@ -99,7 +100,8 @@ return stalePayload(_that);case ApiError_VaultLocked():
 return vaultLocked(_that);case ApiError_ProviderUnavailable():
 return providerUnavailable(_that);case ApiError_OpenSuggestions():
 return openSuggestions(_that);case ApiError_ImportRefused():
-return importRefused(_that);case ApiError_BadSpan():
+return importRefused(_that);case ApiError_DocumentRefused():
+return documentRefused(_that);case ApiError_BadSpan():
 return badSpan(_that);case ApiError_UnknownToken():
 return unknownToken(_that);case ApiError_NothingToSend():
 return nothingToSend(_that);case ApiError_PayloadRefused():
@@ -117,7 +119,7 @@ return payloadRefused(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_ImportRefused value)?  importRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,TResult? Function( ApiError_PayloadRefused value)?  payloadRefused,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_ImportRefused value)?  importRefused,TResult? Function( ApiError_DocumentRefused value)?  documentRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,TResult? Function( ApiError_PayloadRefused value)?  payloadRefused,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -128,7 +130,8 @@ return stalePayload(_that);case ApiError_VaultLocked() when vaultLocked != null:
 return vaultLocked(_that);case ApiError_ProviderUnavailable() when providerUnavailable != null:
 return providerUnavailable(_that);case ApiError_OpenSuggestions() when openSuggestions != null:
 return openSuggestions(_that);case ApiError_ImportRefused() when importRefused != null:
-return importRefused(_that);case ApiError_BadSpan() when badSpan != null:
+return importRefused(_that);case ApiError_DocumentRefused() when documentRefused != null:
+return documentRefused(_that);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
@@ -149,7 +152,7 @@ return payloadRefused(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  importRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,TResult Function( String reason)?  payloadRefused,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  importRefused,TResult Function( Refusal reason,  String detail)?  documentRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,TResult Function( String reason)?  payloadRefused,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -159,7 +162,8 @@ return stalePayload(_that.expected,_that.got);case ApiError_VaultLocked() when v
 return vaultLocked();case ApiError_ProviderUnavailable() when providerUnavailable != null:
 return providerUnavailable(_that.provider);case ApiError_OpenSuggestions() when openSuggestions != null:
 return openSuggestions(_that.count);case ApiError_ImportRefused() when importRefused != null:
-return importRefused(_that.reason);case ApiError_BadSpan() when badSpan != null:
+return importRefused(_that.reason);case ApiError_DocumentRefused() when documentRefused != null:
+return documentRefused(_that.reason,_that.detail);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that.reason);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
@@ -181,7 +185,7 @@ return payloadRefused(_that.reason);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  importRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,required TResult Function( String reason)  payloadRefused,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  importRefused,required TResult Function( Refusal reason,  String detail)  documentRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,required TResult Function( String reason)  payloadRefused,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
 return notImplemented();case ApiError_InvalidSession():
@@ -191,7 +195,8 @@ return stalePayload(_that.expected,_that.got);case ApiError_VaultLocked():
 return vaultLocked();case ApiError_ProviderUnavailable():
 return providerUnavailable(_that.provider);case ApiError_OpenSuggestions():
 return openSuggestions(_that.count);case ApiError_ImportRefused():
-return importRefused(_that.reason);case ApiError_BadSpan():
+return importRefused(_that.reason);case ApiError_DocumentRefused():
+return documentRefused(_that.reason,_that.detail);case ApiError_BadSpan():
 return badSpan(_that.reason);case ApiError_UnknownToken():
 return unknownToken();case ApiError_NothingToSend():
 return nothingToSend();case ApiError_PayloadRefused():
@@ -209,7 +214,7 @@ return payloadRefused(_that.reason);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  importRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,TResult? Function( String reason)?  payloadRefused,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  importRefused,TResult? Function( Refusal reason,  String detail)?  documentRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,TResult? Function( String reason)?  payloadRefused,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -219,7 +224,8 @@ return stalePayload(_that.expected,_that.got);case ApiError_VaultLocked() when v
 return vaultLocked();case ApiError_ProviderUnavailable() when providerUnavailable != null:
 return providerUnavailable(_that.provider);case ApiError_OpenSuggestions() when openSuggestions != null:
 return openSuggestions(_that.count);case ApiError_ImportRefused() when importRefused != null:
-return importRefused(_that.reason);case ApiError_BadSpan() when badSpan != null:
+return importRefused(_that.reason);case ApiError_DocumentRefused() when documentRefused != null:
+return documentRefused(_that.reason,_that.detail);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that.reason);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
@@ -618,6 +624,74 @@ class _$ApiError_ImportRefusedCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? reason = null,}) {
   return _then(ApiError_ImportRefused(
 reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ApiError_DocumentRefused extends ApiError {
+  const ApiError_DocumentRefused({required this.reason, required this.detail}): super._();
+  
+
+ final  Refusal reason;
+ final  String detail;
+
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ApiError_DocumentRefusedCopyWith<ApiError_DocumentRefused> get copyWith => _$ApiError_DocumentRefusedCopyWithImpl<ApiError_DocumentRefused>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ApiError_DocumentRefused&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.detail, detail) || other.detail == detail));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,reason,detail);
+
+@override
+String toString() {
+  return 'ApiError.documentRefused(reason: $reason, detail: $detail)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ApiError_DocumentRefusedCopyWith<$Res> implements $ApiErrorCopyWith<$Res> {
+  factory $ApiError_DocumentRefusedCopyWith(ApiError_DocumentRefused value, $Res Function(ApiError_DocumentRefused) _then) = _$ApiError_DocumentRefusedCopyWithImpl;
+@useResult
+$Res call({
+ Refusal reason, String detail
+});
+
+
+
+
+}
+/// @nodoc
+class _$ApiError_DocumentRefusedCopyWithImpl<$Res>
+    implements $ApiError_DocumentRefusedCopyWith<$Res> {
+  _$ApiError_DocumentRefusedCopyWithImpl(this._self, this._then);
+
+  final ApiError_DocumentRefused _self;
+  final $Res Function(ApiError_DocumentRefused) _then;
+
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? reason = null,Object? detail = null,}) {
+  return _then(ApiError_DocumentRefused(
+reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as Refusal,detail: null == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

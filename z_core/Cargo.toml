@@ -22,6 +22,10 @@ unicode-normalization = "0.1"
 argon2 = "0.5"
 chacha20poly1305 = "0.10"
 zeroize = { version = "1", features = ["zeroize_derive"] }
+# The only decompressor in the project (task 016). DOCX is a zip and a PDF's
+# content streams are deflate; both are read from memory, and the read loop is
+# ours so that the size limits of G15/rule 4 are enforced where the bytes arrive.
+flate2 = { version = "1.1", default-features = false, features = ["rust_backend"] }
 
 [lints]
 workspace = true

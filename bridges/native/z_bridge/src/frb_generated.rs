@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1488890525;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -527688442;
 
 // Section: executor
 
@@ -439,6 +439,37 @@ fn wire__z_core__api__hide_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
                     let output_ok = z_core::api::hide(api_session, api_token)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__import_document_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "import_document",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_name = <String>::sse_decode(&mut deserializer);
+            let api_bytes = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_kind = <crate::api::mirrors::DocumentKind>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::import_document(api_session, api_name, api_bytes, api_kind)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -1300,6 +1331,10 @@ const _: fn() = || {
         crate::api::mirrors::ApiError::ImportRefused { reason } => {
             let _: String = reason;
         }
+        crate::api::mirrors::ApiError::DocumentRefused { reason, detail } => {
+            let _: crate::api::mirrors::Refusal = reason;
+            let _: String = detail;
+        }
         crate::api::mirrors::ApiError::BadSpan { reason } => {
             let _: String = reason;
         }
@@ -1313,6 +1348,9 @@ const _: fn() = || {
         let DocumentView = None::<crate::api::mirrors::DocumentView>.unwrap();
         let _: String = DocumentView.text;
         let _: Vec<crate::api::mirrors::Mark> = DocumentView.marks;
+        let _: String = DocumentView.name;
+        let _: crate::api::mirrors::DocumentKind = DocumentView.kind;
+        let _: u32 = DocumentView.pages;
     }
     {
         let EntityCard = None::<crate::api::mirrors::EntityCard>.unwrap();
@@ -1340,6 +1378,7 @@ const _: fn() = || {
         let _: String = Finding.reason;
         let _: crate::api::mirrors::MarkState = Finding.state;
         let _: Vec<String> = Finding.entities;
+        let _: Option<crate::api::mirrors::Place> = Finding.place;
     }
     {
         let LayerCount = None::<crate::api::mirrors::LayerCount>.unwrap();
@@ -1355,6 +1394,7 @@ const _: fn() = || {
         let _: crate::api::mirrors::Kind = Mark.kind;
         let _: crate::api::mirrors::Source = Mark.source;
         let _: String = Mark.source_detail;
+        let _: Option<crate::api::mirrors::Place> = Mark.place;
     }
     {
         let PayloadHandle = None::<crate::api::mirrors::PayloadHandle>.unwrap();
@@ -1367,6 +1407,11 @@ const _: fn() = || {
         let _: String = PayloadView.text;
         let _: u32 = PayloadView.protected_count;
         let _: u32 = PayloadView.open_suggestions;
+    }
+    {
+        let Place = None::<crate::api::mirrors::Place>.unwrap();
+        let _: u32 = Place.page;
+        let _: u32 = Place.paragraph;
     }
     match None::<crate::api::mirrors::ProtectOutcome>.unwrap() {
         crate::api::mirrors::ProtectOutcome::Applied { token, places } => {
@@ -1530,16 +1575,24 @@ impl SseDecode for crate::api::mirrors::ApiError {
                 return crate::api::mirrors::ApiError::ImportRefused { reason: var_reason };
             }
             8 => {
+                let mut var_reason = <crate::api::mirrors::Refusal>::sse_decode(deserializer);
+                let mut var_detail = <String>::sse_decode(deserializer);
+                return crate::api::mirrors::ApiError::DocumentRefused {
+                    reason: var_reason,
+                    detail: var_detail,
+                };
+            }
+            9 => {
                 let mut var_reason = <String>::sse_decode(deserializer);
                 return crate::api::mirrors::ApiError::BadSpan { reason: var_reason };
             }
-            9 => {
+            10 => {
                 return crate::api::mirrors::ApiError::UnknownToken;
             }
-            10 => {
+            11 => {
                 return crate::api::mirrors::ApiError::NothingToSend;
             }
-            11 => {
+            12 => {
                 let mut var_reason = <String>::sse_decode(deserializer);
                 return crate::api::mirrors::ApiError::PayloadRefused { reason: var_reason };
             }
@@ -1557,14 +1610,33 @@ impl SseDecode for bool {
     }
 }
 
+impl SseDecode for crate::api::mirrors::DocumentKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::DocumentKind::Txt,
+            1 => crate::api::mirrors::DocumentKind::Docx,
+            2 => crate::api::mirrors::DocumentKind::Pdf,
+            _ => unreachable!("Invalid variant for DocumentKind: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for crate::api::mirrors::DocumentView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_text = <String>::sse_decode(deserializer);
         let mut var_marks = <Vec<crate::api::mirrors::Mark>>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_kind = <crate::api::mirrors::DocumentKind>::sse_decode(deserializer);
+        let mut var_pages = <u32>::sse_decode(deserializer);
         return crate::api::mirrors::DocumentView {
             text: var_text,
             marks: var_marks,
+            name: var_name,
+            kind: var_kind,
+            pages: var_pages,
         };
     }
 }
@@ -1632,6 +1704,7 @@ impl SseDecode for crate::api::mirrors::Finding {
         let mut var_reason = <String>::sse_decode(deserializer);
         let mut var_state = <crate::api::mirrors::MarkState>::sse_decode(deserializer);
         let mut var_entities = <Vec<String>>::sse_decode(deserializer);
+        let mut var_place = <Option<crate::api::mirrors::Place>>::sse_decode(deserializer);
         return crate::api::mirrors::Finding {
             id: var_id,
             span: var_span,
@@ -1640,6 +1713,7 @@ impl SseDecode for crate::api::mirrors::Finding {
             reason: var_reason,
             state: var_state,
             entities: var_entities,
+            place: var_place,
         };
     }
 }
@@ -1832,6 +1906,7 @@ impl SseDecode for crate::api::mirrors::Mark {
         let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
         let mut var_source = <crate::api::mirrors::Source>::sse_decode(deserializer);
         let mut var_sourceDetail = <String>::sse_decode(deserializer);
+        let mut var_place = <Option<crate::api::mirrors::Place>>::sse_decode(deserializer);
         return crate::api::mirrors::Mark {
             span: var_span,
             state: var_state,
@@ -1839,6 +1914,7 @@ impl SseDecode for crate::api::mirrors::Mark {
             kind: var_kind,
             source: var_source,
             source_detail: var_sourceDetail,
+            place: var_place,
         };
     }
 }
@@ -1860,6 +1936,17 @@ impl SseDecode for Option<String> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<String>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::mirrors::Place> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::mirrors::Place>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -1901,6 +1988,18 @@ impl SseDecode for crate::api::mirrors::PayloadView {
             text: var_text,
             protected_count: var_protectedCount,
             open_suggestions: var_openSuggestions,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Place {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_page = <u32>::sse_decode(deserializer);
+        let mut var_paragraph = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::Place {
+            page: var_page,
+            paragraph: var_paragraph,
         };
     }
 }
@@ -1965,6 +2064,25 @@ impl SseDecode for crate::api::mirrors::ProviderId {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_id = <String>::sse_decode(deserializer);
         return crate::api::mirrors::ProviderId { id: var_id };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Refusal {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::Refusal::ScannedPdfNoTextLayer,
+            1 => crate::api::mirrors::Refusal::EncryptedPdf,
+            2 => crate::api::mirrors::Refusal::UnsupportedEncoding,
+            3 => crate::api::mirrors::Refusal::MalformedDocument,
+            4 => crate::api::mirrors::Refusal::DocumentTooLarge,
+            5 => crate::api::mirrors::Refusal::TooManyPages,
+            6 => crate::api::mirrors::Refusal::TextTooLarge,
+            7 => crate::api::mirrors::Refusal::TookTooLong,
+            8 => crate::api::mirrors::Refusal::EmptyDocument,
+            _ => unreachable!("Invalid variant for Refusal: {}", inner),
+        };
     }
 }
 
@@ -2230,35 +2348,36 @@ fn pde_ffi_dispatcher_primary_impl(
         12 => wire__z_core__api__entities_impl(port, ptr, rust_vec_len, data_len),
         13 => wire__z_core__api__entity_impl(port, ptr, rust_vec_len, data_len),
         14 => wire__z_core__api__hide_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__z_core__api__import_text_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__z_core__api__ingest_answer_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__core__init_app_impl(port, ptr, rust_vec_len, data_len),
-        18 => wire__z_core__api__list_findings_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__z_core__api__list_tokens_impl(port, ptr, rust_vec_len, data_len),
-        20 => wire__z_core__api__open_session_impl(port, ptr, rust_vec_len, data_len),
-        21 => wire__z_core__api__packs_impl(port, ptr, rust_vec_len, data_len),
-        22 => wire__z_core__api__payload_view_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__z_core__api__profiles_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__z_core__api__protect_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__z_core__api__protect_all_matches_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__z_core__api__providers_impl(port, ptr, rust_vec_len, data_len),
-        27 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
-        28 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
-        29 => wire__z_core__api__reveal_value_impl(port, ptr, rust_vec_len, data_len),
-        30 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
-        31 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
-        32 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
-        33 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
-        34 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
-        35 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
-        36 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
-        37 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
-        38 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
-        39 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        40 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        41 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
-        42 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
-        43 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__z_core__api__import_document_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__z_core__api__import_text_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__z_core__api__ingest_answer_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__core__init_app_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__z_core__api__list_findings_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__z_core__api__list_tokens_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__z_core__api__open_session_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__z_core__api__packs_impl(port, ptr, rust_vec_len, data_len),
+        23 => wire__z_core__api__payload_view_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__z_core__api__profiles_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__z_core__api__protect_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__z_core__api__protect_all_matches_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__z_core__api__providers_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__z_core__api__reveal_value_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
+        33 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
+        34 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
+        35 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
+        36 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
+        37 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
+        38 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
+        39 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        41 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        42 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
+        43 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2313,13 +2432,19 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ApiError>
             crate::api::mirrors::ApiError::ImportRefused { reason } => {
                 [7.into_dart(), reason.into_into_dart().into_dart()].into_dart()
             }
+            crate::api::mirrors::ApiError::DocumentRefused { reason, detail } => [
+                8.into_dart(),
+                reason.into_into_dart().into_dart(),
+                detail.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
             crate::api::mirrors::ApiError::BadSpan { reason } => {
-                [8.into_dart(), reason.into_into_dart().into_dart()].into_dart()
+                [9.into_dart(), reason.into_into_dart().into_dart()].into_dart()
             }
-            crate::api::mirrors::ApiError::UnknownToken => [9.into_dart()].into_dart(),
-            crate::api::mirrors::ApiError::NothingToSend => [10.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::UnknownToken => [10.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::NothingToSend => [11.into_dart()].into_dart(),
             crate::api::mirrors::ApiError::PayloadRefused { reason } => {
-                [11.into_dart(), reason.into_into_dart().into_dart()].into_dart()
+                [12.into_dart(), reason.into_into_dart().into_dart()].into_dart()
             }
             _ => {
                 unimplemented!("");
@@ -2334,11 +2459,33 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::ApiError>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::DocumentKind> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::DocumentKind::Txt => 0.into_dart(),
+            crate::api::mirrors::DocumentKind::Docx => 1.into_dart(),
+            crate::api::mirrors::DocumentKind::Pdf => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::DocumentKind> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::DocumentKind>>
+    for crate::api::mirrors::DocumentKind
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::DocumentKind> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::DocumentView> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.0.text.into_into_dart().into_dart(),
             self.0.marks.into_into_dart().into_dart(),
+            self.0.name.into_into_dart().into_dart(),
+            self.0.kind.into_into_dart().into_dart(),
+            self.0.pages.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -2424,6 +2571,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Finding> 
             self.0.reason.into_into_dart().into_dart(),
             self.0.state.into_into_dart().into_dart(),
             self.0.entities.into_into_dart().into_dart(),
+            self.0.place.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -2511,6 +2659,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Mark> {
             self.0.kind.into_into_dart().into_dart(),
             self.0.source.into_into_dart().into_dart(),
             self.0.source_detail.into_into_dart().into_dart(),
+            self.0.place.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -2572,6 +2721,22 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::PayloadVi
     for crate::api::mirrors::PayloadView
 {
     fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::PayloadView> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Place> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.page.into_into_dart().into_dart(),
+            self.0.paragraph.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Place> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Place>> for crate::api::mirrors::Place {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Place> {
         self.into()
     }
 }
@@ -2647,6 +2812,29 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::ProviderI
     for crate::api::mirrors::ProviderId
 {
     fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::ProviderId> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Refusal> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::Refusal::ScannedPdfNoTextLayer => 0.into_dart(),
+            crate::api::mirrors::Refusal::EncryptedPdf => 1.into_dart(),
+            crate::api::mirrors::Refusal::UnsupportedEncoding => 2.into_dart(),
+            crate::api::mirrors::Refusal::MalformedDocument => 3.into_dart(),
+            crate::api::mirrors::Refusal::DocumentTooLarge => 4.into_dart(),
+            crate::api::mirrors::Refusal::TooManyPages => 5.into_dart(),
+            crate::api::mirrors::Refusal::TextTooLarge => 6.into_dart(),
+            crate::api::mirrors::Refusal::TookTooLong => 7.into_dart(),
+            crate::api::mirrors::Refusal::EmptyDocument => 8.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Refusal> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Refusal>> for crate::api::mirrors::Refusal {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Refusal> {
         self.into()
     }
 }
@@ -2981,18 +3169,23 @@ impl SseEncode for crate::api::mirrors::ApiError {
                 <i32>::sse_encode(7, serializer);
                 <String>::sse_encode(reason, serializer);
             }
-            crate::api::mirrors::ApiError::BadSpan { reason } => {
+            crate::api::mirrors::ApiError::DocumentRefused { reason, detail } => {
                 <i32>::sse_encode(8, serializer);
+                <crate::api::mirrors::Refusal>::sse_encode(reason, serializer);
+                <String>::sse_encode(detail, serializer);
+            }
+            crate::api::mirrors::ApiError::BadSpan { reason } => {
+                <i32>::sse_encode(9, serializer);
                 <String>::sse_encode(reason, serializer);
             }
             crate::api::mirrors::ApiError::UnknownToken => {
-                <i32>::sse_encode(9, serializer);
-            }
-            crate::api::mirrors::ApiError::NothingToSend => {
                 <i32>::sse_encode(10, serializer);
             }
-            crate::api::mirrors::ApiError::PayloadRefused { reason } => {
+            crate::api::mirrors::ApiError::NothingToSend => {
                 <i32>::sse_encode(11, serializer);
+            }
+            crate::api::mirrors::ApiError::PayloadRefused { reason } => {
+                <i32>::sse_encode(12, serializer);
                 <String>::sse_encode(reason, serializer);
             }
             _ => {
@@ -3009,11 +3202,31 @@ impl SseEncode for bool {
     }
 }
 
+impl SseEncode for crate::api::mirrors::DocumentKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::DocumentKind::Txt => 0,
+                crate::api::mirrors::DocumentKind::Docx => 1,
+                crate::api::mirrors::DocumentKind::Pdf => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
 impl SseEncode for crate::api::mirrors::DocumentView {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.text, serializer);
         <Vec<crate::api::mirrors::Mark>>::sse_encode(self.marks, serializer);
+        <String>::sse_encode(self.name, serializer);
+        <crate::api::mirrors::DocumentKind>::sse_encode(self.kind, serializer);
+        <u32>::sse_encode(self.pages, serializer);
     }
 }
 
@@ -3069,6 +3282,7 @@ impl SseEncode for crate::api::mirrors::Finding {
         <String>::sse_encode(self.reason, serializer);
         <crate::api::mirrors::MarkState>::sse_encode(self.state, serializer);
         <Vec<String>>::sse_encode(self.entities, serializer);
+        <Option<crate::api::mirrors::Place>>::sse_encode(self.place, serializer);
     }
 }
 
@@ -3243,6 +3457,7 @@ impl SseEncode for crate::api::mirrors::Mark {
         <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
         <crate::api::mirrors::Source>::sse_encode(self.source, serializer);
         <String>::sse_encode(self.source_detail, serializer);
+        <Option<crate::api::mirrors::Place>>::sse_encode(self.place, serializer);
     }
 }
 
@@ -3272,6 +3487,16 @@ impl SseEncode for Option<String> {
     }
 }
 
+impl SseEncode for Option<crate::api::mirrors::Place> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::mirrors::Place>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<u32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3297,6 +3522,14 @@ impl SseEncode for crate::api::mirrors::PayloadView {
         <String>::sse_encode(self.text, serializer);
         <u32>::sse_encode(self.protected_count, serializer);
         <u32>::sse_encode(self.open_suggestions, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Place {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.page, serializer);
+        <u32>::sse_encode(self.paragraph, serializer);
     }
 }
 
@@ -3356,6 +3589,29 @@ impl SseEncode for crate::api::mirrors::ProviderId {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.id, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Refusal {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::Refusal::ScannedPdfNoTextLayer => 0,
+                crate::api::mirrors::Refusal::EncryptedPdf => 1,
+                crate::api::mirrors::Refusal::UnsupportedEncoding => 2,
+                crate::api::mirrors::Refusal::MalformedDocument => 3,
+                crate::api::mirrors::Refusal::DocumentTooLarge => 4,
+                crate::api::mirrors::Refusal::TooManyPages => 5,
+                crate::api::mirrors::Refusal::TextTooLarge => 6,
+                crate::api::mirrors::Refusal::TookTooLong => 7,
+                crate::api::mirrors::Refusal::EmptyDocument => 8,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

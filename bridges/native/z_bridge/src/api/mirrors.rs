@@ -27,8 +27,11 @@ pub enum _ApiError {
     ProviderUnavailable { provider: String },
     /// Suggestions are still unanswered; there is no way past them.
     OpenSuggestions { count: u32 },
-    /// The file could not be read as text, and why.
+    /// A folder, a profile or a pack could not be used, and why.
     ImportRefused { reason: String },
+    /// A document was not imported, with the named reason and a detail for the
+    /// user («page 3 of 20 has no text layer»).
+    DocumentRefused { reason: Refusal, detail: String },
     /// A span outside the text, reversed, or inside a character.
     BadSpan { reason: String },
     /// No such token in this session.
@@ -131,6 +134,45 @@ pub enum _VaultState {
     Unlocked,
 }
 
+#[frb(mirror(DocumentKind))]
+pub enum _DocumentKind {
+    Txt,
+    Docx,
+    Pdf,
+}
+
+#[frb(mirror(Refusal))]
+pub enum _Refusal {
+    /// Pages with no text layer at all — a photograph of a document. We do not
+    /// guess, and we do not send it anywhere to be read.
+    ScannedPdfNoTextLayer,
+    /// The file is encrypted. Opening it would need its password, which is a
+    /// different conversation.
+    EncryptedPdf,
+    /// The text is there but written in an encoding this build cannot read
+    /// faithfully. Refused rather than mangled.
+    UnsupportedEncoding,
+    /// The file does not hold together: a broken zip, a truncated PDF.
+    MalformedDocument,
+    /// Bigger than the limit. A document is untrusted input; one file may not eat
+    /// the machine.
+    DocumentTooLarge,
+    /// More pages than the limit.
+    TooManyPages,
+    /// The text after decompression is past the limit — a small file that swells.
+    TextTooLarge,
+    /// Reading it took longer than the limit.
+    TookTooLong,
+    /// Empty, or nothing but whitespace: there is nothing to protect.
+    EmptyDocument,
+}
+
+#[frb(mirror(Place))]
+pub struct _Place {
+    pub page: u32,
+    pub paragraph: u32,
+}
+
 #[frb(mirror(EntityKind))]
 pub enum _EntityKind {
     Client,
@@ -195,12 +237,18 @@ pub struct _Mark {
     pub source: Source,
     /// Pack id, entity id, or the rule's name — the "why" behind the mark.
     pub source_detail: String,
+    /// The page and paragraph it sits on, when the text came from a document.
+    pub place: Option<Place>,
 }
 
 #[frb(mirror(DocumentView))]
 pub struct _DocumentView {
     pub text: String,
     pub marks: Vec<Mark>,
+    /// What the user called it: a file name, or empty for text typed in.
+    pub name: String,
+    pub kind: DocumentKind,
+    pub pages: u32,
 }
 
 #[frb(mirror(PayloadView))]
@@ -265,6 +313,9 @@ pub struct _Finding {
     /// than one is a conflict** — two identities claim the same spelling, and the
     /// scanner refuses to choose silently. The app must ask.
     pub entities: Vec<String>,
+    /// Where it sits: page and paragraph. Kept through protection, so a review
+    /// list can still jump to page 17 after everything is replaced.
+    pub place: Option<Place>,
 }
 
 #[frb(mirror(ProtectOutcome))]

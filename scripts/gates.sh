@@ -142,6 +142,35 @@ else
   skip "G5b UI uses no network API" "no flutter app yet"
 fi
 
+
+# ---------------------------------------------------------------- G15
+# No intermediate files: reading a document must never touch the disk. The only
+# file this crate may write is the sealed vault, and each such line carries a
+# «G15-ok» comment above it so that the exemptions are countable.
+FS_HITS=$(grep -RnE '\b(std::fs::|File::create|File::open|temp_dir|tempfile|NamedTempFile|OpenOptions)' z_core/src 2>/dev/null \
+  | grep -vE ':[0-9]+:[[:space:]]*//' || true)
+FS_BAD=""
+while IFS= read -r line; do
+  [ -z "$line" ] && continue
+  FILE=${line%%:*}
+  REST=${line#*:}
+  NUM=${REST%%:*}
+  PREV=$((NUM - 1))
+  if sed -n "${PREV}p" "$FILE" 2>/dev/null | grep -q 'G15-ok'; then
+    continue
+  fi
+  FS_BAD="$FS_BAD$line
+"
+done <<EOF
+$FS_HITS
+EOF
+if [ -n "$FS_BAD" ]; then
+  fail "G15 the core touches the filesystem without a stated reason:"; printf '        %s\n' "$FS_BAD"
+else
+  EXEMPT=$(grep -Rc 'G15-ok' z_core/src 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
+  pass "G15 no filesystem in z_core/src except $EXEMPT stated lines (the sealed vault)"
+fi
+
 # ---------------------------------------------------------------- G4
 if grep -q 'unsafe_code = "forbid"' Cargo.toml 2>/dev/null; then
   pass "G4a unsafe_code = forbid in the workspace lints"
@@ -186,7 +215,7 @@ else
 fi
 
 # A green run proves nothing unless the four invariant tests actually exist.
-for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four; do
+for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

@@ -41,6 +41,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PayloadHandle dco_decode_box_autoadd_payload_handle(dynamic raw);
 
   @protected
+  Place dco_decode_box_autoadd_place(dynamic raw);
+
+  @protected
   ProviderId dco_decode_box_autoadd_provider_id(dynamic raw);
 
   @protected
@@ -51,6 +54,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  DocumentKind dco_decode_document_kind(dynamic raw);
 
   @protected
   DocumentView dco_decode_document_view(dynamic raw);
@@ -95,6 +101,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Mark> dco_decode_list_mark(dynamic raw);
 
   @protected
+  List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
@@ -119,6 +128,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? dco_decode_opt_String(dynamic raw);
 
   @protected
+  Place? dco_decode_opt_box_autoadd_place(dynamic raw);
+
+  @protected
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
@@ -128,6 +140,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PayloadView dco_decode_payload_view(dynamic raw);
 
   @protected
+  Place dco_decode_place(dynamic raw);
+
+  @protected
   Policy dco_decode_policy(dynamic raw);
 
   @protected
@@ -135,6 +150,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProviderId dco_decode_provider_id(dynamic raw);
+
+  @protected
+  Refusal dco_decode_refusal(dynamic raw);
 
   @protected
   RescanOutcome dco_decode_rescan_outcome(dynamic raw);
@@ -211,6 +229,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  Place sse_decode_box_autoadd_place(SseDeserializer deserializer);
+
+  @protected
   ProviderId sse_decode_box_autoadd_provider_id(SseDeserializer deserializer);
 
   @protected
@@ -221,6 +242,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  DocumentKind sse_decode_document_kind(SseDeserializer deserializer);
 
   @protected
   DocumentView sse_decode_document_view(SseDeserializer deserializer);
@@ -265,6 +289,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Mark> sse_decode_list_mark(SseDeserializer deserializer);
 
   @protected
+  List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
@@ -289,6 +316,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
+  Place? sse_decode_opt_box_autoadd_place(SseDeserializer deserializer);
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
@@ -298,6 +328,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PayloadView sse_decode_payload_view(SseDeserializer deserializer);
 
   @protected
+  Place sse_decode_place(SseDeserializer deserializer);
+
+  @protected
   Policy sse_decode_policy(SseDeserializer deserializer);
 
   @protected
@@ -305,6 +338,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProviderId sse_decode_provider_id(SseDeserializer deserializer);
+
+  @protected
+  Refusal sse_decode_refusal(SseDeserializer deserializer);
 
   @protected
   RescanOutcome sse_decode_rescan_outcome(SseDeserializer deserializer);
@@ -387,6 +423,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_place(Place self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_provider_id(
     ProviderId self,
     SseSerializer serializer,
@@ -403,6 +442,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_document_kind(DocumentKind self, SseSerializer serializer);
 
   @protected
   void sse_encode_document_view(DocumentView self, SseSerializer serializer);
@@ -453,6 +495,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_mark(List<Mark> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -480,6 +525,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_place(Place? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
@@ -487,6 +535,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_payload_view(PayloadView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_place(Place self, SseSerializer serializer);
 
   @protected
   void sse_encode_policy(Policy self, SseSerializer serializer);
@@ -499,6 +550,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_provider_id(ProviderId self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_refusal(Refusal self, SseSerializer serializer);
 
   @protected
   void sse_encode_rescan_outcome(RescanOutcome self, SseSerializer serializer);

@@ -9,7 +9,8 @@
 use std::collections::BTreeMap;
 use std::sync::{Mutex, OnceLock};
 
-use crate::api::{Kind, MarkState, Scope, Source};
+use crate::api::{DocumentKind, Kind, MarkState, Place, Scope, Source};
+use crate::documents::PlaceSpan;
 use crate::secret::Secret;
 use crate::payload::SafePayload;
 use crate::tokens::{TokenMint, TokenStore};
@@ -61,6 +62,12 @@ pub(crate) struct Session {
     /// The user's own text. It never leaves this crate except as a view, and it
     /// never prints itself (G11).
     pub original: Secret,
+    /// What the user called the document, and what it was.
+    pub doc_name: String,
+    pub doc_kind: DocumentKind,
+    pub pages: u32,
+    /// Where every run of the text came from: page and paragraph.
+    pub places: Vec<PlaceSpan>,
     pub protections: Vec<Protection>,
     /// What the scanner found: protected ones and open suggestions alike, so the
     /// review list can show all three states with their reasons.
@@ -92,6 +99,10 @@ impl Session {
             profile_id,
             pack_id,
             original: Secret::default(),
+            doc_name: String::new(),
+            doc_kind: DocumentKind::Txt,
+            pages: 1,
+            places: Vec::new(),
             protections: Vec::new(),
             findings: Vec::new(),
             normal_words: 0,
@@ -116,6 +127,21 @@ impl Session {
     /// The original text. Reading it is a deliberate act, by name.
     pub(crate) fn original_str(&self) -> &str {
         self.original.expose()
+    }
+
+    /// Where a byte offset in the text sits in the document it came from.
+    ///
+    /// This is what lets a finding still say «page 17» after the text around it
+    /// has been replaced by tokens: the map is kept against the **original**, and
+    /// the original does not move.
+    pub(crate) fn place_of(&self, start: usize) -> Option<Place> {
+        self.places
+            .iter()
+            .find(|p| p.start <= start && start < p.end)
+            .map(|p| Place {
+                page: p.page,
+                paragraph: p.paragraph,
+            })
     }
 
     /// How many suggestions are still unanswered. Invariant G12: a payload from a

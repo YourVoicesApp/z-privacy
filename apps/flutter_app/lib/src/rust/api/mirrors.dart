@@ -52,9 +52,16 @@ sealed class ApiError with _$ApiError implements FrbException {
   const factory ApiError.openSuggestions({required int count}) =
       ApiError_OpenSuggestions;
 
-  /// The file could not be read as text, and why.
+  /// A folder, a profile or a pack could not be used, and why.
   const factory ApiError.importRefused({required String reason}) =
       ApiError_ImportRefused;
+
+  /// A document was not imported, with the named reason and a detail for the
+  /// user («page 3 of 20 has no text layer»).
+  const factory ApiError.documentRefused({
+    required Refusal reason,
+    required String detail,
+  }) = ApiError_DocumentRefused;
 
   /// A span outside the text, reversed, or inside a character.
   const factory ApiError.badSpan({required String reason}) = ApiError_BadSpan;
@@ -71,14 +78,32 @@ sealed class ApiError with _$ApiError implements FrbException {
       ApiError_PayloadRefused;
 }
 
+enum DocumentKind { txt, docx, pdf }
+
 class DocumentView {
   final String text;
   final List<Mark> marks;
 
-  const DocumentView({required this.text, required this.marks});
+  /// What the user called it: a file name, or empty for text typed in.
+  final String name;
+  final DocumentKind kind;
+  final int pages;
+
+  const DocumentView({
+    required this.text,
+    required this.marks,
+    required this.name,
+    required this.kind,
+    required this.pages,
+  });
 
   @override
-  int get hashCode => text.hashCode ^ marks.hashCode;
+  int get hashCode =>
+      text.hashCode ^
+      marks.hashCode ^
+      name.hashCode ^
+      kind.hashCode ^
+      pages.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -86,7 +111,10 @@ class DocumentView {
       other is DocumentView &&
           runtimeType == other.runtimeType &&
           text == other.text &&
-          marks == other.marks;
+          marks == other.marks &&
+          name == other.name &&
+          kind == other.kind &&
+          pages == other.pages;
 }
 
 class EntityCard {
@@ -182,6 +210,10 @@ class Finding {
   /// scanner refuses to choose silently. The app must ask.
   final List<String> entities;
 
+  /// Where it sits: page and paragraph. Kept through protection, so a review
+  /// list can still jump to page 17 after everything is replaced.
+  final Place? place;
+
   const Finding({
     required this.id,
     required this.span,
@@ -190,6 +222,7 @@ class Finding {
     required this.reason,
     required this.state,
     required this.entities,
+    this.place,
   });
 
   @override
@@ -200,7 +233,8 @@ class Finding {
       source.hashCode ^
       reason.hashCode ^
       state.hashCode ^
-      entities.hashCode;
+      entities.hashCode ^
+      place.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -213,7 +247,8 @@ class Finding {
           source == other.source &&
           reason == other.reason &&
           state == other.state &&
-          entities == other.entities;
+          entities == other.entities &&
+          place == other.place;
 }
 
 enum FindingAnswer { protect, always, notSensitive, skip }
@@ -275,6 +310,9 @@ class Mark {
   /// Pack id, entity id, or the rule's name — the "why" behind the mark.
   final String sourceDetail;
 
+  /// The page and paragraph it sits on, when the text came from a document.
+  final Place? place;
+
   const Mark({
     required this.span,
     required this.state,
@@ -282,6 +320,7 @@ class Mark {
     required this.kind,
     required this.source,
     required this.sourceDetail,
+    this.place,
   });
 
   @override
@@ -291,7 +330,8 @@ class Mark {
       token.hashCode ^
       kind.hashCode ^
       source.hashCode ^
-      sourceDetail.hashCode;
+      sourceDetail.hashCode ^
+      place.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -303,7 +343,8 @@ class Mark {
           token == other.token &&
           kind == other.kind &&
           source == other.source &&
-          sourceDetail == other.sourceDetail;
+          sourceDetail == other.sourceDetail &&
+          place == other.place;
 }
 
 enum MarkState { protected, suggested }
@@ -357,6 +398,24 @@ class PayloadView {
           openSuggestions == other.openSuggestions;
 }
 
+class Place {
+  final int page;
+  final int paragraph;
+
+  const Place({required this.page, required this.paragraph});
+
+  @override
+  int get hashCode => page.hashCode ^ paragraph.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Place &&
+          runtimeType == other.runtimeType &&
+          page == other.page &&
+          paragraph == other.paragraph;
+}
+
 enum Policy {
   /// Replaced the moment it appears.
   always,
@@ -408,6 +467,39 @@ class ProviderId {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is ProviderId && runtimeType == other.runtimeType && id == other.id;
+}
+
+enum Refusal {
+  /// Pages with no text layer at all — a photograph of a document. We do not
+  /// guess, and we do not send it anywhere to be read.
+  scannedPdfNoTextLayer,
+
+  /// The file is encrypted. Opening it would need its password, which is a
+  /// different conversation.
+  encryptedPdf,
+
+  /// The text is there but written in an encoding this build cannot read
+  /// faithfully. Refused rather than mangled.
+  unsupportedEncoding,
+
+  /// The file does not hold together: a broken zip, a truncated PDF.
+  malformedDocument,
+
+  /// Bigger than the limit. A document is untrusted input; one file may not eat
+  /// the machine.
+  documentTooLarge,
+
+  /// More pages than the limit.
+  tooManyPages,
+
+  /// The text after decompression is past the limit — a small file that swells.
+  textTooLarge,
+
+  /// Reading it took longer than the limit.
+  tookTooLong,
+
+  /// Empty, or nothing but whitespace: there is nothing to protect.
+  emptyDocument,
 }
 
 class RescanOutcome {

@@ -34,6 +34,7 @@ pub(crate) struct VaultStore {
 impl VaultStore {
     pub(crate) fn set_dir(&mut self, dir: PathBuf) -> ApiResult<()> {
         if !dir.is_dir() {
+            // G15-ok: the folder for the sealed vault, never for a document.
             std::fs::create_dir_all(&dir).map_err(|e| ApiError::ImportRefused {
                 reason: format!("this folder cannot be used for the vault: {e}"),
             })?;
@@ -57,6 +58,7 @@ impl VaultStore {
             return;
         }
         let Some(path) = self.path() else { return };
+        // G15-ok: reading the sealed vault file.
         if let Ok(bytes) = std::fs::read(&path) {
             self.sealed = SealedVault::from_bytes(&bytes).ok();
         }
@@ -174,9 +176,11 @@ impl VaultStore {
         let bytes = sealed.to_bytes();
         // Write beside it and rename, so a crash cannot leave half a vault.
         let temporary = path.with_extension("zv.new");
+        // G15-ok: the sealed vault is the only file this crate writes.
         std::fs::write(&temporary, &bytes).map_err(|e| ApiError::ImportRefused {
             reason: format!("the vault could not be written: {e}"),
         })?;
+        // G15-ok: rename into place, so a crash cannot leave half a vault.
         std::fs::rename(&temporary, &path).map_err(|e| ApiError::ImportRefused {
             reason: format!("the vault could not be put in place: {e}"),
         })?;
@@ -191,8 +195,10 @@ mod tests {
     use crate::secret::Secret;
     use crate::vault::model::{Entity, ValueRecord};
 
-    fn temp_dir(name: &str) -> PathBuf {
+    fn test_dir(name: &str) -> PathBuf {
+        // G15-ok: a test's own folder, for the vault file only.
         let dir = std::env::temp_dir().join(format!("zprivacy-test-{name}-{}", std::process::id()));
+        // G15-ok: cleaning a test's own folder.
         let _ = std::fs::remove_dir_all(&dir);
         dir
     }
@@ -224,7 +230,7 @@ mod tests {
 
     #[test]
     fn it_survives_being_closed_and_opened_again() {
-        let dir = temp_dir("reload");
+        let dir = test_dir("reload");
         let pass = "ein gutes Passwort für den Test";
 
         let mut store = VaultStore::default();
@@ -258,12 +264,13 @@ mod tests {
         assert_eq!(hints.len(), 2, "the value and its alias");
         assert_eq!(hints[0].entity_handle, "CLIENT #17");
 
+        // G15-ok: cleaning a test's own folder.
         let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn the_file_on_disk_never_holds_the_words() {
-        let dir = temp_dir("bytes");
+        let dir = test_dir("bytes");
         let mut store = VaultStore::default();
         store.set_dir(dir.clone()).expect("dir");
         store.create("ein gutes Passwort für den Test").expect("create");
@@ -274,11 +281,13 @@ mod tests {
             })
             .expect("add");
 
+        // G15-ok: the test reads the vault file to prove it is encrypted.
         let bytes = std::fs::read(dir.join(FILE_NAME)).expect("read the file");
         let as_text = String::from_utf8_lossy(&bytes);
         assert!(!as_text.contains("Nordstern"), "the vault file is not encrypted");
         assert!(bytes.starts_with(b"ZVLT"), "and it names its own format");
 
+        // G15-ok: cleaning a test's own folder.
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

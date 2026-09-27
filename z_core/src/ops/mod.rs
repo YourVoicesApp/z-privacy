@@ -11,7 +11,7 @@ pub(crate) use vault::*;
 use std::collections::BTreeMap;
 
 use crate::api::{
-    ApiError, ApiResult, AnswerId, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
+    ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
     Mark, MarkState, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, RevealedValue,
     RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome, TokenRow,
     UndoOutcome,
@@ -48,11 +48,59 @@ pub(crate) fn session_revision(session: SessionId) -> ApiResult<Revision> {
 // ---------------------------------------------------------------- document
 
 pub(crate) fn import_text(session: SessionId, text_in: String) -> ApiResult<DocumentView> {
+    // Typed text goes through the same reader as a .txt file, so that a paragraph
+    // is numbered the same way whether it was typed or opened.
+    let read = if text_in.trim().is_empty() {
+        None
+    } else {
+        Some(crate::documents::txt::extract(
+            text_in.as_bytes(),
+            &crate::documents::Budget::new(),
+        )?)
+    };
     with_session(session.id, |s| {
-        s.original = crate::secret::Secret::new(text_in);
+        match read {
+            Some(extracted) => {
+                s.original = crate::secret::Secret::new(extracted.text);
+                s.places = extracted.places;
+                s.pages = extracted.pages;
+            }
+            None => {
+                s.original = crate::secret::Secret::new(text_in);
+                s.places = Vec::new();
+                s.pages = 1;
+            }
+        }
+        s.doc_name = String::new();
+        s.doc_kind = DocumentKind::Txt;
         // A new document means the old protections describe nothing. Payloads
         // are kept so an old handle can still explain itself as stale.
         s.protections.clear();
+        s.findings.clear();
+        s.bump();
+        view_of(s)
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+/// Read a file, here, from memory. Nothing is written to disk on the way (G15).
+pub(crate) fn import_document(
+    session: SessionId,
+    name: String,
+    bytes: Vec<u8>,
+    kind: DocumentKind,
+) -> ApiResult<DocumentView> {
+    let extracted = crate::documents::extract(&bytes, kind)?;
+    // The file's bytes are dropped here, at the end of this call. They were never
+    // written anywhere, and the text lives only inside the session's Secret.
+    with_session(session.id, |s| {
+        s.original = crate::secret::Secret::new(extracted.text);
+        s.places = extracted.places;
+        s.pages = extracted.pages;
+        s.doc_name = name;
+        s.doc_kind = kind;
+        s.protections.clear();
+        s.findings.clear();
         s.bump();
         view_of(s)
     })
@@ -75,12 +123,16 @@ fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
             kind: p.kind,
             source: p.source,
             source_detail: p.source_detail.clone(),
+            place: s.place_of(p.start),
         });
     }
     marks.sort_by_key(|m| m.span.start);
     Ok(DocumentView {
         text: s.original_str().to_string(),
         marks,
+        name: s.doc_name.clone(),
+        kind: s.doc_kind,
+        pages: s.pages,
     })
 }
 
@@ -585,6 +637,9 @@ pub(crate) fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
                 reason: f.reason.clone(),
                 state: f.state,
                 entities: f.entities.clone(),
+                // Kept against the original, so it still says «page 17» after
+                // everything around it has been replaced.
+                place: s.place_of(f.start),
             });
         }
         Ok(out)

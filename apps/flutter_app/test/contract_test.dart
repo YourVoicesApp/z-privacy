@@ -9,6 +9,7 @@
 //
 // Needs the native library, so run once:  flutter build linux --debug
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
@@ -46,6 +47,11 @@ void main() {
       'closeSession': () => closeSession(session: session),
       'sessionRevision': () => sessionRevision(session: session),
       'importText': () => importText(session: session, text: 'Hallo'),
+      'importDocument': () => importDocument(
+          session: session,
+          name: 'leer.txt',
+          bytes: Uint8List.fromList('Kunde: Nordstern GmbH'.codeUnits),
+          kind: DocumentKind.txt),
       'documentView': () => documentView(session: session),
       'scan': () => scan(session: session),
       'protect': () =>
@@ -111,7 +117,7 @@ void main() {
       }
     }
     expect(crashed, isEmpty, reason: 'calls that did not answer cleanly');
-    expect(calls.length, 41, reason: 'the contract has 41 functions');
+    expect(calls.length, 42, reason: 'the contract has 42 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
   });
