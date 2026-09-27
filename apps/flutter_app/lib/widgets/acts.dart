@@ -73,6 +73,13 @@ class ActsBar extends StatelessWidget {
                     : () => bench.reviewOpen ? bench.closeReview() : bench.openReview(),
                 hint: bench.findings.isEmpty ? 'The scan found nothing to review' : null,
               ),
+              ZButton(
+                label: 'Tokens',
+                icon: Icons.key_outlined,
+                badge: bench.tokens.isEmpty ? null : bench.tokens.length,
+                onPressed: bench.tokens.isEmpty ? null : () => bench.openTokens(!bench.tokensOpen),
+                hint: bench.tokens.isEmpty ? 'Nothing is protected yet' : null,
+              ),
             ],
           ),
           if (state == ProtectState.known) ...[

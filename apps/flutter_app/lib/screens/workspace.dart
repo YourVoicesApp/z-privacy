@@ -23,6 +23,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/review.dart';
+import 'package:zprivacy/widgets/tokens.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({
@@ -97,6 +98,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     ),
                   ),
                   if (bench.reviewOpen) ReviewPanel(bench: bench),
+                  if (bench.tokensOpen) TokensPanel(bench: bench),
                 ],
               ),
             ),

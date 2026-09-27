@@ -23,6 +23,7 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/protect_dialog.dart';
 import 'package:zprivacy/widgets/review.dart';
+import 'package:zprivacy/widgets/tokens.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -358,6 +359,76 @@ void main() {
     expect(bench.openSuggestions, openBefore - 1);
     expect(bench.report!.suggested, bench.openSuggestions);
     expect(bench.payload!.openSuggestions, bench.openSuggestions);
+
+    bench.dispose();
+  });
+
+  testWidgets('Reveal draws on the screen and does not touch what leaves', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    late final String safeBefore;
+    late final int revisionBefore;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      for (final f in bench.suggested) {
+        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+      }
+      await bench.refresh();
+      bench.openTokens(true);
+      safeBefore = bench.payload!.text;
+      revisionBefore = bench.revision.n;
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TokensPanel), findsOneWidget);
+    expect(bench.tokens, isNotEmpty);
+    final token = bench.tokens.firstWhere((t) => t.kind == Kind.person).token;
+    expect(find.text(token), findsWidgets, reason: 'the token itself is on screen, spelled out');
+
+    // Nothing of the real value is in the panel before Reveal is pressed. The
+    // Original column shows it, of course — that is what that column is for, and
+    // scoping the search to the panel is the honest way to ask this question.
+    Finder inPanel(Finder what) =>
+        find.descendant(of: find.byType(TokensPanel), matching: what);
+    expect(inPanel(find.textContaining('Thomas Müller')), findsNothing,
+        reason: 'the tokens panel does not show values until asked');
+
+    await tester.runAsync(() async => bench.reveal(token));
+    await tester.pumpAndSettle();
+
+    // It is on screen now — locally, for a moment.
+    expect(bench.revealed[token], 'Thomas Müller');
+    expect(inPanel(find.text('Thomas Müller')), findsOneWidget);
+
+    // And this is the invariant: what leaves has not moved a character, and the
+    // session's revision has not turned — so no handle has gone stale either.
+    late final String safeAfter;
+    late final int revisionAfter;
+    await tester.runAsync(() async {
+      await bench.refresh();
+      safeAfter = bench.payload!.text;
+      revisionAfter = bench.revision.n;
+    });
+    expect(safeAfter, safeBefore, reason: 'Reveal wrote into the payload');
+    expect(revisionAfter, revisionBefore, reason: 'Reveal turned the revision, invalidating handles');
+    expect(safeAfter, isNot(contains('Thomas Müller')));
+
+    // Hide takes it off the screen; nothing else changed either way.
+    await tester.runAsync(() async => bench.hideToken(token));
+    await tester.pumpAndSettle();
+    expect(bench.revealed[token], isNull);
+    expect(inPanel(find.text('Thomas Müller')), findsNothing);
 
     bench.dispose();
   });

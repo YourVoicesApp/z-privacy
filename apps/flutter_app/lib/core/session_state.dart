@@ -96,6 +96,15 @@ class Workbench extends ChangeNotifier {
   /// being disabled rather than pretending to be available.
   bool get canUndo => tokens.any((t) => t.source == Source.hand);
 
+  /// Which tokens are showing their value right now, and until when.
+  ///
+  /// This lives **only here**, in the UI. Revealing changes nothing in the core
+  /// — `hide` has nothing to undo — and that is the invariant: reveal draws on
+  /// the screen and never writes into the payload.
+  final Map<String, String> revealed = {};
+  final Map<String, DateTime> _revealedUntil = {};
+  bool tokensOpen = false;
+
   /// The review panel, and which finding it is pointing at.
   bool reviewOpen = false;
   int? focused;
@@ -205,6 +214,58 @@ class Workbench extends ChangeNotifier {
       notifyListeners();
       return null;
     }
+  }
+
+  void openTokens(bool on) {
+    tokensOpen = on;
+    notifyListeners();
+  }
+
+  /// Show one value, for as long as the core says and no longer. The core hands
+  /// over a `ttl_ms` with it; the countdown is the UI's to keep, and a value
+  /// that outlived it is hidden on the next look rather than left on screen.
+  Future<void> reveal(String token) async {
+    try {
+      final shown = await z.reveal(session: session, token: token);
+      revealed[token] = shown.value;
+      _revealedUntil[token] = DateTime.now().add(Duration(milliseconds: shown.ttlMs));
+      trouble = null;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+    }
+    notifyListeners();
+  }
+
+  Future<void> hideToken(String token) async {
+    revealed.remove(token);
+    _revealedUntil.remove(token);
+    try {
+      await z.hide_(session: session, token: token);
+    } on ApiError catch (e) {
+      trouble = e.toString();
+    }
+    notifyListeners();
+  }
+
+  /// Drop anything whose moment has passed. Called before drawing, so a value
+  /// cannot sit on a screen nobody is looking at.
+  void expireReveals() {
+    final now = DateTime.now();
+    final over = _revealedUntil.entries.where((e) => e.value.isBefore(now)).map((e) => e.key).toList();
+    if (over.isEmpty) return;
+    for (final t in over) {
+      revealed.remove(t);
+      _revealedUntil.remove(t);
+    }
+    notifyListeners();
+  }
+
+  /// Leaving the vault, or the workspace, re-hides everything that was shown.
+  void hideEverything() {
+    if (revealed.isEmpty) return;
+    revealed.clear();
+    _revealedUntil.clear();
+    notifyListeners();
   }
 
   void openReview({bool? walk}) {
