@@ -18,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/workspace.dart';
+import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -143,4 +144,73 @@ void main() {
 
     bench.dispose();
   });
+
+  testWidgets('the two columns show the core\'s own two strings, and only those',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      // Answer everything, so there are real tokens on the Safe side. There is
+      // no «send anyway»; the only way past a suggestion is to answer it.
+      for (final f in bench.findings.where((f) => f.state == MarkState.suggested)) {
+        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+      }
+      await bench.refresh();
+      // Plain, so the token text is really in the span tree rather than inside
+      // a chip widget — this test is about the string, not the drawing.
+      bench.showChips(false);
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await tester.pumpAndSettle();
+
+    final original = _plainOf(tester, OriginalText);
+    final safe = _plainOf(tester, SafeText);
+
+    // 1 · Nothing is lost in the drawing. The left column splits the text at
+    // every mark to colour it; if that splitter ever dropped or reordered a
+    // slice, this is where it shows.
+    expect(original, bench.document!.text,
+        reason: 'the Original column must be the document, character for character');
+
+    // 2 · The right column is the payload the core built — not a copy the UI
+    // assembled from the document and the token table.
+    expect(safe, bench.payload!.text,
+        reason: 'the Safe column must be the core\'s payload, character for character');
+
+    // 3 · Control string first, then the claim.
+    expect(original, contains('Thomas Müller'), reason: 'the original really holds the name');
+    expect(bench.tokens, isNotEmpty, reason: 'something was protected, so there is something to check');
+    for (final t in bench.tokens) {
+      expect(safe, contains(t.token), reason: 'every token the core minted is on the Safe side');
+    }
+    for (final secret in ['Thomas Müller', 'Nordstern Consulting GmbH', 'DE89370400440532013000']) {
+      expect(safe, isNot(contains(secret)), reason: '«$secret» is drawn on the side that leaves');
+    }
+
+    // 4 · And the sentence under the column tells the truth about suggestions.
+    expect(bench.payload!.openSuggestions, 0);
+    expect(find.textContaining('This is exactly what the AI will receive'), findsOneWidget);
+
+    bench.dispose();
+  });
+}
+
+/// The plain text of one column, read out of the rendered span tree rather than
+/// out of the state object — so the test sees what a person would see.
+String _plainOf(WidgetTester tester, Type column) {
+  final selectable = tester.widget<SelectableText>(
+    find.descendant(of: find.byType(column), matching: find.byType(SelectableText)),
+  );
+  return selectable.textSpan!.toPlainText();
 }

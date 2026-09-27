@@ -257,7 +257,8 @@ else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
 fi
 
-# A green run proves nothing unless the four invariant tests actually exist.
+# A green run proves nothing unless the invariant tests actually exist. A test
+# that is quietly deleted takes its invariant with it and the suite still passes.
 for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty \
          the_server_receives the_whole_path a_redirect_is_refused never_by_its_body longer_than_the_limit \
          each_purpose_gets_its_own a_format_one_vault a_literal_loopback ciphertext_even_inside; do
@@ -265,6 +266,16 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
     pass "  test present: $t"
   else
     skip "  test present: $t" "not written yet"
+  fi
+done
+
+# The same, for the screens. These are the tests that hold «no number on screen
+# is invented in Dart» to account, so their absence must be as loud.
+for t in "the core reports it" "the scan the core ran" "own two strings" "never the credential"; do
+  if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
+    pass "  screen test present: $t"
+  else
+    skip "  screen test present: $t" "not written yet"
   fi
 done
 

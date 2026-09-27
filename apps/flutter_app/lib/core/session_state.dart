@@ -73,6 +73,18 @@ class Workbench extends ChangeNotifier {
   String? trouble;
   bool busy = false;
 
+  /// The outgoing text, and the handle it was built under.
+  ///
+  /// Rebuilt on every refresh rather than cached, because the core ties a
+  /// payload to a `revision`: a view kept from before a change is a view of a
+  /// different document, and showing one would be the exact lie this column
+  /// exists to prevent.
+  PayloadHandle? handle;
+  PayloadView? payload;
+
+  /// Chips or plain, on the Safe side. A drawing choice; the string is the same.
+  bool chips = true;
+
   /// The three questions the owner says a user must always be able to answer by
   /// looking. These getters exist so a screen never has to work one out.
   ///
@@ -89,6 +101,8 @@ class Workbench extends ChangeNotifier {
       findings = await z.listFindings(session: session);
       tokens = await z.listTokens(session: session);
       revision = await z.sessionRevision(session: session);
+      handle = await z.buildPayload(session: session);
+      payload = await z.payloadView(handle: handle!);
       trouble = null;
     } on ApiError catch (e) {
       trouble = e.toString();
@@ -109,6 +123,11 @@ class Workbench extends ChangeNotifier {
     }
     busy = false;
     await refresh();
+  }
+
+  void showChips(bool on) {
+    chips = on;
+    notifyListeners();
   }
 
   @override

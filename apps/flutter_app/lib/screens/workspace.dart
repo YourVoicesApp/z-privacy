@@ -1,18 +1,26 @@
 // The Workspace — the centre of everything.
 //
-// M7.1 builds the frame: the top bar that says what ground this conversation
-// stands on, and the band under it that reports the scan. Both are real: the
-// counts are the core's `ScanReport`, and the vault line is the core's own
-// `VaultState`, carried inside that report so the two can never disagree.
+// The frame: the top bar that says what ground this conversation stands on, and
+// the band under it that reports the scan. Both are real: the counts are the
+// core's `ScanReport`, and the vault line is the core's own `VaultState`, carried
+// inside that report so the two can never disagree.
 //
-// The two columns arrive in M7.2. Until then each says which milestone fills it,
-// which is a placeholder for the *reader* of the code — not mock data on screen.
+// And the two columns, which are the product's essence and not decoration:
+//
+//   left   the document as written, with what the scanner did drawn over it.
+//          Nothing here is replaced, and nothing here can reach the network.
+//   right  the request itself. Not a preview of it, not a rebuilt copy of it —
+//          the string the core will hand to a provider, shown as it stands.
+//
+// They are side by side and typographically identical on purpose. The whole
+// claim of this product is that a person can compare them.
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/document_text.dart';
 
 class WorkspaceScreen extends StatelessWidget {
   const WorkspaceScreen({
@@ -234,8 +242,7 @@ class _Band extends StatelessWidget {
   }
 }
 
-/// The two columns, which are the product's essence and not decoration. M7.1
-/// stands them up with their headers and their one hard rule each; M7.2 fills them.
+/// The two columns.
 class _Columns extends StatelessWidget {
   const _Columns({required this.bench});
 
@@ -243,6 +250,9 @@ class _Columns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final doc = bench.document;
+    final safe = bench.payload;
+
     return Row(
       children: [
         Expanded(
@@ -250,7 +260,9 @@ class _Columns extends StatelessWidget {
             eyebrow: 'Original — local only',
             rule: 'Never sent to AI · Send cannot read this side',
             tint: Zc.ink4,
-            child: _pending('M7.2 draws the document here, with its marks'),
+            child: doc == null
+                ? const _Empty('Nothing is open.')
+                : OriginalText(text: doc.text, marks: doc.marks),
           ),
         ),
         Container(width: 1, color: Zc.line),
@@ -259,14 +271,25 @@ class _Columns extends StatelessWidget {
             eyebrow: 'Safe — AI will receive',
             rule: 'The request itself, not a preview of it',
             tint: Zc.clay,
-            child: _pending('M7.2 draws the payload here, built in Rust'),
+            trailing: _ChipSwitch(bench: bench),
+            footer: safe == null ? null : _SafeFooter(payload: safe),
+            child: safe == null
+                ? const _Empty('There is nothing to send yet.')
+                : SafeText(text: safe.text, chips: bench.chips),
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _pending(String what) => Center(
+class _Empty extends StatelessWidget {
+  const _Empty(this.what);
+
+  final String what;
+
+  @override
+  Widget build(BuildContext context) => Center(
         child: Padding(
           padding: const EdgeInsets.all(28),
           child: Text(what, style: Zc.small.copyWith(color: Zc.ink4), textAlign: TextAlign.center),
@@ -274,13 +297,94 @@ class _Columns extends StatelessWidget {
       );
 }
 
+/// «Chips / Plain». Both draw the same string; one of them draws it the way the
+/// model will read it, character for character.
+class _ChipSwitch extends StatelessWidget {
+  const _ChipSwitch({required this.bench});
+
+  final Workbench bench;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget one(String label, bool chips) {
+      final on = bench.chips == chips;
+      return InkWell(
+        onTap: () => bench.showChips(chips),
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: on ? Zc.clayWash : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: on ? Zc.clayEdge : Colors.transparent),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: on ? Zc.clayDeep : Zc.ink4,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(mainAxisSize: MainAxisSize.min, children: [one('Chips', true), const SizedBox(width: 4), one('Plain', false)]);
+  }
+}
+
+/// The sentence under the Safe column. It is the one place the app admits that
+/// an unanswered suggestion is **still the real text** — which is what G12 is
+/// about, said in words where the consequence is visible.
+class _SafeFooter extends StatelessWidget {
+  const _SafeFooter({required this.payload});
+
+  final PayloadView payload;
+
+  @override
+  Widget build(BuildContext context) {
+    final open = payload.openSuggestions;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 11, 18, 13),
+      decoration: BoxDecoration(
+        color: open > 0 ? Zc.amberWash : Zc.warmCard,
+        border: const Border(top: BorderSide(color: Zc.lineSoft)),
+      ),
+      child: Text(
+        open == 0
+            ? 'This is exactly what the AI will receive. ${payload.protectedCount} values were replaced.'
+            : open == 1
+                ? 'One suggestion is still open. Until you answer it, it stands here as written — '
+                    'real text on this side.'
+                : '$open suggestions are still open. Until you answer them, they stand here as '
+                    'written — the only real text on this side.',
+        style: Zc.small.copyWith(
+          color: open > 0 ? Zc.amber : Zc.ink3,
+          fontWeight: open > 0 ? FontWeight.w600 : FontWeight.w400,
+        ),
+      ),
+    );
+  }
+}
+
 class _Side extends StatelessWidget {
-  const _Side({required this.eyebrow, required this.rule, required this.tint, required this.child});
+  const _Side({
+    required this.eyebrow,
+    required this.rule,
+    required this.tint,
+    required this.child,
+    this.trailing,
+    this.footer,
+  });
 
   final String eyebrow;
   final String rule;
   final Color tint;
   final Widget child;
+  final Widget? trailing;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
@@ -290,17 +394,31 @@ class _Side extends StatelessWidget {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Eyebrow(eyebrow, color: tint),
-              const SizedBox(height: 4),
-              Text(rule, style: Zc.tiny.copyWith(letterSpacing: 0)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Eyebrow(eyebrow, color: tint),
+                    const SizedBox(height: 4),
+                    Text(rule, style: Zc.tiny.copyWith(letterSpacing: 0)),
+                  ],
+                ),
+              ),
+              ?trailing,
             ],
           ),
         ),
         Container(height: 1, color: Zc.lineSoft),
-        Expanded(child: child),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+            child: child,
+          ),
+        ),
+        ?footer,
       ],
     );
   }
