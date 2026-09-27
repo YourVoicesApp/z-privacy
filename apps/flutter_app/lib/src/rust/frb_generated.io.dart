@@ -4,11 +4,13 @@
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
 import 'api/core.dart';
+import 'api/mirrors.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
 import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
+import 'third_party/z_core/api.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RustLibApiImplPlatform({
@@ -22,34 +24,359 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   String dco_decode_String(dynamic raw);
 
   @protected
+  AnswerId dco_decode_answer_id(dynamic raw);
+
+  @protected
+  ApiError dco_decode_api_error(dynamic raw);
+
+  @protected
+  bool dco_decode_bool(dynamic raw);
+
+  @protected
+  AnswerId dco_decode_box_autoadd_answer_id(dynamic raw);
+
+  @protected
+  PayloadHandle dco_decode_box_autoadd_payload_handle(dynamic raw);
+
+  @protected
+  ProviderId dco_decode_box_autoadd_provider_id(dynamic raw);
+
+  @protected
+  SessionId dco_decode_box_autoadd_session_id(dynamic raw);
+
+  @protected
+  Span dco_decode_box_autoadd_span(dynamic raw);
+
+  @protected
+  DocumentView dco_decode_document_view(dynamic raw);
+
+  @protected
+  Finding dco_decode_finding(dynamic raw);
+
+  @protected
+  FindingAnswer dco_decode_finding_answer(dynamic raw);
+
+  @protected
+  int dco_decode_i_32(dynamic raw);
+
+  @protected
+  Kind dco_decode_kind(dynamic raw);
+
+  @protected
+  LayerCount dco_decode_layer_count(dynamic raw);
+
+  @protected
+  List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
+  List<Finding> dco_decode_list_finding(dynamic raw);
+
+  @protected
+  List<LayerCount> dco_decode_list_layer_count(dynamic raw);
+
+  @protected
+  List<Mark> dco_decode_list_mark(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<Segment> dco_decode_list_segment(dynamic raw);
+
+  @protected
+  List<Span> dco_decode_list_span(dynamic raw);
+
+  @protected
+  List<TokenRow> dco_decode_list_token_row(dynamic raw);
+
+  @protected
+  Mark dco_decode_mark(dynamic raw);
+
+  @protected
+  MarkState dco_decode_mark_state(dynamic raw);
+
+  @protected
+  String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  PayloadHandle dco_decode_payload_handle(dynamic raw);
+
+  @protected
+  PayloadView dco_decode_payload_view(dynamic raw);
+
+  @protected
+  ProtectOutcome dco_decode_protect_outcome(dynamic raw);
+
+  @protected
+  ProviderId dco_decode_provider_id(dynamic raw);
+
+  @protected
+  RescanOutcome dco_decode_rescan_outcome(dynamic raw);
+
+  @protected
+  RevealedValue dco_decode_revealed_value(dynamic raw);
+
+  @protected
+  Revision dco_decode_revision(dynamic raw);
+
+  @protected
+  ScanReport dco_decode_scan_report(dynamic raw);
+
+  @protected
+  Scope dco_decode_scope(dynamic raw);
+
+  @protected
+  Segment dco_decode_segment(dynamic raw);
+
+  @protected
+  SessionId dco_decode_session_id(dynamic raw);
+
+  @protected
+  Source dco_decode_source(dynamic raw);
+
+  @protected
+  Span dco_decode_span(dynamic raw);
+
+  @protected
+  SwitchOutcome dco_decode_switch_outcome(dynamic raw);
+
+  @protected
+  TokenRow dco_decode_token_row(dynamic raw);
+
+  @protected
+  int dco_decode_u_32(dynamic raw);
 
   @protected
   int dco_decode_u_8(dynamic raw);
 
   @protected
+  UndoOutcome dco_decode_undo_outcome(dynamic raw);
+
+  @protected
   void dco_decode_unit(dynamic raw);
+
+  @protected
+  VaultState dco_decode_vault_state(dynamic raw);
+
+  @protected
+  VaultUnlockOutcome dco_decode_vault_unlock_outcome(dynamic raw);
 
   @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
-  Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+  AnswerId sse_decode_answer_id(SseDeserializer deserializer);
 
   @protected
-  int sse_decode_u_8(SseDeserializer deserializer);
-
-  @protected
-  void sse_decode_unit(SseDeserializer deserializer);
-
-  @protected
-  int sse_decode_i_32(SseDeserializer deserializer);
+  ApiError sse_decode_api_error(SseDeserializer deserializer);
 
   @protected
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
+  AnswerId sse_decode_box_autoadd_answer_id(SseDeserializer deserializer);
+
+  @protected
+  PayloadHandle sse_decode_box_autoadd_payload_handle(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  ProviderId sse_decode_box_autoadd_provider_id(SseDeserializer deserializer);
+
+  @protected
+  SessionId sse_decode_box_autoadd_session_id(SseDeserializer deserializer);
+
+  @protected
+  Span sse_decode_box_autoadd_span(SseDeserializer deserializer);
+
+  @protected
+  DocumentView sse_decode_document_view(SseDeserializer deserializer);
+
+  @protected
+  Finding sse_decode_finding(SseDeserializer deserializer);
+
+  @protected
+  FindingAnswer sse_decode_finding_answer(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_i_32(SseDeserializer deserializer);
+
+  @protected
+  Kind sse_decode_kind(SseDeserializer deserializer);
+
+  @protected
+  LayerCount sse_decode_layer_count(SseDeserializer deserializer);
+
+  @protected
+  List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
+  List<Finding> sse_decode_list_finding(SseDeserializer deserializer);
+
+  @protected
+  List<LayerCount> sse_decode_list_layer_count(SseDeserializer deserializer);
+
+  @protected
+  List<Mark> sse_decode_list_mark(SseDeserializer deserializer);
+
+  @protected
+  Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<Segment> sse_decode_list_segment(SseDeserializer deserializer);
+
+  @protected
+  List<Span> sse_decode_list_span(SseDeserializer deserializer);
+
+  @protected
+  List<TokenRow> sse_decode_list_token_row(SseDeserializer deserializer);
+
+  @protected
+  Mark sse_decode_mark(SseDeserializer deserializer);
+
+  @protected
+  MarkState sse_decode_mark_state(SseDeserializer deserializer);
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  PayloadHandle sse_decode_payload_handle(SseDeserializer deserializer);
+
+  @protected
+  PayloadView sse_decode_payload_view(SseDeserializer deserializer);
+
+  @protected
+  ProtectOutcome sse_decode_protect_outcome(SseDeserializer deserializer);
+
+  @protected
+  ProviderId sse_decode_provider_id(SseDeserializer deserializer);
+
+  @protected
+  RescanOutcome sse_decode_rescan_outcome(SseDeserializer deserializer);
+
+  @protected
+  RevealedValue sse_decode_revealed_value(SseDeserializer deserializer);
+
+  @protected
+  Revision sse_decode_revision(SseDeserializer deserializer);
+
+  @protected
+  ScanReport sse_decode_scan_report(SseDeserializer deserializer);
+
+  @protected
+  Scope sse_decode_scope(SseDeserializer deserializer);
+
+  @protected
+  Segment sse_decode_segment(SseDeserializer deserializer);
+
+  @protected
+  SessionId sse_decode_session_id(SseDeserializer deserializer);
+
+  @protected
+  Source sse_decode_source(SseDeserializer deserializer);
+
+  @protected
+  Span sse_decode_span(SseDeserializer deserializer);
+
+  @protected
+  SwitchOutcome sse_decode_switch_outcome(SseDeserializer deserializer);
+
+  @protected
+  TokenRow sse_decode_token_row(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_u_32(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_u_8(SseDeserializer deserializer);
+
+  @protected
+  UndoOutcome sse_decode_undo_outcome(SseDeserializer deserializer);
+
+  @protected
+  void sse_decode_unit(SseDeserializer deserializer);
+
+  @protected
+  VaultState sse_decode_vault_state(SseDeserializer deserializer);
+
+  @protected
+  VaultUnlockOutcome sse_decode_vault_unlock_outcome(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_answer_id(AnswerId self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_api_error(ApiError self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_bool(bool self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_answer_id(
+    AnswerId self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_payload_handle(
+    PayloadHandle self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_provider_id(
+    ProviderId self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_session_id(
+    SessionId self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_span(Span self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_document_view(DocumentView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_finding(Finding self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_finding_answer(FindingAnswer self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_kind(Kind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_layer_count(LayerCount self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_finding(List<Finding> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_layer_count(
+    List<LayerCount> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_mark(List<Mark> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
@@ -58,16 +385,91 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_segment(List<Segment> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_span(List<Span> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_token_row(List<TokenRow> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_mark(Mark self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_mark_state(MarkState self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_payload_handle(PayloadHandle self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_payload_view(PayloadView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_protect_outcome(
+    ProtectOutcome self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_provider_id(ProviderId self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_rescan_outcome(RescanOutcome self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_revealed_value(RevealedValue self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_revision(Revision self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_scan_report(ScanReport self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_scope(Scope self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_segment(Segment self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_session_id(SessionId self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_source(Source self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_span(Span self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_switch_outcome(SwitchOutcome self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_token_row(TokenRow self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_32(int self, SseSerializer serializer);
+
+  @protected
   void sse_encode_u_8(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_undo_outcome(UndoOutcome self, SseSerializer serializer);
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
 
   @protected
-  void sse_encode_i_32(int self, SseSerializer serializer);
+  void sse_encode_vault_state(VaultState self, SseSerializer serializer);
 
   @protected
-  void sse_encode_bool(bool self, SseSerializer serializer);
+  void sse_encode_vault_unlock_outcome(
+    VaultUnlockOutcome self,
+    SseSerializer serializer,
+  );
 }
 
 // Section: wire_class

@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -920764196;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -742393619;
 
 // Section: executor
 
@@ -47,6 +47,151 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__z_core__api__add_alias_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "add_alias",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_token = <String>::sse_decode(&mut deserializer);
+            let api_alias = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::add_alias(api_session, api_token, api_alias)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__ai_view_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "ai_view",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_answer = <crate::api::mirrors::AnswerId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::ai_view(api_session, api_answer)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__answer_finding_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "answer_finding",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_finding = <u32>::sse_decode(&mut deserializer);
+            let api_answer = <crate::api::mirrors::FindingAnswer>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::answer_finding(api_session, api_finding, api_answer)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__build_payload_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "build_payload",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::build_payload(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__close_session_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "close_session",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::close_session(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__core__core_version_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -68,6 +213,121 @@ fn wire__crate__api__core__core_version_impl(
                 let output_ok = Ok::<_, ()>(crate::api::core::core_version())?;
                 std::result::Result::Ok(output_ok)
             })())
+        },
+    )
+}
+fn wire__z_core__api__document_view_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "document_view",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::document_view(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__hide_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "hide",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_token = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::hide(api_session, api_token)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__import_text_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "import_text",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_text = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::import_text(api_session, api_text)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__ingest_answer_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "ingest_answer",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_raw = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::ingest_answer(api_session, api_raw)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
         },
     )
 }
@@ -100,6 +360,772 @@ fn wire__crate__api__core__init_app_impl(
         },
     )
 }
+fn wire__z_core__api__list_findings_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "list_findings",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::list_findings(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__list_tokens_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "list_tokens",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::list_tokens(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__open_session_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "open_session",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_profile_id = <Option<String>>::sse_decode(&mut deserializer);
+            let api_pack_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::open_session(api_profile_id, api_pack_id)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__packs_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "packs",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::packs()?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__payload_view_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "payload_view",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_handle = <crate::api::mirrors::PayloadHandle>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::payload_view(api_handle)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__profiles_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "profiles",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::profiles()?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__protect_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "protect",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_span = <crate::api::mirrors::Span>::sse_decode(&mut deserializer);
+            let api_scope = <crate::api::mirrors::Scope>::sse_decode(&mut deserializer);
+            let api_kind = <crate::api::mirrors::Kind>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::protect(api_session, api_span, api_scope, api_kind)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__protect_all_matches_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "protect_all_matches",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_span = <crate::api::mirrors::Span>::sse_decode(&mut deserializer);
+            let api_scope = <crate::api::mirrors::Scope>::sse_decode(&mut deserializer);
+            let api_kind = <crate::api::mirrors::Kind>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::protect_all_matches(api_session, api_span, api_scope, api_kind)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__providers_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "providers",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::providers()?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__restored_view_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "restored_view",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_answer = <crate::api::mirrors::AnswerId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::restored_view(api_session, api_answer)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__reveal_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "reveal",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_token = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::reveal(api_session, api_token)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__scan_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "scan",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::scan(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__send_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "send",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_handle = <crate::api::mirrors::PayloadHandle>::sse_decode(&mut deserializer);
+            let api_provider = <crate::api::mirrors::ProviderId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::send(api_handle, api_provider)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__session_revision_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "session_revision",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::session_revision(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__switch_pack_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "switch_pack",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_pack_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::switch_pack(api_session, api_pack_id)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__switch_profile_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "switch_profile",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_profile_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::switch_profile(api_session, api_profile_id)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__test_provider_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "test_provider",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_provider = <crate::api::mirrors::ProviderId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::test_provider(api_provider)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__undo_last_protection_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "undo_last_protection",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::undo_last_protection(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__vault_lock_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "vault_lock",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::vault_lock()?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__vault_state_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "vault_state",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::vault_state()?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__vault_unlock_with_passphrase_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "vault_unlock_with_passphrase",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_passphrase = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::vault_unlock_with_passphrase(api_passphrase)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+
+// Section: static_checks
+
+#[allow(clippy::unnecessary_literal_unwrap)]
+const _: fn() = || {
+    {
+        let AnswerId = None::<crate::api::mirrors::AnswerId>.unwrap();
+        let _: u32 = AnswerId.id;
+    }
+    match None::<crate::api::mirrors::ApiError>.unwrap() {
+        crate::api::mirrors::ApiError::NotImplemented => {}
+        crate::api::mirrors::ApiError::InvalidSession => {}
+        crate::api::mirrors::ApiError::InvalidHandle => {}
+        crate::api::mirrors::ApiError::StalePayload { expected, got } => {
+            let _: u32 = expected;
+            let _: u32 = got;
+        }
+        crate::api::mirrors::ApiError::VaultLocked => {}
+        crate::api::mirrors::ApiError::ProviderUnavailable { provider } => {
+            let _: String = provider;
+        }
+        crate::api::mirrors::ApiError::OpenSuggestions { count } => {
+            let _: u32 = count;
+        }
+        crate::api::mirrors::ApiError::ImportRefused { reason } => {
+            let _: String = reason;
+        }
+        crate::api::mirrors::ApiError::BadSpan { reason } => {
+            let _: String = reason;
+        }
+        crate::api::mirrors::ApiError::UnknownToken => {}
+        crate::api::mirrors::ApiError::NothingToSend => {}
+    }
+    {
+        let DocumentView = None::<crate::api::mirrors::DocumentView>.unwrap();
+        let _: String = DocumentView.text;
+        let _: Vec<crate::api::mirrors::Mark> = DocumentView.marks;
+    }
+    {
+        let Finding = None::<crate::api::mirrors::Finding>.unwrap();
+        let _: u32 = Finding.id;
+        let _: crate::api::mirrors::Span = Finding.span;
+        let _: crate::api::mirrors::Kind = Finding.kind;
+        let _: crate::api::mirrors::Source = Finding.source;
+        let _: String = Finding.reason;
+        let _: crate::api::mirrors::MarkState = Finding.state;
+    }
+    {
+        let LayerCount = None::<crate::api::mirrors::LayerCount>.unwrap();
+        let _: crate::api::mirrors::Source = LayerCount.source;
+        let _: String = LayerCount.detail;
+        let _: u32 = LayerCount.count;
+    }
+    {
+        let Mark = None::<crate::api::mirrors::Mark>.unwrap();
+        let _: crate::api::mirrors::Span = Mark.span;
+        let _: crate::api::mirrors::MarkState = Mark.state;
+        let _: Option<String> = Mark.token;
+        let _: crate::api::mirrors::Kind = Mark.kind;
+        let _: crate::api::mirrors::Source = Mark.source;
+        let _: String = Mark.source_detail;
+    }
+    {
+        let PayloadHandle = None::<crate::api::mirrors::PayloadHandle>.unwrap();
+        let _: u32 = PayloadHandle.id;
+        let _: u32 = PayloadHandle.session;
+        let _: u32 = PayloadHandle.revision;
+    }
+    {
+        let PayloadView = None::<crate::api::mirrors::PayloadView>.unwrap();
+        let _: String = PayloadView.text;
+        let _: u32 = PayloadView.protected_count;
+        let _: u32 = PayloadView.open_suggestions;
+    }
+    match None::<crate::api::mirrors::ProtectOutcome>.unwrap() {
+        crate::api::mirrors::ProtectOutcome::Applied { token, places } => {
+            let _: String = token;
+            let _: u32 = places;
+        }
+        crate::api::mirrors::ProtectOutcome::AlreadyProtected {
+            token,
+            source,
+            source_detail,
+        } => {
+            let _: String = token;
+            let _: crate::api::mirrors::Source = source;
+            let _: String = source_detail;
+        }
+        crate::api::mirrors::ProtectOutcome::BelongsToEntity { entity, token } => {
+            let _: String = entity;
+            let _: String = token;
+        }
+        crate::api::mirrors::ProtectOutcome::Snapped { spans } => {
+            let _: Vec<crate::api::mirrors::Span> = spans;
+        }
+    }
+    {
+        let ProviderId = None::<crate::api::mirrors::ProviderId>.unwrap();
+        let _: String = ProviderId.id;
+    }
+    {
+        let RescanOutcome = None::<crate::api::mirrors::RescanOutcome>.unwrap();
+        let _: u32 = RescanOutcome.changed_to_manual;
+        let _: u32 = RescanOutcome.revision;
+    }
+    {
+        let RevealedValue = None::<crate::api::mirrors::RevealedValue>.unwrap();
+        let _: String = RevealedValue.token;
+        let _: String = RevealedValue.value;
+        let _: u32 = RevealedValue.ttl_ms;
+    }
+    {
+        let Revision = None::<crate::api::mirrors::Revision>.unwrap();
+        let _: u32 = Revision.n;
+    }
+    {
+        let ScanReport = None::<crate::api::mirrors::ScanReport>.unwrap();
+        let _: u32 = ScanReport.auto;
+        let _: u32 = ScanReport.suggested;
+        let _: u32 = ScanReport.normal;
+        let _: Vec<crate::api::mirrors::LayerCount> = ScanReport.by_layer;
+    }
+    {
+        let Segment = None::<crate::api::mirrors::Segment>.unwrap();
+        let _: String = Segment.text;
+        let _: bool = Segment.restored;
+    }
+    {
+        let SessionId = None::<crate::api::mirrors::SessionId>.unwrap();
+        let _: u32 = SessionId.id;
+    }
+    {
+        let Span = None::<crate::api::mirrors::Span>.unwrap();
+        let _: u32 = Span.start;
+        let _: u32 = Span.end;
+    }
+    {
+        let SwitchOutcome = None::<crate::api::mirrors::SwitchOutcome>.unwrap();
+        let _: u32 = SwitchOutcome.kept_tokens;
+        let _: u32 = SwitchOutcome.revision;
+    }
+    {
+        let TokenRow = None::<crate::api::mirrors::TokenRow>.unwrap();
+        let _: String = TokenRow.token;
+        let _: crate::api::mirrors::Kind = TokenRow.kind;
+        let _: crate::api::mirrors::Scope = TokenRow.scope;
+        let _: crate::api::mirrors::Source = TokenRow.source;
+        let _: String = TokenRow.source_detail;
+    }
+    match None::<crate::api::mirrors::UndoOutcome>.unwrap() {
+        crate::api::mirrors::UndoOutcome::NothingToUndo => {}
+        crate::api::mirrors::UndoOutcome::Undone {
+            token,
+            places,
+            created_entity,
+        } => {
+            let _: String = token;
+            let _: u32 = places;
+            let _: Option<String> = created_entity;
+        }
+    }
+    match None::<crate::api::mirrors::VaultUnlockOutcome>.unwrap() {
+        crate::api::mirrors::VaultUnlockOutcome::Unlocked { identities, values } => {
+            let _: u32 = identities;
+            let _: u32 = values;
+        }
+        crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase { attempts_left } => {
+            let _: u32 = attempts_left;
+        }
+    }
+};
 
 // Section: dart2rust
 
@@ -108,6 +1134,212 @@ impl SseDecode for String {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut inner = <Vec<u8>>::sse_decode(deserializer);
         return String::from_utf8(inner).unwrap();
+    }
+}
+
+impl SseDecode for crate::api::mirrors::AnswerId {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::AnswerId { id: var_id };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::ApiError {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                return crate::api::mirrors::ApiError::NotImplemented;
+            }
+            1 => {
+                return crate::api::mirrors::ApiError::InvalidSession;
+            }
+            2 => {
+                return crate::api::mirrors::ApiError::InvalidHandle;
+            }
+            3 => {
+                let mut var_expected = <u32>::sse_decode(deserializer);
+                let mut var_got = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::ApiError::StalePayload {
+                    expected: var_expected,
+                    got: var_got,
+                };
+            }
+            4 => {
+                return crate::api::mirrors::ApiError::VaultLocked;
+            }
+            5 => {
+                let mut var_provider = <String>::sse_decode(deserializer);
+                return crate::api::mirrors::ApiError::ProviderUnavailable { provider: var_provider };
+            }
+            6 => {
+                let mut var_count = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::ApiError::OpenSuggestions { count: var_count };
+            }
+            7 => {
+                let mut var_reason = <String>::sse_decode(deserializer);
+                return crate::api::mirrors::ApiError::ImportRefused { reason: var_reason };
+            }
+            8 => {
+                let mut var_reason = <String>::sse_decode(deserializer);
+                return crate::api::mirrors::ApiError::BadSpan { reason: var_reason };
+            }
+            9 => {
+                return crate::api::mirrors::ApiError::UnknownToken;
+            }
+            10 => {
+                return crate::api::mirrors::ApiError::NothingToSend;
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+
+impl SseDecode for bool {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_u8().unwrap() != 0
+    }
+}
+
+impl SseDecode for crate::api::mirrors::DocumentView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_text = <String>::sse_decode(deserializer);
+        let mut var_marks = <Vec<crate::api::mirrors::Mark>>::sse_decode(deserializer);
+        return crate::api::mirrors::DocumentView {
+            text: var_text,
+            marks: var_marks,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Finding {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <u32>::sse_decode(deserializer);
+        let mut var_span = <crate::api::mirrors::Span>::sse_decode(deserializer);
+        let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
+        let mut var_source = <crate::api::mirrors::Source>::sse_decode(deserializer);
+        let mut var_reason = <String>::sse_decode(deserializer);
+        let mut var_state = <crate::api::mirrors::MarkState>::sse_decode(deserializer);
+        return crate::api::mirrors::Finding {
+            id: var_id,
+            span: var_span,
+            kind: var_kind,
+            source: var_source,
+            reason: var_reason,
+            state: var_state,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::FindingAnswer {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::FindingAnswer::Protect,
+            1 => crate::api::mirrors::FindingAnswer::Always,
+            2 => crate::api::mirrors::FindingAnswer::NotSensitive,
+            3 => crate::api::mirrors::FindingAnswer::Skip,
+            _ => unreachable!("Invalid variant for FindingAnswer: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for i32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_i32::<NativeEndian>().unwrap()
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Kind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::Kind::Person,
+            1 => crate::api::mirrors::Kind::Company,
+            2 => crate::api::mirrors::Kind::Email,
+            3 => crate::api::mirrors::Kind::Phone,
+            4 => crate::api::mirrors::Kind::Iban,
+            5 => crate::api::mirrors::Kind::TaxId,
+            6 => crate::api::mirrors::Kind::CustomerNo,
+            7 => crate::api::mirrors::Kind::Address,
+            8 => crate::api::mirrors::Kind::Contract,
+            9 => crate::api::mirrors::Kind::Project,
+            10 => crate::api::mirrors::Kind::Client,
+            11 => crate::api::mirrors::Kind::Custom,
+            _ => unreachable!("Invalid variant for Kind: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::LayerCount {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_source = <crate::api::mirrors::Source>::sse_decode(deserializer);
+        let mut var_detail = <String>::sse_decode(deserializer);
+        let mut var_count = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::LayerCount {
+            source: var_source,
+            detail: var_detail,
+            count: var_count,
+        };
+    }
+}
+
+impl SseDecode for Vec<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<String>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::mirrors::Finding> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::Finding>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::mirrors::LayerCount> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::LayerCount>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::mirrors::Mark> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::Mark>::sse_decode(deserializer));
+        }
+        return ans_;
     }
 }
 
@@ -123,10 +1355,338 @@ impl SseDecode for Vec<u8> {
     }
 }
 
+impl SseDecode for Vec<crate::api::mirrors::Segment> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::Segment>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::mirrors::Span> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::Span>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::mirrors::TokenRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::TokenRow>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Mark {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_span = <crate::api::mirrors::Span>::sse_decode(deserializer);
+        let mut var_state = <crate::api::mirrors::MarkState>::sse_decode(deserializer);
+        let mut var_token = <Option<String>>::sse_decode(deserializer);
+        let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
+        let mut var_source = <crate::api::mirrors::Source>::sse_decode(deserializer);
+        let mut var_sourceDetail = <String>::sse_decode(deserializer);
+        return crate::api::mirrors::Mark {
+            span: var_span,
+            state: var_state,
+            token: var_token,
+            kind: var_kind,
+            source: var_source,
+            source_detail: var_sourceDetail,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::MarkState {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::MarkState::Protected,
+            1 => crate::api::mirrors::MarkState::Suggested,
+            _ => unreachable!("Invalid variant for MarkState: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for Option<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<String>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for crate::api::mirrors::PayloadHandle {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <u32>::sse_decode(deserializer);
+        let mut var_session = <u32>::sse_decode(deserializer);
+        let mut var_revision = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::PayloadHandle {
+            id: var_id,
+            session: var_session,
+            revision: var_revision,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::PayloadView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_text = <String>::sse_decode(deserializer);
+        let mut var_protectedCount = <u32>::sse_decode(deserializer);
+        let mut var_openSuggestions = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::PayloadView {
+            text: var_text,
+            protected_count: var_protectedCount,
+            open_suggestions: var_openSuggestions,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::ProtectOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                let mut var_token = <String>::sse_decode(deserializer);
+                let mut var_places = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::ProtectOutcome::Applied {
+                    token: var_token,
+                    places: var_places,
+                };
+            }
+            1 => {
+                let mut var_token = <String>::sse_decode(deserializer);
+                let mut var_source = <crate::api::mirrors::Source>::sse_decode(deserializer);
+                let mut var_sourceDetail = <String>::sse_decode(deserializer);
+                return crate::api::mirrors::ProtectOutcome::AlreadyProtected {
+                    token: var_token,
+                    source: var_source,
+                    source_detail: var_sourceDetail,
+                };
+            }
+            2 => {
+                let mut var_entity = <String>::sse_decode(deserializer);
+                let mut var_token = <String>::sse_decode(deserializer);
+                return crate::api::mirrors::ProtectOutcome::BelongsToEntity {
+                    entity: var_entity,
+                    token: var_token,
+                };
+            }
+            3 => {
+                let mut var_spans = <Vec<crate::api::mirrors::Span>>::sse_decode(deserializer);
+                return crate::api::mirrors::ProtectOutcome::Snapped { spans: var_spans };
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+
+impl SseDecode for crate::api::mirrors::ProviderId {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        return crate::api::mirrors::ProviderId { id: var_id };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::RescanOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_changedToManual = <u32>::sse_decode(deserializer);
+        let mut var_revision = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::RescanOutcome {
+            changed_to_manual: var_changedToManual,
+            revision: var_revision,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::RevealedValue {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_token = <String>::sse_decode(deserializer);
+        let mut var_value = <String>::sse_decode(deserializer);
+        let mut var_ttlMs = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::RevealedValue {
+            token: var_token,
+            value: var_value,
+            ttl_ms: var_ttlMs,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Revision {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_n = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::Revision { n: var_n };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::ScanReport {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_auto = <u32>::sse_decode(deserializer);
+        let mut var_suggested = <u32>::sse_decode(deserializer);
+        let mut var_normal = <u32>::sse_decode(deserializer);
+        let mut var_byLayer = <Vec<crate::api::mirrors::LayerCount>>::sse_decode(deserializer);
+        return crate::api::mirrors::ScanReport {
+            auto: var_auto,
+            suggested: var_suggested,
+            normal: var_normal,
+            by_layer: var_byLayer,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Scope {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::Scope::Once,
+            1 => crate::api::mirrors::Scope::Conversation,
+            2 => crate::api::mirrors::Scope::Always,
+            _ => unreachable!("Invalid variant for Scope: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Segment {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_text = <String>::sse_decode(deserializer);
+        let mut var_restored = <bool>::sse_decode(deserializer);
+        return crate::api::mirrors::Segment {
+            text: var_text,
+            restored: var_restored,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::SessionId {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::SessionId { id: var_id };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Source {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::Source::GeneralRule,
+            1 => crate::api::mirrors::Source::LanguagePack,
+            2 => crate::api::mirrors::Source::Vault,
+            3 => crate::api::mirrors::Source::Hand,
+            _ => unreachable!("Invalid variant for Source: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::Span {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_start = <u32>::sse_decode(deserializer);
+        let mut var_end = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::Span {
+            start: var_start,
+            end: var_end,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::SwitchOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_keptTokens = <u32>::sse_decode(deserializer);
+        let mut var_revision = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::SwitchOutcome {
+            kept_tokens: var_keptTokens,
+            revision: var_revision,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::TokenRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_token = <String>::sse_decode(deserializer);
+        let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
+        let mut var_scope = <crate::api::mirrors::Scope>::sse_decode(deserializer);
+        let mut var_source = <crate::api::mirrors::Source>::sse_decode(deserializer);
+        let mut var_sourceDetail = <String>::sse_decode(deserializer);
+        return crate::api::mirrors::TokenRow {
+            token: var_token,
+            kind: var_kind,
+            scope: var_scope,
+            source: var_source,
+            source_detail: var_sourceDetail,
+        };
+    }
+}
+
+impl SseDecode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_u32::<NativeEndian>().unwrap()
+    }
+}
+
 impl SseDecode for u8 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_u8().unwrap()
+    }
+}
+
+impl SseDecode for crate::api::mirrors::UndoOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                return crate::api::mirrors::UndoOutcome::NothingToUndo;
+            }
+            1 => {
+                let mut var_token = <String>::sse_decode(deserializer);
+                let mut var_places = <u32>::sse_decode(deserializer);
+                let mut var_createdEntity = <Option<String>>::sse_decode(deserializer);
+                return crate::api::mirrors::UndoOutcome::Undone {
+                    token: var_token,
+                    places: var_places,
+                    created_entity: var_createdEntity,
+                };
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 
@@ -135,17 +1695,41 @@ impl SseDecode for () {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {}
 }
 
-impl SseDecode for i32 {
+impl SseDecode for crate::api::mirrors::VaultState {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        deserializer.cursor.read_i32::<NativeEndian>().unwrap()
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::VaultState::Locked,
+            1 => crate::api::mirrors::VaultState::Unlocked,
+            _ => unreachable!("Invalid variant for VaultState: {}", inner),
+        };
     }
 }
 
-impl SseDecode for bool {
+impl SseDecode for crate::api::mirrors::VaultUnlockOutcome {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        deserializer.cursor.read_u8().unwrap() != 0
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                let mut var_identities = <u32>::sse_decode(deserializer);
+                let mut var_values = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::VaultUnlockOutcome::Unlocked {
+                    identities: var_identities,
+                    values: var_values,
+                };
+            }
+            1 => {
+                let mut var_attemptsLeft = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase {
+                    attempts_left: var_attemptsLeft,
+                };
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 
@@ -158,7 +1742,37 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        2 => wire__crate__api__core__init_app_impl(port, ptr, rust_vec_len, data_len),
+        1 => wire__z_core__api__add_alias_impl(port, ptr, rust_vec_len, data_len),
+        2 => wire__z_core__api__ai_view_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__z_core__api__answer_finding_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__z_core__api__build_payload_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__z_core__api__close_session_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__z_core__api__document_view_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__z_core__api__hide_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__z_core__api__import_text_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__z_core__api__ingest_answer_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__core__init_app_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__z_core__api__list_findings_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__z_core__api__list_tokens_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__z_core__api__open_session_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__z_core__api__packs_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__z_core__api__payload_view_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__z_core__api__profiles_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__z_core__api__protect_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__z_core__api__protect_all_matches_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__z_core__api__providers_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
+        23 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
+        29 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
+        30 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
+        31 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
+        32 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -171,17 +1785,752 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__core__core_version_impl(ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__core__core_version_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
 
 // Section: rust2dart
 
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::AnswerId> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.0.id.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::AnswerId> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::AnswerId>> for crate::api::mirrors::AnswerId {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::AnswerId> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ApiError> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::ApiError::NotImplemented => [0.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::InvalidSession => [1.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::InvalidHandle => [2.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::StalePayload { expected, got } => [
+                3.into_dart(),
+                expected.into_into_dart().into_dart(),
+                got.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::ApiError::VaultLocked => [4.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::ProviderUnavailable { provider } => {
+                [5.into_dart(), provider.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::mirrors::ApiError::OpenSuggestions { count } => {
+                [6.into_dart(), count.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::mirrors::ApiError::ImportRefused { reason } => {
+                [7.into_dart(), reason.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::mirrors::ApiError::BadSpan { reason } => {
+                [8.into_dart(), reason.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::mirrors::ApiError::UnknownToken => [9.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::NothingToSend => [10.into_dart()].into_dart(),
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::ApiError> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::ApiError>> for crate::api::mirrors::ApiError {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::ApiError> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::DocumentView> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.text.into_into_dart().into_dart(),
+            self.0.marks.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::DocumentView> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::DocumentView>>
+    for crate::api::mirrors::DocumentView
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::DocumentView> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Finding> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.id.into_into_dart().into_dart(),
+            self.0.span.into_into_dart().into_dart(),
+            self.0.kind.into_into_dart().into_dart(),
+            self.0.source.into_into_dart().into_dart(),
+            self.0.reason.into_into_dart().into_dart(),
+            self.0.state.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Finding> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Finding>> for crate::api::mirrors::Finding {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Finding> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::FindingAnswer> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::FindingAnswer::Protect => 0.into_dart(),
+            crate::api::mirrors::FindingAnswer::Always => 1.into_dart(),
+            crate::api::mirrors::FindingAnswer::NotSensitive => 2.into_dart(),
+            crate::api::mirrors::FindingAnswer::Skip => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::FindingAnswer> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::FindingAnswer>>
+    for crate::api::mirrors::FindingAnswer
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::FindingAnswer> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Kind> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::Kind::Person => 0.into_dart(),
+            crate::api::mirrors::Kind::Company => 1.into_dart(),
+            crate::api::mirrors::Kind::Email => 2.into_dart(),
+            crate::api::mirrors::Kind::Phone => 3.into_dart(),
+            crate::api::mirrors::Kind::Iban => 4.into_dart(),
+            crate::api::mirrors::Kind::TaxId => 5.into_dart(),
+            crate::api::mirrors::Kind::CustomerNo => 6.into_dart(),
+            crate::api::mirrors::Kind::Address => 7.into_dart(),
+            crate::api::mirrors::Kind::Contract => 8.into_dart(),
+            crate::api::mirrors::Kind::Project => 9.into_dart(),
+            crate::api::mirrors::Kind::Client => 10.into_dart(),
+            crate::api::mirrors::Kind::Custom => 11.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Kind> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Kind>> for crate::api::mirrors::Kind {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Kind> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::LayerCount> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.source.into_into_dart().into_dart(),
+            self.0.detail.into_into_dart().into_dart(),
+            self.0.count.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::LayerCount> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::LayerCount>>
+    for crate::api::mirrors::LayerCount
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::LayerCount> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Mark> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.span.into_into_dart().into_dart(),
+            self.0.state.into_into_dart().into_dart(),
+            self.0.token.into_into_dart().into_dart(),
+            self.0.kind.into_into_dart().into_dart(),
+            self.0.source.into_into_dart().into_dart(),
+            self.0.source_detail.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Mark> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Mark>> for crate::api::mirrors::Mark {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Mark> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::MarkState> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::MarkState::Protected => 0.into_dart(),
+            crate::api::mirrors::MarkState::Suggested => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::MarkState> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::MarkState>> for crate::api::mirrors::MarkState {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::MarkState> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PayloadHandle> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.id.into_into_dart().into_dart(),
+            self.0.session.into_into_dart().into_dart(),
+            self.0.revision.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::PayloadHandle> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::PayloadHandle>>
+    for crate::api::mirrors::PayloadHandle
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::PayloadHandle> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PayloadView> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.text.into_into_dart().into_dart(),
+            self.0.protected_count.into_into_dart().into_dart(),
+            self.0.open_suggestions.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::PayloadView> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::PayloadView>>
+    for crate::api::mirrors::PayloadView
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::PayloadView> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ProtectOutcome> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::ProtectOutcome::Applied { token, places } => [
+                0.into_dart(),
+                token.into_into_dart().into_dart(),
+                places.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::ProtectOutcome::AlreadyProtected {
+                token,
+                source,
+                source_detail,
+            } => [
+                1.into_dart(),
+                token.into_into_dart().into_dart(),
+                source.into_into_dart().into_dart(),
+                source_detail.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::ProtectOutcome::BelongsToEntity { entity, token } => [
+                2.into_dart(),
+                entity.into_into_dart().into_dart(),
+                token.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::ProtectOutcome::Snapped { spans } => {
+                [3.into_dart(), spans.into_into_dart().into_dart()].into_dart()
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::ProtectOutcome> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::ProtectOutcome>>
+    for crate::api::mirrors::ProtectOutcome
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::ProtectOutcome> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ProviderId> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.0.id.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::ProviderId> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::ProviderId>>
+    for crate::api::mirrors::ProviderId
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::ProviderId> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::RescanOutcome> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.changed_to_manual.into_into_dart().into_dart(),
+            self.0.revision.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::RescanOutcome> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::RescanOutcome>>
+    for crate::api::mirrors::RescanOutcome
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::RescanOutcome> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::RevealedValue> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.token.into_into_dart().into_dart(),
+            self.0.value.into_into_dart().into_dart(),
+            self.0.ttl_ms.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::RevealedValue> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::RevealedValue>>
+    for crate::api::mirrors::RevealedValue
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::RevealedValue> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Revision> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.0.n.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Revision> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Revision>> for crate::api::mirrors::Revision {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Revision> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ScanReport> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.auto.into_into_dart().into_dart(),
+            self.0.suggested.into_into_dart().into_dart(),
+            self.0.normal.into_into_dart().into_dart(),
+            self.0.by_layer.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::ScanReport> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::ScanReport>>
+    for crate::api::mirrors::ScanReport
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::ScanReport> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Scope> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::Scope::Once => 0.into_dart(),
+            crate::api::mirrors::Scope::Conversation => 1.into_dart(),
+            crate::api::mirrors::Scope::Always => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Scope> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Scope>> for crate::api::mirrors::Scope {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Scope> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Segment> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.text.into_into_dart().into_dart(),
+            self.0.restored.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Segment> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Segment>> for crate::api::mirrors::Segment {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Segment> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::SessionId> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [self.0.id.into_into_dart().into_dart()].into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::SessionId> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::SessionId>> for crate::api::mirrors::SessionId {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::SessionId> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Source> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::Source::GeneralRule => 0.into_dart(),
+            crate::api::mirrors::Source::LanguagePack => 1.into_dart(),
+            crate::api::mirrors::Source::Vault => 2.into_dart(),
+            crate::api::mirrors::Source::Hand => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Source> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Source>> for crate::api::mirrors::Source {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Source> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Span> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.start.into_into_dart().into_dart(),
+            self.0.end.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Span> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Span>> for crate::api::mirrors::Span {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Span> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::SwitchOutcome> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.kept_tokens.into_into_dart().into_dart(),
+            self.0.revision.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::SwitchOutcome> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::SwitchOutcome>>
+    for crate::api::mirrors::SwitchOutcome
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::SwitchOutcome> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::TokenRow> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.token.into_into_dart().into_dart(),
+            self.0.kind.into_into_dart().into_dart(),
+            self.0.scope.into_into_dart().into_dart(),
+            self.0.source.into_into_dart().into_dart(),
+            self.0.source_detail.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::TokenRow> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::TokenRow>> for crate::api::mirrors::TokenRow {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::TokenRow> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::UndoOutcome> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::UndoOutcome::NothingToUndo => [0.into_dart()].into_dart(),
+            crate::api::mirrors::UndoOutcome::Undone {
+                token,
+                places,
+                created_entity,
+            } => [
+                1.into_dart(),
+                token.into_into_dart().into_dart(),
+                places.into_into_dart().into_dart(),
+                created_entity.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::UndoOutcome> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::UndoOutcome>>
+    for crate::api::mirrors::UndoOutcome
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::UndoOutcome> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::VaultState> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::VaultState::Locked => 0.into_dart(),
+            crate::api::mirrors::VaultState::Unlocked => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::VaultState> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::VaultState>>
+    for crate::api::mirrors::VaultState
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::VaultState> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::VaultUnlockOutcome> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::VaultUnlockOutcome::Unlocked { identities, values } => [
+                0.into_dart(),
+                identities.into_into_dart().into_dart(),
+                values.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase { attempts_left } => {
+                [1.into_dart(), attempts_left.into_into_dart().into_dart()].into_dart()
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<crate::api::mirrors::VaultUnlockOutcome>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::VaultUnlockOutcome>>
+    for crate::api::mirrors::VaultUnlockOutcome
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::VaultUnlockOutcome> {
+        self.into()
+    }
+}
+
 impl SseEncode for String {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <Vec<u8>>::sse_encode(self.into_bytes(), serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::AnswerId {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.id, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::ApiError {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        match self {
+            crate::api::mirrors::ApiError::NotImplemented => {
+                <i32>::sse_encode(0, serializer);
+            }
+            crate::api::mirrors::ApiError::InvalidSession => {
+                <i32>::sse_encode(1, serializer);
+            }
+            crate::api::mirrors::ApiError::InvalidHandle => {
+                <i32>::sse_encode(2, serializer);
+            }
+            crate::api::mirrors::ApiError::StalePayload { expected, got } => {
+                <i32>::sse_encode(3, serializer);
+                <u32>::sse_encode(expected, serializer);
+                <u32>::sse_encode(got, serializer);
+            }
+            crate::api::mirrors::ApiError::VaultLocked => {
+                <i32>::sse_encode(4, serializer);
+            }
+            crate::api::mirrors::ApiError::ProviderUnavailable { provider } => {
+                <i32>::sse_encode(5, serializer);
+                <String>::sse_encode(provider, serializer);
+            }
+            crate::api::mirrors::ApiError::OpenSuggestions { count } => {
+                <i32>::sse_encode(6, serializer);
+                <u32>::sse_encode(count, serializer);
+            }
+            crate::api::mirrors::ApiError::ImportRefused { reason } => {
+                <i32>::sse_encode(7, serializer);
+                <String>::sse_encode(reason, serializer);
+            }
+            crate::api::mirrors::ApiError::BadSpan { reason } => {
+                <i32>::sse_encode(8, serializer);
+                <String>::sse_encode(reason, serializer);
+            }
+            crate::api::mirrors::ApiError::UnknownToken => {
+                <i32>::sse_encode(9, serializer);
+            }
+            crate::api::mirrors::ApiError::NothingToSend => {
+                <i32>::sse_encode(10, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+
+impl SseEncode for bool {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_u8(self as _).unwrap();
+    }
+}
+
+impl SseEncode for crate::api::mirrors::DocumentView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.text, serializer);
+        <Vec<crate::api::mirrors::Mark>>::sse_encode(self.marks, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Finding {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.id, serializer);
+        <crate::api::mirrors::Span>::sse_encode(self.span, serializer);
+        <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
+        <crate::api::mirrors::Source>::sse_encode(self.source, serializer);
+        <String>::sse_encode(self.reason, serializer);
+        <crate::api::mirrors::MarkState>::sse_encode(self.state, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::FindingAnswer {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::FindingAnswer::Protect => 0,
+                crate::api::mirrors::FindingAnswer::Always => 1,
+                crate::api::mirrors::FindingAnswer::NotSensitive => 2,
+                crate::api::mirrors::FindingAnswer::Skip => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for i32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_i32::<NativeEndian>(self).unwrap();
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Kind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::Kind::Person => 0,
+                crate::api::mirrors::Kind::Company => 1,
+                crate::api::mirrors::Kind::Email => 2,
+                crate::api::mirrors::Kind::Phone => 3,
+                crate::api::mirrors::Kind::Iban => 4,
+                crate::api::mirrors::Kind::TaxId => 5,
+                crate::api::mirrors::Kind::CustomerNo => 6,
+                crate::api::mirrors::Kind::Address => 7,
+                crate::api::mirrors::Kind::Contract => 8,
+                crate::api::mirrors::Kind::Project => 9,
+                crate::api::mirrors::Kind::Client => 10,
+                crate::api::mirrors::Kind::Custom => 11,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::mirrors::LayerCount {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::mirrors::Source>::sse_encode(self.source, serializer);
+        <String>::sse_encode(self.detail, serializer);
+        <u32>::sse_encode(self.count, serializer);
+    }
+}
+
+impl SseEncode for Vec<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <String>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::mirrors::Finding> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::Finding>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::mirrors::LayerCount> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::LayerCount>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::mirrors::Mark> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::Mark>::sse_encode(item, serializer);
+        }
     }
 }
 
@@ -195,10 +2544,280 @@ impl SseEncode for Vec<u8> {
     }
 }
 
+impl SseEncode for Vec<crate::api::mirrors::Segment> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::Segment>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::mirrors::Span> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::Span>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::mirrors::TokenRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::TokenRow>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Mark {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::mirrors::Span>::sse_encode(self.span, serializer);
+        <crate::api::mirrors::MarkState>::sse_encode(self.state, serializer);
+        <Option<String>>::sse_encode(self.token, serializer);
+        <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
+        <crate::api::mirrors::Source>::sse_encode(self.source, serializer);
+        <String>::sse_encode(self.source_detail, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::MarkState {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::MarkState::Protected => 0,
+                crate::api::mirrors::MarkState::Suggested => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for Option<String> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <String>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for crate::api::mirrors::PayloadHandle {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.id, serializer);
+        <u32>::sse_encode(self.session, serializer);
+        <u32>::sse_encode(self.revision, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::PayloadView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.text, serializer);
+        <u32>::sse_encode(self.protected_count, serializer);
+        <u32>::sse_encode(self.open_suggestions, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::ProtectOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        match self {
+            crate::api::mirrors::ProtectOutcome::Applied { token, places } => {
+                <i32>::sse_encode(0, serializer);
+                <String>::sse_encode(token, serializer);
+                <u32>::sse_encode(places, serializer);
+            }
+            crate::api::mirrors::ProtectOutcome::AlreadyProtected {
+                token,
+                source,
+                source_detail,
+            } => {
+                <i32>::sse_encode(1, serializer);
+                <String>::sse_encode(token, serializer);
+                <crate::api::mirrors::Source>::sse_encode(source, serializer);
+                <String>::sse_encode(source_detail, serializer);
+            }
+            crate::api::mirrors::ProtectOutcome::BelongsToEntity { entity, token } => {
+                <i32>::sse_encode(2, serializer);
+                <String>::sse_encode(entity, serializer);
+                <String>::sse_encode(token, serializer);
+            }
+            crate::api::mirrors::ProtectOutcome::Snapped { spans } => {
+                <i32>::sse_encode(3, serializer);
+                <Vec<crate::api::mirrors::Span>>::sse_encode(spans, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+
+impl SseEncode for crate::api::mirrors::ProviderId {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::RescanOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.changed_to_manual, serializer);
+        <u32>::sse_encode(self.revision, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::RevealedValue {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.token, serializer);
+        <String>::sse_encode(self.value, serializer);
+        <u32>::sse_encode(self.ttl_ms, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Revision {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.n, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::ScanReport {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.auto, serializer);
+        <u32>::sse_encode(self.suggested, serializer);
+        <u32>::sse_encode(self.normal, serializer);
+        <Vec<crate::api::mirrors::LayerCount>>::sse_encode(self.by_layer, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Scope {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::Scope::Once => 0,
+                crate::api::mirrors::Scope::Conversation => 1,
+                crate::api::mirrors::Scope::Always => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Segment {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.text, serializer);
+        <bool>::sse_encode(self.restored, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::SessionId {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.id, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Source {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::Source::GeneralRule => 0,
+                crate::api::mirrors::Source::LanguagePack => 1,
+                crate::api::mirrors::Source::Vault => 2,
+                crate::api::mirrors::Source::Hand => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Span {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.start, serializer);
+        <u32>::sse_encode(self.end, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::SwitchOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.kept_tokens, serializer);
+        <u32>::sse_encode(self.revision, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::TokenRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.token, serializer);
+        <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
+        <crate::api::mirrors::Scope>::sse_encode(self.scope, serializer);
+        <crate::api::mirrors::Source>::sse_encode(self.source, serializer);
+        <String>::sse_encode(self.source_detail, serializer);
+    }
+}
+
+impl SseEncode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_u32::<NativeEndian>(self).unwrap();
+    }
+}
+
 impl SseEncode for u8 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_u8(self).unwrap();
+    }
+}
+
+impl SseEncode for crate::api::mirrors::UndoOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        match self {
+            crate::api::mirrors::UndoOutcome::NothingToUndo => {
+                <i32>::sse_encode(0, serializer);
+            }
+            crate::api::mirrors::UndoOutcome::Undone {
+                token,
+                places,
+                created_entity,
+            } => {
+                <i32>::sse_encode(1, serializer);
+                <String>::sse_encode(token, serializer);
+                <u32>::sse_encode(places, serializer);
+                <Option<String>>::sse_encode(created_entity, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 
@@ -207,17 +2826,39 @@ impl SseEncode for () {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {}
 }
 
-impl SseEncode for i32 {
+impl SseEncode for crate::api::mirrors::VaultState {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        serializer.cursor.write_i32::<NativeEndian>(self).unwrap();
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::VaultState::Locked => 0,
+                crate::api::mirrors::VaultState::Unlocked => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 
-impl SseEncode for bool {
+impl SseEncode for crate::api::mirrors::VaultUnlockOutcome {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        serializer.cursor.write_u8(self as _).unwrap();
+        match self {
+            crate::api::mirrors::VaultUnlockOutcome::Unlocked { identities, values } => {
+                <i32>::sse_encode(0, serializer);
+                <u32>::sse_encode(identities, serializer);
+                <u32>::sse_encode(values, serializer);
+            }
+            crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase { attempts_left } => {
+                <i32>::sse_encode(1, serializer);
+                <u32>::sse_encode(attempts_left, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 

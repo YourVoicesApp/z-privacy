@@ -14,6 +14,14 @@
 //! See `docs/SECURITY_INVARIANTS.md` for what this design does and does not
 //! promise.
 
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
+
+pub mod api;
+mod ops;
+mod payload;
+mod session;
+mod text;
+
 /// Version of the core, shown by the UI so a build can be identified on sight.
 pub fn core_version() -> String {
     format!("z_core {}", env!("CARGO_PKG_VERSION"))
