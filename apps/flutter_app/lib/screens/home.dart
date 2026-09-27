@@ -132,17 +132,31 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           _divider(),
-          Expanded(
-            flex: 2,
-            child: Tally(
-              value: ground.packs.isEmpty ? '—' : ground.packs.first.id.toUpperCase(),
-              what: ground.packs.isEmpty
-                  ? 'No privacy pack installed'
-                  : '${ground.packs.first.label} · scan on import',
-            ),
-          ),
+          Expanded(flex: 2, child: _pack(ground)),
         ],
       ),
+    );
+  }
+
+  /// The pack **in use**, and what the app will actually do with it.
+  ///
+  /// This card used to read `packs.first` and say «scan on import» whatever the
+  /// setting was. Both were true today by accident — one pack installed, the
+  /// setting on by default — and both would have become quiet untruths the day
+  /// either changed. The same family as «0 tries left».
+  Widget _pack(Ground ground) {
+    if (ground.packs.isEmpty) {
+      return const Tally(value: '—', what: 'No privacy pack installed');
+    }
+    final id = ground.config?.packId;
+    final chosen = ground.packs.firstWhere(
+      (p) => p.id == id,
+      orElse: () => ground.packs.first,
+    );
+    final scans = ground.config?.scanOnImport ?? true;
+    return Tally(
+      value: chosen.id.toUpperCase(),
+      what: '${chosen.label} · ${scans ? "scan on import" : "scan when you ask"}',
     );
   }
 

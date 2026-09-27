@@ -85,9 +85,20 @@ void main() {
     expect(find.textContaining('Conversations are not saved after you close the app'),
         findsOneWidget);
 
-    // The pack's label is the pack's own, never a string typed into a screen.
+    // The pack's label is the pack's own, never a string typed into a screen —
+    // and it is the pack **in use**, read from the settings, not the first one
+    // installed. It also says what the app will do with it, which depends on a
+    // setting rather than on a sentence someone wrote once.
     expect(packs, isNotEmpty, reason: 'this build carries a pack');
-    expect(find.textContaining(packs.first.label), findsOneWidget);
+    final inUse = packs.firstWhere(
+      (p) => p.id == ground.config?.packId,
+      orElse: () => packs.first,
+    );
+    final scans = ground.config?.scanOnImport ?? true;
+    expect(
+      find.text('${inUse.label} · ${scans ? "scan on import" : "scan when you ask"}'),
+      findsOneWidget,
+    );
 
     // The provider count on screen is the core's count.
     final connected = providers.where((p) => p.connected).length;
