@@ -870,8 +870,17 @@ pub fn providers() -> ApiResult<Vec<ProviderRow>> {
 /// Hand a provider its credential. It goes into the sealed vault if one is open,
 /// and otherwise stays in memory for this run only — never to a file in the
 /// clear, and never back across this boundary.
-pub fn connect_provider(provider: ProviderId, credential: String, base_url: Option<String>) -> ApiResult<ProviderRow> {
-    crate::ops::connect_provider(provider, credential, base_url)
+pub fn connect_provider(provider: ProviderId, credential: String, base_url: Option<String>, model: Option<String>) -> ApiResult<ProviderRow> {
+    crate::ops::connect_provider(provider, credential, base_url, model)
+}
+
+/// Change where a provider is reached and which model is asked, without touching
+/// its credential — which the UI does not have and is never given back.
+///
+/// The model is a **setting, not part of the security contract**: models come and
+/// go, and a list of their names has no business being compiled into Rust.
+pub fn configure_provider(provider: ProviderId, base_url: Option<String>, model: Option<String>) -> ApiResult<ProviderRow> {
+    crate::ops::configure_provider(provider, base_url, model)
 }
 
 /// Forget a provider's credential, here and in the vault.

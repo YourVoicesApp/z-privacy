@@ -272,7 +272,8 @@ done
 # The same, for the screens. These are the tests that hold «no number on screen
 # is invented in Dart» to account, so their absence must be as loud.
 for t in "the core reports it" "the scan the core ran" "own two strings" "never the credential" \
-         "not one Dart worked out" "Skip decides nothing" "does not touch what leaves"; do
+         "not one Dart worked out" "Skip decides nothing" "does not touch what leaves" \
+         "the manual door needs no key" "as the model wrote it" "only the safe text arrives"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

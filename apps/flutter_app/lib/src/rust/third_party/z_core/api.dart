@@ -292,10 +292,27 @@ Future<ProviderRow> connectProvider({
   required ProviderId provider,
   required String credential,
   String? baseUrl,
+  String? model,
 }) => RustLib.instance.api.zCoreApiConnectProvider(
   provider: provider,
   credential: credential,
   baseUrl: baseUrl,
+  model: model,
+);
+
+/// Change where a provider is reached and which model is asked, without touching
+/// its credential — which the UI does not have and is never given back.
+///
+/// The model is a **setting, not part of the security contract**: models come and
+/// go, and a list of their names has no business being compiled into Rust.
+Future<ProviderRow> configureProvider({
+  required ProviderId provider,
+  String? baseUrl,
+  String? model,
+}) => RustLib.instance.api.zCoreApiConfigureProvider(
+  provider: provider,
+  baseUrl: baseUrl,
+  model: model,
 );
 
 /// Forget a provider's credential, here and in the vault.

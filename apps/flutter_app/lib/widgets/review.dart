@@ -17,16 +17,21 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
 class ReviewPanel extends StatelessWidget {
-  const ReviewPanel({super.key, required this.bench});
+  const ReviewPanel({super.key, required this.bench, required this.width});
 
   final Workbench bench;
+
+  /// Set by the Workspace from the window's width: two columns must stay
+  /// readable, and a panel that squeezes them off the screen is worse than a
+  /// narrow panel.
+  final double width;
 
   @override
   Widget build(BuildContext context) {
     final open = bench.suggested;
 
     return Container(
-      width: 400,
+      width: width,
       decoration: const BoxDecoration(
         color: Zc.card,
         border: Border(left: BorderSide(color: Zc.line)),

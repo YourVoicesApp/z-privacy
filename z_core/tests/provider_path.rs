@@ -43,7 +43,7 @@ fn the_whole_path_runs_without_a_socket_and_without_a_vault() {
     assert!(!row.connected, "nothing is connected before a credential is given");
     assert_eq!(row.model, "echo");
 
-    let connected = connect_provider(fake(), "no-credential-needed".to_string(), None).expect("connect");
+    let connected = connect_provider(fake(), "no-credential-needed".to_string(), None, None).expect("connect");
     assert!(connected.connected);
     assert!(
         connected.session_only,

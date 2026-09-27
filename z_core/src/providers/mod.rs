@@ -110,6 +110,12 @@ pub(crate) fn check_url_for(base: &str) -> ApiResult<()> {
     http::check_url(base)
 }
 
+/// Is this address a model running on this very machine? The one case where a
+/// provider may be used without a credential.
+pub(crate) fn is_on_this_machine(base: &str) -> bool {
+    http::is_loopback_url(base)
+}
+
 /// The one refusal that is not about the network at all: nothing was connected.
 pub(crate) fn not_connected(id: &str) -> ApiError {
     refuse(

@@ -23,6 +23,8 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/protect_dialog.dart';
 import 'package:zprivacy/widgets/review.dart';
+import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/widgets/tokens.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -432,8 +434,236 @@ void main() {
 
     bench.dispose();
   });
+
+  testWidgets('Send is shut while a suggestion is open, and the manual door needs no key',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await tester.pumpAndSettle();
+
+    // Shut, with the reason beside it. There is no «send anyway» to look for.
+    expect(bench.payload!.openSuggestions, greaterThan(0));
+    expect(find.text('Answer the review first'), findsOneWidget);
+    expect(find.textContaining('send anyway'), findsNothing);
+
+    // Answer everything, and the door opens.
+    await tester.runAsync(() async {
+      for (final f in bench.suggested) {
+        await z.answerFinding(session: bench.session, finding: f.id, answer: FindingAnswer.protect);
+      }
+      await bench.refresh();
+    });
+    await tester.pumpAndSettle();
+    expect(bench.payload!.openSuggestions, 0);
+    expect(find.text('Answer the review first'), findsNothing);
+
+    // The sheet offers the door that needs no account at all, first.
+    await tester.tap(find.text('Send safe version'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SendSheet), findsOneWidget);
+    expect(find.text('Use AI yourself'), findsOneWidget);
+    expect(find.text('Copy safe text'), findsOneWidget);
+    expect(find.textContaining('no account, no key'), findsOneWidget);
+
+    // What the sheet shows is the payload, not a copy assembled for display.
+    final shown = tester
+        .widget<SelectableText>(
+          find.descendant(of: find.byType(SendSheet), matching: find.byType(SelectableText)).first,
+        )
+        .textSpan!
+        .toPlainText();
+    expect(shown, bench.payload!.text);
+
+    // Bring an answer back by hand — the token store does not care how it
+    // travelled — and the real values come home.
+    final safe = bench.payload!.text;
+    await tester.runAsync(() async {
+      await bench.pasteAnswer('Danke. Zusammenfassung:\n$safe');
+    });
+    await settle(tester);
+    expect(bench.answers, hasLength(1));
+
+    late final List<Segment> segments;
+    late final String raw;
+    await tester.runAsync(() async {
+      segments = await bench.restored(bench.answers.first);
+      raw = await bench.asTheModelWroteIt(bench.answers.first);
+    });
+    final restored = segments.map((s) => s.text).join();
+    expect(raw, isNot(contains('Thomas Müller')), reason: 'the answer as it arrived holds no value');
+    expect(restored, contains('Thomas Müller'), reason: 'and restoring puts it back, here');
+    expect(segments.any((s) => s.restored), isTrue, reason: 'the core marks what it put back');
+
+    bench.dispose();
+  });
+
+  testWidgets('the answer is shown twice: restored, and as the model wrote it', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1700, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      for (final f in bench.suggested) {
+        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+      }
+      await bench.refresh();
+      await bench.pasteAnswer('Verstanden:\n${bench.payload!.text}');
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await settle(tester);
+
+    expect(find.byType(AnswerPanel), findsOneWidget);
+    expect(find.text('Restored'), findsOneWidget);
+    expect(find.text('As the model wrote it'), findsOneWidget);
+
+    Finder inPanel(Finder f) => find.descendant(of: find.byType(AnswerPanel), matching: f);
+
+    // Restored is what opens, and the real value is in it — locally.
+    expect(inPanel(find.textContaining('Thomas Müller')), findsOneWidget);
+
+    // The other view is the same answer with the tokens still in it.
+    await tester.tap(find.text('As the model wrote it'));
+    await settle(tester);
+    expect(inPanel(find.textContaining('Thomas Müller')), findsNothing);
+    expect(inPanel(find.textContaining('__Z_')), findsOneWidget);
+
+    bench.dispose();
+  });
+
+  testWidgets('pressing Send really sends, and only the safe text arrives', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1700, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    // A server on this machine, standing in for a provider. `dart:io` is allowed
+    // in a test; gate G5b forbids it in `lib/`, which is the part that ships.
+    late final HttpServer server;
+    String? bodyReceived;
+    String? authReceived;
+    final ground = Ground();
+    late final Workbench bench;
+    late final String safe;
+
+    await tester.runAsync(() async {
+      server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      for (final f in bench.suggested) {
+        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+      }
+      await bench.refresh();
+      safe = bench.payload!.text;
+
+      server.listen((req) async {
+        bodyReceived = await utf8.decodeStream(req);
+        authReceived = req.headers.value('authorization');
+        final reply = jsonEncode({
+          'choices': [
+            {'message': {'role': 'assistant', 'content': 'Verstanden:\n$safe'}}
+          ]
+        });
+        req.response
+          ..statusCode = 200
+          ..headers.contentType = ContentType.json
+          ..write(reply);
+        await req.response.close();
+      });
+
+      // A loopback address over plain http — the one case the core allows, and
+      // the one that makes a local model possible at all.
+      await z.connectProvider(
+        provider: const ProviderId(id: 'openai'),
+        credential: 'sk-test-not-a-real-credential',
+        baseUrl: 'http://127.0.0.1:${server.port}',
+        model: 'a-model-name',
+      );
+      await ground.refresh();
+    });
+    addTearDown(() => server.close(force: true));
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await settle(tester);
+
+    await tester.tap(find.text('Send safe version'));
+    await settle(tester);
+    expect(find.byType(SendSheet), findsOneWidget);
+    // The connected provider is offered, with the model it was configured with.
+    expect(find.textContaining('a-model-name'), findsOneWidget);
+
+    await tester.tap(find.textContaining('Send to '));
+    await settle(tester);
+
+    // It went, and it came back.
+    expect(bench.trouble, isNull, reason: 'the send failed: ${bench.trouble}');
+    expect(bench.answers, hasLength(1));
+    expect(bodyReceived, isNotNull, reason: 'the server was never contacted');
+
+    // And what arrived is the payload, character for character, with nothing of
+    // the original anywhere in the request.
+    final sent = jsonDecode(bodyReceived!) as Map<String, dynamic>;
+    expect((sent['messages'] as List).first['content'], safe);
+    expect(sent['model'], 'a-model-name');
+    for (final secret in ['Thomas Müller', 'Nordstern Consulting GmbH', 'DE89370400440532013000']) {
+      expect(bodyReceived, isNot(contains(secret)));
+    }
+    expect(authReceived, 'Bearer sk-test-not-a-real-credential');
+
+    // The answer panel opened on its own with the restored view.
+    await settle(tester);
+    expect(find.byType(AnswerPanel), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(AnswerPanel), matching: find.textContaining('Thomas Müller')),
+      findsOneWidget,
+    );
+
+    await tester.runAsync(() async {
+      await z.disconnectProvider(provider: const ProviderId(id: 'openai'));
+    });
+    bench.dispose();
+  });
 }
 
+
+/// `pumpAndSettle` never finishes while a real FFI future is in flight: the
+/// spinner waiting on it is an animation that does not stop. So give the future
+/// a real moment outside the fake-async zone, then settle.
+/// Several rounds, because one is not enough: a rebuild can *start* the next
+/// future — a send finishing puts the answer panel on screen, and that panel
+/// then asks the core for two views of the answer.
+Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
+  for (var i = 0; i < rounds; i++) {
+    await tester.pump();
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 120)));
+  }
+  await tester.pumpAndSettle();
+}
 
 /// The plain text of one column, read out of the rendered span tree rather than
 /// out of the state object — so the test sees what a person would see.

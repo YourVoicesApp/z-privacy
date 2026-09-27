@@ -232,14 +232,9 @@ pub(crate) fn providers() -> ApiResult<Vec<ProviderRow>> {
 ///
 /// There is no third case. The owner's rule was explicit: no fallback to a file,
 /// so either the credential is encrypted or it is told to the user as temporary.
-pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_url: Option<String>) -> ApiResult<ProviderRow> {
+pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_url: Option<String>, model: Option<String>) -> ApiResult<ProviderRow> {
     let known = crate::providers::find(&provider.id)?;
     let credential = credential.trim().to_string();
-    if credential.is_empty() {
-        return Err(ApiError::ImportRefused {
-            reason: "a provider needs a credential; an empty one connects nothing".to_string(),
-        });
-    }
     let base = base_url
         .map(|b| b.trim().to_string())
         .filter(|b| !b.is_empty())
@@ -247,11 +242,23 @@ pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_ur
     // The address is checked before the credential is stored, so that a typo is
     // an error the user sees now rather than the first time they press Send.
     crate::providers::check_url_for(&base)?;
+    // A model on this machine needs no credential, and refusing to connect to
+    // one for want of a key would shut the most private door in the product.
+    // Everywhere else, an empty credential connects nothing and says so.
+    if credential.is_empty() && !crate::providers::is_on_this_machine(&base) {
+        return Err(ApiError::ImportRefused {
+            reason: "a provider needs a credential; only a model on this machine may go without one"
+                .to_string(),
+        });
+    }
 
     let login = ProviderLogin {
         credential: Secret::new(credential),
         base,
-        model: known.default_model().to_string(),
+        model: model
+            .map(|m| m.trim().to_string())
+            .filter(|m| !m.is_empty())
+            .unwrap_or_else(|| known.default_model().to_string()),
     };
     let id = provider.id.clone();
     let sealed = with_core(|core| {
@@ -267,6 +274,59 @@ pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_ur
     } else {
         // Sealed now, so the memory copy would only be a second place to leak from.
         with_core(|core| core.session_logins.remove(&provider.id));
+    }
+    row_for(&provider.id)
+}
+
+/// Change the address or the model, keeping the credential where it is.
+///
+/// The UI cannot pass a credential back — it never had one — so changing an
+/// endpoint must not mean typing the key again.
+pub(crate) fn configure_provider(provider: ProviderId, base_url: Option<String>, model: Option<String>) -> ApiResult<ProviderRow> {
+    let known = crate::providers::find(&provider.id)?;
+    let existing = login_in_vault(&provider.id)
+        .or_else(|| with_core(|core| core.session_logins.get(&provider.id).cloned()));
+
+    let base = base_url
+        .map(|b| b.trim().to_string())
+        .filter(|b| !b.is_empty())
+        .or_else(|| existing.as_ref().map(|l| l.base.clone()))
+        .unwrap_or_else(|| known.default_base().to_string());
+    crate::providers::check_url_for(&base)?;
+
+    let login = match existing {
+        Some(l) => ProviderLogin {
+            credential: l.credential.clone(),
+            base,
+            model: model
+                .map(|m| m.trim().to_string())
+                .filter(|m| !m.is_empty())
+                .unwrap_or(l.model),
+        },
+        // Nothing stored yet. Only a model on this machine can be set up without
+        // a credential; anywhere else this is «connect first».
+        None if crate::providers::is_on_this_machine(&base) => ProviderLogin {
+            credential: Secret::new(String::new()),
+            base,
+            model: model
+                .map(|m| m.trim().to_string())
+                .filter(|m| !m.is_empty())
+                .unwrap_or_else(|| known.default_model().to_string()),
+        },
+        None => return Err(crate::providers::not_connected(&provider.id)),
+    };
+
+    let id = provider.id.clone();
+    let sealed = with_core(|core| {
+        core.vault
+            .with_open_mut(|vault| {
+                vault.provider_logins.insert(id.clone(), login.clone());
+                Ok(())
+            })
+            .is_ok()
+    });
+    if !sealed {
+        with_core(|core| core.session_logins.insert(provider.id.clone(), login));
     }
     row_for(&provider.id)
 }

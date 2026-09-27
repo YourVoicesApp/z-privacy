@@ -22,7 +22,9 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/widgets/review.dart';
+import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/widgets/tokens.dart';
 
 class WorkspaceScreen extends StatefulWidget {
@@ -87,19 +89,29 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 child: Trouble(bench.trouble!),
               ),
             Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _Columns(
-                      bench: bench,
-                      said: _said,
-                      focusKey: _focusKey,
-                      onSay: (line) => setState(() => _said = line),
-                    ),
-                  ),
-                  if (bench.reviewOpen) ReviewPanel(bench: bench),
-                  if (bench.tokensOpen) TokensPanel(bench: bench),
-                ],
+              child: LayoutBuilder(
+                builder: (context, box) {
+                  // A side panel takes a third of the window, never more than
+                  // 460 and never less than 280: the two columns are the product
+                  // and must stay readable behind whatever is open over them.
+                  final panel = (box.maxWidth * 0.33).clamp(280.0, 460.0);
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: _Columns(
+                          bench: bench,
+                          ground: widget.ground,
+                          said: _said,
+                          focusKey: _focusKey,
+                          onSay: (line) => setState(() => _said = line),
+                        ),
+                      ),
+                      if (bench.reviewOpen) ReviewPanel(bench: bench, width: panel),
+                      if (bench.tokensOpen) TokensPanel(bench: bench, width: panel),
+                      if (bench.showing != null) AnswerPanel(bench: bench, width: panel),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -299,12 +311,14 @@ class _Band extends StatelessWidget {
 class _Columns extends StatelessWidget {
   const _Columns({
     required this.bench,
+    required this.ground,
     required this.said,
     required this.onSay,
     required this.focusKey,
   });
 
   final Workbench bench;
+  final Ground ground;
   final String? said;
   final void Function(String) onSay;
   final GlobalKey focusKey;
@@ -349,7 +363,9 @@ class _Columns extends StatelessWidget {
             rule: 'The request itself, not a preview of it',
             tint: Zc.clay,
             trailing: _ChipSwitch(bench: bench),
-            footer: safe == null ? null : _SafeFooter(payload: safe),
+            footer: safe == null
+                ? null
+                : _SafeFooter(payload: safe, bench: bench, ground: ground),
             child: safe == null
                 ? const _Empty('There is nothing to send yet.')
                 : SafeText(text: safe.text, chips: bench.chips),
@@ -441,9 +457,11 @@ class _ChipSwitch extends StatelessWidget {
 /// an unanswered suggestion is **still the real text** — which is what G12 is
 /// about, said in words where the consequence is visible.
 class _SafeFooter extends StatelessWidget {
-  const _SafeFooter({required this.payload});
+  const _SafeFooter({required this.payload, required this.bench, required this.ground});
 
   final PayloadView payload;
+  final Workbench bench;
+  final Ground ground;
 
   @override
   Widget build(BuildContext context) {
@@ -455,18 +473,52 @@ class _SafeFooter extends StatelessWidget {
         color: open > 0 ? Zc.amberWash : Zc.warmCard,
         border: const Border(top: BorderSide(color: Zc.lineSoft)),
       ),
-      child: Text(
-        open == 0
-            ? 'This is exactly what the AI will receive. ${payload.protectedCount} values were replaced.'
-            : open == 1
-                ? 'One suggestion is still open. Until you answer it, it stands here as written — '
-                    'real text on this side.'
-                : '$open suggestions are still open. Until you answer them, they stand here as '
-                    'written — the only real text on this side.',
-        style: Zc.small.copyWith(
-          color: open > 0 ? Zc.amber : Zc.ink3,
-          fontWeight: open > 0 ? FontWeight.w600 : FontWeight.w400,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            open == 0
+                ? 'This is exactly what the AI will receive. ${payload.protectedCount} values were replaced.'
+                : open == 1
+                    ? 'One suggestion is still open. Until you answer it, it stands here as written — '
+                        'real text on this side.'
+                    : '$open suggestions are still open. Until you answer them, they stand here as '
+                        'written — the only real text on this side.',
+            style: Zc.small.copyWith(
+              color: open > 0 ? Zc.amber : Zc.ink3,
+              fontWeight: open > 0 ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Wrap: the hint beside a disabled button is a whole sentence, and a
+          // narrow column must put it on the next line rather than off the edge.
+          Wrap(
+            spacing: 9,
+            runSpacing: 9,
+            children: [
+              ZButton(
+                label: 'Send safe version',
+                filled: true,
+                icon: Icons.send_outlined,
+                // Disabled while anything is open — and the reason is beside it,
+                // because «send anyway» does not exist and never will.
+                onPressed: open > 0
+                    ? null
+                    : () => showDialog<bool>(
+                          context: context,
+                          builder: (_) => SendSheet(bench: bench, ground: ground),
+                        ),
+                hint: open > 0 ? 'Answer the review first' : null,
+              ),
+              if (bench.answers.isNotEmpty && bench.showing == null)
+                ZButton(
+                  label: 'Show the answer',
+                  icon: Icons.subject,
+                  onPressed: () => bench.show(bench.answers.last),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }

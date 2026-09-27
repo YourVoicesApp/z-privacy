@@ -158,6 +158,7 @@ fn the_server_receives_the_safe_payload_and_nothing_else() {
         ProviderId { id: "openai".to_string() },
         CREDENTIAL.to_string(),
         Some(base),
+        None,
     )
     .expect("connect");
     assert!(row.connected, "the row says connected");

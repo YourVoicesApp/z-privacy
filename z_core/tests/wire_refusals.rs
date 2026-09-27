@@ -104,6 +104,7 @@ fn ready(base: String) -> (SessionId, PayloadHandle) {
         ProviderId { id: "openai".to_string() },
         "sk-test-not-a-real-credential".to_string(),
         Some(base),
+        None,
     )
     .expect("connect");
     (s, handle)
@@ -219,7 +220,7 @@ fn a_plain_http_address_off_this_machine_is_refused_when_it_is_given() {
     let _guard = serial();
     // Refused at the moment it is typed, not the first time Send is pressed.
     for bad in ["http://api.openai.com", "http://192.168.1.50:8000", "ftp://example.com"] {
-        match connect_provider(openai(), "sk-test".to_string(), Some(bad.to_string())) {
+        match connect_provider(openai(), "sk-test".to_string(), Some(bad.to_string()), None) {
             Err(ApiError::NetworkRefused {
                 reason: NetworkRefusal::InsecureUrl,
                 ..
@@ -228,7 +229,46 @@ fn a_plain_http_address_off_this_machine_is_refused_when_it_is_given() {
         }
     }
     // And https is accepted, so the rule is a rule and not a wall.
-    let row = connect_provider(openai(), "sk-test".to_string(), Some("https://api.openai.com".to_string())).expect("connect");
+    let row = connect_provider(openai(), "sk-test".to_string(), Some("https://api.openai.com".to_string()), None).expect("connect");
     assert_eq!(row.base_url, "https://api.openai.com");
     disconnect_provider(openai()).expect("disconnect");
+}
+
+#[test]
+fn a_model_on_this_machine_needs_no_credential_and_everything_else_does() {
+    let _guard = serial();
+
+    // The most private provider there is: no key, no account, no request that
+    // leaves the machine. Refusing this door for want of an API key would shut
+    // the product to exactly the people it is for.
+    let row = connect_provider(
+        openai(),
+        String::new(),
+        Some("http://127.0.0.1:11434".to_string()),
+        Some("llama3.2".to_string()),
+    )
+    .expect("a local model connects without a credential");
+    assert!(row.connected);
+    assert_eq!(row.model, "llama3.2", "the model is a setting, and it was taken");
+
+    // The model can be changed afterwards without the credential coming back —
+    // the UI never had one and must not need one to edit a setting.
+    let changed = configure_provider(openai(), None, Some("qwen2.5".to_string())).expect("configure");
+    assert_eq!(changed.model, "qwen2.5");
+    assert_eq!(changed.base_url, "http://127.0.0.1:11434", "the address was left alone");
+
+    // Anywhere else, an empty credential connects nothing and says why.
+    disconnect_provider(openai()).expect("disconnect");
+    match connect_provider(openai(), String::new(), Some("https://api.openai.com".to_string()), None) {
+        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("credential"), "{reason}"),
+        other => panic!("expected a refusal, got {other:?}"),
+    }
+    // And a configure with nothing stored is «connect first», not a silent one.
+    match configure_provider(openai(), Some("https://api.openai.com".to_string()), None) {
+        Err(ApiError::NetworkRefused {
+            reason: NetworkRefusal::NotConnected,
+            ..
+        }) => {}
+        other => panic!("expected NotConnected, got {other:?}"),
+    }
 }

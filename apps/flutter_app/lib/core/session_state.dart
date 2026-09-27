@@ -260,6 +260,72 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---------------------------------------------------------------- sending
+
+  /// The answers this conversation has received, newest last, and which one is
+  /// on screen. Kept as ids: the text lives in the core and is asked for by the
+  /// two views, because the restored one must be built there and nowhere else.
+  final List<AnswerId> answers = [];
+  AnswerId? showing;
+  bool sending = false;
+
+  /// Send the built payload to a provider.
+  ///
+  /// Nothing about the outgoing text is decided here: the handle was built by
+  /// the core, audited by the core, and is refused by the core if the session
+  /// has moved since. This method's whole job is to pass it on and say what
+  /// came back.
+  Future<String?> send(String providerId) async {
+    final h = handle;
+    if (h == null) return 'There is nothing to send yet.';
+    sending = true;
+    notifyListeners();
+    try {
+      final answer = await z.send(handle: h, provider: ProviderId(id: providerId));
+      answers.add(answer);
+      showing = answer;
+      trouble = null;
+      sending = false;
+      notifyListeners();
+      return null;
+    } on ApiError catch (e) {
+      sending = false;
+      trouble = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  /// The other door: the user took the safe text to a model themselves and is
+  /// bringing the answer back. Restoring works exactly the same way — the token
+  /// store does not care how the answer travelled.
+  Future<String?> pasteAnswer(String raw) async {
+    if (raw.trim().isEmpty) return 'Nothing was pasted.';
+    try {
+      final answer = await z.ingestAnswer(session: session, raw: raw);
+      answers.add(answer);
+      showing = answer;
+      trouble = null;
+      notifyListeners();
+      return null;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
+  }
+
+  Future<List<Segment>> restored(AnswerId answer) =>
+      z.restoredView(session: session, answer: answer);
+
+  Future<String> asTheModelWroteIt(AnswerId answer) =>
+      z.aiView(session: session, answer: answer);
+
+  void show(AnswerId? answer) {
+    showing = answer;
+    notifyListeners();
+  }
+
   /// Leaving the vault, or the workspace, re-hides everything that was shown.
   void hideEverything() {
     if (revealed.isEmpty) return;
