@@ -135,7 +135,15 @@ enum Kind {
   company,
   email,
   phone,
+
+  /// An IBAN — an account, internationally addressed.
   iban,
+
+  /// A bank's own identifier (SWIFT/BIC). Not an IBAN, and not the same secret.
+  bic,
+
+  /// A plain account number, as a German letter writes it after «Kontonummer:».
+  account,
   taxId,
   customerNo,
   address,

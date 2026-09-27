@@ -64,9 +64,9 @@ fn golden_auto_is_only_what_can_be_proven() {
     assert_eq!(
         kinds,
         vec![
+            Kind::Bic,
             Kind::CustomerNo,
             Kind::Email,
-            Kind::Iban,
             Kind::Iban,
             Kind::Phone,
             Kind::TaxId,
@@ -110,12 +110,12 @@ fn golden_one_value_two_layers_one_token() {
     assert!(!text.contains("DE89 3704"), "the account is still in the payload");
     let tokens = list_tokens(s).expect("tokens");
     let iban_tokens: Vec<&TokenRow> = tokens.iter().filter(|t| t.token.contains("_IBAN_")).collect();
-    // Two bank values in the fixture (the IBAN and the BIC), each with its own
-    // token — and the IBAN itself is one finding, not two.
+    assert_eq!(iban_tokens.len(), 1, "the IBAN is one token, not two: {iban_tokens:?}");
+    // And the BIC carries its own kind: a bank's identifier is not an account.
     assert_eq!(
-        iban_tokens.len(),
-        2,
-        "the IBAN and the BIC are two values; neither is doubled: {iban_tokens:?}"
+        tokens.iter().filter(|t| t.token.contains("_BIC_")).count(),
+        1,
+        "a BIC must not be labelled IBAN, in the token or anywhere else"
     );
 }
 

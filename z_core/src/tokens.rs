@@ -83,6 +83,8 @@ pub(crate) fn kind_word(kind: Kind) -> &'static str {
         Kind::Email => "EMAIL",
         Kind::Phone => "PHONE",
         Kind::Iban => "IBAN",
+        Kind::Bic => "BIC",
+        Kind::Account => "ACCOUNT",
         Kind::TaxId => "TAXID",
         Kind::CustomerNo => "CUSTNO",
         Kind::Address => "ADDR",

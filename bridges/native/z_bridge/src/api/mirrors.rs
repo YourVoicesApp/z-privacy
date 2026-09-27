@@ -89,7 +89,12 @@ pub enum _Kind {
     Company,
     Email,
     Phone,
+    /// An IBAN — an account, internationally addressed.
     Iban,
+    /// A bank's own identifier (SWIFT/BIC). Not an IBAN, and not the same secret.
+    Bic,
+    /// A plain account number, as a German letter writes it after «Kontonummer:».
+    Account,
     TaxId,
     CustomerNo,
     Address,

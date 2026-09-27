@@ -1,8 +1,11 @@
 // The whole contract, called from Dart, on the real Rust library.
 //
-// This is the proof that M1 asks for: every function on the surface can be
-// called today and answers with a typed error instead of killing the isolate.
-// "No panic crosses the boundary" is checked here, not hoped for.
+// The invariant this file defends is G7: **no panic crosses the boundary.** Every
+// call answers — with a value, or with a typed ApiError the UI can read. Anything
+// else (a PanicException, a type error, a dead isolate) fails the test.
+//
+// It also walks the real sequence, so the Dart side is proven to reach what the
+// core can already do: import, scan, protect, build, send.
 //
 // Needs the native library, so run once:  flutter build linux --debug
 import 'dart:io';
@@ -52,8 +55,8 @@ void main() {
       'undoLastProtection': () => undoLastProtection(session: session),
       'addAlias': () => addAlias(session: session, token: 't', alias: 'a'),
       'listFindings': () => listFindings(session: session),
-      'answerFinding': () => answerFinding(
-          session: session, finding: 1, answer: FindingAnswer.protect),
+      'answerFinding': () =>
+          answerFinding(session: session, finding: 1, answer: FindingAnswer.protect),
       'reveal': () => reveal(session: session, token: 't'),
       'hide': () => hide_(session: session, token: 't'),
       'listTokens': () => listTokens(session: session),
@@ -74,24 +77,76 @@ void main() {
       'testProvider': () => testProvider(provider: provider),
     };
 
-    final unexpected = <String>[];
+    final crashed = <String>[];
+    final pending = <String>[];
     for (final entry in calls.entries) {
       try {
         await entry.value();
-        // Nothing on the surface is built yet, so a success is the surprise.
-        unexpected.add('${entry.key}: returned instead of erroring');
+        // A value came back: the call is built and answered.
       } on ApiError catch (e) {
-        // A typed error is the pass: the contract answered in its own words.
-        if (e is! ApiError_NotImplemented) {
-          unexpected.add('${entry.key}: ${e.runtimeType}');
-        }
+        // A typed error is also an answer — the contract speaking in its own
+        // words. Only the "not built yet" ones are worth listing.
+        if (e is ApiError_NotImplemented) pending.add(entry.key);
       } catch (e) {
-        // Anything else — a panic turned into PanicException, a type error —
-        // is exactly what this test exists to catch.
-        unexpected.add('${entry.key}: ${e.runtimeType} $e');
+        // Anything else is what this test exists to catch: a panic turned into
+        // PanicException, a type error, a dead isolate.
+        crashed.add('${entry.key}: ${e.runtimeType} $e');
       }
     }
-    expect(unexpected, isEmpty, reason: 'calls that did not answer cleanly');
+    expect(crashed, isEmpty, reason: 'calls that did not answer cleanly');
     expect(calls.length, 30, reason: 'the contract has 30 functions');
+    // ignore: avoid_print
+    print('still NotImplemented (${pending.length}): $pending');
+  });
+
+  test('a document protects itself, driven from Dart', () async {
+    // The M3 turn, through the bridge: nothing is selected by hand.
+    const doc = 'Kunde: Nordstern Consulting GmbH\n'
+        'Telefon: +49 171 2345678\n'
+        'IBAN: DE89 3704 0044 0532 0130 00\n'
+        'BIC: COBADEFFXXX\n';
+    final session = await openSession(packId: 'de');
+    await importText(session: session, text: doc);
+
+    final report = await scan(session: session);
+    expect(report.auto, 3, reason: 'phone, IBAN and BIC can be proven');
+    expect(report.suggested, 1, reason: 'the company name is a habit, not a proof');
+
+    final findings = await listFindings(session: session);
+    expect(findings.length, 4);
+    for (final f in findings) {
+      expect(f.reason, isNotEmpty, reason: 'every finding says why');
+      expect(f.span.end, greaterThan(f.span.start));
+    }
+
+    // A BIC is a BIC, in the token as everywhere else.
+    final tokens = await listTokens(session: session);
+    expect(tokens.any((t) => t.token.contains('_BIC_')), isTrue);
+    expect(tokens.any((t) => t.kind == Kind.bic), isTrue);
+
+    // G12 from Dart: the open suggestion blocks the send, and says how many.
+    final handle = await buildPayload(session: session);
+    final view = await payloadView(handle: handle);
+    expect(view.text, isNot(contains('COBADEFFXXX')));
+    expect(view.text, contains('Nordstern'), reason: 'still open, so still in the clear');
+
+    try {
+      await send(handle: handle, provider: const ProviderId(id: 'openai'));
+      fail('a send with an open suggestion must be refused');
+    } on ApiError_OpenSuggestions catch (e) {
+      expect(e.count, 1);
+    }
+
+    // Answer it, and the door opens as far as the provider.
+    final open = findings.firstWhere((f) => f.state == MarkState.suggested);
+    await answerFinding(session: session, finding: open.id, answer: FindingAnswer.protect);
+    final fresh = await buildPayload(session: session);
+    try {
+      await send(handle: fresh, provider: const ProviderId(id: 'openai'));
+      fail('the network does not exist until M6');
+    } on ApiError_ProviderUnavailable catch (e) {
+      expect(e.provider, 'openai');
+    }
+    await closeSession(session: session);
   });
 }
