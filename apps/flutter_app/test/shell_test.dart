@@ -479,6 +479,33 @@ void main() {
     expect(find.text('Copy safe text'), findsOneWidget);
     expect(find.textContaining('no account, no key'), findsOneWidget);
 
+    // And the other two doors are reachable from here without leaving: one for
+    // a provider on the internet, one for a model on this machine.
+    expect(find.text('Send from here'), findsOneWidget);
+    expect(find.text('A model on this machine'), findsOneWidget);
+
+    // Nothing is connected in this test, so the internet door shows its form —
+    // address, model, key — and says where the key would live.
+    expect(find.text('API KEY'), findsOneWidget);
+    expect(find.textContaining('kept in memory for this run only'), findsOneWidget);
+
+    // The local door is a fold, and it is below the sheet's scroll: it has to be
+    // brought into view before it can be tapped, exactly as a person would.
+    final localDoor = find.text('Set up a local model');
+    await tester.ensureVisible(localDoor);
+    await settle(tester, rounds: 1);
+    await tester.tap(localDoor);
+    await settle(tester, rounds: 1);
+
+    // A model on this machine is asked for no key at all — one field fewer, not
+    // an empty one. The internet door's own key field is still on screen, so the
+    // claim is about the count: opening this door added a form and no key.
+    expect(find.text('API KEY'), findsOneWidget,
+        reason: 'the local form added a second key field');
+    expect(find.text('ADDRESS'), findsNWidgets(2), reason: 'two forms, two addresses');
+    expect(find.textContaining('literal loopback address'), findsOneWidget);
+    expect(find.text('http://127.0.0.1:11434'), findsWidgets);
+
     // What the sheet shows is the payload, not a copy assembled for display.
     final shown = tester
         .widget<SelectableText>(

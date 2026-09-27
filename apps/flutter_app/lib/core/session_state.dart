@@ -51,6 +51,41 @@ class Ground extends ChangeNotifier {
   }
 
   int get connectedProviders => providers.where((p) => p.connected).length;
+
+  /// Hand a provider its credential, or set up a model on this machine with no
+  /// credential at all. Returns the reason it did not work, or null.
+  ///
+  /// Nothing comes back but a row: there is no call in the whole contract that
+  /// returns a credential, and this method could not leak one if it tried.
+  Future<String?> connect({
+    required String id,
+    required String credential,
+    required String baseUrl,
+    required String model,
+  }) async {
+    try {
+      await z.connectProvider(
+        provider: ProviderId(id: id),
+        credential: credential,
+        baseUrl: baseUrl.trim().isEmpty ? null : baseUrl.trim(),
+        model: model.trim().isEmpty ? null : model.trim(),
+      );
+      await refresh();
+      return null;
+    } on ApiError catch (e) {
+      return e.toString();
+    }
+  }
+
+  Future<String?> forget(String id) async {
+    try {
+      await z.disconnectProvider(provider: ProviderId(id: id));
+      await refresh();
+      return null;
+    } on ApiError catch (e) {
+      return e.toString();
+    }
+  }
 }
 
 /// One conversation: the document, what was found in it, and what would leave.

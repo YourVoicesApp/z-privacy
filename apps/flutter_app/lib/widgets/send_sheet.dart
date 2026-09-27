@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
 class SendSheet extends StatefulWidget {
@@ -180,15 +181,16 @@ class _SendSheetState extends State<SendSheet> {
                     ),
                     const SizedBox(height: 14),
                     _door(
-                      title: connected.isEmpty ? 'Send from here' : 'Send from here',
+                      title: 'Send from here',
                       what: connected.isEmpty
-                          ? 'No provider is connected. A provider with no key is shown here rather '
-                              'than hidden — open Providers to connect one, or use the door above.'
+                          ? 'Nothing is connected yet. Only the text above would travel; the '
+                              'provider still sees the ordinary facts of a connection — your '
+                              'address, the time, the model.'
                           : 'The request goes from this app. Only the text above travels; the '
                               'provider still sees the ordinary facts of a connection — your address, '
                               'the time, the model.',
                       child: connected.isEmpty
-                          ? const SizedBox.shrink()
+                          ? _connectHere(local: false)
                           : Wrap(
                               spacing: 9,
                               runSpacing: 9,
@@ -222,7 +224,23 @@ class _SendSheetState extends State<SendSheet> {
                           '${p.sessionOnly ? "  (key kept for this run only)" : ""}',
                           style: Zc.tiny.copyWith(letterSpacing: 0),
                         ),
+                      const SizedBox(height: 10),
+                      _More(
+                        label: 'Change the address, the model, or the key',
+                        child: _connectHere(local: false),
+                      ),
                     ],
+                    const SizedBox(height: 14),
+                    _door(
+                      title: 'A model on this machine',
+                      what: 'llama.cpp, Ollama, LM Studio — anything that answers the same shape. '
+                          'No key, no account, and the request never leaves this computer. It is '
+                          'the only provider that sees none of the ordinary facts above.',
+                      child: _More(
+                        label: 'Set up a local model',
+                        child: _connectHere(local: true),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -231,6 +249,13 @@ class _SendSheetState extends State<SendSheet> {
         ),
       ),
     );
+  }
+
+  /// The form, for whichever provider row this door is about.
+  Widget _connectHere({required bool local}) {
+    final rows = widget.ground.providers;
+    if (rows.isEmpty) return const Text('This build knows no providers.', style: Zc.small);
+    return ConnectForm(ground: widget.ground, row: rows.first, local: local);
   }
 
   Widget _door({required String title, required String what, required Widget child}) {
@@ -248,6 +273,50 @@ class _SendSheetState extends State<SendSheet> {
           child,
         ],
       ),
+    );
+  }
+}
+
+/// A fold. The form behind it is for the person who wants it, and out of the
+/// way of the person who does not — which is most people, most of the time.
+class _More extends StatefulWidget {
+  const _More({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  State<_More> createState() => _MoreState();
+}
+
+class _MoreState extends State<_More> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _open = !_open),
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(_open ? Icons.expand_less : Icons.expand_more, size: 16, color: Zc.clay),
+                const SizedBox(width: 5),
+                Text(
+                  widget.label,
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Zc.clay),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_open) ...[const SizedBox(height: 10), widget.child],
+      ],
     );
   }
 }
