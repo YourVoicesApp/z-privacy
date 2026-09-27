@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Z Privacy — Behaviour, the Safe side</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #F6F4EF; color: #17181B; }
+    a { color: #17497A; text-decoration: none; }
+    a:hover { color: #0F3459; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 26px 30px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; background: #F6F4EF">
+
+  <div style="display: flex; align-items: flex-end; gap: 16px">
+    <span style="display: flex; flex-direction: column; gap: 5px">
+      <span style="font-family: 'Newsreader', serif; font-size: 26px; font-weight: 600; line-height: 1.1">Behaviour — the Safe side, and the answer</span>
+      <span style="font-size: 12.5px; color: #4E545A">Reveal shows. Send transmits. They must never be the same act, and the design has to make that obvious.</span>
+    </span>
+    <span style="flex-grow: 1"></span>
+    <span style="display: inline-flex; align-items: center; gap: 9px; height: 30px; padding: 0 12px; border-radius: 15px; background: #1F5C97; color: #FFFFFF; font-size: 11.5px; font-weight: 500">Send reads the Safe payload — and nothing else exists for it to read</span>
+  </div>
+
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 14px; min-height: 0">
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1.5px solid #1F5C97; border-radius: 12px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 9px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 1px solid #C3D2E1; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 500">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 8s2.2-3.6 5.4-3.6S13.4 8 13.4 8s-2.2 3.6-5.4 3.6S2.6 8 2.6 8z" stroke="#4E545A" stroke-width="1.2"/><circle cx="8" cy="8" r="1.7" stroke="#4E545A" stroke-width="1.2"/></svg>
+          Reveal
+        </span>
+        <span style="flex-grow: 1; font-size: 10.5px; color: #4E545A">a local look</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">The selection is not a token — it only ever works on a token.</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">The value appears in place, in a blue frame, marked <span style="font-weight: 600">shown here only</span>, and Hide Again takes its place.</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">LOCKED</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Vault locked → it asks for Touch ID first, and reveals one value, not all of them.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #17181B; color: #FFFFFF; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">NEVER</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">It does not touch the payload. The line naming the token stays visible the whole time it is revealed.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 9px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 1px solid #1F5C97; border-radius: 8px; background: #E9EFF6; font-size: 12px; font-weight: 600; color: #17497A">Hide Again</span>
+        <span style="flex-grow: 1; font-size: 10.5px; color: #4E545A">exists only after a reveal</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Puts the token back in the view. Nothing else changes, because nothing else had changed.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">BY ITSELF</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">It also fires on its own: after 20 seconds, when the window loses focus, when the vault locks, and when the tokens panel closes.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 9px">
+        <span style="display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; border: 1px solid #C3D2E1; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 500">Tokens <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 17px; height: 17px; padding: 0 5px; border-radius: 9px; background: #F7E7DA; color: #8F4318; font-family: 'IBM Plex Mono', monospace; font-size: 10px">9</span></span>
+        <span style="flex-grow: 1; font-size: 10.5px; color: #4E545A">the list of this conversation</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Always available; the count is the tokens standing in this conversation. Opens the side panel, never a new screen.</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">REVEAL ALL</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Asks for Touch ID, then shows every value for 20 seconds. One key for many secrets, so it is asked for each time.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">ON CLOSE</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Closing the panel hides every value it had revealed, in the text as well.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 9px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 1px solid #C3D2E1; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 500">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.4" y="3" width="4.6" height="10" rx="1.2" stroke="#4E545A" stroke-width="1.2"/><rect x="9" y="3" width="4.6" height="10" rx="1.2" stroke="#4E545A" stroke-width="1.2"/></svg>
+          Compare
+        </span>
+        <span style="flex-grow: 1; font-size: 10.5px; color: #4E545A">what was replaced, what was removed</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">The document is empty, or nothing is protected — there is nothing to compare.</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Locks the two sides together, line by line, and marks every difference: replaced by a token, or dropped.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #17181B; color: #FFFFFF; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">READ ONLY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Nothing can be edited in this view, so nobody can «fix» the safe text into a real name.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 2px solid #1F5C97; border-radius: 12px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 9px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 8px; background: #1F5C97; color: #FFFFFF; font-size: 12.5px; font-weight: 600">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M9.5 3H13v3.5M13 3L8.2 7.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.4 9.6V12a1.5 1.5 0 01-1.5 1.5H4A1.5 1.5 0 012.5 12V6.1A1.5 1.5 0 014 4.6h2.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Send Safe Version
+        </span>
+        <span style="flex-grow: 1; font-size: 10.5px; color: #4E545A">the only door outward</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #17181B; color: #FFFFFF; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">HARD RULE</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">It cannot read the Original side at all. It takes the Safe payload and posts that. There is no code path from the left column to the network.</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">The Safe side is empty, or the chosen provider is not connected — and it says which of the two it is.</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">WARNS</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Suggestions still open → it names them and offers Review. «Send anyway» appears only if that switch is on; otherwise Review is the only way through.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Everything answered → the review sheet, or straight out if you turned the sheet off. Either way the status bar reports that it went, and to whom.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 9px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 1px solid #C3D2E1; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 500">Review Before Send</span>
+        <span style="flex-grow: 1; font-size: 10.5px; color: #4E545A">the last look</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Provider · document · protected · needs review · profile · pack — and the payload itself, scrollable, exactly as it will go.</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">BACK</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Returns to the Workspace and sends nothing. Closing the sheet is the same as Back, never as Send.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #17181B; color: #FFFFFF; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">EXACT</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">What the preview shows is the payload object itself, not a copy of it — so the two can never drift apart.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FBF7EF; border: 1.5px solid #A85422; border-radius: 12px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 9px">
+        <span style="display: inline-flex; border: 1.5px solid #A85422; border-radius: 8px; overflow: hidden">
+          <span style="display: inline-flex; align-items: center; height: 28px; padding: 0 10px; background: #A85422; color: #FFFFFF; font-size: 11.5px; font-weight: 600">Restored View</span>
+          <span style="display: inline-flex; align-items: center; height: 28px; padding: 0 10px; background: #FFFDF8; color: #17181B; font-size: 11.5px; font-weight: 600">AI View</span>
+        </span>
+        <span style="flex-grow: 1; font-size: 10.5px; color: #4E545A">two fixed buttons</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F0E7D8">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">DEFAULT</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Restored View, always. The words put back carry a dotted mark, so you can see what the model never had.</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F0E7D8">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">AI VIEW</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">The answer exactly as it arrived, tokens and all — the only honest proof of what the model knew.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #17181B; color: #FFFFFF; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">FIXED</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Same place, same size, 44 px, on every answer. Switching sends nothing: by now the request is long over.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 9px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 500">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 8s2.2-3.6 5.4-3.6S13.4 8 13.4 8s-2.2 3.6-5.4 3.6S2.6 8 2.6 8z" stroke="#4E545A" stroke-width="1.2"/><circle cx="8" cy="8" r="1.7" stroke="#4E545A" stroke-width="1.2"/></svg>
+          Reveal Selected
+        </span>
+        <span style="flex-grow: 1; font-size: 10.5px; color: #4E545A">inside the answer</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">On a token in the AI View → the same local reveal, the same blue frame, the same timeout.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">POINTLESS</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">In the Restored View the values are already in place, so the button greys out rather than pretending to do something.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 9px">
+        <span style="display: inline-flex; align-items: center; height: 28px; padding: 0 11px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 500">Copy Restored</span>
+        <span style="display: inline-flex; align-items: center; height: 28px; padding: 0 11px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 500">Copy Safe</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">WARNS ONCE</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Copy Restored puts real names on the clipboard — which belongs to the whole machine. It says so the first time, and offers to clear the clipboard after 60 seconds.</span>
+      </span>
+      <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">SAFE COPY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Copy Safe copies the tokenised text, for pasting somewhere that must stay clean.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">While the vault is locked, Copy Restored is greyed: the app cannot restore what it cannot read.</span>
+      </span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

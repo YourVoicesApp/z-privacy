@@ -1,0 +1,14 @@
+[package]
+name = "z_core"
+description = "Z Privacy core: scanning, tokens, vault, payload. The only code allowed to build the text that leaves the device."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# Gate 1 lives here as well as in CI: this crate carries NO dependencies at all
+# until M4 (crypto). Nothing to audit is the cheapest audit.
+[dependencies]
+
+[lints]
+workspace = true

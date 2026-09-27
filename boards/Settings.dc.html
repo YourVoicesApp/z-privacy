@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Z Privacy — Settings, Privacy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #F6F4EF; color: #17181B; }
+    a { color: #17497A; text-decoration: none; }
+    a:hover { color: #0F3459; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: #F6F4EF">
+
+  <header style="flex-shrink: 0; box-sizing: border-box; height: 56px; padding: 0 18px; display: flex; align-items: center; gap: 12px; background: #FFFFFF; border-bottom: 1px solid #E4E0D6">
+    <a href="Home.dc.html" style="display: flex; align-items: center; gap: 9px; color: #17181B">
+      <span style="width: 25px; height: 25px; border-radius: 7px; background: #A85422; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'Newsreader', serif; font-size: 17px; font-weight: 600; line-height: 1">Z</span>
+      <span style="font-family: 'Newsreader', serif; font-size: 18px; font-weight: 600">Z Privacy</span>
+    </a>
+    <span style="width: 1px; height: 24px; background: #E8E4DA"></span>
+    <span style="font-size: 13.5px; font-weight: 600">Settings</span>
+    <span style="flex-grow: 1"></span>
+    <a href="Main.dc.html" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 13px; font-weight: 500; color: #17181B">Back to the chat</a>
+  </header>
+
+  <div style="flex-grow: 1; display: flex; min-height: 0">
+
+    <nav style="flex-shrink: 0; width: 244px; box-sizing: border-box; padding: 22px 16px; display: flex; flex-direction: column; gap: 3px; background: #FBF9F4; border-right: 1px solid #E4E0D6">
+      <span style="padding: 0 10px 9px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.9px; color: #5E6469">SETTINGS</span>
+      <span style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px">General</span>
+      <span style="box-sizing: border-box; padding: 10px 12px; display: flex; align-items: center; gap: 9px; border-radius: 9px; background: #F1E8D8; font-size: 13.5px; font-weight: 600">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #6E5127"><path d="M8 2l4.5 1.6v4.2c0 2.6-1.8 4.7-4.5 5.6-2.7-.9-4.5-3-4.5-5.6V3.6L8 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        Privacy
+      </span>
+      <a href="AutoProtect.dc.html" style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px; color: #17181B">Automatic Protection</a>
+      <a href="LanguagePack.dc.html" style="box-sizing: border-box; padding: 10px 12px; display: flex; align-items: center; gap: 9px; border-radius: 9px; font-size: 13.5px; color: #17181B"><span style="flex-grow: 1">Language Packs</span><span style="font-size: 11px; font-weight: 600; color: #6E5127">German</span></a>
+      <a href="Providers.dc.html" style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px; color: #17181B">AI Providers</a>
+      <a href="Vault.dc.html" style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px; color: #17181B">Z Vault</a>
+      <span style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px">Shortcuts</span>
+      <span style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px">About</span>
+      <span style="flex-grow: 1"></span>
+      <span style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; line-height: 1.55; color: #4E545A">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px; color: #7A5A2C"><rect x="3.25" y="7" width="9.5" height="6.75" rx="1.6" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        No account, no sync, no telemetry. Every setting here belongs to this device alone.
+      </span>
+    </nav>
+
+    <section style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 28px 34px; display: flex; flex-direction: column; gap: 20px; overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: 'Newsreader', serif; font-size: 30px; font-weight: 600; line-height: 1.1">Privacy</span>
+        <span style="font-size: 13px; color: #4E545A">Who can open the vault, how long it stays open, and what is kept after you close a chat.</span>
+      </div>
+
+      <div style="box-sizing: border-box; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 14px; overflow: hidden">
+
+        <div style="box-sizing: border-box; padding: 17px 22px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #F2EEE5">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-size: 14px; font-weight: 600">Lock Z Vault</span>
+            <span style="font-size: 12px; color: #4E545A">Opening the vault, or revealing one value, asks for Touch ID or this device's password.</span>
+          </span>
+          <span style="display: inline-flex; align-items: center; height: 34px; padding: 0 12px; border: 1px solid #DCD7CB; border-radius: 9px; background: #FFFFFF; font-size: 12.5px; font-weight: 500">Touch ID</span>
+          <span style="font-size: 12px; font-weight: 600; color: #6E5127; width: 26px; text-align: right">On</span>
+          <button type="button" aria-pressed="true" aria-label="Lock Z Vault" style="flex-shrink: 0; width: 46px; height: 26px; padding: 0; border: 0; border-radius: 13px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer">
+            <span style="width: 20px; height: 20px; margin-right: 3px; border-radius: 10px; background: #FFFFFF"></span>
+          </button>
+        </div>
+
+        <div style="box-sizing: border-box; padding: 17px 22px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #F2EEE5">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-size: 14px; font-weight: 600">Auto-lock</span>
+            <span style="font-size: 12px; color: #4E545A">While locked, saved words are not recognised — only what you protect by hand is replaced.</span>
+          </span>
+          <span style="display: inline-flex; border: 1px solid #DCD7CB; border-radius: 9px; overflow: hidden">
+            <button type="button" aria-pressed="false" style="height: 34px; padding: 0 13px; border: 0; border-right: 1px solid #DCD7CB; background: #FFFFFF; font-family: inherit; font-size: 12.5px; color: #3D4247; cursor: pointer">1 min</button>
+            <button type="button" aria-pressed="true" style="height: 34px; padding: 0 13px; border: 0; border-right: 1px solid #DCD7CB; background: #A85422; font-family: inherit; font-size: 12.5px; font-weight: 600; color: #FFFFFF; cursor: pointer">5 min</button>
+            <button type="button" aria-pressed="false" style="height: 34px; padding: 0 13px; border: 0; background: #FFFFFF; font-family: inherit; font-size: 12.5px; color: #3D4247; cursor: pointer">15 min</button>
+          </span>
+        </div>
+
+        <div style="box-sizing: border-box; padding: 17px 22px 17px 44px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #F2EEE5; background: #FDFBF6">
+          <span style="flex-grow: 1; font-size: 13px; color: #3D4247">Lock as well the moment the window is minimised</span>
+          <span style="font-size: 12px; font-weight: 600; color: #6E5127; width: 26px; text-align: right">On</span>
+          <button type="button" aria-pressed="true" aria-label="Lock when the window is minimised" style="flex-shrink: 0; width: 46px; height: 26px; padding: 0; border: 0; border-radius: 13px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer">
+            <span style="width: 20px; height: 20px; margin-right: 3px; border-radius: 10px; background: #FFFFFF"></span>
+          </button>
+        </div>
+
+        <div style="box-sizing: border-box; padding: 17px 22px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #F2EEE5">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-size: 14px; font-weight: 600">Store conversations locally</span>
+            <span style="font-size: 12px; color: #4E545A">The list on the Home screen. Off means a conversation lives only while it is open.</span>
+          </span>
+          <span style="font-size: 12px; font-weight: 600; color: #6E5127; width: 26px; text-align: right">On</span>
+          <button type="button" aria-pressed="true" aria-label="Store conversations locally" style="flex-shrink: 0; width: 46px; height: 26px; padding: 0; border: 0; border-radius: 13px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer">
+            <span style="width: 20px; height: 20px; margin-right: 3px; border-radius: 10px; background: #FFFFFF"></span>
+          </button>
+        </div>
+
+        <div style="box-sizing: border-box; padding: 17px 22px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #F2EEE5">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-size: 14px; font-weight: 600">Delete conversation on close</span>
+            <span style="font-size: 12px; color: #4E545A">Text, answer and the conversation's own tokens go together. Vault entries stay.</span>
+          </span>
+          <span style="font-size: 12px; font-weight: 600; color: #5E6469; width: 26px; text-align: right">Off</span>
+          <button type="button" aria-pressed="false" aria-label="Delete conversation on close" style="flex-shrink: 0; width: 46px; height: 26px; padding: 0; border: 0; border-radius: 13px; background: #DCD7CB; display: flex; align-items: center; justify-content: flex-start; cursor: pointer">
+            <span style="width: 20px; height: 20px; margin-left: 3px; border-radius: 10px; background: #FFFFFF"></span>
+          </button>
+        </div>
+
+        <div style="box-sizing: border-box; padding: 17px 22px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #F2EEE5">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-size: 14px; font-weight: 600">Allow screenshots</span>
+            <span style="font-size: 12px; color: #4E545A">Off asks the system to keep this window out of captures and screen sharing.</span>
+          </span>
+          <span style="font-size: 12px; font-weight: 600; color: #5E6469; width: 26px; text-align: right">Off</span>
+          <button type="button" aria-pressed="false" aria-label="Allow screenshots" style="flex-shrink: 0; width: 46px; height: 26px; padding: 0; border: 0; border-radius: 13px; background: #DCD7CB; display: flex; align-items: center; justify-content: flex-start; cursor: pointer">
+            <span style="width: 20px; height: 20px; margin-left: 3px; border-radius: 10px; background: #FFFFFF"></span>
+          </button>
+        </div>
+
+        <div style="box-sizing: border-box; padding: 17px 22px; display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #F2EEE5">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+            <span style="display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600">
+              Show real Z values automatically
+              <span style="display: inline-flex; align-items: center; height: 20px; padding: 0 9px; border-radius: 10px; background: #F1E8D8; color: #6E5127; font-size: 10.5px; font-weight: 600; letter-spacing: 0.3px">BETTER LEFT OFF</span>
+            </span>
+            <span style="font-size: 12px; color: #4E545A">On, the token table shows every name at once — and so does anyone standing behind you.</span>
+          </span>
+          <span style="font-size: 12px; font-weight: 600; color: #5E6469; width: 26px; text-align: right">Off</span>
+          <button type="button" aria-pressed="false" aria-label="Show real Z values automatically" style="flex-shrink: 0; width: 46px; height: 26px; padding: 0; border: 0; border-radius: 13px; background: #DCD7CB; display: flex; align-items: center; justify-content: flex-start; cursor: pointer">
+            <span style="width: 20px; height: 20px; margin-left: 3px; border-radius: 10px; background: #FFFFFF"></span>
+          </button>
+        </div>
+
+        <div style="box-sizing: border-box; padding: 17px 22px; display: flex; align-items: center; gap: 18px">
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+            <span style="font-size: 14px; font-weight: 600">Rotate Z Tokens</span>
+            <span style="font-size: 12px; color: #4E545A">A fresh token for every conversation, so <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #8F4318">Z_7A91C2</span> cannot be followed from one chat to the next.</span>
+          </span>
+          <span style="font-size: 12px; font-weight: 600; color: #6E5127; width: 26px; text-align: right">On</span>
+          <button type="button" aria-pressed="true" aria-label="Rotate Z Tokens" style="flex-shrink: 0; width: 46px; height: 26px; padding: 0; border: 0; border-radius: 13px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer">
+            <span style="width: 20px; height: 20px; margin-right: 3px; border-radius: 10px; background: #FFFFFF"></span>
+          </button>
+        </div>
+      </div>
+
+      <div style="box-sizing: border-box; padding: 16px 20px; display: flex; align-items: flex-start; gap: 11px; background: #E9EFF6; border: 1px solid #D4DEE9; border-radius: 12px">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px; color: #17497A"><path d="M9.5 3H13v3.5M13 3L8.2 7.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.4 9.6V12a1.5 1.5 0 01-1.5 1.5H4A1.5 1.5 0 012.5 12V6.1A1.5 1.5 0 014 4.6h2.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span style="font-size: 12.5px; line-height: 1.6; color: #3D4247">Nothing on this screen changes the one rule: only the Safe Version column leaves this device. These settings decide what is kept here, and who may look at it.</span>
+      </div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

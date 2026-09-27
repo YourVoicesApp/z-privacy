@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Z Privacy — AI Providers</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #F6F4EF; color: #17181B; }
+    a { color: #17497A; text-decoration: none; }
+    a:hover { color: #0F3459; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: #F6F4EF">
+
+  <header style="flex-shrink: 0; box-sizing: border-box; height: 56px; padding: 0 18px; display: flex; align-items: center; gap: 12px; background: #FFFFFF; border-bottom: 1px solid #E4E0D6">
+    <a href="Home.dc.html" style="display: flex; align-items: center; gap: 9px; color: #17181B">
+      <span style="width: 25px; height: 25px; border-radius: 7px; background: #A85422; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'Newsreader', serif; font-size: 17px; font-weight: 600; line-height: 1">Z</span>
+      <span style="font-family: 'Newsreader', serif; font-size: 18px; font-weight: 600">Z Privacy</span>
+    </a>
+    <span style="width: 1px; height: 24px; background: #E8E4DA"></span>
+    <span style="font-size: 13.5px; font-weight: 600">AI Providers</span>
+    <span style="flex-grow: 1"></span>
+    <a href="Settings.dc.html" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 13px; font-weight: 500; color: #17181B">Settings</a>
+    <a href="Main.dc.html" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 13px; font-weight: 500; color: #17181B">Back to the chat</a>
+  </header>
+
+  <div style="flex-shrink: 0; box-sizing: border-box; padding: 12px 28px; display: flex; align-items: center; gap: 10px; background: #1F5C97; color: #FFFFFF; font-size: 13px; font-weight: 500">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M9.5 3H13v3.5M13 3L8.2 7.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.4 9.6V12a1.5 1.5 0 01-1.5 1.5H4A1.5 1.5 0 012.5 12V6.1A1.5 1.5 0 014 4.6h2.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    Whichever provider you choose, it receives the Safe Version and nothing else. Changing the model changes where the safe text goes — never what is in it.
+  </div>
+
+  <div style="flex-grow: 1; box-sizing: border-box; padding: 26px 28px; display: flex; gap: 22px; min-height: 0">
+
+    <section style="flex-shrink: 0; width: 560px; box-sizing: border-box; padding: 22px 24px; display: flex; flex-direction: column; gap: 18px; background: #FFFFFF; border: 1.5px solid #1F5C97; border-radius: 14px">
+      <div style="display: flex; align-items: center; gap: 13px">
+        <span style="width: 40px; height: 40px; border-radius: 11px; background: #E9EFF6; color: #17497A; display: flex; align-items: center; justify-content: center; font-family: 'Newsreader', serif; font-size: 19px; font-weight: 600">O</span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+          <span style="font-size: 16px; font-weight: 600">OpenAI</span>
+          <span style="font-size: 11.5px; color: #4E545A">api.openai.com</span>
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 12px; background: #DCE6F1; color: #17497A; font-size: 11px; font-weight: 600; letter-spacing: 0.3px">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6.3l2.6 2.6L10 3.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          CONNECTED
+        </span>
+        <span style="display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 12px; background: #F1E8D8; color: #6E5127; font-size: 11px; font-weight: 600; letter-spacing: 0.3px">IN USE</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 7px">
+        <label for="api-key" style="font-size: 12px; font-weight: 600">API Key</label>
+        <span style="box-sizing: border-box; height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 10px; border: 1px solid #DCD7CB; border-radius: 10px; background: #FBF9F4">
+          <input id="api-key" type="text" value="sk-••••••••••••••••••••7C4A" readonly style="flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #3D4247">
+          <button type="button" style="height: 28px; padding: 0 11px; border: 1px solid #DCD7CB; border-radius: 7px; background: #FFFFFF; font-family: inherit; font-size: 11.5px; font-weight: 600; color: #17181B; cursor: pointer">Replace</button>
+        </span>
+        <span style="display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: #4E545A">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #7A5A2C"><rect x="3.25" y="7" width="9.5" height="6.75" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Held in this device's own secret store. It is never shown in full again, and never written into a conversation.
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 14px">
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 7px">
+          <span style="font-size: 12px; font-weight: 600">Default Model</span>
+          <span style="box-sizing: border-box; height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 9px; border: 1px solid #DCD7CB; border-radius: 10px; background: #FFFFFF">
+            <span style="flex-grow: 1; font-size: 13.5px; font-weight: 500">OpenAI — GPT</span>
+            <svg width="11" height="11" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="#565B62" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </span>
+        <span style="flex-shrink: 0; display: flex; flex-direction: column; gap: 7px">
+          <span style="font-size: 12px; font-weight: 600">Connection</span>
+          <button type="button" style="box-sizing: border-box; height: 42px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #C3D2E1; border-radius: 10px; background: #E9EFF6; font-family: inherit; font-size: 13px; font-weight: 600; color: #17497A; cursor: pointer">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.6v3.2M8 2.6L6.2 4.4M8 2.6l1.8 1.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.4 7.6v4.2a1.6 1.6 0 001.6 1.6h6a1.6 1.6 0 001.6-1.6V7.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Test Connection
+          </button>
+        </span>
+      </div>
+
+      <div style="box-sizing: border-box; padding: 12px 15px; display: flex; align-items: center; gap: 9px; background: #F2F6FA; border: 1px solid #D9E3EE; border-radius: 10px; font-size: 12px; color: #3D4247">
+        <svg width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true" style="color: #17497A"><path d="M2 6.3l2.6 2.6L10 3.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Last test today 14:02 — answered in 0.8 s. The test sends the word <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px">ping</span>, nothing from your text.
+      </div>
+
+      <span style="flex-grow: 1"></span>
+
+      <div style="display: flex; align-items: center; gap: 10px; padding-top: 4px; border-top: 1px solid #F2EEE5">
+        <button type="button" style="margin-top: 16px; height: 40px; padding: 0 16px; border: 1px solid #DCD7CB; border-radius: 10px; background: #FFFFFF; font-family: inherit; font-size: 13px; font-weight: 500; color: #17181B; cursor: pointer">Disconnect</button>
+        <button type="button" style="margin-top: 16px; height: 40px; padding: 0 16px; border: 1px solid #C08149; border-radius: 10px; background: #FDF7F1; font-family: inherit; font-size: 13px; font-weight: 600; color: #8F4318; cursor: pointer">Remove Provider</button>
+        <span style="margin-top: 16px; flex-grow: 1; font-size: 11px; line-height: 1.5; color: #4E545A">Removing it deletes the key from the device. Your conversations stay.</span>
+      </div>
+    </section>
+
+    <section style="flex-grow: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-content: start">
+
+      <span style="box-sizing: border-box; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 14px">
+        <span style="display: flex; align-items: center; gap: 11px">
+          <span style="width: 34px; height: 34px; border-radius: 10px; background: #F3EFE6; color: #3D4247; display: flex; align-items: center; justify-content: center; font-family: 'Newsreader', serif; font-size: 17px; font-weight: 600">A</span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 15px; font-weight: 600">Anthropic — Claude</span>
+            <span style="font-size: 11px; color: #4E545A">api.anthropic.com</span>
+          </span>
+        </span>
+        <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; height: 23px; padding: 0 10px; border-radius: 12px; background: #F1EFE9; color: #4E545A; font-size: 11px; font-weight: 600; letter-spacing: 0.3px">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.6 6h6.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          NOT CONNECTED
+        </span>
+        <span style="font-size: 11.5px; line-height: 1.5; color: #4E545A">Add a key, or sign in, to choose it in the Model menu.</span>
+        <button type="button" style="height: 38px; border: 0; border-radius: 9px; background: #17181B; font-family: inherit; font-size: 13px; font-weight: 600; color: #FFFFFF; cursor: pointer">Connect</button>
+      </span>
+
+      <span style="box-sizing: border-box; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 14px">
+        <span style="display: flex; align-items: center; gap: 11px">
+          <span style="width: 34px; height: 34px; border-radius: 10px; background: #E9EFF6; color: #17497A; display: flex; align-items: center; justify-content: center; font-family: 'Newsreader', serif; font-size: 17px; font-weight: 600">G</span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 15px; font-weight: 600">Google — Gemini</span>
+            <span style="font-size: 11px; color: #4E545A">generativelanguage.googleapis.com</span>
+          </span>
+        </span>
+        <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; height: 23px; padding: 0 10px; border-radius: 12px; background: #DCE6F1; color: #17497A; font-size: 11px; font-weight: 600; letter-spacing: 0.3px">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 6.3l2.6 2.6L10 3.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          CONNECTED
+        </span>
+        <span style="font-size: 11.5px; line-height: 1.5; color: #4E545A">Key ends 9B12 · last used 24 Sep with Faruk AB.</span>
+        <span style="display: flex; gap: 9px">
+          <button type="button" style="flex-grow: 1; height: 38px; border: 1px solid #DCD7CB; border-radius: 9px; background: #FFFFFF; font-family: inherit; font-size: 12.5px; font-weight: 500; color: #17181B; cursor: pointer">Test</button>
+          <button type="button" style="flex-grow: 1; height: 38px; border: 1px solid #DCD7CB; border-radius: 9px; background: #FFFFFF; font-family: inherit; font-size: 12.5px; font-weight: 500; color: #17181B; cursor: pointer">Disconnect</button>
+        </span>
+      </span>
+
+      <span style="box-sizing: border-box; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; background: #FBF9F4; border: 1px solid #E4E0D6; border-radius: 14px">
+        <span style="display: flex; align-items: center; gap: 11px">
+          <span style="width: 34px; height: 34px; border-radius: 10px; background: #F1EFE9; color: #5E6469; display: flex; align-items: center; justify-content: center">
+            <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.4" y="3.4" width="11.2" height="7.6" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.4 13.4h5.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </span>
+          <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-size: 15px; font-weight: 600">Local Model</span>
+            <span style="font-size: 11px; color: #4E545A">on this machine · nothing leaves at all</span>
+          </span>
+        </span>
+        <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; height: 23px; padding: 0 10px; border-radius: 12px; border: 1px dashed #C4BFB2; color: #4E545A; font-size: 11px; font-weight: 600; letter-spacing: 0.3px">UNAVAILABLE</span>
+        <span style="font-size: 11.5px; line-height: 1.5; color: #4E545A">No local model found. With one running, the Safe Version still applies — the habit does not change with the destination.</span>
+        <button type="button" style="height: 38px; border: 1px solid #DCD7CB; border-radius: 9px; background: #FFFFFF; font-family: inherit; font-size: 12.5px; font-weight: 500; color: #17181B; cursor: pointer">Choose a folder…</button>
+      </span>
+
+      <span style="box-sizing: border-box; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; justify-content: center; background: #FBF9F4; border: 1px dashed #D3CDBF; border-radius: 14px">
+        <span style="display: flex; align-items: center; gap: 10px">
+          <span style="width: 30px; height: 30px; border-radius: 9px; background: #F1E8D8; color: #7A5A2C; display: flex; align-items: center; justify-content: center">
+            <svg width="15" height="15" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 2.6v8.8M2.6 7h8.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </span>
+          <span style="font-size: 14.5px; font-weight: 600">Add Provider</span>
+        </span>
+        <span style="font-size: 11.5px; line-height: 1.5; color: #4E545A">Any service with an address and a key. It appears in the Model menu, under the same rule.</span>
+      </span>
+
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

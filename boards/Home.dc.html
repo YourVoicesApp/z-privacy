@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Z Privacy — Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #F6F4EF; color: #17181B; }
+    a { color: #17497A; text-decoration: none; }
+    a:hover { color: #0F3459; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: #F6F4EF">
+
+  <header style="flex-shrink: 0; box-sizing: border-box; height: 56px; padding: 0 18px; display: flex; align-items: center; gap: 10px; background: #FFFFFF; border-bottom: 1px solid #E4E0D6">
+    <span style="display: flex; align-items: center; gap: 9px">
+      <span style="width: 25px; height: 25px; border-radius: 7px; background: #A85422; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'Newsreader', serif; font-size: 17px; font-weight: 600; line-height: 1">Z</span>
+      <span style="font-family: 'Newsreader', serif; font-size: 18px; font-weight: 600">Z Privacy</span>
+    </span>
+    <span style="flex-grow: 1"></span>
+    <a href="Vault.dc.html" style="display: inline-flex; align-items: center; gap: 7px; height: 31px; padding: 0 11px; border-radius: 8px; background: #F3EFE6; font-size: 12.5px; font-weight: 500; color: #17181B">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #7A5A2C"><rect x="3.25" y="7" width="9.5" height="6.75" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Z Vault
+    </a>
+    <a href="Settings.dc.html" aria-label="Settings" style="display: inline-flex; align-items: center; justify-content: center; width: 33px; height: 31px; border-radius: 8px; background: #F3EFE6">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #3D4247"><path d="M2 4.5h12M2 11.5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="6" cy="4.5" r="1.9" fill="#F3EFE6" stroke="currentColor" stroke-width="1.3"/><circle cx="10.5" cy="11.5" r="1.9" fill="#F3EFE6" stroke="currentColor" stroke-width="1.3"/></svg>
+    </a>
+  </header>
+
+  <div style="flex-grow: 1; box-sizing: border-box; padding: 40px 52px 36px; display: flex; gap: 44px; min-height: 0">
+
+    <section style="flex-grow: 1; flex-basis: 0; min-width: 0; display: flex; flex-direction: column; gap: 24px">
+      <div style="display: flex; flex-direction: column; gap: 11px">
+        <h1 style="margin: 0; max-width: 620px; font-family: 'Newsreader', serif; font-size: 40px; font-weight: 600; line-height: 1.14; letter-spacing: -0.3px">What stays on this device, and what leaves it.</h1>
+        <p style="margin: 0; max-width: 600px; font-size: 14.5px; line-height: 1.65; color: #4E545A">Bring in a document and it is scanned before you read it. What the scanner is sure of is already protected; what it is unsure of it asks you about. Then you see the exact text that will go.</p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 14px">
+        <a href="Scan.dc.html" style="display: inline-flex; align-items: center; gap: 11px; height: 56px; padding: 0 24px; border-radius: 12px; background: #A85422; color: #FFFFFF; font-size: 16px; font-weight: 600">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10.4V2.8M8 2.8L5.8 5M8 2.8L10.2 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 9.6v2.2a1.5 1.5 0 001.5 1.5h7a1.5 1.5 0 001.5-1.5V9.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Import a document
+        </a>
+        <a href="Main.dc.html" style="display: inline-flex; align-items: center; gap: 10px; height: 56px; padding: 0 22px; border: 1px solid #DCD7CB; border-radius: 12px; background: #FFFFFF; color: #17181B; font-size: 15px; font-weight: 600">
+          <svg width="17" height="17" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11" stroke="#8F4318" stroke-width="1.7" stroke-linecap="round"/></svg>
+          New Private Chat
+        </a>
+        <span style="display: inline-flex; flex-direction: column; gap: 4px; margin-left: 4px">
+          <span style="font-size: 11.5px; color: #4E545A">PDF · Word · TXT to begin with</span>
+          <span style="font-size: 11.5px; color: #4E545A">Nothing is uploaded to be read.</span>
+        </span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px">
+        <a href="Profiles.dc.html" style="display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border: 1.5px solid #A85422; border-radius: 8px; background: #FDF7F1; font-size: 12.5px; color: #17181B">
+          <span style="color: #5E6469">Profile</span><span style="font-weight: 600">Client Nordstern</span>
+        </a>
+        <a href="LanguagePack.dc.html" style="display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border: 1px solid #C9AE83; border-radius: 8px; background: #FBF7EF; font-size: 12.5px; color: #17181B">
+          <span style="color: #5E6469">Language</span><span style="font-weight: 600">German</span>
+        </a>
+        <span style="font-size: 12px; color: #4E545A">· 34 spellings are watched for this client</span>
+      </div>
+
+      <div style="flex-grow: 1; min-height: 0; display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 14px; overflow: hidden">
+        <div style="box-sizing: border-box; height: 50px; padding: 0 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #EDE7DA; background: #FBF9F4">
+          <span style="font-size: 13.5px; font-weight: 600">Local conversations</span>
+          <span style="flex-grow: 1"></span>
+          <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: #4E545A">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3.25" y="7" width="9.5" height="6.75" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Stored on this device only
+          </span>
+        </div>
+
+        <a href="Main.dc.html" style="box-sizing: border-box; padding: 14px 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F2EEE5; background: #FDFBF6; color: #17181B">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink: 0; color: #7A5A2C"><path d="M4 2.2h5l3 3v8.6H4V2.2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M9 2.2v3.2h3" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 14px; font-weight: 600">Vertrag_Nordstern.pdf</span>
+            <span style="font-size: 11.5px; color: #4E545A">Client Nordstern · German · OpenAI — GPT · today 14:02</span>
+          </span>
+          <span style="display: inline-flex; align-items: center; height: 23px; padding: 0 9px; border-radius: 12px; background: #F7E7DA; color: #8F4318; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 500">9 protected</span>
+        </a>
+
+        <span style="box-sizing: border-box; padding: 14px 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F2EEE5">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink: 0; color: #B3AA98"><path d="M4 2.2h5l3 3v8.6H4V2.2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M9 2.2v3.2h3" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 14px; font-weight: 600">Angebot_2026_ClientA.docx</span>
+            <span style="font-size: 11.5px; color: #4E545A">Client A · German · OpenAI — GPT · yesterday</span>
+          </span>
+          <span style="display: inline-flex; align-items: center; height: 23px; padding: 0 9px; border-radius: 12px; background: #F7E7DA; color: #8F4318; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 500">14 protected</span>
+        </span>
+
+        <span style="box-sizing: border-box; padding: 14px 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F2EEE5">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink: 0; color: #B3AA98"><path d="M4 2.2h5l3 3v8.6H4V2.2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M9 2.2v3.2h3" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 14px; font-weight: 600">Steuerunterlagen_Q3.pdf</span>
+            <span style="font-size: 11.5px; color: #4E545A">Client C · German · Google — Gemini · 19 Sep</span>
+          </span>
+          <span style="display: inline-flex; align-items: center; height: 23px; padding: 0 9px; border-radius: 12px; background: #F7E7DA; color: #8F4318; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 500">22 protected</span>
+        </span>
+
+        <span style="box-sizing: border-box; padding: 14px 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F2EEE5">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink: 0; color: #B3AA98"><path d="M2.6 3.4h10.8v7.2H8L5 13.4v-2.8H2.6V3.4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 14px; font-weight: 600">Mahnung — Entwurf</span>
+            <span style="font-size: 11.5px; color: #4E545A">Internal Company · typed, no document · 24 Sep</span>
+          </span>
+          <span style="display: inline-flex; align-items: center; height: 23px; padding: 0 9px; border-radius: 12px; background: #F7E7DA; color: #8F4318; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 500">6 protected</span>
+        </span>
+
+        <span style="box-sizing: border-box; padding: 14px 20px; display: flex; align-items: center; gap: 14px">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink: 0; color: #B3AA98"><path d="M2.6 3.4h10.8v7.2H8L5 13.4v-2.8H2.6V3.4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 14px; font-weight: 600">Notiz an den Steuerberater</span>
+            <span style="font-size: 11.5px; color: #4E545A">Personal · typed, no document · 12 Sep</span>
+          </span>
+          <span style="display: inline-flex; align-items: center; height: 23px; padding: 0 9px; border-radius: 12px; background: #F1EFE9; color: #4E545A; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 500">3 protected</span>
+        </span>
+      </div>
+    </section>
+
+    <aside style="flex-shrink: 0; width: 330px; display: flex; flex-direction: column; gap: 14px">
+      <a href="Vault.dc.html" style="box-sizing: border-box; padding: 18px; display: flex; flex-direction: column; gap: 9px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 14px; color: #17181B">
+        <span style="display: flex; align-items: center; gap: 10px">
+          <span style="width: 30px; height: 30px; border-radius: 9px; background: #F1E8D8; color: #7A5A2C; display: flex; align-items: center; justify-content: center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3.25" y="7" width="9.5" height="6.75" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </span>
+          <span style="font-size: 14.5px; font-weight: 600">Z Vault</span>
+        </span>
+        <span style="font-family: 'Newsreader', serif; font-size: 28px; font-weight: 600; line-height: 1">124</span>
+        <span style="font-size: 12px; color: #4E545A">entities — people and things, each with its aliases</span>
+      </a>
+
+      <a href="Profiles.dc.html" style="box-sizing: border-box; padding: 18px; display: flex; flex-direction: column; gap: 9px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 14px; color: #17181B">
+        <span style="display: flex; align-items: center; gap: 10px">
+          <span style="width: 30px; height: 30px; border-radius: 9px; background: #F1E8D8; color: #7A5A2C; display: flex; align-items: center; justify-content: center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 4.5h4.2l1.1 1.4h5.7v6.6a1 1 0 01-1 1H3.5a1 1 0 01-1-1V4.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </span>
+          <span style="font-size: 14.5px; font-weight: 600">Profiles</span>
+        </span>
+        <span style="font-family: 'Newsreader', serif; font-size: 28px; font-weight: 600; line-height: 1">7</span>
+        <span style="font-size: 12px; color: #4E545A">one dictionary per client, loaded when you open it</span>
+      </a>
+
+      <a href="Providers.dc.html" style="box-sizing: border-box; padding: 18px; display: flex; flex-direction: column; gap: 9px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 14px; color: #17181B">
+        <span style="display: flex; align-items: center; gap: 10px">
+          <span style="width: 30px; height: 30px; border-radius: 9px; background: #DCE6F1; color: #17497A; display: flex; align-items: center; justify-content: center">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M9.5 3H13v3.5M13 3L8.2 7.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.4 9.6V12a1.5 1.5 0 01-1.5 1.5H4A1.5 1.5 0 012.5 12V6.1A1.5 1.5 0 014 4.6h2.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </span>
+          <span style="font-size: 14.5px; font-weight: 600">AI Providers</span>
+        </span>
+        <span style="font-family: 'Newsreader', serif; font-size: 28px; font-weight: 600; line-height: 1">3</span>
+        <span style="font-size: 12px; color: #4E545A">connected — each one receives the Safe Version only</span>
+      </a>
+
+      <a href="AutoProtect.dc.html" style="box-sizing: border-box; padding: 14px 16px; display: flex; align-items: center; gap: 11px; background: #FBF7EF; border: 1px solid #EDE7DA; border-radius: 12px; color: #17181B">
+        <span style="width: 28px; height: 28px; border-radius: 8px; background: #F1E8D8; color: #6E5127; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700">DE</span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 12.5px; font-weight: 600">German pack · scan on import</span>
+          <span style="font-size: 11px; color: #4E545A">both on</span>
+        </span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4.5 2.5l3.5 3.5-3.5 3.5" stroke="#6E5127" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+
+      <a href="Settings.dc.html" style="box-sizing: border-box; padding: 14px 16px; display: flex; align-items: center; gap: 11px; background: #F1E8D8; border-radius: 12px; color: #17181B">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #6E5127"><rect x="3.25" y="7" width="9.5" height="6.75" rx="1.6" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span style="flex-grow: 1; font-size: 12.5px; font-weight: 500">Vault locked · auto-lock after 5 minutes</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M4.5 2.5l3.5 3.5-3.5 3.5" stroke="#6E5127" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </aside>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

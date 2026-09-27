@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Z Privacy — CLIENT #17</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #F6F4EF; color: #17181B; }
+    a { color: #17497A; text-decoration: none; }
+    a:hover { color: #0F3459; }
+    table { border-collapse: collapse; }
+  </style>
+</helmet>
+
+<div style="width: 900px; height: 880px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: #FFFFFF; border: 1px solid #E4E0D6">
+
+  <div style="flex-shrink: 0; box-sizing: border-box; padding: 18px 26px 15px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #EDE7DA; background: #FBF9F4">
+    <span style="width: 34px; height: 34px; border-radius: 10px; background: #17181B; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px">#</span>
+    <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px">
+      <span style="display: flex; align-items: center; gap: 10px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 500">CLIENT #17</span>
+        <span style="display: inline-flex; align-items: center; height: 20px; padding: 0 9px; border-radius: 10px; background: #F1E8D8; color: #6E5127; font-size: 10px; font-weight: 600; letter-spacing: 0.4px">IDENTITY</span>
+      </span>
+      <span style="font-size: 11.5px; color: #4E545A">An identity holds values. The identity is how you think; the values are what the scanner matches.</span>
+    </span>
+    <a href="Vault.dc.html" aria-label="Close" style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1px solid #DDD8CC; border-radius: 8px; background: #FFFFFF">
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="#4E545A" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </a>
+  </div>
+
+  <div style="flex-grow: 1; box-sizing: border-box; padding: 20px 26px; display: flex; flex-direction: column; gap: 18px; min-height: 0; overflow: hidden">
+
+    <div style="display: flex; gap: 16px">
+      <span style="flex-grow: 1; flex-basis: 0; display: flex; flex-direction: column; gap: 7px">
+        <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.9px; color: #5E6469">LABEL — WHAT YOU CALL THIS CLIENT</span>
+        <span style="box-sizing: border-box; height: 42px; padding: 0 13px; display: flex; align-items: center; gap: 11px; border: 1px solid #DCD7CB; border-radius: 10px; background: #FFFDF8">
+          <span style="flex-grow: 1; font-size: 14.5px; font-weight: 600">Nordstern Consulting</span>
+          <button type="button" aria-label="Hide the label" style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border: 1px solid #DDD8CC; border-radius: 7px; background: #FFFFFF; cursor: pointer">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 8s2.2-3.6 5.4-3.6S13.4 8 13.4 8s-2.2 3.6-5.4 3.6S2.6 8 2.6 8z" stroke="#4E545A" stroke-width="1.2"/><path d="M3 13L13 3" stroke="#4E545A" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </button>
+        </span>
+      </span>
+      <span style="flex-shrink: 0; width: 230px; display: flex; flex-direction: column; gap: 7px">
+        <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.9px; color: #5E6469">PROFILE</span>
+        <span style="box-sizing: border-box; height: 42px; padding: 0 13px; display: flex; align-items: center; gap: 9px; border: 1px solid #DCD7CB; border-radius: 10px; background: #FFFDF8">
+          <span style="flex-grow: 1; font-size: 13.5px; font-weight: 500">Client Nordstern</span>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 4l3 3 3-3" stroke="#565B62" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 9px">
+      <span style="display: flex; align-items: baseline; gap: 10px">
+        <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.9px; color: #5E6469">VALUES IN Z VAULT</span>
+        <span style="font-size: 11.5px; color: #4E545A">five things this client is made of — each with its own aliases, policy and token</span>
+      </span>
+
+      <div style="box-sizing: border-box; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+        <table style="width: 100%; font-size: 12.5px">
+          <thead>
+            <tr style="background: #FBF9F4">
+              <th style="text-align: left; padding: 9px 14px; font-size: 10px; font-weight: 600; letter-spacing: 0.7px; color: #5E6469; border-bottom: 1px solid #EDE7DA">KIND</th>
+              <th style="text-align: left; padding: 9px 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.7px; color: #5E6469; border-bottom: 1px solid #EDE7DA">VALUE</th>
+              <th style="text-align: left; padding: 9px 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.7px; color: #5E6469; border-bottom: 1px solid #EDE7DA">ALIASES</th>
+              <th style="text-align: left; padding: 9px 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.7px; color: #5E6469; border-bottom: 1px solid #EDE7DA">POLICY</th>
+              <th style="text-align: left; padding: 9px 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.7px; color: #5E6469; border-bottom: 1px solid #EDE7DA">TOKEN</th>
+              <th style="width: 36px; border-bottom: 1px solid #EDE7DA"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #F2EEE5; font-weight: 500">Company</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; font-family: 'IBM Plex Mono', monospace; color: #5E6469">••••••••••••</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; color: #3D4247">3</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5">Always</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8F4318">Z_COMPANY_91F</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; text-align: right"><button type="button" aria-label="Reveal the company value" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid #DDD8CC; border-radius: 6px; background: #FFFFFF; cursor: pointer"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 8s2.2-3.6 5.4-3.6S13.4 8 13.4 8s-2.2 3.6-5.4 3.6S2.6 8 2.6 8z" stroke="#4E545A" stroke-width="1.2"/><circle cx="8" cy="8" r="1.7" stroke="#4E545A" stroke-width="1.2"/></svg></button></td>
+            </tr>
+
+            <tr style="background: #FDF7F1">
+              <td style="padding: 10px 14px; font-weight: 500">Person</td>
+              <td style="padding: 10px 10px; font-weight: 500">Thomas Müller</td>
+              <td style="padding: 10px 10px; color: #3D4247">3</td>
+              <td style="padding: 10px 10px">Always</td>
+              <td style="padding: 10px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8F4318">Z_PERSON_72A</td>
+              <td style="padding: 10px 10px; text-align: right"><button type="button" aria-label="Hide the person value" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid #E0BFA5; border-radius: 6px; background: #F7E7DA; cursor: pointer"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 8s2.2-3.6 5.4-3.6S13.4 8 13.4 8s-2.2 3.6-5.4 3.6S2.6 8 2.6 8z" stroke="#8F4318" stroke-width="1.2"/><path d="M3 13L13 3" stroke="#8F4318" stroke-width="1.2" stroke-linecap="round"/></svg></button></td>
+            </tr>
+            <tr style="background: #FDF7F1">
+              <td colspan="6" style="padding: 0 14px 12px; border-bottom: 1px solid #F2EEE5">
+                <span style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap">
+                  <span style="font-size: 10.5px; font-weight: 600; letter-spacing: 0.6px; color: #6E5127">ALIASES</span>
+                  <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 6px; background: #FFFFFF; border: 1px solid #E4E0D6; font-size: 11.5px">Herr Müller <span style="color: #5E6469">9×</span></span>
+                  <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 6px; background: #FFFFFF; border: 1px solid #E4E0D6; font-size: 11.5px">T. Müller <span style="color: #5E6469">3×</span></span>
+                  <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 6px; background: #FFFFFF; border: 1px solid #E4E0D6; font-size: 11.5px">Thomas M. <span style="color: #5E6469">1×</span></span>
+                  <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border: 1px dashed #C4BFB2; border-radius: 6px; background: #FFFFFF; font-family: inherit; font-size: 11px; font-weight: 500; color: #3D4247; cursor: pointer">
+                    <svg width="11" height="11" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 2.6v8.8M2.6 7h8.8" stroke="#5E6469" stroke-width="1.5" stroke-linecap="round"/></svg>
+                    Add alias
+                  </button>
+                  <span style="flex-grow: 1"></span>
+                  <span style="font-size: 10.5px; color: #4E545A">all four spellings become the same token</span>
+                </span>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #F2EEE5; font-weight: 500">E-Mail</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; font-family: 'IBM Plex Mono', monospace; color: #5E6469">••••••••••••••</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; color: #3D4247">—</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5">Suggest</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8F4318">Z_EMAIL_4B0</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; text-align: right"><button type="button" aria-label="Reveal the e-mail value" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid #DDD8CC; border-radius: 6px; background: #FFFFFF; cursor: pointer"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 8s2.2-3.6 5.4-3.6S13.4 8 13.4 8s-2.2 3.6-5.4 3.6S2.6 8 2.6 8z" stroke="#4E545A" stroke-width="1.2"/><circle cx="8" cy="8" r="1.7" stroke="#4E545A" stroke-width="1.2"/></svg></button></td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #F2EEE5; font-weight: 500">Bank account</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; font-family: 'IBM Plex Mono', monospace; color: #5E6469">••••••••••••••••••</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; color: #3D4247">1 <span style="font-size: 10.5px; color: #5E6469">BIC</span></td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5">Always</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8F4318">Z_IBAN_27D</td>
+              <td style="padding: 10px 10px; border-bottom: 1px solid #F2EEE5; text-align: right"><button type="button" aria-label="Reveal the bank account value" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid #DDD8CC; border-radius: 6px; background: #FFFFFF; cursor: pointer"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 8s2.2-3.6 5.4-3.6S13.4 8 13.4 8s-2.2 3.6-5.4 3.6S2.6 8 2.6 8z" stroke="#4E545A" stroke-width="1.2"/><circle cx="8" cy="8" r="1.7" stroke="#4E545A" stroke-width="1.2"/></svg></button></td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 14px; font-weight: 500">Customer number</td>
+              <td style="padding: 10px 10px; font-family: 'IBM Plex Mono', monospace; color: #5E6469">••••••••</td>
+              <td style="padding: 10px 10px; color: #3D4247">—</td>
+              <td style="padding: 10px 10px">Always</td>
+              <td style="padding: 10px 10px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8F4318">Z_CUSTNO_D55</td>
+              <td style="padding: 10px 10px; text-align: right"><button type="button" aria-label="Reveal the customer number" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid #DDD8CC; border-radius: 6px; background: #FFFFFF; cursor: pointer"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 8s2.2-3.6 5.4-3.6S13.4 8 13.4 8s-2.2 3.6-5.4 3.6S2.6 8 2.6 8z" stroke="#4E545A" stroke-width="1.2"/><circle cx="8" cy="8" r="1.7" stroke="#4E545A" stroke-width="1.2"/></svg></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <button type="button" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 13px; border: 1px dashed #C4BFB2; border-radius: 9px; background: #FFFFFF; font-family: inherit; font-size: 12.5px; font-weight: 500; color: #3D4247; cursor: pointer">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 2.6v8.8M2.6 7h8.8" stroke="#5E6469" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Add a value to this identity
+      </button>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 16px; display: flex; align-items: center; gap: 12px; background: #FBF9F4; border: 1px solid #EDE7DA; border-radius: 11px">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink: 0; color: #7A5A2C"><path d="M8 2.4v2M8 11.6v2M2.4 8h2M11.6 8h2M4 4l1.4 1.4M10.6 10.6L12 12M12 4l-1.4 1.4M5.4 10.6L4 12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.55; color: #3D4247">Every value has its own token, and with <span style="font-weight: 600">Rotate Z Tokens</span> on, its own new number in each conversation. The identity keeps them together, so an answer about «the client» comes back whole.</span>
+    </div>
+  </div>
+
+  <div style="flex-shrink: 0; box-sizing: border-box; padding: 15px 26px 18px; display: flex; align-items: center; gap: 11px; border-top: 1px solid #EDE7DA; background: #FBF9F4">
+    <button type="button" style="height: 42px; padding: 0 19px; border: 0; border-radius: 10px; background: #A85422; font-family: inherit; font-size: 14px; font-weight: 600; color: #FFFFFF; cursor: pointer">Save</button>
+    <a href="Vault.dc.html" style="display: inline-flex; align-items: center; height: 42px; padding: 0 17px; border: 1px solid #DCD7CB; border-radius: 10px; background: #FFFFFF; font-size: 13px; font-weight: 500; color: #17181B">Cancel</a>
+    <span style="flex-grow: 1"></span>
+    <button type="button" style="height: 42px; padding: 0 16px; border: 1px solid #C08149; border-radius: 10px; background: #FDF7F1; font-family: inherit; font-size: 13px; font-weight: 600; color: #8F4318; cursor: pointer">Delete identity</button>
+    <span style="max-width: 240px; font-size: 10.5px; line-height: 1.5; color: #4E545A">Deleting the identity deletes its five values with it. Documents already sent are not touched.</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":900,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

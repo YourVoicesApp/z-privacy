@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Z Privacy — Behaviour, the Original side</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #F6F4EF; color: #17181B; }
+    a { color: #17497A; text-decoration: none; }
+    a:hover { color: #0F3459; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; box-sizing: border-box; padding: 26px 30px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; background: #F6F4EF">
+
+  <div style="display: flex; align-items: flex-end; gap: 16px">
+    <span style="display: flex; flex-direction: column; gap: 5px">
+      <span style="font-family: 'Newsreader', serif; font-size: 26px; font-weight: 600; line-height: 1.1">Behaviour — the Original side</span>
+      <span style="font-size: 12.5px; color: #4E545A">Every act, and what it does in each state. The mistake in this app will not be a colour; it will be what happens on the press.</span>
+    </span>
+    <span style="flex-grow: 1"></span>
+    <span style="display: inline-flex; align-items: center; gap: 9px; height: 30px; padding: 0 12px; border-radius: 15px; background: #17181B; color: #FFFFFF; font-size: 11.5px; font-weight: 500">Hard rule · nothing on this side can reach the network</span>
+  </div>
+
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 16px; min-height: 0">
+
+    <div style="box-sizing: border-box; padding: 15px 17px; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF; border: 1.5px solid #A85422; border-radius: 13px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 10px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 8px; background: #A85422; color: #FFFFFF; font-size: 12.5px; font-weight: 600"><span style="font-family: 'Newsreader', serif; font-size: 15px; line-height: 1">Z</span> Protect</span>
+        <span style="flex-grow: 1; font-size: 11px; color: #4E545A">five states</span>
+      </span>
+
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Nothing is selected → greyed, and the hint beside it reads <span style="font-style: italic">Select text, then Protect</span>.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">A new, unknown selection → the dialog: <span style="font-weight: 600">Once · This conversation · Always</span>, a Category the pack has guessed, and <span style="font-weight: 600">Protect all N matches</span> when there are more.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #FBF1E8; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">KNOWN</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Already protected → <span style="font-weight: 600">no dialog</span>. A line says «Already protected as <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #8F4318">Z_PERSON_72A</span>, from Z Vault · CLIENT #17», and the only act offered is Undo Protection.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">ASKS</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">A new spelling of something known → «Add as an alias of <span style="font-weight: 600">CLIENT #17</span>» (offered first) or «Make a new identity». Alias keeps the same token; a new identity gets its own.</span>
+      </span>
+      <span style="display: flex; gap: 9px">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">SNAPS</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">The selection cuts a protected item in half, or spans several → it snaps to whole items, says how many, and protects each under its own token.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 15px 17px; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 13px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 10px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 12.5px; font-weight: 500">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7.2" cy="7.2" r="4.3" stroke="#565B62" stroke-width="1.3"/><path d="M10.4 10.4l3 3" stroke="#565B62" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Rescan
+        </span>
+        <span style="flex-grow: 1; font-size: 11px; color: #4E545A">the scan itself is not a screen</span>
+      </span>
+
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">ON IMPORT</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Runs by itself, with no dialog, inside the Workspace. The band under the header reports it. Nobody has to press anything to be protected.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Pressed → scans again with the same types. Items you protected by hand are never touched; automatic ones are recomputed; the counts update in place.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">OPTIONS</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">The chevron opens the type list — <a href="Scan.dc.html" style="font-weight: 600">Scan options</a>. That screen is for detail and for turning a type off in this document; it is not the way to be scanned.</span>
+      </span>
+      <span style="display: flex; gap: 9px">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">VAULT LOCKED</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">The vault layer is skipped and the band says so in words. The general rules and the pack still run, so an IBAN is still caught — but not <span style="font-style: italic">who</span>.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 15px 17px; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF; border: 1.5px solid #1F5C97; border-radius: 13px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 10px">
+        <span style="display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px; border: 1.5px solid #A85422; border-radius: 8px; background: #FDF7F1; font-size: 12.5px; font-weight: 600; color: #8F4318">Review <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 17px; height: 17px; padding: 0 5px; border-radius: 9px; background: #A85422; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 10px">2</span></span>
+        <span style="flex-grow: 1; font-size: 11px; color: #4E545A">the gate before Send</span>
+      </span>
+
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">No suggestions → greyed, and the badge is gone, not zero. Nothing is waiting for you.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Badge = how many are open. It opens the list of <span style="font-weight: 600">all nine</span> items in three groups — auto protected, suggested, manual — each with the rule that flagged it.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">WALKING</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">One suggestion at a time, with its sentence around it. <span style="font-weight: 600">Skip</span> leaves it in the clear and still counted — skipping is not deciding.</span>
+      </span>
+      <span style="display: flex; gap: 9px">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">DONE</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">The last one answered → the badge goes, the wavy marks go, and Send stops warning.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 15px 17px; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 13px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 10px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid #E4E0D6; border-radius: 7px; background: #FFFDF8; font-size: 11.5px; color: #3D4247">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3.4 4.6h4a2.2 2.2 0 110 4.4H4.6" stroke="#5E6469" stroke-width="1.2" stroke-linecap="round"/><path d="M4.8 2.8L3.2 4.6l1.6 1.8" stroke="#5E6469" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Undo Protection
+        </span>
+        <span style="flex-grow: 1; font-size: 11px; color: #4E545A">one step back</span>
+      </span>
+
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Nothing has been protected by hand in this document yet.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Takes back the last protection act. «Protect all 4 matches» came in as one act, so it goes out as one act.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #FBF1E8; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">VAULT ITEM</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Undoing something the vault found frees it <span style="font-weight: 600">here only</span>. The entity stays, and a line says so — the next document finds it again.</span>
+      </span>
+      <span style="display: flex; gap: 9px">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">ASKS</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">If that act also created a vault entity, undo asks the second question: keep the entity, or remove it too?</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 15px 17px; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 13px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 10px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid #E4E0D6; border-radius: 7px; background: #FFFDF8; font-size: 11.5px; color: #3D4247">Protect All Matches <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #8F4318">4</span></span>
+        <span style="flex-grow: 1; font-size: 11px; color: #4E545A">one token, every place</span>
+      </span>
+
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">No selection, or the selection appears only once — then it is the same as Protect, and the count is hidden.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">The number on the button is how many places it found. All of them get <span style="font-weight: 600">the same token</span> — otherwise the model reads them as different people.</span>
+      </span>
+      <span style="display: flex; gap: 9px">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">SHOWS</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Matches that are written differently — «Herr Müller», «T. Müller» — are listed before it acts, and become aliases of the same value.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 15px 17px; display: flex; flex-direction: column; gap: 10px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 13px; overflow: hidden">
+      <span style="display: flex; align-items: center; gap: 10px">
+        <span style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid #E4E0D6; border-radius: 7px; background: #FFFDF8; font-size: 11.5px; color: #3D4247">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #7A5A2C"><rect x="3.25" y="7" width="9.5" height="6.75" rx="1.6" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Add to Vault
+        </span>
+        <span style="flex-grow: 1; font-size: 11px; color: #4E545A">from this document into memory</span>
+      </span>
+
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Nothing is selected.</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">Opens the value form with the kind already guessed, and asks the one question that matters: <span style="font-weight: 600">which identity does this belong to</span> — an existing one, or a new one?</span>
+      </span>
+      <span style="display: flex; gap: 9px; padding-bottom: 7px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #FBF1E8; color: #8F4318; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">EXISTS</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">The value is already kept → it offers to add this spelling as an <span style="font-weight: 600">alias</span> instead of making a twin.</span>
+      </span>
+      <span style="display: flex; gap: 9px">
+        <span style="flex-shrink: 0; width: 74px; display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px">LOCKED</span>
+        <span style="flex-grow: 1; font-size: 11.5px; line-height: 1.5">The vault is locked → it asks for the key first and keeps your selection, so nothing has to be found twice.</span>
+      </span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

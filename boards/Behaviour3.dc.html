@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Z Privacy — Behaviour, the top bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #F6F4EF; color: #17181B; }
+    a { color: #17497A; text-decoration: none; }
+    a:hover { color: #0F3459; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 620px; box-sizing: border-box; padding: 26px 30px; display: flex; flex-direction: column; gap: 14px; overflow: hidden; background: #F6F4EF">
+
+  <div style="display: flex; align-items: flex-end; gap: 16px">
+    <span style="display: flex; flex-direction: column; gap: 5px">
+      <span style="font-family: 'Newsreader', serif; font-size: 26px; font-weight: 600; line-height: 1.1">Behaviour — the top bar</span>
+      <span style="font-size: 12.5px; color: #4E545A">These seven change the ground the Workspace stands on. Each one must say what it does to the document already open.</span>
+    </span>
+    <span style="flex-grow: 1"></span>
+    <span style="display: inline-flex; align-items: center; gap: 9px; height: 30px; padding: 0 12px; border-radius: 15px; background: #17181B; color: #FFFFFF; font-size: 11.5px; font-weight: 500">A token once given is never silently taken back</span>
+  </div>
+
+  <div style="flex-grow: 1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 13px; min-height: 0">
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; height: 27px; padding: 0 11px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 500">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M6 2v8M2 6h8" stroke="#565B62" stroke-width="1.5" stroke-linecap="round"/></svg>
+        New
+      </span>
+      <span style="font-size: 11px; line-height: 1.55; color: #3D4247">A new conversation, a new session token table. Session tokens from the old one die with it; permanent ones get fresh numbers if <span style="font-weight: 600">Rotate Z Tokens</span> is on. The open document is not carried over — it is imported again, or left behind.</span>
+      <span style="flex-grow: 1"></span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">ASKS</span>
+        <span style="flex-grow: 1; font-size: 10.5px; line-height: 1.5; color: #4E545A">If the current conversation was never sent, it asks before dropping it.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1.5px solid #A85422; border-radius: 12px; overflow: hidden">
+      <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; height: 27px; padding: 0 11px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 500">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10.4V2.8M8 2.8L5.8 5M8 2.8L10.2 5" stroke="#565B62" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 9.6v2.2a1.5 1.5 0 001.5 1.5h7a1.5 1.5 0 001.5-1.5V9.6" stroke="#565B62" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Import
+      </span>
+      <span style="font-size: 11px; line-height: 1.55; color: #3D4247">PDF, Word, TXT to begin with. The file is read on this device and the scan runs at once — the document is never once unprotected in front of you.</span>
+      <span style="flex-grow: 1"></span>
+      <span style="display: flex; gap: 8px; padding-bottom: 5px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">LOCKED</span>
+        <span style="flex-grow: 1; font-size: 10.5px; line-height: 1.5; color: #4E545A">Vault locked → it offers to unlock first; if you decline it scans without that layer and says so in the band.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">REFUSES</span>
+        <span style="flex-grow: 1; font-size: 10.5px; line-height: 1.5; color: #4E545A">A scanned PDF with no text layer is refused with the reason, not silently imported empty.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 7px; height: 27px; padding: 0 11px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 12px"><span style="color: #5E6469">Profile</span><span style="font-weight: 500">Client Nordstern</span></span>
+      <span style="font-size: 11px; line-height: 1.55; color: #3D4247">Switching loads that client's identities and unloads the others. Entities scoped <span style="font-weight: 600">Everywhere</span> stay loaded in every profile.</span>
+      <span style="flex-grow: 1"></span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">ASKS</span>
+        <span style="flex-grow: 1; font-size: 10.5px; line-height: 1.5; color: #4E545A">With a document open and protections in it, it asks first. Tokens already given <span style="font-weight: 600">stand</span>; only new matching follows the new profile — so nothing is uncovered behind your back.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1.5px solid #C9AE83; border-radius: 12px; overflow: hidden">
+      <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 7px; height: 27px; padding: 0 11px; border: 1px solid #C9AE83; border-radius: 8px; background: #FBF7EF; font-size: 12px">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #7A5A2C"><path d="M8 2l4.5 1.6v4.2c0 2.6-1.8 4.7-4.5 5.6-2.7-.9-4.5-3-4.5-5.6V3.6L8 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <span style="color: #5E6469">Pack</span><span style="font-weight: 600">German (DE)</span>
+      </span>
+      <span style="font-size: 11px; line-height: 1.55; color: #3D4247">A detection engine, not the language of the interface — and the screen behind it says that in its first line.</span>
+      <span style="flex-grow: 1"></span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">RESCANS</span>
+        <span style="flex-grow: 1; font-size: 10.5px; line-height: 1.5; color: #4E545A">Changing it rescans the open document. Everything already protected keeps its token; what the old pack caught and the new one does not becomes <span style="font-weight: 600">manual</span> and stays protected.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 7px; height: 27px; padding: 0 11px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 12px"><span style="color: #5E6469">Model</span><span style="font-weight: 500">OpenAI — GPT</span></span>
+      <span style="font-size: 11px; line-height: 1.55; color: #3D4247">It changes <span style="font-weight: 600">where</span> the safe text goes, never what is in it. Nothing in either column moves when you switch.</span>
+      <span style="flex-grow: 1"></span>
+      <span style="display: flex; gap: 8px; padding-bottom: 5px; border-bottom: 1px solid #F6F3ED">
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">NOT CONNECTED</span>
+        <span style="flex-grow: 1; font-size: 10.5px; line-height: 1.5; color: #4E545A">A provider with no key is shown greyed with «Connect», not hidden.</span>
+      </span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">LOCAL</span>
+        <span style="flex-grow: 1; font-size: 10.5px; line-height: 1.5; color: #4E545A">A local model changes nothing about protection: the habit does not depend on the destination.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; height: 27px; padding: 0 11px; border-radius: 8px; background: #F3EFE6; font-size: 12px; font-weight: 500">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #7A5A2C"><rect x="3.25" y="7" width="9.5" height="6.75" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 7V5.4a2.5 2.5 0 015 0V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Z Vault
+      </span>
+      <span style="font-size: 11px; line-height: 1.55; color: #3D4247">Opens the vault, asking for the key if it is locked. Leaving it re-hides every value that was revealed, here and in the Workspace.</span>
+      <span style="flex-grow: 1"></span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">AFTER EDITS</span>
+        <span style="flex-grow: 1; font-size: 10.5px; line-height: 1.5; color: #4E545A">If you changed an entity while a document was open, coming back offers a rescan — it does not rescan behind your back.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 12px; overflow: hidden">
+      <span style="display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; height: 27px; padding: 0 11px; border-radius: 8px; background: #F3EFE6; font-size: 12px; font-weight: 500">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #3D4247"><path d="M2 4.5h12M2 11.5h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="6" cy="4.5" r="1.9" fill="#F3EFE6" stroke="currentColor" stroke-width="1.3"/><circle cx="10.5" cy="11.5" r="1.9" fill="#F3EFE6" stroke="currentColor" stroke-width="1.3"/></svg>
+        Settings
+      </span>
+      <span style="font-size: 11px; line-height: 1.55; color: #3D4247">Privacy · Automatic Protection · Privacy Packs · Providers · Vault. Nothing here can make something leave the device; these switches only decide how far the app goes by itself.</span>
+      <span style="flex-grow: 1"></span>
+      <span style="display: flex; gap: 8px">
+        <span style="flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F7E7DA; color: #8F4318; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">OFFERS</span>
+        <span style="flex-grow: 1; font-size: 10.5px; line-height: 1.5; color: #4E545A">Turning a detection type on or off offers to rescan the open document, and says how many items would change.</span>
+      </span>
+    </div>
+
+    <div style="box-sizing: border-box; padding: 13px 15px; display: flex; flex-direction: column; gap: 9px; justify-content: center; background: #17181B; border-radius: 12px; overflow: hidden">
+      <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.8px; color: #B9BCC0">THE THREE THAT ARE NOT NEGOTIABLE</span>
+      <span style="font-size: 11px; line-height: 1.6; color: #FFFFFF">1 · Send reads the Safe payload only, and there is no path from the left column to the network.</span>
+      <span style="font-size: 11px; line-height: 1.6; color: #FFFFFF">2 · Reveal draws on the screen and never writes into the payload.</span>
+      <span style="font-size: 11px; line-height: 1.6; color: #FFFFFF">3 · A suggestion that has not been answered is never quietly treated as safe.</span>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":620}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

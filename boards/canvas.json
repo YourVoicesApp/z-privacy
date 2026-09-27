@@ -1,0 +1,117 @@
+{
+  "v": 3,
+  "attachments": {},
+  "createdOnFiles": { "at": "2026-09-27T09:20:00Z", "v": 1 },
+  "designSystems": [],
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "title": "Z Privacy — UI v2",
+  "boards": {
+    "Home.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "title": "1 · Home", "is_interactive": true },
+    "Main.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "title": "2 · Workspace — the centre of everything", "is_interactive": true },
+    "Send.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 900, "title": "3 · Review Before Send", "is_interactive": true },
+    "Response.dc.html": { "x": 4560, "y": 0, "w": 1440, "h": 900, "title": "4 · Answer — Restored View / AI View", "is_interactive": true },
+
+    "Scan.dc.html": { "x": 0, "y": 1300, "w": 960, "h": 760, "title": "Scan options — details only; the scan itself runs in the Workspace" },
+    "Review.dc.html": { "x": 1040, "y": 1300, "w": 960, "h": 760, "title": "Review — auto · suggested · manual" },
+    "Tokens.dc.html": { "x": 2080, "y": 1300, "w": 560, "h": 820, "title": "Tokens panel · Reveal" },
+    "Protect.dc.html": { "x": 2720, "y": 1300, "w": 960, "h": 760, "title": "Protect dialog · Reveal is local only", "is_interactive": true },
+
+    "Vault.dc.html": { "x": 0, "y": 2540, "w": 1440, "h": 900, "title": "Z Vault — identities, and the values inside them", "is_interactive": true },
+    "VaultEntry.dc.html": { "x": 1520, "y": 2540, "w": 900, "h": 880, "title": "Entity — CLIENT #17 and its values", "is_interactive": true },
+    "Profiles.dc.html": { "x": 2500, "y": 2540, "w": 1440, "h": 900, "title": "Profiles — one dictionary per client", "is_interactive": true },
+    "Providers.dc.html": { "x": 4020, "y": 2540, "w": 1440, "h": 900, "title": "AI Providers", "is_interactive": true },
+    "VaultLocked.dc.html": { "x": 5540, "y": 2540, "w": 640, "h": 420, "title": "Z Vault locked" },
+
+    "Settings.dc.html": { "x": 0, "y": 3860, "w": 1440, "h": 900, "title": "Settings — Privacy", "is_interactive": true },
+    "AutoProtect.dc.html": { "x": 1520, "y": 3860, "w": 1440, "h": 900, "title": "Settings — Automatic Protection", "is_interactive": true },
+    "LanguagePack.dc.html": { "x": 3040, "y": 3860, "w": 900, "h": 700, "title": "Privacy Pack — a rules engine, not an interface language" },
+
+    "Layers.dc.html": { "x": 0, "y": 5180, "w": 1440, "h": 720, "title": "Four layers of protection" },
+    "Language.dc.html": { "x": 1520, "y": 5180, "w": 1440, "h": 680, "title": "Visual language" },
+
+    "Behaviour1.dc.html": { "x": 0, "y": 6320, "w": 1440, "h": 900, "title": "Behaviour · the Original side" },
+    "Behaviour2.dc.html": { "x": 1520, "y": 6320, "w": 1440, "h": 900, "title": "Behaviour · the Safe side and the answer" },
+    "Behaviour3.dc.html": { "x": 3040, "y": 6320, "w": 1440, "h": 620, "title": "Behaviour · the top bar" }
+  },
+  "order": [
+    "Home.dc.html",
+    "Main.dc.html",
+    "Send.dc.html",
+    "Response.dc.html",
+    "Scan.dc.html",
+    "Review.dc.html",
+    "Tokens.dc.html",
+    "Protect.dc.html",
+    "Vault.dc.html",
+    "VaultEntry.dc.html",
+    "Profiles.dc.html",
+    "Providers.dc.html",
+    "VaultLocked.dc.html",
+    "Settings.dc.html",
+    "AutoProtect.dc.html",
+    "LanguagePack.dc.html",
+    "Layers.dc.html",
+    "Language.dc.html",
+    "Behaviour1.dc.html",
+    "Behaviour2.dc.html",
+    "Behaviour3.dc.html"
+  ],
+  "notes": {
+    "t1": {
+      "kind": "title1",
+      "maxW": 6000,
+      "w": 240,
+      "x": 0,
+      "y": -300,
+      "text": "The flow — import · scan · review · protect · send · restore"
+    },
+    "t2": {
+      "kind": "title1",
+      "maxW": 3680,
+      "w": 240,
+      "x": 0,
+      "y": 1000,
+      "text": "Finding it — the scanner, the review, the tokens, the hand"
+    },
+    "t3": {
+      "kind": "title1",
+      "maxW": 6180,
+      "w": 240,
+      "x": 0,
+      "y": 2240,
+      "text": "The rooms — identities · profiles · providers"
+    },
+    "t4": {
+      "kind": "title1",
+      "maxW": 3940,
+      "w": 240,
+      "x": 0,
+      "y": 3560,
+      "text": "Settings — how far the app may go by itself"
+    },
+    "t5": {
+      "kind": "title1",
+      "maxW": 2960,
+      "w": 240,
+      "x": 0,
+      "y": 4880,
+      "text": "Four layers, one visual language"
+    },
+    "t6": {
+      "kind": "title1",
+      "maxW": 4480,
+      "w": 240,
+      "x": 0,
+      "y": 6020,
+      "text": "Behaviour — what every button does, in every state"
+    },
+    "q1": {
+      "fill": "purple",
+      "w": 580,
+      "x": 3120,
+      "y": 5180,
+      "text": "Settled in this pass — and what is still yours\n\n1 · The scan now happens IN the Workspace: a band under the Original header reports it, and the Scan screen is only options and detail. Nobody has to leave the workspace to be protected.\n\n2 · Entity ≠ Vault. An entity is an identity — CLIENT #17. The values under it (company name, contact, IBAN, e-mail, customer number), each with its own aliases and policy, are what the vault keeps encrypted. The vault list shows identities; the entity card shows the values inside one.\n\n3 · The top-bar control is now «Privacy Pack · German (DE)», not «Language», and its screen says in the first line that it does not change the interface language.\n\n4 · Review shows all three states in one list — auto protected, suggested, manual — each with its own badge, mark and reason. The stepper walks only the suggested ones.\n\n5 · The answer has two fixed buttons, Restored View and AI View, 44 px, always in the same place.\n\n6 · Three behaviour boards spell out every button's states, including what is Disabled and why. Read those before the programmer starts.\n\nStill yours to rule: desktop only, or a phone shape too? · one Privacy Pack for the whole app, or one per profile? · may «Send anyway» ever be switched on at all?"
+    }
+  }
+}

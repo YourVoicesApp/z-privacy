@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Z Privacy — Automatic Protection</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Newsreader:opsz,wght@6..72,400;6..72,600&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Sans', system-ui, sans-serif; background: #F6F4EF; color: #17181B; }
+    a { color: #17497A; text-decoration: none; }
+    a:hover { color: #0F3459; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: #F6F4EF">
+
+  <header style="flex-shrink: 0; box-sizing: border-box; height: 56px; padding: 0 16px; display: flex; align-items: center; gap: 10px; background: #FFFFFF; border-bottom: 1px solid #E4E0D6">
+    <a href="Home.dc.html" style="display: flex; align-items: center; gap: 8px; color: #17181B">
+      <span style="width: 25px; height: 25px; border-radius: 7px; background: #A85422; display: flex; align-items: center; justify-content: center; color: #FFFFFF; font-family: 'Newsreader', serif; font-size: 17px; font-weight: 600; line-height: 1">Z</span>
+      <span style="font-family: 'Newsreader', serif; font-size: 17px; font-weight: 600">Z Privacy</span>
+    </a>
+    <span style="width: 1px; height: 22px; background: #E8E4DA"></span>
+    <span style="font-size: 13.5px; font-weight: 600">Settings</span>
+    <span style="flex-grow: 1"></span>
+    <a href="Main.dc.html" style="display: inline-flex; align-items: center; height: 31px; padding: 0 11px; border: 1px solid #DCD7CB; border-radius: 8px; background: #FFFFFF; font-size: 12.5px; font-weight: 500; color: #17181B">Back to the workspace</a>
+  </header>
+
+  <div style="flex-grow: 1; display: flex; min-height: 0">
+
+    <nav style="flex-shrink: 0; width: 244px; box-sizing: border-box; padding: 20px 16px; display: flex; flex-direction: column; gap: 3px; background: #FBF9F4; border-right: 1px solid #E4E0D6">
+      <span style="padding: 0 10px 9px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.9px; color: #5E6469">SETTINGS</span>
+      <span style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px">General</span>
+      <a href="Settings.dc.html" style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px; color: #17181B">Privacy</a>
+      <span style="box-sizing: border-box; padding: 10px 12px; display: flex; align-items: center; gap: 9px; border-radius: 9px; background: #F1E8D8; font-size: 13.5px; font-weight: 600">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #6E5127"><path d="M8 2.4v2M8 11.6v2M2.4 8h2M11.6 8h2M4 4l1.4 1.4M10.6 10.6L12 12M12 4l-1.4 1.4M5.4 10.6L4 12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Automatic Protection
+      </span>
+      <a href="LanguagePack.dc.html" style="box-sizing: border-box; padding: 10px 12px; display: flex; align-items: center; gap: 9px; border-radius: 9px; font-size: 13.5px; color: #17181B"><span style="flex-grow: 1">Language Packs</span><span style="font-size: 11px; font-weight: 600; color: #6E5127">German</span></a>
+      <a href="Providers.dc.html" style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px; color: #17181B">AI Providers</a>
+      <a href="Vault.dc.html" style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px; color: #17181B">Z Vault</a>
+      <span style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px">Shortcuts</span>
+      <span style="box-sizing: border-box; padding: 10px 12px; border-radius: 9px; font-size: 13.5px">About</span>
+      <span style="flex-grow: 1"></span>
+      <span style="display: flex; align-items: flex-start; gap: 8px; font-size: 11px; line-height: 1.55; color: #4E545A">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px; color: #7A5A2C"><path d="M8 2l4.5 1.6v4.2c0 2.6-1.8 4.7-4.5 5.6-2.7-.9-4.5-3-4.5-5.6V3.6L8 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        Every switch here decides how far the app may go <span style="font-style: italic">by itself</span>. None of them can make something leave the device.
+      </span>
+    </nav>
+
+    <section style="flex-grow: 1; min-width: 0; box-sizing: border-box; padding: 24px 32px; display: flex; flex-direction: column; gap: 16px; overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 5px">
+        <span style="font-family: 'Newsreader', serif; font-size: 28px; font-weight: 600; line-height: 1.1">Automatic Protection</span>
+        <span style="font-size: 12.5px; color: #4E545A">What the scanner may protect on its own, what it must ask about, and when it runs.</span>
+      </div>
+
+      <div style="box-sizing: border-box; padding: 16px 20px; display: flex; align-items: center; gap: 16px; background: #FBF7EF; border: 1px solid #EDE7DA; border-radius: 13px">
+        <span style="width: 34px; height: 34px; border-radius: 10px; background: #F1E8D8; color: #6E5127; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700">DE</span>
+        <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px">
+          <span style="font-size: 14.5px; font-weight: 600">German Privacy Pack</span>
+          <span style="font-size: 11.5px; color: #4E545A">Herr · Frau · Dr. — GmbH · AG · KG · GbR — Kundennummer · Steuernummer · USt-IdNr. · BIC</span>
+        </span>
+        <a href="LanguagePack.dc.html" style="font-size: 12px; font-weight: 600">All packs</a>
+        <span style="font-size: 12px; font-weight: 600; color: #6E5127; width: 26px; text-align: right">On</span>
+        <button type="button" aria-pressed="true" aria-label="German Privacy Pack" style="flex-shrink: 0; width: 46px; height: 26px; padding: 0; border: 0; border-radius: 13px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer">
+          <span style="width: 20px; height: 20px; margin-right: 3px; border-radius: 10px; background: #FFFFFF"></span>
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 16px; min-height: 0">
+
+        <div style="flex-grow: 1; flex-basis: 0; box-sizing: border-box; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 13px; overflow: hidden">
+          <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #F2EEE5; background: #FDF7F1">
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 11px; background: #F7E7DA; color: #8F4318; font-size: 11px; font-weight: 700">✓</span>
+            <span style="flex-grow: 1; font-size: 13px; font-weight: 600">Auto-protect — no question asked</span>
+            <span style="font-size: 11px; color: #4E545A">dashed mark</span>
+          </div>
+
+          <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F6F3ED">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">IBAN / Bank details</span><span style="font-size: 11px; color: #4E545A">A German IBAN has a shape that cannot be mistaken.</span></span>
+            <span style="font-size: 11.5px; font-weight: 600; color: #6E5127; width: 22px; text-align: right">On</span>
+            <button type="button" aria-pressed="true" aria-label="Auto-protect IBAN" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+          </div>
+
+          <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F6F3ED">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">Phone numbers</span><span style="font-size: 11px; color: #4E545A">Telefon · Mobil · Handy, and the +49 forms.</span></span>
+            <span style="font-size: 11.5px; font-weight: 600; color: #6E5127; width: 22px; text-align: right">On</span>
+            <button type="button" aria-pressed="true" aria-label="Auto-protect phone numbers" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+          </div>
+
+          <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F6F3ED">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">E-mail addresses</span><span style="font-size: 11px; color: #4E545A">Any address, whoever it belongs to.</span></span>
+            <span style="font-size: 11.5px; font-weight: 600; color: #6E5127; width: 22px; text-align: right">On</span>
+            <button type="button" aria-pressed="true" aria-label="Auto-protect e-mail addresses" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+          </div>
+
+          <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F6F3ED">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">Tax numbers</span><span style="font-size: 11px; color: #4E545A">Steuernummer · USt-IdNr.</span></span>
+            <span style="font-size: 11.5px; font-weight: 600; color: #6E5127; width: 22px; text-align: right">On</span>
+            <button type="button" aria-pressed="true" aria-label="Auto-protect tax numbers" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+          </div>
+
+          <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F6F3ED">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">Customer numbers</span><span style="font-size: 11px; color: #4E545A">The value after Kundennummer or Kunden-Nr.</span></span>
+            <span style="font-size: 11.5px; font-weight: 600; color: #6E5127; width: 22px; text-align: right">On</span>
+            <button type="button" aria-pressed="true" aria-label="Auto-protect customer numbers" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+          </div>
+
+          <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px">
+            <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">Saved Vault entries</span><span style="font-size: 11px; color: #4E545A">Your own people and things, with every alias. Off here and the vault sleeps.</span></span>
+            <span style="font-size: 11.5px; font-weight: 600; color: #6E5127; width: 22px; text-align: right">On</span>
+            <button type="button" aria-pressed="true" aria-label="Auto-protect saved vault entries" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+          </div>
+        </div>
+
+        <div style="flex-grow: 1; flex-basis: 0; display: flex; flex-direction: column; gap: 16px">
+
+          <div style="box-sizing: border-box; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 13px; overflow: hidden">
+            <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #F2EEE5; background: #F2F6FA">
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 11px; background: #DCE6F1; color: #0F3459; font-size: 11px; font-weight: 700">?</span>
+              <span style="flex-grow: 1; font-size: 13px; font-weight: 600">Suggest — ask me first</span>
+              <span style="font-size: 11px; color: #4A5560">wavy mark</span>
+            </div>
+
+            <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F6F3ED">
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">Names</span><span style="font-size: 11px; color: #4E545A">A word after Herr, Frau or Dr. is probably a person — probably.</span></span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #17497A; width: 22px; text-align: right">On</span>
+              <button type="button" aria-pressed="true" aria-label="Suggest names" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #1F5C97; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+            </div>
+
+            <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F6F3ED">
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">Company names</span><span style="font-size: 11px; color: #4E545A">The GmbH, AG, KG, GbR, e.K. and SE forms.</span></span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #17497A; width: 22px; text-align: right">On</span>
+              <button type="button" aria-pressed="true" aria-label="Suggest company names" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #1F5C97; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+            </div>
+
+            <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px">
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">Addresses</span><span style="font-size: 11px; color: #4E545A">Straße · Weg · Platz, with a postcode and a town.</span></span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #17497A; width: 22px; text-align: right">On</span>
+              <button type="button" aria-pressed="true" aria-label="Suggest addresses" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #1F5C97; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+            </div>
+          </div>
+
+          <div style="box-sizing: border-box; background: #FFFFFF; border: 1px solid #E4E0D6; border-radius: 13px; overflow: hidden">
+            <div style="box-sizing: border-box; padding: 13px 18px; border-bottom: 1px solid #F2EEE5; background: #FBF9F4; font-size: 13px; font-weight: 600">When it runs</div>
+
+            <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F6F3ED">
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">Automatic scan on import</span><span style="font-size: 11px; color: #4E545A">So a document is never, even for a second, unprotected in front of you.</span></span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #6E5127; width: 22px; text-align: right">On</span>
+              <button type="button" aria-pressed="true" aria-label="Automatic scan on import" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #A85422; display: flex; align-items: center; justify-content: flex-end; cursor: pointer"><span style="width: 18px; height: 18px; margin-right: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+            </div>
+
+            <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid #F6F3ED">
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 500">Show the scan panel every time</span><span style="font-size: 11px; color: #4E545A">Off: it scans quietly and the status bar reports. On: you choose the types each time.</span></span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #5E6469; width: 22px; text-align: right">Off</span>
+              <button type="button" aria-pressed="false" aria-label="Show the scan panel every time" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #DCD7CB; display: flex; align-items: center; justify-content: flex-start; cursor: pointer"><span style="width: 18px; height: 18px; margin-left: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+            </div>
+
+            <div style="box-sizing: border-box; padding: 13px 18px; display: flex; align-items: center; gap: 14px; background: #F2F6FA">
+              <span style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; font-weight: 600">Allow Send with open suggestions</span><span style="font-size: 11px; line-height: 1.5; color: #3D4247">Off: «Send anyway» stays dead until every wavy item is answered. This is the one switch that decides whether a hurry can cost you a name.</span></span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #5E6469; width: 22px; text-align: right">Off</span>
+              <button type="button" aria-pressed="false" aria-label="Allow sending with open suggestions" style="flex-shrink: 0; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 12px; background: #DCD7CB; display: flex; align-items: center; justify-content: flex-start; cursor: pointer"><span style="width: 18px; height: 18px; margin-left: 3px; border-radius: 9px; background: #FFFFFF"></span></button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
