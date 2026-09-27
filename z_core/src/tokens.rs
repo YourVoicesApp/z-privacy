@@ -15,62 +15,44 @@
 use std::collections::BTreeMap;
 
 use crate::api::{Kind, Scope, Segment, Source, TokenRow};
+use crate::secret::Secret;
+use crate::text::nfc;
 
-/// splitmix64. Small, deterministic when seeded, good enough for identifiers
-/// that must be unpredictable but are not secrets.
+/// Four uppercase hex digits drawn from the operating system.
 ///
-/// M4 brings a real CSPRNG along with the vault's crypto; the seed here comes
-/// from the OS through `RandomState`, which is how std seeds its hashers.
-#[derive(Debug)]
-pub(crate) struct Prng(u64);
-
-impl Prng {
-    pub(crate) fn from_os_entropy() -> Self {
-        use std::collections::hash_map::RandomState;
-        use std::hash::{BuildHasher, Hasher};
-        let mut h = RandomState::new().build_hasher();
-        h.write_u64(0x5A5A_5A5A_5A5A_5A5A);
-        Self(h.finish() | 1)
+/// The owner's ruling: since linking tokens across sessions is the threat, there
+/// is no interim weaker stage. This asks the OS every time (`getrandom`), so the
+/// semantics never change later. Tokens are identifiers, not secrets — but they
+/// are unpredictable from the first commit.
+///
+/// If the OS refuses (it does not, on any platform we ship), the fallback mixes
+/// the clock rather than panicking: the contract says no panic, ever.
+fn os_hex4() -> String {
+    let mut bytes = [0u8; 2];
+    match getrandom::fill(&mut bytes) {
+        Ok(()) => {}
+        Err(_) => {
+            let nanos = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.subsec_nanos())
+                .unwrap_or(0);
+            bytes = [(nanos >> 8) as u8, nanos as u8];
+        }
     }
-
-    #[cfg(test)]
-    pub(crate) fn from_seed(seed: u64) -> Self {
-        Self(seed | 1)
-    }
-
-    fn next_u64(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        let mut z = self.0;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^ (z >> 31)
-    }
-
-    /// Four uppercase hex digits — short enough to read aloud, 65 536 apart.
-    fn hex4(&mut self) -> String {
-        format!("{:04X}", (self.next_u64() >> 17) as u16)
-    }
+    format!("{:02X}{:02X}", bytes[0], bytes[1])
 }
 
 /// Mints the tokens of one session.
 #[derive(Debug)]
 pub(crate) struct TokenMint {
     namespace: String,
-    rng: Prng,
 }
 
 impl TokenMint {
     pub(crate) fn new() -> Self {
-        let mut rng = Prng::from_os_entropy();
-        let namespace = rng.hex4();
-        Self { namespace, rng }
-    }
-
-    #[cfg(test)]
-    pub(crate) fn seeded(seed: u64) -> Self {
-        let mut rng = Prng::from_seed(seed);
-        let namespace = rng.hex4();
-        Self { namespace, rng }
+        Self {
+            namespace: os_hex4(),
+        }
     }
 
     /// Only the tests read this; the namespace's job is to sit inside the tokens.
@@ -82,7 +64,7 @@ impl TokenMint {
     /// A fresh token of this kind, not already in `taken`.
     pub(crate) fn mint(&mut self, kind: Kind, taken: &TokenStore) -> String {
         for _ in 0..64 {
-            let token = format!("__Z_{}_{}_{}__", self.namespace, kind_word(kind), self.rng.hex4());
+            let token = format!("__Z_{}_{}_{}__", self.namespace, kind_word(kind), os_hex4());
             if !taken.contains(&token) {
                 return token;
             }
@@ -115,9 +97,9 @@ pub(crate) fn kind_word(kind: Kind) -> &'static str {
 /// appear in a payload.
 #[derive(Debug, Clone)]
 pub(crate) struct TokenEntry {
-    pub value: String,
+    pub value: Secret,
     /// Other spellings of the same thing, all resolving to this one token.
-    pub aliases: Vec<String>,
+    pub aliases: Vec<Secret>,
     pub kind: Kind,
     pub scope: Scope,
     pub source: Source,
@@ -126,8 +108,12 @@ pub(crate) struct TokenEntry {
 
 impl TokenEntry {
     /// Does `text` name this entry, in any of its spellings?
+    ///
+    /// Compared in NFC: one value written in two Unicode compositions is one
+    /// value, here and in the leak audit.
     pub(crate) fn matches(&self, text: &str) -> bool {
-        self.value == text || self.aliases.iter().any(|a| a == text)
+        let wanted = nfc(text);
+        nfc(self.value.expose()) == wanted || self.aliases.iter().any(|a| nfc(a.expose()) == wanted)
     }
 }
 
@@ -166,8 +152,10 @@ impl TokenStore {
     pub(crate) fn add_alias(&mut self, token: &str, alias: String) -> bool {
         match self.entries.get_mut(token) {
             Some(entry) => {
-                if entry.value != alias && !entry.aliases.contains(&alias) {
-                    entry.aliases.push(alias);
+                let fresh = nfc(entry.value.expose()) != nfc(&alias)
+                    && !entry.aliases.iter().any(|a| nfc(a.expose()) == nfc(&alias));
+                if fresh {
+                    entry.aliases.push(Secret::new(alias));
                 }
                 true
             }
@@ -199,8 +187,8 @@ impl TokenStore {
     pub(crate) fn all_secrets(&self) -> Vec<String> {
         let mut out = Vec::new();
         for e in self.entries.values() {
-            out.push(e.value.clone());
-            out.extend(e.aliases.iter().cloned());
+            out.push(e.value.expose().to_string());
+            out.extend(e.aliases.iter().map(|a| a.expose().to_string()));
         }
         out
     }
@@ -247,7 +235,7 @@ pub(crate) fn restore(raw: &str, store: &TokenStore) -> Vec<Segment> {
                 if !plain.is_empty() {
                     out.push(Segment { text: std::mem::take(&mut plain), restored: false });
                 }
-                out.push(Segment { text: entry.value.clone(), restored: true });
+                out.push(Segment { text: entry.value.expose().to_string(), restored: true });
             }
             // Not ours: it stays word for word.
             None => plain.push_str(candidate),
@@ -266,7 +254,7 @@ mod tests {
 
     #[test]
     fn a_token_carries_its_kind_and_its_session() {
-        let mut mint = TokenMint::seeded(42);
+        let mut mint = TokenMint::new();
         let store = TokenStore::default();
         let token = mint.mint(Kind::Person, &store);
         assert!(token.starts_with("__Z_"), "{token}");
@@ -285,10 +273,6 @@ mod tests {
     fn session_namespace_differs_between_sessions() {
         // Two mints from different entropy must not share a namespace, or the
         // same name could be lined up across conversations.
-        let a = TokenMint::seeded(1);
-        let b = TokenMint::seeded(2);
-        assert_ne!(a.namespace(), b.namespace());
-
         let live_a = TokenMint::new();
         let live_b = TokenMint::new();
         assert_ne!(
@@ -300,7 +284,7 @@ mod tests {
 
     #[test]
     fn two_tokens_of_the_same_kind_differ() {
-        let mut mint = TokenMint::seeded(7);
+        let mut mint = TokenMint::new();
         let mut store = TokenStore::default();
         let first = mint.mint(Kind::Company, &store);
         store.insert(first.clone(), entry("Nordstern GmbH", Kind::Company));
@@ -313,7 +297,7 @@ mod tests {
         let mut store = TokenStore::default();
         let token = "__Z_ABCD_PERSON_1234__".to_string();
         let mut e = entry("Thomas Müller", Kind::Person);
-        e.aliases = vec!["Herr Müller".into(), "T. Müller".into()];
+        e.aliases = vec![Secret::new("Herr Müller"), Secret::new("T. Müller")];
         store.insert(token.clone(), e);
 
         for spelling in ["Thomas Müller", "Herr Müller", "T. Müller"] {
@@ -327,7 +311,7 @@ mod tests {
 
     fn entry(value: &str, kind: Kind) -> TokenEntry {
         TokenEntry {
-            value: value.to_string(),
+            value: Secret::new(value),
             aliases: Vec::new(),
             kind,
             scope: Scope::Conversation,

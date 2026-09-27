@@ -9,7 +9,8 @@
 use std::collections::BTreeMap;
 use std::sync::{Mutex, OnceLock};
 
-use crate::api::{Kind, Scope, Source};
+use crate::api::{Kind, MarkState, Scope, Source};
+use crate::secret::Secret;
 use crate::payload::SafePayload;
 use crate::tokens::{TokenMint, TokenStore};
 
@@ -31,6 +32,21 @@ pub(crate) struct Protection {
     pub source_detail: String,
 }
 
+/// One thing the scanner found, and why. Carried whole so the UI can always say
+/// *why* an item is hidden — or why it is being asked about.
+#[derive(Debug, Clone)]
+#[allow(dead_code)] // every field is read by the scanner and the review, in M3
+pub(crate) struct FindingRecord {
+    pub id: u32,
+    pub start: usize,
+    pub end: usize,
+    pub kind: Kind,
+    pub source: Source,
+    pub source_detail: String,
+    pub reason: String,
+    pub state: MarkState,
+}
+
 /// One conversation.
 #[derive(Debug)]
 pub(crate) struct Session {
@@ -40,9 +56,12 @@ pub(crate) struct Session {
     pub profile_id: Option<String>,
     #[allow(dead_code)] // read by the scanner in M3
     pub pack_id: String,
-    /// The user's own text. It never leaves this crate except as a view.
-    pub original: String,
+    /// The user's own text. It never leaves this crate except as a view, and it
+    /// never prints itself (G11).
+    pub original: Secret,
     pub protections: Vec<Protection>,
+    /// What the scanner found and the user has not answered yet (M3 fills it).
+    pub findings: Vec<FindingRecord>,
     /// What every token in this conversation stands for.
     pub tokens: TokenStore,
     /// This session's own token namespace and randomness.
@@ -65,8 +84,9 @@ impl Session {
             revision: 1,
             profile_id,
             pack_id,
-            original: String::new(),
+            original: Secret::default(),
             protections: Vec::new(),
+            findings: Vec::new(),
             tokens: TokenStore::default(),
             mint: TokenMint::new(),
             payloads: BTreeMap::new(),
@@ -84,6 +104,20 @@ impl Session {
     }
 
     /// The id of the next protection act.
+    /// The original text. Reading it is a deliberate act, by name.
+    pub(crate) fn original_str(&self) -> &str {
+        self.original.expose()
+    }
+
+    /// How many suggestions are still unanswered. Invariant G12: a payload from a
+    /// session with any of these cannot be sent, however it was built.
+    pub(crate) fn open_suggestions(&self) -> u32 {
+        self.findings
+            .iter()
+            .filter(|f| f.state == MarkState::Suggested)
+            .count() as u32
+    }
+
     pub(crate) fn take_act_id(&mut self) -> u32 {
         let id = self.next_act;
         self.next_act = self.next_act.saturating_add(1);

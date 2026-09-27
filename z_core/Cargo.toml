@@ -6,9 +6,16 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
-# Gate 1 lives here as well as in CI: this crate carries NO dependencies at all
-# until M4 (crypto). Nothing to audit is the cheapest audit.
+# Gate G1: no network dependency, ever, outside `providers`. Anything added here
+# must be non-network, pinned in Cargo.lock, and justified in its task file.
 [dependencies]
+# Randomness straight from the OS. Token namespaces are not secrets, but linking
+# them across sessions is the threat, so they are unpredictable from the first
+# commit rather than after a later swap. (task 008)
+getrandom = "0.3"
+# NFC normalisation, so that a value written in two Unicode compositions is one
+# value to the scanner and to the leak audit. (task 008)
+unicode-normalization = "0.1"
 
 [lints]
 workspace = true

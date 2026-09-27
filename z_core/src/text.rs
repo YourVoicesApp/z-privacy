@@ -2,7 +2,17 @@
 //! counts bytes. Every crossing goes through here, and a span that would cut a
 //! character is refused rather than trimmed.
 
+use unicode_normalization::UnicodeNormalization;
+
 use crate::api::{ApiError, ApiResult, Span};
+
+/// One Unicode composition, so that «Müller» written two ways is one value.
+///
+/// Invariant G3 compares values in this form: a leak test that compares raw
+/// bytes can be fooled by a decomposed «u + combining diaeresis».
+pub(crate) fn nfc(s: &str) -> String {
+    s.nfc().collect()
+}
 
 /// Length of `s` in UTF-16 code units — what Dart's `String.length` returns.
 #[allow(dead_code)] // reached once protect() lands in 005

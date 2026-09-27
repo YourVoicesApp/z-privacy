@@ -40,7 +40,7 @@ pub(crate) fn session_revision(session: SessionId) -> ApiResult<Revision> {
 
 pub(crate) fn import_text(session: SessionId, text_in: String) -> ApiResult<DocumentView> {
     with_session(session.id, |s| {
-        s.original = text_in;
+        s.original = crate::secret::Secret::new(text_in);
         // A new document means the old protections describe nothing. Payloads
         // are kept so an old handle can still explain itself as stale.
         s.protections.clear();
@@ -58,7 +58,7 @@ pub(crate) fn document_view(session: SessionId) -> ApiResult<DocumentView> {
 fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
     let mut marks = Vec::with_capacity(s.protections.len());
     for p in &s.protections {
-        let span: Span = text::bytes_to_span(&s.original, p.start, p.end)?;
+        let span: Span = text::bytes_to_span(s.original_str(), p.start, p.end)?;
         marks.push(Mark {
             span,
             state: MarkState::Protected,
@@ -70,7 +70,7 @@ fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
     }
     marks.sort_by_key(|m| m.span.start);
     Ok(DocumentView {
-        text: s.original.clone(),
+        text: s.original_str().to_string(),
         marks,
     })
 }
@@ -103,6 +103,15 @@ pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<Ans
     // The freshness check happens before anything else: a stale request must not
     // even reach a provider, let alone be posted.
     let _fresh = with_payload(handle, |p| p.id)?;
+
+    // Invariant G12: open suggestions stop a send, whatever the payload was built
+    // for. There is no «Send anyway» — the user answers Protect or Not Sensitive,
+    // and the count reaches zero. That is the whole reason the switch does not
+    // exist in the code.
+    let open = with_session(handle.session, |s| s.open_suggestions()).ok_or(ApiError::InvalidSession)?;
+    if open > 0 {
+        return Err(ApiError::OpenSuggestions { count: open });
+    }
     // M6 opens the network. Until then the door is honestly closed.
     Err(ApiError::ProviderUnavailable {
         provider: provider.id,
@@ -146,8 +155,8 @@ fn protect_inner(
     all_matches: bool,
 ) -> ApiResult<ProtectOutcome> {
     with_session(session.id, |s| {
-        let (start, end) = text::span_to_bytes(&s.original, span)?;
-        let selected = match s.original.get(start..end) {
+        let (start, end) = text::span_to_bytes(s.original_str(), span)?;
+        let selected = match s.original_str().get(start..end) {
             Some(text) => text.to_string(),
             None => {
                 return Err(ApiError::BadSpan {
@@ -177,7 +186,7 @@ fn protect_inner(
         if !touched.is_empty() {
             let mut spans = Vec::with_capacity(touched.len());
             for p in &touched {
-                spans.push(text::bytes_to_span(&s.original, p.start, p.end)?);
+                spans.push(text::bytes_to_span(s.original_str(), p.start, p.end)?);
             }
             return Ok(ProtectOutcome::Snapped { spans });
         }
@@ -190,7 +199,7 @@ fn protect_inner(
                 s.tokens.insert(
                     minted.clone(),
                     TokenEntry {
-                        value: selected.clone(),
+                        value: crate::secret::Secret::new(selected.clone()),
                         aliases: Vec::new(),
                         kind,
                         scope,
@@ -205,7 +214,7 @@ fn protect_inner(
         let act = s.take_act_id();
         let mut places = Vec::new();
         if all_matches {
-            places.extend(occurrences(&s.original, &selected));
+            places.extend(occurrences(s.original_str(), &selected));
         } else {
             places.push((start, end));
         }
@@ -306,7 +315,7 @@ pub(crate) fn add_alias(session: SessionId, token: String, alias: String) -> Api
             None => return Err(ApiError::UnknownToken),
         };
         let mut applied = 0u32;
-        for (from, to) in occurrences(&s.original, &alias) {
+        for (from, to) in occurrences(s.original_str(), &alias) {
             if s.protections.iter().any(|p| p.start < to && from < p.end) {
                 continue;
             }
@@ -345,7 +354,8 @@ pub(crate) fn reveal(session: SessionId, token: String) -> ApiResult<RevealedVal
     with_session(session.id, |s| match s.tokens.get(&token) {
         Some(entry) => Ok(RevealedValue {
             token,
-            value: entry.value.clone(),
+            // Handed over because the user asked to see it, for a moment, locally.
+            value: entry.value.expose().to_string(),
             ttl_ms: REVEAL_TTL_MS,
         }),
         None => Err(ApiError::UnknownToken),
@@ -394,4 +404,79 @@ pub(crate) fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String>
         None => Err(ApiError::UnknownToken),
     })
     .ok_or(ApiError::InvalidSession)?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::api::{MarkState, Span};
+    use crate::session::FindingRecord;
+
+    /// Invariant G12. There are no findings until M3, so this test makes one by
+    /// hand: the rule is the point, not where the finding came from.
+    #[test]
+    fn g12_a_payload_cannot_be_sent_while_a_suggestion_is_open() {
+        let doc = "Frau Anna Weber übernimmt.";
+        let s = open_session(None, "de".to_string()).expect("open");
+        import_text(s, doc.to_string()).expect("import");
+        protect(s, Span { start: 5, end: 15 }, Scope::Conversation, Kind::Person).expect("protect");
+        let handle = build_payload(s).expect("build");
+
+        // With nothing open, send gets as far as the provider door.
+        assert!(matches!(
+            send(handle, ProviderId { id: "openai".to_string() }),
+            Err(ApiError::ProviderUnavailable { .. })
+        ));
+
+        // One unanswered suggestion, and the door is shut before that.
+        with_session(s.id, |session| {
+            session.findings.push(FindingRecord {
+                id: 1,
+                start: 0,
+                end: 4,
+                kind: Kind::Person,
+                source: Source::LanguagePack,
+                source_detail: "de".to_string(),
+                reason: "a word after «Frau»".to_string(),
+                state: MarkState::Suggested,
+            });
+        })
+        .expect("session");
+
+        match send(handle, ProviderId { id: "openai".to_string() }) {
+            Err(ApiError::OpenSuggestions { count }) => assert_eq!(count, 1),
+            other => panic!("a send with an open suggestion must be refused, got {other:?}"),
+        }
+
+        // Answering it (here: marking it not sensitive) clears the way again.
+        with_session(s.id, |session| {
+            session.findings.clear();
+        })
+        .expect("session");
+        assert!(matches!(
+            send(handle, ProviderId { id: "openai".to_string() }),
+            Err(ApiError::ProviderUnavailable { .. })
+        ));
+    }
+
+    #[test]
+    fn g11_no_view_prints_the_users_words() {
+        let doc = "Kunde: Nordstern Consulting GmbH";
+        let s = open_session(None, "de".to_string()).expect("open");
+        let view = import_text(s, doc.to_string()).expect("import");
+        assert!(!format!("{view:?}").contains("Nordstern"), "{view:?}");
+
+        protect(s, Span { start: 7, end: 32 }, Scope::Conversation, Kind::Company).expect("protect");
+        let handle = build_payload(s).expect("build");
+        let payload = payload_view(handle).expect("view");
+        assert!(!format!("{payload:?}").contains("Nordstern"));
+
+        let token = list_tokens(s).expect("tokens").first().expect("one").token.clone();
+        let shown = reveal(s, token).expect("reveal");
+        assert!(!format!("{shown:?}").contains("Nordstern"), "{shown:?}");
+
+        let answer = ingest_answer(s, "ok".to_string()).expect("ingest");
+        let segments = restored_view(s, answer).expect("restored");
+        assert!(!format!("{segments:?}").contains("ok"), "{segments:?}");
+    }
 }

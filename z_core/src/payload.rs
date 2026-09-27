@@ -8,9 +8,12 @@
 
 use crate::api::{ApiError, ApiResult, PayloadHandle, PayloadView};
 use crate::session::Session;
+use std::fmt;
+
+use crate::text::nfc;
 
 /// One built request, remembered with the revision it was built on.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub(crate) struct SafePayload {
     pub id: u32,
     pub session: u32,
@@ -20,6 +23,21 @@ pub(crate) struct SafePayload {
     text: String,
     pub protected: u32,
     pub open_suggestions: u32,
+}
+
+impl fmt::Debug for SafePayload {
+    /// G11: even the safe text is the user's writing. Debug says what it is, not
+    /// what it says.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SafePayload")
+            .field("id", &self.id)
+            .field("session", &self.session)
+            .field("revision", &self.revision)
+            .field("bytes", &self.text.len())
+            .field("protected", &self.protected)
+            .field("open_suggestions", &self.open_suggestions)
+            .finish()
+    }
 }
 
 impl SafePayload {
@@ -41,7 +59,7 @@ impl SafePayload {
             if p.start < cursor || p.end > session.original.len() || p.start >= p.end {
                 continue;
             }
-            match session.original.get(cursor..p.start) {
+            match session.original_str().get(cursor..p.start) {
                 Some(before) => text.push_str(before),
                 None => continue,
             }
@@ -49,7 +67,7 @@ impl SafePayload {
             cursor = p.end;
             applied = applied.saturating_add(1);
         }
-        if let Some(rest) = session.original.get(cursor..) {
+        if let Some(rest) = session.original_str().get(cursor..) {
             text.push_str(rest);
         }
 
@@ -96,11 +114,14 @@ impl SafePayload {
     /// silently failed. An upper bound can miss a nested spelling; it can never
     /// refuse an honest build, which is what makes it safe to run in production.
     pub(crate) fn audit(&self, session: &Session) -> ApiResult<()> {
+        let payload_nfc = nfc(&self.text);
+        let original_nfc = nfc(session.original_str());
         for spelling in session.tokens.all_secrets() {
             if spelling.is_empty() {
                 continue;
             }
-            let in_original = count(&session.original, &spelling);
+            let spelling = nfc(&spelling);
+            let in_original = count(&original_nfc, &spelling);
             // Count by INTENT, not by what the range happens to cover: a
             // protection whose token stands for this spelling is meant to hide
             // one of its places. If such a protection exists and the value is
@@ -116,7 +137,7 @@ impl SafePayload {
                 })
                 .count();
             let allowed = in_original.saturating_sub(replaced);
-            let actual = count(&self.text, &spelling);
+            let actual = count(&payload_nfc, &spelling);
             if actual > allowed {
                 return Err(ApiError::PayloadRefused {
                     reason: format!(

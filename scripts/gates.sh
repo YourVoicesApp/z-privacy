@@ -32,20 +32,20 @@ else
   pass "G1 no HTTP client in any Cargo.toml"
 fi
 
-# ---------------------------------------------------------------- G11, G2, G7, G8
+# ---------------------------------------------------------------- G13, G2, G7, G8
 for API in $API_FILES; do
   if [ ! -f "$API" ]; then
-    skip "G11/G2/G7/G8 on $API" "file not there yet"
+    skip "G13/G2/G7/G8 on $API" "file not there yet"
     continue
   fi
   SIGS=$(grep -n '^pub fn ' "$API")
 
-  # G11 (guards the three below): every public signature sits on ONE line.
+  # G13 (guards the three below): every public signature sits on ONE line.
   BAD=$(printf '%s\n' "$SIGS" | grep -v '{' || true)
   if [ -n "$BAD" ]; then
-    fail "G11 $API: signature spans lines:"; printf '        %s\n' "$BAD"
+    fail "G13 $API: signature spans lines:"; printf '        %s\n' "$BAD"
   else
-    pass "G11 $API: every signature is one line"
+    pass "G13 $API: every signature is one line"
   fi
 
   # G2: no send function accepts text.
@@ -74,18 +74,45 @@ for API in $API_FILES; do
 done
 
 
-# ---------------------------------------------------------------- G12
+# ---------------------------------------------------------------- G14
 # The bridge mirrors are generated from the contract. If they drift, Dart gets a
 # class with a missing field and nobody notices until the UI misbehaves.
 if [ -f scripts/gen_mirrors.py ]; then
   if python3 scripts/gen_mirrors.py --check >/tmp/g12.$$ 2>&1; then
-    pass "G12 bridge mirrors match the contract"
+    pass "G14 bridge mirrors match the contract"
   else
-    fail "G12 mirrors are stale:"; sed 's/^/        /' /tmp/g12.$$
+    fail "G14 mirrors are stale:"; sed 's/^/        /' /tmp/g12.$$
   fi
   rm -f /tmp/g12.$$
 else
-  skip "G12 mirrors match the contract" "no generator yet"
+  skip "G14 mirrors match the contract" "no generator yet"
+fi
+
+
+# ---------------------------------------------------------------- G11
+# No original text and no vault value in a log, an error, or Debug output.
+# Comment lines are skipped: secret.rs shows the forbidden line as an example.
+PRINTS=$(grep -RnE '\b(println!|print!|eprintln!|eprint!|dbg!)' z_core/src 2>/dev/null | grep -vE ':[0-9]+:\s*//' || true)
+if [ -n "$PRINTS" ]; then
+  fail "G11 the core prints something:"; printf '        %s\n' "$PRINTS"
+else
+  pass "G11 nothing in z_core/src prints"
+fi
+
+G11_MISSING=""
+for t in Secret SafePayload DocumentView PayloadView RevealedValue Segment; do
+  grep -Rqs "impl fmt::Debug for $t" z_core/src || G11_MISSING="$G11_MISSING $t"
+done
+if [ -n "$G11_MISSING" ]; then
+  fail "G11 these carry the user's words but derive Debug:$G11_MISSING"
+else
+  pass "G11 every type holding the user's words redacts its own Debug"
+fi
+
+if grep -qs 'pub original: Secret' z_core/src/session.rs && grep -qs 'pub value: Secret' z_core/src/tokens.rs; then
+  pass "G11 the original and the token values are Secret, not String"
+else
+  fail "G11 the original or the token values are plain Strings again"
 fi
 
 # ---------------------------------------------------------------- G5
@@ -133,7 +160,7 @@ fi
 # ---------------------------------------------------------------- G3, G6, G9, G10
 # The invariants that live as tests.
 if cargo test --workspace --quiet >/tmp/gt.$$ 2>&1; then
-  pass "G3/G6/G9/G10 cargo test"
+  pass "G3/G6/G9/G10/G11/G12 cargo test"
 else
   fail "cargo test:"; tail -30 /tmp/gt.$$ | sed 's/^/        /'
 fi
@@ -156,7 +183,7 @@ else
 fi
 
 # A green run proves nothing unless the four invariant tests actually exist.
-for t in no_leak stale_payload round_trip session_namespace; do
+for t in no_leak stale_payload round_trip session_namespace g11_ g12_; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

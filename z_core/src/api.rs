@@ -206,14 +206,14 @@ pub struct Mark {
 }
 
 /// The original text and its marks. Local only; this never leaves the device.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct DocumentView {
     pub text: String,
     pub marks: Vec<Mark>,
 }
 
 /// What the AI will receive, for showing in the right-hand column.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct PayloadView {
     pub text: String,
     pub protected_count: u32,
@@ -231,7 +231,7 @@ pub struct TokenRow {
 }
 
 /// A value shown locally for a moment. Revealing never touches a payload.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct RevealedValue {
     pub token: String,
     pub value: String,
@@ -239,7 +239,7 @@ pub struct RevealedValue {
 }
 
 /// A piece of a restored answer. `restored` is true for words put back here.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Segment {
     pub text: String,
     pub restored: bool,
@@ -314,6 +314,50 @@ pub struct RescanOutcome {
 pub enum VaultUnlockOutcome {
     Unlocked { identities: u32, values: u32 },
     WrongPassphrase { attempts_left: u32 },
+}
+
+// ---------------------------------------------------------------- G11: no text in Debug
+
+// These four carry the user's own writing across the bridge. Deriving `Debug` on
+// them would put a client's letter into the first log line someone adds, so each
+// one says what it is and not what it says. Invariant G11.
+
+impl fmt::Debug for DocumentView {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DocumentView")
+            .field("text", &format_args!("[REDACTED {} bytes]", self.text.len()))
+            .field("marks", &self.marks.len())
+            .finish()
+    }
+}
+
+impl fmt::Debug for PayloadView {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PayloadView")
+            .field("text", &format_args!("[REDACTED {} bytes]", self.text.len()))
+            .field("protected_count", &self.protected_count)
+            .field("open_suggestions", &self.open_suggestions)
+            .finish()
+    }
+}
+
+impl fmt::Debug for RevealedValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RevealedValue")
+            .field("token", &self.token)
+            .field("value", &format_args!("[REDACTED]"))
+            .field("ttl_ms", &self.ttl_ms)
+            .finish()
+    }
+}
+
+impl fmt::Debug for Segment {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Segment")
+            .field("text", &format_args!("[REDACTED {} bytes]", self.text.len()))
+            .field("restored", &self.restored)
+            .finish()
+    }
 }
 
 // ---------------------------------------------------------------- session
