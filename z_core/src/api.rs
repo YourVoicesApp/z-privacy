@@ -145,6 +145,22 @@ pub struct ProviderId {
     pub id: String,
 }
 
+/// A profile, as a row rather than a packed string. The UI must never have to
+/// split a field out of text to draw a name. (Task 022.)
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProfileRow {
+    pub id: String,
+    pub name: String,
+}
+
+/// An installed detection pack. The **label is the pack's own**, not the UI's: a
+/// screen may not invent the name of a rules engine.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PackRow {
+    pub id: String,
+    pub label: String,
+}
+
 /// A provider as the UI is allowed to see it: a name, and whether it is
 /// connected. The credential itself is not in this type and has no getter
 /// anywhere in the contract — once given, it never comes back out.
@@ -786,7 +802,7 @@ pub fn create_profile(name: String) -> ApiResult<String> {
 // ---------------------------------------------------------------- profiles, packs
 
 /// The profiles, as the switcher lists them: `id\tname`.
-pub fn profiles() -> ApiResult<Vec<String>> {
+pub fn profiles() -> ApiResult<Vec<ProfileRow>> {
     crate::ops::profiles()
 }
 
@@ -796,7 +812,7 @@ pub fn switch_profile(session: SessionId, profile_id: String) -> ApiResult<Switc
 }
 
 /// The installed privacy packs. A pack is a detection engine, not a UI language.
-pub fn packs() -> ApiResult<Vec<String>> {
+pub fn packs() -> ApiResult<Vec<PackRow>> {
     crate::ops::packs()
 }
 

@@ -12,7 +12,7 @@ use std::collections::BTreeMap;
 
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
-    Mark, MarkState, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, ProviderRow, RevealedValue,
+    Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, ProviderRow, RevealedValue,
     RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome, TokenRow,
     UndoOutcome,
 };
@@ -844,7 +844,7 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
     .ok_or(ApiError::InvalidSession)?
 }
 
-pub(crate) fn packs() -> ApiResult<Vec<String>> {
+pub(crate) fn packs() -> ApiResult<Vec<PackRow>> {
     Ok(scanner::packs::installed())
 }
 
@@ -922,7 +922,7 @@ pub(crate) fn switch_profile(session: SessionId, profile_id: String) -> ApiResul
 }
 
 pub(crate) fn switch_pack(session: SessionId, pack_id: String) -> ApiResult<RescanOutcome> {
-    if !scanner::packs::installed().contains(&pack_id) {
+    if !scanner::packs::installed().iter().any(|p| p.id == pack_id) {
         return Err(ApiError::ImportRefused {
             reason: format!("there is no privacy pack called «{pack_id}»"),
         });

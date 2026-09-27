@@ -399,6 +399,24 @@ sealed class NetworkRefusal with _$NetworkRefusal {
   const factory NetworkRefusal.unreachable() = NetworkRefusal_Unreachable;
 }
 
+class PackRow {
+  final String id;
+  final String label;
+
+  const PackRow({required this.id, required this.label});
+
+  @override
+  int get hashCode => id.hashCode ^ label.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PackRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label;
+}
+
 class PayloadHandle {
   final int id;
   final int session;
@@ -475,6 +493,24 @@ enum Policy {
 
   /// Never found by itself; kept here so its aliases and token stay stable.
   manual,
+}
+
+class ProfileRow {
+  final String id;
+  final String name;
+
+  const ProfileRow({required this.id, required this.name});
+
+  @override
+  int get hashCode => id.hashCode ^ name.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProfileRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name;
 }
 
 @freezed

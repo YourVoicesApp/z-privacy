@@ -1481,6 +1481,11 @@ const _: fn() = || {
         crate::api::mirrors::NetworkRefusal::Unreachable => {}
     }
     {
+        let PackRow = None::<crate::api::mirrors::PackRow>.unwrap();
+        let _: String = PackRow.id;
+        let _: String = PackRow.label;
+    }
+    {
         let PayloadHandle = None::<crate::api::mirrors::PayloadHandle>.unwrap();
         let _: u32 = PayloadHandle.id;
         let _: u32 = PayloadHandle.session;
@@ -1496,6 +1501,11 @@ const _: fn() = || {
         let Place = None::<crate::api::mirrors::Place>.unwrap();
         let _: u32 = Place.page;
         let _: u32 = Place.paragraph;
+    }
+    {
+        let ProfileRow = None::<crate::api::mirrors::ProfileRow>.unwrap();
+        let _: String = ProfileRow.id;
+        let _: String = ProfileRow.name;
     }
     match None::<crate::api::mirrors::ProtectOutcome>.unwrap() {
         crate::api::mirrors::ProtectOutcome::Applied { token, places } => {
@@ -1974,6 +1984,18 @@ impl SseDecode for Vec<crate::api::mirrors::Mark> {
     }
 }
 
+impl SseDecode for Vec<crate::api::mirrors::PackRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::PackRow>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1981,6 +2003,18 @@ impl SseDecode for Vec<u8> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<u8>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::mirrors::ProfileRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::ProfileRow>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -2163,6 +2197,18 @@ impl SseDecode for Option<u32> {
     }
 }
 
+impl SseDecode for crate::api::mirrors::PackRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_label = <String>::sse_decode(deserializer);
+        return crate::api::mirrors::PackRow {
+            id: var_id,
+            label: var_label,
+        };
+    }
+}
+
 impl SseDecode for crate::api::mirrors::PayloadHandle {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2212,6 +2258,18 @@ impl SseDecode for crate::api::mirrors::Policy {
             1 => crate::api::mirrors::Policy::Suggest,
             2 => crate::api::mirrors::Policy::Manual,
             _ => unreachable!("Invalid variant for Policy: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::ProfileRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        return crate::api::mirrors::ProfileRow {
+            id: var_id,
+            name: var_name,
         };
     }
 }
@@ -3010,6 +3068,22 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::NetworkRe
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PackRow> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.id.into_into_dart().into_dart(),
+            self.0.label.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::PackRow> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::PackRow>> for crate::api::mirrors::PackRow {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::PackRow> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PayloadHandle> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -3077,6 +3151,24 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Policy> {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Policy> {}
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Policy>> for crate::api::mirrors::Policy {
     fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Policy> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ProfileRow> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.id.into_into_dart().into_dart(),
+            self.0.name.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::ProfileRow> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::ProfileRow>>
+    for crate::api::mirrors::ProfileRow
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::ProfileRow> {
         self.into()
     }
 }
@@ -3783,12 +3875,32 @@ impl SseEncode for Vec<crate::api::mirrors::Mark> {
     }
 }
 
+impl SseEncode for Vec<crate::api::mirrors::PackRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::PackRow>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <u8>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::mirrors::ProfileRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::ProfileRow>::sse_encode(item, serializer);
         }
     }
 }
@@ -3946,6 +4058,14 @@ impl SseEncode for Option<u32> {
     }
 }
 
+impl SseEncode for crate::api::mirrors::PackRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.label, serializer);
+    }
+}
+
 impl SseEncode for crate::api::mirrors::PayloadHandle {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3986,6 +4106,14 @@ impl SseEncode for crate::api::mirrors::Policy {
             },
             serializer,
         );
+    }
+}
+
+impl SseEncode for crate::api::mirrors::ProfileRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.name, serializer);
     }
 }
 

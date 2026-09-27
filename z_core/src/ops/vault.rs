@@ -9,8 +9,8 @@
 use std::path::PathBuf;
 
 use crate::api::{
-    ApiError, ApiResult, EntityCard, EntityKind, EntityRow, Kind, Policy, RevealedValue, VaultState,
-    VaultUnlockOutcome, ValueRow,
+    ApiError, ApiResult, EntityCard, EntityKind, EntityRow, Kind, Policy, ProfileRow, RevealedValue,
+    VaultState, VaultUnlockOutcome, ValueRow,
 };
 use crate::secret::Secret;
 use crate::session::with_core;
@@ -253,14 +253,17 @@ pub(crate) fn create_profile(name: String) -> ApiResult<String> {
 }
 
 /// `id\tname` per profile — one line the UI can split, without a new type.
-pub(crate) fn profiles() -> ApiResult<Vec<String>> {
+pub(crate) fn profiles() -> ApiResult<Vec<ProfileRow>> {
     with_core(|core| {
         core.vault.with_open(|vault| {
             vault
                 .profiles
                 .iter()
-                .map(|p| format!("{}\t{}", p.id, p.name))
-                .collect::<Vec<String>>()
+                .map(|p| ProfileRow {
+                    id: p.id.clone(),
+                    name: p.name.clone(),
+                })
+                .collect::<Vec<ProfileRow>>()
         })
     })
 }

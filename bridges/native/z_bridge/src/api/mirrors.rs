@@ -94,6 +94,18 @@ pub struct _ProviderId {
     pub id: String,
 }
 
+#[frb(mirror(ProfileRow))]
+pub struct _ProfileRow {
+    pub id: String,
+    pub name: String,
+}
+
+#[frb(mirror(PackRow))]
+pub struct _PackRow {
+    pub id: String,
+    pub label: String,
+}
+
 #[frb(mirror(ProviderRow))]
 pub struct _ProviderRow {
     pub id: String,

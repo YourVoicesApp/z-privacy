@@ -21,7 +21,11 @@ pub(crate) fn scan(text: &str, id: &str) -> Vec<Candidate> {
     }
 }
 
-/// The packs that exist today, in the order the UI lists them.
-pub(crate) fn installed() -> Vec<String> {
-    vec!["de".to_string()]
+/// The packs this build carries. The label belongs to the pack, not to a screen:
+/// a rules engine names itself, and the UI only draws what it is told (task 022).
+pub(crate) fn installed() -> Vec<crate::api::PackRow> {
+    vec![crate::api::PackRow {
+        id: "de".to_string(),
+        label: "German (DE)".to_string(),
+    }]
 }

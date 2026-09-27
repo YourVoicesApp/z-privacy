@@ -259,7 +259,8 @@ fi
 
 # A green run proves nothing unless the four invariant tests actually exist.
 for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty \
-         the_server_receives the_whole_path a_redirect_is_refused never_by_its_body longer_than_the_limit; do
+         the_server_receives the_whole_path a_redirect_is_refused never_by_its_body longer_than_the_limit \
+         each_purpose_gets_its_own a_format_one_vault a_literal_loopback ciphertext_even_inside; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

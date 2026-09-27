@@ -105,10 +105,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Mark> dco_decode_list_mark(dynamic raw);
 
   @protected
+  List<PackRow> dco_decode_list_pack_row(dynamic raw);
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<ProfileRow> dco_decode_list_profile_row(dynamic raw);
 
   @protected
   List<ProviderRow> dco_decode_list_provider_row(dynamic raw);
@@ -144,6 +150,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? dco_decode_opt_box_autoadd_u_32(dynamic raw);
 
   @protected
+  PackRow dco_decode_pack_row(dynamic raw);
+
+  @protected
   PayloadHandle dco_decode_payload_handle(dynamic raw);
 
   @protected
@@ -154,6 +163,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Policy dco_decode_policy(dynamic raw);
+
+  @protected
+  ProfileRow dco_decode_profile_row(dynamic raw);
 
   @protected
   ProtectOutcome dco_decode_protect_outcome(dynamic raw);
@@ -310,10 +322,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Mark> sse_decode_list_mark(SseDeserializer deserializer);
 
   @protected
+  List<PackRow> sse_decode_list_pack_row(SseDeserializer deserializer);
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<ProfileRow> sse_decode_list_profile_row(SseDeserializer deserializer);
 
   @protected
   List<ProviderRow> sse_decode_list_provider_row(SseDeserializer deserializer);
@@ -349,6 +367,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer);
 
   @protected
+  PackRow sse_decode_pack_row(SseDeserializer deserializer);
+
+  @protected
   PayloadHandle sse_decode_payload_handle(SseDeserializer deserializer);
 
   @protected
@@ -359,6 +380,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Policy sse_decode_policy(SseDeserializer deserializer);
+
+  @protected
+  ProfileRow sse_decode_profile_row(SseDeserializer deserializer);
 
   @protected
   ProtectOutcome sse_decode_protect_outcome(SseDeserializer deserializer);
@@ -534,11 +558,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_mark(List<Mark> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_pack_row(List<PackRow> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_profile_row(
+    List<ProfileRow> self,
     SseSerializer serializer,
   );
 
@@ -582,6 +615,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_pack_row(PackRow self, SseSerializer serializer);
+
+  @protected
   void sse_encode_payload_handle(PayloadHandle self, SseSerializer serializer);
 
   @protected
@@ -592,6 +628,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_policy(Policy self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_profile_row(ProfileRow self, SseSerializer serializer);
 
   @protected
   void sse_encode_protect_outcome(
