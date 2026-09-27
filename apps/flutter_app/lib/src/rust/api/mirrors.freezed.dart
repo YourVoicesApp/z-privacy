@@ -675,7 +675,7 @@ $Res call({
 });
 
 
-
+$RefusalCopyWith<$Res> get reason;
 
 }
 /// @nodoc
@@ -696,7 +696,16 @@ as String,
   ));
 }
 
-
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RefusalCopyWith<$Res> get reason {
+  
+  return $RefusalCopyWith<$Res>(_self.reason, (value) {
+    return _then(_self.copyWith(reason: value));
+  });
+}
 }
 
 /// @nodoc
@@ -1344,6 +1353,924 @@ as List<Span>,
 
 
 }
+
+/// @nodoc
+mixin _$Refusal {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Refusal()';
+}
+
+
+}
+
+/// @nodoc
+class $RefusalCopyWith<$Res>  {
+$RefusalCopyWith(Refusal _, $Res Function(Refusal) __);
+}
+
+
+/// Adds pattern-matching-related methods to [Refusal].
+extension RefusalPatterns on Refusal {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( Refusal_ScannedPdfNoTextLayer value)?  scannedPdfNoTextLayer,TResult Function( Refusal_EncryptedPdf value)?  encryptedPdf,TResult Function( Refusal_UnsupportedEncoding value)?  unsupportedEncoding,TResult Function( Refusal_UnreadableStructure value)?  unreadableStructure,TResult Function( Refusal_MalformedDocument value)?  malformedDocument,TResult Function( Refusal_DocumentTooLarge value)?  documentTooLarge,TResult Function( Refusal_TooManyPages value)?  tooManyPages,TResult Function( Refusal_TextTooLarge value)?  textTooLarge,TResult Function( Refusal_CompressionBomb value)?  compressionBomb,TResult Function( Refusal_TooManyParts value)?  tooManyParts,TResult Function( Refusal_TookTooLong value)?  tookTooLong,TResult Function( Refusal_EmptyDocument value)?  emptyDocument,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case Refusal_ScannedPdfNoTextLayer() when scannedPdfNoTextLayer != null:
+return scannedPdfNoTextLayer(_that);case Refusal_EncryptedPdf() when encryptedPdf != null:
+return encryptedPdf(_that);case Refusal_UnsupportedEncoding() when unsupportedEncoding != null:
+return unsupportedEncoding(_that);case Refusal_UnreadableStructure() when unreadableStructure != null:
+return unreadableStructure(_that);case Refusal_MalformedDocument() when malformedDocument != null:
+return malformedDocument(_that);case Refusal_DocumentTooLarge() when documentTooLarge != null:
+return documentTooLarge(_that);case Refusal_TooManyPages() when tooManyPages != null:
+return tooManyPages(_that);case Refusal_TextTooLarge() when textTooLarge != null:
+return textTooLarge(_that);case Refusal_CompressionBomb() when compressionBomb != null:
+return compressionBomb(_that);case Refusal_TooManyParts() when tooManyParts != null:
+return tooManyParts(_that);case Refusal_TookTooLong() when tookTooLong != null:
+return tookTooLong(_that);case Refusal_EmptyDocument() when emptyDocument != null:
+return emptyDocument(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( Refusal_ScannedPdfNoTextLayer value)  scannedPdfNoTextLayer,required TResult Function( Refusal_EncryptedPdf value)  encryptedPdf,required TResult Function( Refusal_UnsupportedEncoding value)  unsupportedEncoding,required TResult Function( Refusal_UnreadableStructure value)  unreadableStructure,required TResult Function( Refusal_MalformedDocument value)  malformedDocument,required TResult Function( Refusal_DocumentTooLarge value)  documentTooLarge,required TResult Function( Refusal_TooManyPages value)  tooManyPages,required TResult Function( Refusal_TextTooLarge value)  textTooLarge,required TResult Function( Refusal_CompressionBomb value)  compressionBomb,required TResult Function( Refusal_TooManyParts value)  tooManyParts,required TResult Function( Refusal_TookTooLong value)  tookTooLong,required TResult Function( Refusal_EmptyDocument value)  emptyDocument,}){
+final _that = this;
+switch (_that) {
+case Refusal_ScannedPdfNoTextLayer():
+return scannedPdfNoTextLayer(_that);case Refusal_EncryptedPdf():
+return encryptedPdf(_that);case Refusal_UnsupportedEncoding():
+return unsupportedEncoding(_that);case Refusal_UnreadableStructure():
+return unreadableStructure(_that);case Refusal_MalformedDocument():
+return malformedDocument(_that);case Refusal_DocumentTooLarge():
+return documentTooLarge(_that);case Refusal_TooManyPages():
+return tooManyPages(_that);case Refusal_TextTooLarge():
+return textTooLarge(_that);case Refusal_CompressionBomb():
+return compressionBomb(_that);case Refusal_TooManyParts():
+return tooManyParts(_that);case Refusal_TookTooLong():
+return tookTooLong(_that);case Refusal_EmptyDocument():
+return emptyDocument(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( Refusal_ScannedPdfNoTextLayer value)?  scannedPdfNoTextLayer,TResult? Function( Refusal_EncryptedPdf value)?  encryptedPdf,TResult? Function( Refusal_UnsupportedEncoding value)?  unsupportedEncoding,TResult? Function( Refusal_UnreadableStructure value)?  unreadableStructure,TResult? Function( Refusal_MalformedDocument value)?  malformedDocument,TResult? Function( Refusal_DocumentTooLarge value)?  documentTooLarge,TResult? Function( Refusal_TooManyPages value)?  tooManyPages,TResult? Function( Refusal_TextTooLarge value)?  textTooLarge,TResult? Function( Refusal_CompressionBomb value)?  compressionBomb,TResult? Function( Refusal_TooManyParts value)?  tooManyParts,TResult? Function( Refusal_TookTooLong value)?  tookTooLong,TResult? Function( Refusal_EmptyDocument value)?  emptyDocument,}){
+final _that = this;
+switch (_that) {
+case Refusal_ScannedPdfNoTextLayer() when scannedPdfNoTextLayer != null:
+return scannedPdfNoTextLayer(_that);case Refusal_EncryptedPdf() when encryptedPdf != null:
+return encryptedPdf(_that);case Refusal_UnsupportedEncoding() when unsupportedEncoding != null:
+return unsupportedEncoding(_that);case Refusal_UnreadableStructure() when unreadableStructure != null:
+return unreadableStructure(_that);case Refusal_MalformedDocument() when malformedDocument != null:
+return malformedDocument(_that);case Refusal_DocumentTooLarge() when documentTooLarge != null:
+return documentTooLarge(_that);case Refusal_TooManyPages() when tooManyPages != null:
+return tooManyPages(_that);case Refusal_TextTooLarge() when textTooLarge != null:
+return textTooLarge(_that);case Refusal_CompressionBomb() when compressionBomb != null:
+return compressionBomb(_that);case Refusal_TooManyParts() when tooManyParts != null:
+return tooManyParts(_that);case Refusal_TookTooLong() when tookTooLong != null:
+return tookTooLong(_that);case Refusal_EmptyDocument() when emptyDocument != null:
+return emptyDocument(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int pages)?  scannedPdfNoTextLayer,TResult Function()?  encryptedPdf,TResult Function( int page,  int readablePercent)?  unsupportedEncoding,TResult Function( int page)?  unreadableStructure,TResult Function()?  malformedDocument,TResult Function( int mib,  int limitMib)?  documentTooLarge,TResult Function( int pages,  int limit)?  tooManyPages,TResult Function( int limitMib)?  textTooLarge,TResult Function( int ratio)?  compressionBomb,TResult Function( int parts,  int limit)?  tooManyParts,TResult Function( int millis)?  tookTooLong,TResult Function()?  emptyDocument,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case Refusal_ScannedPdfNoTextLayer() when scannedPdfNoTextLayer != null:
+return scannedPdfNoTextLayer(_that.pages);case Refusal_EncryptedPdf() when encryptedPdf != null:
+return encryptedPdf();case Refusal_UnsupportedEncoding() when unsupportedEncoding != null:
+return unsupportedEncoding(_that.page,_that.readablePercent);case Refusal_UnreadableStructure() when unreadableStructure != null:
+return unreadableStructure(_that.page);case Refusal_MalformedDocument() when malformedDocument != null:
+return malformedDocument();case Refusal_DocumentTooLarge() when documentTooLarge != null:
+return documentTooLarge(_that.mib,_that.limitMib);case Refusal_TooManyPages() when tooManyPages != null:
+return tooManyPages(_that.pages,_that.limit);case Refusal_TextTooLarge() when textTooLarge != null:
+return textTooLarge(_that.limitMib);case Refusal_CompressionBomb() when compressionBomb != null:
+return compressionBomb(_that.ratio);case Refusal_TooManyParts() when tooManyParts != null:
+return tooManyParts(_that.parts,_that.limit);case Refusal_TookTooLong() when tookTooLong != null:
+return tookTooLong(_that.millis);case Refusal_EmptyDocument() when emptyDocument != null:
+return emptyDocument();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int pages)  scannedPdfNoTextLayer,required TResult Function()  encryptedPdf,required TResult Function( int page,  int readablePercent)  unsupportedEncoding,required TResult Function( int page)  unreadableStructure,required TResult Function()  malformedDocument,required TResult Function( int mib,  int limitMib)  documentTooLarge,required TResult Function( int pages,  int limit)  tooManyPages,required TResult Function( int limitMib)  textTooLarge,required TResult Function( int ratio)  compressionBomb,required TResult Function( int parts,  int limit)  tooManyParts,required TResult Function( int millis)  tookTooLong,required TResult Function()  emptyDocument,}) {final _that = this;
+switch (_that) {
+case Refusal_ScannedPdfNoTextLayer():
+return scannedPdfNoTextLayer(_that.pages);case Refusal_EncryptedPdf():
+return encryptedPdf();case Refusal_UnsupportedEncoding():
+return unsupportedEncoding(_that.page,_that.readablePercent);case Refusal_UnreadableStructure():
+return unreadableStructure(_that.page);case Refusal_MalformedDocument():
+return malformedDocument();case Refusal_DocumentTooLarge():
+return documentTooLarge(_that.mib,_that.limitMib);case Refusal_TooManyPages():
+return tooManyPages(_that.pages,_that.limit);case Refusal_TextTooLarge():
+return textTooLarge(_that.limitMib);case Refusal_CompressionBomb():
+return compressionBomb(_that.ratio);case Refusal_TooManyParts():
+return tooManyParts(_that.parts,_that.limit);case Refusal_TookTooLong():
+return tookTooLong(_that.millis);case Refusal_EmptyDocument():
+return emptyDocument();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int pages)?  scannedPdfNoTextLayer,TResult? Function()?  encryptedPdf,TResult? Function( int page,  int readablePercent)?  unsupportedEncoding,TResult? Function( int page)?  unreadableStructure,TResult? Function()?  malformedDocument,TResult? Function( int mib,  int limitMib)?  documentTooLarge,TResult? Function( int pages,  int limit)?  tooManyPages,TResult? Function( int limitMib)?  textTooLarge,TResult? Function( int ratio)?  compressionBomb,TResult? Function( int parts,  int limit)?  tooManyParts,TResult? Function( int millis)?  tookTooLong,TResult? Function()?  emptyDocument,}) {final _that = this;
+switch (_that) {
+case Refusal_ScannedPdfNoTextLayer() when scannedPdfNoTextLayer != null:
+return scannedPdfNoTextLayer(_that.pages);case Refusal_EncryptedPdf() when encryptedPdf != null:
+return encryptedPdf();case Refusal_UnsupportedEncoding() when unsupportedEncoding != null:
+return unsupportedEncoding(_that.page,_that.readablePercent);case Refusal_UnreadableStructure() when unreadableStructure != null:
+return unreadableStructure(_that.page);case Refusal_MalformedDocument() when malformedDocument != null:
+return malformedDocument();case Refusal_DocumentTooLarge() when documentTooLarge != null:
+return documentTooLarge(_that.mib,_that.limitMib);case Refusal_TooManyPages() when tooManyPages != null:
+return tooManyPages(_that.pages,_that.limit);case Refusal_TextTooLarge() when textTooLarge != null:
+return textTooLarge(_that.limitMib);case Refusal_CompressionBomb() when compressionBomb != null:
+return compressionBomb(_that.ratio);case Refusal_TooManyParts() when tooManyParts != null:
+return tooManyParts(_that.parts,_that.limit);case Refusal_TookTooLong() when tookTooLong != null:
+return tookTooLong(_that.millis);case Refusal_EmptyDocument() when emptyDocument != null:
+return emptyDocument();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class Refusal_ScannedPdfNoTextLayer extends Refusal {
+  const Refusal_ScannedPdfNoTextLayer({required this.pages}): super._();
+  
+
+ final  int pages;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_ScannedPdfNoTextLayerCopyWith<Refusal_ScannedPdfNoTextLayer> get copyWith => _$Refusal_ScannedPdfNoTextLayerCopyWithImpl<Refusal_ScannedPdfNoTextLayer>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_ScannedPdfNoTextLayer&&(identical(other.pages, pages) || other.pages == pages));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,pages);
+
+@override
+String toString() {
+  return 'Refusal.scannedPdfNoTextLayer(pages: $pages)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_ScannedPdfNoTextLayerCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_ScannedPdfNoTextLayerCopyWith(Refusal_ScannedPdfNoTextLayer value, $Res Function(Refusal_ScannedPdfNoTextLayer) _then) = _$Refusal_ScannedPdfNoTextLayerCopyWithImpl;
+@useResult
+$Res call({
+ int pages
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_ScannedPdfNoTextLayerCopyWithImpl<$Res>
+    implements $Refusal_ScannedPdfNoTextLayerCopyWith<$Res> {
+  _$Refusal_ScannedPdfNoTextLayerCopyWithImpl(this._self, this._then);
+
+  final Refusal_ScannedPdfNoTextLayer _self;
+  final $Res Function(Refusal_ScannedPdfNoTextLayer) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? pages = null,}) {
+  return _then(Refusal_ScannedPdfNoTextLayer(
+pages: null == pages ? _self.pages : pages // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Refusal_EncryptedPdf extends Refusal {
+  const Refusal_EncryptedPdf(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_EncryptedPdf);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Refusal.encryptedPdf()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Refusal_UnsupportedEncoding extends Refusal {
+  const Refusal_UnsupportedEncoding({required this.page, required this.readablePercent}): super._();
+  
+
+ final  int page;
+ final  int readablePercent;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_UnsupportedEncodingCopyWith<Refusal_UnsupportedEncoding> get copyWith => _$Refusal_UnsupportedEncodingCopyWithImpl<Refusal_UnsupportedEncoding>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_UnsupportedEncoding&&(identical(other.page, page) || other.page == page)&&(identical(other.readablePercent, readablePercent) || other.readablePercent == readablePercent));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,page,readablePercent);
+
+@override
+String toString() {
+  return 'Refusal.unsupportedEncoding(page: $page, readablePercent: $readablePercent)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_UnsupportedEncodingCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_UnsupportedEncodingCopyWith(Refusal_UnsupportedEncoding value, $Res Function(Refusal_UnsupportedEncoding) _then) = _$Refusal_UnsupportedEncodingCopyWithImpl;
+@useResult
+$Res call({
+ int page, int readablePercent
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_UnsupportedEncodingCopyWithImpl<$Res>
+    implements $Refusal_UnsupportedEncodingCopyWith<$Res> {
+  _$Refusal_UnsupportedEncodingCopyWithImpl(this._self, this._then);
+
+  final Refusal_UnsupportedEncoding _self;
+  final $Res Function(Refusal_UnsupportedEncoding) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? page = null,Object? readablePercent = null,}) {
+  return _then(Refusal_UnsupportedEncoding(
+page: null == page ? _self.page : page // ignore: cast_nullable_to_non_nullable
+as int,readablePercent: null == readablePercent ? _self.readablePercent : readablePercent // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Refusal_UnreadableStructure extends Refusal {
+  const Refusal_UnreadableStructure({required this.page}): super._();
+  
+
+ final  int page;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_UnreadableStructureCopyWith<Refusal_UnreadableStructure> get copyWith => _$Refusal_UnreadableStructureCopyWithImpl<Refusal_UnreadableStructure>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_UnreadableStructure&&(identical(other.page, page) || other.page == page));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,page);
+
+@override
+String toString() {
+  return 'Refusal.unreadableStructure(page: $page)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_UnreadableStructureCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_UnreadableStructureCopyWith(Refusal_UnreadableStructure value, $Res Function(Refusal_UnreadableStructure) _then) = _$Refusal_UnreadableStructureCopyWithImpl;
+@useResult
+$Res call({
+ int page
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_UnreadableStructureCopyWithImpl<$Res>
+    implements $Refusal_UnreadableStructureCopyWith<$Res> {
+  _$Refusal_UnreadableStructureCopyWithImpl(this._self, this._then);
+
+  final Refusal_UnreadableStructure _self;
+  final $Res Function(Refusal_UnreadableStructure) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? page = null,}) {
+  return _then(Refusal_UnreadableStructure(
+page: null == page ? _self.page : page // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Refusal_MalformedDocument extends Refusal {
+  const Refusal_MalformedDocument(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_MalformedDocument);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Refusal.malformedDocument()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class Refusal_DocumentTooLarge extends Refusal {
+  const Refusal_DocumentTooLarge({required this.mib, required this.limitMib}): super._();
+  
+
+ final  int mib;
+ final  int limitMib;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_DocumentTooLargeCopyWith<Refusal_DocumentTooLarge> get copyWith => _$Refusal_DocumentTooLargeCopyWithImpl<Refusal_DocumentTooLarge>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_DocumentTooLarge&&(identical(other.mib, mib) || other.mib == mib)&&(identical(other.limitMib, limitMib) || other.limitMib == limitMib));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,mib,limitMib);
+
+@override
+String toString() {
+  return 'Refusal.documentTooLarge(mib: $mib, limitMib: $limitMib)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_DocumentTooLargeCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_DocumentTooLargeCopyWith(Refusal_DocumentTooLarge value, $Res Function(Refusal_DocumentTooLarge) _then) = _$Refusal_DocumentTooLargeCopyWithImpl;
+@useResult
+$Res call({
+ int mib, int limitMib
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_DocumentTooLargeCopyWithImpl<$Res>
+    implements $Refusal_DocumentTooLargeCopyWith<$Res> {
+  _$Refusal_DocumentTooLargeCopyWithImpl(this._self, this._then);
+
+  final Refusal_DocumentTooLarge _self;
+  final $Res Function(Refusal_DocumentTooLarge) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? mib = null,Object? limitMib = null,}) {
+  return _then(Refusal_DocumentTooLarge(
+mib: null == mib ? _self.mib : mib // ignore: cast_nullable_to_non_nullable
+as int,limitMib: null == limitMib ? _self.limitMib : limitMib // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Refusal_TooManyPages extends Refusal {
+  const Refusal_TooManyPages({required this.pages, required this.limit}): super._();
+  
+
+ final  int pages;
+ final  int limit;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_TooManyPagesCopyWith<Refusal_TooManyPages> get copyWith => _$Refusal_TooManyPagesCopyWithImpl<Refusal_TooManyPages>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_TooManyPages&&(identical(other.pages, pages) || other.pages == pages)&&(identical(other.limit, limit) || other.limit == limit));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,pages,limit);
+
+@override
+String toString() {
+  return 'Refusal.tooManyPages(pages: $pages, limit: $limit)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_TooManyPagesCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_TooManyPagesCopyWith(Refusal_TooManyPages value, $Res Function(Refusal_TooManyPages) _then) = _$Refusal_TooManyPagesCopyWithImpl;
+@useResult
+$Res call({
+ int pages, int limit
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_TooManyPagesCopyWithImpl<$Res>
+    implements $Refusal_TooManyPagesCopyWith<$Res> {
+  _$Refusal_TooManyPagesCopyWithImpl(this._self, this._then);
+
+  final Refusal_TooManyPages _self;
+  final $Res Function(Refusal_TooManyPages) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? pages = null,Object? limit = null,}) {
+  return _then(Refusal_TooManyPages(
+pages: null == pages ? _self.pages : pages // ignore: cast_nullable_to_non_nullable
+as int,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Refusal_TextTooLarge extends Refusal {
+  const Refusal_TextTooLarge({required this.limitMib}): super._();
+  
+
+ final  int limitMib;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_TextTooLargeCopyWith<Refusal_TextTooLarge> get copyWith => _$Refusal_TextTooLargeCopyWithImpl<Refusal_TextTooLarge>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_TextTooLarge&&(identical(other.limitMib, limitMib) || other.limitMib == limitMib));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,limitMib);
+
+@override
+String toString() {
+  return 'Refusal.textTooLarge(limitMib: $limitMib)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_TextTooLargeCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_TextTooLargeCopyWith(Refusal_TextTooLarge value, $Res Function(Refusal_TextTooLarge) _then) = _$Refusal_TextTooLargeCopyWithImpl;
+@useResult
+$Res call({
+ int limitMib
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_TextTooLargeCopyWithImpl<$Res>
+    implements $Refusal_TextTooLargeCopyWith<$Res> {
+  _$Refusal_TextTooLargeCopyWithImpl(this._self, this._then);
+
+  final Refusal_TextTooLarge _self;
+  final $Res Function(Refusal_TextTooLarge) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? limitMib = null,}) {
+  return _then(Refusal_TextTooLarge(
+limitMib: null == limitMib ? _self.limitMib : limitMib // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Refusal_CompressionBomb extends Refusal {
+  const Refusal_CompressionBomb({required this.ratio}): super._();
+  
+
+ final  int ratio;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_CompressionBombCopyWith<Refusal_CompressionBomb> get copyWith => _$Refusal_CompressionBombCopyWithImpl<Refusal_CompressionBomb>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_CompressionBomb&&(identical(other.ratio, ratio) || other.ratio == ratio));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,ratio);
+
+@override
+String toString() {
+  return 'Refusal.compressionBomb(ratio: $ratio)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_CompressionBombCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_CompressionBombCopyWith(Refusal_CompressionBomb value, $Res Function(Refusal_CompressionBomb) _then) = _$Refusal_CompressionBombCopyWithImpl;
+@useResult
+$Res call({
+ int ratio
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_CompressionBombCopyWithImpl<$Res>
+    implements $Refusal_CompressionBombCopyWith<$Res> {
+  _$Refusal_CompressionBombCopyWithImpl(this._self, this._then);
+
+  final Refusal_CompressionBomb _self;
+  final $Res Function(Refusal_CompressionBomb) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? ratio = null,}) {
+  return _then(Refusal_CompressionBomb(
+ratio: null == ratio ? _self.ratio : ratio // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Refusal_TooManyParts extends Refusal {
+  const Refusal_TooManyParts({required this.parts, required this.limit}): super._();
+  
+
+ final  int parts;
+ final  int limit;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_TooManyPartsCopyWith<Refusal_TooManyParts> get copyWith => _$Refusal_TooManyPartsCopyWithImpl<Refusal_TooManyParts>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_TooManyParts&&(identical(other.parts, parts) || other.parts == parts)&&(identical(other.limit, limit) || other.limit == limit));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,parts,limit);
+
+@override
+String toString() {
+  return 'Refusal.tooManyParts(parts: $parts, limit: $limit)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_TooManyPartsCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_TooManyPartsCopyWith(Refusal_TooManyParts value, $Res Function(Refusal_TooManyParts) _then) = _$Refusal_TooManyPartsCopyWithImpl;
+@useResult
+$Res call({
+ int parts, int limit
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_TooManyPartsCopyWithImpl<$Res>
+    implements $Refusal_TooManyPartsCopyWith<$Res> {
+  _$Refusal_TooManyPartsCopyWithImpl(this._self, this._then);
+
+  final Refusal_TooManyParts _self;
+  final $Res Function(Refusal_TooManyParts) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? parts = null,Object? limit = null,}) {
+  return _then(Refusal_TooManyParts(
+parts: null == parts ? _self.parts : parts // ignore: cast_nullable_to_non_nullable
+as int,limit: null == limit ? _self.limit : limit // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Refusal_TookTooLong extends Refusal {
+  const Refusal_TookTooLong({required this.millis}): super._();
+  
+
+ final  int millis;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$Refusal_TookTooLongCopyWith<Refusal_TookTooLong> get copyWith => _$Refusal_TookTooLongCopyWithImpl<Refusal_TookTooLong>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_TookTooLong&&(identical(other.millis, millis) || other.millis == millis));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,millis);
+
+@override
+String toString() {
+  return 'Refusal.tookTooLong(millis: $millis)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $Refusal_TookTooLongCopyWith<$Res> implements $RefusalCopyWith<$Res> {
+  factory $Refusal_TookTooLongCopyWith(Refusal_TookTooLong value, $Res Function(Refusal_TookTooLong) _then) = _$Refusal_TookTooLongCopyWithImpl;
+@useResult
+$Res call({
+ int millis
+});
+
+
+
+
+}
+/// @nodoc
+class _$Refusal_TookTooLongCopyWithImpl<$Res>
+    implements $Refusal_TookTooLongCopyWith<$Res> {
+  _$Refusal_TookTooLongCopyWithImpl(this._self, this._then);
+
+  final Refusal_TookTooLong _self;
+  final $Res Function(Refusal_TookTooLong) _then;
+
+/// Create a copy of Refusal
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? millis = null,}) {
+  return _then(Refusal_TookTooLong(
+millis: null == millis ? _self.millis : millis // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class Refusal_EmptyDocument extends Refusal {
+  const Refusal_EmptyDocument(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Refusal_EmptyDocument);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'Refusal.emptyDocument()';
+}
+
+
+}
+
+
+
 
 /// @nodoc
 mixin _$UndoOutcome {

@@ -212,24 +212,37 @@ pub enum DocumentKind {
 pub enum Refusal {
     /// Pages with no text layer at all — a photograph of a document. We do not
     /// guess, and we do not send it anywhere to be read.
-    ScannedPdfNoTextLayer,
+    ScannedPdfNoTextLayer { pages: u32 },
     /// The file is encrypted. Opening it would need its password, which is a
     /// different conversation.
     EncryptedPdf,
-    /// The text is there but written in an encoding this build cannot read
-    /// faithfully. Refused rather than mangled.
-    UnsupportedEncoding,
+    /// The text is there but this build cannot read it faithfully.
+    ///
+    /// `page` names where (0 for the file as a whole) and `readable_percent` says
+    /// how much of that page came out as text. **Measured per page on purpose:**
+    /// nineteen clean pages and one at 41% average out to «fine», and the page
+    /// that failed is exactly the page with the client's name on it.
+    UnsupportedEncoding { page: u32, readable_percent: u32 },
+    /// The page's fonts or filters are ones this reader does not understand, so
+    /// nothing on it can be trusted — refused even if part of it looks like words.
+    /// Fail-closed: the dangerous failure is not a refused import, it is an import
+    /// that looks successful while secrets sit in text we could not see.
+    UnreadableStructure { page: u32 },
     /// The file does not hold together: a broken zip, a truncated PDF.
     MalformedDocument,
     /// Bigger than the limit. A document is untrusted input; one file may not eat
     /// the machine.
-    DocumentTooLarge,
+    DocumentTooLarge { mib: u32, limit_mib: u32 },
     /// More pages than the limit.
-    TooManyPages,
+    TooManyPages { pages: u32, limit: u32 },
     /// The text after decompression is past the limit — a small file that swells.
-    TextTooLarge,
+    TextTooLarge { limit_mib: u32 },
+    /// A few compressed bytes that unpack into a great many: a zip bomb.
+    CompressionBomb { ratio: u32 },
+    /// More parts inside the file than a document has any reason to hold.
+    TooManyParts { parts: u32, limit: u32 },
     /// Reading it took longer than the limit.
-    TookTooLong,
+    TookTooLong { millis: u32 },
     /// Empty, or nothing but whitespace: there is nothing to protect.
     EmptyDocument,
 }

@@ -35,6 +35,11 @@ pub(crate) mod limits {
     pub(crate) const TEXT_BYTES: usize = 4 * 1024 * 1024;
     /// One entry inside a zip, decompressed.
     pub(crate) const ZIP_ENTRY_BYTES: usize = 8 * 1024 * 1024;
+    /// Parts listed inside one zip. A DOCX has tens, not thousands.
+    pub(crate) const ZIP_ENTRIES: u32 = 512;
+    /// How much bigger a part may be than its compressed form. A zip bomb is a
+    /// few kilobytes that unpack into gigabytes; a document is well under this.
+    pub(crate) const MAX_RATIO: u32 = 200;
     /// How long reading may take before we stop and say so.
     pub(crate) const MILLIS: u64 = 5_000;
 }
@@ -94,7 +99,9 @@ impl Builder {
         }
         if self.text.len().saturating_add(run.len()) > limits::TEXT_BYTES {
             return Err(refuse(
-                Refusal::TextTooLarge,
+                Refusal::TextTooLarge {
+                    limit_mib: (limits::TEXT_BYTES / 1024 / 1024) as u32,
+                },
                 format!("the text passed {} MiB while being read", limits::TEXT_BYTES / 1024 / 1024),
             ));
         }
@@ -150,7 +157,9 @@ impl Budget {
     pub(crate) fn check(&self) -> ApiResult<()> {
         if self.started.elapsed() > self.limit {
             return Err(refuse(
-                Refusal::TookTooLong,
+                Refusal::TookTooLong {
+                    millis: limits::MILLIS as u32,
+                },
                 format!("reading this document passed {} ms", limits::MILLIS),
             ));
         }
@@ -166,7 +175,10 @@ pub(crate) fn refuse(reason: Refusal, detail: String) -> ApiError {
 pub(crate) fn extract(bytes: &[u8], kind: DocumentKind) -> ApiResult<Extracted> {
     if bytes.len() > limits::FILE_BYTES {
         return Err(refuse(
-            Refusal::DocumentTooLarge,
+            Refusal::DocumentTooLarge {
+                mib: (bytes.len() / 1024 / 1024) as u32,
+                limit_mib: (limits::FILE_BYTES / 1024 / 1024) as u32,
+            },
             format!(
                 "{} MiB is past the {} MiB limit for one document",
                 bytes.len() / 1024 / 1024,
@@ -185,7 +197,10 @@ pub(crate) fn extract(bytes: &[u8], kind: DocumentKind) -> ApiResult<Extracted> 
     }?;
     if extracted.pages > limits::PAGES {
         return Err(refuse(
-            Refusal::TooManyPages,
+            Refusal::TooManyPages {
+                pages: extracted.pages,
+                limit: limits::PAGES,
+            },
             format!("{} pages is past the limit of {}", extracted.pages, limits::PAGES),
         ));
     }
@@ -227,7 +242,7 @@ mod tests {
         let big = vec![b'a'; limits::FILE_BYTES + 1];
         match extract(&big, DocumentKind::Txt) {
             Err(ApiError::DocumentRefused { reason, detail }) => {
-                assert_eq!(reason, Refusal::DocumentTooLarge);
+                assert!(matches!(reason, Refusal::DocumentTooLarge { .. }), "{reason:?}");
                 assert!(detail.contains("limit"), "{detail}");
             }
             other => panic!("expected a refusal, got {other:?}"),
@@ -243,7 +258,7 @@ mod tests {
             match b.push(&chunk, 1, 1) {
                 Ok(()) => pushed += chunk.len(),
                 Err(ApiError::DocumentRefused { reason, .. }) => {
-                    assert_eq!(reason, Refusal::TextTooLarge);
+                    assert!(matches!(reason, Refusal::TextTooLarge { .. }), "{reason:?}");
                     assert!(pushed <= limits::TEXT_BYTES);
                     return;
                 }

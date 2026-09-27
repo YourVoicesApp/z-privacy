@@ -1669,7 +1669,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return ApiError_ImportRefused(reason: dco_decode_String(raw[1]));
       case 8:
         return ApiError_DocumentRefused(
-          reason: dco_decode_refusal(raw[1]),
+          reason: dco_decode_box_autoadd_refusal(raw[1]),
           detail: dco_decode_String(raw[2]),
         );
       case 9:
@@ -1713,6 +1713,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ProviderId dco_decode_box_autoadd_provider_id(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_provider_id(raw);
+  }
+
+  @protected
+  Refusal dco_decode_box_autoadd_refusal(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_refusal(raw);
   }
 
   @protected
@@ -2030,7 +2036,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Refusal dco_decode_refusal(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
-    return Refusal.values[raw as int];
+    switch (raw[0]) {
+      case 0:
+        return Refusal_ScannedPdfNoTextLayer(pages: dco_decode_u_32(raw[1]));
+      case 1:
+        return Refusal_EncryptedPdf();
+      case 2:
+        return Refusal_UnsupportedEncoding(
+          page: dco_decode_u_32(raw[1]),
+          readablePercent: dco_decode_u_32(raw[2]),
+        );
+      case 3:
+        return Refusal_UnreadableStructure(page: dco_decode_u_32(raw[1]));
+      case 4:
+        return Refusal_MalformedDocument();
+      case 5:
+        return Refusal_DocumentTooLarge(
+          mib: dco_decode_u_32(raw[1]),
+          limitMib: dco_decode_u_32(raw[2]),
+        );
+      case 6:
+        return Refusal_TooManyPages(
+          pages: dco_decode_u_32(raw[1]),
+          limit: dco_decode_u_32(raw[2]),
+        );
+      case 7:
+        return Refusal_TextTooLarge(limitMib: dco_decode_u_32(raw[1]));
+      case 8:
+        return Refusal_CompressionBomb(ratio: dco_decode_u_32(raw[1]));
+      case 9:
+        return Refusal_TooManyParts(
+          parts: dco_decode_u_32(raw[1]),
+          limit: dco_decode_u_32(raw[2]),
+        );
+      case 10:
+        return Refusal_TookTooLong(millis: dco_decode_u_32(raw[1]));
+      case 11:
+        return Refusal_EmptyDocument();
+      default:
+        throw Exception("unreachable");
+    }
   }
 
   @protected
@@ -2266,7 +2311,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         var var_reason = sse_decode_String(deserializer);
         return ApiError_ImportRefused(reason: var_reason);
       case 8:
-        var var_reason = sse_decode_refusal(deserializer);
+        var var_reason = sse_decode_box_autoadd_refusal(deserializer);
         var var_detail = sse_decode_String(deserializer);
         return ApiError_DocumentRefused(reason: var_reason, detail: var_detail);
       case 9:
@@ -2314,6 +2359,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ProviderId sse_decode_box_autoadd_provider_id(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_provider_id(deserializer));
+  }
+
+  @protected
+  Refusal sse_decode_box_autoadd_refusal(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_refusal(deserializer));
   }
 
   @protected
@@ -2721,8 +2772,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Refusal sse_decode_refusal(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var inner = sse_decode_i_32(deserializer);
-    return Refusal.values[inner];
+
+    var tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        var var_pages = sse_decode_u_32(deserializer);
+        return Refusal_ScannedPdfNoTextLayer(pages: var_pages);
+      case 1:
+        return Refusal_EncryptedPdf();
+      case 2:
+        var var_page = sse_decode_u_32(deserializer);
+        var var_readablePercent = sse_decode_u_32(deserializer);
+        return Refusal_UnsupportedEncoding(
+          page: var_page,
+          readablePercent: var_readablePercent,
+        );
+      case 3:
+        var var_page = sse_decode_u_32(deserializer);
+        return Refusal_UnreadableStructure(page: var_page);
+      case 4:
+        return Refusal_MalformedDocument();
+      case 5:
+        var var_mib = sse_decode_u_32(deserializer);
+        var var_limitMib = sse_decode_u_32(deserializer);
+        return Refusal_DocumentTooLarge(mib: var_mib, limitMib: var_limitMib);
+      case 6:
+        var var_pages = sse_decode_u_32(deserializer);
+        var var_limit = sse_decode_u_32(deserializer);
+        return Refusal_TooManyPages(pages: var_pages, limit: var_limit);
+      case 7:
+        var var_limitMib = sse_decode_u_32(deserializer);
+        return Refusal_TextTooLarge(limitMib: var_limitMib);
+      case 8:
+        var var_ratio = sse_decode_u_32(deserializer);
+        return Refusal_CompressionBomb(ratio: var_ratio);
+      case 9:
+        var var_parts = sse_decode_u_32(deserializer);
+        var var_limit = sse_decode_u_32(deserializer);
+        return Refusal_TooManyParts(parts: var_parts, limit: var_limit);
+      case 10:
+        var var_millis = sse_decode_u_32(deserializer);
+        return Refusal_TookTooLong(millis: var_millis);
+      case 11:
+        return Refusal_EmptyDocument();
+      default:
+        throw UnimplementedError('');
+    }
   }
 
   @protected
@@ -2956,7 +3051,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(reason, serializer);
       case ApiError_DocumentRefused(reason: final reason, detail: final detail):
         sse_encode_i_32(8, serializer);
-        sse_encode_refusal(reason, serializer);
+        sse_encode_box_autoadd_refusal(reason, serializer);
         sse_encode_String(detail, serializer);
       case ApiError_BadSpan(reason: final reason):
         sse_encode_i_32(9, serializer);
@@ -3008,6 +3103,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_provider_id(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_refusal(Refusal self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_refusal(self, serializer);
   }
 
   @protected
@@ -3347,7 +3448,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_refusal(Refusal self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_i_32(self.index, serializer);
+    switch (self) {
+      case Refusal_ScannedPdfNoTextLayer(pages: final pages):
+        sse_encode_i_32(0, serializer);
+        sse_encode_u_32(pages, serializer);
+      case Refusal_EncryptedPdf():
+        sse_encode_i_32(1, serializer);
+      case Refusal_UnsupportedEncoding(
+        page: final page,
+        readablePercent: final readablePercent,
+      ):
+        sse_encode_i_32(2, serializer);
+        sse_encode_u_32(page, serializer);
+        sse_encode_u_32(readablePercent, serializer);
+      case Refusal_UnreadableStructure(page: final page):
+        sse_encode_i_32(3, serializer);
+        sse_encode_u_32(page, serializer);
+      case Refusal_MalformedDocument():
+        sse_encode_i_32(4, serializer);
+      case Refusal_DocumentTooLarge(mib: final mib, limitMib: final limitMib):
+        sse_encode_i_32(5, serializer);
+        sse_encode_u_32(mib, serializer);
+        sse_encode_u_32(limitMib, serializer);
+      case Refusal_TooManyPages(pages: final pages, limit: final limit):
+        sse_encode_i_32(6, serializer);
+        sse_encode_u_32(pages, serializer);
+        sse_encode_u_32(limit, serializer);
+      case Refusal_TextTooLarge(limitMib: final limitMib):
+        sse_encode_i_32(7, serializer);
+        sse_encode_u_32(limitMib, serializer);
+      case Refusal_CompressionBomb(ratio: final ratio):
+        sse_encode_i_32(8, serializer);
+        sse_encode_u_32(ratio, serializer);
+      case Refusal_TooManyParts(parts: final parts, limit: final limit):
+        sse_encode_i_32(9, serializer);
+        sse_encode_u_32(parts, serializer);
+        sse_encode_u_32(limit, serializer);
+      case Refusal_TookTooLong(millis: final millis):
+        sse_encode_i_32(10, serializer);
+        sse_encode_u_32(millis, serializer);
+      case Refusal_EmptyDocument():
+        sse_encode_i_32(11, serializer);
+    }
   }
 
   @protected

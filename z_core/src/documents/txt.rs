@@ -12,7 +12,11 @@ use super::{refuse, Budget, Builder, Extracted};
 pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
     let text = std::str::from_utf8(strip_bom(bytes)).map_err(|e| {
         refuse(
-            Refusal::UnsupportedEncoding,
+            // Not a page problem: the whole file is in the wrong encoding.
+            Refusal::UnsupportedEncoding {
+                page: 0,
+                readable_percent: 0,
+            },
             format!(
                 "this file is not UTF-8 (byte {} is not valid) — save it as UTF-8 and it will read",
                 e.valid_up_to()
@@ -95,7 +99,7 @@ mod tests {
         let latin1 = [b'M', 0xFC, b'l', b'l', b'e', b'r'];
         match read(&latin1) {
             Err(ApiError::DocumentRefused { reason, detail }) => {
-                assert_eq!(reason, Refusal::UnsupportedEncoding);
+                assert!(matches!(reason, Refusal::UnsupportedEncoding { .. }), "{reason:?}");
                 assert!(detail.contains("UTF-8"), "{detail}");
             }
             other => panic!("expected a refusal, got {other:?}"),

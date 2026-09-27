@@ -469,37 +469,69 @@ class ProviderId {
       other is ProviderId && runtimeType == other.runtimeType && id == other.id;
 }
 
-enum Refusal {
+@freezed
+sealed class Refusal with _$Refusal {
+  const Refusal._();
+
   /// Pages with no text layer at all — a photograph of a document. We do not
   /// guess, and we do not send it anywhere to be read.
-  scannedPdfNoTextLayer,
+  const factory Refusal.scannedPdfNoTextLayer({required int pages}) =
+      Refusal_ScannedPdfNoTextLayer;
 
   /// The file is encrypted. Opening it would need its password, which is a
   /// different conversation.
-  encryptedPdf,
+  const factory Refusal.encryptedPdf() = Refusal_EncryptedPdf;
 
-  /// The text is there but written in an encoding this build cannot read
-  /// faithfully. Refused rather than mangled.
-  unsupportedEncoding,
+  /// The text is there but this build cannot read it faithfully.
+  ///
+  /// `page` names where (0 for the file as a whole) and `readable_percent` says
+  /// how much of that page came out as text. **Measured per page on purpose:**
+  /// nineteen clean pages and one at 41% average out to «fine», and the page
+  /// that failed is exactly the page with the client's name on it.
+  const factory Refusal.unsupportedEncoding({
+    required int page,
+    required int readablePercent,
+  }) = Refusal_UnsupportedEncoding;
+
+  /// The page's fonts or filters are ones this reader does not understand, so
+  /// nothing on it can be trusted — refused even if part of it looks like words.
+  /// Fail-closed: the dangerous failure is not a refused import, it is an import
+  /// that looks successful while secrets sit in text we could not see.
+  const factory Refusal.unreadableStructure({required int page}) =
+      Refusal_UnreadableStructure;
 
   /// The file does not hold together: a broken zip, a truncated PDF.
-  malformedDocument,
+  const factory Refusal.malformedDocument() = Refusal_MalformedDocument;
 
   /// Bigger than the limit. A document is untrusted input; one file may not eat
   /// the machine.
-  documentTooLarge,
+  const factory Refusal.documentTooLarge({
+    required int mib,
+    required int limitMib,
+  }) = Refusal_DocumentTooLarge;
 
   /// More pages than the limit.
-  tooManyPages,
+  const factory Refusal.tooManyPages({required int pages, required int limit}) =
+      Refusal_TooManyPages;
 
   /// The text after decompression is past the limit — a small file that swells.
-  textTooLarge,
+  const factory Refusal.textTooLarge({required int limitMib}) =
+      Refusal_TextTooLarge;
+
+  /// A few compressed bytes that unpack into a great many: a zip bomb.
+  const factory Refusal.compressionBomb({required int ratio}) =
+      Refusal_CompressionBomb;
+
+  /// More parts inside the file than a document has any reason to hold.
+  const factory Refusal.tooManyParts({required int parts, required int limit}) =
+      Refusal_TooManyParts;
 
   /// Reading it took longer than the limit.
-  tookTooLong,
+  const factory Refusal.tookTooLong({required int millis}) =
+      Refusal_TookTooLong;
 
   /// Empty, or nothing but whitespace: there is nothing to protect.
-  emptyDocument,
+  const factory Refusal.emptyDocument() = Refusal_EmptyDocument;
 }
 
 class RescanOutcome {

@@ -199,7 +199,7 @@ fn twenty_scanned_pages_are_refused_and_that_is_the_success() {
     let session = open_session(None, "de".to_string()).expect("open");
     match import_document(session, "Scan.pdf".to_string(), pdf.into_bytes(), DocumentKind::Pdf) {
         Err(ApiError::DocumentRefused { reason, detail }) => {
-            assert_eq!(reason, Refusal::ScannedPdfNoTextLayer);
+            assert_eq!(reason, Refusal::ScannedPdfNoTextLayer { pages: 20 }, "and it counted them");
             assert!(detail.contains("20 pages"), "{detail}");
             assert!(detail.contains("scan"), "and it says what it thinks this is: {detail}");
         }

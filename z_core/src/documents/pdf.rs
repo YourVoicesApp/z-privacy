@@ -50,36 +50,71 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
     }
     if pages.len() as u32 > limits::PAGES {
         return Err(refuse(
-            Refusal::TooManyPages,
+            Refusal::TooManyPages {
+                pages: pages.len() as u32,
+                limit: limits::PAGES,
+            },
             format!("{} pages is past the limit of {}", pages.len(), limits::PAGES),
         ));
     }
 
     let mut out = Builder::new();
     let mut pages_with_text = 0usize;
-    let mut unmappable = 0usize;
 
     for (index, page_ref) in pages.iter().enumerate() {
         budget.check()?;
         let page_number = index as u32 + 1;
         let Some(page) = objects.get(page_ref).map(|o| o.dict.clone()) else { continue };
 
+        // Fail-closed, before a single character is believed: if this page's fonts
+        // or its content's filters are ones this reader does not follow, nothing on
+        // the page can be trusted — not even the part that looks like words.
         let fonts = page_fonts(&objects, &page);
+        if let Some(why) = unreadable_structure(&objects, &page, &fonts) {
+            return Err(refuse(
+                Refusal::UnreadableStructure { page: page_number },
+                format!(
+                    "page {page_number} cannot be read faithfully: {why}. The document is refused rather than half-read — a name we cannot see is a name we cannot protect"
+                ),
+            ));
+        }
+
         let content = page_content(&objects, &page)?;
         let runs = text_runs(&content, &fonts);
-        if runs.is_empty() {
+        let page_text: String = runs
+            .iter()
+            .filter_map(|r| match r {
+                Run::Text(text) => Some(text.as_str()),
+                Run::Unmappable => None,
+            })
+            .collect::<Vec<&str>>()
+            .join(" ");
+        if page_text.trim().is_empty() {
             continue;
         }
         pages_with_text += 1;
+
+        // The readable share is measured **per page**, because an average hides the
+        // one page that failed — and that is exactly the page with the name on it.
+        let percent = readable_percent(&page_text);
+        if percent < MIN_READABLE_PERCENT {
+            return Err(refuse(
+                Refusal::UnsupportedEncoding {
+                    page: page_number,
+                    readable_percent: percent as u32,
+                },
+                format!(
+                    "only {percent}% of page {page_number} decoded into characters, so this page's fonts are not ones this build reads faithfully. The whole document is refused, because a name we cannot see is a name we cannot protect — open it and save it as text, or paste the text in instead"
+                ),
+            ));
+        }
+
         for (paragraph, run) in runs.iter().enumerate() {
-            match run {
-                Run::Text(text) => {
-                    if !text.trim().is_empty() {
-                        out.push(text, page_number, paragraph as u32 + 1)?;
-                        out.push_break("\n");
-                    }
+            if let Run::Text(text) = run {
+                if !text.trim().is_empty() {
+                    out.push(text, page_number, paragraph as u32 + 1)?;
+                    out.push_break("\n");
                 }
-                Run::Unmappable => unmappable += 1,
             }
         }
         out.push_break("\n");
@@ -87,57 +122,97 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
 
     if pages_with_text == 0 {
         return Err(refuse(
-            Refusal::ScannedPdfNoTextLayer,
+            Refusal::ScannedPdfNoTextLayer {
+                pages: pages.len() as u32,
+            },
             format!(
                 "all {} pages are images with no text layer — this looks like a scan, and we will not send it anywhere to be read",
                 pages.len()
             ),
         ));
     }
-    if unmappable > 0 {
-        return Err(refuse(
-            Refusal::UnsupportedEncoding,
-            format!(
-                "{unmappable} pieces of text use a font whose characters this build cannot map (no /ToUnicode table) — refused rather than read wrongly"
-            ),
-        ));
-    }
-    let extracted = out.finish()?;
-    check_readable(&extracted.text)?;
-    Ok(extracted)
+    out.finish()
 }
 
-/// Text must be text.
+/// How much of this text decoded into characters at all.
 ///
-/// A font can be mapped in a way this reader does not follow — a custom
-/// `/Differences` encoding, a partial `/ToUnicode` — and the result is a page that
-/// is half words and half rubbish. Measured on a real invoice: 52% readable. Half
-/// a document read wrongly is worse than none, because a name protected by the
-/// scanner cannot be recognised in nonsense. So it is measured, and refused.
-fn check_readable(text: &str) -> ApiResult<()> {
+/// The question is «did these bytes become text», not «is this text English». An
+/// earlier version counted only ASCII punctuation as readable, and so marked a
+/// financial table full of «§ € – ×» as half rubbish: the measure was wrong, not
+/// the page. What a failed decoding actually produces is the opposite of
+/// characters — control bytes, the replacement mark, private-use glyph slots — and
+/// that is what is counted against a page here.
+fn readable_percent(text: &str) -> usize {
     let total = text.chars().count();
     if total == 0 {
-        return Ok(());
+        return 100;
     }
-    let readable = text
-        .chars()
-        .filter(|c| c.is_alphanumeric() || c.is_whitespace() || c.is_ascii_punctuation())
-        .count();
-    let percent = readable.saturating_mul(100) / total;
-    if percent < MIN_READABLE_PERCENT {
-        return Err(refuse(
-            Refusal::UnsupportedEncoding,
-            format!(
-                "only {percent}% of the text came out as readable characters, so this file's fonts are not ones this build can read faithfully — refused rather than half-read"
-            ),
-        ));
-    }
-    Ok(())
+    let broken = text.chars().filter(|c| !decoded(*c)).count();
+    let readable = total.saturating_sub(broken);
+    readable.saturating_mul(100) / total
 }
 
-/// Below this, the text is not text. Chosen from measurement: clean documents
-/// come out at 86–99%, and the file that was half rubbish came out at 52%.
+/// Did this character come out of a decoding, or out of a failure?
+fn decoded(c: char) -> bool {
+    if matches!(c, '\n' | '\r' | '\t') {
+        return true;
+    }
+    // The replacement mark means «these bytes were not what we thought».
+    if c == '\u{FFFD}' {
+        return false;
+    }
+    // Private use: a font's own glyph numbers read as if they were characters.
+    if matches!(c, '\u{E000}'..='\u{F8FF}' | '\u{F0000}'..='\u{FFFFD}' | '\u{100000}'..='\u{10FFFD}') {
+        return false;
+    }
+    // Control characters are not text.
+    !c.is_control()
+}
+
+/// Below this, the text is not text. Chosen from measurement on real documents:
+/// clean pages come out at 86–99%, and a page that was half rubbish came out at 52%.
 const MIN_READABLE_PERCENT: usize = 80;
+
+/// Does this page use something this reader does not understand?
+///
+/// Structural, not statistical: these are the cases where the bytes may well decode
+/// into something that *looks* like words while meaning something else. A refusal
+/// here is the whole point of fail-closed.
+fn unreadable_structure(objects: &Objects, page: &str, fonts: &Fonts) -> Option<String> {
+    if let Some(name) = fonts.unmappable.keys().next() {
+        return Some(format!(
+            "font /{name} needs a character map (Identity-H or Type0) and the file carries none"
+        ));
+    }
+    if let Some(name) = fonts.remapped.keys().next() {
+        return Some(format!(
+            "font /{name} remaps its characters with /Differences, which this reader does not apply"
+        ));
+    }
+    // A content stream filtered by something we do not decode.
+    let mut refs = references(page, "/Contents");
+    if refs.is_empty() {
+        if let Some(single) = reference(page, "/Contents") {
+            refs.push(single);
+        }
+    }
+    for number in refs {
+        let Some(body) = objects.get(&number) else { continue };
+        for filter in [
+            "/LZWDecode",
+            "/ASCII85Decode",
+            "/ASCIIHexDecode",
+            "/RunLengthDecode",
+            "/JBIG2Decode",
+            "/Crypt",
+        ] {
+            if body.dict.contains(filter) {
+                return Some(format!("its text is packed with {filter}, which this reader does not unpack"));
+            }
+        }
+    }
+    None
+}
 
 // ---------------------------------------------------------------- objects
 
@@ -454,6 +529,9 @@ struct Fonts {
     maps: BTreeMap<String, BTreeMap<u32, String>>,
     /// Fonts that need a map and do not have one.
     unmappable: BTreeMap<String, bool>,
+    /// Fonts that remap their own characters with /Differences. This reader does
+    /// not apply those tables, so a page using one is refused rather than read.
+    remapped: BTreeMap<String, bool>,
 }
 
 fn page_fonts(objects: &Objects, page: &str) -> Fonts {
@@ -478,6 +556,18 @@ fn page_fonts(objects: &Objects, page: &str) -> Fonts {
             continue;
         };
         let Some(font) = objects.get(&number).map(|o| o.dict.clone()) else { continue };
+
+        // A simple font may remap its characters through /Encoding /Differences.
+        // We do not follow that table, so the page is not ours to read.
+        let encoding = reference(&font, "/Encoding")
+            .and_then(|n| objects.get(&n))
+            .map(|o| o.dict.clone())
+            .unwrap_or_default();
+        if font.contains("/Differences") || encoding.contains("/Differences") {
+            fonts.remapped.insert(name.to_string(), true);
+            continue;
+        }
+
         let needs_map = font.contains("/Type0") || font.contains("Identity-H");
         if !needs_map {
             continue;
@@ -846,7 +936,10 @@ mod tests {
         let pdf = scanned_pdf(20);
         match read(&pdf) {
             Err(e) => {
-                assert_eq!(error_of(&e), Some(Refusal::ScannedPdfNoTextLayer));
+                assert!(
+                    matches!(error_of(&e), Some(Refusal::ScannedPdfNoTextLayer { pages: 20 })),
+                    "{e}"
+                );
                 assert!(format!("{e}").contains("20 pages"), "{e}");
             }
             Ok(out) => panic!("a scan must be refused, got {} characters", out.text.len()),
@@ -872,9 +965,15 @@ mod tests {
         pdf.push_str(&format!("4 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n", stream.len()));
         pdf.push_str("5 0 obj\n<< /Type/Font /Subtype/Type0 /Encoding/Identity-H /BaseFont/Custom >>\nendobj\n");
         pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
-        assert_eq!(
-            read(pdf.as_bytes()).err().as_ref().and_then(error_of),
-            Some(Refusal::UnsupportedEncoding)
+        // Structural: the font needs a map and the file carries none, so the page
+        // is refused before any character is believed.
+        assert!(
+            matches!(
+                read(pdf.as_bytes()).err().as_ref().and_then(error_of),
+                Some(Refusal::UnreadableStructure { page: 1 })
+            ),
+            "{:?}",
+            read(pdf.as_bytes()).err()
         );
     }
 

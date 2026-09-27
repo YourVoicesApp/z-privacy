@@ -47,6 +47,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ProviderId dco_decode_box_autoadd_provider_id(dynamic raw);
 
   @protected
+  Refusal dco_decode_box_autoadd_refusal(dynamic raw);
+
+  @protected
   SessionId dco_decode_box_autoadd_session_id(dynamic raw);
 
   @protected
@@ -233,6 +236,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProviderId sse_decode_box_autoadd_provider_id(SseDeserializer deserializer);
+
+  @protected
+  Refusal sse_decode_box_autoadd_refusal(SseDeserializer deserializer);
 
   @protected
   SessionId sse_decode_box_autoadd_session_id(SseDeserializer deserializer);
@@ -430,6 +436,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     ProviderId self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_refusal(Refusal self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_session_id(

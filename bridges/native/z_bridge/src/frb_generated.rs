@@ -1439,6 +1439,42 @@ const _: fn() = || {
         let ProviderId = None::<crate::api::mirrors::ProviderId>.unwrap();
         let _: String = ProviderId.id;
     }
+    match None::<crate::api::mirrors::Refusal>.unwrap() {
+        crate::api::mirrors::Refusal::ScannedPdfNoTextLayer { pages } => {
+            let _: u32 = pages;
+        }
+        crate::api::mirrors::Refusal::EncryptedPdf => {}
+        crate::api::mirrors::Refusal::UnsupportedEncoding { page, readable_percent } => {
+            let _: u32 = page;
+            let _: u32 = readable_percent;
+        }
+        crate::api::mirrors::Refusal::UnreadableStructure { page } => {
+            let _: u32 = page;
+        }
+        crate::api::mirrors::Refusal::MalformedDocument => {}
+        crate::api::mirrors::Refusal::DocumentTooLarge { mib, limit_mib } => {
+            let _: u32 = mib;
+            let _: u32 = limit_mib;
+        }
+        crate::api::mirrors::Refusal::TooManyPages { pages, limit } => {
+            let _: u32 = pages;
+            let _: u32 = limit;
+        }
+        crate::api::mirrors::Refusal::TextTooLarge { limit_mib } => {
+            let _: u32 = limit_mib;
+        }
+        crate::api::mirrors::Refusal::CompressionBomb { ratio } => {
+            let _: u32 = ratio;
+        }
+        crate::api::mirrors::Refusal::TooManyParts { parts, limit } => {
+            let _: u32 = parts;
+            let _: u32 = limit;
+        }
+        crate::api::mirrors::Refusal::TookTooLong { millis } => {
+            let _: u32 = millis;
+        }
+        crate::api::mirrors::Refusal::EmptyDocument => {}
+    }
     {
         let RescanOutcome = None::<crate::api::mirrors::RescanOutcome>.unwrap();
         let _: u32 = RescanOutcome.changed_to_manual;
@@ -2070,19 +2106,75 @@ impl SseDecode for crate::api::mirrors::ProviderId {
 impl SseDecode for crate::api::mirrors::Refusal {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut inner = <i32>::sse_decode(deserializer);
-        return match inner {
-            0 => crate::api::mirrors::Refusal::ScannedPdfNoTextLayer,
-            1 => crate::api::mirrors::Refusal::EncryptedPdf,
-            2 => crate::api::mirrors::Refusal::UnsupportedEncoding,
-            3 => crate::api::mirrors::Refusal::MalformedDocument,
-            4 => crate::api::mirrors::Refusal::DocumentTooLarge,
-            5 => crate::api::mirrors::Refusal::TooManyPages,
-            6 => crate::api::mirrors::Refusal::TextTooLarge,
-            7 => crate::api::mirrors::Refusal::TookTooLong,
-            8 => crate::api::mirrors::Refusal::EmptyDocument,
-            _ => unreachable!("Invalid variant for Refusal: {}", inner),
-        };
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                let mut var_pages = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::ScannedPdfNoTextLayer { pages: var_pages };
+            }
+            1 => {
+                return crate::api::mirrors::Refusal::EncryptedPdf;
+            }
+            2 => {
+                let mut var_page = <u32>::sse_decode(deserializer);
+                let mut var_readablePercent = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::UnsupportedEncoding {
+                    page: var_page,
+                    readable_percent: var_readablePercent,
+                };
+            }
+            3 => {
+                let mut var_page = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::UnreadableStructure { page: var_page };
+            }
+            4 => {
+                return crate::api::mirrors::Refusal::MalformedDocument;
+            }
+            5 => {
+                let mut var_mib = <u32>::sse_decode(deserializer);
+                let mut var_limitMib = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::DocumentTooLarge {
+                    mib: var_mib,
+                    limit_mib: var_limitMib,
+                };
+            }
+            6 => {
+                let mut var_pages = <u32>::sse_decode(deserializer);
+                let mut var_limit = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::TooManyPages {
+                    pages: var_pages,
+                    limit: var_limit,
+                };
+            }
+            7 => {
+                let mut var_limitMib = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::TextTooLarge {
+                    limit_mib: var_limitMib,
+                };
+            }
+            8 => {
+                let mut var_ratio = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::CompressionBomb { ratio: var_ratio };
+            }
+            9 => {
+                let mut var_parts = <u32>::sse_decode(deserializer);
+                let mut var_limit = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::TooManyParts {
+                    parts: var_parts,
+                    limit: var_limit,
+                };
+            }
+            10 => {
+                let mut var_millis = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::Refusal::TookTooLong { millis: var_millis };
+            }
+            11 => {
+                return crate::api::mirrors::Refusal::EmptyDocument;
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 
@@ -2819,16 +2911,51 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::ProviderI
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Refusal> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self.0 {
-            crate::api::mirrors::Refusal::ScannedPdfNoTextLayer => 0.into_dart(),
-            crate::api::mirrors::Refusal::EncryptedPdf => 1.into_dart(),
-            crate::api::mirrors::Refusal::UnsupportedEncoding => 2.into_dart(),
-            crate::api::mirrors::Refusal::MalformedDocument => 3.into_dart(),
-            crate::api::mirrors::Refusal::DocumentTooLarge => 4.into_dart(),
-            crate::api::mirrors::Refusal::TooManyPages => 5.into_dart(),
-            crate::api::mirrors::Refusal::TextTooLarge => 6.into_dart(),
-            crate::api::mirrors::Refusal::TookTooLong => 7.into_dart(),
-            crate::api::mirrors::Refusal::EmptyDocument => 8.into_dart(),
-            _ => unreachable!(),
+            crate::api::mirrors::Refusal::ScannedPdfNoTextLayer { pages } => {
+                [0.into_dart(), pages.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::mirrors::Refusal::EncryptedPdf => [1.into_dart()].into_dart(),
+            crate::api::mirrors::Refusal::UnsupportedEncoding { page, readable_percent } => [
+                2.into_dart(),
+                page.into_into_dart().into_dart(),
+                readable_percent.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::Refusal::UnreadableStructure { page } => {
+                [3.into_dart(), page.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::mirrors::Refusal::MalformedDocument => [4.into_dart()].into_dart(),
+            crate::api::mirrors::Refusal::DocumentTooLarge { mib, limit_mib } => [
+                5.into_dart(),
+                mib.into_into_dart().into_dart(),
+                limit_mib.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::Refusal::TooManyPages { pages, limit } => [
+                6.into_dart(),
+                pages.into_into_dart().into_dart(),
+                limit.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::Refusal::TextTooLarge { limit_mib } => {
+                [7.into_dart(), limit_mib.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::mirrors::Refusal::CompressionBomb { ratio } => {
+                [8.into_dart(), ratio.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::mirrors::Refusal::TooManyParts { parts, limit } => [
+                9.into_dart(),
+                parts.into_into_dart().into_dart(),
+                limit.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            crate::api::mirrors::Refusal::TookTooLong { millis } => {
+                [10.into_dart(), millis.into_into_dart().into_dart()].into_dart()
+            }
+            crate::api::mirrors::Refusal::EmptyDocument => [11.into_dart()].into_dart(),
+            _ => {
+                unimplemented!("");
+            }
         }
     }
 }
@@ -3595,23 +3722,60 @@ impl SseEncode for crate::api::mirrors::ProviderId {
 impl SseEncode for crate::api::mirrors::Refusal {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i32>::sse_encode(
-            match self {
-                crate::api::mirrors::Refusal::ScannedPdfNoTextLayer => 0,
-                crate::api::mirrors::Refusal::EncryptedPdf => 1,
-                crate::api::mirrors::Refusal::UnsupportedEncoding => 2,
-                crate::api::mirrors::Refusal::MalformedDocument => 3,
-                crate::api::mirrors::Refusal::DocumentTooLarge => 4,
-                crate::api::mirrors::Refusal::TooManyPages => 5,
-                crate::api::mirrors::Refusal::TextTooLarge => 6,
-                crate::api::mirrors::Refusal::TookTooLong => 7,
-                crate::api::mirrors::Refusal::EmptyDocument => 8,
-                _ => {
-                    unimplemented!("");
-                }
-            },
-            serializer,
-        );
+        match self {
+            crate::api::mirrors::Refusal::ScannedPdfNoTextLayer { pages } => {
+                <i32>::sse_encode(0, serializer);
+                <u32>::sse_encode(pages, serializer);
+            }
+            crate::api::mirrors::Refusal::EncryptedPdf => {
+                <i32>::sse_encode(1, serializer);
+            }
+            crate::api::mirrors::Refusal::UnsupportedEncoding { page, readable_percent } => {
+                <i32>::sse_encode(2, serializer);
+                <u32>::sse_encode(page, serializer);
+                <u32>::sse_encode(readable_percent, serializer);
+            }
+            crate::api::mirrors::Refusal::UnreadableStructure { page } => {
+                <i32>::sse_encode(3, serializer);
+                <u32>::sse_encode(page, serializer);
+            }
+            crate::api::mirrors::Refusal::MalformedDocument => {
+                <i32>::sse_encode(4, serializer);
+            }
+            crate::api::mirrors::Refusal::DocumentTooLarge { mib, limit_mib } => {
+                <i32>::sse_encode(5, serializer);
+                <u32>::sse_encode(mib, serializer);
+                <u32>::sse_encode(limit_mib, serializer);
+            }
+            crate::api::mirrors::Refusal::TooManyPages { pages, limit } => {
+                <i32>::sse_encode(6, serializer);
+                <u32>::sse_encode(pages, serializer);
+                <u32>::sse_encode(limit, serializer);
+            }
+            crate::api::mirrors::Refusal::TextTooLarge { limit_mib } => {
+                <i32>::sse_encode(7, serializer);
+                <u32>::sse_encode(limit_mib, serializer);
+            }
+            crate::api::mirrors::Refusal::CompressionBomb { ratio } => {
+                <i32>::sse_encode(8, serializer);
+                <u32>::sse_encode(ratio, serializer);
+            }
+            crate::api::mirrors::Refusal::TooManyParts { parts, limit } => {
+                <i32>::sse_encode(9, serializer);
+                <u32>::sse_encode(parts, serializer);
+                <u32>::sse_encode(limit, serializer);
+            }
+            crate::api::mirrors::Refusal::TookTooLong { millis } => {
+                <i32>::sse_encode(10, serializer);
+                <u32>::sse_encode(millis, serializer);
+            }
+            crate::api::mirrors::Refusal::EmptyDocument => {
+                <i32>::sse_encode(11, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 

@@ -27,7 +27,10 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
     budget.check()?;
     let xml = String::from_utf8(part).map_err(|_| {
         refuse(
-            Refusal::UnsupportedEncoding,
+            Refusal::UnsupportedEncoding {
+                page: 0,
+                readable_percent: 0,
+            },
             format!("{PART} is not UTF-8, which every DOCX is supposed to be"),
         )
     })?;

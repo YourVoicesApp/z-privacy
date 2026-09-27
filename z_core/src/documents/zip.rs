@@ -51,6 +51,15 @@ fn u32_at(bytes: &[u8], at: usize) -> ApiResult<u32> {
 pub(crate) fn read_entry(bytes: &[u8], wanted: &str) -> ApiResult<Option<Vec<u8>>> {
     let eocd = find_eocd(bytes)?;
     let entries = u16_at(bytes, eocd + 10)?;
+    if u32::from(entries) > limits::ZIP_ENTRIES {
+        return Err(refuse(
+            Refusal::TooManyParts {
+                parts: u32::from(entries),
+                limit: limits::ZIP_ENTRIES,
+            },
+            format!("this file lists {entries} parts; a document has tens, not that many"),
+        ));
+    }
     let central_offset = u32_at(bytes, eocd + 16)? as usize;
 
     let mut at = central_offset;
@@ -82,13 +91,26 @@ pub(crate) fn read_entry(bytes: &[u8], wanted: &str) -> ApiResult<Option<Vec<u8>
             }
             if uncompressed > limits::ZIP_ENTRY_BYTES {
                 return Err(refuse(
-                    Refusal::TextTooLarge,
+                    Refusal::TextTooLarge {
+                        limit_mib: (limits::ZIP_ENTRY_BYTES / 1024 / 1024) as u32,
+                    },
                     format!(
                         "«{wanted}» would be {} MiB once unpacked, past the {} MiB limit",
                         uncompressed / 1024 / 1024,
                         limits::ZIP_ENTRY_BYTES / 1024 / 1024
                     ),
                 ));
+            }
+            // The header's own numbers already betray a bomb: refuse before
+            // inflating a single byte.
+            if compressed > 0 {
+                let ratio = (uncompressed / compressed.max(1)) as u32;
+                if ratio > limits::MAX_RATIO {
+                    return Err(refuse(
+                        Refusal::CompressionBomb { ratio },
+                        format!("«{wanted}» claims to unpack {ratio}× its size, which no document does"),
+                    ));
+                }
             }
             return Ok(Some(read_at_local(bytes, local_offset, method, compressed)?));
         }
@@ -144,6 +166,10 @@ fn read_at_local(bytes: &[u8], offset: usize, method: u16, compressed: usize) ->
 }
 
 /// Inflate, stopping at the limit rather than trusting the header's promise.
+///
+/// Two guards, because a header can lie: the read itself is bounded, and what came
+/// out is measured against what went in. A zip bomb ends as a refusal, never as a
+/// machine with no memory left.
 fn inflate_bounded(raw: &[u8]) -> ApiResult<Vec<u8>> {
     let mut decoder = DeflateDecoder::new(raw).take(limits::ZIP_ENTRY_BYTES as u64 + 1);
     let mut out = Vec::new();
@@ -152,11 +178,20 @@ fn inflate_bounded(raw: &[u8]) -> ApiResult<Vec<u8>> {
         .map_err(|e| malformed(&format!("a part of this file could not be unpacked: {e}")))?;
     if out.len() > limits::ZIP_ENTRY_BYTES {
         return Err(refuse(
-            Refusal::TextTooLarge,
+            Refusal::TextTooLarge {
+                limit_mib: (limits::ZIP_ENTRY_BYTES / 1024 / 1024) as u32,
+            },
             format!(
                 "a part of this file unpacks to more than {} MiB",
                 limits::ZIP_ENTRY_BYTES / 1024 / 1024
             ),
+        ));
+    }
+    let ratio = (out.len() / raw.len().max(1)) as u32;
+    if ratio > limits::MAX_RATIO {
+        return Err(refuse(
+            Refusal::CompressionBomb { ratio },
+            format!("a part of this file unpacked to {ratio}× its size, which no document does"),
         ));
     }
     Ok(out)
