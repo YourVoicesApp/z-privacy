@@ -15,7 +15,9 @@ import 'package:flutter/material.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/home.dart';
+import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/new_session.dart';
+import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
@@ -72,6 +74,11 @@ class _ShellState extends State<_Shell> {
   Workbench? _bench;
   String? _trouble;
   bool _vaultOpen = false;
+  bool _settingsOpen = false;
+  /// Passed for this run. The lasting answer is in the settings, which live in
+  /// the vault — so on a device with no vault this page comes back next time,
+  /// and that is the truth rather than a bug: nothing was written down.
+  bool _firstRunPassed = false;
 
   @override
   void initState() {
@@ -160,6 +167,34 @@ class _ShellState extends State<_Shell> {
 
   @override
   Widget build(BuildContext context) {
+    final config = _ground.config;
+    if (config != null && !config.firstRunDone && !_firstRunPassed) {
+      return FirstRunScreen(
+        ground: _ground,
+        onStart: (language) async {
+          setState(() => _firstRunPassed = true);
+          await _ground.saveConfig(Settings(
+            scanOnImport: config.scanOnImport,
+            revealSeconds: config.revealSeconds,
+            autoLockMinutes: config.autoLockMinutes,
+            // The language picks the pack, which is the part with teeth today.
+            packId: language == 'de' ? 'de' : config.packId,
+            language: language,
+            firstRunDone: true,
+            sessionOnly: config.sessionOnly,
+          ));
+        },
+      );
+    }
+    if (_settingsOpen) {
+      return SettingsScreen(
+        ground: _ground,
+        onClose: () {
+          setState(() => _settingsOpen = false);
+          _ground.refresh();
+        },
+      );
+    }
     final bench = _bench;
     if (bench != null) {
       return WorkspaceScreen(bench: bench, ground: _ground, onHome: _home);
@@ -181,6 +216,7 @@ class _ShellState extends State<_Shell> {
           onImport: () => _begin(typing: false),
           onType: () => _begin(typing: true),
           onVault: () => setState(() => _vaultOpen = true),
+          onSettings: () => setState(() => _settingsOpen = true),
         ),
         if (_trouble != null)
           Positioned(

@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1122271268;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1298330414;
 
 // Section: executor
 
@@ -1169,6 +1169,34 @@ fn wire__z_core__api__reveal_value_impl(
         },
     )
 }
+fn wire__z_core__api__save_settings_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "save_settings",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_settings = <crate::api::mirrors::Settings>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::save_settings(api_settings)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__z_core__api__scan_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1336,6 +1364,33 @@ fn wire__z_core__api__set_value_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
                     let output_ok = z_core::api::set_value(api_entity, api_value_id, api_kind, api_text, api_policy)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__settings_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "settings",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::settings()?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -1861,6 +1916,16 @@ const _: fn() = || {
     {
         let SessionId = None::<crate::api::mirrors::SessionId>.unwrap();
         let _: u32 = SessionId.id;
+    }
+    {
+        let Settings = None::<crate::api::mirrors::Settings>.unwrap();
+        let _: bool = Settings.scan_on_import;
+        let _: u32 = Settings.reveal_seconds;
+        let _: u32 = Settings.auto_lock_minutes;
+        let _: String = Settings.pack_id;
+        let _: String = Settings.language;
+        let _: bool = Settings.first_run_done;
+        let _: bool = Settings.session_only;
     }
     {
         let Span = None::<crate::api::mirrors::Span>.unwrap();
@@ -2821,6 +2886,28 @@ impl SseDecode for crate::api::mirrors::SessionId {
     }
 }
 
+impl SseDecode for crate::api::mirrors::Settings {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_scanOnImport = <bool>::sse_decode(deserializer);
+        let mut var_revealSeconds = <u32>::sse_decode(deserializer);
+        let mut var_autoLockMinutes = <u32>::sse_decode(deserializer);
+        let mut var_packId = <String>::sse_decode(deserializer);
+        let mut var_language = <String>::sse_decode(deserializer);
+        let mut var_firstRunDone = <bool>::sse_decode(deserializer);
+        let mut var_sessionOnly = <bool>::sse_decode(deserializer);
+        return crate::api::mirrors::Settings {
+            scan_on_import: var_scanOnImport,
+            reveal_seconds: var_revealSeconds,
+            auto_lock_minutes: var_autoLockMinutes,
+            pack_id: var_packId,
+            language: var_language,
+            first_run_done: var_firstRunDone,
+            session_only: var_sessionOnly,
+        };
+    }
+}
+
 impl SseDecode for crate::api::mirrors::Source {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -3023,21 +3110,23 @@ fn pde_ffi_dispatcher_primary_impl(
         37 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
         38 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
         39 => wire__z_core__api__reveal_value_impl(port, ptr, rust_vec_len, data_len),
-        40 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
-        41 => wire__z_core__api__search_vault_impl(port, ptr, rust_vec_len, data_len),
-        42 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
-        43 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
-        44 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
-        45 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
-        46 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
-        47 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
-        48 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
-        49 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
-        50 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        51 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        52 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
-        53 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
-        54 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        40 => wire__z_core__api__save_settings_impl(port, ptr, rust_vec_len, data_len),
+        41 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
+        42 => wire__z_core__api__search_vault_impl(port, ptr, rust_vec_len, data_len),
+        43 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
+        45 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
+        46 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__z_core__api__settings_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
+        49 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
+        50 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
+        52 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        53 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        54 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
+        55 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
+        56 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -3790,6 +3879,27 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::SessionId
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::SessionId> {}
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::SessionId>> for crate::api::mirrors::SessionId {
     fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::SessionId> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Settings> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.scan_on_import.into_into_dart().into_dart(),
+            self.0.reveal_seconds.into_into_dart().into_dart(),
+            self.0.auto_lock_minutes.into_into_dart().into_dart(),
+            self.0.pack_id.into_into_dart().into_dart(),
+            self.0.language.into_into_dart().into_dart(),
+            self.0.first_run_done.into_into_dart().into_dart(),
+            self.0.session_only.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Settings> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Settings>> for crate::api::mirrors::Settings {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Settings> {
         self.into()
     }
 }
@@ -4708,6 +4818,19 @@ impl SseEncode for crate::api::mirrors::SessionId {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <u32>::sse_encode(self.id, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::Settings {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.scan_on_import, serializer);
+        <u32>::sse_encode(self.reveal_seconds, serializer);
+        <u32>::sse_encode(self.auto_lock_minutes, serializer);
+        <String>::sse_encode(self.pack_id, serializer);
+        <String>::sse_encode(self.language, serializer);
+        <bool>::sse_encode(self.first_run_done, serializer);
+        <bool>::sse_encode(self.session_only, serializer);
     }
 }
 

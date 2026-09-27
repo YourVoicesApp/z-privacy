@@ -71,6 +71,7 @@ void main() {
         onImport: () {},
         onType: () {},
         onVault: () {},
+        onSettings: () {},
       ),
     ));
     await tester.pumpAndSettle();

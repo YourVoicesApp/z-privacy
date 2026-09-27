@@ -10,15 +10,11 @@ use std::path::PathBuf;
 
 use crate::api::{
     ApiError, ApiResult, EntityCard, EntityKind, EntityRow, Kind, KindRow, Policy, ProfileRow,
-    RevealedValue, VaultState, VaultUnlockOutcome, ValueRow,
+    RevealedValue, Settings, VaultState, VaultUnlockOutcome, ValueRow,
 };
 use crate::secret::Secret;
 use crate::session::with_core;
-use crate::vault::model::{Entity, ValueRecord};
-
-/// How long a revealed vault value stays on screen. The same 20 seconds as a
-/// revealed token: one habit, not two.
-const REVEAL_TTL_MS: u32 = 20_000;
+use crate::vault::model::{Entity, StoredSettings, ValueRecord};
 
 pub(crate) fn set_data_dir(dir: String) -> ApiResult<()> {
     with_core(|core| core.vault.set_dir(PathBuf::from(dir)))
@@ -207,6 +203,8 @@ pub(crate) fn add_value_alias(entity: u32, value_id: u32, alias: String) -> ApiR
 }
 
 pub(crate) fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValue> {
+    // Before the lock: see the note in `ops::reveal`.
+    let ttl_ms = reveal_ttl_ms();
     with_core(|core| {
         core.vault.read(|vault| {
             let e = vault.entity(entity).ok_or(ApiError::UnknownToken)?;
@@ -221,7 +219,7 @@ pub(crate) fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValu
                 token: format!("{} · value {}", e.handle(), v.id),
                 value: v.value.expose().to_string(),
                 aliases: v.aliases.iter().map(|a| a.expose().to_string()).collect(),
-                ttl_ms: REVEAL_TTL_MS,
+                ttl_ms,
             })
         })
     })
@@ -370,6 +368,73 @@ pub(crate) fn kinds() -> ApiResult<Vec<KindRow>> {
         custom: false,
     })
     .collect())
+}
+
+/// What the app has been told to do by itself.
+///
+/// From the vault when one is open, from this run's memory otherwise — and the
+/// answer always says which, so a screen can tell the user that a setting will
+/// not survive the app closing.
+pub(crate) fn settings() -> ApiResult<Settings> {
+    with_core(|core| {
+        match core.vault.with_open(|v| v.settings.clone()) {
+            Ok(stored) => Ok(wear(stored, false)),
+            Err(_) => Ok(wear(core.session_settings.clone(), true)),
+        }
+    })
+}
+
+/// Change them. They go to the vault if one is open, and to memory if not.
+pub(crate) fn save_settings(settings: Settings) -> ApiResult<Settings> {
+    let stored = StoredSettings {
+        scan_on_import: settings.scan_on_import,
+        // Bounded here rather than trusted: a reveal that lasted an hour, or
+        // zero seconds, would both be a screen's bug becoming a policy.
+        reveal_seconds: settings.reveal_seconds.clamp(3, 300),
+        auto_lock_minutes: settings.auto_lock_minutes.min(24 * 60),
+        pack_id: settings.pack_id,
+        language: settings.language,
+        first_run_done: settings.first_run_done,
+    };
+    let sealed = with_core(|core| {
+        core.vault
+            .with_open_mut(|vault| {
+                vault.settings = stored.clone();
+                Ok(())
+            })
+            .is_ok()
+    });
+    // The memory copy is kept either way: it is what a later call reads if the
+    // vault is locked in the meantime, and it is never a second *answer* —
+    // `settings()` reads the vault first whenever the vault is open.
+    with_core(|core| {
+        core.session_settings = stored.clone();
+        core.vault.set_idle_limit(stored.auto_lock_minutes);
+    });
+    Ok(wear(stored, !sealed))
+}
+
+fn wear(stored: StoredSettings, session_only: bool) -> Settings {
+    Settings {
+        scan_on_import: stored.scan_on_import,
+        reveal_seconds: stored.reveal_seconds,
+        auto_lock_minutes: stored.auto_lock_minutes,
+        pack_id: stored.pack_id,
+        language: stored.language,
+        first_run_done: stored.first_run_done,
+        session_only,
+    }
+}
+
+/// How long a revealed value may stand, as the settings say.
+pub(crate) fn reveal_ttl_ms() -> u32 {
+    with_core(|core| {
+        let seconds = match core.vault.with_open(|v| v.settings.reveal_seconds) {
+            Ok(n) => n,
+            Err(_) => core.session_settings.reveal_seconds,
+        };
+        seconds.saturating_mul(1000)
+    })
 }
 
 // ---------------------------------------------------------------- profiles

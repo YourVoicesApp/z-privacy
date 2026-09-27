@@ -12,6 +12,7 @@ pub(crate) mod format;
 pub(crate) mod model;
 
 use std::path::PathBuf;
+use std::time::{Duration, Instant};
 
 use crate::api::{ApiError, ApiResult, VaultState};
 use crate::vault::crypto::{SealedVault, SecretKey};
@@ -29,6 +30,13 @@ pub(crate) struct VaultStore {
     master: Option<SecretKey>,
     /// The decrypted model. Present only while unlocked.
     open: Option<Vault>,
+    /// When the vault was last used, and how long it may sit unused.
+    ///
+    /// Auto-lock is enforced **here** rather than by a timer in the UI (task
+    /// 030). A screen that forgot to count would leave the vault open and
+    /// nobody would know; this way every way in checks the clock first.
+    touched: Option<Instant>,
+    idle_limit: Option<Duration>,
 }
 
 impl VaultStore {
@@ -64,7 +72,31 @@ impl VaultStore {
         }
     }
 
+    /// How long the vault may sit unused, in minutes. 0 means never.
+    pub(crate) fn set_idle_limit(&mut self, minutes: u32) {
+        self.idle_limit = (minutes > 0).then(|| Duration::from_secs(u64::from(minutes) * 60));
+        self.touched = Some(Instant::now());
+    }
+
+    /// Lock it if it has been sitting too long, and note that it is being used.
+    ///
+    /// Called by every way into the open vault, so «auto-lock» is a property of
+    /// the vault and not of whoever remembered to set a timer.
+    fn tick(&mut self) {
+        if self.open.is_none() {
+            return;
+        }
+        if let (Some(limit), Some(touched)) = (self.idle_limit, self.touched) {
+            if touched.elapsed() > limit {
+                self.lock();
+                return;
+            }
+        }
+        self.touched = Some(Instant::now());
+    }
+
     pub(crate) fn state(&mut self) -> VaultState {
+        self.tick();
         self.load_sealed();
         if self.open.is_some() {
             VaultState::Unlocked
@@ -91,9 +123,11 @@ impl VaultStore {
         let body = format::encode(&model, &master)?;
         sealed.reseal_body(&master, &body)?;
         crypto::wipe(body);
+        let minutes = model.settings.auto_lock_minutes;
         self.sealed = Some(sealed);
         self.master = Some(master);
         self.open = Some(model);
+        self.set_idle_limit(minutes);
         self.write_to_disk()?;
         Ok((0, 0))
     }
@@ -111,8 +145,10 @@ impl VaultStore {
             model.entities.len() as u32,
             model.entities.iter().map(|e| e.values.len() as u32).sum(),
         );
+        let minutes = model.settings.auto_lock_minutes;
         self.master = Some(master);
         self.open = Some(model);
+        self.set_idle_limit(minutes);
         Ok(counts)
     }
 
@@ -121,6 +157,7 @@ impl VaultStore {
     pub(crate) fn lock(&mut self) {
         self.master = None;
         self.open = None;
+        self.touched = None;
     }
 
     pub(crate) fn change_passphrase(&mut self, old: &str, replacement: &str) -> ApiResult<()> {
@@ -134,6 +171,7 @@ impl VaultStore {
 
     /// Read the open vault, or say it is locked.
     pub(crate) fn with_open<R>(&mut self, f: impl FnOnce(&Vault) -> R) -> ApiResult<R> {
+        self.tick();
         match self.open.as_ref() {
             Some(vault) => Ok(f(vault)),
             None => Err(ApiError::VaultLocked),
@@ -142,6 +180,7 @@ impl VaultStore {
 
     /// Read the open vault with a closure that can fail on its own.
     pub(crate) fn read<R>(&mut self, f: impl FnOnce(&Vault) -> ApiResult<R>) -> ApiResult<R> {
+        self.tick();
         match self.open.as_ref() {
             Some(vault) => f(vault),
             None => Err(ApiError::VaultLocked),
@@ -150,6 +189,7 @@ impl VaultStore {
 
     /// Change the open vault and seal it again. Nothing here can leave the device.
     pub(crate) fn with_open_mut<R>(&mut self, f: impl FnOnce(&mut Vault) -> ApiResult<R>) -> ApiResult<R> {
+        self.tick();
         let (Some(vault), Some(master)) = (self.open.as_mut(), self.master.as_ref()) else {
             return Err(ApiError::VaultLocked);
         };
@@ -164,7 +204,8 @@ impl VaultStore {
 
     /// What the scanner may recognise: this profile's values, and nothing while
     /// the vault is locked.
-    pub(crate) fn hints(&self, active_profile: Option<&str>) -> Vec<VaultHint> {
+    pub(crate) fn hints(&mut self, active_profile: Option<&str>) -> Vec<VaultHint> {
+        self.tick();
         match self.open.as_ref() {
             Some(vault) => vault.hints_for(active_profile),
             // Locked: the layer is skipped entirely, by having nothing to say.

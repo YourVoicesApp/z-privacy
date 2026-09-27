@@ -20,6 +20,7 @@ ALLOW_PLAIN="core_version|init_app"
 FLUTTER_LIB=apps/flutter_app/lib
 PUBSPEC=apps/flutter_app/pubspec.yaml
 # The one HTTP client, and the one folder allowed to know it exists (G1, G16).
+API_FILES_FIRST=z_core/src/api.rs
 CLIENT=ureq
 NET_DIR=providers
 # The echo provider only exists in a build made for the tests.
@@ -61,6 +62,23 @@ if grep -A3 '^\[features\]' z_core/Cargo.toml | grep -q '^default = \[\]'; then
   pass "G1d the echo provider is not in z_core's default features"
 else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
+fi
+
+# ---------------------------------------------------------------- G17
+# The Dart contract test must call the WHOLE contract. Its own count assertion
+# cannot notice a function nobody added to it — so the count is checked here,
+# against the contract itself. (A function added and forgotten used to pass.)
+DART_TEST=apps/flutter_app/test/contract_test.dart
+if [ -f "$API_FILES_FIRST" ] && [ -f "$DART_TEST" ]; then
+  DECLARED=$(grep -c '^pub fn ' "$API_FILES_FIRST")
+  CLAIMED=$(grep -oE 'the contract has [0-9]+ functions' "$DART_TEST" | grep -oE '[0-9]+' | head -1)
+  if [ "$DECLARED" = "$CLAIMED" ]; then
+    pass "G17 the Dart contract test calls all $DECLARED functions"
+  else
+    fail "G17 api.rs declares $DECLARED functions, contract_test.dart accounts for ${CLAIMED:-none}"
+  fi
+else
+  skip "G17 the Dart test covers the whole contract" "no contract test yet"
 fi
 
 # ---------------------------------------------------------------- G16
@@ -275,7 +293,7 @@ done
 for t in "the core reports it" "the scan the core ran" "own two strings" "never the credential" \
          "not one Dart worked out" "Skip decides nothing" "does not touch what leaves" \
          "the manual door needs no key" "as the model wrote it" "only the safe text arrives" \
-         "the vault room"; do
+         "the vault room" "say where they live" "in the language it is offering"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

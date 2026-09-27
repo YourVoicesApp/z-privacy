@@ -13,6 +13,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/screens/first_run.dart';
+import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -155,4 +157,84 @@ void main() {
     expect(ground.vault, VaultState.locked);
     expect(ground.vaultRows, isEmpty, reason: 'a locked vault lists nothing');
   });
+
+  testWidgets('settings are the core\'s, and say where they live', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    // The vault made by the test above is locked by now, so open it again:
+    // settings kept in a locked vault are not readable, and that is the point.
+    await tester.runAsync(() async {
+      await z.vaultUnlockWithPassphrase(passphrase: _pass);
+      await ground.refresh();
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: SettingsScreen(ground: ground, onClose: () {}, room: SettingsRoom.privacy),
+    ));
+    await settle(tester);
+
+    expect(ground.config, isNotNull);
+    expect(ground.config!.sessionOnly, isFalse, reason: 'an open vault keeps them');
+    expect(find.text('Scan a document the moment it arrives'), findsOneWidget);
+
+    // «Answer every suggestion before sending» is not a switch, and the room
+    // says why. There is no «send anyway» to find anywhere in Settings.
+    expect(find.text('Answer every suggestion before sending'), findsOneWidget);
+    expect(find.textContaining('there is no «send anyway»'), findsOneWidget);
+    expect(find.byType(Switch), findsOneWidget, reason: 'exactly one thing here is a switch');
+
+    // A number that the core bounds, not the screen: ask for far too much and
+    // the core hands back its own limit.
+    final before = ground.config!;
+    await tester.runAsync(() => ground.saveConfig(Settings(
+          scanOnImport: before.scanOnImport,
+          revealSeconds: 99999,
+          autoLockMinutes: before.autoLockMinutes,
+          packId: before.packId,
+          language: before.language,
+          firstRunDone: before.firstRunDone,
+          sessionOnly: before.sessionOnly,
+        )));
+    await settle(tester, rounds: 1);
+    expect(ground.config!.revealSeconds, 300, reason: 'the core clamped it, and the screen shows that');
+  });
+
+  testWidgets('the first run says four things, in the language it is offering', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    await tester.runAsync(ground.refresh);
+    String? chosen;
+
+    await tester.pumpWidget(MaterialApp(
+      home: FirstRunScreen(ground: ground, onStart: (l) => chosen = l),
+    ));
+    await settle(tester, rounds: 1);
+
+    for (final line in ['No account.', 'No ads.', 'No analytics.', 'No Z Privacy server.']) {
+      expect(find.text(line), findsOneWidget);
+    }
+    expect(find.textContaining('Your original data stays on this device'), findsOneWidget);
+    expect(find.text('by YourVoices'), findsOneWidget);
+    // No e-mail, no sign-up, nothing to fill in.
+    expect(find.byType(TextField), findsNothing);
+
+    // Choosing Deutsch writes the page in German — a page that asked the
+    // question only in English would be asking it in the answer.
+    await tester.tap(find.text('Deutsch'));
+    await settle(tester, rounds: 1);
+    expect(find.text('Kein Konto.'), findsOneWidget);
+    expect(find.text('Keine Werbung.'), findsOneWidget);
+    expect(find.text('Starten'), findsOneWidget);
+    // And it is honest about what the choice does today.
+    expect(find.textContaining('Die Oberfläche ist vorerst auf Englisch'), findsOneWidget);
+
+    await tester.tap(find.text('Starten'));
+    await settle(tester, rounds: 1);
+    expect(chosen, 'de');
+  });
 }
+

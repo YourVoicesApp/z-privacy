@@ -23,6 +23,7 @@ class HomeScreen extends StatelessWidget {
     required this.onImport,
     required this.onType,
     required this.onVault,
+    required this.onSettings,
     required this.version,
   });
 
@@ -30,6 +31,7 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onImport;
   final VoidCallback onType;
   final VoidCallback onVault;
+  final VoidCallback onSettings;
   final String version;
 
   @override
@@ -50,6 +52,13 @@ class HomeScreen extends StatelessWidget {
                     const Text('Z Privacy', style: Zc.h1),
                     const Spacer(),
                     Text(version, style: Zc.tiny.copyWith(fontFamily: Zc.mono)),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      tooltip: 'Settings',
+                      icon: const Icon(Icons.tune, size: 18),
+                      color: Zc.ink3,
+                      onPressed: onSettings,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 26),

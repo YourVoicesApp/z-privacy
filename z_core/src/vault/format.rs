@@ -14,10 +14,11 @@ use crate::api::{ApiError, ApiResult, EntityKind, Kind, Policy};
 use crate::secret::Secret;
 use crate::vault::crypto::{self, Purpose, SecretKey};
 
-use super::model::{Entity, Profile, ProviderLogin, ValueRecord, Vault};
+use super::model::{Entity, Profile, ProviderLogin, StoredSettings, ValueRecord, Vault};
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 3 — the settings, appended after the credentials (task 030).
 /// * 1 — identities, values, profiles.
 /// * 2 — provider credentials appended at the end (task 020). A version-1 vault
 ///   simply stops before that section and opens with no credentials, which is
@@ -27,7 +28,7 @@ use super::model::{Entity, Profile, ProviderLogin, ValueRecord, Vault};
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 2;
+pub(crate) const MODEL_VERSION: u16 = 3;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -172,6 +173,15 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
         put_str(&mut out, &login.base);
         put_str(&mut out, &login.model);
     }
+
+    // Model 3. At the end again, for the same reason as model 2.
+    let st = &vault.settings;
+    out.push(u8::from(st.scan_on_import));
+    out.extend_from_slice(&st.reveal_seconds.to_be_bytes());
+    out.extend_from_slice(&st.auto_lock_minutes.to_be_bytes());
+    put_str(&mut out, &st.pack_id);
+    put_str(&mut out, &st.language);
+    out.push(u8::from(st.first_run_done));
     Ok(out)
 }
 
@@ -270,11 +280,26 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         }
     }
 
+    // A vault written before model 3 simply gets today's defaults.
+    let settings = if version >= 3 {
+        StoredSettings {
+            scan_on_import: r.byte()? != 0,
+            reveal_seconds: u32::from_be_bytes(r.array::<4>()?),
+            auto_lock_minutes: u32::from_be_bytes(r.array::<4>()?),
+            pack_id: r.string()?,
+            language: r.string()?,
+            first_run_done: r.byte()? != 0,
+        }
+    } else {
+        StoredSettings::default()
+    };
+
     Ok(Vault {
         entities,
         profiles,
         next_entity,
         next_value,
+        settings,
         provider_logins,
     })
 }
@@ -458,6 +483,26 @@ mod tests {
         // And it comes back intact for the one thing allowed to read it.
         let back = dec(&body).expect("decode");
         assert_eq!(back.provider_logins["openai"].credential.expose(), CREDENTIAL);
+    }
+
+    #[test]
+    fn the_settings_survive_and_an_older_vault_takes_the_defaults() {
+        let mut before = sample();
+        before.settings.auto_lock_minutes = 3;
+        before.settings.language = "de".to_string();
+        before.settings.first_run_done = true;
+        before.settings.scan_on_import = false;
+        let after = dec(&enc(&before)).expect("decode");
+        assert_eq!(after.settings, before.settings);
+
+        // A model-2 file: the same bytes without the settings block.
+        let plain = enc(&sample());
+        let tail = 1 + 4 + 4 + (4 + 2) + (4 + 2) + 1; // the block written above
+        let mut old_file = plain[..plain.len() - tail].to_vec();
+        old_file[0..2].copy_from_slice(&2u16.to_be_bytes());
+        let opened = dec(&old_file).expect("a model-2 vault still opens");
+        assert_eq!(opened.settings, StoredSettings::default(), "and takes today's defaults");
+        assert_eq!(opened.entities.len(), 1, "with nothing else lost");
     }
 
     #[test]

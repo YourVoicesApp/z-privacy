@@ -56,6 +56,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SessionId dco_decode_box_autoadd_session_id(dynamic raw);
 
   @protected
+  Settings dco_decode_box_autoadd_settings(dynamic raw);
+
+  @protected
   Source dco_decode_box_autoadd_source(dynamic raw);
 
   @protected
@@ -218,6 +221,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SessionId dco_decode_session_id(dynamic raw);
 
   @protected
+  Settings dco_decode_settings(dynamic raw);
+
+  @protected
   Source dco_decode_source(dynamic raw);
 
   @protected
@@ -286,6 +292,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SessionId sse_decode_box_autoadd_session_id(SseDeserializer deserializer);
+
+  @protected
+  Settings sse_decode_box_autoadd_settings(SseDeserializer deserializer);
 
   @protected
   Source sse_decode_box_autoadd_source(SseDeserializer deserializer);
@@ -450,6 +459,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SessionId sse_decode_session_id(SseDeserializer deserializer);
 
   @protected
+  Settings sse_decode_settings(SseDeserializer deserializer);
+
+  @protected
   Source sse_decode_source(SseDeserializer deserializer);
 
   @protected
@@ -531,6 +543,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     SessionId self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_settings(Settings self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_source(Source self, SseSerializer serializer);
@@ -717,6 +732,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_session_id(SessionId self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_settings(Settings self, SseSerializer serializer);
 
   @protected
   void sse_encode_source(Source self, SseSerializer serializer);

@@ -392,3 +392,62 @@ fn the_kinds_are_a_list_the_core_hands_over_not_a_set_the_screen_knows() {
     let other = rows.iter().find(|k| k.kind == Kind::Custom).expect("Custom is in the list");
     assert_eq!(other.label, "Something else");
 }
+
+#[test]
+fn settings_live_in_the_vault_and_say_when_they_do_not() {
+    let _lock = serial();
+    // No vault yet: the settings are this run's, and they admit it.
+    set_data_dir(std::env::temp_dir().join(format!("zprivacy-settings-{}", std::process::id())).to_string_lossy().to_string())
+        .expect("dir");
+    let before = settings().expect("settings");
+    assert!(before.session_only, "with no vault, nothing is remembered and the row says so");
+    assert!(before.scan_on_import, "nobody has to press anything to be protected");
+    assert!(!before.first_run_done);
+
+    // A vault, and they have somewhere to live.
+    fresh_vault("settings");
+    let mut want = settings().expect("settings");
+    assert!(!want.session_only, "an open vault keeps them");
+    want.first_run_done = true;
+    want.language = "de".to_string();
+    want.auto_lock_minutes = 7;
+    // Out-of-range numbers are bounded here, not trusted: a screen's bug must
+    // not become a policy.
+    want.reveal_seconds = 100_000;
+    let saved = save_settings(want).expect("save");
+    assert_eq!(saved.reveal_seconds, 300, "clamped, not taken as written");
+    assert_eq!(saved.auto_lock_minutes, 7);
+    assert!(saved.first_run_done);
+
+    // Locked and opened again: they came back from the file.
+    vault_lock().expect("lock");
+    assert!(settings().expect("settings").session_only, "a locked vault keeps nothing readable");
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
+    let back = settings().expect("settings");
+    assert_eq!(back.language, "de");
+    assert_eq!(back.auto_lock_minutes, 7);
+    assert!(back.first_run_done, "the first run is remembered because there was a vault to remember it");
+}
+
+#[test]
+fn auto_lock_is_the_vault_s_own_promise_not_a_timer_in_a_screen() {
+    let _lock = serial();
+    fresh_vault("autolock");
+    identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+    assert_eq!(vault_state().expect("state"), VaultState::Unlocked);
+
+    // A limit that has already passed. No screen is involved, and no timer runs:
+    // the next way in checks the clock, which is what makes this a promise the
+    // vault keeps rather than one the UI remembers to keep.
+    let mut s = settings().expect("settings");
+    s.auto_lock_minutes = 1;
+    save_settings(s).expect("save");
+    assert_eq!(vault_state().expect("state"), VaultState::Unlocked, "one minute has not passed");
+
+    // And zero means never, which must not be read as «lock at once».
+    let mut s = settings().expect("settings");
+    s.auto_lock_minutes = 0;
+    save_settings(s).expect("save");
+    assert_eq!(vault_state().expect("state"), VaultState::Unlocked);
+    assert_eq!(entities(None).expect("entities").len(), 1, "and the vault is still readable");
+}

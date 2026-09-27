@@ -95,11 +95,44 @@ pub(crate) struct Vault {
     pub profiles: Vec<Profile>,
     pub next_entity: u32,
     pub next_value: u32,
+    /// What the app has been told to do by itself. In the vault because the
+    /// vault is the only file we write (G15), and because a setting that
+    /// survives a restart has to live somewhere that does. Written in task 030.
+    pub settings: StoredSettings,
     /// How to reach each AI provider, by provider id. It lives here because the
     /// vault is the one thing this program encrypts before writing, and because
     /// nothing outside the core can read it back: `providers()` reports only
     /// whether a row has a credential. Written in task 020.
     pub provider_logins: BTreeMap<String, ProviderLogin>,
+}
+
+/// The settings, as they are kept. `session_only` is not here: whether these
+/// came from the vault or from memory is not a property of the settings, it is
+/// a property of where they were found.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct StoredSettings {
+    pub scan_on_import: bool,
+    pub reveal_seconds: u32,
+    pub auto_lock_minutes: u32,
+    pub pack_id: String,
+    pub language: String,
+    pub first_run_done: bool,
+}
+
+impl Default for StoredSettings {
+    fn default() -> Self {
+        Self {
+            // Nobody has to press anything to be protected.
+            scan_on_import: true,
+            reveal_seconds: 20,
+            // Fifteen minutes of not being used. Long enough not to annoy,
+            // short enough that a walk to the kitchen is covered.
+            auto_lock_minutes: 15,
+            pack_id: "de".to_string(),
+            language: "en".to_string(),
+            first_run_done: false,
+        }
+    }
 }
 
 /// What it takes to reach one provider: a credential, an address, a model.
@@ -137,6 +170,7 @@ impl Vault {
             profiles: Vec::new(),
             next_entity: 1,
             next_value: 1,
+            settings: StoredSettings::default(),
             provider_logins: BTreeMap::new(),
         }
     }

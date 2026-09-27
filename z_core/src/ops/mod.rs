@@ -26,8 +26,8 @@ use crate::session::{with_core, with_session, Protection, Session};
 use crate::text;
 use crate::tokens::{restore, TokenEntry};
 
-/// How long a revealed value stays on screen before it hides itself.
-const REVEAL_TTL_MS: u32 = 20_000;
+// How long a revealed value stays on screen is a setting now (task 030); see
+// `ops::vault::reveal_ttl_ms`.
 
 // ---------------------------------------------------------------- session
 
@@ -788,13 +788,18 @@ pub(crate) fn list_tokens(session: SessionId) -> ApiResult<Vec<TokenRow>> {
 }
 
 pub(crate) fn reveal(session: SessionId, token: String) -> ApiResult<RevealedValue> {
+    // Read before the session lock is taken. `reveal_ttl_ms` locks the core
+    // itself, and the core's mutex is not re-entrant: asking for it from inside
+    // a call that already holds it is a deadlock, not an error — the whole
+    // program simply stops. Found the moment the settings landed.
+    let ttl_ms = reveal_ttl_ms();
     with_session(session.id, |s| match s.tokens.get(&token) {
         Some(entry) => Ok(RevealedValue {
             token,
             // Handed over because the user asked to see it, for a moment, locally.
             value: entry.value.expose().to_string(),
             aliases: entry.aliases.iter().map(|a| a.expose().to_string()).collect(),
-            ttl_ms: REVEAL_TTL_MS,
+            ttl_ms,
         }),
         None => Err(ApiError::UnknownToken),
     })

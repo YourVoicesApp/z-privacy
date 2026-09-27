@@ -920,6 +920,67 @@ class SessionId {
       other is SessionId && runtimeType == other.runtimeType && id == other.id;
 }
 
+class Settings {
+  /// Scan the moment a document arrives, with no dialog. On by default: the
+  /// boards' rule is that nobody has to press anything to be protected.
+  final bool scanOnImport;
+
+  /// How long a revealed value stays on screen.
+  final int revealSeconds;
+
+  /// Lock the vault after this many minutes of not being used. 0 = never.
+  /// Enforced **in the core**, not by a timer in the UI: a screen that forgot
+  /// to count would leave the vault open, and nobody would know.
+  final int autoLockMinutes;
+
+  /// The detection pack a new session starts with.
+  final String packId;
+
+  /// The working language, `en` or `de`. It picks the pack today; the
+  /// interface follows when it is translated.
+  final String language;
+
+  /// False until the first-run page has been passed.
+  final bool firstRunDone;
+
+  /// True when all of the above will be gone when the app closes, because
+  /// there is no vault to keep them in.
+  final bool sessionOnly;
+
+  const Settings({
+    required this.scanOnImport,
+    required this.revealSeconds,
+    required this.autoLockMinutes,
+    required this.packId,
+    required this.language,
+    required this.firstRunDone,
+    required this.sessionOnly,
+  });
+
+  @override
+  int get hashCode =>
+      scanOnImport.hashCode ^
+      revealSeconds.hashCode ^
+      autoLockMinutes.hashCode ^
+      packId.hashCode ^
+      language.hashCode ^
+      firstRunDone.hashCode ^
+      sessionOnly.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Settings &&
+          runtimeType == other.runtimeType &&
+          scanOnImport == other.scanOnImport &&
+          revealSeconds == other.revealSeconds &&
+          autoLockMinutes == other.autoLockMinutes &&
+          packId == other.packId &&
+          language == other.language &&
+          firstRunDone == other.firstRunDone &&
+          sessionOnly == other.sessionOnly;
+}
+
 enum Source {
   /// Shapes that need no language: an IBAN, an e-mail, a postcode.
   generalRule,

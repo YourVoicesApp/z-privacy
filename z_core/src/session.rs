@@ -215,6 +215,10 @@ pub(crate) struct Core {
     /// here to a file. The owner's rule — no fallback to a text file; say the
     /// credential is session-only instead — is this field and nothing else.
     pub session_logins: std::collections::BTreeMap<String, crate::vault::model::ProviderLogin>,
+    /// Settings for this run, used when no vault is open to keep them in. Same
+    /// two homes as a credential, for the same reason: G15 lets the core write
+    /// one file, and it is the sealed vault.
+    pub session_settings: crate::vault::model::StoredSettings,
 }
 
 impl Core {
@@ -224,6 +228,7 @@ impl Core {
             next_session: 1,
             vault: crate::vault::VaultStore::default(),
             session_logins: std::collections::BTreeMap::new(),
+            session_settings: crate::vault::model::StoredSettings::default(),
         }
     }
 

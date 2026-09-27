@@ -177,6 +177,39 @@ pub struct SelectionView {
     pub snaps_to: Vec<Span>,
 }
 
+/// What the app has been told to do by itself.
+///
+/// Where these live is decided by one rule and no other: **gate G15 says the
+/// sealed vault is the only file this core writes.** So a setting is kept in the
+/// vault when one is open, and in memory for this run when there is none — the
+/// same two homes a provider credential has, and `session_only` says which.
+///
+/// That is also why `first_run_done` can be false again on a device with no
+/// vault: nothing was written, so nothing is remembered. The screen says so
+/// rather than pretending otherwise.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Settings {
+    /// Scan the moment a document arrives, with no dialog. On by default: the
+    /// boards' rule is that nobody has to press anything to be protected.
+    pub scan_on_import: bool,
+    /// How long a revealed value stays on screen.
+    pub reveal_seconds: u32,
+    /// Lock the vault after this many minutes of not being used. 0 = never.
+    /// Enforced **in the core**, not by a timer in the UI: a screen that forgot
+    /// to count would leave the vault open, and nobody would know.
+    pub auto_lock_minutes: u32,
+    /// The detection pack a new session starts with.
+    pub pack_id: String,
+    /// The working language, `en` or `de`. It picks the pack today; the
+    /// interface follows when it is translated.
+    pub language: String,
+    /// False until the first-run page has been passed.
+    pub first_run_done: bool,
+    /// True when all of the above will be gone when the app closes, because
+    /// there is no vault to keep them in.
+    pub session_only: bool,
+}
+
 /// One kind of value, as something to draw rather than something to enumerate.
 ///
 /// The owner's rule of 27 September: **a screen must not assume that Person,
@@ -894,6 +927,16 @@ pub fn search_vault(query: String) -> ApiResult<Vec<EntityRow>> {
 /// Every kind of value this build knows, with its label.
 pub fn kinds() -> ApiResult<Vec<KindRow>> {
     crate::ops::kinds()
+}
+
+/// What the app has been told to do by itself.
+pub fn settings() -> ApiResult<Settings> {
+    crate::ops::settings()
+}
+
+/// Change it. Returns the settings as they now stand, including where they live.
+pub fn save_settings(settings: Settings) -> ApiResult<Settings> {
+    crate::ops::save_settings(settings)
 }
 
 pub fn create_profile(name: String) -> ApiResult<String> {

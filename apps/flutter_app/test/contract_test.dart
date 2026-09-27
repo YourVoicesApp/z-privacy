@@ -89,6 +89,16 @@ void main() {
       'removeValueAlias': () => removeValueAlias(entity: 1, valueId: 1, alias: 'x'),
       'searchVault': () => searchVault(query: 'x'),
       'kinds': () => kinds(),
+      'settings': () => settings(),
+      'saveSettings': () => saveSettings(
+          settings: const Settings(
+              scanOnImport: true,
+              revealSeconds: 20,
+              autoLockMinutes: 15,
+              packId: 'de',
+              language: 'en',
+              firstRunDone: false,
+              sessionOnly: true)),
       'inspectSelection': () => inspectSelection(session: session, span: span),
       'disconnectProvider': () => disconnectProvider(provider: provider),
       'testProvider': () => testProvider(provider: provider),
@@ -128,7 +138,11 @@ void main() {
       }
     }
     expect(crashed, isEmpty, reason: 'calls that did not answer cleanly');
-    expect(calls.length, 52, reason: 'the contract has 52 functions');
+    // Gate G17 checks this number against `pub fn` in api.rs, so a function
+    // added to the contract and forgotten here fails the build rather than
+    // passing quietly — which is what happened when the contract went from 52
+    // to 54 and this line still said 52.
+    expect(calls.length, 54, reason: 'the contract has 54 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
   });

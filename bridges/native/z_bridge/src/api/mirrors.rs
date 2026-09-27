@@ -118,6 +118,29 @@ pub struct _SelectionView {
     pub snaps_to: Vec<Span>,
 }
 
+#[frb(mirror(Settings))]
+pub struct _Settings {
+    /// Scan the moment a document arrives, with no dialog. On by default: the
+    /// boards' rule is that nobody has to press anything to be protected.
+    pub scan_on_import: bool,
+    /// How long a revealed value stays on screen.
+    pub reveal_seconds: u32,
+    /// Lock the vault after this many minutes of not being used. 0 = never.
+    /// Enforced **in the core**, not by a timer in the UI: a screen that forgot
+    /// to count would leave the vault open, and nobody would know.
+    pub auto_lock_minutes: u32,
+    /// The detection pack a new session starts with.
+    pub pack_id: String,
+    /// The working language, `en` or `de`. It picks the pack today; the
+    /// interface follows when it is translated.
+    pub language: String,
+    /// False until the first-run page has been passed.
+    pub first_run_done: bool,
+    /// True when all of the above will be gone when the app closes, because
+    /// there is no vault to keep them in.
+    pub session_only: bool,
+}
+
 #[frb(mirror(KindRow))]
 pub struct _KindRow {
     pub kind: Kind,

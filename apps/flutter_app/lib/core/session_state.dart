@@ -34,6 +34,7 @@ class Ground extends ChangeNotifier {
       packs = await z.packs();
       providers = await z.providers();
       kinds = await z.kinds();
+      config = await z.settings();
       rememberKinds(kinds);
       // Both of these need an open vault; a locked one is not an error, it is a
       // state the UI shows in words.
@@ -51,6 +52,23 @@ class Ground extends ChangeNotifier {
       trouble = e.toString();
     }
     notifyListeners();
+  }
+
+  /// What the app has been told to do by itself. From the core, always — the
+  /// UI holds no policy of its own.
+  Settings? config;
+
+  /// Change one thing about the settings and write them back.
+  Future<String?> saveConfig(Settings next) async {
+    try {
+      config = await z.saveSettings(settings: next);
+      await refresh();
+      return null;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
   }
 
   /// Every kind the core knows, with its label. The UI never enumerates `Kind`
