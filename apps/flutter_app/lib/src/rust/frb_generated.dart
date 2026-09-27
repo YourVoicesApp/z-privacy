@@ -1230,6 +1230,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return ApiError_UnknownToken();
       case 10:
         return ApiError_NothingToSend();
+      case 11:
+        return ApiError_PayloadRefused(reason: dco_decode_String(raw[1]));
       default:
         throw Exception("unreachable");
     }
@@ -1692,6 +1694,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return ApiError_UnknownToken();
       case 10:
         return ApiError_NothingToSend();
+      case 11:
+        var var_reason = sse_decode_String(deserializer);
+        return ApiError_PayloadRefused(reason: var_reason);
       default:
         throw UnimplementedError('');
     }
@@ -2205,6 +2210,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(9, serializer);
       case ApiError_NothingToSend():
         sse_encode_i_32(10, serializer);
+      case ApiError_PayloadRefused(reason: final reason):
+        sse_encode_i_32(11, serializer);
+        sse_encode_String(reason, serializer);
     }
   }
 

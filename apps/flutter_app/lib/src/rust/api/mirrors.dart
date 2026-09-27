@@ -64,6 +64,11 @@ sealed class ApiError with _$ApiError implements FrbException {
 
   /// Nothing is protected and nothing is written; there is nothing to build.
   const factory ApiError.nothingToSend() = ApiError_NothingToSend;
+
+  /// The built payload failed the core's own leak audit and was thrown away.
+  /// This should never reach a user; if it does, the bug stayed inside.
+  const factory ApiError.payloadRefused({required String reason}) =
+      ApiError_PayloadRefused;
 }
 
 class DocumentView {

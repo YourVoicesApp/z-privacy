@@ -35,6 +35,9 @@ pub enum _ApiError {
     UnknownToken,
     /// Nothing is protected and nothing is written; there is nothing to build.
     NothingToSend,
+    /// The built payload failed the core's own leak audit and was thrown away.
+    /// This should never reach a user; if it does, the bug stayed inside.
+    PayloadRefused { reason: String },
 }
 
 #[frb(mirror(SessionId))]

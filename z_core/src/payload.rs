@@ -87,6 +87,47 @@ impl SafePayload {
         &self.text
     }
 
+    /// The core's own check that this payload leaks nothing, run on every build.
+    ///
+    /// The rule is an upper bound, and deliberately so: a value may legitimately
+    /// stand in the payload when the user protected only one of its places
+    /// (`Scope::Once`). What must never happen is that a value appears **more**
+    /// times than the places left unprotected — that would mean a replacement
+    /// silently failed. An upper bound can miss a nested spelling; it can never
+    /// refuse an honest build, which is what makes it safe to run in production.
+    pub(crate) fn audit(&self, session: &Session) -> ApiResult<()> {
+        for spelling in session.tokens.all_secrets() {
+            if spelling.is_empty() {
+                continue;
+            }
+            let in_original = count(&session.original, &spelling);
+            // Count by INTENT, not by what the range happens to cover: a
+            // protection whose token stands for this spelling is meant to hide
+            // one of its places. If such a protection exists and the value is
+            // still there in full, a replacement went astray.
+            let replaced = session
+                .protections
+                .iter()
+                .filter(|p| {
+                    session
+                        .tokens
+                        .get(&p.token)
+                        .is_some_and(|e| e.matches(&spelling))
+                })
+                .count();
+            let allowed = in_original.saturating_sub(replaced);
+            let actual = count(&self.text, &spelling);
+            if actual > allowed {
+                return Err(ApiError::PayloadRefused {
+                    reason: format!(
+                        "a protected value still stands {actual} time(s) where at most {allowed} was expected"
+                    ),
+                });
+            }
+        }
+        Ok(())
+    }
+
     /// Is this payload still the one the session would build now?
     pub(crate) fn check_fresh(&self, session_revision: u32) -> ApiResult<()> {
         if self.revision == session_revision {
@@ -97,5 +138,92 @@ impl SafePayload {
                 got: self.revision,
             })
         }
+    }
+}
+
+/// Non-overlapping occurrences of `needle` in `haystack`.
+fn count(haystack: &str, needle: &str) -> usize {
+    if needle.is_empty() {
+        return 0;
+    }
+    let mut n = 0usize;
+    let mut from = 0usize;
+    while let Some(rest) = haystack.get(from..) {
+        match rest.find(needle) {
+            Some(at) => {
+                n += 1;
+                from = from + at + needle.len();
+            }
+            None => break,
+        }
+    }
+    n
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::api::{Kind, Scope, Span};
+    use crate::ops;
+    use crate::session::with_session;
+
+    const DOC: &str = "Ansprechpartner: Thomas Müller, Nordstern GmbH.";
+
+    fn span_of(doc: &str, needle: &str) -> Span {
+        let byte = doc.find(needle).expect("needle");
+        let start: usize = doc[..byte].chars().map(char::len_utf16).sum();
+        let len: usize = needle.chars().map(char::len_utf16).sum();
+        Span {
+            start: start as u32,
+            end: (start + len) as u32,
+        }
+    }
+
+    /// The control string of invariant G3: prove the audit can actually fail.
+    ///
+    /// A check that never fires is worth nothing, and a green test suite around
+    /// a broken check is worse than no check. So here a protection is bent out of
+    /// place on purpose — exactly the misalignment bug the audit exists for — and
+    /// the build must refuse rather than hand out a payload with the name in it.
+    #[test]
+    fn no_leak_audit_refuses_a_sabotaged_protection() {
+        let s = ops::open_session(None, "de".to_string()).expect("open");
+        ops::import_text(s, DOC.to_string()).expect("import");
+        ops::protect(s, span_of(DOC, "Thomas Müller"), Scope::Conversation, Kind::Person)
+            .expect("protect");
+
+        // An honest build passes.
+        ops::build_payload(s).expect("the honest payload must build");
+
+        // Now point that protection at a different word, as a wrong offset would:
+        // the token still stands for the name, but the name itself survives whole.
+        let elsewhere = DOC.find("Ansprechpartner").expect("word");
+        with_session(s.id, |session| {
+            if let Some(p) = session.protections.first_mut() {
+                p.start = elsewhere;
+                p.end = elsewhere + "Ansprechpartner".len();
+            }
+        })
+        .expect("session");
+
+        match ops::build_payload(s) {
+            Err(crate::api::ApiError::PayloadRefused { reason }) => {
+                assert!(!reason.is_empty(), "the refusal must say what it saw");
+            }
+            other => panic!("the audit did not fire on a sabotaged protection: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn no_leak_audit_allows_a_value_the_user_left_in_the_clear() {
+        // Scope::Once means once. The audit must not second-guess the user, or
+        // it would block honest builds — which is why it checks an upper bound.
+        let doc = "Thomas Müller und Thomas Müller.";
+        let s = ops::open_session(None, "de".to_string()).expect("open");
+        ops::import_text(s, doc.to_string()).expect("import");
+        ops::protect(s, span_of(doc, "Thomas Müller"), Scope::Once, Kind::Person).expect("protect");
+
+        let handle = ops::build_payload(s).expect("a partly protected build is honest");
+        let view = ops::payload_view(handle).expect("view");
+        assert_eq!(view.text.matches("Thomas Müller").count(), 1);
     }
 }

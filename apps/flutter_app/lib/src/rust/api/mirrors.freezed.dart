@@ -55,7 +55,7 @@ extension ApiErrorPatterns on ApiError {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_ImportRefused value)?  importRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_ImportRefused value)?  importRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,TResult Function( ApiError_PayloadRefused value)?  payloadRefused,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -69,7 +69,8 @@ return openSuggestions(_that);case ApiError_ImportRefused() when importRefused !
 return importRefused(_that);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != null:
-return nothingToSend(_that);case _:
+return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
+return payloadRefused(_that);case _:
   return orElse();
 
 }
@@ -87,7 +88,7 @@ return nothingToSend(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_ImportRefused value)  importRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_ImportRefused value)  importRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,required TResult Function( ApiError_PayloadRefused value)  payloadRefused,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
@@ -101,7 +102,8 @@ return openSuggestions(_that);case ApiError_ImportRefused():
 return importRefused(_that);case ApiError_BadSpan():
 return badSpan(_that);case ApiError_UnknownToken():
 return unknownToken(_that);case ApiError_NothingToSend():
-return nothingToSend(_that);}
+return nothingToSend(_that);case ApiError_PayloadRefused():
+return payloadRefused(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -115,7 +117,7 @@ return nothingToSend(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_ImportRefused value)?  importRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_ImportRefused value)?  importRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,TResult? Function( ApiError_PayloadRefused value)?  payloadRefused,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -129,7 +131,8 @@ return openSuggestions(_that);case ApiError_ImportRefused() when importRefused !
 return importRefused(_that);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != null:
-return nothingToSend(_that);case _:
+return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
+return payloadRefused(_that);case _:
   return null;
 
 }
@@ -146,7 +149,7 @@ return nothingToSend(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  importRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  importRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,TResult Function( String reason)?  payloadRefused,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -159,7 +162,8 @@ return openSuggestions(_that.count);case ApiError_ImportRefused() when importRef
 return importRefused(_that.reason);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that.reason);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
-return nothingToSend();case _:
+return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
+return payloadRefused(_that.reason);case _:
   return orElse();
 
 }
@@ -177,7 +181,7 @@ return nothingToSend();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  importRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  importRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,required TResult Function( String reason)  payloadRefused,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
 return notImplemented();case ApiError_InvalidSession():
@@ -190,7 +194,8 @@ return openSuggestions(_that.count);case ApiError_ImportRefused():
 return importRefused(_that.reason);case ApiError_BadSpan():
 return badSpan(_that.reason);case ApiError_UnknownToken():
 return unknownToken();case ApiError_NothingToSend():
-return nothingToSend();}
+return nothingToSend();case ApiError_PayloadRefused():
+return payloadRefused(_that.reason);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -204,7 +209,7 @@ return nothingToSend();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  importRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  importRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,TResult? Function( String reason)?  payloadRefused,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -217,7 +222,8 @@ return openSuggestions(_that.count);case ApiError_ImportRefused() when importRef
 return importRefused(_that.reason);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that.reason);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
-return nothingToSend();case _:
+return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
+return payloadRefused(_that.reason);case _:
   return null;
 
 }
@@ -748,6 +754,72 @@ String toString() {
 
 
 
+
+/// @nodoc
+
+
+class ApiError_PayloadRefused extends ApiError {
+  const ApiError_PayloadRefused({required this.reason}): super._();
+  
+
+ final  String reason;
+
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ApiError_PayloadRefusedCopyWith<ApiError_PayloadRefused> get copyWith => _$ApiError_PayloadRefusedCopyWithImpl<ApiError_PayloadRefused>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ApiError_PayloadRefused&&(identical(other.reason, reason) || other.reason == reason));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,reason);
+
+@override
+String toString() {
+  return 'ApiError.payloadRefused(reason: $reason)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ApiError_PayloadRefusedCopyWith<$Res> implements $ApiErrorCopyWith<$Res> {
+  factory $ApiError_PayloadRefusedCopyWith(ApiError_PayloadRefused value, $Res Function(ApiError_PayloadRefused) _then) = _$ApiError_PayloadRefusedCopyWithImpl;
+@useResult
+$Res call({
+ String reason
+});
+
+
+
+
+}
+/// @nodoc
+class _$ApiError_PayloadRefusedCopyWithImpl<$Res>
+    implements $ApiError_PayloadRefusedCopyWith<$Res> {
+  _$ApiError_PayloadRefusedCopyWithImpl(this._self, this._then);
+
+  final ApiError_PayloadRefused _self;
+  final $Res Function(ApiError_PayloadRefused) _then;
+
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? reason = null,}) {
+  return _then(ApiError_PayloadRefused(
+reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
 
 /// @nodoc
 mixin _$ProtectOutcome {

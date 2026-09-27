@@ -11,6 +11,7 @@ use std::sync::{Mutex, OnceLock};
 
 use crate::api::{Kind, Scope, Source};
 use crate::payload::SafePayload;
+use crate::tokens::{TokenMint, TokenStore};
 
 /// One protected stretch of the original, and the token standing in for it.
 #[derive(Debug, Clone)]
@@ -19,6 +20,9 @@ pub(crate) struct Protection {
     pub start: usize,
     pub end: usize,
     pub token: String,
+    /// Which act of protection put it here. "Protect all matches" is one act,
+    /// so one Undo takes all of its places back together.
+    pub act: u32,
     pub kind: Kind,
     #[allow(dead_code)] // read by the tokens panel in 005
     pub scope: Scope,
@@ -39,8 +43,17 @@ pub(crate) struct Session {
     /// The user's own text. It never leaves this crate except as a view.
     pub original: String,
     pub protections: Vec<Protection>,
+    /// What every token in this conversation stands for.
+    pub tokens: TokenStore,
+    /// This session's own token namespace and randomness.
+    pub mint: TokenMint,
     pub payloads: BTreeMap<u32, SafePayload>,
+    /// Answers as they arrived, by id. Kept raw so «AI View» can show exactly
+    /// what came back, and restore can be redone at any time.
+    pub answers: BTreeMap<u32, String>,
     next_payload: u32,
+    next_act: u32,
+    next_answer: u32,
 }
 
 impl Session {
@@ -54,8 +67,13 @@ impl Session {
             pack_id,
             original: String::new(),
             protections: Vec::new(),
+            tokens: TokenStore::default(),
+            mint: TokenMint::new(),
             payloads: BTreeMap::new(),
+            answers: BTreeMap::new(),
             next_payload: 1,
+            next_act: 1,
+            next_answer: 1,
         }
     }
 
@@ -63,6 +81,30 @@ impl Session {
     /// this moment is now stale.
     pub(crate) fn bump(&mut self) {
         self.revision = self.revision.saturating_add(1);
+    }
+
+    /// The id of the next protection act.
+    pub(crate) fn take_act_id(&mut self) -> u32 {
+        let id = self.next_act;
+        self.next_act = self.next_act.saturating_add(1);
+        id
+    }
+
+    /// The tokens standing in the document right now, newest act first.
+    pub(crate) fn tokens_in_use(&self) -> Vec<String> {
+        let mut seen: Vec<String> = Vec::new();
+        for p in &self.protections {
+            if !seen.iter().any(|t| t == &p.token) {
+                seen.push(p.token.clone());
+            }
+        }
+        seen
+    }
+
+    pub(crate) fn take_answer_id(&mut self) -> u32 {
+        let id = self.next_answer;
+        self.next_answer = self.next_answer.saturating_add(1);
+        id
     }
 
     pub(crate) fn take_payload_id(&mut self) -> u32 {

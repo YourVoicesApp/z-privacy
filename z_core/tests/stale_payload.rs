@@ -4,11 +4,18 @@
 // The list of mutating calls below is walked one by one. A call that is not
 // built yet answers `NotImplemented` and is counted as pending — so the day it
 // lands, this test starts holding it to the rule without anyone editing it.
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::type_complexity)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::type_complexity, clippy::indexing_slicing)]
 
 use z_core::api::*;
 
-const DOC: &str = "Herr Thomas Müller arbeitet bei Nordstern GmbH.";
+const DOC: &str = "Herr Thomas Müller arbeitet bei Nordstern GmbH. Herr Müller leitet das Projekt.";
+
+/// "Thomas Müller" in UTF-16 units, as Flutter would report the selection:
+/// five units of "Herr ", then thirteen for the name (the ü is one unit but two
+/// bytes — which is the whole reason the contract counts units).
+fn person_span() -> Span {
+    Span { start: 5, end: 18 }
+}
 
 fn fresh_session_with_payload() -> (SessionId, PayloadHandle) {
     let s = open_session(None, "de".to_string()).expect("open");
@@ -42,50 +49,114 @@ fn stale_payload_after_a_document_change() {
     }
 }
 
+/// What a call actually did, so the rule can be stated exactly: a call that
+/// changed the safe text must invalidate handles; one that did nothing must not.
+#[derive(Debug, PartialEq, Eq)]
+enum Did {
+    Changed,
+    Nothing,
+    Pending,
+}
+
 #[test]
 fn stale_payload_after_every_mutating_call() {
-    // name, and the call. Each one must either be unbuilt, or make handles stale.
-    let mutators: Vec<(&str, fn(SessionId) -> Option<ApiError>)> = vec![
-        ("import_text", |s| import_text(s, "Neuer Text".to_string()).err()),
-        ("protect", |s| {
-            protect(s, Span { start: 5, end: 18 }, Scope::Conversation, Kind::Person).err()
+    // Each entry sets itself up, then does the one thing under test. The payload
+    // handle is built between the two, so it is fresh when the call happens.
+    type Setup = fn(SessionId);
+    type Mutate = fn(SessionId) -> Did;
+    let cases: Vec<(&str, Setup, Mutate)> = vec![
+        ("import_text", |_| {}, |s| {
+            import_text(s, "Ein anderer Text.".to_string()).expect("import");
+            Did::Changed
         }),
-        ("protect_all_matches", |s| {
-            protect_all_matches(s, Span { start: 5, end: 18 }, Scope::Conversation, Kind::Person).err()
+        ("protect", |_| {}, |s| {
+            protect(s, person_span(), Scope::Conversation, Kind::Person).expect("protect");
+            Did::Changed
         }),
-        ("undo_last_protection", |s| undo_last_protection(s).err()),
-        ("add_alias", |s| add_alias(s, "t".to_string(), "a".to_string()).err()),
-        ("answer_finding", |s| answer_finding(s, 1, FindingAnswer::Protect).err()),
-        ("switch_profile", |s| switch_profile(s, "p".to_string()).err()),
-        ("switch_pack", |s| switch_pack(s, "en".to_string()).err()),
+        ("protect_all_matches", |_| {}, |s| {
+            protect_all_matches(s, person_span(), Scope::Conversation, Kind::Person).expect("all");
+            Did::Changed
+        }),
+        (
+            "undo_last_protection",
+            |s| {
+                protect(s, person_span(), Scope::Conversation, Kind::Person).expect("protect");
+            },
+            |s| match undo_last_protection(s).expect("undo") {
+                UndoOutcome::Undone { places, .. } => {
+                    assert!(places >= 1);
+                    Did::Changed
+                }
+                UndoOutcome::NothingToUndo => Did::Nothing,
+            },
+        ),
+        ("undo with nothing to undo", |_| {}, |s| {
+            assert_eq!(undo_last_protection(s).expect("undo"), UndoOutcome::NothingToUndo);
+            Did::Nothing
+        }),
+        (
+            "add_alias",
+            |s| {
+                protect(s, person_span(), Scope::Conversation, Kind::Person).expect("protect");
+            },
+            |s| {
+                let token = list_tokens(s).expect("tokens").first().expect("one token").token.clone();
+                let places = add_alias(s, token, "Herr Müller".to_string()).expect("alias");
+                assert_eq!(places, 1, "the second spelling stands in one place");
+                Did::Changed
+            },
+        ),
+        ("answer_finding", |_| {}, |s| {
+            match answer_finding(s, 1, FindingAnswer::Protect) {
+                Err(ApiError::NotImplemented) => Did::Pending,
+                other => panic!("unexpected: {other:?}"),
+            }
+        }),
+        ("switch_profile", |_| {}, |s| match switch_profile(s, "p".to_string()) {
+            Err(ApiError::NotImplemented) => Did::Pending,
+            other => panic!("unexpected: {other:?}"),
+        }),
+        ("switch_pack", |_| {}, |s| match switch_pack(s, "en".to_string()) {
+            Err(ApiError::NotImplemented) => Did::Pending,
+            other => panic!("unexpected: {other:?}"),
+        }),
     ];
 
     let mut pending = Vec::new();
-    for (name, call) in mutators {
-        let (s, handle) = fresh_session_with_payload();
+    for (name, setup, mutate) in cases {
+        let (s, _) = fresh_session_with_payload();
+        setup(s);
+        // Build after the setup: this handle is fresh at the moment of the call.
+        let handle = build_payload(s).expect("build");
         let before = session_revision(s).expect("revision").n;
 
-        if let Some(ApiError::NotImplemented) = call(s) {
-            pending.push(name);
-            assert_eq!(
-                session_revision(s).expect("revision").n,
-                before,
-                "{name}: a call that did nothing must not raise the revision"
-            );
-            continue;
-        }
+        let did = mutate(s);
+        let after = session_revision(s).expect("revision").n;
 
-        assert!(
-            session_revision(s).expect("revision").n > before,
-            "{name}: a mutating call must raise the revision"
-        );
-        assert!(
-            matches!(payload_view(handle), Err(ApiError::StalePayload { .. })),
-            "{name}: the handle built before it must be stale"
-        );
+        match did {
+            Did::Changed => {
+                assert!(after > before, "{name}: a change must raise the revision");
+                assert!(
+                    matches!(payload_view(handle), Err(ApiError::StalePayload { .. })),
+                    "{name}: the handle built before the change must be stale"
+                );
+                assert!(
+                    matches!(send(handle, ProviderId { id: "openai".to_string() }), Err(ApiError::StalePayload { .. })),
+                    "{name}: send must refuse it too"
+                );
+            }
+            Did::Nothing | Did::Pending => {
+                assert_eq!(after, before, "{name}: doing nothing must not raise the revision");
+                assert!(payload_view(handle).is_ok(), "{name}: the handle must still be good");
+                if did == Did::Pending {
+                    pending.push(name);
+                }
+            }
+        }
         close_session(s).expect("close");
     }
-    // Recorded, not hidden: this is the honest state of the contract today.
+    // Recorded, not hidden: the honest state of the contract today. The day one
+    // of these lands, this test starts holding it to the rule with no edit.
     eprintln!("pending mutators (not built yet): {pending:?}");
 }
 

@@ -5,12 +5,17 @@
 //! What each call actually does lives here.
 
 use crate::api::{
-    ApiError, ApiResult, AnswerId, DocumentView, Mark, MarkState, PayloadHandle, PayloadView,
-    ProviderId, Revision, SessionId, Span,
+    ApiError, ApiResult, AnswerId, Segment, DocumentView, Kind, Mark, MarkState, PayloadHandle, PayloadView,
+    ProtectOutcome, ProviderId, RevealedValue, Revision, Scope, SessionId, Source, Span, TokenRow,
+    UndoOutcome,
 };
 use crate::payload::SafePayload;
-use crate::session::{with_core, with_session, Session};
+use crate::session::{with_core, with_session, Protection, Session};
 use crate::text;
+use crate::tokens::{restore, TokenEntry};
+
+/// How long a revealed value stays on screen before it hides itself.
+const REVEAL_TTL_MS: u32 = 20_000;
 
 // ---------------------------------------------------------------- session
 
@@ -79,6 +84,9 @@ pub(crate) fn build_payload(session: SessionId) -> ApiResult<PayloadHandle> {
         }
         let id = s.take_payload_id();
         let payload = SafePayload::build(s, id);
+        // Invariant G3, enforced at run time and not only in the tests: a payload
+        // that does not pass its own audit is never handed out.
+        payload.audit(s)?;
         let handle = payload.handle();
         s.payloads.insert(id, payload);
         s.trim_payloads();
@@ -116,6 +124,274 @@ fn with_payload<R>(handle: PayloadHandle, f: impl FnOnce(&SafePayload) -> R) -> 
             });
         }
         Ok(f(payload))
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+// ---------------------------------------------------------------- protect
+
+pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
+    protect_inner(session, span, scope, kind, false)
+}
+
+pub(crate) fn protect_all_matches(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
+    protect_inner(session, span, scope, kind, true)
+}
+
+fn protect_inner(
+    session: SessionId,
+    span: Span,
+    scope: Scope,
+    kind: Kind,
+    all_matches: bool,
+) -> ApiResult<ProtectOutcome> {
+    with_session(session.id, |s| {
+        let (start, end) = text::span_to_bytes(&s.original, span)?;
+        let selected = match s.original.get(start..end) {
+            Some(text) => text.to_string(),
+            None => {
+                return Err(ApiError::BadSpan {
+                    reason: "the selection is not on a character boundary".to_string(),
+                })
+            }
+        };
+
+        // Already protected? Say by whom, and change nothing.
+        let touched: Vec<&Protection> = s
+            .protections
+            .iter()
+            .filter(|p| p.start < end && start < p.end)
+            .collect();
+        if let [only] = touched.as_slice() {
+            if only.start == start && only.end == end {
+                return Ok(ProtectOutcome::AlreadyProtected {
+                    token: only.token.clone(),
+                    source: only.source,
+                    source_detail: only.source_detail.clone(),
+                });
+            }
+        }
+        // The selection cut into protected text, or spanned several: hand back
+        // the whole items and do nothing. A half-replacement could leave part of
+        // a real name in the payload.
+        if !touched.is_empty() {
+            let mut spans = Vec::with_capacity(touched.len());
+            for p in &touched {
+                spans.push(text::bytes_to_span(&s.original, p.start, p.end)?);
+            }
+            return Ok(ProtectOutcome::Snapped { spans });
+        }
+
+        // One value, one token: if this text is already known here, reuse it.
+        let token = match s.tokens.token_for(&selected) {
+            Some(existing) => existing.to_string(),
+            None => {
+                let minted = s.mint.mint(kind, &s.tokens);
+                s.tokens.insert(
+                    minted.clone(),
+                    TokenEntry {
+                        value: selected.clone(),
+                        aliases: Vec::new(),
+                        kind,
+                        scope,
+                        source: Source::Hand,
+                        source_detail: "selected by you".to_string(),
+                    },
+                );
+                minted
+            }
+        };
+
+        let act = s.take_act_id();
+        let mut places = Vec::new();
+        if all_matches {
+            places.extend(occurrences(&s.original, &selected));
+        } else {
+            places.push((start, end));
+        }
+
+        let mut applied = 0u32;
+        for (from, to) in places {
+            // Never overlap what is already protected.
+            if s.protections.iter().any(|p| p.start < to && from < p.end) {
+                continue;
+            }
+            s.protections.push(Protection {
+                start: from,
+                end: to,
+                token: token.clone(),
+                act,
+                kind,
+                scope,
+                source: Source::Hand,
+                source_detail: "selected by you".to_string(),
+            });
+            applied = applied.saturating_add(1);
+        }
+        s.protections.sort_by_key(|p| p.start);
+        if applied == 0 {
+            return Err(ApiError::BadSpan {
+                reason: "nothing was protected: the selection is already covered".to_string(),
+            });
+        }
+        s.bump();
+        Ok(ProtectOutcome::Applied { token, places: applied })
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+/// Every place `needle` appears in `haystack`, as byte ranges, left to right and
+/// non-overlapping.
+fn occurrences(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
+    let mut out = Vec::new();
+    if needle.is_empty() {
+        return out;
+    }
+    let mut from = 0usize;
+    while let Some(rest) = haystack.get(from..) {
+        match rest.find(needle) {
+            Some(at) => {
+                let start = from + at;
+                let end = start + needle.len();
+                out.push((start, end));
+                from = end;
+            }
+            None => break,
+        }
+    }
+    out
+}
+
+pub(crate) fn undo_last_protection(session: SessionId) -> ApiResult<UndoOutcome> {
+    with_session(session.id, |s| {
+        let last_act = match s.protections.iter().map(|p| p.act).max() {
+            Some(act) => act,
+            None => return Ok(UndoOutcome::NothingToUndo),
+        };
+        let token = s
+            .protections
+            .iter()
+            .find(|p| p.act == last_act)
+            .map(|p| p.token.clone())
+            .unwrap_or_default();
+        let before = s.protections.len();
+        s.protections.retain(|p| p.act != last_act);
+        let places = before.saturating_sub(s.protections.len()) as u32;
+
+        // If that token is no longer anywhere, it stops being a token of this
+        // conversation — the panel must not keep showing it.
+        if !s.protections.iter().any(|p| p.token == token) {
+            s.tokens.remove(&token);
+        }
+        s.bump();
+        Ok(UndoOutcome::Undone {
+            token,
+            places,
+            // M4: set when the act had also created a vault identity.
+            created_entity: None,
+        })
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) fn add_alias(session: SessionId, token: String, alias: String) -> ApiResult<u32> {
+    with_session(session.id, |s| {
+        if !s.tokens.add_alias(&token, alias.clone()) {
+            return Err(ApiError::UnknownToken);
+        }
+        // Teaching a spelling also protects the places where it stands.
+        let act = s.take_act_id();
+        let (kind, scope, source, detail) = match s.tokens.get(&token) {
+            Some(e) => (e.kind, e.scope, e.source, e.source_detail.clone()),
+            None => return Err(ApiError::UnknownToken),
+        };
+        let mut applied = 0u32;
+        for (from, to) in occurrences(&s.original, &alias) {
+            if s.protections.iter().any(|p| p.start < to && from < p.end) {
+                continue;
+            }
+            s.protections.push(Protection {
+                start: from,
+                end: to,
+                token: token.clone(),
+                act,
+                kind,
+                scope,
+                source,
+                source_detail: detail.clone(),
+            });
+            applied = applied.saturating_add(1);
+        }
+        s.protections.sort_by_key(|p| p.start);
+        if applied > 0 {
+            s.bump();
+        }
+        Ok(applied)
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+// ---------------------------------------------------------------- tokens
+
+pub(crate) fn list_tokens(session: SessionId) -> ApiResult<Vec<TokenRow>> {
+    with_session(session.id, |s| {
+        let in_use = s.tokens_in_use();
+        Ok(s.tokens.rows(&in_use))
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) fn reveal(session: SessionId, token: String) -> ApiResult<RevealedValue> {
+    with_session(session.id, |s| match s.tokens.get(&token) {
+        Some(entry) => Ok(RevealedValue {
+            token,
+            value: entry.value.clone(),
+            ttl_ms: REVEAL_TTL_MS,
+        }),
+        None => Err(ApiError::UnknownToken),
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) fn hide(session: SessionId, token: String) -> ApiResult<()> {
+    // Revealing never changed anything here, so hiding has nothing to undo: the
+    // showing lives in the UI. This call only confirms the token is real, so the
+    // UI can trust its own state.
+    with_session(session.id, |s| {
+        if s.tokens.contains(&token) {
+            Ok(())
+        } else {
+            Err(ApiError::UnknownToken)
+        }
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+// ---------------------------------------------------------------- answer
+
+pub(crate) fn ingest_answer(session: SessionId, raw: String) -> ApiResult<AnswerId> {
+    with_session(session.id, |s| {
+        let id = s.take_answer_id();
+        s.answers.insert(id, raw);
+        // An answer coming in changes nothing about what would go out, so the
+        // revision does not move and no handle goes stale.
+        Ok(AnswerId { id })
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) fn restored_view(session: SessionId, answer: AnswerId) -> ApiResult<Vec<Segment>> {
+    with_session(session.id, |s| match s.answers.get(&answer.id) {
+        Some(raw) => Ok(restore(raw, &s.tokens)),
+        None => Err(ApiError::UnknownToken),
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String> {
+    with_session(session.id, |s| match s.answers.get(&answer.id) {
+        Some(raw) => Ok(raw.clone()),
+        None => Err(ApiError::UnknownToken),
     })
     .ok_or(ApiError::InvalidSession)?
 }

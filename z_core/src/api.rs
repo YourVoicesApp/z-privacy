@@ -48,6 +48,9 @@ pub enum ApiError {
     UnknownToken,
     /// Nothing is protected and nothing is written; there is nothing to build.
     NothingToSend,
+    /// The built payload failed the core's own leak audit and was thrown away.
+    /// This should never reach a user; if it does, the bug stayed inside.
+    PayloadRefused { reason: String },
 }
 
 impl fmt::Display for ApiError {
@@ -66,6 +69,7 @@ impl fmt::Display for ApiError {
             Self::BadSpan { reason } => write!(f, "bad selection: {reason}"),
             Self::UnknownToken => write!(f, "no such token in this session"),
             Self::NothingToSend => write!(f, "there is nothing to send"),
+            Self::PayloadRefused { reason } => write!(f, "this payload was refused by its own audit: {reason}"),
         }
     }
 }
@@ -352,26 +356,22 @@ pub fn scan(session: SessionId) -> ApiResult<ScanReport> {
 
 /// Protect a selection. The outcome says whether it was already known.
 pub fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
-    let _ = (session, span, scope, kind);
-    Err(ApiError::NotImplemented)
+    crate::ops::protect(session, span, scope, kind)
 }
 
 /// Protect every place the selected text appears, all under one token.
 pub fn protect_all_matches(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
-    let _ = (session, span, scope, kind);
-    Err(ApiError::NotImplemented)
+    crate::ops::protect_all_matches(session, span, scope, kind)
 }
 
 /// One step back. "All matches" went in as one act, so it comes out as one act.
 pub fn undo_last_protection(session: SessionId) -> ApiResult<UndoOutcome> {
-    let _ = session;
-    Err(ApiError::NotImplemented)
+    crate::ops::undo_last_protection(session)
 }
 
 /// Teach an existing token another spelling of the same thing.
 pub fn add_alias(session: SessionId, token: String, alias: String) -> ApiResult<u32> {
-    let _ = (session, token, alias);
-    Err(ApiError::NotImplemented)
+    crate::ops::add_alias(session, token, alias)
 }
 
 // ---------------------------------------------------------------- review
@@ -392,20 +392,17 @@ pub fn answer_finding(session: SessionId, finding: u32, answer: FindingAnswer) -
 
 /// Show one value locally, for a moment. This does not touch any payload.
 pub fn reveal(session: SessionId, token: String) -> ApiResult<RevealedValue> {
-    let _ = (session, token);
-    Err(ApiError::NotImplemented)
+    crate::ops::reveal(session, token)
 }
 
 /// Put the token back in the view.
 pub fn hide(session: SessionId, token: String) -> ApiResult<()> {
-    let _ = (session, token);
-    Err(ApiError::NotImplemented)
+    crate::ops::hide(session, token)
 }
 
 /// The tokens standing in this conversation, without their values.
 pub fn list_tokens(session: SessionId) -> ApiResult<Vec<TokenRow>> {
-    let _ = session;
-    Err(ApiError::NotImplemented)
+    crate::ops::list_tokens(session)
 }
 
 // ---------------------------------------------------------------- payload
@@ -429,22 +426,19 @@ pub fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<AnswerId> 
 /// Incoming only: hand the core an answer as it arrived. M6 replaces this with
 /// the real network path; until then it is how a provider's reply gets in.
 pub fn ingest_answer(session: SessionId, raw: String) -> ApiResult<AnswerId> {
-    let _ = (session, raw);
-    Err(ApiError::NotImplemented)
+    crate::ops::ingest_answer(session, raw)
 }
 
 // ---------------------------------------------------------------- answer
 
 /// The answer with your own words back in place. The default view.
 pub fn restored_view(session: SessionId, answer: AnswerId) -> ApiResult<Vec<Segment>> {
-    let _ = (session, answer);
-    Err(ApiError::NotImplemented)
+    crate::ops::restored_view(session, answer)
 }
 
 /// The answer exactly as it arrived, tokens and all.
 pub fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String> {
-    let _ = (session, answer);
-    Err(ApiError::NotImplemented)
+    crate::ops::ai_view(session, answer)
 }
 
 // ---------------------------------------------------------------- vault

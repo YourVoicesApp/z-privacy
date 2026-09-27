@@ -14,13 +14,14 @@
 //! See `docs/SECURITY_INVARIANTS.md` for what this design does and does not
 //! promise.
 
-#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
+#![cfg_attr(test, allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing))]
 
 pub mod api;
 mod ops;
 mod payload;
 mod session;
 mod text;
+mod tokens;
 
 /// Version of the core, shown by the UI so a build can be identified on sight.
 pub fn core_version() -> String {
