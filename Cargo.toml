@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["z_core"]
+members = ["z_core", "bridges/native/z_bridge"]
 
 [workspace.package]
 version = "0.1.0"
@@ -10,6 +10,7 @@ license = "UNLICENSED"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
 missing_debug_implementations = "warn"
 
 [workspace.lints.clippy]
