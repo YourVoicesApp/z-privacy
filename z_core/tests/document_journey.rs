@@ -285,6 +285,86 @@ fn a_docx_journey_keeps_its_paragraph_numbers() {
     close_session(session).expect("close");
 }
 
+/// F-07: a truncated document.xml must not install a half-read document.
+#[test]
+fn a_malformed_docx_does_not_install_a_partial_document() {
+    let _guard = serial();
+
+    let session = open_session(None, "de".to_string()).expect("open");
+    let before = document_view(session).expect("view");
+    let before_rev = session_revision(session).expect("rev");
+    assert!(before.text.is_empty(), "a new session has no document");
+
+    match import_document(
+        session,
+        "malformed.docx".to_string(),
+        malformed_docx_bytes(),
+        DocumentKind::Docx,
+    ) {
+        Err(ApiError::DocumentRefused { reason, .. }) => {
+            assert_eq!(reason, Refusal::MalformedDocument);
+        }
+        Ok(view) => panic!(
+            "must not return a DocumentView, got {} bytes named {:?}",
+            view.text.len(),
+            view.name
+        ),
+        other => panic!("expected MalformedDocument, got {other:?}"),
+    }
+
+    let after = document_view(session).expect("view after refusal");
+    assert_eq!(after.text, before.text);
+    assert_eq!(after.name, before.name);
+    assert!(!after.text.contains("ZXQ-DOCX-PARTIAL-77220"));
+    assert_eq!(session_revision(session).expect("rev").n, before_rev.n);
+    close_session(session).expect("close");
+}
+
+/// The same refusal must not replace a document that was already in the session.
+#[test]
+fn a_malformed_docx_leaves_the_current_document_untouched() {
+    let _guard = serial();
+
+    let session = open_session(None, "de".to_string()).expect("open");
+    let kept = import_text(session, "Kunde: Nordstern Consulting GmbH".to_string()).expect("import");
+    let kept_rev = session_revision(session).expect("rev");
+
+    match import_document(
+        session,
+        "malformed.docx".to_string(),
+        malformed_docx_bytes(),
+        DocumentKind::Docx,
+    ) {
+        Err(ApiError::DocumentRefused { reason, .. }) => {
+            assert_eq!(reason, Refusal::MalformedDocument);
+        }
+        Ok(view) => panic!("must not return a DocumentView, got {} bytes", view.text.len()),
+        other => panic!("expected MalformedDocument, got {other:?}"),
+    }
+
+    let after = document_view(session).expect("view after refusal");
+    assert_eq!(after.text, kept.text);
+    assert_eq!(after.name, kept.name);
+    assert_eq!(after.kind, kept.kind);
+    assert!(!after.text.contains("ZXQ-DOCX-PARTIAL-77220"));
+    assert_eq!(session_revision(session).expect("rev").n, kept_rev.n);
+    close_session(session).expect("close");
+}
+
+/// The red-team fixture when it is on disk; otherwise the same XML reconstructed.
+fn malformed_docx_bytes() -> Vec<u8> {
+    let path = std::path::Path::new("/home/monopeaks/zprivacy-redteam-2026-09-28/harness/malformed.docx");
+    if let Ok(bytes) = std::fs::read(path) {
+        return bytes;
+    }
+    let xml = concat!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>"#,
+        r#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">"#,
+        r#"<w:body><w:p><w:t>ZXQ-DOCX-PARTIAL-77220</w:t></w:p><unclosed"#,
+    );
+    zip_one("word/document.xml", xml.as_bytes())
+}
+
 /// A one-entry zip, stored uncompressed — enough to be a DOCX.
 fn zip_one(name: &str, content: &[u8]) -> Vec<u8> {
     let crc = crc32(content);

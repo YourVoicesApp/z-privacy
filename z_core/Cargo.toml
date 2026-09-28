@@ -41,6 +41,13 @@ ureq = { version = "3.4.2", default-features = false, features = ["rustls"] }
 # escaper and a parser for untrusted input would be a correctness burden taken on
 # for no gain: unlike the PDF reader, the alternative here costs four crates.
 serde_json = "1.0.151"
+# XML for DOCX (F-07). The previous reader was a byte scan that stopped at the
+# first broken tag and returned the text it already had; a truncated
+# word/document.xml therefore imported as success. quick-xml is one crate
+# (memchr, already in the tree) and well-formedness is its job: a structural
+# error refuses the whole file. Auditability here is "less untrusted parser
+# code we have to prove", not "fewer crates at any cost".
+quick-xml = { version = "0.38.4", default-features = false }
 
 [dev-dependencies]
 # The tests read the request body a provider received, to prove it is the
