@@ -29,6 +29,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnswerId dco_decode_answer_id(dynamic raw);
 
   @protected
+  AnswerSnapshot dco_decode_answer_snapshot(dynamic raw);
+
+  @protected
   ApiError dco_decode_api_error(dynamic raw);
 
   @protected
@@ -42,6 +45,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PayloadHandle dco_decode_box_autoadd_payload_handle(dynamic raw);
+
+  @protected
+  PayloadView dco_decode_box_autoadd_payload_view(dynamic raw);
 
   @protected
   Place dco_decode_box_autoadd_place(dynamic raw);
@@ -66,6 +72,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  CredentialState dco_decode_credential_state(dynamic raw);
 
   @protected
   DocumentKind dco_decode_document_kind(dynamic raw);
@@ -95,6 +104,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ForgetPlan dco_decode_forget_plan(dynamic raw);
 
   @protected
+  HomeSnapshot dco_decode_home_snapshot(dynamic raw);
+
+  @protected
   int dco_decode_i_32(dynamic raw);
 
   @protected
@@ -108,6 +120,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<String> dco_decode_list_String(dynamic raw);
+
+  @protected
+  List<AnswerId> dco_decode_list_answer_id(dynamic raw);
 
   @protected
   List<EntityRow> dco_decode_list_entity_row(dynamic raw);
@@ -137,6 +152,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ProfileRow> dco_decode_list_profile_row(dynamic raw);
 
   @protected
+  List<ProviderFact> dco_decode_list_provider_fact(dynamic raw);
+
+  @protected
   List<ProviderRow> dco_decode_list_provider_row(dynamic raw);
 
   @protected
@@ -144,6 +162,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Span> dco_decode_list_span(dynamic raw);
+
+  @protected
+  List<TaughtValueRow> dco_decode_list_taught_value_row(dynamic raw);
 
   @protected
   List<TokenRow> dco_decode_list_token_row(dynamic raw);
@@ -162,6 +183,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  PayloadHandle? dco_decode_opt_box_autoadd_payload_handle(dynamic raw);
+
+  @protected
+  PayloadView? dco_decode_opt_box_autoadd_payload_view(dynamic raw);
 
   @protected
   Place? dco_decode_opt_box_autoadd_place(dynamic raw);
@@ -194,10 +221,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ProtectOutcome dco_decode_protect_outcome(dynamic raw);
 
   @protected
+  ProviderFact dco_decode_provider_fact(dynamic raw);
+
+  @protected
   ProviderId dco_decode_provider_id(dynamic raw);
 
   @protected
   ProviderRow dco_decode_provider_row(dynamic raw);
+
+  @protected
+  ProviderSnapshot dco_decode_provider_snapshot(dynamic raw);
 
   @protected
   Refusal dco_decode_refusal(dynamic raw);
@@ -210,6 +243,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Revision dco_decode_revision(dynamic raw);
+
+  @protected
+  ScanOrigin dco_decode_scan_origin(dynamic raw);
 
   @protected
   ScanReport dco_decode_scan_report(dynamic raw);
@@ -239,6 +275,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SwitchOutcome dco_decode_switch_outcome(dynamic raw);
 
   @protected
+  TaughtValueRow dco_decode_taught_value_row(dynamic raw);
+
+  @protected
   TokenRow dco_decode_token_row(dynamic raw);
 
   @protected
@@ -260,16 +299,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ValueRow dco_decode_value_row(dynamic raw);
 
   @protected
+  VaultSnapshot dco_decode_vault_snapshot(dynamic raw);
+
+  @protected
   VaultState dco_decode_vault_state(dynamic raw);
 
   @protected
   VaultUnlockOutcome dco_decode_vault_unlock_outcome(dynamic raw);
 
   @protected
+  WorkspaceSnapshot dco_decode_workspace_snapshot(dynamic raw);
+
+  @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
   AnswerId sse_decode_answer_id(SseDeserializer deserializer);
+
+  @protected
+  AnswerSnapshot sse_decode_answer_snapshot(SseDeserializer deserializer);
 
   @protected
   ApiError sse_decode_api_error(SseDeserializer deserializer);
@@ -289,6 +337,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PayloadHandle sse_decode_box_autoadd_payload_handle(
     SseDeserializer deserializer,
   );
+
+  @protected
+  PayloadView sse_decode_box_autoadd_payload_view(SseDeserializer deserializer);
 
   @protected
   Place sse_decode_box_autoadd_place(SseDeserializer deserializer);
@@ -313,6 +364,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  CredentialState sse_decode_credential_state(SseDeserializer deserializer);
 
   @protected
   DocumentKind sse_decode_document_kind(SseDeserializer deserializer);
@@ -342,6 +396,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ForgetPlan sse_decode_forget_plan(SseDeserializer deserializer);
 
   @protected
+  HomeSnapshot sse_decode_home_snapshot(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
@@ -355,6 +412,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
+
+  @protected
+  List<AnswerId> sse_decode_list_answer_id(SseDeserializer deserializer);
 
   @protected
   List<EntityRow> sse_decode_list_entity_row(SseDeserializer deserializer);
@@ -384,6 +444,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ProfileRow> sse_decode_list_profile_row(SseDeserializer deserializer);
 
   @protected
+  List<ProviderFact> sse_decode_list_provider_fact(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<ProviderRow> sse_decode_list_provider_row(SseDeserializer deserializer);
 
   @protected
@@ -391,6 +456,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Span> sse_decode_list_span(SseDeserializer deserializer);
+
+  @protected
+  List<TaughtValueRow> sse_decode_list_taught_value_row(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<TokenRow> sse_decode_list_token_row(SseDeserializer deserializer);
@@ -409,6 +479,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  PayloadHandle? sse_decode_opt_box_autoadd_payload_handle(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PayloadView? sse_decode_opt_box_autoadd_payload_view(
+    SseDeserializer deserializer,
+  );
 
   @protected
   Place? sse_decode_opt_box_autoadd_place(SseDeserializer deserializer);
@@ -441,10 +521,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ProtectOutcome sse_decode_protect_outcome(SseDeserializer deserializer);
 
   @protected
+  ProviderFact sse_decode_provider_fact(SseDeserializer deserializer);
+
+  @protected
   ProviderId sse_decode_provider_id(SseDeserializer deserializer);
 
   @protected
   ProviderRow sse_decode_provider_row(SseDeserializer deserializer);
+
+  @protected
+  ProviderSnapshot sse_decode_provider_snapshot(SseDeserializer deserializer);
 
   @protected
   Refusal sse_decode_refusal(SseDeserializer deserializer);
@@ -457,6 +543,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Revision sse_decode_revision(SseDeserializer deserializer);
+
+  @protected
+  ScanOrigin sse_decode_scan_origin(SseDeserializer deserializer);
 
   @protected
   ScanReport sse_decode_scan_report(SseDeserializer deserializer);
@@ -486,6 +575,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SwitchOutcome sse_decode_switch_outcome(SseDeserializer deserializer);
 
   @protected
+  TaughtValueRow sse_decode_taught_value_row(SseDeserializer deserializer);
+
+  @protected
   TokenRow sse_decode_token_row(SseDeserializer deserializer);
 
   @protected
@@ -507,6 +599,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ValueRow sse_decode_value_row(SseDeserializer deserializer);
 
   @protected
+  VaultSnapshot sse_decode_vault_snapshot(SseDeserializer deserializer);
+
+  @protected
   VaultState sse_decode_vault_state(SseDeserializer deserializer);
 
   @protected
@@ -515,10 +610,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  WorkspaceSnapshot sse_decode_workspace_snapshot(SseDeserializer deserializer);
+
+  @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
   void sse_encode_answer_id(AnswerId self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_answer_snapshot(
+    AnswerSnapshot self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_api_error(ApiError self, SseSerializer serializer);
@@ -541,6 +645,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_payload_handle(
     PayloadHandle self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_payload_view(
+    PayloadView self,
     SseSerializer serializer,
   );
 
@@ -575,6 +685,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
 
   @protected
+  void sse_encode_credential_state(
+    CredentialState self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_document_kind(DocumentKind self, SseSerializer serializer);
 
   @protected
@@ -602,6 +718,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_forget_plan(ForgetPlan self, SseSerializer serializer);
 
   @protected
+  void sse_encode_home_snapshot(HomeSnapshot self, SseSerializer serializer);
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
@@ -615,6 +734,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_answer_id(List<AnswerId> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_entity_row(
@@ -656,6 +778,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_provider_fact(
+    List<ProviderFact> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_provider_row(
     List<ProviderRow> self,
     SseSerializer serializer,
@@ -666,6 +794,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_span(List<Span> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_taught_value_row(
+    List<TaughtValueRow> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_token_row(List<TokenRow> self, SseSerializer serializer);
@@ -687,6 +821,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_payload_handle(
+    PayloadHandle? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_payload_view(
+    PayloadView? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_box_autoadd_place(Place? self, SseSerializer serializer);
@@ -725,10 +871,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_provider_fact(ProviderFact self, SseSerializer serializer);
+
+  @protected
   void sse_encode_provider_id(ProviderId self, SseSerializer serializer);
 
   @protected
   void sse_encode_provider_row(ProviderRow self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_provider_snapshot(
+    ProviderSnapshot self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_refusal(Refusal self, SseSerializer serializer);
@@ -741,6 +896,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_revision(Revision self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_scan_origin(ScanOrigin self, SseSerializer serializer);
 
   @protected
   void sse_encode_scan_report(ScanReport self, SseSerializer serializer);
@@ -770,6 +928,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_switch_outcome(SwitchOutcome self, SseSerializer serializer);
 
   @protected
+  void sse_encode_taught_value_row(
+    TaughtValueRow self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_token_row(TokenRow self, SseSerializer serializer);
 
   @protected
@@ -791,11 +955,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_value_row(ValueRow self, SseSerializer serializer);
 
   @protected
+  void sse_encode_vault_snapshot(VaultSnapshot self, SseSerializer serializer);
+
+  @protected
   void sse_encode_vault_state(VaultState self, SseSerializer serializer);
 
   @protected
   void sse_encode_vault_unlock_outcome(
     VaultUnlockOutcome self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_workspace_snapshot(
+    WorkspaceSnapshot self,
     SseSerializer serializer,
   );
 }

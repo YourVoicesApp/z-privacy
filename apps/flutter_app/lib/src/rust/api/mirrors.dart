@@ -22,6 +22,45 @@ class AnswerId {
       other is AnswerId && runtimeType == other.runtimeType && id == other.id;
 }
 
+class AnswerSnapshot {
+  final int stateRevision;
+  final AnswerId answer;
+  final int index;
+  final int total;
+  final List<Segment> restored;
+  final String asWritten;
+
+  const AnswerSnapshot({
+    required this.stateRevision,
+    required this.answer,
+    required this.index,
+    required this.total,
+    required this.restored,
+    required this.asWritten,
+  });
+
+  @override
+  int get hashCode =>
+      stateRevision.hashCode ^
+      answer.hashCode ^
+      index.hashCode ^
+      total.hashCode ^
+      restored.hashCode ^
+      asWritten.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AnswerSnapshot &&
+          runtimeType == other.runtimeType &&
+          stateRevision == other.stateRevision &&
+          answer == other.answer &&
+          index == other.index &&
+          total == other.total &&
+          restored == other.restored &&
+          asWritten == other.asWritten;
+}
+
 @freezed
 sealed class ApiError with _$ApiError implements FrbException {
   const ApiError._();
@@ -101,6 +140,22 @@ sealed class ApiError with _$ApiError implements FrbException {
 
   /// This payload handle already drove a send, or is driving one now.
   const factory ApiError.payloadAlreadySent() = ApiError_PayloadAlreadySent;
+
+  /// The act needs an open vault — Always, Profile, or anything kept for tomorrow —
+  /// and there is not one. Named so a press that cannot keep its promise cannot
+  /// look like success.
+  const factory ApiError.vaultRequired() = ApiError_VaultRequired;
+}
+
+enum CredentialState {
+  /// No credential is stored for this provider, in the vault or in memory.
+  missing,
+
+  /// Kept in process memory for this run only.
+  sessionOnly,
+
+  /// Sealed inside the vault.
+  encryptedInVault,
 }
 
 enum DocumentKind { txt, docx, pdf }
@@ -428,6 +483,57 @@ class ForgetPlan {
           stillKnownBy == other.stillKnownBy;
 }
 
+class HomeSnapshot {
+  final int stateRevision;
+  final VaultState vault;
+  final int identityCount;
+  final int valueCount;
+  final List<ProfileRow> profiles;
+  final List<PackRow> packs;
+  final List<ProviderFact> providers;
+  final Settings settings;
+  final List<KindRow> kinds;
+
+  const HomeSnapshot({
+    required this.stateRevision,
+    required this.vault,
+    required this.identityCount,
+    required this.valueCount,
+    required this.profiles,
+    required this.packs,
+    required this.providers,
+    required this.settings,
+    required this.kinds,
+  });
+
+  @override
+  int get hashCode =>
+      stateRevision.hashCode ^
+      vault.hashCode ^
+      identityCount.hashCode ^
+      valueCount.hashCode ^
+      profiles.hashCode ^
+      packs.hashCode ^
+      providers.hashCode ^
+      settings.hashCode ^
+      kinds.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is HomeSnapshot &&
+          runtimeType == other.runtimeType &&
+          stateRevision == other.stateRevision &&
+          vault == other.vault &&
+          identityCount == other.identityCount &&
+          valueCount == other.valueCount &&
+          profiles == other.profiles &&
+          packs == other.packs &&
+          providers == other.providers &&
+          settings == other.settings &&
+          kinds == other.kinds;
+}
+
 enum Kind {
   person,
   company,
@@ -750,6 +856,53 @@ sealed class ProtectOutcome with _$ProtectOutcome {
       ProtectOutcome_Snapped;
 }
 
+class ProviderFact {
+  final String id;
+  final String label;
+  final bool configured;
+  final bool connected;
+  final String endpoint;
+  final String model;
+  final bool credentialRequired;
+  final CredentialState credentialState;
+
+  const ProviderFact({
+    required this.id,
+    required this.label,
+    required this.configured,
+    required this.connected,
+    required this.endpoint,
+    required this.model,
+    required this.credentialRequired,
+    required this.credentialState,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      label.hashCode ^
+      configured.hashCode ^
+      connected.hashCode ^
+      endpoint.hashCode ^
+      model.hashCode ^
+      credentialRequired.hashCode ^
+      credentialState.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProviderFact &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          configured == other.configured &&
+          connected == other.connected &&
+          endpoint == other.endpoint &&
+          model == other.model &&
+          credentialRequired == other.credentialRequired &&
+          credentialState == other.credentialState;
+}
+
 class ProviderId {
   final String id;
 
@@ -822,6 +975,27 @@ class ProviderRow {
           baseUrl == other.baseUrl &&
           model == other.model &&
           credentialRequired == other.credentialRequired;
+}
+
+class ProviderSnapshot {
+  final int stateRevision;
+  final List<ProviderFact> providers;
+
+  const ProviderSnapshot({
+    required this.stateRevision,
+    required this.providers,
+  });
+
+  @override
+  int get hashCode => stateRevision.hashCode ^ providers.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProviderSnapshot &&
+          runtimeType == other.runtimeType &&
+          stateRevision == other.stateRevision &&
+          providers == other.providers;
 }
 
 @freezed
@@ -952,6 +1126,8 @@ class Revision {
       identical(this, other) ||
       other is Revision && runtimeType == other.runtimeType && n == other.n;
 }
+
+enum ScanOrigin { notScanned, onImport, rescan }
 
 class ScanReport {
   final int auto;
@@ -1220,6 +1396,37 @@ class SwitchOutcome {
           revision == other.revision;
 }
 
+class TaughtValueRow {
+  final int entityId;
+  final String entityLabel;
+  final int valueId;
+  final Kind kind;
+
+  const TaughtValueRow({
+    required this.entityId,
+    required this.entityLabel,
+    required this.valueId,
+    required this.kind,
+  });
+
+  @override
+  int get hashCode =>
+      entityId.hashCode ^
+      entityLabel.hashCode ^
+      valueId.hashCode ^
+      kind.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TaughtValueRow &&
+          runtimeType == other.runtimeType &&
+          entityId == other.entityId &&
+          entityLabel == other.entityLabel &&
+          valueId == other.valueId &&
+          kind == other.kind;
+}
+
 class TokenRow {
   final String token;
   final Kind kind;
@@ -1301,6 +1508,49 @@ class ValueRow {
           policy == other.policy;
 }
 
+class VaultSnapshot {
+  final int stateRevision;
+  final VaultState vault;
+  final int identityCount;
+  final int valueCount;
+  final List<ProfileRow> profiles;
+  final List<TaughtValueRow> taughtValues;
+  final bool canForget;
+
+  const VaultSnapshot({
+    required this.stateRevision,
+    required this.vault,
+    required this.identityCount,
+    required this.valueCount,
+    required this.profiles,
+    required this.taughtValues,
+    required this.canForget,
+  });
+
+  @override
+  int get hashCode =>
+      stateRevision.hashCode ^
+      vault.hashCode ^
+      identityCount.hashCode ^
+      valueCount.hashCode ^
+      profiles.hashCode ^
+      taughtValues.hashCode ^
+      canForget.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is VaultSnapshot &&
+          runtimeType == other.runtimeType &&
+          stateRevision == other.stateRevision &&
+          vault == other.vault &&
+          identityCount == other.identityCount &&
+          valueCount == other.valueCount &&
+          profiles == other.profiles &&
+          taughtValues == other.taughtValues &&
+          canForget == other.canForget;
+}
+
 enum VaultState {
   /// There is no vault on this device yet.
   absent,
@@ -1318,4 +1568,87 @@ sealed class VaultUnlockOutcome with _$VaultUnlockOutcome {
     required int identities,
     required int values,
   }) = VaultUnlockOutcome_Unlocked;
+}
+
+class WorkspaceSnapshot {
+  final int stateRevision;
+  final SessionId session;
+  final int revision;
+  final ScanOrigin scanOrigin;
+  final int autoProtected;
+  final int userProtected;
+  final int openSuggestions;
+  final int normal;
+  final int tokenCount;
+  final bool canUndo;
+  final List<Finding> findings;
+  final DocumentView document;
+  final List<TokenRow> tokens;
+  final PayloadView? payload;
+  final PayloadHandle? handle;
+  final VaultState vault;
+  final List<AnswerId> answers;
+
+  const WorkspaceSnapshot({
+    required this.stateRevision,
+    required this.session,
+    required this.revision,
+    required this.scanOrigin,
+    required this.autoProtected,
+    required this.userProtected,
+    required this.openSuggestions,
+    required this.normal,
+    required this.tokenCount,
+    required this.canUndo,
+    required this.findings,
+    required this.document,
+    required this.tokens,
+    this.payload,
+    this.handle,
+    required this.vault,
+    required this.answers,
+  });
+
+  @override
+  int get hashCode =>
+      stateRevision.hashCode ^
+      session.hashCode ^
+      revision.hashCode ^
+      scanOrigin.hashCode ^
+      autoProtected.hashCode ^
+      userProtected.hashCode ^
+      openSuggestions.hashCode ^
+      normal.hashCode ^
+      tokenCount.hashCode ^
+      canUndo.hashCode ^
+      findings.hashCode ^
+      document.hashCode ^
+      tokens.hashCode ^
+      payload.hashCode ^
+      handle.hashCode ^
+      vault.hashCode ^
+      answers.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is WorkspaceSnapshot &&
+          runtimeType == other.runtimeType &&
+          stateRevision == other.stateRevision &&
+          session == other.session &&
+          revision == other.revision &&
+          scanOrigin == other.scanOrigin &&
+          autoProtected == other.autoProtected &&
+          userProtected == other.userProtected &&
+          openSuggestions == other.openSuggestions &&
+          normal == other.normal &&
+          tokenCount == other.tokenCount &&
+          canUndo == other.canUndo &&
+          findings == other.findings &&
+          document == other.document &&
+          tokens == other.tokens &&
+          payload == other.payload &&
+          handle == other.handle &&
+          vault == other.vault &&
+          answers == other.answers;
 }

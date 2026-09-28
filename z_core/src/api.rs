@@ -69,6 +69,10 @@ pub enum ApiError {
     VaultAuthenticationFailed,
     /// This payload handle already drove a send, or is driving one now.
     PayloadAlreadySent,
+    /// The act needs an open vault — Always, Profile, or anything kept for tomorrow —
+    /// and there is not one. Named so a press that cannot keep its promise cannot
+    /// look like success.
+    VaultRequired,
 }
 
 /// Why a request did not complete. Numbers and names only, by construction.
@@ -126,6 +130,7 @@ impl fmt::Display for ApiError {
                 write!(f, "could not unlock the vault; the passphrase may be incorrect, or the vault may be corrupted or modified")
             }
             Self::PayloadAlreadySent => write!(f, "this payload has already been sent"),
+            Self::VaultRequired => write!(f, "this needs an open vault"),
         }
     }
 }
@@ -359,6 +364,26 @@ pub struct ProviderRow {
     /// a model on this machine needs none, and a future provider may authorise
     /// some other way. A screen asks this instead of assuming.
     pub credential_required: bool,
+}
+
+/// Where a provider credential actually lives. Never inferred from `connected`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CredentialState {
+    /// No credential is stored for this provider, in the vault or in memory.
+    Missing,
+    /// Kept in process memory for this run only.
+    SessionOnly,
+    /// Sealed inside the vault.
+    EncryptedInVault,
+}
+
+/// How the document last came to be scanned. The band reads this; it does not
+/// remember how it was first opened.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScanOrigin {
+    NotScanned,
+    OnImport,
+    Rescan,
 }
 
 /// One answer that came back from a provider.
@@ -819,6 +844,153 @@ impl fmt::Debug for Segment {
     }
 }
 
+// ---------------------------------------------------------------- truth snapshots
+//
+// Flutter draws these. It does not keep a second copy of any fact in them.
+// `state_revision` is a check that a mutation actually moved displayed truth;
+// it is not itself a source the screen draws from.
+
+/// Home: vault, packs, providers, settings — one read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HomeSnapshot {
+    pub state_revision: u32,
+    pub vault: VaultState,
+    pub identity_count: u32,
+    pub value_count: u32,
+    pub profiles: Vec<ProfileRow>,
+    pub packs: Vec<PackRow>,
+    pub providers: Vec<ProviderFact>,
+    pub settings: Settings,
+    pub kinds: Vec<KindRow>,
+}
+
+/// The workspace: findings are the canonical set; the counts are derived from them.
+#[derive(Clone, PartialEq, Eq)]
+pub struct WorkspaceSnapshot {
+    pub state_revision: u32,
+    pub session: SessionId,
+    pub revision: u32,
+    pub scan_origin: ScanOrigin,
+    pub auto_protected: u32,
+    pub user_protected: u32,
+    pub open_suggestions: u32,
+    pub normal: u32,
+    pub token_count: u32,
+    pub can_undo: bool,
+    pub findings: Vec<Finding>,
+    pub document: DocumentView,
+    pub tokens: Vec<TokenRow>,
+    pub payload: Option<PayloadView>,
+    pub handle: Option<PayloadHandle>,
+    pub vault: VaultState,
+    pub answers: Vec<AnswerId>,
+}
+
+/// Vault room: header and body draw from this one object.
+#[derive(Clone, PartialEq, Eq)]
+pub struct VaultSnapshot {
+    pub state_revision: u32,
+    pub vault: VaultState,
+    pub identity_count: u32,
+    pub value_count: u32,
+    pub profiles: Vec<ProfileRow>,
+    pub taught_values: Vec<TaughtValueRow>,
+    pub can_forget: bool,
+}
+
+/// One taught value, without the secret itself.
+#[derive(Clone, PartialEq, Eq)]
+pub struct TaughtValueRow {
+    pub entity_id: u32,
+    pub entity_label: String,
+    pub value_id: u32,
+    pub kind: Kind,
+}
+
+/// Providers as they actually stand, including where a credential lives.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderSnapshot {
+    pub state_revision: u32,
+    pub providers: Vec<ProviderFact>,
+}
+
+/// One provider's facts. `credential_state` is storage, not a guess from `connected`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProviderFact {
+    pub id: String,
+    pub label: String,
+    pub configured: bool,
+    pub connected: bool,
+    pub endpoint: String,
+    pub model: String,
+    pub credential_required: bool,
+    pub credential_state: CredentialState,
+}
+
+/// One answer, both views, from the core.
+#[derive(Clone, PartialEq, Eq)]
+pub struct AnswerSnapshot {
+    pub state_revision: u32,
+    pub answer: AnswerId,
+    pub index: u32,
+    pub total: u32,
+    pub restored: Vec<Segment>,
+    pub as_written: String,
+}
+
+impl fmt::Debug for WorkspaceSnapshot {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("WorkspaceSnapshot")
+            .field("state_revision", &self.state_revision)
+            .field("scan_origin", &self.scan_origin)
+            .field("auto_protected", &self.auto_protected)
+            .field("user_protected", &self.user_protected)
+            .field("open_suggestions", &self.open_suggestions)
+            .field("token_count", &self.token_count)
+            .field("can_undo", &self.can_undo)
+            .field("findings", &self.findings.len())
+            .field("document", &self.document)
+            .finish()
+    }
+}
+
+impl fmt::Debug for VaultSnapshot {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("VaultSnapshot")
+            .field("state_revision", &self.state_revision)
+            .field("vault", &self.vault)
+            .field("identity_count", &self.identity_count)
+            .field("value_count", &self.value_count)
+            .field("taught_values", &self.taught_values.len())
+            .field("can_forget", &self.can_forget)
+            .finish()
+    }
+}
+
+impl fmt::Debug for TaughtValueRow {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TaughtValueRow")
+            .field("entity_id", &self.entity_id)
+            .field("entity_label", &format_args!("[REDACTED]"))
+            .field("value_id", &self.value_id)
+            .field("kind", &self.kind)
+            .finish()
+    }
+}
+
+impl fmt::Debug for AnswerSnapshot {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AnswerSnapshot")
+            .field("state_revision", &self.state_revision)
+            .field("answer", &self.answer)
+            .field("index", &self.index)
+            .field("total", &self.total)
+            .field("restored", &self.restored.len())
+            .field("as_written", &format_args!("[REDACTED {} bytes]", self.as_written.len()))
+            .finish()
+    }
+}
+
 // ---------------------------------------------------------------- session
 
 /// Open a conversation. `pack_id` is the session's override; empty means the
@@ -1153,4 +1325,31 @@ pub fn disconnect_provider(provider: ProviderId) -> ApiResult<ProviderRow> {
 /// Returns how many milliseconds the round trip took.
 pub fn test_provider(provider: ProviderId) -> ApiResult<u32> {
     crate::ops::test_provider(provider)
+}
+
+// ---------------------------------------------------------------- truth snapshots
+
+/// Home, as one read. The counts, the vault, the providers — the same object.
+pub fn home_snapshot() -> ApiResult<HomeSnapshot> {
+    crate::ops::home_snapshot()
+}
+
+/// The workspace, as one read. Counts are derived from `findings`.
+pub fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnapshot> {
+    crate::ops::workspace_snapshot(session)
+}
+
+/// The vault room, as one read. Header and body draw from this object.
+pub fn vault_snapshot() -> ApiResult<VaultSnapshot> {
+    crate::ops::vault_snapshot()
+}
+
+/// Providers, including where each credential actually lives.
+pub fn provider_snapshot() -> ApiResult<ProviderSnapshot> {
+    crate::ops::provider_snapshot()
+}
+
+/// One answer, both views, as one read.
+pub fn answer_snapshot(session: SessionId, answer: AnswerId) -> ApiResult<AnswerSnapshot> {
+    crate::ops::answer_snapshot(session, answer)
 }

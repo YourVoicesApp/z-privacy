@@ -123,6 +123,11 @@ void main() {
       'addValueAlias': () => addValueAlias(entity: 1, valueId: 1, alias: 'Test'),
       'revealValue': () => revealValue(entity: 1, valueId: 1),
       'createProfile': () => createProfile(name: 'Test'),
+      'homeSnapshot': () => homeSnapshot(),
+      'workspaceSnapshot': () => workspaceSnapshot(session: session),
+      'vaultSnapshot': () => vaultSnapshot(),
+      'providerSnapshot': () => providerSnapshot(),
+      'answerSnapshot': () => answerSnapshot(session: session, answer: answer),
     };
 
     final crashed = <String>[];
@@ -146,7 +151,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 58, reason: 'the contract has 58 functions');
+    expect(calls.length, 63, reason: 'the contract has 63 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

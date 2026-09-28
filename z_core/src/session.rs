@@ -147,6 +147,8 @@ pub(crate) struct Session {
     next_payload: u32,
     next_act: u32,
     next_answer: u32,
+    /// How this document last came to be scanned. The workspace band reads it.
+    pub scan_origin: crate::api::ScanOrigin,
 }
 
 impl Session {
@@ -175,6 +177,7 @@ impl Session {
             next_payload: 1,
             next_act: 1,
             next_answer: 1,
+            scan_origin: crate::api::ScanOrigin::NotScanned,
         }
     }
 
@@ -306,6 +309,8 @@ pub(crate) struct Core {
     /// two homes as a credential, for the same reason: G15 lets the core write
     /// one file, and it is the sealed vault.
     pub session_settings: crate::vault::model::StoredSettings,
+    /// Bumped when a displayed fact changes. A check, not a source of drawing.
+    pub state_revision: u32,
 }
 
 impl Core {
@@ -317,7 +322,12 @@ impl Core {
             config: crate::config::ConfigStore::default(),
             session_logins: std::collections::BTreeMap::new(),
             session_settings: crate::vault::model::StoredSettings::default(),
+            state_revision: 1,
         }
+    }
+
+    pub(crate) fn bump_truth(&mut self) {
+        self.state_revision = self.state_revision.saturating_add(1);
     }
 
     pub(crate) fn open(&mut self, profile_id: Option<String>, pack_id: String) -> u32 {
@@ -365,4 +375,9 @@ pub(crate) fn with_core<R>(f: impl FnOnce(&mut Core) -> R) -> R {
 /// Borrow one session, or say it does not exist.
 pub(crate) fn with_session<R>(id: u32, f: impl FnOnce(&mut Session) -> R) -> Option<R> {
     with_core(|core| core.get(id).map(f))
+}
+
+/// A displayed fact changed. Call from outside `with_core` — the lock is not re-entrant.
+pub(crate) fn bump_truth() {
+    with_core(|core| core.bump_truth());
 }

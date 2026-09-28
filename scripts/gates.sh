@@ -215,7 +215,7 @@ else
 fi
 
 G11_MISSING=""
-for t in Secret SafePayload DocumentView PayloadView RevealedValue Segment EntityRow EntityCard; do
+for t in Secret SafePayload DocumentView PayloadView RevealedValue Segment EntityRow EntityCard WorkspaceSnapshot VaultSnapshot TaughtValueRow AnswerSnapshot; do
   grep -Rqs "impl fmt::Debug for $t" z_core/src || G11_MISSING="$G11_MISSING $t"
 done
 if [ -n "$G11_MISSING" ]; then

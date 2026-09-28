@@ -5,8 +5,10 @@
 //! What each call actually does lives here.
 
 mod vault;
+mod snapshots;
 
 pub(crate) use vault::*;
+pub(crate) use snapshots::*;
 
 use std::collections::BTreeMap;
 
@@ -61,7 +63,7 @@ pub(crate) fn import_text(session: SessionId, text_in: String) -> ApiResult<Docu
             &crate::documents::Budget::new(),
         )?)
     };
-    with_session(session.id, |s| {
+    let view = with_session(session.id, |s| {
         match read {
             Some(extracted) => {
                 s.original = crate::secret::Secret::new(extracted.text);
@@ -80,10 +82,13 @@ pub(crate) fn import_text(session: SessionId, text_in: String) -> ApiResult<Docu
         // are kept so an old handle can still explain itself as stale.
         s.protections.clear();
         s.findings.clear();
+        s.scan_origin = crate::api::ScanOrigin::NotScanned;
         s.bump();
         view_of(s)
     })
-    .ok_or(ApiError::InvalidSession)?
+    .ok_or(ApiError::InvalidSession)?;
+    crate::session::bump_truth();
+    view
 }
 
 /// Read a file, here, from memory. Nothing is written to disk on the way (G15).
@@ -96,7 +101,7 @@ pub(crate) fn import_document(
     let extracted = crate::documents::extract(&bytes, kind)?;
     // The file's bytes are dropped here, at the end of this call. They were never
     // written anywhere, and the text lives only inside the session's Secret.
-    with_session(session.id, |s| {
+    let view = with_session(session.id, |s| {
         s.original = crate::secret::Secret::new(extracted.text);
         s.places = extracted.places;
         s.pages = extracted.pages;
@@ -104,10 +109,13 @@ pub(crate) fn import_document(
         s.doc_kind = kind;
         s.protections.clear();
         s.findings.clear();
+        s.scan_origin = crate::api::ScanOrigin::NotScanned;
         s.bump();
         view_of(s)
     })
-    .ok_or(ApiError::InvalidSession)?
+    .ok_or(ApiError::InvalidSession)?;
+    crate::session::bump_truth();
+    view
 }
 
 pub(crate) fn document_view(session: SessionId) -> ApiResult<DocumentView> {
@@ -324,6 +332,7 @@ pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_ur
         // Sealed now, so the memory copy would only be a second place to leak from.
         with_core(|core| core.session_logins.remove(&provider.id));
     }
+    crate::session::bump_truth();
     row_for(&provider.id)
 }
 
@@ -423,7 +432,7 @@ pub(crate) fn test_provider(provider: ProviderId) -> ApiResult<u32> {
 /// The vault's copy, if the vault is open. A locked vault answers «nothing here»
 /// rather than an error: the credential simply is not available, which is the
 /// same shape as never having been given.
-fn login_in_vault(id: &str) -> Option<ProviderLogin> {
+pub(crate) fn login_in_vault(id: &str) -> Option<ProviderLogin> {
     with_core(|core| core.vault.with_open(|vault| vault.provider_logins.get(id).cloned()).ok().flatten())
 }
 
@@ -438,7 +447,7 @@ fn login_for(id: &str) -> ApiResult<ProviderLogin> {
     Ok(login)
 }
 
-fn login_is_usable(provider: &dyn crate::providers::Provider, login: &ProviderLogin) -> bool {
+pub(crate) fn login_is_usable(provider: &dyn crate::providers::Provider, login: &ProviderLogin) -> bool {
     if crate::providers::destination_of(&login.base).ok().as_deref() != Some(login.bound_to.as_str()) {
         return false;
     }
@@ -750,9 +759,13 @@ pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) 
     // The scope decides the breadth. Until task 034 it was only a label — the
     // breadth came from which function was called — so «this conversation»
     // could protect one place and «always» could reach nothing at all.
+    if matches!(scope, Scope::Always | Scope::Profile) {
+        require_open_vault()?;
+    }
+    remember_in_vault(session, span, scope, kind)?;
     let every_place = !matches!(scope, Scope::Once);
     let outcome = protect_inner(session, span, scope, kind, every_place)?;
-    remember_in_vault(session, span, scope, kind)?;
+    crate::session::bump_truth();
     Ok(outcome)
 }
 
@@ -792,8 +805,13 @@ fn remember_in_vault(session: SessionId, span: Span, scope: Scope, kind: Kind) -
 }
 
 pub(crate) fn protect_all_matches(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
+    if matches!(scope, Scope::Always | Scope::Profile) {
+        require_open_vault()?;
+    }
     remember_in_vault(session, span, scope, kind)?;
-    protect_inner(session, span, scope, kind, true)
+    let outcome = protect_inner(session, span, scope, kind, true)?;
+    crate::session::bump_truth();
+    Ok(outcome)
 }
 
 fn protect_inner(
@@ -1172,7 +1190,7 @@ pub(crate) fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String>
 // ---------------------------------------------------------------- scan (M3)
 
 pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
-    with_core(|core| {
+    let report = with_core(|core| {
         let vault_state = core.vault.state();
         let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;
         if s.original.is_empty() {
@@ -1183,8 +1201,11 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         // to say, not by a flag someone could forget to check.
         let hints = vault.hints(s.profile_id.as_deref());
         rescan_with(s, &pack, &hints);
+        mark_scanned(s);
         Ok(report_of(s, vault_state))
-    })
+    })?;
+    crate::session::bump_truth();
+    Ok(report)
 }
 
 /// One rescan, used by the Rescan button and by switching a pack or a profile.
@@ -1353,6 +1374,7 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
     // mutex is not re-entrant, and a lock taken under a lock does not fail, it
     // stops the program.
     if matches!(answer, FindingAnswer::Always) {
+        require_open_vault()?;
         let learn = with_session(session.id, |s| {
             s.findings
                 .iter()
@@ -1368,7 +1390,7 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
             learn_value(None, kind, text)?;
         }
     }
-    with_session(session.id, |s| {
+    let report = with_session(session.id, |s| {
         let Some(index) = s.findings.iter().position(|f| f.id == finding) else {
             return Err(ApiError::UnknownToken);
         };
@@ -1431,7 +1453,9 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
             }
         }
     })
-    .ok_or(ApiError::InvalidSession)?
+    .ok_or(ApiError::InvalidSession)?;
+    crate::session::bump_truth();
+    report
 }
 
 pub(crate) fn packs() -> ApiResult<Vec<PackRow>> {

@@ -38,18 +38,23 @@ pub(crate) fn vault_create(passphrase: String) -> ApiResult<VaultUnlockOutcome> 
         });
     }
     let (identities, values) = with_core(|core| core.vault.create(&passphrase))?;
+    crate::session::bump_truth();
     Ok(VaultUnlockOutcome::Unlocked { identities, values })
 }
 
 pub(crate) fn vault_unlock(passphrase: String) -> ApiResult<VaultUnlockOutcome> {
     match with_core(|core| core.vault.unlock(&passphrase)) {
-        Ok((identities, values)) => Ok(VaultUnlockOutcome::Unlocked { identities, values }),
+        Ok((identities, values)) => {
+            crate::session::bump_truth();
+            Ok(VaultUnlockOutcome::Unlocked { identities, values })
+        }
         Err(other) => Err(other),
     }
 }
 
 pub(crate) fn vault_lock() -> ApiResult<()> {
     with_core(|core| core.vault.lock());
+    crate::session::bump_truth();
     Ok(())
 }
 

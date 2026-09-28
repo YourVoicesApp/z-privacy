@@ -56,6 +56,10 @@ pub enum _ApiError {
     VaultAuthenticationFailed,
     /// This payload handle already drove a send, or is driving one now.
     PayloadAlreadySent,
+    /// The act needs an open vault — Always, Profile, or anything kept for tomorrow —
+    /// and there is not one. Named so a press that cannot keep its promise cannot
+    /// look like success.
+    VaultRequired,
 }
 
 #[frb(mirror(NetworkRefusal))]
@@ -250,6 +254,23 @@ pub struct _ProviderRow {
     /// a model on this machine needs none, and a future provider may authorise
     /// some other way. A screen asks this instead of assuming.
     pub credential_required: bool,
+}
+
+#[frb(mirror(CredentialState))]
+pub enum _CredentialState {
+    /// No credential is stored for this provider, in the vault or in memory.
+    Missing,
+    /// Kept in process memory for this run only.
+    SessionOnly,
+    /// Sealed inside the vault.
+    EncryptedInVault,
+}
+
+#[frb(mirror(ScanOrigin))]
+pub enum _ScanOrigin {
+    NotScanned,
+    OnImport,
+    Rescan,
 }
 
 #[frb(mirror(AnswerId))]
@@ -577,5 +598,86 @@ pub struct _RescanOutcome {
 #[frb(mirror(VaultUnlockOutcome))]
 pub enum _VaultUnlockOutcome {
     Unlocked { identities: u32, values: u32 },
+}
+
+#[frb(mirror(HomeSnapshot))]
+pub struct _HomeSnapshot {
+    pub state_revision: u32,
+    pub vault: VaultState,
+    pub identity_count: u32,
+    pub value_count: u32,
+    pub profiles: Vec<ProfileRow>,
+    pub packs: Vec<PackRow>,
+    pub providers: Vec<ProviderFact>,
+    pub settings: Settings,
+    pub kinds: Vec<KindRow>,
+}
+
+#[frb(mirror(WorkspaceSnapshot))]
+pub struct _WorkspaceSnapshot {
+    pub state_revision: u32,
+    pub session: SessionId,
+    pub revision: u32,
+    pub scan_origin: ScanOrigin,
+    pub auto_protected: u32,
+    pub user_protected: u32,
+    pub open_suggestions: u32,
+    pub normal: u32,
+    pub token_count: u32,
+    pub can_undo: bool,
+    pub findings: Vec<Finding>,
+    pub document: DocumentView,
+    pub tokens: Vec<TokenRow>,
+    pub payload: Option<PayloadView>,
+    pub handle: Option<PayloadHandle>,
+    pub vault: VaultState,
+    pub answers: Vec<AnswerId>,
+}
+
+#[frb(mirror(VaultSnapshot))]
+pub struct _VaultSnapshot {
+    pub state_revision: u32,
+    pub vault: VaultState,
+    pub identity_count: u32,
+    pub value_count: u32,
+    pub profiles: Vec<ProfileRow>,
+    pub taught_values: Vec<TaughtValueRow>,
+    pub can_forget: bool,
+}
+
+#[frb(mirror(TaughtValueRow))]
+pub struct _TaughtValueRow {
+    pub entity_id: u32,
+    pub entity_label: String,
+    pub value_id: u32,
+    pub kind: Kind,
+}
+
+#[frb(mirror(ProviderSnapshot))]
+pub struct _ProviderSnapshot {
+    pub state_revision: u32,
+    pub providers: Vec<ProviderFact>,
+}
+
+#[frb(mirror(ProviderFact))]
+pub struct _ProviderFact {
+    pub id: String,
+    pub label: String,
+    pub configured: bool,
+    pub connected: bool,
+    pub endpoint: String,
+    pub model: String,
+    pub credential_required: bool,
+    pub credential_state: CredentialState,
+}
+
+#[frb(mirror(AnswerSnapshot))]
+pub struct _AnswerSnapshot {
+    pub state_revision: u32,
+    pub answer: AnswerId,
+    pub index: u32,
+    pub total: u32,
+    pub restored: Vec<Segment>,
+    pub as_written: String,
 }
 
