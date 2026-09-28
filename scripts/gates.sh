@@ -351,7 +351,8 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          can_say_where_it_came_from shows_what_it_will_take leaves_another_client_alone \
          does_not_unprotect_the_document a_different_act_from_forget tomorrow_not_today \
          this_conversation_means_every_place need_the_vault_and_say_so \
-         reports_nothing_it_does_not_know take_back_an_answer; do
+         reports_nothing_it_does_not_know take_back_an_answer \
+         lie_always_without_vault lie_missing_credential lie_rescan_is_named; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -366,7 +367,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "the manual door needs no key" "as the model wrote it" "only the safe text arrives" \
          "the vault room" "say where they live" "in the language it is offering" \
          "not on Home" "word for word" "forgetting shows its cost first" \
-         "clipboard untouched until confirmed"; do
+         "clipboard untouched until confirmed" \
+         "named a rescan, not scanned on import"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

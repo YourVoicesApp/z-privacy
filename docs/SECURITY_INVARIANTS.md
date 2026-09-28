@@ -70,6 +70,12 @@
 
 ومعها اختبارٌ ثالث من نوع آخر: **لا رقم على شاشة ثابت**. الشكل الذي جمع الكذبات الأربع هو حقلٌ لا يتغيّر مهما حدث، فالاختبار يمشي المراجعة كلّها ويطلب أن يكون العدد قد **تحرّك**.
 
+وبعد TruthSnapshot:
+
+> **Any factual security or workflow state displayed by Flutter must originate from a current Rust snapshot. Flutter may cache presentation state, but not security truth.**
+
+الشاشات ترسم `HomeSnapshot` · `WorkspaceSnapshot` · `VaultSnapshot` · `ProviderSnapshot` · `AnswerSnapshot`. العدادات تُشتق في Rust من المجموعة الكانونية (مثل `findings`). و`state_revision` أداة تحقّق بعد كلّ mutation، وليست مصدر الرسم. الاختبارات في `tests/snapshots.rs` و`tests/truthfulness_regressions.rs`.
+
 ---
 
 ## ٣ · ثلاثة أفعال لا تُخلَط

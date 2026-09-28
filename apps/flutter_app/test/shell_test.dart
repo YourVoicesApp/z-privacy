@@ -132,23 +132,21 @@ void main() {
       await bench.rescan();
     });
 
-    // The core's own report, for comparison.
-    final report = bench.report!;
-    expect(report.auto + report.suggested, greaterThan(0), reason: 'the scan found something to show');
+    expect(bench.snap, isNotNull, reason: 'the workspace is drawn from a snapshot');
+    expect((bench.snap!.autoProtected + bench.snap!.openSuggestions), greaterThan(0),
+        reason: 'the scan found something to show');
 
     await tester.pumpWidget(MaterialApp(
       home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
     ));
     await tester.pumpAndSettle();
 
-    // The band, word for word as the design board writes it, with the core's
-    // numbers substituted in.
     expect(find.text('Scanned on import'), findsOneWidget);
     expect(
-      find.text('${report.auto} protected automatically · ${report.suggested} need your word · '
-          '${report.normal} normal'),
+      find.text('${bench.snap!.autoProtected} protected automatically · ${bench.snap!.openSuggestions} need your word · '
+          '${bench.snap!.normal} normal'),
       findsOneWidget,
-      reason: 'the band shows the core numbers and nothing rounded or recomputed',
+      reason: 'the band shows the snapshot numbers, derived from findings',
     );
 
     // The two columns exist and each carries its hard rule.
@@ -160,15 +158,40 @@ void main() {
     expect(find.text('Typed text'), findsOneWidget);
     expect(find.text('1 page'), findsOneWidget);
 
-    // The vault's state is on the bar, and it is the state inside the report —
+    // The vault's state is on the bar, and it is the state inside the snapshot —
     // one source, so the bar and the band can never contradict each other.
-    final onBar = switch (report.vault) {
+    final onBar = switch (bench.snap!.vault) {
       VaultState.unlocked => 'Unlocked',
       VaultState.locked => 'Locked',
       VaultState.absent => 'None',
     };
     expect(find.text(onBar), findsOneWidget);
 
+    bench.dispose();
+  });
+
+  testWidgets('a rescan is named a rescan, not scanned on import', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      await bench.rescan();
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await tester.pumpAndSettle();
+    expect(bench.scanOrigin, ScanOrigin.rescan);
+    expect(find.text('Last scan: manual rescan'), findsOneWidget);
+    expect(find.text('Scanned on import'), findsNothing);
     bench.dispose();
   });
 
