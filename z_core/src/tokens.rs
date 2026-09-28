@@ -203,11 +203,12 @@ impl TokenStore {
 
 /// Put the values back into an answer — and nothing else.
 ///
-/// Only tokens that this session actually minted are replaced. Anything that
-/// merely looks like a token (`__Z_FAKE_123__`, a model inventing one) is left
-/// exactly as it arrived: the core does not guess, and does not pretend to know
-/// what it does not know. That is invariant G9.
-pub(crate) fn restore(raw: &str, store: &TokenStore) -> Vec<Segment> {
+/// Only tokens that this session actually minted **and** that appeared in the
+/// originating payload are replaced. Anything that merely looks like a token
+/// (`__Z_FAKE_123__`, a model inventing one), or a real token from elsewhere in
+/// the session, is left exactly as it arrived: the core does not guess, and does
+/// not pretend to know what it does not know. That is invariant G9.
+pub(crate) fn restore(raw: &str, store: &TokenStore, allowed: &[String]) -> Vec<Segment> {
     const OPEN: &str = "__Z_";
     const CLOSE: &str = "__";
 
@@ -237,7 +238,8 @@ pub(crate) fn restore(raw: &str, store: &TokenStore) -> Vec<Segment> {
             }
         };
         let candidate = raw.get(start..end).unwrap_or_default();
-        match store.get(candidate) {
+        let allowed_here = allowed.iter().any(|t| t == candidate);
+        match allowed_here.then(|| store.get(candidate)).flatten() {
             Some(entry) => {
                 if !plain.is_empty() {
                     out.push(Segment { text: std::mem::take(&mut plain), restored: false });

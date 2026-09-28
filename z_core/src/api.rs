@@ -943,10 +943,10 @@ pub fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<AnswerId> 
     crate::ops::send(handle, provider)
 }
 
-/// Incoming only: hand the core an answer as it arrived. M6 replaces this with
-/// the real network path; until then it is how a provider's reply gets in.
-pub fn ingest_answer(session: SessionId, raw: String) -> ApiResult<AnswerId> {
-    crate::ops::ingest_answer(session, raw)
+/// Incoming only: hand the core an answer as it arrived, tied to the payload the
+/// model saw. There is no restore-from-arbitrary-session-text path.
+pub fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<AnswerId> {
+    crate::ops::ingest_answer(payload, raw)
 }
 
 // ---------------------------------------------------------------- answer

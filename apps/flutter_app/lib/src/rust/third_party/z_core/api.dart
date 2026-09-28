@@ -158,12 +158,12 @@ Future<AnswerId> send({
   required ProviderId provider,
 }) => RustLib.instance.api.zCoreApiSend(handle: handle, provider: provider);
 
-/// Incoming only: hand the core an answer as it arrived. M6 replaces this with
-/// the real network path; until then it is how a provider's reply gets in.
+/// Incoming only: hand the core an answer as it arrived, tied to the payload the
+/// model saw. There is no restore-from-arbitrary-session-text path.
 Future<AnswerId> ingestAnswer({
-  required SessionId session,
+  required PayloadHandle payload,
   required String raw,
-}) => RustLib.instance.api.zCoreApiIngestAnswer(session: session, raw: raw);
+}) => RustLib.instance.api.zCoreApiIngestAnswer(payload: payload, raw: raw);
 
 /// The answer with your own words back in place. The default view.
 Future<List<Segment>> restoredView({

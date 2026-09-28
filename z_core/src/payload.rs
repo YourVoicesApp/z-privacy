@@ -21,6 +21,7 @@ pub(crate) struct SafePayload {
     /// What will go over the wire. Crate-private: only the provider module may
     /// read it, and the UI only ever sees it through [`Self::view`].
     text: String,
+    pub allowed_token_ids: Vec<String>,
     pub protected: u32,
     pub open_suggestions: u32,
 }
@@ -34,6 +35,7 @@ impl fmt::Debug for SafePayload {
             .field("session", &self.session)
             .field("revision", &self.revision)
             .field("bytes", &self.text.len())
+            .field("allowed_tokens", &self.allowed_token_ids.len())
             .field("protected", &self.protected)
             .field("open_suggestions", &self.open_suggestions)
             .finish()
@@ -52,6 +54,7 @@ impl SafePayload {
         ranges.sort_by_key(|p| p.start);
 
         let mut text = String::with_capacity(session.original.len());
+        let mut allowed_token_ids = Vec::new();
         let mut cursor = 0usize;
         let mut applied = 0u32;
 
@@ -64,6 +67,9 @@ impl SafePayload {
                 None => continue,
             }
             text.push_str(&p.token);
+            if !allowed_token_ids.iter().any(|t| t == &p.token) {
+                allowed_token_ids.push(p.token.clone());
+            }
             cursor = p.end;
             applied = applied.saturating_add(1);
         }
@@ -76,6 +82,7 @@ impl SafePayload {
             session: session.id,
             revision: session.revision,
             text,
+            allowed_token_ids,
             protected: applied,
             // How many suggestions are still unanswered **at the moment this was
             // built**. It was hard-coded to 0 from M2 until task 025, which meant

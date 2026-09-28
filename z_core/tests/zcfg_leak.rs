@@ -78,7 +78,7 @@ fn nothing_of_the_user_s_work_reaches_the_settings_file() {
     }
     let handle = build_payload(s).expect("build");
     let view = payload_view(handle).expect("view");
-    let answer = ingest_answer(s, format!("Danke.\n{}", view.text)).expect("answer");
+    let answer = ingest_answer(handle, format!("Danke.\n{}", view.text)).expect("answer");
     let _ = restored_view(s, answer).expect("restore");
     connect_provider(
         ProviderId { id: "openai".to_string() },

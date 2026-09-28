@@ -87,6 +87,26 @@ pub(crate) struct Dismissed {
     pub value: crate::secret::Secret,
 }
 
+/// One answer, tied to the exact payload that produced it.
+#[derive(Clone)]
+pub(crate) struct AnswerRecord {
+    pub id: u32,
+    pub session: u32,
+    pub payload: u32,
+    pub raw: String,
+}
+
+impl std::fmt::Debug for AnswerRecord {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AnswerRecord")
+            .field("id", &self.id)
+            .field("session", &self.session)
+            .field("payload", &self.payload)
+            .field("bytes", &self.raw.len())
+            .finish()
+    }
+}
+
 /// One conversation.
 #[derive(Debug)]
 pub(crate) struct Session {
@@ -120,9 +140,10 @@ pub(crate) struct Session {
     /// This session's own token namespace and randomness.
     pub mint: TokenMint,
     pub payloads: BTreeMap<u32, SafePayload>,
-    /// Answers as they arrived, by id. Kept raw so «AI View» can show exactly
-    /// what came back, and restore can be redone at any time.
-    pub answers: BTreeMap<u32, String>,
+    /// Answers as they arrived, by id, tied to the payload that produced them.
+    /// Kept raw so «AI View» can show exactly what came back, and restore can be
+    /// redone at any time.
+    pub answers: BTreeMap<u32, AnswerRecord>,
     next_payload: u32,
     next_act: u32,
     next_answer: u32,
@@ -249,10 +270,18 @@ impl Session {
     pub(crate) fn trim_payloads(&mut self) {
         const KEEP: usize = 16;
         while self.payloads.len() > KEEP {
+            let used_by_answer = |id: u32| self.answers.values().any(|a| a.payload == id);
             let oldest = match self.payloads.keys().next().copied() {
                 Some(k) => k,
                 None => break,
             };
+            if used_by_answer(oldest) {
+                let Some(drop) = self.payloads.keys().copied().find(|id| !used_by_answer(*id)) else {
+                    break;
+                };
+                self.payloads.remove(&drop);
+                continue;
+            }
             self.payloads.remove(&oldest);
         }
     }

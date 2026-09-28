@@ -179,7 +179,7 @@ abstract class RustLibApi extends BaseApi {
   });
 
   Future<AnswerId> zCoreApiIngestAnswer({
-    required SessionId session,
+    required PayloadHandle payload,
     required String raw,
   });
 
@@ -1067,14 +1067,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   @override
   Future<AnswerId> zCoreApiIngestAnswer({
-    required SessionId session,
+    required PayloadHandle payload,
     required String raw,
   }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          sse_encode_box_autoadd_session_id(session, serializer);
+          sse_encode_box_autoadd_payload_handle(payload, serializer);
           sse_encode_String(raw, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
@@ -1088,7 +1088,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_api_error,
         ),
         constMeta: kZCoreApiIngestAnswerConstMeta,
-        argValues: [session, raw],
+        argValues: [payload, raw],
         apiImpl: this,
       ),
     );
@@ -1096,7 +1096,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kZCoreApiIngestAnswerConstMeta => const TaskConstMeta(
     debugName: "ingest_answer",
-    argNames: ["session", "raw"],
+    argNames: ["payload", "raw"],
   );
 
   @override

@@ -22,7 +22,7 @@ use crate::vault::model::ProviderLogin;
 use crate::scanner;
 use crate::session::FindingRecord;
 use crate::payload::SafePayload;
-use crate::session::{with_core, with_session, Protection, Session};
+use crate::session::{with_core, with_session, AnswerRecord, Protection, Session};
 use crate::text;
 use crate::tokens::{restore, TokenEntry};
 
@@ -224,7 +224,7 @@ pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<Ans
 
     // The raw answer stays here. What the UI gets is an id; what it can then ask
     // for is the restored view, or the model's own words, both from this store.
-    ingest_answer(SessionId { id: handle.session }, raw)
+    ingest_answer(handle, raw)
 }
 
 // ---------------------------------------------------------------- providers (M6)
@@ -463,6 +463,20 @@ pub(crate) fn with_payload<R>(handle: PayloadHandle, f: impl FnOnce(&SafePayload
         if handle.revision != payload.revision {
             return Err(ApiError::StalePayload {
                 expected: revision,
+                got: handle.revision,
+            });
+        }
+        Ok(f(payload))
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) fn with_payload_record<R>(handle: PayloadHandle, f: impl FnOnce(&SafePayload) -> R) -> ApiResult<R> {
+    with_session(handle.session, |s| {
+        let payload = s.payloads.get(&handle.id).ok_or(ApiError::InvalidHandle)?;
+        if handle.revision != payload.revision {
+            return Err(ApiError::StalePayload {
+                expected: payload.revision,
                 got: handle.revision,
             });
         }
@@ -1098,10 +1112,19 @@ pub(crate) fn hide(session: SessionId, token: String) -> ApiResult<()> {
 
 // ---------------------------------------------------------------- answer
 
-pub(crate) fn ingest_answer(session: SessionId, raw: String) -> ApiResult<AnswerId> {
-    with_session(session.id, |s| {
+pub(crate) fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<AnswerId> {
+    with_payload_record(payload, |_| ())?;
+    with_session(payload.session, |s| {
         let id = s.take_answer_id();
-        s.answers.insert(id, raw);
+        s.answers.insert(
+            id,
+            AnswerRecord {
+                id,
+                session: payload.session,
+                payload: payload.id,
+                raw,
+            },
+        );
         // An answer coming in changes nothing about what would go out, so the
         // revision does not move and no handle goes stale.
         Ok(AnswerId { id })
@@ -1111,7 +1134,10 @@ pub(crate) fn ingest_answer(session: SessionId, raw: String) -> ApiResult<Answer
 
 pub(crate) fn restored_view(session: SessionId, answer: AnswerId) -> ApiResult<Vec<Segment>> {
     with_session(session.id, |s| match s.answers.get(&answer.id) {
-        Some(raw) => Ok(restore(raw, &s.tokens)),
+        Some(answer) => {
+            let payload = s.payloads.get(&answer.payload).ok_or(ApiError::InvalidHandle)?;
+            Ok(restore(&answer.raw, &s.tokens, &payload.allowed_token_ids))
+        }
         None => Err(ApiError::UnknownToken),
     })
     .ok_or(ApiError::InvalidSession)?
@@ -1119,7 +1145,7 @@ pub(crate) fn restored_view(session: SessionId, answer: AnswerId) -> ApiResult<V
 
 pub(crate) fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String> {
     with_session(session.id, |s| match s.answers.get(&answer.id) {
-        Some(raw) => Ok(raw.clone()),
+        Some(answer) => Ok(answer.raw.clone()),
         None => Err(ApiError::UnknownToken),
     })
     .ok_or(ApiError::InvalidSession)?
@@ -1520,7 +1546,7 @@ mod tests {
         let shown = reveal(s, token).expect("reveal");
         assert!(!format!("{shown:?}").contains("Nordstern"), "{shown:?}");
 
-        let answer = ingest_answer(s, "ok".to_string()).expect("ingest");
+        let answer = ingest_answer(handle, "ok".to_string()).expect("ingest");
         let segments = restored_view(s, answer).expect("restored");
         assert!(!format!("{segments:?}").contains("ok"), "{segments:?}");
     }

@@ -389,6 +389,7 @@ class Workbench extends ChangeNotifier {
   /// two views, because the restored one must be built there and nowhere else.
   final List<AnswerId> answers = [];
   AnswerId? showing;
+  PayloadHandle? copiedPayload;
   bool sending = false;
 
   /// Send the built payload to a provider.
@@ -423,8 +424,10 @@ class Workbench extends ChangeNotifier {
   /// store does not care how the answer travelled.
   Future<String?> pasteAnswer(String raw) async {
     if (raw.trim().isEmpty) return 'Nothing was pasted.';
+    final copied = copiedPayload;
+    if (copied == null) return 'Copy the safe text first, so the answer can be tied to that payload.';
     try {
-      final answer = await z.ingestAnswer(session: session, raw: raw);
+      final answer = await z.ingestAnswer(payload: copied, raw: raw);
       answers.add(answer);
       showing = answer;
       trouble = null;
@@ -442,6 +445,10 @@ class Workbench extends ChangeNotifier {
 
   Future<String> asTheModelWroteIt(AnswerId answer) =>
       z.aiView(session: session, answer: answer);
+
+  void rememberCopiedPayload() {
+    copiedPayload = handle;
+  }
 
   void show(AnswerId? answer) {
     showing = answer;

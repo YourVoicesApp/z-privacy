@@ -118,7 +118,7 @@ fn first() {
     say("values in the payload", format!("{} (must be 0)", leaked.len()));
 
     // The manual door: the answer comes back by hand, and restores.
-    let answer = ingest_answer(s, format!("Zusammenfassung:\n{}", view.text)).expect("ingest");
+    let answer = ingest_answer(handle, format!("Zusammenfassung:\n{}", view.text)).expect("ingest");
     let restored: String = restored_view(s, answer)
         .expect("restore")
         .into_iter()

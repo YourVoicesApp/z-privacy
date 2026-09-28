@@ -45,13 +45,14 @@ fn round_trip_original_to_safe_to_answer_to_restored() {
     );
 
     // 1. What leaves the device.
-    let safe = payload_view(build_payload(s).expect("build")).expect("view").text;
+    let handle = build_payload(s).expect("build");
+    let safe = payload_view(handle).expect("view").text;
     assert_eq!(safe, format!("Herr {person} arbeitet bei {company}."));
     assert!(!safe.contains("Thomas Müller") && !safe.contains("Nordstern GmbH"));
 
     // 2. What a provider answers, in its own words, using the tokens it was given.
     let raw = format!("Bitte kontaktieren Sie {person} bei {company}.");
-    let answer = ingest_answer(s, raw.clone()).expect("ingest");
+    let answer = ingest_answer(handle, raw.clone()).expect("ingest");
 
     // 3. AI View: exactly what came back, tokens and all.
     assert_eq!(ai_view(s, answer).expect("ai view"), raw);
@@ -82,9 +83,10 @@ fn round_trip_leaves_a_token_it_does_not_know_alone() {
     let person = token_of(
         protect(s, span_of(DOC, "Thomas Müller"), Scope::Conversation, Kind::Person).expect("person"),
     );
+    let handle = build_payload(s).expect("build");
 
     let raw = format!("{person} und __Z_FAKE_123__ und __Z_ohne_Ende und __Z_9999_PERSON_9999__.");
-    let answer = ingest_answer(s, raw).expect("ingest");
+    let answer = ingest_answer(handle, raw).expect("ingest");
     let text = joined(&restored_view(s, answer).expect("restored"));
 
     assert!(text.starts_with("Thomas Müller und "));
@@ -112,9 +114,10 @@ fn round_trip_does_not_cross_sessions() {
         protect(b, span_of(DOC, "Thomas Müller"), Scope::Conversation, Kind::Person).expect("b"),
     );
     assert_ne!(token_a, token_b);
+    let handle_b = build_payload(b).expect("build b");
 
     // Session B is handed an answer built with A's token.
-    let answer = ingest_answer(b, format!("Bitte {token_a} anrufen.")).expect("ingest");
+    let answer = ingest_answer(handle_b, format!("Bitte {token_a} anrufen.")).expect("ingest");
     let text = joined(&restored_view(b, answer).expect("restored"));
     assert_eq!(
         text, format!("Bitte {token_a} anrufen."),
@@ -135,10 +138,11 @@ fn round_trip_restores_every_spelling_to_its_own_value() {
     );
     add_alias(s, token.clone(), "Herr Müller".to_string()).expect("alias");
 
-    let safe = payload_view(build_payload(s).expect("build")).expect("view").text;
+    let handle = build_payload(s).expect("build");
+    let safe = payload_view(handle).expect("view").text;
     assert_eq!(safe.matches(&token).count(), 2);
 
-    let answer = ingest_answer(s, format!("{token} hat unterschrieben.")).expect("ingest");
+    let answer = ingest_answer(handle, format!("{token} hat unterschrieben.")).expect("ingest");
     assert_eq!(
         joined(&restored_view(s, answer).expect("restored")),
         "Thomas Müller hat unterschrieben."
@@ -165,6 +169,49 @@ fn round_trip_an_answer_coming_in_does_not_stale_a_handle() {
     protect(s, span_of(DOC, "Thomas Müller"), Scope::Conversation, Kind::Person).expect("protect");
     let handle = build_payload(s).expect("build");
 
-    ingest_answer(s, "Alles gut.".to_string()).expect("ingest");
+    ingest_answer(handle, "Alles gut.".to_string()).expect("ingest");
     assert!(payload_view(handle).is_ok(), "an incoming answer must not stale the handle");
+}
+
+#[test]
+fn round_trip_restores_only_tokens_from_the_originating_payload() {
+    let s = open_session(None, "de".to_string()).expect("open");
+
+    let doc_a = "Person A ist Anna Weber.";
+    import_text(s, doc_a.to_string()).expect("import a");
+    let token_a = token_of(
+        protect(s, span_of(doc_a, "Anna Weber"), Scope::Conversation, Kind::Person).expect("protect a"),
+    );
+    let payload_a = build_payload(s).expect("payload a");
+
+    let doc_b = "Person B ist Bernd Bauer.";
+    import_text(s, doc_b.to_string()).expect("import b");
+    let token_b = token_of(
+        protect(s, span_of(doc_b, "Bernd Bauer"), Scope::Conversation, Kind::Person).expect("protect b"),
+    );
+    let payload_b = build_payload(s).expect("payload b");
+    assert_ne!(token_a, token_b);
+
+    let raw = format!("{token_a} / {token_a} / {token_b} / __Z_9999_PERSON_9999__");
+    let answer = ingest_answer(payload_a, raw).expect("ingest a answer");
+    let text = joined(&restored_view(s, answer).expect("restored"));
+
+    assert_eq!(
+        text,
+        format!("Anna Weber / Anna Weber / {token_b} / __Z_9999_PERSON_9999__"),
+        "the answer may reuse a token from its payload, but not borrow another payload's token"
+    );
+
+    import_text(s, "Ein neues Dokument ohne diese Namen.".to_string()).expect("change after answer");
+    assert_eq!(
+        joined(&restored_view(s, answer).expect("restored after change")),
+        format!("Anna Weber / Anna Weber / {token_b} / __Z_9999_PERSON_9999__"),
+        "the answer keeps the frozen allow-list of its originating payload"
+    );
+
+    let answer_b = ingest_answer(payload_b, format!("{token_b} antwortet.")).expect("ingest b answer");
+    assert_eq!(
+        joined(&restored_view(s, answer_b).expect("restored b")),
+        "Bernd Bauer antwortet."
+    );
 }

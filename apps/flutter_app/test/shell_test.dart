@@ -536,6 +536,8 @@ void main() {
 
     // Bring an answer back by hand — the token store does not care how it
     // travelled — and the real values come home.
+    await tester.tap(find.text('Copy safe text'));
+    await settle(tester, rounds: 1);
     final safe = bench.payload!.text;
     await tester.runAsync(() async {
       await bench.pasteAnswer('Danke. Zusammenfassung:\n$safe');
@@ -573,6 +575,7 @@ void main() {
         await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
       }
       await bench.refresh();
+      bench.rememberCopiedPayload();
       await bench.pasteAnswer('Verstanden:\n${bench.payload!.text}');
     });
 

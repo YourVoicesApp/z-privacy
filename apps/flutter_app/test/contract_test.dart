@@ -69,7 +69,7 @@ void main() {
       'buildPayload': () => buildPayload(session: session),
       'payloadView': () => payloadView(handle: handle),
       'send': () => send(handle: handle, provider: provider),
-      'ingestAnswer': () => ingestAnswer(session: session, raw: 'x'),
+      'ingestAnswer': () => ingestAnswer(payload: handle, raw: 'x'),
       'restoredView': () => restoredView(session: session, answer: answer),
       'aiView': () => aiView(session: session, answer: answer),
       'vaultState': () => vaultState(),

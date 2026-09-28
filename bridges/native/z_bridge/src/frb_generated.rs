@@ -730,12 +730,12 @@ fn wire__z_core__api__ingest_answer_impl(
                 flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
             };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_payload = <crate::api::mirrors::PayloadHandle>::sse_decode(&mut deserializer);
             let api_raw = <String>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
-                    let output_ok = z_core::api::ingest_answer(api_session, api_raw)?;
+                    let output_ok = z_core::api::ingest_answer(api_payload, api_raw)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }

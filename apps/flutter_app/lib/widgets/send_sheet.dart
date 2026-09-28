@@ -132,6 +132,7 @@ class _SendSheetState extends State<SendSheet> {
                                     ? null
                                     : () async {
                                         await Clipboard.setData(ClipboardData(text: payload.text));
+                                        bench.rememberCopiedPayload();
                                         if (mounted) setState(() => _copied = true);
                                       },
                               ),

@@ -63,7 +63,7 @@ fn main() -> Result<(), ApiError> {
 
     // What a provider might answer, using the tokens it was given.
     let raw = format!("Bitte kontaktieren Sie {person} bei {company}. __Z_FAKE_123__ ist unbekannt.");
-    let answer = ingest_answer(session, raw)?;
+    let answer = ingest_answer(handle, raw)?;
 
     println!("AI VIEW — exactly what came back");
     println!("  {}\n", ai_view(session, answer)?);
