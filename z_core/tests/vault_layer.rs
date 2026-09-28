@@ -674,6 +674,81 @@ fn failed_secure_writes_leave_old_files_intact() {
 }
 
 #[test]
+fn unlock_after_lock_sees_that_the_vault_file_was_deleted() {
+    let _lock = serial();
+    let dir = fresh_vault("cache-delete");
+    let path = std::path::Path::new(&dir).join("vault.zv");
+    vault_lock().expect("lock");
+    assert_eq!(vault_state().expect("state"), VaultState::Locked, "state may look, but must not become unlock cache");
+    std::fs::remove_file(&path).expect("delete vault");
+
+    match vault_unlock_with_passphrase(PASS.to_string()) {
+        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("no vault"), "{reason}"),
+        other => panic!("unlock must reread the missing file from disk, got {other:?}"),
+    }
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn unlock_after_lock_sees_that_the_vault_file_was_modified() {
+    let _lock = serial();
+    let dir = fresh_vault("cache-mutated");
+    let path = std::path::Path::new(&dir).join("vault.zv");
+    vault_lock().expect("lock");
+    assert_eq!(vault_state().expect("state"), VaultState::Locked, "state may look, but must not become unlock cache");
+    let mut bytes = std::fs::read(&path).expect("read vault");
+    let last = bytes.len() - 1;
+    bytes[last] ^= 0x01;
+    std::fs::write(&path, bytes).expect("write mutated vault");
+
+    match vault_unlock_with_passphrase(PASS.to_string()) {
+        Ok(VaultUnlockOutcome::WrongPassphrase) => {}
+        other => panic!("unlock must fail on the modified file from disk, got {other:?}"),
+    }
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn unlock_after_lock_still_opens_an_unchanged_vault_file() {
+    let _lock = serial();
+    let dir = fresh_vault("cache-control");
+    identity("Cache Control", None, Kind::Company, "Cache Control GmbH", &[], Policy::Always);
+    vault_lock().expect("lock");
+    assert_eq!(vault_state().expect("state"), VaultState::Locked, "state may look, but must not become unlock cache");
+
+    match vault_unlock_with_passphrase(PASS.to_string()).expect("unlock") {
+        VaultUnlockOutcome::Unlocked { identities, values } => assert_eq!((identities, values), (1, 1)),
+        other => panic!("expected unlock, got {other:?}"),
+    }
+    assert_eq!(entities(None).expect("entities")[0].label, "Cache Control");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn unlock_after_lock_opens_the_replacement_vault_file_on_disk() {
+    let _lock = serial();
+    let replacement_dir = fresh_vault("cache-replacement-source");
+    identity("Replacement Vault", None, Kind::Company, "Replacement GmbH", &[], Policy::Always);
+    vault_lock().expect("lock replacement");
+    let replacement = std::fs::read(std::path::Path::new(&replacement_dir).join("vault.zv")).expect("replacement bytes");
+
+    let dir = fresh_vault("cache-replacement-target");
+    identity("Cached Old Vault", None, Kind::Company, "Cached Old GmbH", &[], Policy::Always);
+    let path = std::path::Path::new(&dir).join("vault.zv");
+    vault_lock().expect("lock target");
+    assert_eq!(vault_state().expect("state"), VaultState::Locked, "state may look, but must not become unlock cache");
+    std::fs::write(&path, replacement).expect("replace vault");
+
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock replacement");
+    let rows = entities(None).expect("entities");
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].label, "Replacement Vault", "unlock used the file now on disk");
+
+    let _ = std::fs::remove_dir_all(&dir);
+    let _ = std::fs::remove_dir_all(&replacement_dir);
+}
+
+#[test]
 fn a_wrong_passphrase_reports_nothing_it_does_not_know() {
     let _lock = serial();
     // The «0 tries left» lie, as a rule rather than a fix: the refusal carries

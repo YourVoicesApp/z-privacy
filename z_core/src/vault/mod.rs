@@ -146,6 +146,8 @@ impl VaultStore {
 
     /// Open it: derive, unwrap the master key, decrypt the contents.
     pub(crate) fn unlock(&mut self, passphrase: &str) -> ApiResult<(u32, u32)> {
+        self.sealed = None;
+        self.sealed_error = None;
         self.load_sealed();
         if let Some(err) = self.sealed_error.clone() {
             return Err(err);
@@ -170,6 +172,8 @@ impl VaultStore {
     /// Close it. The master key is dropped — and `SecretKey` wipes itself — and
     /// the decrypted contents go with it.
     pub(crate) fn lock(&mut self) {
+        self.sealed = None;
+        self.sealed_error = None;
         self.master = None;
         self.open = None;
         self.touched = None;
