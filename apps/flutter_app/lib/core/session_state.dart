@@ -18,35 +18,28 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 /// What the app knows before any document exists: the ground the Workspace stands
 /// on, and what Home draws.
 class Ground extends ChangeNotifier {
-  VaultState vault = VaultState.absent;
-  List<ProfileRow> profiles = const [];
-  List<PackRow> packs = const [];
-  List<ProviderRow> providers = const [];
-  int entityCount = 0;
-  int valueCount = 0;
+  HomeSnapshot? home;
+  VaultSnapshot? vaultSnap;
+  ProviderSnapshot? providerSnap;
   String? trouble;
 
-  /// Read it all again from Rust. Called on open, and after anything that could
-  /// have changed it.
+  VaultState get vault => home?.vault ?? VaultState.absent;
+  List<ProfileRow> get profiles => home?.profiles ?? const [];
+  List<PackRow> get packs => home?.packs ?? const [];
+  List<ProviderFact> get providers => home?.providers ?? const [];
+  int get entityCount => home?.identityCount ?? 0;
+  int get valueCount => home?.valueCount ?? 0;
+  Settings? get config => home?.settings;
+  List<KindRow> get kinds => home?.kinds ?? const [];
+
+  /// Read it all again from Rust. One snapshot per screen, not a handful of
+  /// calls that can disagree.
   Future<void> refresh() async {
     try {
-      vault = await z.vaultState();
-      packs = await z.packs();
-      providers = await z.providers();
-      kinds = await z.kinds();
-      config = await z.settings();
+      home = await z.homeSnapshot();
+      vaultSnap = await z.vaultSnapshot();
+      providerSnap = await z.providerSnapshot();
       rememberKinds(kinds);
-      // Both of these need an open vault; a locked one is not an error, it is a
-      // state the UI shows in words.
-      profiles = vault == VaultState.unlocked ? await z.profiles() : const [];
-      if (vault == VaultState.unlocked) {
-        final rows = await z.entities();
-        entityCount = rows.length;
-        valueCount = rows.fold<int>(0, (sum, e) => sum + e.values);
-      } else {
-        entityCount = 0;
-        valueCount = 0;
-      }
       trouble = null;
     } on ApiError catch (e) {
       trouble = e.toString();
@@ -54,14 +47,10 @@ class Ground extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// What the app has been told to do by itself. From the core, always — the
-  /// UI holds no policy of its own.
-  Settings? config;
-
   /// Change one thing about the settings and write them back.
   Future<String?> saveConfig(Settings next) async {
     try {
-      config = await z.saveSettings(settings: next);
+      await z.saveSettings(settings: next);
       await refresh();
       return null;
     } on ApiError catch (e) {
@@ -70,10 +59,6 @@ class Ground extends ChangeNotifier {
       return e.toString();
     }
   }
-
-  /// Every kind the core knows, with its label. The UI never enumerates `Kind`
-  /// itself — the day there are user-made kinds, this list simply grows.
-  List<KindRow> kinds = const [];
 
   String nameOfKind(Kind k) {
     for (final row in kinds) {
@@ -182,22 +167,19 @@ class Workbench extends ChangeNotifier {
   final String? profileId;
   final String packId;
 
-  DocumentView? document;
+  WorkspaceSnapshot? snap;
   ScanReport? report;
-  List<Finding> findings = const [];
-  List<TokenRow> tokens = const [];
-  Revision revision = const Revision(n: 0);
   String? trouble;
   bool busy = false;
 
-  /// The outgoing text, and the handle it was built under.
-  ///
-  /// Rebuilt on every refresh rather than cached, because the core ties a
-  /// payload to a `revision`: a view kept from before a change is a view of a
-  /// different document, and showing one would be the exact lie this column
-  /// exists to prevent.
-  PayloadHandle? handle;
-  PayloadView? payload;
+  DocumentView? get document => snap?.document;
+  List<Finding> get findings => snap?.findings ?? const [];
+  List<TokenRow> get tokens => snap?.tokens ?? const [];
+  Revision get revision => Revision(n: snap?.revision ?? 0);
+  PayloadHandle? get handle => snap?.handle;
+  PayloadView? get payload => snap?.payload;
+  List<AnswerId> get answers => snap?.answers ?? const [];
+  ScanOrigin get scanOrigin => snap?.scanOrigin ?? ScanOrigin.notScanned;
 
   /// Chips or plain, on the Safe side. A drawing choice; the string is the same.
   bool chips = true;
@@ -209,9 +191,8 @@ class Workbench extends ChangeNotifier {
   Span? selection;
   SelectionView? selected;
 
-  /// True once anything has been protected by hand, so Undo can be honest about
-  /// being disabled rather than pretending to be available.
-  bool get canUndo => tokens.any((t) => t.source == Source.hand);
+  /// Matches what `undoLastProtection` would actually do.
+  bool get canUndo => snap?.canUndo ?? false;
 
   /// Which tokens are showing their value right now, and until when.
   ///
@@ -257,18 +238,13 @@ class Workbench extends ChangeNotifier {
   ///   what do I have?      → [document] (the Original side)
   ///   what will leave?     → the Safe side, built in Rust, from M7.2
   ///   why was this hidden? → [findings], each carrying its own source and reason
-  int get protectedCount => report?.auto ?? 0;
-  int get openSuggestions => report?.suggested ?? 0;
-  int get normalCount => report?.normal ?? 0;
+  int get protectedCount => (snap?.autoProtected ?? 0) + (snap?.userProtected ?? 0);
+  int get openSuggestions => snap?.openSuggestions ?? 0;
+  int get normalCount => snap?.normal ?? 0;
 
   Future<void> refresh() async {
     try {
-      document = await z.documentView(session: session);
-      findings = await z.listFindings(session: session);
-      tokens = await z.listTokens(session: session);
-      revision = await z.sessionRevision(session: session);
-      handle = await z.buildPayload(session: session);
-      payload = await z.payloadView(handle: handle!);
+      snap = await z.workspaceSnapshot(session: session);
       trouble = null;
     } on ApiError catch (e) {
       trouble = e.toString();
@@ -384,10 +360,7 @@ class Workbench extends ChangeNotifier {
 
   // ---------------------------------------------------------------- sending
 
-  /// The answers this conversation has received, newest last, and which one is
-  /// on screen. Kept as ids: the text lives in the core and is asked for by the
-  /// two views, because the restored one must be built there and nowhere else.
-  final List<AnswerId> answers = [];
+  /// Which answer is on screen. The list itself comes from the snapshot.
   AnswerId? showing;
   PayloadHandle? copiedPayload;
   bool sending = false;
@@ -405,11 +378,10 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
     try {
       final answer = await z.send(handle: h, provider: ProviderId(id: providerId));
-      answers.add(answer);
       showing = answer;
       trouble = null;
       sending = false;
-      notifyListeners();
+      await refresh();
       return null;
     } on ApiError catch (e) {
       sending = false;
@@ -428,10 +400,9 @@ class Workbench extends ChangeNotifier {
     if (copied == null) return 'Copy the safe text first, so the answer can be tied to that payload.';
     try {
       final answer = await z.ingestAnswer(payload: copied, raw: raw);
-      answers.add(answer);
       showing = answer;
       trouble = null;
-      notifyListeners();
+      await refresh();
       return null;
     } on ApiError catch (e) {
       trouble = e.toString();

@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/document_text.dart';
@@ -47,6 +48,9 @@ class _SendSheetState extends State<SendSheet> {
     final bench = widget.bench;
     final payload = bench.payload;
     final open = payload?.openSuggestions ?? 0;
+    return ListenableBuilder(
+      listenable: widget.ground,
+      builder: (context, _) {
     final connected = widget.ground.providers.where((p) => p.connected).toList();
 
     return Dialog(
@@ -221,8 +225,8 @@ class _SendSheetState extends State<SendSheet> {
                       const SizedBox(height: 10),
                       for (final p in connected)
                         Text(
-                          '${p.label} · ${p.model} · ${p.baseUrl}'
-                          '${p.sessionOnly ? "  (key kept for this run only)" : ""}',
+                          '${p.label} · ${p.model} · ${p.endpoint}'
+                          '${p.credentialState == CredentialState.sessionOnly ? "  (key kept for this run only)" : ""}',
                           style: Zc.tiny.copyWith(letterSpacing: 0),
                         ),
                       const SizedBox(height: 10),
@@ -249,6 +253,8 @@ class _SendSheetState extends State<SendSheet> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 

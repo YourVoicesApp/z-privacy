@@ -195,12 +195,12 @@ class _TopBar extends StatelessWidget {
           _Fact(label: 'Pack', value: pack.label),
           _Fact(
             label: 'Vault',
-            value: switch (bench.report?.vault ?? ground.vault) {
+            value: switch (bench.snap?.vault ?? ground.vault) {
               VaultState.unlocked => 'Unlocked',
               VaultState.locked => 'Locked',
               VaultState.absent => 'None',
             },
-            tint: (bench.report?.vault ?? ground.vault) == VaultState.unlocked ? Zc.river : Zc.ink4,
+            tint: (bench.snap?.vault ?? ground.vault) == VaultState.unlocked ? Zc.river : Zc.ink4,
           ),
         ],
       ),
@@ -268,14 +268,18 @@ class _Band extends StatelessWidget {
           ] else ...[
             const Icon(Icons.check, size: 15, color: Zc.clayDeep),
             const SizedBox(width: 8),
-            const Text(
-              'Scanned on import',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Zc.clayDeep),
+            Text(
+              switch (bench.scanOrigin) {
+                ScanOrigin.onImport => 'Scanned on import',
+                ScanOrigin.rescan => 'Last scan: manual rescan',
+                ScanOrigin.notScanned => 'Not scanned yet',
+              },
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Zc.clayDeep),
             ),
             const SizedBox(width: 12),
             Flexible(
               child: Text(
-                '${r.auto} protected automatically · ${r.suggested} need your word · ${r.normal} normal',
+                '${bench.snap?.autoProtected ?? 0} protected automatically · ${bench.openSuggestions} need your word · ${bench.normalCount} normal',
                 style: const TextStyle(fontSize: 13, color: Zc.clayDeep),
                 overflow: TextOverflow.ellipsis,
               ),

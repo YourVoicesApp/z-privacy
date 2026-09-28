@@ -1031,7 +1031,7 @@ pub(crate) fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome
 }
 
 pub(crate) fn undo_last_protection(session: SessionId) -> ApiResult<UndoOutcome> {
-    with_session(session.id, |s| {
+    let outcome = with_session(session.id, |s| {
         let last_act = match s.protections.iter().map(|p| p.act).max() {
             Some(act) => act,
             None => return Ok(UndoOutcome::NothingToUndo),
@@ -1059,7 +1059,9 @@ pub(crate) fn undo_last_protection(session: SessionId) -> ApiResult<UndoOutcome>
             created_entity: None,
         })
     })
-    .ok_or(ApiError::InvalidSession)?
+    .ok_or(ApiError::InvalidSession)?;
+    crate::session::bump_truth();
+    outcome
 }
 
 pub(crate) fn add_alias(session: SessionId, token: String, alias: String) -> ApiResult<u32> {
@@ -1150,7 +1152,7 @@ pub(crate) fn hide(session: SessionId, token: String) -> ApiResult<()> {
 
 pub(crate) fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<AnswerId> {
     with_payload_record(payload, |_| ())?;
-    with_session(payload.session, |s| {
+    let out = with_session(payload.session, |s| {
         let id = s.take_answer_id();
         s.answers.insert(
             id,
@@ -1165,7 +1167,9 @@ pub(crate) fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<An
         // revision does not move and no handle goes stale.
         Ok(AnswerId { id })
     })
-    .ok_or(ApiError::InvalidSession)?
+    .ok_or(ApiError::InvalidSession)?;
+    crate::session::bump_truth();
+    out
 }
 
 pub(crate) fn restored_view(session: SessionId, answer: AnswerId) -> ApiResult<Vec<Segment>> {

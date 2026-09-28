@@ -54,7 +54,7 @@ class ActsBar extends StatelessWidget {
                 label: 'Undo protection',
                 icon: Icons.undo,
                 onPressed: bench.canUndo ? () => _undo(context) : null,
-                hint: bench.canUndo ? null : 'Nothing protected by hand yet',
+                hint: bench.canUndo ? null : 'Nothing to undo',
               ),
               ZButton(
                 label: 'Rescan',
@@ -193,11 +193,11 @@ class ActsBar extends StatelessWidget {
 
   Future<void> _rescan(BuildContext context) async {
     await bench.rescan();
-    final r = bench.report;
-    if (r == null) return;
-    // What you protected by hand is never touched by a rescan; automatic ones
-    // are recomputed. Saying the numbers is how that promise is checkable.
-    onSay('Scanned again: ${r.auto} protected · ${r.suggested} need your word · ${r.normal} normal.');
+    final snap = bench.snap;
+    if (snap == null) return;
+    onSay(
+      'Scanned again: ${snap.autoProtected} protected automatically · ${snap.userProtected} by you · ${snap.openSuggestions} need your word · ${snap.normal} normal.',
+    );
   }
 }
 

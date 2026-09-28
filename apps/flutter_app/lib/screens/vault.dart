@@ -125,9 +125,9 @@ class _VaultScreenState extends State<VaultScreen> {
           const Text('Z Vault', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink)),
           const SizedBox(width: 10),
           Text(
-            switch (g.vault) {
+            switch (g.vaultSnap?.vault ?? g.vault) {
               VaultState.unlocked =>
-                '${plural(g.entityCount, "identity", "identities")} · ${plural(g.valueCount, "value")}',
+                '${plural(g.vaultSnap?.identityCount ?? g.entityCount, "identity", "identities")} · ${plural(g.vaultSnap?.valueCount ?? g.valueCount, "value")}',
               VaultState.locked => 'Locked',
               VaultState.absent => 'Not created on this device',
             },
@@ -314,7 +314,7 @@ class _VaultScreenState extends State<VaultScreen> {
   /// would imply that values are all this app can learn, and the day rules and
   /// exceptions arrive nobody would know where they went.
   Widget _taught(Ground g) {
-    final values = g.vaultRows.fold<int>(0, (n, r) => n + r.values);
+    final values = g.vaultSnap?.valueCount ?? 0;
     return Container(
       margin: const EdgeInsets.fromLTRB(18, 0, 18, 12),
       padding: const EdgeInsets.fromLTRB(15, 12, 15, 12),

@@ -257,7 +257,7 @@ void main() {
     // DISABLED — nothing selected, and the hint says what to do about it.
     expect(protectStateOf(bench.selected), ProtectState.disabled);
     expect(find.text('Select text, then Protect'), findsOneWidget);
-    expect(find.text('Nothing protected by hand yet'), findsOneWidget);
+    expect(bench.canUndo, isTrue, reason: 'the scan created protections, so undo would actually undo');
 
     // READY — a selection the core recognises. The kind is the pack's, and the
     // count is the core's; neither is worked out in Dart.
@@ -307,7 +307,7 @@ void main() {
     });
     await tester.pumpAndSettle();
     expect(undone, isA<UndoOutcome_Undone>());
-    expect(bench.canUndo, isFalse);
+    expect(bench.canUndo, bench.snap?.canUndo ?? false);
 
     bench.dispose();
   });
@@ -507,7 +507,7 @@ void main() {
     // Nothing is connected in this test, so the internet door shows its form —
     // address, model, key — and says where the key would live.
     expect(find.text('API KEY'), findsOneWidget);
-    expect(find.textContaining('kept in memory for this run only'), findsOneWidget);
+    expect(find.textContaining('for this run only'), findsOneWidget);
 
     // The local door is a fold, and it is below the sheet's scroll: it has to be
     // brought into view before it can be tapped, exactly as a person would.

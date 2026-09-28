@@ -21,7 +21,7 @@ class ConnectForm extends StatefulWidget {
   const ConnectForm({super.key, required this.ground, required this.row, required this.local});
 
   final Ground ground;
-  final ProviderRow row;
+  final ProviderFact row;
 
   /// True for the «model on this machine» door: no credential asked for, and the
   /// address starts at the usual local one.
@@ -42,7 +42,7 @@ class _ConnectFormState extends State<ConnectForm> {
   void initState() {
     super.initState();
     _base = TextEditingController(
-      text: widget.local ? 'http://127.0.0.1:11434' : widget.row.baseUrl,
+      text: widget.local ? 'http://127.0.0.1:11434' : widget.row.endpoint,
     );
     _model = TextEditingController(text: widget.local ? 'llama3.2' : widget.row.model);
   }
@@ -79,10 +79,16 @@ class _ConnectFormState extends State<ConnectForm> {
           Padding(
             padding: const EdgeInsets.only(top: 5),
             child: Text(
-              widget.ground.vault == VaultState.unlocked
-                  ? 'The vault is open, so the key is stored encrypted inside it.'
-                  : 'No vault is open, so the key is kept in memory for this run only — it is '
-                      'gone when the app closes. Nothing is written to a file in the clear, ever.',
+              switch (widget.row.credentialState) {
+                CredentialState.encryptedInVault =>
+                  'This key is sealed in the vault.',
+                CredentialState.sessionOnly =>
+                  'This key is kept in memory for this run only — it is gone when the app closes.',
+                CredentialState.missing =>
+                  widget.ground.vault == VaultState.unlocked
+                      ? 'No key is stored yet. Connecting will seal it in the vault.'
+                      : 'No key is stored yet. Connecting will keep it in memory for this run only.',
+              },
               style: Zc.tiny.copyWith(letterSpacing: 0),
             ),
           ),

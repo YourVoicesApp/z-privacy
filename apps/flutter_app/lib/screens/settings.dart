@@ -184,11 +184,11 @@ class _AiRoom extends StatelessWidget {
                     _Dot(on: row.connected),
                     const SizedBox(width: 8),
                     Text(
-                      row.connected
-                          ? (row.sessionOnly
-                              ? 'Connected · key kept for this run only'
-                              : 'Connected · key sealed in the vault')
-                          : 'Not connected',
+                      switch (row.credentialState) {
+                        CredentialState.encryptedInVault => 'Connected · key sealed in the vault',
+                        CredentialState.sessionOnly => 'Connected · key kept for this run only',
+                        CredentialState.missing => row.connected ? 'Connected · no key needed' : 'Not connected',
+                      },
                       style: Zc.small.copyWith(
                         color: row.connected ? Zc.ink2 : Zc.ink4,
                         fontWeight: row.connected ? FontWeight.w600 : FontWeight.w400,
@@ -395,15 +395,19 @@ class _VaultRoom extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final p in ground.providers.where((p) => p.connected))
+              for (final p in ground.providers.where((p) => p.credentialState != CredentialState.missing))
                 Padding(
                   padding: const EdgeInsets.only(bottom: 5),
                   child: Text(
-                    '${p.label} · ${p.sessionOnly ? "in memory, gone when the app closes" : "sealed in the vault"}',
+                    '${p.label} · ${switch (p.credentialState) {
+                      CredentialState.encryptedInVault => 'sealed in the vault',
+                      CredentialState.sessionOnly => 'in memory, gone when the app closes',
+                      CredentialState.missing => 'no key stored',
+                    }}',
                     style: Zc.small,
                   ),
                 ),
-              if (ground.connectedProviders == 0)
+              if (ground.providers.every((p) => p.credentialState == CredentialState.missing))
                 Text('No provider holds a credential.', style: Zc.small.copyWith(color: Zc.ink4)),
             ],
           ),
