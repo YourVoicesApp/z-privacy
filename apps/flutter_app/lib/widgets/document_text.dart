@@ -214,9 +214,12 @@ class SafeText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The parent scrolls this text. An inner Scrollable would swallow the wheel
+    // over the whole payload and leave only a sliver of the outer sheet movable.
     return SelectableText.rich(
       TextSpan(children: _spans(), style: Zc.document),
       style: Zc.document,
+      scrollPhysics: const NeverScrollableScrollPhysics(),
     );
   }
 

@@ -15,6 +15,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -514,13 +515,37 @@ void main() {
     expect(bench.payload!.openSuggestions, 0);
     expect(find.text('Answer the review first'), findsNothing);
 
-    // The sheet offers the door that needs no account at all, first.
+    // The sheet offers the door that needs no account at all, first. Continue
+    // is the step into that door — the payload review does not share a scroller
+    // with the actions.
     await tester.tap(find.text('Send safe version'));
     await tester.pumpAndSettle();
     expect(find.byType(SendSheet), findsOneWidget);
+
+    // What the sheet shows is the payload, not a copy assembled for display.
+    final shown = tester
+        .widget<SelectableText>(
+          find.descendant(of: find.byType(SendSheet), matching: find.byType(SelectableText)).first,
+        )
+        .textSpan!
+        .toPlainText();
+    expect(shown, bench.payload!.text);
+
+    await enterAiMode(tester);
     expect(find.text('Use AI yourself'), findsOneWidget);
     expect(find.text('Copy Protected'), findsOneWidget);
     expect(find.textContaining('no account, no key'), findsOneWidget);
+
+    // Copy Protected is the first door's act — take it while it is on screen,
+    // before the local fold is scrolled into view.
+    final clip = _ClipboardProbe(tester)..install();
+    await tester.tap(find.text('Copy Protected'));
+    await settle(tester, rounds: 1);
+    final safe = bench.payload!.text;
+    expect(clip.text, safe, reason: 'Copy Protected puts the SafePayload on the clipboard, exactly');
+    for (final secret in ['Thomas Müller', 'Nordstern Consulting GmbH', 'DE89370400440532013000']) {
+      expect(clip.text, isNot(contains(secret)), reason: '«$secret» left on the Copy Protected path');
+    }
 
     // And the other two doors are reachable from here without leaving: one for
     // a provider on the internet, one for a model on this machine.
@@ -549,26 +574,8 @@ void main() {
     expect(find.textContaining('literal loopback address'), findsOneWidget);
     expect(find.text('http://127.0.0.1:11434'), findsWidgets);
 
-    // What the sheet shows is the payload, not a copy assembled for display.
-    final shown = tester
-        .widget<SelectableText>(
-          find.descendant(of: find.byType(SendSheet), matching: find.byType(SelectableText)).first,
-        )
-        .textSpan!
-        .toPlainText();
-    expect(shown, bench.payload!.text);
-
     // Bring an answer back by hand — the token store does not care how it
-    // travelled — and the real values come home. Copy Protected is the
-    // SafePayload path: the clipboard gets that string, not the original.
-    final clip = _ClipboardProbe(tester)..install();
-    await tester.tap(find.text('Copy Protected'));
-    await settle(tester, rounds: 1);
-    final safe = bench.payload!.text;
-    expect(clip.text, safe, reason: 'Copy Protected puts the SafePayload on the clipboard, exactly');
-    for (final secret in ['Thomas Müller', 'Nordstern Consulting GmbH', 'DE89370400440532013000']) {
-      expect(clip.text, isNot(contains(secret)), reason: '«$secret» left on the Copy Protected path');
-    }
+    // travelled — and the real values come home.
     await tester.runAsync(() async {
       await bench.pasteAnswer('Danke. Zusammenfassung:\n$safe');
     });
@@ -783,6 +790,7 @@ void main() {
     await tester.tap(find.text('Send safe version'));
     await settle(tester);
     expect(find.byType(SendSheet), findsOneWidget);
+    await enterAiMode(tester);
     // The connected provider is offered, with the model it was configured with.
     expect(find.textContaining('a-model-name'), findsOneWidget);
 
@@ -816,6 +824,89 @@ void main() {
       await z.disconnectProvider(provider: const ProviderId(id: 'openai'));
     });
     bench.dispose();
+  });
+
+  // ------------------------------------------------------ 1280×720 review flow
+  //
+  // The human run could not reach Copy Protected / Paste AI answer / Send from
+  // here at this size: the payload swallowed the wheel, and the doors lived
+  // below the window. These tests walk the journey, not just takeException().
+
+  for (final size in const [Size(1280, 720), Size(1366, 768), Size(1580, 980)]) {
+    testWidgets('the send review stays usable at ${size.width.toInt()}×${size.height.toInt()}',
+        (tester) async {
+      await reviewJourney(tester, size: size, text: longContract(sections: 48, extras: 4));
+    });
+  }
+
+  testWidgets('many findings keep the review footer on screen at 1280×720', (tester) async {
+    await reviewJourney(
+      tester,
+      size: const Size(1280, 720),
+      text: longContract(sections: 24, extras: 28),
+      requireManyProtections: true,
+    );
+  });
+
+  testWidgets('a long SafePayload keeps the review footer on screen at 1280×720', (tester) async {
+    await reviewJourney(
+      tester,
+      size: const Size(1280, 720),
+      text: longContract(sections: 90, extras: 2),
+      requireLongPayload: true,
+    );
+  });
+
+  testWidgets('open suggestions do not push the review footer off 1280×720', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: longContract(sections: 36, extras: 20));
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+    });
+    addTearDown(bench.dispose);
+
+    expect(bench.payload!.openSuggestions, greaterThan(5),
+        reason: 'this case is the many-suggestions shape, not the golden two');
+
+    late BuildContext host;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(builder: (ctx) {
+          host = ctx;
+          return const SizedBox.expand();
+        }),
+      ),
+    ));
+    await tester.pump();
+    showDialog<void>(
+      context: host,
+      builder: (_) => SendSheet(bench: bench, ground: ground),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SendSheet), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expectOnScreen(tester, find.text('Cancel'),
+        because: 'Cancel stays in the footer with suggestions open');
+    expectOnScreen(tester, find.text('Continue'),
+        because: 'Continue stays in the footer with suggestions open');
+    expect(find.textContaining('suggestions are still open'), findsOneWidget);
+    final continueBtn = tester.widget<InkWell>(
+      find.ancestor(of: find.text('Continue'), matching: find.byType(InkWell)).first,
+    );
+    expect(continueBtn.onTap, isNull, reason: 'open suggestions must not be skippable from the footer');
+    await wheelOverPreview(tester, 600);
+    expectOnScreen(tester, find.text('Cancel'), because: 'wheeling the preview must not move Cancel');
+    expectOnScreen(tester, find.text('Continue'),
+        because: 'wheeling the preview must not move Continue');
+    expect(tester.takeException(), isNull);
   });
 
   // ------------------------------------------------------------ truthfulness
@@ -950,4 +1041,178 @@ String _plainOf(WidgetTester tester, Type column) {
     find.descendant(of: find.byType(column), matching: find.byType(SelectableText)),
   );
   return selectable.textSpan!.toPlainText();
+}
+
+/// A contract long enough to reproduce the 1280×720 review overflow. The golden
+/// four-line `_doc` never fills the preview, so it cannot catch the blocker.
+String longContract({int sections = 48, int extras = 4}) {
+  final b = StringBuffer()
+    ..writeln('Kunde: Nordstern Consulting GmbH')
+    ..writeln('Ansprechpartner: Herr Thomas Müller')
+    ..writeln('Telefon: +49 171 2345678')
+    ..writeln('E-Mail: t.mueller@nordstern-consulting.de')
+    ..writeln('IBAN: DE89370400440532013000')
+    ..writeln('BIC: COBADEFFXXX');
+  for (var i = 0; i < extras; i++) {
+    b.writeln('Kontakt $i: person$i@nordstern.example, +49 30 ${10000000 + i}, Firma$i GmbH');
+  }
+  for (var i = 0; i < sections; i++) {
+    b.writeln();
+    b.writeln(
+      'Abschnitt $i. Die Vertragsparteien vereinbaren die in diesem Abschnitt '
+      'genannten Leistungen. Die Zusammenarbeit umfasst Beratung, Dokumentation '
+      'und laufende Abstimmung zwischen den Häusern. Zahlungen erfolgen auf das '
+      'oben genannte Konto. Änderungen bedürfen der Schriftform. Vertrauliche '
+      'Angaben bleiben auf diesem Gerät und werden nicht an Dritte weitergegeben.',
+    );
+  }
+  return b.toString();
+}
+
+Future<void> enterAiMode(WidgetTester tester) async {
+  expectOnScreen(tester, find.text('Continue'), because: 'Continue is the footer step into AI mode');
+  await tester.tap(find.text('Continue'));
+  await tester.pumpAndSettle();
+  expect(find.text('Use AI yourself'), findsOneWidget);
+}
+
+/// The widget's paint box sits inside the test surface. `tester.tap` will hit
+/// an off-stage control, so on-screen is the thing the human run actually lost.
+void expectOnScreen(WidgetTester tester, Finder finder, {required String because}) {
+  expect(finder, findsOneWidget, reason: because);
+  final rect = tester.getRect(finder);
+  final size = tester.binding.renderViews.first.size;
+  expect(
+    rect.top >= -1 &&
+        rect.bottom <= size.height + 1 &&
+        rect.left >= -1 &&
+        rect.right <= size.width + 1 &&
+        rect.height > 8 &&
+        rect.width > 8,
+    isTrue,
+    reason: '$because — rect $rect sits outside $size',
+  );
+}
+
+Future<void> wheelOverPreview(WidgetTester tester, double dy) async {
+  final preview = find.byKey(SendSheet.previewKey);
+  expect(preview, findsOneWidget, reason: 'the payload preview is the only scroller on review');
+  await tester.sendEventToBinding(
+    PointerScrollEvent(position: tester.getCenter(preview), scrollDelta: Offset(0, dy)),
+  );
+  await tester.pump();
+}
+
+/// Open a document, reach Review before send, wheel the preview, keep the
+/// footer, click through to AI mode. This is the journey that failed at 1280×720.
+Future<void> reviewJourney(
+  WidgetTester tester, {
+  required Size size,
+  required String text,
+  bool requireManyProtections = false,
+  bool requireLongPayload = false,
+}) async {
+  await tester.binding.setSurfaceSize(size);
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+
+  final ground = Ground();
+  late final Workbench bench;
+  await tester.runAsync(() async {
+    await ground.refresh();
+    final session = await z.openSession(packId: 'de');
+    await z.importText(session: session, text: text);
+    bench = Workbench(session: session, profileId: null, packId: 'de');
+    await bench.rescan();
+    for (final f in bench.suggested) {
+      await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+    }
+    await bench.refresh();
+  });
+  addTearDown(bench.dispose);
+
+  expect(bench.payload, isNotNull);
+  expect(bench.payload!.openSuggestions, 0);
+  expect(bench.payload!.text.length, greaterThan(4000),
+      reason: 'a short payload will not reproduce the review overflow');
+  if (requireLongPayload) {
+    expect(bench.payload!.text.length, greaterThan(12000),
+        reason: 'the long-SafePayload case must be longer than the golden letter');
+  }
+  if (requireManyProtections) {
+    expect(bench.payload!.protectedCount, greaterThan(10),
+        reason: 'the many-findings case must mint more tokens than the golden letter');
+  }
+
+  final clip = _ClipboardProbe(tester)..install();
+
+  await tester.pumpWidget(MaterialApp(
+    home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+  ));
+  await tester.pumpAndSettle();
+  expect(tester.takeException(), isNull);
+
+  expectOnScreen(tester, find.text('Send safe version'),
+      because: 'the workspace send door itself must be reachable at this size');
+  await tester.tap(find.text('Send safe version'));
+  await tester.pumpAndSettle();
+  expect(find.byType(SendSheet), findsOneWidget);
+  expect(find.text('Review before send'), findsOneWidget);
+  expect(tester.takeException(), isNull);
+
+  expectOnScreen(tester, find.text('Cancel'),
+      because: 'Cancel is the fixed footer, not in the preview');
+  expectOnScreen(tester, find.text('Continue'),
+      because: 'Continue is the fixed footer, not in the preview');
+  expect(find.text('Copy Protected'), findsNothing,
+      reason: 'the AI doors live on the next page so they cannot steal the preview wheel');
+
+  final footerBefore = tester.getRect(find.byKey(SendSheet.footerKey));
+  final continueBefore = tester.getRect(find.text('Continue'));
+  final preview = tester.widget<SingleChildScrollView>(find.byKey(SendSheet.previewKey));
+  final position = preview.controller!.position;
+  expect(position.maxScrollExtent, greaterThan(40),
+      reason: 'the preview must actually overflow, or the wheel assertion is empty');
+  final offsetBefore = position.pixels;
+
+  await wheelOverPreview(tester, 800);
+
+  expect(position.pixels, greaterThan(offsetBefore),
+      reason: 'the wheel over the payload must move the preview, not vanish into SelectableText');
+  expect(tester.getRect(find.byKey(SendSheet.footerKey)), footerBefore,
+      reason: 'wheeling the preview must not move the footer');
+  expect(tester.getRect(find.text('Continue')), continueBefore,
+      reason: 'Continue stays put while the payload moves');
+  expectOnScreen(tester, find.text('Cancel'), because: 'Cancel remains clickable after the wheel');
+  expectOnScreen(tester, find.text('Continue'),
+      because: 'Continue remains clickable after the wheel');
+  expect(tester.takeException(), isNull);
+
+  await enterAiMode(tester);
+  expect(tester.takeException(), isNull);
+  expectOnScreen(tester, find.text('Cancel'), because: 'Cancel stays in the footer on the AI page');
+  expectOnScreen(tester, find.text('Back'), because: 'Back is the footer return to the preview');
+  expectOnScreen(tester, find.text('Copy Protected'),
+      because: 'Copy Protected is a primary action and must be hittable without stretching the window');
+  expectOnScreen(tester, find.text('Paste AI answer'),
+      because: 'Paste AI answer is a primary action and must be hittable without stretching the window');
+  expectOnScreen(tester, find.text('Send from here'),
+      because: 'Send from here is a primary action and must be hittable without stretching the window');
+
+  await tester.tap(find.text('Copy Protected'));
+  await settle(tester, rounds: 1);
+  expect(find.text('Copied'), findsOneWidget);
+  expect(clip.text, bench.payload!.text, reason: 'Copy Protected copies the SafePayload, exactly');
+  await tester.tap(find.text('Paste AI answer'));
+  await tester.pump();
+  expect(find.textContaining('Paste the model'), findsOneWidget);
+  expectOnScreen(tester, find.text('Back'),
+      because: 'opening the paste box must not kick Back off the screen');
+  expect(tester.takeException(), isNull);
+
+  await tester.tap(find.text('Back'));
+  await tester.pumpAndSettle();
+  expect(find.byKey(SendSheet.previewKey), findsOneWidget);
+  expectOnScreen(tester, find.text('Continue'),
+      because: 'Back returns to the review page with Continue on screen');
+  expect(tester.takeException(), isNull);
 }

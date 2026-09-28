@@ -11,6 +11,13 @@
 //
 // The text shown is the payload the core built. It is not re-assembled here, and
 // what is copied to the clipboard is the same string that would be sent.
+//
+// Layout is a window, not a font size. At 1280×720 the sheet is:
+//
+//   header   fixed
+//   body     the only scroll — preview on the first page, the three doors on the
+//            second. The payload never shares a scroller with the actions.
+//   footer   Cancel / Back / Continue, always on screen
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -27,19 +34,30 @@ class SendSheet extends StatefulWidget {
   final Workbench bench;
   final Ground ground;
 
+  /// The payload preview — the only region that accepts a wheel on the first page.
+  static const previewKey = ValueKey<String>('send-sheet-preview');
+
+  /// Cancel / Back / Continue. Never inside the preview scroller.
+  static const footerKey = ValueKey<String>('send-sheet-footer');
+
   @override
   State<SendSheet> createState() => _SendSheetState();
 }
 
+enum _SheetPage { review, ai }
+
 class _SendSheetState extends State<SendSheet> {
   final _pasted = TextEditingController();
+  final _previewScroll = ScrollController();
   bool _copied = false;
   bool _pasting = false;
   String? _trouble;
+  _SheetPage _page = _SheetPage.review;
 
   @override
   void dispose() {
     _pasted.dispose();
+    _previewScroll.dispose();
     super.dispose();
   }
 
@@ -51,221 +69,330 @@ class _SendSheetState extends State<SendSheet> {
     return ListenableBuilder(
       listenable: widget.ground,
       builder: (context, _) {
-    final connected = widget.ground.providers.where((p) => p.connected).toList();
+        final connected = widget.ground.providers
+            .where((p) => p.connected)
+            .toList();
 
-    return Dialog(
-      backgroundColor: Zc.paper,
-      insetPadding: const EdgeInsets.all(40),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 780, maxHeight: 820),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 20, 14, 14),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Review before send', style: Zc.h2),
-                        const SizedBox(height: 4),
-                        Text(
-                          payload == null
-                              ? 'There is nothing to send.'
-                              : '${payload.protectedCount} values replaced · '
-                                  '${payload.text.length} characters would leave this device.',
-                          style: Zc.small,
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, size: 18),
-                    color: Zc.ink3,
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-            ),
-            Container(height: 1, color: Zc.line),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
+        return Dialog(
+          backgroundColor: Zc.paper,
+          insetPadding: const EdgeInsets.all(40),
+          child: LayoutBuilder(
+            builder: (context, incoming) {
+              // A bounded height is what lets the body be Expanded and the
+              // footer stay put. Capping at 820 keeps the sheet from eating a
+              // large window; clamping to the incoming max is what fits 720p.
+              final width = incoming.maxWidth.isFinite
+                  ? incoming.maxWidth.clamp(0.0, 780.0)
+                  : 780.0;
+              final height = incoming.maxHeight.isFinite
+                  ? incoming.maxHeight.clamp(0.0, 820.0)
+                  : 820.0;
+              return SizedBox(
+                width: width,
+                height: height,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (open > 0) ...[
-                      Trouble(
-                        open == 1
-                            ? 'One suggestion is still open. It stands in the text below as written, '
-                                'and nothing can be sent until you answer it. There is no «send anyway».'
-                            : '$open suggestions are still open. They stand in the text below as '
-                                'written, and nothing can be sent until you answer them. There is no '
-                                '«send anyway».',
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    const Eyebrow('This is what would leave'),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: Zc.panel(fill: Zc.card, radius: 10),
-                      child: payload == null
-                          ? const Text('Nothing is built.', style: Zc.small)
-                          : SafeText(text: payload.text, chips: false),
+                    _header(payload),
+                    Container(height: 1, color: Zc.line),
+                    Expanded(
+                      child: _page == _SheetPage.review
+                          ? _preview(payload, open)
+                          : _aiDoors(payload, open, connected),
                     ),
-                    if (_trouble != null) ...[const SizedBox(height: 14), Trouble(_trouble!)],
-                    const SizedBox(height: 22),
-                    _door(
-                      title: 'Use AI yourself',
-                      what: 'Copy the text above, paste it into any model you like, and bring the '
-                          'answer back here. Restoring works the same either way — no account, no key.',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              ZButton(
-                                label: _copied ? 'Copied' : 'Copy Protected',
-                                icon: _copied ? Icons.check : Icons.copy_all_outlined,
-                                onPressed: payload == null
-                                    ? null
-                                    : () async {
-                                        await Clipboard.setData(ClipboardData(text: payload.text));
-                                        bench.rememberCopiedPayload();
-                                        if (mounted) setState(() => _copied = true);
-                                      },
-                              ),
-                              const SizedBox(width: 10),
-                              ZButton(
-                                label: _pasting ? 'Hide the box' : 'Paste AI answer',
-                                icon: Icons.content_paste_go,
-                                onPressed: () => setState(() => _pasting = !_pasting),
-                              ),
-                            ],
-                          ),
-                          if (_pasting) ...[
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: _pasted,
-                              maxLines: 8,
-                              minLines: 4,
-                              style: Zc.document.copyWith(fontSize: 13.5),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Zc.card,
-                                hintText: 'Paste the model’s answer here…',
-                                hintStyle: Zc.body.copyWith(color: Zc.ink4),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(color: Zc.line),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            ZButton(
-                              label: 'Restore the real values',
-                              filled: true,
-                              onPressed: () async {
-                                final bad = await bench.pasteAnswer(_pasted.text);
-                                if (!context.mounted) return;
-                                if (bad == null) {
-                                  Navigator.of(context).pop(true);
-                                } else {
-                                  setState(() => _trouble = bad);
-                                }
-                              },
-                            ),
-                          ],
-                        ],
-                      ),
+                    _footer(context, open: open, payload: payload),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _header(PayloadView? payload) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 20, 14, 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Review before send', style: Zc.h2),
+                const SizedBox(height: 4),
+                Text(
+                  payload == null
+                      ? 'There is nothing to send.'
+                      : '${payload.protectedCount} values replaced · '
+                            '${payload.text.length} characters would leave this device.',
+                  style: Zc.small,
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18),
+            color: Zc.ink3,
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Payload only. Suggestions and a trouble line belong here because they
+  /// describe the text; the doors do not.
+  Widget _preview(PayloadView? payload, int open) {
+    return SingleChildScrollView(
+      key: SendSheet.previewKey,
+      controller: _previewScroll,
+      padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (open > 0) ...[
+            Trouble(
+              open == 1
+                  ? 'One suggestion is still open. It stands in the text below as written, '
+                        'and nothing can be sent until you answer it. There is no «send anyway».'
+                  : '$open suggestions are still open. They stand in the text below as '
+                        'written, and nothing can be sent until you answer them. There is no '
+                        '«send anyway».',
+            ),
+            const SizedBox(height: 16),
+          ],
+          const Eyebrow('This is what would leave'),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: Zc.panel(fill: Zc.card, radius: 10),
+            child: payload == null
+                ? const Text('Nothing is built.', style: Zc.small)
+                : SafeText(text: payload.text, chips: false),
+          ),
+          if (_trouble != null) ...[
+            const SizedBox(height: 14),
+            Trouble(_trouble!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _aiDoors(
+    PayloadView? payload,
+    int open,
+    List<ProviderFact> connected,
+  ) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_trouble != null) ...[
+            Trouble(_trouble!),
+            const SizedBox(height: 14),
+          ],
+          _door(
+            title: 'Use AI yourself',
+            what:
+                'Copy the text above, paste it into any model you like, and bring the '
+                'answer back here. Restoring works the same either way — no account, no key.',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: [
+                    ZButton(
+                      label: _copied ? 'Copied' : 'Copy Protected',
+                      icon: _copied ? Icons.check : Icons.copy_all_outlined,
+                      onPressed: payload == null
+                          ? null
+                          : () async {
+                              await Clipboard.setData(
+                                ClipboardData(text: payload.text),
+                              );
+                              widget.bench.rememberCopiedPayload();
+                              if (mounted) setState(() => _copied = true);
+                            },
                     ),
-                    const SizedBox(height: 14),
-                    _door(
-                      title: 'Send from here',
-                      what: connected.isEmpty
-                          ? 'Nothing is connected yet. Only the text above would travel; the '
-                              'provider still sees the ordinary facts of a connection — your '
-                              'address, the time, the model.'
-                          : 'The request goes from this app. Only the text above travels; the '
-                              'provider still sees the ordinary facts of a connection — your address, '
-                              'the time, the model.',
-                      child: connected.isEmpty
-                          ? _connectHere(local: false)
-                          : Wrap(
-                              spacing: 9,
-                              runSpacing: 9,
-                              children: [
-                                for (final p in connected)
-                                  ZButton(
-                                    label: bench.sending ? 'Sending…' : 'Send to ${p.label}',
-                                    filled: true,
-                                    icon: Icons.send_outlined,
-                                    onPressed: open > 0 || bench.sending || payload == null
-                                        ? null
-                                        : () async {
-                                            final bad = await bench.send(p.id);
-                                            if (!context.mounted) return;
-                                            if (bad == null) {
-                                              Navigator.of(context).pop(true);
-                                            } else {
-                                              setState(() => _trouble = bad);
-                                            }
-                                          },
-                                    hint: open > 0 ? 'Answer the review first' : null,
-                                  ),
-                              ],
-                            ),
-                    ),
-                    if (connected.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      for (final p in connected)
-                        Text(
-                          '${p.label} · ${p.model} · ${p.endpoint}'
-                          '${p.credentialState == CredentialState.sessionOnly ? "  (key kept for this run only)" : ""}',
-                          style: Zc.tiny.copyWith(letterSpacing: 0),
-                        ),
-                      const SizedBox(height: 10),
-                      _More(
-                        label: 'Change the address, the model, or the key',
-                        child: _connectHere(local: false),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-                    _door(
-                      title: 'A model on this machine',
-                      what: 'llama.cpp, Ollama, LM Studio — anything that answers the same shape. '
-                          'No key, no account, and the request never leaves this computer. It is '
-                          'the only provider that sees none of the ordinary facts above.',
-                      child: _More(
-                        label: 'Set up a local model',
-                        child: _connectHere(local: true),
-                      ),
+                    ZButton(
+                      label: _pasting ? 'Hide the box' : 'Paste AI answer',
+                      icon: Icons.content_paste_go,
+                      onPressed: () => setState(() => _pasting = !_pasting),
                     ),
                   ],
                 ),
+                if (_pasting) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _pasted,
+                    maxLines: 8,
+                    minLines: 4,
+                    style: Zc.document.copyWith(fontSize: 13.5),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Zc.card,
+                      hintText: 'Paste the model’s answer here…',
+                      hintStyle: Zc.body.copyWith(color: Zc.ink4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Zc.line),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ZButton(
+                    label: 'Restore the real values',
+                    filled: true,
+                    onPressed: () async {
+                      final bad = await widget.bench.pasteAnswer(_pasted.text);
+                      if (!context.mounted) return;
+                      if (bad == null) {
+                        Navigator.of(context).pop(true);
+                      } else {
+                        setState(() => _trouble = bad);
+                      }
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _door(
+            title: 'Send from here',
+            what: connected.isEmpty
+                ? 'Nothing is connected yet. Only the text above would travel; the '
+                      'provider still sees the ordinary facts of a connection — your '
+                      'address, the time, the model.'
+                : 'The request goes from this app. Only the text above travels; the '
+                      'provider still sees the ordinary facts of a connection — your address, '
+                      'the time, the model.',
+            child: connected.isEmpty
+                ? _connectHere(local: false)
+                : Wrap(
+                    spacing: 9,
+                    runSpacing: 9,
+                    children: [
+                      for (final p in connected)
+                        ZButton(
+                          label: widget.bench.sending
+                              ? 'Sending…'
+                              : 'Send to ${p.label}',
+                          filled: true,
+                          icon: Icons.send_outlined,
+                          onPressed:
+                              open > 0 ||
+                                  widget.bench.sending ||
+                                  payload == null
+                              ? null
+                              : () async {
+                                  final bad = await widget.bench.send(p.id);
+                                  if (!context.mounted) return;
+                                  if (bad == null) {
+                                    Navigator.of(context).pop(true);
+                                  } else {
+                                    setState(() => _trouble = bad);
+                                  }
+                                },
+                          hint: open > 0 ? 'Answer the review first' : null,
+                        ),
+                    ],
+                  ),
+          ),
+          if (connected.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            for (final p in connected)
+              Text(
+                '${p.label} · ${p.model} · ${p.endpoint}'
+                '${p.credentialState == CredentialState.sessionOnly ? "  (key kept for this run only)" : ""}',
+                style: Zc.tiny.copyWith(letterSpacing: 0),
               ),
+            const SizedBox(height: 10),
+            _More(
+              label: 'Change the address, the model, or the key',
+              child: _connectHere(local: false),
             ),
           ],
-        ),
+          const SizedBox(height: 14),
+          _door(
+            title: 'A model on this machine',
+            what:
+                'llama.cpp, Ollama, LM Studio — anything that answers the same shape. '
+                'No key, no account, and the request never leaves this computer. It is '
+                'the only provider that sees none of the ordinary facts above.',
+            child: _More(
+              label: 'Set up a local model',
+              child: _connectHere(local: true),
+            ),
+          ),
+        ],
       ),
     );
-      },
+  }
+
+  Widget _footer(
+    BuildContext context, {
+    required int open,
+    required PayloadView? payload,
+  }) {
+    return Container(
+      key: SendSheet.footerKey,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 12, 22, 14),
+      decoration: const BoxDecoration(
+        color: Zc.paper,
+        border: Border(top: BorderSide(color: Zc.line)),
+      ),
+      child: Row(
+        children: [
+          ZButton(
+            label: 'Cancel',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          const Spacer(),
+          if (_page == _SheetPage.ai) ...[
+            ZButton(
+              label: 'Back',
+              onPressed: () => setState(() {
+                _page = _SheetPage.review;
+                _pasting = false;
+              }),
+            ),
+            const SizedBox(width: 10),
+          ],
+          if (_page == _SheetPage.review)
+            ZButton(
+              label: 'Continue',
+              filled: true,
+              onPressed: payload == null || open > 0
+                  ? null
+                  : () => setState(() => _page = _SheetPage.ai),
+            ),
+        ],
+      ),
     );
   }
 
   /// The form, for whichever provider row this door is about.
   Widget _connectHere({required bool local}) {
     final rows = widget.ground.providers;
-    if (rows.isEmpty) return const Text('This build knows no providers.', style: Zc.small);
+    if (rows.isEmpty)
+      return const Text('This build knows no providers.', style: Zc.small);
     return ConnectForm(ground: widget.ground, row: rows.first, local: local);
   }
 
-  Widget _door({required String title, required String what, required Widget child}) {
+  Widget _door({
+    required String title,
+    required String what,
+    required Widget child,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -273,7 +400,14 @@ class _SendSheetState extends State<SendSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Zc.ink)),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Zc.ink,
+            ),
+          ),
           const SizedBox(height: 5),
           Text(what, style: Zc.small),
           const SizedBox(height: 12),
@@ -312,11 +446,19 @@ class _MoreState extends State<_More> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(_open ? Icons.expand_less : Icons.expand_more, size: 16, color: Zc.clay),
+                Icon(
+                  _open ? Icons.expand_less : Icons.expand_more,
+                  size: 16,
+                  color: Zc.clay,
+                ),
                 const SizedBox(width: 5),
                 Text(
                   widget.label,
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Zc.clay),
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: Zc.clay,
+                  ),
                 ),
               ],
             ),
