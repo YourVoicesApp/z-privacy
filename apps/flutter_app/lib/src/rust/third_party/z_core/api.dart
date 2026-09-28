@@ -89,6 +89,17 @@ Future<ProtectOutcome> protectAllMatches({
 );
 
 /// One step back. "All matches" went in as one act, so it comes out as one act.
+/// Remove the protection on this stretch — **this document, this decision**.
+///
+/// The counterpart that makes «Forget» honest (task 037). Forgetting erases
+/// what Z Privacy learned for future use and deliberately leaves the open
+/// document exactly as it is; this is the only thing that changes what is
+/// protected here, and it is asked for by name.
+Future<UndoOutcome> unprotect({
+  required SessionId session,
+  required Span span,
+}) => RustLib.instance.api.zCoreApiUnprotect(session: session, span: span);
+
 Future<UndoOutcome> undoLastProtection({required SessionId session}) =>
     RustLib.instance.api.zCoreApiUndoLastProtection(session: session);
 

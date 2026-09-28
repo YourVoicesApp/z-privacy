@@ -419,7 +419,9 @@ Future<void> _ask(BuildContext context, Workbench bench, DocumentView doc, Mark 
     builder: (_) => WhySheet(
       why: why,
       word: doc.text.substring(mark.span.start, mark.span.end),
+      span: mark.span,
       onChanged: bench.rescan,
+      onUnprotect: (span) async => bench.unprotect(span),
     ),
   );
 }

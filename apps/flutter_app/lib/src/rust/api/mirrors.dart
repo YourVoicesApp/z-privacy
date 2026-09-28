@@ -364,8 +364,17 @@ class ForgetPlan {
   /// press a button that says «forget».
   final List<String> keeps;
 
-  /// Everything that would still recognise it afterwards. **Must be empty** —
-  /// it is reported rather than assumed, and a test fails if it is not.
+  /// Permanent knowledge that could recognise this value **in future**.
+  ///
+  /// The definition is strict on purpose (the owner, 28 Sep). Empty means:
+  /// *nothing kept on this device will recognise this value again.* It does
+  /// **not** mean the value is nowhere in the program — the open
+  /// conversation's token store still holds it, and an answer already
+  /// received still reads as it did. Those are not knowledge for tomorrow;
+  /// they are today's work, and `keeps` says so in words.
+  ///
+  /// Must be empty after forgetting. Reported rather than assumed, and both a
+  /// test and the screen check it.
   final List<String> stillKnownBy;
 
   const ForgetPlan({

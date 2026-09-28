@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1222008464;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -203806832;
 
 // Section: executor
 
@@ -1594,6 +1594,35 @@ fn wire__z_core__api__undo_last_protection_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
                     let output_ok = z_core::api::undo_last_protection(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__unprotect_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "unprotect",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_span = <crate::api::mirrors::Span>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::unprotect(api_session, api_span)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -3302,11 +3331,12 @@ fn pde_ffi_dispatcher_primary_impl(
         52 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
         53 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
         54 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
-        55 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        56 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        57 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
-        58 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
-        59 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        55 => wire__z_core__api__unprotect_impl(port, ptr, rust_vec_len, data_len),
+        56 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        57 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        58 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
+        59 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
+        60 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

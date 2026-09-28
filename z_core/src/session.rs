@@ -41,6 +41,15 @@ pub(crate) struct Protection {
     /// board's «a token once given is never silently taken back», broken.
     /// (Task 033.)
     pub decided: bool,
+    /// The layer that found this no longer claims it — the pack changed, the
+    /// profile changed, or the value was forgotten from the vault — **and it is
+    /// kept protected anyway**.
+    ///
+    /// Because taking it back would expose, in the Safe column, a value that
+    /// was hidden a moment ago. «Forget» erases knowledge; only «Remove
+    /// protection» changes what is protected here, and one is not a gentle name
+    /// for the other. (Task 037, the ninth.)
+    pub orphaned: bool,
 }
 
 /// One thing the scanner found, and why. Carried whole so the UI can always say

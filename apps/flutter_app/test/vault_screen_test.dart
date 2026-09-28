@@ -289,13 +289,27 @@ void main() {
     expect(why.learnedAt > BigInt.zero, isTrue, reason: 'it knows when it was taught');
 
     await tester.pumpWidget(MaterialApp(
-      home: WhySheet(why: why, word: 'Nordstern Consulting GmbH', onChanged: () async {}),
+      home: WhySheet(
+        why: why,
+        word: 'Nordstern Consulting GmbH',
+        span: const Span(start: 7, end: 32),
+        onChanged: () async {},
+        onUnprotect: (_) async {},
+      ),
     ));
     await settle(tester, rounds: 1);
 
     expect(find.text('Why is this protected?'), findsOneWidget);
     expect(find.text('You taught Z Privacy this value'), findsOneWidget);
     expect(find.text('Forget everywhere'), findsWidgets);
+
+    // The two acts are offered under their own names, and the sheet says which
+    // is which — «forget» must never be a gentle word for «unprotect».
+    expect(find.text('Remove protection'), findsOneWidget);
+    expect(
+      find.textContaining('leaves this document exactly as it is'),
+      findsOneWidget,
+    );
 
     // Other spellings are the same secret, so they wait to be asked for.
     expect(find.text('Nordstern Consulting'), findsNothing);
@@ -306,7 +320,18 @@ void main() {
     expect(find.textContaining('Forget «Nordstern Consulting GmbH»?'), findsOneWidget);
     expect(find.text('THIS WILL REMOVE'), findsOneWidget);
     expect(find.text('IT WILL NOT CHANGE'), findsOneWidget);
-    expect(find.textContaining('already protected'), findsOneWidget);
+    expect(find.textContaining('already protected'), findsWidgets);
+    // His own sentence, in the sheet.
+    expect(
+      find.textContaining('does not remove protection already applied in this document'),
+      findsOneWidget,
+    );
+    // And what an empty `still_known_by` means, said strictly: a statement
+    // about tomorrow, not about this minute.
+    expect(
+      find.textContaining('nothing kept on this device will recognise the value again'),
+      findsOneWidget,
+    );
 
     // And Cancel means nothing happened.
     await tester.tap(find.text('Cancel'));

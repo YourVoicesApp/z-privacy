@@ -23,11 +23,18 @@ class WhySheet extends StatefulWidget {
     super.key,
     required this.why,
     required this.word,
+    required this.span,
     required this.onChanged,
+    required this.onUnprotect,
   });
 
   final Explanation why;
   final String word;
+  final Span span;
+
+  /// Removing the protection here — a different act from forgetting, offered
+  /// under its own name.
+  final Future<void> Function(Span span) onUnprotect;
 
   /// Called when something was forgotten, so the document can be scanned again
   /// with the knowledge gone.
@@ -152,6 +159,13 @@ class _WhySheetState extends State<WhySheet> {
                 alignment: WrapAlignment.end,
                 children: [
                   ZButton(label: 'Close', onPressed: () => Navigator.of(context).pop()),
+                  ZButton(
+                    label: 'Remove protection',
+                    onPressed: () async {
+                      await widget.onUnprotect(widget.span);
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                  ),
                   if (taught)
                     ZButton(
                       label: 'Forget here',
@@ -165,6 +179,17 @@ class _WhySheetState extends State<WhySheet> {
                       onPressed: () => _forget(everywhere: true),
                     ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              // The two acts, named apart. The commonest way to lose a user's
+              // trust here would be to let one quietly do the other.
+              Text(
+                taught
+                    ? 'Remove protection changes this document. Forget erases what Z Privacy '
+                        'learned, and leaves this document exactly as it is.'
+                    : 'Remove protection changes this document. Nothing was learned from this, '
+                        'so there is nothing to forget.',
+                style: Zc.tiny.copyWith(letterSpacing: 0),
               ),
               if (!taught) ...[
                 const SizedBox(height: 10),
@@ -209,12 +234,17 @@ class _WhySheetState extends State<WhySheet> {
       final done = await z.forgetValue(entity: e, valueId: v, everywhere: everywhere);
       // The core reports what still recognises it. It must be nothing — and if
       // it is not, the user is told rather than reassured.
-      if (done.stillKnownBy.isNotEmpty && mounted) {
+      // After «everywhere» nothing may still know it. After a scoped forget
+      // another profile legitimately might, and the preview already said so.
+      if (everywhere && done.stillKnownBy.isNotEmpty && mounted) {
         setState(() => _trouble =
             'Forgotten, but ${done.stillKnownBy.join(", ")} still recognises it. '
             'Please tell us — this should not be possible.');
         return;
       }
+      // `onChanged` looks again; it does **not** take anything back. A rescan
+      // never removes a protection (task 037) — which is what makes it safe to
+      // call here at all.
       await widget.onChanged();
       if (mounted) Navigator.of(context).pop();
     } on ApiError catch (err) {
@@ -265,6 +295,22 @@ class _ForgetSheet extends StatelessWidget {
               const Eyebrow('It will NOT change'),
               const SizedBox(height: 7),
               for (final k in plan.keeps) _Line(k, keeps: true),
+              const SizedBox(height: 10),
+              // What «nothing else knows it» means, exactly. It is a statement
+              // about tomorrow, not about this minute: the open conversation
+              // still holds the value behind its token, and an answer already
+              // received still reads as it did.
+              Text(
+                plan.stillKnownBy.isEmpty
+                    ? 'After this, nothing kept on this device will recognise the value again. '
+                        'The conversation open now still holds it behind its token, as it must.'
+                    : '${plan.stillKnownBy.join(", ")} would still recognise it — forgetting here '
+                        'does not reach into another client\u2019s records.',
+                style: Zc.tiny.copyWith(
+                  letterSpacing: 0,
+                  color: plan.stillKnownBy.isEmpty ? Zc.ink4 : Zc.amber,
+                ),
+              ),
               const SizedBox(height: 20),
               Row(
                 children: [

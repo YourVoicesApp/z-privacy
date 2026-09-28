@@ -164,8 +164,13 @@ fn forget_shows_what_it_will_take_and_then_takes_exactly_that() {
         "{:?}",
         plan.keeps
     );
-    // Before the act, what would still know it is exactly what is about to go.
-    assert_eq!(plan.still_known_by.len(), 1);
+    // And the field means one thing at both moments: what would still know it
+    // **afterwards**. Nothing would, so it is empty before the act as well.
+    assert!(
+        plan.still_known_by.is_empty(),
+        "a plan that removes everything leaves nothing knowing it: {:?}",
+        plan.still_known_by
+    );
 
     // Nothing has changed yet: a plan is a plan.
     assert_eq!(entity(client).expect("card").values.len(), 1);
@@ -211,6 +216,9 @@ fn forgetting_for_one_client_leaves_another_client_alone() {
 
     let plan = forget_plan(ea, va, false).expect("plan");
     assert_eq!(plan.values, 1, "only this client's record is in the plan");
+    // And the preview says, before anything happens, that the other client
+    // would still recognise it — which is the useful half of the strictness.
+    assert_eq!(plan.still_known_by.len(), 1, "{:?}", plan.still_known_by);
     assert!(
         plan.keeps.iter().any(|k| k.contains("Other profiles")),
         "and it says so: {:?}",
@@ -229,5 +237,213 @@ fn forgetting_for_one_client_leaves_another_client_alone() {
         "{:?}",
         all.keeps
     );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn forgetting_does_not_unprotect_the_document_that_is_open() {
+    // The owner's own test, written out step by step on 28 September — because
+    // making «Forget» pull the protection out of the open document would show
+    // the value in the Safe column a moment after the user asked the app to be
+    // *more* careful.
+    //
+    //   Forget    = erase the knowledge
+    //   Unprotect = change the protection decision in this document
+    //
+    // Neither is a gentle name for the other.
+    let _lock = serial();
+    let dir = fresh_vault("forget-vs-unprotect");
+
+    const DOC: &str = "Kunde: Nordstern Consulting GmbH bittet um Auskunft.";
+
+    // Taught → Always.
+    let s = open_session(None, "de".to_string()).expect("session");
+    import_text(s, DOC.to_string()).expect("import");
+    scan(s).expect("scan");
+    protect(
+        s,
+        span_of(DOC, "Nordstern Consulting GmbH"),
+        Scope::Always,
+        Kind::Company,
+    )
+    .expect("always");
+
+    // A fresh conversation finds it by itself — that is what «always» bought.
+    let auto = open_session(None, "de".to_string()).expect("session");
+    import_text(auto, DOC.to_string()).expect("import");
+    scan(auto).expect("scan");
+    let token = list_tokens(auto)
+        .expect("tokens")
+        .into_iter()
+        .find(|t| t.source == Source::Vault)
+        .map(|t| t.token)
+        .expect("the vault protected it by itself");
+    let before = payload_view(build_payload(auto).expect("build")).expect("view").text;
+    assert!(before.contains(&token));
+    assert!(!before.contains("Nordstern Consulting GmbH"));
+
+    // Forget everywhere.
+    let known = search_vault("Nordstern Consulting GmbH".to_string()).expect("search");
+    assert_eq!(known.len(), 1);
+    let card = entity(known[0].id).expect("card");
+    let done = forget_value(known[0].id, card.values[0].id, true).expect("forget");
+    assert!(done.still_known_by.is_empty());
+
+    // 1 · the vault no longer knows it.
+    assert!(search_vault("Nordstern Consulting GmbH".to_string()).expect("search").is_empty());
+
+    // 2 · **the open document is still protected**, and the safe text still
+    //     carries the token. This is the line that matters.
+    let after = payload_view(build_payload(auto).expect("build")).expect("view").text;
+    assert!(after.contains(&token), "forgetting took the protection out of the open document");
+    assert!(
+        !after.contains("Nordstern Consulting GmbH"),
+        "forgetting exposed the value in the Safe column"
+    );
+
+    // 3 · and it survives a rescan too — because Rescan is one button away, and
+    //     a protection that vanishes on the next press was never protected.
+    scan(auto).expect("rescan");
+    let rescanned = payload_view(build_payload(auto).expect("build")).expect("view").text;
+    assert!(
+        !rescanned.contains("Nordstern Consulting GmbH"),
+        "a rescan after forgetting exposed the value"
+    );
+
+    // 4 · a new conversation does not know it any more.
+    let tomorrow = open_session(None, "de".to_string()).expect("session");
+    import_text(tomorrow, DOC.to_string()).expect("import");
+    let now = scan(tomorrow).expect("scan");
+    assert!(
+        !now.by_layer.iter().any(|l| l.source == Source::Vault && l.count > 0),
+        "a new conversation still knows it: {:?}",
+        now.by_layer
+    );
+
+    close_session(s).expect("close");
+    close_session(auto).expect("close");
+    close_session(tomorrow).expect("close");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn remove_protection_is_a_different_act_from_forget_and_says_so() {
+    let _lock = serial();
+    let dir = fresh_vault("unprotect");
+    // A codename no rule would ever catch — so that forgetting it really does
+    // leave the protection with nothing behind it. «Nordstern Consulting GmbH»
+    // would not do: the German pack claims anything ending in GmbH, and the
+    // protection would simply change hands.
+    const DOC: &str = "Das Projekt Apollo läuft weiter.";
+
+    // Taught in one conversation…
+    let taught = open_session(None, "de".to_string()).expect("session");
+    import_text(taught, DOC.to_string()).expect("import");
+    scan(taught).expect("scan");
+    protect(taught, span_of(DOC, "Apollo"), Scope::Always, Kind::Project).expect("always");
+    close_session(taught).expect("close");
+
+    // …and found by itself in the next. **This** protection has no reason of
+    // its own beyond the vault: a hand protection never orphans, because «you
+    // selected it» does not expire.
+    let s = open_session(None, "de".to_string()).expect("session");
+    import_text(s, DOC.to_string()).expect("import");
+    scan(s).expect("scan");
+    let span = span_of(DOC, "Apollo");
+    assert!(
+        document_view(s)
+            .expect("document")
+            .marks
+            .iter()
+            .any(|m| m.source == Source::Vault && m.state == MarkState::Protected),
+        "the vault should have protected it by itself"
+    );
+
+    // Forget: the knowledge goes, the protection stays — and after it, the
+    // explanation says why a protection is standing with nothing behind it.
+    let known = search_vault("Apollo".to_string()).expect("search");
+    let card = entity(known[0].id).expect("card");
+    forget_value(known[0].id, card.values[0].id, true).expect("forget");
+    scan(s).expect("rescan");
+
+    let why = explain(s, span).expect("explain");
+    assert!(
+        why.because.iter().any(|b| b.contains("no longer claims it")),
+        "an orphaned protection must say so: {:?}",
+        why.because
+    );
+    assert!(
+        why.because.iter().any(|b| b.contains("Remove protection")),
+        "and name the act that would take it back: {:?}",
+        why.because
+    );
+    let safe = payload_view(build_payload(s).expect("build")).expect("view").text;
+    assert!(!safe.contains("Apollo"), "an orphaned protection still protects");
+
+    // Remove protection: this is the act that changes the document, and only
+    // this one.
+    match unprotect(s, span).expect("unprotect") {
+        UndoOutcome::Undone { places, .. } => assert_eq!(places, 1),
+        other => panic!("expected it to be taken back, got {other:?}"),
+    }
+    let after = payload_view(build_payload(s).expect("build")).expect("view").text;
+    assert!(
+        after.contains("Apollo"),
+        "«remove protection» did not remove the protection"
+    );
+    assert!(
+        list_tokens(s).expect("tokens").iter().all(|t| !t.token.contains("PROJECT")),
+        "a token nothing points at was kept"
+    );
+
+    // And asking again on a place with nothing protected is «nothing to undo»,
+    // not an error and not a surprise.
+    assert_eq!(unprotect(s, span).expect("again"), UndoOutcome::NothingToUndo);
+
+    close_session(s).expect("close");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn still_known_by_means_tomorrow_not_today() {
+    // The owner's stricter definition, 28 September: an empty `still_known_by`
+    // means «nothing kept on this device will recognise this value again» —
+    // **not** «this value is nowhere in the program». The open conversation's
+    // token store still holds it, and that is today's work, not knowledge for
+    // tomorrow.
+    let _lock = serial();
+    let dir = fresh_vault("strict");
+    const DOC: &str = "Kunde: Nordstern Consulting GmbH bittet um Auskunft.";
+
+    let s = open_session(None, "de".to_string()).expect("session");
+    import_text(s, DOC.to_string()).expect("import");
+    scan(s).expect("scan");
+    protect(s, span_of(DOC, "Nordstern Consulting GmbH"), Scope::Always, Kind::Company)
+        .expect("always");
+
+    let known = search_vault("Nordstern Consulting GmbH".to_string()).expect("search");
+    let card = entity(known[0].id).expect("card");
+    let done = forget_value(known[0].id, card.values[0].id, true).expect("forget");
+
+    // Empty — nothing permanent will know it again.
+    assert!(done.still_known_by.is_empty());
+    // And the plan says in words what that does and does not mean.
+    assert!(
+        done.keeps.iter().any(|k| k.contains("does not remove protection already applied")),
+        "{:?}",
+        done.keeps
+    );
+
+    // Meanwhile the value is very much still in this conversation — which is
+    // exactly what «empty» does not claim.
+    assert_eq!(
+        reveal(s, list_tokens(s).expect("tokens")[0].token.clone())
+            .expect("reveal")
+            .value,
+        "Nordstern Consulting GmbH",
+        "today's token store still holds it, and should"
+    );
+
+    close_session(s).expect("close");
     let _ = std::fs::remove_dir_all(&dir);
 }

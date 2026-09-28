@@ -204,8 +204,17 @@ pub struct ForgetPlan {
     /// What is **not** touched, said out loud because the user is about to
     /// press a button that says «forget».
     pub keeps: Vec<String>,
-    /// Everything that would still recognise it afterwards. **Must be empty** —
-    /// it is reported rather than assumed, and a test fails if it is not.
+    /// Permanent knowledge that could recognise this value **in future**.
+    ///
+    /// The definition is strict on purpose (the owner, 28 Sep). Empty means:
+    /// *nothing kept on this device will recognise this value again.* It does
+    /// **not** mean the value is nowhere in the program — the open
+    /// conversation's token store still holds it, and an answer already
+    /// received still reads as it did. Those are not knowledge for tomorrow;
+    /// they are today's work, and `keeps` says so in words.
+    ///
+    /// Must be empty after forgetting. Reported rather than assumed, and both a
+    /// test and the screen check it.
     pub still_known_by: Vec<String>,
 }
 
@@ -856,6 +865,16 @@ pub fn protect_all_matches(session: SessionId, span: Span, scope: Scope, kind: K
 }
 
 /// One step back. "All matches" went in as one act, so it comes out as one act.
+/// Remove the protection on this stretch — **this document, this decision**.
+///
+/// The counterpart that makes «Forget» honest (task 037). Forgetting erases
+/// what Z Privacy learned for future use and deliberately leaves the open
+/// document exactly as it is; this is the only thing that changes what is
+/// protected here, and it is asked for by name.
+pub fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome> {
+    crate::ops::unprotect(session, span)
+}
+
 pub fn undo_last_protection(session: SessionId) -> ApiResult<UndoOutcome> {
     crate::ops::undo_last_protection(session)
 }

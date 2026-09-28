@@ -506,6 +506,23 @@ class Workbench extends ChangeNotifier {
     }
   }
 
+  /// Remove one protection, here. The counterpart to forgetting, and kept
+  /// apart from it on purpose: **forget erases knowledge, unprotect changes
+  /// what is protected in this document**, and neither is a gentle name for
+  /// the other.
+  Future<UndoOutcome?> unprotect(Span span) async {
+    try {
+      final out = await z.unprotect(session: session, span: span);
+      await refresh();
+      if (selection != null) await select(selection);
+      return out;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
   /// One step back. «Protect all 4 matches» came in as one act, so it goes out
   /// as one act — that is the core's doing, not a loop here.
   Future<UndoOutcome?> undo() async {

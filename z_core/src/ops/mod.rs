@@ -611,6 +611,14 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
         if because.is_empty() {
             because.push(p.source_detail.clone());
         }
+        if p.orphaned {
+            // Said plainly, because it is the one case where the reason a thing
+            // was protected no longer exists and the protection does.
+            because.push(
+                "What found this no longer claims it — the value was forgotten, or the pack                  changed. It stays protected here so that taking it back does not expose it.                  «Remove protection» is the way to take it back."
+                    .to_string(),
+            );
+        }
 
         let applies = match p.scope {
             Scope::Once => "This one place".to_string(),
@@ -815,6 +823,7 @@ fn protect_inner(
                 source: Source::Hand,
                 source_detail: "selected by you".to_string(),
                 decided: true,
+                orphaned: false,
             });
             applied = applied.saturating_add(1);
         }
@@ -880,6 +889,7 @@ fn protect_range(
         source,
         source_detail: detail.to_string(),
         decided,
+        orphaned: false,
     });
     s.protections.sort_by_key(|p| p.start);
     Some(token)
@@ -905,6 +915,39 @@ fn occurrences(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
         }
     }
     out
+}
+
+/// Remove one protection, here, by a person's word.
+///
+/// The one thing that takes a protection back. A rescan does not; forgetting a
+/// value does not. Those change what the app *knows*; this changes what is
+/// *protected in this document*, and the two are kept apart on purpose.
+pub(crate) fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome> {
+    with_session(session.id, |s| {
+        let (start, end) = text::span_to_bytes(s.original_str(), span)?;
+        let Some(hit) = s.protections.iter().find(|p| p.start < end && start < p.end).cloned() else {
+            return Ok(UndoOutcome::NothingToUndo);
+        };
+        let before = s.protections.len();
+        s.protections.retain(|p| !(p.start == hit.start && p.end == hit.end));
+        let places = before.saturating_sub(s.protections.len()) as u32;
+
+        // A token nothing points at any more is not kept: it would sit in the
+        // panel standing for nothing.
+        if !s.protections.iter().any(|p| p.token == hit.token) {
+            s.tokens.remove(&hit.token);
+        }
+        // And the finding goes with it, so the review list does not keep a row
+        // for something that is no longer protected.
+        s.findings.retain(|f| !(f.start == hit.start && f.end == hit.end));
+        s.bump();
+        Ok(UndoOutcome::Undone {
+            token: hit.token,
+            places,
+            created_entity: None,
+        })
+    })
+    .ok_or(ApiError::InvalidSession)?
 }
 
 pub(crate) fn undo_last_protection(session: SessionId) -> ApiResult<UndoOutcome> {
@@ -967,6 +1010,7 @@ pub(crate) fn add_alias(session: SessionId, token: String, alias: String) -> Api
                 // Adding a spelling is a person's act, and survives a rescan
                 // like every other one.
                 decided: true,
+                orphaned: false,
             });
             applied = applied.saturating_add(1);
         }
@@ -1064,62 +1108,96 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         // Empty while the vault is locked: the layer is skipped by having nothing
         // to say, not by a flag someone could forget to check.
         let hints = vault.hints(s.profile_id.as_deref());
-        let candidates = scanner::scan(s.original_str(), &pack, &hints);
+        rescan_with(s, &pack, &hints);
+        Ok(report_of(s, vault_state))
+    })
+}
 
-        // What a **person** decided is never touched by a rescan — whether they
-        // selected it themselves or answered a suggestion about it. Only what a
-        // layer decided on its own is recomputed. Before task 033 this read
-        // `source == Hand`, which threw away every answer given in the review
-        // the moment anyone pressed Rescan.
-        s.protections.retain(|p| p.decided);
-        // And the review row stays where it was: a decided finding keeps its id,
-        // its reason and its place, so the list does not shuffle under the hand
-        // of someone who has been answering it.
-        s.findings.retain(|f| f.decided);
-        let act = s.take_act_id();
+/// One rescan, used by the Rescan button and by switching a pack or a profile.
+///
+/// They were two loops with different rules until task 037, and the difference
+/// was the ninth lie: switching a pack **kept** a protection the new pack no
+/// longer claimed, while pressing Rescan **dropped** it. So forgetting a value
+/// and then rescanning put that value back in the clear — in the Safe column,
+/// one press after the user had asked the app to be *more* careful.
+///
+/// The rule now, and it has no exceptions: **a rescan never takes a protection
+/// back.** What a layer no longer claims is marked `orphaned` and kept, and the
+/// only thing that removes a protection is a person asking for that.
+fn rescan_with(s: &mut Session, pack: &str, hints: &[crate::vault::model::VaultHint]) -> u32 {
+    let candidates = scanner::scan(s.original_str(), pack, hints);
 
-        for c in &candidates {
-            // «Not sensitive» was an answer. Asking again after a rescan would
-            // treat it as if the user had said nothing.
-            if s.is_dismissed(c.start, c.end) {
-                continue;
+    // Nothing is dropped. What is no longer claimed says so.
+    let mut orphaned = 0u32;
+    for p in s.protections.iter_mut() {
+        let claim = candidates.iter().find(|c| c.start == p.start && c.end == p.end);
+        match claim {
+            None if !p.orphaned && p.source != Source::Hand => {
+                p.orphaned = true;
+                orphaned = orphaned.saturating_add(1);
             }
-            // Your word wins: a candidate under a decided protection is not
-            // reported again, and its own finding is the one kept above.
-            if s.protections.iter().any(|p| p.start < c.end && c.start < p.end) {
-                continue;
+            Some(c) => {
+                p.orphaned = false;
+                // Who claims it **now**. Forgetting a value from the vault
+                // while the pack still recognises the shape leaves the thing
+                // protected for a different reason — and «You taught Z Privacy
+                // this value» would then be a false answer to «why?».
+                if p.source != Source::Hand && (p.source != c.source || p.source_detail != c.source_detail) {
+                    p.source = c.source;
+                    p.source_detail = c.source_detail.clone();
+                }
             }
-            let state = match c.confidence {
+            None => {}
+        }
+    }
+
+    // A decided finding keeps its id, its reason and its place.
+    s.findings.retain(|f| f.decided);
+    let act = s.take_act_id();
+
+    for c in &candidates {
+        // «Not sensitive» was an answer, and a rescan is not a new question.
+        if s.is_dismissed(c.start, c.end) {
+            continue;
+        }
+        if s.findings.iter().any(|f| f.start < c.end && c.start < f.end) {
+            continue;
+        }
+        let covered = s.protections.iter().any(|p| p.start < c.end && c.start < p.end);
+        let state = if covered {
+            MarkState::Protected
+        } else {
+            match c.confidence {
                 scanner::Confidence::Auto => {
                     match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act, false) {
                         Some(_) => MarkState::Protected,
-                        // Already covered by something else: not reported twice.
                         None => continue,
                     }
                 }
                 scanner::Confidence::Suggest => MarkState::Suggested,
-            };
-            let id = s.take_finding_id();
-            s.findings.push(FindingRecord {
-                id,
-                start: c.start,
-                end: c.end,
-                kind: c.kind,
-                source: c.source,
-                source_detail: c.source_detail.clone(),
-                reason: c.reason.clone(),
-                state,
-                decided: false,
-                entities: c.entities.clone(),
-                also: c.also.clone(),
-            });
-        }
+            }
+        };
+        let id = s.take_finding_id();
+        s.findings.push(FindingRecord {
+            id,
+            start: c.start,
+            end: c.end,
+            kind: c.kind,
+            source: c.source,
+            source_detail: c.source_detail.clone(),
+            reason: c.reason.clone(),
+            state,
+            decided: false,
+            entities: c.entities.clone(),
+            also: c.also.clone(),
+        });
+    }
 
-        s.normal_words = scanner::plain_word_count(s.original_str(), &candidates);
-        s.bump();
-        Ok(report_of(s, vault_state))
-    })
+    s.normal_words = scanner::plain_word_count(s.original_str(), &candidates);
+    s.bump();
+    orphaned
 }
+
 
 /// The counts, as the band under the Original header reports them. Every number
 /// here is counted from the state; none of them is written into the code.
@@ -1298,55 +1376,11 @@ fn rescan_keeping(session: SessionId, pack: &str) -> ApiResult<(u32, u32)> {
     with_core(|core| {
         let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;
         let hints = vault.hints(s.profile_id.as_deref());
-        let candidates = scanner::scan(s.original_str(), pack, &hints);
         let kept_tokens = s.tokens_in_use().len() as u32;
-
-        // Anything a layer used to claim and no longer does becomes manual.
-        let mut changed_to_manual = 0u32;
-        for p in s.protections.iter_mut() {
-            let still_claimed = candidates.iter().any(|c| c.start == p.start && c.end == p.end);
-            if !still_claimed && p.source != Source::Hand {
-                p.source = Source::Hand;
-                p.source_detail = "kept from an earlier layer, now yours".to_string();
-                changed_to_manual = changed_to_manual.saturating_add(1);
-            }
-        }
-
-        s.findings.clear();
-        let act = s.take_act_id();
-        for c in &candidates {
-            let covered = s.protections.iter().any(|p| p.start < c.end && c.start < p.end);
-            let state = if covered {
-                MarkState::Protected
-            } else {
-                match c.confidence {
-                    scanner::Confidence::Auto => {
-                        match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act, false) {
-                            Some(_) => MarkState::Protected,
-                            None => continue,
-                        }
-                    }
-                    scanner::Confidence::Suggest => MarkState::Suggested,
-                }
-            };
-            let id = s.take_finding_id();
-            s.findings.push(FindingRecord {
-                id,
-                start: c.start,
-                end: c.end,
-                kind: c.kind,
-                source: c.source,
-                source_detail: c.source_detail.clone(),
-                reason: c.reason.clone(),
-                state,
-                decided: false,
-                entities: c.entities.clone(),
-                also: c.also.clone(),
-            });
-        }
-        s.normal_words = scanner::plain_word_count(s.original_str(), &candidates);
-        s.bump();
-        Ok((kept_tokens, changed_to_manual))
+        // The same rule as the Rescan button, because they are the same act:
+        // look again, and take nothing back.
+        let orphaned = rescan_with(s, pack, &hints);
+        Ok((kept_tokens, orphaned))
     })
 }
 

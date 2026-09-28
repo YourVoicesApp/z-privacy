@@ -349,6 +349,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          two_places_report_agrees the_string_that_would_be_sent is_a_constant \
          three_windows_on_one_truth not_sensitive_is_an_answer actually_reach_the_vault \
          can_say_where_it_came_from shows_what_it_will_take leaves_another_client_alone \
+         does_not_unprotect_the_document a_different_act_from_forget tomorrow_not_today \
          this_conversation_means_every_place need_the_vault_and_say_so \
          reports_nothing_it_does_not_know take_back_an_answer; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then

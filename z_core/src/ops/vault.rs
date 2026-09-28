@@ -634,12 +634,20 @@ fn plan(entity: u32, value_id: u32, everywhere: bool, act: bool) -> ApiResult<Fo
                 vault.entities.retain(|e| !e.values.is_empty());
             }
 
-            // And the proof. After the act this must be empty; before it, it is
-            // the list of what would go.
+            // What would still recognise it **afterwards** — the same meaning
+            // whether this is a plan or the act itself.
+            //
+            // It used to mean «what matches now», which made the field say one
+            // thing before the act and another after, and a screen reading it
+            // before could only be wrong. One field, one meaning: permanent
+            // knowledge that will recognise this value in future.
             let mut still: Vec<String> = Vec::new();
             for e in &vault.entities {
                 for v in &e.values {
-                    if spellings.iter().any(|sp| v.matches(sp)) {
+                    if hits.contains(&(e.id, v.id)) {
+                        continue;
+                    }
+                    if spellings.iter().any(|sp| v.matches(sp)) && !still.contains(&e.handle()) {
                         still.push(e.handle());
                     }
                 }
@@ -652,6 +660,14 @@ fn plan(entity: u32, value_id: u32, everywhere: bool, act: bool) -> ApiResult<Fo
                 identities: emptied,
                 profiles,
                 keeps: vec![
+                    // The owner's own words, 28 September. Forgetting erases
+                    // knowledge for the future; it does not reach into a
+                    // document that is open, because doing so would show a
+                    // value in the Safe column one press after the user asked
+                    // the app to be more careful.
+                    "Forgetting removes what Z Privacy learned for future use — it does not \
+                     remove protection already applied in this document"
+                        .to_string(),
                     "Documents you have already protected keep their tokens".to_string(),
                     "Answers you have already received are unchanged".to_string(),
                     if everywhere {
