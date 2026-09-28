@@ -6,9 +6,16 @@
 //   Restored   the answer with your real values put back, here, locally.
 //   AI view    the answer exactly as the model wrote it, tokens and all.
 //
+// Copy is two named acts, never one button:
+//
+//   Copy Restored    the real values — confirmed every time, then the system clipboard.
+//   Copy Protected   tokens still in the text — the manual path out to a model.
+//
 // The restored view is **built in Rust** and arrives as segments, each saying
 // whether it is plain text or a value that came back. Rebuilding it in Dart
 // would mean the UI holding the token table, and it does not.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -36,6 +43,10 @@ class _AnswerPanelState extends State<AnswerPanel> {
   Future<(List<Segment>, String)>? _both;
   AnswerId? _for;
 
+  /// What the last copy did, in words. Kept here rather than flashed: the
+  /// restored path must never claim the clipboard is still ours after writing.
+  String? _copyNote;
+
   @override
   Widget build(BuildContext context) {
     final bench = widget.bench;
@@ -45,8 +56,10 @@ class _AnswerPanelState extends State<AnswerPanel> {
     // Both views of the same answer, fetched once per answer.
     if (_for != answer) {
       _for = answer;
-      _both = Future.wait([bench.restored(answer), bench.asTheModelWroteIt(answer)])
-          .then((r) => (r[0] as List<Segment>, r[1] as String));
+      _both = Future.wait([
+        bench.restored(answer),
+        bench.asTheModelWroteIt(answer),
+      ]).then((r) => (r[0] as List<Segment>, r[1] as String));
     }
 
     return Container(
@@ -94,8 +107,22 @@ class _AnswerPanelState extends State<AnswerPanel> {
               spacing: 7,
               runSpacing: 7,
               children: [
-                _Tab(label: 'Restored', on: _restored, onTap: () => setState(() => _restored = true)),
-                _Tab(label: 'As the model wrote it', on: !_restored, onTap: () => setState(() => _restored = false)),
+                _Tab(
+                  label: 'Restored',
+                  on: _restored,
+                  onTap: () => setState(() {
+                    _restored = true;
+                    _copyNote = null;
+                  }),
+                ),
+                _Tab(
+                  label: 'As the model wrote it',
+                  on: !_restored,
+                  onTap: () => setState(() {
+                    _restored = false;
+                    _copyNote = null;
+                  }),
+                ),
               ],
             ),
           ),
@@ -111,11 +138,16 @@ class _AnswerPanelState extends State<AnswerPanel> {
                   );
                 }
                 if (!snap.hasData) {
-                  return const Center(child: SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Zc.clay),
-                  ));
+                  return const Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Zc.clay,
+                      ),
+                    ),
+                  );
                 }
                 final (segments, raw) = snap.data!;
                 return ListView(
@@ -123,19 +155,21 @@ class _AnswerPanelState extends State<AnswerPanel> {
                   children: [
                     if (_restored)
                       SelectableText.rich(
-                        TextSpan(children: [
-                          for (final seg in segments)
-                            TextSpan(
-                              text: seg.text,
-                              style: seg.restored
-                                  ? const TextStyle(
-                                      backgroundColor: Zc.clayWash,
-                                      color: Zc.clayDeep,
-                                      fontWeight: FontWeight.w600,
-                                    )
-                                  : null,
-                            ),
-                        ]),
+                        TextSpan(
+                          children: [
+                            for (final seg in segments)
+                              TextSpan(
+                                text: seg.text,
+                                style: seg.restored
+                                    ? const TextStyle(
+                                        backgroundColor: Zc.clayWash,
+                                        color: Zc.clayDeep,
+                                        fontWeight: FontWeight.w600,
+                                      )
+                                    : null,
+                              ),
+                          ],
+                        ),
                         style: Zc.document,
                       )
                     else
@@ -144,7 +178,7 @@ class _AnswerPanelState extends State<AnswerPanel> {
                     Text(
                       _restored
                           ? 'The marked words were put back here, on this device. The model never '
-                              'saw them.'
+                                'saw them.'
                           : 'This is the answer exactly as it arrived, with the tokens still in it.',
                       style: Zc.tiny.copyWith(letterSpacing: 0),
                     ),
@@ -161,34 +195,92 @@ class _AnswerPanelState extends State<AnswerPanel> {
             ),
             child: FutureBuilder<(List<Segment>, String)>(
               future: _both,
-              builder: (context, snap) => Row(
-                children: [
-                  ZButton(
-                    label: 'Copy',
-                    icon: Icons.copy_all_outlined,
-                    onPressed: !snap.hasData
-                        ? null
-                        : () => Clipboard.setData(ClipboardData(
-                              text: _restored
-                                  ? snap.data!.$1.map((s) => s.text).join()
-                                  : snap.data!.$2,
-                            )),
-                  ),
-                  const SizedBox(width: 9),
-                  if (bench.answers.length > 1)
-                    Expanded(
-                      child: Text(
-                        'Earlier answers stay in this conversation until you close it.',
+              builder: (context, snap) {
+                final restoredText = snap.hasData
+                    ? snap.data!.$1.map((s) => s.text).join()
+                    : '';
+                final protectedText = snap.hasData ? snap.data!.$2 : '';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        ZButton(
+                          label: _restored ? 'Copy Restored' : 'Copy Protected',
+                          icon: Icons.copy_all_outlined,
+                          onPressed: !snap.hasData
+                              ? null
+                              : () {
+                                  if (_restored) {
+                                    unawaited(_copyRestored(restoredText));
+                                  } else {
+                                    unawaited(_copyProtected(protectedText));
+                                  }
+                                },
+                        ),
+                        const SizedBox(width: 9),
+                        if (bench.answers.length > 1)
+                          Expanded(
+                            child: Text(
+                              'Earlier answers stay in this conversation until you close it.',
+                              style: Zc.tiny.copyWith(letterSpacing: 0),
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (_copyNote != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _copyNote!,
                         style: Zc.tiny.copyWith(letterSpacing: 0),
                       ),
-                    ),
-                ],
-              ),
+                    ],
+                  ],
+                );
+              },
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// The restored string holds the real values. The clipboard is the system's,
+  /// so writing it is named and confirmed every time — not a tutorial, a
+  /// secret leaving the app.
+  Future<void> _copyRestored(String text) async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Zc.paper,
+        title: const Text('Copy restored text?', style: Zc.h2),
+        content: const Text(
+          'This will place the real protected values on your system clipboard. Other applications may be able to read the clipboard.',
+          style: Zc.body,
+        ),
+        actions: [
+          ZButton(
+            label: 'Cancel',
+            onPressed: () => Navigator.of(ctx).pop(false),
+          ),
+          ZButton(
+            label: 'Copy Restored',
+            filled: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (sure != true || !mounted) return;
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    setState(() => _copyNote = 'Restored text copied to the system clipboard.');
+  }
+
+  Future<void> _copyProtected(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    setState(() => _copyNote = null);
   }
 }
 

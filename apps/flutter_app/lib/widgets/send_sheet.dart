@@ -5,7 +5,7 @@
 // not look like a product for people who know what an API key is. So this sheet
 // offers three doors, and the first one needs no account at all:
 //
-//   1. Copy the safe text        take it to any model yourself, paste the answer back
+//   1. Copy Protected            take the SafePayload to any model yourself, paste the answer back
 //   2. A connected provider      the request goes from here
 //   3. A model on this machine   no key, no account, nothing leaves the machine
 //
@@ -126,7 +126,7 @@ class _SendSheetState extends State<SendSheet> {
                           Row(
                             children: [
                               ZButton(
-                                label: _copied ? 'Copied' : 'Copy safe text',
+                                label: _copied ? 'Copied' : 'Copy Protected',
                                 icon: _copied ? Icons.check : Icons.copy_all_outlined,
                                 onPressed: payload == null
                                     ? null

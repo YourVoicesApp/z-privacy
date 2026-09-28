@@ -16,6 +16,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/home.dart';
@@ -495,7 +496,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(SendSheet), findsOneWidget);
     expect(find.text('Use AI yourself'), findsOneWidget);
-    expect(find.text('Copy safe text'), findsOneWidget);
+    expect(find.text('Copy Protected'), findsOneWidget);
     expect(find.textContaining('no account, no key'), findsOneWidget);
 
     // And the other two doors are reachable from here without leaving: one for
@@ -535,10 +536,16 @@ void main() {
     expect(shown, bench.payload!.text);
 
     // Bring an answer back by hand — the token store does not care how it
-    // travelled — and the real values come home.
-    await tester.tap(find.text('Copy safe text'));
+    // travelled — and the real values come home. Copy Protected is the
+    // SafePayload path: the clipboard gets that string, not the original.
+    final clip = _ClipboardProbe(tester)..install();
+    await tester.tap(find.text('Copy Protected'));
     await settle(tester, rounds: 1);
     final safe = bench.payload!.text;
+    expect(clip.text, safe, reason: 'Copy Protected puts the SafePayload on the clipboard, exactly');
+    for (final secret in ['Thomas Müller', 'Nordstern Consulting GmbH', 'DE89370400440532013000']) {
+      expect(clip.text, isNot(contains(secret)), reason: '«$secret» left on the Copy Protected path');
+    }
     await tester.runAsync(() async {
       await bench.pasteAnswer('Danke. Zusammenfassung:\n$safe');
     });
@@ -598,6 +605,96 @@ void main() {
     await settle(tester);
     expect(inPanel(find.textContaining('Thomas Müller')), findsNothing);
     expect(inPanel(find.textContaining('__Z_')), findsOneWidget);
+
+    bench.dispose();
+  });
+
+  testWidgets('Copy Restored leaves the clipboard untouched until confirmed', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1700, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    late final String restored;
+    late final String raw;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      for (final f in bench.suggested) {
+        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+      }
+      await bench.refresh();
+      bench.rememberCopiedPayload();
+      await bench.pasteAnswer('Verstanden:\n${bench.payload!.text}');
+      final segments = await bench.restored(bench.answers.first);
+      restored = segments.map((s) => s.text).join();
+      raw = await bench.asTheModelWroteIt(bench.answers.first);
+    });
+
+    final clip = _ClipboardProbe(tester)..install();
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await settle(tester);
+
+    Finder inPanel(Finder f) => find.descendant(of: find.byType(AnswerPanel), matching: f);
+
+    expect(inPanel(find.text('Copy Restored')), findsOneWidget);
+    expect(find.text('Copy'), findsNothing);
+    expect(restored, contains('Thomas Müller'));
+
+    await tester.tap(inPanel(find.text('Copy Restored')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Copy restored text?'), findsOneWidget);
+    expect(find.textContaining('real protected values'), findsOneWidget);
+    expect(find.textContaining('system clipboard'), findsOneWidget);
+    expect(find.textContaining('Other applications may be able to read'), findsOneWidget);
+    expect(clip.writes, 0, reason: 'the clipboard is not written before confirmation');
+    expect(clip.text, 'SENTINEL');
+
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Cancel')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(clip.writes, 0);
+    expect(clip.text, 'SENTINEL');
+    expect(find.text('Restored text copied to the system clipboard.'), findsNothing);
+
+    await tester.tap(inPanel(find.text('Copy Restored')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Copy Restored')));
+    await tester.pumpAndSettle();
+
+    expect(clip.writes, 1);
+    expect(clip.text, restored);
+    expect(find.text('Restored text copied to the system clipboard.'), findsOneWidget);
+    expect(find.textContaining('Copied securely'), findsNothing);
+
+    // The warning is not a one-time tutorial: the next press asks again.
+    await tester.tap(inPanel(find.text('Copy Restored')));
+    await tester.pumpAndSettle();
+    expect(find.text('Copy restored text?'), findsOneWidget);
+    expect(clip.writes, 1);
+    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Cancel')));
+    await tester.pumpAndSettle();
+    expect(clip.writes, 1);
+    expect(clip.text, restored);
+
+    await tester.tap(find.text('As the model wrote it'));
+    await settle(tester);
+    expect(inPanel(find.text('Copy Protected')), findsOneWidget);
+    expect(inPanel(find.text('Copy Restored')), findsNothing);
+    expect(find.text('Copy'), findsNothing);
+
+    await tester.tap(inPanel(find.text('Copy Protected')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(clip.text, raw);
+    expect(clip.text, isNot(contains('Thomas Müller')));
+    expect(clip.text, contains('__Z_'));
 
     bench.dispose();
   });
@@ -787,6 +884,40 @@ Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 120)));
   }
   await tester.pumpAndSettle();
+}
+
+/// Captures clipboard writes. Widget tests have no system clipboard; this is
+/// how we prove Copy Restored does not write until the person confirms.
+class _ClipboardProbe {
+  _ClipboardProbe(this.tester);
+
+  final WidgetTester tester;
+  String? text = 'SENTINEL';
+  int writes = 0;
+
+  void install() {
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        switch (call.method) {
+          case 'Clipboard.setData':
+            writes += 1;
+            final args = Map<String, dynamic>.from(call.arguments as Map);
+            text = args['text'] as String?;
+            return null;
+          case 'Clipboard.getData':
+            if (text == null) return null;
+            return <String, dynamic>{'text': text};
+          case 'Clipboard.hasStrings':
+            return <String, dynamic>{'value': text != null && text!.isNotEmpty};
+        }
+        return null;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+  }
 }
 
 /// The plain text of one column, read out of the rendered span tree rather than
