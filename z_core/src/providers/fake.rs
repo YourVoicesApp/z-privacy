@@ -10,9 +10,7 @@
 //! provider to pick at all: `providers()` does not list it and `find()` cannot
 //! return it.
 
-use crate::api::ApiResult;
-
-use super::Provider;
+use super::{Provider, ProviderAttempt};
 
 pub(crate) struct Echo;
 
@@ -33,7 +31,7 @@ impl Provider for Echo {
         "echo"
     }
 
-    fn ask(&self, _credential: &str, _base: &str, _model: &str, text: &str) -> ApiResult<String> {
-        Ok(format!("Verstanden. Ihr Text lautet:\n{text}\n— Ende der Antwort."))
+    fn ask(&self, _credential: &str, _base: &str, _model: &str, text: &str) -> ProviderAttempt<String> {
+        ProviderAttempt::sent(format!("Verstanden. Ihr Text lautet:\n{text}\n— Ende der Antwort."))
     }
 }

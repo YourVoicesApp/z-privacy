@@ -44,6 +44,57 @@ fn serve_once(response: String) -> (String, JoinHandle<bool>) {
     (format!("http://127.0.0.1:{port}"), handle)
 }
 
+fn read_then_close() -> (String, JoinHandle<Vec<u8>>) {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+    let port = listener.local_addr().expect("addr").port();
+    let handle = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().expect("accept");
+        let mut buf: Vec<u8> = Vec::new();
+        let mut chunk = [0u8; 4096];
+        let head_end = loop {
+            if let Some(at) = buf.windows(4).position(|w| w == b"\r\n\r\n") {
+                break at;
+            }
+            match stream.read(&mut chunk) {
+                Ok(0) | Err(_) => return buf,
+                Ok(n) => buf.extend_from_slice(&chunk[..n]),
+            }
+        };
+        let head = String::from_utf8_lossy(&buf[..head_end]).to_string();
+        let mut want = 0usize;
+        for line in head.lines() {
+            let lower = line.to_ascii_lowercase();
+            if let Some(value) = lower.strip_prefix("content-length:") {
+                want = value.trim().parse().unwrap_or(0);
+            }
+        }
+        while buf.len() < head_end + 4 + want {
+            match stream.read(&mut chunk) {
+                Ok(0) | Err(_) => return buf,
+                Ok(n) => buf.extend_from_slice(&chunk[..n]),
+            }
+        }
+        buf
+    });
+    (format!("http://127.0.0.1:{port}"), handle)
+}
+
+fn closed_loopback() -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
+    let port = listener.local_addr().expect("addr").port();
+    drop(listener);
+    format!("http://127.0.0.1:{port}")
+}
+
+fn assert_no_connection(listener: TcpListener) {
+    listener.set_nonblocking(true).expect("nonblocking");
+    match listener.accept() {
+        Err(e) if e.kind() == ErrorKind::WouldBlock => {}
+        Ok(_) => panic!("a consumed handle opened a second connection"),
+        Err(e) => panic!("unexpected accept error: {e}"),
+    }
+}
+
 /// Read one HTTP request: the headers, then exactly as much body as announced.
 fn drain_request(stream: &mut std::net::TcpStream) {
     let mut buf: Vec<u8> = Vec::new();
@@ -80,6 +131,10 @@ fn body(content: &str) -> String {
     )
 }
 
+fn good_answer(text: &str) -> String {
+    body(&format!(r#"{{"choices":[{{"message":{{"content":"{text}"}}}}]}}"#))
+}
+
 /// A session with something to send, and a provider pointed at `base`.
 fn ready(base: String) -> (SessionId, PayloadHandle) {
     let s = open_session(None, "de".to_string()).expect("session");
@@ -112,6 +167,103 @@ fn ready(base: String) -> (SessionId, PayloadHandle) {
 
 fn openai() -> ProviderId {
     ProviderId { id: "openai".to_string() }
+}
+
+#[test]
+fn a_successful_send_consumes_the_payload_handle() {
+    let _guard = serial();
+    let (base, server) = serve_once(good_answer("ok"));
+    let (s, handle) = ready(base);
+
+    send(handle, openai()).expect("first send");
+    assert!(server.join().expect("server wrote its answer"));
+
+    let second = TcpListener::bind("127.0.0.1:0").expect("bind second");
+    let second_base = format!("http://127.0.0.1:{}", second.local_addr().expect("addr").port());
+    connect_provider(
+        openai(),
+        "sk-test-not-a-real-credential".to_string(),
+        Some(second_base),
+        None,
+    )
+    .expect("point at second server");
+    match send(handle, openai()) {
+        Err(ApiError::PayloadAlreadySent) => {}
+        other => panic!("a consumed handle must be refused, got {other:?}"),
+    }
+    assert_no_connection(second);
+
+    let (fresh_base, fresh_server) = serve_once(good_answer("ok again"));
+    connect_provider(
+        openai(),
+        "sk-test-not-a-real-credential".to_string(),
+        Some(fresh_base),
+        None,
+    )
+    .expect("point at fresh server");
+    let fresh = build_payload(s).expect("new payload");
+    send(fresh, openai()).expect("a new handle may send the unchanged text");
+    assert!(fresh_server.join().expect("fresh server wrote"));
+    close_session(s).expect("close");
+}
+
+#[test]
+fn a_failure_before_any_request_leaves_can_be_retried() {
+    let _guard = serial();
+    let (s, handle) = ready(closed_loopback());
+
+    match send(handle, openai()) {
+        Err(ApiError::NetworkRefused {
+            reason: NetworkRefusal::Unreachable,
+            ..
+        }) => {}
+        other => panic!("expected the closed port to be unreachable, got {other:?}"),
+    }
+
+    let (base, server) = serve_once(good_answer("retry ok"));
+    connect_provider(
+        openai(),
+        "sk-test-not-a-real-credential".to_string(),
+        Some(base),
+        None,
+    )
+    .expect("connect retry server");
+    send(handle, openai()).expect("same handle can retry after a pre-send failure");
+    assert!(server.join().expect("server wrote"));
+    close_session(s).expect("close");
+}
+
+#[test]
+fn a_request_that_was_written_consumes_the_handle_even_without_a_response() {
+    let _guard = serial();
+    let (base, server) = read_then_close();
+    let (s, handle) = ready(base);
+
+    match send(handle, openai()) {
+        Err(ApiError::NetworkRefused { .. }) => {}
+        other => panic!("the half response should be a network refusal, got {other:?}"),
+    }
+    let request = server.join().expect("request bytes");
+    assert!(
+        !request.is_empty(),
+        "the control server must prove that the request left before the failure"
+    );
+
+    let second = TcpListener::bind("127.0.0.1:0").expect("bind second");
+    let second_base = format!("http://127.0.0.1:{}", second.local_addr().expect("addr").port());
+    connect_provider(
+        openai(),
+        "sk-test-not-a-real-credential".to_string(),
+        Some(second_base),
+        None,
+    )
+    .expect("point at second server");
+    match send(handle, openai()) {
+        Err(ApiError::PayloadAlreadySent) => {}
+        other => panic!("a maybe-sent handle must be consumed, got {other:?}"),
+    }
+    assert_no_connection(second);
+    close_session(s).expect("close");
 }
 
 #[test]

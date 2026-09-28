@@ -12,7 +12,7 @@ use serde_json::{json, Value};
 
 use crate::api::{ApiResult, NetworkRefusal};
 
-use super::{http, refuse, Provider};
+use super::{http, refuse, Provider, ProviderAttempt};
 
 pub(crate) struct OpenAiCompatible;
 
@@ -33,9 +33,9 @@ impl Provider for OpenAiCompatible {
         "gpt-4o-mini"
     }
 
-    fn ask(&self, credential: &str, base: &str, model: &str, text: &str) -> ApiResult<String> {
+    fn ask(&self, credential: &str, base: &str, model: &str, text: &str) -> ProviderAttempt<String> {
         if credential.is_empty() && !http::is_loopback_url(base) {
-            return Err(refuse(
+            return ProviderAttempt::not_sent(refuse(
                 NetworkRefusal::NotConnected,
                 "this provider has no credential in this run".to_string(),
             ));
@@ -52,14 +52,15 @@ impl Provider for OpenAiCompatible {
         })
         .to_string();
 
-        let answer = http::post_json(&url, credential, &body)?;
-        if answer.status != 200 {
-            return Err(refuse(
-                NetworkRefusal::BadStatus { status: answer.status },
-                said_what(answer.status),
-            ));
-        }
-        content_of(&answer.body)
+        http::post_json(&url, credential, &body).map(|answer| {
+            if answer.status != 200 {
+                return Err(refuse(
+                    NetworkRefusal::BadStatus { status: answer.status },
+                    said_what(answer.status),
+                ));
+            }
+            content_of(&answer.body)
+        })
     }
 }
 

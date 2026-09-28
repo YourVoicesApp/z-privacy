@@ -80,9 +80,13 @@ fn the_whole_path_runs_without_a_socket_and_without_a_vault() {
         assert!(restored.contains(secret), "«{secret}» did not come back: {restored}");
     }
 
-    // The same handle again: the session did not change, so it is still fresh and
-    // a second send is simply a second answer.
-    let again = send(handle, fake()).expect("send again");
+    // The same handle again is no longer a second send. Build a new payload if
+    // the user explicitly wants to send the same text again.
+    match send(handle, fake()) {
+        Err(ApiError::PayloadAlreadySent) => {}
+        other => panic!("a sent handle must be consumed, got {other:?}"),
+    }
+    let again = send(build_payload(s).expect("build again"), fake()).expect("send again");
     assert_ne!(again.id, answer.id, "two answers, two ids");
 
     // A change to the session, and the old handle is refused before the provider.

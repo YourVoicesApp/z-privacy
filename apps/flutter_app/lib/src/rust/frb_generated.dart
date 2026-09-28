@@ -2283,6 +2283,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return ApiError_TrailingVaultData();
       case 16:
         return ApiError_VaultAuthenticationFailed();
+      case 17:
+        return ApiError_PayloadAlreadySent();
       default:
         throw Exception("unreachable");
     }
@@ -3151,6 +3153,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return ApiError_TrailingVaultData();
       case 16:
         return ApiError_VaultAuthenticationFailed();
+      case 17:
+        return ApiError_PayloadAlreadySent();
       default:
         throw UnimplementedError('');
     }
@@ -4171,6 +4175,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(15, serializer);
       case ApiError_VaultAuthenticationFailed():
         sse_encode_i_32(16, serializer);
+      case ApiError_PayloadAlreadySent():
+        sse_encode_i_32(17, serializer);
     }
   }
 

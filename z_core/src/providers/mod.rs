@@ -22,6 +22,53 @@ use zeroize::Zeroizing;
 
 use crate::api::{ApiError, ApiResult, NetworkRefusal, PayloadHandle};
 
+pub(crate) struct ProviderAttempt<T> {
+    pub result: ApiResult<T>,
+    pub consume_handle: bool,
+}
+
+impl<T> ProviderAttempt<T> {
+    pub(crate) fn sent(value: T) -> Self {
+        Self {
+            result: Ok(value),
+            consume_handle: true,
+        }
+    }
+
+    pub(crate) fn not_sent(error: ApiError) -> Self {
+        Self {
+            result: Err(error),
+            consume_handle: false,
+        }
+    }
+
+    pub(crate) fn maybe_sent(error: ApiError) -> Self {
+        Self {
+            result: Err(error),
+            consume_handle: true,
+        }
+    }
+
+    pub(crate) fn map<U>(self, f: impl FnOnce(T) -> ApiResult<U>) -> ProviderAttempt<U> {
+        match self.result {
+            Ok(value) => match f(value) {
+                Ok(mapped) => ProviderAttempt {
+                    result: Ok(mapped),
+                    consume_handle: self.consume_handle,
+                },
+                Err(error) => ProviderAttempt {
+                    result: Err(error),
+                    consume_handle: self.consume_handle,
+                },
+            },
+            Err(error) => ProviderAttempt {
+                result: Err(error),
+                consume_handle: self.consume_handle,
+            },
+        }
+    }
+}
+
 /// How much outgoing text a provider accepts, before a socket is opened.
 ///
 /// Not about leaking — the audit already answered that — but about not turning a
@@ -54,7 +101,7 @@ pub(crate) trait Provider {
     }
     /// One question, one answer. `text` is the safe payload; there is no argument
     /// through which anything else could be passed.
-    fn ask(&self, credential: &str, base: &str, model: &str, text: &str) -> ApiResult<String>;
+    fn ask(&self, credential: &str, base: &str, model: &str, text: &str) -> ProviderAttempt<String>;
 }
 
 /// Every provider this build knows, in the order the UI should list them.
@@ -82,9 +129,13 @@ pub(crate) fn find(id: &str) -> ApiResult<Box<dyn Provider>> {
 /// every other call in the program for a minute.
 pub(crate) fn ask(handle: PayloadHandle, id: &str, credential: &str, base: &str, model: &str) -> ApiResult<String> {
     let provider = find(id)?;
-    let text = crate::ops::with_payload(handle, |p| Zeroizing::new(p.wire_text().to_string()))?;
-    check_size(text.len(), provider.as_ref())?;
-    provider.ask(credential, base, model, &text)
+    let text = crate::ops::reserve_payload_for_send(handle, |p| Zeroizing::new(p.wire_text().to_string()))?;
+    let attempt = match check_size(text.len(), provider.as_ref()) {
+        Ok(()) => provider.ask(credential, base, model, &text),
+        Err(error) => ProviderAttempt::not_sent(error),
+    };
+    crate::ops::finish_payload_send(handle, attempt.consume_handle);
+    attempt.result
 }
 
 /// The outgoing limit, checked before a socket is opened and before a body is
@@ -112,7 +163,7 @@ fn check_size(bytes: usize, provider: &dyn Provider) -> ApiResult<()> {
 pub(crate) fn ping(id: &str, credential: &str, base: &str, model: &str) -> ApiResult<u32> {
     let provider = find(id)?;
     let started = std::time::Instant::now();
-    provider.ask(credential, base, model, "ping")?;
+    provider.ask(credential, base, model, "ping").result?;
     Ok(started.elapsed().as_millis().min(u128::from(u32::MAX)) as u32)
 }
 

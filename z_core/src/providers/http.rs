@@ -14,14 +14,14 @@
 //! builds a message from names and numbers: a provider's error page can quote the
 //! request back at you, and an error message travels further than a body does.
 
-use std::io::Read;
+use std::io::{ErrorKind, Read};
 use std::time::Duration;
 
 use ureq::http::Uri;
 
 use crate::api::{ApiResult, NetworkRefusal};
 
-use super::refuse;
+use super::{refuse, ProviderAttempt};
 
 /// End to end, including the model thinking about it.
 const CALL_MILLIS: u64 = 120_000;
@@ -118,8 +118,10 @@ pub(crate) fn check_url(url: &str) -> ApiResult<()> {
 }
 
 /// POST a JSON body with a bearer credential, and read a bounded answer.
-pub(crate) fn post_json(url: &str, credential: &str, body: &str) -> ApiResult<Answer> {
-    check_url(url)?;
+pub(crate) fn post_json(url: &str, credential: &str, body: &str) -> ProviderAttempt<Answer> {
+    if let Err(error) = check_url(url) {
+        return ProviderAttempt::not_sent(error);
+    }
 
     let config = ureq::config::Config::builder()
         // A redirect is refused, not followed: the safe payload and the
@@ -138,13 +140,16 @@ pub(crate) fn post_json(url: &str, credential: &str, body: &str) -> ApiResult<An
     if !credential.is_empty() {
         request = request.header("authorization", format!("Bearer {credential}"));
     }
-    let mut response = request.send(body).map_err(sent_badly)?;
+    let mut response = match request.send(body) {
+        Ok(response) => response,
+        Err(error) => return sent_badly(error),
+    };
 
     let status = u32::from(response.status().as_u16());
     if (300..400).contains(&status) {
         // Read nothing, keep nothing. The location is not followed and is not
         // repeated back either.
-        return Err(refuse(
+        return ProviderAttempt::maybe_sent(refuse(
             NetworkRefusal::Redirected { status },
             format!("the host answered with a redirect ({status}); we do not follow one"),
         ));
@@ -154,56 +159,81 @@ pub(crate) fn post_json(url: &str, credential: &str, body: &str) -> ApiResult<An
     // purpose, so that «exactly at the limit» and «too long» are distinguishable
     // and a refusal is never a truncated answer quietly accepted.
     let mut buffer = Vec::new();
-    response
+    if let Err(error) = response
         .body_mut()
         .as_reader()
         .take(RESPONSE_BYTES + 1)
         .read_to_end(&mut buffer)
-        .map_err(came_back_badly)?;
+        .map_err(came_back_badly)
+    {
+        return ProviderAttempt::maybe_sent(error);
+    }
     if buffer.len() as u64 > RESPONSE_BYTES {
-        return Err(refuse(
+        return ProviderAttempt::maybe_sent(refuse(
             NetworkRefusal::ResponseTooLarge {
                 limit_kib: (RESPONSE_BYTES / 1024) as u32,
             },
             format!("the answer was longer than {} KiB", RESPONSE_BYTES / 1024),
         ));
     }
-    let text = String::from_utf8(buffer)
-        .map_err(|_| refuse(NetworkRefusal::Unreadable, "the answer was not text".to_string()))?;
+    let text = match String::from_utf8(buffer) {
+        Ok(text) => text,
+        Err(_) => {
+            return ProviderAttempt::maybe_sent(refuse(
+                NetworkRefusal::Unreadable,
+                "the answer was not text".to_string(),
+            ))
+        }
+    };
 
-    Ok(Answer { status, body: text })
+    ProviderAttempt::sent(Answer { status, body: text })
 }
 
 /// The request did not complete. The client's own error text is dropped here on
 /// purpose: it can contain the address, and in some clients the body.
-fn sent_badly(e: ureq::Error) -> crate::api::ApiError {
+fn sent_badly(e: ureq::Error) -> ProviderAttempt<Answer> {
     match e {
-        ureq::Error::Timeout(_) => refuse(
+        ureq::Error::Timeout(_) => ProviderAttempt::maybe_sent(refuse(
             NetworkRefusal::Timeout {
                 millis: CALL_MILLIS as u32,
             },
             format!("nothing came back within {} seconds", CALL_MILLIS / 1000),
-        ),
-        ureq::Error::HostNotFound => refuse(
+        )),
+        ureq::Error::HostNotFound => ProviderAttempt::not_sent(refuse(
             NetworkRefusal::Unreachable,
             "that host could not be found".to_string(),
-        ),
-        ureq::Error::ConnectionFailed | ureq::Error::Io(_) => refuse(
+        )),
+        ureq::Error::ConnectionFailed => ProviderAttempt::not_sent(refuse(
             NetworkRefusal::Unreachable,
             "the connection to that host did not open".to_string(),
-        ),
-        ureq::Error::Tls(_) | ureq::Error::TlsRequired => refuse(
+        )),
+        ureq::Error::Io(error)
+            if matches!(
+                error.kind(),
+                ErrorKind::ConnectionRefused | ErrorKind::NotConnected | ErrorKind::AddrNotAvailable
+            ) =>
+        {
+            ProviderAttempt::not_sent(refuse(
+                NetworkRefusal::Unreachable,
+                "the connection to that host did not open".to_string(),
+            ))
+        }
+        ureq::Error::Io(_) => ProviderAttempt::maybe_sent(refuse(
+            NetworkRefusal::Unreadable,
+            "the answer could not be read".to_string(),
+        )),
+        ureq::Error::Tls(_) | ureq::Error::TlsRequired => ProviderAttempt::not_sent(refuse(
             NetworkRefusal::InsecureUrl,
             "the encrypted connection could not be established".to_string(),
-        ),
-        ureq::Error::TooManyRedirects | ureq::Error::RedirectFailed => refuse(
+        )),
+        ureq::Error::TooManyRedirects | ureq::Error::RedirectFailed => ProviderAttempt::maybe_sent(refuse(
             NetworkRefusal::Redirected { status: 0 },
             "the host tried to send this request somewhere else".to_string(),
-        ),
-        _ => refuse(
+        )),
+        _ => ProviderAttempt::maybe_sent(refuse(
             NetworkRefusal::Unreachable,
             "the request did not reach that host".to_string(),
-        ),
+        )),
     }
 }
 

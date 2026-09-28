@@ -54,6 +54,8 @@ pub enum _ApiError {
     /// This does not distinguish a wrong passphrase from a modified vault: the
     /// AEAD tag proves only that opening failed, not which human story caused it.
     VaultAuthenticationFailed,
+    /// This payload handle already drove a send, or is driving one now.
+    PayloadAlreadySent,
 }
 
 #[frb(mirror(NetworkRefusal))]

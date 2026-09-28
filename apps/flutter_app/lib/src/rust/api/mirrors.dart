@@ -98,6 +98,9 @@ sealed class ApiError with _$ApiError implements FrbException {
   /// AEAD tag proves only that opening failed, not which human story caused it.
   const factory ApiError.vaultAuthenticationFailed() =
       ApiError_VaultAuthenticationFailed;
+
+  /// This payload handle already drove a send, or is driving one now.
+  const factory ApiError.payloadAlreadySent() = ApiError_PayloadAlreadySent;
 }
 
 enum DocumentKind { txt, docx, pdf }

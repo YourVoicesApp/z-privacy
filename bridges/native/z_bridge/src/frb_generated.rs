@@ -1816,6 +1816,7 @@ const _: fn() = || {
         }
         crate::api::mirrors::ApiError::TrailingVaultData => {}
         crate::api::mirrors::ApiError::VaultAuthenticationFailed => {}
+        crate::api::mirrors::ApiError::PayloadAlreadySent => {}
     }
     {
         let DocumentView = None::<crate::api::mirrors::DocumentView>.unwrap();
@@ -2216,6 +2217,9 @@ impl SseDecode for crate::api::mirrors::ApiError {
             }
             16 => {
                 return crate::api::mirrors::ApiError::VaultAuthenticationFailed;
+            }
+            17 => {
+                return crate::api::mirrors::ApiError::PayloadAlreadySent;
             }
             _ => {
                 unimplemented!("");
@@ -3427,6 +3431,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ApiError>
             }
             crate::api::mirrors::ApiError::TrailingVaultData => [15.into_dart()].into_dart(),
             crate::api::mirrors::ApiError::VaultAuthenticationFailed => [16.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::PayloadAlreadySent => [17.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -4429,6 +4434,9 @@ impl SseEncode for crate::api::mirrors::ApiError {
             }
             crate::api::mirrors::ApiError::VaultAuthenticationFailed => {
                 <i32>::sse_encode(16, serializer);
+            }
+            crate::api::mirrors::ApiError::PayloadAlreadySent => {
+                <i32>::sse_encode(17, serializer);
             }
             _ => {
                 unimplemented!("");

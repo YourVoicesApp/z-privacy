@@ -471,6 +471,24 @@ pub(crate) fn with_payload<R>(handle: PayloadHandle, f: impl FnOnce(&SafePayload
     .ok_or(ApiError::InvalidSession)?
 }
 
+pub(crate) fn reserve_payload_for_send<R>(handle: PayloadHandle, f: impl FnOnce(&SafePayload) -> R) -> ApiResult<R> {
+    with_session(handle.session, |s| {
+        let revision = s.revision;
+        let payload = s.payloads.get_mut(&handle.id).ok_or(ApiError::InvalidHandle)?;
+        payload.reserve_send(revision, handle.revision)?;
+        Ok(f(payload))
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) fn finish_payload_send(handle: PayloadHandle, consume: bool) {
+    with_session(handle.session, |s| {
+        if let Some(payload) = s.payloads.get_mut(&handle.id) {
+            payload.finish_send(consume);
+        }
+    });
+}
+
 pub(crate) fn with_payload_record<R>(handle: PayloadHandle, f: impl FnOnce(&SafePayload) -> R) -> ApiResult<R> {
     with_session(handle.session, |s| {
         let payload = s.payloads.get(&handle.id).ok_or(ApiError::InvalidHandle)?;

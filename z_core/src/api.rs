@@ -67,6 +67,8 @@ pub enum ApiError {
     /// This does not distinguish a wrong passphrase from a modified vault: the
     /// AEAD tag proves only that opening failed, not which human story caused it.
     VaultAuthenticationFailed,
+    /// This payload handle already drove a send, or is driving one now.
+    PayloadAlreadySent,
 }
 
 /// Why a request did not complete. Numbers and names only, by construction.
@@ -123,6 +125,7 @@ impl fmt::Display for ApiError {
             Self::VaultAuthenticationFailed => {
                 write!(f, "could not unlock the vault; the passphrase may be incorrect, or the vault may be corrupted or modified")
             }
+            Self::PayloadAlreadySent => write!(f, "this payload has already been sent"),
         }
     }
 }

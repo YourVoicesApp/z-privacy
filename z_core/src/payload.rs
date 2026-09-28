@@ -12,6 +12,13 @@ use std::fmt;
 
 use crate::text::nfc;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum PayloadSendState {
+    Ready,
+    InFlight,
+    Consumed,
+}
+
 /// One built request, remembered with the revision it was built on.
 #[derive(Clone)]
 pub(crate) struct SafePayload {
@@ -24,6 +31,7 @@ pub(crate) struct SafePayload {
     pub allowed_token_ids: Vec<String>,
     pub protected: u32,
     pub open_suggestions: u32,
+    send_state: PayloadSendState,
 }
 
 impl fmt::Debug for SafePayload {
@@ -38,6 +46,7 @@ impl fmt::Debug for SafePayload {
             .field("allowed_tokens", &self.allowed_token_ids.len())
             .field("protected", &self.protected)
             .field("open_suggestions", &self.open_suggestions)
+            .field("send_state", &self.send_state)
             .finish()
     }
 }
@@ -90,6 +99,7 @@ impl SafePayload {
             // receive» while `send` was refusing the same payload for open
             // suggestions. Two screens, two answers, and the reassuring one wrong.
             open_suggestions: session.open_suggestions(),
+            send_state: PayloadSendState::Ready,
         }
     }
 
@@ -170,6 +180,31 @@ impl SafePayload {
                 got: self.revision,
             })
         }
+    }
+
+    pub(crate) fn reserve_send(&mut self, session_revision: u32, handle_revision: u32) -> ApiResult<()> {
+        self.check_fresh(session_revision)?;
+        if handle_revision != self.revision {
+            return Err(ApiError::StalePayload {
+                expected: session_revision,
+                got: handle_revision,
+            });
+        }
+        match self.send_state {
+            PayloadSendState::Ready => {
+                self.send_state = PayloadSendState::InFlight;
+                Ok(())
+            }
+            PayloadSendState::InFlight | PayloadSendState::Consumed => Err(ApiError::PayloadAlreadySent),
+        }
+    }
+
+    pub(crate) fn finish_send(&mut self, consume: bool) {
+        self.send_state = if consume {
+            PayloadSendState::Consumed
+        } else {
+            PayloadSendState::Ready
+        };
     }
 }
 
