@@ -240,11 +240,14 @@ pub(crate) fn providers() -> ApiResult<Vec<ProviderRow>> {
         let sealed = login_in_vault(provider.id());
         let in_session = with_core(|core| core.session_logins.get(provider.id()).cloned());
         let login = sealed.clone().or_else(|| in_session.clone());
+        let connected = login
+            .as_ref()
+            .is_some_and(|l| login_is_usable(provider.as_ref(), l));
         rows.push(ProviderRow {
             id: provider.id().to_string(),
             label: provider.label().to_string(),
-            connected: login.is_some(),
-            session_only: sealed.is_none() && in_session.is_some(),
+            connected,
+            session_only: connected && sealed.is_none() && in_session.is_some(),
             base_url: login
                 .as_ref()
                 .map(|l| l.base.clone())
@@ -284,6 +287,7 @@ pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_ur
     // The address is checked before the credential is stored, so that a typo is
     // an error the user sees now rather than the first time they press Send.
     crate::providers::check_url_for(&base)?;
+    let bound_to = crate::providers::destination_of(&base)?;
     // A model on this machine needs no credential, and refusing to connect to
     // one for want of a key would shut the most private door in the product.
     // Everywhere else, an empty credential connects nothing and says so.
@@ -299,6 +303,7 @@ pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_ur
     let login = ProviderLogin {
         credential: Secret::new(credential),
         base,
+        bound_to,
         model: model
             .map(|m| m.trim().to_string())
             .filter(|m| !m.is_empty())
@@ -322,10 +327,11 @@ pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_ur
     row_for(&provider.id)
 }
 
-/// Change the address or the model, keeping the credential where it is.
+/// Change the address or the model.
 ///
 /// The UI cannot pass a credential back — it never had one — so changing an
-/// endpoint must not mean typing the key again.
+/// endpoint writes the new destination without quietly moving the old key to it.
+/// Changing only the model keeps the credential where it is.
 pub(crate) fn configure_provider(provider: ProviderId, base_url: Option<String>, model: Option<String>) -> ApiResult<ProviderRow> {
     let known = crate::providers::find(&provider.id)?;
     let existing = login_in_vault(&provider.id)
@@ -337,21 +343,35 @@ pub(crate) fn configure_provider(provider: ProviderId, base_url: Option<String>,
         .or_else(|| existing.as_ref().map(|l| l.base.clone()))
         .unwrap_or_else(|| known.default_base().to_string());
     crate::providers::check_url_for(&base)?;
+    let bound_to = crate::providers::destination_of(&base)?;
 
     let login = match existing {
-        Some(l) => ProviderLogin {
-            credential: l.credential.clone(),
-            base,
-            model: model
-                .map(|m| m.trim().to_string())
-                .filter(|m| !m.is_empty())
-                .unwrap_or(l.model),
-        },
+        Some(l) => {
+            let already_usable = login_is_usable(known.as_ref(), &l);
+            let same_destination = l.bound_to == bound_to;
+            let has_credential = !l.credential.expose().is_empty();
+            let valid_without_credential = !has_credential && already_usable && !known.credential_required(&base);
+            let (credential, bound_to) = if same_destination || valid_without_credential {
+                (l.credential.clone(), bound_to)
+            } else {
+                (Secret::new(String::new()), l.bound_to)
+            };
+            ProviderLogin {
+                credential,
+                base,
+                bound_to,
+                model: model
+                    .map(|m| m.trim().to_string())
+                    .filter(|m| !m.is_empty())
+                    .unwrap_or(l.model),
+            }
+        }
         // Nothing stored yet. A provider that needs no credential at this
         // address can be set up here; anywhere else this is «connect first».
         None if !known.credential_required(&base) => ProviderLogin {
             credential: Secret::new(String::new()),
             base,
+            bound_to,
             model: model
                 .map(|m| m.trim().to_string())
                 .filter(|m| !m.is_empty())
@@ -410,9 +430,19 @@ fn login_in_vault(id: &str) -> Option<ProviderLogin> {
 /// The credential to use: the vault's if it is open, this run's otherwise.
 fn login_for(id: &str) -> ApiResult<ProviderLogin> {
     let found = login_in_vault(id).or_else(|| with_core(|core| core.session_logins.get(id).cloned()));
-    found.ok_or_else(|| {
-        crate::providers::not_connected(id)
-    })
+    let login = found.ok_or_else(|| crate::providers::not_connected(id))?;
+    let provider = crate::providers::find(id)?;
+    if !login_is_usable(provider.as_ref(), &login) {
+        return Err(crate::providers::not_connected(id));
+    }
+    Ok(login)
+}
+
+fn login_is_usable(provider: &dyn crate::providers::Provider, login: &ProviderLogin) -> bool {
+    if crate::providers::destination_of(&login.base).ok().as_deref() != Some(login.bound_to.as_str()) {
+        return false;
+    }
+    !login.credential.expose().is_empty() || !provider.credential_required(&login.base)
 }
 
 fn row_for(id: &str) -> ApiResult<ProviderRow> {

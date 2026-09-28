@@ -121,6 +121,11 @@ pub(crate) fn check_url_for(base: &str) -> ApiResult<()> {
     http::check_url(base)
 }
 
+/// The normalized destination a credential is bound to.
+pub(crate) fn destination_of(base: &str) -> ApiResult<String> {
+    http::destination_of(base)
+}
+
 /// The one refusal that is not about the network at all: nothing was connected.
 pub(crate) fn not_connected(id: &str) -> ApiError {
     refuse(

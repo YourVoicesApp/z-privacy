@@ -159,6 +159,7 @@ impl Default for StoredSettings {
 pub(crate) struct ProviderLogin {
     pub credential: Secret,
     pub base: String,
+    pub bound_to: String,
     pub model: String,
 }
 

@@ -18,6 +18,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, ValueRecord, 
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 5 — provider credentials are bound to a normalized destination.
 /// * 4 — each value carries when it was taught (task 036).
 /// * 3 — the settings, appended after the credentials (task 030).
 /// * 1 — identities, values, profiles.
@@ -29,7 +30,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, ValueRecord, 
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 4;
+pub(crate) const MODEL_VERSION: u16 = 5;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -176,6 +177,7 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
         out.extend_from_slice(&sealed);
         put_str(&mut out, &login.base);
         put_str(&mut out, &login.model);
+        put_str(&mut out, &login.bound_to);
     }
 
     // Model 3. At the end again, for the same reason as model 2.
@@ -281,12 +283,20 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
             } else {
                 Secret::new(r.string()?)
             };
+            let base = r.string()?;
+            let model = r.string()?;
+            let bound_to = if version >= 5 {
+                r.string()?
+            } else {
+                crate::providers::destination_of(&base)?
+            };
             provider_logins.insert(
                 id,
                 ProviderLogin {
                     credential,
-                    base: r.string()?,
-                    model: r.string()?,
+                    base,
+                    bound_to,
+                    model,
                 },
             );
         }
@@ -485,6 +495,7 @@ mod tests {
             ProviderLogin {
                 credential: Secret::new("sk-not-a-real-key"),
                 base: "https://api.openai.com".to_string(),
+                bound_to: "https://api.openai.com:443".to_string(),
                 model: "gpt-4o-mini".to_string(),
             },
         );
@@ -493,6 +504,7 @@ mod tests {
         let login = after.provider_logins.get("openai").expect("the login");
         assert_eq!(login.credential.expose(), "sk-not-a-real-key");
         assert_eq!(login.base, "https://api.openai.com");
+        assert_eq!(login.bound_to, "https://api.openai.com:443");
         assert_eq!(login.model, "gpt-4o-mini");
 
         // A model-1 file, as a model-1 build wrote one.
@@ -514,6 +526,7 @@ mod tests {
             ProviderLogin {
                 credential: Secret::new(CREDENTIAL),
                 base: "https://api.openai.com".to_string(),
+                bound_to: "https://api.openai.com:443".to_string(),
                 model: "gpt-4o-mini".to_string(),
             },
         );

@@ -222,11 +222,11 @@ pub struct _PackRow {
 pub struct _ProviderRow {
     pub id: String,
     pub label: String,
-    /// True when a credential for this provider exists in this run.
+    /// True when this provider can be used at this address in this run.
     pub connected: bool,
-    /// True when that credential lives only in memory, because there was no open
-    /// vault to seal it into. It is gone when the app closes, and the UI says so
-    /// rather than letting the user believe it was saved.
+    /// True when that usable connection lives only in memory, because there was
+    /// no open vault to seal it into. It is gone when the app closes, and the UI
+    /// says so rather than letting the user believe it was saved.
     pub session_only: bool,
     /// Where requests go. Editable, so a local model on this machine can be used.
     pub base_url: String,

@@ -55,6 +55,37 @@ pub(crate) fn is_loopback_url(url: &str) -> bool {
     }
 }
 
+/// The destination a credential was deliberately given to.
+///
+/// Paths are not part of it: `/v1` and `/v1/chat/completions` are one place for
+/// this purpose. Scheme, host and port are, with the default port made explicit
+/// so equivalent spellings compare as one destination.
+pub(crate) fn destination_of(base: &str) -> ApiResult<String> {
+    let uri = Uri::try_from(base).map_err(|_| {
+        refuse(
+            NetworkRefusal::InsecureUrl,
+            "that address cannot be read as a URL".to_string(),
+        )
+    })?;
+    let scheme = uri.scheme_str()
+        .ok_or_else(|| refuse(NetworkRefusal::InsecureUrl, "that address has no scheme".to_string()))?
+        .to_ascii_lowercase();
+    let host = uri.host()
+        .ok_or_else(|| refuse(NetworkRefusal::InsecureUrl, "that address has no host".to_string()))?;
+    let port = match uri.port_u16() {
+        Some(port) => port,
+        None if scheme == "https" => 443,
+        None if scheme == "http" => 80,
+        None => {
+            return Err(refuse(
+                NetworkRefusal::InsecureUrl,
+                "that address has no known default port".to_string(),
+            ))
+        }
+    };
+    Ok(format!("{scheme}://{}:{port}", host.to_ascii_lowercase()))
+}
+
 /// A literal loopback address, and nothing that merely looks like one.
 fn is_loopback_host(host: &str) -> bool {
     // IPv6 arrives in brackets inside a URL authority.
@@ -241,5 +272,21 @@ mod tests {
         assert!(shown.contains("429"), "{shown}");
         // The whole point: this text was built here, not read off the wire.
         assert!(!shown.contains("Bearer"), "{shown}");
+    }
+
+    #[test]
+    fn a_destination_is_scheme_host_and_explicit_port() {
+        assert_eq!(
+            destination_of("https://api.openai.com").expect("destination"),
+            destination_of("https://API.OPENAI.COM:443/v1/").expect("destination"),
+        );
+        assert_eq!(
+            destination_of("http://127.0.0.1").expect("destination"),
+            "http://127.0.0.1:80",
+        );
+        assert_ne!(
+            destination_of("http://127.0.0.1:18080").expect("destination"),
+            destination_of("http://127.0.0.1:18081").expect("destination"),
+        );
     }
 }

@@ -141,9 +141,7 @@ fn is_numberish(word: &str) -> bool {
 
 /// The end of `word`'s range with sentence punctuation trimmed off.
 fn trimmed_end(word: &Word<'_>) -> usize {
-    let cut = word.text.len() - word.text.trim_end_matches(|c: char| {
-        matches!(c, ',' | ';' | ':' | '.' | '!' | '?' | '"' | ')' | '»')
-    }).len();
+    let cut = word.text.len() - word.text.trim_end_matches([',', ';', ':', '.', '!', '?', '"', ')', '»']).len();
     word.end.saturating_sub(cut)
 }
 
