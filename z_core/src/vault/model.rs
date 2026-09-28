@@ -15,6 +15,15 @@ use crate::api::{EntityKind, Kind, Policy};
 use crate::secret::Secret;
 use crate::text::nfc;
 
+/// Seconds since 1970, for «added on». The clock is not a secret and not a
+/// document: reading it breaks no invariant.
+pub(crate) fn now_seconds() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
+
 /// One spelling-aware value.
 #[derive(Debug, Clone)]
 pub(crate) struct ValueRecord {
@@ -24,6 +33,12 @@ pub(crate) struct ValueRecord {
     /// Other ways the same thing is written. All resolve to one token.
     pub aliases: Vec<Secret>,
     pub policy: Policy,
+    /// When this was taught, in seconds since 1970. 0 for a value written
+    /// before the vault kept the date (model 4, task 036).
+    ///
+    /// «Added 27 Sep 2026» is part of the answer to «why is this protected?»,
+    /// and a person cannot judge a rule they cannot date.
+    pub learned_at: u64,
 }
 
 impl ValueRecord {
@@ -249,6 +264,7 @@ mod tests {
                 .into_iter()
                 .enumerate()
                 .map(|(i, (kind, text, policy))| ValueRecord {
+                    learned_at: now_seconds(),
                     id: i as u32 + 1,
                     kind,
                     value: Secret::new(text),

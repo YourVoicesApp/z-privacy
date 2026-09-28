@@ -89,6 +89,9 @@ void main() {
       'removeValueAlias': () => removeValueAlias(entity: 1, valueId: 1, alias: 'x'),
       'searchVault': () => searchVault(query: 'x'),
       'kinds': () => kinds(),
+      'explain': () => explain(session: session, span: span),
+      'forgetPlan': () => forgetPlan(entity: 1, valueId: 1, everywhere: false),
+      'forgetValue': () => forgetValue(entity: 1, valueId: 1, everywhere: false),
       'settings': () => settings(),
       'saveSettings': () => saveSettings(
           settings: const Settings(
@@ -142,7 +145,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 54, reason: 'the contract has 54 functions');
+    expect(calls.length, 57, reason: 'the contract has 57 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
   });

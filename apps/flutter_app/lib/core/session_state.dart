@@ -495,6 +495,17 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Why is this protected? The core answers; the screen only draws it.
+  Future<Explanation?> why(Span span) async {
+    try {
+      return await z.explain(session: session, span: span);
+    } on ApiError catch (e) {
+      trouble = e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
   /// One step back. «Protect all 4 matches» came in as one act, so it goes out
   /// as one act — that is the core's doing, not a loop here.
   Future<UndoOutcome?> undo() async {

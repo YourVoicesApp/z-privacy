@@ -94,6 +94,52 @@ pub struct _ProviderId {
     pub id: String,
 }
 
+#[frb(mirror(Explanation))]
+pub struct _Explanation {
+    /// «You taught this value» · «German privacy rule» · «You protected this
+    /// by hand» · «A shape that needs no language».
+    pub headline: String,
+    /// The particulars, one per line: «Valid IBAN checksum», «German label:
+    /// Mobil», «Two rules agree». Empty is not allowed to happen — a protection
+    /// with nothing to say about itself is the black box arriving.
+    pub because: Vec<String>,
+    pub kind: Kind,
+    pub scope: Scope,
+    /// Where it applies: «This document only» · «Client Nordstern» · «Everywhere».
+    pub applies: String,
+    /// Whether a person decided this, or a layer did.
+    pub decided: bool,
+    pub token: String,
+    /// When it was taught, in seconds since 1970. 0 when it was not taught at
+    /// all (a rule found it) or when the vault predates the date being kept.
+    pub learned_at: u64,
+    /// The identity and value it came from, when the vault taught it. This is
+    /// what «Edit» and «Forget» act on.
+    pub entity: Option<u32>,
+    pub value_id: Option<u32>,
+    /// Other spellings of the same value. Shown behind one tap, like every
+    /// other value in this app.
+    pub aliases: Vec<String>,
+}
+
+#[frb(mirror(ForgetPlan))]
+pub struct _ForgetPlan {
+    /// What it is, so the sheet can name it back to the user.
+    pub what: String,
+    pub values: u32,
+    pub aliases: u32,
+    /// Identities that would be left holding nothing, and so go too.
+    pub identities: u32,
+    /// The profiles it is associated with, by name.
+    pub profiles: Vec<String>,
+    /// What is **not** touched, said out loud because the user is about to
+    /// press a button that says «forget».
+    pub keeps: Vec<String>,
+    /// Everything that would still recognise it afterwards. **Must be empty** —
+    /// it is reported rather than assumed, and a test fails if it is not.
+    pub still_known_by: Vec<String>,
+}
+
 #[frb(mirror(SelectionView))]
 pub struct _SelectionView {
     /// Empty when the span holds nothing but space.

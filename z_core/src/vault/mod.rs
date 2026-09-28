@@ -256,6 +256,7 @@ mod tests {
             label: Secret::new("Nordstern Consulting"),
             profile_id: None,
             values: vec![ValueRecord {
+                learned_at: crate::vault::model::now_seconds(),
                 id: 1,
                 kind: Kind::Company,
                 value: Secret::new("Nordstern Consulting GmbH"),

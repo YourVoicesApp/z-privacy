@@ -5,6 +5,7 @@
 // Spans arrive in UTF-16 code units, which is exactly how Dart counts a string,
 // so a span can be used to slice directly. The core refuses a span that falls
 // inside a character, so a slice here can never cut one in half.
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
@@ -51,7 +52,7 @@ String kindName(Kind k) => _kindLabels[k] ?? '…';
 /// drawn **over** the words rather than instead of them. Nothing here is
 /// replaced — this side is the original, and the boards' hard rule is that it
 /// never reaches the network.
-class OriginalText extends StatelessWidget {
+class OriginalText extends StatefulWidget {
   const OriginalText({
     super.key,
     required this.text,
@@ -60,6 +61,7 @@ class OriginalText extends StatelessWidget {
     this.onSelection,
     this.focus,
     this.focusKey,
+    this.onAsk,
   });
 
   final String text;
@@ -78,14 +80,47 @@ class OriginalText extends StatelessWidget {
   final Span? focus;
   final GlobalKey? focusKey;
 
+  /// Tapping a protected word asks the one question this whole layer exists to
+  /// answer: **why is this protected?**
+  final void Function(Mark mark)? onAsk;
+
+  @override
+  State<OriginalText> createState() => _OriginalTextState();
+}
+
+class _OriginalTextState extends State<OriginalText> {
+  /// One recognizer per protected mark, rebuilt when the marks change and
+  /// disposed with them — a gesture recognizer left behind is a leak that
+  /// nothing complains about until it is a lot of them.
+  final List<TapGestureRecognizer> _taps = [];
+
+  @override
+  void dispose() {
+    _clearTaps();
+    super.dispose();
+  }
+
+  void _clearTaps() {
+    for (final t in _taps) {
+      t.dispose();
+    }
+    _taps.clear();
+  }
+
+  String get text => widget.text;
+  List<Mark> get marks => widget.marks;
+  Span? get focus => widget.focus;
+  GlobalKey? get focusKey => widget.focusKey;
+
   @override
   Widget build(BuildContext context) {
+    final onSelection = widget.onSelection;
     return SelectableText.rich(
       TextSpan(children: _spans(), style: Zc.document),
       style: Zc.document,
       onSelectionChanged: onSelection == null
           ? null
-          : (sel, _) => onSelection!(
+          : (sel, _) => onSelection(
                 sel.start < 0 ? 0 : sel.start,
                 sel.end < 0 ? 0 : sel.end,
               ),
@@ -93,6 +128,7 @@ class OriginalText extends StatelessWidget {
   }
 
   List<InlineSpan> _spans() {
+    _clearTaps();
     // Marks may arrive in any order and must not overlap on screen; the core
     // settles overlaps before they get here, so sorting is enough.
     final sorted = [...marks]..sort((a, b) => a.span.start.compareTo(b.span.start));
@@ -138,8 +174,16 @@ class OriginalText extends StatelessWidget {
     final tint = suggested ? Zc.amber : sourceTint(m.source);
     final f = focus;
     final isFocus = f != null && f.start == m.span.start && f.end == m.span.end;
+    TapGestureRecognizer? tap;
+    final ask = widget.onAsk;
+    if (ask != null && !suggested) {
+      tap = TapGestureRecognizer()..onTap = () => ask(m);
+      _taps.add(tap);
+    }
     return TextSpan(
       text: slice,
+      recognizer: tap,
+      mouseCursor: tap == null ? null : SystemMouseCursors.click,
       style: TextStyle(
         backgroundColor: isFocus
             ? tint.withValues(alpha: 0.30)

@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 use crate::api::{
     ApiError, ApiResult, EntityCard, EntityKind, EntityRow, Kind, KindRow, Policy, ProfileRow,
-    RevealedValue, Settings, VaultState, VaultUnlockOutcome, ValueRow,
+    ForgetPlan, RevealedValue, Settings, VaultState, VaultUnlockOutcome, ValueRow,
 };
 use crate::secret::Secret;
 use crate::session::with_core;
@@ -174,6 +174,7 @@ pub(crate) fn set_value(
                 }
                 None => {
                     target.values.push(ValueRecord {
+                        learned_at: crate::vault::model::now_seconds(),
                         id: fresh_id,
                         kind,
                         value: Secret::new(text),
@@ -520,6 +521,7 @@ pub(crate) fn learn_value(profile_id: Option<String>, kind: Kind, text: String) 
             let value_id = vault.take_value_id();
             if let Some(e) = vault.entity_mut(entity_id) {
                 e.values.push(ValueRecord {
+                    learned_at: crate::vault::model::now_seconds(),
                     id: value_id,
                     kind,
                     value: Secret::new(text),
@@ -528,6 +530,138 @@ pub(crate) fn learn_value(profile_id: Option<String>, kind: Kind, text: String) 
                 });
             }
             Ok(())
+        })
+    })
+}
+
+/// The vault record whose value or spelling is exactly this text.
+pub(crate) fn value_matching(text: &str) -> Option<crate::ops::KnownValue> {
+    with_core(|core| {
+        core.vault
+            .with_open(|vault| {
+                for e in &vault.entities {
+                    for v in &e.values {
+                        if v.matches(text) {
+                            return Some(crate::ops::KnownValue {
+                                entity: e.id,
+                                value_id: v.id,
+                                learned_at: v.learned_at,
+                                aliases: v.aliases.iter().map(|a| a.expose().to_string()).collect(),
+                            });
+                        }
+                    }
+                }
+                None
+            })
+            .ok()
+            .flatten()
+    })
+}
+
+/// What forgetting this value would take away.
+///
+/// Counted before anything happens, and counted the same way the act counts —
+/// one function decides, so the sheet cannot promise one thing and the button
+/// do another.
+pub(crate) fn forget_plan(entity: u32, value_id: u32, everywhere: bool) -> ApiResult<ForgetPlan> {
+    plan(entity, value_id, everywhere, false)
+}
+
+/// Forget it, and then check that nothing still recognises it.
+pub(crate) fn forget_value(entity: u32, value_id: u32, everywhere: bool) -> ApiResult<ForgetPlan> {
+    plan(entity, value_id, everywhere, true)
+}
+
+fn plan(entity: u32, value_id: u32, everywhere: bool, act: bool) -> ApiResult<ForgetPlan> {
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let target = vault
+                .entity(entity)
+                .and_then(|e| e.values.iter().find(|v| v.id == value_id))
+                .ok_or(ApiError::UnknownToken)?;
+            let what = target.value.expose().to_string();
+            let spellings = target.spellings();
+            let home_profile = vault.entity(entity).and_then(|e| e.profile_id.clone());
+
+            // Every record this text is known by. «Everywhere» takes them all;
+            // otherwise only the ones in the same profile — because forgetting
+            // one client's fact must not reach into another's.
+            let mut hits: Vec<(u32, u32)> = Vec::new();
+            let mut aliases = 0u32;
+            let mut profiles: Vec<String> = Vec::new();
+            for e in &vault.entities {
+                if !everywhere && e.profile_id != home_profile {
+                    continue;
+                }
+                for v in &e.values {
+                    if spellings.iter().any(|sp| v.matches(sp)) {
+                        hits.push((e.id, v.id));
+                        aliases += v.aliases.len() as u32;
+                        if let Some(p) = &e.profile_id {
+                            let name = vault
+                                .profiles
+                                .iter()
+                                .find(|pr| &pr.id == p)
+                                .map(|pr| pr.name.clone())
+                                .unwrap_or_else(|| p.clone());
+                            if !profiles.contains(&name) {
+                                profiles.push(name);
+                            }
+                        } else if !profiles.contains(&"Everywhere".to_string()) {
+                            profiles.push("Everywhere".to_string());
+                        }
+                    }
+                }
+            }
+
+            // Identities that would be left holding nothing.
+            let mut emptied = 0u32;
+            for e in &vault.entities {
+                let losing = e.values.iter().filter(|v| hits.contains(&(e.id, v.id))).count();
+                if losing > 0 && losing == e.values.len() {
+                    emptied += 1;
+                }
+            }
+
+            if act {
+                for (eid, vid) in &hits {
+                    if let Some(e) = vault.entity_mut(*eid) {
+                        e.values.retain(|v| v.id != *vid);
+                    }
+                }
+                // An identity with nothing left is not kept as a shell: it would
+                // sit in the list saying nothing and meaning nothing.
+                vault.entities.retain(|e| !e.values.is_empty());
+            }
+
+            // And the proof. After the act this must be empty; before it, it is
+            // the list of what would go.
+            let mut still: Vec<String> = Vec::new();
+            for e in &vault.entities {
+                for v in &e.values {
+                    if spellings.iter().any(|sp| v.matches(sp)) {
+                        still.push(e.handle());
+                    }
+                }
+            }
+
+            Ok(ForgetPlan {
+                what,
+                values: hits.len() as u32,
+                aliases,
+                identities: emptied,
+                profiles,
+                keeps: vec![
+                    "Documents you have already protected keep their tokens".to_string(),
+                    "Answers you have already received are unchanged".to_string(),
+                    if everywhere {
+                        "Nothing else on this device knows this value".to_string()
+                    } else {
+                        "Other profiles that know it separately are left alone".to_string()
+                    },
+                ],
+                still_known_by: still,
+            })
         })
     })
 }

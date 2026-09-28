@@ -44,6 +44,12 @@ pub(crate) struct Candidate {
     /// The vault identities that claim this text: none, one, or — when more than
     /// one — a conflict the app must ask about rather than settle silently.
     pub entities: Vec<String>,
+    /// Other layers that saw the same thing and called it the same kind.
+    ///
+    /// Kept as a list and not only folded into `reason`, because «two rules
+    /// agree» is an answer to «why is this protected?» and an answer should not
+    /// have to be parsed out of a sentence. (Task 036.)
+    pub also: Vec<String>,
 }
 
 impl Candidate {
@@ -116,6 +122,7 @@ fn vault_pass(text: &str, hints: &[VaultHint]) -> Vec<Candidate> {
                 source_detail: detail.clone(),
                 reason: reason.clone(),
                 entities: entities.clone(),
+                also: Vec::new(),
             });
         }
     }
@@ -178,6 +185,9 @@ fn settle(mut all: Vec<Candidate>) -> Vec<Candidate> {
                     let also = format!("{} agreed as well", candidate.source_detail);
                     if !keeper.reason.contains(&also) {
                         keeper.reason = format!("{} · {}", keeper.reason, also);
+                    }
+                    if !keeper.also.contains(&candidate.source_detail) {
+                        keeper.also.push(candidate.source_detail.clone());
                     }
                     if keeper.confidence == Confidence::Suggest && candidate.confidence == Confidence::Auto {
                         keeper.confidence = Confidence::Auto;

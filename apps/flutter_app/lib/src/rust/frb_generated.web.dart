@@ -83,10 +83,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EntityRow dco_decode_entity_row(dynamic raw);
 
   @protected
+  Explanation dco_decode_explanation(dynamic raw);
+
+  @protected
   Finding dco_decode_finding(dynamic raw);
 
   @protected
   FindingAnswer dco_decode_finding_answer(dynamic raw);
+
+  @protected
+  ForgetPlan dco_decode_forget_plan(dynamic raw);
 
   @protected
   int dco_decode_i_32(dynamic raw);
@@ -239,6 +245,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_u_32(dynamic raw);
 
   @protected
+  BigInt dco_decode_u_64(dynamic raw);
+
+  @protected
   int dco_decode_u_8(dynamic raw);
 
   @protected
@@ -321,10 +330,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EntityRow sse_decode_entity_row(SseDeserializer deserializer);
 
   @protected
+  Explanation sse_decode_explanation(SseDeserializer deserializer);
+
+  @protected
   Finding sse_decode_finding(SseDeserializer deserializer);
 
   @protected
   FindingAnswer sse_decode_finding_answer(SseDeserializer deserializer);
+
+  @protected
+  ForgetPlan sse_decode_forget_plan(SseDeserializer deserializer);
 
   @protected
   int sse_decode_i_32(SseDeserializer deserializer);
@@ -477,6 +492,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
+  BigInt sse_decode_u_64(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_8(SseDeserializer deserializer);
 
   @protected
@@ -572,10 +590,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_entity_row(EntityRow self, SseSerializer serializer);
 
   @protected
+  void sse_encode_explanation(Explanation self, SseSerializer serializer);
+
+  @protected
   void sse_encode_finding(Finding self, SseSerializer serializer);
 
   @protected
   void sse_encode_finding_answer(FindingAnswer self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_forget_plan(ForgetPlan self, SseSerializer serializer);
 
   @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
@@ -750,6 +774,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_64(BigInt self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);

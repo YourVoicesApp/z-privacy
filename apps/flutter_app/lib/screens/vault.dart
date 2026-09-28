@@ -278,6 +278,7 @@ class _VaultScreenState extends State<VaultScreen> {
               ],
             ),
           ),
+        _taught(g),
         Expanded(
           child: rows.isEmpty
               ? Center(
@@ -303,6 +304,58 @@ class _VaultScreenState extends State<VaultScreen> {
                 ),
         ),
       ],
+    );
+  }
+
+  /// What Z Privacy has learned from you — the owner's «My Privacy Rules».
+  ///
+  /// Three groups, and only one of them exists. The other two are named anyway
+  /// and say they are not built: a screen that showed «Values I taught» alone
+  /// would imply that values are all this app can learn, and the day rules and
+  /// exceptions arrive nobody would know where they went.
+  Widget _taught(Ground g) {
+    final values = g.vaultRows.fold<int>(0, (n, r) => n + r.values);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+      padding: const EdgeInsets.fromLTRB(15, 12, 15, 12),
+      decoration: Zc.panel(fill: Zc.warmCard, edge: Zc.lineSoft, radius: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Eyebrow('What Z Privacy has learned from you'),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 22,
+            runSpacing: 8,
+            children: [
+              _Learned(
+                title: 'Values I taught',
+                count: '$values',
+                what: 'names, companies, numbers — found by themselves from now on',
+                live: true,
+              ),
+              const _Learned(
+                title: 'Rules I taught',
+                count: '—',
+                what: 'not built yet · «after Projekt-Nr. → project code»',
+                live: false,
+              ),
+              const _Learned(
+                title: 'Exceptions I taught',
+                count: '—',
+                what: 'not built yet · «after Rechnungsnummer, not a phone»',
+                live: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Text(
+            'Everything here is yours: visible, explainable, editable, and forgettable. '
+            'Open one to see when it was taught and what forgetting it would take away.',
+            style: Zc.tiny.copyWith(letterSpacing: 0),
+          ),
+        ],
+      ),
     );
   }
 
@@ -440,3 +493,58 @@ String entityKindName(EntityKind k) => switch (k) {
       EntityKind.project => 'PROJECT',
       EntityKind.custom => 'OTHER',
     };
+
+/// One group of what the app has learned. A group that does not exist yet says
+/// so rather than being left out.
+class _Learned extends StatelessWidget {
+  const _Learned({
+    required this.title,
+    required this.count,
+    required this.what,
+    required this.live,
+  });
+
+  final String title;
+  final String count;
+  final String what;
+  final bool live;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: live ? 1 : 0.6,
+      child: SizedBox(
+        width: 250,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  count,
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                    color: live ? Zc.river : Zc.ink4,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Zc.ink2),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(what, style: Zc.tiny.copyWith(letterSpacing: 0)),
+          ],
+        ),
+      ),
+    );
+  }
+}

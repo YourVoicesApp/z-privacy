@@ -26,6 +26,7 @@ import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/widgets/tokens.dart';
+import 'package:zprivacy/widgets/why_sheet.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({
@@ -346,13 +347,18 @@ class _Columns extends StatelessWidget {
                   ),
             child: doc == null
                 ? const _Empty('Nothing is open.')
-                : OriginalText(
-                    text: doc.text,
-                    marks: doc.marks,
-                    focus: bench.focusedFinding?.span,
-                    focusKey: focusKey,
-                    onSelection: (start, end) =>
-                        bench.select(end > start ? Span(start: start, end: end) : null),
+                : Builder(
+                    builder: (inner) => OriginalText(
+                      text: doc.text,
+                      marks: doc.marks,
+                      focus: bench.focusedFinding?.span,
+                      focusKey: focusKey,
+                      onSelection: (start, end) =>
+                          bench.select(end > start ? Span(start: start, end: end) : null),
+                      // Tapping a protected word asks the question this whole
+                      // layer exists to answer.
+                      onAsk: (mark) => _ask(inner, bench, doc, mark),
+                    ),
                   ),
           ),
         ),
@@ -400,6 +406,22 @@ class _Said extends StatelessWidget {
       ),
     );
   }
+}
+
+/// «Why is this protected?» — asked of the core, drawn by the sheet, and if
+/// something is forgotten the document is scanned again so the screen matches
+/// what the app now knows.
+Future<void> _ask(BuildContext context, Workbench bench, DocumentView doc, Mark mark) async {
+  final why = await bench.why(mark.span);
+  if (why == null || !context.mounted) return;
+  await showDialog<void>(
+    context: context,
+    builder: (_) => WhySheet(
+      why: why,
+      word: doc.text.substring(mark.span.start, mark.span.end),
+      onChanged: bench.rescan,
+    ),
+  );
 }
 
 class _Empty extends StatelessWidget {

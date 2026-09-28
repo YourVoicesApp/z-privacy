@@ -12,8 +12,8 @@ use std::collections::BTreeMap;
 
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
-    Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId, ProviderRow,
-    RevealedValue, SelectionView,
+    Explanation, Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId,
+    ProviderRow, RevealedValue, SelectionView,
     RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome, TokenRow,
     UndoOutcome,
 };
@@ -559,6 +559,123 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
     })
 }
 
+/// Why is this protected?
+///
+/// Built from what the core already knows and has never put together in one
+/// place: the protection says who found it and who decided it, the finding
+/// under it says the particulars and who else agreed, and the vault says when
+/// it was taught and under which identity.
+pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> {
+    // The vault is read first and separately: reading it inside the session
+    // lock would be a lock inside a lock (G19).
+    let known = vault_facts_for(session, span)?;
+    with_session(session.id, |s| {
+        let (start, end) = text::span_to_bytes(s.original_str(), span)?;
+        let p = s
+            .protections
+            .iter()
+            .find(|p| p.start < end && start < p.end)
+            .ok_or_else(|| ApiError::BadSpan {
+                reason: "nothing is protected there".to_string(),
+            })?
+            .clone();
+        let finding = s.findings.iter().find(|f| f.start < p.end && p.start < f.end).cloned();
+
+        let headline = match (p.source, p.decided) {
+            (Source::Hand, _) => "You protected this by hand",
+            (Source::Vault, _) => "You taught Z Privacy this value",
+            (Source::LanguagePack, true) => "A German privacy rule found it, and you agreed",
+            (Source::LanguagePack, false) => "A German privacy rule",
+            (Source::GeneralRule, true) => "A shape that needs no language, and you agreed",
+            (Source::GeneralRule, false) => "A shape that needs no language",
+        }
+        .to_string();
+
+        // The particulars. A protection with nothing to say about itself is the
+        // black box arriving, so this is never allowed to come out empty.
+        let mut because = Vec::new();
+        if let Some(f) = &finding {
+            because.push(f.reason.clone());
+            for other in &f.also {
+                because.push(format!("{other} agreed as well"));
+            }
+            if !f.also.is_empty() {
+                because.insert(0, format!("{} rules agree", f.also.len() + 1));
+            }
+        } else if p.source == Source::Hand {
+            because.push("You selected these words yourself".to_string());
+        }
+        if let Some(when) = known.as_ref().map(|k| k.learned_at).filter(|w| *w > 0) {
+            because.push(format!("Kept in your vault since {}", day_of(when)));
+        }
+        if because.is_empty() {
+            because.push(p.source_detail.clone());
+        }
+
+        let applies = match p.scope {
+            Scope::Once => "This one place".to_string(),
+            Scope::Conversation => "This conversation".to_string(),
+            Scope::Profile => match &s.profile_id {
+                Some(id) => format!("Profile — {id}"),
+                None => "This conversation".to_string(),
+            },
+            Scope::Always => "Everywhere".to_string(),
+        };
+
+        Ok(Explanation {
+            headline,
+            because,
+            kind: p.kind,
+            scope: p.scope,
+            applies,
+            decided: p.decided,
+            token: p.token.clone(),
+            learned_at: known.as_ref().map(|k| k.learned_at).unwrap_or(0),
+            entity: known.as_ref().map(|k| k.entity),
+            value_id: known.as_ref().map(|k| k.value_id),
+            aliases: known.map(|k| k.aliases).unwrap_or_default(),
+        })
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+pub(crate) struct KnownValue {
+    pub entity: u32,
+    pub value_id: u32,
+    pub learned_at: u64,
+    pub aliases: Vec<String>,
+}
+
+/// What the vault knows about the text in this span, if anything.
+fn vault_facts_for(session: SessionId, span: Span) -> ApiResult<Option<KnownValue>> {
+    let text = with_session(session.id, |s| {
+        let (start, end) = text::span_to_bytes(s.original_str(), span)?;
+        Ok(s.original_str().get(start..end).unwrap_or_default().to_string())
+    })
+    .ok_or(ApiError::InvalidSession)??;
+    Ok(crate::ops::value_matching(&text))
+}
+
+/// A date a person can read, without a calendar dependency: the civil date from
+/// days since 1970, by the standard algorithm.
+fn day_of(seconds: u64) -> String {
+    const MONTHS: [&str; 12] = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    let days = (seconds / 86_400) as i64 + 719_468;
+    let era = if days >= 0 { days } else { days - 146_096 } / 146_097;
+    let doe = days - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let year = if m <= 2 { y + 1 } else { y };
+    let month = MONTHS.get((m as usize).saturating_sub(1)).copied().unwrap_or("?");
+    format!("{d} {month} {year}")
+}
+
 pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
     // The scope decides the breadth. Until task 034 it was only a label — the
     // breadth came from which function was called — so «this conversation»
@@ -994,6 +1111,7 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
                 state,
                 decided: false,
                 entities: c.entities.clone(),
+                also: c.also.clone(),
             });
         }
 
@@ -1223,6 +1341,7 @@ fn rescan_keeping(session: SessionId, pack: &str) -> ApiResult<(u32, u32)> {
                 state,
                 decided: false,
                 entities: c.entities.clone(),
+                also: c.also.clone(),
             });
         }
         s.normal_words = scanner::plain_word_count(s.original_str(), &candidates);
@@ -1296,6 +1415,7 @@ mod tests {
                 state: MarkState::Suggested,
                 decided: false,
                 entities: Vec::new(),
+                also: Vec::new(),
             });
         })
         .expect("session");

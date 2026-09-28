@@ -21,6 +21,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/entity_detail.dart';
+import 'package:zprivacy/widgets/why_sheet.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _pass = 'ein gutes Passwort für den Test';
@@ -236,6 +237,89 @@ void main() {
     await tester.tap(find.text('Starten'));
     await settle(tester, rounds: 1);
     expect(chosen, 'de');
+  });
+
+  testWidgets('a protected word can say why, and forgetting shows its cost first',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1050));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    // Stands on its own: it makes whatever it needs rather than leaning on
+    // what an earlier test in this file left behind. Test order is not a
+    // fixture, and treating it as one has cost this project two red runs.
+    const doc = 'Kunde: Nordstern Consulting GmbH bittet um Auskunft.';
+    final ground = Ground();
+    late final Workbench bench;
+    late final Explanation why;
+    await tester.runAsync(() async {
+      final here = Directory('${Directory.systemTemp.path}/zprivacy-why-$pid');
+      if (here.existsSync()) here.deleteSync(recursive: true);
+      addTearDown(() {
+        if (here.existsSync()) here.deleteSync(recursive: true);
+      });
+      await z.setDataDir(dir: here.path);
+      await z.vaultCreateWithPassphrase(passphrase: _pass);
+      final e = await z.createEntity(
+        kind: EntityKind.client,
+        label: 'Nordstern',
+        profileId: null,
+      );
+      final v = await z.setValue(
+        entity: e,
+        kind: Kind.company,
+        text: 'Nordstern Consulting GmbH',
+        policy: Policy.always,
+      );
+      await z.addValueAlias(entity: e, valueId: v, alias: 'Nordstern Consulting');
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      final at = doc.indexOf('Nordstern Consulting GmbH');
+      why = (await bench.why(Span(
+        start: at,
+        end: at + 'Nordstern Consulting GmbH'.length,
+      )))!;
+    });
+
+    // «Source: Vault» is what this replaces.
+    expect(why.headline, 'You taught Z Privacy this value');
+    expect(why.entity, isNotNull);
+    expect(why.learnedAt > BigInt.zero, isTrue, reason: 'it knows when it was taught');
+
+    await tester.pumpWidget(MaterialApp(
+      home: WhySheet(why: why, word: 'Nordstern Consulting GmbH', onChanged: () async {}),
+    ));
+    await settle(tester, rounds: 1);
+
+    expect(find.text('Why is this protected?'), findsOneWidget);
+    expect(find.text('You taught Z Privacy this value'), findsOneWidget);
+    expect(find.text('Forget everywhere'), findsWidgets);
+
+    // Other spellings are the same secret, so they wait to be asked for.
+    expect(find.text('Nordstern Consulting'), findsNothing);
+
+    // Forgetting shows what it costs **before** it happens, with numbers.
+    await tester.tap(find.text('Forget everywhere').first);
+    await settle(tester, rounds: 2);
+    expect(find.textContaining('Forget «Nordstern Consulting GmbH»?'), findsOneWidget);
+    expect(find.text('THIS WILL REMOVE'), findsOneWidget);
+    expect(find.text('IT WILL NOT CHANGE'), findsOneWidget);
+    expect(find.textContaining('already protected'), findsOneWidget);
+
+    // And Cancel means nothing happened.
+    await tester.tap(find.text('Cancel'));
+    await settle(tester, rounds: 2);
+    await tester.runAsync(() async {
+      expect(
+        (await z.searchVault(query: 'Nordstern Consulting GmbH')).length,
+        1,
+        reason: 'Cancel forgot something',
+      );
+    });
+
+    bench.dispose();
   });
 }
 

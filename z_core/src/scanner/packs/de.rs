@@ -174,6 +174,7 @@ fn candidate(
         source_detail: format!("{PACK}:{rule}"),
         reason,
         entities: Vec::new(),
+        also: Vec::new(),
     }
 }
 

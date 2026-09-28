@@ -145,6 +145,70 @@ pub struct ProviderId {
     pub id: String,
 }
 
+/// Why something is protected, in words a person can judge.
+///
+/// The owner's ninth question, 28 September:
+///
+/// > If I taught Z Privacy something today, can I know tomorrow exactly what it
+/// > learned, why, where it applies — and make it forget completely?
+///
+/// «Source: Vault» is technically true and answers nobody. The rule this type
+/// exists to keep is: **there is no protection whose origin we cannot explain**
+/// — and the danger it exists to prevent is the one worse than any of the eight
+/// lies: local knowledge piling up until the user no longer knows why the app
+/// behaves as it does, and a privacy product quietly becomes a black box.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Explanation {
+    /// «You taught this value» · «German privacy rule» · «You protected this
+    /// by hand» · «A shape that needs no language».
+    pub headline: String,
+    /// The particulars, one per line: «Valid IBAN checksum», «German label:
+    /// Mobil», «Two rules agree». Empty is not allowed to happen — a protection
+    /// with nothing to say about itself is the black box arriving.
+    pub because: Vec<String>,
+    pub kind: Kind,
+    pub scope: Scope,
+    /// Where it applies: «This document only» · «Client Nordstern» · «Everywhere».
+    pub applies: String,
+    /// Whether a person decided this, or a layer did.
+    pub decided: bool,
+    pub token: String,
+    /// When it was taught, in seconds since 1970. 0 when it was not taught at
+    /// all (a rule found it) or when the vault predates the date being kept.
+    pub learned_at: u64,
+    /// The identity and value it came from, when the vault taught it. This is
+    /// what «Edit» and «Forget» act on.
+    pub entity: Option<u32>,
+    pub value_id: Option<u32>,
+    /// Other spellings of the same value. Shown behind one tap, like every
+    /// other value in this app.
+    pub aliases: Vec<String>,
+}
+
+/// What forgetting something would take away — shown **before** it happens.
+///
+/// «Forget» has to mean forget. Not «we removed the alias but another rule
+/// still recognises it», and not «we removed the identity but an old rule
+/// still protects it». So the plan counts every local relation, and
+/// `still_known_by` is the check that there are none left afterwards.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ForgetPlan {
+    /// What it is, so the sheet can name it back to the user.
+    pub what: String,
+    pub values: u32,
+    pub aliases: u32,
+    /// Identities that would be left holding nothing, and so go too.
+    pub identities: u32,
+    /// The profiles it is associated with, by name.
+    pub profiles: Vec<String>,
+    /// What is **not** touched, said out loud because the user is about to
+    /// press a button that says «forget».
+    pub keeps: Vec<String>,
+    /// Everything that would still recognise it afterwards. **Must be empty** —
+    /// it is reported rather than assumed, and a test fails if it is not.
+    pub still_known_by: Vec<String>,
+}
+
 /// What a selection is, before anything is done to it.
 ///
 /// This type exists because the design boards give the Protect button **five**
@@ -964,6 +1028,22 @@ pub fn remove_value_alias(entity: u32, value_id: u32, alias: String) -> ApiResul
 /// identity» and never «because its IBAN is …».
 pub fn search_vault(query: String) -> ApiResult<Vec<EntityRow>> {
     crate::ops::search_vault(query)
+}
+
+/// Why is this protected? The full answer, for one protected stretch.
+pub fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> {
+    crate::ops::explain(session, span)
+}
+
+/// What forgetting this value would take away. Nothing is changed.
+pub fn forget_plan(entity: u32, value_id: u32, everywhere: bool) -> ApiResult<ForgetPlan> {
+    crate::ops::forget_plan(entity, value_id, everywhere)
+}
+
+/// Forget it. Returns what was actually removed, and proves nothing still
+/// recognises it.
+pub fn forget_value(entity: u32, value_id: u32, everywhere: bool) -> ApiResult<ForgetPlan> {
+    crate::ops::forget_value(entity, value_id, everywhere)
 }
 
 /// Every kind of value this build knows, with its label.

@@ -348,6 +348,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          reaches_the_settings_file could_name_a_client remembers_the_first_run \
          two_places_report_agrees the_string_that_would_be_sent is_a_constant \
          three_windows_on_one_truth not_sensitive_is_an_answer actually_reach_the_vault \
+         can_say_where_it_came_from shows_what_it_will_take leaves_another_client_alone \
          this_conversation_means_every_place need_the_vault_and_say_so \
          reports_nothing_it_does_not_know take_back_an_answer; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
@@ -363,7 +364,7 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "not one Dart worked out" "Skip decides nothing" "does not touch what leaves" \
          "the manual door needs no key" "as the model wrote it" "only the safe text arrives" \
          "the vault room" "say where they live" "in the language it is offering" \
-         "not on Home" "word for word"; do
+         "not on Home" "word for word" "forgetting shows its cost first"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

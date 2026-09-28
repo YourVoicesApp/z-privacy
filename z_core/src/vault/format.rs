@@ -18,6 +18,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, ValueRecord, 
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 4 — each value carries when it was taught (task 036).
 /// * 3 — the settings, appended after the credentials (task 030).
 /// * 1 — identities, values, profiles.
 /// * 2 — provider credentials appended at the end (task 020). A version-1 vault
@@ -28,7 +29,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, ValueRecord, 
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 3;
+pub(crate) const MODEL_VERSION: u16 = 4;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -158,6 +159,9 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
             for alias in &value.aliases {
                 put_str(&mut out, alias.expose());
             }
+            // Model 4. Inside the value's own record, because it belongs to the
+            // value — a section at the end would have to be matched up again.
+            out.extend_from_slice(&value.learned_at.to_be_bytes());
         }
     }
 
@@ -237,12 +241,20 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
             for _ in 0..alias_count {
                 aliases.push(Secret::new(r.string()?));
             }
+            let learned_at = if version >= 4 {
+                u64::from_be_bytes(r.array::<8>()?)
+            } else {
+                // Taught before the vault kept dates. Said as «unknown», never
+                // guessed as «today».
+                0
+            };
             values.push(ValueRecord {
                 id: value_id,
                 kind: value_kind,
                 value,
                 aliases,
                 policy,
+                learned_at,
             });
         }
         entities.push(Entity {
@@ -367,6 +379,48 @@ mod tests {
         decode(bytes, &test_master(), true)
     }
 
+    /// A file as an older model wrote one, **built by hand**.
+    ///
+    /// It used to be made by taking today's bytes and chopping the tail, which
+    /// worked only while every change was an append. Model 4 put eight bytes
+    /// *inside* each value's record, and the chopping quietly stopped meaning
+    /// anything — so the compatibility tests were testing arithmetic, not
+    /// compatibility. An old file is written out here, field by field, as the
+    /// build that made it would have written it.
+    fn a_file_from_model(version: u16) -> Vec<u8> {
+        let mut out = Vec::new();
+        out.extend_from_slice(&version.to_be_bytes());
+        out.extend_from_slice(&2u32.to_be_bytes()); // next_entity
+        out.extend_from_slice(&2u32.to_be_bytes()); // next_value
+        out.extend_from_slice(&0u32.to_be_bytes()); // no profiles
+        out.extend_from_slice(&1u32.to_be_bytes()); // one entity
+        out.extend_from_slice(&1u32.to_be_bytes()); // its id
+        out.push(entity_kind_code(EntityKind::Client));
+        put_str(&mut out, "Nordstern");
+        out.push(0); // no profile
+        out.extend_from_slice(&1u32.to_be_bytes()); // one value
+        out.extend_from_slice(&1u32.to_be_bytes()); // its id
+        out.push(kind_code(Kind::Company));
+        out.push(policy_code(Policy::Always));
+        put_str(&mut out, "Nordstern Consulting GmbH");
+        out.extend_from_slice(&0u32.to_be_bytes()); // no aliases
+        if version >= 4 {
+            out.extend_from_slice(&0u64.to_be_bytes());
+        }
+        if version >= 2 {
+            out.extend_from_slice(&0u32.to_be_bytes()); // no credentials
+        }
+        if version >= 3 {
+            out.push(1);
+            out.extend_from_slice(&20u32.to_be_bytes());
+            out.extend_from_slice(&15u32.to_be_bytes());
+            put_str(&mut out, "de");
+            put_str(&mut out, "en");
+            out.push(0);
+        }
+        out
+    }
+
     fn sample() -> Vault {
         let mut v = Vault::new();
         v.profiles.push(Profile {
@@ -380,6 +434,7 @@ mod tests {
             profile_id: Some("p-nordstern".to_string()),
             values: vec![
                 ValueRecord {
+                    learned_at: 1_759_000_000,
                     id: 1,
                     kind: Kind::Company,
                     value: Secret::new("Nordstern Consulting GmbH"),
@@ -387,6 +442,7 @@ mod tests {
                     policy: Policy::Always,
                 },
                 ValueRecord {
+                    learned_at: 1_759_000_000,
                     id: 2,
                     kind: Kind::Bic,
                     value: Secret::new("COBADEFFXXX"),
@@ -439,14 +495,11 @@ mod tests {
         assert_eq!(login.base, "https://api.openai.com");
         assert_eq!(login.model, "gpt-4o-mini");
 
-        // What a model-1 file looks like: the same bytes without the last section.
-        let plain = enc(&sample());
-        let mut old_file = plain.clone();
-        old_file.truncate(plain.len() - 4); // drop the (empty) credential count
-        old_file[0..2].copy_from_slice(&1u16.to_be_bytes());
-        let opened = dec(&old_file).expect("a model-1 vault still opens");
+        // A model-1 file, as a model-1 build wrote one.
+        let opened = dec(&a_file_from_model(1)).expect("a model-1 vault still opens");
         assert!(opened.provider_logins.is_empty(), "and simply has no credentials");
         assert_eq!(opened.entities.len(), 1, "everything older than model 2 is intact");
+        assert_eq!(opened.entities[0].values.len(), 1);
     }
 
     #[test]
@@ -495,14 +548,26 @@ mod tests {
         let after = dec(&enc(&before)).expect("decode");
         assert_eq!(after.settings, before.settings);
 
-        // A model-2 file: the same bytes without the settings block.
-        let plain = enc(&sample());
-        let tail = 1 + 4 + 4 + (4 + 2) + (4 + 2) + 1; // the block written above
-        let mut old_file = plain[..plain.len() - tail].to_vec();
-        old_file[0..2].copy_from_slice(&2u16.to_be_bytes());
-        let opened = dec(&old_file).expect("a model-2 vault still opens");
+        // A model-2 file, as a model-2 build wrote one.
+        let opened = dec(&a_file_from_model(2)).expect("a model-2 vault still opens");
         assert_eq!(opened.settings, StoredSettings::default(), "and takes today's defaults");
         assert_eq!(opened.entities.len(), 1, "with nothing else lost");
+
+        // And every model this build claims to read, read in one place — so
+        // «an old vault still opens» is a statement about all of them.
+        for version in 1..=MODEL_VERSION {
+            let v = dec(&a_file_from_model(version))
+                .unwrap_or_else(|e| panic!("model {version} did not open: {e}"));
+            assert_eq!(v.entities.len(), 1, "model {version} lost its identity");
+            assert_eq!(
+                v.entities[0].values[0].value.expose(),
+                "Nordstern Consulting GmbH",
+                "model {version} lost its value"
+            );
+            // The date is known only from model 4 — and «unknown» is 0, never
+            // today's date guessed in.
+            assert_eq!(v.entities[0].values[0].learned_at, 0);
+        }
     }
 
     #[test]

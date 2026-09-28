@@ -63,6 +63,8 @@ pub(crate) struct FindingRecord {
     pub decided: bool,
     /// The vault identities that claim it; more than one is a conflict.
     pub entities: Vec<String>,
+    /// Other layers that saw the same thing and called it the same kind.
+    pub also: Vec<String>,
 }
 
 /// A value the user said is not sensitive, in this conversation.

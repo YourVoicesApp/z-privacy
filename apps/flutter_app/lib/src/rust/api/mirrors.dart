@@ -203,6 +203,84 @@ class EntityRow {
           policySummary == other.policySummary;
 }
 
+class Explanation {
+  /// «You taught this value» · «German privacy rule» · «You protected this
+  /// by hand» · «A shape that needs no language».
+  final String headline;
+
+  /// The particulars, one per line: «Valid IBAN checksum», «German label:
+  /// Mobil», «Two rules agree». Empty is not allowed to happen — a protection
+  /// with nothing to say about itself is the black box arriving.
+  final List<String> because;
+  final Kind kind;
+  final Scope scope;
+
+  /// Where it applies: «This document only» · «Client Nordstern» · «Everywhere».
+  final String applies;
+
+  /// Whether a person decided this, or a layer did.
+  final bool decided;
+  final String token;
+
+  /// When it was taught, in seconds since 1970. 0 when it was not taught at
+  /// all (a rule found it) or when the vault predates the date being kept.
+  final BigInt learnedAt;
+
+  /// The identity and value it came from, when the vault taught it. This is
+  /// what «Edit» and «Forget» act on.
+  final int? entity;
+  final int? valueId;
+
+  /// Other spellings of the same value. Shown behind one tap, like every
+  /// other value in this app.
+  final List<String> aliases;
+
+  const Explanation({
+    required this.headline,
+    required this.because,
+    required this.kind,
+    required this.scope,
+    required this.applies,
+    required this.decided,
+    required this.token,
+    required this.learnedAt,
+    this.entity,
+    this.valueId,
+    required this.aliases,
+  });
+
+  @override
+  int get hashCode =>
+      headline.hashCode ^
+      because.hashCode ^
+      kind.hashCode ^
+      scope.hashCode ^
+      applies.hashCode ^
+      decided.hashCode ^
+      token.hashCode ^
+      learnedAt.hashCode ^
+      entity.hashCode ^
+      valueId.hashCode ^
+      aliases.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Explanation &&
+          runtimeType == other.runtimeType &&
+          headline == other.headline &&
+          because == other.because &&
+          kind == other.kind &&
+          scope == other.scope &&
+          applies == other.applies &&
+          decided == other.decided &&
+          token == other.token &&
+          learnedAt == other.learnedAt &&
+          entity == other.entity &&
+          valueId == other.valueId &&
+          aliases == other.aliases;
+}
+
 class Finding {
   final int id;
   final Span span;
@@ -269,6 +347,60 @@ class Finding {
 }
 
 enum FindingAnswer { protect, always, notSensitive, skip }
+
+class ForgetPlan {
+  /// What it is, so the sheet can name it back to the user.
+  final String what;
+  final int values;
+  final int aliases;
+
+  /// Identities that would be left holding nothing, and so go too.
+  final int identities;
+
+  /// The profiles it is associated with, by name.
+  final List<String> profiles;
+
+  /// What is **not** touched, said out loud because the user is about to
+  /// press a button that says «forget».
+  final List<String> keeps;
+
+  /// Everything that would still recognise it afterwards. **Must be empty** —
+  /// it is reported rather than assumed, and a test fails if it is not.
+  final List<String> stillKnownBy;
+
+  const ForgetPlan({
+    required this.what,
+    required this.values,
+    required this.aliases,
+    required this.identities,
+    required this.profiles,
+    required this.keeps,
+    required this.stillKnownBy,
+  });
+
+  @override
+  int get hashCode =>
+      what.hashCode ^
+      values.hashCode ^
+      aliases.hashCode ^
+      identities.hashCode ^
+      profiles.hashCode ^
+      keeps.hashCode ^
+      stillKnownBy.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ForgetPlan &&
+          runtimeType == other.runtimeType &&
+          what == other.what &&
+          values == other.values &&
+          aliases == other.aliases &&
+          identities == other.identities &&
+          profiles == other.profiles &&
+          keeps == other.keeps &&
+          stillKnownBy == other.stillKnownBy;
+}
 
 enum Kind {
   person,
