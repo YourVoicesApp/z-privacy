@@ -329,7 +329,7 @@ rm -f /tmp/gt.$$
 # call the whole contract from Dart and see typed errors come back.
 LIB=apps/flutter_app/build/linux/x64/debug/bundle/lib
 if [ -f "$LIB/libz_bridge.so" ] && command -v flutter >/dev/null 2>&1; then
-  if (cd apps/flutter_app && LD_LIBRARY_PATH="$PWD/build/linux/x64/debug/bundle/lib" flutter test --reporter compact >/tmp/gd.$$ 2>&1); then
+  if (cd apps/flutter_app && LD_LIBRARY_PATH="$PWD/build/linux/x64/debug/bundle/lib" flutter test --concurrency=1 --reporter compact >/tmp/gd.$$ 2>&1); then
     pass "G7-dart the whole contract answers from Dart without a panic"
   else
     fail "G7-dart flutter test:"; tail -20 /tmp/gd.$$ | sed 's/^/        /'

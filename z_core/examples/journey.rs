@@ -137,15 +137,14 @@ fn first() {
 fn again() {
     println!("RUN TWO — the same folder, a new process");
     say("vault found", format!("{:?}", vault_state().expect("state")));
-    match vault_unlock_with_passphrase("das falsche Passwort".to_string()).expect("unlock") {
-        VaultUnlockOutcome::WrongPassphrase => say("wrong passphrase", "refused".to_string()),
-        other => say("wrong passphrase", format!("UNEXPECTED {other:?}")),
+    match vault_unlock_with_passphrase("das falsche Passwort".to_string()) {
+        Err(ApiError::VaultAuthenticationFailed) => say("could not authenticate", "refused".to_string()),
+        other => say("could not authenticate", format!("UNEXPECTED {other:?}")),
     }
     match vault_unlock_with_passphrase(PASS.to_string()).expect("unlock") {
         VaultUnlockOutcome::Unlocked { identities, values } => {
             say("opened", format!("{identities} identities · {values} values"))
         }
-        other => say("opened", format!("UNEXPECTED {other:?}")),
     }
 
     let config = settings().expect("settings");

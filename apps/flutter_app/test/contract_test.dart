@@ -149,6 +149,7 @@ void main() {
     expect(calls.length, 58, reason: 'the contract has 58 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
+    await vaultLock();
   });
 
   test('a document protects itself, driven from Dart', () async {
@@ -207,6 +208,13 @@ void main() {
       () async {
     // M6 from the other side. There is no call anywhere in the contract that
     // returns a credential — this test is what that sentence looks like in code.
+    final dir = Directory.systemTemp.createTempSync('zprivacy-provider-contract-$pid-');
+    addTearDown(() {
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+    });
+    await setDataDir(dir: dir.path);
+    await vaultLock();
+
     final rows = await providers();
     expect(rows, isNotEmpty);
     final before = rows.firstWhere((r) => r.id == 'openai');

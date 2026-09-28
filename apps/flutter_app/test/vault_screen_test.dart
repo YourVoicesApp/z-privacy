@@ -21,6 +21,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/entity_detail.dart';
+import 'package:zprivacy/widgets/vault_forms.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -157,6 +158,13 @@ void main() {
     await settle(tester);
     expect(ground.vault, VaultState.locked);
     expect(ground.vaultRows, isEmpty, reason: 'a locked vault lists nothing');
+    expect(find.text('The vault is locked'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+
+    final unlockTrouble = vaultKeyTroubleFor(const ApiError.vaultAuthenticationFailed());
+    expect(unlockTrouble, contains('Could not unlock the vault'));
+    expect(unlockTrouble, contains('may be incorrect, or the vault may be corrupted or modified'));
+    expect(unlockTrouble, isNot(contains('That is not the passphrase')));
   });
 
   testWidgets('settings are the core\'s, and say where they live', (tester) async {
@@ -347,4 +355,3 @@ void main() {
     bench.dispose();
   });
 }
-

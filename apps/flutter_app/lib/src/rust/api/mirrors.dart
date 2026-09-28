@@ -88,6 +88,16 @@ sealed class ApiError with _$ApiError implements FrbException {
   /// A vault file asked for KDF costs this build does not support.
   const factory ApiError.unsupportedKdfParameters({required String reason}) =
       ApiError_UnsupportedKdfParameters;
+
+  /// A vault file had bytes after the end of the versioned ZVLT structure.
+  const factory ApiError.trailingVaultData() = ApiError_TrailingVaultData;
+
+  /// The vault could not be authenticated after key derivation.
+  ///
+  /// This does not distinguish a wrong passphrase from a modified vault: the
+  /// AEAD tag proves only that opening failed, not which human story caused it.
+  const factory ApiError.vaultAuthenticationFailed() =
+      ApiError_VaultAuthenticationFailed;
 }
 
 enum DocumentKind { txt, docx, pdf }
@@ -1305,6 +1315,4 @@ sealed class VaultUnlockOutcome with _$VaultUnlockOutcome {
     required int identities,
     required int values,
   }) = VaultUnlockOutcome_Unlocked;
-  const factory VaultUnlockOutcome.wrongPassphrase() =
-      VaultUnlockOutcome_WrongPassphrase;
 }

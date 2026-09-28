@@ -2279,6 +2279,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return ApiError_UnsupportedKdfParameters(
           reason: dco_decode_String(raw[1]),
         );
+      case 15:
+        return ApiError_TrailingVaultData();
+      case 16:
+        return ApiError_VaultAuthenticationFailed();
       default:
         throw Exception("unreachable");
     }
@@ -3076,8 +3080,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           identities: dco_decode_u_32(raw[1]),
           values: dco_decode_u_32(raw[2]),
         );
-      case 1:
-        return VaultUnlockOutcome_WrongPassphrase();
       default:
         throw Exception("unreachable");
     }
@@ -3145,6 +3147,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 14:
         var var_reason = sse_decode_String(deserializer);
         return ApiError_UnsupportedKdfParameters(reason: var_reason);
+      case 15:
+        return ApiError_TrailingVaultData();
+      case 16:
+        return ApiError_VaultAuthenticationFailed();
       default:
         throw UnimplementedError('');
     }
@@ -4098,8 +4104,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           identities: var_identities,
           values: var_values,
         );
-      case 1:
-        return VaultUnlockOutcome_WrongPassphrase();
       default:
         throw UnimplementedError('');
     }
@@ -4163,6 +4167,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case ApiError_UnsupportedKdfParameters(reason: final reason):
         sse_encode_i_32(14, serializer);
         sse_encode_String(reason, serializer);
+      case ApiError_TrailingVaultData():
+        sse_encode_i_32(15, serializer);
+      case ApiError_VaultAuthenticationFailed():
+        sse_encode_i_32(16, serializer);
     }
   }
 
@@ -4949,8 +4957,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(0, serializer);
         sse_encode_u_32(identities, serializer);
         sse_encode_u_32(values, serializer);
-      case VaultUnlockOutcome_WrongPassphrase():
-        sse_encode_i_32(1, serializer);
     }
   }
 }

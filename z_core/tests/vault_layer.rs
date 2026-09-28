@@ -31,7 +31,6 @@ fn fresh_vault(name: &str) -> String {
     assert_eq!(vault_state().expect("state"), VaultState::Absent);
     match vault_create_with_passphrase(PASS.to_string()).expect("create") {
         VaultUnlockOutcome::Unlocked { identities, values } => assert_eq!((identities, values), (0, 0)),
-        other => panic!("expected a new vault, got {other:?}"),
     }
     path
 }
@@ -193,12 +192,11 @@ fn rule_four_the_passphrase_can_change_and_the_vault_still_opens() {
 
     // The old passphrase is dead; the new one opens the same contents.
     assert!(matches!(
-        vault_unlock_with_passphrase(PASS.to_string()).expect("answer"),
-        VaultUnlockOutcome::WrongPassphrase
+        vault_unlock_with_passphrase(PASS.to_string()),
+        Err(ApiError::VaultAuthenticationFailed)
     ));
     match vault_unlock_with_passphrase("ein anderes langes Passwort".to_string()).expect("unlock") {
         VaultUnlockOutcome::Unlocked { identities, values } => assert_eq!((identities, values), (1, 1)),
-        other => panic!("expected the vault to open, got {other:?}"),
     }
 
     let card = entity(id).expect("the identity");
@@ -702,7 +700,7 @@ fn unlock_after_lock_sees_that_the_vault_file_was_modified() {
     std::fs::write(&path, bytes).expect("write mutated vault");
 
     match vault_unlock_with_passphrase(PASS.to_string()) {
-        Ok(VaultUnlockOutcome::WrongPassphrase) => {}
+        Err(ApiError::VaultAuthenticationFailed) => {}
         other => panic!("unlock must fail on the modified file from disk, got {other:?}"),
     }
     let _ = std::fs::remove_dir_all(&dir);
@@ -718,7 +716,6 @@ fn unlock_after_lock_still_opens_an_unchanged_vault_file() {
 
     match vault_unlock_with_passphrase(PASS.to_string()).expect("unlock") {
         VaultUnlockOutcome::Unlocked { identities, values } => assert_eq!((identities, values), (1, 1)),
-        other => panic!("expected unlock, got {other:?}"),
     }
     assert_eq!(entities(None).expect("entities")[0].label, "Cache Control");
     let _ = std::fs::remove_dir_all(&dir);
@@ -762,10 +759,10 @@ fn a_wrong_passphrase_reports_nothing_it_does_not_know() {
     // Wrong, three times. Nothing counts down, and the third try is as welcome
     // as the first — which is the honest behaviour for a local file.
     for _ in 0..3 {
-        assert_eq!(
-            vault_unlock_with_passphrase("falsch".to_string()).expect("unlock"),
-            VaultUnlockOutcome::WrongPassphrase
-        );
+        assert!(matches!(
+            vault_unlock_with_passphrase("falsch".to_string()),
+            Err(ApiError::VaultAuthenticationFailed)
+        ));
     }
     assert!(matches!(
         vault_unlock_with_passphrase("ein gutes Passwort für den Test".to_string()).expect("unlock"),

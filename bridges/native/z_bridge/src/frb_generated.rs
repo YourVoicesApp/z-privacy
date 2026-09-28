@@ -1814,6 +1814,8 @@ const _: fn() = || {
         crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason } => {
             let _: String = reason;
         }
+        crate::api::mirrors::ApiError::TrailingVaultData => {}
+        crate::api::mirrors::ApiError::VaultAuthenticationFailed => {}
     }
     {
         let DocumentView = None::<crate::api::mirrors::DocumentView>.unwrap();
@@ -2117,7 +2119,6 @@ const _: fn() = || {
             let _: u32 = identities;
             let _: u32 = values;
         }
-        crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase => {}
     }
 };
 
@@ -2209,6 +2210,12 @@ impl SseDecode for crate::api::mirrors::ApiError {
             14 => {
                 let mut var_reason = <String>::sse_decode(deserializer);
                 return crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason: var_reason };
+            }
+            15 => {
+                return crate::api::mirrors::ApiError::TrailingVaultData;
+            }
+            16 => {
+                return crate::api::mirrors::ApiError::VaultAuthenticationFailed;
             }
             _ => {
                 unimplemented!("");
@@ -3266,9 +3273,6 @@ impl SseDecode for crate::api::mirrors::VaultUnlockOutcome {
                     values: var_values,
                 };
             }
-            1 => {
-                return crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase;
-            }
             _ => {
                 unimplemented!("");
             }
@@ -3421,6 +3425,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ApiError>
             crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason } => {
                 [14.into_dart(), reason.into_into_dart().into_dart()].into_dart()
             }
+            crate::api::mirrors::ApiError::TrailingVaultData => [15.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::VaultAuthenticationFailed => [16.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -4325,7 +4331,6 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::VaultUnlo
                 values.into_into_dart().into_dart(),
             ]
             .into_dart(),
-            crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase => [1.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -4418,6 +4423,12 @@ impl SseEncode for crate::api::mirrors::ApiError {
             crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason } => {
                 <i32>::sse_encode(14, serializer);
                 <String>::sse_encode(reason, serializer);
+            }
+            crate::api::mirrors::ApiError::TrailingVaultData => {
+                <i32>::sse_encode(15, serializer);
+            }
+            crate::api::mirrors::ApiError::VaultAuthenticationFailed => {
+                <i32>::sse_encode(16, serializer);
             }
             _ => {
                 unimplemented!("");
@@ -5274,9 +5285,6 @@ impl SseEncode for crate::api::mirrors::VaultUnlockOutcome {
                 <i32>::sse_encode(0, serializer);
                 <u32>::sse_encode(identities, serializer);
                 <u32>::sse_encode(values, serializer);
-            }
-            crate::api::mirrors::VaultUnlockOutcome::WrongPassphrase => {
-                <i32>::sse_encode(1, serializer);
             }
             _ => {
                 unimplemented!("");

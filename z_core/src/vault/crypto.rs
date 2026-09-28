@@ -251,7 +251,7 @@ fn open(key: &SecretKey, sealed: &[u8]) -> ApiResult<Zeroizing<Vec<u8>>> {
     let cipher = ChaCha20Poly1305::new(key.as_ref().into());
     let plain = cipher
         .decrypt(Nonce::from_slice(nonce_bytes), body)
-        .map_err(|_| ApiError::VaultLocked)?;
+        .map_err(|_| ApiError::VaultAuthenticationFailed)?;
     Ok(Zeroizing::new(plain))
 }
 
@@ -274,8 +274,9 @@ impl SealedVault {
         ))
     }
 
-    /// Open the envelope. A wrong passphrase is [`ApiError::VaultLocked`] — the
-    /// AEAD tag simply does not verify, and nothing else is learned.
+    /// Open the envelope. A wrong passphrase and a modified vault both become
+    /// [`ApiError::VaultAuthenticationFailed`]: the AEAD tag simply does not
+    /// verify, and nothing else is learned.
     pub(crate) fn unwrap_master(&self, passphrase: &str) -> ApiResult<SecretKey> {
         let kek = derive_kek(passphrase, &self.params)?;
         let plain = open(&kek, &self.wrapped_master)?;
@@ -369,6 +370,7 @@ impl SealedVault {
         let params = KdfParams::new(format, m_cost, t_cost, p_cost, salt)?;
         let wrapped_master = r.block()?;
         let body = r.block()?;
+        r.finish()?;
         Ok(Self {
             params,
             wrapped_master,
@@ -417,6 +419,14 @@ impl<'a> Reader<'a> {
     fn block(&mut self) -> ApiResult<Vec<u8>> {
         let len = u32::from_be_bytes(self.array::<4>()?) as usize;
         Ok(self.take(len)?.to_vec())
+    }
+
+    fn finish(&self) -> ApiResult<()> {
+        if self.at == self.bytes.len() {
+            Ok(())
+        } else {
+            Err(ApiError::TrailingVaultData)
+        }
     }
 }
 
@@ -531,7 +541,7 @@ mod tests {
 
         // The whole reason for domain separation, as a test.
         match open_for(&master, Purpose::Data, &sealed) {
-            Err(ApiError::VaultLocked) => {}
+            Err(ApiError::VaultAuthenticationFailed) => {}
             other => panic!("a credential must not open with the data key: {other:?}"),
         }
     }
@@ -559,7 +569,10 @@ mod tests {
         assert_eq!(vault.open_body(&master).expect("body").as_slice(), BODY);
 
         // And the upgraded body is no longer readable with the master key itself.
-        assert!(matches!(open(&master, &vault.body), Err(ApiError::VaultLocked)));
+        assert!(matches!(
+            open(&master, &vault.body),
+            Err(ApiError::VaultAuthenticationFailed)
+        ));
     }
 
     #[test]
@@ -570,8 +583,8 @@ mod tests {
         assert_eq!(body.as_slice(), BODY);
 
         match vault.unwrap_master("das falsche Passwort") {
-            Err(ApiError::VaultLocked) => {}
-            other => panic!("a wrong passphrase must say only «locked»: {other:?}"),
+            Err(ApiError::VaultAuthenticationFailed) => {}
+            other => panic!("a wrong passphrase must be indistinguishable from modification: {other:?}"),
         }
     }
 
@@ -595,7 +608,10 @@ mod tests {
         );
 
         // The old passphrase is dead, the new one works, and the body still reads.
-        assert!(matches!(vault.unwrap_master(PASS), Err(ApiError::VaultLocked)));
+        assert!(matches!(
+            vault.unwrap_master(PASS),
+            Err(ApiError::VaultAuthenticationFailed)
+        ));
         let master = vault.unwrap_master("ein neues Passwort").expect("new passphrase");
         assert_eq!(vault.open_body(&master).expect("body").as_slice(), BODY);
     }
@@ -659,6 +675,49 @@ mod tests {
             Err(ApiError::PayloadRefused { reason }) => assert!(reason.contains("newer version")),
             other => panic!("expected a refusal, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn trailing_vault_bytes_are_refused_for_every_supported_format() {
+        let mut current = cheap_vault().0.to_bytes();
+        current.push(b'!');
+        assert!(matches!(
+            SealedVault::from_bytes(&current),
+            Err(ApiError::TrailingVaultData)
+        ));
+
+        let mut current_many = cheap_vault().0.to_bytes();
+        current_many.extend_from_slice(b"ZXQ_TRAILER");
+        assert!(matches!(
+            SealedVault::from_bytes(&current_many),
+            Err(ApiError::TrailingVaultData)
+        ));
+
+        let mut format_one = format_one_vault().to_bytes();
+        format_one.push(0);
+        assert!(matches!(
+            SealedVault::from_bytes(&format_one),
+            Err(ApiError::TrailingVaultData)
+        ));
+    }
+
+    #[test]
+    fn authentication_failure_does_not_claim_to_know_the_cause() {
+        let vault = cheap_vault().0;
+        let mut bytes = vault.to_bytes();
+        let last = bytes.len() - 1;
+        bytes[last] ^= 0x01;
+        let changed = SealedVault::from_bytes(&bytes).expect("the structure still parses");
+        let master = changed.unwrap_master(PASS).expect("passphrase still unwraps master");
+        assert!(matches!(
+            changed.open_body(&master),
+            Err(ApiError::VaultAuthenticationFailed)
+        ));
+
+        assert!(matches!(
+            vault.unwrap_master("das falsche Passwort"),
+            Err(ApiError::VaultAuthenticationFailed)
+        ));
     }
 
     #[test]

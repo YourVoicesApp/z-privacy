@@ -47,6 +47,13 @@ pub enum _ApiError {
     NetworkRefused { reason: NetworkRefusal, detail: String },
     /// A vault file asked for KDF costs this build does not support.
     UnsupportedKdfParameters { reason: String },
+    /// A vault file had bytes after the end of the versioned ZVLT structure.
+    TrailingVaultData,
+    /// The vault could not be authenticated after key derivation.
+    ///
+    /// This does not distinguish a wrong passphrase from a modified vault: the
+    /// AEAD tag proves only that opening failed, not which human story caused it.
+    VaultAuthenticationFailed,
 }
 
 #[frb(mirror(NetworkRefusal))]
@@ -568,6 +575,5 @@ pub struct _RescanOutcome {
 #[frb(mirror(VaultUnlockOutcome))]
 pub enum _VaultUnlockOutcome {
     Unlocked { identities: u32, values: u32 },
-    WrongPassphrase,
 }
 

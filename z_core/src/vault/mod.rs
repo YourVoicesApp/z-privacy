@@ -318,7 +318,7 @@ mod tests {
         assert_eq!(again.state(), VaultState::Locked, "the file is there, sealed");
         assert!(matches!(
             again.unlock("das falsche Passwort"),
-            Err(ApiError::VaultLocked)
+            Err(ApiError::VaultAuthenticationFailed)
         ));
         let (entities, values) = again.unlock(pass).expect("unlock");
         assert_eq!((entities, values), (1, 1));

@@ -44,9 +44,6 @@ pub(crate) fn vault_create(passphrase: String) -> ApiResult<VaultUnlockOutcome> 
 pub(crate) fn vault_unlock(passphrase: String) -> ApiResult<VaultUnlockOutcome> {
     match with_core(|core| core.vault.unlock(&passphrase)) {
         Ok((identities, values)) => Ok(VaultUnlockOutcome::Unlocked { identities, values }),
-        // A wrong passphrase is not an error to shout about; it is an answer.
-        // No attempt counter yet: rate limiting arrives with the UI in M7.
-        Err(ApiError::VaultLocked) => Ok(VaultUnlockOutcome::WrongPassphrase),
         Err(other) => Err(other),
     }
 }

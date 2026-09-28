@@ -60,6 +60,13 @@ pub enum ApiError {
     NetworkRefused { reason: NetworkRefusal, detail: String },
     /// A vault file asked for KDF costs this build does not support.
     UnsupportedKdfParameters { reason: String },
+    /// A vault file had bytes after the end of the versioned ZVLT structure.
+    TrailingVaultData,
+    /// The vault could not be authenticated after key derivation.
+    ///
+    /// This does not distinguish a wrong passphrase from a modified vault: the
+    /// AEAD tag proves only that opening failed, not which human story caused it.
+    VaultAuthenticationFailed,
 }
 
 /// Why a request did not complete. Numbers and names only, by construction.
@@ -112,6 +119,10 @@ impl fmt::Display for ApiError {
                 write!(f, "the request did not go through ({reason:?}): {detail}")
             }
             Self::UnsupportedKdfParameters { reason } => write!(f, "unsupported vault KDF parameters: {reason}"),
+            Self::TrailingVaultData => write!(f, "the vault file has data after the end of the ZVLT structure"),
+            Self::VaultAuthenticationFailed => {
+                write!(f, "could not unlock the vault; the passphrase may be incorrect, or the vault may be corrupted or modified")
+            }
         }
     }
 }
@@ -723,11 +734,8 @@ pub struct RescanOutcome {
 
 /// Opening the vault. No key appears here in either direction.
 ///
-/// `WrongPassphrase` carries nothing, and that is deliberate. It used to carry
-/// `attempts_left`, which was always 0 — a field that looked like information
-/// and was not, and which a screen would have shown as «no tries left» to
-/// someone who had simply mistyped. (Task 032; the same family as the
-/// `open_suggestions` that was always 0.)
+/// Authentication failure is not an outcome here. It is an [`ApiError`], because
+/// Rust cannot prove whether the passphrase was wrong or the file was modified.
 ///
 /// There is no attempt limit and there should not be one: locking a **local**
 /// file after three tries protects nobody — whoever has the file does not use
@@ -737,7 +745,6 @@ pub struct RescanOutcome {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum VaultUnlockOutcome {
     Unlocked { identities: u32, values: u32 },
-    WrongPassphrase,
 }
 
 // ---------------------------------------------------------------- G11: no text in Debug

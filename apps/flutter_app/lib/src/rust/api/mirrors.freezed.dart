@@ -55,7 +55,7 @@ extension ApiErrorPatterns on ApiError {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_ImportRefused value)?  importRefused,TResult Function( ApiError_DocumentRefused value)?  documentRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,TResult Function( ApiError_PayloadRefused value)?  payloadRefused,TResult Function( ApiError_NetworkRefused value)?  networkRefused,TResult Function( ApiError_UnsupportedKdfParameters value)?  unsupportedKdfParameters,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_ImportRefused value)?  importRefused,TResult Function( ApiError_DocumentRefused value)?  documentRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,TResult Function( ApiError_PayloadRefused value)?  payloadRefused,TResult Function( ApiError_NetworkRefused value)?  networkRefused,TResult Function( ApiError_UnsupportedKdfParameters value)?  unsupportedKdfParameters,TResult Function( ApiError_TrailingVaultData value)?  trailingVaultData,TResult Function( ApiError_VaultAuthenticationFailed value)?  vaultAuthenticationFailed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -73,7 +73,9 @@ return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != n
 return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
 return payloadRefused(_that);case ApiError_NetworkRefused() when networkRefused != null:
 return networkRefused(_that);case ApiError_UnsupportedKdfParameters() when unsupportedKdfParameters != null:
-return unsupportedKdfParameters(_that);case _:
+return unsupportedKdfParameters(_that);case ApiError_TrailingVaultData() when trailingVaultData != null:
+return trailingVaultData(_that);case ApiError_VaultAuthenticationFailed() when vaultAuthenticationFailed != null:
+return vaultAuthenticationFailed(_that);case _:
   return orElse();
 
 }
@@ -91,7 +93,7 @@ return unsupportedKdfParameters(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_ImportRefused value)  importRefused,required TResult Function( ApiError_DocumentRefused value)  documentRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,required TResult Function( ApiError_PayloadRefused value)  payloadRefused,required TResult Function( ApiError_NetworkRefused value)  networkRefused,required TResult Function( ApiError_UnsupportedKdfParameters value)  unsupportedKdfParameters,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_ImportRefused value)  importRefused,required TResult Function( ApiError_DocumentRefused value)  documentRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,required TResult Function( ApiError_PayloadRefused value)  payloadRefused,required TResult Function( ApiError_NetworkRefused value)  networkRefused,required TResult Function( ApiError_UnsupportedKdfParameters value)  unsupportedKdfParameters,required TResult Function( ApiError_TrailingVaultData value)  trailingVaultData,required TResult Function( ApiError_VaultAuthenticationFailed value)  vaultAuthenticationFailed,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
@@ -109,7 +111,9 @@ return unknownToken(_that);case ApiError_NothingToSend():
 return nothingToSend(_that);case ApiError_PayloadRefused():
 return payloadRefused(_that);case ApiError_NetworkRefused():
 return networkRefused(_that);case ApiError_UnsupportedKdfParameters():
-return unsupportedKdfParameters(_that);}
+return unsupportedKdfParameters(_that);case ApiError_TrailingVaultData():
+return trailingVaultData(_that);case ApiError_VaultAuthenticationFailed():
+return vaultAuthenticationFailed(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -123,7 +127,7 @@ return unsupportedKdfParameters(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_ImportRefused value)?  importRefused,TResult? Function( ApiError_DocumentRefused value)?  documentRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,TResult? Function( ApiError_PayloadRefused value)?  payloadRefused,TResult? Function( ApiError_NetworkRefused value)?  networkRefused,TResult? Function( ApiError_UnsupportedKdfParameters value)?  unsupportedKdfParameters,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_ImportRefused value)?  importRefused,TResult? Function( ApiError_DocumentRefused value)?  documentRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,TResult? Function( ApiError_PayloadRefused value)?  payloadRefused,TResult? Function( ApiError_NetworkRefused value)?  networkRefused,TResult? Function( ApiError_UnsupportedKdfParameters value)?  unsupportedKdfParameters,TResult? Function( ApiError_TrailingVaultData value)?  trailingVaultData,TResult? Function( ApiError_VaultAuthenticationFailed value)?  vaultAuthenticationFailed,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -141,7 +145,9 @@ return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != n
 return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
 return payloadRefused(_that);case ApiError_NetworkRefused() when networkRefused != null:
 return networkRefused(_that);case ApiError_UnsupportedKdfParameters() when unsupportedKdfParameters != null:
-return unsupportedKdfParameters(_that);case _:
+return unsupportedKdfParameters(_that);case ApiError_TrailingVaultData() when trailingVaultData != null:
+return trailingVaultData(_that);case ApiError_VaultAuthenticationFailed() when vaultAuthenticationFailed != null:
+return vaultAuthenticationFailed(_that);case _:
   return null;
 
 }
@@ -158,7 +164,7 @@ return unsupportedKdfParameters(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  importRefused,TResult Function( Refusal reason,  String detail)?  documentRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,TResult Function( String reason)?  payloadRefused,TResult Function( NetworkRefusal reason,  String detail)?  networkRefused,TResult Function( String reason)?  unsupportedKdfParameters,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  importRefused,TResult Function( Refusal reason,  String detail)?  documentRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,TResult Function( String reason)?  payloadRefused,TResult Function( NetworkRefusal reason,  String detail)?  networkRefused,TResult Function( String reason)?  unsupportedKdfParameters,TResult Function()?  trailingVaultData,TResult Function()?  vaultAuthenticationFailed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -175,7 +181,9 @@ return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
 return payloadRefused(_that.reason);case ApiError_NetworkRefused() when networkRefused != null:
 return networkRefused(_that.reason,_that.detail);case ApiError_UnsupportedKdfParameters() when unsupportedKdfParameters != null:
-return unsupportedKdfParameters(_that.reason);case _:
+return unsupportedKdfParameters(_that.reason);case ApiError_TrailingVaultData() when trailingVaultData != null:
+return trailingVaultData();case ApiError_VaultAuthenticationFailed() when vaultAuthenticationFailed != null:
+return vaultAuthenticationFailed();case _:
   return orElse();
 
 }
@@ -193,7 +201,7 @@ return unsupportedKdfParameters(_that.reason);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  importRefused,required TResult Function( Refusal reason,  String detail)  documentRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,required TResult Function( String reason)  payloadRefused,required TResult Function( NetworkRefusal reason,  String detail)  networkRefused,required TResult Function( String reason)  unsupportedKdfParameters,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  importRefused,required TResult Function( Refusal reason,  String detail)  documentRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,required TResult Function( String reason)  payloadRefused,required TResult Function( NetworkRefusal reason,  String detail)  networkRefused,required TResult Function( String reason)  unsupportedKdfParameters,required TResult Function()  trailingVaultData,required TResult Function()  vaultAuthenticationFailed,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
 return notImplemented();case ApiError_InvalidSession():
@@ -210,7 +218,9 @@ return unknownToken();case ApiError_NothingToSend():
 return nothingToSend();case ApiError_PayloadRefused():
 return payloadRefused(_that.reason);case ApiError_NetworkRefused():
 return networkRefused(_that.reason,_that.detail);case ApiError_UnsupportedKdfParameters():
-return unsupportedKdfParameters(_that.reason);}
+return unsupportedKdfParameters(_that.reason);case ApiError_TrailingVaultData():
+return trailingVaultData();case ApiError_VaultAuthenticationFailed():
+return vaultAuthenticationFailed();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -224,7 +234,7 @@ return unsupportedKdfParameters(_that.reason);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  importRefused,TResult? Function( Refusal reason,  String detail)?  documentRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,TResult? Function( String reason)?  payloadRefused,TResult? Function( NetworkRefusal reason,  String detail)?  networkRefused,TResult? Function( String reason)?  unsupportedKdfParameters,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  importRefused,TResult? Function( Refusal reason,  String detail)?  documentRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,TResult? Function( String reason)?  payloadRefused,TResult? Function( NetworkRefusal reason,  String detail)?  networkRefused,TResult? Function( String reason)?  unsupportedKdfParameters,TResult? Function()?  trailingVaultData,TResult? Function()?  vaultAuthenticationFailed,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -241,7 +251,9 @@ return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
 return payloadRefused(_that.reason);case ApiError_NetworkRefused() when networkRefused != null:
 return networkRefused(_that.reason,_that.detail);case ApiError_UnsupportedKdfParameters() when unsupportedKdfParameters != null:
-return unsupportedKdfParameters(_that.reason);case _:
+return unsupportedKdfParameters(_that.reason);case ApiError_TrailingVaultData() when trailingVaultData != null:
+return trailingVaultData();case ApiError_VaultAuthenticationFailed() when vaultAuthenticationFailed != null:
+return vaultAuthenticationFailed();case _:
   return null;
 
 }
@@ -286,7 +298,7 @@ String toString() {
 
 class ApiError_InvalidSession extends ApiError {
   const ApiError_InvalidSession(): super._();
-  
+
 
 
 
@@ -318,7 +330,7 @@ String toString() {
 
 class ApiError_InvalidHandle extends ApiError {
   const ApiError_InvalidHandle(): super._();
-  
+
 
 
 
@@ -350,7 +362,7 @@ String toString() {
 
 class ApiError_StalePayload extends ApiError {
   const ApiError_StalePayload({required this.expected, required this.got}): super._();
-  
+
 
  final  int expected;
  final  int got;
@@ -418,7 +430,7 @@ as int,
 
 class ApiError_VaultLocked extends ApiError {
   const ApiError_VaultLocked(): super._();
-  
+
 
 
 
@@ -450,7 +462,7 @@ String toString() {
 
 class ApiError_ProviderUnavailable extends ApiError {
   const ApiError_ProviderUnavailable({required this.provider}): super._();
-  
+
 
  final  String provider;
 
@@ -516,7 +528,7 @@ as String,
 
 class ApiError_OpenSuggestions extends ApiError {
   const ApiError_OpenSuggestions({required this.count}): super._();
-  
+
 
  final  int count;
 
@@ -582,7 +594,7 @@ as int,
 
 class ApiError_ImportRefused extends ApiError {
   const ApiError_ImportRefused({required this.reason}): super._();
-  
+
 
  final  String reason;
 
@@ -648,7 +660,7 @@ as String,
 
 class ApiError_DocumentRefused extends ApiError {
   const ApiError_DocumentRefused({required this.reason, required this.detail}): super._();
-  
+
 
  final  Refusal reason;
  final  String detail;
@@ -713,7 +725,7 @@ as String,
 @override
 @pragma('vm:prefer-inline')
 $RefusalCopyWith<$Res> get reason {
-  
+
   return $RefusalCopyWith<$Res>(_self.reason, (value) {
     return _then(_self.copyWith(reason: value));
   });
@@ -725,7 +737,7 @@ $RefusalCopyWith<$Res> get reason {
 
 class ApiError_BadSpan extends ApiError {
   const ApiError_BadSpan({required this.reason}): super._();
-  
+
 
  final  String reason;
 
@@ -791,7 +803,7 @@ as String,
 
 class ApiError_UnknownToken extends ApiError {
   const ApiError_UnknownToken(): super._();
-  
+
 
 
 
@@ -823,7 +835,7 @@ String toString() {
 
 class ApiError_NothingToSend extends ApiError {
   const ApiError_NothingToSend(): super._();
-  
+
 
 
 
@@ -855,7 +867,7 @@ String toString() {
 
 class ApiError_PayloadRefused extends ApiError {
   const ApiError_PayloadRefused({required this.reason}): super._();
-  
+
 
  final  String reason;
 
@@ -921,7 +933,7 @@ as String,
 
 class ApiError_NetworkRefused extends ApiError {
   const ApiError_NetworkRefused({required this.reason, required this.detail}): super._();
-  
+
 
  final  NetworkRefusal reason;
  final  String detail;
@@ -986,7 +998,7 @@ as String,
 @override
 @pragma('vm:prefer-inline')
 $NetworkRefusalCopyWith<$Res> get reason {
-  
+
   return $NetworkRefusalCopyWith<$Res>(_self.reason, (value) {
     return _then(_self.copyWith(reason: value));
   });
@@ -1058,6 +1070,70 @@ as String,
 
 
 }
+
+/// @nodoc
+
+
+class ApiError_TrailingVaultData extends ApiError {
+  const ApiError_TrailingVaultData(): super._();
+
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ApiError_TrailingVaultData);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ApiError.trailingVaultData()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ApiError_VaultAuthenticationFailed extends ApiError {
+  const ApiError_VaultAuthenticationFailed(): super._();
+
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ApiError_VaultAuthenticationFailed);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ApiError.vaultAuthenticationFailed()';
+}
+
+
+}
+
+
+
 
 /// @nodoc
 mixin _$NetworkRefusal {
@@ -1266,7 +1342,7 @@ return unreachable();case _:
 
 class NetworkRefusal_NotConnected extends NetworkRefusal {
   const NetworkRefusal_NotConnected(): super._();
-  
+
 
 
 
@@ -1298,7 +1374,7 @@ String toString() {
 
 class NetworkRefusal_InsecureUrl extends NetworkRefusal {
   const NetworkRefusal_InsecureUrl(): super._();
-  
+
 
 
 
@@ -1330,7 +1406,7 @@ String toString() {
 
 class NetworkRefusal_Redirected extends NetworkRefusal {
   const NetworkRefusal_Redirected({required this.status}): super._();
-  
+
 
  final  int status;
 
@@ -1396,7 +1472,7 @@ as int,
 
 class NetworkRefusal_BadStatus extends NetworkRefusal {
   const NetworkRefusal_BadStatus({required this.status}): super._();
-  
+
 
  final  int status;
 
@@ -1462,7 +1538,7 @@ as int,
 
 class NetworkRefusal_Timeout extends NetworkRefusal {
   const NetworkRefusal_Timeout({required this.millis}): super._();
-  
+
 
  final  int millis;
 
@@ -1528,7 +1604,7 @@ as int,
 
 class NetworkRefusal_ResponseTooLarge extends NetworkRefusal {
   const NetworkRefusal_ResponseTooLarge({required this.limitKib}): super._();
-  
+
 
  final  int limitKib;
 
@@ -1594,7 +1670,7 @@ as int,
 
 class NetworkRefusal_PayloadTooLarge extends NetworkRefusal {
   const NetworkRefusal_PayloadTooLarge({required this.kib, required this.limitKib}): super._();
-  
+
 
  final  int kib;
  final  int limitKib;
@@ -1662,7 +1738,7 @@ as int,
 
 class NetworkRefusal_Unreadable extends NetworkRefusal {
   const NetworkRefusal_Unreadable(): super._();
-  
+
 
 
 
@@ -1694,7 +1770,7 @@ String toString() {
 
 class NetworkRefusal_Unreachable extends NetworkRefusal {
   const NetworkRefusal_Unreachable(): super._();
-  
+
 
 
 
@@ -1898,7 +1974,7 @@ return snapped(_that.spans);case _:
 
 class ProtectOutcome_Applied extends ProtectOutcome {
   const ProtectOutcome_Applied({required this.token, required this.places}): super._();
-  
+
 
  final  String token;
  final  int places;
@@ -1966,7 +2042,7 @@ as int,
 
 class ProtectOutcome_AlreadyProtected extends ProtectOutcome {
   const ProtectOutcome_AlreadyProtected({required this.token, required this.source, required this.sourceDetail}): super._();
-  
+
 
  final  String token;
  final  Source source;
@@ -2036,7 +2112,7 @@ as String,
 
 class ProtectOutcome_BelongsToEntity extends ProtectOutcome {
   const ProtectOutcome_BelongsToEntity({required this.entity, required this.token}): super._();
-  
+
 
  final  String entity;
  final  String token;
@@ -2104,7 +2180,7 @@ as String,
 
 class ProtectOutcome_Snapped extends ProtectOutcome {
   const ProtectOutcome_Snapped({required final  List<Span> spans}): _spans = spans,super._();
-  
+
 
  final  List<Span> _spans;
  List<Span> get spans {
@@ -2396,7 +2472,7 @@ return emptyDocument();case _:
 
 class Refusal_ScannedPdfNoTextLayer extends Refusal {
   const Refusal_ScannedPdfNoTextLayer({required this.pages}): super._();
-  
+
 
  final  int pages;
 
@@ -2462,7 +2538,7 @@ as int,
 
 class Refusal_EncryptedPdf extends Refusal {
   const Refusal_EncryptedPdf(): super._();
-  
+
 
 
 
@@ -2494,7 +2570,7 @@ String toString() {
 
 class Refusal_UnsupportedEncoding extends Refusal {
   const Refusal_UnsupportedEncoding({required this.page, required this.readablePercent}): super._();
-  
+
 
  final  int page;
  final  int readablePercent;
@@ -2562,7 +2638,7 @@ as int,
 
 class Refusal_UnreadableStructure extends Refusal {
   const Refusal_UnreadableStructure({required this.page}): super._();
-  
+
 
  final  int page;
 
@@ -2628,7 +2704,7 @@ as int,
 
 class Refusal_MalformedDocument extends Refusal {
   const Refusal_MalformedDocument(): super._();
-  
+
 
 
 
@@ -2660,7 +2736,7 @@ String toString() {
 
 class Refusal_DocumentTooLarge extends Refusal {
   const Refusal_DocumentTooLarge({required this.mib, required this.limitMib}): super._();
-  
+
 
  final  int mib;
  final  int limitMib;
@@ -2728,7 +2804,7 @@ as int,
 
 class Refusal_TooManyPages extends Refusal {
   const Refusal_TooManyPages({required this.pages, required this.limit}): super._();
-  
+
 
  final  int pages;
  final  int limit;
@@ -2796,7 +2872,7 @@ as int,
 
 class Refusal_TextTooLarge extends Refusal {
   const Refusal_TextTooLarge({required this.limitMib}): super._();
-  
+
 
  final  int limitMib;
 
@@ -2862,7 +2938,7 @@ as int,
 
 class Refusal_CompressionBomb extends Refusal {
   const Refusal_CompressionBomb({required this.ratio}): super._();
-  
+
 
  final  int ratio;
 
@@ -2928,7 +3004,7 @@ as int,
 
 class Refusal_TooManyParts extends Refusal {
   const Refusal_TooManyParts({required this.parts, required this.limit}): super._();
-  
+
 
  final  int parts;
  final  int limit;
@@ -2996,7 +3072,7 @@ as int,
 
 class Refusal_TookTooLong extends Refusal {
   const Refusal_TookTooLong({required this.millis}): super._();
-  
+
 
  final  int millis;
 
@@ -3062,7 +3138,7 @@ as int,
 
 class Refusal_EmptyDocument extends Refusal {
   const Refusal_EmptyDocument(): super._();
-  
+
 
 
 
@@ -3254,7 +3330,7 @@ return undone(_that.token,_that.places,_that.createdEntity);case _:
 
 class UndoOutcome_NothingToUndo extends UndoOutcome {
   const UndoOutcome_NothingToUndo(): super._();
-  
+
 
 
 
@@ -3286,7 +3362,7 @@ String toString() {
 
 class UndoOutcome_Undone extends UndoOutcome {
   const UndoOutcome_Undone({required this.token, required this.places, this.createdEntity}): super._();
-  
+
 
  final  String token;
  final  int places;
@@ -3354,30 +3430,62 @@ as String?,
 /// @nodoc
 mixin _$VaultUnlockOutcome {
 
-
+ int get identities; int get values;
+/// Create a copy of VaultUnlockOutcome
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$VaultUnlockOutcomeCopyWith<VaultUnlockOutcome> get copyWith => _$VaultUnlockOutcomeCopyWithImpl<VaultUnlockOutcome>(this as VaultUnlockOutcome, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VaultUnlockOutcome);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is VaultUnlockOutcome&&(identical(other.identities, identities) || other.identities == identities)&&(identical(other.values, values) || other.values == values));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode => Object.hash(runtimeType,identities,values);
 
 @override
 String toString() {
-  return 'VaultUnlockOutcome()';
+  return 'VaultUnlockOutcome(identities: $identities, values: $values)';
 }
 
 
 }
 
 /// @nodoc
-class $VaultUnlockOutcomeCopyWith<$Res>  {
-$VaultUnlockOutcomeCopyWith(VaultUnlockOutcome _, $Res Function(VaultUnlockOutcome) __);
+abstract mixin class $VaultUnlockOutcomeCopyWith<$Res>  {
+  factory $VaultUnlockOutcomeCopyWith(VaultUnlockOutcome value, $Res Function(VaultUnlockOutcome) _then) = _$VaultUnlockOutcomeCopyWithImpl;
+@useResult
+$Res call({
+ int identities, int values
+});
+
+
+
+
+}
+/// @nodoc
+class _$VaultUnlockOutcomeCopyWithImpl<$Res>
+    implements $VaultUnlockOutcomeCopyWith<$Res> {
+  _$VaultUnlockOutcomeCopyWithImpl(this._self, this._then);
+
+  final VaultUnlockOutcome _self;
+  final $Res Function(VaultUnlockOutcome) _then;
+
+/// Create a copy of VaultUnlockOutcome
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? identities = null,Object? values = null,}) {
+  return _then(_self.copyWith(
+identities: null == identities ? _self.identities : identities // ignore: cast_nullable_to_non_nullable
+as int,values: null == values ? _self.values : values // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
 }
 
 
@@ -3395,12 +3503,11 @@ extension VaultUnlockOutcomePatterns on VaultUnlockOutcome {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( VaultUnlockOutcome_Unlocked value)?  unlocked,TResult Function( VaultUnlockOutcome_WrongPassphrase value)?  wrongPassphrase,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( VaultUnlockOutcome_Unlocked value)?  unlocked,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case VaultUnlockOutcome_Unlocked() when unlocked != null:
-return unlocked(_that);case VaultUnlockOutcome_WrongPassphrase() when wrongPassphrase != null:
-return wrongPassphrase(_that);case _:
+return unlocked(_that);case _:
   return orElse();
 
 }
@@ -3418,12 +3525,11 @@ return wrongPassphrase(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( VaultUnlockOutcome_Unlocked value)  unlocked,required TResult Function( VaultUnlockOutcome_WrongPassphrase value)  wrongPassphrase,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( VaultUnlockOutcome_Unlocked value)  unlocked,}){
 final _that = this;
 switch (_that) {
 case VaultUnlockOutcome_Unlocked():
-return unlocked(_that);case VaultUnlockOutcome_WrongPassphrase():
-return wrongPassphrase(_that);}
+return unlocked(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -3437,12 +3543,11 @@ return wrongPassphrase(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( VaultUnlockOutcome_Unlocked value)?  unlocked,TResult? Function( VaultUnlockOutcome_WrongPassphrase value)?  wrongPassphrase,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( VaultUnlockOutcome_Unlocked value)?  unlocked,}){
 final _that = this;
 switch (_that) {
 case VaultUnlockOutcome_Unlocked() when unlocked != null:
-return unlocked(_that);case VaultUnlockOutcome_WrongPassphrase() when wrongPassphrase != null:
-return wrongPassphrase(_that);case _:
+return unlocked(_that);case _:
   return null;
 
 }
@@ -3459,11 +3564,10 @@ return wrongPassphrase(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int identities,  int values)?  unlocked,TResult Function()?  wrongPassphrase,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( int identities,  int values)?  unlocked,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case VaultUnlockOutcome_Unlocked() when unlocked != null:
-return unlocked(_that.identities,_that.values);case VaultUnlockOutcome_WrongPassphrase() when wrongPassphrase != null:
-return wrongPassphrase();case _:
+return unlocked(_that.identities,_that.values);case _:
   return orElse();
 
 }
@@ -3481,11 +3585,10 @@ return wrongPassphrase();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int identities,  int values)  unlocked,required TResult Function()  wrongPassphrase,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( int identities,  int values)  unlocked,}) {final _that = this;
 switch (_that) {
 case VaultUnlockOutcome_Unlocked():
-return unlocked(_that.identities,_that.values);case VaultUnlockOutcome_WrongPassphrase():
-return wrongPassphrase();}
+return unlocked(_that.identities,_that.values);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -3499,11 +3602,10 @@ return wrongPassphrase();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int identities,  int values)?  unlocked,TResult? Function()?  wrongPassphrase,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( int identities,  int values)?  unlocked,}) {final _that = this;
 switch (_that) {
 case VaultUnlockOutcome_Unlocked() when unlocked != null:
-return unlocked(_that.identities,_that.values);case VaultUnlockOutcome_WrongPassphrase() when wrongPassphrase != null:
-return wrongPassphrase();case _:
+return unlocked(_that.identities,_that.values);case _:
   return null;
 
 }
@@ -3516,14 +3618,14 @@ return wrongPassphrase();case _:
 
 class VaultUnlockOutcome_Unlocked extends VaultUnlockOutcome {
   const VaultUnlockOutcome_Unlocked({required this.identities, required this.values}): super._();
-  
 
- final  int identities;
- final  int values;
+
+@override final  int identities;
+@override final  int values;
 
 /// Create a copy of VaultUnlockOutcome
 /// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
+@override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $VaultUnlockOutcome_UnlockedCopyWith<VaultUnlockOutcome_Unlocked> get copyWith => _$VaultUnlockOutcome_UnlockedCopyWithImpl<VaultUnlockOutcome_Unlocked>(this, _$identity);
 
@@ -3549,7 +3651,7 @@ String toString() {
 /// @nodoc
 abstract mixin class $VaultUnlockOutcome_UnlockedCopyWith<$Res> implements $VaultUnlockOutcomeCopyWith<$Res> {
   factory $VaultUnlockOutcome_UnlockedCopyWith(VaultUnlockOutcome_Unlocked value, $Res Function(VaultUnlockOutcome_Unlocked) _then) = _$VaultUnlockOutcome_UnlockedCopyWithImpl;
-@useResult
+@override @useResult
 $Res call({
  int identities, int values
 });
@@ -3568,7 +3670,7 @@ class _$VaultUnlockOutcome_UnlockedCopyWithImpl<$Res>
 
 /// Create a copy of VaultUnlockOutcome
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? identities = null,Object? values = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? identities = null,Object? values = null,}) {
   return _then(VaultUnlockOutcome_Unlocked(
 identities: null == identities ? _self.identities : identities // ignore: cast_nullable_to_non_nullable
 as int,values: null == values ? _self.values : values // ignore: cast_nullable_to_non_nullable
@@ -3578,37 +3680,5 @@ as int,
 
 
 }
-
-/// @nodoc
-
-
-class VaultUnlockOutcome_WrongPassphrase extends VaultUnlockOutcome {
-  const VaultUnlockOutcome_WrongPassphrase(): super._();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is VaultUnlockOutcome_WrongPassphrase);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-  return 'VaultUnlockOutcome.wrongPassphrase()';
-}
-
-
-}
-
-
-
 
 // dart format on

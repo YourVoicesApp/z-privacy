@@ -13,6 +13,10 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
+String vaultKeyTroubleFor(ApiError e) => e is ApiError_VaultAuthenticationFailed
+    ? 'Could not unlock the vault. The passphrase may be incorrect, or the vault may be corrupted or modified.'
+    : e.toString();
+
 /// Making a vault, opening one, or changing its passphrase.
 class VaultKeyForm extends StatefulWidget {
   const VaultKeyForm({
@@ -111,11 +115,10 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
           await z.vaultCreateWithPassphrase(passphrase: _one.text);
         }
       } else {
-        final out = await z.vaultUnlockWithPassphrase(passphrase: _one.text);
-        if (out is VaultUnlockOutcome_WrongPassphrase) bad = 'That is not the passphrase.';
+        await z.vaultUnlockWithPassphrase(passphrase: _one.text);
       }
     } on ApiError catch (e) {
-      bad = e.toString();
+      bad = vaultKeyTroubleFor(e);
     }
     await widget.ground.refresh();
     if (!mounted) return;
