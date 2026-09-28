@@ -24,6 +24,7 @@ mod payload;
 mod providers;
 mod scanner;
 mod secret;
+mod secure_file;
 mod session;
 mod text;
 mod tokens;

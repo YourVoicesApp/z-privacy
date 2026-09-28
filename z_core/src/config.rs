@@ -150,26 +150,32 @@ pub(crate) struct ConfigStore {
 }
 
 impl ConfigStore {
-    pub(crate) fn set_dir(&mut self, dir: &Path) {
+    pub(crate) fn set_dir(&mut self, dir: &Path) -> ApiResult<()> {
         self.dir = Some(dir.to_path_buf());
-        self.current = self.read_from_disk();
+        self.current = self.read_from_disk()?;
+        Ok(())
     }
 
     fn path(&self) -> Option<PathBuf> {
         self.dir.as_ref().map(|d| d.join(FILE_NAME))
     }
 
-    fn read_from_disk(&self) -> AppConfig {
+    fn read_from_disk(&self) -> ApiResult<AppConfig> {
         let Some(path) = self.path() else {
-            return AppConfig::default();
+            return Ok(AppConfig::default());
         };
-        // G15-cfg: reading the non-secret settings file. See `config.rs`.
-        match std::fs::read_to_string(&path) {
+        let bytes = match crate::secure_file::read_no_follow(&path, "settings.zcfg")? {
+            Some(bytes) => bytes,
+            // A missing file is not an error: it means «no settings yet», which
+            // is exactly what a first run is.
+            None => return Ok(AppConfig::default()),
+        };
+        let config = match String::from_utf8(bytes) {
             Ok(text) if text.starts_with(MAGIC) => AppConfig::from_text(&text),
-            // A missing or foreign file is not an error: it means «no settings
-            // yet», which is exactly what a first run is.
+            // A foreign file is not an error: it means «no settings yet».
             _ => AppConfig::default(),
-        }
+        };
+        Ok(config)
     }
 
     pub(crate) fn get(&self) -> AppConfig {
@@ -178,21 +184,14 @@ impl ConfigStore {
 
     pub(crate) fn save(&mut self, next: AppConfig) -> ApiResult<AppConfig> {
         let next = next.checked()?;
-        self.current = next.clone();
         let Some(path) = self.path() else {
             // No folder yet: kept for this run, and the caller is told so by
             // `Settings::session_only` as usual.
+            self.current = next.clone();
             return Ok(next);
         };
-        let temp = path.with_extension("zcfg.new");
-        // G15-cfg: writing the settings file via temp+rename, never half of one.
-        std::fs::write(&temp, next.to_text()).map_err(|e| ApiError::ImportRefused {
-            reason: format!("the settings could not be written: {e}"),
-        })?;
-        // G15-cfg: rename into place.
-        std::fs::rename(&temp, &path).map_err(|e| ApiError::ImportRefused {
-            reason: format!("the settings could not be written: {e}"),
-        })?;
+        crate::secure_file::replace_atomically(&path, "zcfg.new", next.to_text().as_bytes(), "settings.zcfg")?;
+        self.current = next.clone();
         Ok(next)
     }
 }

@@ -8,6 +8,9 @@ use std::sync::{Mutex, MutexGuard, OnceLock};
 
 use z_core::api::*;
 
+#[cfg(unix)]
+use std::os::unix::fs::{symlink, PermissionsExt};
+
 const PASS: &str = "ein gutes Passwort für den Test";
 
 fn serial() -> MutexGuard<'static, ()> {
@@ -71,6 +74,11 @@ fn states(s: SessionId) -> (Vec<String>, Vec<String>) {
         .map(text_of)
         .collect();
     (auto, open)
+}
+
+#[cfg(unix)]
+fn mode(path: impl AsRef<std::path::Path>) -> u32 {
+    std::fs::metadata(path).expect("metadata").permissions().mode() & 0o777
 }
 
 #[test]
@@ -512,6 +520,156 @@ fn zcfg_refuses_a_value_that_could_name_a_client() {
         !dir.join("settings.zcfg").exists(),
         "and nothing was written at all"
     );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[cfg(unix)]
+#[test]
+fn local_files_are_private_on_fresh_install() {
+    let _lock = serial();
+    let dir = std::env::temp_dir().join(format!("zprivacy-fs-private-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
+    vault_create_with_passphrase(PASS.to_string()).expect("create");
+
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    save_settings(s).expect("save settings");
+
+    assert_eq!(mode(&dir), 0o700, "the data directory is private");
+    assert_eq!(mode(dir.join("vault.zv")), 0o600, "the sealed vault is private");
+    assert_eq!(mode(dir.join("settings.zcfg")), 0o600, "the settings file is private");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[cfg(unix)]
+#[test]
+fn vault_temp_symlink_is_refused_and_victim_is_unchanged() {
+    let _lock = serial();
+    let root = std::env::temp_dir().join(format!("zprivacy-fs-vault-link-{}", std::process::id()));
+    let data = root.join("data");
+    let victim = root.join("victim.txt");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&data).expect("data dir");
+    std::fs::write(&victim, b"ZXQ-VICTIM-VAULT-ORIGINAL").expect("victim");
+    symlink(&victim, data.join("vault.zv.new")).expect("temp symlink");
+
+    set_data_dir(data.to_string_lossy().to_string()).expect("dir");
+    match vault_create_with_passphrase(PASS.to_string()) {
+        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the temp symlink must be refused, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(&victim).expect("victim"), b"ZXQ-VICTIM-VAULT-ORIGINAL");
+    assert!(!data.join("vault.zv").exists(), "a failed create does not invent a final vault");
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[cfg(unix)]
+#[test]
+fn settings_temp_symlink_is_refused_and_victim_is_unchanged() {
+    let _lock = serial();
+    let root = std::env::temp_dir().join(format!("zprivacy-fs-zcfg-link-{}", std::process::id()));
+    let data = root.join("data");
+    let victim = root.join("victim.txt");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&data).expect("data dir");
+    std::fs::write(&victim, b"ZXQ-VICTIM-CONFIG-ORIGINAL").expect("victim");
+    symlink(&victim, data.join("settings.zcfg.new")).expect("temp symlink");
+
+    set_data_dir(data.to_string_lossy().to_string()).expect("dir");
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    match save_settings(s) {
+        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the temp symlink must be refused, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(&victim).expect("victim"), b"ZXQ-VICTIM-CONFIG-ORIGINAL");
+    assert!(!data.join("settings.zcfg").exists(), "a failed save does not invent a final settings file");
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[cfg(unix)]
+#[test]
+fn final_vault_symlink_is_not_read_as_a_vault() {
+    let _lock = serial();
+    let source = fresh_vault("fs-source-vault");
+    vault_lock().expect("lock source");
+    let source_path = std::path::Path::new(&source).join("vault.zv");
+
+    let root = std::env::temp_dir().join(format!("zprivacy-fs-final-link-{}", std::process::id()));
+    let data = root.join("data");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&data).expect("data dir");
+    symlink(&source_path, data.join("vault.zv")).expect("final symlink");
+
+    set_data_dir(data.to_string_lossy().to_string()).expect("dir");
+    assert_eq!(vault_state().expect("state"), VaultState::Locked);
+    match vault_unlock_with_passphrase(PASS.to_string()) {
+        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("following links"), "{reason}"),
+        other => panic!("a final vault symlink must not be followed, got {other:?}"),
+    }
+    let _ = std::fs::remove_dir_all(&root);
+    let _ = std::fs::remove_dir_all(source);
+}
+
+#[cfg(unix)]
+#[test]
+fn normal_secure_vault_and_config_writes_still_work() {
+    let _lock = serial();
+    let dir = fresh_vault("fs-normal");
+    identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    s.language = "de".to_string();
+    save_settings(s).expect("save");
+
+    vault_lock().expect("lock");
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
+    assert_eq!(entities(None).expect("entities").len(), 1);
+
+    let elsewhere = std::path::Path::new(&dir).join("elsewhere");
+    set_data_dir(elsewhere.to_string_lossy().to_string()).expect("elsewhere");
+    assert!(!settings().expect("settings").first_run_done);
+    set_data_dir(dir.clone()).expect("back");
+    assert!(settings().expect("settings").first_run_done);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[cfg(unix)]
+#[test]
+fn failed_secure_writes_leave_old_files_intact() {
+    let _lock = serial();
+    let dir = fresh_vault("fs-fail-intact");
+    let path = std::path::Path::new(&dir);
+
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    save_settings(s).expect("initial settings");
+    let old_vault = std::fs::read(path.join("vault.zv")).expect("old vault");
+    let old_settings = std::fs::read(path.join("settings.zcfg")).expect("old settings");
+    let vault_victim = path.join("vault-victim.txt");
+    let settings_victim = path.join("settings-victim.txt");
+    std::fs::write(&vault_victim, b"ZXQ-OLD-FINAL-VAULT-VICTIM").expect("vault victim");
+    std::fs::write(&settings_victim, b"ZXQ-OLD-FINAL-CONFIG-VICTIM").expect("settings victim");
+
+    symlink(&vault_victim, path.join("vault.zv.new")).expect("vault temp symlink");
+    match create_entity(EntityKind::Client, "Nordstern".to_string(), None) {
+        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the vault write should fail before replacing the old file, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(path.join("vault.zv")).expect("vault"), old_vault);
+    assert_eq!(std::fs::read(&vault_victim).expect("vault victim"), b"ZXQ-OLD-FINAL-VAULT-VICTIM");
+    std::fs::remove_file(path.join("vault.zv.new")).expect("remove vault temp");
+
+    symlink(&settings_victim, path.join("settings.zcfg.new")).expect("settings temp symlink");
+    let mut s = settings().expect("settings");
+    s.language = "de".to_string();
+    match save_settings(s) {
+        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the settings write should fail before replacing the old file, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(path.join("settings.zcfg")).expect("settings"), old_settings);
+    assert_eq!(std::fs::read(&settings_victim).expect("settings victim"), b"ZXQ-OLD-FINAL-CONFIG-VICTIM");
     let _ = std::fs::remove_dir_all(&dir);
 }
 

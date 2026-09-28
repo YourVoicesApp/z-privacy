@@ -22,7 +22,7 @@ pub(crate) fn set_data_dir(dir: String) -> ApiResult<()> {
         core.vault.set_dir(path.clone())?;
         // The settings file lives beside the vault, and is read at once so a
         // first run is known before anything else is asked.
-        core.config.set_dir(&path);
+        core.config.set_dir(&path)?;
         Ok(())
     })
 }

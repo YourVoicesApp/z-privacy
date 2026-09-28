@@ -44,12 +44,7 @@ pub(crate) struct VaultStore {
 
 impl VaultStore {
     pub(crate) fn set_dir(&mut self, dir: PathBuf) -> ApiResult<()> {
-        if !dir.is_dir() {
-            // G15-ok: the folder for the sealed vault, never for a document.
-            std::fs::create_dir_all(&dir).map_err(|e| ApiError::ImportRefused {
-                reason: format!("this folder cannot be used for the vault: {e}"),
-            })?;
-        }
+        crate::secure_file::secure_dir(&dir, "vault.zv")?;
         self.dir = Some(dir);
         // Forget anything that was open for the old folder.
         self.lock();
@@ -70,9 +65,8 @@ impl VaultStore {
             return;
         }
         let Some(path) = self.path() else { return };
-        // G15-ok: reading the sealed vault file.
-        if let Ok(bytes) = std::fs::read(&path) {
-            match SealedVault::from_bytes(&bytes) {
+        match crate::secure_file::read_no_follow(&path, "vault.zv") {
+            Ok(Some(bytes)) => match SealedVault::from_bytes(&bytes) {
                 Ok(sealed) => {
                     self.sealed = Some(sealed);
                     self.sealed_error = None;
@@ -81,6 +75,11 @@ impl VaultStore {
                     self.sealed = None;
                     self.sealed_error = Some(err);
                 }
+            },
+            Ok(None) => {}
+            Err(err) => {
+                self.sealed = None;
+                self.sealed_error = Some(err);
             }
         }
     }
@@ -239,16 +238,7 @@ impl VaultStore {
             return Ok(());
         };
         let bytes = sealed.to_bytes();
-        // Write beside it and rename, so a crash cannot leave half a vault.
-        let temporary = path.with_extension("zv.new");
-        // G15-ok: the sealed vault is the only file this crate writes.
-        std::fs::write(&temporary, &bytes).map_err(|e| ApiError::ImportRefused {
-            reason: format!("the vault could not be written: {e}"),
-        })?;
-        // G15-ok: rename into place, so a crash cannot leave half a vault.
-        std::fs::rename(&temporary, &path).map_err(|e| ApiError::ImportRefused {
-            reason: format!("the vault could not be put in place: {e}"),
-        })?;
+        crate::secure_file::replace_atomically(&path, "zv.new", &bytes, "vault.zv")?;
         Ok(())
     }
 }
