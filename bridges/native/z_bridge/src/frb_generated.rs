@@ -1811,6 +1811,9 @@ const _: fn() = || {
             let _: crate::api::mirrors::NetworkRefusal = reason;
             let _: String = detail;
         }
+        crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason } => {
+            let _: String = reason;
+        }
     }
     {
         let DocumentView = None::<crate::api::mirrors::DocumentView>.unwrap();
@@ -2202,6 +2205,10 @@ impl SseDecode for crate::api::mirrors::ApiError {
                     reason: var_reason,
                     detail: var_detail,
                 };
+            }
+            14 => {
+                let mut var_reason = <String>::sse_decode(deserializer);
+                return crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason: var_reason };
             }
             _ => {
                 unimplemented!("");
@@ -3411,6 +3418,9 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ApiError>
                 detail.into_into_dart().into_dart(),
             ]
             .into_dart(),
+            crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason } => {
+                [14.into_dart(), reason.into_into_dart().into_dart()].into_dart()
+            }
             _ => {
                 unimplemented!("");
             }
@@ -4404,6 +4414,10 @@ impl SseEncode for crate::api::mirrors::ApiError {
                 <i32>::sse_encode(13, serializer);
                 <crate::api::mirrors::NetworkRefusal>::sse_encode(reason, serializer);
                 <String>::sse_encode(detail, serializer);
+            }
+            crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason } => {
+                <i32>::sse_encode(14, serializer);
+                <String>::sse_encode(reason, serializer);
             }
             _ => {
                 unimplemented!("");

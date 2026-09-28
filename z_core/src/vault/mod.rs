@@ -26,6 +26,9 @@ pub(crate) struct VaultStore {
     dir: Option<PathBuf>,
     /// The file as it sits on disk, whether or not it is open.
     sealed: Option<SealedVault>,
+    /// A file was present, but could not be parsed. Kept so `state()` can stay
+    /// infallible and `unlock()` can still name the refusal.
+    sealed_error: Option<ApiError>,
     /// Present only while unlocked. Wiped on lock.
     master: Option<SecretKey>,
     /// The decrypted model. Present only while unlocked.
@@ -51,6 +54,7 @@ impl VaultStore {
         // Forget anything that was open for the old folder.
         self.lock();
         self.sealed = None;
+        self.sealed_error = None;
         self.load_sealed();
         Ok(())
     }
@@ -68,7 +72,16 @@ impl VaultStore {
         let Some(path) = self.path() else { return };
         // G15-ok: reading the sealed vault file.
         if let Ok(bytes) = std::fs::read(&path) {
-            self.sealed = SealedVault::from_bytes(&bytes).ok();
+            match SealedVault::from_bytes(&bytes) {
+                Ok(sealed) => {
+                    self.sealed = Some(sealed);
+                    self.sealed_error = None;
+                }
+                Err(err) => {
+                    self.sealed = None;
+                    self.sealed_error = Some(err);
+                }
+            }
         }
     }
 
@@ -100,7 +113,7 @@ impl VaultStore {
         self.load_sealed();
         if self.open.is_some() {
             VaultState::Unlocked
-        } else if self.sealed.is_some() {
+        } else if self.sealed.is_some() || self.sealed_error.is_some() {
             VaultState::Locked
         } else {
             VaultState::Absent
@@ -135,6 +148,9 @@ impl VaultStore {
     /// Open it: derive, unwrap the master key, decrypt the contents.
     pub(crate) fn unlock(&mut self, passphrase: &str) -> ApiResult<(u32, u32)> {
         self.load_sealed();
+        if let Some(err) = self.sealed_error.clone() {
+            return Err(err);
+        }
         let sealed = self.sealed.as_ref().ok_or(ApiError::ImportRefused {
             reason: "there is no vault on this device yet".to_string(),
         })?;
@@ -162,6 +178,9 @@ impl VaultStore {
 
     pub(crate) fn change_passphrase(&mut self, old: &str, replacement: &str) -> ApiResult<()> {
         self.load_sealed();
+        if let Some(err) = self.sealed_error.clone() {
+            return Err(err);
+        }
         let sealed = self.sealed.as_mut().ok_or(ApiError::ImportRefused {
             reason: "there is no vault on this device yet".to_string(),
         })?;
@@ -303,7 +322,10 @@ mod tests {
         let mut again = VaultStore::default();
         again.set_dir(dir.clone()).expect("dir");
         assert_eq!(again.state(), VaultState::Locked, "the file is there, sealed");
-        assert!(matches!(again.unlock("das falsche Passwort"), Err(ApiError::VaultLocked)));
+        assert!(matches!(
+            again.unlock("das falsche Passwort"),
+            Err(ApiError::VaultLocked)
+        ));
         let (entities, values) = again.unlock(pass).expect("unlock");
         assert_eq!((entities, values), (1, 1));
 
@@ -333,6 +355,35 @@ mod tests {
         let as_text = String::from_utf8_lossy(&bytes);
         assert!(!as_text.contains("Nordstern"), "the vault file is not encrypted");
         assert!(bytes.starts_with(b"ZVLT"), "and it names its own format");
+
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn unlock_names_an_unsupported_kdf_file() {
+        let dir = test_dir("kdf-refusal");
+        let pass = "ein gutes Passwort für den Test";
+
+        let mut store = VaultStore::default();
+        store.set_dir(dir.clone()).expect("dir");
+        store.create(pass).expect("create");
+        store.lock();
+
+        let path = dir.join(FILE_NAME);
+        // G15-ok: the test mutates its own sealed vault file.
+        let mut bytes = std::fs::read(&path).expect("read the vault");
+        bytes[7..11].copy_from_slice(&1_000_000u32.to_be_bytes());
+        // G15-ok: the test writes back its own mutated sealed vault file.
+        std::fs::write(&path, bytes).expect("write the mutated vault");
+
+        let mut again = VaultStore::default();
+        again.set_dir(dir.clone()).expect("dir");
+        assert_eq!(again.state(), VaultState::Locked, "the file is present but unsupported");
+        match again.unlock(pass) {
+            Err(ApiError::UnsupportedKdfParameters { reason }) => assert!(reason.contains("m_cost")),
+            other => panic!("expected UnsupportedKdfParameters, got {other:?}"),
+        }
 
         // G15-ok: cleaning a test's own folder.
         let _ = std::fs::remove_dir_all(&dir);

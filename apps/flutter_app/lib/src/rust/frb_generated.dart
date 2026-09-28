@@ -2275,6 +2275,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           reason: dco_decode_box_autoadd_network_refusal(raw[1]),
           detail: dco_decode_String(raw[2]),
         );
+      case 14:
+        return ApiError_UnsupportedKdfParameters(
+          reason: dco_decode_String(raw[1]),
+        );
       default:
         throw Exception("unreachable");
     }
@@ -3138,6 +3142,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         var var_reason = sse_decode_box_autoadd_network_refusal(deserializer);
         var var_detail = sse_decode_String(deserializer);
         return ApiError_NetworkRefused(reason: var_reason, detail: var_detail);
+      case 14:
+        var var_reason = sse_decode_String(deserializer);
+        return ApiError_UnsupportedKdfParameters(reason: var_reason);
       default:
         throw UnimplementedError('');
     }
@@ -4153,6 +4160,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(13, serializer);
         sse_encode_box_autoadd_network_refusal(reason, serializer);
         sse_encode_String(detail, serializer);
+      case ApiError_UnsupportedKdfParameters(reason: final reason):
+        sse_encode_i_32(14, serializer);
+        sse_encode_String(reason, serializer);
     }
   }
 

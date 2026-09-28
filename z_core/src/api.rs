@@ -58,6 +58,8 @@ pub enum ApiError {
     /// a provider's error page can quote the request back, so nothing that comes
     /// off the wire is allowed into this message.
     NetworkRefused { reason: NetworkRefusal, detail: String },
+    /// A vault file asked for KDF costs this build does not support.
+    UnsupportedKdfParameters { reason: String },
 }
 
 /// Why a request did not complete. Numbers and names only, by construction.
@@ -106,7 +108,10 @@ impl fmt::Display for ApiError {
             Self::UnknownToken => write!(f, "no such token in this session"),
             Self::NothingToSend => write!(f, "there is nothing to send"),
             Self::PayloadRefused { reason } => write!(f, "this payload was refused by its own audit: {reason}"),
-            Self::NetworkRefused { reason, detail } => write!(f, "the request did not go through ({reason:?}): {detail}"),
+            Self::NetworkRefused { reason, detail } => {
+                write!(f, "the request did not go through ({reason:?}): {detail}")
+            }
+            Self::UnsupportedKdfParameters { reason } => write!(f, "unsupported vault KDF parameters: {reason}"),
         }
     }
 }

@@ -84,6 +84,10 @@ sealed class ApiError with _$ApiError implements FrbException {
     required NetworkRefusal reason,
     required String detail,
   }) = ApiError_NetworkRefused;
+
+  /// A vault file asked for KDF costs this build does not support.
+  const factory ApiError.unsupportedKdfParameters({required String reason}) =
+      ApiError_UnsupportedKdfParameters;
 }
 
 enum DocumentKind { txt, docx, pdf }
@@ -751,12 +755,12 @@ class ProviderRow {
   final String id;
   final String label;
 
-  /// True when a credential for this provider exists in this run.
+  /// True when this provider can be used at this address in this run.
   final bool connected;
 
-  /// True when that credential lives only in memory, because there was no open
-  /// vault to seal it into. It is gone when the app closes, and the UI says so
-  /// rather than letting the user believe it was saved.
+  /// True when that usable connection lives only in memory, because there was
+  /// no open vault to seal it into. It is gone when the app closes, and the UI
+  /// says so rather than letting the user believe it was saved.
   final bool sessionOnly;
 
   /// Where requests go. Editable, so a local model on this machine can be used.

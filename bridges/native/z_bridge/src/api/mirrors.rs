@@ -45,6 +45,8 @@ pub enum _ApiError {
     /// a provider's error page can quote the request back, so nothing that comes
     /// off the wire is allowed into this message.
     NetworkRefused { reason: NetworkRefusal, detail: String },
+    /// A vault file asked for KDF costs this build does not support.
+    UnsupportedKdfParameters { reason: String },
 }
 
 #[frb(mirror(NetworkRefusal))]

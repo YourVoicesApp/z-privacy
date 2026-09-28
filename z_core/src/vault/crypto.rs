@@ -56,6 +56,19 @@ const SALT_LEN: usize = 16;
 const DEFAULT_M_COST: u32 = 64 * 1024; // 64 MiB
 const DEFAULT_T_COST: u32 = 3;
 const DEFAULT_P_COST: u32 = 1;
+/// The KDF range this build supports when reading a vault file.
+///
+/// The floor admits every historical vault format this build can still open,
+/// including the format-1 test vector at m=8, t=1, p=1. The ceiling admits a
+/// deliberate near-term cost raise, but refuses attacker-chosen memory sizes
+/// before Argon2 is constructed.
+const MIN_M_COST: u32 = 8;
+const MAX_M_COST: u32 = 128 * 1024; // 128 MiB
+const MIN_T_COST: u32 = 1;
+const MAX_T_COST: u32 = 8;
+const MIN_P_COST: u32 = 1;
+const MAX_P_COST: u32 = 4;
+const MIN_M_COST_PER_LANE: u32 = 8;
 
 /// A key that wipes itself when it goes out of scope.
 pub(crate) type SecretKey = Zeroizing<[u8; KEY_LEN]>;
@@ -130,14 +143,55 @@ pub(crate) struct KdfParams {
 
 impl KdfParams {
     fn fresh() -> ApiResult<Self> {
+        Self::new(
+            FORMAT_VERSION,
+            DEFAULT_M_COST,
+            DEFAULT_T_COST,
+            DEFAULT_P_COST,
+            random_array::<SALT_LEN>()?,
+        )
+    }
+
+    fn new(format: u16, m_cost: u32, t_cost: u32, p_cost: u32, salt: [u8; SALT_LEN]) -> ApiResult<Self> {
+        validate_kdf_params(m_cost, t_cost, p_cost)?;
         Ok(Self {
-            format: FORMAT_VERSION,
-            m_cost: DEFAULT_M_COST,
-            t_cost: DEFAULT_T_COST,
-            p_cost: DEFAULT_P_COST,
-            salt: random_array::<SALT_LEN>()?,
+            format,
+            m_cost,
+            t_cost,
+            p_cost,
+            salt,
         })
     }
+
+    fn with_salt(&self, salt: [u8; SALT_LEN]) -> ApiResult<Self> {
+        Self::new(self.format, self.m_cost, self.t_cost, self.p_cost, salt)
+    }
+}
+
+fn validate_kdf_params(m_cost: u32, t_cost: u32, p_cost: u32) -> ApiResult<()> {
+    let unsupported = |reason: String| ApiError::UnsupportedKdfParameters { reason };
+    if !(MIN_M_COST..=MAX_M_COST).contains(&m_cost) {
+        return Err(unsupported(format!(
+            "m_cost {m_cost} is outside the supported range {MIN_M_COST}..={MAX_M_COST}"
+        )));
+    }
+    if !(MIN_T_COST..=MAX_T_COST).contains(&t_cost) {
+        return Err(unsupported(format!(
+            "t_cost {t_cost} is outside the supported range {MIN_T_COST}..={MAX_T_COST}"
+        )));
+    }
+    if !(MIN_P_COST..=MAX_P_COST).contains(&p_cost) {
+        return Err(unsupported(format!(
+            "p_cost {p_cost} is outside the supported range {MIN_P_COST}..={MAX_P_COST}"
+        )));
+    }
+    let min_memory = MIN_M_COST_PER_LANE * p_cost;
+    if m_cost < min_memory {
+        return Err(unsupported(format!(
+            "m_cost {m_cost} is too small for p_cost {p_cost}; at least {min_memory} is required"
+        )));
+    }
+    Ok(())
 }
 
 /// The whole file: what it takes to open the vault, and the vault itself.
@@ -160,10 +214,11 @@ fn random_array<const N: usize>() -> ApiResult<[u8; N]> {
 
 /// passphrase + this vault's salt and costs → the key-encryption key.
 fn derive_kek(passphrase: &str, params: &KdfParams) -> ApiResult<SecretKey> {
-    let argon_params = Params::new(params.m_cost, params.t_cost, params.p_cost, Some(KEY_LEN))
-        .map_err(|e| ApiError::PayloadRefused {
+    let argon_params = Params::new(params.m_cost, params.t_cost, params.p_cost, Some(KEY_LEN)).map_err(|e| {
+        ApiError::PayloadRefused {
             reason: format!("the vault's stored KDF parameters are not usable: {e}"),
-        })?;
+        }
+    })?;
     let argon = Argon2::new(Algorithm::Argon2id, Version::V0x13, argon_params);
     let mut key = Zeroizing::new([0u8; KEY_LEN]);
     argon
@@ -179,11 +234,9 @@ fn seal(key: &SecretKey, plaintext: &[u8]) -> ApiResult<Vec<u8>> {
     let nonce_bytes = random_array::<NONCE_LEN>()?;
     let nonce = Nonce::from_slice(&nonce_bytes);
     let mut out = nonce_bytes.to_vec();
-    let mut sealed = cipher
-        .encrypt(nonce, plaintext)
-        .map_err(|_| ApiError::PayloadRefused {
-            reason: "sealing failed".to_string(),
-        })?;
+    let mut sealed = cipher.encrypt(nonce, plaintext).map_err(|_| ApiError::PayloadRefused {
+        reason: "sealing failed".to_string(),
+    })?;
     out.append(&mut sealed);
     Ok(out)
 }
@@ -226,12 +279,9 @@ impl SealedVault {
     pub(crate) fn unwrap_master(&self, passphrase: &str) -> ApiResult<SecretKey> {
         let kek = derive_kek(passphrase, &self.params)?;
         let plain = open(&kek, &self.wrapped_master)?;
-        let bytes: [u8; KEY_LEN] = plain
-            .as_slice()
-            .try_into()
-            .map_err(|_| ApiError::PayloadRefused {
-                reason: "the wrapped master key has the wrong length".to_string(),
-            })?;
+        let bytes: [u8; KEY_LEN] = plain.as_slice().try_into().map_err(|_| ApiError::PayloadRefused {
+            reason: "the wrapped master key has the wrong length".to_string(),
+        })?;
         Ok(Zeroizing::new(bytes))
     }
 
@@ -267,10 +317,7 @@ impl SealedVault {
         // vault keeps its own costs. Changing a passphrase must not silently
         // change how expensive the vault is to open; raising the cost is a
         // separate, deliberate act (and old vaults keep working either way).
-        let params = KdfParams {
-            salt: random_array::<SALT_LEN>()?,
-            ..self.params.clone()
-        };
+        let params = self.params.with_salt(random_array::<SALT_LEN>()?)?;
         let kek = derive_kek(new_passphrase, &params)?;
         self.wrapped_master = seal(&kek, master.as_ref())?;
         self.params = params;
@@ -319,16 +366,11 @@ impl SealedVault {
         let t_cost = u32::from_be_bytes(r.array::<4>()?);
         let p_cost = u32::from_be_bytes(r.array::<4>()?);
         let salt = r.array::<SALT_LEN>()?;
+        let params = KdfParams::new(format, m_cost, t_cost, p_cost, salt)?;
         let wrapped_master = r.block()?;
         let body = r.block()?;
         Ok(Self {
-            params: KdfParams {
-                format,
-                m_cost,
-                t_cost,
-                p_cost,
-                salt,
-            },
+            params,
             wrapped_master,
             body,
         })
@@ -336,7 +378,9 @@ impl SealedVault {
 }
 
 fn format_error(found: u16) -> String {
-    format!("this vault was written by a newer version of Z Privacy (format {found}, this build knows {FORMAT_VERSION})")
+    format!(
+        "this vault was written by a newer version of Z Privacy (format {found}, this build knows {FORMAT_VERSION})"
+    )
 }
 
 fn put_block(out: &mut Vec<u8>, block: &[u8]) {
@@ -433,6 +477,25 @@ mod tests {
         }
     }
 
+    fn bytes_with_kdf(m_cost: u32, t_cost: u32, p_cost: u32) -> Vec<u8> {
+        let (vault, _) = cheap_vault();
+        let mut bytes = vault.to_bytes();
+        bytes[7..11].copy_from_slice(&m_cost.to_be_bytes());
+        bytes[11..15].copy_from_slice(&t_cost.to_be_bytes());
+        bytes[15..19].copy_from_slice(&p_cost.to_be_bytes());
+        bytes
+    }
+
+    fn assert_unsupported_kdf(bytes: &[u8], wanted: &str) {
+        match SealedVault::from_bytes(bytes) {
+            Err(ApiError::UnsupportedKdfParameters { reason }) => assert!(
+                reason.contains(wanted),
+                "the refusal should name {wanted}, got {reason}"
+            ),
+            other => panic!("expected UnsupportedKdfParameters, got {other:?}"),
+        }
+    }
+
     #[test]
     fn each_purpose_gets_its_own_key_and_the_master_is_not_one_of_them() {
         let master: SecretKey = Zeroizing::new([3u8; KEY_LEN]);
@@ -443,7 +506,11 @@ mod tests {
         assert_ne!(data.as_ref(), provider.as_ref(), "two purposes, two keys");
         assert_ne!(data.as_ref(), profile.as_ref());
         assert_ne!(provider.as_ref(), profile.as_ref());
-        assert_ne!(data.as_ref(), master.as_ref(), "the master key is a root, not a cipher key");
+        assert_ne!(
+            data.as_ref(),
+            master.as_ref(),
+            "the master key is a root, not a cipher key"
+        );
 
         // Derivation is a function, not a random draw: the same vault must open
         // tomorrow. This is what makes the domain strings part of the format.
@@ -471,9 +538,13 @@ mod tests {
 
     #[test]
     fn a_format_one_vault_still_opens_and_is_written_forward() {
-        let mut vault = format_one_vault();
+        let vault = format_one_vault();
+        let vault = SealedVault::from_bytes(&vault.to_bytes()).expect("a format-1 file still reads");
         let master = vault.unwrap_master(PASS).expect("unwrap");
-        assert!(!vault.credentials_are_sealed(), "format 1 held credentials in the clear");
+        assert!(
+            !vault.credentials_are_sealed(),
+            "format 1 held credentials in the clear"
+        );
         assert_eq!(
             vault.open_body(&master).expect("an old vault still opens").as_slice(),
             BODY,
@@ -481,6 +552,7 @@ mod tests {
         );
 
         // The first change upgrades it, with no migration step of its own.
+        let mut vault = vault;
         vault.reseal_body(&master, BODY).expect("reseal");
         assert_eq!(vault.params.format, FORMAT_VERSION);
         assert!(vault.credentials_are_sealed());
@@ -510,13 +582,17 @@ mod tests {
         let body_before = vault.body.clone();
         let wrapped_before = vault.wrapped_master.clone();
 
-        vault
-            .change_passphrase(PASS, "ein neues Passwort")
-            .expect("change");
+        vault.change_passphrase(PASS, "ein neues Passwort").expect("change");
         assert_eq!(vault.params.m_cost, 8, "the vault keeps its own costs");
 
-        assert_eq!(vault.body, body_before, "the body was re-encrypted: the envelope is pointless");
-        assert_ne!(vault.wrapped_master, wrapped_before, "the master key must be re-wrapped");
+        assert_eq!(
+            vault.body, body_before,
+            "the body was re-encrypted: the envelope is pointless"
+        );
+        assert_ne!(
+            vault.wrapped_master, wrapped_before,
+            "the master key must be re-wrapped"
+        );
 
         // The old passphrase is dead, the new one works, and the body still reads.
         assert!(matches!(vault.unwrap_master(PASS), Err(ApiError::VaultLocked)));
@@ -539,6 +615,27 @@ mod tests {
         // Two vaults never share a salt.
         let (other, _) = cheap_vault();
         assert_ne!(other.params.salt, vault.params.salt);
+    }
+
+    #[test]
+    fn unsupported_kdf_parameters_are_refused_before_argon2() {
+        assert_unsupported_kdf(
+            &bytes_with_kdf(MAX_M_COST + 1, DEFAULT_T_COST, DEFAULT_P_COST),
+            "m_cost",
+        );
+        assert_unsupported_kdf(
+            &bytes_with_kdf(DEFAULT_M_COST, MAX_T_COST + 1, DEFAULT_P_COST),
+            "t_cost",
+        );
+        assert_unsupported_kdf(
+            &bytes_with_kdf(DEFAULT_M_COST, DEFAULT_T_COST, MAX_P_COST + 1),
+            "p_cost",
+        );
+        assert_unsupported_kdf(&bytes_with_kdf(0, DEFAULT_T_COST, DEFAULT_P_COST), "m_cost");
+        assert_unsupported_kdf(&bytes_with_kdf(DEFAULT_M_COST, 0, DEFAULT_P_COST), "t_cost");
+        assert_unsupported_kdf(&bytes_with_kdf(DEFAULT_M_COST, DEFAULT_T_COST, 0), "p_cost");
+        assert_unsupported_kdf(&bytes_with_kdf(8, DEFAULT_T_COST, 2), "too small");
+        assert_unsupported_kdf(&bytes_with_kdf(1_000_000, DEFAULT_T_COST, DEFAULT_P_COST), "m_cost");
     }
 
     #[test]
@@ -573,5 +670,10 @@ mod tests {
         assert_eq!(params.format, FORMAT_VERSION);
         let (vault, master) = SealedVault::create("ein echtes Passwort", BODY).expect("create");
         assert_eq!(vault.open_body(&master).expect("body").as_slice(), BODY);
+        let read = SealedVault::from_bytes(&vault.to_bytes()).expect("a normal current vault reads");
+        let master = read
+            .unwrap_master("ein echtes Passwort")
+            .expect("a normal current vault opens");
+        assert_eq!(read.open_body(&master).expect("body").as_slice(), BODY);
     }
 }
