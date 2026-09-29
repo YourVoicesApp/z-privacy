@@ -51,6 +51,52 @@ class _SendSheetState extends State<SendSheet> {
   final _previewScroll = ScrollController();
   bool _copied = false;
   bool _pasting = false;
+
+  /// Read the clipboard and put it in the answer field. Nothing else.
+  ///
+  /// **Paste is an act of editing, not of processing** (the owner, 29
+  /// September). It creates no answer, restores nothing, touches no vault and
+  /// opens no socket — and it does not change which payload the answer will
+  /// be tied to, so the F-05 binding is exactly where it was.
+  ///
+  /// The button used to only open and close this box, which is why a person
+  /// pressed «Paste» and nothing was pasted.
+  Future<void> _paste() async {
+    String? text;
+    try {
+      // Read **only** on the press. Nothing watches the clipboard.
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      text = data?.text;
+    } catch (_) {
+      // A platform exception is not a sentence. The person is told what
+      // happened to them, not what happened to the channel.
+      if (mounted) {
+        setState(() {
+          _pasting = true;
+          _trouble = 'Z Privacy could not read the clipboard.';
+        });
+      }
+      return;
+    }
+    if (!mounted) return;
+    if (text == null || text.isEmpty) {
+      // The box still opens: they may want to type the answer by hand.
+      setState(() {
+        _pasting = true;
+        _trouble = 'There is no text on the clipboard.';
+      });
+      return;
+    }
+    setState(() {
+      _pasting = true;
+      _trouble = null;
+      // Replaced whole, not inserted at the cursor. This field holds one
+      // complete answer from a model; it is not a general text editor, and
+      // «where did my cursor leave off» is a question it should never raise.
+      _pasted.text = text!;
+      _pasted.selection = TextSelection.collapsed(offset: text.length);
+    });
+  }
   String? _trouble;
   _SheetPage _page = _SheetPage.review;
 
@@ -222,9 +268,9 @@ class _SendSheetState extends State<SendSheet> {
                             },
                     ),
                     ZButton(
-                      label: _pasting ? 'Hide the box' : 'Paste AI answer',
+                      label: 'Paste AI answer',
                       icon: Icons.content_paste_go,
-                      onPressed: () => setState(() => _pasting = !_pasting),
+                      onPressed: _paste,
                     ),
                   ],
                 ),
