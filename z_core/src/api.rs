@@ -231,7 +231,11 @@ pub struct ForgetPlan {
     /// Permanent knowledge that could recognise this value **in future**.
     ///
     /// The definition is strict on purpose (the owner, 28 Sep). Empty means:
-    /// *nothing kept on this device will recognise this value again.* It does
+    /// *no permanent knowledge **in the current vault** will recognise this
+    /// value again.* It is not a claim about every copy of the vault that has
+    /// ever existed: an older valid one may be restored and bring the value
+    /// back, which is F-02 and is stated as an accepted limitation rather than
+    /// quietly contradicted here. It does
     /// **not** mean the value is nowhere in the program — the open
     /// conversation's token store still holds it, and an answer already
     /// received still reads as it did. Those are not knowledge for tomorrow;

@@ -682,13 +682,19 @@ fn plan(entity: u32, value_id: u32, everywhere: bool, act: bool) -> ApiResult<Fo
                     // document that is open, because doing so would show a
                     // value in the Safe column one press after the user asked
                     // the app to be more careful.
-                    "Forgetting removes what Z Privacy learned for future use — it does not \
-                     remove protection already applied in this document"
-                        .to_string(),
+                    // The clause «does not remove protection already applied in
+                    // this document» used to live here too. It is now said once,
+                    // in the sheet's closing sentence, in the owner's own words
+                    // of 29 September — two widgets carrying one promise is
+                    // noise, and a widget test caught the duplication.
                     "Documents you have already protected keep their tokens".to_string(),
                     "Answers you have already received are unchanged".to_string(),
                     if everywhere {
-                        "Nothing else on this device knows this value".to_string()
+                        // Not «nothing on this device». F-02: an older valid
+                        // vault copy may be restored and bring the value back,
+                        // and this list may not quietly contradict a limit the
+                        // invariants state out loud.
+                        "No other identity in this vault knows this value".to_string()
                     } else {
                         "Other profiles that know it separately are left alone".to_string()
                     },

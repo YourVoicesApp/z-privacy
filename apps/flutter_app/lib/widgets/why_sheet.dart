@@ -308,14 +308,19 @@ class _ForgetSheet extends StatelessWidget {
               const SizedBox(height: 7),
               for (final k in plan.keeps) _Line(k, keeps: true),
               const SizedBox(height: 10),
-              // What «nothing else knows it» means, exactly. It is a statement
-              // about tomorrow, not about this minute: the open conversation
-              // still holds the value behind its token, and an answer already
-              // received still reads as it did.
+              // What forgetting does, and the two things it does not do.
+              //
+              // This said «nothing kept on this device will recognise the value
+              // again», which was an overclaim: F-02 means an older valid vault
+              // copy can be restored and bring the value back. The owner's
+              // wording of 29 September, verbatim — it neither frightens nor
+              // promises what we do not hold.
               Text(
                 plan.stillKnownBy.isEmpty
-                    ? 'After this, nothing kept on this device will recognise the value again. '
-                        'The conversation open now still holds it behind its token, as it must.'
+                    ? 'Forget removes this value from the current vault and from future '
+                        'recognition by that vault. It does not remove protection already '
+                        'applied in this document, and an older valid copy of the vault may '
+                        'restore the value later.'
                     : '${plan.stillKnownBy.join(", ")} would still recognise it — forgetting here '
                         'does not reach into another client\u2019s records.',
                 style: Zc.tiny.copyWith(

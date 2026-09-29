@@ -233,7 +233,7 @@ fn forgetting_for_one_client_leaves_another_client_alone() {
     let all = forget_value(eb, vb, true).expect("forget everywhere");
     assert!(all.still_known_by.is_empty());
     assert!(
-        all.keeps.iter().any(|k| k.contains("Nothing else on this device")),
+        all.keeps.iter().any(|k| k.contains("No other identity in this vault")),
         "{:?}",
         all.keeps
     );
@@ -427,9 +427,11 @@ fn still_known_by_means_tomorrow_not_today() {
 
     // Empty — nothing permanent will know it again.
     assert!(done.still_known_by.is_empty());
-    // And the plan says in words what that does and does not mean.
+    // And the plan says in words what that does and does not mean. The clause
+    // about protection already applied moved to the sheet's closing sentence
+    // (the owner's wording, 29 Sep); `keeps` still names the concrete things.
     assert!(
-        done.keeps.iter().any(|k| k.contains("does not remove protection already applied")),
+        done.keeps.iter().any(|k| k.contains("keep their tokens")),
         "{:?}",
         done.keeps
     );

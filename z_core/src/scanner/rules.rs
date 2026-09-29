@@ -369,6 +369,33 @@ mod tests {
         );
     }
 
+    /// «Ansprechpartner» is data **and** still a question.
+    ///
+    /// Both halves matter, and they are asserted together on purpose: the word
+    /// must no longer be a hidden case in the logic, and the security decision
+    /// must be the one it always was. Flipping this row to `Auto` is allowed
+    /// one day — by a deliberate decision with its own test, which is exactly
+    /// what this assertion forces someone to write.
+    #[test]
+    fn ansprechpartner_is_a_row_and_stays_a_suggestion() {
+        let rules = sets::rules_for(&["de".to_string()]);
+        let rule = rules
+            .iter()
+            .find(|r| r.label == "ansprechpartner")
+            .expect("«Ansprechpartner» is no longer in the German rows");
+        assert_eq!(rule.kind, Kind::Person);
+        assert_eq!(
+            rule.decision,
+            Confidence::Suggest,
+            "the label became Auto — that is a change of judgement, not of data"
+        );
+        assert_eq!(
+            found("Ansprechpartner: Herr Thomas Müller", &["de"]),
+            vec![(Kind::Person, "Thomas Müller".to_string())],
+            "the honorific must stay in the clear"
+        );
+    }
+
     /// **The architectural test.**
     ///
     /// A rule set that exists nowhere in `scanner/sets/` — built here, in the

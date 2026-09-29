@@ -334,11 +334,18 @@ void main() {
       find.textContaining('does not remove protection already applied in this document'),
       findsOneWidget,
     );
-    // And what an empty `still_known_by` means, said strictly: a statement
-    // about tomorrow, not about this minute.
+    // And what an empty `still_known_by` means, said strictly: about the
+    // **current vault**, not about every copy that ever existed. The sheet
+    // used to promise «nothing kept on this device will recognise the value
+    // again», which F-02 contradicts — an older valid vault can be restored.
     expect(
-      find.textContaining('nothing kept on this device will recognise the value again'),
+      find.textContaining('an older valid copy of the vault may restore the value later'),
       findsOneWidget,
+    );
+    expect(
+      find.textContaining('nothing kept on this device will recognise'),
+      findsNothing,
+      reason: 'the sheet promises more than F-02 allows',
     );
 
     // And Cancel means nothing happened.

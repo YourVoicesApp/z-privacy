@@ -25,6 +25,23 @@
 وحدّان آخران، مكتوبان هنا لأنّ الهجوم الخارجيّ والرحلة البشريّة أظهرا أنّ صمتنا عنهما كان ادّعاءً:
 
 - **الطزاجة ومنع الـrollback غير مضمونين.** سلامة `vault.zv` مثبتةٌ تشفيريّاً: ملفٌّ معدَّل لا يُفتح. لكنّ ملفّ خزنةٍ **قديماً صحيحاً بالكامل** أُعيد مكان الحاليّ لا نستطيع اكتشافه — توقيعه وتشفيره سليمان، وكلّ ما يُثبت «هذه أحدث نسخة» موجودٌ **داخل** الملفّ الذي يمكن استرجاعه. الاكتشاف يحتاج مرساةً **خارج** الملفّ (OS secure storage / TPM / Keystore، أو خادم)، ولا نريد خادماً. وعدّادُ جيلٍ داخل ZVLT **ليس حلّاً** ولا يُكتب كأنّه حلّ. البند مفتوحٌ حتى قرار device-bound.
+
+  والصيغة التي تُقتبَس حرفيّاً حيث يُقرأ هذا الحدّ بالإنجليزيّة — في أيّ
+  وثيقة تهديد أو صفحة تسويق أو مراجعة أمنيّة:
+
+  > **Vault freshness and anti-rollback are not guaranteed.** Z Privacy
+  > authenticates the integrity of the vault file it opens, but an older valid
+  > encrypted vault may still be restored successfully. Restoring such a copy
+  > may bring back data that was later changed or forgotten. A generation
+  > counter stored inside ZVLT or ZCFG is not anti-rollback protection because
+  > those files can be rolled back together.
+
+  وما يراه المستخدم عند النسيان أقصر، بلا تخويفٍ وبلا ادّعاءِ ما لا نملك:
+
+  > **Forget removes this value from the current vault and from future
+  > recognition by that vault. It does not remove protection already applied in
+  > this document, and an older valid copy of the vault may restore the value
+  > later.**
 - **الحافظة خارج حدودنا بعد الكتابة.** نسخُ الجواب المستعاد يضع قيماً حقيقيّة في حافظة النظام، وبرنامجٌ آخر على الجهاز يستطيع قراءتها. ما نستطيعه هو **تسمية انتقال السرّ قبل وقوعه** — لا حمايته بعده. وأيّ `auto-clear` نضيفه لاحقاً هو best-effort ولا يُقدَّم ضماناً.
 - **Forget يحذف من الخزنة الحاليّة.** بعده لا يعرف النظام الحاليّ تلك القيمة ولا يستخدمها مستقبلاً. ولا ندّعي أنّ من يملك نسخةً قديمةً صحيحة من الخزنة لا يستطيع إعادتها.
 

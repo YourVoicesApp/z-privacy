@@ -11,37 +11,47 @@ use crate::scanner::Confidence;
 
 use super::RuleSet;
 
-/// `(id, label, kind, validator)` — the whole set, as rows.
-// NOTE — «Ansprechpartner» is deliberately NOT a row.
+/// `(id, label, kind, validator, decision)` — the whole set, as rows.
+///
+/// The decision is **per row**, not per set. A label is usually proof of what
+/// follows, but not always: «Ansprechpartner» names a person the way a
+/// salutation does, and the owner's ruling of 29 September keeps it a
+/// question. Making the column exist is what lets one row change its mind
+/// later without the set changing its nature.
+// NOTE — «Ansprechpartner» is a row, and it is a **Suggest**.
 //
-// Adding it would make `Ansprechpartner: Herr Thomas Müller` an **Auto** by the
-// label doctrine, where the salutation rule today makes it a **Suggest**. That
-// is a change to what the scanner decides, and M7.10B is a move of words into
-// data, not a change of judgement — the golden fixture caught it the moment it
-// drifted. It is a good candidate for the next round, and it is the owner's
-// call, not the refactor's.
-const ROWS: &[(&str, &str, Kind, Validator)] = &[
-    ("de-01", "telefon", Kind::Phone, Validator::Number),
-    ("de-02", "tel", Kind::Phone, Validator::Number),
-    ("de-03", "tel.", Kind::Phone, Validator::Number),
-    ("de-04", "mobil", Kind::Phone, Validator::Number),
-    ("de-05", "handy", Kind::Phone, Validator::Number),
-    ("de-06", "fax", Kind::Phone, Validator::Number),
-    ("de-07", "e-mail", Kind::Email, Validator::Word),
-    ("de-08", "email", Kind::Email, Validator::Word),
-    ("de-09", "mail", Kind::Email, Validator::Word),
-    ("de-10", "iban", Kind::Iban, Validator::Grouped),
-    ("de-11", "bic", Kind::Bic, Validator::Grouped),
-    ("de-12", "kontonummer", Kind::Account, Validator::Number),
-    ("de-13", "konto", Kind::Account, Validator::Number),
-    ("de-14", "kundennummer", Kind::CustomerNo, Validator::Number),
-    ("de-15", "kunden-nr.", Kind::CustomerNo, Validator::Number),
-    ("de-16", "kundennr.", Kind::CustomerNo, Validator::Number),
-    ("de-17", "steuernummer", Kind::TaxId, Validator::Word),
-    ("de-18", "steuer-nr.", Kind::TaxId, Validator::Word),
-    ("de-19", "ust-idnr.", Kind::TaxId, Validator::Word),
-    ("de-20", "ust-id", Kind::TaxId, Validator::Word),
-    ("de-21", "umsatzsteuer-id", Kind::TaxId, Validator::Word),
+// It was held back on 29 September because adding it as an `Auto` would have
+// changed what the scanner decides, where M7.10B was a move of words into
+// data. The golden fixture caught exactly that drift. The owner's ruling the
+// same day: put the word in the data, keep the judgement where it was.
+//
+// So the knowledge stops being a hidden case in the logic while the security
+// policy stays measured. If a real corpus later shows the label is precise
+// enough, one row changes from `Suggest` to `Auto` — a deliberate decision
+// with a test of its own, not an accident of a refactor.
+const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
+    ("de-01", "telefon", Kind::Phone, Validator::Number, Confidence::Auto),
+    ("de-02", "tel", Kind::Phone, Validator::Number, Confidence::Auto),
+    ("de-03", "tel.", Kind::Phone, Validator::Number, Confidence::Auto),
+    ("de-04", "mobil", Kind::Phone, Validator::Number, Confidence::Auto),
+    ("de-05", "handy", Kind::Phone, Validator::Number, Confidence::Auto),
+    ("de-06", "fax", Kind::Phone, Validator::Number, Confidence::Auto),
+    ("de-07", "e-mail", Kind::Email, Validator::Word, Confidence::Auto),
+    ("de-08", "email", Kind::Email, Validator::Word, Confidence::Auto),
+    ("de-09", "mail", Kind::Email, Validator::Word, Confidence::Auto),
+    ("de-10", "iban", Kind::Iban, Validator::Grouped, Confidence::Auto),
+    ("de-11", "bic", Kind::Bic, Validator::Grouped, Confidence::Auto),
+    ("de-12", "kontonummer", Kind::Account, Validator::Number, Confidence::Auto),
+    ("de-13", "konto", Kind::Account, Validator::Number, Confidence::Auto),
+    ("de-14", "kundennummer", Kind::CustomerNo, Validator::Number, Confidence::Auto),
+    ("de-15", "kunden-nr.", Kind::CustomerNo, Validator::Number, Confidence::Auto),
+    ("de-16", "kundennr.", Kind::CustomerNo, Validator::Number, Confidence::Auto),
+    ("de-17", "steuernummer", Kind::TaxId, Validator::Word, Confidence::Auto),
+    ("de-18", "steuer-nr.", Kind::TaxId, Validator::Word, Confidence::Auto),
+    ("de-19", "ust-idnr.", Kind::TaxId, Validator::Word, Confidence::Auto),
+    ("de-20", "ust-id", Kind::TaxId, Validator::Word, Confidence::Auto),
+    ("de-21", "umsatzsteuer-id", Kind::TaxId, Validator::Word, Confidence::Auto),
+    ("de-22", "ansprechpartner", Kind::Person, Validator::Name, Confidence::Suggest),
 ];
 
 /// Words that sit between a label and a name and are not part of it.
@@ -55,13 +65,12 @@ pub(crate) fn set() -> RuleSet {
         honorifics: HONORIFICS.iter().map(|h| (*h).to_string()).collect(),
         rules: ROWS
             .iter()
-            .map(|(id, label, kind, validator)| LabelRule {
+            .map(|(id, label, kind, validator, decision)| LabelRule {
                 id: (*id).to_string(),
                 label: (*label).to_string(),
                 kind: *kind,
                 boundary: Boundary::AfterLabelSameField,
-                // A label is proof of what follows, so a set may act alone.
-                decision: Confidence::Auto,
+                decision: *decision,
                 set: "de".to_string(),
                 validator: *validator,
                 source: Source::LanguagePack,
