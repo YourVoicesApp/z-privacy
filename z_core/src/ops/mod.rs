@@ -597,7 +597,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
                     .map(|f| f.kind)
             });
         let guessed = exact_kind.or_else(|| {
-            scanner::scan(&selected, &s.pack_id, &vault_hints, &vault_exceptions)
+            scanner::scan(&selected, &[s.pack_id.clone()], &[], &vault_hints, &vault_exceptions)
                 .into_iter()
                 .find(|c| c.start == 0 && c.end == selected.len())
                 .map(|c| c.kind)
@@ -1197,6 +1197,31 @@ pub(crate) fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String>
 
 // ---------------------------------------------------------------- scan (M3)
 
+
+/// The pack this device starts a new profile with.
+pub(crate) fn default_pack_id() -> String {
+    with_core(|core| core.config.get().default_privacy_pack.clone())
+}
+
+/// Which rule sets run for this session.
+///
+/// The profile decides, because a firm's languages are a property of the client
+/// they work for, not of the app. A session with no profile — or a profile from
+/// a vault written before model 7 — falls back to the one pack it was opened
+/// with, so nothing that used to be detected stops being detected.
+fn active_sets(s: &Session, vault: &crate::vault::VaultStore) -> Vec<String> {
+    let from_profile = s
+        .profile_id
+        .as_deref()
+        .map(|id| vault.languages_of(id))
+        .unwrap_or_default();
+    if from_profile.is_empty() {
+        vec![s.pack_id.clone()]
+    } else {
+        from_profile
+    }
+}
+
 pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
     let report = with_core(|core| {
         let vault_state = core.vault.state();
@@ -1204,13 +1229,14 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         if s.original.is_empty() {
             return Err(ApiError::NothingToSend);
         }
-        let pack = s.pack_id.clone();
+        let sets = active_sets(s, vault);
         // Empty while the vault is locked: the layer is skipped by having nothing
         // to say, not by a flag someone could forget to check.
         let profile = s.profile_id.clone();
         let hints = vault.hints(profile.as_deref());
         let exceptions = vault.exceptions(profile.as_deref());
-        rescan_with(s, &pack, &hints, &exceptions);
+        let taught = vault.label_rules(profile.as_deref());
+        rescan_with(s, &sets, &taught, &hints, &exceptions);
         mark_scanned(s);
         Ok(report_of(s, vault_state))
     })?;
@@ -1231,11 +1257,12 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
 /// only thing that removes a protection is a person asking for that.
 fn rescan_with(
     s: &mut Session,
-    pack: &str,
+    active: &[String],
+    taught: &[crate::scanner::rules::LabelRule],
     hints: &[crate::vault::model::VaultHint],
     exceptions: &[crate::vault::model::UserException],
 ) -> u32 {
-    let candidates = scanner::scan(s.original_str(), pack, hints, exceptions);
+    let candidates = scanner::scan(s.original_str(), active, taught, hints, exceptions);
 
     // Nothing is dropped. What is no longer claimed says so.
     let mut orphaned = 0u32;
@@ -1563,16 +1590,18 @@ pub(crate) fn packs() -> ApiResult<Vec<PackRow>> {
 /// silently taken back.** So nothing is cleared; the layers only add what is not
 /// already covered, and a protection whose layer no longer claims it becomes
 /// yours (manual) instead of disappearing.
-fn rescan_keeping(session: SessionId, pack: &str) -> ApiResult<(u32, u32)> {
+fn rescan_keeping(session: SessionId, _pack: &str) -> ApiResult<(u32, u32)> {
     with_core(|core| {
         let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;
         let profile = s.profile_id.clone();
+        let sets = active_sets(s, vault);
         let hints = vault.hints(profile.as_deref());
         let exceptions = vault.exceptions(profile.as_deref());
+        let taught = vault.label_rules(profile.as_deref());
         let kept_tokens = s.tokens_in_use().len() as u32;
         // The same rule as the Rescan button, because they are the same act:
         // look again, and take nothing back.
-        let orphaned = rescan_with(s, pack, &hints, &exceptions);
+        let orphaned = rescan_with(s, &sets, &taught, &hints, &exceptions);
         Ok((kept_tokens, orphaned))
     })
 }

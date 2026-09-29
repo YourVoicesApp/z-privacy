@@ -2,8 +2,11 @@
 //!
 //! Three kinds of knowledge, and each one's confidence is a decision:
 //!
-//! * **A label is proof of what follows.** After `Kundennummer:` comes a customer
-//!   number; nothing else does. → `Auto`.
+//! Labels — `Kundennummer:`, `Telefon:` — used to live here as a Rust table.
+//! Since 29 September they are rows in `scanner/sets/de.rs` and run through the
+//! shared engine, so another language can be active at the same time. What is
+//! left in this file is the German knowledge that is not a label: a salutation,
+//! a legal form, the shape of an address.
 //! * **A salutation is a hint about the next word.** After `Frau` usually comes a
 //!   person — usually. → `Suggest`, and the name only: `Frau` itself stays in the
 //!   clear so the model can still write a correct German reply.
@@ -34,47 +37,6 @@ const STOP_WORDS: &[&str] = &[
 /// Words that make a street name.
 const STREET_ENDINGS: &[&str] = &[
     "straße", "strasse", "str.", "str", "weg", "platz", "allee", "gasse", "ring", "damm", "ufer",
-];
-
-/// A label, what it proves, and how its value is written.
-struct Label {
-    word: &'static str,
-    kind: Kind,
-    shape: Shape,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Shape {
-    /// Digits with separators: a telephone number, a customer number.
-    Number,
-    /// One word with no spaces: an address, a tax id.
-    Word,
-    /// Letters and digits in groups: an IBAN, a BIC.
-    Grouped,
-}
-
-const LABELS: &[Label] = &[
-    Label { word: "telefon", kind: Kind::Phone, shape: Shape::Number },
-    Label { word: "tel", kind: Kind::Phone, shape: Shape::Number },
-    Label { word: "tel.", kind: Kind::Phone, shape: Shape::Number },
-    Label { word: "mobil", kind: Kind::Phone, shape: Shape::Number },
-    Label { word: "handy", kind: Kind::Phone, shape: Shape::Number },
-    Label { word: "fax", kind: Kind::Phone, shape: Shape::Number },
-    Label { word: "e-mail", kind: Kind::Email, shape: Shape::Word },
-    Label { word: "email", kind: Kind::Email, shape: Shape::Word },
-    Label { word: "mail", kind: Kind::Email, shape: Shape::Word },
-    Label { word: "iban", kind: Kind::Iban, shape: Shape::Grouped },
-    Label { word: "bic", kind: Kind::Bic, shape: Shape::Grouped },
-    Label { word: "kontonummer", kind: Kind::Account, shape: Shape::Number },
-    Label { word: "konto", kind: Kind::Account, shape: Shape::Number },
-    Label { word: "kundennummer", kind: Kind::CustomerNo, shape: Shape::Number },
-    Label { word: "kunden-nr.", kind: Kind::CustomerNo, shape: Shape::Number },
-    Label { word: "kundennr.", kind: Kind::CustomerNo, shape: Shape::Number },
-    Label { word: "steuernummer", kind: Kind::TaxId, shape: Shape::Word },
-    Label { word: "steuer-nr.", kind: Kind::TaxId, shape: Shape::Word },
-    Label { word: "ust-idnr.", kind: Kind::TaxId, shape: Shape::Word },
-    Label { word: "ust-id", kind: Kind::TaxId, shape: Shape::Word },
-    Label { word: "umsatzsteuer-id", kind: Kind::TaxId, shape: Shape::Word },
 ];
 
 /// One whitespace-separated token, with its byte range.
@@ -150,7 +112,6 @@ pub(crate) fn scan(text: &str) -> Vec<Candidate> {
     let mut out = Vec::new();
     salutations(&words, &mut out);
     companies(&words, &mut out);
-    labelled(&words, &mut out);
     addresses(&words, &mut out);
     out
 }
@@ -299,52 +260,6 @@ fn companies(words: &[Word<'_>], out: &mut Vec<Candidate>) {
     }
 }
 
-/// «Kundennummer: 41-88203» — the label says what follows.
-fn labelled(words: &[Word<'_>], out: &mut Vec<Candidate>) {
-    for (i, word) in words.iter().enumerate() {
-        if !word.text.ends_with(':') {
-            continue;
-        }
-        let label = word.text.trim_end_matches(':').to_lowercase();
-        let Some(found) = LABELS.iter().find(|l| l.word == label) else {
-            continue;
-        };
-        let first = i + 1;
-        let mut last = None;
-        let mut j = first;
-        while let Some(next) = words.get(j) {
-            if next.newline_before || is_label(next.text) {
-                break;
-            }
-            let n = bare(next.text);
-            let fits = match found.shape {
-                Shape::Number => is_numberish(n) || (j == first && n.starts_with('+') && n.len() > 1),
-                Shape::Word => j == first && !n.is_empty(),
-                Shape::Grouped => !n.is_empty() && n.chars().all(|c| c.is_ascii_alphanumeric()),
-            };
-            if fits && j - first < 8 {
-                last = Some(j);
-                j += 1;
-            } else {
-                break;
-            }
-        }
-        let (Some(last), Some(start_word)) = (last, words.get(first)) else {
-            continue;
-        };
-        let Some(end_word) = words.get(last) else { continue };
-        out.push(candidate(
-            start_word.start,
-            trimmed_end(end_word),
-            found.kind,
-            // A label is proof of what follows, so the pack may act alone here.
-            Confidence::Auto,
-            "label",
-            format!("the value written after «{}:», which says what it is", word.text.trim_end_matches(':')),
-        ));
-    }
-}
-
 /// «Hafenstraße 14, 20359 Hamburg» — a street, a house number, a postcode, a town.
 fn addresses(words: &[Word<'_>], out: &mut Vec<Candidate>) {
     for (i, word) in words.iter().enumerate() {
@@ -437,21 +352,6 @@ mod tests {
         assert!(found("Die GmbH ist eine Rechtsform.").is_empty());
     }
 
-    #[test]
-    fn a_label_is_proof_of_what_follows() {
-        assert_eq!(
-            found("Kundennummer: 41-88203"),
-            vec![(Kind::CustomerNo, Confidence::Auto, "41-88203".to_string())]
-        );
-        assert_eq!(
-            found("USt-IdNr.: DE811728394"),
-            vec![(Kind::TaxId, Confidence::Auto, "DE811728394".to_string())]
-        );
-        assert_eq!(
-            found("Telefon: 0171 2345678"),
-            vec![(Kind::Phone, Confidence::Auto, "0171 2345678".to_string())]
-        );
-    }
 
     #[test]
     fn an_address_needs_a_postcode_and_a_town() {

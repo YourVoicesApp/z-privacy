@@ -14,10 +14,11 @@ use crate::api::{ApiError, ApiResult, EntityKind, Kind, Policy};
 use crate::secret::Secret;
 use crate::vault::crypto::{self, Purpose, SecretKey};
 
-use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException, ValueRecord, Vault};
+use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException, UserLabelRule, ValueRecord, Vault};
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 7 — a profile's active rule sets, and the label rules a person taught.
 /// * 6 — user-taught exceptions are sealed with the rest of the vault.
 /// * 5 — provider credentials are bound to a normalized destination.
 /// * 4 — each value carries when it was taught (task 036).
@@ -31,7 +32,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 6;
+pub(crate) const MODEL_VERSION: u16 = 7;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -207,6 +208,32 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
         put_str(&mut out, exception.value.expose());
         out.extend_from_slice(&exception.learned_at.to_be_bytes());
     }
+
+    // Model 7, appended for the same reason the block above was: a vault
+    // written by model 6 has no languages and no taught rules, and reads
+    // perfectly without these bytes.
+    out.extend_from_slice(&(vault.profiles.len() as u32).to_be_bytes());
+    for profile in &vault.profiles {
+        out.extend_from_slice(&(profile.languages.len() as u32).to_be_bytes());
+        for language in &profile.languages {
+            put_str(&mut out, language);
+        }
+    }
+    out.extend_from_slice(&vault.next_label_rule.to_be_bytes());
+    out.extend_from_slice(&(vault.label_rules.len() as u32).to_be_bytes());
+    for rule in &vault.label_rules {
+        out.extend_from_slice(&rule.id.to_be_bytes());
+        out.push(kind_code(rule.kind));
+        match &rule.profile_id {
+            Some(id) => {
+                out.push(1);
+                put_str(&mut out, id);
+            }
+            None => out.push(0),
+        }
+        put_str(&mut out, &rule.label);
+        out.extend_from_slice(&rule.learned_at.to_be_bytes());
+    }
     Ok(out)
 }
 
@@ -237,6 +264,7 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         profiles.push(Profile {
             id: r.string()?,
             name: r.string()?,
+            languages: Vec::new(),
         });
     }
 
@@ -361,6 +389,38 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         (1, Vec::new())
     };
 
+    // Model 7 — each profile's active rule sets, then the taught label rules.
+    let (next_label_rule, label_rules) = if version >= 7 {
+        let count = u32::from_be_bytes(r.array::<4>()?) as usize;
+        for index in 0..count {
+            let n = u32::from_be_bytes(r.array::<4>()?);
+            let mut languages = Vec::new();
+            for _ in 0..n {
+                languages.push(r.string()?);
+            }
+            if let Some(profile) = profiles.get_mut(index) {
+                profile.languages = languages;
+            }
+        }
+        let next_label_rule = u32::from_be_bytes(r.array::<4>()?);
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        let mut label_rules = Vec::new();
+        for _ in 0..count {
+            let id = u32::from_be_bytes(r.array::<4>()?);
+            let kind = kind_of(r.byte()?)?;
+            let profile_id = match r.byte()? {
+                0 => None,
+                _ => Some(r.string()?),
+            };
+            let label = r.string()?;
+            let learned_at = u64::from_be_bytes(r.array::<8>()?);
+            label_rules.push(UserLabelRule { id, label, kind, profile_id, learned_at });
+        }
+        (next_label_rule, label_rules)
+    } else {
+        (1, Vec::new())
+    };
+
     Ok(Vault {
         entities,
         profiles,
@@ -368,6 +428,8 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         next_value,
         next_exception,
         exceptions,
+        next_label_rule,
+        label_rules,
         settings,
         provider_logins,
     })
@@ -479,6 +541,14 @@ mod tests {
             out.extend_from_slice(&1u32.to_be_bytes()); // next exception
             out.extend_from_slice(&0u32.to_be_bytes()); // no exceptions
         }
+        if version >= 7 {
+            // One profile is written above, so one language list follows.
+            out.extend_from_slice(&1u32.to_be_bytes()); // profiles with languages
+            out.extend_from_slice(&1u32.to_be_bytes()); // one language
+            put_str(&mut out, "de");
+            out.extend_from_slice(&1u32.to_be_bytes()); // next label rule
+            out.extend_from_slice(&0u32.to_be_bytes()); // no taught rules
+        }
         out
     }
 
@@ -487,6 +557,7 @@ mod tests {
         v.profiles.push(Profile {
             id: "p-nordstern".to_string(),
             name: "Client Nordstern".to_string(),
+            languages: vec!["de".to_string(), "en".to_string()],
         });
         v.entities.push(Entity {
             id: 17,

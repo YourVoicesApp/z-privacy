@@ -101,6 +101,11 @@ impl Entity {
 pub(crate) struct Profile {
     pub id: String,
     pub name: String,
+    /// The rule sets switched on for this client's documents. A firm that works
+    /// in two languages runs both **in the same scan**, which is why this is a
+    /// list and not a setting. Empty means «whatever the session's pack says» —
+    /// the shape a vault written before 29 September has.
+    pub languages: Vec<String>,
 }
 
 /// A durable «do not protect this as that» decision.
@@ -123,6 +128,32 @@ impl UserException {
     }
 }
 
+/// A label rule a person taught: «after Mandantenkennung comes a customer
+/// number». Knowledge, so it lives in the encrypted vault beside the values and
+/// the exceptions — and it is visible, explainable, editable and forgettable
+/// like everything else the app learns (the owner's ninth question).
+#[derive(Debug, Clone)]
+pub(crate) struct UserLabelRule {
+    pub id: u32,
+    /// The word as the person typed it, kept for the screen and the `Why?`.
+    pub label: String,
+    pub kind: Kind,
+    /// `None` is everywhere; `Some(profile)` is this client only.
+    pub profile_id: Option<String>,
+    pub learned_at: u64,
+}
+
+impl UserLabelRule {
+    /// The engine's row for this taught rule.
+    pub(crate) fn as_rule(&self) -> crate::scanner::rules::LabelRule {
+        crate::scanner::rules::LabelRule::taught(
+            format!("u{}", self.id),
+            self.label.clone(),
+            self.kind,
+        )
+    }
+}
+
 /// Everything the vault holds, once it is open.
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Vault {
@@ -132,6 +163,10 @@ pub(crate) struct Vault {
     pub next_value: u32,
     pub next_exception: u32,
     pub exceptions: Vec<UserException>,
+    pub next_label_rule: u32,
+    /// Label rules the person taught. Same shape of scoping as an exception:
+    /// everywhere, or one profile.
+    pub label_rules: Vec<UserLabelRule>,
     /// What the app has been told to do by itself. In the vault because the
     /// vault is the only file we write (G15), and because a setting that
     /// survives a restart has to live somewhere that does. Written in task 030.
@@ -209,6 +244,8 @@ impl Vault {
             next_entity: 1,
             next_value: 1,
             next_exception: 1,
+            next_label_rule: 1,
+            label_rules: Vec::new(),
             exceptions: Vec::new(),
             settings: StoredSettings::default(),
             provider_logins: BTreeMap::new(),
@@ -287,6 +324,22 @@ impl Vault {
             .filter(|ex| match (&ex.profile_id, active_profile) {
                 (None, _) => true,
                 (Some(mine), Some(active)) => mine == active,
+                (Some(_), None) => false,
+            })
+            .cloned()
+            .collect()
+    }
+
+    /// The taught label rules that apply: everywhere, plus this profile's own.
+    ///
+    /// Same rule as a hint — a rule taught for one client does not follow the
+    /// user into another client's document.
+    pub(crate) fn label_rules_for(&self, active_profile: Option<&str>) -> Vec<UserLabelRule> {
+        self.label_rules
+            .iter()
+            .filter(|r| match (&r.profile_id, active_profile) {
+                (None, _) => true,
+                (Some(owner), Some(active)) => owner == active,
                 (Some(_), None) => false,
             })
             .cloned()

@@ -244,6 +244,31 @@ impl VaultStore {
         }
     }
 
+    /// The label rules this person taught, effective for this profile. Empty
+    /// while locked, for the same reason the hints are: a rule is knowledge.
+    pub(crate) fn label_rules(&mut self, active_profile: Option<&str>) -> Vec<crate::scanner::rules::LabelRule> {
+        self.tick();
+        match self.open.as_ref() {
+            Some(vault) => vault
+                .label_rules_for(active_profile)
+                .iter()
+                .map(|r| r.as_rule())
+                .collect(),
+            None => Vec::new(),
+        }
+    }
+
+    /// The rule sets switched on for one profile. Empty when the vault is
+    /// locked or the profile is unknown — and the caller then falls back to the
+    /// session's own pack rather than scanning with nothing.
+    pub(crate) fn languages_of(&self, profile_id: &str) -> Vec<String> {
+        self.open
+            .as_ref()
+            .and_then(|v| v.profiles.iter().find(|p| p.id == profile_id))
+            .map(|p| p.languages.clone())
+            .unwrap_or_default()
+    }
+
     fn write_to_disk(&self) -> ApiResult<()> {
         let (Some(path), Some(sealed)) = (self.path(), self.sealed.as_ref()) else {
             // No folder set: the vault lives for this run only. Used by tests and

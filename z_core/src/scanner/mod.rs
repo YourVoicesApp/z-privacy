@@ -11,6 +11,8 @@
 
 pub(crate) mod general_rules;
 pub(crate) mod packs;
+pub(crate) mod rules;
+pub(crate) mod sets;
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -63,9 +65,24 @@ impl Candidate {
 /// `hints` is what the vault can recognise **for the active profile**, and it is
 /// empty while the vault is locked — which is how «locked means the layer does not
 /// exist» is true without a flag anywhere.
-pub(crate) fn scan(text: &str, pack: &str, hints: &[VaultHint], exceptions: &[UserException]) -> Vec<Candidate> {
+/// `active` is every rule set switched on for this profile — one document may
+/// be German and English at once, and both are asked in the same pass.
+/// `taught` is what the person themself added; it reaches the same engine as a
+/// built-in row, because a rule is a rule whoever wrote it.
+pub(crate) fn scan(
+    text: &str,
+    active: &[String],
+    taught: &[rules::LabelRule],
+    hints: &[VaultHint],
+    exceptions: &[UserException],
+) -> Vec<Candidate> {
     let mut all = general_rules::scan(text);
-    all.extend(packs::scan(text, pack));
+    for id in active {
+        all.extend(packs::scan(text, id));
+    }
+    let mut label_rules = sets::rules_for(active);
+    label_rules.extend(taught.iter().cloned());
+    all.extend(rules::scan_with(text, &label_rules, &sets::honorifics_for(active)));
     all.extend(vault_pass(text, hints));
     all.retain(|candidate| !excepted(text, candidate, exceptions));
     settle(all)
@@ -261,7 +278,7 @@ mod tests {
         // "IBAN:" is a German-pack label, and the number itself passes the mod-97
         // check. Two layers, one thing — and the reason must name both.
         let text = "IBAN: DE89 3704 0044 0532 0130 00";
-        let found = scan(text, "de", &[], &[]);
+        let found = scan(text, &["de".to_string()], &[], &[], &[]);
         assert_eq!(found.len(), 1, "{found:?}");
         let only = found.first().expect("one");
         assert_eq!(only.confidence, Confidence::Auto);
@@ -271,7 +288,7 @@ mod tests {
     #[test]
     fn plain_words_are_what_is_left() {
         let text = "Herr Thomas Müller hat die Nummer +49 171 2345678 genannt.";
-        let found = scan(text, "de", &[], &[]);
+        let found = scan(text, &["de".to_string()], &[], &[], &[]);
         let plain = plain_word_count(text, &found);
         let words = text.split_whitespace().count() as u32;
         assert!(plain < words, "some words are inside findings");

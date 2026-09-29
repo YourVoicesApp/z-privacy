@@ -720,6 +720,10 @@ pub(crate) fn create_profile(name: String) -> ApiResult<String> {
             vault.profiles.push(crate::vault::model::Profile {
                 id: id.clone(),
                 name,
+                // A new profile starts with the pack the device already uses,
+                // and the person adds languages from the profile screen. An
+                // empty list would silently mean «no label rules at all».
+                languages: vec![crate::ops::default_pack_id()],
             });
             Ok(id)
         })
