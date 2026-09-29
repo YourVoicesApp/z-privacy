@@ -44,12 +44,21 @@ class _EntityDetailState extends State<EntityDetail> {
   /// Values shown right now, with their spellings. Only in this screen's head,
   /// and cleared when it closes.
   final Map<int, RevealedValue> _shown = {};
-  Timer? _hide;
+
+  /// Milliseconds the **core** says are left. Read, never counted down here.
+  int _remaining = 0;
+
+  /// Asks the core once a second. This ticker draws a number for a person to
+  /// read; it has no authority to keep a value on screen. When the core
+  /// answers 0 — or answers about a different value — what is shown is
+  /// dropped in the same frame.
+  Timer? _tick;
 
   @override
   void dispose() {
-    _hide?.cancel();
+    _tick?.cancel();
     _shown.clear();
+    unawaited(z.hideValue());
     super.dispose();
   }
 
@@ -57,15 +66,46 @@ class _EntityDetailState extends State<EntityDetail> {
     try {
       final v = await z.revealValue(entity: widget.card.id, valueId: valueId);
       if (!mounted) return;
-      setState(() => _shown[valueId] = v);
-      // The core says how long. Leaving the screen ends it sooner, never later.
-      _hide?.cancel();
-      _hide = Timer(Duration(milliseconds: v.ttlMs), () {
-        if (mounted) setState(() => _shown.clear());
+      setState(() {
+        // One at a time, matching the core.
+        _shown
+          ..clear()
+          ..[valueId] = v;
+        _remaining = v.ttlMs;
       });
+      _watch();
     } on ApiError catch (e) {
       if (mounted) setState(() => widget.ground.trouble = humanMessage(e));
     }
+  }
+
+  void _watch() {
+    _tick?.cancel();
+    _tick = Timer.periodic(const Duration(milliseconds: 250), (_) async {
+      final state = await z.revealState();
+      if (!mounted) return;
+      final over = state.remainingMs == 0 ||
+          state.valueId == null ||
+          !_shown.containsKey(state.valueId);
+      setState(() {
+        _remaining = state.remainingMs;
+        if (over) _shown.clear();
+      });
+      if (over) {
+        _tick?.cancel();
+        _tick = null;
+      }
+    });
+  }
+
+  Future<void> _hideNow() async {
+    _tick?.cancel();
+    _tick = null;
+    await z.hideValue();
+    if (mounted) setState(() {
+      _shown.clear();
+      _remaining = 0;
+    });
   }
 
   @override
@@ -156,65 +196,108 @@ class _EntityDetailState extends State<EntityDetail> {
             ],
           ),
           const SizedBox(height: 10),
-          if (shown == null)
-            Row(
+          // ------------------------------------------------ the value line
+          //
+          // **Expiry changes the content, never the geometry.** The row keeps
+          // its height and its controls keep their places, so a TTL running
+          // out cannot move a button out from under the pointer. That is not
+          // tidiness: in the human run a press meant for «Edit» landed on
+          // nothing, twice, because the buttons only existed while revealed.
+          SizedBox(
+            // Fixed so the line does not change height between masked and
+            // revealed. 34 overflowed the document style by 7.5px — found by
+            // running it, and the stripe was drawn over the value itself.
+            height: 44,
+            child: Row(
               children: [
                 Expanded(
-                  child: Text('••••••••••••', style: Zc.document.copyWith(color: Zc.ink4, letterSpacing: 2)),
+                  child: shown == null
+                      ? Text(
+                          '••••••••••••',
+                          style: Zc.document.copyWith(color: Zc.ink4, letterSpacing: 2),
+                        )
+                      : SelectableText(
+                          shown.value,
+                          maxLines: 1,
+                          style: Zc.document.copyWith(fontWeight: FontWeight.w600),
+                        ),
                 ),
-                ZButton(label: 'Show', icon: Icons.visibility_outlined, onPressed: () => _reveal(v.id)),
+                const SizedBox(width: 10),
+                // The time the **core** reports, drawn for a person to read.
+                Text(
+                  shown == null ? 'Hidden' : 'Revealed · ${(_remaining / 1000).ceil()}s',
+                  key: Key('reveal-state-${v.id}'),
+                  style: Zc.tiny.copyWith(
+                    letterSpacing: 0,
+                    color: shown == null ? Zc.ink4 : Zc.river,
+                  ),
+                ),
               ],
-            )
-          else ...[
-            SelectableText(shown.value, style: Zc.document.copyWith(fontWeight: FontWeight.w600)),
-            if (shown.aliases.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              const Eyebrow('Also written'),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 7,
-                runSpacing: 7,
-                children: [
-                  for (final a in shown.aliases)
-                    _Alias(
-                      text: a,
-                      onRemove: () => _run(() => z.removeValueAlias(
-                            entity: card.id,
-                            valueId: v.id,
-                            alias: a,
-                          )),
-                    ),
-                ],
+            ),
+          ),
+          const SizedBox(height: 11),
+          // One row of controls, always the same, always in the same order.
+          // Only the first one changes its word.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              SizedBox(
+                // A fixed width so «Reveal» and «Hide» occupy the same space
+                // and nothing after them shifts when the word changes. Sized
+                // for the longer word **with its icon** — 92 looked right and
+                // overflowed by 47, which a widget test caught rather than a
+                // person.
+                width: 142,
+                child: ZButton(
+                  label: shown == null ? 'Reveal' : 'Hide',
+                  icon: shown == null ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  onPressed: shown == null ? () => _reveal(v.id) : _hideNow,
+                ),
+              ),
+              ZButton(
+                label: 'Add a spelling',
+                onPressed: () => _addAlias(card, v),
+              ),
+              ZButton(
+                label: 'Edit',
+                onPressed: () async {
+                  final saved = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => ValueForm(entity: card.id, existing: v),
+                  );
+                  if (saved == true) {
+                    await _hideNow();
+                    await widget.onChanged();
+                  }
+                },
+              ),
+              ZButton(
+                label: 'Delete',
+                tint: Zc.amber,
+                onPressed: () => _run(() => z.deleteValue(entity: card.id, valueId: v.id)),
               ),
             ],
-            const SizedBox(height: 11),
+          ),
+          // The spellings sit **below** the controls, so their appearing and
+          // disappearing cannot move a button either.
+          if (shown != null && shown.aliases.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Eyebrow('Also written'),
+            const SizedBox(height: 6),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 7,
+              runSpacing: 7,
               children: [
-                ZButton(label: 'Hide', onPressed: () => setState(() => _shown.remove(v.id))),
-                ZButton(
-                  label: 'Add a spelling',
-                  onPressed: () => _addAlias(card, v),
-                ),
-                ZButton(
-                  label: 'Edit',
-                  onPressed: () async {
-                    final saved = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => ValueForm(entity: card.id, existing: v),
-                    );
-                    if (saved == true) {
-                      setState(() => _shown.remove(v.id));
-                      await widget.onChanged();
-                    }
-                  },
-                ),
-                ZButton(
-                  label: 'Delete',
-                  tint: Zc.amber,
-                  onPressed: () => _run(() => z.deleteValue(entity: card.id, valueId: v.id)),
-                ),
+                for (final a in shown.aliases)
+                  _Alias(
+                    text: a,
+                    onRemove: () => _run(() => z.removeValueAlias(
+                          entity: card.id,
+                          valueId: v.id,
+                          alias: a,
+                        )),
+                  ),
               ],
             ),
           ],

@@ -766,3 +766,10 @@ pub struct _AnswerSnapshot {
     pub as_written: String,
 }
 
+#[frb(mirror(RevealState))]
+pub struct _RevealState {
+    pub entity: Option<u32>,
+    pub value_id: Option<u32>,
+    pub remaining_ms: u32,
+}
+

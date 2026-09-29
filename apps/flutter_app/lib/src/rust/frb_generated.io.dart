@@ -258,6 +258,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RescanOutcome dco_decode_rescan_outcome(dynamic raw);
 
   @protected
+  RevealState dco_decode_reveal_state(dynamic raw);
+
+  @protected
   RevealedValue dco_decode_revealed_value(dynamic raw);
 
   @protected
@@ -589,6 +592,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RescanOutcome sse_decode_rescan_outcome(SseDeserializer deserializer);
+
+  @protected
+  RevealState sse_decode_reveal_state(SseDeserializer deserializer);
 
   @protected
   RevealedValue sse_decode_revealed_value(SseDeserializer deserializer);
@@ -989,6 +995,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_rescan_outcome(RescanOutcome self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_reveal_state(RevealState self, SseSerializer serializer);
 
   @protected
   void sse_encode_revealed_value(RevealedValue self, SseSerializer serializer);

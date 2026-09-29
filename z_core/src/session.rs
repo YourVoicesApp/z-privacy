@@ -290,6 +290,27 @@ impl Session {
     }
 }
 
+/// One reveal, and the moment it runs out.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Revealed {
+    pub entity: u32,
+    pub value_id: u32,
+    pub until: std::time::Instant,
+}
+
+impl Revealed {
+    /// Milliseconds left, and 0 the instant it is over. Read from the clock
+    /// every time rather than counted down, so a process that was suspended
+    /// wakes up with the reveal already finished.
+    pub(crate) fn remaining_ms(&self) -> u32 {
+        let now = std::time::Instant::now();
+        if now >= self.until {
+            return 0;
+        }
+        self.until.saturating_duration_since(now).as_millis().min(u128::from(u32::MAX)) as u32
+    }
+}
+
 /// Everything the core holds, for the life of the process.
 #[derive(Debug)]
 pub(crate) struct Core {
@@ -309,6 +330,16 @@ pub(crate) struct Core {
     /// two homes as a credential, for the same reason: G15 lets the core write
     /// one file, and it is the sealed vault.
     pub session_settings: crate::vault::model::StoredSettings,
+    /// Which vault value is revealed right now, and until when.
+    ///
+    /// The core holds this because the core must own it. It used to hand out a
+    /// TTL and forget: Flutter kept the plaintext in a map and a `Timer`
+    /// decided when the reveal was over. A screen cannot be the authority on
+    /// how long a secret stays on screen — a paused isolate, a dropped timer
+    /// or a rebuilt widget would each quietly extend it.
+    ///
+    /// `None` means nothing is revealed. One at a time, on purpose.
+    pub revealed: Option<Revealed>,
     /// Bumped when a displayed fact changes. A check, not a source of drawing.
     pub state_revision: u32,
 }
@@ -323,6 +354,7 @@ impl Core {
             session_logins: std::collections::BTreeMap::new(),
             session_settings: crate::vault::model::StoredSettings::default(),
             state_revision: 1,
+            revealed: None,
         }
     }
 

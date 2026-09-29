@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 use crate::api::{
     ApiError, ApiResult, EntityCard, EntityKind, EntityRow, Kind, KindRow, Policy, ProfileRow,
-    ForgetPlan, RevealedValue, Settings, VaultState, VaultUnlockOutcome, ValueRow,
+    ForgetPlan, RevealedValue, RevealState, Settings, VaultState, VaultUnlockOutcome, ValueRow,
 };
 use crate::secret::Secret;
 use crate::session::with_core;
@@ -215,7 +215,14 @@ pub(crate) fn add_value_alias(entity: u32, value_id: u32, alias: String) -> ApiR
 pub(crate) fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValue> {
     // Before the lock: see the note in `ops::reveal`.
     let ttl_ms = reveal_ttl_ms();
-    with_core(|core| {
+    let out = with_core(|core| {
+        // The core records the reveal and when it ends. A fresh press gets a
+        // fresh TTL, and replaces whatever was revealed before: one at a time.
+        core.revealed = Some(crate::session::Revealed {
+            entity,
+            value_id,
+            until: std::time::Instant::now() + std::time::Duration::from_millis(u64::from(ttl_ms)),
+        });
         core.vault.read(|vault| {
             let e = vault.entity(entity).ok_or(ApiError::UnknownToken)?;
             let v = e
@@ -232,7 +239,40 @@ pub(crate) fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValu
                 ttl_ms,
             })
         })
-    })
+    });
+    if out.is_err() {
+        // Nothing was shown, so nothing is revealed.
+        with_core(|core| core.revealed = None);
+    }
+    out
+}
+
+/// How much longer the current reveal lasts, and what it is showing.
+///
+/// This is the whole point of P1-4: the screen asks rather than counts. Its
+/// own countdown is for the person to read, never permission to keep a value
+/// on screen — when this says 0 the value is gone whatever a timer thinks.
+pub(crate) fn reveal_state() -> ApiResult<RevealState> {
+    Ok(with_core(|core| {
+        let live = core.revealed.filter(|r| r.remaining_ms() > 0);
+        // Reading is also forgetting: an expired reveal is dropped here, so
+        // the core does not hold a finished one until someone asks again.
+        core.revealed = live;
+        match live {
+            Some(r) => RevealState {
+                entity: Some(r.entity),
+                value_id: Some(r.value_id),
+                remaining_ms: r.remaining_ms(),
+            },
+            None => RevealState { entity: None, value_id: None, remaining_ms: 0 },
+        }
+    }))
+}
+
+/// Stop revealing now, before the time is up.
+pub(crate) fn hide_value() -> ApiResult<()> {
+    with_core(|core| core.revealed = None);
+    Ok(())
 }
 
 /// Rename an identity.

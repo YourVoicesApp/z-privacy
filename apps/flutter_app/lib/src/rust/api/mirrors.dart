@@ -1217,6 +1217,26 @@ class RescanOutcome {
           revision == other.revision;
 }
 
+class RevealState {
+  final int? entity;
+  final int? valueId;
+  final int remainingMs;
+
+  const RevealState({this.entity, this.valueId, required this.remainingMs});
+
+  @override
+  int get hashCode => entity.hashCode ^ valueId.hashCode ^ remainingMs.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RevealState &&
+          runtimeType == other.runtimeType &&
+          entity == other.entity &&
+          valueId == other.valueId &&
+          remainingMs == other.remainingMs;
+}
+
 class RevealedValue {
   final String token;
   final String value;

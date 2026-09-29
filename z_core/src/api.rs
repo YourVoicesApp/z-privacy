@@ -1419,6 +1419,28 @@ pub fn switch_profile(session: SessionId, profile_id: Option<String>) -> ApiResu
     crate::ops::switch_profile(session, profile_id)
 }
 
+/// What is revealed right now, and for how much longer.
+///
+/// `remaining_ms` of 0 means nothing is revealed — the screen must mask the
+/// value at once. A countdown drawn in Flutter is for a person to read; it is
+/// never the reason a secret stays visible.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RevealState {
+    pub entity: Option<u32>,
+    pub value_id: Option<u32>,
+    pub remaining_ms: u32,
+}
+
+/// Ask the core what is revealed. Called about once a second while showing.
+pub fn reveal_state() -> ApiResult<RevealState> {
+    crate::ops::reveal_state()
+}
+
+/// Stop revealing before the time is up.
+pub fn hide_value() -> ApiResult<()> {
+    crate::ops::hide_value()
+}
+
 /// The rule sets this build carries. A language is a set, not a screen.
 pub fn rule_sets() -> ApiResult<Vec<RuleSetRow>> {
     crate::ops::rule_sets()

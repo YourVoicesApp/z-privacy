@@ -121,12 +121,15 @@ void main() {
 
     // A value is hidden until it is asked for — here as everywhere else.
     expect(find.textContaining('Nordstern Consulting GmbH'), findsNothing);
-    expect(find.text('Show'), findsOneWidget);
+    // «Show» became «Reveal» when the row was made stable: the control keeps
+    // its place and only its word changes as the reveal comes and goes.
+    expect(find.text('Reveal'), findsOneWidget);
+    expect(find.text('Hidden'), findsOneWidget);
     // And the kind's name came from the core's list, not a switch in Dart.
     expect(kindRows, isNotEmpty);
     expect(find.text(kindName(Kind.company)), findsOneWidget);
 
-    await tester.tap(find.text('Show'));
+    await tester.tap(find.text('Reveal'));
     await settle(tester);
     expect(find.text('Nordstern Consulting GmbH'), findsOneWidget);
     // Its spellings come with it: they are the same secret.
