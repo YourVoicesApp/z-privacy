@@ -45,12 +45,47 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
   String? _trouble;
   bool _busy = false;
 
+  /// Visibility is **per field** and starts off for both. Showing one must not
+  /// show the other: the commonest reason to look is to check a typo in the
+  /// one you just typed.
+  ///
+  /// This writes nothing to the core. It changes `obscureText` and nothing
+  /// else — no call, no setting, no record of having looked.
+  bool _showOne = false;
+  bool _showTwo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Typing **and pasting** both move the match line. Pasting is how most
+    // people enter a passphrase they already keep somewhere, and a match line
+    // that only followed keystrokes would be wrong exactly then.
+    _one.addListener(_reread);
+    _two.addListener(_reread);
+  }
+
+  void _reread() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _one.removeListener(_reread);
+    _two.removeListener(_reread);
     _one.dispose();
     _two.dispose();
     super.dispose();
   }
+
+  /// Does the pair agree? Comparing here is allowed because these two are
+  /// **input that has not been sent** — presentation state, not a security
+  /// fact anyone stores. Rust remains the decision: it refuses a passphrase
+  /// that is too short whatever this says, and the button being enabled is
+  /// never taken as permission.
+  bool get _needsTwo => widget.creating || widget.changing;
+  bool get _bothFilled => _one.text.isNotEmpty && (!_needsTwo || _two.text.isNotEmpty);
+  bool get _agree => !widget.creating || _one.text == _two.text;
+  bool get _canSubmit => !_busy && _bothFilled && _agree;
 
   @override
   Widget build(BuildContext context) {
@@ -69,10 +104,34 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
           ),
           const SizedBox(height: 16),
         ],
-        _field(widget.changing ? 'Current passphrase' : 'Passphrase', _one),
+        _field(
+          widget.changing ? 'Current passphrase' : 'Passphrase',
+          _one,
+          shown: _showOne,
+          onToggle: () => setState(() => _showOne = !_showOne),
+        ),
         if (needsTwo) ...[
           const SizedBox(height: 10),
-          _field(widget.changing ? 'New passphrase' : 'Again', _two),
+          _field(
+            widget.changing ? 'New passphrase' : 'Confirm passphrase',
+            _two,
+            shown: _showTwo,
+            onToggle: () => setState(() => _showTwo = !_showTwo),
+          ),
+        ],
+        // Only while creating: that is the one place the pair must agree.
+        // Changing asks for the current one and a new one, which are meant to
+        // differ, so a «match» line there would be nonsense.
+        if (widget.creating && _one.text.isNotEmpty && _two.text.isNotEmpty) ...[
+          const SizedBox(height: 7),
+          Text(
+            _agree ? 'Passphrases match' : 'Passphrases do not match',
+            key: const Key('passphrase-match'),
+            style: Zc.tiny.copyWith(
+              letterSpacing: 0,
+              color: _agree ? Zc.river : Zc.amber,
+            ),
+          ),
         ],
         if (widget.creating) ...[
           const SizedBox(height: 7),
@@ -97,7 +156,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
               ? 'Create the vault'
               : 'Unlock',
           filled: true,
-          onPressed: _busy ? null : _go,
+          onPressed: _canSubmit ? _go : null,
         ),
       ],
     );
@@ -113,10 +172,15 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
       if (widget.changing) {
         await z.vaultChangePassphrase(old: _one.text, replacement: _two.text);
       } else if (widget.creating) {
+        // No length rule here. The core owns that decision and refuses a short
+        // passphrase by name; a copy of the rule in this widget is a second
+        // opinion that will drift, and the mapper already words the refusal.
+        //
+        // The pair is compared before the button enables — but the call is
+        // still made only when they agree, so a mismatch cannot slip through
+        // if the button's state is ever wrong.
         if (_one.text != _two.text) {
-          bad = 'The two passphrases are not the same.';
-        } else if (_one.text.trim().length < 8) {
-          bad = 'A vault passphrase should be long enough to be worth having.';
+          bad = 'Passphrases do not match';
         } else {
           await z.vaultCreateWithPassphrase(passphrase: _one.text);
         }
@@ -142,15 +206,26 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
     }
   }
 
-  Widget _field(String label, TextEditingController c) => Column(
+  Widget _field(
+    String label,
+    TextEditingController c, {
+    required bool shown,
+    required VoidCallback onToggle,
+  }) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Eyebrow(label),
       const SizedBox(height: 5),
       TextField(
         controller: c,
-        obscureText: true,
-        onSubmitted: (_) => _go(),
+        // Hidden by default, and toggling touches only this. The controller is
+        // never rebuilt, so the value cannot be lost or altered by looking.
+        obscureText: !shown,
+        // The passphrase is never a semantics value: a screen reader, a
+        // screenshot service or an accessibility dump must not be a way out.
+        // Only the field's own name is announced.
+        obscuringCharacter: '•',
+        onSubmitted: (_) => _canSubmit ? _go() : null,
         decoration: InputDecoration(
           isDense: true,
           filled: true,
@@ -162,6 +237,15 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: const BorderSide(color: Zc.line),
+          ),
+          suffixIcon: IconButton(
+            tooltip: shown ? 'Hide $label' : 'Show $label',
+            icon: Icon(
+              shown ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              size: 17,
+            ),
+            color: Zc.ink3,
+            onPressed: onToggle,
           ),
         ),
       ),
