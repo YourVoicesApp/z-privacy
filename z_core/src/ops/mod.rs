@@ -644,6 +644,9 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
     // The vault is read first and separately: reading it inside the session
     // lock would be a lock inside a lock (G19).
     let known = vault_facts_for(session, span)?;
+    // Same reason, same shape: the taught rules' scopes are read here, outside
+    // the session lock, and looked up as plain data inside it.
+    let taught_scopes = taught_rule_scopes();
     with_session(session.id, |s| {
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
         let p = s
@@ -660,6 +663,17 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
         // they decided it — but «You protected this by hand» would be false:
         // they did not select these words, they taught a word to look for.
         let taught_rule = p.source == Source::Hand && p.source_detail.starts_with("you:");
+        // The rule's own reach, read from the vault by the id inside the
+        // detail («you:u3»), so the card answers about the rule rather than
+        // about the protection the rule happened to produce here.
+        let taught_scope = if taught_rule {
+            p.source_detail
+                .strip_prefix("you:u")
+                .and_then(|n| n.parse::<u32>().ok())
+                .and_then(|id| taught_scopes.get(&id).cloned())
+        } else {
+            None
+        };
         // And the set is read from the finding, never assumed. This line said
         // «A German privacy rule» whatever fired, which was true only while
         // German was the only set there was — the «0 tries left» shape exactly.
@@ -703,14 +717,23 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
             );
         }
 
-        let applies = match p.scope {
-            Scope::Once => "This one place".to_string(),
-            Scope::Conversation => "This conversation".to_string(),
-            Scope::Profile => match &s.profile_id {
-                Some(id) => format!("Profile — {id}"),
-                None => "This conversation".to_string(),
-            },
-            Scope::Always => "Everywhere".to_string(),
+        let applies = if taught_rule {
+            // A taught rule's reach is the rule's own scope, not the scope of
+            // the protection it produced in this document. Saying «This
+            // conversation» about a rule kept in the vault was the same
+            // contradiction the Why card already carried once, reappearing
+            // through a new door.
+            taught_scope.clone().unwrap_or_else(|| "Everywhere".to_string())
+        } else {
+            match p.scope {
+                Scope::Once => "This one place".to_string(),
+                Scope::Conversation => "This conversation".to_string(),
+                Scope::Profile => match &s.profile_id {
+                    Some(id) => format!("Profile — {id}"),
+                    None => "This conversation".to_string(),
+                },
+                Scope::Always => "Everywhere".to_string(),
+            }
         };
 
         Ok(Explanation {
@@ -719,7 +742,11 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
             kind: p.kind,
             scope: p.scope,
             applies,
-            decided: p.decided,
+            // A rule the person taught **was** decided by them — once, when
+            // they taught the word. «Z Privacy, on its own» under a headline
+            // that says «You taught Z Privacy this rule» is one card calling
+            // itself a liar.
+            decided: p.decided || taught_rule,
             token: p.token.clone(),
             learned_at: known.as_ref().map(|k| k.learned_at).unwrap_or(0),
             entity: known.as_ref().map(|k| k.entity),
@@ -1383,6 +1410,33 @@ fn layer_key(s: Source) -> u8 {
         Source::Vault => 2,
         Source::Hand => 3,
     }
+}
+
+/// Where a taught rule applies, in the words a person reads. `None` when the
+/// rule is gone — forgotten since the document was scanned, which is allowed
+/// and must not be answered with a guess.
+fn taught_rule_scopes() -> std::collections::BTreeMap<u32, String> {
+    with_core(|core| {
+        core.vault
+            .with_open(|v| {
+                v.label_rules
+                    .iter()
+                    .map(|r| {
+                        let scope = match &r.profile_id {
+                            Some(owner) => v
+                                .profiles
+                                .iter()
+                                .find(|p| &p.id == owner)
+                                .map(|p| format!("Profile — {}", p.name))
+                                .unwrap_or_else(|| "Everywhere".to_string()),
+                            None => "Everywhere".to_string(),
+                        };
+                        (r.id, scope)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
+    })
 }
 
 /// «de:label» → «A German (DE) privacy rule». The set names itself; a screen

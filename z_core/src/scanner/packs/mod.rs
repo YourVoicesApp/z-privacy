@@ -24,8 +24,15 @@ pub(crate) fn scan(text: &str, id: &str) -> Vec<Candidate> {
 /// The packs this build carries. The label belongs to the pack, not to a screen:
 /// a rules engine names itself, and the UI only draws what it is told (task 022).
 pub(crate) fn installed() -> Vec<crate::api::PackRow> {
-    vec![crate::api::PackRow {
-        id: "de".to_string(),
-        label: "German (DE)".to_string(),
-    }]
+    // Read from the rule sets, never listed again here. Two lists of the same
+    // fact drift, and this one already did: `en` shipped as a rule set on 29
+    // September while this function still said German was the only pack, so
+    // First Run offered a language it could not actually select.
+    crate::scanner::sets::all()
+        .into_iter()
+        .map(|s| crate::api::PackRow {
+            id: s.id.to_string(),
+            label: s.label.to_string(),
+        })
+        .collect()
 }

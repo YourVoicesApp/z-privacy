@@ -292,7 +292,7 @@ class _VaultScreenState extends State<VaultScreen> {
                   onPressed: () async {
                     final made = await showDialog<ProfileRow>(
                       context: context,
-                      builder: (_) => const ProfileForm(),
+                      builder: (_) => ProfileForm(ground: g),
                     );
                     await g.refresh();
                     await _reload();

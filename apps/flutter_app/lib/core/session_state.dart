@@ -27,6 +27,11 @@ class Ground extends ChangeNotifier {
   VaultState get vault => home?.vault ?? VaultState.absent;
   List<ProfileRow> get profiles => home?.profiles ?? const [];
   List<PackRow> get packs => home?.packs ?? const [];
+
+  /// The rule sets this build carries. A pack and a rule set are the same
+  /// thing seen from two screens, and both are read from the core so that
+  /// adding a language never means editing a list in Dart.
+  List<PackRow> get ruleSets => packs;
   List<ProviderFact> get providers => home?.providers ?? const [];
   int get entityCount => home?.identityCount ?? 0;
   int get valueCount => home?.valueCount ?? 0;

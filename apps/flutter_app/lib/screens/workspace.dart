@@ -426,7 +426,7 @@ class _ProfileSwitcherState extends State<ProfileSwitcher> {
   Future<void> _create() async {
     final made = await showDialog<ProfileRow>(
       context: context,
-      builder: (_) => const ProfileForm(),
+      builder: (_) => ProfileForm(ground: widget.ground),
     );
     if (!mounted || made == null) return;
     setState(() {
@@ -442,7 +442,7 @@ class _ProfileSwitcherState extends State<ProfileSwitcher> {
   Future<void> _rename(ProfileRow profile) async {
     final renamed = await showDialog<ProfileRow>(
       context: context,
-      builder: (_) => ProfileForm(profile: profile),
+      builder: (_) => ProfileForm(profile: profile, ground: widget.ground),
     );
     if (!mounted || renamed == null) return;
     setState(() {

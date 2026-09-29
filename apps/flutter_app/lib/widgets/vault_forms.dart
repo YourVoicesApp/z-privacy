@@ -464,9 +464,14 @@ class _ValueFormState extends State<ValueForm> {
 
 /// A new profile — one dictionary per client.
 class ProfileForm extends StatefulWidget {
-  const ProfileForm({super.key, this.profile});
+  const ProfileForm({super.key, this.profile, this.ground});
 
   final ProfileRow? profile;
+
+  /// Needed only for the rule sets this build carries. Optional so the older
+  /// call sites keep working; without it the language row is not drawn, and
+  /// the profile keeps whatever the core gave it.
+  final Ground? ground;
 
   @override
   State<ProfileForm> createState() => _ProfileFormState();
@@ -476,10 +481,15 @@ class _ProfileFormState extends State<ProfileForm> {
   final _name = TextEditingController();
   String? _trouble;
 
+  /// Which rule sets this client's documents are written in. A list, because a
+  /// firm that works in two languages runs both in the same scan.
+  late Set<String> _languages;
+
   @override
   void initState() {
     super.initState();
     _name.text = widget.profile?.name ?? '';
+    _languages = {...?widget.profile?.languages};
   }
 
   @override
@@ -519,6 +529,33 @@ class _ProfileFormState extends State<ProfileForm> {
                 decoration: _box('Client Nordstern'),
                 onSubmitted: (_) => _save(),
               ),
+              if (widget.ground != null) ...[
+                const SizedBox(height: 16),
+                const Eyebrow('Languages used in documents'),
+                const SizedBox(height: 4),
+                Text(
+                  'More than one may be on. A document with a German label and an '
+                  'English one is read by both in a single scan.',
+                  style: Zc.tiny.copyWith(color: Zc.ink4),
+                ),
+                const SizedBox(height: 7),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 7,
+                  children: [
+                    // The sets name themselves; this screen does not know what
+                    // languages exist, and adding one must not touch it.
+                    for (final set in widget.ground!.ruleSets)
+                      _Pick(
+                        label: set.label,
+                        on: _languages.contains(set.id),
+                        onTap: () => setState(() {
+                          if (!_languages.remove(set.id)) _languages.add(set.id);
+                        }),
+                      ),
+                  ],
+                ),
+              ],
               if (_trouble != null) ...[
                 const SizedBox(height: 12),
                 Trouble(_trouble!),
@@ -549,13 +586,22 @@ class _ProfileFormState extends State<ProfileForm> {
     try {
       final name = _name.text.trim();
       final profile = widget.profile;
+      final chosen = _languages.toList()..sort();
       if (profile == null) {
         final id = await z.createProfile(name: name);
-        if (mounted) Navigator.of(context).pop(ProfileRow(id: id, name: name, languages: const []));
+        // The core gives a new profile the device's pack. Only overwrite that
+        // when the person actually chose something, so an empty selection is
+        // never read as «no rule sets at all».
+        final row = chosen.isEmpty
+            ? ProfileRow(id: id, name: name, languages: const [])
+            : await z.setProfileLanguages(profileId: id, languages: chosen);
+        if (mounted) Navigator.of(context).pop(row);
       } else {
         await z.renameProfile(profileId: profile.id, name: name);
-        if (mounted)
-          Navigator.of(context).pop(ProfileRow(id: profile.id, name: name, languages: profile.languages));
+        final row = chosen.isEmpty
+            ? ProfileRow(id: profile.id, name: name, languages: profile.languages)
+            : await z.setProfileLanguages(profileId: profile.id, languages: chosen);
+        if (mounted) Navigator.of(context).pop(row);
       }
     } on ApiError catch (e) {
       setState(() => _trouble = e.toString());

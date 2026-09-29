@@ -157,6 +157,14 @@ fn a_taught_rule_explains_itself_and_can_be_forgotten() {
         because.contains("Mandantenkennung"),
         "the Why sheet does not name the word it was found after: {because}"
     );
+    // The card must agree with its own headline. «Decided by: Z Privacy, on
+    // its own» under «You taught Z Privacy this rule» is one screen calling
+    // itself a liar, and it shipped that way for an hour on 29 September.
+    assert!(why.decided, "the card says the app decided what the person taught");
+    assert_eq!(
+        why.applies, "Profile — Nordstern",
+        "the card reports the protection's scope instead of the rule's"
+    );
 
     // It is in the list, with the profile named.
     let rules = label_rules().expect("rules");

@@ -172,8 +172,14 @@ class _ShellState extends State<ZShell> {
             scanOnImport: config.scanOnImport,
             revealSeconds: config.revealSeconds,
             autoLockMinutes: config.autoLockMinutes,
-            // The language picks the pack, which is the part with teeth today.
-            packId: language == 'de' ? 'de' : config.packId,
+            // The language picks the pack, and it must really pick it.
+            //
+            // This line used to read `language == 'de' ? 'de' : config.packId`,
+            // which was honest only while German was the only pack there was:
+            // choosing English left the pack German while the page said «This
+            // picks the privacy pack». M7.10B shipped an English set and turned
+            // that into a plain untruth on the first screen of the product.
+            packId: language == 'de' ? 'de' : 'en',
             language: language,
             firstRunDone: true,
             sessionOnly: config.sessionOnly,

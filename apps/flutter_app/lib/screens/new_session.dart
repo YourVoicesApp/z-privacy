@@ -138,7 +138,7 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
                       onTap: () async {
                         final made = await showDialog<ProfileRow>(
                           context: context,
-                          builder: (_) => const ProfileForm(),
+                          builder: (_) => ProfileForm(ground: widget.ground),
                         );
                         if (!context.mounted || made == null) return;
                         await g.refresh();

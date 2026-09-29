@@ -52,6 +52,10 @@ class _WhySheetState extends State<WhySheet> {
   Widget build(BuildContext context) {
     final why = widget.why;
     final taught = why.entity != null && why.valueId != null;
+    // A **rule** the person taught is also learned knowledge, but it has no
+    // entity or value — so the sheet used to fall through to «nothing was
+    // learned from this», three lines under a headline saying they taught it.
+    final taughtRule = why.headline.contains('taught Z Privacy this rule');
 
     return Dialog(
       backgroundColor: Zc.paper,
@@ -184,14 +188,22 @@ class _WhySheetState extends State<WhySheet> {
               // The two acts, named apart. The commonest way to lose a user's
               // trust here would be to let one quietly do the other.
               Text(
-                taught
+                taught || taughtRule
                     ? 'Remove protection changes this document. Forget erases what Z Privacy '
                         'learned, and leaves this document exactly as it is.'
                     : 'Remove protection changes this document. Nothing was learned from this, '
                         'so there is nothing to forget.',
                 style: Zc.tiny.copyWith(letterSpacing: 0),
               ),
-              if (!taught) ...[
+              if (taughtRule) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'The rule itself is kept in your vault. Forget it in '
+                  'Z Vault → My Privacy Rules → Rules I taught.',
+                  style: Zc.tiny.copyWith(letterSpacing: 0),
+                ),
+              ],
+              if (!taught && !taughtRule) ...[
                 const SizedBox(height: 10),
                 Text(
                   why.decided
