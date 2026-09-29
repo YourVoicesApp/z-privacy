@@ -23,6 +23,11 @@ fn serial() -> MutexGuard<'static, ()> {
 /// A vault with one value, and the reveal window turned down so the test does
 /// not sit waiting. The window is a setting the core already owns.
 fn a_value(seconds: u32) -> (u32, u32) {
+    // Tests in one binary share one `Core`, so a reveal from the test before
+    // is still live here — `serial()` orders them, it does not reset them.
+    // Caught by `nothing_is_revealed_until_it_is_asked_for` seeing 58971 ms
+    // left over from a sixty-second window two tests earlier.
+    let _ = hide_value();
     let _ = vault_lock();
     let dir = std::env::temp_dir().join(format!("zprivacy-reveal-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
@@ -47,17 +52,25 @@ fn nothing_is_revealed_until_it_is_asked_for() {
     assert!(state.value_id.is_none(), "something is revealed before anyone asked");
 }
 
+/// Written with a **generous** window on purpose.
+///
+/// The first version used three seconds and asserted `later < first`. Under
+/// load — the gates build Flutter at the same time — both readings could land
+/// past the window at 0, and `0 < 0` is false. A test that cries wolf when
+/// the machine is busy teaches everyone to ignore it, so the window here is
+/// long enough that a stall cannot reach it, and expiry is proven separately
+/// by `a_reveal_ends_when_its_window_does`.
 #[test]
-fn a_reveal_reports_its_own_remaining_time_and_then_ends() {
+fn a_reveal_reports_its_own_remaining_time() {
     let _guard = serial();
-    let (entity, value) = a_value(3);
+    let (entity, value) = a_value(60);
 
     let shown = reveal_value(entity, value).expect("reveal");
     assert_eq!(shown.value, "Nordstern Consulting GmbH");
 
     let first = reveal_state().expect("state");
     assert_eq!(first.value_id, Some(value), "the core does not know what it revealed");
-    assert!(first.remaining_ms > 0 && first.remaining_ms <= 3_000, "{}", first.remaining_ms);
+    assert!(first.remaining_ms > 0 && first.remaining_ms <= 60_000, "{}", first.remaining_ms);
 
     // It goes down, read from the clock rather than counted.
     std::thread::sleep(std::time::Duration::from_millis(600));
@@ -69,9 +82,21 @@ fn a_reveal_reports_its_own_remaining_time_and_then_ends() {
         later.remaining_ms
     );
 
-    // And when the window is over the core says so, whatever anyone's timer
-    // believes. This is the honesty test: the screen cannot extend a reveal.
-    std::thread::sleep(std::time::Duration::from_millis(2_600));
+}
+
+/// The honesty test: when the window is over the core says so, whatever any
+/// timer believes. Waiting **longer** than the window can only help, so this
+/// one is safe under load in the way the countdown test is not.
+#[test]
+fn a_reveal_ends_when_its_window_does() {
+    let _guard = serial();
+    // The core clamps the window to a floor of three seconds, so asking for
+    // one gets three — the setting is the core's to police, not the test's.
+    let (entity, value) = a_value(1);
+    reveal_value(entity, value).expect("reveal");
+    assert!(reveal_state().expect("state").remaining_ms <= 3_000, "the floor moved");
+
+    std::thread::sleep(std::time::Duration::from_millis(3_400));
     let over = reveal_state().expect("state");
     assert_eq!(over.remaining_ms, 0, "the reveal outlived its window");
     assert!(over.value_id.is_none(), "an expired reveal is still named");
@@ -93,7 +118,9 @@ fn hiding_by_hand_ends_it_at_once() {
 #[test]
 fn revealing_again_gets_a_fresh_window() {
     let _guard = serial();
-    let (entity, value) = a_value(3);
+    // Also generous: the point is that the second press resets the clock, and
+    // a stall must not be able to make both readings zero.
+    let (entity, value) = a_value(60);
     reveal_value(entity, value).expect("reveal");
     std::thread::sleep(std::time::Duration::from_millis(900));
     let worn = reveal_state().expect("state").remaining_ms;
