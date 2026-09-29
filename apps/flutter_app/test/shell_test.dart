@@ -28,6 +28,7 @@ import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/widgets/tokens.dart';
+import 'package:zprivacy/widgets/vault_forms.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -36,7 +37,8 @@ const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
 /// A document with something for each layer to find, so the band's numbers are
 /// not all zero — a screen that only ever shows 0 proves nothing.
-const _doc = 'Kunde: Nordstern Consulting GmbH\n'
+const _doc =
+    'Kunde: Nordstern Consulting GmbH\n'
     'Ansprechpartner: Herr Thomas Müller\n'
     'IBAN: DE89370400440532013000\n'
     'Bitte prüfen Sie den Vertrag.';
@@ -44,13 +46,17 @@ const _doc = 'Kunde: Nordstern Consulting GmbH\n'
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(
+        'no $_libPath — run `flutter build linux --debug` first',
+      );
     }
     // The runner is started with LD_LIBRARY_PATH pointing at the built bundle.
     await RustLib.init();
   });
 
-  testWidgets('Home draws the ground as the core reports it, not as Dart guesses', (tester) async {
+  testWidgets('Home draws the ground as the core reports it, not as Dart guesses', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -66,16 +72,18 @@ void main() {
       providers = await z.providers();
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: HomeScreen(
-        ground: ground,
-        version: 'z_core 0.1.0',
-        onImport: () {},
-        onType: () {},
-        onVault: () {},
-        onSettings: () {},
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeScreen(
+          ground: ground,
+          version: 'z_core 0.1.0',
+          onImport: () {},
+          onType: () {},
+          onVault: () {},
+          onSettings: () {},
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Z Privacy'), findsOneWidget);
@@ -84,8 +92,12 @@ void main() {
     expect(find.text('Open Z Vault'), findsOneWidget);
     // No invented history: a session lives in memory, and Home says so once.
     expect(find.text('LOCAL CONVERSATIONS'), findsNothing);
-    expect(find.textContaining('Conversations are not saved after you close the app'),
-        findsOneWidget);
+    expect(
+      find.textContaining(
+        'Conversations are not saved after you close the app',
+      ),
+      findsOneWidget,
+    );
 
     // The pack's label is the pack's own, never a string typed into a screen —
     // and it is the pack **in use**, read from the settings, not the first one
@@ -98,7 +110,9 @@ void main() {
     );
     final scans = ground.config?.scanOnImport ?? true;
     expect(
-      find.text('${inUse.label} · ${scans ? "scan on import" : "scan when you ask"}'),
+      find.text(
+        '${inUse.label} · ${scans ? "scan on import" : "scan when you ask"}',
+      ),
       findsOneWidget,
     );
 
@@ -118,8 +132,9 @@ void main() {
     }
   });
 
-  testWidgets('the Workspace band reports the scan the core ran, number for number',
-      (tester) async {
+  testWidgets('the Workspace band reports the scan the core ran, number for number', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -133,19 +148,30 @@ void main() {
       await bench.rescan();
     });
 
-    expect(bench.snap, isNotNull, reason: 'the workspace is drawn from a snapshot');
-    expect((bench.snap!.autoProtected + bench.snap!.openSuggestions), greaterThan(0),
-        reason: 'the scan found something to show');
+    expect(
+      bench.snap,
+      isNotNull,
+      reason: 'the workspace is drawn from a snapshot',
+    );
+    expect(
+      (bench.snap!.autoProtected + bench.snap!.openSuggestions),
+      greaterThan(0),
+      reason: 'the scan found something to show',
+    );
 
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Scanned on import'), findsOneWidget);
     expect(
-      find.text('${bench.snap!.autoProtected} protected automatically · ${bench.snap!.openSuggestions} need your word · '
-          '${bench.snap!.normal} normal'),
+      find.text(
+        '${bench.snap!.autoProtected} protected automatically · ${bench.snap!.openSuggestions} need your word · '
+        '${bench.snap!.normal} normal',
+      ),
       findsOneWidget,
       reason: 'the band shows the snapshot numbers, derived from findings',
     );
@@ -153,7 +179,10 @@ void main() {
     // The two columns exist and each carries its hard rule.
     expect(find.text('ORIGINAL — LOCAL ONLY'), findsOneWidget);
     expect(find.text('SAFE — AI WILL RECEIVE'), findsOneWidget);
-    expect(find.text('Never sent to AI · Send cannot read this side'), findsOneWidget);
+    expect(
+      find.text('Never sent to AI · Send cannot read this side'),
+      findsOneWidget,
+    );
 
     // Typed text has no file name, and the bar says so rather than inventing one.
     expect(find.text('Typed text'), findsOneWidget);
@@ -171,7 +200,9 @@ void main() {
     bench.dispose();
   });
 
-  testWidgets('a rescan is named a rescan, not scanned on import', (tester) async {
+  testWidgets('a rescan is named a rescan, not scanned on import', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -186,9 +217,11 @@ void main() {
       await bench.rescan();
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(bench.scanOrigin, ScanOrigin.rescan);
     expect(find.text('Last scan: manual rescan'), findsOneWidget);
@@ -196,8 +229,9 @@ void main() {
     bench.dispose();
   });
 
-  testWidgets('the two columns show the core\'s own two strings, and only those',
-      (tester) async {
+  testWidgets('the two columns show the core\'s own two strings, and only those', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -211,8 +245,14 @@ void main() {
       await bench.rescan();
       // Answer everything, so there are real tokens on the Safe side. There is
       // no «send anyway»; the only way past a suggestion is to answer it.
-      for (final f in bench.findings.where((f) => f.state == MarkState.suggested)) {
-        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+      for (final f in bench.findings.where(
+        (f) => f.state == MarkState.suggested,
+      )) {
+        await z.answerFinding(
+          session: session,
+          finding: f.id,
+          answer: FindingAnswer.protect,
+        );
       }
       await bench.refresh();
       // Plain, so the token text is really in the span tree rather than inside
@@ -220,9 +260,11 @@ void main() {
       bench.showChips(false);
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final original = _plainOf(tester, OriginalText);
@@ -231,185 +273,263 @@ void main() {
     // 1 · Nothing is lost in the drawing. The left column splits the text at
     // every mark to colour it; if that splitter ever dropped or reordered a
     // slice, this is where it shows.
-    expect(original, bench.document!.text,
-        reason: 'the Original column must be the document, character for character');
+    expect(
+      original,
+      bench.document!.text,
+      reason:
+          'the Original column must be the document, character for character',
+    );
 
     // 2 · The right column is the payload the core built — not a copy the UI
     // assembled from the document and the token table.
-    expect(safe, bench.payload!.text,
-        reason: 'the Safe column must be the core\'s payload, character for character');
+    expect(
+      safe,
+      bench.payload!.text,
+      reason:
+          'the Safe column must be the core\'s payload, character for character',
+    );
 
     // 3 · Control string first, then the claim.
-    expect(original, contains('Thomas Müller'), reason: 'the original really holds the name');
-    expect(bench.tokens, isNotEmpty, reason: 'something was protected, so there is something to check');
+    expect(
+      original,
+      contains('Thomas Müller'),
+      reason: 'the original really holds the name',
+    );
+    expect(
+      bench.tokens,
+      isNotEmpty,
+      reason: 'something was protected, so there is something to check',
+    );
     for (final t in bench.tokens) {
-      expect(safe, contains(t.token), reason: 'every token the core minted is on the Safe side');
+      expect(
+        safe,
+        contains(t.token),
+        reason: 'every token the core minted is on the Safe side',
+      );
     }
-    for (final secret in ['Thomas Müller', 'Nordstern Consulting GmbH', 'DE89370400440532013000']) {
-      expect(safe, isNot(contains(secret)), reason: '«$secret» is drawn on the side that leaves');
+    for (final secret in [
+      'Thomas Müller',
+      'Nordstern Consulting GmbH',
+      'DE89370400440532013000',
+    ]) {
+      expect(
+        safe,
+        isNot(contains(secret)),
+        reason: '«$secret» is drawn on the side that leaves',
+      );
     }
 
     // 4 · And the sentence under the column tells the truth about suggestions.
     expect(bench.payload!.openSuggestions, 0);
-    expect(find.textContaining('This is exactly what the AI will receive'), findsOneWidget);
+    expect(
+      find.textContaining('This is exactly what the AI will receive'),
+      findsOneWidget,
+    );
 
     bench.dispose();
   });
 
-  testWidgets('the Protect button is in the state the core says, not one Dart worked out',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1500, 1000));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'the Protect button is in the state the core says, not one Dart worked out',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1500, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final ground = Ground();
-    late final Workbench bench;
-    late final int nameStart;
-    await tester.runAsync(() async {
-      await ground.refresh();
-      final session = await z.openSession(packId: 'de');
-      await z.importText(session: session, text: _doc);
-      bench = Workbench(session: session, profileId: null, packId: 'de');
-      await bench.rescan();
-      nameStart = _doc.indexOf('Thomas Müller');
-    });
+      final ground = Ground();
+      late final Workbench bench;
+      late final int nameStart;
+      await tester.runAsync(() async {
+        await ground.refresh();
+        final session = await z.openSession(packId: 'de');
+        await z.importText(session: session, text: _doc);
+        bench = Workbench(session: session, profileId: null, packId: 'de');
+        await bench.rescan();
+        nameStart = _doc.indexOf('Thomas Müller');
+      });
 
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
-    await tester.pumpAndSettle();
-
-    // DISABLED — nothing selected, and the hint says what to do about it.
-    expect(protectStateOf(bench.selected), ProtectState.disabled);
-    expect(find.text('Select text, then Protect'), findsOneWidget);
-    expect(bench.canUndo, isTrue, reason: 'the scan created protections, so undo would actually undo');
-
-    // READY — a selection the core recognises. The kind is the pack's, and the
-    // count is the core's; neither is worked out in Dart.
-    await tester.runAsync(() async {
-      await bench.select(Span(start: nameStart, end: nameStart + 'Thomas Müller'.length));
-    });
-    await tester.pumpAndSettle();
-    expect(protectStateOf(bench.selected), ProtectState.ready);
-    expect(bench.selected!.kind, Kind.person, reason: 'the pack guessed, not the screen');
-    expect(find.text('Select text, then Protect'), findsNothing);
-
-    // Protect it, and the state the button reports changes to KNOWN — because
-    // the core now says so, not because a flag was set here.
-    late final ProtectOutcome? outcome;
-    await tester.runAsync(() async {
-      outcome = await bench.protectSelection(
-        scope: Scope.conversation,
-        kind: Kind.person,
-        allMatches: false,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        ),
       );
-    });
-    await tester.pumpAndSettle();
-    expect(outcome, isA<ProtectOutcome_Applied>());
-    expect(protectStateOf(bench.selected), ProtectState.known);
-    expect(bench.selected!.protectedAs, isNotNull);
-    expect(bench.selected!.protectedBy, Source.hand);
-    expect(find.textContaining('Already protected as'), findsOneWidget);
+      await tester.pumpAndSettle();
 
-    // Undo is live now, and its hint is gone with it.
-    expect(bench.canUndo, isTrue);
-    expect(find.text('Nothing protected by hand yet'), findsNothing);
-
-    // SNAPS — a selection that cuts the protected name in half. The core names
-    // the whole item it would take instead, and nothing is changed by asking.
-    await tester.runAsync(() async {
-      await bench.select(Span(start: nameStart + 4, end: nameStart + 20));
-    });
-    await tester.pumpAndSettle();
-    expect(protectStateOf(bench.selected), ProtectState.snaps);
-    expect(bench.selected!.snapsTo, hasLength(1));
-    expect(find.textContaining('cuts into something already protected'), findsOneWidget);
-
-    // And undo takes the act back whole.
-    late final UndoOutcome? undone;
-    await tester.runAsync(() async {
-      undone = await bench.undo();
-    });
-    await tester.pumpAndSettle();
-    expect(undone, isA<UndoOutcome_Undone>());
-    expect(bench.canUndo, bench.snap?.canUndo ?? false);
-
-    bench.dispose();
-  });
-
-  testWidgets('Review shows three groups, says where each sits, and Skip decides nothing',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1600, 1000));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    // A real document, so findings carry a page and a paragraph. Typed text is
-    // all one paragraph and would prove nothing about «page 17».
-    const doc = 'Angebot 2026\n\n'
-        'Kunde: Nordstern Consulting GmbH\n\n'
-        'Ansprechpartner: Herr Thomas Müller\n\n'
-        'IBAN: DE89370400440532013000\n\n'
-        'Bitte prüfen Sie den Vertrag und antworten Sie kurz.';
-
-    final ground = Ground();
-    late final Workbench bench;
-    await tester.runAsync(() async {
-      await ground.refresh();
-      final session = await z.openSession(packId: 'de');
-      await z.importDocument(
-        session: session,
-        name: 'Angebot.txt',
-        bytes: Uint8List.fromList(utf8.encode(doc)),
-        kind: DocumentKind.txt,
-      );
-      bench = Workbench(session: session, profileId: null, packId: 'de');
-      await bench.rescan();
-      bench.openReview();
-    });
-
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(ReviewPanel), findsOneWidget);
-    expect(bench.suggested, isNotEmpty, reason: 'the pack is unsure about something here');
-    expect(bench.automatic, isNotEmpty, reason: 'and sure about something else');
-
-    // The two groups are named apart, because the difference is the whole point.
-    expect(find.text('WAITING FOR YOUR WORD'), findsOneWidget);
-    expect(find.text('PROTECTED AUTOMATICALLY'), findsOneWidget);
-
-    // Every finding says where it sits, and the place is the core's own.
-    final placed = bench.findings.where((f) => f.place != null).toList();
-    expect(placed, isNotEmpty, reason: 'a document gives every finding a place');
-    for (final f in placed.take(3)) {
+      // DISABLED — nothing selected, and the hint says what to do about it.
+      expect(protectStateOf(bench.selected), ProtectState.disabled);
+      expect(find.text('Select text, then Protect'), findsOneWidget);
       expect(
-        find.text('Page ${f.place!.page} · ¶${f.place!.paragraph}'),
-        findsWidgets,
-        reason: 'the row shows the core\'s place, not a counted guess',
+        bench.canUndo,
+        isTrue,
+        reason: 'the scan created protections, so undo would actually undo',
       );
-    }
-    // And the paragraphs really differ, so the numbers mean something.
-    expect(placed.map((f) => f.place!.paragraph).toSet().length, greaterThan(1));
 
-    // SKIP decides nothing: still open, still counted, Send still shut.
-    final first = bench.suggested.first;
-    final openBefore = bench.openSuggestions;
-    await tester.runAsync(() async => bench.answer(first.id, FindingAnswer.skip));
-    await tester.pumpAndSettle();
-    expect(bench.openSuggestions, openBefore, reason: 'skipping is not deciding');
-    expect(bench.payload!.openSuggestions, openBefore);
+      // READY — a selection the core recognises. The kind is the pack's, and the
+      // count is the core's; neither is worked out in Dart.
+      await tester.runAsync(() async {
+        await bench.select(
+          Span(start: nameStart, end: nameStart + 'Thomas Müller'.length),
+        );
+      });
+      await tester.pumpAndSettle();
+      expect(protectStateOf(bench.selected), ProtectState.ready);
+      expect(
+        bench.selected!.kind,
+        Kind.person,
+        reason: 'the pack guessed, not the screen',
+      );
+      expect(find.text('Select text, then Protect'), findsNothing);
 
-    // PROTECT does decide, and every number follows in one move.
-    await tester.runAsync(() async => bench.answer(first.id, FindingAnswer.protect));
-    await tester.pumpAndSettle();
-    expect(bench.openSuggestions, openBefore - 1);
-    expect(bench.report!.suggested, bench.openSuggestions);
-    expect(bench.payload!.openSuggestions, bench.openSuggestions);
+      // Protect it, and the state the button reports changes to KNOWN — because
+      // the core now says so, not because a flag was set here.
+      late final ProtectOutcome? outcome;
+      await tester.runAsync(() async {
+        outcome = await bench.protectSelection(
+          scope: Scope.conversation,
+          kind: Kind.person,
+          allMatches: false,
+        );
+      });
+      await tester.pumpAndSettle();
+      expect(outcome, isA<ProtectOutcome_Applied>());
+      expect(protectStateOf(bench.selected), ProtectState.known);
+      expect(bench.selected!.protectedAs, isNotNull);
+      expect(bench.selected!.protectedBy, Source.hand);
+      expect(find.textContaining('Already protected as'), findsOneWidget);
 
-    bench.dispose();
-  });
+      // Undo is live now, and its hint is gone with it.
+      expect(bench.canUndo, isTrue);
+      expect(find.text('Nothing protected by hand yet'), findsNothing);
 
-  testWidgets('Reveal draws on the screen and does not touch what leaves', (tester) async {
+      // SNAPS — a selection that cuts the protected name in half. The core names
+      // the whole item it would take instead, and nothing is changed by asking.
+      await tester.runAsync(() async {
+        await bench.select(Span(start: nameStart + 4, end: nameStart + 20));
+      });
+      await tester.pumpAndSettle();
+      expect(protectStateOf(bench.selected), ProtectState.snaps);
+      expect(bench.selected!.snapsTo, hasLength(1));
+      expect(
+        find.textContaining('cuts into something already protected'),
+        findsOneWidget,
+      );
+
+      // And undo takes the act back whole.
+      late final UndoOutcome? undone;
+      await tester.runAsync(() async {
+        undone = await bench.undo();
+      });
+      await tester.pumpAndSettle();
+      expect(undone, isA<UndoOutcome_Undone>());
+      expect(bench.canUndo, bench.snap?.canUndo ?? false);
+
+      bench.dispose();
+    },
+  );
+
+  testWidgets(
+    'Review shows three groups, says where each sits, and Skip decides nothing',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1600, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // A real document, so findings carry a page and a paragraph. Typed text is
+      // all one paragraph and would prove nothing about «page 17».
+      const doc =
+          'Angebot 2026\n\n'
+          'Kunde: Nordstern Consulting GmbH\n\n'
+          'Ansprechpartner: Herr Thomas Müller\n\n'
+          'IBAN: DE89370400440532013000\n\n'
+          'Bitte prüfen Sie den Vertrag und antworten Sie kurz.';
+
+      final ground = Ground();
+      late final Workbench bench;
+      await tester.runAsync(() async {
+        await ground.refresh();
+        final session = await z.openSession(packId: 'de');
+        await z.importDocument(
+          session: session,
+          name: 'Angebot.txt',
+          bytes: Uint8List.fromList(utf8.encode(doc)),
+          kind: DocumentKind.txt,
+        );
+        bench = Workbench(session: session, profileId: null, packId: 'de');
+        await bench.rescan();
+        bench.openReview();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ReviewPanel), findsOneWidget);
+      expect(
+        bench.suggested,
+        isNotEmpty,
+        reason: 'the pack is unsure about something here',
+      );
+      expect(
+        bench.automatic,
+        isNotEmpty,
+        reason: 'and sure about something else',
+      );
+
+      // The two groups are named apart, because the difference is the whole point.
+      expect(find.text('WAITING FOR YOUR WORD'), findsOneWidget);
+      expect(find.text('PROTECTED AUTOMATICALLY'), findsOneWidget);
+
+      // Every finding says where it sits, and the place is the core's own.
+      final placed = bench.findings.where((f) => f.place != null).toList();
+      expect(
+        placed,
+        isNotEmpty,
+        reason: 'a document gives every finding a place',
+      );
+      for (final f in placed.take(3)) {
+        expect(
+          find.text('Page ${f.place!.page} · ¶${f.place!.paragraph}'),
+          findsWidgets,
+          reason: 'the row shows the core\'s place, not a counted guess',
+        );
+      }
+      // And the paragraphs really differ, so the numbers mean something.
+      expect(
+        placed.map((f) => f.place!.paragraph).toSet().length,
+        greaterThan(1),
+      );
+
+      // SKIP decides nothing: still open, still counted, Send still shut.
+      final first = bench.suggested.first;
+      final openBefore = bench.openSuggestions;
+      await tester.runAsync(
+        () async => bench.answer(first.id, FindingAnswer.skip),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        bench.openSuggestions,
+        openBefore,
+        reason: 'skipping is not deciding',
+      );
+      expect(bench.payload!.openSuggestions, openBefore);
+
+      // PROTECT does decide, and every number follows in one move.
+      await tester.runAsync(
+        () async => bench.answer(first.id, FindingAnswer.protect),
+      );
+      await tester.pumpAndSettle();
+      expect(bench.openSuggestions, openBefore - 1);
+      expect(bench.report!.suggested, bench.openSuggestions);
+      expect(bench.payload!.openSuggestions, bench.openSuggestions);
+
+      bench.dispose();
+    },
+  );
+
+  testWidgets('Reveal draws on the screen and does not touch what leaves', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1600, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -424,7 +544,11 @@ void main() {
       bench = Workbench(session: session, profileId: null, packId: 'de');
       await bench.rescan();
       for (final f in bench.suggested) {
-        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+        await z.answerFinding(
+          session: session,
+          finding: f.id,
+          answer: FindingAnswer.protect,
+        );
       }
       await bench.refresh();
       bench.openTokens(true);
@@ -432,23 +556,32 @@ void main() {
       revisionBefore = bench.revision.n;
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(TokensPanel), findsOneWidget);
     expect(bench.tokens, isNotEmpty);
     final token = bench.tokens.firstWhere((t) => t.kind == Kind.person).token;
-    expect(find.text(token), findsWidgets, reason: 'the token itself is on screen, spelled out');
+    expect(
+      find.text(token),
+      findsWidgets,
+      reason: 'the token itself is on screen, spelled out',
+    );
 
     // Nothing of the real value is in the panel before Reveal is pressed. The
     // Original column shows it, of course — that is what that column is for, and
     // scoping the search to the panel is the honest way to ask this question.
     Finder inPanel(Finder what) =>
         find.descendant(of: find.byType(TokensPanel), matching: what);
-    expect(inPanel(find.textContaining('Thomas Müller')), findsNothing,
-        reason: 'the tokens panel does not show values until asked');
+    expect(
+      inPanel(find.textContaining('Thomas Müller')),
+      findsNothing,
+      reason: 'the tokens panel does not show values until asked',
+    );
 
     await tester.runAsync(() async => bench.reveal(token));
     await tester.pumpAndSettle();
@@ -467,7 +600,11 @@ void main() {
       revisionAfter = bench.revision.n;
     });
     expect(safeAfter, safeBefore, reason: 'Reveal wrote into the payload');
-    expect(revisionAfter, revisionBefore, reason: 'Reveal turned the revision, invalidating handles');
+    expect(
+      revisionAfter,
+      revisionBefore,
+      reason: 'Reveal turned the revision, invalidating handles',
+    );
     expect(safeAfter, isNot(contains('Thomas Müller')));
 
     // Hide takes it off the screen; nothing else changed either way.
@@ -479,167 +616,223 @@ void main() {
     bench.dispose();
   });
 
-  testWidgets('Send is shut while a suggestion is open, and the manual door needs no key',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1600, 1100));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+  testWidgets(
+    'Send is shut while a suggestion is open, and the manual door needs no key',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1600, 1100));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final ground = Ground();
-    late final Workbench bench;
-    await tester.runAsync(() async {
-      await ground.refresh();
-      final session = await z.openSession(packId: 'de');
-      await z.importText(session: session, text: _doc);
-      bench = Workbench(session: session, profileId: null, packId: 'de');
-      await bench.rescan();
-    });
+      final ground = Ground();
+      late final Workbench bench;
+      await tester.runAsync(() async {
+        await ground.refresh();
+        final session = await z.openSession(packId: 'de');
+        await z.importText(session: session, text: _doc);
+        bench = Workbench(session: session, profileId: null, packId: 'de');
+        await bench.rescan();
+      });
 
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    // Shut, with the reason beside it. There is no «send anyway» to look for.
-    expect(bench.payload!.openSuggestions, greaterThan(0));
-    expect(find.text('Answer the review first'), findsOneWidget);
-    expect(find.textContaining('send anyway'), findsNothing);
+      // Shut, with the reason beside it. There is no «send anyway» to look for.
+      expect(bench.payload!.openSuggestions, greaterThan(0));
+      expect(find.text('Answer the review first'), findsOneWidget);
+      expect(find.textContaining('send anyway'), findsNothing);
 
-    // Answer everything, and the door opens.
-    await tester.runAsync(() async {
-      for (final f in bench.suggested) {
-        await z.answerFinding(session: bench.session, finding: f.id, answer: FindingAnswer.protect);
+      // Answer everything, and the door opens.
+      await tester.runAsync(() async {
+        for (final f in bench.suggested) {
+          await z.answerFinding(
+            session: bench.session,
+            finding: f.id,
+            answer: FindingAnswer.protect,
+          );
+        }
+        await bench.refresh();
+      });
+      await tester.pumpAndSettle();
+      expect(bench.payload!.openSuggestions, 0);
+      expect(find.text('Answer the review first'), findsNothing);
+
+      // The sheet offers the door that needs no account at all, first. Continue
+      // is the step into that door — the payload review does not share a scroller
+      // with the actions.
+      await tester.tap(find.text('Send safe version'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SendSheet), findsOneWidget);
+
+      // What the sheet shows is the payload, not a copy assembled for display.
+      final shown = tester
+          .widget<SelectableText>(
+            find
+                .descendant(
+                  of: find.byType(SendSheet),
+                  matching: find.byType(SelectableText),
+                )
+                .first,
+          )
+          .textSpan!
+          .toPlainText();
+      expect(shown, bench.payload!.text);
+
+      await enterAiMode(tester);
+      expect(find.text('Use AI yourself'), findsOneWidget);
+      expect(find.text('Copy Protected'), findsOneWidget);
+      expect(find.textContaining('no account, no key'), findsOneWidget);
+
+      // Copy Protected is the first door's act — take it while it is on screen,
+      // before the local fold is scrolled into view.
+      final clip = _ClipboardProbe(tester)..install();
+      await tester.tap(find.text('Copy Protected'));
+      await settle(tester, rounds: 1);
+      final safe = bench.payload!.text;
+      expect(
+        clip.text,
+        safe,
+        reason: 'Copy Protected puts the SafePayload on the clipboard, exactly',
+      );
+      for (final secret in [
+        'Thomas Müller',
+        'Nordstern Consulting GmbH',
+        'DE89370400440532013000',
+      ]) {
+        expect(
+          clip.text,
+          isNot(contains(secret)),
+          reason: '«$secret» left on the Copy Protected path',
+        );
       }
-      await bench.refresh();
-    });
-    await tester.pumpAndSettle();
-    expect(bench.payload!.openSuggestions, 0);
-    expect(find.text('Answer the review first'), findsNothing);
 
-    // The sheet offers the door that needs no account at all, first. Continue
-    // is the step into that door — the payload review does not share a scroller
-    // with the actions.
-    await tester.tap(find.text('Send safe version'));
-    await tester.pumpAndSettle();
-    expect(find.byType(SendSheet), findsOneWidget);
+      // And the other two doors are reachable from here without leaving: one for
+      // a provider on the internet, one for a model on this machine.
+      expect(find.text('Send from here'), findsOneWidget);
+      expect(find.text('A model on this machine'), findsOneWidget);
 
-    // What the sheet shows is the payload, not a copy assembled for display.
-    final shown = tester
-        .widget<SelectableText>(
-          find.descendant(of: find.byType(SendSheet), matching: find.byType(SelectableText)).first,
-        )
-        .textSpan!
-        .toPlainText();
-    expect(shown, bench.payload!.text);
+      // Nothing is connected in this test, so the internet door shows its form —
+      // address, model, key — and says where the key would live.
+      expect(find.text('API KEY'), findsOneWidget);
+      expect(find.textContaining('for this run only'), findsOneWidget);
 
-    await enterAiMode(tester);
-    expect(find.text('Use AI yourself'), findsOneWidget);
-    expect(find.text('Copy Protected'), findsOneWidget);
-    expect(find.textContaining('no account, no key'), findsOneWidget);
+      // The local door is a fold, and it is below the sheet's scroll: it has to be
+      // brought into view before it can be tapped, exactly as a person would.
+      final localDoor = find.text('Set up a local model');
+      await tester.ensureVisible(localDoor);
+      await settle(tester, rounds: 1);
+      await tester.tap(localDoor);
+      await settle(tester, rounds: 1);
 
-    // Copy Protected is the first door's act — take it while it is on screen,
-    // before the local fold is scrolled into view.
-    final clip = _ClipboardProbe(tester)..install();
-    await tester.tap(find.text('Copy Protected'));
-    await settle(tester, rounds: 1);
-    final safe = bench.payload!.text;
-    expect(clip.text, safe, reason: 'Copy Protected puts the SafePayload on the clipboard, exactly');
-    for (final secret in ['Thomas Müller', 'Nordstern Consulting GmbH', 'DE89370400440532013000']) {
-      expect(clip.text, isNot(contains(secret)), reason: '«$secret» left on the Copy Protected path');
-    }
+      // A model on this machine is asked for no key at all — one field fewer, not
+      // an empty one. The internet door's own key field is still on screen, so the
+      // claim is about the count: opening this door added a form and no key.
+      expect(
+        find.text('API KEY'),
+        findsOneWidget,
+        reason: 'the local form added a second key field',
+      );
+      expect(
+        find.text('ADDRESS'),
+        findsNWidgets(2),
+        reason: 'two forms, two addresses',
+      );
+      expect(find.textContaining('literal loopback address'), findsOneWidget);
+      expect(find.text('http://127.0.0.1:11434'), findsWidgets);
 
-    // And the other two doors are reachable from here without leaving: one for
-    // a provider on the internet, one for a model on this machine.
-    expect(find.text('Send from here'), findsOneWidget);
-    expect(find.text('A model on this machine'), findsOneWidget);
+      // Bring an answer back by hand — the token store does not care how it
+      // travelled — and the real values come home.
+      await tester.runAsync(() async {
+        await bench.pasteAnswer('Danke. Zusammenfassung:\n$safe');
+      });
+      await settle(tester);
+      expect(bench.answers, hasLength(1));
 
-    // Nothing is connected in this test, so the internet door shows its form —
-    // address, model, key — and says where the key would live.
-    expect(find.text('API KEY'), findsOneWidget);
-    expect(find.textContaining('for this run only'), findsOneWidget);
+      late final List<Segment> segments;
+      late final String raw;
+      await tester.runAsync(() async {
+        segments = await bench.restored(bench.answers.first);
+        raw = await bench.asTheModelWroteIt(bench.answers.first);
+      });
+      final restored = segments.map((s) => s.text).join();
+      expect(
+        raw,
+        isNot(contains('Thomas Müller')),
+        reason: 'the answer as it arrived holds no value',
+      );
+      expect(
+        restored,
+        contains('Thomas Müller'),
+        reason: 'and restoring puts it back, here',
+      );
+      expect(
+        segments.any((s) => s.restored),
+        isTrue,
+        reason: 'the core marks what it put back',
+      );
 
-    // The local door is a fold, and it is below the sheet's scroll: it has to be
-    // brought into view before it can be tapped, exactly as a person would.
-    final localDoor = find.text('Set up a local model');
-    await tester.ensureVisible(localDoor);
-    await settle(tester, rounds: 1);
-    await tester.tap(localDoor);
-    await settle(tester, rounds: 1);
+      bench.dispose();
+    },
+  );
 
-    // A model on this machine is asked for no key at all — one field fewer, not
-    // an empty one. The internet door's own key field is still on screen, so the
-    // claim is about the count: opening this door added a form and no key.
-    expect(find.text('API KEY'), findsOneWidget,
-        reason: 'the local form added a second key field');
-    expect(find.text('ADDRESS'), findsNWidgets(2), reason: 'two forms, two addresses');
-    expect(find.textContaining('literal loopback address'), findsOneWidget);
-    expect(find.text('http://127.0.0.1:11434'), findsWidgets);
+  testWidgets(
+    'the answer is shown twice: restored, and as the model wrote it',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1700, 1100));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    // Bring an answer back by hand — the token store does not care how it
-    // travelled — and the real values come home.
-    await tester.runAsync(() async {
-      await bench.pasteAnswer('Danke. Zusammenfassung:\n$safe');
-    });
-    await settle(tester);
-    expect(bench.answers, hasLength(1));
+      final ground = Ground();
+      late final Workbench bench;
+      await tester.runAsync(() async {
+        await ground.refresh();
+        final session = await z.openSession(packId: 'de');
+        await z.importText(session: session, text: _doc);
+        bench = Workbench(session: session, profileId: null, packId: 'de');
+        await bench.rescan();
+        for (final f in bench.suggested) {
+          await z.answerFinding(
+            session: session,
+            finding: f.id,
+            answer: FindingAnswer.protect,
+          );
+        }
+        await bench.refresh();
+        bench.rememberCopiedPayload();
+        await bench.pasteAnswer('Verstanden:\n${bench.payload!.text}');
+      });
 
-    late final List<Segment> segments;
-    late final String raw;
-    await tester.runAsync(() async {
-      segments = await bench.restored(bench.answers.first);
-      raw = await bench.asTheModelWroteIt(bench.answers.first);
-    });
-    final restored = segments.map((s) => s.text).join();
-    expect(raw, isNot(contains('Thomas Müller')), reason: 'the answer as it arrived holds no value');
-    expect(restored, contains('Thomas Müller'), reason: 'and restoring puts it back, here');
-    expect(segments.any((s) => s.restored), isTrue, reason: 'the core marks what it put back');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        ),
+      );
+      await settle(tester);
 
-    bench.dispose();
-  });
+      expect(find.byType(AnswerPanel), findsOneWidget);
+      expect(find.text('Restored'), findsOneWidget);
+      expect(find.text('As the model wrote it'), findsOneWidget);
 
-  testWidgets('the answer is shown twice: restored, and as the model wrote it', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1700, 1100));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+      Finder inPanel(Finder f) =>
+          find.descendant(of: find.byType(AnswerPanel), matching: f);
 
-    final ground = Ground();
-    late final Workbench bench;
-    await tester.runAsync(() async {
-      await ground.refresh();
-      final session = await z.openSession(packId: 'de');
-      await z.importText(session: session, text: _doc);
-      bench = Workbench(session: session, profileId: null, packId: 'de');
-      await bench.rescan();
-      for (final f in bench.suggested) {
-        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
-      }
-      await bench.refresh();
-      bench.rememberCopiedPayload();
-      await bench.pasteAnswer('Verstanden:\n${bench.payload!.text}');
-    });
+      // Restored is what opens, and the real value is in it — locally.
+      expect(inPanel(find.textContaining('Thomas Müller')), findsOneWidget);
 
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
-    await settle(tester);
+      // The other view is the same answer with the tokens still in it.
+      await tester.tap(find.text('As the model wrote it'));
+      await settle(tester);
+      expect(inPanel(find.textContaining('Thomas Müller')), findsNothing);
+      expect(inPanel(find.textContaining('__Z_')), findsOneWidget);
 
-    expect(find.byType(AnswerPanel), findsOneWidget);
-    expect(find.text('Restored'), findsOneWidget);
-    expect(find.text('As the model wrote it'), findsOneWidget);
+      bench.dispose();
+    },
+  );
 
-    Finder inPanel(Finder f) => find.descendant(of: find.byType(AnswerPanel), matching: f);
-
-    // Restored is what opens, and the real value is in it — locally.
-    expect(inPanel(find.textContaining('Thomas Müller')), findsOneWidget);
-
-    // The other view is the same answer with the tokens still in it.
-    await tester.tap(find.text('As the model wrote it'));
-    await settle(tester);
-    expect(inPanel(find.textContaining('Thomas Müller')), findsNothing);
-    expect(inPanel(find.textContaining('__Z_')), findsOneWidget);
-
-    bench.dispose();
-  });
-
-  testWidgets('Copy Restored leaves the clipboard untouched until confirmed', (tester) async {
+  testWidgets('Copy Restored leaves the clipboard untouched until confirmed', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1700, 1100));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -654,7 +847,11 @@ void main() {
       bench = Workbench(session: session, profileId: null, packId: 'de');
       await bench.rescan();
       for (final f in bench.suggested) {
-        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+        await z.answerFinding(
+          session: session,
+          finding: f.id,
+          answer: FindingAnswer.protect,
+        );
       }
       await bench.refresh();
       bench.rememberCopiedPayload();
@@ -665,12 +862,15 @@ void main() {
     });
 
     final clip = _ClipboardProbe(tester)..install();
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      ),
+    );
     await settle(tester);
 
-    Finder inPanel(Finder f) => find.descendant(of: find.byType(AnswerPanel), matching: f);
+    Finder inPanel(Finder f) =>
+        find.descendant(of: find.byType(AnswerPanel), matching: f);
 
     expect(inPanel(find.text('Copy Restored')), findsOneWidget);
     expect(find.text('Copy'), findsNothing);
@@ -682,25 +882,48 @@ void main() {
     expect(find.text('Copy restored text?'), findsOneWidget);
     expect(find.textContaining('real protected values'), findsOneWidget);
     expect(find.textContaining('system clipboard'), findsOneWidget);
-    expect(find.textContaining('Other applications may be able to read'), findsOneWidget);
-    expect(clip.writes, 0, reason: 'the clipboard is not written before confirmation');
+    expect(
+      find.textContaining('Other applications may be able to read'),
+      findsOneWidget,
+    );
+    expect(
+      clip.writes,
+      0,
+      reason: 'the clipboard is not written before confirmation',
+    );
     expect(clip.text, 'SENTINEL');
 
-    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Cancel')));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Cancel'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsNothing);
     expect(clip.writes, 0);
     expect(clip.text, 'SENTINEL');
-    expect(find.text('Restored text copied to the system clipboard.'), findsNothing);
+    expect(
+      find.text('Restored text copied to the system clipboard.'),
+      findsNothing,
+    );
 
     await tester.tap(inPanel(find.text('Copy Restored')));
     await tester.pumpAndSettle();
-    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Copy Restored')));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Copy Restored'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(clip.writes, 1);
     expect(clip.text, restored);
-    expect(find.text('Restored text copied to the system clipboard.'), findsOneWidget);
+    expect(
+      find.text('Restored text copied to the system clipboard.'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Copied securely'), findsNothing);
 
     // The warning is not a one-time tutorial: the next press asks again.
@@ -708,7 +931,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Copy restored text?'), findsOneWidget);
     expect(clip.writes, 1);
-    await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text('Cancel')));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Cancel'),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(clip.writes, 1);
     expect(clip.text, restored);
@@ -729,7 +957,179 @@ void main() {
     bench.dispose();
   });
 
-  testWidgets('pressing Send really sends, and only the safe text arrives', (tester) async {
+  testWidgets(
+    'profiles are created, renamed, switched, and scope what the vault learns',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1600, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      const taught = 'ZXQPROFILEONLY778899';
+      const doc =
+          'Internal reference: $taught\nNo general rule should know this value.';
+      final ground = Ground();
+      late final Workbench bench;
+      late final SessionId session;
+
+      await tester.runAsync(() async {
+        await freshVaultForUiTest('profiles');
+        await ground.refresh();
+        session = await z.openSession(packId: 'de');
+        await z.importText(session: session, text: doc);
+        bench = Workbench(session: session, profileId: null, packId: 'de');
+        await bench.rescan();
+      });
+      addTearDown(bench.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        ),
+      );
+      await settle(tester);
+
+      await tester.tap(find.text('Everywhere').first);
+      await settle(tester);
+      expect(find.byType(ProfileSwitcher), findsOneWidget);
+
+      await tester.tap(find.text('Create profile'));
+      await settle(tester);
+      expect(find.byType(ProfileForm), findsOneWidget);
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(ProfileForm),
+          matching: find.byType(TextField),
+        ),
+        'Client A',
+      );
+      await tester.pump();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ProfileForm),
+          matching: find.text('Create'),
+        ),
+      );
+      await settle(tester);
+      expect(find.text('Client A'), findsOneWidget);
+      expect(find.text('Active'), findsOneWidget);
+
+      await tester.tap(find.text('Create profile'));
+      await settle(tester);
+      expect(find.byType(ProfileForm), findsOneWidget);
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(ProfileForm),
+          matching: find.byType(TextField),
+        ),
+        'Client B',
+      );
+      await tester.pump();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ProfileForm),
+          matching: find.text('Create'),
+        ),
+      );
+      await settle(tester);
+      expect(find.text('Client B'), findsOneWidget);
+
+      await tester.tap(find.text('Rename').first);
+      await settle(tester);
+      expect(find.byType(ProfileForm), findsOneWidget);
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(ProfileForm),
+          matching: find.byType(TextField),
+        ),
+        'Nordstern',
+      );
+      await tester.pump();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ProfileForm),
+          matching: find.text('Rename'),
+        ),
+      );
+      await settle(tester);
+      expect(find.text('Nordstern'), findsOneWidget);
+      expect(find.text('Client A'), findsNothing);
+
+      // Client B is active after it was created. Switch back to the renamed
+      // profile from the UI; the top bar must show the human name, not the ID.
+      await tester.tap(find.text('Switch').at(1));
+      await settle(tester);
+      await tester.tap(find.text('Done'));
+      await settle(tester);
+      expect(find.text('Nordstern'), findsOneWidget);
+      expect(bench.profileId, isNotNull);
+
+      // And switching can go the other way from the same top-bar entry.
+      await tester.tap(find.text('Nordstern').first);
+      await settle(tester);
+      await tester.tap(find.text('Switch').last);
+      await settle(tester);
+      await tester.tap(find.text('Done'));
+      await settle(tester);
+      expect(find.text('Client B'), findsOneWidget);
+
+      // Leave the open conversation in Nordstern before teaching a profile-scoped
+      // value, then prove another profile does not inherit it.
+      await tester.tap(find.text('Client B').first);
+      await settle(tester);
+      await tester.tap(find.text('Switch').last);
+      await settle(tester);
+      await tester.tap(find.text('Done'));
+      await settle(tester);
+      expect(find.text('Nordstern'), findsOneWidget);
+
+      late final String profileA;
+      late final String profileB;
+      await tester.runAsync(() async {
+        await ground.refresh();
+        profileA = ground.profiles.firstWhere((p) => p.name == 'Nordstern').id;
+        profileB = ground.profiles.firstWhere((p) => p.name == 'Client B').id;
+        expect(bench.profileId, profileA);
+
+        final start = doc.indexOf(taught);
+        await z.protect(
+          session: session,
+          span: Span(start: start, end: start + taught.length),
+          scope: Scope.profile,
+          kind: Kind.custom,
+        );
+        await bench.refresh();
+
+        final b = await z.openSession(profileId: profileB, packId: 'de');
+        await z.importText(session: b, text: doc);
+        await z.scan(session: b);
+        final bTokens = await z.listTokens(session: b);
+        expect(
+          bTokens.where((t) => t.kind == Kind.custom),
+          isEmpty,
+          reason: 'Client B must not inherit values taught to Client A',
+        );
+        await z.closeSession(session: b);
+
+        final a = await z.openSession(profileId: profileA, packId: 'de');
+        await z.importText(session: a, text: doc);
+        await z.scan(session: a);
+        final aTokens = await z.listTokens(session: a);
+        expect(
+          aTokens.where((t) => t.kind == Kind.custom),
+          isNotEmpty,
+          reason: 'Client A should auto-protect the value taught in Client A',
+        );
+        final safe = await z.payloadView(
+          handle: await z.buildPayload(session: a),
+        );
+        expect(safe.text, isNot(contains(taught)));
+        await z.closeSession(session: a);
+      });
+    },
+  );
+
+  testWidgets('pressing Send really sends, and only the safe text arrives', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1700, 1100));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -750,7 +1150,11 @@ void main() {
       bench = Workbench(session: session, profileId: null, packId: 'de');
       await bench.rescan();
       for (final f in bench.suggested) {
-        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+        await z.answerFinding(
+          session: session,
+          finding: f.id,
+          answer: FindingAnswer.protect,
+        );
       }
       await bench.refresh();
       safe = bench.payload!.text;
@@ -760,8 +1164,10 @@ void main() {
         authReceived = req.headers.value('authorization');
         final reply = jsonEncode({
           'choices': [
-            {'message': {'role': 'assistant', 'content': 'Verstanden:\n$safe'}}
-          ]
+            {
+              'message': {'role': 'assistant', 'content': 'Verstanden:\n$safe'},
+            },
+          ],
         });
         req.response
           ..statusCode = 200
@@ -782,9 +1188,11 @@ void main() {
     });
     addTearDown(() => server.close(force: true));
 
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      ),
+    );
     await settle(tester);
 
     await tester.tap(find.text('Send safe version'));
@@ -807,7 +1215,11 @@ void main() {
     final sent = jsonDecode(bodyReceived!) as Map<String, dynamic>;
     expect((sent['messages'] as List).first['content'], safe);
     expect(sent['model'], 'a-model-name');
-    for (final secret in ['Thomas Müller', 'Nordstern Consulting GmbH', 'DE89370400440532013000']) {
+    for (final secret in [
+      'Thomas Müller',
+      'Nordstern Consulting GmbH',
+      'DE89370400440532013000',
+    ]) {
       expect(bodyReceived, isNot(contains(secret)));
     }
     expect(authReceived, 'Bearer sk-test-not-a-real-credential');
@@ -816,7 +1228,10 @@ void main() {
     await settle(tester);
     expect(find.byType(AnswerPanel), findsOneWidget);
     expect(
-      find.descendant(of: find.byType(AnswerPanel), matching: find.textContaining('Thomas Müller')),
+      find.descendant(
+        of: find.byType(AnswerPanel),
+        matching: find.textContaining('Thomas Müller'),
+      ),
       findsOneWidget,
     );
 
@@ -832,14 +1247,26 @@ void main() {
   // here at this size: the payload swallowed the wheel, and the doors lived
   // below the window. These tests walk the journey, not just takeException().
 
-  for (final size in const [Size(1280, 720), Size(1366, 768), Size(1580, 980)]) {
-    testWidgets('the send review stays usable at ${size.width.toInt()}×${size.height.toInt()}',
-        (tester) async {
-      await reviewJourney(tester, size: size, text: longContract(sections: 48, extras: 4));
-    });
+  for (final size in const [
+    Size(1280, 720),
+    Size(1366, 768),
+    Size(1580, 980),
+  ]) {
+    testWidgets(
+      'the send review stays usable at ${size.width.toInt()}×${size.height.toInt()}',
+      (tester) async {
+        await reviewJourney(
+          tester,
+          size: size,
+          text: longContract(sections: 48, extras: 4),
+        );
+      },
+    );
   }
 
-  testWidgets('many findings keep the review footer on screen at 1280×720', (tester) async {
+  testWidgets('many findings keep the review footer on screen at 1280×720', (
+    tester,
+  ) async {
     await reviewJourney(
       tester,
       size: const Size(1280, 720),
@@ -848,16 +1275,21 @@ void main() {
     );
   });
 
-  testWidgets('a long SafePayload keeps the review footer on screen at 1280×720', (tester) async {
-    await reviewJourney(
-      tester,
-      size: const Size(1280, 720),
-      text: longContract(sections: 90, extras: 2),
-      requireLongPayload: true,
-    );
-  });
+  testWidgets(
+    'a long SafePayload keeps the review footer on screen at 1280×720',
+    (tester) async {
+      await reviewJourney(
+        tester,
+        size: const Size(1280, 720),
+        text: longContract(sections: 90, extras: 2),
+        requireLongPayload: true,
+      );
+    },
+  );
 
-  testWidgets('open suggestions do not push the review footer off 1280×720', (tester) async {
+  testWidgets('open suggestions do not push the review footer off 1280×720', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1280, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -866,24 +1298,34 @@ void main() {
     await tester.runAsync(() async {
       await ground.refresh();
       final session = await z.openSession(packId: 'de');
-      await z.importText(session: session, text: longContract(sections: 36, extras: 20));
+      await z.importText(
+        session: session,
+        text: longContract(sections: 36, extras: 20),
+      );
       bench = Workbench(session: session, profileId: null, packId: 'de');
       await bench.rescan();
     });
     addTearDown(bench.dispose);
 
-    expect(bench.payload!.openSuggestions, greaterThan(5),
-        reason: 'this case is the many-suggestions shape, not the golden two');
+    expect(
+      bench.payload!.openSuggestions,
+      greaterThan(5),
+      reason: 'this case is the many-suggestions shape, not the golden two',
+    );
 
     late BuildContext host;
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: Builder(builder: (ctx) {
-          host = ctx;
-          return const SizedBox.expand();
-        }),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (ctx) {
+              host = ctx;
+              return const SizedBox.expand();
+            },
+          ),
+        ),
       ),
-    ));
+    );
     await tester.pump();
     showDialog<void>(
       context: host,
@@ -893,19 +1335,38 @@ void main() {
 
     expect(find.byType(SendSheet), findsOneWidget);
     expect(tester.takeException(), isNull);
-    expectOnScreen(tester, find.text('Cancel'),
-        because: 'Cancel stays in the footer with suggestions open');
-    expectOnScreen(tester, find.text('Continue'),
-        because: 'Continue stays in the footer with suggestions open');
+    expectOnScreen(
+      tester,
+      find.text('Cancel'),
+      because: 'Cancel stays in the footer with suggestions open',
+    );
+    expectOnScreen(
+      tester,
+      find.text('Continue'),
+      because: 'Continue stays in the footer with suggestions open',
+    );
     expect(find.textContaining('suggestions are still open'), findsOneWidget);
     final continueBtn = tester.widget<InkWell>(
-      find.ancestor(of: find.text('Continue'), matching: find.byType(InkWell)).first,
+      find
+          .ancestor(of: find.text('Continue'), matching: find.byType(InkWell))
+          .first,
     );
-    expect(continueBtn.onTap, isNull, reason: 'open suggestions must not be skippable from the footer');
+    expect(
+      continueBtn.onTap,
+      isNull,
+      reason: 'open suggestions must not be skippable from the footer',
+    );
     await wheelOverPreview(tester, 600);
-    expectOnScreen(tester, find.text('Cancel'), because: 'wheeling the preview must not move Cancel');
-    expectOnScreen(tester, find.text('Continue'),
-        because: 'wheeling the preview must not move Continue');
+    expectOnScreen(
+      tester,
+      find.text('Cancel'),
+      because: 'wheeling the preview must not move Cancel',
+    );
+    expectOnScreen(
+      tester,
+      find.text('Continue'),
+      because: 'wheeling the preview must not move Continue',
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -916,7 +1377,9 @@ void main() {
   // the honesty of the interface is part of the security. `truthfulness.rs`
   // checks it inside the core; this checks the same thing where a person would
   // read it — on the screen, in words.
-  testWidgets('what the screens say is what the core says, word for word', (tester) async {
+  testWidgets('what the screens say is what the core says, word for word', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1700, 1100));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -932,42 +1395,63 @@ void main() {
       report = bench.report!;
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      ),
+    );
     await settle(tester, rounds: 2);
 
     // The band's sentence, built from the core's three numbers.
-    expect(report.suggested, greaterThan(0), reason: 'the fixture leaves something open');
     expect(
-      find.text('${report.auto} protected automatically · ${report.suggested} need your word · '
-          '${report.normal} normal'),
+      report.suggested,
+      greaterThan(0),
+      reason: 'the fixture leaves something open',
+    );
+    expect(
+      find.text(
+        '${report.auto} protected automatically · ${report.suggested} need your word · '
+        '${report.normal} normal',
+      ),
       findsOneWidget,
     );
 
     // The Safe column may not say «exactly what the AI will receive» while
     // anything is open. It says the open count instead, and the count is the
     // core's — this is the sentence that was wrong for five milestones.
-    expect(find.textContaining('This is exactly what the AI will receive'), findsNothing);
     expect(
-      find.textContaining(report.suggested == 1
-          ? 'One suggestion is still open'
-          : '${report.suggested} suggestions are still open'),
+      find.textContaining('This is exactly what the AI will receive'),
+      findsNothing,
+    );
+    expect(
+      find.textContaining(
+        report.suggested == 1
+            ? 'One suggestion is still open'
+            : '${report.suggested} suggestions are still open',
+      ),
       findsOneWidget,
     );
 
     // An open suggestion is drawn on the document, not only counted. Before
     // task 033 the core never produced a suggested mark at all, so the badge
     // said «3 need your word» over a document with nothing marked.
-    final suggestedMarks =
-        bench.document!.marks.where((m) => m.state == MarkState.suggested).length;
-    expect(suggestedMarks, report.suggested,
-        reason: 'the marks drawn and the number announced must be the same thing');
+    final suggestedMarks = bench.document!.marks
+        .where((m) => m.state == MarkState.suggested)
+        .length;
+    expect(
+      suggestedMarks,
+      report.suggested,
+      reason: 'the marks drawn and the number announced must be the same thing',
+    );
 
     // Answer them, and every one of those statements changes together.
     await tester.runAsync(() async {
       for (final f in bench.suggested) {
-        await z.answerFinding(session: bench.session, finding: f.id, answer: FindingAnswer.protect);
+        await z.answerFinding(
+          session: bench.session,
+          finding: f.id,
+          answer: FindingAnswer.protect,
+        );
       }
       await bench.refresh();
       await bench.rescan();
@@ -976,7 +1460,10 @@ void main() {
 
     expect(bench.report!.suggested, 0);
     expect(find.textContaining('suggestions are still open'), findsNothing);
-    expect(find.textContaining('This is exactly what the AI will receive'), findsOneWidget);
+    expect(
+      find.textContaining('This is exactly what the AI will receive'),
+      findsOneWidget,
+    );
     expect(
       bench.document!.marks.where((m) => m.state == MarkState.suggested).length,
       0,
@@ -986,6 +1473,7 @@ void main() {
     bench.dispose();
   });
 }
+
 /// `pumpAndSettle` never finishes while a real FFI future is in flight: the
 /// spinner waiting on it is an animation that does not stop. So give the future
 /// a real moment outside the fake-async zone, then settle.
@@ -995,9 +1483,19 @@ void main() {
 Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
   for (var i = 0; i < rounds; i++) {
     await tester.pump();
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 120)));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 120)),
+    );
   }
   await tester.pumpAndSettle();
+}
+
+Future<void> freshVaultForUiTest(String name) async {
+  await z.vaultLock();
+  final dir = Directory('${Directory.systemTemp.path}/zprivacy-ui-$name-$pid');
+  if (dir.existsSync()) dir.deleteSync(recursive: true);
+  await z.setDataDir(dir: dir.path);
+  await z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort');
 }
 
 /// Captures clipboard writes. Widget tests have no system clipboard; this is
@@ -1029,7 +1527,10 @@ class _ClipboardProbe {
       },
     );
     addTearDown(() {
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null);
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
     });
   }
 }
@@ -1038,7 +1539,10 @@ class _ClipboardProbe {
 /// out of the state object — so the test sees what a person would see.
 String _plainOf(WidgetTester tester, Type column) {
   final selectable = tester.widget<SelectableText>(
-    find.descendant(of: find.byType(column), matching: find.byType(SelectableText)),
+    find.descendant(
+      of: find.byType(column),
+      matching: find.byType(SelectableText),
+    ),
   );
   return selectable.textSpan!.toPlainText();
 }
@@ -1054,7 +1558,9 @@ String longContract({int sections = 48, int extras = 4}) {
     ..writeln('IBAN: DE89370400440532013000')
     ..writeln('BIC: COBADEFFXXX');
   for (var i = 0; i < extras; i++) {
-    b.writeln('Kontakt $i: person$i@nordstern.example, +49 30 ${10000000 + i}, Firma$i GmbH');
+    b.writeln(
+      'Kontakt $i: person$i@nordstern.example, +49 30 ${10000000 + i}, Firma$i GmbH',
+    );
   }
   for (var i = 0; i < sections; i++) {
     b.writeln();
@@ -1070,7 +1576,11 @@ String longContract({int sections = 48, int extras = 4}) {
 }
 
 Future<void> enterAiMode(WidgetTester tester) async {
-  expectOnScreen(tester, find.text('Continue'), because: 'Continue is the footer step into AI mode');
+  expectOnScreen(
+    tester,
+    find.text('Continue'),
+    because: 'Continue is the footer step into AI mode',
+  );
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
   expect(find.text('Use AI yourself'), findsOneWidget);
@@ -1078,7 +1588,11 @@ Future<void> enterAiMode(WidgetTester tester) async {
 
 /// The widget's paint box sits inside the test surface. `tester.tap` will hit
 /// an off-stage control, so on-screen is the thing the human run actually lost.
-void expectOnScreen(WidgetTester tester, Finder finder, {required String because}) {
+void expectOnScreen(
+  WidgetTester tester,
+  Finder finder, {
+  required String because,
+}) {
   expect(finder, findsOneWidget, reason: because);
   final rect = tester.getRect(finder);
   final size = tester.binding.renderViews.first.size;
@@ -1096,9 +1610,16 @@ void expectOnScreen(WidgetTester tester, Finder finder, {required String because
 
 Future<void> wheelOverPreview(WidgetTester tester, double dy) async {
   final preview = find.byKey(SendSheet.previewKey);
-  expect(preview, findsOneWidget, reason: 'the payload preview is the only scroller on review');
+  expect(
+    preview,
+    findsOneWidget,
+    reason: 'the payload preview is the only scroller on review',
+  );
   await tester.sendEventToBinding(
-    PointerScrollEvent(position: tester.getCenter(preview), scrollDelta: Offset(0, dy)),
+    PointerScrollEvent(
+      position: tester.getCenter(preview),
+      scrollDelta: Offset(0, dy),
+    ),
   );
   await tester.pump();
 }
@@ -1124,7 +1645,11 @@ Future<void> reviewJourney(
     bench = Workbench(session: session, profileId: null, packId: 'de');
     await bench.rescan();
     for (final f in bench.suggested) {
-      await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+      await z.answerFinding(
+        session: session,
+        finding: f.id,
+        answer: FindingAnswer.protect,
+      );
     }
     await bench.refresh();
   });
@@ -1132,87 +1657,165 @@ Future<void> reviewJourney(
 
   expect(bench.payload, isNotNull);
   expect(bench.payload!.openSuggestions, 0);
-  expect(bench.payload!.text.length, greaterThan(4000),
-      reason: 'a short payload will not reproduce the review overflow');
+  expect(
+    bench.payload!.text.length,
+    greaterThan(4000),
+    reason: 'a short payload will not reproduce the review overflow',
+  );
   if (requireLongPayload) {
-    expect(bench.payload!.text.length, greaterThan(12000),
-        reason: 'the long-SafePayload case must be longer than the golden letter');
+    expect(
+      bench.payload!.text.length,
+      greaterThan(12000),
+      reason: 'the long-SafePayload case must be longer than the golden letter',
+    );
   }
   if (requireManyProtections) {
-    expect(bench.payload!.protectedCount, greaterThan(10),
-        reason: 'the many-findings case must mint more tokens than the golden letter');
+    expect(
+      bench.payload!.protectedCount,
+      greaterThan(10),
+      reason:
+          'the many-findings case must mint more tokens than the golden letter',
+    );
   }
 
   final clip = _ClipboardProbe(tester)..install();
 
-  await tester.pumpWidget(MaterialApp(
-    home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
-  ));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ),
+  );
   await tester.pumpAndSettle();
   expect(tester.takeException(), isNull);
 
-  expectOnScreen(tester, find.text('Send safe version'),
-      because: 'the workspace send door itself must be reachable at this size');
+  expectOnScreen(
+    tester,
+    find.text('Send safe version'),
+    because: 'the workspace send door itself must be reachable at this size',
+  );
   await tester.tap(find.text('Send safe version'));
   await tester.pumpAndSettle();
   expect(find.byType(SendSheet), findsOneWidget);
   expect(find.text('Review before send'), findsOneWidget);
   expect(tester.takeException(), isNull);
 
-  expectOnScreen(tester, find.text('Cancel'),
-      because: 'Cancel is the fixed footer, not in the preview');
-  expectOnScreen(tester, find.text('Continue'),
-      because: 'Continue is the fixed footer, not in the preview');
-  expect(find.text('Copy Protected'), findsNothing,
-      reason: 'the AI doors live on the next page so they cannot steal the preview wheel');
+  expectOnScreen(
+    tester,
+    find.text('Cancel'),
+    because: 'Cancel is the fixed footer, not in the preview',
+  );
+  expectOnScreen(
+    tester,
+    find.text('Continue'),
+    because: 'Continue is the fixed footer, not in the preview',
+  );
+  expect(
+    find.text('Copy Protected'),
+    findsNothing,
+    reason:
+        'the AI doors live on the next page so they cannot steal the preview wheel',
+  );
 
   final footerBefore = tester.getRect(find.byKey(SendSheet.footerKey));
   final continueBefore = tester.getRect(find.text('Continue'));
-  final preview = tester.widget<SingleChildScrollView>(find.byKey(SendSheet.previewKey));
+  final preview = tester.widget<SingleChildScrollView>(
+    find.byKey(SendSheet.previewKey),
+  );
   final position = preview.controller!.position;
-  expect(position.maxScrollExtent, greaterThan(40),
-      reason: 'the preview must actually overflow, or the wheel assertion is empty');
+  expect(
+    position.maxScrollExtent,
+    greaterThan(40),
+    reason:
+        'the preview must actually overflow, or the wheel assertion is empty',
+  );
   final offsetBefore = position.pixels;
 
   await wheelOverPreview(tester, 800);
 
-  expect(position.pixels, greaterThan(offsetBefore),
-      reason: 'the wheel over the payload must move the preview, not vanish into SelectableText');
-  expect(tester.getRect(find.byKey(SendSheet.footerKey)), footerBefore,
-      reason: 'wheeling the preview must not move the footer');
-  expect(tester.getRect(find.text('Continue')), continueBefore,
-      reason: 'Continue stays put while the payload moves');
-  expectOnScreen(tester, find.text('Cancel'), because: 'Cancel remains clickable after the wheel');
-  expectOnScreen(tester, find.text('Continue'),
-      because: 'Continue remains clickable after the wheel');
+  expect(
+    position.pixels,
+    greaterThan(offsetBefore),
+    reason:
+        'the wheel over the payload must move the preview, not vanish into SelectableText',
+  );
+  expect(
+    tester.getRect(find.byKey(SendSheet.footerKey)),
+    footerBefore,
+    reason: 'wheeling the preview must not move the footer',
+  );
+  expect(
+    tester.getRect(find.text('Continue')),
+    continueBefore,
+    reason: 'Continue stays put while the payload moves',
+  );
+  expectOnScreen(
+    tester,
+    find.text('Cancel'),
+    because: 'Cancel remains clickable after the wheel',
+  );
+  expectOnScreen(
+    tester,
+    find.text('Continue'),
+    because: 'Continue remains clickable after the wheel',
+  );
   expect(tester.takeException(), isNull);
 
   await enterAiMode(tester);
   expect(tester.takeException(), isNull);
-  expectOnScreen(tester, find.text('Cancel'), because: 'Cancel stays in the footer on the AI page');
-  expectOnScreen(tester, find.text('Back'), because: 'Back is the footer return to the preview');
-  expectOnScreen(tester, find.text('Copy Protected'),
-      because: 'Copy Protected is a primary action and must be hittable without stretching the window');
-  expectOnScreen(tester, find.text('Paste AI answer'),
-      because: 'Paste AI answer is a primary action and must be hittable without stretching the window');
-  expectOnScreen(tester, find.text('Send from here'),
-      because: 'Send from here is a primary action and must be hittable without stretching the window');
+  expectOnScreen(
+    tester,
+    find.text('Cancel'),
+    because: 'Cancel stays in the footer on the AI page',
+  );
+  expectOnScreen(
+    tester,
+    find.text('Back'),
+    because: 'Back is the footer return to the preview',
+  );
+  expectOnScreen(
+    tester,
+    find.text('Copy Protected'),
+    because:
+        'Copy Protected is a primary action and must be hittable without stretching the window',
+  );
+  expectOnScreen(
+    tester,
+    find.text('Paste AI answer'),
+    because:
+        'Paste AI answer is a primary action and must be hittable without stretching the window',
+  );
+  expectOnScreen(
+    tester,
+    find.text('Send from here'),
+    because:
+        'Send from here is a primary action and must be hittable without stretching the window',
+  );
 
   await tester.tap(find.text('Copy Protected'));
   await settle(tester, rounds: 1);
   expect(find.text('Copied'), findsOneWidget);
-  expect(clip.text, bench.payload!.text, reason: 'Copy Protected copies the SafePayload, exactly');
+  expect(
+    clip.text,
+    bench.payload!.text,
+    reason: 'Copy Protected copies the SafePayload, exactly',
+  );
   await tester.tap(find.text('Paste AI answer'));
   await tester.pump();
   expect(find.textContaining('Paste the model'), findsOneWidget);
-  expectOnScreen(tester, find.text('Back'),
-      because: 'opening the paste box must not kick Back off the screen');
+  expectOnScreen(
+    tester,
+    find.text('Back'),
+    because: 'opening the paste box must not kick Back off the screen',
+  );
   expect(tester.takeException(), isNull);
 
   await tester.tap(find.text('Back'));
   await tester.pumpAndSettle();
   expect(find.byKey(SendSheet.previewKey), findsOneWidget);
-  expectOnScreen(tester, find.text('Continue'),
-      because: 'Back returns to the review page with Continue on screen');
+  expectOnScreen(
+    tester,
+    find.text('Continue'),
+    because: 'Back returns to the review page with Continue on screen',
+  );
   expect(tester.takeException(), isNull);
 }

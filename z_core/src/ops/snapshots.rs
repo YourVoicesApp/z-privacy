@@ -41,10 +41,11 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
     let findings = list_findings(session)?;
     let tokens = list_tokens(session)?;
     let vault = vault_state()?;
-    let (scan_origin, revision, answers, can_undo, normal) = with_core(|core| {
+    let (profile_id, scan_origin, revision, answers, can_undo, normal) = with_core(|core| {
         let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
         let answers: Vec<AnswerId> = s.answers.keys().copied().map(|id| AnswerId { id }).collect();
         Ok((
+            s.profile_id.clone(),
             s.scan_origin,
             s.revision,
             answers,
@@ -69,6 +70,7 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
     Ok(WorkspaceSnapshot {
         state_revision: truth_revision(),
         session,
+        profile_id,
         revision,
         scan_origin,
         auto_protected,

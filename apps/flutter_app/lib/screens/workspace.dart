@@ -26,6 +26,7 @@ import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/widgets/tokens.dart';
+import 'package:zprivacy/widgets/vault_forms.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
 
 class WorkspaceScreen extends StatefulWidget {
@@ -107,9 +108,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           onSay: (line) => setState(() => _said = line),
                         ),
                       ),
-                      if (bench.reviewOpen) ReviewPanel(bench: bench, width: panel),
-                      if (bench.tokensOpen) TokensPanel(bench: bench, width: panel),
-                      if (bench.showing != null) AnswerPanel(bench: bench, width: panel),
+                      if (bench.reviewOpen)
+                        ReviewPanel(bench: bench, width: panel),
+                      if (bench.tokensOpen)
+                        TokensPanel(bench: bench, width: panel),
+                      if (bench.showing != null)
+                        AnswerPanel(bench: bench, width: panel),
                     ],
                   );
                 },
@@ -126,7 +130,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 /// *report* — each becomes an act in its own milestone, and the behaviour board
 /// already says what each must ask before it changes an open document.
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.bench, required this.ground, required this.onHome});
+  const _TopBar({
+    required this.bench,
+    required this.ground,
+    required this.onHome,
+  });
 
   final Workbench bench;
   final Ground ground;
@@ -137,10 +145,13 @@ class _TopBar extends StatelessWidget {
     final doc = bench.document;
     final profile = bench.profileId == null
         ? 'Everywhere'
-        : ground.profiles.firstWhere(
-            (p) => p.id == bench.profileId,
-            orElse: () => ProfileRow(id: bench.profileId!, name: bench.profileId!),
-          ).name;
+        : ground.profiles
+              .firstWhere(
+                (p) => p.id == bench.profileId,
+                orElse: () =>
+                    ProfileRow(id: bench.profileId!, name: bench.profileId!),
+              )
+              .name;
     final pack = ground.packs.firstWhere(
       (p) => p.id == bench.packId,
       orElse: () => PackRow(id: bench.packId, label: bench.packId),
@@ -163,7 +174,14 @@ class _TopBar extends StatelessWidget {
                 children: [
                   ZMark(size: 28),
                   SizedBox(width: 10),
-                  Text('Z Privacy', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink)),
+                  Text(
+                    'Z Privacy',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Zc.ink,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -174,15 +192,19 @@ class _TopBar extends StatelessWidget {
               doc.kind == DocumentKind.pdf
                   ? Icons.picture_as_pdf_outlined
                   : doc.kind == DocumentKind.docx
-                      ? Icons.article_outlined
-                      : Icons.notes_outlined,
+                  ? Icons.article_outlined
+                  : Icons.notes_outlined,
               size: 16,
               color: Zc.ink3,
             ),
             const SizedBox(width: 7),
             Text(
               doc.name.isEmpty ? 'Typed text' : doc.name,
-              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Zc.ink),
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: Zc.ink,
+              ),
             ),
             const SizedBox(width: 9),
             Text(
@@ -191,7 +213,7 @@ class _TopBar extends StatelessWidget {
             ),
           ],
           const Spacer(),
-          _Fact(label: 'Profile', value: profile),
+          _ProfileFact(bench: bench, ground: ground, value: profile),
           _Fact(label: 'Pack', value: pack.label),
           _Fact(
             label: 'Vault',
@@ -200,11 +222,242 @@ class _TopBar extends StatelessWidget {
               VaultState.locked => 'Locked',
               VaultState.absent => 'None',
             },
-            tint: (bench.snap?.vault ?? ground.vault) == VaultState.unlocked ? Zc.river : Zc.ink4,
+            tint: (bench.snap?.vault ?? ground.vault) == VaultState.unlocked
+                ? Zc.river
+                : Zc.ink4,
           ),
         ],
       ),
     );
+  }
+}
+
+class _ProfileFact extends StatelessWidget {
+  const _ProfileFact({
+    required this.bench,
+    required this.ground,
+    required this.value,
+  });
+
+  final Workbench bench;
+  final Ground ground;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = ground.vault == VaultState.unlocked;
+    return Padding(
+      padding: const EdgeInsets.only(left: 20),
+      child: InkWell(
+        onTap: enabled
+            ? () => showDialog<void>(
+                context: context,
+                builder: (_) => ProfileSwitcher(bench: bench, ground: ground),
+              )
+            : null,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Eyebrow('Profile'),
+              const SizedBox(height: 3),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Zc.ink2,
+                    ),
+                  ),
+                  if (enabled) ...[
+                    const SizedBox(width: 4),
+                    const Icon(Icons.expand_more, size: 14, color: Zc.ink4),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ProfileSwitcher extends StatefulWidget {
+  const ProfileSwitcher({super.key, required this.bench, required this.ground});
+
+  final Workbench bench;
+  final Ground ground;
+
+  @override
+  State<ProfileSwitcher> createState() => _ProfileSwitcherState();
+}
+
+class _ProfileSwitcherState extends State<ProfileSwitcher> {
+  String? _trouble;
+  late List<ProfileRow> _profiles;
+
+  @override
+  void initState() {
+    super.initState();
+    _profiles = [...widget.ground.profiles];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final current = widget.bench.profileId;
+    return Dialog(
+      backgroundColor: Zc.paper,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Profiles', style: Zc.h2),
+              const SizedBox(height: 6),
+              Text(
+                'Choose which client dictionary this conversation uses. The profile ID stays '
+                'inside the vault; the display name is what people see.',
+                style: Zc.small,
+              ),
+              const SizedBox(height: 16),
+              _row(
+                title: 'Everywhere',
+                subtitle:
+                    'Only identities and rules that apply to every profile.',
+                active: current == null,
+                onSwitch: current == null ? null : () => _switch(null),
+              ),
+              for (final p in _profiles)
+                _row(
+                  title: p.name,
+                  subtitle: p.id,
+                  active: current == p.id,
+                  onSwitch: current == p.id ? null : () => _switch(p.id),
+                  onRename: () => _rename(p),
+                ),
+              const SizedBox(height: 12),
+              ZButton(
+                label: 'Create profile',
+                icon: Icons.add,
+                onPressed: _create,
+              ),
+              if (_trouble != null) ...[
+                const SizedBox(height: 12),
+                Trouble(_trouble!),
+              ],
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  const Spacer(),
+                  ZButton(
+                    label: 'Done',
+                    filled: true,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _row({
+    required String title,
+    required String subtitle,
+    required bool active,
+    required VoidCallback? onSwitch,
+    VoidCallback? onRename,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+      decoration: Zc.panel(
+        fill: active ? Zc.clayWash : Zc.card,
+        edge: active ? Zc.clayEdge : Zc.lineSoft,
+        radius: 9,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: Zc.ink,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
+                ),
+              ],
+            ),
+          ),
+          if (onRename != null) ...[
+            ZButton(label: 'Rename', onPressed: onRename),
+            const SizedBox(width: 8),
+          ],
+          ZButton(
+            label: active ? 'Active' : 'Switch',
+            filled: !active,
+            onPressed: onSwitch,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _create() async {
+    final made = await showDialog<ProfileRow>(
+      context: context,
+      builder: (_) => const ProfileForm(),
+    );
+    if (!mounted || made == null) return;
+    setState(() {
+      _profiles = [..._profiles.where((p) => p.id != made.id), made];
+      _trouble = null;
+    });
+    await widget.ground.refresh();
+    final bad = await widget.bench.switchProfile(made.id);
+    if (!mounted) return;
+    setState(() => _trouble = bad);
+  }
+
+  Future<void> _rename(ProfileRow profile) async {
+    final renamed = await showDialog<ProfileRow>(
+      context: context,
+      builder: (_) => ProfileForm(profile: profile),
+    );
+    if (!mounted || renamed == null) return;
+    setState(() {
+      _profiles = [for (final p in _profiles) p.id == renamed.id ? renamed : p];
+      _trouble = null;
+    });
+    await widget.ground.refresh();
+    await widget.bench.refresh();
+    if (mounted) setState(() => _trouble = null);
+  }
+
+  Future<void> _switch(String? profileId) async {
+    final bad = await widget.bench.switchProfile(profileId);
+    if (!mounted) return;
+    setState(() => _trouble = bad);
   }
 }
 
@@ -226,7 +479,11 @@ class _Fact extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             value,
-            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: tint ?? Zc.ink2),
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: tint ?? Zc.ink2,
+            ),
           ),
         ],
       ),
@@ -259,12 +516,21 @@ class _Band extends StatelessWidget {
             const SizedBox(
               width: 13,
               height: 13,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Zc.clayDeep),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Zc.clayDeep,
+              ),
             ),
             const SizedBox(width: 10),
-            const Text('Scanning…', style: TextStyle(fontSize: 13, color: Zc.clayDeep)),
+            const Text(
+              'Scanning…',
+              style: TextStyle(fontSize: 13, color: Zc.clayDeep),
+            ),
           ] else if (r == null) ...[
-            const Text('Not scanned yet', style: TextStyle(fontSize: 13, color: Zc.clayDeep)),
+            const Text(
+              'Not scanned yet',
+              style: TextStyle(fontSize: 13, color: Zc.clayDeep),
+            ),
           ] else ...[
             const Icon(Icons.check, size: 15, color: Zc.clayDeep),
             const SizedBox(width: 8),
@@ -274,7 +540,11 @@ class _Band extends StatelessWidget {
                 ScanOrigin.rescan => 'Last scan: manual rescan',
                 ScanOrigin.notScanned => 'Not scanned yet',
               },
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Zc.clayDeep),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Zc.clayDeep,
+              ),
             ),
             const SizedBox(width: 12),
             Flexible(
@@ -300,7 +570,10 @@ class _Band extends StatelessWidget {
                   r.vault == VaultState.locked
                       ? 'Vault locked — rules and pack ran, the vault layer did not'
                       : 'No vault — nothing is recognised by name',
-                  style: Zc.small.copyWith(color: Zc.amber, fontWeight: FontWeight.w600),
+                  style: Zc.small.copyWith(
+                    color: Zc.amber,
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
                 ),
@@ -357,8 +630,9 @@ class _Columns extends StatelessWidget {
                       marks: doc.marks,
                       focus: bench.focusedFinding?.span,
                       focusKey: focusKey,
-                      onSelection: (start, end) =>
-                          bench.select(end > start ? Span(start: start, end: end) : null),
+                      onSelection: (start, end) => bench.select(
+                        end > start ? Span(start: start, end: end) : null,
+                      ),
                       // Tapping a protected word asks the question this whole
                       // layer exists to answer.
                       onAsk: (mark) => _ask(inner, bench, doc, mark),
@@ -405,7 +679,9 @@ class _Said extends StatelessWidget {
         children: [
           const Icon(Icons.check_circle_outline, size: 15, color: Zc.clay),
           const SizedBox(width: 9),
-          Expanded(child: Text(line, style: Zc.small.copyWith(color: Zc.ink2))),
+          Expanded(
+            child: Text(line, style: Zc.small.copyWith(color: Zc.ink2)),
+          ),
         ],
       ),
     );
@@ -415,7 +691,12 @@ class _Said extends StatelessWidget {
 /// «Why is this protected?» — asked of the core, drawn by the sheet, and if
 /// something is forgotten the document is scanned again so the screen matches
 /// what the app now knows.
-Future<void> _ask(BuildContext context, Workbench bench, DocumentView doc, Mark mark) async {
+Future<void> _ask(
+  BuildContext context,
+  Workbench bench,
+  DocumentView doc,
+  Mark mark,
+) async {
   final why = await bench.why(mark.span);
   if (why == null || !context.mounted) return;
   await showDialog<void>(
@@ -437,11 +718,15 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Text(what, style: Zc.small.copyWith(color: Zc.ink4), textAlign: TextAlign.center),
-        ),
-      );
+    child: Padding(
+      padding: const EdgeInsets.all(28),
+      child: Text(
+        what,
+        style: Zc.small.copyWith(color: Zc.ink4),
+        textAlign: TextAlign.center,
+      ),
+    ),
+  );
 }
 
 /// «Chips / Plain». Both draw the same string; one of them draws it the way the
@@ -477,7 +762,14 @@ class _ChipSwitch extends StatelessWidget {
       );
     }
 
-    return Row(mainAxisSize: MainAxisSize.min, children: [one('Chips', true), const SizedBox(width: 4), one('Plain', false)]);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        one('Chips', true),
+        const SizedBox(width: 4),
+        one('Plain', false),
+      ],
+    );
   }
 }
 
@@ -485,7 +777,11 @@ class _ChipSwitch extends StatelessWidget {
 /// an unanswered suggestion is **still the real text** — which is what G12 is
 /// about, said in words where the consequence is visible.
 class _SafeFooter extends StatelessWidget {
-  const _SafeFooter({required this.payload, required this.bench, required this.ground});
+  const _SafeFooter({
+    required this.payload,
+    required this.bench,
+    required this.ground,
+  });
 
   final PayloadView payload;
   final Workbench bench;
@@ -508,10 +804,10 @@ class _SafeFooter extends StatelessWidget {
             open == 0
                 ? 'This is exactly what the AI will receive. ${payload.protectedCount} values were replaced.'
                 : open == 1
-                    ? 'One suggestion is still open. Until you answer it, it stands here as written — '
-                        'real text on this side.'
-                    : '$open suggestions are still open. Until you answer them, they stand here as '
-                        'written — the only real text on this side.',
+                ? 'One suggestion is still open. Until you answer it, it stands here as written — '
+                      'real text on this side.'
+                : '$open suggestions are still open. Until you answer them, they stand here as '
+                      'written — the only real text on this side.',
             style: Zc.small.copyWith(
               color: open > 0 ? Zc.amber : Zc.ink3,
               fontWeight: open > 0 ? FontWeight.w600 : FontWeight.w400,
@@ -533,9 +829,9 @@ class _SafeFooter extends StatelessWidget {
                 onPressed: open > 0
                     ? null
                     : () => showDialog<bool>(
-                          context: context,
-                          builder: (_) => SendSheet(bench: bench, ground: ground),
-                        ),
+                        context: context,
+                        builder: (_) => SendSheet(bench: bench, ground: ground),
+                      ),
                 hint: open > 0 ? 'Answer the review first' : null,
               ),
               if (bench.answers.isNotEmpty && bench.showing == null)

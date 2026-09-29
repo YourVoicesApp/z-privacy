@@ -161,10 +161,14 @@ class Ground extends ChangeNotifier {
 /// `revision` ties them: a document view and a scan report from two different
 /// revisions would be two different documents.
 class Workbench extends ChangeNotifier {
-  Workbench({required this.session, required this.profileId, required this.packId});
+  Workbench({
+    required this.session,
+    required this.profileId,
+    required this.packId,
+  });
 
   final SessionId session;
-  final String? profileId;
+  String? profileId;
   final String packId;
 
   WorkspaceSnapshot? snap;
@@ -210,8 +214,10 @@ class Workbench extends ChangeNotifier {
   /// Walking mode: one suggestion at a time, with its sentence around it.
   bool walking = false;
 
-  List<Finding> get suggested =>
-      findings.where((f) => f.state == MarkState.suggested).toList(growable: false);
+  List<Finding> get suggested => findings
+      .where((f) => f.state == MarkState.suggested)
+      .toList(growable: false);
+
   /// Grouped by **who decided**, not by who found.
   ///
   /// Confirming the pack's suggestion is your decision, and a list that filed
@@ -220,8 +226,9 @@ class Workbench extends ChangeNotifier {
   List<Finding> get automatic => findings
       .where((f) => f.state == MarkState.protected && !f.decided)
       .toList(growable: false);
-  List<Finding> get byHand =>
-      findings.where((f) => f.state == MarkState.protected && f.decided).toList(growable: false);
+  List<Finding> get byHand => findings
+      .where((f) => f.state == MarkState.protected && f.decided)
+      .toList(growable: false);
 
   Finding? get focusedFinding {
     final id = focused;
@@ -238,18 +245,32 @@ class Workbench extends ChangeNotifier {
   ///   what do I have?      → [document] (the Original side)
   ///   what will leave?     → the Safe side, built in Rust, from M7.2
   ///   why was this hidden? → [findings], each carrying its own source and reason
-  int get protectedCount => (snap?.autoProtected ?? 0) + (snap?.userProtected ?? 0);
+  int get protectedCount =>
+      (snap?.autoProtected ?? 0) + (snap?.userProtected ?? 0);
   int get openSuggestions => snap?.openSuggestions ?? 0;
   int get normalCount => snap?.normal ?? 0;
 
   Future<void> refresh() async {
     try {
       snap = await z.workspaceSnapshot(session: session);
+      profileId = snap?.profileId;
       trouble = null;
     } on ApiError catch (e) {
       trouble = e.toString();
     }
     notifyListeners();
+  }
+
+  Future<String?> switchProfile(String? next) async {
+    try {
+      await z.switchProfile(session: session, profileId: next);
+      await refresh();
+      return null;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+      notifyListeners();
+      return e.toString();
+    }
   }
 
   /// A scan is not a screen (the behaviour board): it runs on import, and this is
@@ -301,8 +322,18 @@ class Workbench extends ChangeNotifier {
     if (span == null) return null;
     try {
       final outcome = allMatches
-          ? await z.protectAllMatches(session: session, span: span, scope: scope, kind: kind)
-          : await z.protect(session: session, span: span, scope: scope, kind: kind);
+          ? await z.protectAllMatches(
+              session: session,
+              span: span,
+              scope: scope,
+              kind: kind,
+            )
+          : await z.protect(
+              session: session,
+              span: span,
+              scope: scope,
+              kind: kind,
+            );
       await refresh();
       // The selection still stands, but what it *is* has changed.
       await select(span);
@@ -326,7 +357,9 @@ class Workbench extends ChangeNotifier {
     try {
       final shown = await z.reveal(session: session, token: token);
       revealed[token] = shown.value;
-      _revealedUntil[token] = DateTime.now().add(Duration(milliseconds: shown.ttlMs));
+      _revealedUntil[token] = DateTime.now().add(
+        Duration(milliseconds: shown.ttlMs),
+      );
       trouble = null;
     } on ApiError catch (e) {
       trouble = e.toString();
@@ -349,7 +382,10 @@ class Workbench extends ChangeNotifier {
   /// cannot sit on a screen nobody is looking at.
   void expireReveals() {
     final now = DateTime.now();
-    final over = _revealedUntil.entries.where((e) => e.value.isBefore(now)).map((e) => e.key).toList();
+    final over = _revealedUntil.entries
+        .where((e) => e.value.isBefore(now))
+        .map((e) => e.key)
+        .toList();
     if (over.isEmpty) return;
     for (final t in over) {
       revealed.remove(t);
@@ -377,7 +413,10 @@ class Workbench extends ChangeNotifier {
     sending = true;
     notifyListeners();
     try {
-      final answer = await z.send(handle: h, provider: ProviderId(id: providerId));
+      final answer = await z.send(
+        handle: h,
+        provider: ProviderId(id: providerId),
+      );
       showing = answer;
       trouble = null;
       sending = false;
@@ -397,7 +436,8 @@ class Workbench extends ChangeNotifier {
   Future<String?> pasteAnswer(String raw) async {
     if (raw.trim().isEmpty) return 'Nothing was pasted.';
     final copied = copiedPayload;
-    if (copied == null) return 'Copy the safe text first, so the answer can be tied to that payload.';
+    if (copied == null)
+      return 'Copy the safe text first, so the answer can be tied to that payload.';
     try {
       final answer = await z.ingestAnswer(payload: copied, raw: raw);
       showing = answer;
@@ -457,7 +497,11 @@ class Workbench extends ChangeNotifier {
   /// keeps it open and still counts it, which is why Send stays shut.
   Future<void> answer(int finding, FindingAnswer choice) async {
     try {
-      report = await z.answerFinding(session: session, finding: finding, answer: choice);
+      report = await z.answerFinding(
+        session: session,
+        finding: finding,
+        answer: choice,
+      );
       trouble = null;
     } on ApiError catch (e) {
       trouble = e.toString();
@@ -467,7 +511,12 @@ class Workbench extends ChangeNotifier {
     // Step on to the next one still waiting, so walking is a walk.
     if (walking) {
       final left = suggested;
-      focused = left.isEmpty ? null : (left.firstWhere((f) => f.id != finding, orElse: () => left.first)).id;
+      focused = left.isEmpty
+          ? null
+          : (left.firstWhere(
+              (f) => f.id != finding,
+              orElse: () => left.first,
+            )).id;
       if (left.isEmpty) walking = false;
     }
     notifyListeners();

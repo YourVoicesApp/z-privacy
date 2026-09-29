@@ -167,7 +167,7 @@ fn stale_payload_after_every_mutating_call() {
         ("switch_profile", |_| {}, |s| {
             // A rescan under a different dictionary: the safe text can change, so
             // every handle built before it must be stale.
-            switch_profile(s, "p-somewhere".to_string()).expect("switch");
+            switch_profile(s, Some("p-somewhere".to_string())).expect("switch");
             Did::Changed
         }),
         ("switch_pack", |_| {}, |s| {

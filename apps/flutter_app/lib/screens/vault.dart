@@ -114,7 +114,10 @@ class _VaultScreenState extends State<VaultScreen> {
                 children: [
                   const Icon(Icons.chevron_left, size: 18, color: Zc.ink3),
                   const SizedBox(width: 4),
-                  Text(_open == null ? 'Back' : 'All identities', style: Zc.small),
+                  Text(
+                    _open == null ? 'Back' : 'All identities',
+                    style: Zc.small,
+                  ),
                 ],
               ),
             ),
@@ -122,17 +125,21 @@ class _VaultScreenState extends State<VaultScreen> {
           const SizedBox(width: 16),
           const Icon(Icons.lock_outline, size: 17, color: Zc.river),
           const SizedBox(width: 8),
-          const Text('Z Vault', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink)),
-          const SizedBox(width: 10),
-          Text(
-            switch (g.vaultSnap?.vault ?? g.vault) {
-              VaultState.unlocked =>
-                '${plural(g.vaultSnap?.identityCount ?? g.entityCount, "identity", "identities")} · ${plural(g.vaultSnap?.valueCount ?? g.valueCount, "value")}',
-              VaultState.locked => 'Locked',
-              VaultState.absent => 'Not created on this device',
-            },
-            style: Zc.small.copyWith(color: Zc.ink4),
+          const Text(
+            'Z Vault',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Zc.ink,
+            ),
           ),
+          const SizedBox(width: 10),
+          Text(switch (g.vaultSnap?.vault ?? g.vault) {
+            VaultState.unlocked =>
+              '${plural(g.vaultSnap?.identityCount ?? g.entityCount, "identity", "identities")} · ${plural(g.vaultSnap?.valueCount ?? g.valueCount, "value")}',
+            VaultState.locked => 'Locked',
+            VaultState.absent => 'Not created on this device',
+          }, style: Zc.small.copyWith(color: Zc.ink4)),
           const Spacer(),
           if (g.vault == VaultState.unlocked) ...[
             ZButton(
@@ -167,21 +174,27 @@ class _VaultScreenState extends State<VaultScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              g.vault == VaultState.locked ? 'The vault is locked' : 'There is no vault yet',
+              g.vault == VaultState.locked
+                  ? 'The vault is locked'
+                  : 'There is no vault yet',
               style: Zc.h2,
             ),
             const SizedBox(height: 8),
             Text(
               g.vault == VaultState.locked
                   ? 'Your identities are on this device, sealed. Until it is open the scanner '
-                      'still runs its rules and its pack — an IBAN is still caught — but not who.'
+                        'still runs its rules and its pack — an IBAN is still caught — but not who.'
                   : 'A vault is the only file this app writes. It holds your people and their '
-                      'values, encrypted with a passphrase that never leaves this device. '
-                      'Without one, nothing is recognised by name.',
+                        'values, encrypted with a passphrase that never leaves this device. '
+                        'Without one, nothing is recognised by name.',
               style: Zc.body,
             ),
             const SizedBox(height: 18),
-            VaultKeyForm(ground: g, creating: g.vault == VaultState.absent, onDone: _reload),
+            VaultKeyForm(
+              ground: g,
+              creating: g.vault == VaultState.absent,
+              onDone: _reload,
+            ),
           ],
         ),
       ),
@@ -207,7 +220,11 @@ class _VaultScreenState extends State<VaultScreen> {
                     isDense: true,
                     filled: true,
                     fillColor: Zc.card,
-                    prefixIcon: const Icon(Icons.search, size: 17, color: Zc.ink4),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      size: 17,
+                      color: Zc.ink4,
+                    ),
                     hintText: 'Search this device — names, values, spellings',
                     hintStyle: Zc.small.copyWith(color: Zc.ink4),
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -220,7 +237,10 @@ class _VaultScreenState extends State<VaultScreen> {
                     // The search runs in Rust over real values, so it is not run
                     // on every keystroke.
                     _typing?.cancel();
-                    _typing = Timer(const Duration(milliseconds: 180), () => g.searchVaultFor(q));
+                    _typing = Timer(
+                      const Duration(milliseconds: 180),
+                      () => g.searchVaultFor(q),
+                    );
                   },
                 ),
               ),
@@ -270,9 +290,13 @@ class _VaultScreenState extends State<VaultScreen> {
                 ZButton(
                   label: 'New profile',
                   onPressed: () async {
-                    await showDialog<void>(context: context, builder: (_) => const ProfileForm());
+                    final made = await showDialog<ProfileRow>(
+                      context: context,
+                      builder: (_) => const ProfileForm(),
+                    );
                     await g.refresh();
                     await _reload();
+                    if (made != null) setState(() => _profileFilter = made.id);
                   },
                 ),
               ],
@@ -285,7 +309,7 @@ class _VaultScreenState extends State<VaultScreen> {
                   child: Text(
                     g.vaultQuery.isEmpty
                         ? 'No identities yet. The first one is usually the client whose documents '
-                            'you work on.'
+                              'you work on.'
                         : 'Nothing on this device matches «${g.vaultQuery}».',
                     style: Zc.small,
                     textAlign: TextAlign.center,
@@ -331,7 +355,8 @@ class _VaultScreenState extends State<VaultScreen> {
               _Learned(
                 title: 'Values I taught',
                 count: '$values',
-                what: 'names, companies, numbers — found by themselves from now on',
+                what:
+                    'names, companies, numbers — found by themselves from now on',
                 live: true,
               ),
               const _Learned(
@@ -363,7 +388,11 @@ class _VaultScreenState extends State<VaultScreen> {
     final card = _card;
     if (card == null) {
       return const Center(
-        child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Zc.river)),
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2, color: Zc.river),
+        ),
       );
     }
     return EntityDetail(
@@ -383,7 +412,12 @@ class _VaultScreenState extends State<VaultScreen> {
           constraints: const BoxConstraints(maxWidth: 480),
           child: Padding(
             padding: const EdgeInsets.all(22),
-            child: VaultKeyForm(ground: g, creating: false, changing: true, onDone: _reload),
+            child: VaultKeyForm(
+              ground: g,
+              creating: false,
+              changing: true,
+              onDone: _reload,
+            ),
           ),
         ),
       ),
@@ -410,7 +444,9 @@ class _Chip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(7),
-            border: Border.all(color: on ? Zc.river.withValues(alpha: 0.4) : Zc.line),
+            border: Border.all(
+              color: on ? Zc.river.withValues(alpha: 0.4) : Zc.line,
+            ),
           ),
           child: Text(
             label,
@@ -427,7 +463,11 @@ class _Chip extends StatelessWidget {
 }
 
 class _EntityRowTile extends StatelessWidget {
-  const _EntityRowTile({required this.row, required this.profiles, required this.onTap});
+  const _EntityRowTile({
+    required this.row,
+    required this.profiles,
+    required this.onTap,
+  });
 
   final EntityRow row;
   final List<ProfileRow> profiles;
@@ -438,11 +478,12 @@ class _EntityRowTile extends StatelessWidget {
     final profile = row.profileId == null
         ? 'Everywhere'
         : profiles
-            .firstWhere(
-              (p) => p.id == row.profileId,
-              orElse: () => ProfileRow(id: row.profileId!, name: row.profileId!),
-            )
-            .name;
+              .firstWhere(
+                (p) => p.id == row.profileId,
+                orElse: () =>
+                    ProfileRow(id: row.profileId!, name: row.profileId!),
+              )
+              .name;
 
     return InkWell(
       onTap: onTap,
@@ -461,7 +502,11 @@ class _EntityRowTile extends StatelessWidget {
               ),
               child: Text(
                 entityKindName(row.kind),
-                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Zc.river),
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: Zc.river,
+                ),
               ),
             ),
             const SizedBox(width: 11),
@@ -469,7 +514,14 @@ class _EntityRowTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(row.label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Zc.ink)),
+                  Text(
+                    row.label,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Zc.ink,
+                    ),
+                  ),
                   const SizedBox(height: 3),
                   Text(
                     '${plural(row.values, "value")} · ${row.policySummary} · $profile',
@@ -487,12 +539,12 @@ class _EntityRowTile extends StatelessWidget {
 }
 
 String entityKindName(EntityKind k) => switch (k) {
-      EntityKind.client => 'CLIENT',
-      EntityKind.person => 'PERSON',
-      EntityKind.company => 'COMPANY',
-      EntityKind.project => 'PROJECT',
-      EntityKind.custom => 'OTHER',
-    };
+  EntityKind.client => 'CLIENT',
+  EntityKind.person => 'PERSON',
+  EntityKind.company => 'COMPANY',
+  EntityKind.project => 'PROJECT',
+  EntityKind.custom => 'OTHER',
+};
 
 /// One group of what the app has learned. A group that does not exist yet says
 /// so rather than being left out.
@@ -534,7 +586,11 @@ class _Learned extends StatelessWidget {
                 Flexible(
                   child: Text(
                     title,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Zc.ink2),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Zc.ink2,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

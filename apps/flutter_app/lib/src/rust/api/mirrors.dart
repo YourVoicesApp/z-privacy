@@ -1573,6 +1573,7 @@ sealed class VaultUnlockOutcome with _$VaultUnlockOutcome {
 class WorkspaceSnapshot {
   final int stateRevision;
   final SessionId session;
+  final String? profileId;
   final int revision;
   final ScanOrigin scanOrigin;
   final int autoProtected;
@@ -1592,6 +1593,7 @@ class WorkspaceSnapshot {
   const WorkspaceSnapshot({
     required this.stateRevision,
     required this.session,
+    this.profileId,
     required this.revision,
     required this.scanOrigin,
     required this.autoProtected,
@@ -1613,6 +1615,7 @@ class WorkspaceSnapshot {
   int get hashCode =>
       stateRevision.hashCode ^
       session.hashCode ^
+      profileId.hashCode ^
       revision.hashCode ^
       scanOrigin.hashCode ^
       autoProtected.hashCode ^
@@ -1636,6 +1639,7 @@ class WorkspaceSnapshot {
           runtimeType == other.runtimeType &&
           stateRevision == other.stateRevision &&
           session == other.session &&
+          profileId == other.profileId &&
           revision == other.revision &&
           scanOrigin == other.scanOrigin &&
           autoProtected == other.autoProtected &&

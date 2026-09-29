@@ -617,6 +617,7 @@ pub struct _HomeSnapshot {
 pub struct _WorkspaceSnapshot {
     pub state_revision: u32,
     pub session: SessionId,
+    pub profile_id: Option<String>,
     pub revision: u32,
     pub scan_origin: ScanOrigin,
     pub auto_protected: u32,

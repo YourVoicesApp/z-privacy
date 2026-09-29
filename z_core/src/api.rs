@@ -869,6 +869,7 @@ pub struct HomeSnapshot {
 pub struct WorkspaceSnapshot {
     pub state_revision: u32,
     pub session: SessionId,
+    pub profile_id: Option<String>,
     pub revision: u32,
     pub scan_origin: ScanOrigin,
     pub auto_protected: u32,
@@ -942,6 +943,7 @@ impl fmt::Debug for WorkspaceSnapshot {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("WorkspaceSnapshot")
             .field("state_revision", &self.state_revision)
+            .field("profile_id", &self.profile_id)
             .field("scan_origin", &self.scan_origin)
             .field("auto_protected", &self.auto_protected)
             .field("user_protected", &self.user_protected)
@@ -1271,6 +1273,10 @@ pub fn create_profile(name: String) -> ApiResult<String> {
     crate::ops::create_profile(name)
 }
 
+pub fn rename_profile(profile_id: String, name: String) -> ApiResult<()> {
+    crate::ops::rename_profile(profile_id, name)
+}
+
 // ---------------------------------------------------------------- profiles, packs
 
 /// The profiles, as the switcher lists them: `id\tname`.
@@ -1279,7 +1285,7 @@ pub fn profiles() -> ApiResult<Vec<ProfileRow>> {
 }
 
 /// Switch profile. Tokens already given stand; only new matching follows.
-pub fn switch_profile(session: SessionId, profile_id: String) -> ApiResult<SwitchOutcome> {
+pub fn switch_profile(session: SessionId, profile_id: Option<String>) -> ApiResult<SwitchOutcome> {
     crate::ops::switch_profile(session, profile_id)
 }
 

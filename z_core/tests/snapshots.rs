@@ -161,6 +161,44 @@ fn workspace_counts_come_from_findings() {
 }
 
 #[test]
+fn workspace_snapshot_names_the_active_profile_and_rename_keeps_the_id() {
+    let _guard = serial();
+    fresh_dir("profiles");
+    vault_create_with_passphrase(PASS.to_string()).expect("create");
+    let client_a = create_profile("Client A".to_string()).expect("a");
+    let client_b = create_profile("Client B".to_string()).expect("b");
+    let s = open_session(Some(client_a.clone()), "de".to_string()).expect("open");
+    import_text(s, DOC.to_string()).expect("import");
+    scan(s).expect("scan");
+
+    let snap = workspace_snapshot(s).expect("snapshot");
+    assert_eq!(snap.profile_id.as_deref(), Some(client_a.as_str()));
+    assert_eq!(
+        home_snapshot()
+            .expect("home")
+            .profiles
+            .iter()
+            .find(|p| p.id == client_a)
+            .map(|p| p.name.as_str()),
+        Some("Client A")
+    );
+
+    rename_profile(client_a.clone(), "Nordstern".to_string()).expect("rename");
+    let profiles = profiles().expect("profiles");
+    let renamed = profiles.iter().find(|p| p.id == client_a).expect("renamed");
+    assert_eq!(renamed.name, "Nordstern");
+
+    switch_profile(s, Some(client_b.clone())).expect("switch to b");
+    assert_eq!(
+        workspace_snapshot(s).expect("after b").profile_id.as_deref(),
+        Some(client_b.as_str())
+    );
+    switch_profile(s, None).expect("switch everywhere");
+    assert_eq!(workspace_snapshot(s).expect("everywhere").profile_id, None);
+    close_session(s).expect("close");
+}
+
+#[test]
 fn a_second_scan_is_a_rescan() {
     let _guard = serial();
     fresh_dir("rescan");

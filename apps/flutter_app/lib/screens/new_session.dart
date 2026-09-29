@@ -9,9 +9,14 @@ import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/vault_forms.dart';
 
 class NewSessionSheet extends StatefulWidget {
-  const NewSessionSheet({super.key, required this.ground, required this.typing});
+  const NewSessionSheet({
+    super.key,
+    required this.ground,
+    required this.typing,
+  });
 
   final Ground ground;
 
@@ -40,7 +45,9 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
   @override
   void initState() {
     super.initState();
-    _packId = widget.ground.packs.isNotEmpty ? widget.ground.packs.first.id : null;
+    _packId = widget.ground.packs.isNotEmpty
+        ? widget.ground.packs.first.id
+        : null;
   }
 
   @override
@@ -52,7 +59,8 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
   @override
   Widget build(BuildContext context) {
     final g = widget.ground;
-    final canGo = _packId != null && (!widget.typing || _text.text.trim().isNotEmpty);
+    final canGo =
+        _packId != null && (!widget.typing || _text.text.trim().isNotEmpty);
 
     return Dialog(
       backgroundColor: Zc.paper,
@@ -63,7 +71,10 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.typing ? 'New private chat' : 'Import a document', style: Zc.h2),
+              Text(
+                widget.typing ? 'New private chat' : 'Import a document',
+                style: Zc.h2,
+              ),
               const SizedBox(height: 6),
               Text(
                 'The scan runs the moment this opens — the document is never once '
@@ -74,7 +85,9 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
               const Eyebrow('Privacy pack'),
               const SizedBox(height: 8),
               if (g.packs.isEmpty)
-                const Trouble('No privacy pack is installed, so only the general rules would run.')
+                const Trouble(
+                  'No privacy pack is installed, so only the general rules would run.',
+                )
               else
                 Wrap(
                   spacing: 8,
@@ -99,7 +112,7 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
                 Text(
                   g.vault == VaultState.locked
                       ? 'The vault is locked, so no client dictionary is loaded. The general '
-                          'rules and the pack still run — an IBAN is still caught, but not whose.'
+                            'rules and the pack still run — an IBAN is still caught, but not whose.'
                       : 'There is no vault on this device yet, so nothing is recognised by name.',
                   style: Zc.small,
                 )
@@ -119,6 +132,19 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
                         chosen: _profileId == p.id,
                         onTap: () => setState(() => _profileId = p.id),
                       ),
+                    _Choice(
+                      label: 'Create profile',
+                      chosen: false,
+                      onTap: () async {
+                        final made = await showDialog<ProfileRow>(
+                          context: context,
+                          builder: (_) => const ProfileForm(),
+                        );
+                        if (!context.mounted || made == null) return;
+                        await g.refresh();
+                        if (mounted) setState(() => _profileId = made.id);
+                      },
+                    ),
                   ],
                 ),
               if (widget.typing) ...[
@@ -146,17 +172,22 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
               const SizedBox(height: 24),
               Row(
                 children: [
-                  ZButton(label: 'Cancel', onPressed: () => Navigator.of(context).pop()),
+                  ZButton(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                   const Spacer(),
                   ZButton(
                     label: widget.typing ? 'Open and scan' : 'Choose a file',
                     filled: true,
                     onPressed: canGo
-                        ? () => Navigator.of(context).pop(SessionWish(
+                        ? () => Navigator.of(context).pop(
+                            SessionWish(
                               profileId: _profileId,
                               packId: _packId!,
                               text: widget.typing ? _text.text : null,
-                            ))
+                            ),
+                          )
                         : null,
                   ),
                 ],
@@ -170,7 +201,11 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
 }
 
 class _Choice extends StatelessWidget {
-  const _Choice({required this.label, required this.chosen, required this.onTap});
+  const _Choice({
+    required this.label,
+    required this.chosen,
+    required this.onTap,
+  });
 
   final String label;
   final bool chosen;

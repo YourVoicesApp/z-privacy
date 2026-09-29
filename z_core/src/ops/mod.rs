@@ -1486,9 +1486,9 @@ fn rescan_keeping(session: SessionId, pack: &str) -> ApiResult<(u32, u32)> {
     })
 }
 
-pub(crate) fn switch_profile(session: SessionId, profile_id: String) -> ApiResult<SwitchOutcome> {
+pub(crate) fn switch_profile(session: SessionId, profile_id: Option<String>) -> ApiResult<SwitchOutcome> {
     let pack = with_session(session.id, |s| {
-        s.profile_id = Some(profile_id);
+        s.profile_id = profile_id;
         s.pack_id.clone()
     })
     .ok_or(ApiError::InvalidSession)?;

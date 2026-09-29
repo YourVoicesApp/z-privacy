@@ -255,7 +255,7 @@ fn switching_a_profile_keeps_the_tokens_already_given() {
     let token_before = before[0].token.clone();
 
     // Switch to a profile that knows nothing: what was protected stays protected.
-    let outcome = switch_profile(s, p2.clone()).expect("switch");
+    let outcome = switch_profile(s, Some(p2.clone())).expect("switch");
     assert_eq!(outcome.kept_tokens, 1);
     let after = list_tokens(s).expect("tokens");
     assert!(

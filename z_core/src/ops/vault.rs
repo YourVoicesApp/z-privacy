@@ -687,12 +687,13 @@ fn plan(entity: u32, value_id: u32, everywhere: bool, act: bool) -> ApiResult<Fo
 // ---------------------------------------------------------------- profiles
 
 pub(crate) fn create_profile(name: String) -> ApiResult<String> {
+    let name = name.trim().to_string();
     if name.is_empty() {
         return Err(ApiError::ImportRefused {
             reason: "a profile needs a name you will recognise".to_string(),
         });
     }
-    with_core(|core| {
+    let id = with_core(|core| {
         core.vault.with_open_mut(|vault| {
             // An id made from the name, so a log line names a client only as the
             // user already named them — never a value from inside the vault.
@@ -707,7 +708,33 @@ pub(crate) fn create_profile(name: String) -> ApiResult<String> {
             });
             Ok(id)
         })
-    })
+    })?;
+    crate::session::bump_truth();
+    Ok(id)
+}
+
+pub(crate) fn rename_profile(profile_id: String, name: String) -> ApiResult<()> {
+    let name = name.trim().to_string();
+    if name.is_empty() {
+        return Err(ApiError::ImportRefused {
+            reason: "a profile needs a name you will recognise".to_string(),
+        });
+    }
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let profile = vault
+                .profiles
+                .iter_mut()
+                .find(|p| p.id == profile_id)
+                .ok_or(ApiError::ImportRefused {
+                    reason: format!("there is no profile «{profile_id}»"),
+                })?;
+            profile.name = name;
+            Ok(())
+        })
+    })?;
+    crate::session::bump_truth();
+    Ok(())
 }
 
 /// `id\tname` per profile — one line the UI can split, without a new type.

@@ -80,16 +80,19 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
             style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.amber),
           ),
         ],
-        if (_trouble != null) ...[const SizedBox(height: 12), Trouble(_trouble!)],
+        if (_trouble != null) ...[
+          const SizedBox(height: 12),
+          Trouble(_trouble!),
+        ],
         const SizedBox(height: 14),
         ZButton(
           label: _busy
               ? 'Working…'
               : widget.changing
-                  ? 'Change it'
-                  : widget.creating
-                      ? 'Create the vault'
-                      : 'Unlock',
+              ? 'Change it'
+              : widget.creating
+              ? 'Create the vault'
+              : 'Unlock',
           filled: true,
           onPressed: _busy ? null : _go,
         ),
@@ -137,27 +140,30 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
   }
 
   Widget _field(String label, TextEditingController c) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Eyebrow(label),
-          const SizedBox(height: 5),
-          TextField(
-            controller: c,
-            obscureText: true,
-            onSubmitted: (_) => _go(),
-            decoration: InputDecoration(
-              isDense: true,
-              filled: true,
-              fillColor: Zc.card,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Zc.line),
-              ),
-            ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Eyebrow(label),
+      const SizedBox(height: 5),
+      TextField(
+        controller: c,
+        obscureText: true,
+        onSubmitted: (_) => _go(),
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: Zc.card,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 11,
+            vertical: 12,
           ),
-        ],
-      );
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Zc.line),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 /// A new identity: what sort of thing it is, what to call it, and where it lives.
@@ -231,16 +237,30 @@ class _EntityFormState extends State<EntityForm> {
                 spacing: 7,
                 runSpacing: 7,
                 children: [
-                  _Pick(label: 'Everywhere', on: _profile == null, onTap: () => setState(() => _profile = null)),
+                  _Pick(
+                    label: 'Everywhere',
+                    on: _profile == null,
+                    onTap: () => setState(() => _profile = null),
+                  ),
                   for (final p in widget.ground.profiles)
-                    _Pick(label: p.name, on: _profile == p.id, onTap: () => setState(() => _profile = p.id)),
+                    _Pick(
+                      label: p.name,
+                      on: _profile == p.id,
+                      onTap: () => setState(() => _profile = p.id),
+                    ),
                 ],
               ),
-              if (_trouble != null) ...[const SizedBox(height: 12), Trouble(_trouble!)],
+              if (_trouble != null) ...[
+                const SizedBox(height: 12),
+                Trouble(_trouble!),
+              ],
               const SizedBox(height: 20),
               Row(
                 children: [
-                  ZButton(label: 'Cancel', onPressed: () => Navigator.of(context).pop()),
+                  ZButton(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                   const Spacer(),
                   ZButton(
                     label: 'Create',
@@ -340,7 +360,10 @@ class _ValueFormState extends State<ValueForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(widget.existing == null ? 'A new value' : 'Edit this value', style: Zc.h2),
+              Text(
+                widget.existing == null ? 'A new value' : 'Edit this value',
+                style: Zc.h2,
+              ),
               const SizedBox(height: 16),
               const Eyebrow('The value'),
               const SizedBox(height: 6),
@@ -349,7 +372,11 @@ class _ValueFormState extends State<ValueForm> {
                 autofocus: widget.existing == null,
                 enabled: !_loading,
                 style: Zc.document.copyWith(fontSize: 14),
-                decoration: _box(_loading ? 'reading it from the vault…' : 'Nordstern Consulting GmbH'),
+                decoration: _box(
+                  _loading
+                      ? 'reading it from the vault…'
+                      : 'Nordstern Consulting GmbH',
+                ),
               ),
               const SizedBox(height: 16),
               const Eyebrow('What it is'),
@@ -360,7 +387,11 @@ class _ValueFormState extends State<ValueForm> {
                 runSpacing: 7,
                 children: [
                   for (final row in kindRows)
-                    _Pick(label: row.label, on: _kind == row.kind, onTap: () => setState(() => _kind = row.kind)),
+                    _Pick(
+                      label: row.label,
+                      on: _kind == row.kind,
+                      onTap: () => setState(() => _kind = row.kind),
+                    ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -384,14 +415,21 @@ class _ValueFormState extends State<ValueForm> {
                 policy: Policy.manual,
                 chosen: _policy,
                 title: 'Keep, do not hunt',
-                what: 'Kept so its spellings and its token stay stable — but not looked for.',
+                what:
+                    'Kept so its spellings and its token stay stable — but not looked for.',
                 onTap: (p) => setState(() => _policy = p),
               ),
-              if (_trouble != null) ...[const SizedBox(height: 12), Trouble(_trouble!)],
+              if (_trouble != null) ...[
+                const SizedBox(height: 12),
+                Trouble(_trouble!),
+              ],
               const SizedBox(height: 20),
               Row(
                 children: [
-                  ZButton(label: 'Cancel', onPressed: () => Navigator.of(context).pop()),
+                  ZButton(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                   const Spacer(),
                   ZButton(
                     label: 'Save',
@@ -407,7 +445,8 @@ class _ValueFormState extends State<ValueForm> {
                                 text: _text.text,
                                 policy: _policy,
                               );
-                              if (context.mounted) Navigator.of(context).pop(true);
+                              if (context.mounted)
+                                Navigator.of(context).pop(true);
                             } on ApiError catch (e) {
                               setState(() => _trouble = e.toString());
                             }
@@ -425,7 +464,9 @@ class _ValueFormState extends State<ValueForm> {
 
 /// A new profile — one dictionary per client.
 class ProfileForm extends StatefulWidget {
-  const ProfileForm({super.key});
+  const ProfileForm({super.key, this.profile});
+
+  final ProfileRow? profile;
 
   @override
   State<ProfileForm> createState() => _ProfileFormState();
@@ -434,6 +475,12 @@ class ProfileForm extends StatefulWidget {
 class _ProfileFormState extends State<ProfileForm> {
   final _name = TextEditingController();
   String? _trouble;
+
+  @override
+  void initState() {
+    super.initState();
+    _name.text = widget.profile?.name ?? '';
+  }
 
   @override
   void dispose() {
@@ -453,32 +500,41 @@ class _ProfileFormState extends State<ProfileForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('A new profile', style: Zc.h2),
+              Text(
+                widget.profile == null ? 'A new profile' : 'Rename profile',
+                style: Zc.h2,
+              ),
               const SizedBox(height: 6),
               Text(
-                'One dictionary per client. Only the identities of the profile you open are '
-                'loaded — opening the vault is not a blank cheque.',
+                widget.profile == null
+                    ? 'One dictionary per client. Only the identities of the profile you open are '
+                          'loaded — opening the vault is not a blank cheque.'
+                    : 'The profile ID stays the same. Only the name a person reads changes.',
                 style: Zc.small,
               ),
               const SizedBox(height: 16),
-              TextField(controller: _name, autofocus: true, decoration: _box('Client Nordstern')),
-              if (_trouble != null) ...[const SizedBox(height: 12), Trouble(_trouble!)],
+              TextField(
+                controller: _name,
+                autofocus: true,
+                decoration: _box('Client Nordstern'),
+                onSubmitted: (_) => _save(),
+              ),
+              if (_trouble != null) ...[
+                const SizedBox(height: 12),
+                Trouble(_trouble!),
+              ],
               const SizedBox(height: 18),
               Row(
                 children: [
-                  ZButton(label: 'Cancel', onPressed: () => Navigator.of(context).pop()),
+                  ZButton(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                   const Spacer(),
                   ZButton(
-                    label: 'Create',
+                    label: widget.profile == null ? 'Create' : 'Rename',
                     filled: true,
-                    onPressed: () async {
-                      try {
-                        await z.createProfile(name: _name.text);
-                        if (context.mounted) Navigator.of(context).pop();
-                      } on ApiError catch (e) {
-                        setState(() => _trouble = e.toString());
-                      }
-                    },
+                    onPressed: _save,
                   ),
                 ],
               ),
@@ -488,28 +544,45 @@ class _ProfileFormState extends State<ProfileForm> {
       ),
     );
   }
+
+  Future<void> _save() async {
+    try {
+      final name = _name.text.trim();
+      final profile = widget.profile;
+      if (profile == null) {
+        final id = await z.createProfile(name: name);
+        if (mounted) Navigator.of(context).pop(ProfileRow(id: id, name: name));
+      } else {
+        await z.renameProfile(profileId: profile.id, name: name);
+        if (mounted)
+          Navigator.of(context).pop(ProfileRow(id: profile.id, name: name));
+      }
+    } on ApiError catch (e) {
+      setState(() => _trouble = e.toString());
+    }
+  }
 }
 
 InputDecoration _box(String hint) => InputDecoration(
-      isDense: true,
-      filled: true,
-      fillColor: Zc.card,
-      hintText: hint,
-      hintStyle: Zc.small.copyWith(color: Zc.ink4),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Zc.line),
-      ),
-    );
+  isDense: true,
+  filled: true,
+  fillColor: Zc.card,
+  hintText: hint,
+  hintStyle: Zc.small.copyWith(color: Zc.ink4),
+  contentPadding: const EdgeInsets.symmetric(horizontal: 11, vertical: 12),
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(8),
+    borderSide: const BorderSide(color: Zc.line),
+  ),
+);
 
 String entityKindLabel(EntityKind k) => switch (k) {
-      EntityKind.client => 'Client',
-      EntityKind.person => 'Person',
-      EntityKind.company => 'Company',
-      EntityKind.project => 'Project',
-      EntityKind.custom => 'Something else',
-    };
+  EntityKind.client => 'Client',
+  EntityKind.person => 'Person',
+  EntityKind.company => 'Company',
+  EntityKind.project => 'Project',
+  EntityKind.custom => 'Something else',
+};
 
 class _Pick extends StatelessWidget {
   const _Pick({required this.label, required this.on, required this.onTap});
@@ -530,7 +603,9 @@ class _Pick extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(7),
-            border: Border.all(color: on ? Zc.river.withValues(alpha: 0.4) : Zc.line),
+            border: Border.all(
+              color: on ? Zc.river.withValues(alpha: 0.4) : Zc.line,
+            ),
           ),
           child: Text(
             label,
@@ -573,7 +648,9 @@ class _PolicyRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: on ? Zc.riverWash : Zc.card,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: on ? Zc.river.withValues(alpha: 0.4) : Zc.line),
+          border: Border.all(
+            color: on ? Zc.river.withValues(alpha: 0.4) : Zc.line,
+          ),
         ),
         child: Row(
           children: [
@@ -589,7 +666,11 @@ class _PolicyRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: on ? Zc.river : Zc.ink),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: on ? Zc.river : Zc.ink,
+                    ),
                   ),
                   Text(what, style: Zc.small.copyWith(color: Zc.ink3)),
                 ],

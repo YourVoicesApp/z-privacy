@@ -342,13 +342,19 @@ Future<Settings> saveSettings({required Settings settings}) =>
 Future<String> createProfile({required String name}) =>
     RustLib.instance.api.zCoreApiCreateProfile(name: name);
 
+Future<void> renameProfile({required String profileId, required String name}) =>
+    RustLib.instance.api.zCoreApiRenameProfile(
+      profileId: profileId,
+      name: name,
+    );
+
 /// The profiles, as the switcher lists them: `id\tname`.
 Future<List<ProfileRow>> profiles() => RustLib.instance.api.zCoreApiProfiles();
 
 /// Switch profile. Tokens already given stand; only new matching follows.
 Future<SwitchOutcome> switchProfile({
   required SessionId session,
-  required String profileId,
+  String? profileId,
 }) => RustLib.instance.api.zCoreApiSwitchProfile(
   session: session,
   profileId: profileId,
