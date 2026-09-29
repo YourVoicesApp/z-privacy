@@ -152,10 +152,22 @@ class _TopBar extends StatelessWidget {
                     ProfileRow(id: bench.profileId!, name: bench.profileId!, languages: const []),
               )
               .name;
-    final pack = ground.packs.firstWhere(
-      (p) => p.id == bench.packId,
-      orElse: () => PackRow(id: bench.packId, label: bench.packId),
-    );
+    // What actually ran, not what the session was opened with. A profile may
+    // run two rule sets at once, and naming only one of them here would say
+    // «German» over a document whose English label had just been detected.
+    final active = ground.profiles
+        .where((p) => p.id == bench.profileId)
+        .expand((p) => p.languages)
+        .toList();
+    final ran = active.isEmpty ? [bench.packId] : active;
+    final packLabel = ran
+        .map(
+          (id) => ground.packs
+              .firstWhere((p) => p.id == id, orElse: () => PackRow(id: id, label: id))
+              .label,
+        )
+        .join(' · ');
+    final pack = PackRow(id: ran.join('+'), label: packLabel);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 13, 18, 13),
