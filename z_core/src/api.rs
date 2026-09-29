@@ -1015,6 +1015,16 @@ pub struct AnswerSnapshot {
     pub answer: AnswerId,
     pub index: u32,
     pub total: u32,
+    /// The answer before this one, or `None` at the first.
+    ///
+    /// Carried here rather than worked out by a screen, for the reason the
+    /// whole snapshot exists: `index`/`total` and «which answer do I move to»
+    /// must be **one** fact. A list held in Dart alongside a count from Rust
+    /// is two sources that will disagree, and «Answer 2 of 2» with a stale
+    /// neighbour is the same family as every lie this project has hunted.
+    pub previous: Option<AnswerId>,
+    /// The answer after this one, or `None` at the last.
+    pub next: Option<AnswerId>,
     pub restored: Vec<Segment>,
     pub as_written: String,
 }

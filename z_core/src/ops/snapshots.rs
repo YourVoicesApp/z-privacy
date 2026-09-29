@@ -210,22 +210,27 @@ pub(crate) fn provider_snapshot() -> ApiResult<ProviderSnapshot> {
 }
 
 pub(crate) fn answer_snapshot(session: SessionId, answer: AnswerId) -> ApiResult<AnswerSnapshot> {
-    let (index, total) = with_core(|core| {
+    // Position **and** neighbours in one read of one map, so the number a
+    // person sees and the answer a press moves to cannot come apart.
+    let (index, total, previous, next) = with_core(|core| {
         let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
         let ids: Vec<u32> = s.answers.keys().copied().collect();
         let total = ids.len() as u32;
-        let index = ids
+        let at = ids
             .iter()
             .position(|id| *id == answer.id)
-            .map(|i| (i as u32).saturating_add(1))
             .ok_or(ApiError::UnknownToken)?;
-        Ok((index, total))
+        let previous = at.checked_sub(1).and_then(|i| ids.get(i)).map(|id| AnswerId { id: *id });
+        let next = ids.get(at + 1).map(|id| AnswerId { id: *id });
+        Ok(((at as u32).saturating_add(1), total, previous, next))
     })?;
     Ok(AnswerSnapshot {
         state_revision: truth_revision(),
         answer,
         index,
         total,
+        previous,
+        next,
         restored: restored_view(session, answer)?,
         as_written: super::ai_view(session, answer)?,
     })

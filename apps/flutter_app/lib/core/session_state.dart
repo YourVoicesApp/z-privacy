@@ -463,11 +463,15 @@ class Workbench extends ChangeNotifier {
     }
   }
 
-  Future<List<Segment>> restored(AnswerId answer) =>
-      z.restoredView(session: session, answer: answer);
-
-  Future<String> asTheModelWroteIt(AnswerId answer) =>
-      z.aiView(session: session, answer: answer);
+  /// One read for everything about one answer: both views, its position, and
+  /// which answers sit either side of it.
+  ///
+  /// The screen used to fetch the two views here and count `2 of 2` from a
+  /// Dart list — two sources for one fact. Navigation would have made that a
+  /// third, and a stale neighbour is how «Answer 1» ends up drawn while the
+  /// copy button still belongs to «Answer 2».
+  Future<AnswerSnapshot> answerFacts(AnswerId answer) =>
+      z.answerSnapshot(session: session, answer: answer);
 
   void rememberCopiedPayload() {
     copiedPayload = handle;

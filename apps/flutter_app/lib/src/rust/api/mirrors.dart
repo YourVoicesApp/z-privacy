@@ -27,6 +27,18 @@ class AnswerSnapshot {
   final AnswerId answer;
   final int index;
   final int total;
+
+  /// The answer before this one, or `None` at the first.
+  ///
+  /// Carried here rather than worked out by a screen, for the reason the
+  /// whole snapshot exists: `index`/`total` and «which answer do I move to»
+  /// must be **one** fact. A list held in Dart alongside a count from Rust
+  /// is two sources that will disagree, and «Answer 2 of 2» with a stale
+  /// neighbour is the same family as every lie this project has hunted.
+  final AnswerId? previous;
+
+  /// The answer after this one, or `None` at the last.
+  final AnswerId? next;
   final List<Segment> restored;
   final String asWritten;
 
@@ -35,6 +47,8 @@ class AnswerSnapshot {
     required this.answer,
     required this.index,
     required this.total,
+    this.previous,
+    this.next,
     required this.restored,
     required this.asWritten,
   });
@@ -45,6 +59,8 @@ class AnswerSnapshot {
       answer.hashCode ^
       index.hashCode ^
       total.hashCode ^
+      previous.hashCode ^
+      next.hashCode ^
       restored.hashCode ^
       asWritten.hashCode;
 
@@ -57,6 +73,8 @@ class AnswerSnapshot {
           answer == other.answer &&
           index == other.index &&
           total == other.total &&
+          previous == other.previous &&
+          next == other.next &&
           restored == other.restored &&
           asWritten == other.asWritten;
 }

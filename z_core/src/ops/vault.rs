@@ -263,7 +263,7 @@ pub(crate) fn move_entity(entity_id: u32, profile_id: Option<String>) -> ApiResu
             if let Some(wanted) = &profile_id {
                 if !vault.profiles.iter().any(|p| &p.id == wanted) {
                     return Err(ApiError::ImportRefused {
-                        reason: format!("there is no profile «{wanted}»"),
+                        reason: no_such_profile(),
                     });
                 }
             }
@@ -707,6 +707,17 @@ fn plan(entity: u32, value_id: u32, everywhere: bool, act: bool) -> ApiResult<Fo
 
 // ---------------------------------------------------------------- profiles
 
+/// «That profile is not in this vault» — and **never the id**.
+///
+/// A profile id is `p-<slug of the name>-<n>`, and the name is the client's
+/// own. Echoing the id back in an error would put the very thing the vault
+/// protects into a sentence on screen — the same rule that took the name out
+/// of the Why card (the owner, 29 September). The id also tells a person
+/// nothing: they never typed it.
+fn no_such_profile() -> String {
+    "that profile is not in this vault".to_string()
+}
+
 pub(crate) fn create_profile(name: String) -> ApiResult<String> {
     let name = name.trim().to_string();
     if name.is_empty() {
@@ -757,7 +768,7 @@ pub(crate) fn rename_profile(profile_id: String, name: String) -> ApiResult<()> 
                 .iter_mut()
                 .find(|p| p.id == profile_id)
                 .ok_or(ApiError::ImportRefused {
-                    reason: format!("there is no profile «{profile_id}»"),
+                    reason: no_such_profile(),
                 })?;
             profile.name = name;
             Ok(())
@@ -838,7 +849,7 @@ pub(crate) fn teach_label_rule(label: String, kind: Kind, profile_id: Option<Str
             if let Some(owner) = profile_id.as_deref() {
                 if !vault.profiles.iter().any(|p| p.id == owner) {
                     return Err(ApiError::ImportRefused {
-                        reason: format!("there is no profile «{owner}»"),
+                        reason: no_such_profile(),
                     });
                 }
             }

@@ -40,7 +40,7 @@ class AnswerPanel extends StatefulWidget {
 
 class _AnswerPanelState extends State<AnswerPanel> {
   bool _restored = true;
-  Future<(List<Segment>, String)>? _both;
+  Future<AnswerSnapshot>? _facts;
   AnswerId? _for;
 
   /// What the last copy did, in words. Kept here rather than flashed: the
@@ -53,13 +53,11 @@ class _AnswerPanelState extends State<AnswerPanel> {
     final answer = bench.showing;
     if (answer == null) return const SizedBox.shrink();
 
-    // Both views of the same answer, fetched once per answer.
+    // Everything about this answer in one read: both views, its position, and
+    // its neighbours. One answer, one source.
     if (_for != answer) {
       _for = answer;
-      _both = Future.wait([
-        bench.restored(answer),
-        bench.asTheModelWroteIt(answer),
-      ]).then((r) => (r[0] as List<Segment>, r[1] as String));
+      _facts = bench.answerFacts(answer);
     }
 
     return Container(
@@ -81,11 +79,46 @@ class _AnswerPanelState extends State<AnswerPanel> {
                     children: [
                       const Eyebrow('The answer'),
                       const SizedBox(height: 4),
-                      Text(
-                        bench.answers.length == 1
-                            ? 'One answer in this conversation.'
-                            : 'Answer ${bench.answers.indexOf(answer) + 1} of ${bench.answers.length}.',
-                        style: Zc.small,
+                      // The position and the two arrows come from the same
+                      // snapshot as the text below. The screen used to count
+                      // `2 of 2` from a Dart list — a second source for a
+                      // fact Rust already holds, and the moment navigation
+                      // existed it would have become a third.
+                      FutureBuilder<AnswerSnapshot>(
+                        future: _facts,
+                        builder: (context, snap) {
+                          final facts = snap.data;
+                          if (facts == null) {
+                            return const Text('…', style: Zc.small);
+                          }
+                          if (facts.total == 1) {
+                            return const Text(
+                              'One answer in this conversation.',
+                              style: Zc.small,
+                            );
+                          }
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _Step(
+                                icon: Icons.chevron_left,
+                                tip: 'Previous answer',
+                                to: facts.previous,
+                                onGo: bench.show,
+                              ),
+                              Text(
+                                'Answer ${facts.index} of ${facts.total}.',
+                                style: Zc.small,
+                              ),
+                              _Step(
+                                icon: Icons.chevron_right,
+                                tip: 'Next answer',
+                                to: facts.next,
+                                onGo: bench.show,
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -128,8 +161,8 @@ class _AnswerPanelState extends State<AnswerPanel> {
           ),
           Container(height: 1, color: Zc.lineSoft),
           Expanded(
-            child: FutureBuilder<(List<Segment>, String)>(
-              future: _both,
+            child: FutureBuilder<AnswerSnapshot>(
+              future: _facts,
               builder: (context, snap) {
                 if (snap.hasError) {
                   return Padding(
@@ -149,7 +182,8 @@ class _AnswerPanelState extends State<AnswerPanel> {
                     ),
                   );
                 }
-                final (segments, raw) = snap.data!;
+                final segments = snap.data!.restored;
+                final raw = snap.data!.asWritten;
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                   children: [
@@ -193,13 +227,16 @@ class _AnswerPanelState extends State<AnswerPanel> {
               color: Zc.warmCard,
               border: Border(top: BorderSide(color: Zc.lineSoft)),
             ),
-            child: FutureBuilder<(List<Segment>, String)>(
-              future: _both,
+            child: FutureBuilder<AnswerSnapshot>(
+              future: _facts,
               builder: (context, snap) {
+                // Both texts come from the same snapshot as the position and
+                // the neighbours, so a copy can never belong to a different
+                // answer from the one on screen.
                 final restoredText = snap.hasData
-                    ? snap.data!.$1.map((s) => s.text).join()
+                    ? snap.data!.restored.map((s) => s.text).join()
                     : '';
-                final protectedText = snap.hasData ? snap.data!.$2 : '';
+                final protectedText = snap.hasData ? snap.data!.asWritten : '';
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -315,6 +352,32 @@ class _Tab extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+
+/// One arrow. Disabled when the core says there is nothing on that side —
+/// never because a screen worked out that it is at an end.
+class _Step extends StatelessWidget {
+  const _Step({required this.icon, required this.tip, required this.to, required this.onGo});
+
+  final IconData icon;
+  final String tip;
+
+  /// The answer to move to, straight from the snapshot. `null` is the end.
+  final AnswerId? to;
+  final void Function(AnswerId?) onGo;
+
+  @override
+  Widget build(BuildContext context) {
+    final on = to != null;
+    return IconButton(
+      tooltip: on ? tip : null,
+      icon: Icon(icon, size: 18),
+      color: on ? Zc.clay : Zc.ink4.withValues(alpha: 0.4),
+      visualDensity: VisualDensity.compact,
+      onPressed: on ? () => onGo(to) : null,
     );
   }
 }

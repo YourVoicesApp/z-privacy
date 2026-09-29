@@ -247,3 +247,40 @@ fn the_why_card_names_a_reach_and_never_the_client() {
         "the profile screen lost the display name"
     );
 }
+
+/// His condition on the error mapper, 29 September: a `reason` must be text
+/// the **core** composes from known phrases — never raw text from a file, a
+/// provider, or the user — so that turning reasons into sentences can never
+/// become a way to leak a path, a response body, or a client's name.
+///
+/// The one that was leaking: a profile id is `p-<slug of the name>-<n>`, so
+/// «there is no profile «p-nordstern-consulting-gmbh-1»» put the client's own
+/// name on screen.
+#[test]
+fn a_refusal_never_echoes_a_profile_id() {
+    let _guard = serial();
+    fresh("no-echo");
+    let display = "Nordstern Consulting GmbH";
+    let profile = create_profile(display.to_string()).expect("profile");
+    assert!(
+        profile.contains("nordstern"),
+        "the id stopped being derived from the name; this test guards the wrong thing now"
+    );
+
+    // Every door that takes a profile id and can refuse it.
+    let cases: Vec<ApiError> = vec![
+        set_profile_languages("p-does-not-exist-9".to_string(), vec!["de".to_string()]).unwrap_err(),
+        teach_label_rule("X".to_string(), Kind::CustomerNo, Some(profile.clone())).err().unwrap_or(
+            // Teaching for a real profile succeeds, so use a missing one.
+            teach_label_rule("X".to_string(), Kind::CustomerNo, Some("p-ghost-2".to_string()))
+                .unwrap_err(),
+        ),
+    ];
+    for error in cases {
+        let text = format!("{error:?}");
+        assert!(
+            !text.contains(&profile) && !text.to_lowercase().contains("nordstern"),
+            "a refusal echoed a profile id, and the id carries the client's name: {text}"
+        );
+    }
+}

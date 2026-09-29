@@ -753,8 +753,8 @@ void main() {
       late final List<Segment> segments;
       late final String raw;
       await tester.runAsync(() async {
-        segments = await bench.restored(bench.answers.first);
-        raw = await bench.asTheModelWroteIt(bench.answers.first);
+        segments = (await bench.answerFacts(bench.answers.first)).restored;
+        raw = (await bench.answerFacts(bench.answers.first)).asWritten;
       });
       final restored = segments.map((s) => s.text).join();
       expect(
@@ -856,9 +856,9 @@ void main() {
       await bench.refresh();
       bench.rememberCopiedPayload();
       await bench.pasteAnswer('Verstanden:\n${bench.payload!.text}');
-      final segments = await bench.restored(bench.answers.first);
+      final segments = (await bench.answerFacts(bench.answers.first)).restored;
       restored = segments.map((s) => s.text).join();
-      raw = await bench.asTheModelWroteIt(bench.answers.first);
+      raw = (await bench.answerFacts(bench.answers.first)).asWritten;
     });
 
     final clip = _ClipboardProbe(tester)..install();

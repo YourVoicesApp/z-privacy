@@ -2716,15 +2716,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AnswerSnapshot dco_decode_answer_snapshot(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return AnswerSnapshot(
       stateRevision: dco_decode_u_32(arr[0]),
       answer: dco_decode_answer_id(arr[1]),
       index: dco_decode_u_32(arr[2]),
       total: dco_decode_u_32(arr[3]),
-      restored: dco_decode_list_segment(arr[4]),
-      asWritten: dco_decode_String(arr[5]),
+      previous: dco_decode_opt_box_autoadd_answer_id(arr[4]),
+      next: dco_decode_opt_box_autoadd_answer_id(arr[5]),
+      restored: dco_decode_list_segment(arr[6]),
+      asWritten: dco_decode_String(arr[7]),
     );
   }
 
@@ -3258,6 +3260,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  AnswerId? dco_decode_opt_box_autoadd_answer_id(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_answer_id(raw);
   }
 
   @protected
@@ -3859,6 +3867,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_answer = sse_decode_answer_id(deserializer);
     var var_index = sse_decode_u_32(deserializer);
     var var_total = sse_decode_u_32(deserializer);
+    var var_previous = sse_decode_opt_box_autoadd_answer_id(deserializer);
+    var var_next = sse_decode_opt_box_autoadd_answer_id(deserializer);
     var var_restored = sse_decode_list_segment(deserializer);
     var var_asWritten = sse_decode_String(deserializer);
     return AnswerSnapshot(
@@ -3866,6 +3876,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       answer: var_answer,
       index: var_index,
       total: var_total,
+      previous: var_previous,
+      next: var_next,
       restored: var_restored,
       asWritten: var_asWritten,
     );
@@ -4584,6 +4596,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  AnswerId? sse_decode_opt_box_autoadd_answer_id(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_answer_id(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   PayloadHandle? sse_decode_opt_box_autoadd_payload_handle(
     SseDeserializer deserializer,
   ) {
@@ -5275,6 +5298,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_answer_id(self.answer, serializer);
     sse_encode_u_32(self.index, serializer);
     sse_encode_u_32(self.total, serializer);
+    sse_encode_opt_box_autoadd_answer_id(self.previous, serializer);
+    sse_encode_opt_box_autoadd_answer_id(self.next, serializer);
     sse_encode_list_segment(self.restored, serializer);
     sse_encode_String(self.asWritten, serializer);
   }
@@ -5889,6 +5914,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_String(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_answer_id(
+    AnswerId? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_answer_id(self, serializer);
     }
   }
 

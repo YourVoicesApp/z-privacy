@@ -2177,6 +2177,8 @@ const _: fn() = || {
         let _: crate::api::mirrors::AnswerId = AnswerSnapshot.answer;
         let _: u32 = AnswerSnapshot.index;
         let _: u32 = AnswerSnapshot.total;
+        let _: Option<crate::api::mirrors::AnswerId> = AnswerSnapshot.previous;
+        let _: Option<crate::api::mirrors::AnswerId> = AnswerSnapshot.next;
         let _: Vec<crate::api::mirrors::Segment> = AnswerSnapshot.restored;
         let _: String = AnswerSnapshot.as_written;
     }
@@ -2663,6 +2665,8 @@ impl SseDecode for crate::api::mirrors::AnswerSnapshot {
         let mut var_answer = <crate::api::mirrors::AnswerId>::sse_decode(deserializer);
         let mut var_index = <u32>::sse_decode(deserializer);
         let mut var_total = <u32>::sse_decode(deserializer);
+        let mut var_previous = <Option<crate::api::mirrors::AnswerId>>::sse_decode(deserializer);
+        let mut var_next = <Option<crate::api::mirrors::AnswerId>>::sse_decode(deserializer);
         let mut var_restored = <Vec<crate::api::mirrors::Segment>>::sse_decode(deserializer);
         let mut var_asWritten = <String>::sse_decode(deserializer);
         return crate::api::mirrors::AnswerSnapshot {
@@ -2670,6 +2674,8 @@ impl SseDecode for crate::api::mirrors::AnswerSnapshot {
             answer: var_answer,
             index: var_index,
             total: var_total,
+            previous: var_previous,
+            next: var_next,
             restored: var_restored,
             as_written: var_asWritten,
         };
@@ -3411,6 +3417,17 @@ impl SseDecode for Option<String> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<String>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::mirrors::AnswerId> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::mirrors::AnswerId>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -4318,6 +4335,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::AnswerSna
             self.0.answer.into_into_dart().into_dart(),
             self.0.index.into_into_dart().into_dart(),
             self.0.total.into_into_dart().into_dart(),
+            self.0.previous.into_into_dart().into_dart(),
+            self.0.next.into_into_dart().into_dart(),
             self.0.restored.into_into_dart().into_dart(),
             self.0.as_written.into_into_dart().into_dart(),
         ]
@@ -5632,6 +5651,8 @@ impl SseEncode for crate::api::mirrors::AnswerSnapshot {
         <crate::api::mirrors::AnswerId>::sse_encode(self.answer, serializer);
         <u32>::sse_encode(self.index, serializer);
         <u32>::sse_encode(self.total, serializer);
+        <Option<crate::api::mirrors::AnswerId>>::sse_encode(self.previous, serializer);
+        <Option<crate::api::mirrors::AnswerId>>::sse_encode(self.next, serializer);
         <Vec<crate::api::mirrors::Segment>>::sse_encode(self.restored, serializer);
         <String>::sse_encode(self.as_written, serializer);
     }
@@ -6251,6 +6272,16 @@ impl SseEncode for Option<String> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <String>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::mirrors::AnswerId> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::mirrors::AnswerId>::sse_encode(value, serializer);
         }
     }
 }
