@@ -336,6 +336,7 @@ class _VaultScreenState extends State<VaultScreen> {
     final rules = g.privacyRules;
     final values = rules?.values ?? const <TaughtValueRow>[];
     final exceptions = rules?.exceptions ?? const <TaughtExceptionRow>[];
+    final labelRules = rules?.labelRules ?? const <LabelRuleRow>[];
     return Container(
       margin: const EdgeInsets.fromLTRB(18, 0, 18, 12),
       padding: const EdgeInsets.fromLTRB(15, 12, 15, 12),
@@ -356,11 +357,11 @@ class _VaultScreenState extends State<VaultScreen> {
                     'names, companies, numbers — found by themselves from now on',
                 live: true,
               ),
-              const _Learned(
+              _Learned(
                 title: 'Rules I taught',
-                count: '—',
-                what: 'not built yet · «after Projekt-Nr. → project code»',
-                live: false,
+                count: '${labelRules.length}',
+                what: 'words that say what follows them — «after Mandantenkennung → customer number»',
+                live: true,
               ),
               _Learned(
                 title: 'Exceptions I taught',
@@ -391,12 +392,18 @@ class _VaultScreenState extends State<VaultScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          const _RuleSection(
+          _RuleSection(
             title: 'Rules I taught',
-            empty:
-                'Not built yet — custom patterns and label rules come later.',
-            children: [],
-            live: false,
+            empty: 'No rules taught yet.',
+            children: [
+              for (final row in labelRules.take(5))
+                _TaughtRuleTile(
+                  row: row,
+                  kind: g.nameOfKind(row.kind),
+                  onForget: () => g.vaultEdit(() => z.forgetLabelRule(id: row.id)),
+                ),
+              _TeachRuleButton(ground: g, profileId: rules?.profileId),
+            ],
           ),
           const SizedBox(height: 10),
           _RuleSection(
@@ -798,6 +805,79 @@ class _Learned extends StatelessWidget {
             const SizedBox(height: 2),
             Text(what, style: Zc.tiny.copyWith(letterSpacing: 0)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+
+/// One rule the person taught, and the one act it allows: forgetting it.
+///
+/// Forgetting a rule is knowledge only — a document open now keeps every token
+/// it already has. That is §3 of the invariants, and the core proves it in
+/// `rule_sets.rs`; this tile only has to not say otherwise.
+class _TaughtRuleTile extends StatelessWidget {
+  const _TaughtRuleTile({required this.row, required this.kind, required this.onForget});
+
+  final LabelRuleRow row;
+  final String kind;
+  final VoidCallback onForget;
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = row.profileName ?? 'Everywhere';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('After «${row.label}:» → $kind', style: Zc.body),
+                const SizedBox(height: 2),
+                Text(scope, style: Zc.tiny.copyWith(color: Zc.ink4)),
+              ],
+            ),
+          ),
+          ZButton(label: 'Forget', onPressed: onForget),
+        ],
+      ),
+    );
+  }
+}
+
+/// His form, in his words:
+///
+///   When Z Privacy sees:      [ Mandantenkennung ]
+///   Protect the value after it as: [ Customer Number ]
+///   Where:                    [ Profile — Nordstern ]
+///
+/// No regular expressions, no pattern language, no «we noticed you did this
+/// five times». A word, a kind, a scope.
+class _TeachRuleButton extends StatelessWidget {
+  const _TeachRuleButton({required this.ground, required this.profileId});
+
+  final Ground ground;
+  final String? profileId;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: ZButton(
+          label: 'Teach a rule',
+          icon: Icons.add,
+          onPressed: () async {
+            final taught = await showDialog<bool>(
+              context: context,
+              builder: (_) => TeachRuleSheet(ground: ground, profileId: profileId),
+            );
+            if (taught == true) await ground.refresh();
+          },
         ),
       ),
     );

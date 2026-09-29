@@ -682,3 +682,152 @@ class _PolicyRow extends StatelessWidget {
     );
   }
 }
+
+/// Teach a label rule — the owner's form of 29 September, in his words:
+///
+/// ```text
+/// When Z Privacy sees:            [ Mandantenkennung ]
+/// Protect the value after it as:  [ Customer Number ]
+/// Where:                          [ Profile — Nordstern ]
+/// ```
+///
+/// Deliberately not here: a regular-expression field, a pattern language, or
+/// anything that suggests a rule on its own. A word, a kind, a scope — and the
+/// kinds come from the core (`kinds()`), because a screen may not decide what
+/// sorts of thing exist.
+class TeachRuleSheet extends StatefulWidget {
+  const TeachRuleSheet({super.key, required this.ground, this.profileId});
+
+  final Ground ground;
+
+  /// The profile the Privacy Rules screen is showing, offered as the default
+  /// scope. `null` means the rule is being taught from the everywhere view.
+  final String? profileId;
+
+  @override
+  State<TeachRuleSheet> createState() => _TeachRuleSheetState();
+}
+
+class _TeachRuleSheetState extends State<TeachRuleSheet> {
+  final _label = TextEditingController();
+  Kind _kind = Kind.customerNo;
+  late String? _profile = widget.profileId;
+  String? _trouble;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _label.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() {
+      _saving = true;
+      _trouble = null;
+    });
+    try {
+      await z.teachLabelRule(label: _label.text, kind: _kind, profileId: _profile);
+      if (mounted) Navigator.of(context).pop(true);
+    } on ApiError catch (e) {
+      // A refusal is news. The core names the reason; the screen does not
+      // invent one, and does not print the enum around it.
+      setState(() {
+        _saving = false;
+        _trouble = e is ApiError_ImportRefused ? e.reason : e.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final g = widget.ground;
+    return Dialog(
+      backgroundColor: Zc.paper,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Teach a rule', style: Zc.h2),
+              const SizedBox(height: 6),
+              Text(
+                'A rule is a word and what comes after it. Z Privacy protects the '
+                'value that follows and stops at the end of that field.',
+                style: Zc.small,
+              ),
+              const SizedBox(height: 18),
+              const Eyebrow('When Z Privacy sees'),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _label,
+                autofocus: true,
+                decoration: _box('Mandantenkennung'),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 16),
+              const Eyebrow('Protect the value after it as'),
+              const SizedBox(height: 7),
+              Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  // The kinds come from the core. A screen may not decide what
+                  // sorts of thing exist in the world.
+                  for (final row in g.kinds)
+                    _Pick(
+                      label: row.label,
+                      on: row.kind == _kind,
+                      onTap: () => setState(() => _kind = row.kind),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Eyebrow('Where'),
+              const SizedBox(height: 7),
+              Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  _Pick(
+                    label: 'Everywhere',
+                    on: _profile == null,
+                    onTap: () => setState(() => _profile = null),
+                  ),
+                  for (final p in g.profiles)
+                    _Pick(
+                      label: 'Profile — ${p.name}',
+                      on: _profile == p.id,
+                      onTap: () => setState(() => _profile = p.id),
+                    ),
+                ],
+              ),
+              if (_trouble != null) ...[
+                const SizedBox(height: 12),
+                Trouble(_trouble!),
+              ],
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ZButton(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(false),
+                  ),
+                  ZButton(
+                    label: 'Save rule',
+                    filled: true,
+                    onPressed: _saving || _label.text.trim().isEmpty ? null : _save,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
