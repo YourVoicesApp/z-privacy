@@ -42,6 +42,13 @@ class VaultKeyForm extends StatefulWidget {
 class _VaultKeyFormState extends State<VaultKeyForm> {
   final _one = TextEditingController();
   final _two = TextEditingController();
+  /// The confirmation of the **new** passphrase when changing.
+  ///
+  /// Changing used to ask for the new one exactly once. A typo there locks a
+  /// person out of a vault that already holds their work, and the screen's own
+  /// warning says there is no way back — so this is the more dangerous of the
+  /// two places to type blind, not the safer one.
+  final _three = TextEditingController();
   String? _trouble;
   bool _busy = false;
 
@@ -53,6 +60,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
   /// else — no call, no setting, no record of having looked.
   bool _showOne = false;
   bool _showTwo = false;
+  bool _showThree = false;
 
   @override
   void initState() {
@@ -62,6 +70,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
     // that only followed keystrokes would be wrong exactly then.
     _one.addListener(_reread);
     _two.addListener(_reread);
+    _three.addListener(_reread);
   }
 
   void _reread() {
@@ -72,8 +81,10 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
   void dispose() {
     _one.removeListener(_reread);
     _two.removeListener(_reread);
+    _three.removeListener(_reread);
     _one.dispose();
     _two.dispose();
+    _three.dispose();
     super.dispose();
   }
 
@@ -83,9 +94,20 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
   /// that is too short whatever this says, and the button being enabled is
   /// never taken as permission.
   bool get _needsTwo => widget.creating || widget.changing;
-  bool get _bothFilled => _one.text.isNotEmpty && (!_needsTwo || _two.text.isNotEmpty);
-  bool get _agree => !widget.creating || _one.text == _two.text;
-  bool get _canSubmit => !_busy && _bothFilled && _agree;
+
+  /// The two fields that must agree. When creating they are the passphrase and
+  /// its confirmation; when changing they are the **new** passphrase and its
+  /// confirmation — never the current one, which is meant to differ.
+  (String, String) get _pair =>
+      widget.changing ? (_two.text, _three.text) : (_one.text, _two.text);
+
+  bool get _confirms => widget.creating || widget.changing;
+  bool get _allFilled =>
+      _one.text.isNotEmpty &&
+      (!_needsTwo || _two.text.isNotEmpty) &&
+      (!widget.changing || _three.text.isNotEmpty);
+  bool get _agree => !_confirms || _pair.$1 == _pair.$2;
+  bool get _canSubmit => !_busy && _allFilled && _agree;
 
   @override
   Widget build(BuildContext context) {
@@ -119,10 +141,19 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
             onToggle: () => setState(() => _showTwo = !_showTwo),
           ),
         ],
-        // Only while creating: that is the one place the pair must agree.
-        // Changing asks for the current one and a new one, which are meant to
-        // differ, so a «match» line there would be nonsense.
-        if (widget.creating && _one.text.isNotEmpty && _two.text.isNotEmpty) ...[
+        // The line is about the pair that must agree — the new passphrase and
+        // its confirmation — never about current-vs-new, which are meant to
+        // differ.
+        if (widget.changing) ...[
+          const SizedBox(height: 10),
+          _field(
+            'Confirm new passphrase',
+            _three,
+            shown: _showThree,
+            onToggle: () => setState(() => _showThree = !_showThree),
+          ),
+        ],
+        if (_confirms && _pair.$1.isNotEmpty && _pair.$2.isNotEmpty) ...[
           const SizedBox(height: 7),
           Text(
             _agree ? 'Passphrases match' : 'Passphrases do not match',
@@ -170,7 +201,11 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
     String? bad;
     try {
       if (widget.changing) {
-        await z.vaultChangePassphrase(old: _one.text, replacement: _two.text);
+        if (_two.text != _three.text) {
+          bad = 'Passphrases do not match';
+        } else {
+          await z.vaultChangePassphrase(old: _one.text, replacement: _two.text);
+        }
       } else if (widget.creating) {
         // No length rule here. The core owns that decision and refuses a short
         // passphrase by name; a copy of the rule in this widget is a second
@@ -198,6 +233,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
       if (bad == null) {
         _one.clear();
         _two.clear();
+        _three.clear();
       }
     });
     if (bad == null) {

@@ -7,7 +7,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'dart:io';
+
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
 
@@ -16,11 +20,16 @@ import 'package:zprivacy/widgets/vault_forms.dart';
 bool _hidden(WidgetTester tester, int at) =>
     tester.widgetList<TextField>(find.byType(TextField)).elementAt(at).obscureText;
 
-Future<void> _form(WidgetTester tester, Ground ground) async {
+Future<void> _form(WidgetTester tester, Ground ground, {bool changing = false}) async {
   await tester.pumpWidget(MaterialApp(
     home: Scaffold(
       body: SingleChildScrollView(
-        child: VaultKeyForm(ground: ground, creating: true, onDone: () {}),
+        child: VaultKeyForm(
+          ground: ground,
+          creating: !changing,
+          changing: changing,
+          onDone: () {},
+        ),
       ),
     ),
   ));
@@ -108,6 +117,75 @@ void main() {
     await tester.pump();
     expect(find.text('Passphrases match'), findsOneWidget,
         reason: 'the match line only follows keystrokes');
+  });
+
+  /// Changing is the **more** dangerous place to type blind: the vault
+  /// already holds work, and the screen's own warning says there is no way
+  /// back. It used to ask for the new passphrase exactly once.
+  testWidgets('changing confirms the new passphrase too', (tester) async {
+    final ground = Ground();
+    await _form(tester, ground, changing: true);
+
+    expect(find.byTooltip('Show Current passphrase'), findsOneWidget);
+    expect(find.byTooltip('Show New passphrase'), findsOneWidget);
+    expect(find.byTooltip('Show Confirm new passphrase'), findsOneWidget);
+
+    ZButton button() => tester.widget<ZButton>(
+          find.ancestor(of: find.text('Change it'), matching: find.byType(ZButton)),
+        );
+
+    await tester.enterText(find.byType(TextField).at(0), 'the old one');
+    await tester.enterText(find.byType(TextField).at(1), 'the new one');
+    await tester.pump();
+    expect(button().onPressed, isNull, reason: 'a new passphrase can be set unconfirmed');
+
+    await tester.enterText(find.byType(TextField).at(2), 'the new ONE');
+    await tester.pump();
+    expect(find.text('Passphrases do not match'), findsOneWidget);
+    expect(button().onPressed, isNull);
+
+    await tester.enterText(find.byType(TextField).at(2), 'the new one');
+    await tester.pump();
+    expect(find.text('Passphrases match'), findsOneWidget);
+    expect(button().onPressed, isNotNull);
+
+    // And the line never compares current with new — those are meant to differ.
+    await tester.enterText(find.byType(TextField).at(0), 'the new one');
+    await tester.pump();
+    expect(find.text('Passphrases match'), findsOneWidget,
+        reason: 'the line is comparing the current passphrase with the new one');
+  });
+
+  /// The last of his list: a matching pair goes through and really makes a
+  /// vault — the form is wired to the core, not only to itself.
+  testWidgets('submitting a matching pair creates the vault', (tester) async {
+    final dir = Directory.systemTemp.createTempSync('zprivacy-passphrase-');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final ground = Ground();
+    await tester.runAsync(() async {
+      await z.setDataDir(dir: dir.path);
+      await ground.refresh();
+    });
+    expect(ground.vault, VaultState.absent);
+
+    await _form(tester, ground);
+    await tester.enterText(find.byType(TextField).at(0), 'a good long passphrase');
+    await tester.enterText(find.byType(TextField).at(1), 'a good long passphrase');
+    await tester.pump();
+
+    // The trap documented at the head of `shell_test.dart`: a future into
+    // Rust never completes inside the fake-async zone, and Argon2 at 64 MiB
+    // takes real wall-clock time. So the press is made and then real time is
+    // allowed to pass, in rounds, until the core has answered.
+    await tester.tap(find.text('Create the vault'));
+    for (var i = 0; i < 40 && ground.vault != VaultState.unlocked; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await tester.pump();
+    }
+
+    expect(ground.vault, VaultState.unlocked, reason: 'the form did not create a vault');
+    expect(File('${dir.path}/vault.zv').existsSync(), isTrue, reason: 'no vault on disk');
+    await tester.runAsync(() => z.vaultLock());
   });
 
   testWidgets('the passphrase is never a semantics value', (tester) async {
