@@ -64,6 +64,21 @@ else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
 fi
 
+# ---------------------------------------------------------------- G20
+# One error, one sentence. A typed error becomes language in exactly one file;
+# a widget that reads an `ApiError` itself is how one failure comes to say
+# three different things on three screens. Measured live on 29 September:
+# `ApiError.importRefused(reason: …)` printed at a person.
+G20_BAD=$(grep -RnE '\b(e|err|bad|error)\.toString\(\)|\bis ApiError_' \
+            apps/flutter_app/lib --include='*.dart' 2>/dev/null \
+          | grep -v '/src/rust/' | grep -v 'core/messages.dart' \
+          | grep -vE ':[0-9]+: *//' || true)
+if [ -z "$G20_BAD" ]; then
+  pass "G20 every typed error is worded in one place"
+else
+  fail "G20 an ApiError is read outside the mapper:"; printf '%s\n' "$G20_BAD" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G19
 # A deadlock does not shout. The program stops, with no panic and no log — the
 # first one in this project hung the test suite for ten minutes. So the shape

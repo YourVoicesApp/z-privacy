@@ -20,6 +20,7 @@ import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/core/messages.dart';
 
 /// The three kinds a build reads today. Kept here because the core decides what
 /// it can read and the UI only names the extensions that map onto it.
@@ -87,7 +88,7 @@ class _ShellState extends State<ZShell> {
     try {
       await z.setDataDir(dir: widget.dataDir);
     } on ApiError catch (e) {
-      _trouble = e.toString();
+      _trouble = humanMessage(e);
     }
     await _ground.refresh();
   }
@@ -149,7 +150,7 @@ class _ShellState extends State<ZShell> {
     } on ApiError catch (e) {
       // A refusal is news, not a failure: «a scanned PDF with no text layer is
       // refused with the reason, not silently imported empty».
-      setState(() => _trouble = e.toString());
+      setState(() => _trouble = humanMessage(e));
     }
   }
 

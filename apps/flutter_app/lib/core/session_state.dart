@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/document_text.dart' show rememberKinds;
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'package:zprivacy/core/messages.dart';
 
 /// What the app knows before any document exists: the ground the Workspace stands
 /// on, and what Home draws.
@@ -51,7 +52,7 @@ class Ground extends ChangeNotifier {
       rememberKinds(kinds);
       trouble = null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
     }
     notifyListeners();
   }
@@ -63,9 +64,9 @@ class Ground extends ChangeNotifier {
       await refresh();
       return null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
       notifyListeners();
-      return e.toString();
+      return humanMessage(e);
     }
   }
 
@@ -100,7 +101,7 @@ class Ground extends ChangeNotifier {
       await refresh();
       return null;
     } on ApiError catch (e) {
-      return e.toString();
+      return humanMessage(e);
     }
   }
 
@@ -126,7 +127,7 @@ class Ground extends ChangeNotifier {
       privacyRules = await z.privacyRulesSnapshot(profileId: null);
       trouble = null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
     }
     notifyListeners();
   }
@@ -149,9 +150,9 @@ class Ground extends ChangeNotifier {
       await readVault();
       return null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
       notifyListeners();
-      return e.toString();
+      return humanMessage(e);
     }
   }
 
@@ -161,7 +162,7 @@ class Ground extends ChangeNotifier {
       await refresh();
       return null;
     } on ApiError catch (e) {
-      return e.toString();
+      return humanMessage(e);
     }
   }
 }
@@ -267,7 +268,7 @@ class Workbench extends ChangeNotifier {
       profileId = snap?.profileId;
       trouble = null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
     }
     notifyListeners();
   }
@@ -278,9 +279,9 @@ class Workbench extends ChangeNotifier {
       await refresh();
       return null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
       notifyListeners();
-      return e.toString();
+      return humanMessage(e);
     }
   }
 
@@ -293,7 +294,7 @@ class Workbench extends ChangeNotifier {
       report = await z.scan(session: session);
       trouble = null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
     }
     busy = false;
     await refresh();
@@ -317,7 +318,7 @@ class Workbench extends ChangeNotifier {
       trouble = null;
     } on ApiError catch (e) {
       selected = null;
-      trouble = e.toString();
+      trouble = humanMessage(e);
     }
     notifyListeners();
   }
@@ -350,7 +351,7 @@ class Workbench extends ChangeNotifier {
       await select(span);
       return outcome;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
       notifyListeners();
       return null;
     }
@@ -373,7 +374,7 @@ class Workbench extends ChangeNotifier {
       );
       trouble = null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
     }
     notifyListeners();
   }
@@ -384,7 +385,7 @@ class Workbench extends ChangeNotifier {
     try {
       await z.hide_(session: session, token: token);
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
     }
     notifyListeners();
   }
@@ -435,9 +436,9 @@ class Workbench extends ChangeNotifier {
       return null;
     } on ApiError catch (e) {
       sending = false;
-      trouble = e.toString();
+      trouble = humanMessage(e);
       notifyListeners();
-      return e.toString();
+      return humanMessage(e);
     }
   }
 
@@ -456,9 +457,9 @@ class Workbench extends ChangeNotifier {
       await refresh();
       return null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
       notifyListeners();
-      return e.toString();
+      return humanMessage(e);
     }
   }
 
@@ -515,7 +516,7 @@ class Workbench extends ChangeNotifier {
       );
       trouble = null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
     }
     await refresh();
     if (selection != null) await select(selection);
@@ -544,7 +545,7 @@ class Workbench extends ChangeNotifier {
       );
       trouble = null;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
     }
     await refresh();
     if (selection != null) await select(selection);
@@ -556,7 +557,7 @@ class Workbench extends ChangeNotifier {
     try {
       return await z.explain(session: session, span: span);
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
       notifyListeners();
       return null;
     }
@@ -573,7 +574,7 @@ class Workbench extends ChangeNotifier {
       if (selection != null) await select(selection);
       return out;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
       notifyListeners();
       return null;
     }
@@ -588,7 +589,7 @@ class Workbench extends ChangeNotifier {
       if (selection != null) await select(selection);
       return outcome;
     } on ApiError catch (e) {
-      trouble = e.toString();
+      trouble = humanMessage(e);
       notifyListeners();
       return null;
     }

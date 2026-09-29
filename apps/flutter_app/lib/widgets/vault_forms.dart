@@ -12,10 +12,13 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'package:zprivacy/core/messages.dart';
 
-String vaultKeyTroubleFor(ApiError e) => e is ApiError_VaultAuthenticationFailed
-    ? 'Could not unlock the vault. The passphrase may be incorrect, or the vault may be corrupted or modified.'
-    : e.toString();
+// Kept as a name, not as a second opinion: it forwards to the one mapper.
+// It used to carry its own sentence for a wrong passphrase and fall back to
+// the enum's debug formatting for everything else — which is exactly the
+// «one error, three sentences» drift the mapper exists to prevent.
+String vaultKeyTroubleFor(ApiError e) => humanMessage(e);
 
 /// Making a vault, opening one, or changing its passphrase.
 class VaultKeyForm extends StatefulWidget {
@@ -274,7 +277,7 @@ class _EntityFormState extends State<EntityForm> {
                         );
                         if (context.mounted) Navigator.of(context).pop(id);
                       } on ApiError catch (e) {
-                        setState(() => _trouble = e.toString());
+                        setState(() => _trouble = humanMessage(e));
                       }
                     },
                   ),
@@ -335,7 +338,7 @@ class _ValueFormState extends State<ValueForm> {
     } on ApiError catch (e) {
       if (mounted) {
         setState(() {
-          _trouble = e.toString();
+          _trouble = humanMessage(e);
           _loading = false;
         });
       }
@@ -448,7 +451,7 @@ class _ValueFormState extends State<ValueForm> {
                               if (context.mounted)
                                 Navigator.of(context).pop(true);
                             } on ApiError catch (e) {
-                              setState(() => _trouble = e.toString());
+                              setState(() => _trouble = humanMessage(e));
                             }
                           },
                   ),
@@ -604,7 +607,7 @@ class _ProfileFormState extends State<ProfileForm> {
         if (mounted) Navigator.of(context).pop(row);
       }
     } on ApiError catch (e) {
-      setState(() => _trouble = e.toString());
+      setState(() => _trouble = humanMessage(e));
     }
   }
 }
@@ -780,7 +783,7 @@ class _TeachRuleSheetState extends State<TeachRuleSheet> {
       // invent one, and does not print the enum around it.
       setState(() {
         _saving = false;
-        _trouble = e is ApiError_ImportRefused ? e.reason : e.toString();
+        _trouble = humanMessage(e);
       });
     }
   }

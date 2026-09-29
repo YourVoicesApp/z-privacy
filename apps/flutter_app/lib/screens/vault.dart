@@ -20,6 +20,7 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/entity_detail.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
+import 'package:zprivacy/core/messages.dart';
 
 class VaultScreen extends StatefulWidget {
   const VaultScreen({super.key, required this.ground, required this.onClose});
@@ -61,7 +62,7 @@ class _VaultScreenState extends State<VaultScreen> {
       final card = await z.entity(entityId: id);
       if (mounted) setState(() => _card = card);
     } on ApiError catch (e) {
-      if (mounted) setState(() => widget.ground.trouble = e.toString());
+      if (mounted) setState(() => widget.ground.trouble = humanMessage(e));
     }
   }
 

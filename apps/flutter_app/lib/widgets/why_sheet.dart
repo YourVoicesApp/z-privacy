@@ -17,6 +17,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'package:zprivacy/core/messages.dart';
 
 class WhySheet extends StatefulWidget {
   const WhySheet({
@@ -231,7 +232,7 @@ class _WhySheetState extends State<WhySheet> {
     try {
       plan = await z.forgetPlan(entity: e, valueId: v, everywhere: everywhere);
     } on ApiError catch (err) {
-      setState(() => _trouble = err.toString());
+      setState(() => _trouble = humanMessage(err));
       return;
     }
     if (!mounted) return;
@@ -260,7 +261,7 @@ class _WhySheetState extends State<WhySheet> {
       await widget.onChanged();
       if (mounted) Navigator.of(context).pop();
     } on ApiError catch (err) {
-      if (mounted) setState(() => _trouble = err.toString());
+      if (mounted) setState(() => _trouble = humanMessage(err));
     }
   }
 

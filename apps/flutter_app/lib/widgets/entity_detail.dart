@@ -20,6 +20,7 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
+import 'package:zprivacy/core/messages.dart';
 
 class EntityDetail extends StatefulWidget {
   const EntityDetail({
@@ -63,7 +64,7 @@ class _EntityDetailState extends State<EntityDetail> {
         if (mounted) setState(() => _shown.clear());
       });
     } on ApiError catch (e) {
-      if (mounted) setState(() => widget.ground.trouble = e.toString());
+      if (mounted) setState(() => widget.ground.trouble = humanMessage(e));
     }
   }
 
