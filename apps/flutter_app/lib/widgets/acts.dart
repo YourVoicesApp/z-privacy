@@ -149,7 +149,7 @@ class ActsBar extends StatelessWidget {
             : ground.profiles
                 .firstWhere(
                   (p) => p.id == bench.profileId,
-                  orElse: () => ProfileRow(id: bench.profileId!, name: 'this client'),
+                  orElse: () => ProfileRow(id: bench.profileId!, name: 'this client', languages: const []),
                 )
                 .name,
       ),

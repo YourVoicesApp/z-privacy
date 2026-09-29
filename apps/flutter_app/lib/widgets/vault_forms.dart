@@ -551,11 +551,11 @@ class _ProfileFormState extends State<ProfileForm> {
       final profile = widget.profile;
       if (profile == null) {
         final id = await z.createProfile(name: name);
-        if (mounted) Navigator.of(context).pop(ProfileRow(id: id, name: name));
+        if (mounted) Navigator.of(context).pop(ProfileRow(id: id, name: name, languages: const []));
       } else {
         await z.renameProfile(profileId: profile.id, name: name);
         if (mounted)
-          Navigator.of(context).pop(ProfileRow(id: profile.id, name: name));
+          Navigator.of(context).pop(ProfileRow(id: profile.id, name: name, languages: profile.languages));
       }
     } on ApiError catch (e) {
       setState(() => _trouble = e.toString());

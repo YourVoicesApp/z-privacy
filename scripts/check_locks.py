@@ -34,17 +34,45 @@ OPS = ROOT / "z_core" / "src"
 TAKES_THE_LOCK = ("with_core(", "with_session(")
 
 # Helpers that are themselves written as `with_core(...)`, so calling one from
-# inside a lock is the same mistake at one remove. Kept by name because Rust
-# has no way to say «this function locks» in its type.
-LOCKING_HELPERS = (
-    "reveal_ttl_ms(",
-    "login_in_vault(",
-    "login_for(",
-    "row_for(",
-    "settings(",
-    "save_settings(",
-    "providers(",
-)
+# inside a lock is the same mistake at one remove.
+#
+# This list used to be written by hand — and on 29 September that is exactly how
+# M7.10B deadlocked: `create_profile` called `default_pack_id()`, a new helper
+# nobody had added here, from inside a held lock. The gate passed and the test
+# suite hung. A hand-kept list of dangerous functions always lags the code, so
+# the list is now **read out of the source**: any `fn` in `z_core/src` whose own
+# body takes the lock is a locking helper, whether or not anyone remembered it.
+def locking_helpers() -> dict[str, set[str]]:
+    found: dict[str, set[str]] = {}
+    for path in sorted(OPS.rglob("*.rs")):
+        text = strip_strings_and_comments(path.read_text())
+        for match in re.finditer(r"\bfn\s+([a-z_][a-z0-9_]*)\s*[(<]", text):
+            name = match.group(1)
+            brace = text.find("{", match.end())
+            if brace < 0:
+                continue
+            depth = 0
+            j = brace
+            while j < len(text):
+                if text[j] == "{":
+                    depth += 1
+                elif text[j] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                j += 1
+            body = text[brace:j]
+            if any(opener in body for opener in TAKES_THE_LOCK):
+                # Which module defines it, so a same-named function in another
+                # module is not reported. `scanner::scan` is a pure function
+                # that shares a name with `ops::scan`, which locks.
+                module = path.parent.name if path.name == "mod.rs" else path.stem
+                found.setdefault(name + "(", set()).add(module)
+    # `with_core` and `with_session` are the openers themselves, and a closure
+    # argument named after them would only duplicate a report.
+    found.pop("with_core(", None)
+    found.pop("with_session(", None)
+    return found
 
 
 def strip_strings_and_comments(text: str) -> str:
@@ -77,7 +105,7 @@ def strip_strings_and_comments(text: str) -> str:
     return "".join(out)
 
 
-def nested_locks(path: pathlib.Path) -> list[str]:
+def nested_locks(path: pathlib.Path, helpers: dict[str, set[str]]) -> list[str]:
     raw = path.read_text()
     text = strip_strings_and_comments(raw)
     lines = raw.split("\n")
@@ -102,8 +130,33 @@ def nested_locks(path: pathlib.Path) -> list[str]:
                         break
                 j += 1
             body = text[at + len(opener) : j]
-            for inner in TAKES_THE_LOCK + LOCKING_HELPERS:
-                where = body.find(inner)
+            for inner in list(TAKES_THE_LOCK) + sorted(helpers):
+                where = -1
+                # Only a **free** call counts. `vault.entity(..)` and
+                # `payload.finish_send(..)` are methods that merely share a
+                # name with a locking helper, and reporting them would train
+                # everyone to ignore this gate.
+                # A whole name, not a substring: `reserve_send(` is not `send(`.
+                pattern = r"(?<![A-Za-z0-9_])" + re.escape(inner)
+                for m in re.finditer(pattern, body):
+                    before = body[: m.start()].rstrip()
+                    # `x.foo()` is a method that merely shares a name. But
+                    # `crate::ops::foo()` is a free call through a path, and
+                    # that is precisely how M7.10B deadlocked — so a `::`
+                    # prefix counts, it does not excuse.
+                    if before.endswith("."):
+                        continue
+                    # A qualified call must name the module that defines the
+                    # locking helper, or it is a different function entirely.
+                    if before.endswith("::"):
+                        segment = re.search(r"([A-Za-z0-9_]+)::$", before)
+                        owners = helpers.get(inner, set())
+                        if owners and (not segment or segment.group(1) not in owners):
+                            continue
+                    if re.search(r"\bfn\s*$", before):
+                        continue
+                    where = m.start()
+                    break
                 if where < 0:
                     continue
                 line_no = raw[: at + len(opener) + where].count("\n") + 1
@@ -128,8 +181,9 @@ def api_called_inwards() -> list[str]:
 
 def main() -> int:
     problems = []
+    helpers = locking_helpers()
     for path in sorted(OPS.rglob("*.rs")):
-        problems += nested_locks(path)
+        problems += nested_locks(path, helpers)
     problems += api_called_inwards()
 
     if problems:

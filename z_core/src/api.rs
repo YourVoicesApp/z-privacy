@@ -330,6 +330,33 @@ pub struct KindRow {
 pub struct ProfileRow {
     pub id: String,
     pub name: String,
+    /// The rule sets switched on for this client's documents. A firm that works
+    /// in two languages runs both **in one scan**, so this is a list.
+    pub languages: Vec<String>,
+}
+
+/// One rule set this build carries, named by itself.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RuleSetRow {
+    pub id: String,
+    pub label: String,
+    /// How many label rules it carries. Counted, never written down — a number
+    /// on a screen must have a source (§2 of the invariants).
+    pub rules: u32,
+}
+
+/// A label rule the person taught, as a screen shows it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LabelRuleRow {
+    pub id: u32,
+    /// The word as they typed it.
+    pub label: String,
+    pub kind: Kind,
+    /// `None` is everywhere; `Some` names the profile it belongs to.
+    pub profile_id: Option<String>,
+    pub profile_name: Option<String>,
+    /// Days since the epoch, 0 when unknown — never today's date guessed in.
+    pub learned_at: u64,
 }
 
 /// An installed detection pack. The **label is the pack's own**, not the UI's: a
@@ -914,7 +941,16 @@ pub struct PrivacyRulesSnapshot {
     pub profile_id: Option<String>,
     pub values: Vec<TaughtValueRow>,
     pub exceptions: Vec<TaughtExceptionRow>,
-    /// Phase A names this section honestly, but does not pretend it exists.
+    /// The label rules this person taught, effective for `profile_id`.
+    pub label_rules: Vec<LabelRuleRow>,
+    /// Every rule set this build carries, so the screen can offer them without
+    /// keeping a list of its own.
+    pub rule_sets: Vec<RuleSetRow>,
+    /// The sets actually switched on for `profile_id` — what *ran*, not what
+    /// was asked for.
+    pub active_sets: Vec<String>,
+    /// Was the «Rules I taught» section built? True since M7.10B; kept as a
+    /// field because a screen must read this, never assume it.
     pub rules_built: bool,
 }
 
@@ -1367,6 +1403,31 @@ pub fn profiles() -> ApiResult<Vec<ProfileRow>> {
 /// Switch profile. Tokens already given stand; only new matching follows.
 pub fn switch_profile(session: SessionId, profile_id: Option<String>) -> ApiResult<SwitchOutcome> {
     crate::ops::switch_profile(session, profile_id)
+}
+
+/// The rule sets this build carries. A language is a set, not a screen.
+pub fn rule_sets() -> ApiResult<Vec<RuleSetRow>> {
+    crate::ops::rule_sets()
+}
+
+/// Switch which rule sets a profile runs. Several at once, on purpose.
+pub fn set_profile_languages(profile_id: String, languages: Vec<String>) -> ApiResult<ProfileRow> {
+    crate::ops::set_profile_languages(profile_id, languages)
+}
+
+/// Teach a label rule: «the value after this word is a customer number».
+pub fn teach_label_rule(label: String, kind: Kind, profile_id: Option<String>) -> ApiResult<u32> {
+    crate::ops::teach_label_rule(label, kind, profile_id)
+}
+
+/// Forget a taught rule. Knowledge only — an open document keeps its tokens.
+pub fn forget_label_rule(id: u32) -> ApiResult<()> {
+    crate::ops::forget_label_rule(id)
+}
+
+/// Every rule the person taught, newest first.
+pub fn label_rules() -> ApiResult<Vec<LabelRuleRow>> {
+    crate::ops::label_rules()
 }
 
 /// The installed privacy packs. A pack is a detection engine, not a UI language.

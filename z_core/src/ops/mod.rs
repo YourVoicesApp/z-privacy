@@ -597,7 +597,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
                     .map(|f| f.kind)
             });
         let guessed = exact_kind.or_else(|| {
-            scanner::scan(&selected, &[s.pack_id.clone()], &[], &vault_hints, &vault_exceptions)
+            scanner::scan(&selected, std::slice::from_ref(&s.pack_id), &[], &vault_hints, &vault_exceptions)
                 .into_iter()
                 .find(|c| c.start == 0 && c.end == selected.len())
                 .map(|c| c.kind)
@@ -656,15 +656,23 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
             .clone();
         let finding = s.findings.iter().find(|f| f.start < p.end && p.start < f.end).cloned();
 
+        // A rule the person taught reaches here as `Source::Hand`, because
+        // they decided it — but «You protected this by hand» would be false:
+        // they did not select these words, they taught a word to look for.
+        let taught_rule = p.source == Source::Hand && p.source_detail.starts_with("you:");
+        // And the set is read from the finding, never assumed. This line said
+        // «A German privacy rule» whatever fired, which was true only while
+        // German was the only set there was — the «0 tries left» shape exactly.
+        let set_label = set_label_of(&p.source_detail);
         let headline = match (p.source, p.decided) {
-            (Source::Hand, _) => "You protected this by hand",
-            (Source::Vault, _) => "You taught Z Privacy this value",
-            (Source::LanguagePack, true) => "A German privacy rule found it, and you agreed",
-            (Source::LanguagePack, false) => "A German privacy rule",
-            (Source::GeneralRule, true) => "A shape that needs no language, and you agreed",
-            (Source::GeneralRule, false) => "A shape that needs no language",
-        }
-        .to_string();
+            _ if taught_rule => "You taught Z Privacy this rule".to_string(),
+            (Source::Hand, _) => "You protected this by hand".to_string(),
+            (Source::Vault, _) => "You taught Z Privacy this value".to_string(),
+            (Source::LanguagePack, true) => format!("{set_label} found it, and you agreed"),
+            (Source::LanguagePack, false) => set_label,
+            (Source::GeneralRule, true) => "A shape that needs no language, and you agreed".to_string(),
+            (Source::GeneralRule, false) => "A shape that needs no language".to_string(),
+        };
 
         // The particulars. A protection with nothing to say about itself is the
         // black box arriving, so this is never allowed to come out empty.
@@ -1375,6 +1383,17 @@ fn layer_key(s: Source) -> u8 {
         Source::Vault => 2,
         Source::Hand => 3,
     }
+}
+
+/// «de:label» → «A German (DE) privacy rule». The set names itself; a screen
+/// may not, and neither may this sentence.
+fn set_label_of(source_detail: &str) -> String {
+    let id = source_detail.split(':').next().unwrap_or_default();
+    crate::scanner::sets::all()
+        .into_iter()
+        .find(|s| s.id == id)
+        .map(|s| format!("A {} privacy rule", s.label))
+        .unwrap_or_else(|| "A privacy rule".to_string())
 }
 
 fn layer_of(key: u8) -> Source {

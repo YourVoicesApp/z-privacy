@@ -153,12 +153,50 @@ pub(crate) fn privacy_rules_snapshot(profile_id: Option<String>) -> ApiResult<Pr
                     source: KnowledgeSource::UserException,
                 });
             }
+            let label_rules: Vec<crate::api::LabelRuleRow> = {
+                let mut rows: Vec<crate::api::LabelRuleRow> = vault
+                    .label_rules
+                    .iter()
+                    .filter(|r| include(&r.profile_id))
+                    .map(|r| crate::api::LabelRuleRow {
+                        id: r.id,
+                        label: r.label.clone(),
+                        kind: r.kind,
+                        profile_id: r.profile_id.clone(),
+                        profile_name: r.profile_id.as_ref().and_then(|id| {
+                            vault.profiles.iter().find(|p| &p.id == id).map(|p| p.name.clone())
+                        }),
+                        learned_at: r.learned_at,
+                    })
+                    .collect();
+                rows.sort_by_key(|r| std::cmp::Reverse(r.id));
+                rows
+            };
+            let rule_sets: Vec<crate::api::RuleSetRow> = crate::scanner::sets::all()
+                .into_iter()
+                .map(|s| crate::api::RuleSetRow {
+                    id: s.id.to_string(),
+                    label: s.label.to_string(),
+                    rules: s.rules.len() as u32,
+                })
+                .collect();
+            // What ran, not what was asked for: a set this build no longer has
+            // must not be reported as active (§2 of the invariants).
+            let asked: Vec<String> = profile_id
+                .as_deref()
+                .and_then(|id| vault.profiles.iter().find(|p| p.id == id))
+                .map(|p| p.languages.clone())
+                .unwrap_or_default();
+            let active_sets = crate::scanner::sets::known_of(&asked);
             Ok(PrivacyRulesSnapshot {
                 state_revision,
                 profile_id,
                 values,
                 exceptions,
-                rules_built: false,
+                label_rules,
+                rule_sets,
+                active_sets,
+                rules_built: true,
             })
         })
     })?

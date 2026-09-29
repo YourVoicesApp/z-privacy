@@ -159,7 +159,11 @@ fn values_and_exceptions_are_vault_knowledge_with_profile_scope() {
     assert!(rules.values.iter().any(|row| row.value == "Nordstern Consulting GmbH"));
     assert!(rules.values.iter().any(|row| row.value == "Thomas Müller"));
     assert!(rules.exceptions.iter().any(|row| row.value == "0171 2345678"));
-    assert!(!rules.rules_built, "phase A must not pretend rule builder exists");
+    // Phase A said «not built yet» and meant it. M7.10B built it, so the flag
+    // turns over — and this line turns with it rather than being deleted,
+    // because the field exists so a screen can read the answer instead of
+    // assuming one.
+    assert!(rules.rules_built, "the rule builder is built, and the flag should say so");
 
     let nordstern = rules
         .values

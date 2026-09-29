@@ -588,6 +588,51 @@ class KindRow {
 
 enum KnowledgeSource { builtIn, userTaughtValue, userException }
 
+class LabelRuleRow {
+  final int id;
+
+  /// The word as they typed it.
+  final String label;
+  final Kind kind;
+
+  /// `None` is everywhere; `Some` names the profile it belongs to.
+  final String? profileId;
+  final String? profileName;
+
+  /// Days since the epoch, 0 when unknown — never today's date guessed in.
+  final BigInt learnedAt;
+
+  const LabelRuleRow({
+    required this.id,
+    required this.label,
+    required this.kind,
+    this.profileId,
+    this.profileName,
+    required this.learnedAt,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      label.hashCode ^
+      kind.hashCode ^
+      profileId.hashCode ^
+      profileName.hashCode ^
+      learnedAt.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LabelRuleRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          kind == other.kind &&
+          profileId == other.profileId &&
+          profileName == other.profileName &&
+          learnedAt == other.learnedAt;
+}
+
 class LayerCount {
   final Source source;
   final String detail;
@@ -818,7 +863,19 @@ class PrivacyRulesSnapshot {
   final List<TaughtValueRow> values;
   final List<TaughtExceptionRow> exceptions;
 
-  /// Phase A names this section honestly, but does not pretend it exists.
+  /// The label rules this person taught, effective for `profile_id`.
+  final List<LabelRuleRow> labelRules;
+
+  /// Every rule set this build carries, so the screen can offer them without
+  /// keeping a list of its own.
+  final List<RuleSetRow> ruleSets;
+
+  /// The sets actually switched on for `profile_id` — what *ran*, not what
+  /// was asked for.
+  final List<String> activeSets;
+
+  /// Was the «Rules I taught» section built? True since M7.10B; kept as a
+  /// field because a screen must read this, never assume it.
   final bool rulesBuilt;
 
   const PrivacyRulesSnapshot({
@@ -826,6 +883,9 @@ class PrivacyRulesSnapshot {
     this.profileId,
     required this.values,
     required this.exceptions,
+    required this.labelRules,
+    required this.ruleSets,
+    required this.activeSets,
     required this.rulesBuilt,
   });
 
@@ -835,6 +895,9 @@ class PrivacyRulesSnapshot {
       profileId.hashCode ^
       values.hashCode ^
       exceptions.hashCode ^
+      labelRules.hashCode ^
+      ruleSets.hashCode ^
+      activeSets.hashCode ^
       rulesBuilt.hashCode;
 
   @override
@@ -846,6 +909,9 @@ class PrivacyRulesSnapshot {
           profileId == other.profileId &&
           values == other.values &&
           exceptions == other.exceptions &&
+          labelRules == other.labelRules &&
+          ruleSets == other.ruleSets &&
+          activeSets == other.activeSets &&
           rulesBuilt == other.rulesBuilt;
 }
 
@@ -853,10 +919,18 @@ class ProfileRow {
   final String id;
   final String name;
 
-  const ProfileRow({required this.id, required this.name});
+  /// The rule sets switched on for this client's documents. A firm that works
+  /// in two languages runs both **in one scan**, so this is a list.
+  final List<String> languages;
+
+  const ProfileRow({
+    required this.id,
+    required this.name,
+    required this.languages,
+  });
 
   @override
-  int get hashCode => id.hashCode ^ name.hashCode;
+  int get hashCode => id.hashCode ^ name.hashCode ^ languages.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -864,7 +938,8 @@ class ProfileRow {
       other is ProfileRow &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          name == other.name;
+          name == other.name &&
+          languages == other.languages;
 }
 
 @freezed
@@ -1164,6 +1239,33 @@ class Revision {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is Revision && runtimeType == other.runtimeType && n == other.n;
+}
+
+class RuleSetRow {
+  final String id;
+  final String label;
+
+  /// How many label rules it carries. Counted, never written down — a number
+  /// on a screen must have a source (§2 of the invariants).
+  final int rules;
+
+  const RuleSetRow({
+    required this.id,
+    required this.label,
+    required this.rules,
+  });
+
+  @override
+  int get hashCode => id.hashCode ^ label.hashCode ^ rules.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RuleSetRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          rules == other.rules;
 }
 
 enum ScanOrigin { notScanned, onImport, rescan }

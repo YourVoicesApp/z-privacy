@@ -225,6 +225,31 @@ pub struct _KindRow {
 pub struct _ProfileRow {
     pub id: String,
     pub name: String,
+    /// The rule sets switched on for this client's documents. A firm that works
+    /// in two languages runs both **in one scan**, so this is a list.
+    pub languages: Vec<String>,
+}
+
+#[frb(mirror(RuleSetRow))]
+pub struct _RuleSetRow {
+    pub id: String,
+    pub label: String,
+    /// How many label rules it carries. Counted, never written down — a number
+    /// on a screen must have a source (§2 of the invariants).
+    pub rules: u32,
+}
+
+#[frb(mirror(LabelRuleRow))]
+pub struct _LabelRuleRow {
+    pub id: u32,
+    /// The word as they typed it.
+    pub label: String,
+    pub kind: Kind,
+    /// `None` is everywhere; `Some` names the profile it belongs to.
+    pub profile_id: Option<String>,
+    pub profile_name: Option<String>,
+    /// Days since the epoch, 0 when unknown — never today's date guessed in.
+    pub learned_at: u64,
 }
 
 #[frb(mirror(PackRow))]
@@ -659,7 +684,16 @@ pub struct _PrivacyRulesSnapshot {
     pub profile_id: Option<String>,
     pub values: Vec<TaughtValueRow>,
     pub exceptions: Vec<TaughtExceptionRow>,
-    /// Phase A names this section honestly, but does not pretend it exists.
+    /// The label rules this person taught, effective for `profile_id`.
+    pub label_rules: Vec<LabelRuleRow>,
+    /// Every rule set this build carries, so the screen can offer them without
+    /// keeping a list of its own.
+    pub rule_sets: Vec<RuleSetRow>,
+    /// The sets actually switched on for `profile_id` — what *ran*, not what
+    /// was asked for.
+    pub active_sets: Vec<String>,
+    /// Was the «Rules I taught» section built? True since M7.10B; kept as a
+    /// field because a screen must read this, never assume it.
     pub rules_built: bool,
 }
 

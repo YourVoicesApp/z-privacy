@@ -119,6 +119,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KnowledgeSource dco_decode_knowledge_source(dynamic raw);
 
   @protected
+  LabelRuleRow dco_decode_label_rule_row(dynamic raw);
+
+  @protected
   LayerCount dco_decode_layer_count(dynamic raw);
 
   @protected
@@ -135,6 +138,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<KindRow> dco_decode_list_kind_row(dynamic raw);
+
+  @protected
+  List<LabelRuleRow> dco_decode_list_label_rule_row(dynamic raw);
 
   @protected
   List<LayerCount> dco_decode_list_layer_count(dynamic raw);
@@ -159,6 +165,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ProviderRow> dco_decode_list_provider_row(dynamic raw);
+
+  @protected
+  List<RuleSetRow> dco_decode_list_rule_set_row(dynamic raw);
 
   @protected
   List<Segment> dco_decode_list_segment(dynamic raw);
@@ -252,6 +261,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Revision dco_decode_revision(dynamic raw);
+
+  @protected
+  RuleSetRow dco_decode_rule_set_row(dynamic raw);
 
   @protected
   ScanOrigin dco_decode_scan_origin(dynamic raw);
@@ -423,6 +435,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KnowledgeSource sse_decode_knowledge_source(SseDeserializer deserializer);
 
   @protected
+  LabelRuleRow sse_decode_label_rule_row(SseDeserializer deserializer);
+
+  @protected
   LayerCount sse_decode_layer_count(SseDeserializer deserializer);
 
   @protected
@@ -439,6 +454,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<KindRow> sse_decode_list_kind_row(SseDeserializer deserializer);
+
+  @protected
+  List<LabelRuleRow> sse_decode_list_label_rule_row(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<LayerCount> sse_decode_list_layer_count(SseDeserializer deserializer);
@@ -465,6 +485,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ProviderRow> sse_decode_list_provider_row(SseDeserializer deserializer);
+
+  @protected
+  List<RuleSetRow> sse_decode_list_rule_set_row(SseDeserializer deserializer);
 
   @protected
   List<Segment> sse_decode_list_segment(SseDeserializer deserializer);
@@ -568,6 +591,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Revision sse_decode_revision(SseDeserializer deserializer);
+
+  @protected
+  RuleSetRow sse_decode_rule_set_row(SseDeserializer deserializer);
 
   @protected
   ScanOrigin sse_decode_scan_origin(SseDeserializer deserializer);
@@ -766,6 +792,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_label_rule_row(LabelRuleRow self, SseSerializer serializer);
+
+  @protected
   void sse_encode_layer_count(LayerCount self, SseSerializer serializer);
 
   @protected
@@ -785,6 +814,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_kind_row(List<KindRow> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_label_rule_row(
+    List<LabelRuleRow> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_layer_count(
@@ -822,6 +857,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_provider_row(
     List<ProviderRow> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_rule_set_row(
+    List<RuleSetRow> self,
     SseSerializer serializer,
   );
 
@@ -944,6 +985,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_revision(Revision self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_rule_set_row(RuleSetRow self, SseSerializer serializer);
 
   @protected
   void sse_encode_scan_origin(ScanOrigin self, SseSerializer serializer);

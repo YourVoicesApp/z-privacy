@@ -149,7 +149,7 @@ class _TopBar extends StatelessWidget {
               .firstWhere(
                 (p) => p.id == bench.profileId,
                 orElse: () =>
-                    ProfileRow(id: bench.profileId!, name: bench.profileId!),
+                    ProfileRow(id: bench.profileId!, name: bench.profileId!, languages: const []),
               )
               .name;
     final pack = ground.packs.firstWhere(

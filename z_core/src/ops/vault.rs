@@ -708,6 +708,11 @@ pub(crate) fn create_profile(name: String) -> ApiResult<String> {
             reason: "a profile needs a name you will recognise".to_string(),
         });
     }
+    // Read BEFORE the lock, never inside it: `default_pack_id` takes the core
+    // mutex, and calling it from within the closure below is exactly the
+    // deadlock G19 exists to forbid. It cost this milestone one hung test run
+    // to prove the rule is not theoretical.
+    let starting_pack = crate::ops::default_pack_id();
     let id = with_core(|core| {
         core.vault.with_open_mut(|vault| {
             // An id made from the name, so a log line names a client only as the
@@ -723,7 +728,7 @@ pub(crate) fn create_profile(name: String) -> ApiResult<String> {
                 // A new profile starts with the pack the device already uses,
                 // and the person adds languages from the profile screen. An
                 // empty list would silently mean «no label rules at all».
-                languages: vec![crate::ops::default_pack_id()],
+                languages: vec![starting_pack.clone()],
             });
             Ok(id)
         })
@@ -766,8 +771,126 @@ pub(crate) fn profiles() -> ApiResult<Vec<ProfileRow>> {
                 .map(|p| ProfileRow {
                     id: p.id.clone(),
                     name: p.name.clone(),
+                    languages: p.languages.clone(),
                 })
                 .collect::<Vec<ProfileRow>>()
+        })
+    })
+}
+
+// ------------------------------------------------- rule sets and taught rules
+
+/// Every rule set this build carries, each counting its own rows.
+pub(crate) fn rule_sets() -> ApiResult<Vec<crate::api::RuleSetRow>> {
+    Ok(crate::scanner::sets::all()
+        .into_iter()
+        .map(|s| crate::api::RuleSetRow {
+            id: s.id.to_string(),
+            label: s.label.to_string(),
+            rules: s.rules.len() as u32,
+        })
+        .collect())
+}
+
+/// Switch a profile's rule sets. Unknown ids are refused by name rather than
+/// stored and silently ignored — «active» has to mean «ran».
+pub(crate) fn set_profile_languages(profile_id: String, languages: Vec<String>) -> ApiResult<ProfileRow> {
+    let known = crate::scanner::sets::known_of(&languages);
+    if let Some(missing) = languages.iter().find(|l| !known.iter().any(|k| k == *l)) {
+        return Err(ApiError::ImportRefused {
+            reason: format!("there is no rule set called «{missing}»"),
+        });
+    }
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let profile = vault
+                .profiles
+                .iter_mut()
+                .find(|p| p.id == profile_id)
+                .ok_or(ApiError::InvalidSession)?;
+            profile.languages = languages.clone();
+            Ok(())
+        })
+    })?;
+    crate::session::bump_truth();
+    profiles()?
+        .into_iter()
+        .find(|p| p.id == profile_id)
+        .ok_or(ApiError::InvalidSession)
+}
+
+/// Teach a label rule: «after this word comes a value of this kind».
+pub(crate) fn teach_label_rule(label: String, kind: Kind, profile_id: Option<String>) -> ApiResult<u32> {
+    let label = crate::text::nfc(label.trim()).to_string();
+    if label.is_empty() {
+        return Err(ApiError::ImportRefused {
+            reason: "a rule needs a word to look for".to_string(),
+        });
+    }
+    let id = with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            if let Some(owner) = profile_id.as_deref() {
+                if !vault.profiles.iter().any(|p| p.id == owner) {
+                    return Err(ApiError::ImportRefused {
+                        reason: format!("there is no profile «{owner}»"),
+                    });
+                }
+            }
+            let id = vault.next_label_rule;
+            vault.next_label_rule = vault.next_label_rule.saturating_add(1);
+            vault.label_rules.push(crate::vault::model::UserLabelRule {
+                id,
+                label: label.clone(),
+                kind,
+                profile_id: profile_id.clone(),
+                learned_at: crate::vault::model::now_seconds(),
+            });
+            Ok(id)
+        })
+    })?;
+    crate::session::bump_truth();
+    Ok(id)
+}
+
+/// Forget a taught rule. Forgetting knowledge, never a protection: a document
+/// open now keeps every token it already has (§3 of the invariants).
+pub(crate) fn forget_label_rule(id: u32) -> ApiResult<()> {
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let before = vault.label_rules.len();
+            vault.label_rules.retain(|r| r.id != id);
+            if vault.label_rules.len() == before {
+                return Err(ApiError::ImportRefused {
+                    reason: "there is no rule with that number".to_string(),
+                });
+            }
+            Ok(())
+        })
+    })?;
+    crate::session::bump_truth();
+    Ok(())
+}
+
+/// Every rule the person taught, newest first, with its profile named.
+pub(crate) fn label_rules() -> ApiResult<Vec<crate::api::LabelRuleRow>> {
+    with_core(|core| {
+        core.vault.with_open(|vault| {
+            let mut rows: Vec<crate::api::LabelRuleRow> = vault
+                .label_rules
+                .iter()
+                .map(|r| crate::api::LabelRuleRow {
+                    id: r.id,
+                    label: r.label.clone(),
+                    kind: r.kind,
+                    profile_id: r.profile_id.clone(),
+                    profile_name: r.profile_id.as_ref().and_then(|id| {
+                        vault.profiles.iter().find(|p| &p.id == id).map(|p| p.name.clone())
+                    }),
+                    learned_at: r.learned_at,
+                })
+                .collect();
+            rows.sort_by_key(|r| std::cmp::Reverse(r.id));
+            rows
         })
     })
 }

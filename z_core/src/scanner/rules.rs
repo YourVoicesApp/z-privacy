@@ -132,7 +132,6 @@ fn kind_word(kind: Kind) -> &'static str {
 /// One whitespace-separated token with its byte range.
 struct Word<'a> {
     start: usize,
-    end: usize,
     text: &'a str,
     newline_before: bool,
 }
@@ -144,7 +143,7 @@ fn words(text: &str) -> Vec<Word<'_>> {
     for (i, ch) in text.char_indices() {
         if ch.is_whitespace() {
             if cursor < i {
-                out.push(Word { start: cursor, end: i, text: &text[cursor..i], newline_before: newline });
+                out.push(Word { start: cursor, text: &text[cursor..i], newline_before: newline });
                 newline = false;
             }
             if ch == '\n' {
@@ -154,7 +153,7 @@ fn words(text: &str) -> Vec<Word<'_>> {
         }
     }
     if cursor < text.len() {
-        out.push(Word { start: cursor, end: text.len(), text: &text[cursor..], newline_before: newline });
+        out.push(Word { start: cursor, text: &text[cursor..], newline_before: newline });
     }
     out
 }
@@ -164,7 +163,7 @@ fn bare(word: &str) -> &str {
 }
 
 fn trimmed_end(word: &Word<'_>) -> usize {
-    let trimmed = word.text.trim_end_matches(|c: char| matches!(c, ',' | ';' | '.' | ')' | ':'));
+    let trimmed = word.text.trim_end_matches([',', ';', '.', ')', ':']);
     word.start + trimmed.len()
 }
 
@@ -208,14 +207,11 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
                 break;
             }
             let first = i + 1 - span;
-            if words[first..=i].iter().skip(1).any(|w| w.newline_before) {
+            let Some(run) = words.get(first..=i) else { break };
+            if run.iter().skip(1).any(|w| w.newline_before) {
                 break;
             }
-            let written: String = words[first..=i]
-                .iter()
-                .map(|w| w.text)
-                .collect::<Vec<_>>()
-                .join(" ");
+            let written: String = run.iter().map(|w| w.text).collect::<Vec<_>>().join(" ");
             let label = crate::text::nfc(written.trim_end_matches(':')).to_lowercase();
             if let Some(rule) = rules.iter().filter(|r| r.label == label).max_by_key(|r| r.label.len()) {
                 best = Some((rule, first, written.trim_end_matches(':').to_string()));
@@ -233,7 +229,7 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
                     break;
                 }
                 let n = crate::text::nfc(bare(next.text)).to_lowercase();
-                if honorifics.iter().any(|h| *h == n) {
+                if honorifics.contains(&n) {
                     j += 1;
                 } else {
                     break;
@@ -361,11 +357,14 @@ mod tests {
     }
 
     /// An honorific belongs to the letter, not to the name: a model still needs
-    /// «Herr» to write a correct German reply.
+    /// «Mr.» — and «Herr» — to write a correct reply.
+    ///
+    /// Tested through English because German deliberately has no
+    /// «Ansprechpartner» row; see the note at the head of `sets/de.rs`.
     #[test]
     fn an_honorific_stays_in_the_clear() {
         assert_eq!(
-            found("Ansprechpartner: Herr Thomas Müller", &["de"]),
+            found("Contact person: Mr. Thomas Müller", &["en"]),
             vec![(Kind::Person, "Thomas Müller".to_string())]
         );
     }

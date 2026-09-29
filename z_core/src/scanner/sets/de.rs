@@ -12,6 +12,14 @@ use crate::scanner::Confidence;
 use super::RuleSet;
 
 /// `(id, label, kind, validator)` — the whole set, as rows.
+// NOTE — «Ansprechpartner» is deliberately NOT a row.
+//
+// Adding it would make `Ansprechpartner: Herr Thomas Müller` an **Auto** by the
+// label doctrine, where the salutation rule today makes it a **Suggest**. That
+// is a change to what the scanner decides, and M7.10B is a move of words into
+// data, not a change of judgement — the golden fixture caught it the moment it
+// drifted. It is a good candidate for the next round, and it is the owner's
+// call, not the refactor's.
 const ROWS: &[(&str, &str, Kind, Validator)] = &[
     ("de-01", "telefon", Kind::Phone, Validator::Number),
     ("de-02", "tel", Kind::Phone, Validator::Number),
@@ -34,7 +42,6 @@ const ROWS: &[(&str, &str, Kind, Validator)] = &[
     ("de-19", "ust-idnr.", Kind::TaxId, Validator::Word),
     ("de-20", "ust-id", Kind::TaxId, Validator::Word),
     ("de-21", "umsatzsteuer-id", Kind::TaxId, Validator::Word),
-    ("de-22", "ansprechpartner", Kind::Person, Validator::Name),
 ];
 
 /// Words that sit between a label and a name and are not part of it.

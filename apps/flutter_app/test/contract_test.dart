@@ -96,6 +96,11 @@ void main() {
       'renameProfile': () =>
           renameProfile(profileId: 'p', name: 'Test renamed'),
       'packs': () => packs(),
+      'ruleSets': () => ruleSets(),
+      'setProfileLanguages': () => setProfileLanguages(profileId: 'p-none', languages: ['de']),
+      'teachLabelRule': () => teachLabelRule(label: 'Mandantenkennung', kind: Kind.customerNo, profileId: null),
+      'forgetLabelRule': () => forgetLabelRule(id: 1),
+      'labelRules': () => labelRules(),
       'switchPack': () => switchPack(session: session, packId: 'de'),
       'providers': () => providers(),
       'connectProvider': () => connectProvider(
@@ -186,7 +191,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 67, reason: 'the contract has 67 functions');
+    expect(calls.length, 72, reason: 'the contract has 72 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

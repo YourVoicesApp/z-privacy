@@ -680,7 +680,7 @@ class _EntityRowTile extends StatelessWidget {
               .firstWhere(
                 (p) => p.id == row.profileId,
                 orElse: () =>
-                    ProfileRow(id: row.profileId!, name: row.profileId!),
+                    ProfileRow(id: row.profileId!, name: row.profileId!, languages: const []),
               )
               .name;
 
