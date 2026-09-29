@@ -717,19 +717,20 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
             );
         }
 
+        // «Where it applies» names a **reach**, never a client. Neither the
+        // profile id nor its display name appears here: the name belongs where
+        // a person chooses or manages a profile, and repeating it in an
+        // explanation is the EXPOSURE rule broken for no gain.
         let applies = if taught_rule {
             // A taught rule's reach is the rule's own scope, not the scope of
-            // the protection it produced in this document. Saying «This
-            // conversation» about a rule kept in the vault was the same
-            // contradiction the Why card already carried once, reappearing
-            // through a new door.
+            // the protection it produced in this document.
             taught_scope.clone().unwrap_or_else(|| "Everywhere".to_string())
         } else {
             match p.scope {
                 Scope::Once => "This one place".to_string(),
                 Scope::Conversation => "This conversation".to_string(),
                 Scope::Profile => match &s.profile_id {
-                    Some(id) => format!("Profile — {id}"),
+                    Some(_) => "This profile".to_string(),
                     None => "This conversation".to_string(),
                 },
                 Scope::Always => "Everywhere".to_string(),
@@ -1422,13 +1423,10 @@ fn taught_rule_scopes() -> std::collections::BTreeMap<u32, String> {
                 v.label_rules
                     .iter()
                     .map(|r| {
+                        // A reach, not a client. The profile's display name
+                        // stays on the screens that manage profiles.
                         let scope = match &r.profile_id {
-                            Some(owner) => v
-                                .profiles
-                                .iter()
-                                .find(|p| &p.id == owner)
-                                .map(|p| format!("Profile — {}", p.name))
-                                .unwrap_or_else(|| "Everywhere".to_string()),
+                            Some(_) => "This profile".to_string(),
                             None => "Everywhere".to_string(),
                         };
                         (r.id, scope)

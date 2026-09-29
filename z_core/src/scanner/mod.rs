@@ -123,13 +123,16 @@ fn vault_pass(text: &str, hints: &[VaultHint]) -> Vec<Candidate> {
                 Policy::Manual => continue,
             }
         };
+        // Neither the handle («CLIENT #01») nor the label. The owner's ruling
+        // of 29 September: the identity's name is needed where a person picks
+        // or manages one — not repeated in an explanation merely because we
+        // hold it. `CLIENT #01` said nothing to a human; the label is the
+        // client's own name and is exactly what the vault protects.
         let reason = if conflict {
-            format!(
-                "two identities in your vault claim this spelling ({}) — the app will not choose for you",
-                entities.join(", ")
-            )
+            "two identities in your vault claim this spelling — the app will not choose for you"
+                .to_string()
         } else {
-            format!("your vault knows this, under {}", first.entity_handle)
+            "your vault knows this value".to_string()
         };
         let detail = if conflict {
             "vault:conflict".to_string()

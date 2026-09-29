@@ -162,7 +162,7 @@ fn a_taught_rule_explains_itself_and_can_be_forgotten() {
     // itself a liar, and it shipped that way for an hour on 29 September.
     assert!(why.decided, "the card says the app decided what the person taught");
     assert_eq!(
-        why.applies, "Profile — Nordstern",
+        why.applies, "This profile",
         "the card reports the protection's scope instead of the rule's"
     );
 
@@ -208,4 +208,42 @@ fn the_snapshot_reports_the_rules_and_the_sets_that_actually_ran() {
         Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("sv"), "{reason}"),
         other => panic!("an unknown rule set was accepted: {other:?}"),
     }
+}
+
+/// His test of 29 September, exactly: the explanation names a **reach**, and
+/// neither the machine's handle nor the client's own name.
+///
+/// The two halves are one rule — a name appears where a person picks or
+/// manages a profile, and nowhere else merely because we hold it.
+#[test]
+fn the_why_card_names_a_reach_and_never_the_client() {
+    let _guard = serial();
+    fresh("reach");
+    let display = "Nordstern Consulting GmbH";
+    let profile = create_profile(display.to_string()).expect("profile");
+    set_profile_languages(profile.clone(), vec!["de".to_string()]).expect("languages");
+    teach_label_rule("Mandantenkennung".to_string(), Kind::CustomerNo, Some(profile.clone()))
+        .expect("teach");
+
+    let doc = "Mandantenkennung: 7781-B";
+    let session = open_session(Some(profile.clone()), "de".to_string()).expect("session");
+    import_text(session, doc.to_string()).expect("import");
+    scan(session).expect("scan");
+    let start = doc.find("7781-B").unwrap() as u32;
+    let why = explain(session, Span { start, end: start + "7781-B".len() as u32 }).expect("why");
+
+    assert_eq!(why.applies, "This profile");
+    let whole = format!("{} {} {}", why.headline, why.because.join(" "), why.applies);
+    assert!(!whole.contains("CLIENT #"), "the machine's handle reached the card: {whole}");
+    assert!(
+        !whole.contains(display),
+        "the client's own name reached the explanation: {whole}"
+    );
+
+    // And the screen whose job **is** managing profiles still shows the name.
+    let rows = profiles().expect("profiles");
+    assert!(
+        rows.iter().any(|p| p.name == display),
+        "the profile screen lost the display name"
+    );
 }
