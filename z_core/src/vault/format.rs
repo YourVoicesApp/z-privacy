@@ -14,10 +14,11 @@ use crate::api::{ApiError, ApiResult, EntityKind, Kind, Policy};
 use crate::secret::Secret;
 use crate::vault::crypto::{self, Purpose, SecretKey};
 
-use super::model::{Entity, Profile, ProviderLogin, StoredSettings, ValueRecord, Vault};
+use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException, ValueRecord, Vault};
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 6 — user-taught exceptions are sealed with the rest of the vault.
 /// * 5 — provider credentials are bound to a normalized destination.
 /// * 4 — each value carries when it was taught (task 036).
 /// * 3 — the settings, appended after the credentials (task 030).
@@ -30,7 +31,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, ValueRecord, 
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 5;
+pub(crate) const MODEL_VERSION: u16 = 6;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -188,6 +189,24 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
     put_str(&mut out, &st.pack_id);
     put_str(&mut out, &st.language);
     out.push(u8::from(st.first_run_done));
+
+    // Model 6. Also at the end: an exception is durable user knowledge, but old
+    // vaults simply had none.
+    out.extend_from_slice(&vault.next_exception.to_be_bytes());
+    out.extend_from_slice(&(vault.exceptions.len() as u32).to_be_bytes());
+    for exception in &vault.exceptions {
+        out.extend_from_slice(&exception.id.to_be_bytes());
+        out.push(kind_code(exception.kind));
+        match &exception.profile_id {
+            Some(id) => {
+                out.push(1);
+                put_str(&mut out, id);
+            }
+            None => out.push(0),
+        }
+        put_str(&mut out, exception.value.expose());
+        out.extend_from_slice(&exception.learned_at.to_be_bytes());
+    }
     Ok(out)
 }
 
@@ -316,11 +335,39 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         StoredSettings::default()
     };
 
+    let (next_exception, exceptions) = if version >= 6 {
+        let next_exception = u32::from_be_bytes(r.array::<4>()?);
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        let mut exceptions = Vec::new();
+        for _ in 0..count {
+            let id = u32::from_be_bytes(r.array::<4>()?);
+            let kind = kind_of(r.byte()?)?;
+            let profile_id = match r.byte()? {
+                0 => None,
+                _ => Some(r.string()?),
+            };
+            let value = Secret::new(r.string()?);
+            let learned_at = u64::from_be_bytes(r.array::<8>()?);
+            exceptions.push(UserException {
+                id,
+                kind,
+                value,
+                profile_id,
+                learned_at,
+            });
+        }
+        (next_exception, exceptions)
+    } else {
+        (1, Vec::new())
+    };
+
     Ok(Vault {
         entities,
         profiles,
         next_entity,
         next_value,
+        next_exception,
+        exceptions,
         settings,
         provider_logins,
     })
@@ -427,6 +474,10 @@ mod tests {
             put_str(&mut out, "de");
             put_str(&mut out, "en");
             out.push(0);
+        }
+        if version >= 6 {
+            out.extend_from_slice(&1u32.to_be_bytes()); // next exception
+            out.extend_from_slice(&0u32.to_be_bytes()); // no exceptions
         }
         out
     }

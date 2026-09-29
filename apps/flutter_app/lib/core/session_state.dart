@@ -20,6 +20,7 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 class Ground extends ChangeNotifier {
   HomeSnapshot? home;
   VaultSnapshot? vaultSnap;
+  PrivacyRulesSnapshot? privacyRules;
   ProviderSnapshot? providerSnap;
   String? trouble;
 
@@ -38,6 +39,9 @@ class Ground extends ChangeNotifier {
     try {
       home = await z.homeSnapshot();
       vaultSnap = await z.vaultSnapshot();
+      privacyRules = (home?.vault == VaultState.unlocked)
+          ? await z.privacyRulesSnapshot(profileId: null)
+          : null;
       providerSnap = await z.providerSnapshot();
       rememberKinds(kinds);
       trouble = null;
@@ -108,11 +112,13 @@ class Ground extends ChangeNotifier {
   Future<void> readVault() async {
     if (vault != VaultState.unlocked) {
       vaultRows = const [];
+      privacyRules = null;
       notifyListeners();
       return;
     }
     try {
       vaultRows = await z.searchVault(query: vaultQuery);
+      privacyRules = await z.privacyRulesSnapshot(profileId: null);
       trouble = null;
     } on ApiError catch (e) {
       trouble = e.toString();
@@ -519,6 +525,24 @@ class Workbench extends ChangeNotifier {
             )).id;
       if (left.isEmpty) walking = false;
     }
+    notifyListeners();
+  }
+
+  /// Remember a Not Sensitive decision beyond this document. Plain
+  /// `Not sensitive` remains session-only; this is the explicit durable path.
+  Future<void> teachException(int finding, Scope scope) async {
+    try {
+      report = await z.teachException(
+        session: session,
+        finding: finding,
+        scope: scope,
+      );
+      trouble = null;
+    } on ApiError catch (e) {
+      trouble = e.toString();
+    }
+    await refresh();
+    if (selection != null) await select(selection);
     notifyListeners();
   }
 

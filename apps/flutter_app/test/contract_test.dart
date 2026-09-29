@@ -77,6 +77,8 @@ void main() {
         finding: 1,
         answer: FindingAnswer.protect,
       ),
+      'teachException': () =>
+          teachException(session: session, finding: 1, scope: Scope.always),
       'reveal': () => reveal(session: session, token: 't'),
       'hide': () => hide_(session: session, token: 't'),
       'listTokens': () => listTokens(session: session),
@@ -114,6 +116,7 @@ void main() {
       'forgetPlan': () => forgetPlan(entity: 1, valueId: 1, everywhere: false),
       'forgetValue': () =>
           forgetValue(entity: 1, valueId: 1, everywhere: false),
+      'forgetException': () => forgetException(id: 1),
       'settings': () => settings(),
       'saveSettings': () => saveSettings(
         settings: const Settings(
@@ -157,6 +160,7 @@ void main() {
       'homeSnapshot': () => homeSnapshot(),
       'workspaceSnapshot': () => workspaceSnapshot(session: session),
       'vaultSnapshot': () => vaultSnapshot(),
+      'privacyRulesSnapshot': () => privacyRulesSnapshot(),
       'providerSnapshot': () => providerSnapshot(),
       'answerSnapshot': () => answerSnapshot(session: session, answer: answer),
     };
@@ -182,7 +186,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 64, reason: 'the contract has 64 functions');
+    expect(calls.length, 67, reason: 'the contract has 67 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

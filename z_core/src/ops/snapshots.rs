@@ -4,8 +4,8 @@
 
 use crate::api::{
     AnswerId, AnswerSnapshot, ApiError, ApiResult, CredentialState, Finding, HomeSnapshot,
-    MarkState, ProviderFact, ProviderSnapshot, ScanOrigin, SessionId, TaughtValueRow, VaultSnapshot,
-    VaultState, WorkspaceSnapshot,
+    KnowledgeSource, MarkState, PrivacyRulesSnapshot, ProviderFact, ProviderSnapshot, ScanOrigin,
+    SessionId, TaughtExceptionRow, TaughtValueRow, VaultSnapshot, VaultState, WorkspaceSnapshot,
 };
 use crate::session::{with_core, Session};
 
@@ -111,6 +111,59 @@ pub(crate) fn vault_snapshot() -> ApiResult<VaultSnapshot> {
     })
 }
 
+pub(crate) fn privacy_rules_snapshot(profile_id: Option<String>) -> ApiResult<PrivacyRulesSnapshot> {
+    let vault = vault_state()?;
+    if vault != VaultState::Unlocked {
+        return Err(ApiError::VaultLocked);
+    }
+    with_core(|core| {
+        let state_revision = core.state_revision;
+        core.vault.with_open(|vault| {
+            let include = |row_profile: &Option<String>| match profile_id.as_deref() {
+                Some(active) => row_profile.as_deref().is_none_or(|row| row == active),
+                None => true,
+            };
+            let mut values = Vec::new();
+            for e in &vault.entities {
+                if !include(&e.profile_id) {
+                    continue;
+                }
+                for v in &e.values {
+                    values.push(taught_value_row(vault, e, v));
+                }
+            }
+            let mut exceptions = Vec::new();
+            for exception in &vault.exceptions {
+                if !include(&exception.profile_id) {
+                    continue;
+                }
+                let profile_name = exception
+                    .profile_id
+                    .as_ref()
+                    .and_then(|id| vault.profiles.iter().find(|p| &p.id == id).map(|p| p.name.clone()));
+                let scope = profile_name.clone().unwrap_or_else(|| "Everywhere".to_string());
+                exceptions.push(TaughtExceptionRow {
+                    id: exception.id,
+                    value: exception.value.expose().to_string(),
+                    kind: exception.kind,
+                    profile_id: exception.profile_id.clone(),
+                    profile_name,
+                    taught_at: exception.learned_at,
+                    why: format!("This value is excluded in {scope}."),
+                    source: KnowledgeSource::UserException,
+                });
+            }
+            Ok(PrivacyRulesSnapshot {
+                state_revision,
+                profile_id,
+                values,
+                exceptions,
+                rules_built: false,
+            })
+        })
+    })?
+}
+
 pub(crate) fn provider_snapshot() -> ApiResult<ProviderSnapshot> {
     Ok(ProviderSnapshot {
         state_revision: truth_revision(),
@@ -162,17 +215,37 @@ fn taught() -> ApiResult<(u32, u32, Vec<TaughtValueRow>)> {
             let mut rows = Vec::new();
             for e in &vault.entities {
                 for v in &e.values {
-                    rows.push(TaughtValueRow {
-                        entity_id: e.id,
-                        entity_label: e.label.expose().to_string(),
-                        value_id: v.id,
-                        kind: v.kind,
-                    });
+                    rows.push(taught_value_row(vault, e, v));
                 }
             }
             Ok((vault.entities.len() as u32, rows.len() as u32, rows))
         })
     })?
+}
+
+fn taught_value_row(
+    vault: &crate::vault::model::Vault,
+    entity: &crate::vault::model::Entity,
+    value: &crate::vault::model::ValueRecord,
+) -> TaughtValueRow {
+    let profile_name = entity
+        .profile_id
+        .as_ref()
+        .and_then(|id| vault.profiles.iter().find(|p| &p.id == id).map(|p| p.name.clone()));
+    let scope = profile_name.clone().unwrap_or_else(|| "Everywhere".to_string());
+    TaughtValueRow {
+        entity_id: entity.id,
+        entity_label: entity.label.expose().to_string(),
+        value_id: value.id,
+        value: value.value.expose().to_string(),
+        kind: value.kind,
+        profile_id: entity.profile_id.clone(),
+        profile_name,
+        aliases: value.aliases.iter().map(|a| a.expose().to_string()).collect(),
+        taught_at: value.learned_at,
+        why: format!("You taught Z Privacy this value. Scope: {scope}."),
+        source: KnowledgeSource::UserTaughtValue,
+    }
 }
 
 pub(crate) fn provider_facts() -> ApiResult<Vec<ProviderFact>> {

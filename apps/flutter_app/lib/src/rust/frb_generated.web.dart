@@ -116,6 +116,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KindRow dco_decode_kind_row(dynamic raw);
 
   @protected
+  KnowledgeSource dco_decode_knowledge_source(dynamic raw);
+
+  @protected
   LayerCount dco_decode_layer_count(dynamic raw);
 
   @protected
@@ -162,6 +165,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Span> dco_decode_list_span(dynamic raw);
+
+  @protected
+  List<TaughtExceptionRow> dco_decode_list_taught_exception_row(dynamic raw);
 
   @protected
   List<TaughtValueRow> dco_decode_list_taught_value_row(dynamic raw);
@@ -213,6 +219,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Policy dco_decode_policy(dynamic raw);
+
+  @protected
+  PrivacyRulesSnapshot dco_decode_privacy_rules_snapshot(dynamic raw);
 
   @protected
   ProfileRow dco_decode_profile_row(dynamic raw);
@@ -273,6 +282,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SwitchOutcome dco_decode_switch_outcome(dynamic raw);
+
+  @protected
+  TaughtExceptionRow dco_decode_taught_exception_row(dynamic raw);
 
   @protected
   TaughtValueRow dco_decode_taught_value_row(dynamic raw);
@@ -408,6 +420,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KindRow sse_decode_kind_row(SseDeserializer deserializer);
 
   @protected
+  KnowledgeSource sse_decode_knowledge_source(SseDeserializer deserializer);
+
+  @protected
   LayerCount sse_decode_layer_count(SseDeserializer deserializer);
 
   @protected
@@ -456,6 +471,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Span> sse_decode_list_span(SseDeserializer deserializer);
+
+  @protected
+  List<TaughtExceptionRow> sse_decode_list_taught_exception_row(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<TaughtValueRow> sse_decode_list_taught_value_row(
@@ -513,6 +533,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Policy sse_decode_policy(SseDeserializer deserializer);
+
+  @protected
+  PrivacyRulesSnapshot sse_decode_privacy_rules_snapshot(
+    SseDeserializer deserializer,
+  );
 
   @protected
   ProfileRow sse_decode_profile_row(SseDeserializer deserializer);
@@ -573,6 +598,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SwitchOutcome sse_decode_switch_outcome(SseDeserializer deserializer);
+
+  @protected
+  TaughtExceptionRow sse_decode_taught_exception_row(
+    SseDeserializer deserializer,
+  );
 
   @protected
   TaughtValueRow sse_decode_taught_value_row(SseDeserializer deserializer);
@@ -730,6 +760,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_kind_row(KindRow self, SseSerializer serializer);
 
   @protected
+  void sse_encode_knowledge_source(
+    KnowledgeSource self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_layer_count(LayerCount self, SseSerializer serializer);
 
   @protected
@@ -794,6 +830,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_span(List<Span> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_taught_exception_row(
+    List<TaughtExceptionRow> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_taught_value_row(
@@ -862,6 +904,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_policy(Policy self, SseSerializer serializer);
 
   @protected
+  void sse_encode_privacy_rules_snapshot(
+    PrivacyRulesSnapshot self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_profile_row(ProfileRow self, SseSerializer serializer);
 
   @protected
@@ -926,6 +974,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_switch_outcome(SwitchOutcome self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_taught_exception_row(
+    TaughtExceptionRow self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_taught_value_row(

@@ -646,12 +646,48 @@ pub struct _VaultSnapshot {
     pub can_forget: bool,
 }
 
+#[frb(mirror(KnowledgeSource))]
+pub enum _KnowledgeSource {
+    BuiltIn,
+    UserTaughtValue,
+    UserException,
+}
+
+#[frb(mirror(PrivacyRulesSnapshot))]
+pub struct _PrivacyRulesSnapshot {
+    pub state_revision: u32,
+    pub profile_id: Option<String>,
+    pub values: Vec<TaughtValueRow>,
+    pub exceptions: Vec<TaughtExceptionRow>,
+    /// Phase A names this section honestly, but does not pretend it exists.
+    pub rules_built: bool,
+}
+
 #[frb(mirror(TaughtValueRow))]
 pub struct _TaughtValueRow {
     pub entity_id: u32,
     pub entity_label: String,
     pub value_id: u32,
+    pub value: String,
     pub kind: Kind,
+    pub profile_id: Option<String>,
+    pub profile_name: Option<String>,
+    pub aliases: Vec<String>,
+    pub taught_at: u64,
+    pub why: String,
+    pub source: KnowledgeSource,
+}
+
+#[frb(mirror(TaughtExceptionRow))]
+pub struct _TaughtExceptionRow {
+    pub id: u32,
+    pub value: String,
+    pub kind: Kind,
+    pub profile_id: Option<String>,
+    pub profile_name: Option<String>,
+    pub taught_at: u64,
+    pub why: String,
+    pub source: KnowledgeSource,
 }
 
 #[frb(mirror(ProviderSnapshot))]

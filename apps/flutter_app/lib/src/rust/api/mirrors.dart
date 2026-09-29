@@ -586,6 +586,8 @@ class KindRow {
           custom == other.custom;
 }
 
+enum KnowledgeSource { builtIn, userTaughtValue, userException }
+
 class LayerCount {
   final Source source;
   final String detail;
@@ -808,6 +810,43 @@ enum Policy {
 
   /// Never found by itself; kept here so its aliases and token stay stable.
   manual,
+}
+
+class PrivacyRulesSnapshot {
+  final int stateRevision;
+  final String? profileId;
+  final List<TaughtValueRow> values;
+  final List<TaughtExceptionRow> exceptions;
+
+  /// Phase A names this section honestly, but does not pretend it exists.
+  final bool rulesBuilt;
+
+  const PrivacyRulesSnapshot({
+    required this.stateRevision,
+    this.profileId,
+    required this.values,
+    required this.exceptions,
+    required this.rulesBuilt,
+  });
+
+  @override
+  int get hashCode =>
+      stateRevision.hashCode ^
+      profileId.hashCode ^
+      values.hashCode ^
+      exceptions.hashCode ^
+      rulesBuilt.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PrivacyRulesSnapshot &&
+          runtimeType == other.runtimeType &&
+          stateRevision == other.stateRevision &&
+          profileId == other.profileId &&
+          values == other.values &&
+          exceptions == other.exceptions &&
+          rulesBuilt == other.rulesBuilt;
 }
 
 class ProfileRow {
@@ -1396,17 +1435,78 @@ class SwitchOutcome {
           revision == other.revision;
 }
 
+class TaughtExceptionRow {
+  final int id;
+  final String value;
+  final Kind kind;
+  final String? profileId;
+  final String? profileName;
+  final BigInt taughtAt;
+  final String why;
+  final KnowledgeSource source;
+
+  const TaughtExceptionRow({
+    required this.id,
+    required this.value,
+    required this.kind,
+    this.profileId,
+    this.profileName,
+    required this.taughtAt,
+    required this.why,
+    required this.source,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      value.hashCode ^
+      kind.hashCode ^
+      profileId.hashCode ^
+      profileName.hashCode ^
+      taughtAt.hashCode ^
+      why.hashCode ^
+      source.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TaughtExceptionRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          value == other.value &&
+          kind == other.kind &&
+          profileId == other.profileId &&
+          profileName == other.profileName &&
+          taughtAt == other.taughtAt &&
+          why == other.why &&
+          source == other.source;
+}
+
 class TaughtValueRow {
   final int entityId;
   final String entityLabel;
   final int valueId;
+  final String value;
   final Kind kind;
+  final String? profileId;
+  final String? profileName;
+  final List<String> aliases;
+  final BigInt taughtAt;
+  final String why;
+  final KnowledgeSource source;
 
   const TaughtValueRow({
     required this.entityId,
     required this.entityLabel,
     required this.valueId,
+    required this.value,
     required this.kind,
+    this.profileId,
+    this.profileName,
+    required this.aliases,
+    required this.taughtAt,
+    required this.why,
+    required this.source,
   });
 
   @override
@@ -1414,7 +1514,14 @@ class TaughtValueRow {
       entityId.hashCode ^
       entityLabel.hashCode ^
       valueId.hashCode ^
-      kind.hashCode;
+      value.hashCode ^
+      kind.hashCode ^
+      profileId.hashCode ^
+      profileName.hashCode ^
+      aliases.hashCode ^
+      taughtAt.hashCode ^
+      why.hashCode ^
+      source.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -1424,7 +1531,14 @@ class TaughtValueRow {
           entityId == other.entityId &&
           entityLabel == other.entityLabel &&
           valueId == other.valueId &&
-          kind == other.kind;
+          value == other.value &&
+          kind == other.kind &&
+          profileId == other.profileId &&
+          profileName == other.profileName &&
+          aliases == other.aliases &&
+          taughtAt == other.taughtAt &&
+          why == other.why &&
+          source == other.source;
 }
 
 class TokenRow {

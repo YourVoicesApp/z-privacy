@@ -103,6 +103,26 @@ pub(crate) struct Profile {
     pub name: String,
 }
 
+/// A durable «do not protect this as that» decision.
+///
+/// Unlike a session dismissal, this is knowledge and therefore lives in the
+/// encrypted vault. It is deliberately value/kind exact: phase A teaches values
+/// and exceptions, not patterns.
+#[derive(Debug, Clone)]
+pub(crate) struct UserException {
+    pub id: u32,
+    pub kind: Kind,
+    pub value: Secret,
+    pub profile_id: Option<String>,
+    pub learned_at: u64,
+}
+
+impl UserException {
+    pub(crate) fn matches(&self, kind: Kind, text: &str) -> bool {
+        self.kind == kind && nfc(self.value.expose()) == nfc(text)
+    }
+}
+
 /// Everything the vault holds, once it is open.
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Vault {
@@ -110,6 +130,8 @@ pub(crate) struct Vault {
     pub profiles: Vec<Profile>,
     pub next_entity: u32,
     pub next_value: u32,
+    pub next_exception: u32,
+    pub exceptions: Vec<UserException>,
     /// What the app has been told to do by itself. In the vault because the
     /// vault is the only file we write (G15), and because a setting that
     /// survives a restart has to live somewhere that does. Written in task 030.
@@ -186,6 +208,8 @@ impl Vault {
             profiles: Vec::new(),
             next_entity: 1,
             next_value: 1,
+            next_exception: 1,
+            exceptions: Vec::new(),
             settings: StoredSettings::default(),
             provider_logins: BTreeMap::new(),
         }
@@ -208,6 +232,12 @@ impl Vault {
     pub(crate) fn take_value_id(&mut self) -> u32 {
         let id = self.next_value;
         self.next_value = self.next_value.saturating_add(1);
+        id
+    }
+
+    pub(crate) fn take_exception_id(&mut self) -> u32 {
+        let id = self.next_exception;
+        self.next_exception = self.next_exception.saturating_add(1);
         id
     }
 
@@ -248,6 +278,19 @@ impl Vault {
         // Longest first, so «Nordstern Consulting GmbH» wins over «Nordstern».
         out.sort_by_key(|h| std::cmp::Reverse(h.text.len()));
         out
+    }
+
+    /// Durable exceptions effective in this profile.
+    pub(crate) fn exceptions_for(&self, active_profile: Option<&str>) -> Vec<UserException> {
+        self.exceptions
+            .iter()
+            .filter(|ex| match (&ex.profile_id, active_profile) {
+                (None, _) => true,
+                (Some(mine), Some(active)) => mine == active,
+                (Some(_), None) => false,
+            })
+            .cloned()
+            .collect()
     }
 }
 

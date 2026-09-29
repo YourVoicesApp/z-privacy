@@ -16,7 +16,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::api::{Kind, Policy, Source};
 use crate::text::nfc;
-use crate::vault::model::VaultHint;
+use crate::vault::model::{UserException, VaultHint};
 
 /// How sure the scanner is — and therefore whether it may act alone.
 ///
@@ -63,11 +63,19 @@ impl Candidate {
 /// `hints` is what the vault can recognise **for the active profile**, and it is
 /// empty while the vault is locked — which is how «locked means the layer does not
 /// exist» is true without a flag anywhere.
-pub(crate) fn scan(text: &str, pack: &str, hints: &[VaultHint]) -> Vec<Candidate> {
+pub(crate) fn scan(text: &str, pack: &str, hints: &[VaultHint], exceptions: &[UserException]) -> Vec<Candidate> {
     let mut all = general_rules::scan(text);
     all.extend(packs::scan(text, pack));
     all.extend(vault_pass(text, hints));
+    all.retain(|candidate| !excepted(text, candidate, exceptions));
     settle(all)
+}
+
+fn excepted(text: &str, candidate: &Candidate, exceptions: &[UserException]) -> bool {
+    let Some(found) = text.get(candidate.start..candidate.end) else {
+        return false;
+    };
+    exceptions.iter().any(|ex| ex.matches(candidate.kind, found))
 }
 
 /// What the vault itself recognises. This is the only layer that knows *who*.
@@ -253,7 +261,7 @@ mod tests {
         // "IBAN:" is a German-pack label, and the number itself passes the mod-97
         // check. Two layers, one thing — and the reason must name both.
         let text = "IBAN: DE89 3704 0044 0532 0130 00";
-        let found = scan(text, "de", &[]);
+        let found = scan(text, "de", &[], &[]);
         assert_eq!(found.len(), 1, "{found:?}");
         let only = found.first().expect("one");
         assert_eq!(only.confidence, Confidence::Auto);
@@ -263,7 +271,7 @@ mod tests {
     #[test]
     fn plain_words_are_what_is_left() {
         let text = "Herr Thomas Müller hat die Nummer +49 171 2345678 genannt.";
-        let found = scan(text, "de", &[]);
+        let found = scan(text, "de", &[], &[]);
         let plain = plain_word_count(text, &found);
         let words = text.split_whitespace().count() as u32;
         assert!(plain < words, "some words are inside findings");

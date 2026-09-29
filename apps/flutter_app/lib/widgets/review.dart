@@ -66,8 +66,8 @@ class ReviewPanel extends StatelessWidget {
                   open == 0
                       ? 'Nothing is waiting for you.'
                       : open == 1
-                          ? 'One thing is waiting for your word.'
-                          : '$open things are waiting for your word.',
+                      ? 'One thing is waiting for your word.'
+                      : '$open things are waiting for your word.',
                   style: Zc.small.copyWith(
                     color: open == 0 ? Zc.ink3 : Zc.amber,
                     fontWeight: open == 0 ? FontWeight.w400 : FontWeight.w600,
@@ -78,8 +78,13 @@ class ReviewPanel extends StatelessWidget {
           ),
           if (open > 0)
             IconButton(
-              tooltip: bench.walking ? 'Show the whole list' : 'Walk them one at a time',
-              icon: Icon(bench.walking ? Icons.list : Icons.directions_walk, size: 18),
+              tooltip: bench.walking
+                  ? 'Show the whole list'
+                  : 'Walk them one at a time',
+              icon: Icon(
+                bench.walking ? Icons.list : Icons.directions_walk,
+                size: 18,
+              ),
               color: Zc.ink3,
               onPressed: () => bench.openReview(walk: !bench.walking),
             ),
@@ -110,7 +115,10 @@ class _List extends StatelessWidget {
     if (bench.findings.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(20),
-        child: Text('The scan found nothing in this document.', style: Zc.small),
+        child: Text(
+          'The scan found nothing in this document.',
+          style: Zc.small,
+        ),
       );
     }
 
@@ -119,17 +127,20 @@ class _List extends StatelessWidget {
       children: [
         if (suggested.isNotEmpty) ...[
           _GroupTitle('Waiting for your word', suggested.length, Zc.amber),
-          for (final f in suggested) _Row(bench: bench, finding: f, answerable: true),
+          for (final f in suggested)
+            _Row(bench: bench, finding: f, answerable: true),
           const SizedBox(height: 16),
         ],
         if (automatic.isNotEmpty) ...[
           _GroupTitle('Protected automatically', automatic.length, Zc.clay),
-          for (final f in automatic) _Row(bench: bench, finding: f, answerable: false),
+          for (final f in automatic)
+            _Row(bench: bench, finding: f, answerable: false),
           const SizedBox(height: 16),
         ],
         if (byHand.isNotEmpty) ...[
           _GroupTitle('Decided by you', byHand.length, Zc.ink3),
-          for (final f in byHand) _Row(bench: bench, finding: f, answerable: false),
+          for (final f in byHand)
+            _Row(bench: bench, finding: f, answerable: false),
         ],
       ],
     );
@@ -159,7 +170,11 @@ class _GroupTitle extends StatelessWidget {
             ),
             child: Text(
               '$count',
-              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: tint),
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: tint,
+              ),
             ),
           ),
         ],
@@ -171,7 +186,11 @@ class _GroupTitle extends StatelessWidget {
 /// One finding: what it is, why it was flagged, where it sits, and — when it is
 /// still open — the three answers.
 class _Row extends StatelessWidget {
-  const _Row({required this.bench, required this.finding, required this.answerable});
+  const _Row({
+    required this.bench,
+    required this.finding,
+    required this.answerable,
+  });
 
   final Workbench bench;
   final Finding finding;
@@ -180,7 +199,9 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final focused = bench.focused == finding.id;
-    final tint = finding.state == MarkState.suggested ? Zc.amber : sourceTint(finding.source);
+    final tint = finding.state == MarkState.suggested
+        ? Zc.amber
+        : sourceTint(finding.source);
     final text = bench.document == null
         ? ''
         : bench.document!.text.substring(finding.span.start, finding.span.end);
@@ -194,7 +215,9 @@ class _Row extends StatelessWidget {
         decoration: BoxDecoration(
           color: focused ? tint.withValues(alpha: 0.07) : Zc.paper,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: focused ? tint.withValues(alpha: 0.45) : Zc.lineSoft),
+          border: Border.all(
+            color: focused ? tint.withValues(alpha: 0.45) : Zc.lineSoft,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +227,11 @@ class _Row extends StatelessWidget {
                 Expanded(
                   child: Text(
                     text,
-                    style: Zc.document.copyWith(fontSize: 13.5, fontWeight: FontWeight.w600, color: tint),
+                    style: Zc.document.copyWith(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: tint,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -220,12 +247,21 @@ class _Row extends StatelessWidget {
               spacing: 6,
               runSpacing: 5,
               children: [
-                _Tag('found by ${sourceName(finding.source).toLowerCase()}', sourceTint(finding.source)),
+                _Tag(
+                  'found by ${sourceName(finding.source).toLowerCase()}',
+                  sourceTint(finding.source),
+                ),
                 if (finding.decided) _Tag('you decided', Zc.clay),
                 if (finding.place != null)
-                  _Tag('Page ${finding.place!.page} · ¶${finding.place!.paragraph}', Zc.ink4),
+                  _Tag(
+                    'Page ${finding.place!.page} · ¶${finding.place!.paragraph}',
+                    Zc.ink4,
+                  ),
                 if (finding.entities.length > 1)
-                  _Tag('${finding.entities.length} identities claim it', Zc.river),
+                  _Tag(
+                    '${finding.entities.length} identities claim it',
+                    Zc.river,
+                  ),
               ],
             ),
             if (answerable) ...[
@@ -253,7 +289,14 @@ class _Tag extends StatelessWidget {
         color: tint.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(text, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: tint)),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w600,
+          color: tint,
+        ),
+      ),
     );
   }
 }
@@ -269,29 +312,58 @@ class _Answers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget one(String label, FindingAnswer a, Color tint, {bool filled = false}) => Material(
-          color: filled ? tint : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-          child: InkWell(
-            onTap: () => bench.answer(finding.id, a),
+    Widget one(
+      String label,
+      FindingAnswer a,
+      Color tint, {
+      bool filled = false,
+    }) => Material(
+      color: filled ? tint : Colors.transparent,
+      borderRadius: BorderRadius.circular(7),
+      child: InkWell(
+        onTap: () => bench.answer(finding.id, a),
+        borderRadius: BorderRadius.circular(7),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(7),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(color: filled ? Colors.transparent : Zc.line),
-              ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: filled ? Colors.white : tint,
-                ),
-              ),
+            border: Border.all(color: filled ? Colors.transparent : Zc.line),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: filled ? Colors.white : tint,
             ),
           ),
-        );
+        ),
+      ),
+    );
+
+    Widget remember(String label, Scope scope) => Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(7),
+      child: InkWell(
+        onTap: () => bench.teachException(finding.id, scope),
+        borderRadius: BorderRadius.circular(7),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: Zc.line),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Zc.ink3,
+            ),
+          ),
+        ),
+      ),
+    );
 
     return Wrap(
       spacing: 6,
@@ -300,6 +372,9 @@ class _Answers extends StatelessWidget {
         one('Protect', FindingAnswer.protect, Zc.clay, filled: true),
         one('Always', FindingAnswer.always, Zc.river),
         one('Not sensitive', FindingAnswer.notSensitive, Zc.ink3),
+        if (bench.profileId != null)
+          remember('Not sensitive in profile', Scope.profile),
+        remember('Not sensitive everywhere', Scope.always),
         one('Skip', FindingAnswer.skip, Zc.ink4),
       ],
     );
@@ -325,7 +400,10 @@ class _Walk extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text('${at < 0 ? 1 : at + 1} of ${open.length}', style: Zc.small.copyWith(color: Zc.ink4)),
+            Text(
+              '${at < 0 ? 1 : at + 1} of ${open.length}',
+              style: Zc.small.copyWith(color: Zc.ink4),
+            ),
             const Spacer(),
             IconButton(
               icon: const Icon(Icons.chevron_left, size: 20),
@@ -335,7 +413,9 @@ class _Walk extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.chevron_right, size: 20),
               color: Zc.ink3,
-              onPressed: at >= 0 && at < open.length - 1 ? () => bench.focusOn(open[at + 1].id) : null,
+              onPressed: at >= 0 && at < open.length - 1
+                  ? () => bench.focusOn(open[at + 1].id)
+                  : null,
             ),
           ],
         ),
@@ -356,10 +436,16 @@ class _Walk extends StatelessWidget {
           children: [
             _Tag(kindName(current.kind), Zc.ink4),
             const SizedBox(width: 6),
-            _Tag('found by ${sourceName(current.source).toLowerCase()}', sourceTint(current.source)),
+            _Tag(
+              'found by ${sourceName(current.source).toLowerCase()}',
+              sourceTint(current.source),
+            ),
             if (current.place != null) ...[
               const SizedBox(width: 6),
-              _Tag('Page ${current.place!.page} · ¶${current.place!.paragraph}', Zc.ink4),
+              _Tag(
+                'Page ${current.place!.page} · ¶${current.place!.paragraph}',
+                Zc.ink4,
+              ),
             ],
           ],
         ),
@@ -379,28 +465,42 @@ class _Walk extends StatelessWidget {
   TextSpan _sentence(String text, Span span) {
     const reach = 180;
     var from = span.start;
-    while (from > 0 && span.start - from < reach && !'.!?\n'.contains(text[from - 1])) {
+    while (from > 0 &&
+        span.start - from < reach &&
+        !'.!?\n'.contains(text[from - 1])) {
       from--;
     }
     var to = span.end;
-    while (to < text.length && to - span.end < reach && !'.!?\n'.contains(text[to])) {
+    while (to < text.length &&
+        to - span.end < reach &&
+        !'.!?\n'.contains(text[to])) {
       to++;
     }
     if (to < text.length && to - span.end < reach) to++;
 
-    return TextSpan(children: [
-      if (from > 0) const TextSpan(text: '… ', style: TextStyle(color: Zc.ink4)),
-      TextSpan(text: text.substring(from, span.start)),
-      TextSpan(
-        text: text.substring(span.start, span.end),
-        style: const TextStyle(
-          backgroundColor: Zc.amberWash,
-          color: Zc.amber,
-          fontWeight: FontWeight.w700,
+    return TextSpan(
+      children: [
+        if (from > 0)
+          const TextSpan(
+            text: '… ',
+            style: TextStyle(color: Zc.ink4),
+          ),
+        TextSpan(text: text.substring(from, span.start)),
+        TextSpan(
+          text: text.substring(span.start, span.end),
+          style: const TextStyle(
+            backgroundColor: Zc.amberWash,
+            color: Zc.amber,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      ),
-      TextSpan(text: text.substring(span.end, to)),
-      if (to < text.length) const TextSpan(text: ' …', style: TextStyle(color: Zc.ink4)),
-    ]);
+        TextSpan(text: text.substring(span.end, to)),
+        if (to < text.length)
+          const TextSpan(
+            text: ' …',
+            style: TextStyle(color: Zc.ink4),
+          ),
+      ],
+    );
   }
 }

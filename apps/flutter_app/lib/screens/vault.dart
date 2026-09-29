@@ -332,13 +332,10 @@ class _VaultScreenState extends State<VaultScreen> {
   }
 
   /// What Z Privacy has learned from you — the owner's «My Privacy Rules».
-  ///
-  /// Three groups, and only one of them exists. The other two are named anyway
-  /// and say they are not built: a screen that showed «Values I taught» alone
-  /// would imply that values are all this app can learn, and the day rules and
-  /// exceptions arrive nobody would know where they went.
   Widget _taught(Ground g) {
-    final values = g.vaultSnap?.valueCount ?? 0;
+    final rules = g.privacyRules;
+    final values = rules?.values ?? const <TaughtValueRow>[];
+    final exceptions = rules?.exceptions ?? const <TaughtExceptionRow>[];
     return Container(
       margin: const EdgeInsets.fromLTRB(18, 0, 18, 12),
       padding: const EdgeInsets.fromLTRB(15, 12, 15, 12),
@@ -346,7 +343,7 @@ class _VaultScreenState extends State<VaultScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Eyebrow('What Z Privacy has learned from you'),
+          const Eyebrow('My Privacy Rules'),
           const SizedBox(height: 8),
           Wrap(
             spacing: 22,
@@ -354,7 +351,7 @@ class _VaultScreenState extends State<VaultScreen> {
             children: [
               _Learned(
                 title: 'Values I taught',
-                count: '$values',
+                count: '${values.length}',
                 what:
                     'names, companies, numbers — found by themselves from now on',
                 live: true,
@@ -365,19 +362,55 @@ class _VaultScreenState extends State<VaultScreen> {
                 what: 'not built yet · «after Projekt-Nr. → project code»',
                 live: false,
               ),
-              const _Learned(
+              _Learned(
                 title: 'Exceptions I taught',
-                count: '—',
-                what: 'not built yet · «after Rechnungsnummer, not a phone»',
-                live: false,
+                count: '${exceptions.length}',
+                what: 'values you explicitly excluded from protection',
+                live: true,
               ),
             ],
           ),
-          const SizedBox(height: 9),
-          Text(
-            'Everything here is yours: visible, explainable, editable, and forgettable. '
-            'Open one to see when it was taught and what forgetting it would take away.',
-            style: Zc.tiny.copyWith(letterSpacing: 0),
+          const SizedBox(height: 12),
+          _RuleSection(
+            title: 'Values I taught',
+            empty: 'No taught values yet.',
+            children: [
+              for (final row in values.take(5))
+                _TaughtValueTile(
+                  row: row,
+                  kind: g.nameOfKind(row.kind),
+                  onOpen: () => _openEntity(row.entityId),
+                  onForget: () => g.vaultEdit(
+                    () => z.forgetValue(
+                      entity: row.entityId,
+                      valueId: row.valueId,
+                      everywhere: false,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const _RuleSection(
+            title: 'Rules I taught',
+            empty:
+                'Not built yet — custom patterns and label rules come later.',
+            children: [],
+            live: false,
+          ),
+          const SizedBox(height: 10),
+          _RuleSection(
+            title: 'Exceptions I taught',
+            empty: 'No saved exceptions yet.',
+            children: [
+              for (final row in exceptions.take(5))
+                _TaughtExceptionTile(
+                  row: row,
+                  kind: g.nameOfKind(row.kind),
+                  onForget: () =>
+                      g.vaultEdit(() => z.forgetException(id: row.id)),
+                ),
+            ],
           ),
         ],
       ),
@@ -423,6 +456,172 @@ class _VaultScreenState extends State<VaultScreen> {
       ),
     );
   }
+}
+
+class _RuleSection extends StatelessWidget {
+  const _RuleSection({
+    required this.title,
+    required this.empty,
+    required this.children,
+    this.live = true,
+  });
+
+  final String title;
+  final String empty;
+  final List<Widget> children;
+  final bool live;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: live ? 1 : 0.65,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Zc.ink,
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (children.isEmpty)
+            Text(empty, style: Zc.tiny.copyWith(letterSpacing: 0))
+          else
+            Wrap(spacing: 8, runSpacing: 8, children: children),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaughtValueTile extends StatelessWidget {
+  const _TaughtValueTile({
+    required this.row,
+    required this.kind,
+    required this.onOpen,
+    required this.onForget,
+  });
+
+  final TaughtValueRow row;
+  final String kind;
+  final VoidCallback onOpen;
+  final Future<String?> Function() onForget;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RuleTile(
+      title: row.value,
+      subtitle:
+          '$kind · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
+      why: row.why,
+      onOpen: onOpen,
+      onForget: onForget,
+    );
+  }
+}
+
+class _TaughtExceptionTile extends StatelessWidget {
+  const _TaughtExceptionTile({
+    required this.row,
+    required this.kind,
+    required this.onForget,
+  });
+
+  final TaughtExceptionRow row;
+  final String kind;
+  final Future<String?> Function() onForget;
+
+  @override
+  Widget build(BuildContext context) {
+    return _RuleTile(
+      title: row.value,
+      subtitle:
+          'Do not protect as $kind · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
+      why: row.why,
+      onForget: onForget,
+    );
+  }
+}
+
+class _RuleTile extends StatelessWidget {
+  const _RuleTile({
+    required this.title,
+    required this.subtitle,
+    required this.why,
+    this.onOpen,
+    required this.onForget,
+  });
+
+  final String title;
+  final String subtitle;
+  final String why;
+  final VoidCallback? onOpen;
+  final Future<String?> Function() onForget;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 330,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: Zc.panel(fill: Zc.card, edge: Zc.lineSoft, radius: 9),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+              color: Zc.ink,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(subtitle, style: Zc.tiny.copyWith(letterSpacing: 0)),
+          const SizedBox(height: 5),
+          Text(why, style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              if (onOpen != null)
+                ZButton(label: 'Open', onPressed: onOpen)
+              else
+                const Spacer(),
+              if (onOpen != null) const Spacer(),
+              ZButton(label: 'Forget', onPressed: () async => onForget()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _scope(String? profile) =>
+    profile == null ? 'Everywhere' : 'Profile: $profile';
+
+String _taughtOn(BigInt seconds) {
+  if (seconds == BigInt.zero) return 'unknown';
+  final date = DateTime.fromMillisecondsSinceEpoch(seconds.toInt() * 1000);
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return '${date.day} ${months[date.month - 1]} ${date.year}';
 }
 
 class _Chip extends StatelessWidget {

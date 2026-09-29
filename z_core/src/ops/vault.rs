@@ -574,6 +574,21 @@ pub(crate) fn forget_value(entity: u32, value_id: u32, everywhere: bool) -> ApiR
     plan(entity, value_id, everywhere, true)
 }
 
+pub(crate) fn forget_exception(id: u32) -> ApiResult<()> {
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let before = vault.exceptions.len();
+            vault.exceptions.retain(|exception| exception.id != id);
+            if vault.exceptions.len() == before {
+                return Err(ApiError::UnknownToken);
+            }
+            Ok(())
+        })
+    })?;
+    crate::session::bump_truth();
+    Ok(())
+}
+
 fn plan(entity: u32, value_id: u32, everywhere: bool, act: bool) -> ApiResult<ForgetPlan> {
     with_core(|core| {
         core.vault.with_open_mut(|vault| {

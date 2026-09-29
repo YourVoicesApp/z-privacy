@@ -899,13 +899,53 @@ pub struct VaultSnapshot {
     pub can_forget: bool,
 }
 
-/// One taught value, without the secret itself.
+/// Which durable layer a privacy-rules row came from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum KnowledgeSource {
+    BuiltIn,
+    UserTaughtValue,
+    UserException,
+}
+
+/// My Privacy Rules, read in one call from the vault.
+#[derive(Clone, PartialEq, Eq)]
+pub struct PrivacyRulesSnapshot {
+    pub state_revision: u32,
+    pub profile_id: Option<String>,
+    pub values: Vec<TaughtValueRow>,
+    pub exceptions: Vec<TaughtExceptionRow>,
+    /// Phase A names this section honestly, but does not pretend it exists.
+    pub rules_built: bool,
+}
+
+/// One taught value. The value is present only because the vault is unlocked and
+/// this screen exists for the owner to review what they taught.
 #[derive(Clone, PartialEq, Eq)]
 pub struct TaughtValueRow {
     pub entity_id: u32,
     pub entity_label: String,
     pub value_id: u32,
+    pub value: String,
     pub kind: Kind,
+    pub profile_id: Option<String>,
+    pub profile_name: Option<String>,
+    pub aliases: Vec<String>,
+    pub taught_at: u64,
+    pub why: String,
+    pub source: KnowledgeSource,
+}
+
+/// One durable exception taught by the user.
+#[derive(Clone, PartialEq, Eq)]
+pub struct TaughtExceptionRow {
+    pub id: u32,
+    pub value: String,
+    pub kind: Kind,
+    pub profile_id: Option<String>,
+    pub profile_name: Option<String>,
+    pub taught_at: u64,
+    pub why: String,
+    pub source: KnowledgeSource,
 }
 
 /// Providers as they actually stand, including where a credential lives.
@@ -975,7 +1015,37 @@ impl fmt::Debug for TaughtValueRow {
             .field("entity_id", &self.entity_id)
             .field("entity_label", &format_args!("[REDACTED]"))
             .field("value_id", &self.value_id)
+            .field("value", &format_args!("[REDACTED]"))
             .field("kind", &self.kind)
+            .field("profile_id", &self.profile_id)
+            .field("aliases", &self.aliases.len())
+            .field("taught_at", &self.taught_at)
+            .field("source", &self.source)
+            .finish()
+    }
+}
+
+impl fmt::Debug for TaughtExceptionRow {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TaughtExceptionRow")
+            .field("id", &self.id)
+            .field("value", &format_args!("[REDACTED]"))
+            .field("kind", &self.kind)
+            .field("profile_id", &self.profile_id)
+            .field("taught_at", &self.taught_at)
+            .field("source", &self.source)
+            .finish()
+    }
+}
+
+impl fmt::Debug for PrivacyRulesSnapshot {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PrivacyRulesSnapshot")
+            .field("state_revision", &self.state_revision)
+            .field("profile_id", &self.profile_id)
+            .field("values", &self.values.len())
+            .field("exceptions", &self.exceptions.len())
+            .field("rules_built", &self.rules_built)
             .finish()
     }
 }
@@ -1083,6 +1153,11 @@ pub fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
 /// Answer one suggestion. Skip leaves it in the clear, and still counted.
 pub fn answer_finding(session: SessionId, finding: u32, answer: FindingAnswer) -> ApiResult<ScanReport> {
     crate::ops::answer_finding(session, finding, answer)
+}
+
+/// Remember that one suggestion is not sensitive in a durable scope.
+pub fn teach_exception(session: SessionId, finding: u32, scope: Scope) -> ApiResult<ScanReport> {
+    crate::ops::teach_exception(session, finding, scope)
 }
 
 // ---------------------------------------------------------------- tokens
@@ -1254,6 +1329,11 @@ pub fn forget_value(entity: u32, value_id: u32, everywhere: bool) -> ApiResult<F
     crate::ops::forget_value(entity, value_id, everywhere)
 }
 
+/// Forget one durable exception.
+pub fn forget_exception(id: u32) -> ApiResult<()> {
+    crate::ops::forget_exception(id)
+}
+
 /// Every kind of value this build knows, with its label.
 pub fn kinds() -> ApiResult<Vec<KindRow>> {
     crate::ops::kinds()
@@ -1348,6 +1428,11 @@ pub fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnapshot> {
 /// The vault room, as one read. Header and body draw from this object.
 pub fn vault_snapshot() -> ApiResult<VaultSnapshot> {
     crate::ops::vault_snapshot()
+}
+
+/// My Privacy Rules, from the vault. `profile_id` narrows to effective rules.
+pub fn privacy_rules_snapshot(profile_id: Option<String>) -> ApiResult<PrivacyRulesSnapshot> {
+    crate::ops::privacy_rules_snapshot(profile_id)
 }
 
 /// Providers, including where each credential actually lives.

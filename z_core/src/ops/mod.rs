@@ -20,7 +20,7 @@ use crate::api::{
     UndoOutcome,
 };
 use crate::secret::Secret;
-use crate::vault::model::ProviderLogin;
+use crate::vault::model::{ProviderLogin, UserException};
 use crate::scanner;
 use crate::session::FindingRecord;
 use crate::payload::SafePayload;
@@ -525,6 +525,10 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             let profile = core.get(session.id).and_then(|s| s.profile_id.clone());
             core.vault.hints(profile.as_deref())
         };
+        let vault_exceptions = {
+            let profile = core.get(session.id).and_then(|s| s.profile_id.clone());
+            core.vault.exceptions(profile.as_deref())
+        };
         let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
         let selected = s
@@ -593,7 +597,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
                     .map(|f| f.kind)
             });
         let guessed = exact_kind.or_else(|| {
-            scanner::scan(&selected, &s.pack_id, &vault_hints)
+            scanner::scan(&selected, &s.pack_id, &vault_hints, &vault_exceptions)
                 .into_iter()
                 .find(|c| c.start == 0 && c.end == selected.len())
                 .map(|c| c.kind)
@@ -1203,8 +1207,10 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         let pack = s.pack_id.clone();
         // Empty while the vault is locked: the layer is skipped by having nothing
         // to say, not by a flag someone could forget to check.
-        let hints = vault.hints(s.profile_id.as_deref());
-        rescan_with(s, &pack, &hints);
+        let profile = s.profile_id.clone();
+        let hints = vault.hints(profile.as_deref());
+        let exceptions = vault.exceptions(profile.as_deref());
+        rescan_with(s, &pack, &hints, &exceptions);
         mark_scanned(s);
         Ok(report_of(s, vault_state))
     })?;
@@ -1223,8 +1229,13 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
 /// The rule now, and it has no exceptions: **a rescan never takes a protection
 /// back.** What a layer no longer claims is marked `orphaned` and kept, and the
 /// only thing that removes a protection is a person asking for that.
-fn rescan_with(s: &mut Session, pack: &str, hints: &[crate::vault::model::VaultHint]) -> u32 {
-    let candidates = scanner::scan(s.original_str(), pack, hints);
+fn rescan_with(
+    s: &mut Session,
+    pack: &str,
+    hints: &[crate::vault::model::VaultHint],
+    exceptions: &[crate::vault::model::UserException],
+) -> u32 {
+    let candidates = scanner::scan(s.original_str(), pack, hints, exceptions);
 
     // Nothing is dropped. What is no longer claimed says so.
     let mut orphaned = 0u32;
@@ -1462,6 +1473,84 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
     report
 }
 
+/// Teach a durable exception from a suggestion, with an explicit durable scope.
+///
+/// Plain `NotSensitive` remains a conversation dismissal. This call is the
+/// separate «remember this decision» path, so persistent knowledge cannot be
+/// created by accident.
+pub(crate) fn teach_exception(session: SessionId, finding: u32, scope: Scope) -> ApiResult<ScanReport> {
+    let report = with_core(|core| {
+        let vault_state = core.vault.state();
+        let (text, kind, profile) = {
+            let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
+            let record = s
+                .findings
+                .iter()
+                .find(|f| f.id == finding && f.state == MarkState::Suggested)
+                .ok_or(ApiError::UnknownToken)?;
+            let text = s
+                .original_str()
+                .get(record.start..record.end)
+                .ok_or_else(|| ApiError::BadSpan {
+                    reason: "that suggestion is not on a character boundary".to_string(),
+                })?
+                .to_string();
+            (text, record.kind, s.profile_id.clone())
+        };
+        let target_profile = match scope {
+            Scope::Profile => profile.ok_or_else(|| ApiError::ImportRefused {
+                reason: "this conversation is not in a profile, so there is no profile exception to remember"
+                    .to_string(),
+            })?,
+            Scope::Always => String::new(),
+            _ => {
+                return Err(ApiError::ImportRefused {
+                    reason: "a saved exception must be for this profile or everywhere".to_string(),
+                })
+            }
+        };
+        let profile_id = match scope {
+            Scope::Profile => Some(target_profile),
+            Scope::Always => None,
+            _ => unreachable!(),
+        };
+        let trimmed = text.trim().to_string();
+        if trimmed.is_empty() {
+            return Err(ApiError::BadSpan {
+                reason: "an empty value cannot be taught as an exception".to_string(),
+            });
+        }
+        core.vault.with_open_mut(|vault| {
+            if !vault
+                .exceptions
+                .iter()
+                .any(|ex| ex.profile_id == profile_id && ex.matches(kind, &trimmed))
+            {
+                let id = vault.take_exception_id();
+                vault.exceptions.push(UserException {
+                    id,
+                    kind,
+                    value: Secret::new(trimmed.clone()),
+                    profile_id: profile_id.clone(),
+                    learned_at: crate::vault::model::now_seconds(),
+                });
+            }
+            Ok(())
+        })?;
+        let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
+        if let Some(index) = s.findings.iter().position(|f| f.id == finding) {
+            s.findings.remove(index);
+        }
+        s.dismissed.push(crate::session::Dismissed {
+            value: Secret::new(trimmed),
+        });
+        s.bump();
+        Ok(report_of(s, vault_state))
+    })?;
+    crate::session::bump_truth();
+    Ok(report)
+}
+
 pub(crate) fn packs() -> ApiResult<Vec<PackRow>> {
     Ok(scanner::packs::installed())
 }
@@ -1477,11 +1566,13 @@ pub(crate) fn packs() -> ApiResult<Vec<PackRow>> {
 fn rescan_keeping(session: SessionId, pack: &str) -> ApiResult<(u32, u32)> {
     with_core(|core| {
         let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;
-        let hints = vault.hints(s.profile_id.as_deref());
+        let profile = s.profile_id.clone();
+        let hints = vault.hints(profile.as_deref());
+        let exceptions = vault.exceptions(profile.as_deref());
         let kept_tokens = s.tokens_in_use().len() as u32;
         // The same rule as the Rescan button, because they are the same act:
         // look again, and take nothing back.
-        let orphaned = rescan_with(s, pack, &hints);
+        let orphaned = rescan_with(s, pack, &hints, &exceptions);
         Ok((kept_tokens, orphaned))
     })
 }

@@ -16,7 +16,7 @@ use std::time::{Duration, Instant};
 
 use crate::api::{ApiError, ApiResult, VaultState};
 use crate::vault::crypto::{SealedVault, SecretKey};
-use crate::vault::model::{Vault, VaultHint};
+use crate::vault::model::{UserException, Vault, VaultHint};
 
 const FILE_NAME: &str = "vault.zv";
 
@@ -231,6 +231,15 @@ impl VaultStore {
         match self.open.as_ref() {
             Some(vault) => vault.hints_for(active_profile),
             // Locked: the layer is skipped entirely, by having nothing to say.
+            None => Vec::new(),
+        }
+    }
+
+    /// Durable exceptions effective for this profile, and none while locked.
+    pub(crate) fn exceptions(&mut self, active_profile: Option<&str>) -> Vec<UserException> {
+        self.tick();
+        match self.open.as_ref() {
+            Some(vault) => vault.exceptions_for(active_profile),
             None => Vec::new(),
         }
     }
