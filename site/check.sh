@@ -37,6 +37,38 @@ else
   say PASS "no JavaScript, no analytics, no cookie"
 fi
 
+# A filled-in link is not a real link. The promise was that nothing goes public
+# pointing at something that does not exist, so the page's outward destinations
+# are asked whether they answer. No network, no verdict — and no publishing.
+DESTS=$(grep -rhoE '(href)="https?://[^"]+"' --include='*.html' . 2>/dev/null \
+        | sed -E 's/^href="//; s/"$//' \
+        | grep -vE '^https?://(www\.)?(apache\.org|w3\.org)' | sort -u)
+if ! command -v curl >/dev/null 2>&1; then
+  say FAIL "curl is missing, so no destination could be checked"; FAIL=1
+else
+  for u in $DESTS; do
+    # One request, one code. `-I -L` writes a code per hop and «000000» once
+    # read as an answer — a guard that mis-reads a dead host is worse than none.
+    code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$u" 2>/dev/null || true)
+    case "$code" in
+      [0-9][0-9][0-9]) : ;;
+      *) code=000 ;;
+    esac
+    case "$u" in
+      # A link on a public page must be reachable by a stranger, so 200 —
+      # a private repository reads as 404 here, and would to a visitor too.
+      *github.com*) ok=$([ "$code" = "200" ] && echo yes || echo no) ;;
+      # Behind Cloudflare Access a redirect to its login is a real answer.
+      *) ok=$([ "$code" != "000" ] && echo yes || echo no) ;;
+    esac
+    if [ "$ok" = yes ]; then
+      say PASS "answers ($code): $u"
+    else
+      say FAIL "does not answer yet ($code): $u"; FAIL=1
+    fi
+  done
+fi
+
 for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html; do
   [ -f "$f" ] || { say FAIL "missing $f"; FAIL=1; }
 done
