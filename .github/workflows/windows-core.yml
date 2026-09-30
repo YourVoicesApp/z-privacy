@@ -54,6 +54,13 @@ jobs:
         shell: bash
         run: cargo test --workspace --features fake_provider -- --nocapture
 
+      # The tests above pass on Windows. That is not the same as being safe:
+      # six of them do not exist there at all. This step asks for those six by
+      # name and is expected to fail until Windows has its own guard.
+      - name: Storage protection contracts
+        shell: bash
+        run: bash scripts/check_storage_contracts.sh
+
       - name: What Linux says, for comparison
         if: always()
         shell: bash

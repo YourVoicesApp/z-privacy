@@ -353,6 +353,20 @@ fi
 rm -f /tmp/gt.$$
 
 
+# ---------------------------------------------------------------- G22
+# The storage protection layer must be MEASURED on the platform you are on,
+# not merely written for one. Six named contracts guard the vault's own file;
+# on Windows all six are `#[cfg(unix)]` and simply do not exist, so the suite
+# there runs 245 of 251 and still says «ok». A count would drift as tests are
+# added — these are asked for by name.
+if bash scripts/check_storage_contracts.sh >/tmp/g22.$$ 2>&1; then
+  pass "G22 all six storage protection contracts are measured on this platform"
+else
+  fail "G22 storage protection is not fully measured here:"
+  sed 's/\x1b\[[0-9;]*m//g' /tmp/g22.$$ | grep -E "^  FAIL|contracts have no test" | sed 's/^/        /'
+fi
+rm -f /tmp/g22.$$
+
 # ---------------------------------------------------------------- G7 (from Dart)
 # The claim "no panic crosses the boundary" is only proven from the other side:
 # call the whole contract from Dart and see typed errors come back.
