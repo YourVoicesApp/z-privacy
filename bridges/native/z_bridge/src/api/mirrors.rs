@@ -135,6 +135,19 @@ pub struct _Explanation {
     /// Other spellings of the same value. Shown behind one tap, like every
     /// other value in this app.
     pub aliases: Vec<String>,
+    /// The reach of the taught value, when one was taught — so the «Forget»
+    /// button can carry its own scope in its name instead of leaving a person
+    /// to assemble the meaning from a line of small print. `None` when nothing
+    /// was taught, which is the same case as `entity`/`value_id` being `None`.
+    pub taught_reach: Option<TaughtReach>,
+}
+
+#[frb(mirror(TaughtReach))]
+pub enum _TaughtReach {
+    /// The identity holding it belongs to one profile.
+    ThisProfile,
+    /// It belongs to no profile, so every profile knows it.
+    Everywhere,
 }
 
 #[frb(mirror(ForgetPlan))]

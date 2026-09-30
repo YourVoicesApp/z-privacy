@@ -589,6 +589,10 @@ pub(crate) fn value_matching(text: &str) -> Option<crate::ops::KnownValue> {
                                 value_id: v.id,
                                 learned_at: v.learned_at,
                                 aliases: v.aliases.iter().map(|a| a.expose().to_string()).collect(),
+                                // Whether it belongs to one profile — not which
+                                // one. That is all a button needs to name its
+                                // own scope, and the name itself stays here.
+                                in_profile: e.profile_id.is_some(),
                             });
                         }
                     }

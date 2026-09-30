@@ -19,6 +19,7 @@ import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/entity_detail.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
@@ -316,11 +317,34 @@ void main() {
 
     // The two acts are offered under their own names, and the sheet says which
     // is which — «forget» must never be a gentle word for «unprotect».
-    expect(find.text('Remove protection'), findsOneWidget);
+    // P2-5: and each name carries its own scope, so «Remove protection» alone
+    // is no longer a button anybody can press.
+    expect(find.text('Remove protection here'), findsWidgets);
+    expect(find.widgetWithText(ZButton, 'Remove protection'), findsNothing,
+        reason: 'an action without its scope is back on the sheet');
     expect(
-      find.textContaining('leaves this document exactly as it is'),
+      find.textContaining('The value stays in your privacy rules'),
       findsOneWidget,
     );
+
+    // This value was taught to no profile, so «from this profile» would be a
+    // lie about it and is not offered at all.
+    expect(find.text('Forget from this profile'), findsNothing,
+        reason: 'knowledge that belongs to every profile was called scoped');
+
+    // **His size rule.** Every action a decision is made from is at the
+    // action's own weight, and nothing in the smallest type is load-bearing.
+    for (final label in ['Remove protection here', 'Forget everywhere']) {
+      final button = find.widgetWithText(ZButton, label);
+      expect(button, findsOneWidget, reason: '$label is not an action');
+      final text = tester.widget<Text>(
+        find.descendant(of: button, matching: find.text(label)),
+      );
+      final size = text.style?.fontSize ?? 0;
+      expect(size, greaterThanOrEqualTo(13.5),
+          reason: '«$label» is set at ${size}pt — caption size for a decision');
+      expect(text.style?.fontWeight, FontWeight.w600);
+    }
 
     // Other spellings are the same secret, so they wait to be asked for.
     expect(find.text('Nordstern Consulting'), findsNothing);
@@ -363,5 +387,169 @@ void main() {
     });
 
     bench.dispose();
+  });
+
+  /// P2-5 — knowledge that lives in one profile. Two acts, two scopes, and
+  /// both readable without reading anything small.
+  testWidgets('a value taught to one profile names both acts by their reach',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1050));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    const doc = 'Kunde: Nordstern Consulting GmbH bittet um Auskunft.';
+    late final Workbench bench;
+    late final Explanation why;
+    late final String profile;
+    await tester.runAsync(() async {
+      final here = Directory('${Directory.systemTemp.path}/zprivacy-scope-$pid');
+      if (here.existsSync()) here.deleteSync(recursive: true);
+      addTearDown(() {
+        if (here.existsSync()) here.deleteSync(recursive: true);
+      });
+      await z.setDataDir(dir: here.path);
+      await z.vaultCreateWithPassphrase(passphrase: _pass);
+      profile = await z.createProfile(name: 'Nordstern');
+      final e = await z.createEntity(
+        kind: EntityKind.client,
+        label: 'Nordstern',
+        profileId: profile,
+      );
+      await z.setValue(
+        entity: e,
+        kind: Kind.company,
+        text: 'Nordstern Consulting GmbH',
+        policy: Policy.always,
+      );
+      final session = await z.openSession(profileId: profile, packId: 'de');
+      await z.importText(session: session, text: doc);
+      bench = Workbench(session: session, profileId: profile, packId: 'de');
+      await bench.rescan();
+      final at = doc.indexOf('Nordstern Consulting GmbH');
+      why = (await bench.why(Span(
+        start: at,
+        end: at + 'Nordstern Consulting GmbH'.length,
+      )))!;
+    });
+
+    // The core's answer first — the button's name is downstream of this.
+    expect(why.taughtReach, TaughtReach.thisProfile);
+
+    await tester.pumpWidget(MaterialApp(
+      home: WhySheet(
+        why: why,
+        word: 'Nordstern Consulting GmbH',
+        span: const Span(start: 7, end: 32),
+        onChanged: () async {},
+        onUnprotect: (_) async {},
+      ),
+    ));
+    await settle(tester, rounds: 1);
+
+    // Three acts, three scopes, each in the name of the act.
+    for (final label in [
+      'Remove protection here',
+      'Forget from this profile',
+      'Forget everywhere',
+    ]) {
+      final button = find.widgetWithText(ZButton, label);
+      expect(button, findsOneWidget, reason: '$label is not offered as an action');
+      final text = tester.widget<Text>(
+        find.descendant(of: button, matching: find.text(label)),
+      );
+      expect(text.style?.fontSize ?? 0, greaterThanOrEqualTo(13.5),
+          reason: '«$label» is set at caption size');
+      expect(text.style?.fontWeight, FontWeight.w600);
+    }
+
+    // No bare act survives anywhere on the sheet.
+    for (final bare in ['Remove', 'Forget', 'Here', 'Everywhere', 'Forget here']) {
+      expect(find.widgetWithText(ZButton, bare), findsNothing,
+          reason: '«$bare» is a button whose meaning is somewhere else');
+    }
+
+    // And his consequence lines, one under each act.
+    expect(find.textContaining('may be protected again later'), findsOneWidget);
+    expect(find.textContaining('learned for this profile'), findsOneWidget);
+    expect(find.textContaining('in every profile'), findsOneWidget);
+    expect(
+      find.textContaining('Protection already applied in this document stays in place'),
+      findsNWidgets(2),
+      reason: 'each forget must say what it leaves alone',
+    );
+
+    // The confirmation repeats the words that were pressed, not a shortening.
+    // Looked for **inside the confirmation**, since the sheet behind it still
+    // carries the same button.
+    await tester.tap(find.widgetWithText(ZButton, 'Forget from this profile'));
+    await settle(tester, rounds: 2);
+    final confirmation = find.ancestor(
+      of: find.textContaining('Forget «Nordstern Consulting GmbH»?'),
+      matching: find.byType(Dialog),
+    );
+    expect(confirmation, findsOneWidget);
+    expect(
+      find.descendant(
+        of: confirmation,
+        matching: find.widgetWithText(ZButton, 'Forget from this profile'),
+      ),
+      findsOneWidget,
+      reason: 'the confirmation renamed the act it was opened by',
+    );
+    expect(find.descendant(of: confirmation, matching: find.widgetWithText(ZButton, 'Forget')),
+        findsNothing);
+    await tester.tap(find.text('Cancel'));
+    await settle(tester, rounds: 2);
+
+    bench.dispose();
+  });
+
+  /// The same rule, two screens away: the vault's own tiles used to show a
+  /// bare «Forget» over a scope line set in the card's smallest type.
+  testWidgets('the vault tiles name the reach they would forget', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    await tester.runAsync(() async {
+      final here = Directory('${Directory.systemTemp.path}/zprivacy-tiles-$pid');
+      if (here.existsSync()) here.deleteSync(recursive: true);
+      addTearDown(() {
+        if (here.existsSync()) here.deleteSync(recursive: true);
+      });
+      await z.setDataDir(dir: here.path);
+      await z.vaultCreateWithPassphrase(passphrase: _pass);
+      final profile = await z.createProfile(name: 'Nordstern');
+      final scoped = await z.createEntity(
+        kind: EntityKind.client,
+        label: 'Nordstern',
+        profileId: profile,
+      );
+      await z.setValue(
+        entity: scoped,
+        kind: Kind.company,
+        text: 'Nordstern Consulting GmbH',
+        policy: Policy.always,
+      );
+      final global = await z.createEntity(
+        kind: EntityKind.person,
+        label: 'Kontakt',
+        profileId: null,
+      );
+      await z.setValue(
+        entity: global,
+        kind: Kind.person,
+        text: 'Thomas Müller',
+        policy: Policy.always,
+      );
+      await ground.refresh();
+    });
+
+    await tester.pumpWidget(MaterialApp(home: VaultScreen(ground: ground, onClose: () {})));
+    await settle(tester);
+
+    expect(find.widgetWithText(ZButton, 'Forget'), findsNothing,
+        reason: 'a bare «Forget» is back in the vault');
+    expect(find.widgetWithText(ZButton, 'Forget from this profile'), findsWidgets);
+    expect(find.widgetWithText(ZButton, 'Forget everywhere'), findsWidgets);
   });
 }

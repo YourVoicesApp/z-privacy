@@ -19,6 +19,16 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/core/messages.dart';
 
+/// The three actions, each carrying its own scope in its own name.
+///
+/// His rule, 30 September: **action + scope must be readable from the name of
+/// the act itself.** Helper text may explain a consequence; it may not be the
+/// only place the scope is written, because then the decision is being made
+/// from the smallest line on the card.
+const kRemoveHere = 'Remove protection here';
+const kForgetThisProfile = 'Forget from this profile';
+const kForgetEverywhere = 'Forget everywhere';
+
 class WhySheet extends StatefulWidget {
   const WhySheet({
     super.key,
@@ -57,6 +67,12 @@ class _WhySheetState extends State<WhySheet> {
     // entity or value — so the sheet used to fall through to «nothing was
     // learned from this», three lines under a headline saying they taught it.
     final taughtRule = why.headline.contains('taught Z Privacy this rule');
+    // The narrower forget, offered only where it has a true name: knowledge
+    // that lives in one profile. For knowledge that belongs to every profile
+    // the narrow act reaches every global record already, so «everywhere» is
+    // the only honest word for it and one button carries it.
+    final scopedForget =
+        taught && why.taughtReach == TaughtReach.thisProfile ? kForgetThisProfile : null;
 
     return Dialog(
       backgroundColor: Zc.paper,
@@ -165,56 +181,61 @@ class _WhySheetState extends State<WhySheet> {
                 children: [
                   ZButton(label: 'Close', onPressed: () => Navigator.of(context).pop()),
                   ZButton(
-                    label: 'Remove protection',
+                    label: kRemoveHere,
                     onPressed: () async {
                       await widget.onUnprotect(widget.span);
                       if (context.mounted) Navigator.of(context).pop();
                     },
                   ),
-                  if (taught)
+                  // Named from the reach the core reports for the taught value,
+                  // so «this profile» is never on a button over knowledge that
+                  // belongs to every profile.
+                  if (scopedForget != null)
                     ZButton(
-                      label: 'Forget here',
+                      label: scopedForget,
                       tint: Zc.amber,
                       onPressed: () => _forget(everywhere: false),
                     ),
                   if (taught)
                     ZButton(
-                      label: 'Forget everywhere',
+                      label: kForgetEverywhere,
                       tint: Zc.amber,
                       onPressed: () => _forget(everywhere: true),
                     ),
                 ],
               ),
-              const SizedBox(height: 10),
-              // The two acts, named apart. The commonest way to lose a user's
-              // trust here would be to let one quietly do the other.
-              Text(
-                taught || taughtRule
-                    ? 'Remove protection changes this document. Forget erases what Z Privacy '
-                        'learned, and leaves this document exactly as it is.'
-                    : 'Remove protection changes this document. Nothing was learned from this, '
-                        'so there is nothing to forget.',
-                style: Zc.tiny.copyWith(letterSpacing: 0),
-              ),
-              if (taughtRule) ...[
-                const SizedBox(height: 10),
-                Text(
-                  'The rule itself is kept in your vault. Forget it in '
-                  'Z Vault → My Privacy Rules → Rules I taught.',
-                  style: Zc.tiny.copyWith(letterSpacing: 0),
-                ),
-              ],
-              if (!taught && !taughtRule) ...[
-                const SizedBox(height: 10),
+              const SizedBox(height: 12),
+              // The acts, named apart and explained one by one. The name above
+              // each explanation is the **same string** as the button's, so a
+              // rename cannot leave the two disagreeing.
+              _Note(kRemoveHere, const [
+                'Changes this document only.',
+                'The value stays in your privacy rules and may be protected again later.',
+              ]),
+              if (scopedForget != null)
+                _Note(scopedForget, const [
+                  'Removes what Z Privacy learned for this profile.',
+                  'Protection already applied in this document stays in place.',
+                ]),
+              if (taught)
+                _Note(kForgetEverywhere, const [
+                  'Removes what Z Privacy learned, in every profile.',
+                  'Protection already applied in this document stays in place.',
+                ]),
+              if (taughtRule)
+                _Note('Forget this rule', const [
+                  'The rule itself is kept in your vault.',
+                  'Forget it in Z Vault → My Privacy Rules → Rules I taught.',
+                ]),
+              if (!taught && !taughtRule)
                 Text(
                   why.decided
                       ? 'Nothing was learned from this — you protected it here, and Undo takes '
                           'it back.'
                       : 'Nothing was learned from this. A rule recognised the shape, and no '
                           'record of it was kept.',
-                  style: Zc.tiny.copyWith(letterSpacing: 0),
+                  style: Zc.small,
                 ),
-              ],
             ],
           ),
         ),
@@ -223,6 +244,7 @@ class _WhySheetState extends State<WhySheet> {
   }
 
   Future<void> _forget({required bool everywhere}) async {
+    final action = everywhere ? kForgetEverywhere : kForgetThisProfile;
     final why = widget.why;
     final e = why.entity;
     final v = why.valueId;
@@ -239,7 +261,7 @@ class _WhySheetState extends State<WhySheet> {
 
     final sure = await showDialog<bool>(
       context: context,
-      builder: (_) => _ForgetSheet(plan: plan, everywhere: everywhere),
+      builder: (_) => _ForgetSheet(plan: plan, action: action),
     );
     if (sure != true || !mounted) return;
 
@@ -278,10 +300,13 @@ class _WhySheetState extends State<WhySheet> {
 
 /// What forgetting will take away — shown before it happens, with its numbers.
 class _ForgetSheet extends StatelessWidget {
-  const _ForgetSheet({required this.plan, required this.everywhere});
+  const _ForgetSheet({required this.plan, required this.action});
 
   final ForgetPlan plan;
-  final bool everywhere;
+
+  /// The name of the button that opened this sheet, so the confirmation says
+  /// the same words the person just read rather than a shortened «Forget».
+  final String action;
 
   @override
   Widget build(BuildContext context) {
@@ -330,12 +355,17 @@ class _ForgetSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              Row(
+              // A Wrap: the confirmation says the act's full name, and a
+              // `Row` with a `Spacer` overflowed by 41 px once that name
+              // carried its scope.
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
                 children: [
                   ZButton(label: 'Cancel', onPressed: () => Navigator.of(context).pop(false)),
-                  const Spacer(),
                   ZButton(
-                    label: everywhere ? 'Forget everywhere' : 'Forget',
+                    label: action,
                     filled: true,
                     tint: Zc.amber,
                     onPressed: () => Navigator.of(context).pop(true),
@@ -394,6 +424,35 @@ class _Row extends StatelessWidget {
                     : Zc.small.copyWith(color: Zc.ink),
               ),
             ),
+          ],
+        ),
+      );
+}
+
+/// One action, named, with what it does under it.
+///
+/// The name is at the action's own weight — a person deciding reads it here at
+/// the same size as on the button, and the consequence lines below only explain
+/// what the name already said. Nothing in the small print is load-bearing.
+class _Note extends StatelessWidget {
+  const _Note(this.action, this.lines);
+
+  final String action;
+  final List<String> lines;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(bottom: 11),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              action,
+              style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Zc.ink),
+            ),
+            const SizedBox(height: 2),
+            for (final line in lines)
+              Text(line, style: Zc.small),
           ],
         ),
       );

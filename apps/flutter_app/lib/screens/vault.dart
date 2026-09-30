@@ -20,6 +20,7 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/entity_detail.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
+import 'package:zprivacy/widgets/why_sheet.dart';
 import 'package:zprivacy/core/messages.dart';
 
 class VaultScreen extends StatefulWidget {
@@ -525,6 +526,7 @@ class _TaughtValueTile extends StatelessWidget {
       subtitle:
           '$kind · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
       why: row.why,
+      forgetLabel: forgetLabelFor(row.profileId),
       onOpen: onOpen,
       onForget: onForget,
     );
@@ -549,6 +551,7 @@ class _TaughtExceptionTile extends StatelessWidget {
       subtitle:
           'Do not protect as $kind · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
       why: row.why,
+      forgetLabel: forgetLabelFor(row.profileId),
       onForget: onForget,
     );
   }
@@ -559,6 +562,7 @@ class _RuleTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.why,
+    required this.forgetLabel,
     this.onOpen,
     required this.onForget,
   });
@@ -566,6 +570,11 @@ class _RuleTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final String why;
+
+  /// The scope travels in the name of the act, not in the small line above it:
+  /// the tile used to show a bare «Forget» over «Everywhere» set in the card's
+  /// smallest type, and a person had to assemble the meaning from the two.
+  final String forgetLabel;
   final VoidCallback? onOpen;
   final Future<String?> Function() onForget;
 
@@ -593,14 +602,15 @@ class _RuleTile extends StatelessWidget {
           const SizedBox(height: 5),
           Text(why, style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4)),
           const SizedBox(height: 8),
-          Row(
+          // A Wrap, not a Row: «Forget from this profile» is a longer name than
+          // «Forget», and on a 330 px card it overflowed the row by 49 px — the
+          // scope has to be readable, so the layout gives way, not the name.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              if (onOpen != null)
-                ZButton(label: 'Open', onPressed: onOpen)
-              else
-                const Spacer(),
-              if (onOpen != null) const Spacer(),
-              ZButton(label: 'Forget', onPressed: () async => onForget()),
+              if (onOpen != null) ZButton(label: 'Open', onPressed: onOpen),
+              ZButton(label: forgetLabel, onPressed: () async => onForget()),
             ],
           ),
         ],
@@ -611,6 +621,14 @@ class _RuleTile extends StatelessWidget {
 
 String _scope(String? profile) =>
     profile == null ? 'Everywhere' : 'Profile: $profile';
+
+/// The name of the forget act for knowledge with this reach.
+///
+/// Decided by `profileId` — a fact from the core — and never by reading the
+/// display line beside it. The profile's **name** stays out of the button for
+/// the same reason it stays out of «Where it applies»: a reach is not a client.
+String forgetLabelFor(String? profileId) =>
+    profileId == null ? kForgetEverywhere : kForgetThisProfile;
 
 String _taughtOn(BigInt seconds) {
   if (seconds == BigInt.zero) return 'unknown';
@@ -828,21 +846,19 @@ class _TaughtRuleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scope = row.profileName ?? 'Everywhere';
+    // The rule above its action, rather than beside it: the act's name now
+    // carries its scope, and a name that long beside an `Expanded` label
+    // squeezed the button until its own text overflowed by 58 px.
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('After «${row.label}:» → $kind', style: Zc.body),
-                const SizedBox(height: 2),
-                Text(scope, style: Zc.tiny.copyWith(color: Zc.ink4)),
-              ],
-            ),
-          ),
-          ZButton(label: 'Forget', onPressed: onForget),
+          Text('After «${row.label}:» → $kind', style: Zc.body),
+          const SizedBox(height: 2),
+          Text(scope, style: Zc.tiny.copyWith(color: Zc.ink4)),
+          const SizedBox(height: 7),
+          ZButton(label: forgetLabelFor(row.profileId), onPressed: onForget),
         ],
       ),
     );

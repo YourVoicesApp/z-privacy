@@ -325,6 +325,12 @@ class Explanation {
   /// other value in this app.
   final List<String> aliases;
 
+  /// The reach of the taught value, when one was taught — so the «Forget»
+  /// button can carry its own scope in its name instead of leaving a person
+  /// to assemble the meaning from a line of small print. `None` when nothing
+  /// was taught, which is the same case as `entity`/`value_id` being `None`.
+  final TaughtReach? taughtReach;
+
   const Explanation({
     required this.headline,
     required this.because,
@@ -337,6 +343,7 @@ class Explanation {
     this.entity,
     this.valueId,
     required this.aliases,
+    this.taughtReach,
   });
 
   @override
@@ -351,7 +358,8 @@ class Explanation {
       learnedAt.hashCode ^
       entity.hashCode ^
       valueId.hashCode ^
-      aliases.hashCode;
+      aliases.hashCode ^
+      taughtReach.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -368,7 +376,8 @@ class Explanation {
           learnedAt == other.learnedAt &&
           entity == other.entity &&
           valueId == other.valueId &&
-          aliases == other.aliases;
+          aliases == other.aliases &&
+          taughtReach == other.taughtReach;
 }
 
 class Finding {
@@ -1643,6 +1652,14 @@ class TaughtExceptionRow {
           taughtAt == other.taughtAt &&
           why == other.why &&
           source == other.source;
+}
+
+enum TaughtReach {
+  /// The identity holding it belongs to one profile.
+  thisProfile,
+
+  /// It belongs to no profile, so every profile knows it.
+  everywhere,
 }
 
 class TaughtValueRow {

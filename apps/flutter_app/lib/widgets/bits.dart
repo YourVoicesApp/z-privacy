@@ -116,7 +116,21 @@ class ZButton extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (icon != null) ...[Icon(icon, size: 16, color: fg), const SizedBox(width: 8)],
-                Text(label, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: fg)),
+                // Flexible, and wrapping rather than clipping. A label is the
+                // only place a person can read what a press will do, so where
+                // the space is too narrow the button grows taller — it never
+                // hides a word. No ellipsis for the same reason: «Forget from
+                // this profile…» would drop the scope and leave the bare act.
+                //
+                // Loose fit, so a button with room is still exactly its own
+                // width; this changes nothing until something squeezes it.
+                Flexible(
+                  child: Text(
+                    label,
+                    softWrap: true,
+                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: fg),
+                  ),
+                ),
                 if (badge != null) ...[
                   const SizedBox(width: 8),
                   Container(

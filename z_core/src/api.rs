@@ -207,6 +207,27 @@ pub struct Explanation {
     /// Other spellings of the same value. Shown behind one tap, like every
     /// other value in this app.
     pub aliases: Vec<String>,
+    /// The reach of the taught value, when one was taught — so the «Forget»
+    /// button can carry its own scope in its name instead of leaving a person
+    /// to assemble the meaning from a line of small print. `None` when nothing
+    /// was taught, which is the same case as `entity`/`value_id` being `None`.
+    pub taught_reach: Option<TaughtReach>,
+}
+
+/// Where the **taught value** lives — which is what «Forget» acts on, and a
+/// different question from `Explanation::applies` (the reach of the protection
+/// standing here).
+///
+/// A reach, never a client: the profile's **name** is deliberately absent, for
+/// the same reason it is absent from `applies` — a name belongs where a person
+/// chooses or manages a profile, not in an explanation. The screen needs only
+/// enough to name its own button truthfully.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TaughtReach {
+    /// The identity holding it belongs to one profile.
+    ThisProfile,
+    /// It belongs to no profile, so every profile knows it.
+    Everywhere,
 }
 
 /// What forgetting something would take away — shown **before** it happens.

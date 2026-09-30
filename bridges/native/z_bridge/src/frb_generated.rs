@@ -2316,6 +2316,7 @@ const _: fn() = || {
         let _: Option<u32> = Explanation.entity;
         let _: Option<u32> = Explanation.value_id;
         let _: Vec<String> = Explanation.aliases;
+        let _: Option<crate::api::mirrors::TaughtReach> = Explanation.taught_reach;
     }
     {
         let Finding = None::<crate::api::mirrors::Finding>.unwrap();
@@ -2951,6 +2952,7 @@ impl SseDecode for crate::api::mirrors::Explanation {
         let mut var_entity = <Option<u32>>::sse_decode(deserializer);
         let mut var_valueId = <Option<u32>>::sse_decode(deserializer);
         let mut var_aliases = <Vec<String>>::sse_decode(deserializer);
+        let mut var_taughtReach = <Option<crate::api::mirrors::TaughtReach>>::sse_decode(deserializer);
         return crate::api::mirrors::Explanation {
             headline: var_headline,
             because: var_because,
@@ -2963,6 +2965,7 @@ impl SseDecode for crate::api::mirrors::Explanation {
             entity: var_entity,
             value_id: var_valueId,
             aliases: var_aliases,
+            taught_reach: var_taughtReach,
         };
     }
 }
@@ -3539,6 +3542,17 @@ impl SseDecode for Option<crate::api::mirrors::Source> {
     }
 }
 
+impl SseDecode for Option<crate::api::mirrors::TaughtReach> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::mirrors::TaughtReach>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<u32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4071,6 +4085,18 @@ impl SseDecode for crate::api::mirrors::TaughtExceptionRow {
             taught_at: var_taughtAt,
             why: var_why,
             source: var_source,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::TaughtReach {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::TaughtReach::ThisProfile,
+            1 => crate::api::mirrors::TaughtReach::Everywhere,
+            _ => unreachable!("Invalid variant for TaughtReach: {}", inner),
         };
     }
 }
@@ -4628,6 +4654,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Explanati
             self.0.entity.into_into_dart().into_dart(),
             self.0.value_id.into_into_dart().into_dart(),
             self.0.aliases.into_into_dart().into_dart(),
+            self.0.taught_reach.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -5528,6 +5555,24 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::TaughtExc
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::TaughtReach> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::TaughtReach::ThisProfile => 0.into_dart(),
+            crate::api::mirrors::TaughtReach::Everywhere => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::TaughtReach> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::TaughtReach>>
+    for crate::api::mirrors::TaughtReach
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::TaughtReach> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::TaughtValueRow> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -5945,6 +5990,7 @@ impl SseEncode for crate::api::mirrors::Explanation {
         <Option<u32>>::sse_encode(self.entity, serializer);
         <Option<u32>>::sse_encode(self.value_id, serializer);
         <Vec<String>>::sse_encode(self.aliases, serializer);
+        <Option<crate::api::mirrors::TaughtReach>>::sse_encode(self.taught_reach, serializer);
     }
 }
 
@@ -6425,6 +6471,16 @@ impl SseEncode for Option<crate::api::mirrors::Source> {
     }
 }
 
+impl SseEncode for Option<crate::api::mirrors::TaughtReach> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::mirrors::TaughtReach>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<u32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -6823,6 +6879,22 @@ impl SseEncode for crate::api::mirrors::TaughtExceptionRow {
         <u64>::sse_encode(self.taught_at, serializer);
         <String>::sse_encode(self.why, serializer);
         <crate::api::mirrors::KnowledgeSource>::sse_encode(self.source, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::TaughtReach {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::TaughtReach::ThisProfile => 0,
+                crate::api::mirrors::TaughtReach::Everywhere => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

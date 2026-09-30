@@ -2921,6 +2921,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TaughtReach dco_decode_box_autoadd_taught_reach(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_taught_reach(raw);
+  }
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -2994,8 +3000,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Explanation dco_decode_explanation(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 11)
-      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return Explanation(
       headline: dco_decode_String(arr[0]),
       because: dco_decode_list_String(arr[1]),
@@ -3008,6 +3014,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       entity: dco_decode_opt_box_autoadd_u_32(arr[8]),
       valueId: dco_decode_opt_box_autoadd_u_32(arr[9]),
       aliases: dco_decode_list_String(arr[10]),
+      taughtReach: dco_decode_opt_box_autoadd_taught_reach(arr[11]),
     );
   }
 
@@ -3348,6 +3355,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Source? dco_decode_opt_box_autoadd_source(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_source(raw);
+  }
+
+  @protected
+  TaughtReach? dco_decode_opt_box_autoadd_taught_reach(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_taught_reach(raw);
   }
 
   @protected
@@ -3762,6 +3775,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TaughtReach dco_decode_taught_reach(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return TaughtReach.values[raw as int];
+  }
+
+  @protected
   TaughtValueRow dco_decode_taught_value_row(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -4095,6 +4114,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TaughtReach sse_decode_box_autoadd_taught_reach(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_taught_reach(deserializer));
+  }
+
+  @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_u_32(deserializer));
@@ -4188,6 +4215,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_entity = sse_decode_opt_box_autoadd_u_32(deserializer);
     var var_valueId = sse_decode_opt_box_autoadd_u_32(deserializer);
     var var_aliases = sse_decode_list_String(deserializer);
+    var var_taughtReach = sse_decode_opt_box_autoadd_taught_reach(deserializer);
     return Explanation(
       headline: var_headline,
       because: var_because,
@@ -4200,6 +4228,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       entity: var_entity,
       valueId: var_valueId,
       aliases: var_aliases,
+      taughtReach: var_taughtReach,
     );
   }
 
@@ -4727,6 +4756,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TaughtReach? sse_decode_opt_box_autoadd_taught_reach(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_taught_reach(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   int? sse_decode_opt_box_autoadd_u_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -5163,6 +5205,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TaughtReach sse_decode_taught_reach(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return TaughtReach.values[inner];
+  }
+
+  @protected
   TaughtValueRow sse_decode_taught_value_row(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_entityId = sse_decode_u_32(deserializer);
@@ -5542,6 +5591,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_taught_reach(
+    TaughtReach self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_taught_reach(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self, serializer);
@@ -5613,6 +5671,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_u_32(self.entity, serializer);
     sse_encode_opt_box_autoadd_u_32(self.valueId, serializer);
     sse_encode_list_String(self.aliases, serializer);
+    sse_encode_opt_box_autoadd_taught_reach(self.taughtReach, serializer);
   }
 
   @protected
@@ -6067,6 +6126,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_taught_reach(
+    TaughtReach? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_taught_reach(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_u_32(int? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -6390,6 +6462,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_64(self.taughtAt, serializer);
     sse_encode_String(self.why, serializer);
     sse_encode_knowledge_source(self.source, serializer);
+  }
+
+  @protected
+  void sse_encode_taught_reach(TaughtReach self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected

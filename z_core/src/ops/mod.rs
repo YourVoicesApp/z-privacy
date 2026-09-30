@@ -16,8 +16,8 @@ use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
     Explanation, Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId,
     ProviderRow, RevealedValue, SelectionView,
-    RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome, TokenRow,
-    UndoOutcome,
+    RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome,
+    TaughtReach, TokenRow, UndoOutcome,
 };
 use crate::secret::Secret;
 use crate::vault::model::{ProviderLogin, UserException};
@@ -766,6 +766,16 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
             learned_at: known.as_ref().map(|k| k.learned_at).unwrap_or(0),
             entity: known.as_ref().map(|k| k.entity),
             value_id: known.as_ref().map(|k| k.value_id),
+            // The reach of what «Forget» would act on. Read from the vault
+            // beside the value itself, so the button's name and the act's
+            // breadth cannot come to disagree.
+            taught_reach: known.as_ref().map(|k| {
+                if k.in_profile {
+                    TaughtReach::ThisProfile
+                } else {
+                    TaughtReach::Everywhere
+                }
+            }),
             aliases: known.map(|k| k.aliases).unwrap_or_default(),
         })
     })
@@ -777,6 +787,9 @@ pub(crate) struct KnownValue {
     pub value_id: u32,
     pub learned_at: u64,
     pub aliases: Vec<String>,
+    /// Does the identity holding it belong to a profile? The reach of the
+    /// knowledge, which is not the reach of the protection standing over it.
+    pub in_profile: bool,
 }
 
 /// What the vault knows about the text in this span, if anything.
