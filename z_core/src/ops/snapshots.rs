@@ -352,10 +352,15 @@ pub(crate) fn mark_scanned(s: &mut Session) {
     };
 }
 
-/// Always / Profile need an open vault. Named so a press cannot look like success.
+/// Always / Profile need an open vault. Named so a press cannot look like
+/// success — and named by **which** vault is missing, because the two states
+/// leave the person with different next moves: there is none, so make one; or
+/// there is one and it is shut, so unlock it. One name for both could carry
+/// neither, and the screen that shows it can only repeat what it is given.
 pub(crate) fn require_open_vault() -> ApiResult<()> {
     match vault_state()? {
         VaultState::Unlocked => Ok(()),
-        _ => Err(ApiError::VaultRequired),
+        VaultState::Absent => Err(ApiError::VaultAbsent),
+        VaultState::Locked => Err(ApiError::VaultLocked),
     }
 }

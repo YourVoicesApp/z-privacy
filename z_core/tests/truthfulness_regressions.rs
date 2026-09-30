@@ -44,14 +44,40 @@ fn span_of(doc: &str, needle: &str) -> Span {
 }
 
 #[test]
-fn lie_always_without_vault_is_a_typed_failure() {
+fn lie_always_without_vault_names_which_vault_is_missing() {
     let _g = serial();
     fresh_dir("always");
     let s = session_with_doc();
     scan(s).expect("scan");
+
+    // Nothing on this device: the next move is to **make** a vault, so the
+    // refusal has to be the one that says that. `VaultRequired` named the act's
+    // need and left the person to guess whether there was a vault to open at
+    // all — and the screen it reached could only repeat the guess.
     match protect(s, span_of(DOC, "Thomas Müller"), Scope::Always, Kind::Person) {
-        Err(ApiError::VaultRequired) => {}
-        other => panic!("got {other:?}"),
+        Err(ApiError::VaultAbsent) => {}
+        other => panic!("absent, by protect: got {other:?}"),
+    }
+    // The same for the button a person actually presses in the review.
+    let open = list_findings(s)
+        .expect("findings")
+        .into_iter()
+        .filter(|f| f.state == MarkState::Suggested)
+        .map(|f| f.id)
+        .collect::<Vec<_>>();
+    assert!(!open.is_empty(), "the document has something to answer");
+    match answer_finding(s, open[0], FindingAnswer::Always) {
+        Err(ApiError::VaultAbsent) => {}
+        other => panic!("absent, by Always: got {other:?}"),
+    }
+
+    // A vault that exists and is shut is a different sentence and a different
+    // next move: unlock it. One refusal for two states could be neither.
+    vault_create_with_passphrase(PASS.to_string()).expect("create");
+    vault_lock().expect("lock");
+    match answer_finding(s, open[0], FindingAnswer::Always) {
+        Err(ApiError::VaultLocked) => {}
+        other => panic!("locked, by Always: got {other:?}"),
     }
     close_session(s).ok();
 }

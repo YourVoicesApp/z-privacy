@@ -273,6 +273,19 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// A refusal has to outlive the refresh that follows it.
+  ///
+  /// `refresh()` clears `trouble` when it succeeds — and it does succeed, because
+  /// asking for a snapshot is not the act that was refused. For a while that
+  /// erased the sentence the core had produced one line earlier, and the press
+  /// looked like success: «Always» with no vault changed nothing and said
+  /// nothing (human run, 30 September). The snapshot is still taken, because the
+  /// screen must show what is true now; only the sentence survives it.
+  Future<void> _refreshKeeping(String? refusal) async {
+    await refresh();
+    if (refusal != null) trouble = refusal;
+  }
+
   Future<String?> switchProfile(String? next) async {
     try {
       await z.switchProfile(session: session, profileId: next);
@@ -290,14 +303,16 @@ class Workbench extends ChangeNotifier {
   Future<void> rescan() async {
     busy = true;
     notifyListeners();
+    String? refused;
     try {
       report = await z.scan(session: session);
       trouble = null;
     } on ApiError catch (e) {
-      trouble = humanMessage(e);
+      refused = humanMessage(e);
+      trouble = refused;
     }
     busy = false;
-    await refresh();
+    await _refreshKeeping(refused);
   }
 
   void showChips(bool on) {
@@ -512,6 +527,7 @@ class Workbench extends ChangeNotifier {
   /// Answer one suggestion. `Skip` is an answer that decides nothing: the core
   /// keeps it open and still counts it, which is why Send stays shut.
   Future<void> answer(int finding, FindingAnswer choice) async {
+    String? refused;
     try {
       report = await z.answerFinding(
         session: session,
@@ -520,9 +536,10 @@ class Workbench extends ChangeNotifier {
       );
       trouble = null;
     } on ApiError catch (e) {
-      trouble = humanMessage(e);
+      refused = humanMessage(e);
+      trouble = refused;
     }
-    await refresh();
+    await _refreshKeeping(refused);
     if (selection != null) await select(selection);
     // Step on to the next one still waiting, so walking is a walk.
     if (walking) {
@@ -541,6 +558,7 @@ class Workbench extends ChangeNotifier {
   /// Remember a Not Sensitive decision beyond this document. Plain
   /// `Not sensitive` remains session-only; this is the explicit durable path.
   Future<void> teachException(int finding, Scope scope) async {
+    String? refused;
     try {
       report = await z.teachException(
         session: session,
@@ -549,9 +567,10 @@ class Workbench extends ChangeNotifier {
       );
       trouble = null;
     } on ApiError catch (e) {
-      trouble = humanMessage(e);
+      refused = humanMessage(e);
+      trouble = refused;
     }
-    await refresh();
+    await _refreshKeeping(refused);
     if (selection != null) await select(selection);
     notifyListeners();
   }

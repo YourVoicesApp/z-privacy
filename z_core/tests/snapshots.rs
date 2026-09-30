@@ -221,8 +221,8 @@ fn always_without_a_vault_is_a_named_failure_and_changes_nothing() {
     scan(s).expect("scan");
     let before = workspace_snapshot(s).expect("before");
     match protect(s, span_of(DOC, "Thomas Müller"), Scope::Always, Kind::Person) {
-        Err(ApiError::VaultRequired) => {}
-        other => panic!("expected VaultRequired, got {other:?}"),
+        Err(ApiError::VaultAbsent) => {}
+        other => panic!("expected VaultAbsent, got {other:?}"),
     }
     let after = workspace_snapshot(s).expect("after");
     assert_eq!(after.token_count, before.token_count);
