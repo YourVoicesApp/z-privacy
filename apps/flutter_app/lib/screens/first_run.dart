@@ -1,17 +1,90 @@
 // First run — one page, once.
 //
 // Not an onboarding of ten screens. Four lines of what this program does not do,
-// one line of what it does, a language, and away. No e-mail, no account, no
+// two lines of what it does, a language, and away. No e-mail, no account, no
 // permission it does not need.
 //
 // It is written in both languages because the choice on it is a language choice:
 // a page that asked «Deutsch oder English?» in English only would be asking the
 // question in the answer.
+//
+// That was written here as a comment while the code did the opposite — the state
+// began at `en`, so a fresh install read the promise in English and the German
+// text existed only for someone who had already found the button. P2-6: nothing
+// is assumed. Before a choice **both** promises stand on the page, neither
+// button is on, and there is no Start yet.
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/bits.dart';
+
+/// What the product does not do, and what it does — in one place per language.
+///
+/// The two paragraphs carry a correction of the owner's, 30 September: «your
+/// original data stays on this device» must not be read as «it can never
+/// leave», because `Copy Restored` exists and puts real values on the clipboard
+/// when a person asks for them. The sentence names that exception itself rather
+/// than being quietly wrong about it.
+class _Promise {
+  const _Promise({
+    required this.name,
+    required this.nots,
+    required this.paragraphs,
+    required this.rules,
+    required this.start,
+  });
+
+  /// The language's own name for itself.
+  final String name;
+  final List<String> nots;
+  final List<String> paragraphs;
+
+  /// What choosing this language actually does — said before Start, because a
+  /// person picking «Deutsch» must not have to discover afterwards that only
+  /// the rules changed.
+  final List<String> rules;
+  final String start;
+}
+
+const _de = _Promise(
+  name: 'Deutsch',
+  nots: [
+    'Kein Konto.',
+    'Keine Werbung.',
+    'Keine Analyse- oder Tracking-Daten.',
+    'Kein Z-Privacy-Server.',
+  ],
+  paragraphs: [
+    'Ihre Originaldaten bleiben auf diesem Gerät, es sei denn, Sie kopieren '
+        'ausdrücklich wiederhergestellte Inhalte.',
+    'Über Z Privacy wird nur die geschützte Version an eine KI gesendet.',
+  ],
+  rules: [
+    'Die deutschen Datenschutzregeln werden aktiviert.',
+    'Die übrige Benutzeroberfläche ist derzeit auf Englisch.',
+  ],
+  start: 'Starten',
+);
+
+const _en = _Promise(
+  name: 'English',
+  nots: [
+    'No account.',
+    'No ads.',
+    'No analytics.',
+    'No Z Privacy server.',
+  ],
+  paragraphs: [
+    'Your original data stays on this device unless you explicitly copy '
+        'restored content.',
+    'Only the protected version is sent to AI through Z Privacy.',
+  ],
+  rules: [
+    'The English privacy rules will be enabled.',
+  ],
+  start: 'Start',
+);
 
 class FirstRunScreen extends StatefulWidget {
   const FirstRunScreen({super.key, required this.ground, required this.onStart});
@@ -24,11 +97,17 @@ class FirstRunScreen extends StatefulWidget {
 }
 
 class _FirstRunScreenState extends State<FirstRunScreen> {
-  String _language = 'en';
+  /// Null until a person chooses. **Not** a default — this page has no right to
+  /// one, because the question it asks is which language they read.
+  String? _language;
 
   @override
   Widget build(BuildContext context) {
-    final de = _language == 'de';
+    final chosen = switch (_language) {
+      'de' => _de,
+      'en' => _en,
+      _ => null,
+    };
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
@@ -47,71 +126,72 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
                   ],
                 ),
                 const SizedBox(height: 30),
-                for (final line in de
-                    ? const ['Kein Konto.', 'Keine Werbung.', 'Keine Analyse.', 'Kein Z-Privacy-Server.']
-                    : const ['No account.', 'No ads.', 'No analytics.', 'No Z Privacy server.'])
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 7),
-                    child: Text(
-                      line,
-                      style: const TextStyle(fontSize: 17, height: 1.3, fontWeight: FontWeight.w600, color: Zc.ink),
-                    ),
-                  ),
-                const SizedBox(height: 22),
-                Text(
-                  de
-                      ? 'Ihre Originaldaten bleiben auf diesem Gerät. Gesendet wird nur die '
-                          'geschützte Fassung, und nur wenn Sie sich entscheiden, einen '
-                          'KI-Anbieter zu nutzen.'
-                      : 'Your original data stays on this device. Only the protected version is '
-                          'sent, and only when you choose to use an AI provider.',
-                  style: Zc.body.copyWith(fontSize: 15, height: 1.6),
-                ),
-                const SizedBox(height: 30),
-                Eyebrow(de ? 'Sprache' : 'Language'),
+
+                // Before a choice: both, each under its own name so nobody has
+                // to work out which language they are reading. After a choice:
+                // theirs alone.
+                if (chosen == null)
+                  for (final p in const [_de, _en]) _Block(p, named: true)
+                else
+                  _Block(chosen, named: false),
+
+                const SizedBox(height: 8),
+                // The label is in both languages while the answer is unknown.
+                Eyebrow(chosen == null ? 'Sprache · Language' : (chosen == _de ? 'Sprache' : 'Language')),
                 const SizedBox(height: 9),
                 Row(
                   children: [
-                    _Lang(label: 'Deutsch', on: de, onTap: () => setState(() => _language = 'de')),
+                    _Lang(
+                      label: _de.name,
+                      on: _language == 'de',
+                      onTap: () => setState(() => _language = 'de'),
+                    ),
                     const SizedBox(width: 9),
-                    _Lang(label: 'English', on: !de, onTap: () => setState(() => _language = 'en')),
+                    _Lang(
+                      label: _en.name,
+                      on: _language == 'en',
+                      onTap: () => setState(() => _language = 'en'),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                // The owner's words, 27 September. Choosing Deutsch does
-                // something real today — it turns on the German rules — and the
-                // page says plainly what it does not do yet, rather than
-                // implying a half-translated interface is coming with it.
-                if (de)
+                const SizedBox(height: 12),
+
+                if (chosen == null)
+                  // Why there is no Start yet, in both languages — a control
+                  // that is absent has to be accounted for, like a disabled one.
+                  Text(
+                    'Wählen Sie eine Sprache, um fortzufahren.\n'
+                    'Choose a language to continue.',
+                    style: Zc.small,
+                  )
+                else ...[
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     decoration: Zc.panel(fill: Zc.clayWash, edge: Zc.clayEdge, radius: 9),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'German privacy rules enabled.',
-                          style: Zc.small.copyWith(color: Zc.clayDeep, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          'Interface translation is coming later.',
-                          style: Zc.small.copyWith(color: Zc.clayDeep),
-                        ),
+                        for (final line in chosen.rules)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Text(
+                              line,
+                              style: Zc.small.copyWith(
+                                color: Zc.clayDeep,
+                                fontWeight: line == chosen.rules.first ? FontWeight.w600 : FontWeight.w400,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
-                  )
-                else
-                  Text(
-                    'This picks the privacy pack — the rules the scanner looks with.',
-                    style: Zc.tiny.copyWith(letterSpacing: 0),
                   ),
-                const SizedBox(height: 28),
-                ZButton(
-                  label: de ? 'Starten' : 'Start',
-                  filled: true,
-                  onPressed: () => widget.onStart(_language),
-                ),
+                  const SizedBox(height: 28),
+                  ZButton(
+                    label: chosen.start,
+                    filled: true,
+                    onPressed: () => widget.onStart(_language!),
+                  ),
+                ],
                 const SizedBox(height: 34),
                 Text('by YourVoices', style: Zc.tiny.copyWith(letterSpacing: 0.4)),
               ],
@@ -121,6 +201,49 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
       ),
     );
   }
+}
+
+/// One language's promise: the four lines, then the two sentences.
+class _Block extends StatelessWidget {
+  const _Block(this.promise, {required this.named});
+
+  final _Promise promise;
+
+  /// Headed by the language's name — only while both are on the page.
+  final bool named;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(bottom: named ? 24 : 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (named) ...[
+              Eyebrow(promise.name),
+              const SizedBox(height: 8),
+            ],
+            for (final line in promise.nots)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 7),
+                child: Text(
+                  line,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    height: 1.3,
+                    fontWeight: FontWeight.w600,
+                    color: Zc.ink,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 11),
+            for (final paragraph in promise.paragraphs)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 7),
+                child: Text(paragraph, style: Zc.body.copyWith(fontSize: 15, height: 1.6)),
+              ),
+          ],
+        ),
+      );
 }
 
 class _Lang extends StatelessWidget {

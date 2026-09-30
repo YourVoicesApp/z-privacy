@@ -303,8 +303,9 @@ class _LanguageRoom extends StatelessWidget {
       children: [
         const _Title(
           'Language & rules',
-          'A privacy pack is a detection engine, not the language of the interface. The screen '
-          'behind this one says so in its first line, and it is worth repeating here.',
+          'A privacy pack is a detection engine, not the language of the interface — and more '
+          'than one pack can run in a single scan, so this is a starting point rather than the '
+          'only rules allowed. The interface itself is English.',
         ),
         _Card(
           title: 'Privacy pack',

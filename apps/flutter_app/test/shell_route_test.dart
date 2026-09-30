@@ -50,7 +50,10 @@ void main() {
   });
 
   testWidgets('a fresh device opens on the first-run page, not on Home', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1300, 950));
+    // Tall enough for both promises: since P2-6 the page carries the German
+    // and the English text until a language is chosen, because it has no
+    // right to assume one.
+    await tester.binding.setSurfaceSize(const Size(1300, 1500));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     // Started outside the fake-async zone, for the reason written on
@@ -71,6 +74,12 @@ void main() {
 
     // Passing it leaves for Home, in this run at least — the lasting answer
     // needs a vault to be written into, and this device has none.
+    //
+    // The language is chosen first because there is no Start before one: this
+    // test is about which screen the shell picks, and it has to make the
+    // page's own decision to get past it.
+    await tester.tap(find.text('English'));
+    await settle(tester, rounds: 1);
     await tester.tap(find.text('Start'));
     await settle(tester);
     expect(find.byType(HomeScreen), findsOneWidget);

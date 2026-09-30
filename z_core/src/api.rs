@@ -322,8 +322,17 @@ pub struct Settings {
     pub auto_lock_minutes: u32,
     /// The detection pack a new session starts with.
     pub pack_id: String,
-    /// The working language, `en` or `de`. It picks the pack today; the
-    /// interface follows when it is translated.
+    /// The working language, `en` or `de`.
+    ///
+    /// **What it selects in v1, exactly:** the language of the First Run page,
+    /// and the rule set a new session starts with. It does **not** translate
+    /// the interface, which is English. The field is named `ui_language` in the
+    /// settings file; that name describes what it will govern, not all it
+    /// governs today, and the First Run page says so out loud rather than
+    /// letting a person infer a translated app from choosing «Deutsch».
+    ///
+    /// It is also not «the rule set»: more than one set can run in a scan
+    /// (M7.10A), so this picks a starting point, not the only engine allowed.
     pub language: String,
     /// False until the first-run page has been passed.
     pub first_run_done: bool,

@@ -402,7 +402,7 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "clipboard untouched until confirmed" \
          "named a rescan, not scanned on import" \
          "offers Disconnect, not" "names both acts by their reach" \
-         "name the reach they would forget"; do
+         "name the reach they would forget" "is the pack that is kept"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

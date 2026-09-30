@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/settings.dart';
+import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -215,7 +216,7 @@ void main() {
   });
 
   testWidgets('the first run says four things, in the language it is offering', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1000, 900));
+    await tester.binding.setSurfaceSize(const Size(1000, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final ground = Ground();
@@ -227,28 +228,136 @@ void main() {
     ));
     await settle(tester, rounds: 1);
 
+    // ------------------------------------------------ fresh: nothing assumed
+    // P2-6. The page used to start at `en`, so a German speaker met an English
+    // promise and the German text existed only for whoever found the button.
+    // Both promises stand here, each under its own name, and neither language
+    // is on.
     for (final line in ['No account.', 'No ads.', 'No analytics.', 'No Z Privacy server.']) {
       expect(find.text(line), findsOneWidget);
     }
-    expect(find.textContaining('Your original data stays on this device'), findsOneWidget);
+    for (final line in [
+      'Kein Konto.',
+      'Keine Werbung.',
+      'Keine Analyse- oder Tracking-Daten.',
+      'Kein Z-Privacy-Server.',
+    ]) {
+      expect(find.text(line), findsOneWidget, reason: 'the German promise is not on a fresh page');
+    }
+    // No Start until a language is chosen, and the page says why — in both.
+    expect(find.widgetWithText(ZButton, 'Start'), findsNothing);
+    expect(find.widgetWithText(ZButton, 'Starten'), findsNothing);
+    expect(find.textContaining('Wählen Sie eine Sprache'), findsOneWidget);
+    expect(find.textContaining('Choose a language to continue'), findsOneWidget);
+    // And nothing claims a rule set before one is picked.
+    expect(find.textContaining('werden aktiviert'), findsNothing);
+    expect(find.textContaining('will be enabled'), findsNothing);
+
+    // The sentence F-11 made necessary: «stays on this device» is not «can
+    // never leave», because Copy Restored exists.
+    expect(
+      find.textContaining('unless you explicitly copy restored content'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('es sei denn, Sie kopieren ausdrücklich wiederhergestellte Inhalte'),
+      findsOneWidget,
+    );
+    // The old wording promised more than the app does.
+    expect(find.text('Your original data stays on this device.'), findsNothing);
     expect(find.text('by YourVoices'), findsOneWidget);
     // No e-mail, no sign-up, nothing to fill in.
     expect(find.byType(TextField), findsNothing);
 
-    // Choosing Deutsch writes the page in German — a page that asked the
-    // question only in English would be asking it in the answer.
+    // The sentence that said a language is one rule set. M7.10A runs more than
+    // one set in a scan, so it became the old world's sentence.
+    expect(find.textContaining('This picks the privacy pack'), findsNothing);
+    expect(find.textContaining('Interface translation is coming later'), findsNothing);
+
+    // ------------------------------------------------ Deutsch
     await tester.tap(find.text('Deutsch'));
     await settle(tester, rounds: 1);
     expect(find.text('Kein Konto.'), findsOneWidget);
     expect(find.text('Keine Werbung.'), findsOneWidget);
-    expect(find.text('Starten'), findsOneWidget);
-    // And it is honest about what the choice does today — the owner's own words.
-    expect(find.text('German privacy rules enabled.'), findsOneWidget);
-    expect(find.text('Interface translation is coming later.'), findsOneWidget);
+    expect(find.widgetWithText(ZButton, 'Starten'), findsOneWidget);
+    // The page is now in one language, not two.
+    expect(find.text('No account.'), findsNothing);
+    // What the choice really does, and what it does not — before Start.
+    expect(find.text('Die deutschen Datenschutzregeln werden aktiviert.'), findsOneWidget);
+    expect(
+      find.text('Die übrige Benutzeroberfläche ist derzeit auf Englisch.'),
+      findsOneWidget,
+      reason: 'a person could choose Deutsch expecting a translated app',
+    );
 
+    // ------------------------------------------------ English, and back
+    await tester.tap(find.text('English'));
+    await settle(tester, rounds: 1);
+    expect(find.text('No account.'), findsOneWidget);
+    expect(find.text('Kein Konto.'), findsNothing);
+    expect(find.text('The English privacy rules will be enabled.'), findsOneWidget);
+    expect(find.widgetWithText(ZButton, 'Start'), findsOneWidget);
+
+    await tester.tap(find.text('Deutsch'));
+    await settle(tester, rounds: 1);
     await tester.tap(find.text('Starten'));
     await settle(tester, rounds: 1);
     expect(chosen, 'de');
+  });
+
+  /// P2-6 — the choice reaches the file, and the page does not come back.
+  ///
+  /// The screen test above proves what is said; this proves what is kept. Both
+  /// halves matter: a truthful page that wrote the wrong pack would be the same
+  /// lie one layer down.
+  testWidgets('the language chosen on the first run is the pack that is kept',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    late final Directory here;
+    await tester.runAsync(() async {
+      here = Directory('${Directory.systemTemp.path}/zprivacy-firstrun-$pid');
+      if (here.existsSync()) here.deleteSync(recursive: true);
+      addTearDown(() {
+        if (here.existsSync()) here.deleteSync(recursive: true);
+      });
+      await z.setDataDir(dir: here.path);
+    });
+
+    final ground = Ground();
+    await tester.runAsync(ground.refresh);
+    expect(ground.config!.firstRunDone, isFalse, reason: 'a fresh install has passed first run');
+
+    await tester.pumpWidget(
+        MaterialApp(home: ZShell(dataDir: here.path, ground: ground)));
+    await settle(tester);
+    expect(find.textContaining('Choose a language to continue'), findsOneWidget,
+        reason: 'the shell did not show the first run on a fresh install');
+
+    await tester.tap(find.text('Deutsch'));
+    await settle(tester, rounds: 1);
+    await tester.tap(find.text('Starten'));
+    await settle(tester);
+
+    // Written, and read back from the core rather than from the widget.
+    await tester.runAsync(ground.refresh);
+    final kept = ground.config!;
+    expect(kept.language, 'de');
+    expect(kept.packId, 'de', reason: 'the language did not pick its rule set');
+    expect(kept.firstRunDone, isTrue);
+
+    // Restart: a new shell over the same settings must not ask again.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await settle(tester, rounds: 1);
+    final again = Ground();
+    await tester.runAsync(again.refresh);
+    await tester.pumpWidget(
+        MaterialApp(home: ZShell(dataDir: here.path, ground: again)));
+    await settle(tester);
+    expect(find.textContaining('Choose a language to continue'), findsNothing,
+        reason: 'the first run came back after it was passed');
+    expect(find.text('Kein Konto.'), findsNothing);
   });
 
   testWidgets('a protected word can say why, and forgetting shows its cost first',
