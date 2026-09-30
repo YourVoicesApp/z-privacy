@@ -64,6 +64,20 @@ else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
 fi
 
+# ---------------------------------------------------------------- G21
+# The Hardening phase closes on «the same harness, re-run, with no change in
+# our favour». That is only worth something if «the same» can still be proved
+# when nobody remembers what the attacker looked like.
+if [ -f scripts/check_redteam.py ]; then
+  if OUT=$(python3 scripts/check_redteam.py 2>&1); then
+    pass "$(printf '%s' "$OUT" | head -1)"
+  else
+    fail "$(printf '%s' "$OUT" | head -1)"; printf '%s\n' "$OUT" | tail -n +2
+  fi
+else
+  skip "G21 the captured harness is unchanged" "no checker yet"
+fi
+
 # ---------------------------------------------------------------- G20
 # One error, one sentence. A typed error becomes language in exactly one file;
 # a widget that reads an `ApiError` itself is how one failure comes to say

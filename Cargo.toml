@@ -1,6 +1,11 @@
 [workspace]
 resolver = "2"
 members = ["z_core", "bridges/native/z_bridge"]
+# The captured red-team harness is evidence, not a crate of ours. It is kept
+# out of the workspace so an ordinary `cargo build` never compiles the
+# attacker, and so its pinned `Cargo.lock` is never rewritten by our builds —
+# which is exactly how its hashes stay verifiable (gate G21).
+exclude = ["redteam"]
 
 [workspace.package]
 version = "0.1.0"

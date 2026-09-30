@@ -1,0 +1,28 @@
+# Hashes of every file in original/ — the 2026-09-28 red-team harness.
+#
+# Checked by gate G21 on every build. If a line here stops matching, the
+# attacker was edited — and no claim that «the same harness still passes»
+# may be made until that is explained.
+#
+# Two lines per file: SHA-256 then MD5, paths relative to original/.
+
+sha256  dfe4fb4d8035eb58de18e3f867dc8b51b85b7c92ef5781c2ca6375f1fc7b9d5a  Cargo.lock
+md5     9e39460be8e10e80c59493dbee16fb3e  Cargo.lock
+sha256  9bae0b3de06b668ff305b0310782013ff1eb64cc8846eabf4f1c020a741d1a9a  Cargo.toml
+md5     292220eb94b7dfebc2ae91e01f89a1d1  Cargo.toml
+sha256  9088f35c98c5253868b1c5410fec62eb3ceb4d21a0fddaae7bd72ece3bb4f46b  docx/word/document.xml
+md5     9ca1204e4e641033f24e3df68edb6623  docx/word/document.xml
+sha256  8efd9cf28838aba6b1805eebb62a39c750f6146a8e51023acddb9fdb2d5518b4  malformed.docx
+md5     490c12d3f84bfaa0bb7ee31efe87e7a3  malformed.docx
+sha256  680c72f36a0ae91ef191e3339512af92316a691fd1152e9f20278017201d6481  src/bin/fs.rs
+md5     e9dfa100c4885f5666fdb7c32d3dc71c  src/bin/fs.rs
+sha256  76e00ee2ae72e1ae2afdbec55b9428418045071d26ea97cf2fbef64938992bc8  src/bin/kdf.rs
+md5     b36299d67d89b96b5c4d546d7aa8bcef  src/bin/kdf.rs
+sha256  fcd20bf554c7353445bc446355db1ce68bef497bb84faf996faea2b29fc9f777  src/bin/rollback.rs
+md5     4e8ec848fae38c7cba901c1aed69a7be  src/bin/rollback.rs
+sha256  18d6677ea15fe1172b9f3468a327d1fc181ee8b3c26ccbb174ddf7616af8d7e7  src/bin/trailing.rs
+md5     3bee31e8e61ab56be1c53b2a6bcb4e22  src/bin/trailing.rs
+sha256  d2745ed854b011717e8f1d17076a7a161fca9adb3b21f5203bda847ed649db33  src/bin/url.rs
+md5     8b6223de267c687e534d016c185eba09  src/bin/url.rs
+sha256  b77a77774d1146d9eef5e66c48f8e85a711f4c478ac3ee8f7a13ec0520ccacad  src/main.rs
+md5     692961315fc6f265b53c4e55e4658500  src/main.rs
