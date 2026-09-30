@@ -2476,6 +2476,7 @@ const _: fn() = || {
         let _: String = ProviderFact.model;
         let _: bool = ProviderFact.credential_required;
         let _: crate::api::mirrors::CredentialState = ProviderFact.credential_state;
+        let _: bool = ProviderFact.on_this_computer;
     }
     {
         let ProviderId = None::<crate::api::mirrors::ProviderId>.unwrap();
@@ -3705,6 +3706,7 @@ impl SseDecode for crate::api::mirrors::ProviderFact {
         let mut var_model = <String>::sse_decode(deserializer);
         let mut var_credentialRequired = <bool>::sse_decode(deserializer);
         let mut var_credentialState = <crate::api::mirrors::CredentialState>::sse_decode(deserializer);
+        let mut var_onThisComputer = <bool>::sse_decode(deserializer);
         return crate::api::mirrors::ProviderFact {
             id: var_id,
             label: var_label,
@@ -3714,6 +3716,7 @@ impl SseDecode for crate::api::mirrors::ProviderFact {
             model: var_model,
             credential_required: var_credentialRequired,
             credential_state: var_credentialState,
+            on_this_computer: var_onThisComputer,
         };
     }
 }
@@ -5100,6 +5103,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ProviderF
             self.0.model.into_into_dart().into_dart(),
             self.0.credential_required.into_into_dart().into_dart(),
             self.0.credential_state.into_into_dart().into_dart(),
+            self.0.on_this_computer.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -6551,6 +6555,7 @@ impl SseEncode for crate::api::mirrors::ProviderFact {
         <String>::sse_encode(self.model, serializer);
         <bool>::sse_encode(self.credential_required, serializer);
         <crate::api::mirrors::CredentialState>::sse_encode(self.credential_state, serializer);
+        <bool>::sse_encode(self.on_this_computer, serializer);
     }
 }
 

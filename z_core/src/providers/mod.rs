@@ -167,6 +167,15 @@ pub(crate) fn ping(id: &str, credential: &str, base: &str, model: &str) -> ApiRe
     Ok(started.elapsed().as_millis().min(u128::from(u32::MAX)) as u32)
 }
 
+/// Is this address on the machine the program is running on?
+///
+/// The same test the network door uses to decide whether plain `http` is
+/// allowed — so «Local AI» on a screen and «loopback only» in the rules are
+/// one fact, and cannot drift into disagreeing.
+pub(crate) fn is_on_this_computer(base: &str) -> bool {
+    http::is_loopback_url(base)
+}
+
 /// Check an address the way a request would, before a credential is stored.
 pub(crate) fn check_url_for(base: &str) -> ApiResult<()> {
     http::check_url(base)

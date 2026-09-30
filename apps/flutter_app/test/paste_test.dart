@@ -159,6 +159,7 @@ void main() {
   });
 
   _p22();
+  _p23();
 
   /// The one that matters after F-05: pressing Paste must not re-aim the
   /// answer at a different payload.
@@ -226,5 +227,49 @@ void _p22() {
     expect(bench.copiedPayload, isNull, reason: 'Review bound a payload');
     final still = await Clipboard.getData(Clipboard.kTextPlain);
     expect(still?.text, startsWith('SENTINEL'), reason: 'Review wrote to the clipboard');
+  });
+}
+
+/// P2-3 — the routes are named by what they mean to a person.
+void _p23() {
+  testWidgets('the three routes are Manual AI, Direct API and Local AI', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installClipboard(tester);
+    final ground = Ground();
+    await _sheet(tester, ground);
+
+    expect(find.text('Manual AI'), findsOneWidget);
+    expect(find.text('Direct API'), findsOneWidget);
+    expect(find.text('Local AI'), findsOneWidget);
+    expect(find.textContaining('Use an AI chat you already have'), findsOneWidget);
+    expect(find.textContaining('Runs through an AI service on this computer'), findsNothing);
+    expect(find.textContaining('Use an AI service running on this computer'), findsOneWidget);
+
+    // «OpenAI-compatible» is a protocol, and never the name of a route a
+    // person picks. It does not belong on this sheet at all.
+    expect(find.textContaining('OpenAI-compatible'), findsNothing);
+  });
+
+  /// «Local» is a promise about where the text goes, so the core decides it
+  /// from the address — the same test the network door enforces.
+  testWidgets('the core says whether an endpoint is on this computer', (tester) async {
+    await tester.runAsync(() async {
+      // Default is the remote OpenAI address.
+      var facts = (await z.providerSnapshot()).providers;
+      expect(facts.first.onThisComputer, isFalse,
+          reason: 'a remote address was called local');
+
+      await z.configureProvider(
+        provider: const ProviderId(id: 'openai'),
+        baseUrl: 'http://127.0.0.1:11434',
+        model: 'llama3.2',
+      );
+      facts = (await z.providerSnapshot()).providers;
+      expect(facts.first.onThisComputer, isTrue,
+          reason: 'a loopback address was not called local');
+      expect(facts.first.label, 'OpenAI-compatible',
+          reason: 'the protocol is still reported for the settings screen');
+    });
   });
 }

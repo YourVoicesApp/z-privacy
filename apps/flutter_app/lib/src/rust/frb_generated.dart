@@ -3474,8 +3474,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ProviderFact dco_decode_provider_fact(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return ProviderFact(
       id: dco_decode_String(arr[0]),
       label: dco_decode_String(arr[1]),
@@ -3485,6 +3485,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       model: dco_decode_String(arr[5]),
       credentialRequired: dco_decode_bool(arr[6]),
       credentialState: dco_decode_credential_state(arr[7]),
+      onThisComputer: dco_decode_bool(arr[8]),
     );
   }
 
@@ -4864,6 +4865,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_model = sse_decode_String(deserializer);
     var var_credentialRequired = sse_decode_bool(deserializer);
     var var_credentialState = sse_decode_credential_state(deserializer);
+    var var_onThisComputer = sse_decode_bool(deserializer);
     return ProviderFact(
       id: var_id,
       label: var_label,
@@ -4873,6 +4875,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       model: var_model,
       credentialRequired: var_credentialRequired,
       credentialState: var_credentialState,
+      onThisComputer: var_onThisComputer,
     );
   }
 
@@ -6177,6 +6180,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.model, serializer);
     sse_encode_bool(self.credentialRequired, serializer);
     sse_encode_credential_state(self.credentialState, serializer);
+    sse_encode_bool(self.onThisComputer, serializer);
   }
 
   @protected

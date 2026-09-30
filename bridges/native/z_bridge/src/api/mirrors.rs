@@ -737,6 +737,8 @@ pub struct _ProviderSnapshot {
 #[frb(mirror(ProviderFact))]
 pub struct _ProviderFact {
     pub id: String,
+    /// What Z Privacy speaks, not what a person chose: «OpenAI-compatible».
+    /// A **protocol**, shown where the technical detail belongs.
     pub label: String,
     pub configured: bool,
     pub connected: bool,
@@ -744,6 +746,13 @@ pub struct _ProviderFact {
     pub model: String,
     pub credential_required: bool,
     pub credential_state: CredentialState,
+    /// Is this endpoint on this computer?
+    ///
+    /// Reported by the core from the address itself, never worked out by a
+    /// screen — because the word «Local» is a promise about where the text
+    /// goes, and a promise must be checked by whoever knows. It is the same
+    /// test the network door enforces, so the word and the rule cannot part.
+    pub on_this_computer: bool,
 }
 
 #[frb(mirror(AnswerSnapshot))]

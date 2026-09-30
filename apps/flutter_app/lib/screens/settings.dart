@@ -160,10 +160,10 @@ class _AiRoom extends StatelessWidget {
       children: [
         const _Title('AI', 'Three ways to ask a model. The first needs no account at all.'),
         _Card(
-          title: 'Use AI yourself',
-          what: 'Copy the safe text out of the Workspace, paste it into whatever model you '
-              'already use, and bring the answer back. Nothing to set up, nothing to pay for, '
-              'and the restoring works exactly the same.',
+          title: 'Manual AI',
+          what: 'Use an AI chat you already have. Copy the safe text out of the Workspace, '
+              'paste it into whatever model you use, and bring the answer back. Nothing to '
+              'set up, nothing to pay for, and the restoring works exactly the same.',
           child: Text(
             'Always available — it is the «Review what will leave» sheet, first door.',
             style: Zc.small.copyWith(color: Zc.ink4),
@@ -171,14 +171,21 @@ class _AiRoom extends StatelessWidget {
         ),
         for (final row in rows)
           _Card(
-            title: row.label,
+            // Named for the route a person chose, not the protocol. The
+            // protocol is a fact about this card and is stated below, beside
+            // the endpoint — which is the only place it answers a question
+            // anyone actually has.
+            title: 'Direct API',
             what: row.credentialRequired
-                ? 'A provider reached over the internet. The key goes in once and never comes '
-                    'back out — no screen in this app can show it to you again.'
+                ? 'Connect to a remote AI provider with your API credential. The key goes in '
+                    'once and never comes back out — no screen in this app can show it to you '
+                    'again.'
                 : 'At this address no credential is needed.',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _Spec('Protocol', row.label),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     _Dot(on: row.connected),
@@ -203,11 +210,19 @@ class _AiRoom extends StatelessWidget {
           ),
         if (rows.isNotEmpty)
           _Card(
-            title: 'A model on this machine',
-            what: 'llama.cpp, Ollama, LM Studio — anything that answers the OpenAI shape. No '
-                'key, no account, and the request never leaves this computer. Plain http is '
-                'accepted only for a literal loopback address.',
-            child: ConnectForm(ground: ground, row: rows.first, local: true),
+            title: 'Local AI',
+            what: 'Runs through an AI service on this computer — llama.cpp, Ollama, LM '
+                'Studio, anything that answers the same shape. No key, no account, and the '
+                'request never leaves this computer. Plain http is accepted only for a '
+                'literal loopback address.',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Spec('Protocol', rows.first.label),
+                const SizedBox(height: 10),
+                ConnectForm(ground: ground, row: rows.first, local: true),
+              ],
+            ),
           ),
       ],
     );
@@ -665,4 +680,33 @@ class _Pick extends StatelessWidget {
           ),
         ),
       );
+}
+
+
+/// A technical fact about a card: its name and its value, small and plain.
+///
+/// «OpenAI-compatible» lives here — it is how Z Privacy talks to the service,
+/// which is worth knowing when you are typing an endpoint, and answers
+/// nothing at all when you are choosing a route.
+class _Spec extends StatelessWidget {
+  const _Spec(this.name, this.value);
+
+  final String name;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 88,
+          child: Text(name, style: Zc.tiny.copyWith(color: Zc.ink4, letterSpacing: 0)),
+        ),
+        Expanded(
+          child: Text(value, style: Zc.tiny.copyWith(fontFamily: Zc.mono, letterSpacing: 0)),
+        ),
+      ],
+    );
+  }
 }

@@ -316,6 +316,12 @@ pub(crate) fn provider_facts() -> ApiResult<Vec<ProviderFact>> {
                 .as_ref()
                 .map(|l| l.base.clone())
                 .unwrap_or_else(|| provider.default_base().to_string()),
+            on_this_computer: crate::providers::is_on_this_computer(
+                login
+                    .as_ref()
+                    .map(|l| l.base.as_str())
+                    .unwrap_or_else(|| provider.default_base()),
+            ),
             model: login
                 .as_ref()
                 .map(|l| l.model.clone())

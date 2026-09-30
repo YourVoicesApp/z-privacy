@@ -994,6 +994,9 @@ sealed class ProtectOutcome with _$ProtectOutcome {
 
 class ProviderFact {
   final String id;
+
+  /// What Z Privacy speaks, not what a person chose: «OpenAI-compatible».
+  /// A **protocol**, shown where the technical detail belongs.
   final String label;
   final bool configured;
   final bool connected;
@@ -1001,6 +1004,14 @@ class ProviderFact {
   final String model;
   final bool credentialRequired;
   final CredentialState credentialState;
+
+  /// Is this endpoint on this computer?
+  ///
+  /// Reported by the core from the address itself, never worked out by a
+  /// screen — because the word «Local» is a promise about where the text
+  /// goes, and a promise must be checked by whoever knows. It is the same
+  /// test the network door enforces, so the word and the rule cannot part.
+  final bool onThisComputer;
 
   const ProviderFact({
     required this.id,
@@ -1011,6 +1022,7 @@ class ProviderFact {
     required this.model,
     required this.credentialRequired,
     required this.credentialState,
+    required this.onThisComputer,
   });
 
   @override
@@ -1022,7 +1034,8 @@ class ProviderFact {
       endpoint.hashCode ^
       model.hashCode ^
       credentialRequired.hashCode ^
-      credentialState.hashCode;
+      credentialState.hashCode ^
+      onThisComputer.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -1036,7 +1049,8 @@ class ProviderFact {
           endpoint == other.endpoint &&
           model == other.model &&
           credentialRequired == other.credentialRequired &&
-          credentialState == other.credentialState;
+          credentialState == other.credentialState &&
+          onThisComputer == other.onThisComputer;
 }
 
 class ProviderId {

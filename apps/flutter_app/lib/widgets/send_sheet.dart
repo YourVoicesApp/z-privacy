@@ -243,10 +243,16 @@ class _SendSheetState extends State<SendSheet> {
             const SizedBox(height: 14),
           ],
           _door(
-            title: 'Use AI yourself',
+            // The three routes are named by **what they mean to a person**,
+            // not by the protocol underneath: which AI, and where does it run?
+            // «OpenAI-compatible» answers neither of those questions — it is
+            // how Z Privacy speaks, and it belongs in the settings beside the
+            // endpoint (the owner, 30 September).
+            title: 'Manual AI',
             what:
-                'Copy the text above, paste it into any model you like, and bring the '
-                'answer back here. Restoring works the same either way — no account, no key.',
+                'Use an AI chat you already have. Copy the text above, paste it into any '
+                'model you like, and bring the answer back here. Restoring works the same '
+                'either way — no account, no key.',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -312,11 +318,11 @@ class _SendSheetState extends State<SendSheet> {
           ),
           const SizedBox(height: 14),
           _door(
-            title: 'Send from here',
+            title: 'Direct API',
             what: connected.isEmpty
-                ? 'Nothing is connected yet. Only the text above would travel; the '
-                      'provider still sees the ordinary facts of a connection — your '
-                      'address, the time, the model.'
+                ? 'Connect to a remote AI provider with your API credential. Only the text '
+                      'above would travel; the provider still sees the ordinary facts of a '
+                      'connection — your address, the time, the model.'
                 : 'The request goes from this app. Only the text above travels; the '
                       'provider still sees the ordinary facts of a connection — your address, '
                       'the time, the model.',
@@ -330,7 +336,11 @@ class _SendSheetState extends State<SendSheet> {
                         ZButton(
                           label: widget.bench.sending
                               ? 'Sending…'
-                              : 'Send to ${p.label}',
+                              // The route, not the protocol. And «Local AI»
+                              // only when the core says the endpoint really
+                              // is on this computer — the word is a promise
+                              // about where the text goes.
+                              : 'Send to ${p.onThisComputer ? "Local AI" : "Direct API"}',
                           filled: true,
                           icon: Icons.send_outlined,
                           onPressed:
@@ -368,11 +378,12 @@ class _SendSheetState extends State<SendSheet> {
           ],
           const SizedBox(height: 14),
           _door(
-            title: 'A model on this machine',
+            title: 'Local AI',
             what:
-                'llama.cpp, Ollama, LM Studio — anything that answers the same shape. '
-                'No key, no account, and the request never leaves this computer. It is '
-                'the only provider that sees none of the ordinary facts above.',
+                'Use an AI service running on this computer — llama.cpp, Ollama, LM '
+                'Studio, anything that answers the same shape. No key, no account, and '
+                'the request never leaves this computer. It is the only route that sees '
+                'none of the ordinary facts above.',
             child: _More(
               label: 'Set up a local model',
               child: _connectHere(local: true),
