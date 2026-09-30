@@ -351,10 +351,16 @@ fn a_malformed_docx_leaves_the_current_document_untouched() {
     close_session(session).expect("close");
 }
 
-/// The red-team fixture when it is on disk; otherwise the same XML reconstructed.
+/// The red-team fixture itself; otherwise the same XML reconstructed.
+///
+/// It used to be read from an absolute path in one person's home directory,
+/// so everywhere else this test quietly fell back to a rebuilt copy and never
+/// touched the bytes that actually broke the parser. The fixture is in the
+/// repository now, so every machine reads the captured one.
 fn malformed_docx_bytes() -> Vec<u8> {
-    let path = std::path::Path::new("/home/monopeaks/zprivacy-redteam-2026-09-28/harness/malformed.docx");
-    if let Ok(bytes) = std::fs::read(path) {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../redteam/2026-09-28/original/malformed.docx");
+    if let Ok(bytes) = std::fs::read(&path) {
         return bytes;
     }
     let xml = concat!(
