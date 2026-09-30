@@ -7,6 +7,7 @@
 // So it fills a field and does nothing else: no answer, no restore, no vault
 // write, no network — and, after F-05, no change to which payload the answer
 // will be tied to.
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
@@ -16,8 +17,11 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
+import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
+import 'package:zprivacy/widgets/why_sheet.dart';
 
 /// Stand in for the system clipboard. `null` is «nothing there»; throwing is
 /// «the platform would not answer».
@@ -162,6 +166,7 @@ void main() {
   _p22();
   _p23();
   _p24();
+  _p27();
 
   /// The one that matters after F-05: pressing Paste must not re-aim the
   /// answer at a different payload.
@@ -375,5 +380,123 @@ void _p24() {
     expect(find.text('Forget the key'), findsNothing);
     expect(find.text('Disconnect'), findsNothing);
     expect(find.text('Connect'), findsOneWidget);
+  });
+}
+
+/// P2-7 — the last of the human run's P2 list.
+///
+/// The chip in the Safe column carried no gesture and never had: the defect was
+/// that it **looked** like one. In this app `clayWash` inside a `clayEdge`
+/// border is the costume of a chosen control — every selected language, every
+/// on-state toggle, every picked scope wears it — and the chip wore it while
+/// answering nothing, next to a column where the matching word really does
+/// answer by opening «Why».
+///
+/// So this test pins exactly two things, and no third: the chip offers no press
+/// and does not dress as though it did, and «Why» is reached from the Original
+/// column. Nothing was added to the chip; nothing is expected of it.
+void _p27() {
+  testWidgets('a Safe-column chip is display only, and Why lives on the Original side',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    const word = 'Nordstern Consulting GmbH';
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await z.importText(session: session, text: 'Kunde: $word');
+      await bench.rescan();
+      // A suggestion is not a protection, and there is no «send anyway»: the
+      // only way to a real token is to answer.
+      for (final f in bench.findings.where((f) => f.state == MarkState.suggested)) {
+        await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
+      }
+      await bench.refresh();
+    });
+    addTearDown(bench.dispose);
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+    ));
+    await settle(tester);
+
+    // Control string first: without a token there is no chip to judge.
+    expect(bench.tokens, isNotEmpty, reason: 'nothing was protected, so there is no chip');
+    expect(bench.chips, isTrue, reason: 'the column is not drawing chips');
+
+    // ------------------------------------------------ the chip: no press
+    final chipLabel = find.descendant(
+      of: find.byType(SafeText),
+      matching: find.byWidgetPredicate((w) => w is Text && (w.data ?? '').startsWith('Z_')),
+    );
+    expect(chipLabel, findsWidgets, reason: 'the Safe column drew no chip');
+
+    // No span on the Safe side carries a tap, and none asks for the hand
+    // cursor — the two ways this app makes text pressable.
+    final safeSpan = tester
+        .widget<SelectableText>(
+          find.descendant(of: find.byType(SafeText), matching: find.byType(SelectableText)),
+        )
+        .textSpan!;
+    safeSpan.visitChildren((span) {
+      if (span is TextSpan) {
+        expect(span.recognizer, isNull, reason: 'a Safe-column span became pressable');
+        expect(span.mouseCursor, isNot(SystemMouseCursors.click),
+            reason: 'a Safe-column span asks for the hand cursor');
+      }
+      return true;
+    });
+    // And the app's own tap primitive is nowhere above it.
+    expect(find.ancestor(of: chipLabel.first, matching: find.byType(InkWell)), findsNothing);
+
+    // ------------------------------------------------ the chip: no costume
+    // The heart of his rule. A control state in this app is a fill **inside a
+    // border**; a display-only chip is a highlight over text.
+    final box = tester.widget<Container>(
+      find.ancestor(of: chipLabel.first, matching: find.byType(Container)).first,
+    );
+    final skin = box.decoration! as BoxDecoration;
+    expect(skin.border, isNull, reason: 'a bordered chip reads as a button');
+    expect(skin.color, isNot(Zc.clayWash),
+        reason: 'the chip is wearing the colour this app uses for a chosen control');
+
+    // Pressing it changes nothing at all.
+    final safeBefore = bench.payload!.text;
+    final chipsBefore = bench.chips;
+    await tester.tap(chipLabel.first);
+    await settle(tester);
+    expect(find.byType(WhySheet), findsNothing, reason: 'the chip opened something');
+    expect(find.byType(Dialog), findsNothing, reason: 'the chip opened a dialog');
+    expect(bench.payload!.text, safeBefore, reason: 'the chip changed what would leave');
+    expect(bench.chips, chipsBefore);
+    expect(bench.trouble, isNull, reason: 'the chip produced a complaint');
+
+    // ------------------------------------------------ Why, on the other side
+    final originalSpan = tester
+        .widget<SelectableText>(
+          find.descendant(of: find.byType(OriginalText), matching: find.byType(SelectableText)),
+        )
+        .textSpan!;
+    TextSpan? marked;
+    originalSpan.visitChildren((span) {
+      if (span is TextSpan && span.text == word) marked = span;
+      return true;
+    });
+    expect(marked, isNotNull, reason: 'the protected word is not its own span');
+    expect(marked!.mouseCursor, SystemMouseCursors.click,
+        reason: 'the one pressable thing does not say so to a pointer');
+    final tap = marked!.recognizer;
+    expect(tap, isA<TapGestureRecognizer>(), reason: 'the Original mark lost its tap');
+
+    // Fired through the production callback, not a re-implementation of it.
+    (tap! as TapGestureRecognizer).onTap!();
+    await settle(tester);
+    expect(find.byType(WhySheet), findsOneWidget, reason: 'the Original mark did not open Why');
+    expect(find.text('Why is this protected?'), findsOneWidget);
+    expect(find.text(word), findsWidgets, reason: 'Why opened on the wrong word');
   });
 }

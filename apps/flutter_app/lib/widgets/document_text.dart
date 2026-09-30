@@ -237,14 +237,28 @@ class SafeText extends StatelessWidget {
 
   /// A chip still spells the token out. Hiding it behind a friendly word would
   /// mean the user cannot check what the model actually reads.
+  ///
+  /// **Display only, and dressed as such (P2-7).** It used to be drawn with
+  /// `clayWash` filled inside a `clayEdge` border — which in this app is not
+  /// decoration but a meaning: it is the costume of a *chosen control*, worn by
+  /// every selected language, every on-state toggle, every picked scope. The
+  /// chip wore it while carrying no gesture at all, so it invited a press that
+  /// could never answer, and the matching word in the Original column **does**
+  /// answer one by opening «Why». A person read the difference as a bug in the
+  /// program rather than as a difference between the two columns.
+  ///
+  /// So the border is gone and the fill is a neutral that names no state: this
+  /// is a highlight over text, not a button. Nothing was added to make it
+  /// interactive — the Original column's mark stays the one way to ask «Why».
+  /// The letters keep `clayDeep` and the mono face, because «Chips» and
+  /// «Plain» must stay visibly the same string drawn two ways.
   InlineSpan _chip(String token) => WidgetSpan(
         alignment: PlaceholderAlignment.middle,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 1),
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
           decoration: BoxDecoration(
-            color: Zc.clayWash,
-            border: Border.all(color: Zc.clayEdge),
+            color: Zc.lineSoft,
             borderRadius: BorderRadius.circular(5),
           ),
           child: Text(
