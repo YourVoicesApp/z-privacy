@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# The guard before publishing: the site must carry no unfilled build value and
-# must reach no third party. Exit status is the verdict.
+# The guard before publishing z-privacy.com: no unfilled build value, no third
+# party reached, no script, and every outward link answering. Exit is the verdict.
+# It lives outside site/ because site/ is what gets uploaded, and a guard is not
+# part of what visitors are served.
 set -uo pipefail
-cd "$(dirname "$0")" || exit 2
+cd "$(dirname "$0")/../site" || exit 2
 FAIL=0
 say() { printf '  %-6s %s\n' "$1" "$2"; }
 
