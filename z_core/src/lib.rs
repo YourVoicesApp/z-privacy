@@ -30,6 +30,21 @@ mod text;
 mod tokens;
 mod vault;
 
+/// One door, opened for the test suite on Windows and nowhere else.
+///
+/// `secure_file::windows` is private because nothing in the product ever needs
+/// to read an access list back — it writes one and moves on. The test for the
+/// first storage contract does need to: the whole point of that contract is to
+/// check what was written rather than trust that it was. This is the narrowest
+/// way to let it, and it only reads.
+#[cfg(windows)]
+pub mod testing {
+    /// The file's access list, as SDDL.
+    pub fn dacl_sddl(path: &std::path::Path) -> std::io::Result<String> {
+        crate::secure_file::windows::dacl_sddl(path)
+    }
+}
+
 /// Version of the core, shown by the UI so a build can be identified on sight.
 pub fn core_version() -> String {
     format!("z_core {}", env!("CARGO_PKG_VERSION"))

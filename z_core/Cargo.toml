@@ -49,6 +49,21 @@ serde_json = "1.0.151"
 # code we have to prove", not "fewer crates at any cost".
 quick-xml = { version = "0.38.4", default-features = false }
 
+# ---------------------------------------------------------------- Windows only
+# The reason the workspace's one `unsafe` exception exists. A file created with
+# the ordinary API on Windows inherits whatever the folder above it grants, and
+# there is no `0600` to fall back on. Raw bindings on purpose: a wrapper crate
+# would hide the same calls somewhere nobody here reads, while these sit in one
+# file — `secure_file/windows.rs` — that G4a proves is the only one allowed to
+# contain `unsafe` at all.
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_Security_Authorization",
+  "Win32_Storage_FileSystem",
+] }
+
 [dev-dependencies]
 # The tests read the request body a provider received, to prove it is the
 # SafePayload character for character. Already in the tree; no new cost.

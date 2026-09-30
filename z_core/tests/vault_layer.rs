@@ -540,6 +540,55 @@ fn local_files_are_private_on_fresh_install() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// The same contract as the Unix test above, in the only terms Windows can
+/// keep it in.
+///
+/// Not «nobody but the owner can read it»: Administrators and SYSTEM hold
+/// privileges no access list can refuse, and a promise that ignored that would
+/// be false on the platform it is made about. What is promised, and checked:
+/// the file's access list names no other account, and it does not inherit
+/// whatever the folder above it grants.
+///
+/// It carries the Unix test's name on purpose. One contract, one name, each
+/// platform proving it in its own terms — which is what lets G22 ask for it
+/// without knowing which platform it is standing on.
+#[cfg(windows)]
+#[test]
+fn local_files_are_private_on_fresh_install() {
+    let _lock = serial();
+    let dir = std::env::temp_dir().join(format!("zprivacy-fs-private-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
+    vault_create_with_passphrase(PASS.to_string()).expect("create");
+
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    save_settings(s).expect("save settings");
+
+    for name in ["vault.zv", "settings.zcfg"] {
+        let sddl = z_core::testing::dacl_sddl(&dir.join(name)).expect("read the access list");
+
+        // «P» — protected. Without it the file takes whatever the folder gives,
+        // which is the half of the contract that has nothing to do with us.
+        assert!(
+            sddl.starts_with("D:P"),
+            "{name} inherits permissions from its folder: {sddl}"
+        );
+        // One allow entry, for the owner. Anything not named is denied by
+        // absence, so counting the entries is the whole check.
+        assert_eq!(
+            sddl.matches('(').count(),
+            1,
+            "{name} names more than one account: {sddl}"
+        );
+        assert!(
+            sddl.contains(";OW)") || sddl.contains(";CO)"),
+            "{name}'s single entry is not the owner's: {sddl}"
+        );
+    }
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 #[cfg(unix)]
 #[test]
 fn vault_temp_symlink_is_refused_and_victim_is_unchanged() {
