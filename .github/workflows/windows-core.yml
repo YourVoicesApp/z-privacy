@@ -1,0 +1,70 @@
+# The first honest question about Windows: does the core compile there at all,
+# and do its 251 tests still hold?
+#
+# Nothing is fixed before this has answered. Z Privacy has never been built or
+# tested off Linux — `secure_file.rs` guards the vault entirely under
+# `#[cfg(unix)]`, and the data directory is a hard-coded `~/.local/share` path —
+# so a red run here is the report we are asking for, not a failure to hide.
+#
+# It runs on this branch only. `main` carries V1, frozen at d685d7b, and nothing
+# here reaches it.
+name: windows core
+
+on:
+  push:
+    branches: [platform/windows]
+  pull_request:
+    branches: [platform/windows]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: build and test z_core on Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The runner image ships a Rust toolchain. Using it rather than a
+      # third-party setup action keeps this to one dependency we did not write,
+      # and the printed version is part of the report.
+      - name: Toolchain
+        shell: bash
+        run: |
+          rustc --version
+          cargo --version
+          echo "workspace rust-version: $(grep -m1 'rust-version' Cargo.toml)"
+
+      # Split from the tests on purpose: «it does not compile» and «it compiles
+      # and something is wrong» are different answers, and the step that fails
+      # says which one we got.
+      - name: Compile the core
+        shell: bash
+        run: cargo build -p z_core --features fake_provider
+
+      - name: Compile the workspace
+        shell: bash
+        run: cargo build --workspace --features fake_provider
+
+      - name: Rust tests
+        shell: bash
+        run: cargo test --workspace --features fake_provider -- --nocapture
+
+      - name: What Linux says, for comparison
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Measured on Linux at d685d7b"
+            echo ""
+            echo '| | |'
+            echo '|---|---|'
+            echo '| Rust tests | 251 passed, 0 failed |'
+            echo '| gates | 108 checks, 0 failed, 0 skipped |'
+            echo ""
+            echo "Anything this Windows run reports differently is the port's work list."
+          } >> "$GITHUB_STEP_SUMMARY"
