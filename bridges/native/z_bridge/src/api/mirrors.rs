@@ -740,6 +740,10 @@ pub struct _ProviderFact {
     /// What Z Privacy speaks, not what a person chose: «OpenAI-compatible».
     /// A **protocol**, shown where the technical detail belongs.
     pub label: String,
+    /// A credential is stored for this provider — not «this provider is set
+    /// up». A model on this machine is connected and holds no credential, so
+    /// this is `false` while `connected` is `true`, and the two words are not
+    /// interchangeable anywhere.
     pub configured: bool,
     pub connected: bool,
     pub endpoint: String,

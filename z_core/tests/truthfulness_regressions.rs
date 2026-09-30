@@ -204,3 +204,72 @@ fn a_displayed_mutation_bumps_state_revision() {
     assert!(workspace_snapshot(s).unwrap().state_revision > before);
     close_session(s).ok();
 }
+
+/// P2-4 — the eleventh lie: a login record is not a credential.
+///
+/// Connecting a model on this machine stores a login with an empty credential.
+/// The snapshot used to read «is there a record?» and answer `EncryptedInVault`,
+/// so the vault card claimed to hold a key for the one door whose own text is
+/// «No key, no account», and the form offered to forget it.
+#[test]
+fn lie_a_keyless_login_claims_a_key() {
+    let _g = serial();
+    fresh_dir("keyless");
+    vault_create_with_passphrase(PASS.to_string()).expect("vault");
+    let openai = ProviderId {
+        id: "openai".to_string(),
+    };
+    let _ = disconnect_provider(openai.clone());
+
+    // A model on this machine: an address, a model, and no credential at all.
+    connect_provider(
+        openai.clone(),
+        String::new(),
+        Some("http://127.0.0.1:11434".to_string()),
+        Some("llama3.2".to_string()),
+    )
+    .expect("a local model needs no key");
+
+    let p = provider_snapshot()
+        .expect("snap")
+        .providers
+        .into_iter()
+        .find(|p| p.id == "openai")
+        .expect("openai");
+
+    // Connected, and holding nothing. Both at once — that is the whole point.
+    assert!(p.connected, "a local model with no key is still reachable");
+    assert!(p.on_this_computer);
+    assert!(!p.credential_required);
+    assert_eq!(
+        p.credential_state,
+        CredentialState::Missing,
+        "an empty credential was given a home in the vault"
+    );
+    assert!(
+        !p.configured,
+        "`configured` means a credential is stored, and none is"
+    );
+
+    // And the vault was open, so this is not «it fell back to memory».
+    assert_eq!(vault_state().expect("vault state"), VaultState::Unlocked);
+
+    // A real key, at an address that needs one, still reports where it lives.
+    connect_provider(
+        openai.clone(),
+        "sk-test-not-a-real-key".to_string(),
+        Some("https://api.openai.com".to_string()),
+        Some("gpt-4o-mini".to_string()),
+    )
+    .expect("connect");
+    let p = provider_snapshot()
+        .expect("snap")
+        .providers
+        .into_iter()
+        .find(|p| p.id == "openai")
+        .expect("openai");
+    assert_eq!(p.credential_state, CredentialState::EncryptedInVault);
+    assert!(p.configured);
+
+    disconnect_provider(openai).ok();
+}

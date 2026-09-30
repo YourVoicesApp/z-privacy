@@ -255,7 +255,11 @@ pub(crate) fn providers() -> ApiResult<Vec<ProviderRow>> {
             id: provider.id().to_string(),
             label: provider.label().to_string(),
             connected,
-            session_only: connected && sealed.is_none() && in_session.is_some(),
+            // Asked of the credential, not of the record that carries it: a
+            // keyless local login is not «a key kept for this run only».
+            session_only: connected
+                && sealed.is_none()
+                && in_session.as_ref().is_some_and(holds_credential),
             base_url: login
                 .as_ref()
                 .map(|l| l.base.clone())
@@ -445,6 +449,16 @@ fn login_for(id: &str) -> ApiResult<ProviderLogin> {
         return Err(crate::providers::not_connected(id));
     }
     Ok(login)
+}
+
+/// Does this login actually hold a credential?
+///
+/// A login record is **not** a credential. A model on this machine is stored
+/// with an empty one, so «a record exists» and «a key is held» are two facts,
+/// and every sentence that says where a key lives has to ask this one — or it
+/// tells a person their vault is holding something it has never seen.
+pub(crate) fn holds_credential(login: &ProviderLogin) -> bool {
+    !login.credential.expose().is_empty()
 }
 
 pub(crate) fn login_is_usable(provider: &dyn crate::providers::Provider, login: &ProviderLogin) -> bool {

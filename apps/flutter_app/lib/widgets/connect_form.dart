@@ -84,6 +84,11 @@ class _ConnectFormState extends State<ConnectForm> {
                   'This key is sealed in the vault.',
                 CredentialState.sessionOnly =>
                   'This key is kept in memory for this run only — it is gone when the app closes.',
+                // The same question the button above asks, in the other
+                // direction: where a key is not needed at all, promising to
+                // seal one is the previous world's sentence.
+                CredentialState.missing when !widget.row.credentialRequired =>
+                  'No key is needed at this address.',
                 CredentialState.missing =>
                   widget.ground.vault == VaultState.unlocked
                       ? 'No key is stored yet. Connecting will seal it in the vault.'
@@ -102,22 +107,31 @@ class _ConnectFormState extends State<ConnectForm> {
               filled: true,
               onPressed: _busy ? null : _connect,
             ),
-            if (widget.row.connected) ...[
+            // One button, named by what is actually held. «Forget the key»
+            // used to appear on the strength of `connected` alone, so the
+            // «No key, no account» door offered to forget a key that had
+            // never existed. What the call takes away is the whole login —
+            // so where there is no credential, the honest word is the one
+            // the status line already uses.
+            if (widget.row.credentialState != CredentialState.missing) ...[
               const SizedBox(width: 9),
-              ZButton(
-                label: 'Forget the key',
-                onPressed: _busy
-                    ? null
-                    : () async {
-                        final bad = await widget.ground.forget(widget.row.id);
-                        if (mounted) setState(() => _trouble = bad);
-                      },
-              ),
+              ZButton(label: 'Forget the key', onPressed: _busy ? null : _forget),
+            ] else if (widget.row.connected) ...[
+              const SizedBox(width: 9),
+              ZButton(label: 'Disconnect', onPressed: _busy ? null : _forget),
             ],
           ],
         ),
       ],
     );
+  }
+
+  /// Takes the whole login away — the credential in both of its homes, and
+  /// the address it was bound to. The two labels above are two true names for
+  /// this one act, not two acts.
+  Future<void> _forget() async {
+    final bad = await widget.ground.forget(widget.row.id);
+    if (mounted) setState(() => _trouble = bad);
   }
 
   Future<void> _connect() async {

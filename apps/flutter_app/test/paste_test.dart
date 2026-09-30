@@ -16,6 +16,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 
 /// Stand in for the system clipboard. `null` is «nothing there»; throwing is
@@ -160,6 +161,7 @@ void main() {
 
   _p22();
   _p23();
+  _p24();
 
   /// The one that matters after F-05: pressing Paste must not re-aim the
   /// answer at a different payload.
@@ -271,5 +273,107 @@ void _p23() {
       expect(facts.first.label, 'OpenAI-compatible',
           reason: 'the protocol is still reported for the settings screen');
     });
+  });
+}
+
+/// P2-4 — «Forget the key» may only stand where a key is held.
+///
+/// The local door's own text is «No key, no account», and it offered to forget
+/// one. The cause was under the screen: the core answered «sealed in the vault»
+/// for a login whose credential is empty, so both facts are pinned here — what
+/// the core says, and what the form draws from it.
+void _p24() {
+  Future<ProviderFact> currentRow() async =>
+      (await z.providerSnapshot()).providers.firstWhere((p) => p.id == 'openai');
+
+  Future<void> showForm(WidgetTester tester, ProviderFact row, {required bool local}) async {
+    final ground = Ground();
+    await tester.runAsync(() => ground.refresh());
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: ConnectForm(ground: ground, row: row, local: local)),
+    ));
+    await settle(tester);
+  }
+
+  testWidgets('a model on this machine offers Disconnect, not «Forget the key»', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    addTearDown(() => z.disconnectProvider(provider: const ProviderId(id: 'openai')));
+
+    late final ProviderFact row;
+    await tester.runAsync(() async {
+      await z.disconnectProvider(provider: const ProviderId(id: 'openai'));
+      await z.connectProvider(
+        provider: const ProviderId(id: 'openai'),
+        credential: '',
+        baseUrl: 'http://127.0.0.1:11434',
+        model: 'llama3.2',
+      );
+      row = await currentRow();
+    });
+
+    // The core first: connected, on this computer, holding nothing.
+    expect(row.connected, isTrue);
+    expect(row.onThisComputer, isTrue);
+    expect(row.credentialState, CredentialState.missing,
+        reason: 'a login with an empty credential claimed a home for a key');
+
+    await showForm(tester, row, local: true);
+    expect(find.text('Forget the key'), findsNothing,
+        reason: 'the «No key, no account» door offered to forget a key');
+    expect(find.text('Disconnect'), findsOneWidget,
+        reason: 'a local connection could no longer be taken away');
+
+    // The same address seen through the Direct API card — one provider, two
+    // doors. Neither of them may promise to seal a key at an address that
+    // needs none.
+    await showForm(tester, row, local: false);
+    expect(find.text('No key is needed at this address.'), findsOneWidget);
+    expect(find.textContaining('sealed in the vault'), findsNothing,
+        reason: 'the vault was said to hold a key that was never given');
+    expect(find.text('Forget the key'), findsNothing);
+  });
+
+  testWidgets('a key that is held is still offered to be forgotten', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    addTearDown(() => z.disconnectProvider(provider: const ProviderId(id: 'openai')));
+
+    late final ProviderFact row;
+    await tester.runAsync(() async {
+      await z.disconnectProvider(provider: const ProviderId(id: 'openai'));
+      await z.connectProvider(
+        provider: const ProviderId(id: 'openai'),
+        credential: 'sk-test-not-a-real-key',
+        baseUrl: 'https://api.openai.com',
+        model: 'gpt-4o-mini',
+      );
+      row = await currentRow();
+    });
+
+    expect(row.credentialState, isNot(CredentialState.missing));
+
+    await showForm(tester, row, local: false);
+    expect(find.text('Forget the key'), findsOneWidget,
+        reason: 'a stored key cannot be taken away');
+    expect(find.text('Disconnect'), findsNothing,
+        reason: 'two words for one act, drawn at once');
+  });
+
+  testWidgets('nothing connected offers neither', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    late final ProviderFact row;
+    await tester.runAsync(() async {
+      await z.disconnectProvider(provider: const ProviderId(id: 'openai'));
+      row = await currentRow();
+    });
+
+    expect(row.connected, isFalse);
+    await showForm(tester, row, local: false);
+    expect(find.text('Forget the key'), findsNothing);
+    expect(find.text('Disconnect'), findsNothing);
+    expect(find.text('Connect'), findsOneWidget);
   });
 }

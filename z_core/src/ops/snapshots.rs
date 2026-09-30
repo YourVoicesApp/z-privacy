@@ -296,9 +296,15 @@ pub(crate) fn provider_facts() -> ApiResult<Vec<ProviderFact>> {
     for provider in crate::providers::known() {
         let sealed = super::login_in_vault(provider.id());
         let in_session = with_core(|core| core.session_logins.get(provider.id()).cloned());
-        let credential_state = if sealed.is_some() {
+        // Where the key lives — asked of the key, never of the record around it.
+        // Connecting a model on this machine writes a login with an empty
+        // credential, and reading «is there a record?» here made the vault card
+        // say «key sealed in the vault» about a provider whose own text is «No
+        // key, no account». The question is «where does the credential live»,
+        // and for a keyless provider the answer is «nowhere».
+        let credential_state = if sealed.as_ref().is_some_and(super::holds_credential) {
             CredentialState::EncryptedInVault
-        } else if in_session.is_some() {
+        } else if in_session.as_ref().is_some_and(super::holds_credential) {
             CredentialState::SessionOnly
         } else {
             CredentialState::Missing

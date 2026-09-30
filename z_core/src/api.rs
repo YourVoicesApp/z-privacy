@@ -397,7 +397,11 @@ pub struct ProviderRow {
     pub credential_required: bool,
 }
 
-/// Where a provider credential actually lives. Never inferred from `connected`.
+/// Where a provider credential actually lives.
+///
+/// Never inferred from `connected`, and never from the login record either: a
+/// record with an empty credential is `Missing`, because a provider that needs
+/// no key holds none.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CredentialState {
     /// No credential is stored for this provider, in the vault or in memory.
@@ -1002,6 +1006,10 @@ pub struct ProviderFact {
     /// What Z Privacy speaks, not what a person chose: «OpenAI-compatible».
     /// A **protocol**, shown where the technical detail belongs.
     pub label: String,
+    /// A credential is stored for this provider — not «this provider is set
+    /// up». A model on this machine is connected and holds no credential, so
+    /// this is `false` while `connected` is `true`, and the two words are not
+    /// interchangeable anywhere.
     pub configured: bool,
     pub connected: bool,
     pub endpoint: String,

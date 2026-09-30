@@ -103,7 +103,10 @@ fn a_missing_credential_never_claims_a_home() {
     for p in &snap.providers {
         if p.credential_state == CredentialState::Missing {
             assert!(!p.configured);
-            assert!(!p.connected);
+            // «No key» no longer means «not reachable»: a model on this machine
+            // is connected and holds none. What must still hold is that nothing
+            // needing a key is called connected without one.
+            assert!(!p.connected || !p.credential_required);
         }
     }
 }

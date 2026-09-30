@@ -998,6 +998,11 @@ class ProviderFact {
   /// What Z Privacy speaks, not what a person chose: «OpenAI-compatible».
   /// A **protocol**, shown where the technical detail belongs.
   final String label;
+
+  /// A credential is stored for this provider — not «this provider is set
+  /// up». A model on this machine is connected and holds no credential, so
+  /// this is `false` while `connected` is `true`, and the two words are not
+  /// interchangeable anywhere.
   final bool configured;
   final bool connected;
   final String endpoint;
