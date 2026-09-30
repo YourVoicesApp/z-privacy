@@ -681,7 +681,7 @@ void main() {
       expect(shown, bench.payload!.text);
 
       await enterAiMode(tester);
-      expect(find.text('Use AI yourself'), findsOneWidget);
+      expect(find.text('Manual AI'), findsOneWidget);
       expect(find.text('Copy Protected'), findsOneWidget);
       expect(find.textContaining('no account, no key'), findsOneWidget);
 
@@ -710,8 +710,8 @@ void main() {
 
       // And the other two doors are reachable from here without leaving: one for
       // a provider on the internet, one for a model on this machine.
-      expect(find.text('Send from here'), findsOneWidget);
-      expect(find.text('A model on this machine'), findsOneWidget);
+      expect(find.text('Direct API'), findsOneWidget);
+      expect(find.text('Local AI'), findsOneWidget);
 
       // Nothing is connected in this test, so the internet door shows its form —
       // address, model, key — and says where the key would live.
@@ -1583,7 +1583,7 @@ Future<void> enterAiMode(WidgetTester tester) async {
   );
   await tester.tap(find.text('Continue'));
   await tester.pumpAndSettle();
-  expect(find.text('Use AI yourself'), findsOneWidget);
+  expect(find.text('Manual AI'), findsOneWidget);
 }
 
 /// The widget's paint box sits inside the test surface. `tester.tap` will hit
@@ -1786,7 +1786,7 @@ Future<void> reviewJourney(
   );
   expectOnScreen(
     tester,
-    find.text('Send from here'),
+    find.text('Direct API'),
     because:
         'Send from here is a primary action and must be hittable without stretching the window',
   );
