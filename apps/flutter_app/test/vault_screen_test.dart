@@ -750,6 +750,128 @@ void main() {
     expect(await stillTaught(), 0);
   });
 
+  /// A vault holding one taught rule and one taught exception, and nothing
+  /// else — so the two «Forget everywhere» buttons under test are the only two
+  /// on the screen.
+  Future<Ground> ruleAndException(WidgetTester tester, String tag) async {
+    final ground = Ground();
+    await tester.runAsync(() async {
+      final here = Directory('${Directory.systemTemp.path}/zprivacy-$tag-$pid');
+      if (here.existsSync()) here.deleteSync(recursive: true);
+      addTearDown(() {
+        if (here.existsSync()) here.deleteSync(recursive: true);
+      });
+      await z.setDataDir(dir: here.path);
+      await z.vaultCreateWithPassphrase(passphrase: _pass);
+      await z.teachLabelRule(
+        label: 'Mandantenkennung',
+        kind: Kind.customerNo,
+        profileId: null,
+      );
+      // An exception is taught from an **open** suggestion, which is the only
+      // way a person can make one — so the test makes one the same way. A
+      // company name is what the German pack is unsure about; a phone number
+      // it protects outright, and there would be no suggestion to except.
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: 'Kunde: Nordstern Consulting GmbH');
+      await z.scan(session: session);
+      final open = (await z.listFindings(session: session))
+          .where((f) => f.state == MarkState.suggested)
+          .toList();
+      await z.teachException(
+        session: session,
+        finding: open.first.id,
+        scope: Scope.always,
+      );
+      await z.closeSession(session: session);
+      await ground.refresh();
+    });
+    return ground;
+  }
+
+  Future<(int, int)> counts(WidgetTester tester) async {
+    var rules = -1;
+    var exceptions = -1;
+    await tester.runAsync(() async {
+      final snap = await z.privacyRulesSnapshot(profileId: null);
+      rules = snap.labelRules.length;
+      exceptions = snap.exceptions.length;
+    });
+    return (rules, exceptions);
+  }
+
+  testWidgets('a rule and an exception are not forgotten by the press alone', (
+    tester,
+  ) async {
+    // Smoke, 30 September, after the value learned to ask: «Forget everywhere»
+    // meant two things on one screen — a question on the value's card, and an
+    // immediate deletion on the two cards beside it. Same words, same screen.
+    await tester.binding.setSurfaceSize(const Size(1400, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = await ruleAndException(tester, 'press');
+    expect(await counts(tester), (1, 1));
+
+    await tester.pumpWidget(
+      MaterialApp(home: VaultScreen(ground: ground, onClose: () {})),
+    );
+    await settle(tester);
+
+    final buttons = find.widgetWithText(ZButton, 'Forget everywhere');
+    expect(buttons, findsNWidgets(2), reason: 'the rule and the exception');
+
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').at(i));
+      await settle(tester);
+      expect(
+        find.textContaining('Forget «'),
+        findsOneWidget,
+        reason: 'the press asks instead of deleting',
+      );
+      expect(
+        find.textContaining('cannot be undone'),
+        findsOneWidget,
+        reason: 'and says the price of yes',
+      );
+      expect(await counts(tester), (1, 1), reason: 'nothing is gone yet');
+      await tester.tap(find.widgetWithText(ZButton, 'Cancel'));
+      await settle(tester);
+      expect(await counts(tester), (1, 1), reason: 'Cancel keeps both');
+    }
+  });
+
+  testWidgets('confirming forgets the one it named, and leaves the other', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = await ruleAndException(tester, 'confirm');
+    await tester.pumpWidget(
+      MaterialApp(home: VaultScreen(ground: ground, onClose: () {})),
+    );
+    await settle(tester);
+
+    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').first);
+    await settle(tester);
+
+    // The dialog says which one it is about, so the test does not have to
+    // assume an order to know what should be gone afterwards.
+    final aboutRule = find
+        .textContaining('After «Mandantenkennung:»')
+        .evaluate()
+        .isNotEmpty;
+
+    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').last);
+    await settle(tester);
+
+    expect(
+      await counts(tester),
+      aboutRule ? (0, 1) : (1, 0),
+      reason: 'the one named goes, and only that one',
+    );
+  });
+
   testWidgets('the vault tiles name the reach they would forget', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));

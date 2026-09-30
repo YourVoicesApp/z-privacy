@@ -654,7 +654,16 @@ class _TaughtExceptionTile extends StatelessWidget {
           'Do not protect as $kind · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
       why: row.why,
       forgetLabel: forgetLabelFor(row.profileId),
-      onForget: onForget,
+      onForget: () async {
+        final sure = await confirmForgetPlainly(
+          context,
+          what: row.value,
+          goes: 'the exception — this value will be offered for protection again',
+          action: forgetLabelFor(row.profileId),
+        );
+        if (!sure) return null;
+        return onForget();
+      },
     );
   }
 }
@@ -968,16 +977,28 @@ class _TaughtRuleTile extends StatelessWidget {
     // The rule above its action, rather than beside it: the act's name now
     // carries its scope, and a name that long beside an `Expanded` label
     // squeezed the button until its own text overflowed by 58 px.
+    final line = 'After «${row.label}:» → $kind';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('After «${row.label}:» → $kind', style: Zc.body),
+          Text(line, style: Zc.body),
           const SizedBox(height: 2),
           Text(scope, style: Zc.tiny.copyWith(color: Zc.ink4)),
           const SizedBox(height: 7),
-          ZButton(label: forgetLabelFor(row.profileId), onPressed: onForget),
+          ZButton(
+            label: forgetLabelFor(row.profileId),
+            onPressed: () async {
+              final sure = await confirmForgetPlainly(
+                context,
+                what: line,
+                goes: 'the rule — Z Privacy will stop protecting what follows that word',
+                action: forgetLabelFor(row.profileId),
+              );
+              if (sure) onForget();
+            },
+          ),
         ],
       ),
     );

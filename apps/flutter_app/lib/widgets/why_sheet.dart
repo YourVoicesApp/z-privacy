@@ -332,6 +332,93 @@ Future<bool> confirmForget(
   return sure == true;
 }
 
+/// Ask before forgetting something that has nothing to count.
+///
+/// A taught rule and a taught exception hold no value and leave no identity
+/// empty, so `forget_plan` — which counts exactly those — has nothing to say
+/// about them. Inventing numbers so the two sheets would match is worse than
+/// asking plainly, so this asks plainly.
+///
+/// It exists because the button is the same button. When the vault list learned
+/// to ask before forgetting a **value**, «Forget everywhere» began meaning two
+/// things on one screen: a question on one card, and a deletion on the press in
+/// the two beside it. That difference was ours to make and ours to close.
+Future<bool> confirmForgetPlainly(
+  BuildContext context, {
+  required String what,
+  required String goes,
+  required String action,
+}) async {
+  final sure = await showDialog<bool>(
+    context: context,
+    builder: (_) => _PlainForgetSheet(what: what, goes: goes, action: action),
+  );
+  return sure == true;
+}
+
+/// The plain question: what goes, and that yes is final.
+class _PlainForgetSheet extends StatelessWidget {
+  const _PlainForgetSheet({
+    required this.what,
+    required this.goes,
+    required this.action,
+  });
+
+  final String what;
+  final String goes;
+
+  /// The name of the button that opened it, so the confirmation says the same
+  /// words the person just read.
+  final String action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Zc.paper,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Forget «$what»?', style: Zc.h2),
+              const SizedBox(height: 14),
+              const Eyebrow('This will remove'),
+              const SizedBox(height: 7),
+              _Line(goes),
+              const SizedBox(height: 14),
+              Text(
+                'This cannot be undone.',
+                style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                children: [
+                  ZButton(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(false),
+                  ),
+                  ZButton(
+                    label: action,
+                    filled: true,
+                    tint: Zc.amber,
+                    onPressed: () => Navigator.of(context).pop(true),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// What forgetting will take away — shown before it happens, with its numbers.
 class _ForgetSheet extends StatelessWidget {
   const _ForgetSheet({required this.plan, required this.action});
