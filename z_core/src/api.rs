@@ -40,8 +40,33 @@ pub enum ApiError {
     ProviderUnavailable { provider: String },
     /// Suggestions are still unanswered; there is no way past them.
     OpenSuggestions { count: u32 },
-    /// A folder, a profile or a pack could not be used, and why.
-    ImportRefused { reason: String },
+    /// What was given cannot be used, and why: an empty value, a name left
+    /// blank, a passphrase too short, a credential missing where one is
+    /// needed, a scope that does not apply in this conversation.
+    ///
+    /// The person's next move is to change what they entered.
+    InputRefused { reason: String },
+    /// Something was named that is not here — a profile, a rule set, a pack, a
+    /// taught rule. `UnknownToken` is this same shape for a token in a session.
+    ///
+    /// The person's next move is to name something else.
+    NotFound { reason: String },
+    /// There is no vault on this device yet, so there is nothing to open, to
+    /// change, or to keep anything in.
+    ///
+    /// Three neighbours, deliberately apart: this one means **there is none**,
+    /// `VaultLocked` means there is one and it is shut, and `VaultRequired`
+    /// means an act needs one open and none is.
+    VaultAbsent,
+    /// A vault is already on this device, and making another would write over
+    /// it. Refused rather than merged: there is no way back from that.
+    VaultAlreadyExists,
+    /// A place Z Privacy keeps its **own** files cannot be used safely — a
+    /// symlink where a directory belongs, permissions that let someone else
+    /// read it, a temporary file left by another program.
+    ///
+    /// Nothing the person typed is wrong here, so it is not `InputRefused`.
+    StorageRefused { reason: String },
     /// A document was not imported, with the named reason and a detail for the
     /// user («page 3 of 20 has no text layer»).
     DocumentRefused { reason: Refusal, detail: String },
@@ -113,7 +138,11 @@ impl fmt::Display for ApiError {
             Self::VaultLocked => write!(f, "the vault is locked"),
             Self::ProviderUnavailable { provider } => write!(f, "provider {provider} is not available"),
             Self::OpenSuggestions { count } => write!(f, "{count} suggestions are still unanswered"),
-            Self::ImportRefused { reason } => write!(f, "that could not be used: {reason}"),
+            Self::InputRefused { reason } => write!(f, "that cannot be used: {reason}"),
+            Self::NotFound { reason } => write!(f, "that is not here: {reason}"),
+            Self::VaultAbsent => write!(f, "there is no vault on this device yet"),
+            Self::VaultAlreadyExists => write!(f, "a vault already exists on this device"),
+            Self::StorageRefused { reason } => write!(f, "that place cannot be used safely: {reason}"),
             Self::DocumentRefused { reason, detail } => {
                 write!(f, "this document was not imported ({reason:?}): {detail}")
             }

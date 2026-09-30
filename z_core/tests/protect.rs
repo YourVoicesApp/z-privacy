@@ -362,7 +362,7 @@ fn always_and_profile_need_the_vault_and_say_so() {
     // And a profile scope in a conversation that is in no profile is refused
     // with its own reason — there is no profile to remember it for.
     match protect(s, span_of(DOC, "Thomas Müller"), Scope::Profile, Kind::Person) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("profile"), "{reason}"),
+        Err(ApiError::InputRefused { reason }) => assert!(reason.contains("profile"), "{reason}"),
         Err(ApiError::VaultRequired) => {}
         other => panic!("expected a refusal, got {other:?}"),
     }

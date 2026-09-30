@@ -2812,36 +2812,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 6:
         return ApiError_OpenSuggestions(count: dco_decode_u_32(raw[1]));
       case 7:
-        return ApiError_ImportRefused(reason: dco_decode_String(raw[1]));
+        return ApiError_InputRefused(reason: dco_decode_String(raw[1]));
       case 8:
+        return ApiError_NotFound(reason: dco_decode_String(raw[1]));
+      case 9:
+        return ApiError_VaultAbsent();
+      case 10:
+        return ApiError_VaultAlreadyExists();
+      case 11:
+        return ApiError_StorageRefused(reason: dco_decode_String(raw[1]));
+      case 12:
         return ApiError_DocumentRefused(
           reason: dco_decode_box_autoadd_refusal(raw[1]),
           detail: dco_decode_String(raw[2]),
         );
-      case 9:
-        return ApiError_BadSpan(reason: dco_decode_String(raw[1]));
-      case 10:
-        return ApiError_UnknownToken();
-      case 11:
-        return ApiError_NothingToSend();
-      case 12:
-        return ApiError_PayloadRefused(reason: dco_decode_String(raw[1]));
       case 13:
+        return ApiError_BadSpan(reason: dco_decode_String(raw[1]));
+      case 14:
+        return ApiError_UnknownToken();
+      case 15:
+        return ApiError_NothingToSend();
+      case 16:
+        return ApiError_PayloadRefused(reason: dco_decode_String(raw[1]));
+      case 17:
         return ApiError_NetworkRefused(
           reason: dco_decode_box_autoadd_network_refusal(raw[1]),
           detail: dco_decode_String(raw[2]),
         );
-      case 14:
+      case 18:
         return ApiError_UnsupportedKdfParameters(
           reason: dco_decode_String(raw[1]),
         );
-      case 15:
+      case 19:
         return ApiError_TrailingVaultData();
-      case 16:
+      case 20:
         return ApiError_VaultAuthenticationFailed();
-      case 17:
+      case 21:
         return ApiError_PayloadAlreadySent();
-      case 18:
+      case 22:
         return ApiError_VaultRequired();
       default:
         throw Exception("unreachable");
@@ -4000,35 +4008,45 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return ApiError_OpenSuggestions(count: var_count);
       case 7:
         var var_reason = sse_decode_String(deserializer);
-        return ApiError_ImportRefused(reason: var_reason);
+        return ApiError_InputRefused(reason: var_reason);
       case 8:
+        var var_reason = sse_decode_String(deserializer);
+        return ApiError_NotFound(reason: var_reason);
+      case 9:
+        return ApiError_VaultAbsent();
+      case 10:
+        return ApiError_VaultAlreadyExists();
+      case 11:
+        var var_reason = sse_decode_String(deserializer);
+        return ApiError_StorageRefused(reason: var_reason);
+      case 12:
         var var_reason = sse_decode_box_autoadd_refusal(deserializer);
         var var_detail = sse_decode_String(deserializer);
         return ApiError_DocumentRefused(reason: var_reason, detail: var_detail);
-      case 9:
+      case 13:
         var var_reason = sse_decode_String(deserializer);
         return ApiError_BadSpan(reason: var_reason);
-      case 10:
+      case 14:
         return ApiError_UnknownToken();
-      case 11:
+      case 15:
         return ApiError_NothingToSend();
-      case 12:
+      case 16:
         var var_reason = sse_decode_String(deserializer);
         return ApiError_PayloadRefused(reason: var_reason);
-      case 13:
+      case 17:
         var var_reason = sse_decode_box_autoadd_network_refusal(deserializer);
         var var_detail = sse_decode_String(deserializer);
         return ApiError_NetworkRefused(reason: var_reason, detail: var_detail);
-      case 14:
+      case 18:
         var var_reason = sse_decode_String(deserializer);
         return ApiError_UnsupportedKdfParameters(reason: var_reason);
-      case 15:
+      case 19:
         return ApiError_TrailingVaultData();
-      case 16:
+      case 20:
         return ApiError_VaultAuthenticationFailed();
-      case 17:
+      case 21:
         return ApiError_PayloadAlreadySent();
-      case 18:
+      case 22:
         return ApiError_VaultRequired();
       default:
         throw UnimplementedError('');
@@ -5462,38 +5480,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case ApiError_OpenSuggestions(count: final count):
         sse_encode_i_32(6, serializer);
         sse_encode_u_32(count, serializer);
-      case ApiError_ImportRefused(reason: final reason):
+      case ApiError_InputRefused(reason: final reason):
         sse_encode_i_32(7, serializer);
         sse_encode_String(reason, serializer);
-      case ApiError_DocumentRefused(reason: final reason, detail: final detail):
+      case ApiError_NotFound(reason: final reason):
         sse_encode_i_32(8, serializer);
+        sse_encode_String(reason, serializer);
+      case ApiError_VaultAbsent():
+        sse_encode_i_32(9, serializer);
+      case ApiError_VaultAlreadyExists():
+        sse_encode_i_32(10, serializer);
+      case ApiError_StorageRefused(reason: final reason):
+        sse_encode_i_32(11, serializer);
+        sse_encode_String(reason, serializer);
+      case ApiError_DocumentRefused(reason: final reason, detail: final detail):
+        sse_encode_i_32(12, serializer);
         sse_encode_box_autoadd_refusal(reason, serializer);
         sse_encode_String(detail, serializer);
       case ApiError_BadSpan(reason: final reason):
-        sse_encode_i_32(9, serializer);
+        sse_encode_i_32(13, serializer);
         sse_encode_String(reason, serializer);
       case ApiError_UnknownToken():
-        sse_encode_i_32(10, serializer);
+        sse_encode_i_32(14, serializer);
       case ApiError_NothingToSend():
-        sse_encode_i_32(11, serializer);
+        sse_encode_i_32(15, serializer);
       case ApiError_PayloadRefused(reason: final reason):
-        sse_encode_i_32(12, serializer);
+        sse_encode_i_32(16, serializer);
         sse_encode_String(reason, serializer);
       case ApiError_NetworkRefused(reason: final reason, detail: final detail):
-        sse_encode_i_32(13, serializer);
+        sse_encode_i_32(17, serializer);
         sse_encode_box_autoadd_network_refusal(reason, serializer);
         sse_encode_String(detail, serializer);
       case ApiError_UnsupportedKdfParameters(reason: final reason):
-        sse_encode_i_32(14, serializer);
+        sse_encode_i_32(18, serializer);
         sse_encode_String(reason, serializer);
       case ApiError_TrailingVaultData():
-        sse_encode_i_32(15, serializer);
+        sse_encode_i_32(19, serializer);
       case ApiError_VaultAuthenticationFailed():
-        sse_encode_i_32(16, serializer);
+        sse_encode_i_32(20, serializer);
       case ApiError_PayloadAlreadySent():
-        sse_encode_i_32(17, serializer);
+        sse_encode_i_32(21, serializer);
       case ApiError_VaultRequired():
-        sse_encode_i_32(18, serializer);
+        sse_encode_i_32(22, serializer);
     }
   }
 

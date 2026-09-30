@@ -176,7 +176,7 @@ fn stale_payload_after_every_mutating_call() {
         }),
         ("switch_pack · unknown", |_| {}, |s| {
             // A pack that does not exist changes nothing and says so.
-            assert!(matches!(switch_pack(s, "kl".to_string()), Err(ApiError::ImportRefused { .. })));
+            assert!(matches!(switch_pack(s, "kl".to_string()), Err(ApiError::NotFound { .. })));
             Did::Nothing
         }),
     ];

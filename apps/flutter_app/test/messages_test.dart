@@ -21,7 +21,11 @@ final _everyError = <ApiError>[
   const ApiError.vaultLocked(),
   const ApiError.providerUnavailable(provider: 'openai'),
   const ApiError.openSuggestions(count: 2),
-  const ApiError.importRefused(reason: 'this file could not be opened safely'),
+  const ApiError.inputRefused(reason: 'a profile needs a name you will recognise'),
+  const ApiError.notFound(reason: 'there is no rule set called «sv»'),
+  const ApiError.vaultAbsent(),
+  const ApiError.vaultAlreadyExists(),
+  const ApiError.storageRefused(reason: 'the vault folder: a temporary file was left behind'),
   const ApiError.documentRefused(
     reason: Refusal.malformedDocument(),
     detail: 'word/document.xml is not well-formed XML',
@@ -83,7 +87,8 @@ void _readsAsHuman(String message, String what) {
 
 void main() {
   test('every ApiError variant has a human sentence', () {
-    expect(_everyError.length, 19, reason: 'the contract has 19 ApiError variants');
+    expect(_everyError.length, 23,
+        reason: 'the contract has 23 ApiError variants');
     for (final e in _everyError) {
       _readsAsHuman(humanMessage(e), e.runtimeType.toString());
     }
@@ -104,14 +109,38 @@ void main() {
     // The exact case from the human run and the re-triage: pressing Connect
     // with an empty key used to print
     //   ApiError.importRefused(reason: OpenAI-compatible needs a credential …)
-    final e = const ApiError.importRefused(
+    //
+    // And the word was wrong twice over: it was debug formatting, **and**
+    // nothing was being imported. The core now calls this what it is.
+    final e = const ApiError.inputRefused(
       reason: 'OpenAI-compatible needs a credential at that address; a model on '
           'this machine does not',
     );
     final message = humanMessage(e);
     expect(message.contains('ApiError'), isFalse);
-    expect(message.contains('importRefused'), isFalse);
+    expect(message.contains('inputRefused'), isFalse);
     expect(message, contains('needs a credential at that address'));
+  });
+
+  test('the split gave each story its own next move', () {
+    // One sentence for «change what you typed», «name something else» and
+    // «there is no vault» was the name's own defect one layer up: a person
+    // cannot act on a word that covers three different situations.
+    final input = humanMessage(const ApiError.inputRefused(reason: 'a profile needs a name'));
+    final missing = humanMessage(const ApiError.notFound(reason: 'that profile is not in this vault'));
+    final absent = humanMessage(const ApiError.vaultAbsent());
+    final already = humanMessage(const ApiError.vaultAlreadyExists());
+    final storage = humanMessage(
+        const ApiError.storageRefused(reason: 'the vault folder: a temporary file was left behind'));
+
+    expect({input, missing, absent, already, storage}.length, 5,
+        reason: 'two of the five stories are told with the same sentence');
+    // The two that need no string say the whole fact themselves, so no reason
+    // can be worded wrongly into them.
+    expect(absent, contains('no vault on this device'));
+    expect(already, contains('will not write over'));
+    // And a location that cannot be used is not blamed on the person.
+    expect(storage, startsWith('Z Privacy will not use that location'));
   });
 
   test('anything unknown still gets a sentence, never debug formatting', () {

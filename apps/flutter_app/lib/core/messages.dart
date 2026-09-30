@@ -57,13 +57,20 @@ String humanMessage(Object error) {
     ApiError_OpenSuggestions(:final count) => count == 1
         ? 'One suggestion is still waiting for your word.'
         : '$count suggestions are still waiting for your word.',
-    // `ImportRefused` is **overloaded in the core**: it carries a bad file, a
-    // provider that needs a credential, a profile that does not exist. So a
-    // single fixed sentence here would be wrong for two of the three — which
-    // is the same defect as the name itself. Until the core splits it, the
-    // reason is a concrete fact and is made into a sentence rather than
-    // replaced by a guess.
-    ApiError_ImportRefused(:final reason) => _sentence(reason),
+    // The core split `ImportRefused` on 30 September, so this no longer has to
+    // word one sentence for three unrelated stories. Each of these is a
+    // different next move for the person: change what you entered · name
+    // something else · make a vault · nothing you typed is wrong.
+    ApiError_InputRefused(:final reason) => _sentence(reason),
+    ApiError_NotFound(:final reason) => _sentence(reason),
+    ApiError_VaultAbsent() =>
+      'There is no vault on this device yet. Create one to keep anything for tomorrow.',
+    ApiError_VaultAlreadyExists() =>
+      'A vault already exists on this device, and Z Privacy will not write over it.',
+    // Not the person's doing, and said so — the fault is in a location, and
+    // the reason names which one and why.
+    ApiError_StorageRefused(:final reason) =>
+      'Z Privacy will not use that location — ${_lower(reason)}',
     ApiError_DocumentRefused(:final reason) => _document(reason),
     ApiError_BadSpan() =>
       'That selection could not be read. Try selecting the words again.',
@@ -85,6 +92,16 @@ String humanMessage(Object error) {
 /// A fact from the core, made into something a person reads: a capital at the
 /// front and a full stop at the end. The core writes facts, not phrasing, and
 /// this is the seam where the two meet.
+/// A core fact folded into the middle of a sentence: lower-cased at its first
+/// letter and closed with a stop, so «Z Privacy will not use that location —
+/// the vault folder: a symlink…» reads as one line rather than two halves.
+String _lower(String fact) {
+  final trimmed = fact.trim();
+  if (trimmed.isEmpty) return 'the reason was not reported.';
+  final lowered = trimmed[0].toLowerCase() + trimmed.substring(1);
+  return lowered.endsWith('.') ? lowered : '$lowered.';
+}
+
 String _sentence(String fact) {
   final trimmed = fact.trim();
   if (trimmed.isEmpty) return unnamedTrouble;

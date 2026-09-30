@@ -304,7 +304,7 @@ pub(crate) fn connect_provider(provider: ProviderId, credential: String, base_ur
     // one for want of a key would shut the most private door in the product.
     // Everywhere else, an empty credential connects nothing and says so.
     if credential.is_empty() && known.credential_required(&base) {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: format!(
                 "{} needs a credential at that address; a model on this machine does not",
                 known.label()
@@ -862,7 +862,7 @@ fn remember_in_vault(session: SessionId, span: Span, scope: Scope, kind: Kind) -
     .ok_or(ApiError::InvalidSession)??;
 
     if profile_only && profile.is_none() {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: "this conversation is not in a profile, so there is no profile to remember it                      for — choose «always», or open a profile first"
                 .to_string(),
         });
@@ -1623,13 +1623,13 @@ pub(crate) fn teach_exception(session: SessionId, finding: u32, scope: Scope) ->
             (text, record.kind, s.profile_id.clone())
         };
         let target_profile = match scope {
-            Scope::Profile => profile.ok_or_else(|| ApiError::ImportRefused {
+            Scope::Profile => profile.ok_or_else(|| ApiError::InputRefused {
                 reason: "this conversation is not in a profile, so there is no profile exception to remember"
                     .to_string(),
             })?,
             Scope::Always => String::new(),
             _ => {
-                return Err(ApiError::ImportRefused {
+                return Err(ApiError::InputRefused {
                     reason: "a saved exception must be for this profile or everywhere".to_string(),
                 })
             }
@@ -1717,7 +1717,7 @@ pub(crate) fn switch_profile(session: SessionId, profile_id: Option<String>) -> 
 
 pub(crate) fn switch_pack(session: SessionId, pack_id: String) -> ApiResult<RescanOutcome> {
     if !scanner::packs::installed().iter().any(|p| p.id == pack_id) {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::NotFound {
             reason: format!("there is no privacy pack called «{pack_id}»"),
         });
     }

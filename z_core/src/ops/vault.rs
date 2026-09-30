@@ -33,7 +33,7 @@ pub(crate) fn vault_state() -> ApiResult<VaultState> {
 
 pub(crate) fn vault_create(passphrase: String) -> ApiResult<VaultUnlockOutcome> {
     if passphrase.chars().count() < 8 {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: "a vault passphrase needs at least eight characters".to_string(),
         });
     }
@@ -60,7 +60,7 @@ pub(crate) fn vault_lock() -> ApiResult<()> {
 
 pub(crate) fn vault_change_passphrase(old: String, replacement: String) -> ApiResult<()> {
     if replacement.chars().count() < 8 {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: "a vault passphrase needs at least eight characters".to_string(),
         });
     }
@@ -154,7 +154,7 @@ pub(crate) fn set_value(
     policy: Policy,
 ) -> ApiResult<u32> {
     if text.is_empty() {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: "an empty value would match everything and protect nothing".to_string(),
         });
     }
@@ -192,7 +192,7 @@ pub(crate) fn set_value(
 
 pub(crate) fn add_value_alias(entity: u32, value_id: u32, alias: String) -> ApiResult<()> {
     if alias.is_empty() {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: "an empty spelling is not a spelling".to_string(),
         });
     }
@@ -279,7 +279,7 @@ pub(crate) fn hide_value() -> ApiResult<()> {
 pub(crate) fn rename_entity(entity_id: u32, label: String) -> ApiResult<()> {
     let label = label.trim().to_string();
     if label.is_empty() {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: "an identity needs a name".to_string(),
         });
     }
@@ -302,7 +302,7 @@ pub(crate) fn move_entity(entity_id: u32, profile_id: Option<String>) -> ApiResu
         core.vault.with_open_mut(|vault| {
             if let Some(wanted) = &profile_id {
                 if !vault.profiles.iter().any(|p| &p.id == wanted) {
-                    return Err(ApiError::ImportRefused {
+                    return Err(ApiError::NotFound {
                         reason: no_such_profile(),
                     });
                 }
@@ -765,7 +765,7 @@ fn no_such_profile() -> String {
 pub(crate) fn create_profile(name: String) -> ApiResult<String> {
     let name = name.trim().to_string();
     if name.is_empty() {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: "a profile needs a name you will recognise".to_string(),
         });
     }
@@ -801,7 +801,7 @@ pub(crate) fn create_profile(name: String) -> ApiResult<String> {
 pub(crate) fn rename_profile(profile_id: String, name: String) -> ApiResult<()> {
     let name = name.trim().to_string();
     if name.is_empty() {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: "a profile needs a name you will recognise".to_string(),
         });
     }
@@ -811,7 +811,7 @@ pub(crate) fn rename_profile(profile_id: String, name: String) -> ApiResult<()> 
                 .profiles
                 .iter_mut()
                 .find(|p| p.id == profile_id)
-                .ok_or(ApiError::ImportRefused {
+                .ok_or(ApiError::NotFound {
                     reason: no_such_profile(),
                 })?;
             profile.name = name;
@@ -858,7 +858,7 @@ pub(crate) fn rule_sets() -> ApiResult<Vec<crate::api::RuleSetRow>> {
 pub(crate) fn set_profile_languages(profile_id: String, languages: Vec<String>) -> ApiResult<ProfileRow> {
     let known = crate::scanner::sets::known_of(&languages);
     if let Some(missing) = languages.iter().find(|l| !known.iter().any(|k| k == *l)) {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::NotFound {
             reason: format!("there is no rule set called «{missing}»"),
         });
     }
@@ -884,7 +884,7 @@ pub(crate) fn set_profile_languages(profile_id: String, languages: Vec<String>) 
 pub(crate) fn teach_label_rule(label: String, kind: Kind, profile_id: Option<String>) -> ApiResult<u32> {
     let label = crate::text::nfc(label.trim()).to_string();
     if label.is_empty() {
-        return Err(ApiError::ImportRefused {
+        return Err(ApiError::InputRefused {
             reason: "a rule needs a word to look for".to_string(),
         });
     }
@@ -892,7 +892,7 @@ pub(crate) fn teach_label_rule(label: String, kind: Kind, profile_id: Option<Str
         core.vault.with_open_mut(|vault| {
             if let Some(owner) = profile_id.as_deref() {
                 if !vault.profiles.iter().any(|p| p.id == owner) {
-                    return Err(ApiError::ImportRefused {
+                    return Err(ApiError::NotFound {
                         reason: no_such_profile(),
                     });
                 }
@@ -921,7 +921,7 @@ pub(crate) fn forget_label_rule(id: u32) -> ApiResult<()> {
             let before = vault.label_rules.len();
             vault.label_rules.retain(|r| r.id != id);
             if vault.label_rules.len() == before {
-                return Err(ApiError::ImportRefused {
+                return Err(ApiError::NotFound {
                     reason: "there is no rule with that number".to_string(),
                 });
             }

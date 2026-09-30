@@ -123,9 +123,7 @@ impl VaultStore {
     pub(crate) fn create(&mut self, passphrase: &str) -> ApiResult<(u32, u32)> {
         self.load_sealed();
         if self.sealed.is_some() {
-            return Err(ApiError::ImportRefused {
-                reason: "a vault already exists on this device".to_string(),
-            });
+            return Err(ApiError::VaultAlreadyExists);
         }
         let model = Vault::new();
         // The master key has to exist before the body can be encoded, because the
@@ -152,9 +150,7 @@ impl VaultStore {
         if let Some(err) = self.sealed_error.clone() {
             return Err(err);
         }
-        let sealed = self.sealed.as_ref().ok_or(ApiError::ImportRefused {
-            reason: "there is no vault on this device yet".to_string(),
-        })?;
+        let sealed = self.sealed.as_ref().ok_or(ApiError::VaultAbsent)?;
         let master = sealed.unwrap_master(passphrase)?;
         let body = sealed.open_body(&master)?;
         let model = format::decode(&body, &master, sealed.credentials_are_sealed())?;
@@ -184,9 +180,7 @@ impl VaultStore {
         if let Some(err) = self.sealed_error.clone() {
             return Err(err);
         }
-        let sealed = self.sealed.as_mut().ok_or(ApiError::ImportRefused {
-            reason: "there is no vault on this device yet".to_string(),
-        })?;
+        let sealed = self.sealed.as_mut().ok_or(ApiError::VaultAbsent)?;
         sealed.change_passphrase(old, replacement)?;
         self.write_to_disk()
     }

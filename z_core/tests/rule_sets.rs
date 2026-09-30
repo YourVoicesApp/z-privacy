@@ -205,7 +205,7 @@ fn the_snapshot_reports_the_rules_and_the_sets_that_actually_ran() {
     // And a set this build does not have is refused by name, never stored as
     // «active» and quietly ignored.
     match set_profile_languages(profile, vec!["sv".to_string()]) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("sv"), "{reason}"),
+        Err(ApiError::NotFound { reason }) => assert!(reason.contains("sv"), "{reason}"),
         other => panic!("an unknown rule set was accepted: {other:?}"),
     }
 }

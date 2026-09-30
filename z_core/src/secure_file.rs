@@ -18,8 +18,8 @@ use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 const O_NOFOLLOW: i32 = 0o400000;
 
 fn refused(label: &str, reason: impl Into<String>) -> ApiError {
-    ApiError::ImportRefused {
-        reason: format!("{label} could not be used safely: {}", reason.into()),
+    ApiError::StorageRefused {
+        reason: format!("{label}: {}", reason.into()),
     }
 }
 

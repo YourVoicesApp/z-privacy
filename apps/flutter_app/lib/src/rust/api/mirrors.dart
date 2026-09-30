@@ -109,9 +109,39 @@ sealed class ApiError with _$ApiError implements FrbException {
   const factory ApiError.openSuggestions({required int count}) =
       ApiError_OpenSuggestions;
 
-  /// A folder, a profile or a pack could not be used, and why.
-  const factory ApiError.importRefused({required String reason}) =
-      ApiError_ImportRefused;
+  /// What was given cannot be used, and why: an empty value, a name left
+  /// blank, a passphrase too short, a credential missing where one is
+  /// needed, a scope that does not apply in this conversation.
+  ///
+  /// The person's next move is to change what they entered.
+  const factory ApiError.inputRefused({required String reason}) =
+      ApiError_InputRefused;
+
+  /// Something was named that is not here — a profile, a rule set, a pack, a
+  /// taught rule. `UnknownToken` is this same shape for a token in a session.
+  ///
+  /// The person's next move is to name something else.
+  const factory ApiError.notFound({required String reason}) = ApiError_NotFound;
+
+  /// There is no vault on this device yet, so there is nothing to open, to
+  /// change, or to keep anything in.
+  ///
+  /// Three neighbours, deliberately apart: this one means **there is none**,
+  /// `VaultLocked` means there is one and it is shut, and `VaultRequired`
+  /// means an act needs one open and none is.
+  const factory ApiError.vaultAbsent() = ApiError_VaultAbsent;
+
+  /// A vault is already on this device, and making another would write over
+  /// it. Refused rather than merged: there is no way back from that.
+  const factory ApiError.vaultAlreadyExists() = ApiError_VaultAlreadyExists;
+
+  /// A place Z Privacy keeps its **own** files cannot be used safely — a
+  /// symlink where a directory belongs, permissions that let someone else
+  /// read it, a temporary file left by another program.
+  ///
+  /// Nothing the person typed is wrong here, so it is not `InputRefused`.
+  const factory ApiError.storageRefused({required String reason}) =
+      ApiError_StorageRefused;
 
   /// A document was not imported, with the named reason and a detail for the
   /// user («page 3 of 20 has no text layer»).

@@ -412,7 +412,7 @@ fn a_model_on_this_machine_needs_no_credential_and_everything_else_does() {
     // Anywhere else, an empty credential connects nothing and says why.
     disconnect_provider(openai()).expect("disconnect");
     match connect_provider(openai(), String::new(), Some("https://api.openai.com".to_string()), None) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("credential"), "{reason}"),
+        Err(ApiError::InputRefused { reason }) => assert!(reason.contains("credential"), "{reason}"),
         other => panic!("expected a refusal, got {other:?}"),
     }
     // And a configure with nothing stored is «connect first», not a silent one.

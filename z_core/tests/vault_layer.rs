@@ -344,7 +344,7 @@ fn an_identity_can_be_renamed_moved_and_pruned() {
     // Moving to a profile that does not exist is refused, not silently done:
     // an identity in a profile nobody can pick is a value never found again.
     match move_entity(id, Some("p-does-not-exist".to_string())) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("profile"), "{reason}"),
+        Err(ApiError::NotFound { reason }) => assert!(reason.contains("profile"), "{reason}"),
         other => panic!("expected a refusal, got {other:?}"),
     }
     move_entity(id, Some(profile.clone())).expect("move");
@@ -509,7 +509,7 @@ fn zcfg_refuses_a_value_that_could_name_a_client() {
     let mut want = settings().expect("settings");
     want.language = "Nordstern Consulting GmbH".to_string();
     match save_settings(want) {
-        Err(ApiError::ImportRefused { reason }) => {
+        Err(ApiError::InputRefused { reason }) => {
             assert!(reason.contains("plain tag"), "{reason}");
         }
         other => panic!("a client's name must not be writable to ZCFG, got {other:?}"),
@@ -554,7 +554,7 @@ fn vault_temp_symlink_is_refused_and_victim_is_unchanged() {
 
     set_data_dir(data.to_string_lossy().to_string()).expect("dir");
     match vault_create_with_passphrase(PASS.to_string()) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
         other => panic!("the temp symlink must be refused, got {other:?}"),
     }
     assert_eq!(std::fs::read(&victim).expect("victim"), b"ZXQ-VICTIM-VAULT-ORIGINAL");
@@ -578,7 +578,7 @@ fn settings_temp_symlink_is_refused_and_victim_is_unchanged() {
     let mut s = settings().expect("settings");
     s.first_run_done = true;
     match save_settings(s) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
         other => panic!("the temp symlink must be refused, got {other:?}"),
     }
     assert_eq!(std::fs::read(&victim).expect("victim"), b"ZXQ-VICTIM-CONFIG-ORIGINAL");
@@ -603,7 +603,7 @@ fn final_vault_symlink_is_not_read_as_a_vault() {
     set_data_dir(data.to_string_lossy().to_string()).expect("dir");
     assert_eq!(vault_state().expect("state"), VaultState::Locked);
     match vault_unlock_with_passphrase(PASS.to_string()) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("following links"), "{reason}"),
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("following links"), "{reason}"),
         other => panic!("a final vault symlink must not be followed, got {other:?}"),
     }
     let _ = std::fs::remove_dir_all(&root);
@@ -652,7 +652,7 @@ fn failed_secure_writes_leave_old_files_intact() {
 
     symlink(&vault_victim, path.join("vault.zv.new")).expect("vault temp symlink");
     match create_entity(EntityKind::Client, "Nordstern".to_string(), None) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
         other => panic!("the vault write should fail before replacing the old file, got {other:?}"),
     }
     assert_eq!(std::fs::read(path.join("vault.zv")).expect("vault"), old_vault);
@@ -663,7 +663,7 @@ fn failed_secure_writes_leave_old_files_intact() {
     let mut s = settings().expect("settings");
     s.language = "de".to_string();
     match save_settings(s) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
         other => panic!("the settings write should fail before replacing the old file, got {other:?}"),
     }
     assert_eq!(std::fs::read(path.join("settings.zcfg")).expect("settings"), old_settings);
@@ -681,7 +681,9 @@ fn unlock_after_lock_sees_that_the_vault_file_was_deleted() {
     std::fs::remove_file(&path).expect("delete vault");
 
     match vault_unlock_with_passphrase(PASS.to_string()) {
-        Err(ApiError::ImportRefused { reason }) => assert!(reason.contains("no vault"), "{reason}"),
+        // «there is no vault» no longer carries a string to be searched: the
+        // variant itself is the whole fact, so nothing can word it wrongly.
+        Err(ApiError::VaultAbsent) => {}
         other => panic!("unlock must reread the missing file from disk, got {other:?}"),
     }
     let _ = std::fs::remove_dir_all(&dir);

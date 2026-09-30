@@ -105,7 +105,7 @@ impl AppConfig {
             ("default_privacy_pack", &self.default_privacy_pack),
         ] {
             if !is_a_plain_tag(value) {
-                return Err(ApiError::ImportRefused {
+                return Err(ApiError::InputRefused {
                     reason: format!(
                         "{field} may only be a short plain tag; nothing that could name a person, \
                          a client or a file is written to {FILE_NAME}"
