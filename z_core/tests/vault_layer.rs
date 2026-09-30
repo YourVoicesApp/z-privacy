@@ -611,6 +611,61 @@ fn vault_temp_symlink_is_refused_and_victim_is_unchanged() {
     let _ = std::fs::remove_dir_all(&root);
 }
 
+/// The second contract on Windows, and «symlink» is too small a word for it
+/// there: a symlink, a junction and a mount point are all reparse points, and
+/// any of them in the path would make a write land somewhere else.
+///
+/// Two cases, because one of them passes by accident. With the link pointing at
+/// a file that exists, CREATE_NEW refuses even without the flag — the target is
+/// already there, so the call fails for the wrong reason and the test would go
+/// green over an unguarded build. The second case is the real one: a link to a
+/// path that does **not** exist. Follow it and the victim is created and
+/// written; refuse to follow it and nothing appears at all.
+#[cfg(windows)]
+#[test]
+fn vault_temp_symlink_is_refused_and_victim_is_unchanged() {
+    use std::os::windows::fs::symlink_file;
+
+    let _lock = serial();
+    let root = std::env::temp_dir().join(format!("zprivacy-fs-vault-link-{}", std::process::id()));
+    let data = root.join("data");
+    let victim = root.join("victim.txt");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&data).expect("data dir");
+    std::fs::write(&victim, b"ZXQ-VICTIM-VAULT-ORIGINAL").expect("victim");
+
+    // Creating one needs SeCreateSymbolicLinkPrivilege or Developer Mode. If
+    // this machine has neither, say so and stop — a contract that quietly skips
+    // itself is the thing G22 exists to make impossible.
+    if let Err(e) = symlink_file(&victim, data.join("vault.zv.new")) {
+        panic!("this machine cannot create a reparse point, so the contract cannot be measured here: {e}");
+    }
+
+    set_data_dir(data.to_string_lossy().to_string()).expect("dir");
+    match vault_create_with_passphrase(PASS.to_string()) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the temp reparse point must be refused, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(&victim).expect("victim"), b"ZXQ-VICTIM-VAULT-ORIGINAL");
+    assert!(!data.join("vault.zv").exists(), "a failed create does not invent a final vault");
+
+    // The case that proves the flag: the link points nowhere. Following it
+    // would create that path and write the vault into it.
+    let _ = std::fs::remove_file(data.join("vault.zv.new"));
+    let nowhere = root.join("not-there-yet.txt");
+    symlink_file(&nowhere, data.join("vault.zv.new")).expect("dangling reparse point");
+    match vault_create_with_passphrase(PASS.to_string()) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("a dangling reparse point must be refused, got {other:?}"),
+    }
+    assert!(
+        !nowhere.exists(),
+        "following the reparse point created the file it pointed at"
+    );
+
+    let _ = std::fs::remove_dir_all(&root);
+}
+
 #[cfg(unix)]
 #[test]
 fn settings_temp_symlink_is_refused_and_victim_is_unchanged() {

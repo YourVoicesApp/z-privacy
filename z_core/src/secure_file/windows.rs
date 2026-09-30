@@ -65,6 +65,12 @@ const GENERIC_WRITE: u32 = 0x4000_0000;
 const FILE_SHARE_READ: u32 = 0x0000_0001;
 const CREATE_NEW: u32 = 1;
 const FILE_ATTRIBUTE_NORMAL: u32 = 0x0000_0080;
+// The whole of the second contract, in one flag. Without it CreateFileW walks
+// a reparse point — a symlink, a junction, a mount point — and creates or
+// opens whatever is on the far side. With it, the call is about the entry at
+// this path and nothing else, so CREATE_NEW meets the reparse point itself and
+// refuses. It is Windows' O_NOFOLLOW.
+const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
 const ERROR_FILE_EXISTS: i32 = 80;
 
 /// The access list every file this crate creates is born with.
@@ -123,8 +129,11 @@ impl Descriptor {
 /// Create a file that does not exist yet, with the owner-only access list and
 /// inheritance cut.
 ///
-/// Fails if the path is already there, the same way `create_new(true)` does on
-/// Unix: a save must never write into something an attacker put in its place.
+/// Fails if anything is already at the path — including a reparse point, which
+/// is not followed. That is the same refusal `create_new(true)` plus
+/// `O_NOFOLLOW` gives on Unix, and for the same reason: a save must never write
+/// into something an attacker put in its place, nor into whatever that thing
+/// points at.
 // G15-ok: creating ZVLT or ZCFG's temp file, with its access list.
 pub(crate) fn create_new_owner_only(path: &Path) -> Result<std::fs::File, std::io::Error> {
     use std::os::windows::io::FromRawHandle;
@@ -150,7 +159,7 @@ pub(crate) fn create_new_owner_only(path: &Path) -> Result<std::fs::File, std::i
             FILE_SHARE_READ,
             &mut attributes,
             CREATE_NEW,
-            FILE_ATTRIBUTE_NORMAL,
+            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT,
             std::ptr::null_mut(),
         )
     };
