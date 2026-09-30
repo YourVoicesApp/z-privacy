@@ -614,6 +614,68 @@ void main() {
 
   /// The same rule, two screens away: the vault's own tiles used to show a
   /// bare «Forget» over a scope line set in the card's smallest type.
+  testWidgets('a taught value is hidden in the list, as it is in the card', (
+    tester,
+  ) async {
+    // Human run, 30 September. «Values I taught» printed the protected value as
+    // the heading of its own card, while the same value one screen deeper sat
+    // behind dots, a «Reveal» and a clock. Two rooms, one passphrase, one rule —
+    // and the rule was applied in only one of them.
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    const secret = 'Nordstern Consulting GmbH';
+    final ground = Ground();
+    await tester.runAsync(() async {
+      final here = Directory('${Directory.systemTemp.path}/zprivacy-taught-$pid');
+      if (here.existsSync()) here.deleteSync(recursive: true);
+      addTearDown(() {
+        if (here.existsSync()) here.deleteSync(recursive: true);
+      });
+      await z.setDataDir(dir: here.path);
+      await z.vaultCreateWithPassphrase(passphrase: _pass);
+      final e = await z.createEntity(
+        kind: EntityKind.client,
+        label: 'Der Mandant',
+        profileId: null,
+      );
+      await z.setValue(
+        entity: e,
+        kind: Kind.company,
+        text: secret,
+        policy: Policy.always,
+      );
+      await ground.refresh();
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(home: VaultScreen(ground: ground, onClose: () {})),
+    );
+    await settle(tester);
+
+    expect(
+      find.textContaining('Values I taught'),
+      findsWidgets,
+      reason: 'the list under test is on screen',
+    );
+    expect(
+      find.text(secret),
+      findsNothing,
+      reason: 'the vault list drew the value it exists to protect',
+    );
+    expect(
+      find.text('Hidden'),
+      findsWidgets,
+      reason: 'the list says the value is there and not shown',
+    );
+
+    // The same door as the card, and the same clock on it.
+    await tester.tap(find.widgetWithText(ZButton, 'Reveal').first);
+    await settle(tester);
+    expect(find.text(secret), findsOneWidget);
+    expect(find.textContaining('Revealed · '), findsWidgets);
+  });
+
   testWidgets('the vault tiles name the reach they would forget', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));

@@ -753,11 +753,11 @@ pub struct _TaughtValueRow {
     pub entity_id: u32,
     pub entity_label: String,
     pub value_id: u32,
-    pub value: String,
     pub kind: Kind,
     pub profile_id: Option<String>,
     pub profile_name: Option<String>,
-    pub aliases: Vec<String>,
+    /// How many spellings, not which ones — the same shape as `ValueRow`.
+    pub aliases: u32,
     pub taught_at: u64,
     pub why: String,
     pub source: KnowledgeSource,

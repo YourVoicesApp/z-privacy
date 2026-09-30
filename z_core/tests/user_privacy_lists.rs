@@ -81,6 +81,13 @@ fn suggested_id(snap: &WorkspaceSnapshot, kind: Kind, needle: &str) -> u32 {
         .unwrap_or_else(|| panic!("no suggested {kind:?} for {needle}: {:?}", snap.findings))
 }
 
+/// The text behind a taught row. It is no longer carried in the row — the list
+/// gets ids and a label, and the value comes only through the door that has a
+/// clock on it. Asking here is the test doing what the screen does.
+fn text_of(row: &TaughtValueRow) -> String {
+    reveal_value(row.entity_id, row.value_id).expect("reveal").value
+}
+
 #[test]
 fn values_and_exceptions_are_vault_knowledge_with_profile_scope() {
     let _guard = serial();
@@ -156,8 +163,8 @@ fn values_and_exceptions_are_vault_knowledge_with_profile_scope() {
     close_session(b_session).expect("close");
 
     let rules = privacy_rules_snapshot(Some(profile_a.clone())).expect("rules");
-    assert!(rules.values.iter().any(|row| row.value == "Nordstern Consulting GmbH"));
-    assert!(rules.values.iter().any(|row| row.value == "Thomas Müller"));
+    assert!(rules.values.iter().any(|row| text_of(row) == "Nordstern Consulting GmbH"));
+    assert!(rules.values.iter().any(|row| text_of(row) == "Thomas Müller"));
     assert!(rules.exceptions.iter().any(|row| row.value == "0171 2345678"));
     // Phase A said «not built yet» and meant it. M7.10B built it, so the flag
     // turns over — and this line turns with it rather than being deleted,
@@ -168,12 +175,12 @@ fn values_and_exceptions_are_vault_knowledge_with_profile_scope() {
     let nordstern = rules
         .values
         .iter()
-        .find(|row| row.value == "Nordstern Consulting GmbH")
+        .find(|row| text_of(row) == "Nordstern Consulting GmbH")
         .expect("nordstern row");
     forget_value(nordstern.entity_id, nordstern.value_id, false).expect("forget taught value");
     let rules = privacy_rules_snapshot(Some(profile_a.clone())).expect("rules after forget");
     assert!(
-        !rules.values.iter().any(|row| row.value == "Nordstern Consulting GmbH"),
+        !rules.values.iter().any(|row| text_of(row) == "Nordstern Consulting GmbH"),
         "forgotten value still appears in My Privacy Rules"
     );
     let (session, snap) = scan_text(Some(profile_a), "Nordstern Consulting GmbH meldet sich.");

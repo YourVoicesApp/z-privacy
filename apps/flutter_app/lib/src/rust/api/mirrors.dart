@@ -1705,11 +1705,12 @@ class TaughtValueRow {
   final int entityId;
   final String entityLabel;
   final int valueId;
-  final String value;
   final Kind kind;
   final String? profileId;
   final String? profileName;
-  final List<String> aliases;
+
+  /// How many spellings, not which ones — the same shape as `ValueRow`.
+  final int aliases;
   final BigInt taughtAt;
   final String why;
   final KnowledgeSource source;
@@ -1718,7 +1719,6 @@ class TaughtValueRow {
     required this.entityId,
     required this.entityLabel,
     required this.valueId,
-    required this.value,
     required this.kind,
     this.profileId,
     this.profileName,
@@ -1733,7 +1733,6 @@ class TaughtValueRow {
       entityId.hashCode ^
       entityLabel.hashCode ^
       valueId.hashCode ^
-      value.hashCode ^
       kind.hashCode ^
       profileId.hashCode ^
       profileName.hashCode ^
@@ -1750,7 +1749,6 @@ class TaughtValueRow {
           entityId == other.entityId &&
           entityLabel == other.entityLabel &&
           valueId == other.valueId &&
-          value == other.value &&
           kind == other.kind &&
           profileId == other.profileId &&
           profileName == other.profileName &&

@@ -18,6 +18,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/reveal.dart';
 import 'package:zprivacy/widgets/entity_detail.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
@@ -382,6 +383,7 @@ class _VaultScreenState extends State<VaultScreen> {
                 _TaughtValueTile(
                   row: row,
                   kind: g.nameOfKind(row.kind),
+                  ground: g,
                   onOpen: () => _openEntity(row.entityId),
                   onForget: () => g.vaultEdit(
                     () => z.forgetValue(
@@ -506,29 +508,106 @@ class _RuleSection extends StatelessWidget {
   }
 }
 
-class _TaughtValueTile extends StatelessWidget {
+/// A value the vault protects, in the list of what it was taught.
+///
+/// Human run, 30 September: this card printed the value as its heading, while
+/// the same value one screen deeper — the identity card — sat behind dots, a
+/// «Reveal» and a clock. Two rooms behind one passphrase, and the rule applied
+/// in only one of them. It is the same door here now, and the same machine
+/// behind it; the row itself no longer carries the text at all.
+class _TaughtValueTile extends StatefulWidget {
   const _TaughtValueTile({
     required this.row,
     required this.kind,
+    required this.ground,
     required this.onOpen,
     required this.onForget,
   });
 
   final TaughtValueRow row;
   final String kind;
+  final Ground ground;
   final VoidCallback onOpen;
   final Future<String?> Function() onForget;
 
   @override
+  State<_TaughtValueTile> createState() => _TaughtValueTileState();
+}
+
+class _TaughtValueTileState extends State<_TaughtValueTile>
+    with RevealHold<_TaughtValueTile> {
+  @override
+  void dispose() {
+    endReveal();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final row = widget.row;
+    final shown = shownFor(row.valueId);
     return _RuleTile(
-      title: row.value,
+      title: SizedBox(
+        // Fixed, so the time running out changes the content and not the
+        // height: the buttons below must not move out from under a pointer
+        // that is already resting on one. The identity card holds the same
+        // rule for the same reason — `reveal_row_test.dart`.
+        height: 20,
+        child: Row(
+          children: [
+            Expanded(
+              child: shown == null
+                  ? Text(
+                      '••••••••••••',
+                      style: Zc.small.copyWith(color: Zc.ink4, letterSpacing: 2),
+                    )
+                  : Text(
+                      shown.value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: Zc.ink,
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              revealLabel(row.valueId),
+              key: Key('taught-reveal-state-${row.valueId}'),
+              style: Zc.tiny.copyWith(
+                letterSpacing: 0,
+                color: shown == null ? Zc.ink4 : Zc.river,
+              ),
+            ),
+          ],
+        ),
+      ),
       subtitle:
-          '$kind · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
+          '${widget.kind} · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
       why: row.why,
       forgetLabel: forgetLabelFor(row.profileId),
-      onOpen: onOpen,
-      onForget: onForget,
+      leading: SizedBox(
+        // One width for both words, so «Hide» does not shift what follows it.
+        width: 142,
+        child: ZButton(
+          label: shown == null ? 'Reveal' : 'Hide',
+          icon: shown == null
+              ? Icons.visibility_outlined
+              : Icons.visibility_off_outlined,
+          onPressed: shown == null
+              ? () => reveal(
+                  row.entityId,
+                  row.valueId,
+                  onTrouble: (m) =>
+                      setState(() => widget.ground.trouble = m),
+                )
+              : hideNow,
+        ),
+      ),
+      onOpen: widget.onOpen,
+      onForget: widget.onForget,
     );
   }
 }
@@ -547,7 +626,9 @@ class _TaughtExceptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _RuleTile(
-      title: row.value,
+      // An exception is a value its owner declared **not** sensitive, and the
+      // list exists so that declaration can be read back. It stays legible.
+      title: _PlainTitle(row.value),
       subtitle:
           'Do not protect as $kind · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
       why: row.why,
@@ -564,10 +645,13 @@ class _RuleTile extends StatelessWidget {
     required this.why,
     required this.forgetLabel,
     this.onOpen,
+    this.leading,
     required this.onForget,
   });
 
-  final String title;
+  /// The card's first line — a widget, not a string, because a value the vault
+  /// is protecting is not drawn as text until a person asks for it.
+  final Widget title;
   final String subtitle;
   final String why;
 
@@ -576,6 +660,9 @@ class _RuleTile extends StatelessWidget {
   /// smallest type, and a person had to assemble the meaning from the two.
   final String forgetLabel;
   final VoidCallback? onOpen;
+
+  /// An action that belongs before «Open» — the reveal, where there is one.
+  final Widget? leading;
   final Future<String?> Function() onForget;
 
   @override
@@ -587,16 +674,7 @@ class _RuleTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w700,
-              color: Zc.ink,
-            ),
-          ),
+          title,
           const SizedBox(height: 3),
           Text(subtitle, style: Zc.tiny.copyWith(letterSpacing: 0)),
           const SizedBox(height: 5),
@@ -609,6 +687,7 @@ class _RuleTile extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
+              ?leading,
               if (onOpen != null) ZButton(label: 'Open', onPressed: onOpen),
               ZButton(label: forgetLabel, onPressed: () async => onForget()),
             ],
@@ -617,6 +696,25 @@ class _RuleTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The old heading, kept for the lines that are still text.
+class _PlainTitle extends StatelessWidget {
+  const _PlainTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w700,
+          color: Zc.ink,
+        ),
+      );
 }
 
 String _scope(String? profile) =>

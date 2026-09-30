@@ -18,9 +18,9 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/reveal.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
-import 'package:zprivacy/core/messages.dart';
 
 class EntityDetail extends StatefulWidget {
   const EntityDetail({
@@ -40,72 +40,16 @@ class EntityDetail extends StatefulWidget {
   State<EntityDetail> createState() => _EntityDetailState();
 }
 
-class _EntityDetailState extends State<EntityDetail> {
-  /// Values shown right now, with their spellings. Only in this screen's head,
-  /// and cleared when it closes.
-  final Map<int, RevealedValue> _shown = {};
-
-  /// Milliseconds the **core** says are left. Read, never counted down here.
-  int _remaining = 0;
-
-  /// Asks the core once a second. This ticker draws a number for a person to
-  /// read; it has no authority to keep a value on screen. When the core
-  /// answers 0 — or answers about a different value — what is shown is
-  /// dropped in the same frame.
-  Timer? _tick;
+class _EntityDetailState extends State<EntityDetail>
+    with RevealHold<EntityDetail> {
+  /// The machine that holds one revealed value moved to `widgets/reveal.dart`
+  /// when «Values I taught» in the vault list had to hold a value the same way.
+  /// What is drawn here did not change; where it is written did.
 
   @override
   void dispose() {
-    _tick?.cancel();
-    _shown.clear();
-    unawaited(z.hideValue());
+    endReveal();
     super.dispose();
-  }
-
-  Future<void> _reveal(int valueId) async {
-    try {
-      final v = await z.revealValue(entity: widget.card.id, valueId: valueId);
-      if (!mounted) return;
-      setState(() {
-        // One at a time, matching the core.
-        _shown
-          ..clear()
-          ..[valueId] = v;
-        _remaining = v.ttlMs;
-      });
-      _watch();
-    } on ApiError catch (e) {
-      if (mounted) setState(() => widget.ground.trouble = humanMessage(e));
-    }
-  }
-
-  void _watch() {
-    _tick?.cancel();
-    _tick = Timer.periodic(const Duration(milliseconds: 250), (_) async {
-      final state = await z.revealState();
-      if (!mounted) return;
-      final over = state.remainingMs == 0 ||
-          state.valueId == null ||
-          !_shown.containsKey(state.valueId);
-      setState(() {
-        _remaining = state.remainingMs;
-        if (over) _shown.clear();
-      });
-      if (over) {
-        _tick?.cancel();
-        _tick = null;
-      }
-    });
-  }
-
-  Future<void> _hideNow() async {
-    _tick?.cancel();
-    _tick = null;
-    await z.hideValue();
-    if (mounted) setState(() {
-      _shown.clear();
-      _remaining = 0;
-    });
   }
 
   @override
@@ -161,7 +105,7 @@ class _EntityDetailState extends State<EntityDetail> {
   }
 
   Widget _value(EntityCard card, ValueRow v) {
-    final shown = _shown[v.id];
+    final shown = shownFor(v.id);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.fromLTRB(15, 13, 15, 13),
@@ -225,7 +169,7 @@ class _EntityDetailState extends State<EntityDetail> {
                 const SizedBox(width: 10),
                 // The time the **core** reports, drawn for a person to read.
                 Text(
-                  shown == null ? 'Hidden' : 'Revealed · ${(_remaining / 1000).ceil()}s',
+                  revealLabel(v.id),
                   key: Key('reveal-state-${v.id}'),
                   style: Zc.tiny.copyWith(
                     letterSpacing: 0,
@@ -252,7 +196,14 @@ class _EntityDetailState extends State<EntityDetail> {
                 child: ZButton(
                   label: shown == null ? 'Reveal' : 'Hide',
                   icon: shown == null ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                  onPressed: shown == null ? () => _reveal(v.id) : _hideNow,
+                  onPressed: shown == null
+                      ? () => reveal(
+                          card.id,
+                          v.id,
+                          onTrouble: (m) =>
+                              setState(() => widget.ground.trouble = m),
+                        )
+                      : hideNow,
                 ),
               ),
               ZButton(
@@ -267,7 +218,7 @@ class _EntityDetailState extends State<EntityDetail> {
                     builder: (_) => ValueForm(entity: card.id, existing: v),
                   );
                   if (saved == true) {
-                    await _hideNow();
+                    await hideNow();
                     await widget.onChanged();
                   }
                 },
@@ -310,7 +261,7 @@ class _EntityDetailState extends State<EntityDetail> {
   Future<void> _run(Future<void> Function() act) async {
     final bad = await widget.ground.vaultEdit(act);
     if (bad == null) {
-      setState(_shown.clear);
+      setState(dropShown);
       await widget.onChanged();
     }
   }

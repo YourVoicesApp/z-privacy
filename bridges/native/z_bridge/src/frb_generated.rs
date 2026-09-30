@@ -2634,11 +2634,10 @@ const _: fn() = || {
         let _: u32 = TaughtValueRow.entity_id;
         let _: String = TaughtValueRow.entity_label;
         let _: u32 = TaughtValueRow.value_id;
-        let _: String = TaughtValueRow.value;
         let _: crate::api::mirrors::Kind = TaughtValueRow.kind;
         let _: Option<String> = TaughtValueRow.profile_id;
         let _: Option<String> = TaughtValueRow.profile_name;
-        let _: Vec<String> = TaughtValueRow.aliases;
+        let _: u32 = TaughtValueRow.aliases;
         let _: u64 = TaughtValueRow.taught_at;
         let _: String = TaughtValueRow.why;
         let _: crate::api::mirrors::KnowledgeSource = TaughtValueRow.source;
@@ -4129,11 +4128,10 @@ impl SseDecode for crate::api::mirrors::TaughtValueRow {
         let mut var_entityId = <u32>::sse_decode(deserializer);
         let mut var_entityLabel = <String>::sse_decode(deserializer);
         let mut var_valueId = <u32>::sse_decode(deserializer);
-        let mut var_value = <String>::sse_decode(deserializer);
         let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
         let mut var_profileId = <Option<String>>::sse_decode(deserializer);
         let mut var_profileName = <Option<String>>::sse_decode(deserializer);
-        let mut var_aliases = <Vec<String>>::sse_decode(deserializer);
+        let mut var_aliases = <u32>::sse_decode(deserializer);
         let mut var_taughtAt = <u64>::sse_decode(deserializer);
         let mut var_why = <String>::sse_decode(deserializer);
         let mut var_source = <crate::api::mirrors::KnowledgeSource>::sse_decode(deserializer);
@@ -4141,7 +4139,6 @@ impl SseDecode for crate::api::mirrors::TaughtValueRow {
             entity_id: var_entityId,
             entity_label: var_entityLabel,
             value_id: var_valueId,
-            value: var_value,
             kind: var_kind,
             profile_id: var_profileId,
             profile_name: var_profileName,
@@ -5609,7 +5606,6 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::TaughtVal
             self.0.entity_id.into_into_dart().into_dart(),
             self.0.entity_label.into_into_dart().into_dart(),
             self.0.value_id.into_into_dart().into_dart(),
-            self.0.value.into_into_dart().into_dart(),
             self.0.kind.into_into_dart().into_dart(),
             self.0.profile_id.into_into_dart().into_dart(),
             self.0.profile_name.into_into_dart().into_dart(),
@@ -6948,11 +6944,10 @@ impl SseEncode for crate::api::mirrors::TaughtValueRow {
         <u32>::sse_encode(self.entity_id, serializer);
         <String>::sse_encode(self.entity_label, serializer);
         <u32>::sse_encode(self.value_id, serializer);
-        <String>::sse_encode(self.value, serializer);
         <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
         <Option<String>>::sse_encode(self.profile_id, serializer);
         <Option<String>>::sse_encode(self.profile_name, serializer);
-        <Vec<String>>::sse_encode(self.aliases, serializer);
+        <u32>::sse_encode(self.aliases, serializer);
         <u64>::sse_encode(self.taught_at, serializer);
         <String>::sse_encode(self.why, serializer);
         <crate::api::mirrors::KnowledgeSource>::sse_encode(self.source, serializer);

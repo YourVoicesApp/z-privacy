@@ -3792,20 +3792,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaughtValueRow dco_decode_taught_value_row(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 11)
-      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return TaughtValueRow(
       entityId: dco_decode_u_32(arr[0]),
       entityLabel: dco_decode_String(arr[1]),
       valueId: dco_decode_u_32(arr[2]),
-      value: dco_decode_String(arr[3]),
-      kind: dco_decode_kind(arr[4]),
-      profileId: dco_decode_opt_String(arr[5]),
-      profileName: dco_decode_opt_String(arr[6]),
-      aliases: dco_decode_list_String(arr[7]),
-      taughtAt: dco_decode_u_64(arr[8]),
-      why: dco_decode_String(arr[9]),
-      source: dco_decode_knowledge_source(arr[10]),
+      kind: dco_decode_kind(arr[3]),
+      profileId: dco_decode_opt_String(arr[4]),
+      profileName: dco_decode_opt_String(arr[5]),
+      aliases: dco_decode_u_32(arr[6]),
+      taughtAt: dco_decode_u_64(arr[7]),
+      why: dco_decode_String(arr[8]),
+      source: dco_decode_knowledge_source(arr[9]),
     );
   }
 
@@ -5235,11 +5234,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_entityId = sse_decode_u_32(deserializer);
     var var_entityLabel = sse_decode_String(deserializer);
     var var_valueId = sse_decode_u_32(deserializer);
-    var var_value = sse_decode_String(deserializer);
     var var_kind = sse_decode_kind(deserializer);
     var var_profileId = sse_decode_opt_String(deserializer);
     var var_profileName = sse_decode_opt_String(deserializer);
-    var var_aliases = sse_decode_list_String(deserializer);
+    var var_aliases = sse_decode_u_32(deserializer);
     var var_taughtAt = sse_decode_u_64(deserializer);
     var var_why = sse_decode_String(deserializer);
     var var_source = sse_decode_knowledge_source(deserializer);
@@ -5247,7 +5245,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       entityId: var_entityId,
       entityLabel: var_entityLabel,
       valueId: var_valueId,
-      value: var_value,
       kind: var_kind,
       profileId: var_profileId,
       profileName: var_profileName,
@@ -6507,11 +6504,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_32(self.entityId, serializer);
     sse_encode_String(self.entityLabel, serializer);
     sse_encode_u_32(self.valueId, serializer);
-    sse_encode_String(self.value, serializer);
     sse_encode_kind(self.kind, serializer);
     sse_encode_opt_String(self.profileId, serializer);
     sse_encode_opt_String(self.profileName, serializer);
-    sse_encode_list_String(self.aliases, serializer);
+    sse_encode_u_32(self.aliases, serializer);
     sse_encode_u_64(self.taughtAt, serializer);
     sse_encode_String(self.why, serializer);
     sse_encode_knowledge_source(self.source, serializer);

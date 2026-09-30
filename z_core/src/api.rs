@@ -1028,11 +1028,11 @@ pub struct TaughtValueRow {
     pub entity_id: u32,
     pub entity_label: String,
     pub value_id: u32,
-    pub value: String,
     pub kind: Kind,
     pub profile_id: Option<String>,
     pub profile_name: Option<String>,
-    pub aliases: Vec<String>,
+    /// How many spellings, not which ones — the same shape as `ValueRow`.
+    pub aliases: u32,
     pub taught_at: u64,
     pub why: String,
     pub source: KnowledgeSource,
@@ -1141,10 +1141,9 @@ impl fmt::Debug for TaughtValueRow {
             .field("entity_id", &self.entity_id)
             .field("entity_label", &format_args!("[REDACTED]"))
             .field("value_id", &self.value_id)
-            .field("value", &format_args!("[REDACTED]"))
             .field("kind", &self.kind)
             .field("profile_id", &self.profile_id)
-            .field("aliases", &self.aliases.len())
+            .field("aliases", &self.aliases)
             .field("taught_at", &self.taught_at)
             .field("source", &self.source)
             .finish()
