@@ -385,11 +385,15 @@ class _VaultScreenState extends State<VaultScreen> {
                   kind: g.nameOfKind(row.kind),
                   ground: g,
                   onOpen: () => _openEntity(row.entityId),
-                  onForget: () => g.vaultEdit(
+                  // The reach comes from the act the button names. It passed
+                  // `everywhere: false` under a button reading «Forget
+                  // everywhere», which on knowledge held in no profile happened
+                  // to look the same and would not have stayed that way.
+                  onForget: (everywhere) => g.vaultEdit(
                     () => z.forgetValue(
                       entity: row.entityId,
                       valueId: row.valueId,
-                      everywhere: false,
+                      everywhere: everywhere,
                     ),
                   ),
                 ),
@@ -528,7 +532,9 @@ class _TaughtValueTile extends StatefulWidget {
   final String kind;
   final Ground ground;
   final VoidCallback onOpen;
-  final Future<String?> Function() onForget;
+
+  /// Takes the reach, because the tile is where the act is named.
+  final Future<String?> Function(bool everywhere) onForget;
 
   @override
   State<_TaughtValueTile> createState() => _TaughtValueTileState();
@@ -607,7 +613,22 @@ class _TaughtValueTileState extends State<_TaughtValueTile>
         ),
       ),
       onOpen: widget.onOpen,
-      onForget: widget.onForget,
+      onForget: () async {
+        // Named by the reach, and asked before it is done. Forgetting is the
+        // one act here that cannot be taken back.
+        final everywhere = row.profileId == null;
+        final sure = await confirmForget(
+          context,
+          entity: row.entityId,
+          valueId: row.valueId,
+          everywhere: everywhere,
+          action: forgetLabelFor(row.profileId),
+          onTrouble: (m) => setState(() => widget.ground.trouble = m),
+        );
+        if (!sure) return null;
+        await hideNow();
+        return widget.onForget(everywhere);
+      },
     );
   }
 }

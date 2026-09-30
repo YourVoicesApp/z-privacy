@@ -250,20 +250,15 @@ class _WhySheetState extends State<WhySheet> {
     final v = why.valueId;
     if (e == null || v == null) return;
 
-    ForgetPlan plan;
-    try {
-      plan = await z.forgetPlan(entity: e, valueId: v, everywhere: everywhere);
-    } on ApiError catch (err) {
-      setState(() => _trouble = humanMessage(err));
-      return;
-    }
-    if (!mounted) return;
-
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (_) => _ForgetSheet(plan: plan, action: action),
+    final sure = await confirmForget(
+      context,
+      entity: e,
+      valueId: v,
+      everywhere: everywhere,
+      action: action,
+      onTrouble: (m) => setState(() => _trouble = m),
     );
-    if (sure != true || !mounted) return;
+    if (!sure || !mounted) return;
 
     try {
       final done = await z.forgetValue(entity: e, valueId: v, everywhere: everywhere);
@@ -296,6 +291,45 @@ class _WhySheetState extends State<WhySheet> {
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
+}
+
+/// Ask before forgetting: read the plan from the core, show what it would take
+/// away, and answer whether the person said yes.
+///
+/// The one path to that question. The vault list used to call `forget_value`
+/// straight from the press and this sheet was never built for it — a screenshot
+/// a third of a second after the click already read «0 identities · 0 values»
+/// (human run, 30 September). Two callers, one question, so they cannot drift.
+///
+/// The value is named in the sheet's heading, which is the point: on the vault
+/// list the row itself is behind dots, and «Forget ••••••••?» would be a
+/// question nobody can answer. It is shown to be judged, once, in a dialog the
+/// person opened — not drawn where they were only reading.
+Future<bool> confirmForget(
+  BuildContext context, {
+  required int entity,
+  required int valueId,
+  required bool everywhere,
+  required String action,
+  required void Function(String) onTrouble,
+}) async {
+  ForgetPlan plan;
+  try {
+    plan = await z.forgetPlan(
+      entity: entity,
+      valueId: valueId,
+      everywhere: everywhere,
+    );
+  } on ApiError catch (err) {
+    onTrouble(humanMessage(err));
+    return false;
+  }
+  if (!context.mounted) return false;
+  final sure = await showDialog<bool>(
+    context: context,
+    builder: (_) => _ForgetSheet(plan: plan, action: action),
+  );
+  return sure == true;
 }
 
 /// What forgetting will take away — shown before it happens, with its numbers.

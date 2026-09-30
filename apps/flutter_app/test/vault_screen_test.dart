@@ -676,6 +676,80 @@ void main() {
     expect(find.textContaining('Revealed · '), findsWidgets);
   });
 
+  testWidgets('forgetting from the vault list asks before it takes anything', (
+    tester,
+  ) async {
+    // Human run, 30 September. «Forget everywhere» in the vault list ran on the
+    // press: a screenshot a third of a second later already read «0 identities ·
+    // 0 values». The same app asks before putting text on the clipboard, which
+    // can be undone; this cannot be, and asked nothing.
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    const secret = 'Nordstern Consulting GmbH';
+    final ground = Ground();
+    await tester.runAsync(() async {
+      final here = Directory('${Directory.systemTemp.path}/zprivacy-ask-$pid');
+      if (here.existsSync()) here.deleteSync(recursive: true);
+      addTearDown(() {
+        if (here.existsSync()) here.deleteSync(recursive: true);
+      });
+      await z.setDataDir(dir: here.path);
+      await z.vaultCreateWithPassphrase(passphrase: _pass);
+      final e = await z.createEntity(
+        kind: EntityKind.client,
+        label: 'Der Mandant',
+        profileId: null,
+      );
+      await z.setValue(
+        entity: e,
+        kind: Kind.company,
+        text: secret,
+        policy: Policy.always,
+      );
+      await ground.refresh();
+    });
+
+    /// Asked of the core, not of the screen: the screen is what is on trial.
+    Future<int> stillTaught() async {
+      var n = -1;
+      await tester.runAsync(() async {
+        n = (await z.privacyRulesSnapshot(profileId: null)).values.length;
+      });
+      return n;
+    }
+
+    await tester.pumpWidget(
+      MaterialApp(home: VaultScreen(ground: ground, onClose: () {})),
+    );
+    await settle(tester);
+    expect(await stillTaught(), 1);
+
+    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').first);
+    await settle(tester);
+
+    // It asks, it names what it would take, and it has taken nothing yet.
+    expect(find.text('Forget «$secret»?'), findsOneWidget);
+    expect(find.text('THIS WILL REMOVE'), findsOneWidget);
+    expect(
+      await stillTaught(),
+      1,
+      reason: 'the press alone must not forget anything',
+    );
+
+    await tester.tap(find.widgetWithText(ZButton, 'Cancel'));
+    await settle(tester);
+    expect(await stillTaught(), 1, reason: 'Cancel keeps it');
+
+    // And saying yes does forget it — the confirmation carries the act's own
+    // name, so the word pressed twice is the same word.
+    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').first);
+    await settle(tester);
+    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').last);
+    await settle(tester);
+    expect(await stillTaught(), 0);
+  });
+
   testWidgets('the vault tiles name the reach they would forget', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
