@@ -3,8 +3,8 @@
 ## الحالة
 
 ```text
-HEAD            d62e8e4
-النقطة المرجعيّة audit/pre-redteam-2026-09-28 → b4cdfed
+HEAD            938ba8f
+النقطة المرجعيّة audit/pre-redteam-2026-09-28 → 30d35c5
 المهاجم         ~/zprivacy-redteam-2026-09-28/harness  (مصدره مطابقٌ بايتاً ببايت)
 الاختبارات      ٢٣٧ Rust + ٢٥ Dart · كلّ البوّابات خضراء · العقد ٧٢ دالّة
 ```
