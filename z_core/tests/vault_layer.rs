@@ -698,6 +698,66 @@ fn settings_temp_symlink_is_refused_and_victim_is_unchanged() {
     let _ = std::fs::remove_dir_all(&root);
 }
 
+/// The same contract as the vault's, for the file beside it.
+///
+/// No new guard was needed: `replace_atomically` is one function and both files
+/// go through it, so closing the vault's path closed this one at the same
+/// moment. That is worth a test rather than an assumption — a shared guard is
+/// exactly the kind that gets specialised later and quietly stops covering the
+/// second caller.
+///
+/// Two cases again, and for the same reason: pointed at a file that exists the
+/// call refuses even unguarded, so the dangling link is the one that proves it.
+#[cfg(windows)]
+#[test]
+fn settings_temp_symlink_is_refused_and_victim_is_unchanged() {
+    use std::os::windows::fs::symlink_file;
+
+    let _lock = serial();
+    let root = std::env::temp_dir().join(format!("zprivacy-fs-zcfg-link-{}", std::process::id()));
+    let data = root.join("data");
+    let victim = root.join("victim.txt");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&data).expect("data dir");
+    std::fs::write(&victim, b"ZXQ-VICTIM-CONFIG-ORIGINAL").expect("victim");
+    if let Err(e) = symlink_file(&victim, data.join("settings.zcfg.new")) {
+        panic!("this machine cannot create a reparse point, so the contract cannot be measured here: {e}");
+    }
+
+    set_data_dir(data.to_string_lossy().to_string()).expect("dir");
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    match save_settings(s) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the temp reparse point must be refused, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(&victim).expect("victim"), b"ZXQ-VICTIM-CONFIG-ORIGINAL");
+    assert!(
+        !data.join("settings.zcfg").exists(),
+        "a failed save does not invent a final settings file"
+    );
+
+    // The dangling case, from a data root of its own so nothing above this
+    // layer answers first.
+    let second = root.join("data2");
+    std::fs::create_dir_all(&second).expect("second data dir");
+    let nowhere = root.join("not-there-yet.txt");
+    symlink_file(&nowhere, second.join("settings.zcfg.new")).expect("dangling reparse point");
+    set_data_dir(second.to_string_lossy().to_string()).expect("second dir");
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    match save_settings(s) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("a dangling reparse point must be refused, got {other:?}"),
+    }
+    assert!(
+        !nowhere.exists(),
+        "following the reparse point created the file it pointed at"
+    );
+
+    let _ = std::fs::remove_dir_all(&root);
+}
+
 #[cfg(unix)]
 #[test]
 fn final_vault_symlink_is_not_read_as_a_vault() {
