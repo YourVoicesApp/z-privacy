@@ -57,7 +57,12 @@ jobs:
       # The tests above pass on Windows. That is not the same as being safe:
       # six of them do not exist there at all. This step asks for those six by
       # name and is expected to fail until Windows has its own guard.
+      # `always()`, because the contract report is the most useful thing this
+      # job produces and a failing test above it must not take it away. The
+      # first time the tests went red, this step was skipped and we lost the
+      # whole picture for a mistake in one test.
       - name: Storage protection contracts
+        if: always()
         shell: bash
         run: bash scripts/check_storage_contracts.sh
 

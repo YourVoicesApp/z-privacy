@@ -651,9 +651,17 @@ fn vault_temp_symlink_is_refused_and_victim_is_unchanged() {
 
     // The case that proves the flag: the link points nowhere. Following it
     // would create that path and write the vault into it.
-    let _ = std::fs::remove_file(data.join("vault.zv.new"));
+    //
+    // From a data root of its own, because the case above left a vault behind
+    // and a second create would be answered `VaultAlreadyExists` — a correct
+    // refusal from a layer above this one, which never reaches the file at all.
+    // That is exactly what this run reported, and it was the test's fault, not
+    // the guard's.
+    let second = root.join("data2");
+    std::fs::create_dir_all(&second).expect("second data dir");
     let nowhere = root.join("not-there-yet.txt");
-    symlink_file(&nowhere, data.join("vault.zv.new")).expect("dangling reparse point");
+    symlink_file(&nowhere, second.join("vault.zv.new")).expect("dangling reparse point");
+    set_data_dir(second.to_string_lossy().to_string()).expect("second dir");
     match vault_create_with_passphrase(PASS.to_string()) {
         Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
         other => panic!("a dangling reparse point must be refused, got {other:?}"),
