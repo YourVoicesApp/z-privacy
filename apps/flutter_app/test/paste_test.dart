@@ -14,6 +14,8 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'package:zprivacy/screens/workspace.dart';
+import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 
 /// Stand in for the system clipboard. `null` is «nothing there»; throwing is
@@ -42,6 +44,23 @@ Future<void> settle(WidgetTester tester, {int rounds = 8}) async {
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
     await tester.pump();
   }
+}
+
+/// The workspace itself, without opening the sheet.
+Future<Workbench> _sheetlessWorkspace(WidgetTester tester, Ground ground) async {
+  late final Workbench bench;
+  await tester.runAsync(() async {
+    final session = await z.openSession(profileId: null, packId: 'de');
+    bench = Workbench(session: session, profileId: null, packId: 'de');
+    await z.importText(session: session, text: 'E-Mail: a.weber@nordstern.de');
+    await bench.rescan();
+    await ground.refresh();
+  });
+  await tester.pumpWidget(MaterialApp(
+    home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+  ));
+  await settle(tester);
+  return bench;
 }
 
 /// A session with something to protect, and the sheet open on its AI page.
@@ -139,6 +158,8 @@ void main() {
     expect(find.textContaining('PlatformException'), findsNothing);
   });
 
+  _p22();
+
   /// The one that matters after F-05: pressing Paste must not re-aim the
   /// answer at a different payload.
   testWidgets('Paste changes nothing but the field', (tester) async {
@@ -160,5 +181,50 @@ void main() {
 
     expect(bench.copiedPayload, bound, reason: 'Paste re-aimed the answer at another payload');
     expect(bench.answers, isEmpty, reason: 'Paste created an answer by itself');
+  });
+}
+
+/// P2-2 — a button's name describes the act its own press causes.
+///
+/// His rule of 29 September, and a new member of the family we have been
+/// hunting: the earlier lies were about **states** reported wrongly; this one
+/// is about an **act** named for something two steps away.
+void _p22() {
+  testWidgets('the workspace offers Review, and sends nothing', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    _installClipboard(tester);
+    _clipboard = 'SENTINEL — the clipboard must not be written by Review';
+
+    final ground = Ground();
+    final bench = await _sheetlessWorkspace(tester, ground);
+
+    // The door is named for what the press does.
+    expect(find.text('Review what will leave'), findsOneWidget);
+    expect(find.text('Send safe version'), findsNothing);
+    // «Send» belongs only where a request really leaves. The rule is about
+    // **controls**: the left column's caption «Send cannot read this side» is
+    // prose about the app's own parts, not a promise about a press.
+    final buttonWords = tester
+        .widgetList<ZButton>(find.byType(ZButton))
+        .map((b) => b.label)
+        .toList();
+    expect(
+      buttonWords.where((l) => l.contains('Send')),
+      isEmpty,
+      reason: 'a button on the workspace promises a send: $buttonWords',
+    );
+    // And it is distinct from the suggestions «Review» in the left column.
+    expect(find.text('Review'), findsOneWidget);
+
+    await tester.tap(find.text('Review what will leave'));
+    await settle(tester);
+
+    // It opened the sheet — and did nothing else.
+    expect(find.text('THIS IS WHAT WOULD LEAVE'), findsOneWidget);
+    expect(bench.answers, isEmpty, reason: 'Review created an answer');
+    expect(bench.copiedPayload, isNull, reason: 'Review bound a payload');
+    final still = await Clipboard.getData(Clipboard.kTextPlain);
+    expect(still?.text, startsWith('SENTINEL'), reason: 'Review wrote to the clipboard');
   });
 }

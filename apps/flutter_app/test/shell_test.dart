@@ -662,7 +662,7 @@ void main() {
       // The sheet offers the door that needs no account at all, first. Continue
       // is the step into that door — the payload review does not share a scroller
       // with the actions.
-      await tester.tap(find.text('Send safe version'));
+      await tester.tap(find.text('Review what will leave'));
       await tester.pumpAndSettle();
       expect(find.byType(SendSheet), findsOneWidget);
 
@@ -1195,7 +1195,7 @@ void main() {
     );
     await settle(tester);
 
-    await tester.tap(find.text('Send safe version'));
+    await tester.tap(find.text('Review what will leave'));
     await settle(tester);
     expect(find.byType(SendSheet), findsOneWidget);
     await enterAiMode(tester);
@@ -1690,10 +1690,10 @@ Future<void> reviewJourney(
 
   expectOnScreen(
     tester,
-    find.text('Send safe version'),
-    because: 'the workspace send door itself must be reachable at this size',
+    find.text('Review what will leave'),
+    because: 'the workspace review door itself must be reachable at this size',
   );
-  await tester.tap(find.text('Send safe version'));
+  await tester.tap(find.text('Review what will leave'));
   await tester.pumpAndSettle();
   expect(find.byType(SendSheet), findsOneWidget);
   expect(find.text('Review before send'), findsOneWidget);

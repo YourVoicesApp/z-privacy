@@ -833,9 +833,23 @@ class _SafeFooter extends StatelessWidget {
             runSpacing: 9,
             children: [
               ZButton(
-                label: 'Send safe version',
+                // «Review», not «Send»: this press opens the review sheet and
+                // nothing leaves. The owner's rule of 29 September — **a
+                // button's name describes the act its own press causes, not
+                // one that may happen two steps later.**
+                //
+                // Not «Review & Send» either: after reviewing, a person may
+                // take the manual path with Copy Protected and never send at
+                // all, so «Send» would still be a promise we do not keep.
+                //
+                // And not the bare «Review», because the left column already
+                // has one — that opens the list of suggestions. Two buttons
+                // with one word meaning two things is a smaller version of the
+                // same fault. This names what the press shows: the exact text
+                // that would leave, which is the sheet's own first heading.
+                label: 'Review what will leave',
                 filled: true,
-                icon: Icons.send_outlined,
+                icon: Icons.fact_check_outlined,
                 // Disabled while anything is open — and the reason is beside it,
                 // because «send anyway» does not exist and never will.
                 onPressed: open > 0

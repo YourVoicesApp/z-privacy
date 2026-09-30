@@ -165,7 +165,7 @@ class _AiRoom extends StatelessWidget {
               'already use, and bring the answer back. Nothing to set up, nothing to pay for, '
               'and the restoring works exactly the same.',
           child: Text(
-            'Always available — it is the «Send safe version» sheet, first door.',
+            'Always available — it is the «Review what will leave» sheet, first door.',
             style: Zc.small.copyWith(color: Zc.ink4),
           ),
         ),
