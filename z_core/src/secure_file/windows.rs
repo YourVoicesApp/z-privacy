@@ -46,6 +46,7 @@
 #![allow(unsafe_code)]
 
 use std::ffi::c_void;
+use std::io::Read;
 use std::os::windows::ffi::OsStrExt;
 use std::path::Path;
 
@@ -55,7 +56,7 @@ use windows_sys::Win32::Security::Authorization::{
     GetNamedSecurityInfoW, SDDL_REVISION_1, SE_FILE_OBJECT,
 };
 use windows_sys::Win32::Security::{DACL_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR, SECURITY_ATTRIBUTES};
-use windows_sys::Win32::Storage::FileSystem::CreateFileW;
+use windows_sys::Win32::Storage::FileSystem::{CreateFileW, GetFileInformationByHandle, BY_HANDLE_FILE_INFORMATION};
 
 // Flags, written out rather than imported. Their values are fixed by the
 // Windows API and have not changed in thirty years; their *paths* inside
@@ -72,6 +73,13 @@ const FILE_ATTRIBUTE_NORMAL: u32 = 0x0000_0080;
 // refuses. It is Windows' O_NOFOLLOW.
 const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
 const ERROR_FILE_EXISTS: i32 = 80;
+const GENERIC_READ: u32 = 0x8000_0000;
+const OPEN_EXISTING: u32 = 3;
+const ERROR_FILE_NOT_FOUND: i32 = 2;
+const ERROR_PATH_NOT_FOUND: i32 = 3;
+// The attribute that says «this entry is a doorway, not a file».
+const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
+const FILE_ATTRIBUTE_DIRECTORY: u32 = 0x0000_0010;
 
 /// The access list every file this crate creates is born with.
 ///
@@ -228,4 +236,71 @@ pub(crate) fn dacl_sddl(path: &Path) -> Result<String, std::io::Error> {
     // as its release, and is not used after this point.
     unsafe { LocalFree(text as *mut c_void) };
     Ok(out)
+}
+
+/// Read a file we own, refusing to walk a doorway standing in its place.
+///
+/// Writing is guarded by [`create_new_owner_only`]; this is the other half.
+/// A vault that is itself a reparse point would otherwise be read straight
+/// through — Z Privacy would open some other file, find a sealed vault in it,
+/// and report a vault on this device that is not this device's.
+///
+/// `Ok(None)` means there is nothing there, which is an ordinary first run.
+/// Anything else is a refusal.
+// G15-ok: reading ZVLT or ZCFG without following what is in its place.
+pub(crate) fn read_no_reparse(path: &Path) -> Result<Option<Vec<u8>>, std::io::Error> {
+    use std::os::windows::io::FromRawHandle;
+
+    let wide = wide_path(path);
+    // SAFETY: `wide` is a NUL-terminated path alive across the call. No
+    // security attributes and no template handle are wanted, so both are null,
+    // which the API documents. OPEN_EXISTING never creates anything, and
+    // FILE_FLAG_OPEN_REPARSE_POINT makes the call about the entry at this path
+    // rather than whatever it points at.
+    let handle: HANDLE = unsafe {
+        CreateFileW(
+            wide.as_ptr(),
+            GENERIC_READ,
+            FILE_SHARE_READ,
+            std::ptr::null_mut(),
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT,
+            std::ptr::null_mut(),
+        )
+    };
+    if handle == INVALID_HANDLE_VALUE {
+        let err = std::io::Error::last_os_error();
+        return match err.raw_os_error() {
+            Some(ERROR_FILE_NOT_FOUND) | Some(ERROR_PATH_NOT_FOUND) => Ok(None),
+            _ => Err(err),
+        };
+    }
+    // SAFETY: `handle` is a valid open handle this function just took and has
+    // not shared; File owns it from here and closes it on drop, including on
+    // every early return below.
+    // G15-ok: wrapping the handle just opened for ZVLT or ZCFG.
+    let mut file = unsafe { std::fs::File::from_raw_handle(handle as *mut c_void) };
+
+    // SAFETY: BY_HANDLE_FILE_INFORMATION is a plain struct of integers and
+    // FILETIMEs; all-zero is a valid, meaningless value, and the call below
+    // overwrites every field before anything reads one.
+    let mut info: BY_HANDLE_FILE_INFORMATION = unsafe { std::mem::zeroed() };
+    // SAFETY: the handle is open and owned by `file`, and `info` is a live
+    // out-parameter of exactly the type the call expects.
+    let ok = unsafe { GetFileInformationByHandle(handle, &mut info) };
+    if ok == 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    // Asked of the handle we hold, not of the path — so there is no window
+    // between the question and the answer for something to be swapped in.
+    if info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+        return Err(std::io::Error::other("the path is a reparse point, not the file"));
+    }
+    if info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY != 0 {
+        return Err(std::io::Error::other("the path is a directory, not a file"));
+    }
+
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)?;
+    Ok(Some(bytes))
 }

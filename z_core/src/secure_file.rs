@@ -160,11 +160,21 @@ pub(crate) fn secure_dir(dir: &Path, label: &str) -> ApiResult<()> {
 
 #[cfg(not(unix))]
 pub(crate) fn read_no_follow(path: &Path, label: &str) -> ApiResult<Option<Vec<u8>>> {
-    // G15-ok: non-Unix fallback read for ZVLT or ZCFG.
-    match std::fs::read(path) {
-        Ok(bytes) => Ok(Some(bytes)),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(e) => Err(refused(label, format!("the file could not be read: {e}"))),
+    #[cfg(windows)]
+    {
+        // The same sentence Unix gives, because it is the same refusal: what is
+        // standing at this path was not followed, so nothing was read.
+        windows::read_no_reparse(path)
+            .map_err(|e| refused(label, format!("the file could not be opened without following links: {e}")))
+    }
+    #[cfg(not(windows))]
+    {
+        // G15-ok: non-Unix, non-Windows fallback read for ZVLT or ZCFG.
+        match std::fs::read(path) {
+            Ok(bytes) => Ok(Some(bytes)),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(refused(label, format!("the file could not be read: {e}"))),
+        }
     }
 }
 

@@ -782,6 +782,45 @@ fn final_vault_symlink_is_not_read_as_a_vault() {
     let _ = std::fs::remove_dir_all(source);
 }
 
+/// The other half of the guard: not writing through a doorway, but refusing to
+/// read one as though it were the vault.
+///
+/// Without this, a reparse point standing where `vault.zv` belongs is followed
+/// straight through. Z Privacy opens some other file, finds a sealed vault in
+/// it, and reports a vault on this device that belongs to another — then asks
+/// for the passphrase to it.
+///
+/// The refusal carries the same words as the Unix one, «following links»,
+/// because it is the same refusal: what was at this path was not followed, so
+/// nothing was read.
+#[cfg(windows)]
+#[test]
+fn final_vault_symlink_is_not_read_as_a_vault() {
+    use std::os::windows::fs::symlink_file;
+
+    let _lock = serial();
+    let source = fresh_vault("fs-source-vault");
+    vault_lock().expect("lock source");
+    let source_path = std::path::Path::new(&source).join("vault.zv");
+
+    let root = std::env::temp_dir().join(format!("zprivacy-fs-final-link-{}", std::process::id()));
+    let data = root.join("data");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&data).expect("data dir");
+    if let Err(e) = symlink_file(&source_path, data.join("vault.zv")) {
+        panic!("this machine cannot create a reparse point, so the contract cannot be measured here: {e}");
+    }
+
+    set_data_dir(data.to_string_lossy().to_string()).expect("dir");
+    assert_eq!(vault_state().expect("state"), VaultState::Locked);
+    match vault_unlock_with_passphrase(PASS.to_string()) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("following links"), "{reason}"),
+        other => panic!("a final vault reparse point must not be followed, got {other:?}"),
+    }
+    let _ = std::fs::remove_dir_all(&root);
+    let _ = std::fs::remove_dir_all(source);
+}
+
 #[cfg(unix)]
 #[test]
 fn normal_secure_vault_and_config_writes_still_work() {
