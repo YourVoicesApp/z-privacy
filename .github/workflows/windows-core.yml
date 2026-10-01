@@ -1,5 +1,8 @@
-# The first honest question about Windows: does the core compile there at all,
-# and do its 251 tests still hold?
+# What a Windows machine says about Z Privacy, in two jobs.
+#
+# `core` was the first question — does the Rust core compile there, do its tests
+# hold, and is the storage protection layer actually measured. `app` is the
+# second: does the whole desktop application build, runner and bridge and all.
 #
 # Nothing is fixed before this has answered. Z Privacy has never been built or
 # tested off Linux — `secure_file.rs` guards the vault entirely under
@@ -8,7 +11,7 @@
 #
 # It runs on this branch only. `main` carries V1, frozen at d685d7b, and nothing
 # here reaches it.
-name: windows core
+name: windows
 
 on:
   push:
@@ -80,3 +83,61 @@ jobs:
             echo ""
             echo "Anything this Windows run reports differently is the port's work list."
           } >> "$GITHUB_STEP_SUMMARY"
+
+  app:
+    name: build the desktop app on Windows
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The exact SDK this was built and tested with, by URL, not «stable».
+      # «stable» moves, and a build that breaks because the channel advanced
+      # teaches nothing about this commit. 1.8 GB each run for now; cache it
+      # when that becomes the slow part, not before.
+      - name: Flutter 3.44.2
+        shell: pwsh
+        run: |
+          $url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/windows/flutter_windows_3.44.2-stable.zip"
+          Invoke-WebRequest -Uri $url -OutFile flutter.zip
+          Expand-Archive -Path flutter.zip -DestinationPath C:\ -Force
+          Remove-Item flutter.zip
+          "C:\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Versions
+        shell: bash
+        run: |
+          flutter --version
+          rustc --version
+
+      # Says out loud what is missing rather than failing later with a linker
+      # error nobody can place: a Windows desktop build needs Visual Studio's
+      # C++ workload, and the runner image is supposed to carry it.
+      - name: What Flutter thinks of this machine
+        shell: bash
+        run: flutter doctor -v
+
+      - name: Build
+        shell: bash
+        working-directory: apps/flutter_app
+        run: flutter build windows --release
+
+      - name: What came out
+        if: always()
+        shell: bash
+        working-directory: apps/flutter_app
+        run: |
+          out=build/windows/x64/runner/Release
+          if [ -d "$out" ]; then
+            ls -la "$out"
+            {
+              echo "### The Windows build"
+              echo ""
+              echo '```'
+              ls -la "$out"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "nothing at $out"
+          fi
