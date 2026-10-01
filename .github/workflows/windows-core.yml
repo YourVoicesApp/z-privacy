@@ -123,21 +123,51 @@ jobs:
         working-directory: apps/flutter_app
         run: flutter build windows --release
 
-      - name: What came out
-        if: always()
+      # The whole folder, never the .exe alone. A Flutter application on Windows
+      # is the executable plus flutter_windows.dll, z_bridge.dll, the plugin
+      # DLLs and `data/` beside it; the .exe on its own does not start.
+      - name: Stage the folder
         shell: bash
         working-directory: apps/flutter_app
         run: |
           out=build/windows/x64/runner/Release
-          if [ -d "$out" ]; then
-            ls -la "$out"
-            {
-              echo "### The Windows build"
-              echo ""
-              echo '```'
-              ls -la "$out"
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "nothing at $out"
-          fi
+          test -f "$out/zprivacy.exe" || { echo "no zprivacy.exe at $out"; exit 1; }
+          mkdir -p ../../staging/zprivacy-v1-windows-x86_64
+          cp -a "$out/." ../../staging/zprivacy-v1-windows-x86_64/
+
+      - name: What is in it, and its hashes
+        if: always()
+        shell: bash
+        run: |
+          dir=staging/zprivacy-v1-windows-x86_64
+          [ -d "$dir" ] || { echo "nothing staged"; exit 0; }
+          {
+            echo "### Z Privacy for Windows — not a release yet"
+            echo ""
+            echo "Built from \`$GITHUB_SHA\`. Download the artifact, unzip it into a"
+            echo "folder of its own, and run \`zprivacy.exe\` from there."
+            echo ""
+            echo "The two files that are the product, to check after the download:"
+            echo ""
+            echo '```'
+            (cd "$dir" && sha256sum zprivacy.exe z_bridge.dll)
+            echo '```'
+            echo ""
+            echo "Everything in the folder:"
+            echo ""
+            echo '```'
+            (cd "$dir" && find . -type f -printf '%10s  %p\n' | sort -k2)
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          (cd "$dir" && sha256sum zprivacy.exe z_bridge.dll)
+
+      # Downloading this gives `zprivacy-v1-windows-x86_64.zip`, holding one
+      # folder of that name — so it unpacks into its own place rather than
+      # scattering twenty files wherever it was opened.
+      - name: Upload it
+        uses: actions/upload-artifact@v4
+        with:
+          name: zprivacy-v1-windows-x86_64
+          path: staging
+          retention-days: 30
+          if-no-files-found: error
