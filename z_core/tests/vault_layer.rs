@@ -844,6 +844,45 @@ fn normal_secure_vault_and_config_writes_still_work() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// The contract that checks the guards did not win by breaking the product.
+///
+/// Four refusals are in place now. This one asks whether an ordinary save still
+/// goes through, and — the part that matters on Windows — whether a **second**
+/// one does. Every write here replaces a file that already exists, which is
+/// where `rename` behaves differently than it does on Unix.
+///
+/// Nothing was changed to make this pass. If it falls, the fall is the report.
+#[cfg(windows)]
+#[test]
+fn normal_secure_vault_and_config_writes_still_work() {
+    let _lock = serial();
+    let dir = fresh_vault("fs-normal");
+    identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    s.language = "de".to_string();
+    save_settings(s).expect("save");
+
+    // The second save of each file: the first created it, this one must replace
+    // it. On Unix that is one rename and nothing to say about it.
+    identity("Zweiter", None, Kind::Company, "Zweite Firma GmbH", &[], Policy::Always);
+    let mut s = settings().expect("settings");
+    s.language = "en".to_string();
+    save_settings(s).expect("save a second time over an existing file");
+
+    vault_lock().expect("lock");
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
+    assert_eq!(entities(None).expect("entities").len(), 2);
+    assert_eq!(settings().expect("settings").language, "en");
+
+    let elsewhere = std::path::Path::new(&dir).join("elsewhere");
+    set_data_dir(elsewhere.to_string_lossy().to_string()).expect("elsewhere");
+    assert!(!settings().expect("settings").first_run_done);
+    set_data_dir(dir.clone()).expect("back");
+    assert!(settings().expect("settings").first_run_done);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 #[cfg(unix)]
 #[test]
 fn failed_secure_writes_leave_old_files_intact() {
