@@ -844,6 +844,68 @@ fn normal_secure_vault_and_config_writes_still_work() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// The last of the six: a write that fails leaves yesterday's file untouched.
+///
+/// This is what «atomic» has to mean in practice. The new bytes go to a temp
+/// file first and only replace the real one once they are all there, so a
+/// failure anywhere before that moment costs nothing — the vault that was on
+/// disk a second ago is still the vault on disk now, byte for byte, and no
+/// half-written file is left sitting where the real one belongs.
+///
+/// The failure is caused the way an attacker would cause it: a reparse point in
+/// the temp file's place, which the second contract taught the writer to refuse.
+/// So this test also proves the refusal happens *early* — before anything was
+/// done to the file that already existed.
+///
+/// Nothing was changed to make it pass. The write path is as it was.
+#[cfg(windows)]
+#[test]
+fn failed_secure_writes_leave_old_files_intact() {
+    use std::os::windows::fs::symlink_file;
+
+    let _lock = serial();
+    let dir = fresh_vault("fs-fail-intact");
+    let path = std::path::Path::new(&dir);
+
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    save_settings(s).expect("initial settings");
+    let old_vault = std::fs::read(path.join("vault.zv")).expect("old vault");
+    let old_settings = std::fs::read(path.join("settings.zcfg")).expect("old settings");
+    let vault_victim = path.join("vault-victim.txt");
+    let settings_victim = path.join("settings-victim.txt");
+    std::fs::write(&vault_victim, b"ZXQ-OLD-FINAL-VAULT-VICTIM").expect("vault victim");
+    std::fs::write(&settings_victim, b"ZXQ-OLD-FINAL-CONFIG-VICTIM").expect("settings victim");
+
+    if let Err(e) = symlink_file(&vault_victim, path.join("vault.zv.new")) {
+        panic!("this machine cannot create a reparse point, so the contract cannot be measured here: {e}");
+    }
+    match create_entity(EntityKind::Client, "Nordstern".to_string(), None) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the vault write should fail before replacing the old file, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(path.join("vault.zv")).expect("vault"), old_vault);
+    assert_eq!(
+        std::fs::read(&vault_victim).expect("vault victim"),
+        b"ZXQ-OLD-FINAL-VAULT-VICTIM"
+    );
+    std::fs::remove_file(path.join("vault.zv.new")).expect("remove vault temp");
+
+    symlink_file(&settings_victim, path.join("settings.zcfg.new")).expect("settings temp reparse point");
+    let mut s = settings().expect("settings");
+    s.language = "de".to_string();
+    match save_settings(s) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the settings write should fail before replacing the old file, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(path.join("settings.zcfg")).expect("settings"), old_settings);
+    assert_eq!(
+        std::fs::read(&settings_victim).expect("settings victim"),
+        b"ZXQ-OLD-FINAL-CONFIG-VICTIM"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 /// The contract that checks the guards did not win by breaking the product.
 ///
 /// Four refusals are in place now. This one asks whether an ordinary save still
