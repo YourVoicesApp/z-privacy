@@ -33,11 +33,13 @@ const _kinds = <String, DocumentKind>{
 };
 
 class ZShell extends StatefulWidget {
-  const ZShell({super.key, required this.dataDir, this.ground});
+  const ZShell({super.key, this.dataDir, this.ground});
 
   /// Where the vault lives. Passed in rather than found here, so a test can
   /// point the whole shell at a folder of its own.
-  final String dataDir;
+  /// Where the vault goes. Null means «ask the core», which is what the app
+  /// does; the tests pass a folder of their own.
+  final String? dataDir;
 
   /// An already-started `Ground`, for tests.
   ///
@@ -85,8 +87,14 @@ class _ShellState extends State<ZShell> {
   Future<void> _start() async {
     // The vault lives beside the app's own data, and the core is told once where.
     // It is the only file this program writes (gate G15).
+    //
+    // The screen no longer decides where that is. It used to read HOME and fall
+    // back to the temp directory, which was right on Linux and wrong on Windows,
+    // where HOME is usually unset — the vault would have gone to a folder the
+    // system empties. The core owns these files and says where they belong.
     try {
-      await z.setDataDir(dir: widget.dataDir);
+      final dir = widget.dataDir ?? await z.defaultDataDir();
+      await z.setDataDir(dir: dir);
     } on ApiError catch (e) {
       _trouble = humanMessage(e);
     }

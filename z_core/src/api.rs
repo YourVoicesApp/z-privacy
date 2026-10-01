@@ -1345,6 +1345,13 @@ pub fn set_data_dir(dir: String) -> ApiResult<()> {
     crate::ops::set_data_dir(dir)
 }
 
+/// Where this machine's Z Privacy files belong, decided by the core rather than
+/// guessed by the screen. Never the temp directory: a platform that cannot say
+/// is refused, not fallen back on.
+pub fn default_data_dir() -> ApiResult<String> {
+    crate::data_dir::default_data_dir().map(|p| p.to_string_lossy().to_string())
+}
+
 /// Is it open? Locked means the vault layer is skipped, and the UI says so.
 pub fn vault_state() -> ApiResult<VaultState> {
     crate::ops::vault_state()

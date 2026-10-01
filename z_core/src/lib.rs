@@ -20,6 +20,7 @@ pub mod api;
 mod documents;
 mod ops;
 mod config;
+mod data_dir;
 mod payload;
 mod providers;
 mod scanner;

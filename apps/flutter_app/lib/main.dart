@@ -30,7 +30,6 @@ class ZPrivacyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final home = Platform.environment['HOME'] ?? Directory.systemTemp.path;
     return MaterialApp(
       title: 'Z Privacy',
       debugShowCheckedModeBanner: false,
@@ -39,8 +38,9 @@ class ZPrivacyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Zc.clay, surface: Zc.paper),
         useMaterial3: true,
       ),
-      // The vault is the only file this program writes, and this is where it goes.
-      home: ZShell(dataDir: '$home/.local/share/zprivacy'),
+      // The vault is the only file this program writes. Where it goes is the
+      // core's answer, not this file's guess — see `z_core::default_data_dir`.
+      home: const ZShell(),
     );
   }
 }

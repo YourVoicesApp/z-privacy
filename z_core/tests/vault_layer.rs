@@ -1147,3 +1147,53 @@ fn always_and_profile_actually_reach_the_vault() {
     );
     close_session(elsewhere).expect("close");
 }
+
+/// Where the vault is allowed to live, asked of the core on whatever machine is
+/// running this.
+///
+/// It replaces one line of Dart — `HOME ?? systemTemp` — that was right on
+/// Linux and wrong everywhere else: Windows does not set `HOME`, so the
+/// fallback took over and the vault would have been written into the temp
+/// directory. The test is not cfg-gated, so it is measured on every platform
+/// the suite runs on, and it asserts the thing that actually matters first.
+#[test]
+fn the_vault_never_lives_in_the_temp_directory() {
+    let chosen = default_data_dir().expect("this platform must be able to say where its data goes");
+    let chosen = std::path::PathBuf::from(&chosen);
+    let temp = std::env::temp_dir();
+
+    assert!(
+        !chosen.starts_with(&temp),
+        "the vault would live under the temp directory: {chosen:?} is inside {temp:?}"
+    );
+    assert!(chosen.is_absolute(), "a relative data directory depends on where the app was started: {chosen:?}");
+    assert!(
+        chosen.file_name().is_some(),
+        "the data directory must name a folder of ours, not a drive root: {chosen:?}"
+    );
+
+    // And it is the platform's own place, not merely «not temp».
+    #[cfg(windows)]
+    {
+        let local = std::env::var("LOCALAPPDATA").or_else(|_| std::env::var("USERPROFILE"));
+        let local = local.expect("a Windows session has LOCALAPPDATA or USERPROFILE");
+        assert!(
+            chosen.starts_with(&local),
+            "{chosen:?} is not under this user's local application data ({local})"
+        );
+        assert!(
+            !chosen.to_string_lossy().to_lowercase().contains("roaming"),
+            "the vault belongs to this machine and must not roam between them: {chosen:?}"
+        );
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let home = std::env::var("XDG_DATA_HOME").or_else(|_| std::env::var("HOME")).expect("HOME");
+        assert!(chosen.starts_with(&home), "{chosen:?} is not under {home}");
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let home = std::env::var("HOME").expect("HOME");
+        assert!(chosen.starts_with(&home), "{chosen:?} is not under {home}");
+    }
+}
