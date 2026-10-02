@@ -25,6 +25,7 @@
   <div class="cta">
     <a class="btn primary" href="#download">التنزيل للينكس</a>
     <a class="btn" href="https://github.com/YourVoicesApp/z-privacy">الشفرة المصدرية</a>
+    <a class="btn" href="#download-windows">نزّل لويندوز</a>
     <a class="btn" href="#verify">التحقّق من التنزيل</a>
   </div>
 
@@ -50,7 +51,7 @@
   </section>
 
   <section id="download" class="card" aria-labelledby="h-dl">
-    <h2 id="h-dl">التنزيل</h2>
+    <h2 id="h-dl">التنزيل — لينكس</h2>
     <p class="dlt" lang="en">Z Privacy V1 — Linux x86_64</p>
     <p class="file" dir="ltr"><a href="https://beta.z-privacy.com/zprivacy-v1-linux-x86_64.tar.gz">zprivacy-v1-linux-x86_64.tar.gz</a></p>
     <p class="shalab" dir="ltr">SHA-256</p>
@@ -58,9 +59,21 @@
     <p class="note">سطح مكتب لينكس x86_64 مع GTK3. لا شيء يُركَّب: الحزمة تحمل ما تحتاجه معها.</p>
   </section>
 
+  <section id="download-windows" class="card" aria-labelledby="h-dlw">
+    <h2 id="h-dlw">التنزيل — ويندوز</h2>
+    <p class="dlt" lang="en">Z Privacy V1 — Windows x86_64</p>
+    <p class="file" dir="ltr"><a href="https://beta.z-privacy.com/zprivacy-v1-windows-x86_64-setup.exe">zprivacy-v1-windows-x86_64-setup.exe</a></p>
+    <p class="shalab" dir="ltr">SHA-256</p>
+    <p class="sha" dir="ltr">7fac86b88967272a0cdb625fd7d85fb5f6853c579fa1ddfaee456bfa2a6013d7</p>
+    <p class="note">ملفٌّ واحد، ١٢ ميغابايت. يُثبَّت في حسابك أنت، فلا يطلب كلمة سرّ المدير. ويندوز ١٠ أو ١١، ٦٤-بت.</p>
+    <p class="honest">هذه أوّل نسخة لويندوز. طبقة حماية الملفّات التي تحرس الخزنة على لينكس ليست فيها بعد، والمثبّت غير موقَّع بعد فسيطلب ويندوز إذنك قبل تشغيله. وستتبعها نسخٌ أخرى.</p>
+  </section>
+
   <section id="verify" class="card soft" aria-labelledby="h-ver">
     <h2 id="h-ver">كيفية التحقق</h2>
     <pre dir="ltr"><code>sha256sum -c zprivacy-v1-linux-x86_64.tar.gz.sha256</code></pre>
+    <p class="note">في PowerShell، داخل المجلّد الذي نزّلت إليه:</p>
+    <pre dir="ltr"><code>Get-FileHash .\zprivacy-v1-windows-x86_64-setup.exe</code></pre>
   </section>
 
   <section aria-labelledby="h-src">

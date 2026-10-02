@@ -25,6 +25,7 @@
   <div class="cta">
     <a class="btn primary" href="#download">Für Linux herunterladen</a>
     <a class="btn" href="https://github.com/YourVoicesApp/z-privacy">Quellcode</a>
+    <a class="btn" href="#download-windows">Für Windows herunterladen</a>
     <a class="btn" href="#verify">Download prüfen</a>
   </div>
 
@@ -50,7 +51,7 @@
   </section>
 
   <section id="download" class="card" aria-labelledby="h-dl">
-    <h2 id="h-dl">Download</h2>
+    <h2 id="h-dl">Download — Linux</h2>
     <p class="dlt" lang="en">Z Privacy V1 — Linux x86_64</p>
     <p class="file" dir="ltr"><a href="https://beta.z-privacy.com/zprivacy-v1-linux-x86_64.tar.gz">zprivacy-v1-linux-x86_64.tar.gz</a></p>
     <p class="shalab" dir="ltr">SHA-256</p>
@@ -58,9 +59,21 @@
     <p class="note">Linux-Desktop x86_64 mit GTK3. Nichts zu installieren: das Archiv bringt mit, was es braucht.</p>
   </section>
 
+  <section id="download-windows" class="card" aria-labelledby="h-dlw">
+    <h2 id="h-dlw">Download — Windows</h2>
+    <p class="dlt" lang="en">Z Privacy V1 — Windows x86_64</p>
+    <p class="file" dir="ltr"><a href="https://beta.z-privacy.com/zprivacy-v1-windows-x86_64-setup.exe">zprivacy-v1-windows-x86_64-setup.exe</a></p>
+    <p class="shalab" dir="ltr">SHA-256</p>
+    <p class="sha" dir="ltr">7fac86b88967272a0cdb625fd7d85fb5f6853c579fa1ddfaee456bfa2a6013d7</p>
+    <p class="note">Eine Datei, 12 MB. Sie wird in Ihrem eigenen Benutzerkonto installiert, es wird also kein Administratorkennwort verlangt. Windows 10 oder 11, 64-Bit.</p>
+    <p class="honest">Dies ist die erste Windows-Version. Die Dateischutzschicht, die unter Linux den Tresor schützt, ist noch nicht enthalten, und das Installationsprogramm ist noch nicht signiert, sodass Windows Sie vor dem Start um Bestätigung bittet. Weitere Versionen folgen.</p>
+  </section>
+
   <section id="verify" class="card soft" aria-labelledby="h-ver">
     <h2 id="h-ver">Prüfsumme überprüfen</h2>
     <pre dir="ltr"><code>sha256sum -c zprivacy-v1-linux-x86_64.tar.gz.sha256</code></pre>
+    <p class="note">In PowerShell, im Ordner, in den Sie heruntergeladen haben:</p>
+    <pre dir="ltr"><code>Get-FileHash .\zprivacy-v1-windows-x86_64-setup.exe</code></pre>
   </section>
 
   <section aria-labelledby="h-src">
