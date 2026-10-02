@@ -416,7 +416,10 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          remove_protection_here_leaves forget_from_this_profile_keeps \
          forget_everywhere_reaches nothing_taught_reports_no_reach \
          locked_by_hand locks_itself does_not_postpone_the_lock tell_one_story \
-         opened_again the_lock_closer no_error_and_no_trace; do
+         opened_again the_lock_closer no_error_and_no_trace \
+         from_the_vault_goes_when by_hand_goes_when revealed_while_the_vault_is_locked \
+         takes_the_tokens_too postpone_the_vault_lock one_door_covers \
+         closing_the_conversation_ends; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -436,7 +439,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "offers Disconnect, not" "names both acts by their reach" \
          "name the reach they would forget" "is the pack that is kept" \
          "display only, and Why lives" "its own next move" \
-         "takes the reveal with it"; do
+         "takes the reveal with it" "takes the revealed tokens with it" \
+         "hides rather than keeps"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

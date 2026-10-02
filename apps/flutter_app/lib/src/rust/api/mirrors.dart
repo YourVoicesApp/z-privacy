@@ -1295,6 +1295,24 @@ class RevealState {
           remainingMs == other.remainingMs;
 }
 
+class RevealedToken {
+  final String token;
+  final int remainingMs;
+
+  const RevealedToken({required this.token, required this.remainingMs});
+
+  @override
+  int get hashCode => token.hashCode ^ remainingMs.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RevealedToken &&
+          runtimeType == other.runtimeType &&
+          token == other.token &&
+          remainingMs == other.remainingMs;
+}
+
 class RevealedValue {
   final String token;
   final String value;

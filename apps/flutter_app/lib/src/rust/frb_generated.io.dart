@@ -168,6 +168,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ProviderRow> dco_decode_list_provider_row(dynamic raw);
 
   @protected
+  List<RevealedToken> dco_decode_list_revealed_token(dynamic raw);
+
+  @protected
   List<RuleSetRow> dco_decode_list_rule_set_row(dynamic raw);
 
   @protected
@@ -265,6 +268,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RevealState dco_decode_reveal_state(dynamic raw);
+
+  @protected
+  RevealedToken dco_decode_revealed_token(dynamic raw);
 
   @protected
   RevealedValue dco_decode_revealed_value(dynamic raw);
@@ -503,6 +509,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ProviderRow> sse_decode_list_provider_row(SseDeserializer deserializer);
 
   @protected
+  List<RevealedToken> sse_decode_list_revealed_token(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<RuleSetRow> sse_decode_list_rule_set_row(SseDeserializer deserializer);
 
   @protected
@@ -612,6 +623,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RevealState sse_decode_reveal_state(SseDeserializer deserializer);
+
+  @protected
+  RevealedToken sse_decode_revealed_token(SseDeserializer deserializer);
 
   @protected
   RevealedValue sse_decode_revealed_value(SseDeserializer deserializer);
@@ -897,6 +911,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_revealed_token(
+    List<RevealedToken> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_rule_set_row(
     List<RuleSetRow> self,
     SseSerializer serializer,
@@ -1030,6 +1050,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_reveal_state(RevealState self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_revealed_token(RevealedToken self, SseSerializer serializer);
 
   @protected
   void sse_encode_revealed_value(RevealedValue self, SseSerializer serializer);

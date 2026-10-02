@@ -754,6 +754,17 @@ pub struct TokenRow {
     pub source_detail: String,
 }
 
+/// A token being shown in the safe column right now.
+///
+/// The value is not in it: that was handed over once, when it was revealed.
+/// This row says only *that* it may be on screen, and for how much longer —
+/// and the core is the one that says so.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RevealedToken {
+    pub token: String,
+    pub remaining_ms: u32,
+}
+
 /// A value shown locally for a moment. Revealing never touches a payload.
 #[derive(Clone, PartialEq, Eq)]
 pub struct RevealedValue {
@@ -1295,6 +1306,16 @@ pub fn reveal(session: SessionId, token: String) -> ApiResult<RevealedValue> {
 /// Put the token back in the view.
 pub fn hide(session: SessionId, token: String) -> ApiResult<()> {
     crate::ops::hide(session, token)
+}
+
+/// Which tokens are shown locally right now, and for how much longer.
+pub fn revealed_tokens(session: SessionId) -> ApiResult<Vec<RevealedToken>> {
+    crate::ops::revealed_tokens(session)
+}
+
+/// Cover everything that is uncovered: the vault's value and every token.
+pub fn hide_all_reveals() -> ApiResult<()> {
+    crate::ops::hide_all_reveals()
 }
 
 /// The tokens standing in this conversation, without their values.

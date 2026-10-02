@@ -52,6 +52,14 @@ pub(crate) fn vault_unlock(passphrase: String) -> ApiResult<VaultUnlockOutcome> 
     }
 }
 
+/// How many times the vault has been closed in this run, judged now.
+///
+/// Read **before** the session lock is taken wherever a session needs it: the
+/// core's mutex is not re-entrant, and this takes it.
+pub(crate) fn vault_locks_now() -> u64 {
+    with_core(|core| core.vault.locks_so_far())
+}
+
 pub(crate) fn vault_lock() -> ApiResult<()> {
     with_core(|core| core.vault.lock());
     crate::session::bump_truth();

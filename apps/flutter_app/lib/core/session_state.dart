@@ -7,6 +7,8 @@
 //
 // It also means a mistake is findable: if a count is wrong, it is wrong in the
 // core or in the refresh below — never in a widget.
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 // Prefixed on purpose: every line below that says `z.` is a call into Rust, and
@@ -210,13 +212,15 @@ class Workbench extends ChangeNotifier {
   /// Matches what `undoLastProtection` would actually do.
   bool get canUndo => snap?.canUndo ?? false;
 
-  /// Which tokens are showing their value right now, and until when.
+  /// Which tokens are showing their value right now.
   ///
-  /// This lives **only here**, in the UI. Revealing changes nothing in the core
-  /// — `hide` has nothing to undo — and that is the invariant: reveal draws on
-  /// the screen and never writes into the payload.
+  /// The text is here because the core handed it over once, when it was asked
+  /// for. **Whether it may still be here is the core's answer, not this map's**
+  /// — `syncReveals` asks and drops the rest. Revealing still writes nothing
+  /// into the payload; what changed is that «the showing lives in the UI» is no
+  /// longer true, because a screen cannot be the authority on how long a secret
+  /// stays on it.
   final Map<String, String> revealed = {};
-  final Map<String, DateTime> _revealedUntil = {};
   bool tokensOpen = false;
 
   /// The review panel, and which finding it is pointing at.
@@ -384,9 +388,6 @@ class Workbench extends ChangeNotifier {
     try {
       final shown = await z.reveal(session: session, token: token);
       revealed[token] = shown.value;
-      _revealedUntil[token] = DateTime.now().add(
-        Duration(milliseconds: shown.ttlMs),
-      );
       trouble = null;
     } on ApiError catch (e) {
       trouble = humanMessage(e);
@@ -396,7 +397,6 @@ class Workbench extends ChangeNotifier {
 
   Future<void> hideToken(String token) async {
     revealed.remove(token);
-    _revealedUntil.remove(token);
     try {
       await z.hide_(session: session, token: token);
     } on ApiError catch (e) {
@@ -405,18 +405,30 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Drop anything whose moment has passed. Called before drawing, so a value
-  /// cannot sit on a screen nobody is looking at.
-  void expireReveals() {
-    final now = DateTime.now();
-    final over = _revealedUntil.entries
-        .where((e) => e.value.isBefore(now))
-        .map((e) => e.key)
-        .toList();
-    if (over.isEmpty) return;
-    for (final t in over) {
-      revealed.remove(t);
-      _revealedUntil.remove(t);
+  /// Ask the core what may still be shown, and drop whatever it no longer
+  /// lists — a window that ran out, or a vault that locked.
+  ///
+  /// Called about once a second by the panel, which is why it must not be a way
+  /// of *using* the vault: `revealedTokens` judges the clock and renews
+  /// nothing, so a value sitting on screen cannot hold the vault open.
+  Future<void> syncReveals() async {
+    if (revealed.isEmpty) return;
+    try {
+      final live = await z.revealedTokens(session: session);
+      final names = live.map((r) => r.token).toSet();
+      final gone = revealed.keys.where((t) => !names.contains(t)).toList();
+      if (gone.isEmpty) return;
+      for (final t in gone) {
+        revealed.remove(t);
+      }
+    } catch (e) {
+      // The authority could not be asked — a closed conversation answers
+      // `InvalidSession` to every question about it — so nothing may stay
+      // uncovered. A screen that keeps a value because the question failed is
+      // deciding for itself how long a secret stays on it, which is the one
+      // thing this design does not allow it to do. Hide first, then say why.
+      revealed.clear();
+      trouble = humanMessage(e);
     }
     notifyListeners();
   }
@@ -497,11 +509,14 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Leaving the vault, or the workspace, re-hides everything that was shown.
+  /// Leaving the vault, or the workspace, re-hides everything that was shown —
+  /// and says so to the core, which is where a reveal now lives.
   void hideEverything() {
+    // The core is told either way: it is the one that holds a reveal now, and
+    // this is called from `dispose`, where nothing may depend on a listener.
+    unawaited(z.hideAllReveals());
     if (revealed.isEmpty) return;
     revealed.clear();
-    _revealedUntil.clear();
     notifyListeners();
   }
 

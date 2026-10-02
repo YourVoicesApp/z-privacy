@@ -149,6 +149,9 @@ pub(crate) struct Session {
     next_answer: u32,
     /// How this document last came to be scanned. The workspace band reads it.
     pub scan_origin: crate::api::ScanOrigin,
+    /// Which tokens are shown locally right now, and until when. The value is
+    /// not here: it is in `tokens`, and it was handed over once when asked for.
+    pub revealed: BTreeMap<String, ShownToken>,
 }
 
 impl Session {
@@ -178,6 +181,7 @@ impl Session {
             next_act: 1,
             next_answer: 1,
             scan_origin: crate::api::ScanOrigin::NotScanned,
+            revealed: BTreeMap::new(),
         }
     }
 
@@ -290,6 +294,33 @@ impl Session {
     }
 }
 
+/// Milliseconds left until `until`, and 0 the moment it is past.
+///
+/// One function for both kinds of reveal, so there is one clock and not two.
+pub(crate) fn ms_left(until: std::time::Instant) -> u32 {
+    let now = std::time::Instant::now();
+    if now >= until {
+        return 0;
+    }
+    until.saturating_duration_since(now).as_millis().min(u128::from(u32::MAX)) as u32
+}
+
+/// One token shown in the safe column, and what ends it.
+///
+/// It lives in the session because the value it stands for does: `tokens` is
+/// the session's, and closing the session ends both. Before this, the core
+/// handed over a `ttl_ms` and forgot — and «the showing lives in the UI» was
+/// written in `ops::hide` as if it were a design and not a gap.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct ShownToken {
+    pub until: std::time::Instant,
+    /// The vault's lock count when this was revealed. A lock — by hand or by
+    /// the clock — moves the count on, and this record is then stale. The rule
+    /// is about the **moment** of a lock, not the state of being locked: a
+    /// token can still be revealed while the vault is shut.
+    pub locks_at: u64,
+}
+
 /// One reveal, and the moment it runs out.
 ///
 /// It is held by the vault it came from — [`crate::vault::OpenVault`] — and not
@@ -347,6 +378,14 @@ impl Core {
             session_logins: std::collections::BTreeMap::new(),
             session_settings: crate::vault::model::StoredSettings::default(),
             state_revision: 1,
+        }
+    }
+
+    /// Re-hide every token shown in every session. One loop, so the caller
+    /// does not have to know how many conversations are open.
+    pub(crate) fn hide_every_token(&mut self) {
+        for session in self.sessions.values_mut() {
+            session.revealed.clear();
         }
     }
 

@@ -41,6 +41,15 @@ pub(crate) struct VaultStore {
     /// nobody would know; this way every way in checks the clock first.
     touched: Option<Instant>,
     idle_limit: Option<Duration>,
+    /// How many times this vault has been closed in this run.
+    ///
+    /// It is how «a reveal does not live past a lock» holds for a token in the
+    /// safe column, whose value is the session's and not the vault's. Each
+    /// reveal remembers the count it was born under and the read door drops
+    /// anything older — so the vault never reaches into a session to clear
+    /// anything, and the auto-lock is covered because that door judges the
+    /// clock before it answers.
+    locks: u64,
 }
 
 /// The open vault, and the one value revealed from it.
@@ -225,9 +234,24 @@ impl VaultStore {
     /// Close it. The master key is dropped — and `SecretKey` wipes itself — and
     /// the decrypted contents go with it, and so does whatever was revealed:
     /// that lives inside [`OpenVault`], so there is nothing here to remember.
+    /// The count of locks so far — after judging the clock, so an auto-lock
+    /// that was due is counted before the answer and not after it.
+    ///
+    /// Asking is not using: this never renews `touched`.
+    pub(crate) fn locks_so_far(&mut self) -> u64 {
+        self.judge_idle();
+        self.locks
+    }
+
     pub(crate) fn lock(&mut self) {
         self.sealed = None;
         self.sealed_error = None;
+        // Counted only when there was something to close. A press on «Lock»
+        // with nothing open is not a lock, and must not take down a reveal
+        // that no key was turned on.
+        if self.open.is_some() {
+            self.locks = self.locks.saturating_add(1);
+        }
         self.master = None;
         self.open = None;
         self.touched = None;
