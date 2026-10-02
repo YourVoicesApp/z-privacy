@@ -172,18 +172,30 @@ jobs:
       # Inno Setup 6 is already on the runner image. The version comes from
       # pubspec.yaml so there is one place it is written down.
       - name: Package an installer
-        shell: bash
+        # PowerShell, not bash, for this one step. Git Bash's MSYS layer rewrites
+        # arguments on their way to a Windows program: `/DSourceDir=...` becomes
+        # a path, and the usual `//D` escape for that was passed through
+        # untouched, so Inno saw an option it did not know and stopped.
+        # PowerShell hands the arguments over as they were written.
+        shell: pwsh
         run: |
-          version=$(grep -m1 '^version:' apps/flutter_app/pubspec.yaml | sed 's/^version:[[:space:]]*//' | cut -d+ -f1)
-          [ -n "$version" ] || { echo "no version in pubspec.yaml"; exit 1; }
-          echo "version from pubspec.yaml: $version"
-          mkdir -p staging-installer
-          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" \
-            //DSourceDir="$(pwd -W)\\staging\\zprivacy-v1-windows-x86_64" \
-            //DOutDir="$(pwd -W)\\staging-installer" \
-            //DAppVersion="$version" \
-            //DIconFile="$(pwd -W)\\apps\\flutter_app\\windows\\runner\\resources\\app_icon.ico" \
-            packaging/windows/zprivacy.iss
+          $line = Get-Content apps/flutter_app/pubspec.yaml |
+                  Where-Object { $_ -match '^version:' } |
+                  Select-Object -First 1
+          if (-not $line) { throw "no version in pubspec.yaml" }
+          $version = ($line -replace '^version:\s*', '' -split '\+')[0].Trim()
+          Write-Host "version from pubspec.yaml: $version"
+
+          $root = (Get-Location).Path
+          New-Item -ItemType Directory -Force -Path staging-installer | Out-Null
+
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/DSourceDir=$root\staging\zprivacy-v1-windows-x86_64" `
+            "/DOutDir=$root\staging-installer" `
+            "/DAppVersion=$version" `
+            "/DIconFile=$root\apps\flutter_app\windows\runner\resources\app_icon.ico" `
+            "packaging\windows\zprivacy.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup refused the script ($LASTEXITCODE)" }
 
       - name: What the installer is, and its hash
         if: always()
@@ -217,7 +229,13 @@ jobs:
       # folder of that name — so it unpacks into its own place rather than
       # scattering twenty files wherever it was opened. Kept beside the
       # installer: it is what the build actually made, with nothing added.
+      #
+      # `always()`, because the packaging step above it can fail on its own and
+      # a working build must not be thrown away with it. The first time it did
+      # fail, this upload was skipped and there was nothing to hand anybody —
+      # which is the same mistake the contracts step above already guards against.
       - name: Upload the folder
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zprivacy-v1-windows-x86_64
