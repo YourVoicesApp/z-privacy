@@ -230,6 +230,49 @@ fn one_door_covers_the_vault_value_and_the_tokens() {
     assert_eq!(reveal_state().expect("state").remaining_ms, 0, "the vault value stayed shown");
 }
 
+/// The screen tells the core what happened; the core decides what it means.
+/// Both doors end everything, which is what lets the screen stay ignorant.
+#[test]
+fn losing_the_window_ends_every_reveal() {
+    let _guard = serial();
+    let g = a_document_with_both(300, 0);
+
+    reveal(g.session, g.by_hand.clone()).expect("token");
+    reveal_value(g.entity, g.value_id).expect("vault value");
+    assert_eq!(shown(g.session).len(), 1);
+    assert!(reveal_state().expect("state").remaining_ms > 0);
+
+    window_focus_lost().expect("focus lost");
+
+    assert!(shown(g.session).is_empty(), "a token survived the window losing focus");
+    assert_eq!(reveal_state().expect("state").remaining_ms, 0, "the vault value survived it");
+
+    // And the other event, on its own: minimised, or moved to a workspace that
+    // is not the visible one.
+    reveal(g.session, g.by_hand.clone()).expect("token again");
+    reveal_value(g.entity, g.value_id).expect("vault value again");
+    assert_eq!(shown(g.session).len(), 1);
+
+    window_hidden().expect("hidden");
+
+    assert!(shown(g.session).is_empty(), "a token survived the window disappearing");
+    assert_eq!(reveal_state().expect("state").remaining_ms, 0);
+}
+
+/// Both doors are safe to call when there is nothing to cover: the measured
+/// `inactive` at startup arrives before anyone has revealed anything.
+#[test]
+fn covering_nothing_is_not_an_error() {
+    let _guard = serial();
+    let g = a_document_with_both(300, 0);
+    assert!(shown(g.session).is_empty());
+
+    window_focus_lost().expect("focus lost with nothing shown");
+    window_hidden().expect("hidden with nothing shown");
+
+    assert!(shown(g.session).is_empty());
+}
+
 #[test]
 fn closing_the_conversation_ends_what_it_was_showing() {
     let _guard = serial();

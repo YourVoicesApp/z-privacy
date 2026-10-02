@@ -154,6 +154,26 @@ Future<void> hide_({required SessionId session, required String token}) =>
 Future<List<RevealedToken>> revealedTokens({required SessionId session}) =>
     RustLib.instance.api.zCoreApiRevealedTokens(session: session);
 
+/// The window is no longer the one in front.
+///
+/// The screen reports the event; what it means is decided here. Measured on
+/// Linux/GTK before it was promised: this is `AppLifecycleState.inactive`,
+/// which also arrives once at startup and again during a restore — harmless,
+/// because covering what is uncovered asks nothing of the person and nothing
+/// of the vault.
+Future<void> windowFocusLost() =>
+    RustLib.instance.api.zCoreApiWindowFocusLost();
+
+/// The window is not on the screen at all — minimised, or on a workspace that
+/// is not the visible one. Measured as `AppLifecycleState.hidden`.
+///
+/// It ends every reveal, as losing focus does. Locking the vault when the
+/// window disappears is a separate act with its own switch, and its own
+/// commit: this door must never be the one that locks, because `inactive`
+/// arrives at startup and a vault that locked itself on every launch would be
+/// a defect wearing a promise's clothes.
+Future<void> windowHidden() => RustLib.instance.api.zCoreApiWindowHidden();
+
 /// Cover everything that is uncovered: the vault's value and every token.
 Future<void> hideAllReveals() => RustLib.instance.api.zCoreApiHideAllReveals();
 

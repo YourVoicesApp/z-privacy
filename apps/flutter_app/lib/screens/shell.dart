@@ -6,6 +6,8 @@
 // nothing asked the question again. A screen can be tested in isolation; the
 // choice *between* screens can only be tested if something can build it.
 
+import 'dart:async';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
@@ -63,9 +65,53 @@ class _ShellState extends State<ZShell> {
   /// and that is the truth rather than a bug: nothing was written down.
   bool _firstRunPassed = false;
 
+  /// The one thing in this app that watches the window.
+  ///
+  /// It lives here and nowhere else on purpose: a second watcher in a screen
+  /// would mean two places deciding what a window event means, and neither of
+  /// them is allowed to decide at all. The core is told what happened and it
+  /// does the deciding — `windowFocusLost` and `windowHidden` are the two
+  /// doors, and both end every reveal.
+  ///
+  /// The states are the measured ones, not the guessed ones (Flutter 3.44.2,
+  /// Linux/GTK, written down before any of this was promised):
+  ///
+  ///   * `inactive` — another window took the front. It also arrives once at
+  ///     startup and again during a restore, which costs nothing: covering
+  ///     what is already covered asks nothing of anybody.
+  ///   * `hidden` — minimised, or moved to a workspace that is not the visible
+  ///     one. Both produce it, so the promise is «when the window goes», not
+  ///     «when it is minimised».
+  late final AppLifecycleListener _window;
+
+  /// Report the event, then stop drawing what the screen still holds — in this
+  /// frame, not when a timer next comes round. The core is emptied at once, but
+  /// the panel keeps the text it was handed until it asks again, and a value
+  /// drawn a second after the window went is a value that was on screen after
+  /// the window went.
+  ///
+  /// And it fails closed. If the core cannot be told, the screen drops what it
+  /// holds anyway: staying quiet used to mean the value sat there until its own
+  /// time ran out. No failure of these two calls can be produced through the
+  /// contract today, so that half is a guard without a red test — the same
+  /// honesty as the vault room's ticker.
+  Future<void> _report(Future<void> Function() tell) async {
+    try {
+      await tell();
+    } catch (_) {
+      _bench?.hideEverything();
+      return;
+    }
+    await _bench?.syncReveals();
+  }
+
   @override
   void initState() {
     super.initState();
+    _window = AppLifecycleListener(
+      onInactive: () => unawaited(_report(z.windowFocusLost)),
+      onHide: () => unawaited(_report(z.windowHidden)),
+    );
     // The shell itself decides which screen is on: first run, settings, the
     // vault, the workspace, home. That decision reads `Ground`, so the shell has
     // to rebuild when `Ground` changes — the screens' own `ListenableBuilder`s
@@ -95,6 +141,7 @@ class _ShellState extends State<ZShell> {
 
   @override
   void dispose() {
+    _window.dispose();
     _ground.removeListener(_groundChanged);
     _bench?.dispose();
     _ground.dispose();

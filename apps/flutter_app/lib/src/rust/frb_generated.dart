@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 135572415;
+  int get rustContentHash => 168887366;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -366,6 +366,10 @@ abstract class RustLibApi extends BaseApi {
   Future<VaultUnlockOutcome> zCoreApiVaultUnlockWithPassphrase({
     required String passphrase,
   });
+
+  Future<void> zCoreApiWindowFocusLost();
+
+  Future<void> zCoreApiWindowHidden();
 
   Future<WorkspaceSnapshot> zCoreApiWorkspaceSnapshot({
     required SessionId session,
@@ -2787,6 +2791,60 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> zCoreApiWindowFocusLost() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 78,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kZCoreApiWindowFocusLostConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kZCoreApiWindowFocusLostConstMeta =>
+      const TaskConstMeta(debugName: "window_focus_lost", argNames: []);
+
+  @override
+  Future<void> zCoreApiWindowHidden() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 79,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_api_error,
+        ),
+        constMeta: kZCoreApiWindowHiddenConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kZCoreApiWindowHiddenConstMeta =>
+      const TaskConstMeta(debugName: "window_hidden", argNames: []);
+
+  @override
   Future<WorkspaceSnapshot> zCoreApiWorkspaceSnapshot({
     required SessionId session,
   }) {
@@ -2798,7 +2856,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 78,
+            funcId: 80,
             port: port_,
           );
         },

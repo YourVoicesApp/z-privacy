@@ -67,6 +67,33 @@ else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
 fi
 
+# ---------------------------------------------------------------- G24
+# One watcher for the window, and it only reports.
+#
+# The behaviour board promises that a reveal ends when the window stops being
+# the one in front. That event is a fact only the screen can see — so the
+# screen reports it and the core decides what it means. Two watchers would be
+# two places deciding, and a watcher in a screen would be a screen deciding;
+# both are the shape this project spent two rounds removing.
+WATCHERS=$(grep -RlE 'AppLifecycleListener|WidgetsBindingObserver|didChangeAppLifecycleState' \
+             "$FLUTTER_LIB" --include='*.dart' 2>/dev/null | grep -v '/src/rust/' || true)
+WATCH_N=$(printf '%s' "$WATCHERS" | grep -c . || true)
+if [ "$WATCH_N" = "1" ] && printf '%s' "$WATCHERS" | grep -q 'screens/shell.dart'; then
+  pass "G24 one place watches the window, and it is the shell"
+else
+  fail "G24 the window is watched in $WATCH_N place(s), expected the shell alone:"
+  printf '%s\n' "$WATCHERS" | sed 's/^/        /'
+fi
+
+DOOR_CALLERS=$(grep -RlE 'windowFocusLost|windowHidden' \
+                 "$FLUTTER_LIB" --include='*.dart' 2>/dev/null | grep -v '/src/rust/' || true)
+if [ "$DOOR_CALLERS" = "$WATCHERS" ]; then
+  pass "G24 the window doors are called from that one place and no other"
+else
+  fail "G24 the window doors are called outside the watcher:"
+  printf '%s\n' "$DOOR_CALLERS" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G23
 # The test clock is a seam, and a seam is a promise about what it cannot do.
 #
@@ -417,6 +444,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          forget_everywhere_reaches nothing_taught_reports_no_reach \
          locked_by_hand locks_itself does_not_postpone_the_lock tell_one_story \
          opened_again the_lock_closer no_error_and_no_trace \
+         losing_the_window covering_nothing \
          from_the_vault_goes_when by_hand_goes_when revealed_while_the_vault_is_locked \
          takes_the_tokens_too postpone_the_vault_lock one_door_covers \
          closing_the_conversation_ends; do
@@ -440,7 +468,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "name the reach they would forget" "is the pack that is kept" \
          "display only, and Why lives" "its own next move" \
          "takes the reveal with it" "takes the revealed tokens with it" \
-         "hides rather than keeps"; do
+         "hides rather than keeps" "no longer in front" "gone from the screen" \
+         "in the frame after the window does"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else
