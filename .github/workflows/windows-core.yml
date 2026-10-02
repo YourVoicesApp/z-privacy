@@ -161,10 +161,63 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           (cd "$dir" && sha256sum zprivacy.exe z_bridge.dll)
 
+      # One file instead of thirteen.
+      #
+      # The folder below is still uploaded, for anyone who wants to see exactly
+      # what the build produced. The installer is for everyone else: it puts the
+      # thirteen files where they belong, makes the shortcuts, and registers an
+      # uninstaller — so «unblock it, extract it, and never move the .exe» stops
+      # being something a person has to get right.
+      #
+      # Inno Setup 6 is already on the runner image. The version comes from
+      # pubspec.yaml so there is one place it is written down.
+      - name: Package an installer
+        shell: bash
+        run: |
+          version=$(grep -m1 '^version:' apps/flutter_app/pubspec.yaml | sed 's/^version:[[:space:]]*//' | cut -d+ -f1)
+          [ -n "$version" ] || { echo "no version in pubspec.yaml"; exit 1; }
+          echo "version from pubspec.yaml: $version"
+          mkdir -p staging-installer
+          "/c/Program Files (x86)/Inno Setup 6/ISCC.exe" \
+            //DSourceDir="$(pwd -W)\\staging\\zprivacy-v1-windows-x86_64" \
+            //DOutDir="$(pwd -W)\\staging-installer" \
+            //DAppVersion="$version" \
+            //DIconFile="$(pwd -W)\\apps\\flutter_app\\windows\\runner\\resources\\app_icon.ico" \
+            packaging/windows/zprivacy.iss
+
+      - name: What the installer is, and its hash
+        if: always()
+        shell: bash
+        run: |
+          file=staging-installer/zprivacy-v1-windows-x86_64-setup.exe
+          [ -f "$file" ] || { echo "no installer was made"; exit 0; }
+          {
+            echo "### The installer"
+            echo ""
+            echo "One file. Download it, run it, and it is installed — no unzipping,"
+            echo "and no administrator password. Windows will still ask to allow an"
+            echo "unsigned program: More info, then Run anyway."
+            echo ""
+            echo '```'
+            ls -l "$file" | awk '{print $5" bytes"}'
+            sha256sum "$file"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          sha256sum "$file"
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: zprivacy-v1-windows-x86_64-setup
+          path: staging-installer
+          retention-days: 30
+          if-no-files-found: error
+
       # Downloading this gives `zprivacy-v1-windows-x86_64.zip`, holding one
       # folder of that name — so it unpacks into its own place rather than
-      # scattering twenty files wherever it was opened.
-      - name: Upload it
+      # scattering twenty files wherever it was opened. Kept beside the
+      # installer: it is what the build actually made, with nothing added.
+      - name: Upload the folder
         uses: actions/upload-artifact@v4
         with:
           name: zprivacy-v1-windows-x86_64
