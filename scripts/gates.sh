@@ -24,7 +24,10 @@ API_FILES_FIRST=z_core/src/api.rs
 CLIENT=ureq
 NET_DIR=providers
 # The echo provider only exists in a build made for the tests.
-TEST_FEATURES="--features fake_provider" 
+# Both are test-only features. `test_clock` is listed here and not only in the
+# manifest because a feature the suite forgets to ask for takes its tests with
+# it silently — the same shrink G22 exists to refuse. G23 checks this line.
+TEST_FEATURES="--features fake_provider,test_clock" 
 
 echo "Z Privacy gates"
 echo
@@ -62,6 +65,33 @@ if grep -A3 '^\[features\]' z_core/Cargo.toml | grep -q '^default = \[\]'; then
   pass "G1d the echo provider is not in z_core's default features"
 else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
+fi
+
+# ---------------------------------------------------------------- G23
+# The test clock is a seam, and a seam is a promise about what it cannot do.
+#
+# It can only make the vault look longer unused than it is — never shorter — so
+# it has no power to postpone a lock. What is checked here is that it stays
+# where it was put: out of `default`, out of the bridge, out of the interface,
+# and named by the suite so its four tests cannot disappear quietly.
+SEAM="age_vault_unused"
+if grep -q '^test_clock = \[\]' z_core/Cargo.toml; then
+  pass "G23 the test clock is a declared feature, not a default"
+else
+  fail "G23 z_core/Cargo.toml does not declare test_clock as its own feature"
+fi
+
+G23_OUT=$(grep -RlsE "$SEAM|test_clock" bridges apps/flutter_app/lib 2>/dev/null || true)
+if [ -z "$G23_OUT" ]; then
+  pass "G23 the test clock does not cross the bridge or reach the interface"
+else
+  fail "G23 the test clock is named outside z_core:"; printf '%s\n' "$G23_OUT" | sed 's/^/        /'
+fi
+
+if printf '%s' "$TEST_FEATURES" | grep -q 'test_clock'; then
+  pass "G23 the suite runs with the clock, so its tests cannot vanish silently"
+else
+  fail "G23 TEST_FEATURES does not name test_clock — the clock tests are being skipped"
 fi
 
 # ---------------------------------------------------------------- G21
@@ -384,7 +414,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          lie_always_without_vault lie_missing_credential lie_rescan_is_named \
          keyless_login_claims_a_key \
          remove_protection_here_leaves forget_from_this_profile_keeps \
-         forget_everywhere_reaches nothing_taught_reports_no_reach; do
+         forget_everywhere_reaches nothing_taught_reports_no_reach \
+         locked_by_hand locks_itself does_not_postpone_the_lock tell_one_story \
+         opened_again the_lock_closer no_error_and_no_trace; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -403,7 +435,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "named a rescan, not scanned on import" \
          "offers Disconnect, not" "names both acts by their reach" \
          "name the reach they would forget" "is the pack that is kept" \
-         "display only, and Why lives" "its own next move"; do
+         "display only, and Why lives" "its own next move" \
+         "takes the reveal with it"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

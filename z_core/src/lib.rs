@@ -30,6 +30,25 @@ mod text;
 mod tokens;
 mod vault;
 
+/// The second door of that kind, and the same shape: the vault's idle clock.
+///
+/// Auto-lock is a promise about elapsed time, and the shortest limit a person
+/// can set is one minute — so a test that waits for the real clock costs the
+/// suite a minute per case, and a suite that slow has `#[ignore]` written on it
+/// within the month. A test ages the vault instead.
+///
+/// It opens **one way**: unused for longer, never for less. There is no call
+/// here that pushes a lock away, so this door cannot be used to make the
+/// product less safe. Compiled only under `test_clock`, which is never a
+/// default feature and never reaches the bridge — gate G23.
+#[cfg(feature = "test_clock")]
+pub mod test_clock {
+    /// Pretend the open vault has been sitting unused for `seconds` longer.
+    pub fn age_vault_unused(seconds: u32) {
+        crate::session::with_core(|core| core.vault.age_unused(seconds));
+    }
+}
+
 /// Version of the core, shown by the UI so a build can be identified on sight.
 pub fn core_version() -> String {
     format!("z_core {}", env!("CARGO_PKG_VERSION"))

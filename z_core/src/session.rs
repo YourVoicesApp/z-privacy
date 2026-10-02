@@ -291,6 +291,9 @@ impl Session {
 }
 
 /// One reveal, and the moment it runs out.
+///
+/// It is held by the vault it came from — [`crate::vault::OpenVault`] — and not
+/// here, so that locking the vault ends it with nothing to remember.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Revealed {
     pub entity: u32,
@@ -330,16 +333,6 @@ pub(crate) struct Core {
     /// two homes as a credential, for the same reason: G15 lets the core write
     /// one file, and it is the sealed vault.
     pub session_settings: crate::vault::model::StoredSettings,
-    /// Which vault value is revealed right now, and until when.
-    ///
-    /// The core holds this because the core must own it. It used to hand out a
-    /// TTL and forget: Flutter kept the plaintext in a map and a `Timer`
-    /// decided when the reveal was over. A screen cannot be the authority on
-    /// how long a secret stays on screen — a paused isolate, a dropped timer
-    /// or a rebuilt widget would each quietly extend it.
-    ///
-    /// `None` means nothing is revealed. One at a time, on purpose.
-    pub revealed: Option<Revealed>,
     /// Bumped when a displayed fact changes. A check, not a source of drawing.
     pub state_revision: u32,
 }
@@ -354,7 +347,6 @@ impl Core {
             session_logins: std::collections::BTreeMap::new(),
             session_settings: crate::vault::model::StoredSettings::default(),
             state_revision: 1,
-            revealed: None,
         }
     }
 

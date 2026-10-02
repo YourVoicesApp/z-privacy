@@ -31,8 +31,9 @@ pub(crate) struct VaultStore {
     sealed_error: Option<ApiError>,
     /// Present only while unlocked. Wiped on lock.
     master: Option<SecretKey>,
-    /// The decrypted model. Present only while unlocked.
-    open: Option<Vault>,
+    /// The decrypted model and the one value revealed from it. Present only
+    /// while unlocked — see [`OpenVault`].
+    open: Option<OpenVault>,
     /// When the vault was last used, and how long it may sit unused.
     ///
     /// Auto-lock is enforced **here** rather than by a timer in the UI (task
@@ -40,6 +41,31 @@ pub(crate) struct VaultStore {
     /// nobody would know; this way every way in checks the clock first.
     touched: Option<Instant>,
     idle_limit: Option<Duration>,
+}
+
+/// The open vault, and the one value revealed from it.
+///
+/// The reveal lives **inside** the open state rather than beside it, and that
+/// is the whole fix of this file: it used to sit in `Core`, so `lock()` closed
+/// the vault and left the reveal standing. The lock a person presses was only
+/// half of it — the auto-lock fires inside [`VaultStore::judge_idle`] and never
+/// passes through `vault_lock()` at all, so a second place would have had to
+/// remember too. Here there is no way to write down a revealed value without an
+/// open vault, and `lock()` drops both in one move.
+///
+/// The core owns it because the core must: Flutter used to keep the plaintext
+/// in a map and let a `Timer` decide when the reveal was over. A screen cannot
+/// be the authority on how long a secret stays on screen — a paused isolate, a
+/// dropped timer or a rebuilt widget would each quietly extend it.
+///
+/// And it is not part of [`Vault`]: that is the decrypted content, and
+/// `with_open_mut` seals it and writes the file. A reveal belongs to this run
+/// and must never reach the disk.
+#[derive(Debug)]
+pub(crate) struct OpenVault {
+    vault: Vault,
+    /// `None` means nothing is revealed. One at a time, on purpose.
+    revealed: Option<crate::session::Revealed>,
 }
 
 impl VaultStore {
@@ -90,21 +116,52 @@ impl VaultStore {
         self.touched = Some(Instant::now());
     }
 
-    /// Lock it if it has been sitting too long, and note that it is being used.
+    /// Tests only: make the vault look as though it had been sitting unused for
+    /// `seconds` longer than it has.
     ///
-    /// Called by every way into the open vault, so «auto-lock» is a property of
-    /// the vault and not of whoever remembered to set a timer.
-    fn tick(&mut self) {
+    /// One direction, on purpose: this brings the auto-lock **closer** and has
+    /// no way to push it away. And when the clock cannot go back that far,
+    /// «older than the clock itself» is older than any limit, so the honest
+    /// answer is to judge it unused now rather than to leave it as it was.
+    #[cfg(feature = "test_clock")]
+    pub(crate) fn age_unused(&mut self, seconds: u32) {
+        let by = Duration::from_secs(u64::from(seconds));
+        match self.touched.and_then(|t| t.checked_sub(by)) {
+            Some(older) => self.touched = Some(older),
+            None => {
+                if self.idle_limit.is_some() {
+                    self.lock();
+                }
+            }
+        }
+    }
+
+    /// Lock it if it has been sitting too long — and nothing else.
+    ///
+    /// **Judging is not using.** `touched` is never renewed here, which is what
+    /// lets a screen ask about a reveal four times a second without holding the
+    /// vault open for as long as the value is on it.
+    fn judge_idle(&mut self) {
         if self.open.is_none() {
             return;
         }
         if let (Some(limit), Some(touched)) = (self.idle_limit, self.touched) {
             if touched.elapsed() > limit {
                 self.lock();
-                return;
             }
         }
-        self.touched = Some(Instant::now());
+    }
+
+    /// Every way *into* the open vault: judge the clock first, then note that
+    /// it is being used.
+    ///
+    /// Called by every such way, so «auto-lock» is a property of the vault and
+    /// not of whoever remembered to set a timer.
+    fn tick(&mut self) {
+        self.judge_idle();
+        if self.open.is_some() {
+            self.touched = Some(Instant::now());
+        }
     }
 
     pub(crate) fn state(&mut self) -> VaultState {
@@ -136,7 +193,7 @@ impl VaultStore {
         let minutes = model.settings.auto_lock_minutes;
         self.sealed = Some(sealed);
         self.master = Some(master);
-        self.open = Some(model);
+        self.open = Some(OpenVault { vault: model, revealed: None });
         self.set_idle_limit(minutes);
         self.write_to_disk()?;
         Ok((0, 0))
@@ -160,13 +217,14 @@ impl VaultStore {
         );
         let minutes = model.settings.auto_lock_minutes;
         self.master = Some(master);
-        self.open = Some(model);
+        self.open = Some(OpenVault { vault: model, revealed: None });
         self.set_idle_limit(minutes);
         Ok(counts)
     }
 
     /// Close it. The master key is dropped — and `SecretKey` wipes itself — and
-    /// the decrypted contents go with it.
+    /// the decrypted contents go with it, and so does whatever was revealed:
+    /// that lives inside [`OpenVault`], so there is nothing here to remember.
     pub(crate) fn lock(&mut self) {
         self.sealed = None;
         self.sealed_error = None;
@@ -189,7 +247,7 @@ impl VaultStore {
     pub(crate) fn with_open<R>(&mut self, f: impl FnOnce(&Vault) -> R) -> ApiResult<R> {
         self.tick();
         match self.open.as_ref() {
-            Some(vault) => Ok(f(vault)),
+            Some(open) => Ok(f(&open.vault)),
             None => Err(ApiError::VaultLocked),
         }
     }
@@ -198,7 +256,7 @@ impl VaultStore {
     pub(crate) fn read<R>(&mut self, f: impl FnOnce(&Vault) -> ApiResult<R>) -> ApiResult<R> {
         self.tick();
         match self.open.as_ref() {
-            Some(vault) => f(vault),
+            Some(open) => f(&open.vault),
             None => Err(ApiError::VaultLocked),
         }
     }
@@ -206,9 +264,10 @@ impl VaultStore {
     /// Change the open vault and seal it again. Nothing here can leave the device.
     pub(crate) fn with_open_mut<R>(&mut self, f: impl FnOnce(&mut Vault) -> ApiResult<R>) -> ApiResult<R> {
         self.tick();
-        let (Some(vault), Some(master)) = (self.open.as_mut(), self.master.as_ref()) else {
+        let (Some(open), Some(master)) = (self.open.as_mut(), self.master.as_ref()) else {
             return Err(ApiError::VaultLocked);
         };
+        let vault = &mut open.vault;
         let out = f(vault)?;
         let body = format::encode(vault, master)?;
         let sealed = self.sealed.as_mut().ok_or(ApiError::VaultLocked)?;
@@ -218,12 +277,54 @@ impl VaultStore {
         Ok(out)
     }
 
+    /// What is revealed right now, if anything.
+    ///
+    /// The clock is judged on the way in — a vault that should have locked
+    /// locks here — but asking is **not** using, so nothing is postponed. An
+    /// expired reveal is dropped on the way out, so the core does not hold a
+    /// finished one until someone asks again.
+    pub(crate) fn revealed_now(&mut self) -> Option<crate::session::Revealed> {
+        self.judge_idle();
+        let open = self.open.as_mut()?;
+        let live = open.revealed.filter(|r| r.remaining_ms() > 0);
+        open.revealed = live;
+        live
+    }
+
+    /// Read the open vault and set what it is revealing, in one pass.
+    ///
+    /// A way *in* — a person pressed the eye — so the clock is renewed. It
+    /// writes no file: a reveal is state for this run, and `with_open_mut` is
+    /// the only door that seals and saves.
+    pub(crate) fn with_reveal<R>(
+        &mut self,
+        f: impl FnOnce(&Vault, &mut Option<crate::session::Revealed>) -> ApiResult<R>,
+    ) -> ApiResult<R> {
+        self.tick();
+        match self.open.as_mut() {
+            Some(open) => {
+                let OpenVault { vault, revealed } = open;
+                f(vault, revealed)
+            }
+            None => Err(ApiError::VaultLocked),
+        }
+    }
+
+    /// End a reveal now. Infallible on purpose: a locked vault has none to end,
+    /// and a person pressing «Hide» a second after it locked itself must not be
+    /// answered with a refusal about the vault.
+    pub(crate) fn end_reveal(&mut self) {
+        if let Some(open) = self.open.as_mut() {
+            open.revealed = None;
+        }
+    }
+
     /// What the scanner may recognise: this profile's values, and nothing while
     /// the vault is locked.
     pub(crate) fn hints(&mut self, active_profile: Option<&str>) -> Vec<VaultHint> {
         self.tick();
         match self.open.as_ref() {
-            Some(vault) => vault.hints_for(active_profile),
+            Some(open) => open.vault.hints_for(active_profile),
             // Locked: the layer is skipped entirely, by having nothing to say.
             None => Vec::new(),
         }
@@ -233,7 +334,7 @@ impl VaultStore {
     pub(crate) fn exceptions(&mut self, active_profile: Option<&str>) -> Vec<UserException> {
         self.tick();
         match self.open.as_ref() {
-            Some(vault) => vault.exceptions_for(active_profile),
+            Some(open) => open.vault.exceptions_for(active_profile),
             None => Vec::new(),
         }
     }
@@ -243,7 +344,8 @@ impl VaultStore {
     pub(crate) fn label_rules(&mut self, active_profile: Option<&str>) -> Vec<crate::scanner::rules::LabelRule> {
         self.tick();
         match self.open.as_ref() {
-            Some(vault) => vault
+            Some(open) => open
+                .vault
                 .label_rules_for(active_profile)
                 .iter()
                 .map(|r| r.as_rule())
@@ -258,7 +360,7 @@ impl VaultStore {
     pub(crate) fn languages_of(&self, profile_id: &str) -> Vec<String> {
         self.open
             .as_ref()
-            .and_then(|v| v.profiles.iter().find(|p| p.id == profile_id))
+            .and_then(|o| o.vault.profiles.iter().find(|p| p.id == profile_id))
             .map(|p| p.languages.clone())
             .unwrap_or_default()
     }
