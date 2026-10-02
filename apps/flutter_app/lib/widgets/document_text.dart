@@ -166,9 +166,24 @@ class _OriginalTextState extends State<OriginalText> {
     return out;
   }
 
-  /// A protected stretch is filled; a suggested one is underlined and left in
-  /// the clear. The difference is deliberate and is the whole of G12 made
-  /// visible: an unanswered suggestion **is still the real text**.
+  /// Four marks, and two facts on every word.
+  ///
+  /// **The line says who decided. The wash says whether the vault knew.** They
+  /// are different questions — the pack may find a name while a person chooses
+  /// to protect it — and the core has kept them apart since task 034, as
+  /// `Mark.decided` beside `Mark.source`. Before this the screen drew only the
+  /// second, so who decided a word could be read in the Why sheet and nowhere
+  /// on the word itself.
+  ///
+  /// ```text
+  ///   solid  1.5  clay       a person decided it
+  ///   dashed 1.5  clay       a layer decided on its own
+  ///   wavy   2.0  amberEdge  still waiting for a person's word
+  /// ```
+  ///
+  /// Waiting beats the source: an unanswered suggestion is wavy whoever found
+  /// it, because it **is still the real text** — the whole of G12 made visible.
+  /// And a suggested stretch stays unfilled for the same reason.
   InlineSpan _marked(String slice, Mark m) {
     final suggested = m.state == MarkState.suggested;
     final tint = suggested ? Zc.amber : sourceTint(m.source);
@@ -190,9 +205,15 @@ class _OriginalTextState extends State<OriginalText> {
             : (suggested ? Zc.amberWash : (m.source == Source.vault ? Zc.riverWash : Zc.clayWash)),
         color: tint,
         fontWeight: FontWeight.w600,
-        decoration: suggested ? TextDecoration.underline : null,
-        decorationStyle: TextDecorationStyle.wavy,
-        decorationColor: Zc.amberEdge,
+        // The line is drawn under every mark now, and it is the one thing the
+        // focus does not touch: focus moves the wash, so that being pointed at
+        // never changes what a mark is saying.
+        decoration: TextDecoration.underline,
+        decorationStyle: suggested
+            ? TextDecorationStyle.wavy
+            : (m.decided ? TextDecorationStyle.solid : TextDecorationStyle.dashed),
+        decorationColor: suggested ? Zc.amberEdge : Zc.clay,
+        decorationThickness: suggested ? 2.0 : 1.5,
       ),
     );
   }

@@ -469,7 +469,10 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "display only, and Why lives" "its own next move" \
          "takes the reveal with it" "takes the revealed tokens with it" \
          "hides rather than keeps" "no longer in front" "gone from the screen" \
-         "in the frame after the window does"; do
+         "in the frame after the window does" \
+         "drawn with a solid line" "protected on its own is drawn dashed" \
+         "the line still says who decided" "stays wavy, whoever found it" \
+         "put back in the answer is drawn dotted"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

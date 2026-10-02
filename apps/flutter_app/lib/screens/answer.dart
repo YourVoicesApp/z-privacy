@@ -194,11 +194,20 @@ class _AnswerPanelState extends State<AnswerPanel> {
                             for (final seg in segments)
                               TextSpan(
                                 text: seg.text,
+                                // The fourth mark: dotted for a value that was
+                                // put back here, locally. The other three live
+                                // in the document's own column; this is the only
+                                // place a word can carry this one, because it is
+                                // the only place a value comes back.
                                 style: seg.restored
                                     ? const TextStyle(
                                         backgroundColor: Zc.clayWash,
                                         color: Zc.clayDeep,
                                         fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                        decorationStyle: TextDecorationStyle.dotted,
+                                        decorationColor: Zc.clayDeep,
+                                        decorationThickness: 1.5,
                                       )
                                     : null,
                               ),
