@@ -47,7 +47,7 @@
       </span>
       <span style="display: flex; gap: 8px; padding-bottom: 6px; border-bottom: 1px solid #F6F3ED">
         <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #DCE6F1; color: #0F3459; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">LOCKED</span>
-        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Vault locked → it asks for Touch ID first, and reveals one value, not all of them.</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Vault locked → a vault value is not revealed until the vault is opened with its passphrase. A token of this conversation still reveals: its value lives in the conversation, not in the vault.</span>
       </span>
       <span style="display: flex; gap: 8px">
         <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #17181B; color: #FFFFFF; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">NEVER</span>
@@ -210,8 +210,8 @@
         <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">Copy Safe copies the tokenised text, for pasting somewhere that must stay clean.</span>
       </span>
       <span style="display: flex; gap: 8px">
-        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">DISABLED</span>
-        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">While the vault is locked, Copy Restored is greyed: the app cannot restore what it cannot read.</span>
+        <span style="flex-shrink: 0; width: 66px; display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: #F1EFE9; color: #5E6469; font-size: 9px; font-weight: 700; letter-spacing: 0.4px">READY</span>
+        <span style="flex-grow: 1; font-size: 11px; line-height: 1.5">It works with the vault locked: restoring reads this conversation&#39;s own tokens, never the vault. Every copy still asks first, before anything reaches the clipboard.</span>
       </span>
     </div>
 
