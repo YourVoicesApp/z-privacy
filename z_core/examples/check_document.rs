@@ -61,8 +61,24 @@ fn main() {
                     let found = view.text.to_lowercase().contains(&word.to_lowercase());
                     format!("  «{word}»: {}", if found { "found" } else { "MISSING" })
                 });
+                // And what the scanner makes of it: how many it protects by
+                // itself, how many it offers, and how many tokens the text that
+                // would leave actually carries. Counts, never the things counted
+                // — a word wrongly protected shows up as a token count that is
+                // far too high, which is how «und» was caught on 3 October.
+                let (auto, suggest, tokens) = match z_core::api::scan(session) {
+                    Ok(report) => {
+                        let tokens = z_core::api::build_payload(session)
+                            .and_then(z_core::api::payload_view)
+                            .map(|p| p.text.matches("__Z_").count().to_string())
+                            .unwrap_or_else(|_| "—".to_string());
+                        (report.auto.to_string(), report.suggested.to_string(), tokens)
+                    }
+                    Err(_) => ("—".to_string(), "—".to_string(), "—".to_string()),
+                };
                 println!(
-                    "{shown:>44}  {:>8} KiB  {:>3} pages  {:>6} words  {:>7} chars  {:>3}% readable  ok{}",
+                    "{shown:>44}  {:>8} KiB  {:>3} pages  {:>6} words  {:>7} chars  {:>3}% readable  \
+                     {auto:>4} protected  {suggest:>4} waiting  {tokens:>5} tokens{}",
                     bytes.len() / 1024,
                     view.pages,
                     words,

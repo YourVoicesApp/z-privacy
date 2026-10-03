@@ -368,6 +368,24 @@ else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
 fi
 
+# ------------------------------------------------- the second golden
+# The first golden is a letter we wrote. The second is 146 pages of public
+# German prose — the owner's own file, a megabyte of it, so it does not enter
+# the repository. It holds the other half of the promise: that the scanner
+# leaves a language alone. On 3 October it caught «und» being protected as a
+# date of birth, 1,380 times.
+# Without the file there is nothing to measure, and that is said as a skip.
+BOOK="${ZPRIVACY_SECOND_GOLDEN:-$HOME/Documents/steuern-von-a-z.pdf}"
+if [ -f "$BOOK" ]; then
+  if cargo test --quiet --test the_second_golden >/dev/null 2>&1; then
+    pass "the second golden: a public book keeps its own words"
+  else
+    fail "the second golden: a public book keeps its own words (cargo test --test the_second_golden)"
+  fi
+else
+  skip "the second golden: a public book keeps its own words" "the book is not on this machine"
+fi
+
 # A green run proves nothing unless the invariant tests actually exist. A test
 # that is quietly deleted takes its invariant with it and the suite still passes.
 for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty \
@@ -393,6 +411,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          raw_bytes_survives_the_way_in plain_text_is_not_touched \
          simple_font_with_a_table_is_read cmap_behind_a_reference \
          name_with_an_underscore \
+         a_label_in_a_sentence_takes_no_ordinary_word a_run_of_zeros_is_not_a_telephone \
+         a_label_without_a_colon_still_takes_a_value a_protected_word_does_not_spread \
+         the_book_of_tax_terms_is_left_alone \
          salutation_stays_and_the_company \
          never_mentions_are_counted codes_with_no_characters; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then

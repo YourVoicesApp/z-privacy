@@ -234,6 +234,15 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             }
         }
         let Some((rule, _label_start, written)) = best else { continue };
+        // A label with a colon is a form. A label without one is a word in a
+        // sentence until what follows it is shaped like a value.
+        //
+        // Measured on 146 pages of German tax prose: «Geburtsdatum und seine
+        // Steuernummer» protected the word «und» as a date of birth, «in
+        // Rechnung gestellt» offered «gestellt» as a contract, «E-Mail
+        // versenden» protected «versenden». Seven values protected on that
+        // book and three of them were ordinary German words.
+        let wrote_colon = word.text.ends_with(':');
         let Boundary::AfterLabelSameField = rule.boundary;
         let mut first = i + 1;
         // «Rechnung Nr. 2026-04471», «Kunden-Nr 7733» — a number word between
@@ -261,6 +270,17 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             }
         }
         let value_start = j;
+        if !wrote_colon {
+            // Without a colon the value must carry a digit: an identifier, a
+            // number, a date. A plain word never qualifies, in any language
+            // whose nouns are capitalised.
+            let shaped = words
+                .get(value_start)
+                .is_some_and(|w| !w.newline_before && bare(w.text).chars().any(|c| c.is_ascii_digit()));
+            if !shaped {
+                continue;
+            }
+        }
         while let Some(next) = words.get(j) {
             // The field ends at a line break, or where another label begins —
             // this is what stops «IBAN:» from eating the «BIC:» line under it.
