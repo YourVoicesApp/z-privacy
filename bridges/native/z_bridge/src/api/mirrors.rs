@@ -581,6 +581,12 @@ pub struct _TokenRow {
     pub source_detail: String,
 }
 
+#[frb(mirror(RevealedToken))]
+pub struct _RevealedToken {
+    pub token: String,
+    pub remaining_ms: u32,
+}
+
 #[frb(mirror(RevealedValue))]
 pub struct _RevealedValue {
     pub token: String,

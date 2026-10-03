@@ -152,4 +152,80 @@ void main() {
     expect(find.text('Edit this value'), findsOneWidget,
         reason: 'the press did not reach Edit');
   });
+
+  // The other half of «a reveal does not outlive its vault»: the core ends the
+  // reveal when the vault closes, and this is the screen keeping its side of
+  // that. The window here is 300 seconds — the longest a person can set — so
+  // nothing below can pass because a window quietly ran out, and auto-lock is
+  // off so the only thing acting is the lock itself.
+  testWidgets('locking the vault takes the reveal with it', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1000, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final EntityCard card;
+    await tester.runAsync(() async {
+      final dir = Directory.systemTemp.createTempSync('zprivacy-reveal-lock-');
+      await z.setDataDir(dir: dir.path);
+      await z.vaultCreateWithPassphrase(passphrase: _pass);
+      final now = await z.settings();
+      await z.saveSettings(
+        settings: Settings(
+          scanOnImport: now.scanOnImport,
+          revealSeconds: 300,
+          autoLockMinutes: 0,
+          packId: now.packId,
+          language: now.language,
+          firstRunDone: now.firstRunDone,
+          sessionOnly: now.sessionOnly,
+        ),
+      );
+      final entity = await z.createEntity(
+        kind: EntityKind.client,
+        label: 'Nordstern',
+        profileId: null,
+      );
+      await z.setValue(
+        entity: entity,
+        kind: Kind.company,
+        text: 'Nordstern Consulting GmbH',
+        policy: Policy.always,
+      );
+      card = await z.entity(entityId: entity);
+      await ground.refresh();
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EntityDetail(
+          card: card,
+          ground: ground,
+          onChanged: () async {},
+          onGone: () {},
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    await tester.runAsync(() async {
+      await tester.tap(find.text('Reveal'));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+    });
+    await tester.pump();
+    expect(find.text('Nordstern Consulting GmbH'), findsOneWidget,
+        reason: 'the reveal did not start');
+
+    // The vault locks. Not this screen, and not this widget: nothing here is
+    // told to hide, and the row has to find out by asking the core.
+    await tester.runAsync(() => z.vaultLock());
+    for (var i = 0; i < 20; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
+      await tester.pump();
+      if (find.text('Hidden').evaluate().isNotEmpty) break;
+    }
+
+    expect(find.text('Nordstern Consulting GmbH'), findsNothing,
+        reason: 'the value stayed on screen after the vault was locked');
+    expect(find.text('Hidden'), findsOneWidget);
+  });
 }

@@ -61,7 +61,22 @@ mixin RevealHold<T extends StatefulWidget> on State<T> {
   void _watch() {
     _tick?.cancel();
     _tick = Timer.periodic(const Duration(milliseconds: 250), (_) async {
-      final state = await z.revealState();
+      late final RevealState state;
+      try {
+        state = await z.revealState();
+      } catch (_) {
+        // The core could not be asked. Hiding is the only honest answer: this
+        // file says the authority is in Rust, and a value kept because the
+        // question failed would make that untrue. Same rule as `syncReveals`.
+        if (!mounted) return;
+        setState(() {
+          _shown = null;
+          _remaining = 0;
+        });
+        _tick?.cancel();
+        _tick = null;
+        return;
+      }
       if (!mounted) return;
       final over = state.remainingMs == 0 ||
           state.valueId == null ||

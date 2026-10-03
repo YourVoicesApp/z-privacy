@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
     Explanation, Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId,
-    ProviderRow, RevealedValue, SelectionView,
+    ProviderRow, RevealedToken, RevealedValue, SelectionView,
     RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome,
     TaughtReach, TokenRow, UndoOutcome,
 };
@@ -1188,25 +1188,79 @@ pub(crate) fn reveal(session: SessionId, token: String) -> ApiResult<RevealedVal
     // a call that already holds it is a deadlock, not an error — the whole
     // program simply stops. Found the moment the settings landed.
     let ttl_ms = reveal_ttl_ms();
-    with_session(session.id, |s| match s.tokens.get(&token) {
-        Some(entry) => Ok(RevealedValue {
-            token,
+    // And the lock count, for the same reason and in the same place: both of
+    // these take the core's mutex, which `with_session` is about to hold.
+    let locks_at = crate::ops::vault::vault_locks_now();
+    with_session(session.id, |s| {
+        let Some(entry) = s.tokens.get(&token) else {
+            return Err(ApiError::UnknownToken);
+        };
+        let out = RevealedValue {
+            token: token.clone(),
             // Handed over because the user asked to see it, for a moment, locally.
             value: entry.value.expose().to_string(),
             aliases: entry.aliases.iter().map(|a| a.expose().to_string()).collect(),
             ttl_ms,
-        }),
-        None => Err(ApiError::UnknownToken),
+        };
+        // And recorded, instead of handing over a deadline and forgetting.
+        // After the token is found, so a press that found nothing shows nothing.
+        s.revealed.insert(
+            token,
+            crate::session::ShownToken {
+                until: std::time::Instant::now()
+                    + std::time::Duration::from_millis(u64::from(ttl_ms)),
+                locks_at,
+            },
+        );
+        Ok(out)
     })
     .ok_or(ApiError::InvalidSession)?
 }
 
+/// What is shown in the safe column right now, and for how much longer.
+///
+/// The value is not in the answer: it was handed over once, when it was
+/// revealed. This is the authority on *whether* it may still be on a screen,
+/// and a panel asks it about once a second — so it judges and renews nothing.
+pub(crate) fn revealed_tokens(session: SessionId) -> ApiResult<Vec<RevealedToken>> {
+    // Judged here, before the session lock: a vault whose minutes have run out
+    // locks on this line, and the count it moves is the one every record below
+    // is measured against.
+    let locks = crate::ops::vault::vault_locks_now();
+    with_session(session.id, |s| {
+        s.revealed
+            .retain(|_, shown| shown.locks_at == locks && crate::session::ms_left(shown.until) > 0);
+        s.revealed
+            .iter()
+            .map(|(token, shown)| RevealedToken {
+                token: token.clone(),
+                remaining_ms: crate::session::ms_left(shown.until),
+            })
+            .collect()
+    })
+    .ok_or(ApiError::InvalidSession)
+}
+
+/// End every reveal there is: the vault's value, and every token in every
+/// session.
+///
+/// One door, so that the window losing focus, the window being hidden, and a
+/// person asking for everything to be covered are three callers of one act and
+/// not three acts.
+pub(crate) fn hide_all_reveals() -> ApiResult<()> {
+    with_core(|core| {
+        core.vault.end_reveal();
+        core.hide_every_token();
+    });
+    Ok(())
+}
+
 pub(crate) fn hide(session: SessionId, token: String) -> ApiResult<()> {
-    // Revealing never changed anything here, so hiding has nothing to undo: the
-    // showing lives in the UI. This call only confirms the token is real, so the
-    // UI can trust its own state.
+    // Ends the reveal where it now lives. It still refuses a token that is not
+    // real, so the UI can trust its own state.
     with_session(session.id, |s| {
         if s.tokens.contains(&token) {
+            s.revealed.remove(&token);
             Ok(())
         } else {
             Err(ApiError::UnknownToken)

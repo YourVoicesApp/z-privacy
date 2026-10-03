@@ -527,6 +527,147 @@ void main() {
     },
   );
 
+  // And the other way a screen can keep a secret: not by being told to hold it,
+  // but by failing to ask. If the authority cannot be reached, the honest move
+  // is to hide — a screen that keeps a value because the question failed is
+  // deciding for itself how long a secret stays on it, which is the whole thing
+  // this design refuses.
+  //
+  // Reachable, not hypothetical: a session closed in the core answers
+  // `InvalidSession` to every question about it.
+  testWidgets('when the core cannot be asked, the panel hides rather than keeps', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    late final SessionId session;
+    await tester.runAsync(() async {
+      await freshVaultForUiTest('asking-fails');
+      await ground.refresh();
+      session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      for (final f in bench.suggested) {
+        await z.answerFinding(
+          session: session,
+          finding: f.id,
+          answer: FindingAnswer.protect,
+        );
+      }
+      await bench.refresh();
+      bench.openTokens(true);
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final token = bench.tokens.firstWhere((t) => t.kind == Kind.person).token;
+    await tester.runAsync(() async => bench.reveal(token));
+    await tester.pumpAndSettle();
+
+    Finder inPanel(Finder what) =>
+        find.descendant(of: find.byType(TokensPanel), matching: what);
+    expect(inPanel(find.text('Thomas Müller')), findsOneWidget);
+
+    // The conversation is closed underneath the screen. Nothing is told to
+    // hide; the next question simply cannot be answered.
+    await tester.runAsync(() => z.closeSession(session: session));
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 1100));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 60)),
+      );
+      await tester.pump();
+      if (inPanel(find.text('Thomas Müller')).evaluate().isEmpty) break;
+    }
+
+    expect(
+      inPanel(find.text('Thomas Müller')),
+      findsNothing,
+      reason: 'the value stayed on screen when the core could not be asked',
+    );
+    expect(bench.revealed, isEmpty, reason: 'the UI still holds the text');
+  });
+
+  // The screen's half of «a reveal does not live past a lock». The core is the
+  // authority — it stops listing the token — and this proves the panel asks and
+  // obeys rather than keeping the text because nobody told it to let go.
+  //
+  // A vault is made on purpose: locking with nothing open is not a lock, and
+  // must not take down a reveal no key was turned on.
+  testWidgets('locking the vault takes the revealed tokens with it', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await freshVaultForUiTest('tokens-and-the-lock');
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      for (final f in bench.suggested) {
+        await z.answerFinding(
+          session: session,
+          finding: f.id,
+          answer: FindingAnswer.protect,
+        );
+      }
+      await bench.refresh();
+      bench.openTokens(true);
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final token = bench.tokens.firstWhere((t) => t.kind == Kind.person).token;
+    await tester.runAsync(() async => bench.reveal(token));
+    await tester.pumpAndSettle();
+
+    Finder inPanel(Finder what) =>
+        find.descendant(of: find.byType(TokensPanel), matching: what);
+    expect(
+      inPanel(find.text('Thomas Müller')),
+      findsOneWidget,
+      reason: 'the reveal did not reach the panel',
+    );
+
+    // The vault closes. Nothing here is told to hide: the panel finds out by
+    // asking, on its own second-by-second tick.
+    await tester.runAsync(() => z.vaultLock());
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 1100));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 60)),
+      );
+      await tester.pump();
+      if (inPanel(find.text('Thomas Müller')).evaluate().isEmpty) break;
+    }
+
+    expect(
+      inPanel(find.text('Thomas Müller')),
+      findsNothing,
+      reason: 'the value stayed in the panel after the vault was locked',
+    );
+    expect(bench.revealed[token], isNull, reason: 'the UI still holds the text');
+  });
+
   testWidgets('Reveal draws on the screen and does not touch what leaves', (
     tester,
   ) async {

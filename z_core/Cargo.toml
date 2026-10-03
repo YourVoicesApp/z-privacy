@@ -60,6 +60,11 @@ default = []
 # `providers()` does not list it and nothing can select it. Gate G1c checks that
 # this never reaches `default`.
 fake_provider = []
+# The vault's idle clock, for tests only. It opens one way — it can make the
+# vault look longer unused than it is, never shorter — so it has no power to
+# weaken the auto-lock promise. Nothing in the product calls it, it is never in
+# `default`, and it does not cross the bridge. Gate G23 checks all three.
+test_clock = []
 
 [lints]
 workspace = true

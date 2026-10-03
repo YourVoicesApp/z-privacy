@@ -37,8 +37,8 @@ class _TokensPanelState extends State<TokensPanel> {
   void initState() {
     super.initState();
     // A revealed value has a life; something has to end it even if nobody
-    // touches the app again.
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) => widget.bench.expireReveals());
+    // touches the app again. The core decides when it is over — this only asks.
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) => widget.bench.syncReveals());
   }
 
   @override

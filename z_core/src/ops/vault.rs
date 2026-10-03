@@ -52,6 +52,14 @@ pub(crate) fn vault_unlock(passphrase: String) -> ApiResult<VaultUnlockOutcome> 
     }
 }
 
+/// How many times the vault has been closed in this run, judged now.
+///
+/// Read **before** the session lock is taken wherever a session needs it: the
+/// core's mutex is not re-entrant, and this takes it.
+pub(crate) fn vault_locks_now() -> u64 {
+    with_core(|core| core.vault.locks_so_far())
+}
+
 pub(crate) fn vault_lock() -> ApiResult<()> {
     with_core(|core| core.vault.lock());
     crate::session::bump_truth();
@@ -215,21 +223,23 @@ pub(crate) fn add_value_alias(entity: u32, value_id: u32, alias: String) -> ApiR
 pub(crate) fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValue> {
     // Before the lock: see the note in `ops::reveal`.
     let ttl_ms = reveal_ttl_ms();
-    let out = with_core(|core| {
-        // The core records the reveal and when it ends. A fresh press gets a
-        // fresh TTL, and replaces whatever was revealed before: one at a time.
-        core.revealed = Some(crate::session::Revealed {
-            entity,
-            value_id,
-            until: std::time::Instant::now() + std::time::Duration::from_millis(u64::from(ttl_ms)),
-        });
-        core.vault.read(|vault| {
+    with_core(|core| {
+        core.vault.with_reveal(|vault, revealed| {
             let e = vault.entity(entity).ok_or(ApiError::UnknownToken)?;
             let v = e
                 .values
                 .iter()
                 .find(|v| v.id == value_id)
                 .ok_or(ApiError::UnknownToken)?;
+            // Recorded once the value is found, and inside the vault's own open
+            // state: a fresh press gets a fresh TTL and replaces whatever was
+            // revealed before — one at a time — and a press that found nothing
+            // reveals nothing, with no rollback to forget.
+            *revealed = Some(crate::session::Revealed {
+                entity,
+                value_id,
+                until: std::time::Instant::now() + std::time::Duration::from_millis(u64::from(ttl_ms)),
+            });
             Ok(RevealedValue {
                 // Named by its identity, not by a token: this is the vault, not a
                 // conversation.
@@ -239,12 +249,7 @@ pub(crate) fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValu
                 ttl_ms,
             })
         })
-    });
-    if out.is_err() {
-        // Nothing was shown, so nothing is revealed.
-        with_core(|core| core.revealed = None);
-    }
-    out
+    })
 }
 
 /// How much longer the current reveal lasts, and what it is showing.
@@ -254,11 +259,11 @@ pub(crate) fn reveal_value(entity: u32, value_id: u32) -> ApiResult<RevealedValu
 /// on screen — when this says 0 the value is gone whatever a timer thinks.
 pub(crate) fn reveal_state() -> ApiResult<RevealState> {
     Ok(with_core(|core| {
-        let live = core.revealed.filter(|r| r.remaining_ms() > 0);
-        // Reading is also forgetting: an expired reveal is dropped here, so
-        // the core does not hold a finished one until someone asks again.
-        core.revealed = live;
-        match live {
+        // Asking is not using. `revealed_now` judges the idle clock on the way
+        // in — a vault whose minutes have run out locks right here, and takes
+        // the reveal with it — and it never renews that clock, so a screen
+        // polling four times a second cannot hold the vault open.
+        match core.vault.revealed_now() {
             Some(r) => RevealState {
                 entity: Some(r.entity),
                 value_id: Some(r.value_id),
@@ -271,7 +276,8 @@ pub(crate) fn reveal_state() -> ApiResult<RevealState> {
 
 /// Stop revealing now, before the time is up.
 pub(crate) fn hide_value() -> ApiResult<()> {
-    with_core(|core| core.revealed = None);
+    // Not a way in, and never an error: a locked vault has nothing to hide.
+    with_core(|core| core.vault.end_reveal());
     Ok(())
 }
 
