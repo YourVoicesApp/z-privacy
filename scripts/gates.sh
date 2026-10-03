@@ -384,7 +384,11 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          lie_always_without_vault lie_missing_credential lie_rescan_is_named \
          keyless_login_claims_a_key \
          remove_protection_here_leaves forget_from_this_profile_keeps \
-         forget_everywhere_reaches nothing_taught_reports_no_reach; do
+         forget_everywhere_reaches nothing_taught_reports_no_reach \
+         drawn_through_a_form draws_itself_stops image_xobject_is_still_a_scan \
+         long_bfrange_maps_all several_entries_on_one_line list_of_destinations \
+         literal_string_in_a_two_byte_font maps_to_nothing_never_reaches \
+         never_mentions_are_counted codes_with_no_characters; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -402,6 +406,7 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "clipboard untouched until confirmed" \
          "named a rescan, not scanned on import" \
          "offers Disconnect, not" "names both acts by their reach" \
+         "says how much, and what to do" \
          "name the reach they would forget" "is the pack that is kept" \
          "display only, and Why lives" "its own next move"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then

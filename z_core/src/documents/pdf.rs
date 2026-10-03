@@ -79,24 +79,33 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
             ));
         }
 
-        let content = page_content(&objects, &page)?;
-        let runs = text_runs(&content, &fonts);
+        let runs = runs_of(&objects, &page, &fonts, budget)?;
         let page_text: String = runs
             .iter()
             .filter_map(|r| match r {
                 Run::Text(text) => Some(text.as_str()),
-                Run::Unmappable => None,
+                Run::Unmappable(_) => None,
             })
             .collect::<Vec<&str>>()
             .join(" ");
-        if page_text.trim().is_empty() {
+        let unmapped: usize = runs
+            .iter()
+            .map(|r| match r {
+                Run::Unmappable(count) => *count,
+                Run::Text(_) => 0,
+            })
+            .sum();
+        // A page with nothing on it at all is a page with nothing on it. A page
+        // whose codes all failed is a different thing, and it is not skipped:
+        // it goes on to be refused by its share, which says what happened.
+        if page_text.trim().is_empty() && unmapped == 0 {
             continue;
         }
         pages_with_text += 1;
 
         // The readable share is measured **per page**, because an average hides the
         // one page that failed — and that is exactly the page with the name on it.
-        let percent = readable_percent(&page_text);
+        let percent = readable_percent(&page_text, unmapped);
         if percent < MIN_READABLE_PERCENT {
             return Err(refuse(
                 Refusal::UnsupportedEncoding {
@@ -142,12 +151,12 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
 /// the page. What a failed decoding actually produces is the opposite of
 /// characters — control bytes, the replacement mark, private-use glyph slots — and
 /// that is what is counted against a page here.
-fn readable_percent(text: &str) -> usize {
-    let total = text.chars().count();
+fn readable_percent(text: &str, unmapped: usize) -> usize {
+    let total = text.chars().count() + unmapped;
     if total == 0 {
         return 100;
     }
-    let broken = text.chars().filter(|c| !decoded(*c)).count();
+    let broken = text.chars().filter(|c| !decoded(*c)).count() + unmapped;
     let readable = total.saturating_sub(broken);
     readable.saturating_mul(100) / total
 }
@@ -500,6 +509,88 @@ fn references(dict: &str, key: &str) -> Vec<u32> {
 }
 
 /// A page's content, inflated, with several streams joined.
+/// How deep a form may draw another form before we stop following.
+const FORM_DEPTH: u32 = 8;
+
+/// Every text run a page draws — its own, and the ones inside the forms it calls.
+///
+/// A page may hold no text of its own and draw all of it through `… /Fm1 Do`.
+/// Measured on a 221-page book: 225 of its page streams say only that, and 209
+/// forms hold the text. Reading the page stream alone and then calling the file
+/// a scan is how a whole book became «this looks like a scan, and we will not
+/// send it anywhere».
+///
+/// An image stays an image: `/Subtype /Image` is not followed, so a real scan
+/// is still refused by name.
+fn runs_of(objects: &Objects, page: &str, fonts: &Fonts, budget: &Budget) -> ApiResult<Vec<Run>> {
+    let content = page_content(objects, page)?;
+    let mut walk = Walk {
+        objects,
+        budget,
+        path: Vec::new(),
+        out: Vec::new(),
+    };
+    walk.collect(page, &content, fonts, 0)?;
+    Ok(walk.out)
+}
+
+/// What the walk carries down: where it is reading from, what it may spend,
+/// the forms it is inside, and the runs it has found.
+struct Walk<'a> {
+    objects: &'a Objects,
+    budget: &'a Budget,
+    /// The forms on the way down. A path and not a set on purpose: the same
+    /// header form drawn twice on a page is read twice, but a form that draws
+    /// itself — or a ring of them — ends the walk instead of the process.
+    path: Vec<u32>,
+    out: Vec<Run>,
+}
+
+impl Walk<'_> {
+    fn collect(&mut self, dict: &str, content: &str, fonts: &Fonts, depth: u32) -> ApiResult<()> {
+        self.budget.check()?;
+        self.out.extend(text_runs(content, fonts));
+        if depth >= FORM_DEPTH {
+            return Ok(());
+        }
+        let resources = resources_of(self.objects, dict);
+        for (name, number) in named_refs(&sub_dict(self.objects, &resources, "/XObject")) {
+            if self.path.contains(&number) || !drawn(content, &name) {
+                continue;
+            }
+            let Some(body) = self.objects.get(&number) else { continue };
+            if !body.dict.contains("/Form") {
+                continue;
+            }
+            let Some(plain) = body.stream.as_ref().and_then(|raw| decode_stream(&body.dict, raw)) else {
+                continue;
+            };
+            // The form's own fonts sit over the page's: a form with no
+            // /Resources inherits them, and one with its own names them itself.
+            let mut inner = fonts.clone();
+            inner.absorb(page_fonts(self.objects, &body.dict));
+            let dict = body.dict.clone();
+            self.path.push(number);
+            self.collect(&dict, &String::from_utf8_lossy(&plain), &inner, depth + 1)?;
+            self.path.pop();
+        }
+        Ok(())
+    }
+}
+
+/// Is this name actually drawn — `/Fm1 Do` — rather than merely listed?
+fn drawn(content: &str, name: &str) -> bool {
+    let wanted = format!("/{name}");
+    let mut previous = "";
+    for token in content.split_whitespace() {
+        if token == "Do" && previous == wanted {
+            return true;
+        }
+        previous = token;
+    }
+    false
+}
+
 fn page_content(objects: &Objects, page: &str) -> ApiResult<String> {
     let mut refs = references(page, "/Contents");
     if refs.is_empty() {
@@ -523,7 +614,7 @@ fn page_content(objects: &Objects, page: &str) -> ApiResult<String> {
 // ---------------------------------------------------------------- fonts
 
 /// What a page's fonts can do: either single-byte text, or a `/ToUnicode` map.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct Fonts {
     /// Fonts that need a map, with the map when the document provides one.
     maps: BTreeMap<String, BTreeMap<u32, String>>,
@@ -534,27 +625,54 @@ struct Fonts {
     remapped: BTreeMap<String, bool>,
 }
 
-fn page_fonts(objects: &Objects, page: &str) -> Fonts {
-    let mut fonts = Fonts::default();
-    // /Resources may be inline or a reference.
-    let resources = match reference(page, "/Resources") {
+impl Fonts {
+    /// Lay another set over this one: the form's own names win, and the page's
+    /// stay for the names the form does not define.
+    fn absorb(&mut self, other: Fonts) {
+        self.maps.extend(other.maps);
+        self.unmappable.extend(other.unmappable);
+        self.remapped.extend(other.remapped);
+    }
+}
+
+/// A page's or a form's `/Resources`, which may be inline or a reference.
+fn resources_of(objects: &Objects, dict: &str) -> String {
+    match reference(dict, "/Resources") {
         Some(number) => objects.get(&number).map(|o| o.dict.clone()).unwrap_or_default(),
-        None => page.to_string(),
-    };
-    let Some(font_at) = resources.find("/Font") else { return fonts };
-    let tail = resources.get(font_at..).unwrap_or_default();
-    let dictionary = match reference(tail, "/Font") {
+        None => dict.to_string(),
+    }
+}
+
+/// One named sub-dictionary of a resources dictionary — `/Font`, `/XObject` —
+/// whether it is written inline or kept in an object of its own.
+fn sub_dict(objects: &Objects, resources: &str, key: &str) -> String {
+    let Some(at) = resources.find(key) else { return String::new() };
+    let tail = resources.get(at..).unwrap_or_default();
+    match reference(tail, key) {
         Some(number) => objects.get(&number).map(|o| o.dict.clone()).unwrap_or_default(),
         None => tail.to_string(),
-    };
+    }
+}
 
-    // Entries look like «/F1 7 0 R».
+/// The entries of such a dictionary: «/F1 7 0 R» → `("F1", 7)`.
+fn named_refs(dictionary: &str) -> Vec<(String, u32)> {
+    let mut out = Vec::new();
     for piece in dictionary.split('/').skip(1) {
         let mut words = piece.split_whitespace();
         let Some(name) = words.next() else { continue };
         let Some(number) = words.next().and_then(|w| w.parse::<u32>().ok()) else {
             continue;
         };
+        out.push((name.to_string(), number));
+    }
+    out
+}
+
+fn page_fonts(objects: &Objects, page: &str) -> Fonts {
+    let mut fonts = Fonts::default();
+    let dictionary = sub_dict(objects, &resources_of(objects, page), "/Font");
+    for (name, number) in named_refs(&dictionary) {
+        let name = name.as_str();
         let Some(font) = objects.get(&number).map(|o| o.dict.clone()) else { continue };
 
         // A simple font may remap its characters through /Encoding /Differences.
@@ -595,39 +713,153 @@ fn page_fonts(objects: &Objects, page: &str) -> Fonts {
 }
 
 /// `beginbfchar`/`beginbfrange` — the font's own table from its codes to Unicode.
+///
+/// Read by **token**, not by line, and measured on three real documents before
+/// it was rewritten:
+///
+/// * entries share a line — 6 to 11 such lines per map in one file — and the
+///   old reader took one entry from each line and dropped the rest. When the
+///   `beginbfchar` itself shared the line, it dropped them all;
+/// * ranges run to 897, 8125 and 65535 codes, and the old reader stopped at
+///   513, leaving the rest of the page as holes;
+/// * a range may name its destinations one by one in a list. Read as a single
+///   destination it does not leave a hole — it puts **the wrong character** on
+///   the screen, which is worse.
+///
+/// What it still will not do is guess: a destination it cannot decode is left
+/// out, and the page's readable share falls, which is the refusal path.
 fn parse_to_unicode(cmap: &str) -> BTreeMap<u32, String> {
     let mut out = BTreeMap::new();
-    let mut rest = cmap;
-    while let Some(at) = rest.find("beginbfchar") {
-        let tail = rest.get(at..).unwrap_or_default();
-        let end = tail.find("endbfchar").unwrap_or(tail.len());
-        for line in tail.get(..end).unwrap_or_default().lines().skip(1) {
-            let hexes: Vec<&str> = line.split('<').skip(1).collect();
-            if let (Some(code), Some(value)) = (hexes.first(), hexes.get(1)) {
-                if let (Some(code), Some(text)) = (hex_u32(code), hex_string(value)) {
+    for block in blocks(cmap, "beginbfchar", "endbfchar") {
+        let items = items(block);
+        let mut at = 0;
+        while let (Some(Item::Hex(code)), Some(Item::Hex(value))) = (items.get(at), items.get(at + 1)) {
+            if let (Some(code), Some(text)) = (hex_u32(code), hex_string(value)) {
+                if out.len() >= MAX_CMAP_ENTRIES {
+                    return out;
+                }
+                // `<0000>` is what a table says when it has nothing to say about
+                // a glyph — the Swedish annual report says it of ten codes in
+                // each of its two fonts. It is not a character, so it is not a
+                // mapping, and the code it names stays unmapped and counted.
+                if names_a_character(&text) {
                     out.insert(code, text);
                 }
             }
+            at += 2;
         }
-        rest = tail.get(end..).unwrap_or_default();
     }
-    let mut rest = cmap;
-    while let Some(at) = rest.find("beginbfrange") {
-        let tail = rest.get(at..).unwrap_or_default();
-        let end = tail.find("endbfrange").unwrap_or(tail.len());
-        for line in tail.get(..end).unwrap_or_default().lines().skip(1) {
-            let hexes: Vec<&str> = line.split('<').skip(1).collect();
-            if let (Some(low), Some(high), Some(start)) = (hexes.first(), hexes.get(1), hexes.get(2)) {
-                if let (Some(low), Some(high), Some(start)) = (hex_u32(low), hex_u32(high), hex_u32(start)) {
-                    for (step, code) in (low..=high.min(low + 512)).enumerate() {
-                        if let Some(c) = char::from_u32(start + step as u32) {
-                            out.insert(code, c.to_string());
+    for block in blocks(cmap, "beginbfrange", "endbfrange") {
+        let items = items(block);
+        let mut at = 0;
+        while at + 2 < items.len() + 1 {
+            let (Some(Item::Hex(low)), Some(Item::Hex(high))) = (items.get(at), items.get(at + 1)) else {
+                break;
+            };
+            let (Some(low), Some(high)) = (hex_u32(low), hex_u32(high)) else { break };
+            at += 2;
+            match items.get(at) {
+                // `<low> <high> [<d1> <d2> …]` — one destination for each code.
+                Some(Item::Open) => {
+                    at += 1;
+                    let mut code = low;
+                    while let Some(Item::Hex(value)) = items.get(at) {
+                        if let Some(text) = hex_string(value).filter(|t| names_a_character(t)) {
+                            if out.len() >= MAX_CMAP_ENTRIES {
+                                return out;
+                            }
+                            out.insert(code, text);
+                        }
+                        code = code.saturating_add(1);
+                        at += 1;
+                    }
+                    if matches!(items.get(at), Some(Item::Close)) {
+                        at += 1;
+                    }
+                }
+                // `<low> <high> <start>` — the destination counts up with the code.
+                Some(Item::Hex(start)) => {
+                    at += 1;
+                    let Some(units) = hex_units(start) else { continue };
+                    for (step, code) in (low..=high).enumerate() {
+                        if out.len() >= MAX_CMAP_ENTRIES {
+                            return out;
+                        }
+                        let Ok(step) = u16::try_from(step) else { break };
+                        let mut units = units.clone();
+                        let Some(last) = units.last_mut() else { break };
+                        let Some(moved) = last.checked_add(step) else { break };
+                        *last = moved;
+                        if let Some(text) = utf16_string(&units).filter(|t| names_a_character(t)) {
+                            out.insert(code, text);
                         }
                     }
                 }
+                _ => break,
             }
         }
-        rest = tail.get(end..).unwrap_or_default();
+    }
+    out
+}
+
+/// Does this destination name a character a person could read?
+///
+/// The owner's rule, in one line: **a code with no real character is an
+/// unreadable code.** A table that answers `<0000>` — or any control or
+/// private-use slot — has not told us what the glyph is, and pretending it has
+/// puts a byte in the text that nobody typed.
+fn names_a_character(text: &str) -> bool {
+    !text.is_empty() && text.chars().all(decoded)
+}
+
+/// A code map is at most a two-byte space, so this is a bound and not a policy:
+/// it exists so that a malformed range cannot ask for memory without end.
+const MAX_CMAP_ENTRIES: usize = 70_000;
+
+/// One piece of a CMap block: a `<hex>` string, or a bracket around a list.
+enum Item {
+    Hex(String),
+    Open,
+    Close,
+}
+
+/// The text between each `begin…`/`end…` pair.
+fn blocks<'a>(cmap: &'a str, begin: &str, end: &str) -> Vec<&'a str> {
+    let mut out = Vec::new();
+    let mut rest = cmap;
+    while let Some(at) = rest.find(begin) {
+        let tail = rest.get(at + begin.len()..).unwrap_or_default();
+        let stop = tail.find(end).unwrap_or(tail.len());
+        out.push(tail.get(..stop).unwrap_or_default());
+        rest = tail.get(stop..).unwrap_or_default();
+    }
+    out
+}
+
+/// The `<…>` groups and the brackets of a block, in the order they are written.
+fn items(block: &str) -> Vec<Item> {
+    let mut out = Vec::new();
+    let mut chars = block.char_indices();
+    while let Some((at, c)) = chars.next() {
+        match c {
+            '[' => out.push(Item::Open),
+            ']' => out.push(Item::Close),
+            '<' => {
+                let tail = block.get(at + 1..).unwrap_or_default();
+                let stop = tail.find('>').unwrap_or(tail.len());
+                let digits: String = tail
+                    .get(..stop)
+                    .unwrap_or_default()
+                    .chars()
+                    .filter(|c| c.is_ascii_hexdigit())
+                    .collect();
+                out.push(Item::Hex(digits));
+                for _ in 0..stop {
+                    chars.next();
+                }
+            }
+            _ => {}
+        }
     }
     out
 }
@@ -640,18 +872,33 @@ fn hex_u32(piece: &str) -> Option<u32> {
     u32::from_str_radix(&digits, 16).ok()
 }
 
-fn hex_string(piece: &str) -> Option<String> {
+/// A destination, as UTF-16 code units — which is what a CMap writes.
+fn hex_units(piece: &str) -> Option<Vec<u16>> {
     let digits: String = piece.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
     if digits.is_empty() || digits.len() % 4 != 0 {
         return None;
     }
-    let mut out = String::new();
+    let mut out = Vec::new();
     for chunk in digits.as_bytes().chunks(4) {
         let hex = String::from_utf8_lossy(chunk);
-        let value = u32::from_str_radix(&hex, 16).ok()?;
-        out.push(char::from_u32(value)?);
+        out.push(u16::from_str_radix(&hex, 16).ok()?);
     }
     Some(out)
+}
+
+/// UTF-16 units into text — **pairs included**. The old reader took every four
+/// hex digits for a character of its own, so a destination written as a
+/// surrogate pair decoded to nothing and the whole entry was dropped.
+fn utf16_string(units: &[u16]) -> Option<String> {
+    let mut out = String::new();
+    for c in char::decode_utf16(units.iter().copied()) {
+        out.push(c.ok()?);
+    }
+    Some(out)
+}
+
+fn hex_string(piece: &str) -> Option<String> {
+    utf16_string(&hex_units(piece)?)
 }
 
 // ---------------------------------------------------------------- text
@@ -659,8 +906,14 @@ fn hex_string(piece: &str) -> Option<String> {
 #[derive(Debug, PartialEq, Eq)]
 enum Run {
     Text(String),
-    /// Text in a font whose codes cannot be mapped. Counted, never guessed at.
-    Unmappable,
+    /// Codes that came out as no character at all — a font with no table, a
+    /// code the table does not mention, or one the table maps to nothing.
+    ///
+    /// It carries **how many**, because that is the whole of its use: a code
+    /// with no character is an unreadable code, and it is counted against the
+    /// page exactly as a broken character is. Dropped silently — as it was —
+    /// a page of them came out empty and was called a picture of a page.
+    Unmappable(usize),
 }
 
 /// Pull the text-showing operators out of a content stream.
@@ -809,15 +1062,41 @@ fn hex_literal(content: &str, at: usize) -> (String, usize) {
 /// read, and we say so instead of writing nonsense.
 fn decode(text: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
     if fonts.unmappable.contains_key(font) {
-        out.push(Run::Unmappable);
+        // Two bytes to the code, so that is how many codes went unread.
+        out.push(Run::Unmappable(text.chars().count().div_ceil(2)));
         return String::new();
     }
     if let Some(map) = fonts.maps.get(font) {
-        // A mapped font used with a literal string: map byte by byte.
-        return text
-            .bytes()
-            .map(|b| map.get(&u32::from(b)).cloned().unwrap_or_default())
-            .collect();
+        // A mapped font is a two-byte font: `Identity-H` says so by name, and
+        // every code map measured on real documents carries a two-byte
+        // codespace. So a literal string holds **codes**, not bytes, and they
+        // are read in pairs.
+        //
+        // Read one byte at a time — as this did — a line of such a font comes
+        // out as «NUL K NUL L»: the high byte of each code looks up the map's
+        // entry for code 0, which an identity table gives as U+0000. Measured
+        // on two real documents: 578 of 1225 characters on one page, 174 of
+        // 841 on another, every one of them a NUL, and the page refused at 52%
+        // and 79% readable for a reason that was ours and not the file's.
+        let codes: Vec<u32> = text.chars().map(u32::from).collect();
+        let mut read = String::new();
+        let mut missed = 0usize;
+        for pair in codes.chunks(2) {
+            let code = match pair {
+                [high, low] => (high << 8) | low,
+                [only] => *only,
+                _ => continue,
+            };
+            match map.get(&code) {
+                Some(piece) => read.push_str(piece),
+                // Not a character, so not silence either: it is counted.
+                None => missed += 1,
+            }
+        }
+        if missed > 0 {
+            out.push(Run::Unmappable(missed));
+        }
+        return read;
     }
     text.to_string()
 }
@@ -826,18 +1105,21 @@ fn decode(text: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
 fn decode_hex(digits: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
     if let Some(map) = fonts.maps.get(font) {
         let mut text = String::new();
+        let mut missed = 0usize;
         for chunk in digits.as_bytes().chunks(4) {
             let hex = String::from_utf8_lossy(chunk);
-            if let Ok(code) = u32::from_str_radix(&hex, 16) {
-                if let Some(piece) = map.get(&code) {
-                    text.push_str(piece);
-                }
+            match u32::from_str_radix(&hex, 16).ok().and_then(|code| map.get(&code)) {
+                Some(piece) => text.push_str(piece),
+                None => missed += 1,
             }
+        }
+        if missed > 0 {
+            out.push(Run::Unmappable(missed));
         }
         return text;
     }
     if fonts.unmappable.contains_key(font) {
-        out.push(Run::Unmappable);
+        out.push(Run::Unmappable(digits.len().div_ceil(4)));
         return String::new();
     }
     let mut text = String::new();
@@ -916,8 +1198,254 @@ mod tests {
         out.into_bytes()
     }
 
+    /// A page that draws its text through a form, and holds none of its own.
+    ///
+    /// This is what ilovepdf, «print to PDF» and some Word exports write: the
+    /// page stream is `… /Fm1 Do` and every `Tj` lives inside the form. The
+    /// form carries its own `/Resources`, so its font names are its own.
+    pub(crate) fn pdf_with_form(line: &str, form_stream: Option<&str>) -> Vec<u8> {
+        let inner = form_stream
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("BT /FA 12 Tf 72 700 Td ({line}) Tj ET"));
+        let mut out = String::from("%PDF-1.4\n");
+        out.push_str("1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        out.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        out.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /XObject << /Fm1 5 0 R >> >> >>\nendobj\n",
+        );
+        let page_stream = "q 1 0 0 1 0 0 cm /Fm1 Do Q";
+        out.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{page_stream}\nendstream\nendobj\n",
+            page_stream.len()
+        ));
+        out.push_str(&format!(
+            "5 0 obj\n<< /Type/XObject /Subtype/Form /Length {} \
+             /Resources << /Font << /FA 100 0 R >> /XObject << /Fm1 5 0 R >> >> >>\nstream\n{inner}\nendstream\nendobj\n",
+            inner.len()
+        ));
+        out.push_str("100 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/Helvetica >>\nendobj\n");
+        out.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+        out.into_bytes()
+    }
+
     fn read(bytes: &[u8]) -> ApiResult<Extracted> {
         extract(bytes, &Budget::new())
+    }
+
+    /// Measured on a 221-page book: 225 page streams that say only `… Do`, and
+    /// 209 forms holding the `Tj`s. The reader called the whole book a scan.
+    #[test]
+    fn text_drawn_through_a_form_is_read_rather_than_called_a_scan() {
+        let pdf = pdf_with_form("Kunde: Nordstern Consulting GmbH", None);
+        let out = read(&pdf).expect("a page that draws a form is not a scan");
+        assert_eq!(out.pages, 1);
+        assert!(
+            out.text.contains("Nordstern Consulting GmbH"),
+            "the text inside the form never arrived: {} chars",
+            out.text.chars().count()
+        );
+    }
+
+    /// A form may draw another form. One that draws itself must end the walk,
+    /// not the process.
+    #[test]
+    fn a_form_that_draws_itself_stops_instead_of_spinning() {
+        let pdf = pdf_with_form("", Some("q /Fm1 Do Q"));
+        match read(&pdf) {
+            Err(e) => assert!(
+                matches!(error_of(&e), Some(Refusal::ScannedPdfNoTextLayer { .. })),
+                "a form with no text is a page with no text"
+            ),
+            Ok(out) => assert_eq!(out.text.trim(), "", "there was no text to find"),
+        }
+    }
+
+    /// An image is still an image: following forms must not turn a scan into a
+    /// page that looks readable.
+    #[test]
+    fn an_image_xobject_is_still_a_scan() {
+        let pdf = scanned_pdf(3);
+        let e = read(&pdf).expect_err("a scan is refused");
+        assert!(matches!(
+            error_of(&e),
+            Some(Refusal::ScannedPdfNoTextLayer { pages: 3 })
+        ));
+    }
+
+    /// A page drawn in one mapped font, with the codes and the table given.
+    ///
+    /// `codes` is the hex string the page shows; `pairs` is what the font's
+    /// own `/ToUnicode` says about them.
+    pub(crate) fn pdf_with_map(codes: &str, pairs: &[(&str, &str)]) -> Vec<u8> {
+        let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        let stream = format!("BT /F1 12 Tf <{codes}> Tj ET");
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+            stream.len()
+        ));
+        pdf.push_str("5 0 obj\n<< /Type/Font /Subtype/Type0 /Encoding/Identity-H /ToUnicode 6 0 R >>\nendobj\n");
+        let rows: String = pairs.iter().map(|(c, v)| format!("<{c}> <{v}>\n")).collect();
+        let cmap = format!(
+            "/CIDInit /ProcSet findresource begin\n{} beginbfchar\n{rows}endbfchar\nend",
+            pairs.len()
+        );
+        pdf.push_str(&format!(
+            "6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n",
+            cmap.len()
+        ));
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+        pdf.into_bytes()
+    }
+
+    /// A table may say «this glyph has no Unicode» — `<0000>` — and a real
+    /// document does: the Swedish annual report says it of ten codes in each of
+    /// its two fonts, and uses them 174 times on one page.
+    ///
+    /// That is not a character. It must not reach the text as a NUL byte the
+    /// person never typed, and it must be counted against the page rather than
+    /// quietly dropped, or a page with five of them in a thousand would pass at
+    /// 99.5% carrying five NULs into what gets sent.
+    #[test]
+    fn a_code_the_table_maps_to_nothing_never_reaches_the_text() {
+        let pdf = pdf_with_map(
+            "00010002000300040005000600070008000900 0A",
+            &[
+                ("0001", "0041"),
+                ("0002", "0042"),
+                ("0003", "0043"),
+                ("0004", "0044"),
+                ("0005", "0045"),
+                ("0006", "0046"),
+                ("0007", "0047"),
+                ("0008", "0048"),
+                // The two the document itself says nothing about.
+                ("0009", "0000"),
+                ("000A", "0000"),
+            ],
+        );
+        let out = read(&pdf).expect("eight of ten codes are characters, which is 80%");
+        assert!(
+            !out.text.contains('\u{0}'),
+            "a NUL reached the text: {} chars",
+            out.text.chars().count()
+        );
+        assert_eq!(out.text.trim(), "ABCDEFGH");
+    }
+
+    /// And when the whole page is such codes, the refusal is the one that says
+    /// what happened — the share that decoded — not «this looks like a scan».
+    #[test]
+    fn a_page_of_codes_with_no_characters_is_refused_by_its_share() {
+        let pdf = pdf_with_map(
+            "00010002000300040005",
+            &[
+                ("0001", "0000"),
+                ("0002", "0000"),
+                ("0003", "0000"),
+                ("0004", "0000"),
+                ("0005", "0000"),
+            ],
+        );
+        // A table all of whose entries name nothing is a table with nothing in
+        // it, so the font has no map at all and the page is refused before a
+        // character is believed. Either refusal is honest; what must never be
+        // said is «this is a picture of a page», because it is not.
+        let e = read(&pdf).expect_err("a page of nothing is refused");
+        match error_of(&e) {
+            Some(Refusal::UnsupportedEncoding { page, .. }) => assert_eq!(page, 1),
+            Some(Refusal::UnreadableStructure { page }) => assert_eq!(page, 1),
+            other => panic!("refused as {other:?}, which tells the person the wrong thing"),
+        }
+    }
+
+    /// The other silent hole: codes the table never mentions at all.
+    ///
+    /// They looked up as nothing and were dropped — no character, no count, no
+    /// word about them. A page made only of those came out empty and was
+    /// refused as «a picture of a page», which tells the person something that
+    /// is not true about their document.
+    #[test]
+    fn codes_the_table_never_mentions_are_counted_not_dropped() {
+        let pdf = pdf_with_map("00010002000300040005", &[("00FF", "0041")]);
+        let e = read(&pdf).expect_err("nothing on the page could be read");
+        match error_of(&e) {
+            Some(Refusal::UnsupportedEncoding { page, readable_percent }) => {
+                assert_eq!(page, 1);
+                assert_eq!(readable_percent, 0, "none of it decoded, and the number says so");
+            }
+            other => panic!("refused as {other:?}, which is not what happened"),
+        }
+    }
+
+    /// A two-byte font's literal string holds codes, not bytes.
+    ///
+    /// Measured on two real documents before it was believed: every unreadable
+    /// character on the refused pages was a NUL — 578 of 1225 on one, 174 of
+    /// 841 on the other — because the high byte of each code was looked up on
+    /// its own and an identity table answers code 0 with U+0000.
+    #[test]
+    fn a_literal_string_in_a_two_byte_font_is_read_in_pairs() {
+        let mut fonts = Fonts::default();
+        let mut map = BTreeMap::new();
+        // What an identity /ToUnicode really says about code 0.
+        map.insert(0x0000, "\u{0}".to_string());
+        map.insert(0x0041, "K".to_string());
+        map.insert(0x0042, "L".to_string());
+        fonts.maps.insert("F1".to_string(), map);
+
+        let mut out = Vec::new();
+        let text = decode("\u{0}A\u{0}B", "F1", &fonts, &mut out);
+
+        assert_eq!(
+            text, "KL",
+            "the codes were read one byte at a time, so every other character came out a NUL"
+        );
+        assert!(out.is_empty(), "nothing here is unmappable");
+    }
+
+    /// Measured: ranges of 897, 8125 and 65535 codes in three real documents.
+    /// The reader stopped at 513 and the rest of the page came out as holes.
+    #[test]
+    fn a_long_bfrange_maps_all_of_itself() {
+        let cmap = "1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n\
+                    1 beginbfrange\n<0000> <0FFF> <0041>\nendbfrange\n";
+        let map = parse_to_unicode(cmap);
+        // 4096 codes, less the 33 whose destination lands in the control block
+        // at U+007F..U+009F: those name no character, so they are not mappings.
+        assert_eq!(map.len(), 4096 - 33, "a 4096-code range came back cut short");
+        let last = char::from_u32(0x0041 + 0x0FFF).map(|c| c.to_string());
+        assert_eq!(map.get(&0x0FFF), last.as_ref(), "the last code of the range is not where it should be");
+    }
+
+    /// Measured: 6 to 11 lines per map in a real document carry more than one
+    /// entry. The reader read the first on each line and dropped the rest.
+    #[test]
+    fn several_entries_on_one_line_are_all_read() {
+        let cmap = "2 beginbfchar <01> <0041> <02> <0042> endbfchar\n\
+                    2 beginbfrange <10> <11> <0061> <20> <21> <0071> endbfrange\n";
+        let map = parse_to_unicode(cmap);
+        assert_eq!(map.get(&0x01).map(String::as_str), Some("A"));
+        assert_eq!(map.get(&0x02).map(String::as_str), Some("B"), "the second entry on the line was dropped");
+        assert_eq!(map.get(&0x11).map(String::as_str), Some("b"));
+        assert_eq!(map.get(&0x21).map(String::as_str), Some("r"), "the second range on the line was dropped");
+    }
+
+    /// `<low> <high> [<d1> <d2> <d3>]` names a destination for each code, and
+    /// they need not be consecutive. Read as a single destination it does not
+    /// leave a hole — it puts **the wrong character** on the screen.
+    #[test]
+    fn a_bfrange_with_a_list_of_destinations_takes_each_one() {
+        let cmap = "1 beginbfrange\n<01> <03> [<0041> <0062> <0043>]\nendbfrange\n";
+        let map = parse_to_unicode(cmap);
+        assert_eq!(map.get(&0x01).map(String::as_str), Some("A"));
+        assert_eq!(map.get(&0x02).map(String::as_str), Some("b"), "the second destination was invented, not read");
+        assert_eq!(map.get(&0x03).map(String::as_str), Some("C"));
     }
 
     #[test]
