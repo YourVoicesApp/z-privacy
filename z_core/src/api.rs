@@ -637,6 +637,25 @@ pub enum Refusal {
     EmptyDocument,
 }
 
+/// What a copied report is about.
+///
+/// Two states and no third: a document the core is holding, or a file it
+/// refused. Written as one type rather than two functions with optional
+/// arguments, so that «a refusal with a session» cannot be asked for.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ReportSubject {
+    /// A document that was imported. Every number comes from the core's own
+    /// state; the screen passes nothing but the session.
+    Imported { session: SessionId },
+    /// A file that was not imported. The screen knows these three things and
+    /// the core knows nothing about it at all.
+    Refused {
+        name: String,
+        bytes: u32,
+        refusal: Refusal,
+    },
+}
+
 /// Where a piece of text sits in the document it came from, so that Review can
 /// say «page 17» instead of an offset into one enormous string.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1224,6 +1243,17 @@ pub fn import_text(session: SessionId, text: String) -> ApiResult<DocumentView> 
 /// by name when it cannot be read honestly.
 pub fn import_document(session: SessionId, name: String, bytes: Vec<u8>, kind: DocumentKind) -> ApiResult<DocumentView> {
     crate::ops::import_document(session, name, bytes, kind)
+}
+
+/// The report a person can copy when something is wrong with a document.
+///
+/// **Numbers only, by contract**: sizes, counts, the kinds by name, the
+/// refusal by its own name — and not one character of the document or of
+/// anything found in it. It exists for a tester who cannot send us the file,
+/// and it is written in the core so that the screen cannot work out a figure
+/// of its own.
+pub fn import_report(subject: ReportSubject) -> ApiResult<String> {
+    crate::ops::import_report(subject)
 }
 
 /// The original text with its marks, for the left-hand column.

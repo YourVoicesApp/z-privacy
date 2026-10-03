@@ -56,6 +56,7 @@ void main() {
         kind: DocumentKind.txt,
       ),
       'documentView': () => documentView(session: session),
+      'importReport': () => importReport(subject: ReportSubject.imported(session: session)),
       'scan': () => scan(session: session),
       'protect': () => protect(
         session: session,
@@ -193,7 +194,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 74, reason: 'the contract has 74 functions');
+    expect(calls.length, 75, reason: 'the contract has 75 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

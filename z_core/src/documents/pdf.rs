@@ -106,6 +106,7 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
         // The readable share is measured **per page**, because an average hides the
         // one page that failed — and that is exactly the page with the name on it.
         let percent = readable_percent(&page_text, unmapped);
+        out.saw_readable(percent as u32);
         if percent < MIN_READABLE_PERCENT {
             return Err(refuse(
                 Refusal::UnsupportedEncoding {

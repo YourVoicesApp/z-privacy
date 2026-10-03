@@ -59,6 +59,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Refusal dco_decode_box_autoadd_refusal(dynamic raw);
 
   @protected
+  ReportSubject dco_decode_box_autoadd_report_subject(dynamic raw);
+
+  @protected
   SessionId dco_decode_box_autoadd_session_id(dynamic raw);
 
   @protected
@@ -263,6 +266,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Refusal dco_decode_refusal(dynamic raw);
 
   @protected
+  ReportSubject dco_decode_report_subject(dynamic raw);
+
+  @protected
   RescanOutcome dco_decode_rescan_outcome(dynamic raw);
 
   @protected
@@ -388,6 +394,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Refusal sse_decode_box_autoadd_refusal(SseDeserializer deserializer);
+
+  @protected
+  ReportSubject sse_decode_box_autoadd_report_subject(
+    SseDeserializer deserializer,
+  );
 
   @protected
   SessionId sse_decode_box_autoadd_session_id(SseDeserializer deserializer);
@@ -610,6 +621,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Refusal sse_decode_refusal(SseDeserializer deserializer);
 
   @protected
+  ReportSubject sse_decode_report_subject(SseDeserializer deserializer);
+
+  @protected
   RescanOutcome sse_decode_rescan_outcome(SseDeserializer deserializer);
 
   @protected
@@ -753,6 +767,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_refusal(Refusal self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_report_subject(
+    ReportSubject self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_session_id(
@@ -1026,6 +1046,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_refusal(Refusal self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_report_subject(ReportSubject self, SseSerializer serializer);
 
   @protected
   void sse_encode_rescan_outcome(RescanOutcome self, SseSerializer serializer);

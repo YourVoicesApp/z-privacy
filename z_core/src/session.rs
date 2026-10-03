@@ -121,6 +121,11 @@ pub(crate) struct Session {
     pub original: Secret,
     /// What the user called the document, and what it was.
     pub doc_name: String,
+    /// The size of the file as it arrived, in bytes, and the lowest readable
+    /// share of any of its pages. Kept for one reason: the report a person can
+    /// copy is written by the core, and these are two of its numbers.
+    pub doc_bytes: u32,
+    pub readable: u32,
     pub doc_kind: DocumentKind,
     pub pages: u32,
     /// Where every run of the text came from: page and paragraph.
@@ -162,6 +167,8 @@ impl Session {
             pack_id,
             original: Secret::default(),
             doc_name: String::new(),
+            doc_bytes: 0,
+            readable: 100,
             doc_kind: DocumentKind::Txt,
             pages: 1,
             places: Vec::new(),

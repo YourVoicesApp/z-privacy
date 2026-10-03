@@ -1267,6 +1267,24 @@ sealed class Refusal with _$Refusal {
   const factory Refusal.emptyDocument() = Refusal_EmptyDocument;
 }
 
+@freezed
+sealed class ReportSubject with _$ReportSubject {
+  const ReportSubject._();
+
+  /// A document that was imported. Every number comes from the core's own
+  /// state; the screen passes nothing but the session.
+  const factory ReportSubject.imported({required SessionId session}) =
+      ReportSubject_Imported;
+
+  /// A file that was not imported. The screen knows these three things and
+  /// the core knows nothing about it at all.
+  const factory ReportSubject.refused({
+    required String name,
+    required int bytes,
+    required Refusal refusal,
+  }) = ReportSubject_Refused;
+}
+
 class RescanOutcome {
   final int changedToManual;
   final int revision;

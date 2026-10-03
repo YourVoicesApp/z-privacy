@@ -416,6 +416,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_book_of_tax_terms_is_left_alone \
          a_line_that_moves_down_separates the_other_ways_of_asking_for_a_new_line \
          an_object_stream_is_cut_in_bytes a_refusal_counts_the_pages \
+         carries_the_numbers_and_none_of_the_words a_refused_file_still_has_a_report \
          salutation_stays_and_the_company \
          never_mentions_are_counted codes_with_no_characters; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
@@ -437,7 +438,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "offers Disconnect, not" "names both acts by their reach" \
          "says how much, and what to do" \
          "name the reach they would forget" "is the pack that is kept" \
-         "display only, and Why lives" "its own next move"; do
+         "display only, and Why lives" "its own next move" \
+         "own report, and none of the words"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

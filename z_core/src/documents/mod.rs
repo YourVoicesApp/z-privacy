@@ -73,6 +73,11 @@ pub(crate) struct Extracted {
     pub text: String,
     pub places: Vec<PlaceSpan>,
     pub pages: u32,
+    /// The lowest share of one page that decoded into characters, as a
+    /// percentage. 100 where every byte was already text. Carried out of the
+    /// reader because it is the one number that says whether a document was
+    /// read or merely accepted — and the report a person copies shows it.
+    pub readable: u32,
 }
 
 impl Extracted {
@@ -98,6 +103,7 @@ pub(crate) struct Builder {
     text: String,
     places: Vec<PlaceSpan>,
     pages: u32,
+    readable: Option<u32>,
 }
 
 impl Builder {
@@ -130,6 +136,13 @@ impl Builder {
         Ok(())
     }
 
+    /// What share of one page decoded into characters. The lowest one wins: an
+    /// average hides the single page that failed, and that is the page with the
+    /// name on it.
+    pub(crate) fn saw_readable(&mut self, percent: u32) {
+        self.readable = Some(self.readable.map_or(percent, |lowest| lowest.min(percent)));
+    }
+
     /// Text that belongs to no particular place: a separator between runs.
     pub(crate) fn push_break(&mut self, separator: &str) {
         if self.text.len().saturating_add(separator.len()) <= limits::TEXT_BYTES {
@@ -147,6 +160,7 @@ impl Builder {
         Ok(Extracted {
             text: self.text,
             places: self.places,
+            readable: self.readable.unwrap_or(100),
             pages: self.pages.max(1),
         })
     }

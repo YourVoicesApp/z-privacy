@@ -479,6 +479,20 @@ pub enum _Refusal {
     EmptyDocument,
 }
 
+#[frb(mirror(ReportSubject))]
+pub enum _ReportSubject {
+    /// A document that was imported. Every number comes from the core's own
+    /// state; the screen passes nothing but the session.
+    Imported { session: SessionId },
+    /// A file that was not imported. The screen knows these three things and
+    /// the core knows nothing about it at all.
+    Refused {
+        name: String,
+        bytes: u32,
+        refusal: Refusal,
+    },
+}
+
 #[frb(mirror(Place))]
 pub struct _Place {
     pub page: u32,

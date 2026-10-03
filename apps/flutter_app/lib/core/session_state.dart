@@ -298,6 +298,12 @@ class Workbench extends ChangeNotifier {
     }
   }
 
+  /// The numbers about this document, as the core writes them. Nothing here
+  /// shapes the text: a report the screen edited would no longer be the core's
+  /// answer, and the whole use of it is that it is.
+  Future<String> reportText() =>
+      z.importReport(subject: ReportSubject.imported(session: session));
+
   /// A scan is not a screen (the behaviour board): it runs on import, and this is
   /// the same call the Rescan button makes later.
   Future<void> rescan() async {
