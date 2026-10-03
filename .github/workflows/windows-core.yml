@@ -9,15 +9,19 @@
 # `#[cfg(unix)]`, and the data directory is a hard-coded `~/.local/share` path —
 # so a red run here is the report we are asking for, not a failure to hide.
 #
-# It runs on this branch only. `main` carries V1, frozen at d685d7b, and nothing
-# here reaches it.
+# It runs on `main` as well as on this branch. That is the whole of what the
+# merge changed: a workflow that triggers on a branch which no longer receives
+# commits does not fail — it stops running, and a build that stops silently is
+# the one nobody notices is gone. A tag starting with `v` builds too, so a
+# release has an installer of its own.
 name: windows
 
 on:
   push:
-    branches: [platform/windows]
+    branches: [main, platform/windows]
+    tags: ['v*']
   pull_request:
-    branches: [platform/windows]
+    branches: [main, platform/windows]
   workflow_dispatch:
 
 permissions:
