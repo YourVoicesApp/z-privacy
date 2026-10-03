@@ -35,10 +35,18 @@ import 'package:zprivacy/widgets/document_text.dart';
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
 /// Deliberately plain: «Blaues Dach» is a name only the vault can know, the
-/// IBAN is a shape any language finds, «Herr Thomas Müller» is what the German
-/// pack asks about, and «Mai» is what a person protects by hand.
+/// IBAN is a shape any language finds, the company is what the German pack
+/// offers for a word, and «Mai» is what a person protects by hand.
+///
+/// The company line was the salutation until 3 October, when a name after
+/// «Herr» became a protection rather than a question — there is nobody in
+/// Germany the word does not name, and asking about it was the thing being
+/// asked that the owner objected to. So this document needed something that
+/// is still genuinely open: a company name is offered, because the legal form
+/// says what the name is while the name itself may be anybody's.
 const _doc = 'Projekt Blaues Dach läuft seit Mai.\n'
     'IBAN: DE89370400440532013000\n'
+    'Kunde: Nordstern Consulting GmbH\n'
     'Ansprechpartner: Herr Thomas Müller\n';
 
 Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
