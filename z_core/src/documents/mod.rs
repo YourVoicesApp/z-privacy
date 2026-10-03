@@ -30,7 +30,13 @@ pub(crate) mod limits {
     /// The file itself.
     pub(crate) const FILE_BYTES: usize = 25 * 1024 * 1024;
     /// Pages in one document.
-    pub(crate) const PAGES: u32 = 500;
+    ///
+    /// Measured, not chosen: the owner's 734-page Word export holds 1,589,050
+    /// characters, which is 2,165 a page, and `TEXT_BYTES` below stops at
+    /// 1,937 pages of that density. So the real guard is the text, and this
+    /// number is set where the text runs out rather than under it — a document
+    /// of 600 pages was refused by a limit of 500 that defended nothing.
+    pub(crate) const PAGES: u32 = 2000;
     /// Text after decompression — the defence against a small file that swells.
     pub(crate) const TEXT_BYTES: usize = 4 * 1024 * 1024;
     /// One entry inside a zip, decompressed.
@@ -41,7 +47,14 @@ pub(crate) mod limits {
     /// few kilobytes that unpack into gigabytes; a document is well under this.
     pub(crate) const MAX_RATIO: u32 = 200;
     /// How long reading may take before we stop and say so.
-    pub(crate) const MILLIS: u64 = 5_000;
+    ///
+    /// Measured on the biggest files we accept. The 734-page export reads in
+    /// 136 ms in release and 1,049 ms in a debug build — 215 ms per megabyte —
+    /// so the 25 MB a `FILE_BYTES` allows would take about 5.4 seconds to read
+    /// in debug and 0.7 in release. The old 5,000 would have refused a large
+    /// but perfectly ordinary document for being slow. This is four times the
+    /// measured worst case, and still a ceiling no real file comes near.
+    pub(crate) const MILLIS: u64 = 20_000;
 }
 
 /// One run of text, and where it sits.

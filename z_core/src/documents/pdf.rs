@@ -17,7 +17,7 @@
 //! scan with no text layer, a font whose bytes we cannot map. The owner's rule
 //! stands — better a refusal with a reason than text with silent holes in it.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 
 use flate2::read::ZlibDecoder;
@@ -326,13 +326,25 @@ fn unpack_object_stream(holder: &ObjBody, out: &mut Objects) {
         Some(plain) => plain,
         None => return,
     };
-    let text = String::from_utf8_lossy(&plain).to_string();
+    // The offsets in this stream count **bytes**, so the stream is cut in bytes
+    // and each object is made into text on its own. Converting the whole stream
+    // first is the mistake this file already warns about one level up, and it
+    // costs more here: `from_utf8_lossy` writes three bytes where one invalid
+    // byte stood, so every offset past it points somewhere else.
+    //
+    // Measured on the owner's 734-page Word export: 508 object streams, 123 of
+    // them not valid UTF-8, and 7,222 of 48,928 objects sliced out of the wrong
+    // place. One was the font `/F3` on page 14 — the mis-sliced copy began in
+    // the middle of the object before it and had lost its `/ToUnicode`, so the
+    // whole document was refused as a font with no character map. A Word file
+    // reaches this state simply by having a title: a text string is written in
+    // UTF-16 and begins with the bytes `FE FF`.
     let count = number_after(&holder.dict, "/N").unwrap_or(0) as usize;
     let first = number_after(&holder.dict, "/First").unwrap_or(0) as usize;
-    if count == 0 || first == 0 || first > text.len() {
+    if count == 0 || first == 0 || first > plain.len() {
         return;
     }
-    let header = text.get(..first).unwrap_or_default();
+    let header = String::from_utf8_lossy(plain.get(..first).unwrap_or_default()).to_string();
     let numbers: Vec<u32> = header
         .split_whitespace()
         .filter_map(|w| w.parse::<u32>().ok())
@@ -353,11 +365,11 @@ fn unpack_object_stream(holder: &ObjBody, out: &mut Objects) {
         let end = pairs
             .get(index + 1)
             .map(|(_, next)| first + next)
-            .unwrap_or(text.len());
-        if let Some(body) = text.get(start..end.min(text.len())) {
+            .unwrap_or(plain.len());
+        if let Some(body) = plain.get(start..end.min(plain.len())) {
             // Objects inside an object stream never hold streams themselves.
             out.entry(*number).or_insert_with(|| ObjBody {
-                dict: body.to_string(),
+                dict: String::from_utf8_lossy(body).to_string(),
                 stream: None,
             });
         }
@@ -444,7 +456,8 @@ fn page_order(objects: &Objects) -> Vec<u32> {
         .and_then(|(_, o)| reference(&o.dict, "/Pages"));
 
     if let Some(pages_ref) = root {
-        walk(objects, pages_ref, &mut order, 0);
+        let mut seen = BTreeSet::new();
+        walk(objects, pages_ref, &mut order, 0, &mut seen);
     }
     if order.is_empty() {
         // No catalogue, or a tree we could not follow: every page object, in order.
@@ -463,8 +476,14 @@ fn is_page(dict: &str) -> bool {
     has_type && !is_tree
 }
 
-fn walk(objects: &Objects, node: u32, order: &mut Vec<u32>, depth: u32) {
-    if depth > 32 || order.len() > limits::PAGES as usize {
+/// Every node is entered once, and that is what bounds the walk — not the page
+/// limit. Stopping at `PAGES + 1` kept the walk cheap and made the refusal lie:
+/// a 734-page document was described as having 501 pages, because 501 was where
+/// we stopped counting. A node already visited is skipped, so a tree that
+/// points back into itself costs one visit per object and no more, and the
+/// count that comes out is the document's own.
+fn walk(objects: &Objects, node: u32, order: &mut Vec<u32>, depth: u32, seen: &mut BTreeSet<u32>) {
+    if depth > 32 || !seen.insert(node) {
         return;
     }
     let Some(body) = objects.get(&node) else { return };
@@ -473,7 +492,7 @@ fn walk(objects: &Objects, node: u32, order: &mut Vec<u32>, depth: u32) {
         return;
     }
     for child in references(&body.dict, "/Kids") {
-        walk(objects, child, order, depth + 1);
+        walk(objects, child, order, depth + 1, seen);
     }
 }
 
@@ -1505,6 +1524,104 @@ mod tests {
         let spaced = pdf_with_form("", Some("BT /FA 12 Tf 72 700 Td (Telefon:)Tj 0 0 (0228 406-1200)\" ET"));
         let text = read(&spaced).expect("quote").text;
         assert!(text.contains("Telefon:\n0228"), "the \" operator did not end the line: {text:?}");
+    }
+
+    /// The number in a refusal is the number of pages the file has.
+    ///
+    /// Measured on the owner's 734-page export: the walk stopped as soon as it
+    /// had one page more than the limit, so the refusal said «501 pages is past
+    /// the limit of 500» about a document with 734. A limit may refuse a file;
+    /// it may not describe it wrongly, because that number is the one a person
+    /// repeats when they ask for help.
+    #[test]
+    fn a_refusal_counts_the_pages_the_file_really_has() {
+        let many = vec!["Seite"; limits::PAGES as usize + 10];
+        let pdf = pdf_with_pages(&many);
+        let e = read(&pdf).expect_err("past the page limit");
+        assert!(
+            matches!(
+                error_of(&e),
+                Some(Refusal::TooManyPages { pages, limit })
+                    if pages == limits::PAGES + 10 && limit == limits::PAGES
+            ),
+            "the refusal does not carry the real count: {e}"
+        );
+    }
+
+    /// A PDF whose objects live in an object stream that is **not** valid UTF-8.
+    ///
+    /// The offsets in `/First` count bytes. Reading the whole stream through
+    /// `from_utf8_lossy` first turns every invalid byte into U+FFFD, which is
+    /// three bytes where one stood, and every offset after it points somewhere
+    /// else. Measured on the owner's 734-page Word export: 508 object streams,
+    /// 123 of them not UTF-8, and **7,222 of 48,928 objects** sliced from the
+    /// wrong place. One of them was the font `/F3` on page 14 — its real
+    /// dictionary carries `/ToUnicode`, the mis-sliced one began in the middle
+    /// of the object before it and carried none, so a readable page was refused
+    /// as a font with no character map.
+    ///
+    /// A Word document reaches this state by having a title: a text string is
+    /// written in UTF-16 and starts with the bytes `FE FF`.
+    #[test]
+    fn an_object_stream_is_cut_in_bytes_not_in_characters() {
+        // Two objects in one stream: a title holding UTF-16 bytes, then the
+        // font. `/ToUnicode` sits at the end of the font's dictionary, which is
+        // exactly where the shifted slice stops short.
+        // Twelve bytes no UTF-8 decoder accepts — a UTF-16 title, as Word
+        // writes it. Each one becomes U+FFFD, three bytes where one stood, so
+        // everything after this object slides 24 bytes out of place.
+        let mut title = b"<</Title(".to_vec();
+        title.extend_from_slice(&[0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff]);
+        title.extend_from_slice(b")>>");
+        let font =
+            b"<</Type/Font/Subtype/Type0/BaseFont/SymbolMT/Encoding/Identity-H/ToUnicode 11 0 R>>".to_vec();
+        // A third object after the font, so the font's slice ends where the
+        // next one begins — which is the end that the shift cuts short.
+        let after = b"<</Type/Outlines/Count 0>>".to_vec();
+        let mut header =
+            format!("9 0 10 {} 12 {} ", title.len(), title.len() + font.len()).into_bytes();
+        let first = header.len();
+        let mut packed = Vec::new();
+        packed.append(&mut header);
+        packed.extend_from_slice(&title);
+        packed.extend_from_slice(&font);
+        packed.extend_from_slice(&after);
+
+        let cmap = "/CIDInit /ProcSet findresource begin begincmap \
+                    1 begincodespacerange <0000> <FFFF> endcodespacerange \
+                    1 beginbfchar <0001> <004E> endbfchar endcmap end";
+        let content = "BT /F1 12 Tf 72 700 Td <0001> Tj ET";
+
+        let mut head = String::from("%PDF-1.5\n");
+        let push = &mut head;
+        push.push_str("1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        push.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        push.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 10 0 R >> >> >>\nendobj\n",
+        );
+        push.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{content}\nendstream\nendobj\n",
+            content.len()
+        ));
+        push.push_str(&format!(
+            "11 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n",
+            cmap.len()
+        ));
+        push.push_str(&format!(
+            "5 0 obj\n<< /Type/ObjStm /N 3 /First {first} /Length {} >>\nstream\n",
+            packed.len()
+        ));
+        let mut pdf: Vec<u8> = head.into_bytes();
+        pdf.extend_from_slice(&packed);
+        pdf.extend_from_slice(b"\nendstream\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(&pdf).expect("a page whose font is described in an object stream");
+        assert!(
+            out.text.contains('N'),
+            "the font's /ToUnicode was lost with the offsets: {:?}",
+            out.text
+        );
     }
 
     /// A form may draw another form. One that draws itself must end the walk,
