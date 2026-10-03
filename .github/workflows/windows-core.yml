@@ -1,0 +1,244 @@
+# What a Windows machine says about Z Privacy, in two jobs.
+#
+# `core` was the first question — does the Rust core compile there, do its tests
+# hold, and is the storage protection layer actually measured. `app` is the
+# second: does the whole desktop application build, runner and bridge and all.
+#
+# Nothing is fixed before this has answered. Z Privacy has never been built or
+# tested off Linux — `secure_file.rs` guards the vault entirely under
+# `#[cfg(unix)]`, and the data directory is a hard-coded `~/.local/share` path —
+# so a red run here is the report we are asking for, not a failure to hide.
+#
+# It runs on this branch only. `main` carries V1, frozen at d685d7b, and nothing
+# here reaches it.
+name: windows
+
+on:
+  push:
+    branches: [platform/windows]
+  pull_request:
+    branches: [platform/windows]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: build and test z_core on Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The runner image ships a Rust toolchain. Using it rather than a
+      # third-party setup action keeps this to one dependency we did not write,
+      # and the printed version is part of the report.
+      - name: Toolchain
+        shell: bash
+        run: |
+          rustc --version
+          cargo --version
+          echo "workspace rust-version: $(grep -m1 'rust-version' Cargo.toml)"
+
+      # Split from the tests on purpose: «it does not compile» and «it compiles
+      # and something is wrong» are different answers, and the step that fails
+      # says which one we got.
+      - name: Compile the core
+        shell: bash
+        run: cargo build -p z_core --features fake_provider
+
+      - name: Compile the workspace
+        shell: bash
+        run: cargo build --workspace --features fake_provider
+
+      - name: Rust tests
+        shell: bash
+        run: cargo test --workspace --features fake_provider -- --nocapture
+
+      # The tests above pass on Windows. That is not the same as being safe:
+      # six of them do not exist there at all. This step asks for those six by
+      # name and is expected to fail until Windows has its own guard.
+      # `always()`, because the contract report is the most useful thing this
+      # job produces and a failing test above it must not take it away. The
+      # first time the tests went red, this step was skipped and we lost the
+      # whole picture for a mistake in one test.
+      - name: Storage protection contracts
+        if: always()
+        shell: bash
+        run: bash scripts/check_storage_contracts.sh
+
+      - name: What Linux says, for comparison
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Measured on Linux at d685d7b"
+            echo ""
+            echo '| | |'
+            echo '|---|---|'
+            echo '| Rust tests | 251 passed, 0 failed |'
+            echo '| gates | 108 checks, 0 failed, 0 skipped |'
+            echo ""
+            echo "Anything this Windows run reports differently is the port's work list."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  app:
+    name: build the desktop app on Windows
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The exact SDK this was built and tested with, by URL, not «stable».
+      # «stable» moves, and a build that breaks because the channel advanced
+      # teaches nothing about this commit. 1.8 GB each run for now; cache it
+      # when that becomes the slow part, not before.
+      - name: Flutter 3.44.2
+        shell: pwsh
+        run: |
+          $url = "https://storage.googleapis.com/flutter_infra_release/releases/stable/windows/flutter_windows_3.44.2-stable.zip"
+          Invoke-WebRequest -Uri $url -OutFile flutter.zip
+          Expand-Archive -Path flutter.zip -DestinationPath C:\ -Force
+          Remove-Item flutter.zip
+          "C:\flutter\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Versions
+        shell: bash
+        run: |
+          flutter --version
+          rustc --version
+
+      # Says out loud what is missing rather than failing later with a linker
+      # error nobody can place: a Windows desktop build needs Visual Studio's
+      # C++ workload, and the runner image is supposed to carry it.
+      - name: What Flutter thinks of this machine
+        shell: bash
+        run: flutter doctor -v
+
+      - name: Build
+        shell: bash
+        working-directory: apps/flutter_app
+        run: flutter build windows --release
+
+      # The whole folder, never the .exe alone. A Flutter application on Windows
+      # is the executable plus flutter_windows.dll, z_bridge.dll, the plugin
+      # DLLs and `data/` beside it; the .exe on its own does not start.
+      - name: Stage the folder
+        shell: bash
+        working-directory: apps/flutter_app
+        run: |
+          out=build/windows/x64/runner/Release
+          test -f "$out/zprivacy.exe" || { echo "no zprivacy.exe at $out"; exit 1; }
+          mkdir -p ../../staging/zprivacy-v1-windows-x86_64
+          cp -a "$out/." ../../staging/zprivacy-v1-windows-x86_64/
+
+      - name: What is in it, and its hashes
+        if: always()
+        shell: bash
+        run: |
+          dir=staging/zprivacy-v1-windows-x86_64
+          [ -d "$dir" ] || { echo "nothing staged"; exit 0; }
+          {
+            echo "### Z Privacy for Windows — not a release yet"
+            echo ""
+            echo "Built from \`$GITHUB_SHA\`. Download the artifact, unzip it into a"
+            echo "folder of its own, and run \`zprivacy.exe\` from there."
+            echo ""
+            echo "The two files that are the product, to check after the download:"
+            echo ""
+            echo '```'
+            (cd "$dir" && sha256sum zprivacy.exe z_bridge.dll)
+            echo '```'
+            echo ""
+            echo "Everything in the folder:"
+            echo ""
+            echo '```'
+            (cd "$dir" && find . -type f -printf '%10s  %p\n' | sort -k2)
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          (cd "$dir" && sha256sum zprivacy.exe z_bridge.dll)
+
+      # One file instead of thirteen.
+      #
+      # The folder below is still uploaded, for anyone who wants to see exactly
+      # what the build produced. The installer is for everyone else: it puts the
+      # thirteen files where they belong, makes the shortcuts, and registers an
+      # uninstaller — so «unblock it, extract it, and never move the .exe» stops
+      # being something a person has to get right.
+      #
+      # Inno Setup 6 is already on the runner image. The version comes from
+      # pubspec.yaml so there is one place it is written down.
+      - name: Package an installer
+        # PowerShell, not bash, for this one step. Git Bash's MSYS layer rewrites
+        # arguments on their way to a Windows program: `/DSourceDir=...` becomes
+        # a path, and the usual `//D` escape for that was passed through
+        # untouched, so Inno saw an option it did not know and stopped.
+        # PowerShell hands the arguments over as they were written.
+        shell: pwsh
+        run: |
+          $line = Get-Content apps/flutter_app/pubspec.yaml |
+                  Where-Object { $_ -match '^version:' } |
+                  Select-Object -First 1
+          if (-not $line) { throw "no version in pubspec.yaml" }
+          $version = ($line -replace '^version:\s*', '' -split '\+')[0].Trim()
+          Write-Host "version from pubspec.yaml: $version"
+
+          $root = (Get-Location).Path
+          New-Item -ItemType Directory -Force -Path staging-installer | Out-Null
+
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/DSourceDir=$root\staging\zprivacy-v1-windows-x86_64" `
+            "/DOutDir=$root\staging-installer" `
+            "/DAppVersion=$version" `
+            "/DIconFile=$root\apps\flutter_app\windows\runner\resources\app_icon.ico" `
+            "packaging\windows\zprivacy.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup refused the script ($LASTEXITCODE)" }
+
+      - name: What the installer is, and its hash
+        if: always()
+        shell: bash
+        run: |
+          file=staging-installer/zprivacy-v1-windows-x86_64-setup.exe
+          [ -f "$file" ] || { echo "no installer was made"; exit 0; }
+          {
+            echo "### The installer"
+            echo ""
+            echo "One file. Download it, run it, and it is installed — no unzipping,"
+            echo "and no administrator password. Windows will still ask to allow an"
+            echo "unsigned program: More info, then Run anyway."
+            echo ""
+            echo '```'
+            ls -l "$file" | awk '{print $5" bytes"}'
+            sha256sum "$file"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          sha256sum "$file"
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: zprivacy-v1-windows-x86_64-setup
+          path: staging-installer
+          retention-days: 30
+          if-no-files-found: error
+
+      # Downloading this gives `zprivacy-v1-windows-x86_64.zip`, holding one
+      # folder of that name — so it unpacks into its own place rather than
+      # scattering twenty files wherever it was opened. Kept beside the
+      # installer: it is what the build actually made, with nothing added.
+      #
+      # `always()`, because the packaging step above it can fail on its own and
+      # a working build must not be thrown away with it. The first time it did
+      # fail, this upload was skipped and there was nothing to hand anybody —
+      # which is the same mistake the contracts step above already guards against.
+      - name: Upload the folder
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zprivacy-v1-windows-x86_64
+          path: staging
+          retention-days: 30
+          if-no-files-found: error

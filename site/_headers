@@ -1,9 +1,31 @@
-# Cloudflare Pages reads this. The page promises it reaches no third party;
-# these headers make the browser hold it to that rather than trusting us.
+# What the browser is told, and who actually tells it.
+#
+# **This file is not served.** The site runs on nginx behind Cloudflare, and the
+# headers below come from `/etc/nginx/snippets/zprivacy-headers.conf` on the
+# server. This is the record of what they should be, kept in the repository so
+# the intent is reviewable with the pages it protects — and it is written in
+# Cloudflare Pages' format because that is where the site began.
+#
+# Keep the two in step. The one time they drifted, the file was read as the
+# truth and a difference was reported as a fault that was not one.
+#
+# The page promises it reaches no third party; these make the browser hold it to
+# that rather than trusting us.
 /*
   Content-Security-Policy: default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'
   Referrer-Policy: no-referrer
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Permissions-Policy: geolocation=(), camera=(), microphone=(), interest-cohort=()
+
+  # Deliberately short, and deliberately without includeSubDomains.
+  #
+  # A long HSTS is a promise a browser will hold you to for a year: if a
+  # renewal fails or a subdomain is not ready for HTTPS, nobody can reach the
+  # site and nothing you do on the server shortens it. So it starts at five
+  # minutes and is raised once renewals have been clean for a week.
+  #
+  # nginx serves `max-age=300` today. Raise it there, then here, around
+  # 8 October 2026 — and add includeSubDomains only when every subdomain,
+  # beta included, is certain to stay on HTTPS.
   Strict-Transport-Security: max-age=31536000; includeSubDomains

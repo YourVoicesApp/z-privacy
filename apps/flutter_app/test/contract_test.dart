@@ -147,6 +147,10 @@ void main() {
       // The vault (M4). Called against a locked, absent vault here: the answers
       // must still be answers.
       'setDataDir': () => setDataDir(dir: Directory.systemTemp.path),
+      // The core's own answer for where the vault belongs. Called here so the
+      // contract stays whole; what it must *say* is checked in Rust, on every
+      // platform the suite runs on.
+      'defaultDataDir': () => defaultDataDir(),
       'vaultCreateWithPassphrase': () =>
           vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort'),
       'vaultChangePassphrase': () => vaultChangePassphrase(
@@ -198,7 +202,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 79, reason: 'the contract has 79 functions');
+    expect(calls.length, 80, reason: 'the contract has 80 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

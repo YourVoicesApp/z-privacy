@@ -14,7 +14,13 @@ rust-version = "1.85"
 license = "Apache-2.0"
 
 [workspace.lints.rust]
-unsafe_code = "forbid"
+# `deny`, not `forbid`, since 30 September — and the difference is one file.
+# Windows has no `0600` and no `O_NOFOLLOW`; guarding the vault's own file there
+# needs Win32, and Win32 needs `unsafe`. The owner chose a boundary we wrote and
+# can read over the same calls hidden inside a dependency. `forbid` cannot be
+# lifted anywhere, so the lint is `deny` and G4a proves the single exception
+# lives in `z_core/src/secure_file/windows.rs` and nowhere else.
+unsafe_code = "deny"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
 missing_debug_implementations = "warn"
 

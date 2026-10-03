@@ -383,10 +383,41 @@ else
 fi
 
 # ---------------------------------------------------------------- G4
-if grep -q 'unsafe_code = "forbid"' Cargo.toml 2>/dev/null; then
-  pass "G4a unsafe_code = forbid in the workspace lints"
+# G4a was «forbid, everywhere, full stop» until 30 September. Windows has no
+# 0600 and no O_NOFOLLOW, so guarding the vault's own file there needs Win32 and
+# Win32 needs `unsafe`. The rule did not go away; it got a countable exception,
+# and this gate is what keeps it countable. One allowance, one file, and no
+# `unsafe` anywhere else — the moment a second appears, this is red.
+UNSAFE_HOME="z_core/src/secure_file/windows.rs"
+if grep -q 'unsafe_code = "deny"' Cargo.toml 2>/dev/null; then
+  pass "G4a unsafe_code = deny in the workspace lints"
 else
-  fail "G4a workspace lints do not forbid unsafe_code"
+  fail "G4a workspace lints do not deny unsafe_code"
+fi
+
+ALLOWS=$(grep -rln 'allow(unsafe_code)' --include=*.rs z_core bridges 2>/dev/null | sort)
+ALLOW_COUNT=$(printf '%s\n' "$ALLOWS" | grep -c . || true)
+if [ "$ALLOW_COUNT" = "1" ] && [ "$ALLOWS" = "$UNSAFE_HOME" ]; then
+  pass "G4a-one the single unsafe allowance is $UNSAFE_HOME"
+else
+  fail "G4a-one unsafe is allowed somewhere other than $UNSAFE_HOME:"
+  printf '        %s\n' "${ALLOWS:-（none — the exception was removed; delete this gate with it）}"
+fi
+
+STRAY=$(grep -rn '\bunsafe\b' --include=*.rs z_core/src bridges/native/z_bridge/src/api 2>/dev/null \
+        | grep -v "^$UNSAFE_HOME:" | grep -vE ':[0-9]+:\s*(//|///|//!)' || true)
+if [ -z "$STRAY" ]; then
+  pass "G4a-only no unsafe outside that one file"
+else
+  fail "G4a-only unsafe appears outside $UNSAFE_HOME:"; printf '        %s\n' "$STRAY"
+fi
+
+SAFETY=$(grep -c 'unsafe {' "$UNSAFE_HOME" 2>/dev/null || echo 0)
+NOTES=$(grep -c 'SAFETY:' "$UNSAFE_HOME" 2>/dev/null || echo 0)
+if [ ! -f "$UNSAFE_HOME" ] || [ "$NOTES" -ge "$SAFETY" ]; then
+  pass "G4a-why every unsafe block in it carries a SAFETY note ($SAFETY blocks, $NOTES notes)"
+else
+  fail "G4a-why $SAFETY unsafe blocks but only $NOTES SAFETY notes in $UNSAFE_HOME"
 fi
 
 if cargo clippy --version >/dev/null 2>&1; then
@@ -409,6 +440,20 @@ else
 fi
 rm -f /tmp/gt.$$
 
+
+# ---------------------------------------------------------------- G22
+# The storage protection layer must be MEASURED on the platform you are on,
+# not merely written for one. Six named contracts guard the vault's own file;
+# on Windows all six are `#[cfg(unix)]` and simply do not exist, so the suite
+# there runs 245 of 251 and still says «ok». A count would drift as tests are
+# added — these are asked for by name.
+if bash scripts/check_storage_contracts.sh >/tmp/g22.$$ 2>&1; then
+  pass "G22 all six storage protection contracts are measured on this platform"
+else
+  fail "G22 storage protection is not fully measured here:"
+  sed 's/\x1b\[[0-9;]*m//g' /tmp/g22.$$ | grep -E "^  FAIL|contracts have no test" | sed 's/^/        /'
+fi
+rm -f /tmp/g22.$$
 
 # ---------------------------------------------------------------- G7 (from Dart)
 # The claim "no panic crosses the boundary" is only proven from the other side:

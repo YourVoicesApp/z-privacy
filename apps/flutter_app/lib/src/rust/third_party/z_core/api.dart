@@ -228,6 +228,12 @@ Future<String> aiView({required SessionId session, required AnswerId answer}) =>
 Future<void> setDataDir({required String dir}) =>
     RustLib.instance.api.zCoreApiSetDataDir(dir: dir);
 
+/// Where this machine's Z Privacy files belong, decided by the core rather than
+/// guessed by the screen. Never the temp directory: a platform that cannot say
+/// is refused, not fallen back on.
+Future<String> defaultDataDir() =>
+    RustLib.instance.api.zCoreApiDefaultDataDir();
+
 /// Is it open? Locked means the vault layer is skipped, and the UI says so.
 Future<VaultState> vaultState() => RustLib.instance.api.zCoreApiVaultState();
 

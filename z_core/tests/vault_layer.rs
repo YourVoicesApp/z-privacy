@@ -572,6 +572,55 @@ fn local_files_are_private_on_fresh_install() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// The same contract as the Unix test above, in the only terms Windows can
+/// keep it in.
+///
+/// Not «nobody but the owner can read it»: Administrators and SYSTEM hold
+/// privileges no access list can refuse, and a promise that ignored that would
+/// be false on the platform it is made about. What is promised, and checked:
+/// the file's access list names no other account, and it does not inherit
+/// whatever the folder above it grants.
+///
+/// It carries the Unix test's name on purpose. One contract, one name, each
+/// platform proving it in its own terms — which is what lets G22 ask for it
+/// without knowing which platform it is standing on.
+#[cfg(windows)]
+#[test]
+fn local_files_are_private_on_fresh_install() {
+    let _lock = serial();
+    let dir = std::env::temp_dir().join(format!("zprivacy-fs-private-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
+    vault_create_with_passphrase(PASS.to_string()).expect("create");
+
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    save_settings(s).expect("save settings");
+
+    for name in ["vault.zv", "settings.zcfg"] {
+        let sddl = z_core::testing::dacl_sddl(&dir.join(name)).expect("read the access list");
+
+        // «P» — protected. Without it the file takes whatever the folder gives,
+        // which is the half of the contract that has nothing to do with us.
+        assert!(
+            sddl.starts_with("D:P"),
+            "{name} inherits permissions from its folder: {sddl}"
+        );
+        // One allow entry, for the owner. Anything not named is denied by
+        // absence, so counting the entries is the whole check.
+        assert_eq!(
+            sddl.matches('(').count(),
+            1,
+            "{name} names more than one account: {sddl}"
+        );
+        assert!(
+            sddl.contains(";OW)") || sddl.contains(";CO)"),
+            "{name}'s single entry is not the owner's: {sddl}"
+        );
+    }
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 #[cfg(unix)]
 #[test]
 fn vault_temp_symlink_is_refused_and_victim_is_unchanged() {
@@ -591,6 +640,69 @@ fn vault_temp_symlink_is_refused_and_victim_is_unchanged() {
     }
     assert_eq!(std::fs::read(&victim).expect("victim"), b"ZXQ-VICTIM-VAULT-ORIGINAL");
     assert!(!data.join("vault.zv").exists(), "a failed create does not invent a final vault");
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+/// The second contract on Windows, and «symlink» is too small a word for it
+/// there: a symlink, a junction and a mount point are all reparse points, and
+/// any of them in the path would make a write land somewhere else.
+///
+/// Two cases, because one of them passes by accident. With the link pointing at
+/// a file that exists, CREATE_NEW refuses even without the flag — the target is
+/// already there, so the call fails for the wrong reason and the test would go
+/// green over an unguarded build. The second case is the real one: a link to a
+/// path that does **not** exist. Follow it and the victim is created and
+/// written; refuse to follow it and nothing appears at all.
+#[cfg(windows)]
+#[test]
+fn vault_temp_symlink_is_refused_and_victim_is_unchanged() {
+    use std::os::windows::fs::symlink_file;
+
+    let _lock = serial();
+    let root = std::env::temp_dir().join(format!("zprivacy-fs-vault-link-{}", std::process::id()));
+    let data = root.join("data");
+    let victim = root.join("victim.txt");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&data).expect("data dir");
+    std::fs::write(&victim, b"ZXQ-VICTIM-VAULT-ORIGINAL").expect("victim");
+
+    // Creating one needs SeCreateSymbolicLinkPrivilege or Developer Mode. If
+    // this machine has neither, say so and stop — a contract that quietly skips
+    // itself is the thing G22 exists to make impossible.
+    if let Err(e) = symlink_file(&victim, data.join("vault.zv.new")) {
+        panic!("this machine cannot create a reparse point, so the contract cannot be measured here: {e}");
+    }
+
+    set_data_dir(data.to_string_lossy().to_string()).expect("dir");
+    match vault_create_with_passphrase(PASS.to_string()) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the temp reparse point must be refused, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(&victim).expect("victim"), b"ZXQ-VICTIM-VAULT-ORIGINAL");
+    assert!(!data.join("vault.zv").exists(), "a failed create does not invent a final vault");
+
+    // The case that proves the flag: the link points nowhere. Following it
+    // would create that path and write the vault into it.
+    //
+    // From a data root of its own, because the case above left a vault behind
+    // and a second create would be answered `VaultAlreadyExists` — a correct
+    // refusal from a layer above this one, which never reaches the file at all.
+    // That is exactly what this run reported, and it was the test's fault, not
+    // the guard's.
+    let second = root.join("data2");
+    std::fs::create_dir_all(&second).expect("second data dir");
+    let nowhere = root.join("not-there-yet.txt");
+    symlink_file(&nowhere, second.join("vault.zv.new")).expect("dangling reparse point");
+    set_data_dir(second.to_string_lossy().to_string()).expect("second dir");
+    match vault_create_with_passphrase(PASS.to_string()) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("a dangling reparse point must be refused, got {other:?}"),
+    }
+    assert!(
+        !nowhere.exists(),
+        "following the reparse point created the file it pointed at"
+    );
+
     let _ = std::fs::remove_dir_all(&root);
 }
 
@@ -618,6 +730,66 @@ fn settings_temp_symlink_is_refused_and_victim_is_unchanged() {
     let _ = std::fs::remove_dir_all(&root);
 }
 
+/// The same contract as the vault's, for the file beside it.
+///
+/// No new guard was needed: `replace_atomically` is one function and both files
+/// go through it, so closing the vault's path closed this one at the same
+/// moment. That is worth a test rather than an assumption — a shared guard is
+/// exactly the kind that gets specialised later and quietly stops covering the
+/// second caller.
+///
+/// Two cases again, and for the same reason: pointed at a file that exists the
+/// call refuses even unguarded, so the dangling link is the one that proves it.
+#[cfg(windows)]
+#[test]
+fn settings_temp_symlink_is_refused_and_victim_is_unchanged() {
+    use std::os::windows::fs::symlink_file;
+
+    let _lock = serial();
+    let root = std::env::temp_dir().join(format!("zprivacy-fs-zcfg-link-{}", std::process::id()));
+    let data = root.join("data");
+    let victim = root.join("victim.txt");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&data).expect("data dir");
+    std::fs::write(&victim, b"ZXQ-VICTIM-CONFIG-ORIGINAL").expect("victim");
+    if let Err(e) = symlink_file(&victim, data.join("settings.zcfg.new")) {
+        panic!("this machine cannot create a reparse point, so the contract cannot be measured here: {e}");
+    }
+
+    set_data_dir(data.to_string_lossy().to_string()).expect("dir");
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    match save_settings(s) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the temp reparse point must be refused, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(&victim).expect("victim"), b"ZXQ-VICTIM-CONFIG-ORIGINAL");
+    assert!(
+        !data.join("settings.zcfg").exists(),
+        "a failed save does not invent a final settings file"
+    );
+
+    // The dangling case, from a data root of its own so nothing above this
+    // layer answers first.
+    let second = root.join("data2");
+    std::fs::create_dir_all(&second).expect("second data dir");
+    let nowhere = root.join("not-there-yet.txt");
+    symlink_file(&nowhere, second.join("settings.zcfg.new")).expect("dangling reparse point");
+    set_data_dir(second.to_string_lossy().to_string()).expect("second dir");
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    match save_settings(s) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("a dangling reparse point must be refused, got {other:?}"),
+    }
+    assert!(
+        !nowhere.exists(),
+        "following the reparse point created the file it pointed at"
+    );
+
+    let _ = std::fs::remove_dir_all(&root);
+}
+
 #[cfg(unix)]
 #[test]
 fn final_vault_symlink_is_not_read_as_a_vault() {
@@ -642,6 +814,45 @@ fn final_vault_symlink_is_not_read_as_a_vault() {
     let _ = std::fs::remove_dir_all(source);
 }
 
+/// The other half of the guard: not writing through a doorway, but refusing to
+/// read one as though it were the vault.
+///
+/// Without this, a reparse point standing where `vault.zv` belongs is followed
+/// straight through. Z Privacy opens some other file, finds a sealed vault in
+/// it, and reports a vault on this device that belongs to another — then asks
+/// for the passphrase to it.
+///
+/// The refusal carries the same words as the Unix one, «following links»,
+/// because it is the same refusal: what was at this path was not followed, so
+/// nothing was read.
+#[cfg(windows)]
+#[test]
+fn final_vault_symlink_is_not_read_as_a_vault() {
+    use std::os::windows::fs::symlink_file;
+
+    let _lock = serial();
+    let source = fresh_vault("fs-source-vault");
+    vault_lock().expect("lock source");
+    let source_path = std::path::Path::new(&source).join("vault.zv");
+
+    let root = std::env::temp_dir().join(format!("zprivacy-fs-final-link-{}", std::process::id()));
+    let data = root.join("data");
+    let _ = std::fs::remove_dir_all(&root);
+    std::fs::create_dir_all(&data).expect("data dir");
+    if let Err(e) = symlink_file(&source_path, data.join("vault.zv")) {
+        panic!("this machine cannot create a reparse point, so the contract cannot be measured here: {e}");
+    }
+
+    set_data_dir(data.to_string_lossy().to_string()).expect("dir");
+    assert_eq!(vault_state().expect("state"), VaultState::Locked);
+    match vault_unlock_with_passphrase(PASS.to_string()) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("following links"), "{reason}"),
+        other => panic!("a final vault reparse point must not be followed, got {other:?}"),
+    }
+    let _ = std::fs::remove_dir_all(&root);
+    let _ = std::fs::remove_dir_all(source);
+}
+
 #[cfg(unix)]
 #[test]
 fn normal_secure_vault_and_config_writes_still_work() {
@@ -656,6 +867,107 @@ fn normal_secure_vault_and_config_writes_still_work() {
     vault_lock().expect("lock");
     vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
     assert_eq!(entities(None).expect("entities").len(), 1);
+
+    let elsewhere = std::path::Path::new(&dir).join("elsewhere");
+    set_data_dir(elsewhere.to_string_lossy().to_string()).expect("elsewhere");
+    assert!(!settings().expect("settings").first_run_done);
+    set_data_dir(dir.clone()).expect("back");
+    assert!(settings().expect("settings").first_run_done);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// The last of the six: a write that fails leaves yesterday's file untouched.
+///
+/// This is what «atomic» has to mean in practice. The new bytes go to a temp
+/// file first and only replace the real one once they are all there, so a
+/// failure anywhere before that moment costs nothing — the vault that was on
+/// disk a second ago is still the vault on disk now, byte for byte, and no
+/// half-written file is left sitting where the real one belongs.
+///
+/// The failure is caused the way an attacker would cause it: a reparse point in
+/// the temp file's place, which the second contract taught the writer to refuse.
+/// So this test also proves the refusal happens *early* — before anything was
+/// done to the file that already existed.
+///
+/// Nothing was changed to make it pass. The write path is as it was.
+#[cfg(windows)]
+#[test]
+fn failed_secure_writes_leave_old_files_intact() {
+    use std::os::windows::fs::symlink_file;
+
+    let _lock = serial();
+    let dir = fresh_vault("fs-fail-intact");
+    let path = std::path::Path::new(&dir);
+
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    save_settings(s).expect("initial settings");
+    let old_vault = std::fs::read(path.join("vault.zv")).expect("old vault");
+    let old_settings = std::fs::read(path.join("settings.zcfg")).expect("old settings");
+    let vault_victim = path.join("vault-victim.txt");
+    let settings_victim = path.join("settings-victim.txt");
+    std::fs::write(&vault_victim, b"ZXQ-OLD-FINAL-VAULT-VICTIM").expect("vault victim");
+    std::fs::write(&settings_victim, b"ZXQ-OLD-FINAL-CONFIG-VICTIM").expect("settings victim");
+
+    if let Err(e) = symlink_file(&vault_victim, path.join("vault.zv.new")) {
+        panic!("this machine cannot create a reparse point, so the contract cannot be measured here: {e}");
+    }
+    match create_entity(EntityKind::Client, "Nordstern".to_string(), None) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the vault write should fail before replacing the old file, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(path.join("vault.zv")).expect("vault"), old_vault);
+    assert_eq!(
+        std::fs::read(&vault_victim).expect("vault victim"),
+        b"ZXQ-OLD-FINAL-VAULT-VICTIM"
+    );
+    std::fs::remove_file(path.join("vault.zv.new")).expect("remove vault temp");
+
+    symlink_file(&settings_victim, path.join("settings.zcfg.new")).expect("settings temp reparse point");
+    let mut s = settings().expect("settings");
+    s.language = "de".to_string();
+    match save_settings(s) {
+        Err(ApiError::StorageRefused { reason }) => assert!(reason.contains("temporary file"), "{reason}"),
+        other => panic!("the settings write should fail before replacing the old file, got {other:?}"),
+    }
+    assert_eq!(std::fs::read(path.join("settings.zcfg")).expect("settings"), old_settings);
+    assert_eq!(
+        std::fs::read(&settings_victim).expect("settings victim"),
+        b"ZXQ-OLD-FINAL-CONFIG-VICTIM"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// The contract that checks the guards did not win by breaking the product.
+///
+/// Four refusals are in place now. This one asks whether an ordinary save still
+/// goes through, and — the part that matters on Windows — whether a **second**
+/// one does. Every write here replaces a file that already exists, which is
+/// where `rename` behaves differently than it does on Unix.
+///
+/// Nothing was changed to make this pass. If it falls, the fall is the report.
+#[cfg(windows)]
+#[test]
+fn normal_secure_vault_and_config_writes_still_work() {
+    let _lock = serial();
+    let dir = fresh_vault("fs-normal");
+    identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
+    let mut s = settings().expect("settings");
+    s.first_run_done = true;
+    s.language = "de".to_string();
+    save_settings(s).expect("save");
+
+    // The second save of each file: the first created it, this one must replace
+    // it. On Unix that is one rename and nothing to say about it.
+    identity("Zweiter", None, Kind::Company, "Zweite Firma GmbH", &[], Policy::Always);
+    let mut s = settings().expect("settings");
+    s.language = "en".to_string();
+    save_settings(s).expect("save a second time over an existing file");
+
+    vault_lock().expect("lock");
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
+    assert_eq!(entities(None).expect("entities").len(), 2);
+    assert_eq!(settings().expect("settings").language, "en");
 
     let elsewhere = std::path::Path::new(&dir).join("elsewhere");
     set_data_dir(elsewhere.to_string_lossy().to_string()).expect("elsewhere");
@@ -866,4 +1178,54 @@ fn always_and_profile_actually_reach_the_vault() {
         outside.by_layer
     );
     close_session(elsewhere).expect("close");
+}
+
+/// Where the vault is allowed to live, asked of the core on whatever machine is
+/// running this.
+///
+/// It replaces one line of Dart — `HOME ?? systemTemp` — that was right on
+/// Linux and wrong everywhere else: Windows does not set `HOME`, so the
+/// fallback took over and the vault would have been written into the temp
+/// directory. The test is not cfg-gated, so it is measured on every platform
+/// the suite runs on, and it asserts the thing that actually matters first.
+#[test]
+fn the_vault_never_lives_in_the_temp_directory() {
+    let chosen = default_data_dir().expect("this platform must be able to say where its data goes");
+    let chosen = std::path::PathBuf::from(&chosen);
+    let temp = std::env::temp_dir();
+
+    assert!(
+        !chosen.starts_with(&temp),
+        "the vault would live under the temp directory: {chosen:?} is inside {temp:?}"
+    );
+    assert!(chosen.is_absolute(), "a relative data directory depends on where the app was started: {chosen:?}");
+    assert!(
+        chosen.file_name().is_some(),
+        "the data directory must name a folder of ours, not a drive root: {chosen:?}"
+    );
+
+    // And it is the platform's own place, not merely «not temp».
+    #[cfg(windows)]
+    {
+        let local = std::env::var("LOCALAPPDATA").or_else(|_| std::env::var("USERPROFILE"));
+        let local = local.expect("a Windows session has LOCALAPPDATA or USERPROFILE");
+        assert!(
+            chosen.starts_with(&local),
+            "{chosen:?} is not under this user's local application data ({local})"
+        );
+        assert!(
+            !chosen.to_string_lossy().to_lowercase().contains("roaming"),
+            "the vault belongs to this machine and must not roam between them: {chosen:?}"
+        );
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let home = std::env::var("XDG_DATA_HOME").or_else(|_| std::env::var("HOME")).expect("HOME");
+        assert!(chosen.starts_with(&home), "{chosen:?} is not under {home}");
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let home = std::env::var("HOME").expect("HOME");
+        assert!(chosen.starts_with(&home), "{chosen:?} is not under {home}");
+    }
 }

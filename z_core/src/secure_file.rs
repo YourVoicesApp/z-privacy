@@ -17,6 +17,12 @@ use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 #[cfg(target_os = "linux")]
 const O_NOFOLLOW: i32 = 0o400000;
 
+// The only module in this workspace that may contain `unsafe`, and G4a proves
+// it is the only one. What it buys: a file born with an access list that grants
+// nothing to other accounts and inherits nothing from the folder above it.
+#[cfg(windows)]
+pub(crate) mod windows;
+
 fn refused(label: &str, reason: impl Into<String>) -> ApiError {
     ApiError::StorageRefused {
         reason: format!("{label}: {}", reason.into()),
@@ -154,11 +160,52 @@ pub(crate) fn secure_dir(dir: &Path, label: &str) -> ApiResult<()> {
 
 #[cfg(not(unix))]
 pub(crate) fn read_no_follow(path: &Path, label: &str) -> ApiResult<Option<Vec<u8>>> {
-    // G15-ok: non-Unix fallback read for ZVLT or ZCFG.
-    match std::fs::read(path) {
-        Ok(bytes) => Ok(Some(bytes)),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(e) => Err(refused(label, format!("the file could not be read: {e}"))),
+    #[cfg(windows)]
+    {
+        // The same sentence Unix gives, because it is the same refusal: what is
+        // standing at this path was not followed, so nothing was read.
+        windows::read_no_reparse(path)
+            .map_err(|e| refused(label, format!("the file could not be opened without following links: {e}")))
+    }
+    #[cfg(not(windows))]
+    {
+        // G15-ok: non-Unix, non-Windows fallback read for ZVLT or ZCFG.
+        match std::fs::read(path) {
+            Ok(bytes) => Ok(Some(bytes)),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(refused(label, format!("the file could not be read: {e}"))),
+        }
+    }
+}
+
+/// A brand-new file that no other account may reach.
+///
+/// On Windows that means an explicit access list and no inheritance, which
+/// takes the one `unsafe` boundary this workspace allows. Elsewhere off Unix
+/// there is nothing to say yet, and pretending otherwise would be the lie this
+/// whole exercise exists to avoid — `create_new` at least refuses to write into
+/// something already sitting in the path.
+#[cfg(not(unix))]
+// G15-ok: the one place off Unix that creates ZVLT or ZCFG's temp file.
+fn create_private_new(temp: &Path, label: &str) -> ApiResult<std::fs::File> {
+    #[cfg(windows)]
+    {
+        windows::create_new_owner_only(temp).map_err(|e| {
+            if e.kind() == std::io::ErrorKind::AlreadyExists {
+                refused(label, "the temporary file already exists")
+            } else {
+                refused(label, format!("the temporary file could not be created safely: {e}"))
+            }
+        })
+    }
+    #[cfg(not(windows))]
+    {
+        // G15-ok: non-Unix, non-Windows fallback temp file for ZVLT or ZCFG.
+        std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(temp)
+            .map_err(|e| refused(label, format!("the temporary file could not be created: {e}")))
     }
 }
 
@@ -169,9 +216,12 @@ pub(crate) fn replace_atomically(path: &Path, temp_extension: &str, bytes: &[u8]
         .ok_or_else(|| refused(label, "the file has no parent directory"))?;
     secure_dir(parent, label)?;
     let temp = temp_path(path, temp_extension);
-    // G15-ok: non-Unix fallback temp write for ZVLT or ZCFG.
-    std::fs::write(&temp, bytes)
-        .map_err(|e| refused(label, format!("the temporary file could not be written: {e}")))?;
+    let mut file = create_private_new(&temp, label)?;
+    file.write_all(bytes)
+        .map_err(|e| refused(label, format!("the complete file could not be written: {e}")))?;
+    file.sync_all()
+        .map_err(|e| refused(label, format!("the temporary file could not be synced: {e}")))?;
+    drop(file);
     // G15-ok: non-Unix fallback rename for ZVLT or ZCFG.
     std::fs::rename(&temp, path)
         .map_err(|e| refused(label, format!("the complete file could not be put in place: {e}")))?;
