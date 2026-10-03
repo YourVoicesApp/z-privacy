@@ -54,6 +54,25 @@ fn scanned(profile: Option<&str>) -> (SessionId, ScanReport) {
     (s, report)
 }
 
+/// What the **vault layer** claimed, and nothing else.
+///
+/// Since 3 October a German salutation proves a person on its own, so «what is
+/// protected» is no longer the same question as «what did the vault know». These
+/// tests are about the vault, so they ask about the vault.
+fn from_vault(s: SessionId) -> Vec<String> {
+    let findings = list_findings(s).expect("findings");
+    findings
+        .iter()
+        .filter(|f| f.state == MarkState::Protected && f.source == Source::Vault)
+        .map(|f| {
+            DOC.chars()
+                .skip(f.span.start as usize)
+                .take((f.span.end - f.span.start) as usize)
+                .collect::<String>()
+        })
+        .collect()
+}
+
 fn states(s: SessionId) -> (Vec<String>, Vec<String>) {
     let findings = list_findings(s).expect("findings");
     let text_of = |f: &Finding| {
@@ -95,12 +114,15 @@ fn rule_one_a_locked_vault_skips_its_layer_and_says_so() {
     vault_lock().expect("lock");
     let (locked_session, locked_report) = scanned(None);
     assert_eq!(locked_report.vault, VaultState::Locked, "the report says it out loud");
-    let (auto, open) = states(locked_session);
+    let (_, open) = states(locked_session);
+    let claimed = from_vault(locked_session);
     assert!(
-        auto.is_empty(),
-        "nothing in this document can be proven without the vault: {auto:?}"
+        claimed.is_empty(),
+        "the vault layer claimed something while the vault was locked: {claimed:?}"
     );
-    assert_eq!(open.len(), 3, "the pack still guesses: two names and a company");
+    // The two names are proven by their salutations since 3 October; the
+    // company is still the pack's guess.
+    assert_eq!(open.len(), 1, "the pack still guesses at the company: {open:?}");
 }
 
 #[test]
@@ -116,11 +138,14 @@ fn rule_two_only_what_the_vault_actually_holds_becomes_automatic() {
     assert_eq!(report.vault, VaultState::Unlocked);
     assert!(auto.contains(&"Nordstern Consulting GmbH".to_string()), "{auto:?}");
     assert!(auto.contains(&"Thomas Müller".to_string()), "{auto:?}");
-    assert_eq!(
-        open,
-        vec!["Anna Weber".to_string()],
-        "a name the vault does not hold stays a question: opening the vault is not a blank cheque"
+    // Anna Weber is protected — a salutation says so since 3 October — but the
+    // vault never claimed her, and that is what «not a blank cheque» means.
+    let claimed = from_vault(s);
+    assert!(
+        !claimed.contains(&"Anna Weber".to_string()),
+        "the vault claimed a name it has never held: {claimed:?}"
     );
+    let _ = open;
 
     // And the identity is named in the finding, so the UI can say «from CLIENT #1».
     let company = list_findings(s)
@@ -142,8 +167,9 @@ fn rule_two_a_value_in_another_profile_is_not_loaded() {
 
     // No profile active: an entity that belongs to one profile is not loaded.
     let (s, _) = scanned(None);
-    let (auto, open) = states(s);
-    assert!(auto.is_empty(), "{auto:?}");
+    let (_, open) = states(s);
+    let claimed = from_vault(s);
+    assert!(claimed.is_empty(), "the vault loaded another profile's value: {claimed:?}");
     assert!(open.contains(&"Nordstern Consulting GmbH".to_string()), "still only a guess");
 
     // With that profile active, the same value is recognised.
@@ -251,12 +277,18 @@ fn switching_a_profile_keeps_the_tokens_already_given() {
 
     let (s, _) = scanned(Some(&p1));
     let before = list_tokens(s).expect("tokens");
-    assert_eq!(before.len(), 1, "the company was recognised");
-    let token_before = before[0].token.clone();
+    let company = before
+        .iter()
+        .find(|t| t.kind == Kind::Company)
+        .expect("the company was recognised");
+    let token_before = company.token.clone();
 
     // Switch to a profile that knows nothing: what was protected stays protected.
     let outcome = switch_profile(s, Some(p2.clone())).expect("switch");
-    assert_eq!(outcome.kept_tokens, 1);
+    assert_eq!(
+        outcome.kept_tokens, 3,
+        "the company the vault knew and the two names the salutations proved"
+    );
     let after = list_tokens(s).expect("tokens");
     assert!(
         after.iter().any(|t| t.token == token_before),
@@ -299,8 +331,8 @@ fn the_golden_document_with_an_open_vault_asks_nothing() {
     assert_eq!(report.vault, VaultState::Unlocked);
     assert_eq!(
         (report.auto, report.suggested),
-        (9, 0),
-        "seven by arithmetic and label, two more because the vault knows them: {report:?}"
+        (10, 0),
+        "nine by arithmetic, label and salutation, one more because the vault knows it: {report:?}"
     );
 
     // The two that were questions in M3 are now answered by the vault itself.

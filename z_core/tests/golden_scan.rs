@@ -1,7 +1,13 @@
 // The golden fixture: one document that never changes, so the scanner's numbers
 // are a regression test and not an opinion.
 //
-// `7 auto · 2 suggest · 428 normal` is asserted **here**, never written into the
+// Moved on 3 October, deliberately: `7 · 2 · 428` became `9 · 1 · 426` when a
+// salutation stopped being a question (the owner's ruling, after he scanned his
+// own letter and found that not one of its seven people had been protected) and
+// when a label stopped needing a colon after it. This test noticed, which is
+// its whole purpose — the numbers are updated with the reason, never quietly.
+//
+// `9 auto · 1 suggest · 426 normal` is asserted **here**, never written into the
 // code: the core counts what it finds, and this test says what that count was on
 // the day the fixture was frozen. If a rule changes tomorrow, this test is the
 // thing that notices.
@@ -23,7 +29,7 @@ fn golden_counts_do_not_move() {
     let (_s, report) = scanned_session();
     assert_eq!(
         (report.auto, report.suggested, report.normal),
-        (7, 2, 428),
+        (9, 1, 426),
         "the golden fixture's counts moved: {report:?}"
     );
 }
@@ -32,7 +38,7 @@ fn golden_counts_do_not_move() {
 fn golden_every_finding_says_what_and_why() {
     let (s, _) = scanned_session();
     let findings = list_findings(s).expect("findings");
-    assert_eq!(findings.len(), 9, "seven protected and two waiting");
+    assert_eq!(findings.len(), 10, "nine protected and one waiting");
 
     for f in &findings {
         assert!(f.span.end > f.span.start, "a finding must point somewhere");
@@ -58,7 +64,9 @@ fn golden_auto_is_only_what_can_be_proven() {
 
     // Protected on sight: a bank account, a BIC, an e-mail, a telephone number in
     // international form, a customer number, a tax id — each one either carries a
-    // checksum or stands after a label that says what it is.
+    // checksum or stands after a label that says what it is. And since
+    // 3 October the two people as well: a German salutation names the person
+    // who follows it, which is the owner's ruling after his own letter.
     let mut kinds: Vec<Kind> = protected.iter().map(|f| f.kind).collect();
     kinds.sort_by_key(|k| format!("{k:?}"));
     assert_eq!(
@@ -68,6 +76,8 @@ fn golden_auto_is_only_what_can_be_proven() {
             Kind::CustomerNo,
             Kind::Email,
             Kind::Iban,
+            Kind::Person,
+            Kind::Person,
             Kind::Phone,
             Kind::TaxId,
             Kind::TaxId
@@ -75,11 +85,13 @@ fn golden_auto_is_only_what_can_be_proven() {
         "the automatic set changed"
     );
 
-    // Left for the user: a person's name after a salutation, and a company name
-    // ending in a legal form. Both are habits of the language, not proofs.
+    // Left for the user: a company name ending in a legal form. That is still a
+    // habit of the language and not a proof — «die GmbH» can be spoken of in
+    // general — while the name after a salutation stopped being a question on
+    // 3 October.
     let mut open_kinds: Vec<Kind> = open.iter().map(|f| f.kind).collect();
     open_kinds.sort_by_key(|k| format!("{k:?}"));
-    assert_eq!(open_kinds, vec![Kind::Company, Kind::Person]);
+    assert_eq!(open_kinds, vec![Kind::Company]);
     for f in open {
         assert_eq!(f.source, Source::LanguagePack, "only a pack guesses");
     }
@@ -132,7 +144,7 @@ fn golden_a_rescan_keeps_what_you_did_by_hand() {
     protect(s, span, Scope::Conversation, Kind::Custom).expect("protect by hand");
 
     let again = scan(s).expect("rescan");
-    assert_eq!((again.auto, again.suggested), (7, 2), "the layers found the same");
+    assert_eq!((again.auto, again.suggested), (9, 1), "the layers found the same");
 
     let text = payload_view(build_payload(s).expect("build")).expect("view").text;
     assert!(
@@ -144,27 +156,25 @@ fn golden_a_rescan_keeps_what_you_did_by_hand() {
 #[test]
 fn golden_answering_the_two_clears_the_way_to_send() {
     let (s, report) = scanned_session();
-    assert_eq!(report.suggested, 2);
+    assert_eq!(report.suggested, 1);
 
     // Invariant G12: while a suggestion is open, nothing can be sent.
     let handle = build_payload(s).expect("build");
     match send(handle, ProviderId { id: "openai".to_string() }) {
-        Err(ApiError::OpenSuggestions { count }) => assert_eq!(count, 2),
+        Err(ApiError::OpenSuggestions { count }) => assert_eq!(count, 1),
         other => panic!("a send with open suggestions must be refused, got {other:?}"),
     }
 
-    // Answer both: one is protected, one is not sensitive.
+    // Answer the one that is left: a person's decision, and the way is clear.
     let open: Vec<u32> = list_findings(s)
         .expect("findings")
         .into_iter()
         .filter(|f| f.state == MarkState::Suggested)
         .map(|f| f.id)
         .collect();
-    let after_first = answer_finding(s, open[0], FindingAnswer::Protect).expect("protect it");
-    assert_eq!(after_first.suggested, 1);
-    let after_second = answer_finding(s, open[1], FindingAnswer::NotSensitive).expect("leave it");
-    assert_eq!(after_second.suggested, 0);
-    assert_eq!(after_second.auto, 8, "the confirmed one joined the protected set");
+    let after = answer_finding(s, open[0], FindingAnswer::Protect).expect("protect it");
+    assert_eq!(after.suggested, 0);
+    assert_eq!(after.auto, 10, "the confirmed one joined the protected set");
 
     // A payload built after the answers may go as far as the provider door, where
     // it stops for want of a credential and for no other reason.

@@ -53,6 +53,11 @@ fn kind_code(kind: Kind) -> u8 {
         // Added in task 012. New kinds take the next free number, always.
         Kind::Bic => 13,
         Kind::Account => 14,
+        // Added 3 October, for the German letter: an identity card, a date of
+        // birth, a vehicle plate.
+        Kind::IdCard => 15,
+        Kind::Birthdate => 16,
+        Kind::Vehicle => 17,
     }
 }
 
@@ -72,6 +77,9 @@ fn kind_of(code: u8) -> ApiResult<Kind> {
         12 => Kind::Custom,
         13 => Kind::Bic,
         14 => Kind::Account,
+        15 => Kind::IdCard,
+        16 => Kind::Birthdate,
+        17 => Kind::Vehicle,
         other => {
             return Err(ApiError::PayloadRefused {
                 reason: format!("this vault holds a kind ({other}) this build does not know"),

@@ -7,9 +7,22 @@
 //! shared engine, so another language can be active at the same time. What is
 //! left in this file is the German knowledge that is not a label: a salutation,
 //! a legal form, the shape of an address.
-//! * **A salutation is a hint about the next word.** After `Frau` usually comes a
-//!   person — usually. → `Suggest`, and the name only: `Frau` itself stays in the
-//!   clear so the model can still write a correct German reply.
+//! * **A salutation names the person who follows it.** → `Auto`, and the name
+//!   only: `Frau` itself stays in the clear so the model can still write a
+//!   correct German reply.
+//!
+//!   It was a `Suggest` until 3 October, on the reading that «after `Frau`
+//!   usually comes a person — usually». The owner scanned a letter of his own
+//!   that day and said: «it did not hide the names… not one of the seven people
+//!   was encrypted». A salutation in a German letter is not a guess about the
+//!   next word; it is a word written to introduce a person. The confidence
+//!   moved, the span did not, and `golden_scan.rs` recorded the change with its
+//!   reason rather than absorbing it.
+//! * **A signature is a name too** (3 October). A line of its own under a
+//!   closing formula, or above a line that says what the person's role is.
+//!   The owner signs his own name with no salutation in front of it, so nothing
+//!   in this file had seen it — and after he had answered every question the
+//!   app asked, his name was still in the text that would have left.
 //! * **A company form is a hint too.** A run ending in `GmbH` is very probably a
 //!   company, but a document can also discuss «die GmbH» in general. → `Suggest`.
 
@@ -111,8 +124,11 @@ pub(crate) fn scan(text: &str) -> Vec<Candidate> {
     let words = words(text);
     let mut out = Vec::new();
     salutations(&words, &mut out);
+    signatures(&words, &mut out);
     companies(&words, &mut out);
     addresses(&words, &mut out);
+    plates(&words, &mut out);
+    local_phones(&words, &mut out);
     out
 }
 
@@ -134,6 +150,169 @@ fn candidate(
         reason,
         entities: Vec::new(),
         also: Vec::new(),
+    }
+}
+
+/// The last word of a German closing formula, lowercased.
+const CLOSINGS: &[&str] = &["grüßen", "grüssen", "grüße", "grüsse", "hochachtungsvoll"];
+/// What a line under a signature says about the person who signed.
+const ROLES: &[&str] = &[
+    "geschäftsführer", "geschäftsführerin", "inhaber", "inhaberin", "i.a.", "ppa.", "prokurist",
+    "vorstand", "mitglied",
+];
+/// Words that name a telephone number before one is written.
+const PHONE_WORDS: &[&str] = &[
+    "telefon", "telefonnummer", "tel", "tel.", "mobil", "handy", "durchwahl", "fax", "rufnummer",
+];
+
+/// The words of each line, as indices. Blank lines disappear, which is what we
+/// want: a signature usually has one above it.
+fn lines(words: &[Word<'_>]) -> Vec<Vec<usize>> {
+    let mut out: Vec<Vec<usize>> = Vec::new();
+    for (i, word) in words.iter().enumerate() {
+        if i == 0 || word.newline_before {
+            out.push(Vec::new());
+        }
+        if let Some(line) = out.last_mut() {
+            line.push(i);
+        }
+    }
+    out
+}
+
+/// The name under «Mit freundlichen Grüßen», and the name above
+/// «Geschäftsführer».
+///
+/// The owner's letter of 3 October is why this exists: he signs his own name
+/// with no salutation in front of it, so the salutation rule never saw it, and
+/// after he had answered all fourteen questions his name was still in the text
+/// that would have left the machine — three times.
+fn signatures(words: &[Word<'_>], out: &mut Vec<Candidate>) {
+    let lines = lines(words);
+    for (n, line) in lines.iter().enumerate() {
+        if line.len() < 2 || line.len() > 3 {
+            continue;
+        }
+        let all_names = line.iter().all(|&i| {
+            words.get(i).is_some_and(|w| {
+                let b = bare(w.text);
+                starts_upper(b) && !b.is_empty() && !is_numberish(b) && !is_label(w.text)
+            })
+        });
+        if !all_names {
+            continue;
+        }
+        let closing_above = n > 0
+            && lines
+                .get(n - 1)
+                .and_then(|l| l.last())
+                .and_then(|&i| words.get(i))
+                .is_some_and(|w| CLOSINGS.contains(&bare(w.text).to_lowercase().as_str()));
+        let role_below = lines
+            .get(n + 1)
+            .and_then(|l| l.first())
+            .and_then(|&i| words.get(i))
+            .is_some_and(|w| ROLES.contains(&bare_keep_dot(w.text).to_lowercase().as_str()));
+        if !closing_above && !role_below {
+            continue;
+        }
+        let (Some(&first), Some(&last)) = (line.first(), line.last()) else { continue };
+        let (Some(start_word), Some(end_word)) = (words.get(first), words.get(last)) else {
+            continue;
+        };
+        let why = if closing_above {
+            "a name on its own line under a closing formula — that is a signature"
+        } else {
+            "a name on its own line above what the person's role is — that is a signature"
+        };
+        out.push(candidate(
+            start_word.start,
+            trimmed_end(end_word),
+            Kind::Person,
+            Confidence::Auto,
+            "signature",
+            why.to_string(),
+        ));
+    }
+}
+
+/// `A-MW 2041` — a German plate: a town's letters, a hyphen, letters, a number.
+fn plates(words: &[Word<'_>], out: &mut Vec<Candidate>) {
+    for (i, word) in words.iter().enumerate() {
+        let w = bare(word.text);
+        let Some((town, letters)) = w.split_once('-') else { continue };
+        let town_ok = (1..=3).contains(&town.chars().count())
+            && town.chars().all(|c| c.is_uppercase() && c.is_alphabetic());
+        let letters_ok = (1..=2).contains(&letters.chars().count())
+            && letters.chars().all(|c| c.is_uppercase() && c.is_alphabetic());
+        if !town_ok || !letters_ok {
+            continue;
+        }
+        let Some(number) = words.get(i + 1) else { continue };
+        if number.newline_before {
+            continue;
+        }
+        let digits = bare(number.text);
+        if digits.is_empty() || digits.chars().count() > 4 || !digits.chars().all(|c| c.is_ascii_digit()) {
+            continue;
+        }
+        out.push(candidate(
+            word.start,
+            trimmed_end(number),
+            Kind::Vehicle,
+            Confidence::Auto,
+            "plate",
+            "the shape of a German registration plate".to_string(),
+        ));
+    }
+}
+
+/// `mobil unter 0171 9876543` — a local number is only a number until a word
+/// nearby says it is a telephone. Then it is one, and it is not a question.
+fn local_phones(words: &[Word<'_>], out: &mut Vec<Candidate>) {
+    for (i, word) in words.iter().enumerate() {
+        let w = bare(word.text);
+        let local = w.len() >= 3 && w.starts_with('0') && w.chars().all(|c| c.is_ascii_digit());
+        if !local {
+            continue;
+        }
+        // A telephone word earlier on the same line, within a few words.
+        let mut said_phone = false;
+        let mut back = i;
+        while back > 0 {
+            back -= 1;
+            let Some(prev) = words.get(back) else { break };
+            if prev.newline_before || i - back > 6 {
+                break;
+            }
+            if PHONE_WORDS.contains(&bare(prev.text).to_lowercase().trim_end_matches(':')) {
+                said_phone = true;
+                break;
+            }
+        }
+        if !said_phone {
+            continue;
+        }
+        // The number may be written in groups: «089 1234 5699».
+        let mut last = i;
+        let mut j = i + 1;
+        while let Some(next) = words.get(j) {
+            let n = bare(next.text);
+            if next.newline_before || n.is_empty() || !n.chars().all(|c| c.is_ascii_digit()) || j - i > 3 {
+                break;
+            }
+            last = j;
+            j += 1;
+        }
+        let Some(end_word) = words.get(last) else { continue };
+        out.push(candidate(
+            word.start,
+            trimmed_end(end_word),
+            Kind::Phone,
+            Confidence::Auto,
+            "local-phone",
+            "a local telephone number, written after a word that names one".to_string(),
+        ));
     }
 }
 
@@ -184,14 +363,14 @@ fn salutations(words: &[Word<'_>], out: &mut Vec<Candidate>) {
         };
         let Some(end_word) = words.get(last) else { continue };
         let reason = match title {
-            Some(t) => format!("a name after «{w} {t}» — the German pack expects a person there, but only you can be sure"),
-            None => format!("a name after «{w}» — the German pack expects a person there, but only you can be sure"),
+            Some(t) => format!("a name after «{w} {t}» — a German salutation names the person who follows it"),
+            None => format!("a name after «{w}» — a German salutation names the person who follows it"),
         };
         out.push(candidate(
             start_word.start,
             trimmed_end(end_word),
             Kind::Person,
-            Confidence::Suggest,
+            Confidence::Auto,
             "salutation",
             reason,
         ));
@@ -202,7 +381,13 @@ fn salutations(words: &[Word<'_>], out: &mut Vec<Candidate>) {
 fn companies(words: &[Word<'_>], out: &mut Vec<Candidate>) {
     for (i, word) in words.iter().enumerate() {
         let w = bare_keep_dot(word.text);
-        if !COMPANY_FORMS.contains(&w) {
+        // A company at the end of a sentence carries the sentence's full stop:
+        // «… bei Nordstern GmbH.» was invisible to this rule until 3 October,
+        // because the dot that belongs to «e.K.» is kept and the one that
+        // belongs to the sentence looks exactly like it. Both spellings are
+        // tried, so neither form is lost.
+        let trimmed = w.trim_end_matches('.');
+        if !COMPANY_FORMS.contains(&w) && !COMPANY_FORMS.contains(&trimmed) {
             continue;
         }
         // Walk left over capitalised words to the start of the name.
@@ -221,6 +406,21 @@ fn companies(words: &[Word<'_>], out: &mut Vec<Candidate>) {
                 || prev.text.ends_with(';')
                 || prev.text.ends_with('.');
             let function_word = STOP_WORDS.contains(&p);
+            // «Lindemann & Partner GmbH» is one name. The walk steps over the
+            // «&» — or «und» — when a capitalised word stands on the far side
+            // of it, and stops otherwise, so «die GmbH und wir» is left alone.
+            if !closes && matches!(p, "&" | "und" | "+") {
+                let before = first.checked_sub(2).and_then(|k| words.get(k));
+                let joins = before.is_some_and(|b| {
+                    let t = bare(b.text);
+                    starts_upper(t) && !t.is_empty() && !STOP_WORDS.contains(&t) && !b.newline_before
+                });
+                if joins {
+                    first -= 1;
+                    continue;
+                }
+                break;
+            }
             if !closes
                 && !function_word
                 && starts_upper(p)
@@ -284,6 +484,23 @@ fn addresses(words: &[Word<'_>], out: &mut Vec<Candidate>) {
                 let street_ok = STREET_ENDINGS.iter().any(|e| s.ends_with(e));
                 if house_ok && street_ok {
                     first = i - 2;
+                    // A street may be two words: «Berliner Allee», «Alter
+                    // Markt». The word before it joins when it is capitalised
+                    // and is not the end of the sentence before it.
+                    if let Some(before) = first.checked_sub(1).and_then(|k| words.get(k)) {
+                        let b = bare(before.text);
+                        let joins = starts_upper(b)
+                            && !b.is_empty()
+                            && !STOP_WORDS.contains(&b)
+                            && !is_label(before.text)
+                            && !before.text.ends_with(',')
+                            && !before.text.ends_with('.')
+                            && !before.text.ends_with(':')
+                            && !words.get(first).is_some_and(|w| w.newline_before);
+                        if joins {
+                            first -= 1;
+                        }
+                    }
                 }
             }
         }
@@ -319,14 +536,16 @@ mod tests {
     #[test]
     fn a_salutation_points_at_the_name_and_leaves_the_salutation() {
         // «Frau» stays in the clear: the model still needs it to write a correct
-        // German reply, and it hides nothing on its own.
+        // German reply, and it hides nothing on its own. What changed on
+        // 3 October is the confidence, not the span: the salutation is the
+        // proof, so the name after it is protected rather than asked about.
         assert_eq!(
             found("Frau Anna Weber übernimmt."),
-            vec![(Kind::Person, Confidence::Suggest, "Anna Weber".to_string())]
+            vec![(Kind::Person, Confidence::Auto, "Anna Weber".to_string())]
         );
         assert_eq!(
             found("Herr Dr. Schneider ruft an."),
-            vec![(Kind::Person, Confidence::Suggest, "Schneider".to_string())]
+            vec![(Kind::Person, Confidence::Auto, "Schneider".to_string())]
         );
     }
 

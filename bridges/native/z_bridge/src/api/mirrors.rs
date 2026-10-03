@@ -396,6 +396,13 @@ pub enum _Kind {
     Contract,
     Project,
     Client,
+    /// A national identity card number — `Personalausweisnummer L01X00T47`.
+    IdCard,
+    /// A date of birth. The date alone: «geboren am» stays in the clear, as a
+    /// salutation does, so the sentence still reads.
+    Birthdate,
+    /// A vehicle's registration plate.
+    Vehicle,
     Custom,
 }
 

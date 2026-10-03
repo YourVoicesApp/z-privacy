@@ -1369,7 +1369,29 @@ fn rescan_with(
         } else {
             match c.confidence {
                 scanner::Confidence::Auto => {
-                    match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act, false) {
+                    // `Scope::Conversation` means every place in this document,
+                    // and that is what it now does when a layer protects as well
+                    // as when a person answers. The owner's letter is why: his
+                    // own name is written three times and only the signature
+                    // carries the proof, so protecting the proven one and
+                    // leaving the others was how his name stayed in the clear
+                    // after he had answered every question the app asked.
+                    let selected = s.original_str().get(c.start..c.end).map(str::to_string);
+                    let mut here = None;
+                    if let Some(selected) = selected {
+                        for (from, to) in occurrences(s.original_str(), &selected) {
+                            if s.protections.iter().any(|p| p.start < to && from < p.end) {
+                                continue;
+                            }
+                            let got = protect_range(
+                                s, from, to, c.kind, Scope::Conversation, c.source, &c.source_detail, act, false,
+                            );
+                            if from == c.start {
+                                here = got;
+                            }
+                        }
+                    }
+                    match here {
                         Some(_) => MarkState::Protected,
                         None => continue,
                     }

@@ -29,6 +29,16 @@ use super::RuleSet;
 // policy stays measured. If a real corpus later shows the label is precise
 // enough, one row changes from `Suggest` to `Auto` — a deliberate decision
 // with a test of its own, not an accident of a refactor.
+//
+// 3 October: that deliberate decision was taken, for the salutation rule in
+// `packs/de.rs` rather than for this row. The owner scanned his own letter and
+// found seven people unprotected; a salutation is now proof. «Ansprechpartner»
+// below is still a question, because a label naming a contact is not the same
+// act as a salutation introducing one.
+//
+// The same day, the engine stopped needing a colon: his letter writes «mit der
+// Kundennummer 7733-9120» and «Steuernummer 143/815/08154», and the three rows
+// that would have protected them were sitting here, correct and silent.
 const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
     ("de-01", "telefon", Kind::Phone, Validator::Number, Confidence::Auto),
     ("de-02", "tel", Kind::Phone, Validator::Number, Confidence::Auto),
@@ -52,6 +62,20 @@ const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
     ("de-20", "ust-id", Kind::TaxId, Validator::Word, Confidence::Auto),
     ("de-21", "umsatzsteuer-id", Kind::TaxId, Validator::Word, Confidence::Auto),
     ("de-22", "ansprechpartner", Kind::Person, Validator::Name, Confidence::Suggest),
+    // Added 3 October, from the owner's own letter. A label naming one of these
+    // is proof: nothing else is written after «Personalausweisnummer».
+    ("de-23", "personalausweisnummer", Kind::IdCard, Validator::Word, Confidence::Auto),
+    ("de-24", "personalausweis", Kind::IdCard, Validator::Word, Confidence::Auto),
+    ("de-25", "ausweisnummer", Kind::IdCard, Validator::Word, Confidence::Auto),
+    ("de-26", "kennzeichen", Kind::Vehicle, Validator::Any, Confidence::Auto),
+    ("de-27", "geboren am", Kind::Birthdate, Validator::Word, Confidence::Auto),
+    ("de-28", "geburtsdatum", Kind::Birthdate, Validator::Word, Confidence::Auto),
+    ("de-29", "name", Kind::Person, Validator::Name, Confidence::Auto),
+    ("de-30", "durchwahl", Kind::Phone, Validator::Number, Confidence::Auto),
+    // An invoice number may be the company's own and may be the customer's.
+    // The owner decides this one, so it is a question and not an answer.
+    ("de-31", "rechnung", Kind::Contract, Validator::Any, Confidence::Suggest),
+    ("de-32", "rechnungsnummer", Kind::Contract, Validator::Any, Confidence::Suggest),
 ];
 
 /// Words that sit between a label and a name and are not part of it.

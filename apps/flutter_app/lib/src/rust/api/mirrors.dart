@@ -615,6 +615,16 @@ enum Kind {
   contract,
   project,
   client,
+
+  /// A national identity card number — `Personalausweisnummer L01X00T47`.
+  idCard,
+
+  /// A date of birth. The date alone: «geboren am» stays in the clear, as a
+  /// salutation does, so the sentence still reads.
+  birthdate,
+
+  /// A vehicle's registration plate.
+  vehicle,
   custom,
 }
 
