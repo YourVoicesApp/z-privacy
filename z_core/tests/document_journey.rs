@@ -27,6 +27,15 @@ fn serial() -> MutexGuard<'static, ()> {
 ///
 /// Written here by hand so that the reader is tested against bytes laid out the
 /// way a PDF writer lays them out, not against its own idea of a file.
+/// One byte to a character, which is how a simple font's string is written.
+/// Never UTF-8: no PDF writer does that, and the reader reads the stream as the
+/// bytes it is.
+fn latin1(text: &str) -> Vec<u8> {
+    text.chars()
+        .map(|c| u8::try_from(u32::from(c)).unwrap_or(b'?'))
+        .collect()
+}
+
 fn pdf_of(lines: &[String]) -> Vec<u8> {
     let mut out = String::from("%PDF-1.4\n");
     let count = lines.len();
@@ -42,15 +51,17 @@ fn pdf_of(lines: &[String]) -> Vec<u8> {
         out.push_str(&format!(
             "{page_id} 0 obj\n<< /Type/Page /Parent 2 0 R /Contents {content_id} 0 R /Resources << /Font << /F1 100 0 R >> >> >>\nendobj\n"
         ));
-        let stream = format!("BT /F1 12 Tf 72 700 Td ({line}) Tj ET");
+        let stream = latin1(&format!("BT /F1 12 Tf 72 700 Td ({line}) Tj ET"));
         out.push_str(&format!(
-            "{content_id} 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+            "{content_id} 0 obj\n<< /Length {} >>\nstream\n",
             stream.len()
         ));
+        out.push_str(&stream.iter().map(|b| char::from(*b)).collect::<String>());
+        out.push_str("\nendstream\nendobj\n");
     }
     out.push_str("100 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/Helvetica >>\nendobj\n");
     out.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
-    out.into_bytes()
+    latin1(&out)
 }
 
 /// Twenty pages of ordinary contract prose, with the things that matter placed on

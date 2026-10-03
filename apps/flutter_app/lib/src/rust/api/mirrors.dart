@@ -615,6 +615,16 @@ enum Kind {
   contract,
   project,
   client,
+
+  /// A national identity card number — `Personalausweisnummer L01X00T47`.
+  idCard,
+
+  /// A date of birth. The date alone: «geboren am» stays in the clear, as a
+  /// salutation does, so the sentence still reads.
+  birthdate,
+
+  /// A vehicle's registration plate.
+  vehicle,
   custom,
 }
 
@@ -1255,6 +1265,24 @@ sealed class Refusal with _$Refusal {
 
   /// Empty, or nothing but whitespace: there is nothing to protect.
   const factory Refusal.emptyDocument() = Refusal_EmptyDocument;
+}
+
+@freezed
+sealed class ReportSubject with _$ReportSubject {
+  const ReportSubject._();
+
+  /// A document that was imported. Every number comes from the core's own
+  /// state; the screen passes nothing but the session.
+  const factory ReportSubject.imported({required SessionId session}) =
+      ReportSubject_Imported;
+
+  /// A file that was not imported. The screen knows these three things and
+  /// the core knows nothing about it at all.
+  const factory ReportSubject.refused({
+    required String name,
+    required int bytes,
+    required Refusal refusal,
+  }) = ReportSubject_Refused;
 }
 
 class RescanOutcome {

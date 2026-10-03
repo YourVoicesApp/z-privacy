@@ -174,12 +174,18 @@ class ZButton extends StatelessWidget {
 /// a typed `ApiError` already says what happened, and inventing a friendlier
 /// sentence here is how a real reason gets lost.
 class Trouble extends StatelessWidget {
-  const Trouble(this.text, {super.key});
+  const Trouble(this.text, {super.key, this.onCopyReport});
 
   final String text;
 
+  /// Offered only when the core has written a report about this refusal. A
+  /// person whose document will not open has something to send that is not the
+  /// document.
+  final VoidCallback? onCopyReport;
+
   @override
   Widget build(BuildContext context) {
+    final copy = onCopyReport;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
@@ -190,8 +196,63 @@ class Trouble extends StatelessWidget {
           const Icon(Icons.info_outline, size: 16, color: Zc.amber),
           const SizedBox(width: 9),
           Expanded(child: Text(text, style: Zc.small.copyWith(color: Zc.amber))),
+          if (copy != null) ...[
+            const SizedBox(width: 9),
+            CopyReportButton(onCopy: copy),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// «Copy report» — numbers about a document, never a word of it.
+///
+/// The text it copies is written by the core and nowhere else, so what lands in
+/// the clipboard cannot differ from what the core would say. The button only
+/// says whether it has been pressed.
+class CopyReportButton extends StatefulWidget {
+  const CopyReportButton({super.key, required this.onCopy, this.label = 'Copy report', this.compact = false});
+
+  final VoidCallback onCopy;
+  final String label;
+
+  /// The icon alone, with the words in a tooltip. The top bar is full: the
+  /// labelled button overflowed it by 79 pixels at 964 wide, measured.
+  final bool compact;
+
+  @override
+  State<CopyReportButton> createState() => _CopyReportButtonState();
+}
+
+class _CopyReportButtonState extends State<CopyReportButton> {
+  bool _done = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = Icon(_done ? Icons.check : Icons.copy_all_outlined, size: 15);
+    final style = TextButton.styleFrom(
+      foregroundColor: Zc.ink,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      minimumSize: Size.zero,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+    void press() {
+      widget.onCopy();
+      setState(() => _done = true);
+    }
+
+    if (widget.compact) {
+      return Tooltip(
+        message: _done ? 'Copied' : widget.label,
+        child: TextButton(onPressed: press, style: style, child: icon),
+      );
+    }
+    return TextButton.icon(
+      onPressed: press,
+      icon: icon,
+      label: Text(_done ? 'Copied' : widget.label, style: Zc.small),
+      style: style,
     );
   }
 }

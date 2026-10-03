@@ -17,7 +17,7 @@
 //! scan with no text layer, a font whose bytes we cannot map. The owner's rule
 //! stands — better a refusal with a reason than text with silent holes in it.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 
 use flate2::read::ZlibDecoder;
@@ -79,24 +79,34 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
             ));
         }
 
-        let content = page_content(&objects, &page)?;
-        let runs = text_runs(&content, &fonts);
+        let runs = runs_of(&objects, &page, &fonts, budget)?;
         let page_text: String = runs
             .iter()
             .filter_map(|r| match r {
                 Run::Text(text) => Some(text.as_str()),
-                Run::Unmappable => None,
+                Run::Unmappable(_) => None,
             })
             .collect::<Vec<&str>>()
             .join(" ");
-        if page_text.trim().is_empty() {
+        let unmapped: usize = runs
+            .iter()
+            .map(|r| match r {
+                Run::Unmappable(count) => *count,
+                Run::Text(_) => 0,
+            })
+            .sum();
+        // A page with nothing on it at all is a page with nothing on it. A page
+        // whose codes all failed is a different thing, and it is not skipped:
+        // it goes on to be refused by its share, which says what happened.
+        if page_text.trim().is_empty() && unmapped == 0 {
             continue;
         }
         pages_with_text += 1;
 
         // The readable share is measured **per page**, because an average hides the
         // one page that failed — and that is exactly the page with the name on it.
-        let percent = readable_percent(&page_text);
+        let percent = readable_percent(&page_text, unmapped);
+        out.saw_readable(percent as u32);
         if percent < MIN_READABLE_PERCENT {
             return Err(refuse(
                 Refusal::UnsupportedEncoding {
@@ -142,12 +152,12 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
 /// the page. What a failed decoding actually produces is the opposite of
 /// characters — control bytes, the replacement mark, private-use glyph slots — and
 /// that is what is counted against a page here.
-fn readable_percent(text: &str) -> usize {
-    let total = text.chars().count();
+fn readable_percent(text: &str, unmapped: usize) -> usize {
+    let total = text.chars().count() + unmapped;
     if total == 0 {
         return 100;
     }
-    let broken = text.chars().filter(|c| !decoded(*c)).count();
+    let broken = text.chars().filter(|c| !decoded(*c)).count() + unmapped;
     let readable = total.saturating_sub(broken);
     readable.saturating_mul(100) / total
 }
@@ -317,13 +327,25 @@ fn unpack_object_stream(holder: &ObjBody, out: &mut Objects) {
         Some(plain) => plain,
         None => return,
     };
-    let text = String::from_utf8_lossy(&plain).to_string();
+    // The offsets in this stream count **bytes**, so the stream is cut in bytes
+    // and each object is made into text on its own. Converting the whole stream
+    // first is the mistake this file already warns about one level up, and it
+    // costs more here: `from_utf8_lossy` writes three bytes where one invalid
+    // byte stood, so every offset past it points somewhere else.
+    //
+    // Measured on the owner's 734-page Word export: 508 object streams, 123 of
+    // them not valid UTF-8, and 7,222 of 48,928 objects sliced out of the wrong
+    // place. One was the font `/F3` on page 14 — the mis-sliced copy began in
+    // the middle of the object before it and had lost its `/ToUnicode`, so the
+    // whole document was refused as a font with no character map. A Word file
+    // reaches this state simply by having a title: a text string is written in
+    // UTF-16 and begins with the bytes `FE FF`.
     let count = number_after(&holder.dict, "/N").unwrap_or(0) as usize;
     let first = number_after(&holder.dict, "/First").unwrap_or(0) as usize;
-    if count == 0 || first == 0 || first > text.len() {
+    if count == 0 || first == 0 || first > plain.len() {
         return;
     }
-    let header = text.get(..first).unwrap_or_default();
+    let header = String::from_utf8_lossy(plain.get(..first).unwrap_or_default()).to_string();
     let numbers: Vec<u32> = header
         .split_whitespace()
         .filter_map(|w| w.parse::<u32>().ok())
@@ -344,11 +366,11 @@ fn unpack_object_stream(holder: &ObjBody, out: &mut Objects) {
         let end = pairs
             .get(index + 1)
             .map(|(_, next)| first + next)
-            .unwrap_or(text.len());
-        if let Some(body) = text.get(start..end.min(text.len())) {
+            .unwrap_or(plain.len());
+        if let Some(body) = plain.get(start..end.min(plain.len())) {
             // Objects inside an object stream never hold streams themselves.
             out.entry(*number).or_insert_with(|| ObjBody {
-                dict: body.to_string(),
+                dict: String::from_utf8_lossy(body).to_string(),
                 stream: None,
             });
         }
@@ -435,7 +457,8 @@ fn page_order(objects: &Objects) -> Vec<u32> {
         .and_then(|(_, o)| reference(&o.dict, "/Pages"));
 
     if let Some(pages_ref) = root {
-        walk(objects, pages_ref, &mut order, 0);
+        let mut seen = BTreeSet::new();
+        walk(objects, pages_ref, &mut order, 0, &mut seen);
     }
     if order.is_empty() {
         // No catalogue, or a tree we could not follow: every page object, in order.
@@ -454,8 +477,14 @@ fn is_page(dict: &str) -> bool {
     has_type && !is_tree
 }
 
-fn walk(objects: &Objects, node: u32, order: &mut Vec<u32>, depth: u32) {
-    if depth > 32 || order.len() > limits::PAGES as usize {
+/// Every node is entered once, and that is what bounds the walk — not the page
+/// limit. Stopping at `PAGES + 1` kept the walk cheap and made the refusal lie:
+/// a 734-page document was described as having 501 pages, because 501 was where
+/// we stopped counting. A node already visited is skipped, so a tree that
+/// points back into itself costs one visit per object and no more, and the
+/// count that comes out is the document's own.
+fn walk(objects: &Objects, node: u32, order: &mut Vec<u32>, depth: u32, seen: &mut BTreeSet<u32>) {
+    if depth > 32 || !seen.insert(node) {
         return;
     }
     let Some(body) = objects.get(&node) else { return };
@@ -464,7 +493,7 @@ fn walk(objects: &Objects, node: u32, order: &mut Vec<u32>, depth: u32) {
         return;
     }
     for child in references(&body.dict, "/Kids") {
-        walk(objects, child, order, depth + 1);
+        walk(objects, child, order, depth + 1, seen);
     }
 }
 
@@ -500,20 +529,179 @@ fn references(dict: &str, key: &str) -> Vec<u32> {
 }
 
 /// A page's content, inflated, with several streams joined.
-fn page_content(objects: &Objects, page: &str) -> ApiResult<String> {
+/// How deep a form may draw another form before we stop following.
+const FORM_DEPTH: u32 = 8;
+
+/// Every text run a page draws — its own, and the ones inside the forms it calls.
+///
+/// A page may hold no text of its own and draw all of it through `… /Fm1 Do`.
+/// Measured on a 221-page book: 225 of its page streams say only that, and 209
+/// forms hold the text. Reading the page stream alone and then calling the file
+/// a scan is how a whole book became «this looks like a scan, and we will not
+/// send it anywhere».
+///
+/// An image stays an image: `/Subtype /Image` is not followed, so a real scan
+/// is still refused by name.
+fn runs_of(objects: &Objects, page: &str, fonts: &Fonts, budget: &Budget) -> ApiResult<Vec<Run>> {
+    let content = page_content(objects, page)?;
+    let mut walk = Walk {
+        objects,
+        budget,
+        path: Vec::new(),
+        out: Vec::new(),
+    };
+    walk.collect(page, &content, fonts, 0)?;
+    Ok(walk.out)
+}
+
+/// What the walk carries down: where it is reading from, what it may spend,
+/// the forms it is inside, and the runs it has found.
+struct Walk<'a> {
+    objects: &'a Objects,
+    budget: &'a Budget,
+    /// The forms on the way down. A path and not a set on purpose: the same
+    /// header form drawn twice on a page is read twice, but a form that draws
+    /// itself — or a ring of them — ends the walk instead of the process.
+    path: Vec<u32>,
+    out: Vec<Run>,
+}
+
+impl Walk<'_> {
+    fn collect(&mut self, dict: &str, content: &[u8], fonts: &Fonts, depth: u32) -> ApiResult<()> {
+        self.budget.check()?;
+        self.out.extend(text_runs(content, fonts));
+        if depth >= FORM_DEPTH {
+            return Ok(());
+        }
+        let resources = resources_of(self.objects, dict);
+        for (name, number) in named_refs(&sub_dict(self.objects, &resources, "/XObject")) {
+            if self.path.contains(&number) || !drawn(content, &name) {
+                continue;
+            }
+            let Some(body) = self.objects.get(&number) else { continue };
+            if !body.dict.contains("/Form") {
+                continue;
+            }
+            let Some(plain) = body.stream.as_ref().and_then(|raw| decode_stream(&body.dict, raw)) else {
+                continue;
+            };
+            // The form's own fonts sit over the page's: a form with no
+            // /Resources inherits them, and one with its own names them itself.
+            let mut inner = fonts.clone();
+            inner.absorb(page_fonts(self.objects, &body.dict));
+            let dict = body.dict.clone();
+            self.path.push(number);
+            self.collect(&dict, &plain, &inner, depth + 1)?;
+            self.path.pop();
+        }
+        Ok(())
+    }
+}
+
+/// The bytes PDF reserves: a name, a string, an array, a dictionary, a comment.
+fn is_delimiter(byte: u8) -> bool {
+    matches!(byte, b'/' | b'(' | b')' | b'<' | b'>' | b'[' | b']' | b'{' | b'}' | b'%')
+}
+
+/// Is the token here exactly this operator? An operator stands on its own:
+/// the `Td` in `3 4 Td` is one, the `Td` in a font named `/Td` is not, and a
+/// `Td` inside a string is never reached — strings are read whole.
+fn is_operator(bytes: &[u8], at: usize, name: &[u8]) -> bool {
+    if bytes.get(at..at + name.len()) != Some(name) {
+        return false;
+    }
+    let before = at.checked_sub(1).and_then(|i| bytes.get(i));
+    let after = bytes.get(at + name.len());
+    // An operand may end in `)` or `]` with no space before the operator —
+    // `[(a)4(b)]TJ` is how every generator writes it.
+    before.is_none_or(|b| b.is_ascii_whitespace() || matches!(b, b')' | b']' | b'>'))
+        && after.is_none_or(|b| b.is_ascii_whitespace() || is_delimiter(*b))
+}
+
+/// The numbers written in front of an operator: `-3.979 -2.888 Td` has two.
+/// Read backwards, because backwards is where they are, and returned in the
+/// order they were written.
+fn operands_before(bytes: &[u8], operator: usize, want: usize) -> Vec<f64> {
+    let mut out: Vec<f64> = Vec::new();
+    let mut at = operator;
+    while out.len() < want {
+        while at > 0 && bytes.get(at - 1).is_some_and(u8::is_ascii_whitespace) {
+            at -= 1;
+        }
+        let end = at;
+        while at > 0
+            && bytes
+                .get(at - 1)
+                .is_some_and(|b| b.is_ascii_digit() || matches!(b, b'.' | b'-' | b'+'))
+        {
+            at -= 1;
+        }
+        let token: String =
+            bytes.get(at..end).unwrap_or_default().iter().map(|b| char::from(*b)).collect();
+        match token.parse::<f64>() {
+            Ok(number) => out.push(number),
+            Err(_) => break,
+        }
+    }
+    out.reverse();
+    out
+}
+
+/// The pen moved, so the words it divides are divided. A move down a line
+/// separates them with a line, a move along one with a space — and writing
+/// nothing in its place is what joined two lines into a single word.
+fn separate(current: &mut String, down: bool) {
+    if current.is_empty() {
+        return;
+    }
+    if down {
+        while current.ends_with(' ') {
+            current.pop();
+        }
+        if !current.ends_with('\n') {
+            current.push('\n');
+        }
+    } else if !current.ends_with(['\n', ' ']) {
+        current.push(' ');
+    }
+}
+
+/// Is this name actually drawn — `/Fm1 Do` — rather than merely listed?
+fn drawn(content: &[u8], name: &str) -> bool {
+    let wanted = format!("/{name}");
+    let mut previous: &[u8] = b"";
+    for token in content.split(|b| b.is_ascii_whitespace()).filter(|t| !t.is_empty()) {
+        if token == b"Do" && previous == wanted.as_bytes() {
+            return true;
+        }
+        previous = token;
+    }
+    false
+}
+
+/// The page's content stream, **as bytes**.
+///
+/// A stream is bytes, and a literal string inside it may hold any of them. Read
+/// as text — which this did, through `from_utf8_lossy` — a two-byte code whose
+/// low byte is `0xE4` is not valid UTF-8, and the replacement mark took its
+/// place before the decoder ever saw it. Measured on a German book: 459 such
+/// marks on a single page. The rule the object reader already follows, written
+/// down in task 018 — «the dictionaries are ASCII and may be read as text; the
+/// streams are not» — had never reached the content.
+fn page_content(objects: &Objects, page: &str) -> ApiResult<Vec<u8>> {
     let mut refs = references(page, "/Contents");
     if refs.is_empty() {
         if let Some(single) = reference(page, "/Contents") {
             refs.push(single);
         }
     }
-    let mut out = String::new();
+    let mut out = Vec::new();
     for number in refs {
         let Some(body) = objects.get(&number) else { continue };
         if let Some(raw) = body.stream.as_ref() {
             if let Some(plain) = decode_stream(&body.dict, raw) {
-                out.push_str(&String::from_utf8_lossy(&plain));
-                out.push('\n');
+                out.extend_from_slice(&plain);
+                out.push(b'\n');
             }
         }
     }
@@ -523,10 +711,21 @@ fn page_content(objects: &Objects, page: &str) -> ApiResult<String> {
 // ---------------------------------------------------------------- fonts
 
 /// What a page's fonts can do: either single-byte text, or a `/ToUnicode` map.
-#[derive(Debug, Default)]
+/// One font's own table, and how wide the codes in it are.
+///
+/// `Identity-H` writes two bytes to a code; a simple font writes one. The same
+/// table read at the wrong width gives the wrong characters, so the width
+/// travels with the table rather than being assumed where it is used.
+#[derive(Debug, Clone)]
+struct FontMap {
+    table: BTreeMap<u32, String>,
+    two_byte: bool,
+}
+
+#[derive(Debug, Default, Clone)]
 struct Fonts {
     /// Fonts that need a map, with the map when the document provides one.
-    maps: BTreeMap<String, BTreeMap<u32, String>>,
+    maps: BTreeMap<String, FontMap>,
     /// Fonts that need a map and do not have one.
     unmappable: BTreeMap<String, bool>,
     /// Fonts that remap their own characters with /Differences. This reader does
@@ -534,27 +733,54 @@ struct Fonts {
     remapped: BTreeMap<String, bool>,
 }
 
-fn page_fonts(objects: &Objects, page: &str) -> Fonts {
-    let mut fonts = Fonts::default();
-    // /Resources may be inline or a reference.
-    let resources = match reference(page, "/Resources") {
+impl Fonts {
+    /// Lay another set over this one: the form's own names win, and the page's
+    /// stay for the names the form does not define.
+    fn absorb(&mut self, other: Fonts) {
+        self.maps.extend(other.maps);
+        self.unmappable.extend(other.unmappable);
+        self.remapped.extend(other.remapped);
+    }
+}
+
+/// A page's or a form's `/Resources`, which may be inline or a reference.
+fn resources_of(objects: &Objects, dict: &str) -> String {
+    match reference(dict, "/Resources") {
         Some(number) => objects.get(&number).map(|o| o.dict.clone()).unwrap_or_default(),
-        None => page.to_string(),
-    };
-    let Some(font_at) = resources.find("/Font") else { return fonts };
-    let tail = resources.get(font_at..).unwrap_or_default();
-    let dictionary = match reference(tail, "/Font") {
+        None => dict.to_string(),
+    }
+}
+
+/// One named sub-dictionary of a resources dictionary — `/Font`, `/XObject` —
+/// whether it is written inline or kept in an object of its own.
+fn sub_dict(objects: &Objects, resources: &str, key: &str) -> String {
+    let Some(at) = resources.find(key) else { return String::new() };
+    let tail = resources.get(at..).unwrap_or_default();
+    match reference(tail, key) {
         Some(number) => objects.get(&number).map(|o| o.dict.clone()).unwrap_or_default(),
         None => tail.to_string(),
-    };
+    }
+}
 
-    // Entries look like «/F1 7 0 R».
+/// The entries of such a dictionary: «/F1 7 0 R» → `("F1", 7)`.
+fn named_refs(dictionary: &str) -> Vec<(String, u32)> {
+    let mut out = Vec::new();
     for piece in dictionary.split('/').skip(1) {
         let mut words = piece.split_whitespace();
         let Some(name) = words.next() else { continue };
         let Some(number) = words.next().and_then(|w| w.parse::<u32>().ok()) else {
             continue;
         };
+        out.push((name.to_string(), number));
+    }
+    out
+}
+
+fn page_fonts(objects: &Objects, page: &str) -> Fonts {
+    let mut fonts = Fonts::default();
+    let dictionary = sub_dict(objects, &resources_of(objects, page), "/Font");
+    for (name, number) in named_refs(&dictionary) {
+        let name = name.as_str();
         let Some(font) = objects.get(&number).map(|o| o.dict.clone()) else { continue };
 
         // A simple font may remap its characters through /Encoding /Differences.
@@ -563,71 +789,203 @@ fn page_fonts(objects: &Objects, page: &str) -> Fonts {
             .and_then(|n| objects.get(&n))
             .map(|o| o.dict.clone())
             .unwrap_or_default();
-        if font.contains("/Differences") || encoding.contains("/Differences") {
-            fonts.remapped.insert(name.to_string(), true);
-            continue;
-        }
-
-        let needs_map = font.contains("/Type0") || font.contains("Identity-H");
-        if !needs_map {
-            continue;
-        }
-        match reference(&font, "/ToUnicode").and_then(|n| objects.get(&n)) {
-            Some(cmap_body) => {
-                let plain = cmap_body
+        // A simple font may remap its characters through /Encoding /Differences.
+        // We do not read that table — but a font that carries one usually also
+        // carries /ToUnicode, and that one says outright what each code means.
+        //
+        // Measured on a 146-page book of German tax terms (InDesign, eight
+        // fonts, four of them remapped and every one of the four with its own
+        // /ToUnicode): the reader refused page 1 and with it the whole file,
+        // because a cover page in a font with fifteen remapped glyph names was
+        // enough. The refusal now waits until there is really nothing to read
+        // the font by.
+        let remapped = font.contains("/Differences") || encoding.contains("/Differences");
+        // Two bytes to a code, or one. A composite font says so in its own
+        // dictionary — or through the CMap its `/Encoding` points at, which is
+        // how the German tax book writes it. Measured there: the reader read
+        // that font one byte at a time and 526 NULs came out of a single page.
+        let two_byte = font.contains("/Type0")
+            || font.contains("Identity-H")
+            || encoding.contains("Identity-H")
+            || encoding.contains("/CMap");
+        let cmap = reference(&font, "/ToUnicode")
+            .and_then(|n| objects.get(&n))
+            .map(|body| {
+                let plain = body
                     .stream
                     .as_ref()
-                    .and_then(|raw| decode_stream(&cmap_body.dict, raw))
+                    .and_then(|raw| decode_stream(&body.dict, raw))
                     .unwrap_or_default();
-                let cmap = parse_to_unicode(&String::from_utf8_lossy(&plain));
-                if cmap.is_empty() {
-                    fonts.unmappable.insert(name.to_string(), true);
-                } else {
-                    fonts.maps.insert(name.to_string(), cmap);
-                }
-            }
-            None => {
+                parse_to_unicode(&String::from_utf8_lossy(&plain))
+            })
+            .unwrap_or_default();
+        if cmap.is_empty() {
+            // No table. A font that remaps its glyphs, or one whose codes are
+            // two bytes wide, cannot be read without one — and is refused by
+            // name rather than guessed at. A plain simple font is read by its
+            // standard encoding, as it always was.
+            if remapped {
+                fonts.remapped.insert(name.to_string(), true);
+            } else if two_byte {
                 fonts.unmappable.insert(name.to_string(), true);
             }
+            continue;
         }
+        // A font that carries a table is read by it, whatever its type: the
+        // answer is in the file, and reading it is not a guess.
+        fonts.maps.insert(name.to_string(), FontMap { table: cmap, two_byte });
     }
     fonts
 }
 
 /// `beginbfchar`/`beginbfrange` — the font's own table from its codes to Unicode.
+///
+/// Read by **token**, not by line, and measured on three real documents before
+/// it was rewritten:
+///
+/// * entries share a line — 6 to 11 such lines per map in one file — and the
+///   old reader took one entry from each line and dropped the rest. When the
+///   `beginbfchar` itself shared the line, it dropped them all;
+/// * ranges run to 897, 8125 and 65535 codes, and the old reader stopped at
+///   513, leaving the rest of the page as holes;
+/// * a range may name its destinations one by one in a list. Read as a single
+///   destination it does not leave a hole — it puts **the wrong character** on
+///   the screen, which is worse.
+///
+/// What it still will not do is guess: a destination it cannot decode is left
+/// out, and the page's readable share falls, which is the refusal path.
 fn parse_to_unicode(cmap: &str) -> BTreeMap<u32, String> {
     let mut out = BTreeMap::new();
-    let mut rest = cmap;
-    while let Some(at) = rest.find("beginbfchar") {
-        let tail = rest.get(at..).unwrap_or_default();
-        let end = tail.find("endbfchar").unwrap_or(tail.len());
-        for line in tail.get(..end).unwrap_or_default().lines().skip(1) {
-            let hexes: Vec<&str> = line.split('<').skip(1).collect();
-            if let (Some(code), Some(value)) = (hexes.first(), hexes.get(1)) {
-                if let (Some(code), Some(text)) = (hex_u32(code), hex_string(value)) {
+    for block in blocks(cmap, "beginbfchar", "endbfchar") {
+        let items = items(block);
+        let mut at = 0;
+        while let (Some(Item::Hex(code)), Some(Item::Hex(value))) = (items.get(at), items.get(at + 1)) {
+            if let (Some(code), Some(text)) = (hex_u32(code), hex_string(value)) {
+                if out.len() >= MAX_CMAP_ENTRIES {
+                    return out;
+                }
+                // `<0000>` is what a table says when it has nothing to say about
+                // a glyph — the Swedish annual report says it of ten codes in
+                // each of its two fonts. It is not a character, so it is not a
+                // mapping, and the code it names stays unmapped and counted.
+                if names_a_character(&text) {
                     out.insert(code, text);
                 }
             }
+            at += 2;
         }
-        rest = tail.get(end..).unwrap_or_default();
     }
-    let mut rest = cmap;
-    while let Some(at) = rest.find("beginbfrange") {
-        let tail = rest.get(at..).unwrap_or_default();
-        let end = tail.find("endbfrange").unwrap_or(tail.len());
-        for line in tail.get(..end).unwrap_or_default().lines().skip(1) {
-            let hexes: Vec<&str> = line.split('<').skip(1).collect();
-            if let (Some(low), Some(high), Some(start)) = (hexes.first(), hexes.get(1), hexes.get(2)) {
-                if let (Some(low), Some(high), Some(start)) = (hex_u32(low), hex_u32(high), hex_u32(start)) {
-                    for (step, code) in (low..=high.min(low + 512)).enumerate() {
-                        if let Some(c) = char::from_u32(start + step as u32) {
-                            out.insert(code, c.to_string());
+    for block in blocks(cmap, "beginbfrange", "endbfrange") {
+        let items = items(block);
+        let mut at = 0;
+        while at + 2 < items.len() + 1 {
+            let (Some(Item::Hex(low)), Some(Item::Hex(high))) = (items.get(at), items.get(at + 1)) else {
+                break;
+            };
+            let (Some(low), Some(high)) = (hex_u32(low), hex_u32(high)) else { break };
+            at += 2;
+            match items.get(at) {
+                // `<low> <high> [<d1> <d2> …]` — one destination for each code.
+                Some(Item::Open) => {
+                    at += 1;
+                    let mut code = low;
+                    while let Some(Item::Hex(value)) = items.get(at) {
+                        if let Some(text) = hex_string(value).filter(|t| names_a_character(t)) {
+                            if out.len() >= MAX_CMAP_ENTRIES {
+                                return out;
+                            }
+                            out.insert(code, text);
+                        }
+                        code = code.saturating_add(1);
+                        at += 1;
+                    }
+                    if matches!(items.get(at), Some(Item::Close)) {
+                        at += 1;
+                    }
+                }
+                // `<low> <high> <start>` — the destination counts up with the code.
+                Some(Item::Hex(start)) => {
+                    at += 1;
+                    let Some(units) = hex_units(start) else { continue };
+                    for (step, code) in (low..=high).enumerate() {
+                        if out.len() >= MAX_CMAP_ENTRIES {
+                            return out;
+                        }
+                        let Ok(step) = u16::try_from(step) else { break };
+                        let mut units = units.clone();
+                        let Some(last) = units.last_mut() else { break };
+                        let Some(moved) = last.checked_add(step) else { break };
+                        *last = moved;
+                        if let Some(text) = utf16_string(&units).filter(|t| names_a_character(t)) {
+                            out.insert(code, text);
                         }
                     }
                 }
+                _ => break,
             }
         }
-        rest = tail.get(end..).unwrap_or_default();
+    }
+    out
+}
+
+/// Does this destination name a character a person could read?
+///
+/// The owner's rule, in one line: **a code with no real character is an
+/// unreadable code.** A table that answers `<0000>` — or any control or
+/// private-use slot — has not told us what the glyph is, and pretending it has
+/// puts a byte in the text that nobody typed.
+fn names_a_character(text: &str) -> bool {
+    !text.is_empty() && text.chars().all(decoded)
+}
+
+/// A code map is at most a two-byte space, so this is a bound and not a policy:
+/// it exists so that a malformed range cannot ask for memory without end.
+const MAX_CMAP_ENTRIES: usize = 70_000;
+
+/// One piece of a CMap block: a `<hex>` string, or a bracket around a list.
+enum Item {
+    Hex(String),
+    Open,
+    Close,
+}
+
+/// The text between each `begin…`/`end…` pair.
+fn blocks<'a>(cmap: &'a str, begin: &str, end: &str) -> Vec<&'a str> {
+    let mut out = Vec::new();
+    let mut rest = cmap;
+    while let Some(at) = rest.find(begin) {
+        let tail = rest.get(at + begin.len()..).unwrap_or_default();
+        let stop = tail.find(end).unwrap_or(tail.len());
+        out.push(tail.get(..stop).unwrap_or_default());
+        rest = tail.get(stop..).unwrap_or_default();
+    }
+    out
+}
+
+/// The `<…>` groups and the brackets of a block, in the order they are written.
+fn items(block: &str) -> Vec<Item> {
+    let mut out = Vec::new();
+    let mut chars = block.char_indices();
+    while let Some((at, c)) = chars.next() {
+        match c {
+            '[' => out.push(Item::Open),
+            ']' => out.push(Item::Close),
+            '<' => {
+                let tail = block.get(at + 1..).unwrap_or_default();
+                let stop = tail.find('>').unwrap_or(tail.len());
+                let digits: String = tail
+                    .get(..stop)
+                    .unwrap_or_default()
+                    .chars()
+                    .filter(|c| c.is_ascii_hexdigit())
+                    .collect();
+                out.push(Item::Hex(digits));
+                for _ in 0..stop {
+                    chars.next();
+                }
+            }
+            _ => {}
+        }
     }
     out
 }
@@ -640,18 +998,33 @@ fn hex_u32(piece: &str) -> Option<u32> {
     u32::from_str_radix(&digits, 16).ok()
 }
 
-fn hex_string(piece: &str) -> Option<String> {
+/// A destination, as UTF-16 code units — which is what a CMap writes.
+fn hex_units(piece: &str) -> Option<Vec<u16>> {
     let digits: String = piece.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
     if digits.is_empty() || digits.len() % 4 != 0 {
         return None;
     }
-    let mut out = String::new();
+    let mut out = Vec::new();
     for chunk in digits.as_bytes().chunks(4) {
         let hex = String::from_utf8_lossy(chunk);
-        let value = u32::from_str_radix(&hex, 16).ok()?;
-        out.push(char::from_u32(value)?);
+        out.push(u16::from_str_radix(&hex, 16).ok()?);
     }
     Some(out)
+}
+
+/// UTF-16 units into text — **pairs included**. The old reader took every four
+/// hex digits for a character of its own, so a destination written as a
+/// surrogate pair decoded to nothing and the whole entry was dropped.
+fn utf16_string(units: &[u16]) -> Option<String> {
+    let mut out = String::new();
+    for c in char::decode_utf16(units.iter().copied()) {
+        out.push(c.ok()?);
+    }
+    Some(out)
+}
+
+fn hex_string(piece: &str) -> Option<String> {
+    utf16_string(&hex_units(piece)?)
 }
 
 // ---------------------------------------------------------------- text
@@ -659,8 +1032,14 @@ fn hex_string(piece: &str) -> Option<String> {
 #[derive(Debug, PartialEq, Eq)]
 enum Run {
     Text(String),
-    /// Text in a font whose codes cannot be mapped. Counted, never guessed at.
-    Unmappable,
+    /// Codes that came out as no character at all — a font with no table, a
+    /// code the table does not mention, or one the table maps to nothing.
+    ///
+    /// It carries **how many**, because that is the whole of its use: a code
+    /// with no character is an unreadable code, and it is counted against the
+    /// page exactly as a broken character is. Dropped silently — as it was —
+    /// a page of them came out empty and was called a picture of a page.
+    Unmappable(usize),
 }
 
 /// Pull the text-showing operators out of a content stream.
@@ -668,22 +1047,29 @@ enum Run {
 /// `(literal) Tj`, `[(a) -20 (b)] TJ`, `(line) '` and `(line) "` — the four ways a
 /// PDF says «draw these characters». Each `BT … ET` block is one paragraph, which
 /// is usually one line: that is what makes «page 17, paragraph 4» meaningful.
-fn text_runs(content: &str, fonts: &Fonts) -> Vec<Run> {
+fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
     let mut out = Vec::new();
     let mut current = String::new();
     let mut font = String::new();
     let mut in_text_object = false;
-    let bytes = content.as_bytes();
     let mut at = 0usize;
+    // Where the string being read now begins inside `current`: `'` and `"`
+    // draw their string **on the next line**, and by then it is already read.
+    let mut string_at: Option<usize> = None;
+    // The vertical offset the line matrix was last set to, so that a second
+    // `Tm` in one block can be told from the first.
+    let mut line_y: Option<f64> = None;
 
     while at < bytes.len() {
         match bytes.get(at) {
-            Some(b'B') if content.get(at..at + 2) == Some("BT") => {
+            Some(b'B') if bytes.get(at..at + 2) == Some(b"BT".as_slice()) => {
                 in_text_object = true;
                 current.clear();
+                string_at = None;
+                line_y = None;
                 at += 2;
             }
-            Some(b'E') if content.get(at..at + 2) == Some("ET") => {
+            Some(b'E') if bytes.get(at..at + 2) == Some(b"ET".as_slice()) => {
                 if !current.trim().is_empty() {
                     out.push(Run::Text(current.trim().to_string()));
                 }
@@ -692,32 +1078,79 @@ fn text_runs(content: &str, fonts: &Fonts) -> Vec<Run> {
                 at += 2;
             }
             Some(b'/') => {
-                // A font is chosen: «/F1 12 Tf».
-                let name: String = content
+                // A font is chosen: «/F1 12 Tf». A name is written in ASCII.
+                // A name runs to whitespace or to a delimiter, which is what
+                // PDF says a name is. Reading it as letters and digits alone
+                // stops at the underscore in `/C2_0`, and then the font never
+                // changes: measured on the German tax book, a two-byte font's
+                // text was decoded with the one-byte table of the font chosen
+                // before it, and 526 NULs came out of a single page.
+                let name: String = bytes
                     .get(at + 1..)
                     .unwrap_or_default()
-                    .chars()
-                    .take_while(|c| c.is_alphanumeric() || *c == '+' || *c == '.')
+                    .iter()
+                    .take_while(|b| !b.is_ascii_whitespace() && !is_delimiter(**b))
+                    .map(|b| char::from(*b))
                     .collect();
-                let after = content.get(at + 1 + name.len()..).unwrap_or_default();
-                if after.trim_start().starts_with(|c: char| c.is_ascii_digit())
-                    && after.split_whitespace().nth(1) == Some("Tf")
-                {
+                let after = bytes.get(at + 1 + name.len()..).unwrap_or_default();
+                let mut words = after
+                    .split(|b| b.is_ascii_whitespace())
+                    .filter(|w| !w.is_empty());
+                let size = words.next().unwrap_or_default();
+                if size.first().is_some_and(u8::is_ascii_digit) && words.next() == Some(b"Tf".as_slice()) {
                     font = name;
                 }
                 at += 1;
             }
+            // The pen moves to the start of the next line. Ignored, it wrote
+            // nothing where a line break belongs: measured on the owner's tax
+            // book, 1,983 of these and 585 more that move along the line, and
+            // one of them joined an address to the word under it.
+            Some(b'T') if is_operator(bytes, at, b"Td") || is_operator(bytes, at, b"TD") => {
+                let moved = operands_before(bytes, at, 2);
+                let down = moved.get(1).copied().unwrap_or(0.0);
+                separate(&mut current, down.abs() > f64::EPSILON);
+                at += 2;
+            }
+            Some(b'T') if is_operator(bytes, at, b"T*") => {
+                separate(&mut current, true);
+                at += 2;
+            }
+            // `Tm` replaces the whole text matrix, so it can begin a new line
+            // too. Measured: 26 blocks in that book set it more than once, and
+            // what makes it a line is the vertical offset changing.
+            Some(b'T') if is_operator(bytes, at, b"Tm") => {
+                let y = operands_before(bytes, at, 6).get(5).copied();
+                if let (Some(now), Some(was)) = (y, line_y) {
+                    separate(&mut current, (now - was).abs() > f64::EPSILON);
+                }
+                line_y = y.or(line_y);
+                at += 2;
+            }
+            // `'` and `"` show their string **on** the next line, and the
+            // string is written before them — so the break goes in front of it.
+            Some(b'\'') | Some(b'"') if in_text_object => {
+                if let Some(start) = string_at.filter(|start| *start > 0) {
+                    let mut head = current.get(..start).unwrap_or_default().to_string();
+                    let tail = current.get(start..).unwrap_or_default().to_string();
+                    separate(&mut head, true);
+                    current = head + &tail;
+                }
+                at += 1;
+            }
             Some(b'(') => {
-                let (text, next) = literal_string(content, at);
+                let (text, next) = literal_string(bytes, at);
                 at = next;
                 if in_text_object {
+                    string_at = Some(current.len());
                     current.push_str(&decode(&text, &font, fonts, &mut out));
                 }
             }
-            Some(b'<') if content.get(at + 1..at + 2) != Some("<") => {
-                let (text, next) = hex_literal(content, at);
+            Some(b'<') if bytes.get(at + 1) != Some(&b'<') => {
+                let (text, next) = hex_literal(bytes, at);
                 at = next;
                 if in_text_object {
+                    string_at = Some(current.len());
                     current.push_str(&decode_hex(&text, &font, fonts, &mut out));
                 }
             }
@@ -731,32 +1164,36 @@ fn text_runs(content: &str, fonts: &Fonts) -> Vec<Run> {
 }
 
 /// `(a string with \( escapes \))`
-fn literal_string(content: &str, at: usize) -> (String, usize) {
-    let mut out = String::new();
+fn literal_string(bytes: &[u8], at: usize) -> (Vec<u8>, usize) {
+    let mut out: Vec<u8> = Vec::new();
     let mut depth = 1usize;
     let mut index = at + 1;
-    let bytes = content.as_bytes();
     while index < bytes.len() {
         match bytes.get(index) {
             Some(b'\\') => {
                 match bytes.get(index + 1) {
-                    Some(b'n') => out.push('\n'),
-                    Some(b'r') => out.push('\r'),
-                    Some(b't') => out.push('\t'),
-                    Some(b'(') => out.push('('),
-                    Some(b')') => out.push(')'),
-                    Some(b'\\') => out.push('\\'),
+                    Some(b'n') => out.push(b'\n'),
+                    Some(b'r') => out.push(b'\r'),
+                    Some(b't') => out.push(b'\t'),
+                    Some(b'(') => out.push(b'('),
+                    Some(b')') => out.push(b')'),
+                    Some(b'\\') => out.push(b'\\'),
                     Some(other) if other.is_ascii_digit() => {
-                        // An octal escape: up to three digits.
-                        let digits: String = content
+                        // An octal escape: up to three digits, and it names a
+                        // **byte**, not a character.
+                        let digits: Vec<u8> = bytes
                             .get(index + 1..)
                             .unwrap_or_default()
-                            .chars()
+                            .iter()
                             .take(3)
-                            .take_while(|c| c.is_digit(8))
+                            .take_while(|b| (b'0'..=b'7').contains(b))
+                            .copied()
                             .collect();
-                        if let Some(c) = u32::from_str_radix(&digits, 8).ok().and_then(char::from_u32) {
-                            out.push(c);
+                        let text = String::from_utf8_lossy(&digits);
+                        if let Ok(value) = u32::from_str_radix(&text, 8) {
+                            if let Ok(byte) = u8::try_from(value) {
+                                out.push(byte);
+                            }
                         }
                         index += digits.len();
                     }
@@ -766,7 +1203,7 @@ fn literal_string(content: &str, at: usize) -> (String, usize) {
             }
             Some(b'(') => {
                 depth += 1;
-                out.push('(');
+                out.push(b'(');
                 index += 1;
             }
             Some(b')') => {
@@ -774,18 +1211,12 @@ fn literal_string(content: &str, at: usize) -> (String, usize) {
                 if depth == 0 {
                     return (out, index + 1);
                 }
-                out.push(')');
+                out.push(b')');
                 index += 1;
             }
-            Some(_) => {
-                let ch = content.get(index..).and_then(|s| s.chars().next());
-                match ch {
-                    Some(c) => {
-                        out.push(c);
-                        index += c.len_utf8();
-                    }
-                    None => index += 1,
-                }
+            Some(byte) => {
+                out.push(*byte);
+                index += 1;
             }
             None => break,
         }
@@ -793,51 +1224,108 @@ fn literal_string(content: &str, at: usize) -> (String, usize) {
     (out, index)
 }
 
-fn hex_literal(content: &str, at: usize) -> (String, usize) {
-    let tail = content.get(at + 1..).unwrap_or_default();
-    let end = tail.find('>').unwrap_or(tail.len());
+fn hex_literal(bytes: &[u8], at: usize) -> (String, usize) {
+    let tail = bytes.get(at + 1..).unwrap_or_default();
+    let end = tail.iter().position(|b| *b == b'>').unwrap_or(tail.len());
     let digits: String = tail
         .get(..end)
         .unwrap_or_default()
-        .chars()
-        .filter(|c| c.is_ascii_hexdigit())
+        .iter()
+        .filter(|b| b.is_ascii_hexdigit())
+        .map(|b| char::from(*b))
         .collect();
     (digits, at + 1 + end + 1)
 }
 
 /// A single-byte string. If the current font needs a map, this is not text we can
 /// read, and we say so instead of writing nonsense.
-fn decode(text: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
+fn decode(bytes: &[u8], font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
     if fonts.unmappable.contains_key(font) {
-        out.push(Run::Unmappable);
+        // Two bytes to the code, so that is how many codes went unread.
+        out.push(Run::Unmappable(bytes.len().div_ceil(2)));
         return String::new();
     }
     if let Some(map) = fonts.maps.get(font) {
-        // A mapped font used with a literal string: map byte by byte.
-        return text
-            .bytes()
-            .map(|b| map.get(&u32::from(b)).cloned().unwrap_or_default())
-            .collect();
+        // A literal string holds **codes**, and the font's own table says how
+        // wide one is: two bytes under `Identity-H`, one in a simple font. Read
+        // one byte at a time where it should be two, a line comes out as «NUL K
+        // NUL L»: the high byte of each code looks up the table's entry for code
+        // 0, which an identity table gives as U+0000. Measured on two real
+        // documents: 578 of 1225 characters on one page, 174 of 841 on another,
+        // every one of them a NUL.
+        let width = if map.two_byte { 2 } else { 1 };
+        let mut read = String::new();
+        let mut missed = 0usize;
+        for piece in bytes.chunks(width) {
+            let code = match piece {
+                [high, low] => (u32::from(*high) << 8) | u32::from(*low),
+                [only] => u32::from(*only),
+                _ => continue,
+            };
+            match map.table.get(&code) {
+                Some(text) => read.push_str(text),
+                // A simple font's table covers what the font did unusually —
+                // measured on the German tax book: one of its fonts carries 89
+                // entries and the page uses more codes than that. The rest are
+                // what the font's own named encoding says they are, one byte to
+                // a character, which is where they were read from before any
+                // table existed. Nothing is guessed: the file named the
+                // encoding, and the table is the exception list.
+                //
+                // A two-byte font has no such fallback — a code is a glyph
+                // number and nothing else names it — so there it is counted.
+                None if !map.two_byte => match char::from_u32(code).filter(|c| decoded(*c)) {
+                    Some(c) => read.push(c),
+                    // And the same rule as everywhere else: a code that names
+                    // no character is an unreadable code, never a byte in the
+                    // text nobody typed.
+                    None => missed += 1,
+                },
+                None => missed += 1,
+            }
+        }
+        if missed > 0 {
+            out.push(Run::Unmappable(missed));
+        }
+        return read;
     }
-    text.to_string()
+    // No table: the bytes are the characters. A string may say outright that it
+    // is UTF-16, and PDF marks that the way the format does, with FE FF at the
+    // front; anything else is one byte to a character.
+    if let Some(rest) = bytes.strip_prefix(&[0xFE, 0xFF]) {
+        let units: Vec<u16> = rest
+            .chunks(2)
+            .filter_map(|pair| match pair {
+                [high, low] => Some((u16::from(*high) << 8) | u16::from(*low)),
+                _ => None,
+            })
+            .collect();
+        if let Some(text) = utf16_string(&units) {
+            return text;
+        }
+    }
+    bytes.iter().map(|b| char::from(*b)).collect()
 }
 
-/// A hex string: two bytes per code for a mapped font, one byte otherwise.
 fn decode_hex(digits: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
     if let Some(map) = fonts.maps.get(font) {
         let mut text = String::new();
-        for chunk in digits.as_bytes().chunks(4) {
+        let mut missed = 0usize;
+        let width = if map.two_byte { 4 } else { 2 };
+        for chunk in digits.as_bytes().chunks(width) {
             let hex = String::from_utf8_lossy(chunk);
-            if let Ok(code) = u32::from_str_radix(&hex, 16) {
-                if let Some(piece) = map.get(&code) {
-                    text.push_str(piece);
-                }
+            match u32::from_str_radix(&hex, 16).ok().and_then(|code| map.table.get(&code)) {
+                Some(piece) => text.push_str(piece),
+                None => missed += 1,
             }
+        }
+        if missed > 0 {
+            out.push(Run::Unmappable(missed));
         }
         return text;
     }
     if fonts.unmappable.contains_key(font) {
-        out.push(Run::Unmappable);
+        out.push(Run::Unmappable(digits.len().div_ceil(4)));
         return String::new();
     }
     let mut text = String::new();
@@ -865,6 +1353,16 @@ mod tests {
     use crate::api::Place;
 
     /// A PDF with `pages` pages of plain, uncompressed text, written by hand.
+    /// A simple font's string is written in the font's own encoding, one byte
+    /// to a character — never UTF-8. These builders wrote UTF-8 and the reader
+    /// read it back as UTF-8, so both sides agreed on something no PDF writer
+    /// does. Since the content stream is read as bytes, they write bytes.
+    pub(crate) fn latin1(text: &str) -> Vec<u8> {
+        text.chars()
+            .map(|c| u8::try_from(u32::from(c)).unwrap_or(b'?'))
+            .collect()
+    }
+
     pub(crate) fn pdf_with_pages(lines: &[&str]) -> Vec<u8> {
         let mut out = String::from("%PDF-1.4\n");
         let count = lines.len();
@@ -880,15 +1378,18 @@ mod tests {
             out.push_str(&format!(
                 "{page_id} 0 obj\n<< /Type/Page /Parent 2 0 R /Contents {content_id} 0 R /Resources << /Font << /F1 100 0 R >> >> >>\nendobj\n"
             ));
-            let stream = format!("BT /F1 12 Tf 72 700 Td ({line}) Tj ET");
+            let stream = latin1(&format!("BT /F1 12 Tf 72 700 Td ({line}) Tj ET"));
             out.push_str(&format!(
-                "{content_id} 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+                "{content_id} 0 obj\n<< /Length {} >>\nstream\n",
                 stream.len()
             ));
+            // The stream goes in as bytes, because that is what a stream is.
+            out.push_str(&stream.iter().map(|b| char::from(*b)).collect::<String>());
+            out.push_str("\nendstream\nendobj\n");
         }
         out.push_str("100 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/Helvetica >>\nendobj\n");
         out.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
-        out.into_bytes()
+        latin1(&out)
     }
 
     /// A scan: pages that hold an image and no text at all.
@@ -916,8 +1417,639 @@ mod tests {
         out.into_bytes()
     }
 
+    /// A page that draws its text through a form, and holds none of its own.
+    ///
+    /// This is what ilovepdf, «print to PDF» and some Word exports write: the
+    /// page stream is `… /Fm1 Do` and every `Tj` lives inside the form. The
+    /// form carries its own `/Resources`, so its font names are its own.
+    pub(crate) fn pdf_with_form(line: &str, form_stream: Option<&str>) -> Vec<u8> {
+        let inner = form_stream
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| format!("BT /FA 12 Tf 72 700 Td ({line}) Tj ET"));
+        let mut out = String::from("%PDF-1.4\n");
+        out.push_str("1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        out.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        out.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /XObject << /Fm1 5 0 R >> >> >>\nendobj\n",
+        );
+        let page_stream = "q 1 0 0 1 0 0 cm /Fm1 Do Q";
+        out.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{page_stream}\nendstream\nendobj\n",
+            page_stream.len()
+        ));
+        out.push_str(&format!(
+            "5 0 obj\n<< /Type/XObject /Subtype/Form /Length {} \
+             /Resources << /Font << /FA 100 0 R >> /XObject << /Fm1 5 0 R >> >> >>\nstream\n{inner}\nendstream\nendobj\n",
+            inner.len()
+        ));
+        out.push_str("100 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/Helvetica >>\nendobj\n");
+        out.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+        out.into_bytes()
+    }
+
     fn read(bytes: &[u8]) -> ApiResult<Extracted> {
         extract(bytes, &Budget::new())
+    }
+
+    /// Measured on a 221-page book: 225 page streams that say only `… Do`, and
+    /// 209 forms holding the `Tj`s. The reader called the whole book a scan.
+    #[test]
+    fn text_drawn_through_a_form_is_read_rather_than_called_a_scan() {
+        let pdf = pdf_with_form("Kunde: Nordstern Consulting GmbH", None);
+        let out = read(&pdf).expect("a page that draws a form is not a scan");
+        assert_eq!(out.pages, 1);
+        assert!(
+            out.text.contains("Nordstern Consulting GmbH"),
+            "the text inside the form never arrived: {} chars",
+            out.text.chars().count()
+        );
+    }
+
+    /// A new line is a word boundary. Measured on the owner's tax book, on the
+    /// page that offers a feedback link:
+    ///
+    /// ```text
+    /// [(pub)4(likati)4(onen@bundesr)13.1(egi)4.1(erung.de)]TJ
+    /// -3.979720115 -2.88889 Td
+    /// [(Geben S)5.1(i)4(e uns F)40(eedback zu di)4.1(eser Pub)4.1(likati)4(on!)]TJ
+    /// ```
+    ///
+    /// `Td` moves the pen to the start of the next line. The reader passed over
+    /// it and wrote nothing in its place, so the two lines arrived as one word
+    /// and the e-mail rule read the address as
+    /// «publikationen@bundesregierung.deGeben». That book holds 1,983 moves
+    /// that go down a line and 585 that move along one, and every one of them
+    /// was glue.
+    #[test]
+    fn a_line_that_moves_down_separates_the_words_it_divides() {
+        let stream = "BT /FA 12 Tf 72 700 Td [(pub)4(likati)4(onen@bundesr)13.1(egierung.de)]TJ \
+                      -3.979720115 -2.88889 Td [(Geben S)5.1(ie uns F)40(eedback)]TJ \
+                      4.0 0 Td (zu dieser Publikation)Tj ET";
+        let pdf = pdf_with_form("", Some(stream));
+        let out = read(&pdf).expect("one page, one form");
+        assert!(
+            out.text.contains("publikationen@bundesregierung.de"),
+            "the address did not survive the pieces it is drawn in: {:?}",
+            out.text
+        );
+        assert!(
+            !out.text.contains("deGeben"),
+            "a new line became nothing, so two lines are one word: {:?}",
+            out.text
+        );
+        // And a move along the same line is a space, not a new line: that is
+        // how a table's columns stop running into one number.
+        assert!(
+            out.text.contains("Feedback zu dieser"),
+            "a move along the line joined two columns: {:?}",
+            out.text
+        );
+    }
+
+    /// The same move, written the three other ways the format allows. The tax
+    /// book uses none of them — 0 of each in its 145 content streams — so they
+    /// are held by a fixture instead of by a file.
+    #[test]
+    fn the_other_ways_of_asking_for_a_new_line_are_read_too() {
+        let star = pdf_with_form("", Some("BT /FA 12 Tf 72 700 Td (Telefon:)Tj T* (0228 406-1200)Tj ET"));
+        let text = read(&star).expect("T*").text;
+        assert!(text.contains("Telefon:\n0228"), "T* did not end the line: {text:?}");
+
+        // `'` and `"` show a string on the next line, so the line they begin
+        // belongs before the text they carry, not after it.
+        let quote = pdf_with_form("", Some("BT /FA 12 Tf 72 700 Td (Telefon:)Tj (0228 406-1200)' ET"));
+        let text = read(&quote).expect("'").text;
+        assert!(text.contains("Telefon:\n0228"), "' did not end the line: {text:?}");
+
+        let spaced = pdf_with_form("", Some("BT /FA 12 Tf 72 700 Td (Telefon:)Tj 0 0 (0228 406-1200)\" ET"));
+        let text = read(&spaced).expect("quote").text;
+        assert!(text.contains("Telefon:\n0228"), "the \" operator did not end the line: {text:?}");
+    }
+
+    /// The number in a refusal is the number of pages the file has.
+    ///
+    /// Measured on the owner's 734-page export: the walk stopped as soon as it
+    /// had one page more than the limit, so the refusal said «501 pages is past
+    /// the limit of 500» about a document with 734. A limit may refuse a file;
+    /// it may not describe it wrongly, because that number is the one a person
+    /// repeats when they ask for help.
+    #[test]
+    fn a_refusal_counts_the_pages_the_file_really_has() {
+        let many = vec!["Seite"; limits::PAGES as usize + 10];
+        let pdf = pdf_with_pages(&many);
+        let e = read(&pdf).expect_err("past the page limit");
+        assert!(
+            matches!(
+                error_of(&e),
+                Some(Refusal::TooManyPages { pages, limit })
+                    if pages == limits::PAGES + 10 && limit == limits::PAGES
+            ),
+            "the refusal does not carry the real count: {e}"
+        );
+    }
+
+    /// A PDF whose objects live in an object stream that is **not** valid UTF-8.
+    ///
+    /// The offsets in `/First` count bytes. Reading the whole stream through
+    /// `from_utf8_lossy` first turns every invalid byte into U+FFFD, which is
+    /// three bytes where one stood, and every offset after it points somewhere
+    /// else. Measured on the owner's 734-page Word export: 508 object streams,
+    /// 123 of them not UTF-8, and **7,222 of 48,928 objects** sliced from the
+    /// wrong place. One of them was the font `/F3` on page 14 — its real
+    /// dictionary carries `/ToUnicode`, the mis-sliced one began in the middle
+    /// of the object before it and carried none, so a readable page was refused
+    /// as a font with no character map.
+    ///
+    /// A Word document reaches this state by having a title: a text string is
+    /// written in UTF-16 and starts with the bytes `FE FF`.
+    #[test]
+    fn an_object_stream_is_cut_in_bytes_not_in_characters() {
+        // Two objects in one stream: a title holding UTF-16 bytes, then the
+        // font. `/ToUnicode` sits at the end of the font's dictionary, which is
+        // exactly where the shifted slice stops short.
+        // Twelve bytes no UTF-8 decoder accepts — a UTF-16 title, as Word
+        // writes it. Each one becomes U+FFFD, three bytes where one stood, so
+        // everything after this object slides 24 bytes out of place.
+        let mut title = b"<</Title(".to_vec();
+        title.extend_from_slice(&[0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff, 0xfe, 0xff]);
+        title.extend_from_slice(b")>>");
+        let font =
+            b"<</Type/Font/Subtype/Type0/BaseFont/SymbolMT/Encoding/Identity-H/ToUnicode 11 0 R>>".to_vec();
+        // A third object after the font, so the font's slice ends where the
+        // next one begins — which is the end that the shift cuts short.
+        let after = b"<</Type/Outlines/Count 0>>".to_vec();
+        let mut header =
+            format!("9 0 10 {} 12 {} ", title.len(), title.len() + font.len()).into_bytes();
+        let first = header.len();
+        let mut packed = Vec::new();
+        packed.append(&mut header);
+        packed.extend_from_slice(&title);
+        packed.extend_from_slice(&font);
+        packed.extend_from_slice(&after);
+
+        let cmap = "/CIDInit /ProcSet findresource begin begincmap \
+                    1 begincodespacerange <0000> <FFFF> endcodespacerange \
+                    1 beginbfchar <0001> <004E> endbfchar endcmap end";
+        let content = "BT /F1 12 Tf 72 700 Td <0001> Tj ET";
+
+        let mut head = String::from("%PDF-1.5\n");
+        let push = &mut head;
+        push.push_str("1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        push.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        push.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 10 0 R >> >> >>\nendobj\n",
+        );
+        push.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{content}\nendstream\nendobj\n",
+            content.len()
+        ));
+        push.push_str(&format!(
+            "11 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n",
+            cmap.len()
+        ));
+        push.push_str(&format!(
+            "5 0 obj\n<< /Type/ObjStm /N 3 /First {first} /Length {} >>\nstream\n",
+            packed.len()
+        ));
+        let mut pdf: Vec<u8> = head.into_bytes();
+        pdf.extend_from_slice(&packed);
+        pdf.extend_from_slice(b"\nendstream\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(&pdf).expect("a page whose font is described in an object stream");
+        assert!(
+            out.text.contains('N'),
+            "the font's /ToUnicode was lost with the offsets: {:?}",
+            out.text
+        );
+    }
+
+    /// A form may draw another form. One that draws itself must end the walk,
+    /// not the process.
+    #[test]
+    fn a_form_that_draws_itself_stops_instead_of_spinning() {
+        let pdf = pdf_with_form("", Some("q /Fm1 Do Q"));
+        match read(&pdf) {
+            Err(e) => assert!(
+                matches!(error_of(&e), Some(Refusal::ScannedPdfNoTextLayer { .. })),
+                "a form with no text is a page with no text"
+            ),
+            Ok(out) => assert_eq!(out.text.trim(), "", "there was no text to find"),
+        }
+    }
+
+    /// An image is still an image: following forms must not turn a scan into a
+    /// page that looks readable.
+    #[test]
+    fn an_image_xobject_is_still_a_scan() {
+        let pdf = scanned_pdf(3);
+        let e = read(&pdf).expect_err("a scan is refused");
+        assert!(matches!(
+            error_of(&e),
+            Some(Refusal::ScannedPdfNoTextLayer { pages: 3 })
+        ));
+    }
+
+    /// A page drawn in one mapped font, with the codes and the table given.
+    ///
+    /// `codes` is the hex string the page shows; `pairs` is what the font's
+    /// own `/ToUnicode` says about them.
+    pub(crate) fn pdf_with_map(codes: &str, pairs: &[(&str, &str)]) -> Vec<u8> {
+        let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        let stream = format!("BT /F1 12 Tf <{codes}> Tj ET");
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+            stream.len()
+        ));
+        pdf.push_str("5 0 obj\n<< /Type/Font /Subtype/Type0 /Encoding/Identity-H /ToUnicode 6 0 R >>\nendobj\n");
+        let rows: String = pairs.iter().map(|(c, v)| format!("<{c}> <{v}>\n")).collect();
+        let cmap = format!(
+            "/CIDInit /ProcSet findresource begin\n{} beginbfchar\n{rows}endbfchar\nend",
+            pairs.len()
+        );
+        pdf.push_str(&format!(
+            "6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n",
+            cmap.len()
+        ));
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+        pdf.into_bytes()
+    }
+
+    /// A table may say «this glyph has no Unicode» — `<0000>` — and a real
+    /// document does: the Swedish annual report says it of ten codes in each of
+    /// its two fonts, and uses them 174 times on one page.
+    ///
+    /// That is not a character. It must not reach the text as a NUL byte the
+    /// person never typed, and it must be counted against the page rather than
+    /// quietly dropped, or a page with five of them in a thousand would pass at
+    /// 99.5% carrying five NULs into what gets sent.
+    #[test]
+    fn a_code_the_table_maps_to_nothing_never_reaches_the_text() {
+        let pdf = pdf_with_map(
+            "00010002000300040005000600070008000900 0A",
+            &[
+                ("0001", "0041"),
+                ("0002", "0042"),
+                ("0003", "0043"),
+                ("0004", "0044"),
+                ("0005", "0045"),
+                ("0006", "0046"),
+                ("0007", "0047"),
+                ("0008", "0048"),
+                // The two the document itself says nothing about.
+                ("0009", "0000"),
+                ("000A", "0000"),
+            ],
+        );
+        let out = read(&pdf).expect("eight of ten codes are characters, which is 80%");
+        assert!(
+            !out.text.contains('\u{0}'),
+            "a NUL reached the text: {} chars",
+            out.text.chars().count()
+        );
+        assert_eq!(out.text.trim(), "ABCDEFGH");
+    }
+
+    /// And when the whole page is such codes, the refusal is the one that says
+    /// what happened — the share that decoded — not «this looks like a scan».
+    #[test]
+    fn a_page_of_codes_with_no_characters_is_refused_by_its_share() {
+        let pdf = pdf_with_map(
+            "00010002000300040005",
+            &[
+                ("0001", "0000"),
+                ("0002", "0000"),
+                ("0003", "0000"),
+                ("0004", "0000"),
+                ("0005", "0000"),
+            ],
+        );
+        // A table all of whose entries name nothing is a table with nothing in
+        // it, so the font has no map at all and the page is refused before a
+        // character is believed. Either refusal is honest; what must never be
+        // said is «this is a picture of a page», because it is not.
+        let e = read(&pdf).expect_err("a page of nothing is refused");
+        match error_of(&e) {
+            Some(Refusal::UnsupportedEncoding { page, .. }) => assert_eq!(page, 1),
+            Some(Refusal::UnreadableStructure { page }) => assert_eq!(page, 1),
+            other => panic!("refused as {other:?}, which tells the person the wrong thing"),
+        }
+    }
+
+    /// A font that carries a table is read by it, whatever its type.
+    ///
+    /// Measured on the German tax book: nine font objects, and **every one of
+    /// them carries `/ToUnicode`**. The reader used that table in two cases
+    /// only — a font whose own dictionary says `/Type0` or `Identity-H`, and a
+    /// font with `/Differences` — so a simple `/WinAnsiEncoding` font with a
+    /// table of its own had its table ignored and its bytes read as if the
+    /// standard encoding were the truth.
+    #[test]
+    fn a_simple_font_with_a_table_is_read_by_it_and_not_by_its_encoding() {
+        let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        let stream = "BT /F1 12 Tf (AB) Tj ET";
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+            stream.len()
+        ));
+        pdf.push_str(
+            "5 0 obj\n<< /Type/Font /Subtype/TrueType /BaseFont/BundesSerif \
+             /Encoding/WinAnsiEncoding /ToUnicode 6 0 R >>\nendobj\n",
+        );
+        // The file says these two codes are «Zü», whatever WinAnsi would say.
+        let cmap = "/CIDInit /ProcSet findresource begin\n2 beginbfchar\n<41> <005A>\n<42> <00FC>\nendbfchar\nend";
+        pdf.push_str(&format!(
+            "6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n",
+            cmap.len()
+        ));
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(pdf.as_bytes()).expect("read");
+        assert_eq!(
+            out.text.trim(),
+            "Zü",
+            "the font's own table was ignored in favour of the encoding's name: {:?}",
+            out.text
+        );
+    }
+
+    /// And a composite font says it is one through a reference as often as it
+    /// says so in its own dictionary.
+    #[test]
+    fn a_two_byte_font_is_known_by_its_cmap_behind_a_reference() {
+        let mut pdf: Vec<u8> = b"%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n".to_vec();
+        pdf.extend_from_slice(b"2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.extend_from_slice(
+            b"3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /TT0 5 0 R >> >> >>\nendobj\n",
+        );
+        let mut stream: Vec<u8> = b"BT /TT0 12 Tf (".to_vec();
+        stream.extend_from_slice(&[0x00, 0x41, 0x00, 0x42]);
+        stream.extend_from_slice(b") Tj ET");
+        pdf.extend_from_slice(format!("4 0 obj\n<< /Length {} >>\nstream\n", stream.len()).as_bytes());
+        pdf.extend_from_slice(&stream);
+        pdf.extend_from_slice(b"\nendstream\nendobj\n");
+        // Nothing in the font's own dictionary says «two bytes»: the CMap does,
+        // and it sits behind a reference.
+        pdf.extend_from_slice(b"5 0 obj\n<< /Type/Font /BaseFont/BundesSerifOffice /Encoding 7 0 R /ToUnicode 6 0 R >>\nendobj\n");
+        let cmap = "/CIDInit /ProcSet findresource begin\n2 beginbfchar\n<0041> <004B>\n<0042> <004C>\nendbfchar\nend";
+        pdf.extend_from_slice(
+            format!("6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n", cmap.len()).as_bytes(),
+        );
+        pdf.extend_from_slice(b"7 0 obj\n<< /Type/CMap /CMapName/Identity-H /CIDSystemInfo << /Registry(Adobe) >> >>\nendobj\n");
+        pdf.extend_from_slice(b"trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(&pdf).expect("read");
+        assert_eq!(
+            out.text.trim(),
+            "KL",
+            "the codes were read one byte at a time, so the CMap behind the reference was not seen: {:?}",
+            out.text
+        );
+    }
+
+    /// A font's name is read the way PDF writes one.
+    ///
+    /// `/C2_0 12 Tf` is an ordinary name — Acrobat and InDesign both write it —
+    /// and reading names as letters and digits stops at the underscore. The
+    /// `Tf` is then not recognised, the font never changes, and the next text
+    /// is decoded with the table of the font chosen before it. Measured on the
+    /// German tax book: a two-byte font read with a one-byte table, 526 NULs on
+    /// a single page, and 146 pages refused for it.
+    #[test]
+    fn a_font_name_with_an_underscore_still_chooses_its_font() {
+        let mut pdf: Vec<u8> = b"%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n".to_vec();
+        pdf.extend_from_slice(b"2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.extend_from_slice(
+            b"3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+              /Resources << /Font << /TT0 5 0 R /C2_0 7 0 R >> >> >>\nendobj\n",
+        );
+        // The simple font first, then the two-byte one — the order a page uses
+        // when a heading is set in one and the body in the other.
+        let mut stream: Vec<u8> = b"BT /TT0 12 Tf (AB) Tj /C2_0 12 Tf (".to_vec();
+        stream.extend_from_slice(&[0x00, 0x41, 0x00, 0x42]);
+        stream.extend_from_slice(b") Tj ET");
+        pdf.extend_from_slice(format!("4 0 obj\n<< /Length {} >>\nstream\n", stream.len()).as_bytes());
+        pdf.extend_from_slice(&stream);
+        pdf.extend_from_slice(b"\nendstream\nendobj\n");
+        pdf.extend_from_slice(b"5 0 obj\n<< /Type/Font /Subtype/TrueType /BaseFont/Bundes /Encoding/WinAnsiEncoding >>\nendobj\n");
+        pdf.extend_from_slice(b"7 0 obj\n<< /Type/Font /Subtype/Type0 /BaseFont/Bundes /Encoding/Identity-H /ToUnicode 8 0 R >>\nendobj\n");
+        let cmap = "/CIDInit /ProcSet findresource begin\n2 beginbfchar\n<0041> <004B>\n<0042> <004C>\nendbfchar\nend";
+        pdf.extend_from_slice(
+            format!("8 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n", cmap.len()).as_bytes(),
+        );
+        pdf.extend_from_slice(b"trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(&pdf).expect("read");
+        assert_eq!(
+            out.text.trim(),
+            "ABKL",
+            "the second Tf was not seen, so the two-byte text was read with the first font: {:?}",
+            out.text
+        );
+    }
+
+    /// A content stream is **bytes**, and a literal string in it may hold any of
+    /// them.
+    ///
+    /// Measured on a 146-page book of German tax terms: 459 replacement marks
+    /// and 526 NULs on one page, with every code finding an entry in its table.
+    /// Neither a table nor this reader makes a replacement mark — what cannot be
+    /// read is dropped and counted — so they came from reading the stream as
+    /// text. A two-byte code whose low byte is `0xE4` is not valid UTF-8, and
+    /// the mark replaced it before the decoder ever saw it.
+    #[test]
+    fn a_literal_string_of_raw_bytes_survives_the_way_in() {
+        let mut pdf: Vec<u8> = b"%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n".to_vec();
+        pdf.extend_from_slice(b"2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.extend_from_slice(
+            b"3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        // «BT /F1 12 Tf (<00><E4><00><F6>) Tj ET» with the bytes written raw, as
+        // a real file writes them.
+        let mut stream: Vec<u8> = b"BT /F1 12 Tf (".to_vec();
+        stream.extend_from_slice(&[0x00, 0xE4, 0x00, 0xF6]);
+        stream.extend_from_slice(b") Tj ET");
+        pdf.extend_from_slice(format!("4 0 obj\n<< /Length {} >>\nstream\n", stream.len()).as_bytes());
+        pdf.extend_from_slice(&stream);
+        pdf.extend_from_slice(b"\nendstream\nendobj\n");
+        pdf.extend_from_slice(
+            b"5 0 obj\n<< /Type/Font /Subtype/Type0 /Encoding/Identity-H /ToUnicode 6 0 R >>\nendobj\n",
+        );
+        let cmap = "/CIDInit /ProcSet findresource begin\n2 beginbfchar\n<00E4> <00E4>\n<00F6> <00F6>\nendbfchar\nend";
+        pdf.extend_from_slice(
+            format!("6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n", cmap.len()).as_bytes(),
+        );
+        pdf.extend_from_slice(b"trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(&pdf).expect("the bytes name two characters, and the table says which");
+        assert_eq!(out.text.trim(), "äö", "the stream was read as text: {:?}", out.text);
+    }
+
+    /// And the way in does not change a page of plain ASCII by one character.
+    #[test]
+    fn plain_text_is_not_touched_by_the_way_in() {
+        let pdf = pdf_with_pages(&["Kunde: Nordstern Consulting GmbH", "Seite zwei"]);
+        let out = read(&pdf).expect("read");
+        assert_eq!(out.pages, 2);
+        assert!(out.text.contains("Nordstern Consulting GmbH"));
+        assert!(out.text.contains("Seite zwei"));
+    }
+
+    /// A simple font that remaps its glyphs, with the table that says what they
+    /// mean.
+    ///
+    /// Measured on a 146-page book of German tax terms: eight fonts, four of
+    /// them remapped by `/Differences` and **every one of the four carrying its
+    /// own `/ToUnicode`**. The reader refused page 1 — a cover page with fifteen
+    /// remapped glyph names — and with it all 146 pages, while the answer was
+    /// in the file the whole time.
+    #[test]
+    fn a_remapped_font_is_read_by_its_own_table() {
+        let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        let stream = "BT /F1 12 Tf <414243> Tj ET";
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+            stream.len()
+        ));
+        pdf.push_str(
+            "5 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/AGaramondPro \
+             /Encoding << /Differences [65 /f_i 66 /one.lt 67 /arrowright] >> /ToUnicode 6 0 R >>\nendobj\n",
+        );
+        // One byte to a code, because a simple font writes one.
+        let cmap = "/CIDInit /ProcSet findresource begin\n3 beginbfchar\n<41> <0046>\n<42> <0031>\n<43> <2192>\nendbfchar\nend";
+        pdf.push_str(&format!(
+            "6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n",
+            cmap.len()
+        ));
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(pdf.as_bytes()).expect("the font says what its glyphs mean");
+        assert_eq!(out.text.trim(), "F1→", "the table was not used: {:?}", out.text);
+    }
+
+    /// And when it carries no table, the refusal stands: we do not read a
+    /// remapped font by guessing what its glyph names meant.
+    #[test]
+    fn a_remapped_font_with_no_table_is_still_refused() {
+        let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        let stream = "BT /F1 12 Tf (ABC) Tj ET";
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+            stream.len()
+        ));
+        pdf.push_str(
+            "5 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/AGaramondPro \
+             /Encoding << /Differences [65 /f_i] >> >>\nendobj\n",
+        );
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let e = read(pdf.as_bytes()).expect_err("a remapped font with no table is refused");
+        assert!(matches!(error_of(&e), Some(Refusal::UnreadableStructure { page: 1 })));
+    }
+
+    /// The other silent hole: codes the table never mentions at all.
+    ///
+    /// They looked up as nothing and were dropped — no character, no count, no
+    /// word about them. A page made only of those came out empty and was
+    /// refused as «a picture of a page», which tells the person something that
+    /// is not true about their document.
+    #[test]
+    fn codes_the_table_never_mentions_are_counted_not_dropped() {
+        let pdf = pdf_with_map("00010002000300040005", &[("00FF", "0041")]);
+        let e = read(&pdf).expect_err("nothing on the page could be read");
+        match error_of(&e) {
+            Some(Refusal::UnsupportedEncoding { page, readable_percent }) => {
+                assert_eq!(page, 1);
+                assert_eq!(readable_percent, 0, "none of it decoded, and the number says so");
+            }
+            other => panic!("refused as {other:?}, which is not what happened"),
+        }
+    }
+
+    /// A two-byte font's literal string holds codes, not bytes.
+    ///
+    /// Measured on two real documents before it was believed: every unreadable
+    /// character on the refused pages was a NUL — 578 of 1225 on one, 174 of
+    /// 841 on the other — because the high byte of each code was looked up on
+    /// its own and an identity table answers code 0 with U+0000.
+    #[test]
+    fn a_literal_string_in_a_two_byte_font_is_read_in_pairs() {
+        let mut fonts = Fonts::default();
+        let mut map = BTreeMap::new();
+        // What an identity /ToUnicode really says about code 0.
+        map.insert(0x0000, "\u{0}".to_string());
+        map.insert(0x0041, "K".to_string());
+        map.insert(0x0042, "L".to_string());
+        fonts.maps.insert("F1".to_string(), FontMap { table: map, two_byte: true });
+
+        let mut out = Vec::new();
+        let text = decode(&[0x00, b'A', 0x00, b'B'], "F1", &fonts, &mut out);
+
+        assert_eq!(
+            text, "KL",
+            "the codes were read one byte at a time, so every other character came out a NUL"
+        );
+        assert!(out.is_empty(), "nothing here is unmappable");
+    }
+
+    /// Measured: ranges of 897, 8125 and 65535 codes in three real documents.
+    /// The reader stopped at 513 and the rest of the page came out as holes.
+    #[test]
+    fn a_long_bfrange_maps_all_of_itself() {
+        let cmap = "1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n\
+                    1 beginbfrange\n<0000> <0FFF> <0041>\nendbfrange\n";
+        let map = parse_to_unicode(cmap);
+        // 4096 codes, less the 33 whose destination lands in the control block
+        // at U+007F..U+009F: those name no character, so they are not mappings.
+        assert_eq!(map.len(), 4096 - 33, "a 4096-code range came back cut short");
+        let last = char::from_u32(0x0041 + 0x0FFF).map(|c| c.to_string());
+        assert_eq!(map.get(&0x0FFF), last.as_ref(), "the last code of the range is not where it should be");
+    }
+
+    /// Measured: 6 to 11 lines per map in a real document carry more than one
+    /// entry. The reader read the first on each line and dropped the rest.
+    #[test]
+    fn several_entries_on_one_line_are_all_read() {
+        let cmap = "2 beginbfchar <01> <0041> <02> <0042> endbfchar\n\
+                    2 beginbfrange <10> <11> <0061> <20> <21> <0071> endbfrange\n";
+        let map = parse_to_unicode(cmap);
+        assert_eq!(map.get(&0x01).map(String::as_str), Some("A"));
+        assert_eq!(map.get(&0x02).map(String::as_str), Some("B"), "the second entry on the line was dropped");
+        assert_eq!(map.get(&0x11).map(String::as_str), Some("b"));
+        assert_eq!(map.get(&0x21).map(String::as_str), Some("r"), "the second range on the line was dropped");
+    }
+
+    /// `<low> <high> [<d1> <d2> <d3>]` names a destination for each code, and
+    /// they need not be consecutive. Read as a single destination it does not
+    /// leave a hole — it puts **the wrong character** on the screen.
+    #[test]
+    fn a_bfrange_with_a_list_of_destinations_takes_each_one() {
+        let cmap = "1 beginbfrange\n<01> <03> [<0041> <0062> <0043>]\nendbfrange\n";
+        let map = parse_to_unicode(cmap);
+        assert_eq!(map.get(&0x01).map(String::as_str), Some("A"));
+        assert_eq!(map.get(&0x02).map(String::as_str), Some("b"), "the second destination was invented, not read");
+        assert_eq!(map.get(&0x03).map(String::as_str), Some("C"));
     }
 
     #[test]

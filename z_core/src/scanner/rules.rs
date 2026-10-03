@@ -122,6 +122,9 @@ fn kind_word(kind: Kind) -> &'static str {
         Kind::TaxId => "tax ID",
         Kind::CustomerNo => "customer number",
         Kind::Address => "address",
+        Kind::IdCard => "identity card number",
+        Kind::Birthdate => "date of birth",
+        Kind::Vehicle => "vehicle plate",
         Kind::Contract => "contract",
         Kind::Project => "project",
         Kind::Client => "client",
@@ -192,13 +195,26 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
         .max()
         .unwrap_or(1)
         .clamp(1, 4);
+    // The last word of every label this set knows, so the loop below can leave
+    // ordinary prose alone in one comparison.
+    let tails: Vec<&str> = rules
+        .iter()
+        .filter_map(|r| r.label.split_whitespace().last())
+        .collect();
     let words = words(text);
     let mut out = Vec::new();
     for (i, word) in words.iter().enumerate() {
-        if !word.text.ends_with(':') {
+        // A label is a label with a colon or without one. The owner's letter of
+        // 3 October writes «mit der Kundennummer 7733-9120» and «Steuernummer
+        // 143/815/08154» and «USt-IdNr. DE123456789», and the colon was the one
+        // thing standing between those three values and being protected. What
+        // keeps this from firing on ordinary prose is the validator: the word
+        // after the label still has to be shaped like the value the row names.
+        let tail = crate::text::nfc(word.text.trim_end_matches(':')).to_lowercase();
+        if !tails.contains(&tail.as_str()) {
             continue;
         }
-        // Read the label backwards from the colon: «person:» alone, then
+        // Read the label backwards from its last word: «person:» alone, then
         // «contact person:», and keep the longest any rule claims. A label of
         // several words must not cross a line break.
         let mut best: Option<(&LabelRule, usize, String)> = None;
@@ -218,8 +234,25 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             }
         }
         let Some((rule, _label_start, written)) = best else { continue };
+        // A label with a colon is a form. A label without one is a word in a
+        // sentence until what follows it is shaped like a value.
+        //
+        // Measured on 146 pages of German tax prose: «Geburtsdatum und seine
+        // Steuernummer» protected the word «und» as a date of birth, «in
+        // Rechnung gestellt» offered «gestellt» as a contract, «E-Mail
+        // versenden» protected «versenden». Seven values protected on that
+        // book and three of them were ordinary German words.
+        let wrote_colon = word.text.ends_with(':');
         let Boundary::AfterLabelSameField = rule.boundary;
-        let first = i + 1;
+        let mut first = i + 1;
+        // «Rechnung Nr. 2026-04471», «Kunden-Nr 7733» — a number word between
+        // the label and the value belongs to the label, not to the value.
+        if let Some(next) = words.get(first) {
+            let n = crate::text::nfc(bare(next.text)).to_lowercase();
+            if !next.newline_before && matches!(n.as_str(), "nr" | "nr." | "-nr" | "-nr." | "nummer") {
+                first += 1;
+            }
+        }
         let mut last = None;
         let mut j = first;
         // An honorific directly after the label is not part of the name.
@@ -237,6 +270,17 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             }
         }
         let value_start = j;
+        if !wrote_colon {
+            // Without a colon the value must carry a digit: an identifier, a
+            // number, a date. A plain word never qualifies, in any language
+            // whose nouns are capitalised.
+            let shaped = words
+                .get(value_start)
+                .is_some_and(|w| !w.newline_before && bare(w.text).chars().any(|c| c.is_ascii_digit()));
+            if !shaped {
+                continue;
+            }
+        }
         while let Some(next) = words.get(j) {
             // The field ends at a line break, or where another label begins —
             // this is what stops «IBAN:» from eating the «BIC:» line under it.

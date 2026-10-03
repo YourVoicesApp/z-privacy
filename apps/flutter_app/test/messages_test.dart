@@ -105,6 +105,25 @@ void main() {
     }
   });
 
+  // What the owner saw on 3 October: a Swedish annual report whose page 5 is
+  // four fifths readable, and a screen that said «Page 5 could not be read as
+  // text.» He read that as «it thinks the page is an image». The core knew
+  // more than the screen passed on — the share that decoded, and what to do
+  // about it — and both belong in the sentence.
+  test('a page that half decoded says how much, and what to do', () {
+    const refusal = Refusal.unsupportedEncoding(page: 5, readablePercent: 79);
+    final said = humanMessage(
+      const ApiError.documentRefused(reason: refusal, detail: ''),
+    );
+    expect(said, contains('5'), reason: 'the page is in the sentence');
+    expect(said, contains('79'), reason: 'the share that decoded is what the core measured');
+    expect(
+      said.toLowerCase(),
+      anyOf(contains('save'), contains('paste')),
+      reason: 'a refusal without a next move leaves the person with nothing to do',
+    );
+  });
+
   test('the one we measured live now reads as a sentence', () {
     // The exact case from the human run and the re-triage: pressing Connect
     // with an empty key used to print

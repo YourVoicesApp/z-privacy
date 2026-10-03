@@ -118,8 +118,14 @@ String _document(Refusal reason) => switch (reason) {
             'be read — and Z Privacy will not import a document it cannot see.'
       : 'This PDF is $pages pages of pictures with no text in them, so nothing '
             'could be read.',
-  Refusal_UnsupportedEncoding(:final page) =>
-    'Page $page could not be read as text.',
+  // The core measured two things here and the screen used to pass on neither:
+  // how much of the page decoded, and what a person can do about it. Read
+  // without them — «Page 5 could not be read as text» — it sounds like the app
+  // took a page of words for a picture, which is what the owner read it as.
+  Refusal_UnsupportedEncoding(:final page, :final readablePercent) =>
+    'Only $readablePercent% of page $page decoded into characters, so this '
+        'document is refused rather than half-read. Open it and save it as '
+        'text, or paste the text in.',
   Refusal_UnreadableStructure(:final page) =>
     'Page $page is built in a way this build cannot read.',
   _ => 'This file could not be opened safely.',

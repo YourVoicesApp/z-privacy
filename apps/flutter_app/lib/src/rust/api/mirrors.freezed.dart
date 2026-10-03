@@ -3462,6 +3462,311 @@ String toString() {
 
 
 /// @nodoc
+mixin _$ReportSubject {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportSubject);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ReportSubject()';
+}
+
+
+}
+
+/// @nodoc
+class $ReportSubjectCopyWith<$Res>  {
+$ReportSubjectCopyWith(ReportSubject _, $Res Function(ReportSubject) __);
+}
+
+
+/// Adds pattern-matching-related methods to [ReportSubject].
+extension ReportSubjectPatterns on ReportSubject {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ReportSubject_Imported value)?  imported,TResult Function( ReportSubject_Refused value)?  refused,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case ReportSubject_Imported() when imported != null:
+return imported(_that);case ReportSubject_Refused() when refused != null:
+return refused(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ReportSubject_Imported value)  imported,required TResult Function( ReportSubject_Refused value)  refused,}){
+final _that = this;
+switch (_that) {
+case ReportSubject_Imported():
+return imported(_that);case ReportSubject_Refused():
+return refused(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ReportSubject_Imported value)?  imported,TResult? Function( ReportSubject_Refused value)?  refused,}){
+final _that = this;
+switch (_that) {
+case ReportSubject_Imported() when imported != null:
+return imported(_that);case ReportSubject_Refused() when refused != null:
+return refused(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( SessionId session)?  imported,TResult Function( String name,  int bytes,  Refusal refusal)?  refused,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case ReportSubject_Imported() when imported != null:
+return imported(_that.session);case ReportSubject_Refused() when refused != null:
+return refused(_that.name,_that.bytes,_that.refusal);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( SessionId session)  imported,required TResult Function( String name,  int bytes,  Refusal refusal)  refused,}) {final _that = this;
+switch (_that) {
+case ReportSubject_Imported():
+return imported(_that.session);case ReportSubject_Refused():
+return refused(_that.name,_that.bytes,_that.refusal);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( SessionId session)?  imported,TResult? Function( String name,  int bytes,  Refusal refusal)?  refused,}) {final _that = this;
+switch (_that) {
+case ReportSubject_Imported() when imported != null:
+return imported(_that.session);case ReportSubject_Refused() when refused != null:
+return refused(_that.name,_that.bytes,_that.refusal);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class ReportSubject_Imported extends ReportSubject {
+  const ReportSubject_Imported({required this.session}): super._();
+  
+
+ final  SessionId session;
+
+/// Create a copy of ReportSubject
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ReportSubject_ImportedCopyWith<ReportSubject_Imported> get copyWith => _$ReportSubject_ImportedCopyWithImpl<ReportSubject_Imported>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportSubject_Imported&&(identical(other.session, session) || other.session == session));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,session);
+
+@override
+String toString() {
+  return 'ReportSubject.imported(session: $session)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ReportSubject_ImportedCopyWith<$Res> implements $ReportSubjectCopyWith<$Res> {
+  factory $ReportSubject_ImportedCopyWith(ReportSubject_Imported value, $Res Function(ReportSubject_Imported) _then) = _$ReportSubject_ImportedCopyWithImpl;
+@useResult
+$Res call({
+ SessionId session
+});
+
+
+
+
+}
+/// @nodoc
+class _$ReportSubject_ImportedCopyWithImpl<$Res>
+    implements $ReportSubject_ImportedCopyWith<$Res> {
+  _$ReportSubject_ImportedCopyWithImpl(this._self, this._then);
+
+  final ReportSubject_Imported _self;
+  final $Res Function(ReportSubject_Imported) _then;
+
+/// Create a copy of ReportSubject
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? session = null,}) {
+  return _then(ReportSubject_Imported(
+session: null == session ? _self.session : session // ignore: cast_nullable_to_non_nullable
+as SessionId,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ReportSubject_Refused extends ReportSubject {
+  const ReportSubject_Refused({required this.name, required this.bytes, required this.refusal}): super._();
+  
+
+ final  String name;
+ final  int bytes;
+ final  Refusal refusal;
+
+/// Create a copy of ReportSubject
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ReportSubject_RefusedCopyWith<ReportSubject_Refused> get copyWith => _$ReportSubject_RefusedCopyWithImpl<ReportSubject_Refused>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportSubject_Refused&&(identical(other.name, name) || other.name == name)&&(identical(other.bytes, bytes) || other.bytes == bytes)&&(identical(other.refusal, refusal) || other.refusal == refusal));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,name,bytes,refusal);
+
+@override
+String toString() {
+  return 'ReportSubject.refused(name: $name, bytes: $bytes, refusal: $refusal)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ReportSubject_RefusedCopyWith<$Res> implements $ReportSubjectCopyWith<$Res> {
+  factory $ReportSubject_RefusedCopyWith(ReportSubject_Refused value, $Res Function(ReportSubject_Refused) _then) = _$ReportSubject_RefusedCopyWithImpl;
+@useResult
+$Res call({
+ String name, int bytes, Refusal refusal
+});
+
+
+$RefusalCopyWith<$Res> get refusal;
+
+}
+/// @nodoc
+class _$ReportSubject_RefusedCopyWithImpl<$Res>
+    implements $ReportSubject_RefusedCopyWith<$Res> {
+  _$ReportSubject_RefusedCopyWithImpl(this._self, this._then);
+
+  final ReportSubject_Refused _self;
+  final $Res Function(ReportSubject_Refused) _then;
+
+/// Create a copy of ReportSubject
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? name = null,Object? bytes = null,Object? refusal = null,}) {
+  return _then(ReportSubject_Refused(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,bytes: null == bytes ? _self.bytes : bytes // ignore: cast_nullable_to_non_nullable
+as int,refusal: null == refusal ? _self.refusal : refusal // ignore: cast_nullable_to_non_nullable
+as Refusal,
+  ));
+}
+
+/// Create a copy of ReportSubject
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$RefusalCopyWith<$Res> get refusal {
+  
+  return $RefusalCopyWith<$Res>(_self.refusal, (value) {
+    return _then(_self.copyWith(refusal: value));
+  });
+}
+}
+
+/// @nodoc
 mixin _$UndoOutcome {
 
 

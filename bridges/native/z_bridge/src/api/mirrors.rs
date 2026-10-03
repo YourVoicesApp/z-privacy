@@ -396,6 +396,13 @@ pub enum _Kind {
     Contract,
     Project,
     Client,
+    /// A national identity card number — `Personalausweisnummer L01X00T47`.
+    IdCard,
+    /// A date of birth. The date alone: «geboren am» stays in the clear, as a
+    /// salutation does, so the sentence still reads.
+    Birthdate,
+    /// A vehicle's registration plate.
+    Vehicle,
     Custom,
 }
 
@@ -470,6 +477,20 @@ pub enum _Refusal {
     TookTooLong { millis: u32 },
     /// Empty, or nothing but whitespace: there is nothing to protect.
     EmptyDocument,
+}
+
+#[frb(mirror(ReportSubject))]
+pub enum _ReportSubject {
+    /// A document that was imported. Every number comes from the core's own
+    /// state; the screen passes nothing but the session.
+    Imported { session: SessionId },
+    /// A file that was not imported. The screen knows these three things and
+    /// the core knows nothing about it at all.
+    Refused {
+        name: String,
+        bytes: u32,
+        refusal: Refusal,
+    },
 }
 
 #[frb(mirror(Place))]

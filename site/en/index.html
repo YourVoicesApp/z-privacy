@@ -66,7 +66,8 @@
     <p class="shalab" dir="ltr">SHA-256</p>
     <p class="sha" dir="ltr">7fac86b88967272a0cdb625fd7d85fb5f6853c579fa1ddfaee456bfa2a6013d7</p>
     <p class="note">One file, 12 MB. It installs into your own user account, so no administrator password is asked for. Windows 10 or 11, 64-bit.</p>
-    <p class="honest">This is the first Windows version. The file-protection layer that guards the vault on Linux is not in it yet, and the installer is not yet signed, so Windows will ask you to allow it before it runs. Further versions will follow.</p>
+    <p class="note">Windows will warn you before it runs, because the installer is not signed with a certificate: choose <code>More info</code>, then <code>Run anyway</code>.</p>
+    <p class="honest">This is the first Windows version. The vault's own two files are created with an access list that grants nothing to any other account and inherits nothing from the folder above them — measured on Windows itself, where all six storage promises are checked on every build. The folder that holds them is not yet narrowed in the same way, and nobody has yet run the application itself on a Windows machine but ours. Further versions will follow.</p>
   </section>
 
   <section id="verify" class="card soft" aria-labelledby="h-ver">

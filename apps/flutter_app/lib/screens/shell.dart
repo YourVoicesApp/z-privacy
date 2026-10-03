@@ -10,6 +10,7 @@ import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/first_run.dart';
@@ -58,6 +59,12 @@ class _ShellState extends State<ZShell> {
   late final Ground _ground = widget.ground ?? Ground();
   Workbench? _bench;
   String? _trouble;
+
+  /// The report the core wrote about the file it would not open. Built at the
+  /// moment of the refusal, because that is when the name and the size are
+  /// still in hand — and a person whose document will not open needs something
+  /// they can send that is not the document.
+  String? _troubleReport;
   bool _vaultOpen = false;
   bool _settingsOpen = false;
   /// Passed for this run. The lasting answer is in the settings, which live in
@@ -169,7 +176,11 @@ class _ShellState extends State<ZShell> {
       if (file == null || !mounted) return;
       kind = _kinds[file.name.split('.').last.toLowerCase()];
       if (kind == null) {
-        setState(() => _trouble = 'This build reads PDF, Word and text files. «${file!.name}» is none of those.');
+        setState(() {
+          _trouble = 'This build reads PDF, Word and text files. «${file!.name}» is none of those.';
+          // Nothing was read, so the core has nothing to report about it.
+          _troubleReport = null;
+        });
         return;
       }
     }
@@ -193,11 +204,36 @@ class _ShellState extends State<ZShell> {
       setState(() {
         _bench = bench;
         _trouble = null;
+        _troubleReport = null;
       });
     } on ApiError catch (e) {
       // A refusal is news, not a failure: «a scanned PDF with no text layer is
       // refused with the reason, not silently imported empty».
-      setState(() => _trouble = humanMessage(e));
+      final report = await _reportOfRefusal(e, file);
+      if (!mounted) return;
+      setState(() {
+        _trouble = humanMessage(e);
+        _troubleReport = report;
+      });
+    }
+  }
+
+  /// Ask the core what it would say about a file it refused. The screen works
+  /// out none of it: the name and the size go in, the sentence comes back.
+  Future<String?> _reportOfRefusal(ApiError error, XFile? file) async {
+    if (error is! ApiError_DocumentRefused || file == null) return null;
+    try {
+      final size = await file.length();
+      return await z.importReport(
+        subject: ReportSubject.refused(
+          name: file.name,
+          bytes: size > 0xFFFFFFFF ? 0xFFFFFFFF : size,
+          refusal: error.reason,
+        ),
+      );
+    } on ApiError {
+      // A report about a refusal must never become a second refusal.
+      return null;
     }
   }
 
@@ -278,8 +314,16 @@ class _ShellState extends State<ZShell> {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => setState(() => _trouble = null),
-                    child: Trouble(_trouble!),
+                    onTap: () => setState(() {
+                      _trouble = null;
+                      _troubleReport = null;
+                    }),
+                    child: Trouble(
+                      _trouble!,
+                      onCopyReport: _troubleReport == null
+                          ? null
+                          : () => Clipboard.setData(ClipboardData(text: _troubleReport!)),
+                    ),
                   ),
                 ),
               ),

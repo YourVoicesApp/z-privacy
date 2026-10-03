@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
     Explanation, Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId,
-    ProviderRow, RevealedToken, RevealedValue, SelectionView,
+    ProviderRow, ReportSubject, RevealedToken, RevealedValue, SelectionView,
     RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome,
     TaughtReach, TokenRow, UndoOutcome,
 };
@@ -106,6 +106,8 @@ pub(crate) fn import_document(
         s.places = extracted.places;
         s.pages = extracted.pages;
         s.doc_name = name;
+        s.doc_bytes = bytes.len().min(u32::MAX as usize) as u32;
+        s.readable = extracted.readable;
         s.doc_kind = kind;
         s.protections.clear();
         s.findings.clear();
@@ -116,6 +118,114 @@ pub(crate) fn import_document(
     .ok_or(ApiError::InvalidSession)?;
     crate::session::bump_truth();
     view
+}
+
+/// The report a person can copy and send when something is wrong.
+///
+/// **Numbers only.** Not one character of the document, and not one character of
+/// anything the scanner found — the kinds are counted by name, never shown. The
+/// use of it is a tester in another country who cannot send us the document
+/// itself: this is what can be said about a file without saying anything that is
+/// in it. Written here because the screen must not be able to invent a number
+/// of its own (G11, and the behaviour board's rule that no figure on screen is
+/// worked out in Dart).
+pub(crate) fn import_report(subject: ReportSubject) -> ApiResult<String> {
+    let mut out = String::new();
+    out.push_str("Z Privacy — document report\n");
+    out.push_str(&format!("{:<12}{}\n", "build", crate::core_version()));
+    match subject {
+        ReportSubject::Refused {
+            name,
+            bytes,
+            refusal,
+        } => {
+            out.push_str(&format!("{:<12}{}\n", "file", file_extension(&name)));
+            out.push_str(&format!("{:<12}{} KiB\n", "size", bytes / 1024));
+            // The refusal by its own name and its own numbers, as the core wrote
+            // it — a sentence translated for a screen is not what a report needs.
+            out.push_str(&format!("{:<12}{refusal:?}\n", "refused"));
+        }
+        ReportSubject::Imported { session } => {
+            let report = with_session(session.id, |s| {
+                let text = s.original_str().to_string();
+                let mut auto: BTreeMap<String, u32> = BTreeMap::new();
+                let mut waiting: BTreeMap<String, u32> = BTreeMap::new();
+                for finding in &s.findings {
+                    let row = if finding.state == MarkState::Protected {
+                        &mut auto
+                    } else {
+                        &mut waiting
+                    };
+                    *row.entry(format!("{:?}", finding.kind)).or_default() += 1;
+                }
+                (
+                    s.protections.len(),
+                    s.doc_name.clone(),
+                    s.doc_bytes,
+                    s.doc_kind,
+                    s.pages,
+                    s.readable,
+                    text.split_whitespace().count(),
+                    text.chars().count(),
+                    auto,
+                    waiting,
+                )
+            })
+            .ok_or(ApiError::InvalidSession)?;
+            let (tokens, name, bytes, kind, pages, readable, words, chars, auto, waiting) = report;
+            out.push_str(&format!("{:<12}{}\n", "file", file_extension(&name)));
+            out.push_str(&format!("{:<12}{} KiB\n", "size", bytes / 1024));
+            out.push_str(&format!("{:<12}{kind:?}\n", "kind"));
+            out.push_str(&format!("{:<12}{pages}\n", "pages"));
+            out.push_str(&format!("{:<12}{words}\n", "words"));
+            out.push_str(&format!("{:<12}{chars}\n", "characters"));
+            out.push_str(&format!("{:<12}{readable}%\n", "readable"));
+            out.push_str(&format!(
+                "{:<12}{:<5}{}\n",
+                "protected",
+                auto.values().sum::<u32>(),
+                by_kind(&auto)
+            ));
+            out.push_str(&format!(
+                "{:<12}{:<5}{}\n",
+                "waiting",
+                waiting.values().sum::<u32>(),
+                by_kind(&waiting)
+            ));
+            out.push_str(&format!("{:<12}{tokens}\n", "tokens"));
+        }
+    }
+    Ok(out)
+}
+
+/// `Person ×7, Address ×3` — the kinds counted, with nothing of what they hold.
+fn by_kind(counts: &BTreeMap<String, u32>) -> String {
+    if counts.is_empty() {
+        return String::new();
+    }
+    let mut rows: Vec<(&String, &u32)> = counts.iter().collect();
+    // Most of them first: a report is read top to bottom.
+    rows.sort_by(|a, b| b.1.cmp(a.1).then(a.0.cmp(b.0)));
+    let named: Vec<String> = rows.iter().map(|(kind, n)| format!("{kind} ×{n}")).collect();
+    format!("({})", named.join(", "))
+}
+
+/// The file's **extension**, and nothing else of what it is called.
+///
+/// This began as the file name, with the path stripped off — and the first test
+/// of the report caught the mistake: the letter is called `Brief_Weber.txt`, so
+/// the report named the person it was written to. A German desktop is full of
+/// `Rechnung_Müller.pdf` and `Vertrag Nordstern GmbH.docx`. A report meant to be
+/// safe to paste into an e-mail cannot carry a file name, and the only part of
+/// one that helps us is the extension.
+fn file_extension(name: &str) -> String {
+    let last = name.rsplit(['/', '\\']).next().unwrap_or(name);
+    match last.rsplit_once('.') {
+        Some((before, ext)) if !before.is_empty() && !ext.is_empty() && ext.len() <= 8 => {
+            format!(".{}", ext.to_lowercase())
+        }
+        _ => "(no extension)".to_string(),
+    }
 }
 
 pub(crate) fn document_view(session: SessionId) -> ApiResult<DocumentView> {
@@ -1423,7 +1533,29 @@ fn rescan_with(
         } else {
             match c.confidence {
                 scanner::Confidence::Auto => {
-                    match protect_range(s, c.start, c.end, c.kind, Scope::Conversation, c.source, &c.source_detail, act, false) {
+                    // `Scope::Conversation` means every place in this document,
+                    // and that is what it now does when a layer protects as well
+                    // as when a person answers. The owner's letter is why: his
+                    // own name is written three times and only the signature
+                    // carries the proof, so protecting the proven one and
+                    // leaving the others was how his name stayed in the clear
+                    // after he had answered every question the app asked.
+                    let selected = s.original_str().get(c.start..c.end).map(str::to_string);
+                    let mut here = None;
+                    if let Some(selected) = selected {
+                        for (from, to) in occurrences(s.original_str(), &selected) {
+                            if s.protections.iter().any(|p| p.start < to && from < p.end) {
+                                continue;
+                            }
+                            let got = protect_range(
+                                s, from, to, c.kind, Scope::Conversation, c.source, &c.source_detail, act, false,
+                            );
+                            if from == c.start {
+                                here = got;
+                            }
+                        }
+                    }
+                    match here {
                         Some(_) => MarkState::Protected,
                         None => continue,
                     }

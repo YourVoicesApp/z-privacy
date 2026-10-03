@@ -363,18 +363,24 @@ void main() {
         reason: 'the scan created protections, so undo would actually undo',
       );
 
-      // READY — a selection the core recognises. The kind is the pack's, and the
-      // count is the core's; neither is worked out in Dart.
+      // READY — a selection the core recognises and has not protected. Since
+      // 3 October a name after a salutation is protected on sight, so the one
+      // thing in this document that is still only a guess is the company: a run
+      // ending in «GmbH» can be a company or a sentence about companies.
+      final companyStart = _doc.indexOf('Nordstern Consulting GmbH');
       await tester.runAsync(() async {
         await bench.select(
-          Span(start: nameStart, end: nameStart + 'Thomas Müller'.length),
+          Span(
+            start: companyStart,
+            end: companyStart + 'Nordstern Consulting GmbH'.length,
+          ),
         );
       });
       await tester.pumpAndSettle();
       expect(protectStateOf(bench.selected), ProtectState.ready);
       expect(
         bench.selected!.kind,
-        Kind.person,
+        Kind.company,
         reason: 'the pack guessed, not the screen',
       );
       expect(find.text('Select text, then Protect'), findsNothing);
@@ -385,7 +391,7 @@ void main() {
       await tester.runAsync(() async {
         outcome = await bench.protectSelection(
           scope: Scope.conversation,
-          kind: Kind.person,
+          kind: Kind.company,
           allMatches: false,
         );
       });

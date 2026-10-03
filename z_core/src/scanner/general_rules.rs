@@ -228,8 +228,13 @@ fn phones(text: &str, out: &mut Vec<Candidate>) {
     let mut i = 0usize;
     while i < bytes.len() {
         let starts_intl = bytes.get(i) == Some(&b'+') && bytes.get(i + 1).is_some_and(|b| b.is_ascii_digit());
+        // No telephone number begins with three zeros. Measured in a book of
+        // tax tables whose columns ran together — «6.000.000193030bis einschl.
+        // 13.000.000233550» — where the piece «000.000274050» was offered as
+        // one. «00» keeps working: that is how a country code is dialled.
         let starts_local = bytes.get(i) == Some(&b'0')
             && bytes.get(i + 1).is_some_and(|b| b.is_ascii_digit())
+            && bytes.get(i..i + 3) != Some(b"000".as_slice())
             && boundary_before(bytes, i);
         if !(starts_intl || starts_local) {
             i += 1;

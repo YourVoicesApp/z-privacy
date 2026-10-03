@@ -46,8 +46,10 @@ fn main() {
                 continue;
             }
         };
+        let started = std::time::Instant::now();
         match z_core::api::import_document(session, shown.to_string(), bytes.clone(), kind) {
             Ok(view) => {
+                let read_ms = started.elapsed().as_millis();
                 let words = view.text.split_whitespace().count();
                 // How much of it reads as text at all. A wrong font mapping shows
                 // up here as a low number, without anything being printed.
@@ -61,8 +63,27 @@ fn main() {
                     let found = view.text.to_lowercase().contains(&word.to_lowercase());
                     format!("  «{word}»: {}", if found { "found" } else { "MISSING" })
                 });
+                // And what the scanner makes of it: how many it protects by
+                // itself, how many it offers, and how many tokens the text that
+                // would leave actually carries. Counts, never the things counted
+                // — a word wrongly protected shows up as a token count that is
+                // far too high, which is how «und» was caught on 3 October.
+                let scanning = std::time::Instant::now();
+                let (auto, suggest, tokens) = match z_core::api::scan(session) {
+                    Ok(report) => {
+                        let tokens = z_core::api::build_payload(session)
+                            .and_then(z_core::api::payload_view)
+                            .map(|p| p.text.matches("__Z_").count().to_string())
+                            .unwrap_or_else(|_| "—".to_string());
+                        (report.auto.to_string(), report.suggested.to_string(), tokens)
+                    }
+                    Err(_) => ("—".to_string(), "—".to_string(), "—".to_string()),
+                };
+                let scan_ms = scanning.elapsed().as_millis();
                 println!(
-                    "{shown:>44}  {:>8} KiB  {:>3} pages  {:>6} words  {:>7} chars  {:>3}% readable  ok{}",
+                    "{shown:>44}  {:>8} KiB  {:>4} pages  {:>7} words  {:>8} chars  {:>3}% readable  \
+                     {auto:>4} protected  {suggest:>4} waiting  {tokens:>6} tokens  \
+                     read {read_ms:>6} ms  scan {scan_ms:>6} ms{}",
                     bytes.len() / 1024,
                     view.pages,
                     words,
@@ -71,10 +92,14 @@ fn main() {
                     expected.unwrap_or_default()
                 );
             }
-            Err(ApiError::DocumentRefused { reason, .. }) => {
+            Err(ApiError::DocumentRefused { reason, detail }) => {
+                // The reason names a font or a filter, which is the structure of
+                // the file and not a word of anybody's text — and it is the whole
+                // use of this probe when a document is refused.
                 println!(
-                    "{shown:>44}  {:>8} KiB  refused: {reason:?}",
-                    bytes.len() / 1024
+                    "{shown:>44}  {:>8} KiB  refused: {reason:?}\n{:>46}{detail}",
+                    bytes.len() / 1024,
+                    ""
                 );
             }
             Err(other) => println!("{shown:>44}  —  {other}"),

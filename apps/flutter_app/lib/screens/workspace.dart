@@ -15,6 +15,7 @@
 // They are side by side and typographically identical on purpose. The whole
 // claim of this product is that a person can compare them.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -210,12 +211,16 @@ class _TopBar extends StatelessWidget {
               color: Zc.ink3,
             ),
             const SizedBox(width: 7),
-            Text(
-              doc.name.isEmpty ? 'Typed text' : doc.name,
-              style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                color: Zc.ink,
+            Flexible(
+              child: Text(
+                doc.name.isEmpty ? 'Typed text' : doc.name,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: Zc.ink,
+                ),
               ),
             ),
             const SizedBox(width: 9),
@@ -238,6 +243,17 @@ class _TopBar extends StatelessWidget {
                 ? Zc.river
                 : Zc.ink4,
           ),
+          // Numbers about this document, for a person who cannot send us the
+          // document itself. The core writes every line of it.
+          if (doc != null) ...[
+            const SizedBox(width: 14),
+            CopyReportButton(
+              compact: true,
+              onCopy: () async {
+                await Clipboard.setData(ClipboardData(text: await bench.reportText()));
+              },
+            ),
+          ],
         ],
       ),
     );

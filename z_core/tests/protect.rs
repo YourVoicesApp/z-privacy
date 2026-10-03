@@ -288,7 +288,14 @@ fn inspect_ready_offers_the_packs_own_guess_and_a_count() {
     assert!(!view.empty);
     assert_eq!(view.kind, Kind::Person, "the pack recognised a name, and the screen did not");
     assert_eq!(view.matches, 2, "«all matches» would take both places");
-    assert!(view.protected_as.is_none());
+    // Since 3 October a salutation is proof, so the scan has already protected
+    // this one and the screen is told by whom rather than being asked. The
+    // count stays 2: the other place carries the same token, because
+    // `Scope::Conversation` means every place in the document.
+    assert!(
+        view.protected_as.is_some(),
+        "a name after «Herr» is protected on sight now, and the view must say so"
+    );
     assert!(view.snaps_to.is_empty());
 }
 
