@@ -368,6 +368,24 @@ else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
 fi
 
+# ------------------------------------------------- the third golden
+# 734 pages of Austrian medical German: a code table with one page of doctors
+# in the middle. It holds both halves of the promise at once — the people are
+# protected without being asked, and the hundred thousand ICD-10 codes are left
+# alone. On 3 October it caught a title protected in place of a name, four
+# codes protected as people, and 28,853 chapter letters.
+# The owner's file, five megabytes, not in the repository: a skip, not a pass.
+DOC="${ZPRIVACY_THIRD_GOLDEN:-$HOME/Downloads/tysk1.pdf}"
+if [ -f "$DOC" ]; then
+  if cargo test --quiet --test the_third_golden >/dev/null 2>&1; then
+    pass "the third golden: the team page is protected, the code tables are not"
+  else
+    fail "the third golden: the team page is protected, the code tables are not (cargo test --test the_third_golden)"
+  fi
+else
+  skip "the third golden: the team page is protected, the code tables are not" "the document is not on this machine"
+fi
+
 # ------------------------------------------------- the second golden
 # The first golden is a letter we wrote. The second is 146 pages of public
 # German prose — the owner's own file, a megabyte of it, so it does not enter
@@ -417,6 +435,11 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_line_that_moves_down_separates the_other_ways_of_asking_for_a_new_line \
          an_object_stream_is_cut_in_bytes a_refusal_counts_the_pages \
          carries_the_numbers_and_none_of_the_words a_refused_file_still_has_a_report \
+         the_team_page_is_protected_and_the_code_tables_are_not \
+         an_icd_code_after_frau_is_not_a_person a_title_at_the_start_of_a_name \
+         a_title_with_no_name_after_it_is_nothing a_degree_after_the_name_is_left \
+         frau_as_an_ordinary_noun_names_nobody a_word_like_den_in_front_of_a_salutation \
+         an_austrian_title_is_stepped_over replaces_what_was_selected \
          salutation_stays_and_the_company \
          never_mentions_are_counted codes_with_no_characters; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then

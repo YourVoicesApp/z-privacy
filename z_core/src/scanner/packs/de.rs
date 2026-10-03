@@ -34,8 +34,24 @@ const PACK: &str = "de";
 
 /// Salutations and titles: what follows one of these is probably a person.
 const SALUTATIONS: &[&str] = &["Herr", "Herrn", "Frau", "Fr.", "Hr."];
-/// Titles that sit between the salutation and the name.
-const TITLES: &[&str] = &["Dr.", "Dr", "Prof.", "Prof", "Dipl.-Ing.", "Ing."];
+/// Titles that introduce a person, German and Austrian, as they are written.
+///
+/// Measured on a 734-page Austrian document whose team page is a column of
+/// doctors: not one of them was protected, because a title only counted when a
+/// salutation stood in front of it. In this writing the title **is** how a name
+/// is introduced — «Prim. Dr. Ludwig Neuner», «Ing. Mag. Alexander Wölfl» — so
+/// a title starts a name as well as sitting inside one.
+const TITLES: &[&str] = &[
+    "Dr.", "Dr", "Dr.in", "DDr.", "MMag.", "Mag.", "Mag", "Mag.a", "Prof.", "Prof",
+    "Univ.-Prof.", "Univ.-Doz.", "Priv.-Doz.", "PD", "Prim.", "Prim", "DI", "Dipl.-Ing.",
+    "Dipl.-Kfm.", "Ing.", "Bakk.",
+];
+/// The parts of a Latin title that never stand on their own: «Dr. med. univ.».
+/// Stepped over inside a chain, and never the start of one — in German every
+/// noun is capitalised, so «med. Abteilung» would otherwise name a person.
+const TITLE_PARTS: &[&str] = &["med.", "rer.", "nat.", "phil.", "techn.", "univ.", "h.c.", "mult."];
+/// Degrees that follow a name. They are not part of it and do not start one.
+const DEGREES: &[&str] = &["MBA", "MSc", "BSc", "BA", "MA", "LL.M.", "PhD", "MPH", "MAS", "CFA"];
 /// The legal forms a German company name ends with.
 const COMPANY_FORMS: &[&str] = &[
     "GmbH", "AG", "UG", "KG", "OHG", "GbR", "SE", "e.K.", "eG", "mbH", "KGaA",
@@ -124,6 +140,7 @@ pub(crate) fn scan(text: &str) -> Vec<Candidate> {
     let words = words(text);
     let mut out = Vec::new();
     salutations(&words, &mut out);
+    titled_names(&words, &mut out);
     signatures(&words, &mut out);
     companies(&words, &mut out);
     addresses(&words, &mut out);
@@ -316,6 +333,71 @@ fn local_phones(words: &[Word<'_>], out: &mut Vec<Candidate>) {
     }
 }
 
+/// Is this word shaped like a name? A capital letter, then letters — a hyphen
+/// or an apostrophe is a name («Müller-Lüdenscheidt», «O\'Brien»); a digit or a
+/// bracket is not. This is the whole of what «(N95.1» failed to be.
+fn name_shaped(word: &str) -> bool {
+    let n = bare(word).trim_end_matches(['.', ',', ';', ':']);
+    // Two letters at least. A single capital is an initial, and in the owner's
+    // ICD-10 document the chapter letters — G, K, N, P, W — stand alone on
+    // their own lines near a «DI» or a «Dr»: the rule protected 28,853 of them
+    // as people, and the payload's own audit refused to build at all («a
+    // protected value still stands 28,851 times where at most 3 was expected»).
+    n.chars().count() >= 2
+        && starts_upper(n)
+        && n.chars().all(|c| c.is_alphabetic() || c == '-' || c == '\'' || c == '\u{2019}')
+        && !STOP_WORDS.contains(&n)
+        && !DEGREES.contains(&n)
+}
+
+/// Step over a chain of titles: «Dr.», «Prim. Dr.», «Univ.-Prof. Dr. med.».
+/// Returns where the chain ends and what it said, or `None` if there is no
+/// title here at all.
+fn title_chain(words: &[Word<'_>], from: usize) -> Option<(usize, String)> {
+    let mut at = from;
+    let mut said: Vec<String> = Vec::new();
+    while let Some(next) = words.get(at) {
+        if at > from && next.newline_before {
+            break;
+        }
+        let n = bare_keep_dot(next.text);
+        let known = TITLES.iter().any(|t| t.eq_ignore_ascii_case(n))
+            || (!said.is_empty() && TITLE_PARTS.iter().any(|t| t.eq_ignore_ascii_case(n)));
+        if !known {
+            break;
+        }
+        said.push(n.to_string());
+        at += 1;
+    }
+    (!said.is_empty()).then(|| (at, said.join(" ")))
+}
+
+/// The name that follows: up to three words, each shaped like one.
+fn name_from(words: &[Word<'_>], first: usize) -> Option<(usize, usize)> {
+    let mut j = first;
+    let mut last = None;
+    while let Some(next) = words.get(j) {
+        // A bracket opens something that is not the name: «Ludwig Neuner
+        // (Klinikum Freistadt, OÖG)» is one person and one hospital.
+        if next.newline_before || is_label(next.text) || next.text.starts_with(['(', '[', '{', '«', '"']) {
+            break;
+        }
+        let n = bare(next.text);
+        let joiner = matches!(n, "von" | "van" | "de" | "der" | "zu");
+        if (name_shaped(next.text) || joiner) && j - first < 3 {
+            last = Some(j);
+            // A word carrying a comma, a full stop or a closing bracket ends it.
+            if next.text.ends_with([',', '.', ';', ')', ':']) {
+                break;
+            }
+            j += 1;
+        } else {
+            break;
+        }
+    }
+    last.map(|last| (first, last))
+}
+
 /// «Herr Thomas Müller» → the name, not the salutation.
 fn salutations(words: &[Word<'_>], out: &mut Vec<Candidate>) {
     for (i, word) in words.iter().enumerate() {
@@ -323,44 +405,19 @@ fn salutations(words: &[Word<'_>], out: &mut Vec<Candidate>) {
         if !SALUTATIONS.iter().any(|s| s.eq_ignore_ascii_case(w)) {
             continue;
         }
-        let mut j = i + 1;
-        // Step over a title: «Herr Dr. Schneider».
-        let mut title = None;
-        while let Some(next) = words.get(j) {
-            if next.newline_before {
-                break;
-            }
-            let n = bare_keep_dot(next.text);
-            if TITLES.iter().any(|t| t.eq_ignore_ascii_case(n)) {
-                title = Some(n.to_string());
-                j += 1;
-            } else {
-                break;
-            }
-        }
-        // Then up to three capitalised words: «Anna Weber», «von der Leyen».
-        let first = j;
-        let mut last = None;
-        while let Some(next) = words.get(j) {
-            if next.newline_before || is_label(next.text) {
-                break;
-            }
-            let n = bare(next.text);
-            let is_name = starts_upper(n) || matches!(n, "von" | "van" | "de" | "der" | "zu");
-            if is_name && j - first < 3 && !n.is_empty() {
-                last = Some(j);
-                // A word ending the phrase (comma, full stop) closes the name.
-                if next.text.ends_with(',') || next.text.ends_with('.') || next.text.ends_with(';') {
-                    break;
-                }
-                j += 1;
-            } else {
-                break;
-            }
-        }
-        let (Some(last), Some(start_word)) = (last, words.get(first)) else {
-            continue;
+        // An article in front of it was tried here first — «bei der Frau
+        // (N95.1)» — and taken out again: the first golden letter says «den
+        // Herr Tobias Reinhardt am 3. März», where «den» is a relative
+        // pronoun, not an article, and the rule lost a real person. The shape
+        // of what **follows** does the work instead, and does it in every one
+        // of the four cases measured.
+        // Step over a title: «Herr Dr. Schneider», «Frau Mag. Spitzwieser».
+        let (j, title) = match title_chain(words, i + 1) {
+            Some((at, said)) => (at, Some(said)),
+            None => (i + 1, None),
         };
+        let Some((first, last)) = name_from(words, j) else { continue };
+        let Some(start_word) = words.get(first) else { continue };
         let Some(end_word) = words.get(last) else { continue };
         let reason = match title {
             Some(t) => format!("a name after «{w} {t}» — a German salutation names the person who follows it"),
@@ -374,6 +431,48 @@ fn salutations(words: &[Word<'_>], out: &mut Vec<Candidate>) {
             "salutation",
             reason,
         ));
+    }
+}
+
+/// «Prim. Dr. Ludwig Neuner» → the name. The title stays in the clear.
+///
+/// The owner's words, on a page of twenty-odd doctors none of which was
+/// protected: «the name after Dr. is supposed to be encrypted».
+fn titled_names(words: &[Word<'_>], out: &mut Vec<Candidate>) {
+    let mut i = 0usize;
+    while i < words.len() {
+        // Only the start of a chain, so «Dr.» inside «Prim. Dr. …» is not read
+        // twice — and a salutation in front of it leaves the work to that rule.
+        let follows_title = i
+            .checked_sub(1)
+            .and_then(|k| words.get(k))
+            .is_some_and(|prev| {
+                let n = bare_keep_dot(prev.text);
+                TITLES.iter().any(|t| t.eq_ignore_ascii_case(n))
+                    || TITLE_PARTS.iter().any(|t| t.eq_ignore_ascii_case(n))
+                    || SALUTATIONS.iter().any(|t| t.eq_ignore_ascii_case(n))
+            });
+        let Some((after, said)) = title_chain(words, i) else {
+            i += 1;
+            continue;
+        };
+        if follows_title {
+            i += 1;
+            continue;
+        }
+        if let Some((first, last)) = name_from(words, after) {
+            if let (Some(start_word), Some(end_word)) = (words.get(first), words.get(last)) {
+                out.push(candidate(
+                    start_word.start,
+                    trimmed_end(end_word),
+                    Kind::Person,
+                    Confidence::Auto,
+                    "title",
+                    format!("a name after «{said}» — a title introduces the person who follows it"),
+                ));
+            }
+        }
+        i = after.max(i + 1);
     }
 }
 
