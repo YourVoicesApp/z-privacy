@@ -547,7 +547,7 @@ struct Walk<'a> {
 }
 
 impl Walk<'_> {
-    fn collect(&mut self, dict: &str, content: &str, fonts: &Fonts, depth: u32) -> ApiResult<()> {
+    fn collect(&mut self, dict: &str, content: &[u8], fonts: &Fonts, depth: u32) -> ApiResult<()> {
         self.budget.check()?;
         self.out.extend(text_runs(content, fonts));
         if depth >= FORM_DEPTH {
@@ -571,7 +571,7 @@ impl Walk<'_> {
             inner.absorb(page_fonts(self.objects, &body.dict));
             let dict = body.dict.clone();
             self.path.push(number);
-            self.collect(&dict, &String::from_utf8_lossy(&plain), &inner, depth + 1)?;
+            self.collect(&dict, &plain, &inner, depth + 1)?;
             self.path.pop();
         }
         Ok(())
@@ -579,11 +579,11 @@ impl Walk<'_> {
 }
 
 /// Is this name actually drawn — `/Fm1 Do` — rather than merely listed?
-fn drawn(content: &str, name: &str) -> bool {
+fn drawn(content: &[u8], name: &str) -> bool {
     let wanted = format!("/{name}");
-    let mut previous = "";
-    for token in content.split_whitespace() {
-        if token == "Do" && previous == wanted {
+    let mut previous: &[u8] = b"";
+    for token in content.split(|b| b.is_ascii_whitespace()).filter(|t| !t.is_empty()) {
+        if token == b"Do" && previous == wanted.as_bytes() {
             return true;
         }
         previous = token;
@@ -591,20 +591,29 @@ fn drawn(content: &str, name: &str) -> bool {
     false
 }
 
-fn page_content(objects: &Objects, page: &str) -> ApiResult<String> {
+/// The page's content stream, **as bytes**.
+///
+/// A stream is bytes, and a literal string inside it may hold any of them. Read
+/// as text — which this did, through `from_utf8_lossy` — a two-byte code whose
+/// low byte is `0xE4` is not valid UTF-8, and the replacement mark took its
+/// place before the decoder ever saw it. Measured on a German book: 459 such
+/// marks on a single page. The rule the object reader already follows, written
+/// down in task 018 — «the dictionaries are ASCII and may be read as text; the
+/// streams are not» — had never reached the content.
+fn page_content(objects: &Objects, page: &str) -> ApiResult<Vec<u8>> {
     let mut refs = references(page, "/Contents");
     if refs.is_empty() {
         if let Some(single) = reference(page, "/Contents") {
             refs.push(single);
         }
     }
-    let mut out = String::new();
+    let mut out = Vec::new();
     for number in refs {
         let Some(body) = objects.get(&number) else { continue };
         if let Some(raw) = body.stream.as_ref() {
             if let Some(plain) = decode_stream(&body.dict, raw) {
-                out.push_str(&String::from_utf8_lossy(&plain));
-                out.push('\n');
+                out.extend_from_slice(&plain);
+                out.push(b'\n');
             }
         }
     }
@@ -947,22 +956,21 @@ enum Run {
 /// `(literal) Tj`, `[(a) -20 (b)] TJ`, `(line) '` and `(line) "` — the four ways a
 /// PDF says «draw these characters». Each `BT … ET` block is one paragraph, which
 /// is usually one line: that is what makes «page 17, paragraph 4» meaningful.
-fn text_runs(content: &str, fonts: &Fonts) -> Vec<Run> {
+fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
     let mut out = Vec::new();
     let mut current = String::new();
     let mut font = String::new();
     let mut in_text_object = false;
-    let bytes = content.as_bytes();
     let mut at = 0usize;
 
     while at < bytes.len() {
         match bytes.get(at) {
-            Some(b'B') if content.get(at..at + 2) == Some("BT") => {
+            Some(b'B') if bytes.get(at..at + 2) == Some(b"BT".as_slice()) => {
                 in_text_object = true;
                 current.clear();
                 at += 2;
             }
-            Some(b'E') if content.get(at..at + 2) == Some("ET") => {
+            Some(b'E') if bytes.get(at..at + 2) == Some(b"ET".as_slice()) => {
                 if !current.trim().is_empty() {
                     out.push(Run::Text(current.trim().to_string()));
                 }
@@ -971,30 +979,33 @@ fn text_runs(content: &str, fonts: &Fonts) -> Vec<Run> {
                 at += 2;
             }
             Some(b'/') => {
-                // A font is chosen: «/F1 12 Tf».
-                let name: String = content
+                // A font is chosen: «/F1 12 Tf». A name is written in ASCII.
+                let name: String = bytes
                     .get(at + 1..)
                     .unwrap_or_default()
-                    .chars()
-                    .take_while(|c| c.is_alphanumeric() || *c == '+' || *c == '.')
+                    .iter()
+                    .take_while(|b| b.is_ascii_alphanumeric() || **b == b'+' || **b == b'.')
+                    .map(|b| char::from(*b))
                     .collect();
-                let after = content.get(at + 1 + name.len()..).unwrap_or_default();
-                if after.trim_start().starts_with(|c: char| c.is_ascii_digit())
-                    && after.split_whitespace().nth(1) == Some("Tf")
-                {
+                let after = bytes.get(at + 1 + name.len()..).unwrap_or_default();
+                let mut words = after
+                    .split(|b| b.is_ascii_whitespace())
+                    .filter(|w| !w.is_empty());
+                let size = words.next().unwrap_or_default();
+                if size.first().is_some_and(u8::is_ascii_digit) && words.next() == Some(b"Tf".as_slice()) {
                     font = name;
                 }
                 at += 1;
             }
             Some(b'(') => {
-                let (text, next) = literal_string(content, at);
+                let (text, next) = literal_string(bytes, at);
                 at = next;
                 if in_text_object {
                     current.push_str(&decode(&text, &font, fonts, &mut out));
                 }
             }
-            Some(b'<') if content.get(at + 1..at + 2) != Some("<") => {
-                let (text, next) = hex_literal(content, at);
+            Some(b'<') if bytes.get(at + 1) != Some(&b'<') => {
+                let (text, next) = hex_literal(bytes, at);
                 at = next;
                 if in_text_object {
                     current.push_str(&decode_hex(&text, &font, fonts, &mut out));
@@ -1010,32 +1021,36 @@ fn text_runs(content: &str, fonts: &Fonts) -> Vec<Run> {
 }
 
 /// `(a string with \( escapes \))`
-fn literal_string(content: &str, at: usize) -> (String, usize) {
-    let mut out = String::new();
+fn literal_string(bytes: &[u8], at: usize) -> (Vec<u8>, usize) {
+    let mut out: Vec<u8> = Vec::new();
     let mut depth = 1usize;
     let mut index = at + 1;
-    let bytes = content.as_bytes();
     while index < bytes.len() {
         match bytes.get(index) {
             Some(b'\\') => {
                 match bytes.get(index + 1) {
-                    Some(b'n') => out.push('\n'),
-                    Some(b'r') => out.push('\r'),
-                    Some(b't') => out.push('\t'),
-                    Some(b'(') => out.push('('),
-                    Some(b')') => out.push(')'),
-                    Some(b'\\') => out.push('\\'),
+                    Some(b'n') => out.push(b'\n'),
+                    Some(b'r') => out.push(b'\r'),
+                    Some(b't') => out.push(b'\t'),
+                    Some(b'(') => out.push(b'('),
+                    Some(b')') => out.push(b')'),
+                    Some(b'\\') => out.push(b'\\'),
                     Some(other) if other.is_ascii_digit() => {
-                        // An octal escape: up to three digits.
-                        let digits: String = content
+                        // An octal escape: up to three digits, and it names a
+                        // **byte**, not a character.
+                        let digits: Vec<u8> = bytes
                             .get(index + 1..)
                             .unwrap_or_default()
-                            .chars()
+                            .iter()
                             .take(3)
-                            .take_while(|c| c.is_digit(8))
+                            .take_while(|b| (b'0'..=b'7').contains(b))
+                            .copied()
                             .collect();
-                        if let Some(c) = u32::from_str_radix(&digits, 8).ok().and_then(char::from_u32) {
-                            out.push(c);
+                        let text = String::from_utf8_lossy(&digits);
+                        if let Ok(value) = u32::from_str_radix(&text, 8) {
+                            if let Ok(byte) = u8::try_from(value) {
+                                out.push(byte);
+                            }
                         }
                         index += digits.len();
                     }
@@ -1045,7 +1060,7 @@ fn literal_string(content: &str, at: usize) -> (String, usize) {
             }
             Some(b'(') => {
                 depth += 1;
-                out.push('(');
+                out.push(b'(');
                 index += 1;
             }
             Some(b')') => {
@@ -1053,18 +1068,12 @@ fn literal_string(content: &str, at: usize) -> (String, usize) {
                 if depth == 0 {
                     return (out, index + 1);
                 }
-                out.push(')');
+                out.push(b')');
                 index += 1;
             }
-            Some(_) => {
-                let ch = content.get(index..).and_then(|s| s.chars().next());
-                match ch {
-                    Some(c) => {
-                        out.push(c);
-                        index += c.len_utf8();
-                    }
-                    None => index += 1,
-                }
+            Some(byte) => {
+                out.push(*byte);
+                index += 1;
             }
             None => break,
         }
@@ -1072,51 +1081,46 @@ fn literal_string(content: &str, at: usize) -> (String, usize) {
     (out, index)
 }
 
-fn hex_literal(content: &str, at: usize) -> (String, usize) {
-    let tail = content.get(at + 1..).unwrap_or_default();
-    let end = tail.find('>').unwrap_or(tail.len());
+fn hex_literal(bytes: &[u8], at: usize) -> (String, usize) {
+    let tail = bytes.get(at + 1..).unwrap_or_default();
+    let end = tail.iter().position(|b| *b == b'>').unwrap_or(tail.len());
     let digits: String = tail
         .get(..end)
         .unwrap_or_default()
-        .chars()
-        .filter(|c| c.is_ascii_hexdigit())
+        .iter()
+        .filter(|b| b.is_ascii_hexdigit())
+        .map(|b| char::from(*b))
         .collect();
     (digits, at + 1 + end + 1)
 }
 
 /// A single-byte string. If the current font needs a map, this is not text we can
 /// read, and we say so instead of writing nonsense.
-fn decode(text: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
+fn decode(bytes: &[u8], font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
     if fonts.unmappable.contains_key(font) {
         // Two bytes to the code, so that is how many codes went unread.
-        out.push(Run::Unmappable(text.chars().count().div_ceil(2)));
+        out.push(Run::Unmappable(bytes.len().div_ceil(2)));
         return String::new();
     }
     if let Some(map) = fonts.maps.get(font) {
-        // A mapped font is a two-byte font: `Identity-H` says so by name, and
-        // every code map measured on real documents carries a two-byte
-        // codespace. So a literal string holds **codes**, not bytes, and they
-        // are read in pairs.
-        //
-        // Read one byte at a time — as this did — a line of such a font comes
-        // out as «NUL K NUL L»: the high byte of each code looks up the map's
-        // entry for code 0, which an identity table gives as U+0000. Measured
-        // on two real documents: 578 of 1225 characters on one page, 174 of
-        // 841 on another, every one of them a NUL, and the page refused at 52%
-        // and 79% readable for a reason that was ours and not the file's.
-        let codes: Vec<u32> = text.chars().map(u32::from).collect();
+        // A literal string holds **codes**, and the font's own table says how
+        // wide one is: two bytes under `Identity-H`, one in a simple font. Read
+        // one byte at a time where it should be two, a line comes out as «NUL K
+        // NUL L»: the high byte of each code looks up the table's entry for code
+        // 0, which an identity table gives as U+0000. Measured on two real
+        // documents: 578 of 1225 characters on one page, 174 of 841 on another,
+        // every one of them a NUL.
+        let width = if map.two_byte { 2 } else { 1 };
         let mut read = String::new();
         let mut missed = 0usize;
-        // One byte to a code, or two, as the font's own table says.
-        let width = if map.two_byte { 2 } else { 1 };
-        for pair in codes.chunks(width) {
-            let code = match pair {
-                [high, low] => (high << 8) | low,
-                [only] => *only,
+        for piece in bytes.chunks(width) {
+            let code = match piece {
+                [high, low] => (u32::from(*high) << 8) | u32::from(*low),
+                [only] => u32::from(*only),
                 _ => continue,
             };
             match map.table.get(&code) {
-                Some(piece) => read.push_str(piece),
+                Some(text) => read.push_str(text),
                 // Not a character, so not silence either: it is counted.
                 None => missed += 1,
             }
@@ -1126,10 +1130,24 @@ fn decode(text: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
         }
         return read;
     }
-    text.to_string()
+    // No table: the bytes are the characters. A string may say outright that it
+    // is UTF-16, and PDF marks that the way the format does, with FE FF at the
+    // front; anything else is one byte to a character.
+    if let Some(rest) = bytes.strip_prefix(&[0xFE, 0xFF]) {
+        let units: Vec<u16> = rest
+            .chunks(2)
+            .filter_map(|pair| match pair {
+                [high, low] => Some((u16::from(*high) << 8) | u16::from(*low)),
+                _ => None,
+            })
+            .collect();
+        if let Some(text) = utf16_string(&units) {
+            return text;
+        }
+    }
+    bytes.iter().map(|b| char::from(*b)).collect()
 }
 
-/// A hex string: two bytes per code for a mapped font, one byte otherwise.
 fn decode_hex(digits: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
     if let Some(map) = fonts.maps.get(font) {
         let mut text = String::new();
@@ -1176,6 +1194,16 @@ mod tests {
     use crate::api::Place;
 
     /// A PDF with `pages` pages of plain, uncompressed text, written by hand.
+    /// A simple font's string is written in the font's own encoding, one byte
+    /// to a character — never UTF-8. These builders wrote UTF-8 and the reader
+    /// read it back as UTF-8, so both sides agreed on something no PDF writer
+    /// does. Since the content stream is read as bytes, they write bytes.
+    pub(crate) fn latin1(text: &str) -> Vec<u8> {
+        text.chars()
+            .map(|c| u8::try_from(u32::from(c)).unwrap_or(b'?'))
+            .collect()
+    }
+
     pub(crate) fn pdf_with_pages(lines: &[&str]) -> Vec<u8> {
         let mut out = String::from("%PDF-1.4\n");
         let count = lines.len();
@@ -1191,15 +1219,18 @@ mod tests {
             out.push_str(&format!(
                 "{page_id} 0 obj\n<< /Type/Page /Parent 2 0 R /Contents {content_id} 0 R /Resources << /Font << /F1 100 0 R >> >> >>\nendobj\n"
             ));
-            let stream = format!("BT /F1 12 Tf 72 700 Td ({line}) Tj ET");
+            let stream = latin1(&format!("BT /F1 12 Tf 72 700 Td ({line}) Tj ET"));
             out.push_str(&format!(
-                "{content_id} 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+                "{content_id} 0 obj\n<< /Length {} >>\nstream\n",
                 stream.len()
             ));
+            // The stream goes in as bytes, because that is what a stream is.
+            out.push_str(&stream.iter().map(|b| char::from(*b)).collect::<String>());
+            out.push_str("\nendstream\nendobj\n");
         }
         out.push_str("100 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/Helvetica >>\nendobj\n");
         out.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
-        out.into_bytes()
+        latin1(&out)
     }
 
     /// A scan: pages that hold an image and no text at all.
@@ -1393,6 +1424,53 @@ mod tests {
         }
     }
 
+    /// A content stream is **bytes**, and a literal string in it may hold any of
+    /// them.
+    ///
+    /// Measured on a 146-page book of German tax terms: 459 replacement marks
+    /// and 526 NULs on one page, with every code finding an entry in its table.
+    /// Neither a table nor this reader makes a replacement mark — what cannot be
+    /// read is dropped and counted — so they came from reading the stream as
+    /// text. A two-byte code whose low byte is `0xE4` is not valid UTF-8, and
+    /// the mark replaced it before the decoder ever saw it.
+    #[test]
+    fn a_literal_string_of_raw_bytes_survives_the_way_in() {
+        let mut pdf: Vec<u8> = b"%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n".to_vec();
+        pdf.extend_from_slice(b"2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.extend_from_slice(
+            b"3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        // «BT /F1 12 Tf (<00><E4><00><F6>) Tj ET» with the bytes written raw, as
+        // a real file writes them.
+        let mut stream: Vec<u8> = b"BT /F1 12 Tf (".to_vec();
+        stream.extend_from_slice(&[0x00, 0xE4, 0x00, 0xF6]);
+        stream.extend_from_slice(b") Tj ET");
+        pdf.extend_from_slice(format!("4 0 obj\n<< /Length {} >>\nstream\n", stream.len()).as_bytes());
+        pdf.extend_from_slice(&stream);
+        pdf.extend_from_slice(b"\nendstream\nendobj\n");
+        pdf.extend_from_slice(
+            b"5 0 obj\n<< /Type/Font /Subtype/Type0 /Encoding/Identity-H /ToUnicode 6 0 R >>\nendobj\n",
+        );
+        let cmap = "/CIDInit /ProcSet findresource begin\n2 beginbfchar\n<00E4> <00E4>\n<00F6> <00F6>\nendbfchar\nend";
+        pdf.extend_from_slice(
+            format!("6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n", cmap.len()).as_bytes(),
+        );
+        pdf.extend_from_slice(b"trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(&pdf).expect("the bytes name two characters, and the table says which");
+        assert_eq!(out.text.trim(), "äö", "the stream was read as text: {:?}", out.text);
+    }
+
+    /// And the way in does not change a page of plain ASCII by one character.
+    #[test]
+    fn plain_text_is_not_touched_by_the_way_in() {
+        let pdf = pdf_with_pages(&["Kunde: Nordstern Consulting GmbH", "Seite zwei"]);
+        let out = read(&pdf).expect("read");
+        assert_eq!(out.pages, 2);
+        assert!(out.text.contains("Nordstern Consulting GmbH"));
+        assert!(out.text.contains("Seite zwei"));
+    }
+
     /// A simple font that remaps its glyphs, with the table that says what they
     /// mean.
     ///
@@ -1491,7 +1569,7 @@ mod tests {
         fonts.maps.insert("F1".to_string(), FontMap { table: map, two_byte: true });
 
         let mut out = Vec::new();
-        let text = decode("\u{0}A\u{0}B", "F1", &fonts, &mut out);
+        let text = decode(&[0x00, b'A', 0x00, b'B'], "F1", &fonts, &mut out);
 
         assert_eq!(
             text, "KL",
