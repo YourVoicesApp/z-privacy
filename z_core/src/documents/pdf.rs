@@ -614,10 +614,21 @@ fn page_content(objects: &Objects, page: &str) -> ApiResult<String> {
 // ---------------------------------------------------------------- fonts
 
 /// What a page's fonts can do: either single-byte text, or a `/ToUnicode` map.
+/// One font's own table, and how wide the codes in it are.
+///
+/// `Identity-H` writes two bytes to a code; a simple font writes one. The same
+/// table read at the wrong width gives the wrong characters, so the width
+/// travels with the table rather than being assumed where it is used.
+#[derive(Debug, Clone)]
+struct FontMap {
+    table: BTreeMap<u32, String>,
+    two_byte: bool,
+}
+
 #[derive(Debug, Default, Clone)]
 struct Fonts {
     /// Fonts that need a map, with the map when the document provides one.
-    maps: BTreeMap<String, BTreeMap<u32, String>>,
+    maps: BTreeMap<String, FontMap>,
     /// Fonts that need a map and do not have one.
     unmappable: BTreeMap<String, bool>,
     /// Fonts that remap their own characters with /Differences. This reader does
@@ -681,33 +692,48 @@ fn page_fonts(objects: &Objects, page: &str) -> Fonts {
             .and_then(|n| objects.get(&n))
             .map(|o| o.dict.clone())
             .unwrap_or_default();
-        if font.contains("/Differences") || encoding.contains("/Differences") {
-            fonts.remapped.insert(name.to_string(), true);
-            continue;
-        }
-
+        // A simple font may remap its characters through /Encoding /Differences.
+        // We do not read that table — but a font that carries one usually also
+        // carries /ToUnicode, and that one says outright what each code means.
+        //
+        // Measured on a 146-page book of German tax terms (InDesign, eight
+        // fonts, four of them remapped and every one of the four with its own
+        // /ToUnicode): the reader refused page 1 and with it the whole file,
+        // because a cover page in a font with fifteen remapped glyph names was
+        // enough. The refusal now waits until there is really nothing to read
+        // the font by.
+        let remapped = font.contains("/Differences") || encoding.contains("/Differences");
         let needs_map = font.contains("/Type0") || font.contains("Identity-H");
-        if !needs_map {
+        if !remapped && !needs_map {
             continue;
         }
-        match reference(&font, "/ToUnicode").and_then(|n| objects.get(&n)) {
-            Some(cmap_body) => {
-                let plain = cmap_body
+        let cmap = reference(&font, "/ToUnicode")
+            .and_then(|n| objects.get(&n))
+            .map(|body| {
+                let plain = body
                     .stream
                     .as_ref()
-                    .and_then(|raw| decode_stream(&cmap_body.dict, raw))
+                    .and_then(|raw| decode_stream(&body.dict, raw))
                     .unwrap_or_default();
-                let cmap = parse_to_unicode(&String::from_utf8_lossy(&plain));
-                if cmap.is_empty() {
-                    fonts.unmappable.insert(name.to_string(), true);
-                } else {
-                    fonts.maps.insert(name.to_string(), cmap);
-                }
-            }
-            None => {
+                parse_to_unicode(&String::from_utf8_lossy(&plain))
+            })
+            .unwrap_or_default();
+        if cmap.is_empty() {
+            if remapped {
+                fonts.remapped.insert(name.to_string(), true);
+            } else {
                 fonts.unmappable.insert(name.to_string(), true);
             }
+            continue;
         }
+        fonts.maps.insert(
+            name.to_string(),
+            FontMap {
+                table: cmap,
+                // One byte to a code in a simple font, two in `Identity-H`.
+                two_byte: needs_map,
+            },
+        );
     }
     fonts
 }
@@ -1081,13 +1107,15 @@ fn decode(text: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
         let codes: Vec<u32> = text.chars().map(u32::from).collect();
         let mut read = String::new();
         let mut missed = 0usize;
-        for pair in codes.chunks(2) {
+        // One byte to a code, or two, as the font's own table says.
+        let width = if map.two_byte { 2 } else { 1 };
+        for pair in codes.chunks(width) {
             let code = match pair {
                 [high, low] => (high << 8) | low,
                 [only] => *only,
                 _ => continue,
             };
-            match map.get(&code) {
+            match map.table.get(&code) {
                 Some(piece) => read.push_str(piece),
                 // Not a character, so not silence either: it is counted.
                 None => missed += 1,
@@ -1106,9 +1134,10 @@ fn decode_hex(digits: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> St
     if let Some(map) = fonts.maps.get(font) {
         let mut text = String::new();
         let mut missed = 0usize;
-        for chunk in digits.as_bytes().chunks(4) {
+        let width = if map.two_byte { 4 } else { 2 };
+        for chunk in digits.as_bytes().chunks(width) {
             let hex = String::from_utf8_lossy(chunk);
-            match u32::from_str_radix(&hex, 16).ok().and_then(|code| map.get(&code)) {
+            match u32::from_str_radix(&hex, 16).ok().and_then(|code| map.table.get(&code)) {
                 Some(piece) => text.push_str(piece),
                 None => missed += 1,
             }
@@ -1364,6 +1393,68 @@ mod tests {
         }
     }
 
+    /// A simple font that remaps its glyphs, with the table that says what they
+    /// mean.
+    ///
+    /// Measured on a 146-page book of German tax terms: eight fonts, four of
+    /// them remapped by `/Differences` and **every one of the four carrying its
+    /// own `/ToUnicode`**. The reader refused page 1 — a cover page with fifteen
+    /// remapped glyph names — and with it all 146 pages, while the answer was
+    /// in the file the whole time.
+    #[test]
+    fn a_remapped_font_is_read_by_its_own_table() {
+        let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        let stream = "BT /F1 12 Tf <414243> Tj ET";
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+            stream.len()
+        ));
+        pdf.push_str(
+            "5 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/AGaramondPro \
+             /Encoding << /Differences [65 /f_i 66 /one.lt 67 /arrowright] >> /ToUnicode 6 0 R >>\nendobj\n",
+        );
+        // One byte to a code, because a simple font writes one.
+        let cmap = "/CIDInit /ProcSet findresource begin\n3 beginbfchar\n<41> <0046>\n<42> <0031>\n<43> <2192>\nendbfchar\nend";
+        pdf.push_str(&format!(
+            "6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n",
+            cmap.len()
+        ));
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(pdf.as_bytes()).expect("the font says what its glyphs mean");
+        assert_eq!(out.text.trim(), "F1→", "the table was not used: {:?}", out.text);
+    }
+
+    /// And when it carries no table, the refusal stands: we do not read a
+    /// remapped font by guessing what its glyph names meant.
+    #[test]
+    fn a_remapped_font_with_no_table_is_still_refused() {
+        let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        let stream = "BT /F1 12 Tf (ABC) Tj ET";
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+            stream.len()
+        ));
+        pdf.push_str(
+            "5 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/AGaramondPro \
+             /Encoding << /Differences [65 /f_i] >> >>\nendobj\n",
+        );
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let e = read(pdf.as_bytes()).expect_err("a remapped font with no table is refused");
+        assert!(matches!(error_of(&e), Some(Refusal::UnreadableStructure { page: 1 })));
+    }
+
     /// The other silent hole: codes the table never mentions at all.
     ///
     /// They looked up as nothing and were dropped — no character, no count, no
@@ -1397,7 +1488,7 @@ mod tests {
         map.insert(0x0000, "\u{0}".to_string());
         map.insert(0x0041, "K".to_string());
         map.insert(0x0042, "L".to_string());
-        fonts.maps.insert("F1".to_string(), map);
+        fonts.maps.insert("F1".to_string(), FontMap { table: map, two_byte: true });
 
         let mut out = Vec::new();
         let text = decode("\u{0}A\u{0}B", "F1", &fonts, &mut out);

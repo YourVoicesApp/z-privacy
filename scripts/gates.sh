@@ -389,6 +389,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          long_bfrange_maps_all several_entries_on_one_line list_of_destinations \
          literal_string_in_a_two_byte_font maps_to_nothing_never_reaches \
          nothing_of_his_own_is_left protected_without_being_asked \
+         remapped_font_is_read_by_its_own remapped_font_with_no_table \
          salutation_stays_and_the_company \
          never_mentions_are_counted codes_with_no_characters; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
