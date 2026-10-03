@@ -16,6 +16,7 @@
 // `scripts/gates.sh` prints that as a skip, never as a pass.
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing)]
 
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use z_core::api::*;
@@ -41,13 +42,13 @@ fn the_book_of_tax_terms_is_left_alone() {
     assert_eq!(view.pages, 146);
 
     let report = scan(session).expect("scan");
-    // Two values the book really carries — a ministry's telephone number and an
-    // address for ordering publications — and three more offered for a word.
+    // Two values the book really carries — a ministry's telephone number and
+    // an address for ordering publications — and four more offered for a word.
     // These numbers are asserted here and nowhere else: if a rule starts
     // reading German prose as a form again, this is what notices.
     assert_eq!(
         (report.auto, report.suggested),
-        (2, 3),
+        (2, 4),
         "the scanner found things in a public book that are nobody's: {report:?}"
     );
 
@@ -57,13 +58,44 @@ fn the_book_of_tax_terms_is_left_alone() {
             units.get(f.span.start as usize..f.span.end as usize).unwrap_or_default(),
         )
     };
-    for finding in list_findings(session).expect("findings") {
-        let text = text_of(&finding);
+    let findings = list_findings(session).expect("findings");
+
+    // What it found, by kind and not by count alone — so that a change here
+    // says which rule moved rather than only that something did.
+    let mut shape: BTreeMap<String, usize> = BTreeMap::new();
+    for finding in &findings {
+        *shape.entry(format!("{:?} {:?}", finding.state, finding.kind)).or_default() += 1;
+    }
+    let shape: Vec<String> = shape.iter().map(|(k, n)| format!("{k} ×{n}")).collect();
+    assert_eq!(
+        shape,
+        [
+            "Protected Email ×1",
+            "Protected Phone ×1",
+            "Suggested Address ×3",
+            "Suggested Phone ×1"
+        ],
+        "the book holds a different shape of thing than it did"
+    );
+
+    for finding in &findings {
+        let text = text_of(finding);
         assert!(
             text.chars().any(|c| c.is_ascii_digit() || c == '@'),
             "«{text}» is an ordinary German word, not a value ({:?})",
             finding.kind
         );
+        // An e-mail address ends where its line ends. This one measured 37
+        // characters until 3 October — «publikationen@bundesregierung.deGeben»
+        // — because the reader passed over the `Td` that ends the line and the
+        // first word of the next line was joined to the address.
+        if finding.kind == Kind::Email {
+            assert_eq!(
+                text.chars().count(),
+                32,
+                "the address took the word on the line below it: «{text}»"
+            );
+        }
     }
 
     // And the proof in the thing that leaves: a book nobody is named in should

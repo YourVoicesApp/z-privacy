@@ -583,6 +583,69 @@ fn is_delimiter(byte: u8) -> bool {
     matches!(byte, b'/' | b'(' | b')' | b'<' | b'>' | b'[' | b']' | b'{' | b'}' | b'%')
 }
 
+/// Is the token here exactly this operator? An operator stands on its own:
+/// the `Td` in `3 4 Td` is one, the `Td` in a font named `/Td` is not, and a
+/// `Td` inside a string is never reached — strings are read whole.
+fn is_operator(bytes: &[u8], at: usize, name: &[u8]) -> bool {
+    if bytes.get(at..at + name.len()) != Some(name) {
+        return false;
+    }
+    let before = at.checked_sub(1).and_then(|i| bytes.get(i));
+    let after = bytes.get(at + name.len());
+    // An operand may end in `)` or `]` with no space before the operator —
+    // `[(a)4(b)]TJ` is how every generator writes it.
+    before.is_none_or(|b| b.is_ascii_whitespace() || matches!(b, b')' | b']' | b'>'))
+        && after.is_none_or(|b| b.is_ascii_whitespace() || is_delimiter(*b))
+}
+
+/// The numbers written in front of an operator: `-3.979 -2.888 Td` has two.
+/// Read backwards, because backwards is where they are, and returned in the
+/// order they were written.
+fn operands_before(bytes: &[u8], operator: usize, want: usize) -> Vec<f64> {
+    let mut out: Vec<f64> = Vec::new();
+    let mut at = operator;
+    while out.len() < want {
+        while at > 0 && bytes.get(at - 1).is_some_and(u8::is_ascii_whitespace) {
+            at -= 1;
+        }
+        let end = at;
+        while at > 0
+            && bytes
+                .get(at - 1)
+                .is_some_and(|b| b.is_ascii_digit() || matches!(b, b'.' | b'-' | b'+'))
+        {
+            at -= 1;
+        }
+        let token: String =
+            bytes.get(at..end).unwrap_or_default().iter().map(|b| char::from(*b)).collect();
+        match token.parse::<f64>() {
+            Ok(number) => out.push(number),
+            Err(_) => break,
+        }
+    }
+    out.reverse();
+    out
+}
+
+/// The pen moved, so the words it divides are divided. A move down a line
+/// separates them with a line, a move along one with a space — and writing
+/// nothing in its place is what joined two lines into a single word.
+fn separate(current: &mut String, down: bool) {
+    if current.is_empty() {
+        return;
+    }
+    if down {
+        while current.ends_with(' ') {
+            current.pop();
+        }
+        if !current.ends_with('\n') {
+            current.push('\n');
+        }
+    } else if !current.ends_with(['\n', ' ']) {
+        current.push(' ');
+    }
+}
+
 /// Is this name actually drawn — `/Fm1 Do` — rather than merely listed?
 fn drawn(content: &[u8], name: &str) -> bool {
     let wanted = format!("/{name}");
@@ -970,12 +1033,20 @@ fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
     let mut font = String::new();
     let mut in_text_object = false;
     let mut at = 0usize;
+    // Where the string being read now begins inside `current`: `'` and `"`
+    // draw their string **on the next line**, and by then it is already read.
+    let mut string_at: Option<usize> = None;
+    // The vertical offset the line matrix was last set to, so that a second
+    // `Tm` in one block can be told from the first.
+    let mut line_y: Option<f64> = None;
 
     while at < bytes.len() {
         match bytes.get(at) {
             Some(b'B') if bytes.get(at..at + 2) == Some(b"BT".as_slice()) => {
                 in_text_object = true;
                 current.clear();
+                string_at = None;
+                line_y = None;
                 at += 2;
             }
             Some(b'E') if bytes.get(at..at + 2) == Some(b"ET".as_slice()) => {
@@ -1011,10 +1082,47 @@ fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
                 }
                 at += 1;
             }
+            // The pen moves to the start of the next line. Ignored, it wrote
+            // nothing where a line break belongs: measured on the owner's tax
+            // book, 1,983 of these and 585 more that move along the line, and
+            // one of them joined an address to the word under it.
+            Some(b'T') if is_operator(bytes, at, b"Td") || is_operator(bytes, at, b"TD") => {
+                let moved = operands_before(bytes, at, 2);
+                let down = moved.get(1).copied().unwrap_or(0.0);
+                separate(&mut current, down.abs() > f64::EPSILON);
+                at += 2;
+            }
+            Some(b'T') if is_operator(bytes, at, b"T*") => {
+                separate(&mut current, true);
+                at += 2;
+            }
+            // `Tm` replaces the whole text matrix, so it can begin a new line
+            // too. Measured: 26 blocks in that book set it more than once, and
+            // what makes it a line is the vertical offset changing.
+            Some(b'T') if is_operator(bytes, at, b"Tm") => {
+                let y = operands_before(bytes, at, 6).get(5).copied();
+                if let (Some(now), Some(was)) = (y, line_y) {
+                    separate(&mut current, (now - was).abs() > f64::EPSILON);
+                }
+                line_y = y.or(line_y);
+                at += 2;
+            }
+            // `'` and `"` show their string **on** the next line, and the
+            // string is written before them — so the break goes in front of it.
+            Some(b'\'') | Some(b'"') if in_text_object => {
+                if let Some(start) = string_at.filter(|start| *start > 0) {
+                    let mut head = current.get(..start).unwrap_or_default().to_string();
+                    let tail = current.get(start..).unwrap_or_default().to_string();
+                    separate(&mut head, true);
+                    current = head + &tail;
+                }
+                at += 1;
+            }
             Some(b'(') => {
                 let (text, next) = literal_string(bytes, at);
                 at = next;
                 if in_text_object {
+                    string_at = Some(current.len());
                     current.push_str(&decode(&text, &font, fonts, &mut out));
                 }
             }
@@ -1022,6 +1130,7 @@ fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
                 let (text, next) = hex_literal(bytes, at);
                 at = next;
                 if in_text_object {
+                    string_at = Some(current.len());
                     current.push_str(&decode_hex(&text, &font, fonts, &mut out));
                 }
             }
@@ -1335,6 +1444,67 @@ mod tests {
             "the text inside the form never arrived: {} chars",
             out.text.chars().count()
         );
+    }
+
+    /// A new line is a word boundary. Measured on the owner's tax book, on the
+    /// page that offers a feedback link:
+    ///
+    /// ```text
+    /// [(pub)4(likati)4(onen@bundesr)13.1(egi)4.1(erung.de)]TJ
+    /// -3.979720115 -2.88889 Td
+    /// [(Geben S)5.1(i)4(e uns F)40(eedback zu di)4.1(eser Pub)4.1(likati)4(on!)]TJ
+    /// ```
+    ///
+    /// `Td` moves the pen to the start of the next line. The reader passed over
+    /// it and wrote nothing in its place, so the two lines arrived as one word
+    /// and the e-mail rule read the address as
+    /// «publikationen@bundesregierung.deGeben». That book holds 1,983 moves
+    /// that go down a line and 585 that move along one, and every one of them
+    /// was glue.
+    #[test]
+    fn a_line_that_moves_down_separates_the_words_it_divides() {
+        let stream = "BT /FA 12 Tf 72 700 Td [(pub)4(likati)4(onen@bundesr)13.1(egierung.de)]TJ \
+                      -3.979720115 -2.88889 Td [(Geben S)5.1(ie uns F)40(eedback)]TJ \
+                      4.0 0 Td (zu dieser Publikation)Tj ET";
+        let pdf = pdf_with_form("", Some(stream));
+        let out = read(&pdf).expect("one page, one form");
+        assert!(
+            out.text.contains("publikationen@bundesregierung.de"),
+            "the address did not survive the pieces it is drawn in: {:?}",
+            out.text
+        );
+        assert!(
+            !out.text.contains("deGeben"),
+            "a new line became nothing, so two lines are one word: {:?}",
+            out.text
+        );
+        // And a move along the same line is a space, not a new line: that is
+        // how a table's columns stop running into one number.
+        assert!(
+            out.text.contains("Feedback zu dieser"),
+            "a move along the line joined two columns: {:?}",
+            out.text
+        );
+    }
+
+    /// The same move, written the three other ways the format allows. The tax
+    /// book uses none of them — 0 of each in its 145 content streams — so they
+    /// are held by a fixture instead of by a file.
+    #[test]
+    fn the_other_ways_of_asking_for_a_new_line_are_read_too() {
+        let star = pdf_with_form("", Some("BT /FA 12 Tf 72 700 Td (Telefon:)Tj T* (0228 406-1200)Tj ET"));
+        let text = read(&star).expect("T*").text;
+        assert!(text.contains("Telefon:\n0228"), "T* did not end the line: {text:?}");
+
+        // `'` and `"` show a string on the next line, so the line they begin
+        // belongs before the text they carry, not after it.
+        let quote = pdf_with_form("", Some("BT /FA 12 Tf 72 700 Td (Telefon:)Tj (0228 406-1200)' ET"));
+        let text = read(&quote).expect("'").text;
+        assert!(text.contains("Telefon:\n0228"), "' did not end the line: {text:?}");
+
+        let spaced = pdf_with_form("", Some("BT /FA 12 Tf 72 700 Td (Telefon:)Tj 0 0 (0228 406-1200)\" ET"));
+        let text = read(&spaced).expect("quote").text;
+        assert!(text.contains("Telefon:\n0228"), "the \" operator did not end the line: {text:?}");
     }
 
     /// A form may draw another form. One that draws itself must end the walk,

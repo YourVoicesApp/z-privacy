@@ -414,6 +414,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_label_in_a_sentence_takes_no_ordinary_word a_run_of_zeros_is_not_a_telephone \
          a_label_without_a_colon_still_takes_a_value a_protected_word_does_not_spread \
          the_book_of_tax_terms_is_left_alone \
+         a_line_that_moves_down_separates the_other_ways_of_asking_for_a_new_line \
          salutation_stays_and_the_company \
          never_mentions_are_counted codes_with_no_characters; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
