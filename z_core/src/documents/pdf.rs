@@ -578,6 +578,11 @@ impl Walk<'_> {
     }
 }
 
+/// The bytes PDF reserves: a name, a string, an array, a dictionary, a comment.
+fn is_delimiter(byte: u8) -> bool {
+    matches!(byte, b'/' | b'(' | b')' | b'<' | b'>' | b'[' | b']' | b'{' | b'}' | b'%')
+}
+
 /// Is this name actually drawn — `/Fm1 Do` — rather than merely listed?
 fn drawn(content: &[u8], name: &str) -> bool {
     let wanted = format!("/{name}");
@@ -712,10 +717,14 @@ fn page_fonts(objects: &Objects, page: &str) -> Fonts {
         // enough. The refusal now waits until there is really nothing to read
         // the font by.
         let remapped = font.contains("/Differences") || encoding.contains("/Differences");
-        let needs_map = font.contains("/Type0") || font.contains("Identity-H");
-        if !remapped && !needs_map {
-            continue;
-        }
+        // Two bytes to a code, or one. A composite font says so in its own
+        // dictionary — or through the CMap its `/Encoding` points at, which is
+        // how the German tax book writes it. Measured there: the reader read
+        // that font one byte at a time and 526 NULs came out of a single page.
+        let two_byte = font.contains("/Type0")
+            || font.contains("Identity-H")
+            || encoding.contains("Identity-H")
+            || encoding.contains("/CMap");
         let cmap = reference(&font, "/ToUnicode")
             .and_then(|n| objects.get(&n))
             .map(|body| {
@@ -728,21 +737,20 @@ fn page_fonts(objects: &Objects, page: &str) -> Fonts {
             })
             .unwrap_or_default();
         if cmap.is_empty() {
+            // No table. A font that remaps its glyphs, or one whose codes are
+            // two bytes wide, cannot be read without one — and is refused by
+            // name rather than guessed at. A plain simple font is read by its
+            // standard encoding, as it always was.
             if remapped {
                 fonts.remapped.insert(name.to_string(), true);
-            } else {
+            } else if two_byte {
                 fonts.unmappable.insert(name.to_string(), true);
             }
             continue;
         }
-        fonts.maps.insert(
-            name.to_string(),
-            FontMap {
-                table: cmap,
-                // One byte to a code in a simple font, two in `Identity-H`.
-                two_byte: needs_map,
-            },
-        );
+        // A font that carries a table is read by it, whatever its type: the
+        // answer is in the file, and reading it is not a guess.
+        fonts.maps.insert(name.to_string(), FontMap { table: cmap, two_byte });
     }
     fonts
 }
@@ -980,11 +988,17 @@ fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
             }
             Some(b'/') => {
                 // A font is chosen: «/F1 12 Tf». A name is written in ASCII.
+                // A name runs to whitespace or to a delimiter, which is what
+                // PDF says a name is. Reading it as letters and digits alone
+                // stops at the underscore in `/C2_0`, and then the font never
+                // changes: measured on the German tax book, a two-byte font's
+                // text was decoded with the one-byte table of the font chosen
+                // before it, and 526 NULs came out of a single page.
                 let name: String = bytes
                     .get(at + 1..)
                     .unwrap_or_default()
                     .iter()
-                    .take_while(|b| b.is_ascii_alphanumeric() || **b == b'+' || **b == b'.')
+                    .take_while(|b| !b.is_ascii_whitespace() && !is_delimiter(**b))
                     .map(|b| char::from(*b))
                     .collect();
                 let after = bytes.get(at + 1 + name.len()..).unwrap_or_default();
@@ -1121,7 +1135,23 @@ fn decode(bytes: &[u8], font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String
             };
             match map.table.get(&code) {
                 Some(text) => read.push_str(text),
-                // Not a character, so not silence either: it is counted.
+                // A simple font's table covers what the font did unusually —
+                // measured on the German tax book: one of its fonts carries 89
+                // entries and the page uses more codes than that. The rest are
+                // what the font's own named encoding says they are, one byte to
+                // a character, which is where they were read from before any
+                // table existed. Nothing is guessed: the file named the
+                // encoding, and the table is the exception list.
+                //
+                // A two-byte font has no such fallback — a code is a glyph
+                // number and nothing else names it — so there it is counted.
+                None if !map.two_byte => match char::from_u32(code).filter(|c| decoded(*c)) {
+                    Some(c) => read.push(c),
+                    // And the same rule as everywhere else: a code that names
+                    // no character is an unreadable code, never a byte in the
+                    // text nobody typed.
+                    None => missed += 1,
+                },
                 None => missed += 1,
             }
         }
@@ -1422,6 +1452,123 @@ mod tests {
             Some(Refusal::UnreadableStructure { page }) => assert_eq!(page, 1),
             other => panic!("refused as {other:?}, which tells the person the wrong thing"),
         }
+    }
+
+    /// A font that carries a table is read by it, whatever its type.
+    ///
+    /// Measured on the German tax book: nine font objects, and **every one of
+    /// them carries `/ToUnicode`**. The reader used that table in two cases
+    /// only — a font whose own dictionary says `/Type0` or `Identity-H`, and a
+    /// font with `/Differences` — so a simple `/WinAnsiEncoding` font with a
+    /// table of its own had its table ignored and its bytes read as if the
+    /// standard encoding were the truth.
+    #[test]
+    fn a_simple_font_with_a_table_is_read_by_it_and_not_by_its_encoding() {
+        let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n",
+        );
+        let stream = "BT /F1 12 Tf (AB) Tj ET";
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{stream}\nendstream\nendobj\n",
+            stream.len()
+        ));
+        pdf.push_str(
+            "5 0 obj\n<< /Type/Font /Subtype/TrueType /BaseFont/BundesSerif \
+             /Encoding/WinAnsiEncoding /ToUnicode 6 0 R >>\nendobj\n",
+        );
+        // The file says these two codes are «Zü», whatever WinAnsi would say.
+        let cmap = "/CIDInit /ProcSet findresource begin\n2 beginbfchar\n<41> <005A>\n<42> <00FC>\nendbfchar\nend";
+        pdf.push_str(&format!(
+            "6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n",
+            cmap.len()
+        ));
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(pdf.as_bytes()).expect("read");
+        assert_eq!(
+            out.text.trim(),
+            "Zü",
+            "the font's own table was ignored in favour of the encoding's name: {:?}",
+            out.text
+        );
+    }
+
+    /// And a composite font says it is one through a reference as often as it
+    /// says so in its own dictionary.
+    #[test]
+    fn a_two_byte_font_is_known_by_its_cmap_behind_a_reference() {
+        let mut pdf: Vec<u8> = b"%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n".to_vec();
+        pdf.extend_from_slice(b"2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.extend_from_slice(
+            b"3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /TT0 5 0 R >> >> >>\nendobj\n",
+        );
+        let mut stream: Vec<u8> = b"BT /TT0 12 Tf (".to_vec();
+        stream.extend_from_slice(&[0x00, 0x41, 0x00, 0x42]);
+        stream.extend_from_slice(b") Tj ET");
+        pdf.extend_from_slice(format!("4 0 obj\n<< /Length {} >>\nstream\n", stream.len()).as_bytes());
+        pdf.extend_from_slice(&stream);
+        pdf.extend_from_slice(b"\nendstream\nendobj\n");
+        // Nothing in the font's own dictionary says «two bytes»: the CMap does,
+        // and it sits behind a reference.
+        pdf.extend_from_slice(b"5 0 obj\n<< /Type/Font /BaseFont/BundesSerifOffice /Encoding 7 0 R /ToUnicode 6 0 R >>\nendobj\n");
+        let cmap = "/CIDInit /ProcSet findresource begin\n2 beginbfchar\n<0041> <004B>\n<0042> <004C>\nendbfchar\nend";
+        pdf.extend_from_slice(
+            format!("6 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n", cmap.len()).as_bytes(),
+        );
+        pdf.extend_from_slice(b"7 0 obj\n<< /Type/CMap /CMapName/Identity-H /CIDSystemInfo << /Registry(Adobe) >> >>\nendobj\n");
+        pdf.extend_from_slice(b"trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(&pdf).expect("read");
+        assert_eq!(
+            out.text.trim(),
+            "KL",
+            "the codes were read one byte at a time, so the CMap behind the reference was not seen: {:?}",
+            out.text
+        );
+    }
+
+    /// A font's name is read the way PDF writes one.
+    ///
+    /// `/C2_0 12 Tf` is an ordinary name — Acrobat and InDesign both write it —
+    /// and reading names as letters and digits stops at the underscore. The
+    /// `Tf` is then not recognised, the font never changes, and the next text
+    /// is decoded with the table of the font chosen before it. Measured on the
+    /// German tax book: a two-byte font read with a one-byte table, 526 NULs on
+    /// a single page, and 146 pages refused for it.
+    #[test]
+    fn a_font_name_with_an_underscore_still_chooses_its_font() {
+        let mut pdf: Vec<u8> = b"%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n".to_vec();
+        pdf.extend_from_slice(b"2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.extend_from_slice(
+            b"3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+              /Resources << /Font << /TT0 5 0 R /C2_0 7 0 R >> >> >>\nendobj\n",
+        );
+        // The simple font first, then the two-byte one — the order a page uses
+        // when a heading is set in one and the body in the other.
+        let mut stream: Vec<u8> = b"BT /TT0 12 Tf (AB) Tj /C2_0 12 Tf (".to_vec();
+        stream.extend_from_slice(&[0x00, 0x41, 0x00, 0x42]);
+        stream.extend_from_slice(b") Tj ET");
+        pdf.extend_from_slice(format!("4 0 obj\n<< /Length {} >>\nstream\n", stream.len()).as_bytes());
+        pdf.extend_from_slice(&stream);
+        pdf.extend_from_slice(b"\nendstream\nendobj\n");
+        pdf.extend_from_slice(b"5 0 obj\n<< /Type/Font /Subtype/TrueType /BaseFont/Bundes /Encoding/WinAnsiEncoding >>\nendobj\n");
+        pdf.extend_from_slice(b"7 0 obj\n<< /Type/Font /Subtype/Type0 /BaseFont/Bundes /Encoding/Identity-H /ToUnicode 8 0 R >>\nendobj\n");
+        let cmap = "/CIDInit /ProcSet findresource begin\n2 beginbfchar\n<0041> <004B>\n<0042> <004C>\nendbfchar\nend";
+        pdf.extend_from_slice(
+            format!("8 0 obj\n<< /Length {} >>\nstream\n{cmap}\nendstream\nendobj\n", cmap.len()).as_bytes(),
+        );
+        pdf.extend_from_slice(b"trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(&pdf).expect("read");
+        assert_eq!(
+            out.text.trim(),
+            "ABKL",
+            "the second Tf was not seen, so the two-byte text was read with the first font: {:?}",
+            out.text
+        );
     }
 
     /// A content stream is **bytes**, and a literal string in it may hold any of
