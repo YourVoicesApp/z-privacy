@@ -470,6 +470,29 @@ else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
 fi
 
+# ------------------------------------------------- the build's own stamp
+# `core_version()` names the build: version, date, commit. Two things have to
+# hold for that to be worth anything — the Windows workflow must read the stamp
+# out of the binary it built and refuse a stamp that names another commit, and
+# the download page must not be publishable with the build value unfilled.
+WF=.github/workflows/windows-core.yml
+if [ -f "$WF" ]; then
+  if grep -q "The build's own stamp" "$WF" && grep -q 'the binary says' "$WF"; then
+    pass "the Windows build prints its own stamp, and checks it names the commit"
+  else
+    fail "the Windows build does not print the stamp it was built with ($WF)"
+  fi
+else
+  skip "the Windows build prints its own stamp" "no Windows workflow on this branch"
+fi
+if grep -rq '{{WINDOWS_BUILD}}' site/*/index.html 2>/dev/null; then
+  pass "  the download page names the build it is offering (unfilled, so unpublishable)"
+elif grep -rqE '>Build</p>' site/*/index.html 2>/dev/null; then
+  pass "  the download page names the build it is offering"
+else
+  fail "  the download page offers a file without naming the build it came from"
+fi
+
 # ------------------------------------------------- the third golden
 # 734 pages of Austrian medical German: a code table with one page of doctors
 # in the middle. It holds both halves of the promise at once — the people are

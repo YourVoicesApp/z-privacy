@@ -21,6 +21,9 @@ fn kind_of(path: &Path) -> Option<DocumentKind> {
 
 fn main() {
     let files: Vec<String> = std::env::args().skip(1).collect();
+    // Which build said these numbers. The same stamp the window shows and the
+    // copied report carries, so a measurement can be put back to a commit.
+    println!("{}", z_core::core_version());
     if files.is_empty() {
         println!("usage: check_document <file> [file …]");
         return;

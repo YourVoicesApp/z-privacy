@@ -65,9 +65,19 @@ pub mod testing {
     }
 }
 
-/// Version of the core, shown by the UI so a build can be identified on sight.
+/// The build that is running, shown by the UI so it can be named on sight.
+///
+/// `z_core 0.1.0 · 2026-10-04 · fb9cfb8` — the version, the day it was built,
+/// and the commit it was built from. The last two are written in by
+/// `build.rs`; see the head of that file for why a version alone was not
+/// enough to tell two builds of one afternoon apart.
 pub fn core_version() -> String {
-    format!("z_core {}", env!("CARGO_PKG_VERSION"))
+    format!(
+        "z_core {} · {} · {}",
+        env!("CARGO_PKG_VERSION"),
+        env!("ZCORE_BUILD_DATE"),
+        env!("ZCORE_COMMIT")
+    )
 }
 
 #[cfg(test)]
@@ -77,5 +87,43 @@ mod tests {
     #[test]
     fn version_names_the_crate() {
         assert!(core_version().starts_with("z_core 0."));
+    }
+
+    /// The owner looked at the download page and thought the old build was
+    /// still there, because `z_core 0.1.0` has been the whole of what the
+    /// screen says since the first day and the installer is called `v1`
+    /// whatever is inside it. Two builds of the same afternoon were
+    /// indistinguishable by anything but a SHA-256 nobody reads aloud.
+    ///
+    /// So the version names the build that is running: the version, the day it
+    /// was built, and the commit it was built from.
+    #[test]
+    fn the_version_names_the_build_that_is_running() {
+        let stamp = core_version();
+        let parts: Vec<&str> = stamp.split(" · ").collect();
+        assert_eq!(parts.len(), 3, "the stamp is version, date and commit: «{stamp}»");
+        assert!(parts[0].starts_with("z_core 0."), "«{stamp}»");
+
+        let date = parts[1];
+        assert_eq!(date.len(), 10, "a date is ten characters: «{date}»");
+        assert!(
+            date.char_indices().all(|(i, c)| if i == 4 || i == 7 { c == '-' } else { c.is_ascii_digit() }),
+            "one shape of date and one only, YYYY-MM-DD: «{date}»"
+        );
+
+        let commit = parts[2];
+        // Built outside a checkout — from a crates tarball, say — there is no
+        // commit to name, and a stamp that invents one is worse than a stamp
+        // that says it does not know. Here, in the repository, it must be real.
+        let in_a_checkout = std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.git")).exists();
+        if in_a_checkout {
+            assert_eq!(commit.len(), 7, "seven of them, as git prints: «{commit}»");
+            assert!(
+                commit.chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()),
+                "a commit is lowercase hexadecimal: «{commit}»"
+            );
+        } else {
+            assert_eq!(commit, "unknown", "no checkout, so nothing may be claimed: «{commit}»");
+        }
     }
 }
