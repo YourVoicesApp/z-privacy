@@ -576,7 +576,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "drawn with a solid line" "protected on its own is drawn dashed" \
          "the line still says who decided" "stays wavy, whoever found it" \
          "put back in the answer is drawn dotted" \
-         "own report, and none of the words"; do
+         "own report, and none of the words" \
+         "selection in blue, not in nothing" "wash covers it"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else
