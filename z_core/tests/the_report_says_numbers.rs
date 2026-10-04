@@ -78,4 +78,12 @@ fn a_refused_file_still_has_a_report() {
     assert!(text.contains("UnsupportedEncoding"), "the refusal is named: {text}");
     assert!(text.contains("page: 14") && text.contains("41"), "with its own numbers: {text}");
     assert!(text.contains("z_core"), "and the build that refused it: {text}");
+    // The stamp, whole: a report from a tester in another country is worth
+    // having only if it can be put back to the build that wrote it.
+    assert!(
+        text.contains(&z_core::core_version()),
+        "the report does not name its own build: {text}"
+    );
+    let stamp = text.lines().find(|l| l.starts_with("build")).unwrap_or_default();
+    assert_eq!(stamp.split(" · ").count(), 3, "version, date, commit: «{stamp}»");
 }

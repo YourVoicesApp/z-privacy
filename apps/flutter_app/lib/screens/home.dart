@@ -51,7 +51,18 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     const Text('Z Privacy', style: Zc.h1),
                     const Spacer(),
-                    Text(version, style: Zc.tiny.copyWith(fontFamily: Zc.mono)),
+                    // The stamp is three times the length of «z_core 0.1.0», so
+                    // it is given room to shrink rather than room to overflow —
+                    // the workspace top bar taught that lesson on 3 October.
+                    Flexible(
+                      child: Text(
+                        version,
+                        style: Zc.tiny.copyWith(fontFamily: Zc.mono),
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: false,
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     IconButton(
                       tooltip: 'Settings',

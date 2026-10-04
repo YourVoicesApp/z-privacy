@@ -61,6 +61,31 @@ jobs:
         shell: bash
         run: cargo test --workspace --features fake_provider -- --nocapture
 
+      # What build is this? The owner looked at the download page and thought
+      # yesterday's installer was still live, because the screen said
+      # `z_core 0.1.0` and the file is called `v1` whatever is inside it.
+      #
+      # So the stamp is read out of the binary this machine just built — not
+      # worked out from the run's own variables — and it has to name the commit
+      # being built. A stamp that names another commit is worse than none.
+      - name: The build's own stamp
+        shell: bash
+        run: |
+          stamp=$(cargo run -q -p z_core --example check_document | head -1)
+          echo "$stamp"
+          short="${GITHUB_SHA:0:7}"
+          case "$stamp" in
+            *"$short") echo "the stamp names this commit" ;;
+            *) echo "::error::the binary says «$stamp» and this is commit $short"; exit 1 ;;
+          esac
+          {
+            echo "### The build"
+            echo ""
+            echo '```'
+            echo "$stamp"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # The tests above pass on Windows. That is not the same as being safe:
       # six of them do not exist there at all. This step asks for those six by
       # name and is expected to fail until Windows has its own guard.
@@ -217,6 +242,15 @@ jobs:
             echo '```'
             ls -l "$file" | awk '{print $5" bytes"}'
             sha256sum "$file"
+            echo '```'
+            echo ""
+            echo "The two lines the download page needs, which are written there by"
+            echo 'hand — the page has no build step of its own, and scripts/check_site.sh'
+            echo "refuses to call the site ready while \`{{WINDOWS_BUILD}}\` is unfilled:"
+            echo ""
+            echo '```'
+            echo "$(date -u +%Y-%m-%d) · ${GITHUB_SHA:0:7}"
+            sha256sum "$file" | cut -d" " -f1
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           sha256sum "$file"
