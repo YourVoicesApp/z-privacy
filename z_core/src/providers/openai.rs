@@ -12,7 +12,9 @@ use serde_json::{json, Value};
 
 use crate::api::{ApiResult, NetworkRefusal};
 
-use super::{http, refuse, Provider, ProviderAttempt};
+use crate::api::ModelCapability as Capability;
+
+use super::{http, refuse, ModelFacts, Provider, ProviderAttempt, Said};
 
 pub(crate) struct OpenAiCompatible;
 
@@ -33,7 +35,43 @@ impl Provider for OpenAiCompatible {
         "gpt-4o-mini"
     }
 
-    fn ask(&self, credential: &str, base: &str, model: &str, text: &str) -> ProviderAttempt<String> {
+    /// What this endpoint offers, as of this build.
+    ///
+    /// A list rather than a question asked over the network: configuring a
+    /// provider must not itself be a request. It is also why «OpenAI-compatible»
+    /// accepts a model this list does not name — a model on your own machine is
+    /// whatever you called it, and the field stays editable.
+    fn models(&self) -> &'static [ModelFacts] {
+        &[
+            ModelFacts {
+                id: "gpt-4o-mini",
+                display: "GPT-4o mini",
+                capabilities: &[Capability::Text, Capability::Vision, Capability::Tools],
+                context_k: 128,
+            },
+            ModelFacts {
+                id: "gpt-4o",
+                display: "GPT-4o",
+                capabilities: &[Capability::Text, Capability::Vision, Capability::Tools],
+                context_k: 128,
+            },
+            ModelFacts {
+                id: "gpt-4.1-mini",
+                display: "GPT-4.1 mini",
+                capabilities: &[Capability::Text, Capability::Tools],
+                context_k: 1_000,
+            },
+        ]
+    }
+
+    fn ask(
+        &self,
+        credential: &str,
+        base: &str,
+        model: &str,
+        text: &str,
+        instructions: &str,
+    ) -> ProviderAttempt<Said> {
         if credential.is_empty() && !http::is_loopback_url(base) {
             return ProviderAttempt::not_sent(refuse(
                 NetworkRefusal::NotConnected,
@@ -45,21 +83,36 @@ impl Provider for OpenAiCompatible {
         // The body is built here, from exactly two things: the model's name and
         // the safe text. There is no third field into which anything else could
         // travel, and the escaping is not ours to get wrong.
+        // The body is built from exactly three things: the model's name, what
+        // the workspace told it, and the text. There is no fourth field into
+        // which anything else could travel, and the escaping is not ours to
+        // get wrong.
+        let mut messages = Vec::new();
+        if !instructions.is_empty() {
+            messages.push(json!({ "role": "system", "content": instructions }));
+        }
+        messages.push(json!({ "role": "user", "content": text }));
         let body = json!({
             "model": model,
-            "messages": [{ "role": "user", "content": text }],
+            "messages": messages,
             "stream": false,
         })
         .to_string();
 
-        http::post_json(&url, credential, &body).map(|answer| {
+        http::post_json(&url, &self.authorisation(credential), &body).map(|answer| {
             if answer.status != 200 {
                 return Err(refuse(
                     NetworkRefusal::BadStatus { status: answer.status },
                     said_what(answer.status),
                 ));
             }
-            content_of(&answer.body)
+            // The units this company states, where it states them.
+            let (input, output) = units_of(&answer.body);
+            content_of(&answer.body).map(|text| Said {
+                text,
+                input_units: input,
+                output_units: output,
+            })
         })
     }
 }
@@ -124,6 +177,20 @@ fn content_of(body: &str) -> ApiResult<String> {
         }
     }
     Err(unreadable())
+}
+
+/// `usage.prompt_tokens` and `usage.completion_tokens`, where present.
+fn units_of(body: &str) -> (u32, u32) {
+    let Ok(value) = serde_json::from_str::<Value>(body) else { return (0, 0) };
+    let at = |name: &str| {
+        value
+            .get("usage")
+            .and_then(|u| u.get(name))
+            .and_then(Value::as_u64)
+            .unwrap_or(0)
+            .min(u64::from(u32::MAX)) as u32
+    };
+    (at("prompt_tokens"), at("completion_tokens"))
 }
 
 #[cfg(test)]

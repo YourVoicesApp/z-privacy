@@ -18,6 +18,8 @@
 //   body     the only scroll — preview on the first page, the three doors on the
 //            second. The payload never shares a scroller with the actions.
 //   footer   Cancel / Back / Continue, always on screen
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -47,6 +49,14 @@ class SendSheet extends StatefulWidget {
 enum _SheetPage { review, ai }
 
 class _SendSheetState extends State<SendSheet> {
+  @override
+  void initState() {
+    super.initState();
+    // The catalogue, at the moment it is needed: a chooser that opens empty is
+    // a chooser nobody can use.
+    unawaited(widget.bench.refreshModels());
+  }
+
   final _pasted = TextEditingController();
   final _previewScroll = ScrollController();
   bool _copied = false;
@@ -317,6 +327,7 @@ class _SendSheetState extends State<SendSheet> {
             ),
           ),
           const SizedBox(height: 14),
+          if (widget.bench.models.isNotEmpty) _ModelAndMode(bench: widget.bench),
           _door(
             title: 'Direct API',
             what: connected.isEmpty
@@ -346,10 +357,13 @@ class _SendSheetState extends State<SendSheet> {
                           onPressed:
                               open > 0 ||
                                   widget.bench.sending ||
-                                  payload == null
+                                  (payload == null && !widget.bench.sendOriginal)
                               ? null
                               : () async {
-                                  final bad = await widget.bench.send(p.id);
+                                  final bad = await widget.bench.askModel(
+                                    p.id,
+                                    original: widget.bench.document?.text ?? '',
+                                  );
                                   if (!context.mounted) return;
                                   if (bad == null) {
                                     Navigator.of(context).pop(true);
@@ -523,6 +537,116 @@ class _MoreState extends State<_More> {
         ),
         if (_open) ...[const SizedBox(height: 10), widget.child],
       ],
+    );
+  }
+}
+
+/// Which model answers, and what travels to it.
+///
+/// Two choices and no third. The second one is the only place in this app
+/// where a person can decide to send their document as it stands, and it says
+/// so in those words: «Direct API» already means the route in Z's vocabulary —
+/// this app to the provider, with the protected text — so the unredacted mode
+/// is never called «direct» on a screen.
+class _ModelAndMode extends StatelessWidget {
+  const _ModelAndMode({required this.bench});
+
+  final Workbench bench;
+
+  @override
+  Widget build(BuildContext context) {
+    final available = bench.models.where((m) => m.available).toList();
+    final listed = available.isEmpty ? bench.models : available;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: Zc.panel(fill: Zc.card, edge: Zc.line, radius: 9),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Model', style: Zc.tiny.copyWith(color: Zc.ink4)),
+          const SizedBox(height: 6),
+          // The names come from the core's catalogue. No model is named in
+          // this file, which is the point of the catalogue.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Chip(
+                label: 'As configured',
+                on: bench.chosenModel == null,
+                onTap: () => bench.chooseModel(null),
+              ),
+              for (final model in listed)
+                _Chip(
+                  label: model.displayName,
+                  on: bench.chosenModel == model.modelId,
+                  onTap: () => bench.chooseModel(model.modelId),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text('What travels', style: Zc.tiny.copyWith(color: Zc.ink4)),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              _Chip(
+                label: 'Protected text',
+                on: !bench.sendOriginal,
+                onTap: () => bench.chooseOriginal(false),
+              ),
+              const SizedBox(width: 8),
+              _Chip(
+                label: 'The original text',
+                on: bench.sendOriginal,
+                warn: true,
+                onTap: () => bench.chooseOriginal(true),
+              ),
+            ],
+          ),
+          if (bench.sendOriginal) ...[
+            const SizedBox(height: 8),
+            Text(
+              'The document goes as it is written, with your names and numbers in '
+              'it. The connection is encrypted; the text is not replaced.',
+              style: Zc.small.copyWith(color: Zc.amber),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({required this.label, required this.on, required this.onTap, this.warn = false});
+
+  final String label;
+  final bool on;
+  final VoidCallback onTap;
+  final bool warn;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = warn ? Zc.amber : Zc.river;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: on ? tint.withValues(alpha: 0.12) : Colors.transparent,
+          border: Border.all(color: on ? tint : Zc.line),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: Zc.small.copyWith(
+            color: on ? tint : Zc.ink3,
+            fontWeight: on ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      ),
     );
   }
 }

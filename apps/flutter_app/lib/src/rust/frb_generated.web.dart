@@ -155,6 +155,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Mark> dco_decode_list_mark(dynamic raw);
 
   @protected
+  List<ModelCapability> dco_decode_list_model_capability(dynamic raw);
+
+  @protected
+  List<ModelDescriptor> dco_decode_list_model_descriptor(dynamic raw);
+
+  @protected
   List<NameCandidate> dco_decode_list_name_candidate(dynamic raw);
 
   @protected
@@ -207,6 +213,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MarkState dco_decode_mark_state(dynamic raw);
+
+  @protected
+  ModelAnswer dco_decode_model_answer(dynamic raw);
+
+  @protected
+  ModelCapability dco_decode_model_capability(dynamic raw);
+
+  @protected
+  ModelDescriptor dco_decode_model_descriptor(dynamic raw);
+
+  @protected
+  ModelUsage dco_decode_model_usage(dynamic raw);
 
   @protected
   NameCandidate dco_decode_name_candidate(dynamic raw);
@@ -514,6 +532,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Mark> sse_decode_list_mark(SseDeserializer deserializer);
 
   @protected
+  List<ModelCapability> sse_decode_list_model_capability(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<ModelDescriptor> sse_decode_list_model_descriptor(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<NameCandidate> sse_decode_list_name_candidate(
     SseDeserializer deserializer,
   );
@@ -578,6 +606,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MarkState sse_decode_mark_state(SseDeserializer deserializer);
+
+  @protected
+  ModelAnswer sse_decode_model_answer(SseDeserializer deserializer);
+
+  @protected
+  ModelCapability sse_decode_model_capability(SseDeserializer deserializer);
+
+  @protected
+  ModelDescriptor sse_decode_model_descriptor(SseDeserializer deserializer);
+
+  @protected
+  ModelUsage sse_decode_model_usage(SseDeserializer deserializer);
 
   @protected
   NameCandidate sse_decode_name_candidate(SseDeserializer deserializer);
@@ -931,6 +971,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_mark(List<Mark> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_model_capability(
+    List<ModelCapability> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_model_descriptor(
+    List<ModelDescriptor> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_name_candidate(
     List<NameCandidate> self,
     SseSerializer serializer,
@@ -1013,6 +1065,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_mark_state(MarkState self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_model_answer(ModelAnswer self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_model_capability(
+    ModelCapability self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_model_descriptor(
+    ModelDescriptor self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_model_usage(ModelUsage self, SseSerializer serializer);
 
   @protected
   void sse_encode_name_candidate(NameCandidate self, SseSerializer serializer);

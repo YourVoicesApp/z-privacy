@@ -118,7 +118,17 @@ pub(crate) fn check_url(url: &str) -> ApiResult<()> {
 }
 
 /// POST a JSON body with a bearer credential, and read a bounded answer.
-pub(crate) fn post_json(url: &str, credential: &str, body: &str) -> ProviderAttempt<Answer> {
+/// Post a JSON body, with the headers the provider asked for.
+///
+/// The headers are the provider's business and the socket is this file's. Until
+/// the second provider arrived, `authorization: Bearer …` was written here —
+/// which made «how a company wants its key presented» a fact of the network
+/// layer, and Anthropic wants `x-api-key` and a version. So the provider says
+/// how, in one method, and this door still opens exactly once.
+///
+/// Nothing about a header is logged, and `credential` does not appear in this
+/// function any more: what arrives is already the finished header.
+pub(crate) fn post_json(url: &str, headers: &[(String, String)], body: &str) -> ProviderAttempt<Answer> {
     if let Err(error) = check_url(url) {
         return ProviderAttempt::not_sent(error);
     }
@@ -137,8 +147,11 @@ pub(crate) fn post_json(url: &str, credential: &str, body: &str) -> ProviderAtte
         .build();
 
     let mut request = config.new_agent().post(url).header("content-type", "application/json");
-    if !credential.is_empty() {
-        request = request.header("authorization", format!("Bearer {credential}"));
+    for (name, value) in headers {
+        if value.is_empty() {
+            continue;
+        }
+        request = request.header(name.as_str(), value.as_str());
     }
     let mut response = match request.send(body) {
         Ok(response) => response,

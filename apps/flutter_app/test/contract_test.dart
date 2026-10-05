@@ -58,6 +58,35 @@ void main() {
       'documentView': () => documentView(session: session),
       'importReport': () => importReport(subject: ReportSubject.imported(session: session)),
       'nameCandidates': () => nameCandidates(session: session),
+      'models': () => models(),
+      'askModel': () async {
+        // No provider is connected in this test, so the refusal is the answer:
+        // the call is reached, and the protected door takes a handle.
+        try {
+          final handle = await buildPayload(session: session);
+          await askModel(
+            handle: handle,
+            provider: const ProviderId(id: 'openai'),
+            workspace: const [],
+            history: const [],
+          );
+        } on ApiError {
+          // named, not swallowed
+        }
+      },
+      'askModelDirectly': () async {
+        try {
+          await askModelDirectly(
+            session: session,
+            text: 'hello',
+            provider: const ProviderId(id: 'openai'),
+            workspace: const [],
+            history: const [],
+          );
+        } on ApiError {
+          // the same: a door that refuses is a door that was reached
+        }
+      },
       'teachName': () async {
         // The vault is locked in this test, so the refusal is the answer: the
         // call is reached, and it says what it needs.
@@ -226,7 +255,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 84, reason: 'the contract has 84 functions');
+    expect(calls.length, 87, reason: 'the contract has 87 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

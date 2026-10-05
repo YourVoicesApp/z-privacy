@@ -450,6 +450,82 @@ pub struct PackRow {
     pub family: u32,
 }
 
+/// What a model said, and what the request cost.
+///
+/// The protected path also keeps the answer in the core and returns its id, so
+/// the restored view is reachable the way it always was: `answer` is `Some`
+/// there and `None` for a direct request, which has nothing to restore.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ModelAnswer {
+    pub answer: Option<AnswerId>,
+    /// The model's words as they arrived. For a protected request this is the
+    /// text with tokens still in it — the restored view is a different call,
+    /// and this one is what the model actually wrote.
+    pub text: String,
+    pub usage: ModelUsage,
+}
+
+/// What one request to a model cost, as the provider reported it.
+///
+/// Enough to tell a person what happened, and the ground a managed
+/// subscription would one day stand on. What it deliberately does **not**
+/// carry is the prompt: a usage record that stored the question would be a
+/// second copy of the document, kept for accounting.
+///
+/// A number the provider did not state is `0`, and `0` means «not stated»
+/// rather than «none» — a figure we were not given is not a figure we invent.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ModelUsage {
+    pub provider_id: String,
+    pub model_id: String,
+    pub input_units: u32,
+    pub output_units: u32,
+    /// How long the request took, end to end, in milliseconds.
+    pub millis: u32,
+    pub ok: bool,
+}
+
+/// What a model can be asked to do.
+///
+/// Named capabilities rather than model names, because a screen that knows
+/// «gpt-4o can see pictures» is a screen that has to be edited every time a
+/// company ships something. The UI asks what a model can do; the catalogue
+/// answers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ModelCapability {
+    /// Text in, text out. Every model in V1 has this and only this is used.
+    Text,
+    /// Accepts images as well as text.
+    Vision,
+    /// Can be given tools to call.
+    Tools,
+    /// Asked to reason at length before answering.
+    Reasoning,
+}
+
+/// One model a provider offers, as the catalogue states it.
+///
+/// The gateway's unit of choice. A provider is **where** a request goes; a
+/// model is **what** answers it; a credential is what opens the door. Keeping
+/// the three apart is the whole of why a second provider is a file and not a
+/// rewrite — and why the screens below never name a model of their own.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ModelDescriptor {
+    pub provider_id: String,
+    pub model_id: String,
+    /// What a person reads in a list.
+    pub display_name: String,
+    pub capabilities: Vec<ModelCapability>,
+    /// The context window the provider states, in thousands of tokens. 0 where
+    /// the provider does not say — a number we do not have is not a number we
+    /// invent.
+    pub context_k: u32,
+    /// Whether this model, at this provider's address, needs a credential.
+    pub credential_required: bool,
+    /// Usable in this run: the provider is connected, or needs no credential.
+    pub available: bool,
+}
+
 /// A provider as the UI is allowed to see it: a name, and whether it is
 /// connected. The credential itself is not in this type and has no getter
 /// anywhere in the contract — once given, it never comes back out.
@@ -1467,6 +1543,32 @@ pub fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<AnswerId> 
     crate::ops::send(handle, provider)
 }
 
+/// Ask a model, with a workspace's instructions and a conversation's history.
+///
+/// The protected door of the Model Gateway, and the one a workspace uses. It
+/// takes a **handle**, so there is no signature here through which a document
+/// could be sent unprotected — the same promise `send` has always made, with a
+/// context and a chosen model added.
+///
+/// `model` is optional: without one, the provider's configured model answers.
+pub fn ask_model(handle: PayloadHandle, provider: ProviderId, model: Option<String>, workspace: Vec<String>, history: Vec<String>) -> ApiResult<ModelAnswer> {
+    crate::ops::ask_model(handle, provider, model, workspace, history)
+}
+
+/// Send text to a model **as it stands**, because the person chose to.
+///
+/// Direct Mode. A separate function, a separate body type and a separate path
+/// through the gateway: nothing turns a protected request into this one, and a
+/// protected request that fails is reported as having failed. The person knows
+/// which mode they are in, because they called this.
+///
+/// It is «not redacted». It is never «not encrypted»: the address is checked
+/// the way every other request's is, and plain HTTP reaches nothing but this
+/// machine.
+pub fn ask_model_directly(session: SessionId, text: String, provider: ProviderId, model: Option<String>, workspace: Vec<String>, history: Vec<String>) -> ApiResult<ModelAnswer> {
+    crate::ops::ask_model_directly(session, text, provider, model, workspace, history)
+}
+
 /// Incoming only: hand the core an answer as it arrived, tied to the payload the
 /// model saw. There is no restore-from-arbitrary-session-text path.
 pub fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<AnswerId> {
@@ -1727,6 +1829,15 @@ pub fn switch_pack(session: SessionId, pack_id: String) -> ApiResult<RescanOutco
 // ---------------------------------------------------------------- providers
 
 /// The providers and whether each is connected.
+/// Every model this build can offer, with what each one can do.
+///
+/// The catalogue the screens read. One layer, static in V1 — a registry inside
+/// the application is honest about being a list we maintain, and a marketplace
+/// is not in this phase.
+pub fn models() -> ApiResult<Vec<ModelDescriptor>> {
+    crate::ops::models()
+}
+
 pub fn providers() -> ApiResult<Vec<ProviderRow>> {
     crate::ops::providers()
 }

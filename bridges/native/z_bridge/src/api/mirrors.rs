@@ -329,6 +329,56 @@ pub struct _PackRow {
     pub family: u32,
 }
 
+#[frb(mirror(ModelAnswer))]
+pub struct _ModelAnswer {
+    pub answer: Option<AnswerId>,
+    /// The model's words as they arrived. For a protected request this is the
+    /// text with tokens still in it — the restored view is a different call,
+    /// and this one is what the model actually wrote.
+    pub text: String,
+    pub usage: ModelUsage,
+}
+
+#[frb(mirror(ModelUsage))]
+pub struct _ModelUsage {
+    pub provider_id: String,
+    pub model_id: String,
+    pub input_units: u32,
+    pub output_units: u32,
+    /// How long the request took, end to end, in milliseconds.
+    pub millis: u32,
+    pub ok: bool,
+}
+
+#[frb(mirror(ModelCapability))]
+pub enum _ModelCapability {
+    /// Text in, text out. Every model in V1 has this and only this is used.
+    Text,
+    /// Accepts images as well as text.
+    Vision,
+    /// Can be given tools to call.
+    Tools,
+    /// Asked to reason at length before answering.
+    Reasoning,
+}
+
+#[frb(mirror(ModelDescriptor))]
+pub struct _ModelDescriptor {
+    pub provider_id: String,
+    pub model_id: String,
+    /// What a person reads in a list.
+    pub display_name: String,
+    pub capabilities: Vec<ModelCapability>,
+    /// The context window the provider states, in thousands of tokens. 0 where
+    /// the provider does not say — a number we do not have is not a number we
+    /// invent.
+    pub context_k: u32,
+    /// Whether this model, at this provider's address, needs a credential.
+    pub credential_required: bool,
+    /// Usable in this run: the provider is connected, or needs no credential.
+    pub available: bool,
+}
+
 #[frb(mirror(ProviderRow))]
 pub struct _ProviderRow {
     pub id: String,

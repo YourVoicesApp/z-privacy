@@ -790,6 +790,138 @@ class Mark {
 
 enum MarkState { protected, suggested }
 
+class ModelAnswer {
+  final AnswerId? answer;
+
+  /// The model's words as they arrived. For a protected request this is the
+  /// text with tokens still in it — the restored view is a different call,
+  /// and this one is what the model actually wrote.
+  final String text;
+  final ModelUsage usage;
+
+  const ModelAnswer({this.answer, required this.text, required this.usage});
+
+  @override
+  int get hashCode => answer.hashCode ^ text.hashCode ^ usage.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ModelAnswer &&
+          runtimeType == other.runtimeType &&
+          answer == other.answer &&
+          text == other.text &&
+          usage == other.usage;
+}
+
+enum ModelCapability {
+  /// Text in, text out. Every model in V1 has this and only this is used.
+  text,
+
+  /// Accepts images as well as text.
+  vision,
+
+  /// Can be given tools to call.
+  tools,
+
+  /// Asked to reason at length before answering.
+  reasoning,
+}
+
+class ModelDescriptor {
+  final String providerId;
+  final String modelId;
+
+  /// What a person reads in a list.
+  final String displayName;
+  final List<ModelCapability> capabilities;
+
+  /// The context window the provider states, in thousands of tokens. 0 where
+  /// the provider does not say — a number we do not have is not a number we
+  /// invent.
+  final int contextK;
+
+  /// Whether this model, at this provider's address, needs a credential.
+  final bool credentialRequired;
+
+  /// Usable in this run: the provider is connected, or needs no credential.
+  final bool available;
+
+  const ModelDescriptor({
+    required this.providerId,
+    required this.modelId,
+    required this.displayName,
+    required this.capabilities,
+    required this.contextK,
+    required this.credentialRequired,
+    required this.available,
+  });
+
+  @override
+  int get hashCode =>
+      providerId.hashCode ^
+      modelId.hashCode ^
+      displayName.hashCode ^
+      capabilities.hashCode ^
+      contextK.hashCode ^
+      credentialRequired.hashCode ^
+      available.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ModelDescriptor &&
+          runtimeType == other.runtimeType &&
+          providerId == other.providerId &&
+          modelId == other.modelId &&
+          displayName == other.displayName &&
+          capabilities == other.capabilities &&
+          contextK == other.contextK &&
+          credentialRequired == other.credentialRequired &&
+          available == other.available;
+}
+
+class ModelUsage {
+  final String providerId;
+  final String modelId;
+  final int inputUnits;
+  final int outputUnits;
+
+  /// How long the request took, end to end, in milliseconds.
+  final int millis;
+  final bool ok;
+
+  const ModelUsage({
+    required this.providerId,
+    required this.modelId,
+    required this.inputUnits,
+    required this.outputUnits,
+    required this.millis,
+    required this.ok,
+  });
+
+  @override
+  int get hashCode =>
+      providerId.hashCode ^
+      modelId.hashCode ^
+      inputUnits.hashCode ^
+      outputUnits.hashCode ^
+      millis.hashCode ^
+      ok.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ModelUsage &&
+          runtimeType == other.runtimeType &&
+          providerId == other.providerId &&
+          modelId == other.modelId &&
+          inputUnits == other.inputUnits &&
+          outputUnits == other.outputUnits &&
+          millis == other.millis &&
+          ok == other.ok;
+}
+
 class NameCandidate {
   /// The word, as the document writes it.
   final String text;

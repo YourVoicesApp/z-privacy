@@ -21,6 +21,7 @@ mod documents;
 mod ops;
 mod config;
 mod data_dir;
+mod gateway;
 mod payload;
 mod providers;
 mod scanner;
