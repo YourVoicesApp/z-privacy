@@ -3736,11 +3736,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PackRow dco_decode_pack_row(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return PackRow(
       id: dco_decode_String(arr[0]),
       label: dco_decode_String(arr[1]),
+      locale: dco_decode_String(arr[2]),
+      version: dco_decode_String(arr[3]),
+      ownRules: dco_decode_list_String(arr[4]),
+      provenance: dco_decode_String(arr[5]),
+      given: dco_decode_u_32(arr[6]),
+      family: dco_decode_u_32(arr[7]),
     );
   }
 
@@ -5271,7 +5277,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_String(deserializer);
     var var_label = sse_decode_String(deserializer);
-    return PackRow(id: var_id, label: var_label);
+    var var_locale = sse_decode_String(deserializer);
+    var var_version = sse_decode_String(deserializer);
+    var var_ownRules = sse_decode_list_String(deserializer);
+    var var_provenance = sse_decode_String(deserializer);
+    var var_given = sse_decode_u_32(deserializer);
+    var var_family = sse_decode_u_32(deserializer);
+    return PackRow(
+      id: var_id,
+      label: var_label,
+      locale: var_locale,
+      version: var_version,
+      ownRules: var_ownRules,
+      provenance: var_provenance,
+      given: var_given,
+      family: var_family,
+    );
   }
 
   @protected
@@ -6752,6 +6773,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.id, serializer);
     sse_encode_String(self.label, serializer);
+    sse_encode_String(self.locale, serializer);
+    sse_encode_String(self.version, serializer);
+    sse_encode_list_String(self.ownRules, serializer);
+    sse_encode_String(self.provenance, serializer);
+    sse_encode_u_32(self.given, serializer);
+    sse_encode_u_32(self.family, serializer);
   }
 
   @protected

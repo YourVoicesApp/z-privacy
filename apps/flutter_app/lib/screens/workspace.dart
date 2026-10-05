@@ -169,11 +169,11 @@ class _TopBar extends StatelessWidget {
     final packLabel = ran
         .map(
           (id) => ground.packs
-              .firstWhere((p) => p.id == id, orElse: () => PackRow(id: id, label: id))
+              .firstWhere((p) => p.id == id, orElse: () => _unknownPack(id))
               .label,
         )
         .join(' · ');
-    final pack = PackRow(id: ran.join('+'), label: packLabel);
+    final pack = _unknownPack(ran.join('+'), label: packLabel);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 13, 18, 13),
@@ -264,6 +264,21 @@ class _TopBar extends StatelessWidget {
     );
   }
 }
+
+/// A row for a language the core did not send one for: a profile may name a
+/// pack this build no longer carries, and the bar still has to say its name.
+/// Everything the core would have filled stays empty, because Dart knows none
+/// of it and may not invent it.
+PackRow _unknownPack(String id, {String? label}) => PackRow(
+      id: id,
+      label: label ?? id,
+      locale: '',
+      version: '',
+      ownRules: const [],
+      provenance: '',
+      given: 0,
+      family: 0,
+    );
 
 class _ProfileFact extends StatelessWidget {
   const _ProfileFact({

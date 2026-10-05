@@ -26,14 +26,64 @@
 //! * **A company form is a hint too.** A run ending in `GmbH` is very probably a
 //!   company, but a document can also discuss «die GmbH» in general. → `Suggest`.
 
-use crate::api::{Kind, Source};
+use crate::api::Kind;
 
+use super::pack::{bare, is_label, is_numberish, starts_upper, trimmed_end, LanguagePack, NameOrder, Word};
 use crate::scanner::{Candidate, Confidence};
 
 const PACK: &str = "de";
 
+/// German, as the first implementation of the pack contract.
+///
+/// Every field points at a list that was already in this file: the data did not
+/// change when it became data. What is **not** here is what is not language —
+/// an e-mail address, an IBAN, a telephone number in international form — and
+/// what is here beyond the lists is three rules no other language can use,
+/// named in `extra` with the reason each one cannot be generalised.
+pub(crate) fn pack() -> LanguagePack {
+    LanguagePack {
+        locale: "de-DE",
+        id: PACK,
+        label: "Deutsch",
+        version: "1",
+        salutations: SALUTATIONS,
+        titles: TITLES,
+        title_parts: TITLE_PARTS,
+        degrees: DEGREES,
+        function_words: FUNCTION_WORDS,
+        stop_words: STOP_WORDS,
+        closings: CLOSINGS,
+        roles: ROLES,
+        company_forms: COMPANY_FORMS,
+        conjunctions: CONJUNCTIONS,
+        order: NameOrder::GivenThenFamily,
+        names: super::de_names::CSV,
+        provenance: "Berlin Open Data (CC BY 3.0 DE) · sigpwned/popular-names-by-country (CC0) · Wikidata (CC0) — see z_core/assets/licenses/german_names_sources.md",
+        extra: &[
+            // A national plate format: «B-MW 2041» says where a car is
+            // registered in Germany. Nothing about it generalises.
+            ("vehicle plates", plates),
+            // A local number written after the German word for telephone:
+            // «Telefon: 089 1234 5678» has no country code, so the only thing
+            // that says it is a number is the German word in front of it.
+            ("local telephone numbers", local_phones),
+            // A street line as German addresses are written: the street word is
+            // part of the name («Lindenstraße 8») and the postcode is five
+            // digits before the town.
+            ("street addresses", addresses),
+        ],
+    }
+}
+
+/// Conjunctions a German company name may carry: «Lindemann & Partner»,
+/// «Müller und Söhne». A list, because the rule is the same everywhere and
+/// only the words change.
+const CONJUNCTIONS: &[&str] = &["&", "und"];
+
+
 /// Salutations and titles: what follows one of these is probably a person.
 const SALUTATIONS: &[&str] = &["Herr", "Herrn", "Frau", "Fr.", "Hr."];
+
 /// Titles that introduce a person, German and Austrian, as they are written.
 ///
 /// Measured on a 734-page Austrian document whose team page is a column of
@@ -46,10 +96,12 @@ const TITLES: &[&str] = &[
     "Univ.-Prof.", "Univ.-Doz.", "Priv.-Doz.", "PD", "Prim.", "Prim", "DI", "Dipl.-Ing.",
     "Dipl.-Kfm.", "Ing.", "Bakk.",
 ];
+
 /// The parts of a Latin title that never stand on their own: «Dr. med. univ.».
 /// Stepped over inside a chain, and never the start of one — in German every
 /// noun is capitalised, so «med. Abteilung» would otherwise name a person.
 const TITLE_PARTS: &[&str] = &["med.", "rer.", "nat.", "phil.", "techn.", "univ.", "h.c.", "mult."];
+
 /// German function words that are also given names in the dictionary.
 ///
 /// `An` (at, to) is rank 175 of the 300 and `Nur` (only) is rank 224 — real
@@ -68,10 +120,12 @@ const FUNCTION_WORDS: &[&str] = &["an", "nur"];
 
 /// Degrees that follow a name. They are not part of it and do not start one.
 const DEGREES: &[&str] = &["MBA", "MSc", "BSc", "BA", "MA", "LL.M.", "PhD", "MPH", "MAS", "CFA"];
+
 /// The legal forms a German company name ends with.
 const COMPANY_FORMS: &[&str] = &[
     "GmbH", "AG", "UG", "KG", "OHG", "GbR", "SE", "e.K.", "eG", "mbH", "KGaA",
 ];
+
 /// Capitalised words that start a sentence but belong to no name.
 const STOP_WORDS: &[&str] = &[
     "Die", "Der", "Das", "Den", "Dem", "Des", "Ein", "Eine", "Einer", "Eines", "Unser", "Unsere",
@@ -84,191 +138,19 @@ const STREET_ENDINGS: &[&str] = &[
     "straße", "strasse", "str.", "str", "weg", "platz", "allee", "gasse", "ring", "damm", "ufer",
 ];
 
-/// One whitespace-separated token, with its byte range.
-struct Word<'a> {
-    start: usize,
-    end: usize,
-    text: &'a str,
-    /// True when a line break sits between this word and the one before it.
-    ///
-    /// Two of the pack's rules need this: a name does not run past the end of a
-    /// line, and neither does a labelled value. Without it, «Ansprechpartner:
-    /// Herr Thomas Müller\nTelefon:» reads as a three-word name.
-    newline_before: bool,
-}
-
-/// Is this word a label — «Telefon:», «BIC:» — rather than a value?
-///
-/// A label ends a value: `IBAN: DE89 … 00` must stop before `BIC:`, or one
-/// finding swallows the next.
-fn is_label(word: &str) -> bool {
-    word.ends_with(':')
-}
-
-fn words(text: &str) -> Vec<Word<'_>> {
-    let mut out = Vec::new();
-    let mut index = 0usize;
-    for token in text.split_whitespace() {
-        if let Some(offset) = text.get(index..).and_then(|rest| rest.find(token)) {
-            let start = index + offset;
-            let end = start + token.len();
-            let gap = text.get(index..start).unwrap_or_default();
-            out.push(Word {
-                start,
-                end,
-                text: token,
-                newline_before: gap.contains('\n'),
-            });
-            index = end;
-        }
-    }
-    out
-}
-
-/// The word without the punctuation a sentence puts around it.
-fn bare(word: &str) -> &str {
-    word.trim_matches(|c: char| matches!(c, ',' | ';' | ':' | '.' | '!' | '?' | '"' | '(' | ')' | '»' | '«'))
-}
-
-/// Same, but keeping a trailing dot, which belongs to «Dr.» and «e.K.».
-fn bare_keep_dot(word: &str) -> &str {
-    word.trim_matches(|c: char| matches!(c, ',' | ';' | ':' | '!' | '?' | '"' | '(' | ')' | '»' | '«'))
-}
-
-fn starts_upper(word: &str) -> bool {
-    bare(word).chars().next().is_some_and(char::is_uppercase)
-}
-
-fn is_numberish(word: &str) -> bool {
-    let w = bare(word);
-    !w.is_empty()
-        && w.chars().any(|c| c.is_ascii_digit())
-        && w.chars().all(|c| c.is_ascii_digit() || matches!(c, '+' | '-' | '/' | '(' | ')' | '.' | ' '))
-}
-
-/// The end of `word`'s range with sentence punctuation trimmed off.
-fn trimmed_end(word: &Word<'_>) -> usize {
-    let cut = word.text.len() - word.text.trim_end_matches([',', ';', ':', '.', '!', '?', '"', ')', '»']).len();
-    word.end.saturating_sub(cut)
-}
-
-pub(crate) fn scan(text: &str, taught: &[(String, bool)]) -> Vec<Candidate> {
-    let words = words(text);
-    let mut out = Vec::new();
-    salutations(&words, &mut out);
-    titled_names(&words, &mut out);
-    dictionary_names(&words, taught, &mut out);
-    signatures(&words, &mut out);
-    companies(&words, &mut out);
-    addresses(&words, &mut out);
-    plates(&words, &mut out);
-    local_phones(&words, &mut out);
-    out
-}
-
-fn candidate(
-    start: usize,
-    end: usize,
-    kind: Kind,
-    confidence: Confidence,
-    rule: &str,
-    reason: String,
-) -> Candidate {
-    Candidate {
-        start,
-        end,
-        kind,
-        confidence,
-        source: Source::LanguagePack,
-        source_detail: format!("{PACK}:{rule}"),
-        reason,
-        entities: Vec::new(),
-        also: Vec::new(),
-    }
-}
-
 /// The last word of a German closing formula, lowercased.
 const CLOSINGS: &[&str] = &["grüßen", "grüssen", "grüße", "grüsse", "hochachtungsvoll"];
+
 /// What a line under a signature says about the person who signed.
 const ROLES: &[&str] = &[
     "geschäftsführer", "geschäftsführerin", "inhaber", "inhaberin", "i.a.", "ppa.", "prokurist",
     "vorstand", "mitglied",
 ];
+
 /// Words that name a telephone number before one is written.
 const PHONE_WORDS: &[&str] = &[
     "telefon", "telefonnummer", "tel", "tel.", "mobil", "handy", "durchwahl", "fax", "rufnummer",
 ];
-
-/// The words of each line, as indices. Blank lines disappear, which is what we
-/// want: a signature usually has one above it.
-fn lines(words: &[Word<'_>]) -> Vec<Vec<usize>> {
-    let mut out: Vec<Vec<usize>> = Vec::new();
-    for (i, word) in words.iter().enumerate() {
-        if i == 0 || word.newline_before {
-            out.push(Vec::new());
-        }
-        if let Some(line) = out.last_mut() {
-            line.push(i);
-        }
-    }
-    out
-}
-
-/// The name under «Mit freundlichen Grüßen», and the name above
-/// «Geschäftsführer».
-///
-/// The owner's letter of 3 October is why this exists: he signs his own name
-/// with no salutation in front of it, so the salutation rule never saw it, and
-/// after he had answered all fourteen questions his name was still in the text
-/// that would have left the machine — three times.
-fn signatures(words: &[Word<'_>], out: &mut Vec<Candidate>) {
-    let lines = lines(words);
-    for (n, line) in lines.iter().enumerate() {
-        if line.len() < 2 || line.len() > 3 {
-            continue;
-        }
-        let all_names = line.iter().all(|&i| {
-            words.get(i).is_some_and(|w| {
-                let b = bare(w.text);
-                starts_upper(b) && !b.is_empty() && !is_numberish(b) && !is_label(w.text)
-            })
-        });
-        if !all_names {
-            continue;
-        }
-        let closing_above = n > 0
-            && lines
-                .get(n - 1)
-                .and_then(|l| l.last())
-                .and_then(|&i| words.get(i))
-                .is_some_and(|w| CLOSINGS.contains(&bare(w.text).to_lowercase().as_str()));
-        let role_below = lines
-            .get(n + 1)
-            .and_then(|l| l.first())
-            .and_then(|&i| words.get(i))
-            .is_some_and(|w| ROLES.contains(&bare_keep_dot(w.text).to_lowercase().as_str()));
-        if !closing_above && !role_below {
-            continue;
-        }
-        let (Some(&first), Some(&last)) = (line.first(), line.last()) else { continue };
-        let (Some(start_word), Some(end_word)) = (words.get(first), words.get(last)) else {
-            continue;
-        };
-        let why = if closing_above {
-            "a name on its own line under a closing formula — that is a signature"
-        } else {
-            "a name on its own line above what the person's role is — that is a signature"
-        };
-        out.push(candidate(
-            start_word.start,
-            trimmed_end(end_word),
-            Kind::Person,
-            Confidence::Auto,
-            "signature",
-            why.to_string(),
-        ));
-    }
-}
 
 /// `A-MW 2041` — a German plate: a town's letters, a hyphen, letters, a number.
 fn plates(words: &[Word<'_>], out: &mut Vec<Candidate>) {
@@ -290,7 +172,8 @@ fn plates(words: &[Word<'_>], out: &mut Vec<Candidate>) {
         if digits.is_empty() || digits.chars().count() > 4 || !digits.chars().all(|c| c.is_ascii_digit()) {
             continue;
         }
-        out.push(candidate(
+        out.push(super::people::candidate(
+            &pack(),
             word.start,
             trimmed_end(number),
             Kind::Vehicle,
@@ -339,405 +222,14 @@ fn local_phones(words: &[Word<'_>], out: &mut Vec<Candidate>) {
             j += 1;
         }
         let Some(end_word) = words.get(last) else { continue };
-        out.push(candidate(
+        out.push(super::people::candidate(
+            &pack(),
             word.start,
             trimmed_end(end_word),
             Kind::Phone,
             Confidence::Auto,
             "local-phone",
             "a local telephone number, written after a word that names one".to_string(),
-        ));
-    }
-}
-
-/// Is this word shaped like a name? A capital letter, then letters — a hyphen
-/// or an apostrophe is a name («Müller-Lüdenscheidt», «O\'Brien»); a digit or a
-/// bracket is not. This is the whole of what «(N95.1» failed to be.
-fn name_shaped(word: &str) -> bool {
-    let n = bare(word).trim_end_matches(['.', ',', ';', ':']);
-    // Two letters at least. A single capital is an initial, and in the owner's
-    // ICD-10 document the chapter letters — G, K, N, P, W — stand alone on
-    // their own lines near a «DI» or a «Dr»: the rule protected 28,853 of them
-    // as people, and the payload's own audit refused to build at all («a
-    // protected value still stands 28,851 times where at most 3 was expected»).
-    n.chars().count() >= 2
-        && starts_upper(n)
-        && n.chars().all(|c| c.is_alphabetic() || c == '-' || c == '\'' || c == '\u{2019}')
-        && !STOP_WORDS.contains(&n)
-        && !DEGREES.contains(&n)
-}
-
-/// Step over a chain of titles: «Dr.», «Prim. Dr.», «Univ.-Prof. Dr. med.».
-/// Returns where the chain ends and what it said, or `None` if there is no
-/// title here at all.
-fn title_chain(words: &[Word<'_>], from: usize) -> Option<(usize, String)> {
-    let mut at = from;
-    let mut said: Vec<String> = Vec::new();
-    while let Some(next) = words.get(at) {
-        if at > from && next.newline_before {
-            break;
-        }
-        let n = bare_keep_dot(next.text);
-        let known = TITLES.iter().any(|t| t.eq_ignore_ascii_case(n))
-            || (!said.is_empty() && TITLE_PARTS.iter().any(|t| t.eq_ignore_ascii_case(n)));
-        if !known {
-            break;
-        }
-        said.push(n.to_string());
-        at += 1;
-    }
-    (!said.is_empty()).then(|| (at, said.join(" ")))
-}
-
-/// The name that follows: up to three words, each shaped like one.
-fn name_from(words: &[Word<'_>], first: usize) -> Option<(usize, usize)> {
-    let mut j = first;
-    let mut last = None;
-    while let Some(next) = words.get(j) {
-        // A bracket opens something that is not the name: «Ludwig Neuner
-        // (Klinikum Freistadt, OÖG)» is one person and one hospital.
-        if next.newline_before || is_label(next.text) || next.text.starts_with(['(', '[', '{', '«', '"']) {
-            break;
-        }
-        let n = bare(next.text);
-        let joiner = matches!(n, "von" | "van" | "de" | "der" | "zu");
-        if (name_shaped(next.text) || joiner) && j - first < 3 {
-            last = Some(j);
-            // A word carrying a comma, a full stop or a closing bracket ends it.
-            if next.text.ends_with([',', '.', ';', ')', ':']) {
-                break;
-            }
-            j += 1;
-        } else {
-            break;
-        }
-    }
-    last.map(|last| (first, last))
-}
-
-/// «Herr Thomas Müller» → the name, not the salutation.
-fn salutations(words: &[Word<'_>], out: &mut Vec<Candidate>) {
-    for (i, word) in words.iter().enumerate() {
-        let w = bare_keep_dot(word.text);
-        if !SALUTATIONS.iter().any(|s| s.eq_ignore_ascii_case(w)) {
-            continue;
-        }
-        // An article in front of it was tried here first — «bei der Frau
-        // (N95.1)» — and taken out again: the first golden letter says «den
-        // Herr Tobias Reinhardt am 3. März», where «den» is a relative
-        // pronoun, not an article, and the rule lost a real person. The shape
-        // of what **follows** does the work instead, and does it in every one
-        // of the four cases measured.
-        // Step over a title: «Herr Dr. Schneider», «Frau Mag. Spitzwieser».
-        let (j, title) = match title_chain(words, i + 1) {
-            Some((at, said)) => (at, Some(said)),
-            None => (i + 1, None),
-        };
-        let Some((first, last)) = name_from(words, j) else { continue };
-        let Some(start_word) = words.get(first) else { continue };
-        let Some(end_word) = words.get(last) else { continue };
-        let reason = match title {
-            Some(t) => format!("a name after «{w} {t}» — a German salutation names the person who follows it"),
-            None => format!("a name after «{w}» — a German salutation names the person who follows it"),
-        };
-        out.push(candidate(
-            start_word.start,
-            trimmed_end(end_word),
-            Kind::Person,
-            Confidence::Auto,
-            "salutation",
-            reason,
-        ));
-    }
-}
-
-/// «Prim. Dr. Ludwig Neuner» → the name. The title stays in the clear.
-///
-/// The owner's words, on a page of twenty-odd doctors none of which was
-/// protected: «the name after Dr. is supposed to be encrypted».
-fn titled_names(words: &[Word<'_>], out: &mut Vec<Candidate>) {
-    let mut i = 0usize;
-    while i < words.len() {
-        // Only the start of a chain, so «Dr.» inside «Prim. Dr. …» is not read
-        // twice — and a salutation in front of it leaves the work to that rule.
-        let follows_title = i
-            .checked_sub(1)
-            .and_then(|k| words.get(k))
-            .is_some_and(|prev| {
-                let n = bare_keep_dot(prev.text);
-                TITLES.iter().any(|t| t.eq_ignore_ascii_case(n))
-                    || TITLE_PARTS.iter().any(|t| t.eq_ignore_ascii_case(n))
-                    || SALUTATIONS.iter().any(|t| t.eq_ignore_ascii_case(n))
-            });
-        let Some((after, said)) = title_chain(words, i) else {
-            i += 1;
-            continue;
-        };
-        if follows_title {
-            i += 1;
-            continue;
-        }
-        if let Some((first, last)) = name_from(words, after) {
-            if let (Some(start_word), Some(end_word)) = (words.get(first), words.get(last)) {
-                out.push(candidate(
-                    start_word.start,
-                    trimmed_end(end_word),
-                    Kind::Person,
-                    Confidence::Auto,
-                    "title",
-                    format!("a name after «{said}» — a title introduces the person who follows it"),
-                ));
-            }
-        }
-        i = after.max(i + 1);
-    }
-}
-
-/// A word this document uses as a name, which no dictionary of ours knows.
-///
-/// Phase 2's whole idea: Z does not need a dictionary of every surname on
-/// earth. It needs to **notice** the names a document keeps using, gather each
-/// one once, and ask about it once — «I have 17 names for you to look at» for a
-/// 700-page file. What comes back is a candidate, never a finding: nothing here
-/// protects anything, and nothing here writes to a dictionary.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct NameHint {
-    /// Where the word sits in the text, so the session can keep the place.
-    pub start: usize,
-    pub end: usize,
-    /// What the document is using it as.
-    pub family: bool,
-    /// Which rule noticed it, for the «why» a person is owed.
-    pub rule: &'static str,
-}
-
-/// The two rules of Phase 1 of Phase 2, measured and no wider.
-///
-/// **«Kowalski, Thomas»** — a word, a comma, then a given name this build
-/// knows. That is a list of people, written the way lists of people are
-/// written, and the word before the comma is a surname. The comma alone proves
-/// nothing: «Berlin, Hauptstadt» is not a person.
-///
-/// **«Mahmoud Al-Hassan»** — a known given name, then a word that is shaped
-/// like a name and is in no dictionary. The given name is the evidence; the
-/// word after it is the candidate.
-///
-/// Neither fires on a lone capitalised word, and the function-word guard of
-/// Phase 1 holds here too: «An Bauer» and «Nur Richter» are a preposition and
-/// an adverb, whatever follows them.
-pub(crate) fn discover_names(text: &str, taught: &dyn Fn(&str) -> bool) -> Vec<NameHint> {
-    let names = super::de_names::dictionary();
-    let words = words(text);
-    let mut out: Vec<NameHint> = Vec::new();
-    let known = |word: &str| {
-        let bare = bare(word).trim_end_matches(['.', ',', ';', ':']);
-        names.given(bare) || names.family(bare) || taught(bare)
-    };
-
-    // Where a trimmed slice really sits. `bare` takes characters off **both**
-    // ends, so a span built as «the word's start plus the trimmed length»
-    // points at the wrong place as soon as anything was trimmed from the front:
-    // measured on the owner's 734-page file, «(BMASGPK)» came back as
-    // «(BMASGP». A span that is one character out is a protection in the wrong
-    // place, which is the one mistake this project will not make twice.
-    let span_of = |word: &Word<'_>, slice: &str| -> (usize, usize) {
-        let at = word.text.find(slice).unwrap_or(0);
-        (word.start + at, word.start + at + slice.len())
-    };
-
-    for (i, word) in words.iter().enumerate() {
-        let bare_now = bare(word.text).trim_end_matches([',', ';', ':']);
-        // «Kowalski, Thomas» — the comma is part of the form, so it is read
-        // from the raw word and not trimmed away first.
-        if word.text.ends_with(',') && name_shaped(bare_now) && !known(bare_now) {
-            let next = words.get(i + 1);
-            let follows_given = next.is_some_and(|n| {
-                let n_bare = bare(n.text).trim_end_matches(['.', ',', ';', ':']);
-                !n.newline_before
-                    && names.given(n_bare)
-                    && !FUNCTION_WORDS.contains(&n_bare.to_lowercase().as_str())
-            });
-            if follows_given {
-                let (start, end) = span_of(word, bare_now);
-                out.push(NameHint {
-                    start,
-                    end,
-                    family: true,
-                    rule: "surname-before-a-known-given-name",
-                });
-                continue;
-            }
-        }
-        // «Mahmoud Al-Hassan» — a known given name, then an unknown name.
-        let given = bare(word.text).trim_end_matches(['.', ',', ';', ':']);
-        if !names.given(given)
-            || FUNCTION_WORDS.contains(&given.to_lowercase().as_str())
-            || !name_shaped(word.text)
-        {
-            continue;
-        }
-        let Some(next) = words.get(i + 1) else { continue };
-        if next.newline_before || is_label(next.text) || next.text.starts_with(['(', '[', '«', '"']) {
-            continue;
-        }
-        let candidate = bare(next.text).trim_end_matches(['.', ',', ';', ':']);
-        if name_shaped(candidate) && !known(candidate) && !COMPANY_FORMS.contains(&candidate) {
-            let (start, end) = span_of(next, candidate);
-            out.push(NameHint {
-                start,
-                end,
-                family: true,
-                rule: "unknown-name-after-a-known-given-name",
-            });
-        }
-    }
-    out
-}
-
-/// «Thomas Müller» — two names in a row, and nothing in the sentence saying so.
-///
-/// The one thing the German Name Dictionary V1 adds. Everything else about a
-/// person this pack already knew: a salutation names the person after it, a
-/// title introduces one. What it could not see was a name standing on its own
-/// in a sentence — a signature, a line in a table, «… hat Thomas Müller
-/// unterschrieben» — because nothing there announces a person.
-///
-/// Three rules hold it to a signal rather than a verdict:
-///
-/// * **both halves**, a given name then a surname. One hit is a word that
-///   happens to be in a list: «Im August», «Die Rose», «Der Max».
-/// * **offered, never protected.** `Confidence::Suggest`, always. A list of
-///   310 names may not decide that a word is somebody's name; a person decides,
-///   or another rule does.
-/// * **it yields.** A salutation or a title in front means another rule owns
-///   this name and has already protected it, so this one says nothing.
-fn dictionary_names(words: &[Word<'_>], taught: &[(String, bool)], out: &mut Vec<Candidate>) {
-    let names = super::de_names::dictionary();
-    // Three layers, kept apart: what this build ships with, what the person
-    // taught, and — in `discover_names` — what nobody has decided yet. A
-    // taught name is as good as a shipped one here: the person said so.
-    let taught_given = |word: &str| taught.iter().any(|(t, family)| !family && t.eq_ignore_ascii_case(word));
-    let taught_family = |word: &str| taught.iter().any(|(t, family)| *family && t.eq_ignore_ascii_case(word));
-    let mut i = 0usize;
-    while i + 1 < words.len() {
-        let (Some(first), Some(second)) = (words.get(i), words.get(i + 1)) else { break };
-        let given = bare(first.text).trim_end_matches(['.', ',', ';', ':']);
-        let family = bare(second.text).trim_end_matches(['.', ',', ';', ':']);
-        if !(name_shaped(first.text) && name_shaped(second.text))
-            || second.newline_before
-            || FUNCTION_WORDS.contains(&given.to_lowercase().as_str())
-            || !(names.given(given) || taught_given(given))
-            || !(names.family(family) || taught_family(family))
-        {
-            i += 1;
-            continue;
-        }
-        // Another rule's ground: a salutation or a title in front of this pair
-        // protects it outright, and two findings on one name is one too many.
-        let claimed = i.checked_sub(1).and_then(|k| words.get(k)).is_some_and(|prev| {
-            let n = bare_keep_dot(prev.text);
-            SALUTATIONS.iter().any(|t| t.eq_ignore_ascii_case(n))
-                || TITLES.iter().any(|t| t.eq_ignore_ascii_case(n))
-                || TITLE_PARTS.iter().any(|t| t.eq_ignore_ascii_case(n))
-        });
-        if claimed {
-            i += 2;
-            continue;
-        }
-        out.push(candidate(
-            first.start,
-            trimmed_end(second),
-            Kind::Person,
-            // Never Auto. This is the whole of item B of the owner's paper.
-            Confidence::Suggest,
-            "name-dictionary",
-            format!(
-                "«{given}» is one of the 300 given names and «{family}» one of the ten surnames in the German name dictionary — two names in a row, offered for your word"
-            ),
-        ));
-        i += 2;
-    }
-}
-
-/// «Nordstern Consulting GmbH» — and «GmbH & Co. KG» as one form.
-fn companies(words: &[Word<'_>], out: &mut Vec<Candidate>) {
-    for (i, word) in words.iter().enumerate() {
-        let w = bare_keep_dot(word.text);
-        // A company at the end of a sentence carries the sentence's full stop:
-        // «… bei Nordstern GmbH.» was invisible to this rule until 3 October,
-        // because the dot that belongs to «e.K.» is kept and the one that
-        // belongs to the sentence looks exactly like it. Both spellings are
-        // tried, so neither form is lost.
-        let trimmed = w.trim_end_matches('.');
-        if !COMPANY_FORMS.contains(&w) && !COMPANY_FORMS.contains(&trimmed) {
-            continue;
-        }
-        // Walk left over capitalised words to the start of the name.
-        let mut first = i;
-        while first > 0 {
-            // Do not walk back across a line break.
-            if words.get(first).is_some_and(|w| w.newline_before) {
-                break;
-            }
-            let Some(prev) = words.get(first - 1) else { break };
-            let p = bare(prev.text);
-            // A label, a comma or a full stop ends the name to the left:
-            // «Kunde: Nordstern GmbH» is not called «Kunde Nordstern GmbH».
-            let closes = prev.text.ends_with(':')
-                || prev.text.ends_with(',')
-                || prev.text.ends_with(';')
-                || prev.text.ends_with('.');
-            let function_word = STOP_WORDS.contains(&p);
-            // «Lindemann & Partner GmbH» is one name. The walk steps over the
-            // «&» — or «und» — when a capitalised word stands on the far side
-            // of it, and stops otherwise, so «die GmbH und wir» is left alone.
-            if !closes && matches!(p, "&" | "und" | "+") {
-                let before = first.checked_sub(2).and_then(|k| words.get(k));
-                let joins = before.is_some_and(|b| {
-                    let t = bare(b.text);
-                    starts_upper(t) && !t.is_empty() && !STOP_WORDS.contains(&t) && !b.newline_before
-                });
-                if joins {
-                    first -= 1;
-                    continue;
-                }
-                break;
-            }
-            if !closes
-                && !function_word
-                && starts_upper(p)
-                && !p.is_empty()
-                && !SALUTATIONS.iter().any(|s| s.eq_ignore_ascii_case(p))
-            {
-                first -= 1;
-            } else {
-                break;
-            }
-        }
-        if first == i {
-            // «die GmbH» on its own is a word about companies, not a company.
-            continue;
-        }
-        // «GmbH & Co. KG» keeps going to the right.
-        let mut last = i;
-        if let (Some(amp), Some(co), Some(kg)) = (words.get(i + 1), words.get(i + 2), words.get(i + 3)) {
-            if bare(amp.text) == "&"
-                && bare_keep_dot(co.text).eq_ignore_ascii_case("Co.")
-                && COMPANY_FORMS.contains(&bare_keep_dot(kg.text))
-            {
-                last = i + 3;
-            }
-        }
-        let (Some(start_word), Some(end_word)) = (words.get(first), words.get(last)) else {
-            continue;
-        };
-        out.push(candidate(
-            start_word.start,
-            trimmed_end(end_word),
-            Kind::Company,
-            Confidence::Suggest,
-            "company-form",
-            format!("a name ending in «{w}», which is a German legal form — probably this client's company"),
         ));
     }
 }
@@ -787,7 +279,8 @@ fn addresses(words: &[Word<'_>], out: &mut Vec<Candidate>) {
             }
         }
         let Some(start_word) = words.get(first) else { continue };
-        out.push(candidate(
+        out.push(super::people::candidate(
+            &pack(),
             start_word.start,
             trimmed_end(town),
             Kind::Address,
@@ -803,7 +296,7 @@ mod tests {
     use super::*;
 
     fn found(text: &str) -> Vec<(Kind, Confidence, String)> {
-        scan(text, &[])
+        crate::scanner::packs::people::scan_with(text, &pack(), &[])
             .into_iter()
             .map(|c| {
                 (
@@ -870,7 +363,7 @@ mod tests {
 
     #[test]
     fn every_finding_says_which_pack_and_why() {
-        for c in scan("Frau Anna Weber, Kundennummer: 41-88203, Nordstern Consulting GmbH", &[]) {
+        for c in crate::scanner::packs::people::scan_with("Frau Anna Weber, Kundennummer: 41-88203, Nordstern Consulting GmbH", &pack(), &[]) {
             assert!(c.source_detail.starts_with("de:"), "{}", c.source_detail);
             assert!(!c.reason.is_empty());
         }

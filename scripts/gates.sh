@@ -470,6 +470,36 @@ else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
 fi
 
+# ------------------------------------------------- the pack contract
+# Phase 3: a language is data. Two things are checked, and both are the
+# promise rather than a preference.
+#
+# The shared rules may not name a language. `scan_with` and the rules it calls
+# read their words out of the pack they are given — a German word written into
+# one of them is German leaking back into the core, which is the whole of what
+# this phase removed.
+#
+# And a second pack may not need code: `packs/sv.rs` has to be data only, so it
+# is checked for having no `fn` of its own but `pack()`.
+PACKS=z_core/src/scanner/packs
+if [ -d "$PACKS" ]; then
+  LEAK=$(grep -nE '"(Herr|Frau|Herrn|GmbH|und|Straße|grüßen|geschäftsführer)"' \
+    "$PACKS/people.rs" 2>/dev/null | grep -vE '^[0-9]+:\s*(//|///)' || true)
+  if [ -z "$LEAK" ]; then
+    pass "the shared rules name no language of their own"
+  else
+    fail "a German word is written into a shared rule: $(echo "$LEAK" | head -1)"
+  fi
+  SV_FNS=$(grep -cE '^pub\(crate\) fn |^fn ' "$PACKS/sv.rs" 2>/dev/null || echo 0)
+  if [ "$SV_FNS" -le 1 ]; then
+    pass "  the second pack is data: $SV_FNS function in sv.rs"
+  else
+    fail "  the second pack carries $SV_FNS functions — a pack should be data, or say why"
+  fi
+else
+  skip "the pack contract" "no packs folder on this branch"
+fi
+
 # ------------------------------------------------- candidate discovery
 # Phase 2: Z notices the names a document uses that it does not know, asks once
 # per name, and learns from one answer. Two things are checked here, because
@@ -624,6 +654,12 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          offers_its_unknown_names_once_each a_candidate_protects_nothing_until_it_is_taught \
          a_name_whose_given_half_is_unknown_is_still_invisible \
          a_person_answers_twice_and_a_whole_document_is_understood \
+         a_swedish_letter_is_read_by_a_pack_that_is_only_data \
+         a_swedish_word_that_is_also_a_name_opens_nothing \
+         swedish_labels_are_rows_like_every_other_language \
+         german_reads_exactly_what_it_read_before \
+         what_each_pack_needs_beyond_the_shared_rules_is_declared \
+         the_pack_is_what_was_asked_for_and_not_what_the_machine_is \
          a_small_german_set_positive_and_negative the_rules_that_were_there_before_still_hold \
          a_title_with_no_name_after_it_is_nothing a_degree_after_the_name_is_left \
          frau_as_an_ordinary_noun_names_nobody a_word_like_den_in_front_of_a_salutation \

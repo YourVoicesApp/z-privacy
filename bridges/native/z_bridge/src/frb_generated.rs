@@ -2704,6 +2704,12 @@ const _: fn() = || {
         let PackRow = None::<crate::api::mirrors::PackRow>.unwrap();
         let _: String = PackRow.id;
         let _: String = PackRow.label;
+        let _: String = PackRow.locale;
+        let _: String = PackRow.version;
+        let _: Vec<String> = PackRow.own_rules;
+        let _: String = PackRow.provenance;
+        let _: u32 = PackRow.given;
+        let _: u32 = PackRow.family;
     }
     {
         let PayloadHandle = None::<crate::api::mirrors::PayloadHandle>.unwrap();
@@ -3958,9 +3964,21 @@ impl SseDecode for crate::api::mirrors::PackRow {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_id = <String>::sse_decode(deserializer);
         let mut var_label = <String>::sse_decode(deserializer);
+        let mut var_locale = <String>::sse_decode(deserializer);
+        let mut var_version = <String>::sse_decode(deserializer);
+        let mut var_ownRules = <Vec<String>>::sse_decode(deserializer);
+        let mut var_provenance = <String>::sse_decode(deserializer);
+        let mut var_given = <u32>::sse_decode(deserializer);
+        let mut var_family = <u32>::sse_decode(deserializer);
         return crate::api::mirrors::PackRow {
             id: var_id,
             label: var_label,
+            locale: var_locale,
+            version: var_version,
+            own_rules: var_ownRules,
+            provenance: var_provenance,
+            given: var_given,
+            family: var_family,
         };
     }
 }
@@ -5433,6 +5451,12 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PackRow> 
         [
             self.0.id.into_into_dart().into_dart(),
             self.0.label.into_into_dart().into_dart(),
+            self.0.locale.into_into_dart().into_dart(),
+            self.0.version.into_into_dart().into_dart(),
+            self.0.own_rules.into_into_dart().into_dart(),
+            self.0.provenance.into_into_dart().into_dart(),
+            self.0.given.into_into_dart().into_dart(),
+            self.0.family.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -7107,6 +7131,12 @@ impl SseEncode for crate::api::mirrors::PackRow {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.id, serializer);
         <String>::sse_encode(self.label, serializer);
+        <String>::sse_encode(self.locale, serializer);
+        <String>::sse_encode(self.version, serializer);
+        <Vec<String>>::sse_encode(self.own_rules, serializer);
+        <String>::sse_encode(self.provenance, serializer);
+        <u32>::sse_encode(self.given, serializer);
+        <u32>::sse_encode(self.family, serializer);
     }
 }
 

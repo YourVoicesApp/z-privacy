@@ -1,4 +1,4 @@
-//! The German Name Dictionary — 901 names, and not one verdict among them.
+//! The name lists a pack ships with — and not one verdict among them.
 //!
 //! The owner's rule, in his own order: «Herr Thomas Müller» is very high
 //! confidence, «Thomas Müller» is high, «Thomas» alone is a dictionary match
@@ -15,11 +15,11 @@
 //! Compiled in. There is no file to read at run time and no network to reach —
 //! a scan on an aeroplane finds exactly what a scan in an office finds.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
 /// The dictionary as shipped. 310 rows and five comment lines.
-const CSV: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/de_names_v1.csv"));
+pub(crate) const CSV: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/de_names_v1.csv"));
 
 /// Names folded to lowercase, because a name is matched by its letters and not
 /// by its case — and the shape of the word is judged elsewhere, by the rules
@@ -38,18 +38,43 @@ impl Dictionary {
         self.family.contains(&word.to_lowercase())
     }
 
-    /// How many of each were loaded. No screen shows this and no report carries
-    /// it — it exists so that a test can say «310» and mean it.
-    #[cfg(test)]
+    /// How many of each were loaded. A pack's row carries it now, so the list
+    /// of installed languages can say what each one knows.
     pub(crate) fn counts(&self) -> (usize, usize) {
         (self.given.len(), self.family.len())
     }
 }
 
-/// Read once, for the life of the process.
+/// Read once per pack, for the life of the process.
+///
+/// Keyed by the pack's locale, because every pack has its own lists and a
+/// dictionary that belonged to one language was the thing Phase 3 set out to
+/// remove. German's own is still reachable by its locale, and so is Swedish's,
+/// with no code between them.
+pub(crate) fn dictionary_of(locale: &'static str, csv: &'static str) -> &'static Dictionary {
+    static LOADED: OnceLock<std::sync::Mutex<BTreeMap<&'static str, &'static Dictionary>>> =
+        OnceLock::new();
+    let cache = LOADED.get_or_init(|| std::sync::Mutex::new(BTreeMap::new()));
+    // A pack's lists are read once and then live as long as the process: the
+    // leak is deliberate and bounded by the number of packs this build carries.
+    let mut held = match cache.lock() {
+        Ok(held) => held,
+        // A poisoned lock here would mean a panic while parsing a shipped CSV.
+        // Reading it again is the honest answer, and it cannot poison twice.
+        Err(poisoned) => poisoned.into_inner(),
+    };
+    if let Some(found) = held.get(locale) {
+        return found;
+    }
+    let made: &'static Dictionary = Box::leak(Box::new(parse(csv)));
+    held.insert(locale, made);
+    made
+}
+
+/// German's lists, by name, for the tests that measure them.
+#[cfg(test)]
 pub(crate) fn dictionary() -> &'static Dictionary {
-    static LOADED: OnceLock<Dictionary> = OnceLock::new();
-    LOADED.get_or_init(|| parse(CSV))
+    dictionary_of("de-DE", CSV)
 }
 
 /// The two fields this code needs are the first two, and neither can hold a

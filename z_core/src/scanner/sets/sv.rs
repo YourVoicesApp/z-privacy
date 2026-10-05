@@ -1,0 +1,57 @@
+//! Swedish label rules.
+//!
+//! The third set, and the second added without a line of scanner code — which
+//! is what the head of this folder promises. It is small on purpose: enough
+//! rows to prove the engine is open, and the pack's word lists in
+//! `packs/sv.rs` do the work on names.
+
+use crate::api::{Kind, Source};
+
+use crate::scanner::rules::{Boundary, LabelRule, Validator};
+use crate::scanner::Confidence;
+
+use super::RuleSet;
+
+/// `(id, label, kind, validator, decision)` — the whole set, as rows.
+const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
+    ("sv-01", "telefon", Kind::Phone, Validator::Number, Confidence::Auto),
+    ("sv-02", "mobil", Kind::Phone, Validator::Number, Confidence::Auto),
+    ("sv-03", "e-post", Kind::Email, Validator::Any, Confidence::Auto),
+    ("sv-04", "epost", Kind::Email, Validator::Any, Confidence::Auto),
+    // A Swedish personal number is a national identifier with a check digit.
+    // The row says what it is; the arithmetic, if we ever add it, is a
+    // `Validator` in Rust and never a row — the rule this folder opens with.
+    ("sv-05", "personnummer", Kind::TaxId, Validator::Number, Confidence::Auto),
+    ("sv-06", "organisationsnummer", Kind::TaxId, Validator::Number, Confidence::Auto),
+    ("sv-07", "org.nr", Kind::TaxId, Validator::Number, Confidence::Auto),
+    ("sv-08", "kundnummer", Kind::CustomerNo, Validator::Number, Confidence::Auto),
+    ("sv-09", "fakturanummer", Kind::Contract, Validator::Number, Confidence::Auto),
+    // «Adress» names a place, and a place is a question rather than a fact:
+    // the same decision German made for its own address label.
+    ("sv-10", "adress", Kind::Address, Validator::Any, Confidence::Suggest),
+    ("sv-11", "kontaktperson", Kind::Person, Validator::Any, Confidence::Suggest),
+];
+
+/// What Swedish puts between a label and a name.
+const HONORIFICS: &[&str] = &["herr", "fru", "fröken", "dr", "dr.", "prof", "prof."];
+
+pub(crate) fn set() -> RuleSet {
+    RuleSet {
+        id: "sv",
+        label: "Svenska (SV)",
+        honorifics: HONORIFICS.iter().map(|h| (*h).to_string()).collect(),
+        rules: ROWS
+            .iter()
+            .map(|(id, label, kind, validator, decision)| LabelRule {
+                id: (*id).to_string(),
+                label: (*label).to_string(),
+                kind: *kind,
+                boundary: Boundary::AfterLabelSameField,
+                decision: *decision,
+                set: "sv".to_string(),
+                validator: *validator,
+                source: Source::LanguagePack,
+            })
+            .collect(),
+    }
+}
