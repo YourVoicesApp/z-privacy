@@ -213,8 +213,9 @@ void main() {
         within: find.byType(OriginalText),
       );
       expect(style, isNotNull, reason: 'the vault-known name is not drawn as its own run');
-      // The wash is the vault's: «the app knows who this is».
-      expect(style!.backgroundColor, Zc.riverWash);
+      // The wash is the vault's: «the app knows who this is» — translucent
+      // since 041-C, so a selection drawn under it still reads through.
+      expect(style!.backgroundColor, Zc.riverWash.withValues(alpha: 0.55));
       expect(style.color, Zc.river);
       // And the line is a different fact: nobody decided it by hand.
       expect(
