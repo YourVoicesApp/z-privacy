@@ -1493,6 +1493,11 @@ void main() {
       because: 'Continue stays in the footer with suggestions open',
     );
     expect(find.textContaining('suggestions are still open'), findsOneWidget);
+    // 041-A: open suggestions no longer shut this door. They shut the **send**,
+    // and the sentence beside the send button says so. The owner spent his
+    // first evening unable to reach the provider list at all, because the only
+    // way to it ran through a button that waits for a finished review — and
+    // choosing who answers is not a reward for finishing one.
     final continueBtn = tester.widget<InkWell>(
       find
           .ancestor(of: find.text('Continue'), matching: find.byType(InkWell))
@@ -1500,8 +1505,8 @@ void main() {
     );
     expect(
       continueBtn.onTap,
-      isNull,
-      reason: 'open suggestions must not be skippable from the footer',
+      isNotNull,
+      reason: 'the doors are shut while suggestions are open',
     );
     await wheelOverPreview(tester, 600);
     expectOnScreen(
