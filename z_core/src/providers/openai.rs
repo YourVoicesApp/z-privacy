@@ -12,7 +12,9 @@ use serde_json::{json, Value};
 
 use crate::api::{ApiResult, NetworkRefusal};
 
-use super::{http, refuse, Provider, ProviderAttempt};
+use crate::api::ModelCapability as Capability;
+
+use super::{http, refuse, ModelFacts, Provider, ProviderAttempt, Said};
 
 pub(crate) struct OpenAiCompatible;
 
@@ -30,10 +32,63 @@ impl Provider for OpenAiCompatible {
     }
 
     fn default_model(&self) -> &'static str {
-        "gpt-4o-mini"
+        // The efficient one of the three the documentation features, so a new
+        // connection costs the least until a person chooses otherwise.
+        "gpt-6-luna"
     }
 
-    fn ask(&self, credential: &str, base: &str, model: &str, text: &str) -> ProviderAttempt<String> {
+    /// What this endpoint offers, checked against the company's own
+    /// documentation rather than against memory.
+    ///
+    /// Source: <https://platform.openai.com/docs/models>, read on **5 October
+    /// 2026**. Each model's card on that page gives a «Model ID» line and a
+    /// «Context window» line: `gpt-6-astra` (1.05M), `gpt-6.1-sol` (1.05M),
+    /// `gpt-6-luna` (1.05M), each with a «Reasoning» row of effort levels and
+    /// «Tools: Functions, Web search, File search, Computer use».
+    ///
+    /// The three ids this list carried before — `gpt-4o-mini`, `gpt-4o`,
+    /// `gpt-4.1-mini` — were written from memory and are not what that page
+    /// features today. That is exactly what this check was for.
+    ///
+    /// `Vision` is **not** claimed for any of them: the cards state tools and
+    /// reasoning, and image input is not something to infer from «computer
+    /// use». A capability we were not told about is not a capability we list.
+    ///
+    /// A list rather than a question asked over the network: configuring a
+    /// provider must not itself be a request. It is also why «OpenAI-compatible»
+    /// accepts a model this list does not name — a model on your own machine is
+    /// whatever you called it, and the field stays editable.
+    fn models(&self) -> &'static [ModelFacts] {
+        &[
+            ModelFacts {
+                id: "gpt-6-astra",
+                display: "GPT-6 Astra",
+                capabilities: &[Capability::Text, Capability::Tools, Capability::Reasoning],
+                context_k: 1_050,
+            },
+            ModelFacts {
+                id: "gpt-6.1-sol",
+                display: "GPT-6.1 Sol",
+                capabilities: &[Capability::Text, Capability::Tools, Capability::Reasoning],
+                context_k: 1_050,
+            },
+            ModelFacts {
+                id: "gpt-6-luna",
+                display: "GPT-6 Luna",
+                capabilities: &[Capability::Text, Capability::Tools, Capability::Reasoning],
+                context_k: 1_050,
+            },
+        ]
+    }
+
+    fn ask(
+        &self,
+        credential: &str,
+        base: &str,
+        model: &str,
+        text: &str,
+        instructions: &str,
+    ) -> ProviderAttempt<Said> {
         if credential.is_empty() && !http::is_loopback_url(base) {
             return ProviderAttempt::not_sent(refuse(
                 NetworkRefusal::NotConnected,
@@ -45,21 +100,36 @@ impl Provider for OpenAiCompatible {
         // The body is built here, from exactly two things: the model's name and
         // the safe text. There is no third field into which anything else could
         // travel, and the escaping is not ours to get wrong.
+        // The body is built from exactly three things: the model's name, what
+        // the workspace told it, and the text. There is no fourth field into
+        // which anything else could travel, and the escaping is not ours to
+        // get wrong.
+        let mut messages = Vec::new();
+        if !instructions.is_empty() {
+            messages.push(json!({ "role": "system", "content": instructions }));
+        }
+        messages.push(json!({ "role": "user", "content": text }));
         let body = json!({
             "model": model,
-            "messages": [{ "role": "user", "content": text }],
+            "messages": messages,
             "stream": false,
         })
         .to_string();
 
-        http::post_json(&url, credential, &body).map(|answer| {
+        http::post_json(&url, &self.authorisation(credential), &body).map(|answer| {
             if answer.status != 200 {
                 return Err(refuse(
                     NetworkRefusal::BadStatus { status: answer.status },
                     said_what(answer.status),
                 ));
             }
-            content_of(&answer.body)
+            // The units this company states, where it states them.
+            let (input, output) = units_of(&answer.body);
+            content_of(&answer.body).map(|text| Said {
+                text,
+                input_units: input,
+                output_units: output,
+            })
         })
     }
 }
@@ -124,6 +194,20 @@ fn content_of(body: &str) -> ApiResult<String> {
         }
     }
     Err(unreadable())
+}
+
+/// `usage.prompt_tokens` and `usage.completion_tokens`, where present.
+fn units_of(body: &str) -> (u32, u32) {
+    let Ok(value) = serde_json::from_str::<Value>(body) else { return (0, 0) };
+    let at = |name: &str| {
+        value
+            .get("usage")
+            .and_then(|u| u.get(name))
+            .and_then(Value::as_u64)
+            .unwrap_or(0)
+            .min(u64::from(u32::MAX)) as u32
+    };
+    (at("prompt_tokens"), at("completion_tokens"))
 }
 
 #[cfg(test)]

@@ -10,7 +10,7 @@
 //! provider to pick at all: `providers()` does not list it and `find()` cannot
 //! return it.
 
-use super::{Provider, ProviderAttempt};
+use super::{Provider, ProviderAttempt, Said};
 
 pub(crate) struct Echo;
 
@@ -31,7 +31,24 @@ impl Provider for Echo {
         "echo"
     }
 
-    fn ask(&self, _credential: &str, _base: &str, _model: &str, text: &str) -> ProviderAttempt<String> {
-        ProviderAttempt::sent(format!("Verstanden. Ihr Text lautet:\n{text}\n— Ende der Antwort."))
+    fn ask(
+        &self,
+        _credential: &str,
+        _base: &str,
+        _model: &str,
+        text: &str,
+        instructions: &str,
+    ) -> ProviderAttempt<Said> {
+        // The echo says what it was told as well as what it was asked, so a
+        // test can see that the instructions travelled and that the document
+        // did not travel inside them.
+        let said = if instructions.is_empty() {
+            String::new()
+        } else {
+            format!("[instructions: {instructions}]\n")
+        };
+        ProviderAttempt::sent(Said::text(format!(
+            "{said}Verstanden. Ihr Text lautet:\n{text}\n— Ende der Antwort."
+        )))
     }
 }

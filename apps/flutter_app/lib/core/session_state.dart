@@ -274,7 +274,24 @@ class Workbench extends ChangeNotifier {
     } on ApiError catch (e) {
       trouble = humanMessage(e);
     }
+    // A document that is not the one the choice was made about starts
+    // protected. Here rather than in `rescan`, because a rescan of the **same**
+    // document — after teaching a name, say — must not quietly undo what a
+    // person chose.
+    _protectIfTheDocumentChanged();
     notifyListeners();
+  }
+
+  /// What the mode was chosen about. A name and a length is enough to tell one
+  /// document from another, and it is nothing of what is in them.
+  String? _choseFor;
+
+  void _protectIfTheDocumentChanged() {
+    final doc = snap?.document;
+    final now = doc == null ? null : '${doc.name}:${doc.text.length}';
+    if (now == _choseFor) return;
+    _choseFor = now;
+    startProtected();
   }
 
   /// A refusal has to outlive the refresh that follows it.
@@ -455,6 +472,144 @@ class Workbench extends ChangeNotifier {
   /// the core, audited by the core, and is refused by the core if the session
   /// has moved since. This method's whole job is to pass it on and say what
   /// came back.
+  /// The models this build can offer, from the core's catalogue.
+  ///
+  /// Read once when the ground is refreshed and again when a provider is
+  /// connected: a model's availability follows its provider's, and no screen
+  /// works that out for itself.
+  List<ModelDescriptor> models = const [];
+
+  /// Which model the next request goes to, when a person has chosen one.
+  /// `null` means «the provider's configured model», which is also what a
+  /// model on this machine is.
+  String? chosenModel;
+
+  /// What the next send will carry. **False is the only default there is.**
+  ///
+  /// Z's existing vocabulary already has «Direct API», and it means the route —
+  /// this app to the provider, with the protected text. So the unredacted mode
+  /// is not called «direct» anywhere a person can see: it is «the original
+  /// text», which says what travels.
+  bool sendOriginal = false;
+
+  bool _gone = false;
+
+  /// The catalogue, asked for when it is needed — by the send sheet, as it
+  /// opens. Not from a scan: a scan's result does not depend on a list of model
+  /// names, and making one wait on the other cost two screen tests their
+  /// timing before it was taken out again.
+  Future<void> refreshModels() async {
+    List<ModelDescriptor> got;
+    try {
+      got = await z.models();
+    } on ApiError {
+      got = const [];
+    }
+    // The bench may have gone while the bridge was answering: a widget test
+    // ends, and a future that lands afterwards must change nothing and tell
+    // nobody.
+    if (_gone) return;
+    models = got;
+    notifyListeners();
+  }
+
+  void chooseModel(String? modelId) {
+    chosenModel = modelId;
+    notifyListeners();
+  }
+
+  /// Choosing to send the original is one press, and it is never automatic:
+  /// nothing in this class turns a failed protected send into this.
+  void chooseOriginal(bool on) {
+    sendOriginal = on;
+    notifyListeners();
+  }
+
+  /// A document that arrives is protected, whatever the last one was.
+  ///
+  /// The owner's rule for this phase: **a new document or workspace never
+  /// silently inherits Direct Mode.** A choice made about one document was
+  /// made about that document — the next one begins where every document
+  /// begins, and a person who wants the original says so again.
+  void startProtected() {
+    if (!sendOriginal) return;
+    sendOriginal = false;
+    notifyListeners();
+  }
+
+  /// Ask a model with the protected payload. **No argument carries the
+  /// document**, here as in the core: a handle goes, and nothing else could.
+  Future<String?> askModelProtected(String providerId) async {
+    final h = handle;
+    if (h == null) return 'There is nothing to send yet.';
+    return _ask(() async {
+      final said = await z.askModel(
+        handle: h,
+        provider: ProviderId(id: providerId),
+        model: chosenModel,
+        workspace: const [],
+        history: const [],
+      );
+      lastUsage = said.usage;
+      showing = said.answer;
+    });
+  }
+
+  /// Ask a model with the document **as it stands**, because a person chose to.
+  ///
+  /// A separate function taking the text — so the only call that can carry the
+  /// original is the one a human selection reaches, and a mistaken press
+  /// cannot pass a document to the protected door. The core keeps the same
+  /// separation in its types; this is that separation where the button is.
+  Future<String?> askModelWithTheOriginal(String providerId, {required String original}) async {
+    if (!sendOriginal) {
+      // Not reachable from the screen, and refused here as well: the original
+      // travels when the mode says so, never because a caller passed it.
+      return 'Choose «The original text» first — this app does not send a '
+          'document unprotected on its own.';
+    }
+    return _ask(() async {
+      final said = await z.askModelDirectly(
+        session: session,
+        text: original,
+        provider: ProviderId(id: providerId),
+        model: chosenModel,
+        workspace: const [],
+        history: const [],
+      );
+      lastUsage = said.usage;
+      // There is nothing to restore: nothing was protected.
+      said_ = said.text;
+    });
+  }
+
+  /// What both doors share: the busy flag, the refusal, and the refresh. The
+  /// difference between them is the call, and it stays the call.
+  Future<String?> _ask(Future<void> Function() door) async {
+    sending = true;
+    notifyListeners();
+    try {
+      await door();
+      trouble = null;
+      sending = false;
+      await refresh();
+      return null;
+    } on ApiError catch (e) {
+      sending = false;
+      trouble = humanMessage(e);
+      notifyListeners();
+      // A failure of one door is a failure of that door. Nothing here tries
+      // the other one, and the mode is not touched.
+      return humanMessage(e);
+    }
+  }
+
+  /// What the model wrote, when there was nothing to restore it against.
+  String? said_;
+
+  /// What the last request cost, as the provider stated it.
+  ModelUsage? lastUsage;
+
   Future<String?> send(String providerId) async {
     final h = handle;
     if (h == null) return 'There is nothing to send yet.';
@@ -704,6 +859,7 @@ class Workbench extends ChangeNotifier {
 
   @override
   void dispose() {
+    _gone = true;
     // A closed session takes its tokens with it. Nothing is kept behind.
     z.closeSession(session: session).catchError((_) {});
     super.dispose();

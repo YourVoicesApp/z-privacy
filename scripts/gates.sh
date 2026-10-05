@@ -470,6 +470,47 @@ else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
 fi
 
+# ------------------------------------------------- the model gateway
+# Phase 4. Three promises, and each one is a shape rather than a hope.
+#
+# **No fallback.** Nothing may construct a direct body from a protected one. The
+# check is literal: `Body::Direct` may appear only where a caller chose it —
+# in `ops::ask_model_directly` and in the gateway's own match — and never
+# inside the protected path.
+#
+# **The gateway knows no language.** A pack id or a language word inside
+# `gateway.rs` would mean the door had started reading documents.
+#
+# **A provider is a file.** Adding one may not need the gateway: the check
+# counts the providers and the gateway's mentions of them, which must stay at
+# zero.
+GW=z_core/src/gateway.rs
+if [ -f "$GW" ]; then
+  BUILT=$(grep -cE 'Body::Direct\(' z_core/src/ops/*.rs z_core/src/*.rs 2>/dev/null \
+    | awk -F: '{n+=$2} END {print n+0}')
+  CHOSEN=$(sed -n '/pub(crate) fn ask_model_directly/,/^}/p' z_core/src/ops/mod.rs 2>/dev/null \
+    | grep -cE 'Body::Direct\(' || true)
+  # The gateway's own `match` reads the arm; it does not build one.
+  READS=$(grep -cE 'Body::Direct\(text\) =>' "$GW" || true)
+  if [ "$BUILT" = "$((CHOSEN + READS))" ] && [ "$CHOSEN" = "1" ]; then
+    pass "no path turns a protected request into a direct one (built once, where a person chooses it)"
+  else
+    fail "a direct body is built $BUILT time(s); $CHOSEN in the door a person chooses, $READS read in the gateway"
+  fi
+  if grep -nE '"(de|sv|en)"|German|Swedish|Deutsch' "$GW" | grep -vE '^[0-9]+:\s*(//|///)|//!' | grep -q .; then
+    fail "the gateway names a language: $GW"
+  else
+    pass "  the gateway knows no language"
+  fi
+  if grep -nE '\b(openai|anthropic)\b' "$GW" | grep -vE '^[0-9]+:\s*(//|///)|//!' | grep -q .; then
+    fail "the gateway names a provider: adding one would mean editing the door"
+  else
+    pass "  the gateway names no provider: $(grep -c 'Box::new' z_core/src/providers/mod.rs) listed in the registry"
+  fi
+else
+  skip "the model gateway" "no gateway on this branch"
+fi
+
 # ------------------------------------------------- the pack contract
 # Phase 3: a language is data. Two things are checked, and both are the
 # promise rather than a preference.
@@ -660,6 +701,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          german_reads_exactly_what_it_read_before \
          what_each_pack_needs_beyond_the_shared_rules_is_declared \
          the_pack_is_what_was_asked_for_and_not_what_the_machine_is \
+         the_matrix the_catalogue_is_what_the_providers_say \
          a_small_german_set_positive_and_negative the_rules_that_were_there_before_still_hold \
          a_title_with_no_name_after_it_is_nothing a_degree_after_the_name_is_left \
          frau_as_an_ordinary_noun_names_nobody a_word_like_den_in_front_of_a_salutation \
@@ -694,7 +736,9 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "put back in the answer is drawn dotted" \
          "own report, and none of the words" \
          "selection in blue, not in nothing" "wash covers it" \
-         "asks once per name, with what the decision is worth"; do
+         "asks once per name, with what the decision is worth" \
+         "no model is named in Dart" "the original is a chosen thing" \
+         "never inherits the last one"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

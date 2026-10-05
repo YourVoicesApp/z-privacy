@@ -423,17 +423,94 @@ pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<Ans
     // Everything above held the core's lock briefly and let it go. From here the
     // wire is open, and no lock is held while a provider takes its time.
     let login = login_for(&provider.id)?;
+    // The protected path, through the gateway: a handle, never text. The
+    // instructions are empty in this call because `send` is the old door and
+    // keeps its promise exactly — a workspace that has something to say uses
+    // `ask_model`, which is the same gateway with a context.
     let raw = crate::providers::ask(
         handle,
         &provider.id,
         login.credential.expose(),
         &login.base,
         &login.model,
+        "",
     )?;
 
     // The raw answer stays here. What the UI gets is an id; what it can then ask
     // for is the restored view, or the model's own words, both from this store.
-    ingest_answer(handle, raw)
+    ingest_answer(handle, raw.text)
+}
+
+/// The protected door: a handle, a model, and what the workspace has to say.
+pub(crate) fn ask_model(
+    handle: PayloadHandle,
+    provider: ProviderId,
+    model: Option<String>,
+    workspace: Vec<String>,
+    history: Vec<String>,
+) -> ApiResult<crate::api::ModelAnswer> {
+    // Everything `send` checks, it checks here too, and for the same reasons:
+    // a stale payload must not reach a provider, and an open suggestion stops
+    // a send with no «anyway» anywhere in the code (G12).
+    let _fresh = with_payload(handle, |p| p.id)?;
+    let open = with_session(handle.session, |s| s.open_suggestions()).ok_or(ApiError::InvalidSession)?;
+    if open > 0 {
+        return Err(ApiError::OpenSuggestions { count: open });
+    }
+    let answer = crate::gateway::send(crate::gateway::Request {
+        target: crate::gateway::Target {
+            provider_id: provider.id.clone(),
+            model_id: model,
+        },
+        task: crate::gateway::Task::Answer,
+        context: crate::gateway::Context { workspace, history },
+        body: crate::gateway::Body::Protected(handle),
+    })?;
+    // The answer is kept where every answer is kept, so the restored view and
+    // the model's own words are both reachable by id.
+    let id = ingest_answer(handle, answer.text.clone())?;
+    Ok(crate::api::ModelAnswer {
+        answer: Some(id),
+        text: answer.text,
+        usage: answer.usage,
+    })
+}
+
+/// The direct door: text the person chose to send as it stands.
+///
+/// It takes a session so that the refusal can be about this workspace, and it
+/// touches nothing in it: nothing is built, nothing is consumed, and no answer
+/// is stored, because there is no payload to restore an answer against.
+pub(crate) fn ask_model_directly(
+    session: SessionId,
+    text: String,
+    provider: ProviderId,
+    model: Option<String>,
+    workspace: Vec<String>,
+    history: Vec<String>,
+) -> ApiResult<crate::api::ModelAnswer> {
+    if with_session(session.id, |s| s.id).is_none() {
+        return Err(ApiError::InvalidSession);
+    }
+    if text.trim().is_empty() {
+        return Err(ApiError::InputRefused {
+            reason: "there is nothing to send".to_string(),
+        });
+    }
+    let answer = crate::gateway::send(crate::gateway::Request {
+        target: crate::gateway::Target {
+            provider_id: provider.id.clone(),
+            model_id: model,
+        },
+        task: crate::gateway::Task::Answer,
+        context: crate::gateway::Context { workspace, history },
+        body: crate::gateway::Body::Direct(zeroize::Zeroizing::new(text)),
+    })?;
+    Ok(crate::api::ModelAnswer {
+        answer: None,
+        text: answer.text,
+        usage: answer.usage,
+    })
 }
 
 // ---------------------------------------------------------------- providers (M6)
@@ -443,6 +520,38 @@ pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<Ans
 /// There is no function anywhere in the contract that returns a credential. This
 /// is the only thing the UI learns about one: that it exists, and whether it will
 /// still exist tomorrow.
+/// Every model this build can offer, from every provider's own list.
+///
+/// Built from the same two facts the provider list is built from — what the
+/// provider says it offers, and whether this run can reach it — so a model
+/// cannot be «available» on one screen and not on another.
+pub(crate) fn models() -> ApiResult<Vec<crate::api::ModelDescriptor>> {
+    let connected: Vec<(String, bool)> = providers()?
+        .into_iter()
+        .map(|row| (row.id, row.connected))
+        .collect();
+    let mut out = Vec::new();
+    for provider in crate::providers::known() {
+        let base = provider.default_base();
+        let reachable = connected
+            .iter()
+            .find(|(id, _)| id == provider.id())
+            .is_some_and(|(_, ok)| *ok);
+        for model in provider.models() {
+            out.push(crate::api::ModelDescriptor {
+                provider_id: provider.id().to_string(),
+                model_id: model.id.to_string(),
+                display_name: model.display.to_string(),
+                capabilities: model.capabilities.to_vec(),
+                context_k: model.context_k,
+                credential_required: provider.credential_required(base),
+                available: reachable,
+            });
+        }
+    }
+    Ok(out)
+}
+
 pub(crate) fn providers() -> ApiResult<Vec<ProviderRow>> {
     let mut rows = Vec::new();
     for provider in crate::providers::known() {
@@ -642,7 +751,7 @@ pub(crate) fn login_in_vault(id: &str) -> Option<ProviderLogin> {
 }
 
 /// The credential to use: the vault's if it is open, this run's otherwise.
-fn login_for(id: &str) -> ApiResult<ProviderLogin> {
+pub(crate) fn login_for(id: &str) -> ApiResult<ProviderLogin> {
     let found = login_in_vault(id).or_else(|| with_core(|core| core.session_logins.get(id).cloned()));
     let login = found.ok_or_else(|| crate::providers::not_connected(id))?;
     let provider = crate::providers::find(id)?;
