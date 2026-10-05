@@ -3479,8 +3479,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Finding dco_decode_finding(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 9)
-      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return Finding(
       id: dco_decode_u_32(arr[0]),
       span: dco_decode_span(arr[1]),
@@ -3491,6 +3491,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       state: dco_decode_mark_state(arr[6]),
       entities: dco_decode_list_String(arr[7]),
       place: dco_decode_opt_box_autoadd_place(arr[8]),
+      occurrences: dco_decode_u_32(arr[9]),
     );
   }
 
@@ -4868,6 +4869,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_state = sse_decode_mark_state(deserializer);
     var var_entities = sse_decode_list_String(deserializer);
     var var_place = sse_decode_opt_box_autoadd_place(deserializer);
+    var var_occurrences = sse_decode_u_32(deserializer);
     return Finding(
       id: var_id,
       span: var_span,
@@ -4878,6 +4880,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       state: var_state,
       entities: var_entities,
       place: var_place,
+      occurrences: var_occurrences,
     );
   }
 
@@ -6535,6 +6538,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_mark_state(self.state, serializer);
     sse_encode_list_String(self.entities, serializer);
     sse_encode_opt_box_autoadd_place(self.place, serializer);
+    sse_encode_u_32(self.occurrences, serializer);
   }
 
   @protected

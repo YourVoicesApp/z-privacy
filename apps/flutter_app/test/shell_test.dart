@@ -161,7 +161,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -219,7 +219,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -262,7 +262,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -349,7 +349,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -465,7 +465,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -570,7 +570,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -637,7 +637,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -705,7 +705,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -781,7 +781,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -952,7 +952,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
         ),
       );
       await settle(tester);
@@ -1011,7 +1011,7 @@ void main() {
     final clip = _ClipboardProbe(tester)..install();
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -1129,7 +1129,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
         ),
       );
       await settle(tester);
@@ -1337,7 +1337,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -1549,7 +1549,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
       ),
     );
     await settle(tester, rounds: 2);
@@ -1834,7 +1834,7 @@ Future<void> reviewJourney(
 
   await tester.pumpWidget(
     MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
     ),
   );
   await tester.pumpAndSettle();

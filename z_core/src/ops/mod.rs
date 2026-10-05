@@ -1879,8 +1879,26 @@ fn layer_of(key: u8) -> Source {
 pub(crate) fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
     with_session(session.id, |s| {
         let mut out = Vec::with_capacity(s.findings.len());
+        // How many places hold the same value in the same state. Counted here,
+        // over a list that is already in memory and is per document — a letter
+        // has tens of these, not thousands — so the pairwise count is cheaper
+        // than the map it would take to avoid it.
+        let same_value = |record: &crate::session::FindingRecord| -> u32 {
+            let whole = s.original_str();
+            let Some(text) = whole.get(record.start..record.end) else { return 1 };
+            s.findings
+                .iter()
+                .filter(|other| {
+                    other.kind == record.kind
+                        && other.state == record.state
+                        && whole.get(other.start..other.end) == Some(text)
+                })
+                .count()
+                .max(1) as u32
+        };
         for f in &s.findings {
             out.push(Finding {
+                occurrences: same_value(f),
                 decided: f.decided,
                 id: f.id,
                 span: text::bytes_to_span(s.original_str(), f.start, f.end)?,
@@ -1897,6 +1915,32 @@ pub(crate) fn list_findings(session: SessionId) -> ApiResult<Vec<Finding>> {
         Ok(out)
     })
     .ok_or(ApiError::InvalidSession)?
+}
+
+/// Every suggestion in this document that holds the same value as `record`,
+/// youngest first by id, with `record` itself among them.
+///
+/// Same text **and** same kind: «Müller» the person and «Müller» in a company's
+/// name are two different claims about one spelling, and a decision about one
+/// of them is not a decision about the other.
+///
+/// Ids rather than indices, because the caller removes and rewrites rows as it
+/// goes and an index taken before that is an index into a list that no longer
+/// exists.
+fn same_value_suggestions(s: &crate::session::Session, record: &crate::session::FindingRecord) -> Vec<u32> {
+    let whole = s.original_str();
+    let Some(text) = whole.get(record.start..record.end) else {
+        return vec![record.id];
+    };
+    s.findings
+        .iter()
+        .filter(|f| {
+            f.state == MarkState::Suggested
+                && f.kind == record.kind
+                && whole.get(f.start..f.end) == Some(text)
+        })
+        .map(|f| f.id)
+        .collect()
 }
 
 pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAnswer) -> ApiResult<ScanReport> {
@@ -1946,39 +1990,63 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
                     let value = crate::secret::Secret::new(text.to_string());
                     s.dismissed.push(crate::session::Dismissed { value });
                 }
-                s.findings.remove(index);
+                // Every place that holds the same value, not only the one
+                // whose button was pressed: «this is not sensitive» is said
+                // about a value, and `dismissed` already works that way — the
+                // other places would have come back empty-handed on the next
+                // rescan anyway, after asking once more for nothing.
+                for id in same_value_suggestions(s, &record) {
+                    if let Some(at) = s.findings.iter().position(|f| f.id == id) {
+                        s.findings.remove(at);
+                    }
+                }
                 s.bump();
                 Ok(report_of(s, vault_state))
             }
             FindingAnswer::Protect | FindingAnswer::Always => {
+                // One act for the whole decision, so one step back takes it
+                // back whole — the same shape the hand path has had since it
+                // learned to say «in 3 places».
                 let act = s.take_act_id();
                 let detail = record.source_detail.clone();
-                let protected = protect_range(
-                    s,
-                    record.start,
-                    record.end,
-                    record.kind,
-                    Scope::Conversation,
-                    record.source,
-                    &detail,
-                    act,
-                    // A person answered. This is what keeps it through a rescan.
-                    true,
-                );
-                if protected.is_none() {
+                let group = same_value_suggestions(s, &record);
+                let mut applied = 0u32;
+                for id in group {
+                    let Some(at) = s.findings.iter().position(|f| f.id == id) else { continue };
+                    let Some(place) = s.findings.get(at).cloned() else { continue };
+                    let protected = protect_range(
+                        s,
+                        place.start,
+                        place.end,
+                        place.kind,
+                        Scope::Conversation,
+                        place.source,
+                        if id == record.id { &detail } else { &place.source_detail },
+                        act,
+                        // A person answered. This is what keeps it through a rescan.
+                        true,
+                    );
+                    if protected.is_none() {
+                        // Already covered by something else. That is not a
+                        // failure of the decision, only of this one place.
+                        continue;
+                    }
+                    applied = applied.saturating_add(1);
+                    if let Some(f) = s.findings.get_mut(at) {
+                        f.state = MarkState::Protected;
+                        // A person decided. This is what carries it through a
+                        // rescan, and what puts it under «protected by you».
+                        f.decided = true;
+                        f.reason = match answer {
+                            FindingAnswer::Always => format!("{} · confirmed by you, and kept in the vault", f.reason),
+                            _ => format!("{} · confirmed by you", f.reason),
+                        };
+                    }
+                }
+                if applied == 0 {
                     return Err(ApiError::BadSpan {
                         reason: "that place is already covered by another protection".to_string(),
                     });
-                }
-                if let Some(f) = s.findings.get_mut(index) {
-                    f.state = MarkState::Protected;
-                    // A person decided. This is what carries it through a
-                    // rescan, and what puts it under «protected by you».
-                    f.decided = true;
-                    f.reason = match answer {
-                        FindingAnswer::Always => format!("{} · confirmed by you, and kept in the vault", f.reason),
-                        _ => format!("{} · confirmed by you", f.reason),
-                    };
                 }
                 s.bump();
                 Ok(report_of(s, vault_state))

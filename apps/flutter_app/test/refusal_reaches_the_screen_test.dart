@@ -93,23 +93,26 @@ void main() {
     final waiting = b.suggested.length;
     expect(waiting, greaterThan(0), reason: 'there is something to answer');
 
+    var toTheVault = 0;
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: b, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: b, ground: ground, onHome: () {}, onVault: () => toTheVault++),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Always').first);
+    // 041-B: the refusal is not drawn any more, because it is not provoked any
+    // more. The core still refuses «Always» without a vault — it is the screen
+    // that stopped asking for something it can see is impossible, and started
+    // saying so on the button, where the press is. The owner pressed this and
+    // saw nothing happen: the sentence was drawn at the top of the window, four
+    // hundred pixels from his finger and above the fold.
+    expect(find.text('Always'), findsNothing, reason: 'the button still promises what it cannot do');
+    await tester.tap(find.text('Always · needs a vault').first);
     await settle(tester);
 
-    // The core's own sentence, not one this test wrote out again: with no vault
-    // on the device the next move is to make one, and the line says so.
-    expect(
-      find.text(humanMessage(const ApiError_VaultAbsent())),
-      findsOneWidget,
-      reason: 'the refusal is drawn, not swallowed by the refresh after it',
-    );
+    expect(toTheVault, 1, reason: 'the button did not open the way to a vault');
+    expect(b.trouble, isNull, reason: 'it refused instead of offering the way in');
     // And the press changed nothing, which is the other half of not lying.
     expect(
       b.suggested.length,
@@ -135,21 +138,23 @@ void main() {
     final b = await bench(tester, ground);
     expect(b.snap!.vault, VaultState.locked);
 
+    var toTheVault = 0;
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: b, ground: ground, onHome: () {}),
+        home: WorkspaceScreen(bench: b, ground: ground, onHome: () {}, onVault: () => toTheVault++),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Always').first);
+    // The distinction survives the move onto the button: there **is** a vault
+    // here, so the next move is to unlock it, not to make one — and the button
+    // says which.
+    expect(find.text('Always · needs a vault'), findsNothing, reason: 'it asks for a vault that exists');
+    await tester.tap(find.text('Always · unlock the vault').first);
     await settle(tester);
 
-    expect(
-      find.text(humanMessage(const ApiError_VaultLocked())),
-      findsOneWidget,
-      reason: 'there is a vault here; the next move is to unlock it, not make one',
-    );
+    expect(toTheVault, 1, reason: 'the button did not open the way to the vault');
+    expect(b.trouble, isNull);
 
     b.dispose();
   });

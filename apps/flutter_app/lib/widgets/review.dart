@@ -17,9 +17,14 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
 class ReviewPanel extends StatelessWidget {
-  const ReviewPanel({super.key, required this.bench, required this.width});
+  const ReviewPanel({super.key, required this.bench, required this.width, required this.onVault});
 
   final Workbench bench;
+
+  /// Where «Always» sends a person who has no vault yet. The answer row needs
+  /// it, so the panel carries it: a button that cannot do what it says must at
+  /// least open the door that would let it.
+  final VoidCallback onVault;
 
   /// Set by the Workspace from the window's width: two columns must stay
   /// readable, and a panel that squeezes them off the screen is worse than a
@@ -43,8 +48,8 @@ class ReviewPanel extends StatelessWidget {
           Container(height: 1, color: Zc.lineSoft),
           Expanded(
             child: bench.walking && open.isNotEmpty
-                ? _Walk(bench: bench)
-                : _List(bench: bench),
+                ? _Walk(bench: bench, onVault: onVault)
+                : _List(bench: bench, onVault: onVault),
           ),
         ],
       ),
@@ -102,9 +107,10 @@ class ReviewPanel extends StatelessWidget {
 
 /// The whole list, in its three groups.
 class _List extends StatelessWidget {
-  const _List({required this.bench});
+  const _List({required this.bench, required this.onVault});
 
   final Workbench bench;
+  final VoidCallback onVault;
 
   @override
   Widget build(BuildContext context) {
@@ -128,19 +134,19 @@ class _List extends StatelessWidget {
         if (suggested.isNotEmpty) ...[
           _GroupTitle('Waiting for your word', suggested.length, Zc.amber),
           for (final f in suggested)
-            _Row(bench: bench, finding: f, answerable: true),
+            _Row(bench: bench, finding: f, answerable: true, onVault: onVault),
           const SizedBox(height: 16),
         ],
         if (automatic.isNotEmpty) ...[
           _GroupTitle('Protected automatically', automatic.length, Zc.clay),
           for (final f in automatic)
-            _Row(bench: bench, finding: f, answerable: false),
+            _Row(bench: bench, finding: f, answerable: false, onVault: onVault),
           const SizedBox(height: 16),
         ],
         if (byHand.isNotEmpty) ...[
           _GroupTitle('Decided by you', byHand.length, Zc.ink3),
           for (final f in byHand)
-            _Row(bench: bench, finding: f, answerable: false),
+            _Row(bench: bench, finding: f, answerable: false, onVault: onVault),
         ],
       ],
     );
@@ -190,11 +196,13 @@ class _Row extends StatelessWidget {
     required this.bench,
     required this.finding,
     required this.answerable,
+    required this.onVault,
   });
 
   final Workbench bench;
   final Finding finding;
   final bool answerable;
+  final VoidCallback onVault;
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +265,11 @@ class _Row extends StatelessWidget {
                     'Page ${finding.place!.page} · ¶${finding.place!.paragraph}',
                     Zc.ink4,
                   ),
+                // What one press will settle. The core counts the places; this
+                // line only reads the number, and says nothing when a value
+                // stands once — «in 1 places» is noise, and wrong English.
+                if (finding.occurrences > 1)
+                  _Tag('in ${finding.occurrences} places', Zc.clay),
                 if (finding.entities.length > 1)
                   _Tag(
                     '${finding.entities.length} identities claim it',
@@ -266,7 +279,7 @@ class _Row extends StatelessWidget {
             ),
             if (answerable) ...[
               const SizedBox(height: 10),
-              _Answers(bench: bench, finding: finding),
+              _Answers(bench: bench, finding: finding, onVault: onVault),
             ],
           ],
         ),
@@ -305,10 +318,11 @@ class _Tag extends StatelessWidget {
 /// item stays in the clear and still counts, so Send stays shut. There is no
 /// fourth button that sends anyway — that one was deleted from the product.
 class _Answers extends StatelessWidget {
-  const _Answers({required this.bench, required this.finding});
+  const _Answers({required this.bench, required this.finding, required this.onVault});
 
   final Workbench bench;
   final Finding finding;
+  final VoidCallback onVault;
 
   @override
   Widget build(BuildContext context) {
@@ -365,17 +379,74 @@ class _Answers extends StatelessWidget {
       ),
     );
 
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+    // «Always» writes to the vault, so without an open vault the core refuses
+    // it — correctly, and into `bench.trouble`, which the Workspace draws once
+    // at the **top of the window**, under the band. The owner pressed this
+    // button in the right-hand panel and saw nothing happen, because the
+    // sentence was four hundred pixels away and above the fold.
+    //
+    // So the button carries its own state: it says what it needs, and the
+    // press opens the door that would satisfy it. Nothing is refused that was
+    // not asked for.
+    // Three states, two sentences, because «there is no vault» and «the vault
+    // is locked» ask different things of a person — the same distinction the
+    // core's two refusals have always made.
+    final vault = bench.snap?.vault ?? VaultState.absent;
+    final vaultOpen = vault == VaultState.unlocked;
+    final needs = vault == VaultState.locked ? 'Always · unlock the vault' : 'Always · needs a vault';
+    Widget always() => Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(7),
+      child: InkWell(
+        onTap: vaultOpen ? () => bench.answer(finding.id, FindingAnswer.always) : onVault,
+        borderRadius: BorderRadius.circular(7),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: vaultOpen ? Zc.line : Zc.lineSoft),
+          ),
+          child: Text(
+            vaultOpen ? 'Always' : needs,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: vaultOpen ? Zc.river : Zc.ink4,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        one('Protect', FindingAnswer.protect, Zc.clay, filled: true),
-        one('Always', FindingAnswer.always, Zc.river),
-        one('Not sensitive', FindingAnswer.notSensitive, Zc.ink3),
-        if (bench.profileId != null)
-          remember('Not sensitive in profile', Scope.profile),
-        remember('Not sensitive everywhere', Scope.always),
-        one('Skip', FindingAnswer.skip, Zc.ink4),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            one('Protect', FindingAnswer.protect, Zc.clay, filled: true),
+            always(),
+            one('Not sensitive', FindingAnswer.notSensitive, Zc.ink3),
+            if (bench.profileId != null)
+              remember('Not sensitive in profile', Scope.profile),
+            remember('Not sensitive everywhere', Scope.always),
+            one('Skip', FindingAnswer.skip, Zc.ink4),
+          ],
+        ),
+        const SizedBox(height: 6),
+        // What «Always» is, in one sentence, beside the button rather than in
+        // a document nobody opens.
+        Text(
+          vaultOpen
+              ? 'Always: protect this value in every document from now on.'
+              : vault == VaultState.locked
+              ? 'Always: protect this value in every document from now on — it is kept in '
+                    'the vault, which is locked.'
+              : 'Always: protect this value in every document from now on — it is kept in '
+                    'the vault, so it needs one.',
+          style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
+        ),
       ],
     );
   }
@@ -384,9 +455,10 @@ class _Answers extends StatelessWidget {
 /// WALKING — one at a time, with the sentence it lives in, because a word out of
 /// its sentence is not enough to decide about.
 class _Walk extends StatelessWidget {
-  const _Walk({required this.bench});
+  const _Walk({required this.bench, required this.onVault});
 
   final Workbench bench;
+  final VoidCallback onVault;
 
   @override
   Widget build(BuildContext context) {
@@ -450,7 +522,7 @@ class _Walk extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        _Answers(bench: bench, finding: current),
+        _Answers(bench: bench, finding: current, onVault: onVault),
         const SizedBox(height: 10),
         Text(
           'Skip leaves it in the clear and still counted — skipping is not deciding.',

@@ -2714,6 +2714,7 @@ const _: fn() = || {
         let _: crate::api::mirrors::MarkState = Finding.state;
         let _: Vec<String> = Finding.entities;
         let _: Option<crate::api::mirrors::Place> = Finding.place;
+        let _: u32 = Finding.occurrences;
     }
     {
         let ForgetPlan = None::<crate::api::mirrors::ForgetPlan>.unwrap();
@@ -3443,6 +3444,7 @@ impl SseDecode for crate::api::mirrors::Finding {
         let mut var_state = <crate::api::mirrors::MarkState>::sse_decode(deserializer);
         let mut var_entities = <Vec<String>>::sse_decode(deserializer);
         let mut var_place = <Option<crate::api::mirrors::Place>>::sse_decode(deserializer);
+        let mut var_occurrences = <u32>::sse_decode(deserializer);
         return crate::api::mirrors::Finding {
             id: var_id,
             span: var_span,
@@ -3453,6 +3455,7 @@ impl SseDecode for crate::api::mirrors::Finding {
             state: var_state,
             entities: var_entities,
             place: var_place,
+            occurrences: var_occurrences,
         };
     }
 }
@@ -5381,6 +5384,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Finding> 
             self.0.state.into_into_dart().into_dart(),
             self.0.entities.into_into_dart().into_dart(),
             self.0.place.into_into_dart().into_dart(),
+            self.0.occurrences.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -6902,6 +6906,7 @@ impl SseEncode for crate::api::mirrors::Finding {
         <crate::api::mirrors::MarkState>::sse_encode(self.state, serializer);
         <Vec<String>>::sse_encode(self.entities, serializer);
         <Option<crate::api::mirrors::Place>>::sse_encode(self.place, serializer);
+        <u32>::sse_encode(self.occurrences, serializer);
     }
 }
 

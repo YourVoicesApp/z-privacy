@@ -288,10 +288,9 @@ class _ShellState extends State<ZShell> {
         },
       );
     }
-    final bench = _bench;
-    if (bench != null) {
-      return WorkspaceScreen(bench: bench, ground: _ground, onHome: _home);
-    }
+    // Before the Workspace, not after it: the vault has to be reachable **from
+    // a document**, because that is where «Always» is pressed. Closing it puts
+    // the document back exactly as it was — the bench is untouched by any of it.
     if (_vaultOpen) {
       return VaultScreen(
         ground: _ground,
@@ -299,6 +298,15 @@ class _ShellState extends State<ZShell> {
           setState(() => _vaultOpen = false);
           _ground.refresh();
         },
+      );
+    }
+    final bench = _bench;
+    if (bench != null) {
+      return WorkspaceScreen(
+        bench: bench,
+        ground: _ground,
+        onHome: _home,
+        onVault: () => setState(() => _vaultOpen = true),
       );
     }
     return Stack(
