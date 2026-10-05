@@ -192,6 +192,32 @@ PDF**, however good the rule; plain-text input (`.txt`, pasted text) is in
 logical order and unaffected — AR-1 is `.txt`, which is why its e-mails and
 IBAN were found.
 
+### 4.3 · The owner's demo: «our own lists work» — a list of the book's characters
+
+The owner's proposal (5 Oct, night): write the names of the book's characters
+into Z and put the book in; if they are protected, the user-taught layer is
+shown to work in Arabic with no dictionary at all. Measured with a fresh vault
+holding five characters as Person values, policy «always»:
+
+| text given to the scanner | taught | Person auto | note |
+|---|---|---|---|
+| AR-1, the invented letter (`.txt`) + its 7 people taught | 7 | **7** | the vault layer finds every taught name in Arabic running text; auto rises 5 → 12 |
+| AR-2 as this build reads the PDF | 5 | **0** | presentation forms in visual order defeat every list |
+| AR-2 folded to NFKC (poppler's text, logical order, diacritics kept) | 5 | **461** | = 180 + 209 + 4 + 1 + 67, each name's own count |
+| the same with the diacritics (harakat) removed | 5 | **562** | 101 more: the occurrences that carry a vowel mark inside the name |
+
+So the layer the Arabic pack rests on — names taught once, protected
+everywhere — **works on Arabic today**, and what stands between it and the
+real book is the reader, in two parts: fold the presentation forms (NFKC) and
+hand the text over in logical order; then let a taught value match through
+the vowel marks. A value matches as a substring, which in Arabic is what one
+wants (`وكليلة`, `لدمنة`: the clitic stays, the name goes) and is also the
+risk a short name carries inside another word.
+
+A common noun taught as a name is the live lesson of the «suggest» policy: the
+word for the lion, a character of the book and an ordinary word, stands 267
+times.
+
 **Reproduce:** `measure de z_core/tests/fixtures/Risala_Alharbi.txt` for the
 letter; the book only on a machine that has it.
 
@@ -226,9 +252,10 @@ May **not** be said yet:
 1. **The probe in git** (task 038): a `measure` example with a pack argument,
    numbers only, so every row above is one command; SV-1 and AR-1 pinned as
    goldens four and five; AR-2 as a skip-if-absent sixth.
-2. **The Arabic reader**: presentation forms folded (NFKC) and visual order
-   restored before any Arabic pack rule is written — the 0 → 180 probe is
-   its acceptance test.
+2. **The Arabic reader** (task 039): presentation forms folded (NFKC) and
+   visual order restored before any Arabic pack rule is written — the 0 → 180
+   probe and the five-name 0 → 461 are its acceptance tests; matching through
+   the vowel marks takes it to 562.
 3. **Swedish identifiers**: personnummer (with the century and checksum
    rules), org.nr, bankgiro/plusgiro, a Swedish address shape — each a general
    or pack rule with its own fixture, measured on SV-1 and, by counts, on the
