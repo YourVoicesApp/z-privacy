@@ -20,6 +20,45 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 }
 
 // Implements GApplication::activate.
+// The window's own icon, from the files that ship beside the executable.
+//
+// Not a theme lookup and not a path in anybody's home: the bundle carries the
+// PNGs in `data/flutter_assets/assets/brand/`, and this finds them by asking
+// the kernel where this executable is. A tarball unpacked anywhere — including
+// a path with spaces in it — therefore has its icon, and a build that moved
+// loses nothing.
+//
+// The list is a list of sizes because `gtk_window_set_icon_list` lets the
+// window manager pick: 256 for the dock, 48 for a task list, 16 for a corner.
+// A name is set as well, so that a `.desktop` file saying `Icon=zprivacy` and
+// this window are understood as the same application.
+static void set_window_icon(GtkWindow* window) {
+  g_autofree gchar* exe = g_file_read_link("/proc/self/exe", nullptr);
+  if (exe == nullptr) {
+    return;
+  }
+  g_autofree gchar* dir = g_path_get_dirname(exe);
+  GList* icons = nullptr;
+  const int sizes[] = {256, 128, 64, 48, 32, 16};
+  for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
+    g_autofree gchar* name = g_strdup_printf("zprivacy-%d.png", sizes[i]);
+    g_autofree gchar* path =
+        g_build_filename(dir, "data", "flutter_assets", "assets", "brand", name, nullptr);
+    GdkPixbuf* pixbuf = gdk_pixbuf_new_from_file(path, nullptr);
+    if (pixbuf != nullptr) {
+      icons = g_list_append(icons, pixbuf);
+    }
+  }
+  if (icons != nullptr) {
+    gtk_window_set_icon_list(window, icons);
+    gtk_window_set_default_icon_list(icons);
+    g_list_free_full(icons, g_object_unref);
+  }
+  // Said whether or not a file was found: a desktop file names this, and the
+  // name costs nothing when the icon is already set.
+  gtk_window_set_icon_name(window, "zprivacy");
+}
+
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
   GtkWindow* window =
@@ -53,6 +92,7 @@ static void my_application_activate(GApplication* application) {
   }
 
   gtk_window_set_default_size(window, 1280, 720);
+  set_window_icon(window);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(

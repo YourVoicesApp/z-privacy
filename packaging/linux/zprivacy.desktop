@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Z Privacy
+GenericName=Private AI assistant
+Comment=Protect names and numbers in a document before it reaches an AI
+# Filled in by install-shortcut.sh with the folder the person unpacked into:
+# a .desktop file carries an absolute path, and this one is written where it is
+# installed rather than guessed here.
+Exec=@EXEC@
+Icon=zprivacy
+Terminal=false
+Categories=Office;
+Keywords=privacy;AI;redaction;GDPR;
+StartupWMClass=zprivacy

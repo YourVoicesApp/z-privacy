@@ -1,0 +1,37 @@
+Third-party notices — Z Privacy V1
+==================================
+
+Z Privacy itself is licensed under the Apache License 2.0; its text is in
+../LICENSE. This archive also carries work by other people. Each one is listed
+here with the licence it travels under, and its full text is beside this file.
+
+This is not a NOTICE file in the sense of Apache-2.0 §4(d). That section asks
+for one only when a dependency we redistribute carries its own, and none of the
+142 crates does. These are attribution notices, which the BSD and CC licences
+below do require when a binary is redistributed.
+
+  Flutter engine and framework
+    Copyright 2014 The Flutter Authors — BSD-3-Clause
+    Shipped as lib/libflutter_linux_gtk.so and the Dart runtime inside it.
+    flutter-sdk-LICENSE.txt      the licence itself
+    flutter-engine-LICENSE.txt   the engine's own aggregated notices for
+                                 everything built into it (30,200 lines)
+
+  Material Icons
+    Copyright Google — Creative Commons Attribution 4.0 International
+    Shipped as data/flutter_assets/fonts/MaterialIcons-Regular.otf
+    material-icons-LICENSE.txt
+
+  Rust crates
+    142 packages compiled into lib/libz_bridge.so, listed with the licence
+    each one states.
+    rust-crates.txt
+
+  file_selector_linux
+    Copyright 2013 The Flutter Authors — BSD-3-Clause
+    Shipped as lib/libfile_selector_linux_plugin.so; covered by
+    flutter-sdk-LICENSE.txt, which is the same licence and the same authors.
+
+Nothing here reaches the network on its own. The one HTTP client in the
+product is `ureq`, in the core, and it speaks only to the AI provider you
+connect yourself.

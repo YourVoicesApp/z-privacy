@@ -470,6 +470,33 @@ else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
 fi
 
+# ------------------------------------------------- the mark
+# One picture, every size, and no icon edited by hand.
+#
+# `scripts/build_brand.py --check` rebuilds all thirteen files into a temporary
+# directory from `brand/source.png` and compares the bytes with what is
+# committed. A PNG touched in an image editor, a size regenerated from a
+# different crop, an `.ico` rebuilt elsewhere — each of those is this check
+# going red.
+if [ -f scripts/build_brand.py ] && [ -f brand/source.png ]; then
+  if OUT=$(python3 scripts/build_brand.py --check 2>&1); then
+    pass "the mark: $(echo "$OUT" | sed 's/^PASS  //')"
+  else
+    fail "the mark: $(echo "$OUT" | head -2 | tr '\n' ' ')"
+  fi
+  # And the window wears it from the files beside it, never from a path in
+  # somebody's home.
+  RUNNER=apps/flutter_app/linux/runner/my_application.cc
+  if grep -q 'gtk_window_set_icon_list' "$RUNNER" 2>/dev/null \
+     && ! grep -nE '"/home/|g_get_home_dir' "$RUNNER" 2>/dev/null | grep -q .; then
+    pass "  the Linux window takes its icon from the bundle, relative to the executable"
+  else
+    fail "  the window icon is missing or is read from a home path ($RUNNER)"
+  fi
+else
+  skip "the mark" "no brand script on this branch"
+fi
+
 # ------------------------------------------------- the model gateway
 # Phase 4. Three promises, and each one is a shape rather than a hope.
 #

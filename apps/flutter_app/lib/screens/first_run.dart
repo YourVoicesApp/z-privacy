@@ -109,7 +109,9 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
       _ => null,
     };
     return Scaffold(
-      body: Center(
+      body: Stack(
+        children: [
+          Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: SingleChildScrollView(
@@ -198,6 +200,17 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
             ),
           ),
         ),
+          ),
+          // The mark itself, once, in the corner of the first page a person
+          // ever sees — and nowhere else in the app. A product that shows its
+          // badge on every screen is a product talking about itself; this one
+          // has work to do.
+          const Positioned(
+            right: 28,
+            bottom: 24,
+            child: Opacity(opacity: 0.9, child: BrandMark(size: 64)),
+          ),
+        ],
       ),
     );
   }

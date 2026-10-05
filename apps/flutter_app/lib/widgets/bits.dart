@@ -4,6 +4,35 @@ import 'package:flutter/material.dart';
 import 'package:zprivacy/core/palette.dart';
 
 /// The mark. A plain square with a Z — the boards' one piece of identity.
+/// The owner's own picture: a lighthouse in a ring, on a night.
+///
+/// One asset, generated with every other size from `brand/source.png` by
+/// `scripts/build_brand.py` — no screen chooses a file by name but this one,
+/// and no icon in this repository is edited by hand.
+///
+/// Distinct from [ZMark], which is the lettered tile the shell and the
+/// workspace already wear. This is the badge, and it appears once: in the
+/// corner of the first page a person ever sees.
+class BrandMark extends StatelessWidget {
+  const BrandMark({super.key, this.size = 64});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.22),
+      child: Image.asset(
+        'assets/brand/zprivacy-128.png',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.medium,
+      ),
+    );
+  }
+}
+
 class ZMark extends StatelessWidget {
   const ZMark({super.key, this.size = 34});
 
