@@ -100,10 +100,57 @@ void main() {
     // A send with no provider connected is refused, and it stays refused: the
     // bench has no path that retries without protection.
     await tester.runAsync(() async {
-      final said = await bench.askModel('openai', original: _doc);
+      final said = await bench.askModelProtected('openai');
       expect(said, isNotNull, reason: 'an unconnected provider answered');
     });
     expect(bench.sendOriginal, isFalse, reason: 'a failed protected send changed the mode');
+    bench.dispose();
+  });
+
+  // The owner's own order, as he wrote it: choose Direct → open/switch
+  // document → mode == Protected.
+  testWidgets('a document that arrives never inherits the last one\'s mode', (tester) async {
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+    });
+
+    // Choose Direct, deliberately, as a person would.
+    bench.chooseOriginal(true);
+    expect(bench.sendOriginal, isTrue);
+
+    // Another document arrives into the same workbench.
+    await tester.runAsync(() async {
+      await z.importText(session: bench.session, text: 'Ein ganz anderes Dokument, ohne Namen.');
+      await bench.rescan();
+    });
+
+    expect(
+      bench.sendOriginal,
+      isFalse,
+      reason: 'a new document inherited Direct Mode, which is the one thing it may never do',
+    );
+
+    // And a rescan of the **same** document does not undo a choice: the rule
+    // is about a new document, not about every refresh.
+    bench.chooseOriginal(true);
+    await tester.runAsync(() async => bench.rescan());
+    expect(
+      bench.sendOriginal,
+      isTrue,
+      reason: 'rescanning the same document took a choice away from the person who made it',
+    );
+
+    // The protected door cannot be handed a document at all, and the direct
+    // door refuses unless the mode was chosen.
+    bench.chooseOriginal(false);
+    await tester.runAsync(() async {
+      final said = await bench.askModelWithTheOriginal('openai', original: _doc);
+      expect(said, contains('Choose'), reason: 'the original travelled without a choice');
+    });
     bench.dispose();
   });
 }

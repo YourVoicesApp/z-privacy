@@ -32,10 +32,27 @@ impl Provider for OpenAiCompatible {
     }
 
     fn default_model(&self) -> &'static str {
-        "gpt-4o-mini"
+        // The efficient one of the three the documentation features, so a new
+        // connection costs the least until a person chooses otherwise.
+        "gpt-6-luna"
     }
 
-    /// What this endpoint offers, as of this build.
+    /// What this endpoint offers, checked against the company's own
+    /// documentation rather than against memory.
+    ///
+    /// Source: <https://platform.openai.com/docs/models>, read on **5 October
+    /// 2026**. Each model's card on that page gives a «Model ID» line and a
+    /// «Context window» line: `gpt-6-astra` (1.05M), `gpt-6.1-sol` (1.05M),
+    /// `gpt-6-luna` (1.05M), each with a «Reasoning» row of effort levels and
+    /// «Tools: Functions, Web search, File search, Computer use».
+    ///
+    /// The three ids this list carried before — `gpt-4o-mini`, `gpt-4o`,
+    /// `gpt-4.1-mini` — were written from memory and are not what that page
+    /// features today. That is exactly what this check was for.
+    ///
+    /// `Vision` is **not** claimed for any of them: the cards state tools and
+    /// reasoning, and image input is not something to infer from «computer
+    /// use». A capability we were not told about is not a capability we list.
     ///
     /// A list rather than a question asked over the network: configuring a
     /// provider must not itself be a request. It is also why «OpenAI-compatible»
@@ -44,22 +61,22 @@ impl Provider for OpenAiCompatible {
     fn models(&self) -> &'static [ModelFacts] {
         &[
             ModelFacts {
-                id: "gpt-4o-mini",
-                display: "GPT-4o mini",
-                capabilities: &[Capability::Text, Capability::Vision, Capability::Tools],
-                context_k: 128,
+                id: "gpt-6-astra",
+                display: "GPT-6 Astra",
+                capabilities: &[Capability::Text, Capability::Tools, Capability::Reasoning],
+                context_k: 1_050,
             },
             ModelFacts {
-                id: "gpt-4o",
-                display: "GPT-4o",
-                capabilities: &[Capability::Text, Capability::Vision, Capability::Tools],
-                context_k: 128,
+                id: "gpt-6.1-sol",
+                display: "GPT-6.1 Sol",
+                capabilities: &[Capability::Text, Capability::Tools, Capability::Reasoning],
+                context_k: 1_050,
             },
             ModelFacts {
-                id: "gpt-4.1-mini",
-                display: "GPT-4.1 mini",
-                capabilities: &[Capability::Text, Capability::Tools],
-                context_k: 1_000,
+                id: "gpt-6-luna",
+                display: "GPT-6 Luna",
+                capabilities: &[Capability::Text, Capability::Tools, Capability::Reasoning],
+                context_k: 1_050,
             },
         ]
     }

@@ -145,11 +145,11 @@ fn the_matrix() {
             ProviderId { id: "openai".to_string() },
             CREDENTIAL.to_string(),
             Some(base),
-            Some("gpt-4o-mini".to_string()),
+            Some("gpt-6-luna".to_string()),
         )
         .expect("connect");
 
-        let (answer, session) = a_workspace_asks("de", GERMAN, "openai", Some("gpt-4o-mini"));
+        let (answer, session) = a_workspace_asks("de", GERMAN, "openai", Some("gpt-6-luna"));
         let bytes = server.join().expect("the server");
         let wire = String::from_utf8_lossy(&bytes).to_string();
 
@@ -171,7 +171,7 @@ fn the_matrix() {
         assert_eq!(answer.text, "Verstanden.");
         assert!(answer.answer.is_some(), "a protected answer is kept, so it can be restored");
         assert_eq!(answer.usage.provider_id, "openai");
-        assert_eq!(answer.usage.model_id, "gpt-4o-mini");
+        assert_eq!(answer.usage.model_id, "gpt-6-luna");
         assert!(answer.usage.ok);
         // The units the provider stated, carried and not estimated.
         assert_eq!((answer.usage.input_units, answer.usage.output_units), (41, 7));
@@ -186,7 +186,7 @@ fn the_matrix() {
             ProviderId { id: "openai".to_string() },
             CREDENTIAL.to_string(),
             Some(base),
-            Some("gpt-4o".to_string()),
+            Some("gpt-6-astra".to_string()),
         )
         .expect("connect");
 
@@ -209,7 +209,7 @@ fn the_matrix() {
         assert!(!wire.contains("__Z_"), "a direct request carried a token: {wire}");
         // Nothing is kept to restore, because there is nothing to restore.
         assert!(answer.answer.is_none());
-        assert_eq!(answer.usage.model_id, "gpt-4o", "the configured model answered");
+        assert_eq!(answer.usage.model_id, "gpt-6-astra", "the configured model answered");
         let _ = close_session(session);
     }
 
@@ -245,7 +245,7 @@ fn the_matrix() {
                 ProviderId { id: "openai".to_string() },
                 CREDENTIAL.to_string(),
                 Some(base),
-                Some("gpt-4o-mini".to_string()),
+                Some("gpt-6-luna".to_string()),
             )
             .expect("connect");
             let (answer, session) = a_workspace_asks(pack, doc, "openai", None);
@@ -335,7 +335,7 @@ fn the_matrix() {
     {
         let mut said = Vec::new();
         for (provider, model, answer) in [
-            ("openai", "gpt-4o-mini", reply("A.")),
+            ("openai", "gpt-6-luna", reply("A.")),
             (
                 "anthropic",
                 "claude-sonnet-5-5",
@@ -383,4 +383,28 @@ fn the_catalogue_is_what_the_providers_say_and_not_what_a_screen_knows() {
     // One provider, several models, and the UI picks from this list.
     let openai: Vec<&ModelDescriptor> = models.iter().filter(|m| m.provider_id == "openai").collect();
     assert!(openai.len() >= 2, "a catalogue with one model is a hard-coded model");
+
+    // Every id is written the way an API takes it: no spaces, no capitals, and
+    // nothing a person typed into a sentence.
+    for model in &models {
+        assert!(
+            model.model_id.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.'),
+            "«{}» is not an API id",
+            model.model_id
+        );
+        assert!(model.context_k > 0, "«{}» claims no context window", model.model_id);
+    }
+
+    // The one id that was questioned, checked against the company's own page
+    // on 5 October 2026: the «Claude API ID» row reads `claude-sonnet-5-5`,
+    // and a bare `claude-sonnet-5` appears nowhere on it. The comment in
+    // `providers/anthropic.rs` carries the source and the date.
+    let anthropic: Vec<&str> = models
+        .iter()
+        .filter(|m| m.provider_id == "anthropic")
+        .map(|m| m.model_id.as_str())
+        .collect();
+    assert!(anthropic.contains(&"claude-sonnet-5-5"), "{anthropic:?}");
+    assert!(!anthropic.contains(&"claude-sonnet-5"), "an id nobody documented: {anthropic:?}");
+    assert!(anthropic.contains(&"claude-haiku-4-5-20251001"), "{anthropic:?}");
 }

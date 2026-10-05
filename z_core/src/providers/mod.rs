@@ -91,6 +91,11 @@ pub(crate) struct Said {
 
 impl Said {
     /// An answer whose cost the provider did not state.
+    ///
+    /// Only the echo provider has nothing to report, and it exists only in a
+    /// build made for the tests — so this exists there too, and a release
+    /// carries neither.
+    #[cfg(feature = "fake_provider")]
     pub(crate) fn text(text: String) -> Self {
         Self { text, input_units: 0, output_units: 0 }
     }

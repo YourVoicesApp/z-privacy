@@ -274,7 +274,24 @@ class Workbench extends ChangeNotifier {
     } on ApiError catch (e) {
       trouble = humanMessage(e);
     }
+    // A document that is not the one the choice was made about starts
+    // protected. Here rather than in `rescan`, because a rescan of the **same**
+    // document — after teaching a name, say — must not quietly undo what a
+    // person chose.
+    _protectIfTheDocumentChanged();
     notifyListeners();
+  }
+
+  /// What the mode was chosen about. A name and a length is enough to tell one
+  /// document from another, and it is nothing of what is in them.
+  String? _choseFor;
+
+  void _protectIfTheDocumentChanged() {
+    final doc = snap?.document;
+    final now = doc == null ? null : '${doc.name}:${doc.text.length}';
+    if (now == _choseFor) return;
+    _choseFor = now;
+    startProtected();
   }
 
   /// A refusal has to outlive the refresh that follows it.
@@ -508,42 +525,71 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Ask a model, through the gateway, with this workspace's instructions.
+  /// A document that arrives is protected, whatever the last one was.
   ///
-  /// Two doors and they are different calls, as they are in the core. A failure
-  /// of the first is reported as a failure of the first.
-  Future<String?> askModel(String providerId, {required String original}) async {
+  /// The owner's rule for this phase: **a new document or workspace never
+  /// silently inherits Direct Mode.** A choice made about one document was
+  /// made about that document — the next one begins where every document
+  /// begins, and a person who wants the original says so again.
+  void startProtected() {
+    if (!sendOriginal) return;
+    sendOriginal = false;
+    notifyListeners();
+  }
+
+  /// Ask a model with the protected payload. **No argument carries the
+  /// document**, here as in the core: a handle goes, and nothing else could.
+  Future<String?> askModelProtected(String providerId) async {
+    final h = handle;
+    if (h == null) return 'There is nothing to send yet.';
+    return _ask(() async {
+      final said = await z.askModel(
+        handle: h,
+        provider: ProviderId(id: providerId),
+        model: chosenModel,
+        workspace: const [],
+        history: const [],
+      );
+      lastUsage = said.usage;
+      showing = said.answer;
+    });
+  }
+
+  /// Ask a model with the document **as it stands**, because a person chose to.
+  ///
+  /// A separate function taking the text — so the only call that can carry the
+  /// original is the one a human selection reaches, and a mistaken press
+  /// cannot pass a document to the protected door. The core keeps the same
+  /// separation in its types; this is that separation where the button is.
+  Future<String?> askModelWithTheOriginal(String providerId, {required String original}) async {
+    if (!sendOriginal) {
+      // Not reachable from the screen, and refused here as well: the original
+      // travels when the mode says so, never because a caller passed it.
+      return 'Choose «The original text» first — this app does not send a '
+          'document unprotected on its own.';
+    }
+    return _ask(() async {
+      final said = await z.askModelDirectly(
+        session: session,
+        text: original,
+        provider: ProviderId(id: providerId),
+        model: chosenModel,
+        workspace: const [],
+        history: const [],
+      );
+      lastUsage = said.usage;
+      // There is nothing to restore: nothing was protected.
+      said_ = said.text;
+    });
+  }
+
+  /// What both doors share: the busy flag, the refusal, and the refresh. The
+  /// difference between them is the call, and it stays the call.
+  Future<String?> _ask(Future<void> Function() door) async {
     sending = true;
     notifyListeners();
     try {
-      if (sendOriginal) {
-        final said = await z.askModelDirectly(
-          session: session,
-          text: original,
-          provider: ProviderId(id: providerId),
-          model: chosenModel,
-          workspace: const [],
-          history: const [],
-        );
-        lastUsage = said.usage;
-        // There is nothing to restore: nothing was protected.
-        said_ = said.text;
-      } else {
-        final h = handle;
-        if (h == null) {
-          sending = false;
-          return 'There is nothing to send yet.';
-        }
-        final said = await z.askModel(
-          handle: h,
-          provider: ProviderId(id: providerId),
-          model: chosenModel,
-          workspace: const [],
-          history: const [],
-        );
-        lastUsage = said.usage;
-        showing = said.answer;
-      }
+      await door();
       trouble = null;
       sending = false;
       await refresh();
@@ -552,6 +598,8 @@ class Workbench extends ChangeNotifier {
       sending = false;
       trouble = humanMessage(e);
       notifyListeners();
+      // A failure of one door is a failure of that door. Nothing here tries
+      // the other one, and the mode is not touched.
       return humanMessage(e);
     }
   }

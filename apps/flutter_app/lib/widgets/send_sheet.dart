@@ -360,10 +360,15 @@ class _SendSheetState extends State<SendSheet> {
                                   (payload == null && !widget.bench.sendOriginal)
                               ? null
                               : () async {
-                                  final bad = await widget.bench.askModel(
-                                    p.id,
-                                    original: widget.bench.document?.text ?? '',
-                                  );
+                                  // Two doors, and the mode names which. The
+                                  // document is an argument of one of them
+                                  // only.
+                                  final bad = widget.bench.sendOriginal
+                                      ? await widget.bench.askModelWithTheOriginal(
+                                          p.id,
+                                          original: widget.bench.document?.text ?? '',
+                                        )
+                                      : await widget.bench.askModelProtected(p.id);
                                   if (!context.mounted) return;
                                   if (bad == null) {
                                     Navigator.of(context).pop(true);

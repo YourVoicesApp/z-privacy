@@ -48,25 +48,40 @@ impl Provider for Anthropic {
         "claude-haiku-4-5-20251001"
     }
 
+    /// Checked against the company's own documentation, not against memory.
+    ///
+    /// Source: <https://docs.claude.com/en/docs/about-claude/models/overview>
+    /// (also served at docs.anthropic.com), read on **5 October 2026**. The
+    /// page's own table gives the «Claude API ID» row as `claude-fable-5-1`,
+    /// `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-4-5-20251001`,
+    /// and the «Context window» row beneath it as 1M, 1M, 1M and 200K.
+    ///
+    /// A bare `claude-sonnet-5` appears nowhere on that page: the two
+    /// occurrences a search finds are escaped spellings of
+    /// `claude-sonnet-5-5`.
+    ///
+    /// The same page states the capabilities in one sentence, for all of them:
+    /// «All current models support text and image input, text output,
+    /// multilingual capabilities, vision, and tool use.»
     fn models(&self) -> &'static [ModelFacts] {
         &[
             ModelFacts {
                 id: "claude-haiku-4-5-20251001",
                 display: "Claude Haiku 4.5",
-                capabilities: &[Capability::Text, Capability::Vision, Capability::Tools],
+                capabilities: &[Capability::Text, Capability::Vision, Capability::Tools, Capability::Reasoning],
                 context_k: 200,
             },
             ModelFacts {
                 id: "claude-sonnet-5-5",
                 display: "Claude Sonnet 5.5",
                 capabilities: &[Capability::Text, Capability::Vision, Capability::Tools, Capability::Reasoning],
-                context_k: 200,
+                context_k: 1_000,
             },
             ModelFacts {
                 id: "claude-opus-5-5",
                 display: "Claude Opus 5.5",
                 capabilities: &[Capability::Text, Capability::Vision, Capability::Tools, Capability::Reasoning],
-                context_k: 200,
+                context_k: 1_000,
             },
         ]
     }

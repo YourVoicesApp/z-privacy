@@ -737,7 +737,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "own report, and none of the words" \
          "selection in blue, not in nothing" "wash covers it" \
          "asks once per name, with what the decision is worth" \
-         "no model is named in Dart" "the original is a chosen thing"; do
+         "no model is named in Dart" "the original is a chosen thing" \
+         "never inherits the last one"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else
