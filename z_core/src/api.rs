@@ -986,6 +986,14 @@ pub struct Finding {
     /// Where it sits: page and paragraph. Kept through protection, so a review
     /// list can still jump to page 17 after everything is replaced.
     pub place: Option<Place>,
+    /// How many places in this document hold this same value, in this same
+    /// state — this one included, so it is never 0.
+    ///
+    /// For a suggestion it is the size of the decision: one answer settles all
+    /// of them, because a person deciding about «Lindenstraße 8» has decided
+    /// about «Lindenstraße 8», not about a byte range. The card says «in N
+    /// places» from this number, and Dart counts nothing itself.
+    pub occurrences: u32,
 }
 
 /// What happened when the user pressed Protect.

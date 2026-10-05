@@ -435,6 +435,15 @@ class Finding {
   /// list can still jump to page 17 after everything is replaced.
   final Place? place;
 
+  /// How many places in this document hold this same value, in this same
+  /// state — this one included, so it is never 0.
+  ///
+  /// For a suggestion it is the size of the decision: one answer settles all
+  /// of them, because a person deciding about «Lindenstraße 8» has decided
+  /// about «Lindenstraße 8», not about a byte range. The card says «in N
+  /// places» from this number, and Dart counts nothing itself.
+  final int occurrences;
+
   const Finding({
     required this.id,
     required this.span,
@@ -445,6 +454,7 @@ class Finding {
     required this.state,
     required this.entities,
     this.place,
+    required this.occurrences,
   });
 
   @override
@@ -457,7 +467,8 @@ class Finding {
       reason.hashCode ^
       state.hashCode ^
       entities.hashCode ^
-      place.hashCode;
+      place.hashCode ^
+      occurrences.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -472,7 +483,8 @@ class Finding {
           reason == other.reason &&
           state == other.state &&
           entities == other.entities &&
-          place == other.place;
+          place == other.place &&
+          occurrences == other.occurrences;
 }
 
 enum FindingAnswer { protect, always, notSensitive, skip }

@@ -37,11 +37,17 @@ class WorkspaceScreen extends StatefulWidget {
     required this.bench,
     required this.ground,
     required this.onHome,
+    required this.onVault,
   });
 
   final Workbench bench;
   final Ground ground;
   final VoidCallback onHome;
+
+  /// Open the vault screen over this one. Required rather than optional: a
+  /// Workspace that cannot reach the vault has buttons that refuse into a
+  /// sentence nobody sees, which is exactly what 041-B is about.
+  final VoidCallback onVault;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -125,7 +131,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       if (bench.reviewingNames)
                         NameReviewPanel(bench: bench, width: panel)
                       else if (bench.reviewOpen)
-                        ReviewPanel(bench: bench, width: panel),
+                        ReviewPanel(bench: bench, width: panel, onVault: widget.onVault),
                       if (bench.tokensOpen)
                         TokensPanel(bench: bench, width: panel),
                       if (bench.showing != null)

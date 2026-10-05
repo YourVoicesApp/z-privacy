@@ -52,7 +52,7 @@ void main() {
     });
 
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () => home++)),
+      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () => home++, onVault: () {})),
     );
     await settle(tester);
 
@@ -107,7 +107,7 @@ void main() {
     expect(bench.payload!.openSuggestions, greaterThan(0), reason: 'this document asks nothing');
 
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {})),
+      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {})),
     );
     await settle(tester);
 
@@ -188,7 +188,7 @@ void main() {
     });
 
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {})),
+      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {})),
     );
     await settle(tester);
     await tester.tap(find.byTooltip('Choose the AI and what travels to it'));
