@@ -594,6 +594,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_dictionary_loads_the_names_it_ships_with german_letters_survive_the_way_in \
          a_given_name_and_a_surname_in_a_row_are_offered a_single_name_on_its_own_is_never \
          the_dictionary_never_protects_anything_by_itself a_german_word_that_is_also_a_name \
+         a_function_word_does_not_open_a_name the_surnames_of_a_real_letter_are_in_the_list \
          a_small_german_set_positive_and_negative the_rules_that_were_there_before_still_hold \
          a_title_with_no_name_after_it_is_nothing a_degree_after_the_name_is_left \
          frau_as_an_ordinary_noun_names_nobody a_word_like_den_in_front_of_a_salutation \

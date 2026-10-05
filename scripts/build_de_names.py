@@ -31,7 +31,9 @@ from __future__ import annotations
 import argparse
 import csv
 import io
+import json
 import pathlib
+import re
 import sys
 import urllib.request
 
@@ -44,6 +46,7 @@ FIELDS = [
 ]
 
 GIVEN_LIMIT = 300
+FAMILY_LIMIT = 600
 BERLIN_RAW = "https://raw.githubusercontent.com/berlin/haeufige-vornamen-berlin/main/data/2023"
 BERLIN_DISTRICTS = [
     "charlottenburg-wilmersdorf", "friedrichshain-kreuzberg", "lichtenberg",
@@ -57,6 +60,32 @@ SURNAMES_URL = (
     "/master/common-surnames-by-country.csv"
 )
 SURNAMES_REPO = "https://github.com/sigpwned/popular-names-by-country-dataset"
+
+# Wikidata, through an engine that will actually answer: the question is «which
+# family names do the people Wikidata records as German citizens carry, and how
+# many of them», which Wikidata's own endpoint times out on at 60 seconds —
+# measured, including split by first letter. QLever serves the same CC0 data.
+WIKIDATA_ENGINE = "https://qlever.dev/api/wikidata"
+WIKIDATA_QUERY = """
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?nameLabel (COUNT(?person) AS ?people) WHERE {
+  ?person wdt:P31 wd:Q5 ;
+          wdt:P27 wd:Q183 ;
+          wdt:P734 ?name .
+  ?name rdfs:label ?nameLabel .
+  FILTER(LANG(?nameLabel) = "de")
+}
+GROUP BY ?nameLabel
+ORDER BY DESC(?people)
+LIMIT 2000
+"""
+WIKIDATA_PAGE = "https://www.wikidata.org"
+# A name the rule can match on one word: a capital, then letters, a hyphen or an
+# apostrophe. «von Rumerskirch» and «Jarosch von Schweder» are real names and
+# not ones this rule is built to read.
+NAME_SHAPE = re.compile(r"[A-ZÄÖÜ][A-Za-zÄÖÜäöüß'\u2019-]+$")
 
 
 def get(url: str) -> str:
@@ -134,6 +163,59 @@ def family_names() -> list[dict]:
     return out
 
 
+def wikidata_surnames() -> list[dict]:
+    """The 600 most borne family names of people Wikidata records as German."""
+    request = urllib.request.Request(
+        WIKIDATA_ENGINE,
+        data=WIKIDATA_QUERY.encode("utf-8"),
+        headers={
+            "Content-Type": "application/sparql-query",
+            "Accept": "application/sparql-results+json",
+            # A real agent string, because a public service is owed one.
+            "User-Agent": "ZPrivacy-build/0.1 (local, one-off; a German surname list for on-device PII detection)",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=120) as answer:  # noqa: S310
+        payload = json.load(answer)
+    out: list[dict] = []
+    for row in payload["results"]["bindings"]:
+        name = row["nameLabel"]["value"].strip()
+        if not NAME_SHAPE.match(name):
+            continue
+        out.append({
+            "name": name,
+            "type": "family",
+            "gender": "u",
+            "count": int(row["people"]["value"]),
+            "rank": 0,  # filled below, after the shape filter has thinned it
+            "scope": "Wikidata, German citizens",
+            "year": 2026,
+            "source": "Wikidata — family names of people with German citizenship",
+            "license": "CC0 1.0",
+            "source_url": WIKIDATA_PAGE,
+            "notes": "count is people recorded in Wikidata, not the population",
+        })
+        if len(out) >= FAMILY_LIMIT:
+            break
+    for rank, row in enumerate(out, start=1):
+        row["rank"] = rank
+    return out
+
+
+def family_rows() -> list[dict]:
+    """Both surname sources, as a union.
+
+    Wikidata ranks them, and it is missing `Schmidt` — no family-name item with
+    that German label has German-citizen holders there, so the second commonest
+    surname in Germany is not in its output. The ten CC0 names of V1 are kept
+    for exactly that reason, and each row still says where it came from.
+    """
+    wikidata = wikidata_surnames()
+    have = {row["name"].lower() for row in wikidata}
+    kept = [row for row in family_names() if row["name"].lower() not in have]
+    return wikidata + kept
+
+
 def write(rows: list[dict]) -> None:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with OUT.open("w", encoding="utf-8", newline="\n") as handle:
@@ -165,9 +247,15 @@ def check() -> int:
     family = [r for r in rows if r["type"] == "family"]
     if len(given) != GIVEN_LIMIT:
         problems.append(f"{len(given)} given names, not {GIVEN_LIMIT}")
-    if len(family) != 10:
-        problems.append(f"{len(family)} surnames, not 10")
-    for kind, group in (("given", given), ("family", family)):
+    if not FAMILY_LIMIT <= len(family) <= FAMILY_LIMIT + 10:
+        problems.append(f"{len(family)} surnames, not {FAMILY_LIMIT} to {FAMILY_LIMIT + 10}")
+    family_by_source: dict[str, list[dict]] = {}
+    for row in family:
+        family_by_source.setdefault(row["source"], []).append(row)
+    groups = [("given", given)] + [
+        (f"family from {source.split(' — ')[0]}", rows) for source, rows in family_by_source.items()
+    ]
+    for kind, group in groups:
         counts = [int(r["count"]) for r in group]
         if counts != sorted(counts, reverse=True):
             problems.append(f"the {kind} names are not in order of use")
@@ -191,7 +279,7 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="check the CSV on disk, offline")
     args = parser.parse_args()
     if args.fetch:
-        write(given_names() + family_names())
+        write(given_names() + family_rows())
         return check()
     if args.check:
         return check()

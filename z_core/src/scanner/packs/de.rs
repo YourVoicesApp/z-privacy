@@ -50,6 +50,22 @@ const TITLES: &[&str] = &[
 /// Stepped over inside a chain, and never the start of one — in German every
 /// noun is capitalised, so «med. Abteilung» would otherwise name a person.
 const TITLE_PARTS: &[&str] = &["med.", "rer.", "nat.", "phil.", "techn.", "univ.", "h.c.", "mult."];
+/// German function words that are also given names in the dictionary.
+///
+/// `An` (at, to) is rank 175 of the 300 and `Nur` (only) is rank 224 — real
+/// names, used in Berlin, and they belong in the list. But V2 widened the
+/// surnames from ten to 601, of which 43 are ordinary German words (Koch a
+/// cook, Richter a judge, Bauer a farmer), and the pair of those two facts is
+/// «An Müller GmbH» — how a German letter is addressed — or «Nur Richter
+/// dürfen entscheiden», which offered a protection on the word «only».
+/// Measured: that pair never occurs in 880 pages of the owner's documents, and
+/// it is one line of ordinary business German away.
+///
+/// A function word cannot open a name. It is kept here, in the rule, and not
+/// taken out of the owner's list: the list says what Berlin named its children,
+/// which is true, and this says what a sentence can mean, which is also true.
+const FUNCTION_WORDS: &[&str] = &["an", "nur"];
+
 /// Degrees that follow a name. They are not part of it and do not start one.
 const DEGREES: &[&str] = &["MBA", "MSc", "BSc", "BA", "MA", "LL.M.", "PhD", "MPH", "MAS", "CFA"];
 /// The legal forms a German company name ends with.
@@ -503,6 +519,7 @@ fn dictionary_names(words: &[Word<'_>], out: &mut Vec<Candidate>) {
         let family = bare(second.text).trim_end_matches(['.', ',', ';', ':']);
         if !(name_shaped(first.text) && name_shaped(second.text))
             || second.newline_before
+            || FUNCTION_WORDS.contains(&given.to_lowercase().as_str())
             || !names.given(given)
             || !names.family(family)
         {
