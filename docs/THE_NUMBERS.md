@@ -258,8 +258,12 @@ detection path. In the owner's words: «نسجلها كديون مقاسة».
 | 038 | the probe in git: `measure <pack> <file>`, goldens four to six | rows §3–§4 reproducible only by the lead's rig | every row one command |
 | 038-A | the signature rule protects the line under the closing whatever it is | DE-2: 1 false protection («Abteilung …») | 0, with the one person still 1 |
 | 038-B | Swedish production gaps: personnummer · organisationsnummer · bankgiro · roles · addresses | SV-1: 4 of 7 people, BIC/bankgiro/plate/VAT/addresses 0; the owner's papers: 0 persons, 36 unrecognised org.nr, 26 false phone suggestions | SV-1 at DE-1's level; the papers' persons found; the org.nr a kind of its own |
-| 038-C | Arabic PDF normalisation: presentation forms · RTL/reordering · Arabic-Indic digits | AR-2: 205 434 presentation-form characters, title word 0 raw; five taught names 0 | title word 180 raw; five names 461, then 562 through the vowel marks |
-| then | the Arabic pack — **only after 038-C** | AR-1 under general rules: 0 of 7 people, 0 of 2 companies | its own paper |
+| 038-C | Arabic PDF normalisation **in ingestion, before any pack**: presentation forms · RTL/reordering · Arabic-Indic digits — normalisation is for comparison, never for changing the document | AR-2: 205 434 presentation-form characters, title word 0 raw; five taught names 0 | title word 180 raw; five names 461, then 562 through the vowel marks — **these numbers are the acceptance contract** |
+| then | the Arabic pack — **only after 038 + 038-C, the quality/ingestion step** | AR-1 under general rules: 0 of 7 people, 0 of 2 companies | its own paper |
+
+**What the measurement settled** (the owner): «محرك Z والقوائم الشخصية قادران أصلًا على
+التعامل مع العربية؛ العطل في طبقة إدخال PDF» — the fix goes where the fault is,
+not where the language is.
 
 **The reason the Arabic reader comes before the Arabic pack** (the owner):
 «لا نبني الحزمة العربية قبل إصلاح طبقة القراءة. وإلا سنقيس فشلًا في اللغة بينما
