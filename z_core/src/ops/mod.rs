@@ -135,7 +135,9 @@ pub(crate) fn name_candidates(session: SessionId) -> ApiResult<Vec<NameCandidate
         // review list is what still needs a decision, and nothing else.
         let taught = vault.taught_names(s.profile_id.as_deref());
         let is_taught = |word: &str| taught.iter().any(|(t, _)| t.eq_ignore_ascii_case(word));
-        let hints = crate::scanner::packs::de::discover_names(&text, &is_taught);
+        // Whichever pack this session runs: discovery belongs to the contract,
+        // not to German.
+        let hints = crate::scanner::packs::discover(&text, &s.pack_id, &is_taught);
 
         // One row per spelling. The first hint's rule is kept as the «why»:
         // they are rules about the same word, and the first is the one that

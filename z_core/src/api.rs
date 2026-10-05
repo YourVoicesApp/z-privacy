@@ -428,6 +428,26 @@ pub struct LabelRuleRow {
 pub struct PackRow {
     pub id: String,
     pub label: String,
+    /// `de-DE`, `sv-SE` — the full locale, where this language has a name pack.
+    /// Empty where it has label rows only, which English does: a pack is not
+    /// required to carry names, and saying so is better than inventing a
+    /// locale for a list of words.
+    pub locale: String,
+    /// The pack's own version, so a report can say which knowledge produced a
+    /// finding.
+    pub version: String,
+    /// Rules this language needs that no other language can use, by name.
+    ///
+    /// The honest measure of the contract. German declares three — a national
+    /// vehicle plate, a local telephone number written after the German word
+    /// for telephone, a German street line — and Swedish declares none, which
+    /// is what «the second language is data» means in a number.
+    pub own_rules: Vec<String>,
+    /// One line naming the sources of its name lists and their licences.
+    pub provenance: String,
+    /// How many given and family names it ships with.
+    pub given: u32,
+    pub family: u32,
 }
 
 /// A provider as the UI is allowed to see it: a name, and whether it is

@@ -11,12 +11,13 @@
 
 mod de;
 mod en;
+mod sv;
 
 use super::rules::LabelRule;
 
 /// Every rule set this build carries, in the order the UI lists them.
 pub(crate) fn all() -> Vec<RuleSet> {
-    vec![de::set(), en::set()]
+    vec![de::set(), en::set(), sv::set()]
 }
 
 /// One language's worth of label knowledge.
