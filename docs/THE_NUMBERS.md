@@ -247,22 +247,24 @@ May **not** be said yet:
 
 ---
 
-## 6 · Open measurements, in the order they are worth taking
+## 6 · The measured debts, in the owner's order (5 Oct 2026, night)
 
-1. **The probe in git** (task 038): a `measure` example with a pack argument,
-   numbers only, so every row above is one command; SV-1 and AR-1 pinned as
-   goldens four and five; AR-2 as a skip-if-absent sixth.
-2. **The Arabic reader** (task 039): presentation forms folded (NFKC) and
-   visual order restored before any Arabic pack rule is written — the 0 → 180
-   probe and the five-name 0 → 461 are its acceptance tests; matching through
-   the vowel marks takes it to 562.
-3. **Swedish identifiers**: personnummer (with the century and checksum
-   rules), org.nr, bankgiro/plusgiro, a Swedish address shape — each a general
-   or pack rule with its own fixture, measured on SV-1 and, by counts, on the
-   owner's papers.
-4. **The 26 false phone suggestions** on Swedish forms: the phone rule reads
-   `999 99.999` as a number to ask about; a decimal point inside the shape
-   should end the match.
-5. **The signature rule** (DE-2): the line under the closing is a person only
-   if it looks like one — two words the dictionary or the pack can vouch for,
-   or a name the document already used.
+None of these is fixed ad hoc. All wait for Phase 4 (the Multi-Model Gateway)
+to be delivered, so that one person at a time changes the gates and the
+detection path. In the owner's words: «نسجلها كديون مقاسة».
+
+| paper | debt | the number that measures it today | the number that closes it |
+|---|---|---|---|
+| 038 | the probe in git: `measure <pack> <file>`, goldens four to six | rows §3–§4 reproducible only by the lead's rig | every row one command |
+| 038-A | the signature rule protects the line under the closing whatever it is | DE-2: 1 false protection («Abteilung …») | 0, with the one person still 1 |
+| 038-B | Swedish production gaps: personnummer · organisationsnummer · bankgiro · roles · addresses | SV-1: 4 of 7 people, BIC/bankgiro/plate/VAT/addresses 0; the owner's papers: 0 persons, 36 unrecognised org.nr, 26 false phone suggestions | SV-1 at DE-1's level; the papers' persons found; the org.nr a kind of its own |
+| 038-C | Arabic PDF normalisation: presentation forms · RTL/reordering · Arabic-Indic digits | AR-2: 205 434 presentation-form characters, title word 0 raw; five taught names 0 | title word 180 raw; five names 461, then 562 through the vowel marks |
+| then | the Arabic pack — **only after 038-C** | AR-1 under general rules: 0 of 7 people, 0 of 2 companies | its own paper |
+
+**The reason the Arabic reader comes before the Arabic pack** (the owner):
+«لا نبني الحزمة العربية قبل إصلاح طبقة القراءة. وإلا سنقيس فشلًا في اللغة بينما
+المشكلة في أن النص نفسه وصل إلى Z مشوهًا.»
+
+**And the reason the ugly rows stay on this page** (the owner): «لا نحاول إخفاء
+النتائج غير الجميلة… فهي تثبت أننا نقيس ونكتشف حدود النظام بدل ادعاء أن المنتج
+يعرف كل شيء. وبعد إصلاحها يصبح لدينا قبل/بعد حقيقي.»

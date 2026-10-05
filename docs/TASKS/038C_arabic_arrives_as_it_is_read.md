@@ -1,6 +1,6 @@
-# 039 · Arabic arrives as it is read
+# 038-C · Arabic arrives as it is read
 
-**Status: ORDERED, after Phase 4** · 5 Oct 2026 · lead → the builder the owner names · branch `fix/arabic-arrives-as-it-is-read` from `main` · **the first step of the Arabic pack, and a reader step, not a pack step.**
+**Status: WAITING — after Phase 4, third of the three measured debts (the owner's order, 5 Oct night).** · lead → the builder the owner names · branch `fix/arabic-arrives-as-it-is-read` from `main` · **the first step of the Arabic pack, and a reader step, not a pack step.** The owner: «لا نبني الحزمة العربية قبل إصلاح طبقة القراءة. وإلا سنقيس فشلًا في اللغة بينما المشكلة في أن النص نفسه وصل إلى Z مشوهًا.» His three parts: presentation forms · RTL/reordering · Arabic digits.
 
 ## Why
 
@@ -11,7 +11,8 @@ The owner's demo for Doha: a list of the characters of «كليلة ودمنة»
 1. **Fold presentation forms** in `z_core/src/documents/pdf.rs` where a font's codes become characters: a character in the two presentation blocks becomes its NFKC form (the crate `unicode-normalization` is already a dependency; no new crate). Lam-alef ligatures (`ﻻ` and kin) become two letters. The fold is the reader's, so `DocumentView.text` is what the scanner and the screen both see, and spans stay consistent — measure that a mark drawn on a folded word lands on the right glyphs on screen.
 2. **Logical order**: a line whose characters came out right-to-left-reversed is turned round before it leaves the reader. Smallest honest rule first: within a line, a run of right-to-left characters is reversed as a run, and runs of digits and Latin letters inside it keep their own order; measure on the book and on an Arabic letter saved as PDF from a word processor (the owner can make one) before deciding whether the full bidi algorithm is needed. **Do not reorder `.txt` or `.docx` text** — they arrive logical already (AR-1 proves it).
 3. **Match through the vowel marks**: a vault value and a taught name compare with the Arabic combining marks (U+064B–U+0652, U+0670, tatweel U+0640) removed from both sides, while the span covers the marked text as written. That is the 461 → 562 step.
-4. **Nothing else**: no Arabic rule, no honorific, no company form — those are the pack's, after this.
+4. **Arabic-Indic digits** (the owner's third part): a value written in `٠١٢…` or `۰۱۲…` must be found by the same general rules as `012…` — measure first whether the rules fold digits or compare them raw (AR-1's fourth phone, written in Arabic-Indic digits, is found by nothing today); fold at the point of comparison, never by rewriting `DocumentView.text`.
+5. **Nothing else**: no Arabic rule, no honorific, no company form — those are the pack's, after this.
 
 ## Done means
 
@@ -24,3 +25,4 @@ The owner's demo for Doha: a list of the characters of «كليلة ودمنة»
 
 - The Arabic pack's own rules (honorifics, kinship particles, company forms, Gulf phone and ID shapes).
 - The substring question for short names inside longer words (named in §4.3; a pack decision).
+- Task 038's probe and goldens, which this task's tests build on when both are ordered.

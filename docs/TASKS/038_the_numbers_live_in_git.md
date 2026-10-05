@@ -1,6 +1,8 @@
 # 038 · The numbers live in git
 
-**Status: ORDERED** · 5 Oct 2026 · lead → a builder the owner names, **after Phase 4's exit report, or beside it only if Phase 4 is waiting on a review** · branch `feat/the-numbers-live-in-git` from `main`.
+**Status: WAITING — not assigned.** The owner, 5 Oct night: «أما مهمة 038 فلا أعطيها للمبرمج الآن؛ اتركها جاهزة إلى أن يسلم Multi-Model Gateway. لا أريد شخصين يغيران الحرّاس ومسار الكشف بينما فرع feat/model-gateway فيه 19 ملفًا غير ملتزم.» · 5 Oct 2026 · lead → the builder the owner names after the Gateway is delivered · branch `feat/the-numbers-live-in-git` from `main`.
+
+The three findings of the measurement are **measured debts, in the owner's order, all after Phase 4**: 038-A the signature false positive · 038-B the Swedish production gaps · 038-C Arabic PDF normalisation, and only then the Arabic pack. Each has its own paper beside this one.
 
 ## Why
 
