@@ -887,6 +887,98 @@ pub(crate) fn set_profile_languages(profile_id: String, languages: Vec<String>) 
 }
 
 /// Teach a label rule: «after this word comes a value of this kind».
+/// Teach a name: «Al-Hassan is a family name».
+///
+/// The user layer of the name dictionary. It does **not** protect the word —
+/// that is what Add Person does, and it goes to the vault as a value. This
+/// says what kind of word it is, so the rules that already know how names are
+/// written can see it: «Mahmoud Al-Hassan» becomes a pair, «Herr Al-Hassan» a
+/// name a salutation introduces.
+pub(crate) fn teach_name(text: String, family: bool, profile_id: Option<String>) -> ApiResult<u32> {
+    let text = crate::text::nfc(text.trim()).to_string();
+    if text.is_empty() {
+        return Err(ApiError::InputRefused {
+            reason: "a name needs a word".to_string(),
+        });
+    }
+    // One word. A name of two words is two decisions, and the rules match word
+    // by word — teaching «Anna Weber» as one name would teach nothing at all.
+    if text.split_whitespace().count() != 1 {
+        return Err(ApiError::InputRefused {
+            reason: "teach one word at a time: a first name and a surname are two names".to_string(),
+        });
+    }
+    let id = with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            if let Some(owner) = profile_id.as_deref() {
+                if !vault.profiles.iter().any(|p| p.id == owner) {
+                    return Err(ApiError::NotFound {
+                        reason: no_such_profile(),
+                    });
+                }
+            }
+            // Taught twice is taught once: the same word for the same reach
+            // keeps the id it already has.
+            if let Some(existing) = vault.taught_names.iter().find(|n| {
+                n.text.eq_ignore_ascii_case(&text) && n.family == family && n.profile_id == profile_id
+            }) {
+                return Ok(existing.id);
+            }
+            let id = vault.next_taught_name;
+            vault.next_taught_name = vault.next_taught_name.saturating_add(1);
+            vault.taught_names.push(crate::vault::model::UserName {
+                id,
+                text: text.clone(),
+                family,
+                profile_id: profile_id.clone(),
+                learned_at: crate::vault::model::now_seconds(),
+            });
+            Ok(id)
+        })
+    })?;
+    crate::session::bump_truth();
+    Ok(id)
+}
+
+/// Unlearn a name. Knowledge only: an open document keeps every token it has.
+pub(crate) fn forget_name(id: u32) -> ApiResult<()> {
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let before = vault.taught_names.len();
+            vault.taught_names.retain(|n| n.id != id);
+            if vault.taught_names.len() == before {
+                return Err(ApiError::NotFound {
+                    reason: "no taught name with that id".to_string(),
+                });
+            }
+            Ok(())
+        })
+    })?;
+    crate::session::bump_truth();
+    Ok(())
+}
+
+/// Every name the person taught, newest first.
+pub(crate) fn taught_names() -> ApiResult<Vec<crate::api::TaughtNameRow>> {
+    with_core(|core| {
+        core.vault.with_open(|vault| {
+            let mut rows: Vec<crate::api::TaughtNameRow> = vault
+                .taught_names
+                .iter()
+                .map(|n| crate::api::TaughtNameRow {
+                    id: n.id,
+                    text: n.text.clone(),
+                    family: n.family,
+                    profile_id: n.profile_id.clone(),
+                    learned_at: n.learned_at,
+                })
+                .collect();
+            rows.sort_by(|a, b| b.learned_at.cmp(&a.learned_at).then(b.id.cmp(&a.id)));
+            rows
+        })
+    })
+}
+
 pub(crate) fn teach_label_rule(label: String, kind: Kind, profile_id: Option<String>) -> ApiResult<u32> {
     let label = crate::text::nfc(label.trim()).to_string();
     if label.is_empty() {

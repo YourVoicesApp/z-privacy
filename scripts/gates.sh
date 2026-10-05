@@ -470,6 +470,32 @@ else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
 fi
 
+# ------------------------------------------------- candidate discovery
+# Phase 2: Z notices the names a document uses that it does not know, asks once
+# per name, and learns from one answer. Two things are checked here, because
+# both are promises rather than preferences.
+#
+# A candidate is not a finding: `discover_names` may not build a `Candidate`,
+# which is the type the scanner protects things with. And a taught name is
+# knowledge in the vault like a taught label rule — never a value, and never a
+# protection on its own.
+DISC=z_core/src/scanner/packs/de.rs
+if [ -f "$DISC" ]; then
+  if sed -n '/fn discover_names/,/^}/p' "$DISC" | grep -qE 'Confidence::|candidate\('; then
+    fail "discovery builds a protection: a candidate must only ever be a candidate ($DISC)"
+  else
+    pass "candidate discovery protects nothing by itself"
+  fi
+  if grep -q 'fn teach_name' z_core/src/ops/vault.rs 2>/dev/null \
+     && grep -q 'taught_names' z_core/src/vault/model.rs 2>/dev/null; then
+    pass "  a taught name is knowledge in the vault, beside the taught label rules"
+  else
+    fail "  a taught name is not stored where the other taught knowledge is"
+  fi
+else
+  skip "candidate discovery" "no German pack on this branch"
+fi
+
 # ------------------------------------------------- the name dictionary
 # German Name Dictionary V1: a signal for Person detection and never a verdict.
 # Two things are checked here. The file must have the shape the loader expects —
@@ -595,6 +621,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_given_name_and_a_surname_in_a_row_are_offered a_single_name_on_its_own_is_never \
          the_dictionary_never_protects_anything_by_itself a_german_word_that_is_also_a_name \
          a_function_word_does_not_open_a_name the_surnames_of_a_real_letter_are_in_the_list \
+         offers_its_unknown_names_once_each a_candidate_protects_nothing_until_it_is_taught \
+         a_name_whose_given_half_is_unknown_is_still_invisible \
+         a_person_answers_twice_and_a_whole_document_is_understood \
          a_small_german_set_positive_and_negative the_rules_that_were_there_before_still_hold \
          a_title_with_no_name_after_it_is_nothing a_degree_after_the_name_is_left \
          frau_as_an_ordinary_noun_names_nobody a_word_like_den_in_front_of_a_salutation \
@@ -628,7 +657,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "the line still says who decided" "stays wavy, whoever found it" \
          "put back in the answer is drawn dotted" \
          "own report, and none of the words" \
-         "selection in blue, not in nothing" "wash covers it"; do
+         "selection in blue, not in nothing" "wash covers it" \
+         "asks once per name, with what the decision is worth"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

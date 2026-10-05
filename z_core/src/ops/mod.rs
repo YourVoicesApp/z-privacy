@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
     Explanation, Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId,
-    ProviderRow, ReportSubject, RevealedToken, RevealedValue, SelectionView,
+    NameCandidate, ProviderRow, ReportSubject, RevealedToken, RevealedValue, SelectionView,
     RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome,
     TaughtReach, TokenRow, UndoOutcome,
 };
@@ -118,6 +118,95 @@ pub(crate) fn import_document(
     .ok_or(ApiError::InvalidSession)?;
     crate::session::bump_truth();
     view
+}
+
+/// Gather the names this document uses that no dictionary knows.
+///
+/// One row per name, not one per occurrence: a person reviewing a 734-page file
+/// cannot be shown 18 lines about one word. The count of occurrences and the
+/// count of pages are on the row because together they say what the decision is
+/// worth, and three lines of context are there because one look should be
+/// enough to decide.
+pub(crate) fn name_candidates(session: SessionId) -> ApiResult<Vec<NameCandidate>> {
+    with_core(|core| {
+        let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;
+        let text = s.original_str().to_string();
+        // What the person has already taught is no longer a candidate: the
+        // review list is what still needs a decision, and nothing else.
+        let taught = vault.taught_names(s.profile_id.as_deref());
+        let is_taught = |word: &str| taught.iter().any(|(t, _)| t.eq_ignore_ascii_case(word));
+        let hints = crate::scanner::packs::de::discover_names(&text, &is_taught);
+
+        // One row per spelling. The first hint's rule is kept as the «why»:
+        // they are rules about the same word, and the first is the one that
+        // noticed it.
+        let mut rows: BTreeMap<String, (bool, &'static str)> = BTreeMap::new();
+        for hint in &hints {
+            let Some(word) = text.get(hint.start..hint.end) else { continue };
+            rows.entry(word.to_string()).or_insert((hint.family, hint.rule));
+        }
+
+        let mut out: Vec<NameCandidate> = Vec::new();
+        for (word, (family, rule)) in rows {
+            let places = occurrences(&text, &word);
+            let mut pages: Vec<u32> = places
+                .iter()
+                .filter_map(|(start, _)| s.place_of(*start).map(|p| p.page))
+                .collect();
+            pages.sort_unstable();
+            pages.dedup();
+            let examples = places
+                .iter()
+                .take(3)
+                .map(|(start, end)| line_around(&text, *start, *end))
+                .collect();
+            out.push(NameCandidate {
+                text: word,
+                family,
+                occurrences: places.len() as u32,
+                pages: pages.len().max(1) as u32,
+                examples,
+                why: match rule {
+                    "surname-before-a-known-given-name" => {
+                        "it stands before a comma and a given name this build knows — the way a list of people is written".to_string()
+                    }
+                    _ => "it stands straight after a given name this build knows".to_string(),
+                },
+            });
+        }
+        // The most places first: one decision there is worth the most.
+        out.sort_by(|a, b| b.occurrences.cmp(&a.occurrences).then(a.text.cmp(&b.text)));
+        Ok(out)
+    })
+}
+
+/// The line a word stands in, trimmed, so three of them fit on a screen.
+fn line_around(text: &str, start: usize, end: usize) -> String {
+    let from = text.get(..start).map_or(0, |head| head.rfind('\n').map_or(0, |at| at + 1));
+    let to = text.get(end..).map_or(text.len(), |tail| {
+        tail.find('\n').map_or(text.len(), |at| end + at)
+    });
+    let line = text.get(from..to).unwrap_or_default();
+    if line.chars().count() <= 160 {
+        return line.trim().to_string();
+    }
+    // A paragraph can be a single line of 2,000 characters, and the first 160
+    // of it may not contain the name at all — measured on the German letter,
+    // where the example shown for «Demir» was a sentence about somebody else.
+    // So the window is centred on the word.
+    let head = start.saturating_sub(from);
+    let before = 70usize;
+    let want = head.saturating_sub(before);
+    let open = line.char_indices().map(|(i, _)| i).rfind(|i| *i <= want).unwrap_or(0);
+    let close = line
+        .char_indices()
+        .map(|(i, _)| i)
+        .find(|i| *i >= (end.saturating_sub(from)).saturating_add(before))
+        .unwrap_or(line.len());
+    let window = line.get(open..close).unwrap_or_default().trim();
+    let left = if open > 0 { "…" } else { "" };
+    let right = if close < line.len() { "…" } else { "" };
+    format!("{left}{window}{right}")
 }
 
 /// The report a person can copy and send when something is wrong.
@@ -653,6 +742,10 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             let profile = core.get(session.id).and_then(|s| s.profile_id.clone());
             core.vault.exceptions(profile.as_deref())
         };
+        let vault_names = {
+            let profile = core.get(session.id).and_then(|s| s.profile_id.clone());
+            core.vault.taught_names(profile.as_deref())
+        };
         let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
         let selected = s
@@ -721,7 +814,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
                     .map(|f| f.kind)
             });
         let guessed = exact_kind.or_else(|| {
-            scanner::scan(&selected, std::slice::from_ref(&s.pack_id), &[], &vault_hints, &vault_exceptions)
+            scanner::scan(&selected, std::slice::from_ref(&s.pack_id), &[], &vault_hints, &vault_exceptions, &vault_names)
                 .into_iter()
                 .find(|c| c.start == 0 && c.end == selected.len())
                 .map(|c| c.kind)
@@ -1463,7 +1556,8 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         let hints = vault.hints(profile.as_deref());
         let exceptions = vault.exceptions(profile.as_deref());
         let taught = vault.label_rules(profile.as_deref());
-        rescan_with(s, &sets, &taught, &hints, &exceptions);
+        let names = vault.taught_names(profile.as_deref());
+        rescan_with(s, &sets, &taught, &hints, &exceptions, &names);
         mark_scanned(s);
         Ok(report_of(s, vault_state))
     })?;
@@ -1488,8 +1582,9 @@ fn rescan_with(
     taught: &[crate::scanner::rules::LabelRule],
     hints: &[crate::vault::model::VaultHint],
     exceptions: &[crate::vault::model::UserException],
+    names: &[(String, bool)],
 ) -> u32 {
-    let candidates = scanner::scan(s.original_str(), active, taught, hints, exceptions);
+    let candidates = scanner::scan(s.original_str(), active, taught, hints, exceptions, names);
 
     // Nothing is dropped. What is no longer claimed says so.
     let mut orphaned = 0u32;
@@ -1885,7 +1980,8 @@ fn rescan_keeping(session: SessionId, _pack: &str) -> ApiResult<(u32, u32)> {
         let kept_tokens = s.tokens_in_use().len() as u32;
         // The same rule as the Rescan button, because they are the same act:
         // look again, and take nothing back.
-        let orphaned = rescan_with(s, &sets, &taught, &hints, &exceptions);
+        let names = vault.taught_names(profile.as_deref());
+        let orphaned = rescan_with(s, &sets, &taught, &hints, &exceptions, &names);
         Ok((kept_tokens, orphaned))
     })
 }

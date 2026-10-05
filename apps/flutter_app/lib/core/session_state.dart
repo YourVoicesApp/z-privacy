@@ -323,6 +323,9 @@ class Workbench extends ChangeNotifier {
     }
     busy = false;
     await _refreshKeeping(refused);
+    // The names that still need a word are part of what a scan produced, so the
+    // badge knows before anybody opens the panel.
+    await refreshCandidates();
   }
 
   void showChips(bool on) {
@@ -523,6 +526,66 @@ class Workbench extends ChangeNotifier {
     unawaited(z.hideAllReveals());
     if (revealed.isEmpty) return;
     revealed.clear();
+    notifyListeners();
+  }
+
+  /// The names this document uses that no dictionary knows. One row each, with
+  /// the count of places and three lines of context, as the core gathers them.
+  List<NameCandidate> candidates = const [];
+
+  /// Names this person has pressed Ignore on, for this session only. Not
+  /// knowledge: nothing is written, and the next document asks again.
+  final Set<String> ignored = {};
+
+  bool reviewingNames = false;
+
+  /// What still needs a word: the core's list, less what was ignored here.
+  List<NameCandidate> get openCandidates =>
+      candidates.where((c) => !ignored.contains(c.text)).toList();
+
+  Future<void> refreshCandidates() async {
+    try {
+      candidates = await z.nameCandidates(session: session);
+    } on ApiError {
+      // A list that cannot be gathered is an empty list, never a crash: the
+      // document is still open and still protected by everything else.
+      candidates = const [];
+    }
+    notifyListeners();
+  }
+
+  /// «Al-Hassan is a family name» — taught once, then the document is scanned
+  /// again so every place it stands is seen at once.
+  Future<void> teachName(String text, {required bool family}) async {
+    busy = true;
+    notifyListeners();
+    String? refused;
+    try {
+      await z.teachName(text: text, family: family);
+      await rescan();
+    } on ApiError catch (e) {
+      refused = humanMessage(e);
+    }
+    busy = false;
+    // A refusal is news, not a failure, and it is the core's own sentence.
+    if (refused != null) trouble = refused;
+    await refreshCandidates();
+  }
+
+  void ignoreCandidate(String text) {
+    ignored.add(text);
+    notifyListeners();
+  }
+
+  void openNameReview() {
+    reviewOpen = true;
+    reviewingNames = true;
+    notifyListeners();
+    unawaited(refreshCandidates());
+  }
+
+  void closeNameReview() {
+    reviewingNames = false;
     notifyListeners();
   }
 

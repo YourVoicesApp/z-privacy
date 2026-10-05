@@ -365,6 +365,22 @@ impl VaultStore {
 
     /// The label rules this person taught, effective for this profile. Empty
     /// while locked, for the same reason the hints are: a rule is knowledge.
+    /// The names the person taught, as the rules want them: the word and
+    /// whether it is a surname. Empty while the vault is locked — the layer is
+    /// skipped by having nothing to say, not by a flag someone could forget.
+    pub(crate) fn taught_names(&mut self, active_profile: Option<&str>) -> Vec<(String, bool)> {
+        self.tick();
+        match self.open.as_ref() {
+            Some(open) => open
+                .vault
+                .taught_names_for(active_profile)
+                .iter()
+                .map(|n| (n.text.clone(), n.family))
+                .collect(),
+            None => Vec::new(),
+        }
+    }
+
     pub(crate) fn label_rules(&mut self, active_profile: Option<&str>) -> Vec<crate::scanner::rules::LabelRule> {
         self.tick();
         match self.open.as_ref() {

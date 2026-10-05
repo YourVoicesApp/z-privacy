@@ -790,6 +790,59 @@ class Mark {
 
 enum MarkState { protected, suggested }
 
+class NameCandidate {
+  /// The word, as the document writes it.
+  final String text;
+
+  /// What the document is using it as. A surname, so far: the two rules that
+  /// find candidates both read the position of a known given name.
+  final bool family;
+
+  /// How many times the word stands in this document.
+  final int occurrences;
+
+  /// How many pages it stands on, which is how much reading it would take to
+  /// check it by hand.
+  final int pages;
+
+  /// Up to three lines it appears in, so one look is enough to decide. Local
+  /// only, like the document itself.
+  final List<String> examples;
+
+  /// Which rule noticed it.
+  final String why;
+
+  const NameCandidate({
+    required this.text,
+    required this.family,
+    required this.occurrences,
+    required this.pages,
+    required this.examples,
+    required this.why,
+  });
+
+  @override
+  int get hashCode =>
+      text.hashCode ^
+      family.hashCode ^
+      occurrences.hashCode ^
+      pages.hashCode ^
+      examples.hashCode ^
+      why.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NameCandidate &&
+          runtimeType == other.runtimeType &&
+          text == other.text &&
+          family == other.family &&
+          occurrences == other.occurrences &&
+          pages == other.pages &&
+          examples == other.examples &&
+          why == other.why;
+}
+
 @freezed
 sealed class NetworkRefusal with _$NetworkRefusal {
   const NetworkRefusal._();
@@ -1737,6 +1790,45 @@ class TaughtExceptionRow {
           taughtAt == other.taughtAt &&
           why == other.why &&
           source == other.source;
+}
+
+class TaughtNameRow {
+  final int id;
+  final String text;
+
+  /// A surname, or a given name.
+  final bool family;
+
+  /// `None` is everywhere; `Some(profile)` is one client.
+  final String? profileId;
+  final BigInt learnedAt;
+
+  const TaughtNameRow({
+    required this.id,
+    required this.text,
+    required this.family,
+    this.profileId,
+    required this.learnedAt,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      text.hashCode ^
+      family.hashCode ^
+      profileId.hashCode ^
+      learnedAt.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TaughtNameRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          text == other.text &&
+          family == other.family &&
+          profileId == other.profileId &&
+          learnedAt == other.learnedAt;
 }
 
 enum TaughtReach {

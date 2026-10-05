@@ -15,9 +15,12 @@ use super::Candidate;
 
 /// Run the pack named by `id`. An unknown id simply contributes nothing — a
 /// missing pack must never be an error that stops a document from being scanned.
-pub(crate) fn scan(text: &str, id: &str) -> Vec<Candidate> {
+pub(crate) fn scan(text: &str, id: &str, names: &[(String, bool)]) -> Vec<Candidate> {
     match id {
-        "de" => de::scan(text),
+        // The names the person taught travel with the text, the way the taught
+        // label rules and the vault's hints do: knowledge is an argument here,
+        // never a global somebody could forget to pass.
+        "de" => de::scan(text, names),
         _ => Vec::new(),
     }
 }

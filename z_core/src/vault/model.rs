@@ -143,6 +143,27 @@ pub(crate) struct UserLabelRule {
     pub learned_at: u64,
 }
 
+/// A name the person taught: «Al-Hassan is a family name».
+///
+/// Knowledge, not a value — the same kind of thing as a taught label rule and
+/// stored the same way. It does not protect the word; it tells the rules that
+/// the word is a name, so that «Mahmoud Al-Hassan» becomes a pair they can see
+/// and «Herr Al-Hassan» becomes a name a salutation introduces.
+///
+/// In the vault, encrypted, because the surname of a person's client is as much
+/// theirs as the client's address.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct UserName {
+    pub id: u32,
+    /// The word as the person taught it.
+    pub text: String,
+    /// A surname, or a given name.
+    pub family: bool,
+    /// `None` is everywhere; `Some(profile)` is this client only.
+    pub profile_id: Option<String>,
+    pub learned_at: u64,
+}
+
 impl UserLabelRule {
     /// The engine's row for this taught rule.
     pub(crate) fn as_rule(&self) -> crate::scanner::rules::LabelRule {
@@ -167,6 +188,11 @@ pub(crate) struct Vault {
     /// Label rules the person taught. Same shape of scoping as an exception:
     /// everywhere, or one profile.
     pub label_rules: Vec<UserLabelRule>,
+    pub next_taught_name: u32,
+    /// Names the person taught — the user layer of the name dictionary, kept
+    /// apart from the lists this build ships with and from the candidates
+    /// nobody has decided about yet. Written in Phase 2.
+    pub taught_names: Vec<UserName>,
     /// What the app has been told to do by itself. In the vault because the
     /// vault is the only file we write (G15), and because a setting that
     /// survives a restart has to live somewhere that does. Written in task 030.
@@ -246,6 +272,8 @@ impl Vault {
             next_exception: 1,
             next_label_rule: 1,
             label_rules: Vec::new(),
+            next_taught_name: 1,
+            taught_names: Vec::new(),
             exceptions: Vec::new(),
             settings: StoredSettings::default(),
             provider_logins: BTreeMap::new(),
@@ -334,6 +362,18 @@ impl Vault {
     ///
     /// Same rule as a hint — a rule taught for one client does not follow the
     /// user into another client's document.
+    /// The names taught everywhere, plus the ones taught for this client.
+    pub(crate) fn taught_names_for(&self, active_profile: Option<&str>) -> Vec<UserName> {
+        self.taught_names
+            .iter()
+            .filter(|n| match n.profile_id.as_deref() {
+                None => true,
+                Some(owner) => Some(owner) == active_profile,
+            })
+            .cloned()
+            .collect()
+    }
+
     pub(crate) fn label_rules_for(&self, active_profile: Option<&str>) -> Vec<UserLabelRule> {
         self.label_rules
             .iter()
