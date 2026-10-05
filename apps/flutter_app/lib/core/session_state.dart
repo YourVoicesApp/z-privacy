@@ -183,7 +183,10 @@ class Workbench extends ChangeNotifier {
 
   final SessionId session;
   String? profileId;
-  final String packId;
+
+  /// The rule set this document is being read with. Not final since 041-D: the
+  /// top bar can switch it, and what the bar says must be what ran.
+  String packId;
 
   WorkspaceSnapshot? snap;
   ScanReport? report;
@@ -711,6 +714,103 @@ class Workbench extends ChangeNotifier {
 
   /// «Al-Hassan is a family name» — taught once, then the document is scanned
   /// again so every place it stands is seen at once.
+  /// What this device knows because the person said so, from the core.
+  ///
+  /// Kept here beside the candidates because the Names panel shows both: what
+  /// Z is asking about, and what the person has already answered. Empty while
+  /// the vault is shut — the list lives in the vault, and a closed vault has
+  /// nothing to say rather than something to guess.
+  List<UserNameRow> userNames = const [];
+
+  /// The last import's three numbers, for the sentence under the button.
+  NameImport? lastImport;
+
+  /// What the last act on «your names» did, in a sentence. Kept here and not
+  /// in the panel, because the act is the bench's and the panel is only where
+  /// it is pressed — a widget that awaits the core itself is a widget that
+  /// cannot be driven from a test, and in this app it would be the only one.
+  String? namesSaid;
+
+  Future<void> refreshUserNames() async {
+    List<UserNameRow> got;
+    try {
+      got = await z.userNames();
+    } on ApiError {
+      got = const [];
+    }
+    if (_gone) return;
+    userNames = got;
+    notifyListeners();
+  }
+
+  /// Add one name a person typed. The core decides where it is kept.
+  Future<String?> addUserName(String text, {required UserNameKind kind, required bool always}) async {
+    return _aboutNames(() async {
+      await z.addUserName(text: text, kind: kind, always: always);
+      return 'Added «$text».';
+    });
+  }
+
+  Future<String?> forgetUserName(UserNameRow row) async {
+    return _aboutNames(() async {
+      await z.forgetUserName(id: row.id, entityId: row.entityId);
+      return 'Forgot «${row.text}».';
+    });
+  }
+
+  /// Read a list of names. The three numbers come back from the core, which is
+  /// the only thing that knows which of them were already known.
+  Future<String?> importUserNames(String csv) async {
+    return _aboutNames(() async {
+      final report = await z.importUserNames(csv: csv);
+      lastImport = report;
+      return '${report.added} added · ${report.alreadyKnown} already known · '
+          '${report.refused} refused';
+    });
+  }
+
+  /// What the three acts share: the busy flag, the sentence, and the two
+  /// refreshes after it. The sentence is the core's own when it refuses.
+  Future<String?> _aboutNames(Future<String> Function() act) async {
+    busy = true;
+    namesSaid = null;
+    notifyListeners();
+    String? refused;
+    try {
+      namesSaid = await act();
+    } on ApiError catch (e) {
+      refused = humanMessage(e);
+      namesSaid = refused;
+    }
+    busy = false;
+    await refreshUserNames();
+    // A name changes what the scanner knows, so the document is read again.
+    await rescan();
+    notifyListeners();
+    return refused;
+  }
+
+  /// Run this document against another rule set, from the top bar.
+  ///
+  /// The list of packs is the core's; this only names one of them. A switch is
+  /// a rescan, so the numbers that come back are the new pack's own.
+  Future<String?> switchPack(String id) async {
+    if (id == packId) return null;
+    busy = true;
+    notifyListeners();
+    String? refused;
+    try {
+      await z.switchPack(session: session, packId: id);
+      packId = id;
+    } on ApiError catch (e) {
+      refused = humanMessage(e);
+      trouble = refused;
+    }
+    busy = false;
+    await rescan();
+    return refused;
+  }
+
   Future<void> teachName(String text, {required bool family}) async {
     busy = true;
     notifyListeners();
@@ -718,6 +818,7 @@ class Workbench extends ChangeNotifier {
     try {
       await z.teachName(text: text, family: family);
       await rescan();
+      await refreshUserNames();
     } on ApiError catch (e) {
       refused = humanMessage(e);
     }
@@ -737,6 +838,9 @@ class Workbench extends ChangeNotifier {
     reviewingNames = true;
     notifyListeners();
     unawaited(refreshCandidates());
+    // The person's own list is the other half of this panel, and it is asked
+    // for where it is needed rather than on every scan.
+    unawaited(refreshUserNames());
   }
 
   void closeNameReview() {

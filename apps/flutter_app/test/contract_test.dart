@@ -110,6 +110,37 @@ void main() {
           // the same
         }
       },
+      // 041-D — the names a person adds themselves. The vault is locked here,
+      // so each of these answers by refusing, which is what being reached looks
+      // like for anything that writes to the vault.
+      'addUserName': () async {
+        try {
+          await addUserName(text: 'Lindqvist', kind: UserNameKind.family, always: false);
+        } on ApiError {
+          // the vault is shut
+        }
+      },
+      'userNames': () async {
+        try {
+          await userNames();
+        } on ApiError {
+          // the same
+        }
+      },
+      'forgetUserName': () async {
+        try {
+          await forgetUserName(id: 1);
+        } on ApiError {
+          // the same
+        }
+      },
+      'importUserNames': () async {
+        try {
+          await importUserNames(csv: 'name,type\nLindqvist,family\n');
+        } on ApiError {
+          // the same
+        }
+      },
       'scan': () => scan(session: session),
       'protect': () => protect(
         session: session,
@@ -255,7 +286,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 87, reason: 'the contract has 87 functions');
+    expect(calls.length, 91, reason: 'the contract has 91 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();
