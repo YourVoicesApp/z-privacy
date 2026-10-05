@@ -74,6 +74,24 @@ fi
 for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html; do
   [ -f "$f" ] || { say FAIL "missing $f"; FAIL=1; }
 done
+
+# The four files the pages now ask a browser for. A page that links an icon
+# which is not there shows a broken image to everyone who opens it, and the
+# three pages ask for the same four.
+MISSING=0
+for f in assets/favicon-32.png assets/favicon-16.png assets/apple-touch-icon.png assets/logo-512.png; do
+  if [ ! -f "$f" ]; then
+    say FAIL "the pages link $f and it is not here"
+    FAIL=1; MISSING=1
+  fi
+done
+for page in en de ar; do
+  for want in 'rel="icon"' 'apple-touch-icon' 'logo-512.png'; do
+    grep -q "$want" "$page/index.html" || { say FAIL "$page/index.html has no $want"; FAIL=1; MISSING=1; }
+  done
+done
+[ "$MISSING" = 0 ] && say PASS "the mark is on all three pages, and its four files are here"
+
 [ "$FAIL" = 0 ] && say PASS "all pages present"
 
 echo

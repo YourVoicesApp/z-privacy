@@ -24,3 +24,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    # The mark, in every size the product uses. They are generated from
+    # `brand/source.png` by `scripts/build_brand.py` and never edited by hand —
+    # a gate rebuilds them into a temp directory and compares the bytes.
+    - assets/brand/

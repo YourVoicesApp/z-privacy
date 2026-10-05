@@ -57,7 +57,9 @@ header.top {
 .mark:hover { text-decoration: none; }
 .z {
   inline-size: 30px; block-size: 30px; border-radius: 8px;
-  background: var(--clay); color: #fff;
+  /* The mark is a picture now — the owner's own. The background stays as the
+     colour behind a picture that has not arrived yet, so nothing jumps. */
+  background: var(--clay); color: #fff; object-fit: cover;
   font-family: var(--disp); font-size: 18px; font-weight: 600;
   display: inline-flex; align-items: center; justify-content: center;
 }
