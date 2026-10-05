@@ -82,7 +82,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     _jumpIfMoved();
     return ListenableBuilder(
       listenable: bench,
-      builder: (context, _) => Scaffold(
+      // Alt+Left is the back door of every document reader there is, and the
+      // owner reached for it before he found the arrow. `CallbackShortcuts`
+      // needs somewhere for the keys to land, so the focus node under it is
+      // autofocused: nothing else on this screen takes focus on arrival.
+      builder: (context, _) => CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): widget.onHome,
+        },
+        child: Focus(
+        autofocus: true,
+        child: Scaffold(
         body: Column(
           children: [
             _TopBar(bench: bench, ground: widget.ground, onHome: widget.onHome),
@@ -127,6 +137,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             ),
           ],
         ),
+      ),
+      ),
       ),
     );
   }
@@ -183,28 +195,58 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          InkWell(
-            onTap: onHome,
-            borderRadius: BorderRadius.circular(9),
-            child: const Padding(
-              padding: EdgeInsets.all(3),
-              child: Row(
-                children: [
-                  ZMark(size: 28),
-                  SizedBox(width: 10),
-                  Text(
-                    'Z Privacy',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Zc.ink,
-                    ),
-                  ),
-                ],
+          // The way back, with an arrow on it. The mark beside it went home
+          // too, and still does — but nothing on a logo says «back», and the
+          // owner spent his first evening without a way out of a document.
+          Tooltip(
+            message: 'Back to your documents · Alt+Left',
+            child: TextButton.icon(
+              onPressed: onHome,
+              icon: const Icon(Icons.arrow_back, size: 17),
+              label: const Text('Documents', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
+              style: TextButton.styleFrom(
+                foregroundColor: Zc.ink,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
           ),
-          const SizedBox(width: 22),
+          const SizedBox(width: 12),
+          // The mark goes home too, and still does. The **word** beside it
+          // steps aside while a document is open: the bar overflowed by 50 px
+          // at 964 wide once the back control and the AI door were on it
+          // (measured), and of everything standing there the product's own
+          // name is the one thing a person is not reading — the document's
+          // name is the identity of this moment, and the mark still says whose
+          // app this is.
+          Tooltip(
+            message: 'Z Privacy · home',
+            child: InkWell(
+              onTap: onHome,
+              borderRadius: BorderRadius.circular(9),
+              child: Padding(
+                padding: const EdgeInsets.all(3),
+                child: Row(
+                  children: [
+                    const ZMark(size: 28),
+                    if (doc == null) ...[
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Z Privacy',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Zc.ink,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
           if (doc != null) ...[
             Icon(
               doc.kind == DocumentKind.pdf
@@ -248,10 +290,33 @@ class _TopBar extends StatelessWidget {
                 ? Zc.river
                 : Zc.ink4,
           ),
+          // The AI door, open at any time. The choice of provider, model and
+          // mode is not a reward for finishing the review: it is the first
+          // thing a person wants to see, and the review gates the **send**.
+          if (doc != null) ...[
+            const SizedBox(width: 14),
+            Tooltip(
+              message: 'Choose the AI and what travels to it',
+              child: TextButton.icon(
+                onPressed: () => showDialog<bool>(
+                  context: context,
+                  builder: (_) => SendSheet(bench: bench, ground: ground),
+                ),
+                icon: const Icon(Icons.auto_awesome_outlined, size: 16),
+                label: const Text('AI', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                style: TextButton.styleFrom(
+                  foregroundColor: Zc.clay,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+          ],
           // Numbers about this document, for a person who cannot send us the
           // document itself. The core writes every line of it.
           if (doc != null) ...[
-            const SizedBox(width: 14),
+            const SizedBox(width: 6),
             CopyReportButton(
               compact: true,
               onCopy: () async {

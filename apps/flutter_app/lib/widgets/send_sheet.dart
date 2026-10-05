@@ -123,7 +123,7 @@ class _SendSheetState extends State<SendSheet> {
     final payload = bench.payload;
     final open = payload?.openSuggestions ?? 0;
     return ListenableBuilder(
-      listenable: widget.ground,
+      listenable: Listenable.merge([widget.ground, widget.bench]),
       builder: (context, _) {
         final connected = widget.ground.providers
             .where((p) => p.connected)
@@ -208,6 +208,10 @@ class _SendSheetState extends State<SendSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Provider, model and mode first. A person opens this sheet to
+          // decide **who answers**; the text they are about to send is the
+          // second question, and the doors are the third.
+          _ModelAndMode(bench: widget.bench, ground: widget.ground),
           if (open > 0) ...[
             Trouble(
               open == 1
@@ -327,7 +331,6 @@ class _SendSheetState extends State<SendSheet> {
             ),
           ),
           const SizedBox(height: 14),
-          if (widget.bench.models.isNotEmpty) _ModelAndMode(bench: widget.bench),
           _door(
             title: 'Direct API',
             what: connected.isEmpty
@@ -447,7 +450,11 @@ class _SendSheetState extends State<SendSheet> {
             ZButton(
               label: 'Continue',
               filled: true,
-              onPressed: payload == null || open > 0
+              // Open suggestions do not shut this door any more: they shut the
+              // send, where the sentence beside the button says so. A person
+              // who cannot reach the doors cannot connect a provider either,
+              // and connecting is exactly what a first evening needs.
+              onPressed: payload == null
                   ? null
                   : () => setState(() => _page = _SheetPage.ai),
             ),
@@ -548,22 +555,50 @@ class _MoreState extends State<_More> {
 
 /// Which model answers, and what travels to it.
 ///
-/// Two choices and no third. The second one is the only place in this app
-/// where a person can decide to send their document as it stands, and it says
-/// so in those words: «Direct API» already means the route in Z's vocabulary —
-/// this app to the provider, with the protected text — so the unredacted mode
-/// is never called «direct» on a screen.
-class _ModelAndMode extends StatelessWidget {
-  const _ModelAndMode({required this.bench});
+/// **The whole catalogue, grouped by provider** — not only the models a
+/// connected key can reach. A person with one provider connected used to see
+/// one provider's models and no sign that this build knows any others, which
+/// made the choice look smaller than it is; and the way to connect the rest
+/// was two doors further down, under a button that stayed disabled until the
+/// review was finished.
+///
+/// So an unconnected provider's models are shown greyed, with «Connect» beside
+/// the provider's own name and its form opening right there.
+///
+/// The second choice is the only place in this app where a person can decide
+/// to send their document as it stands, and it says so in those words:
+/// «Direct API» already means the route in Z's vocabulary — this app to the
+/// provider, with the protected text — so the unredacted mode is never called
+/// «direct» on a screen.
+class _ModelAndMode extends StatefulWidget {
+  const _ModelAndMode({required this.bench, required this.ground});
 
   final Workbench bench;
+  final Ground ground;
+
+  @override
+  State<_ModelAndMode> createState() => _ModelAndModeState();
+}
+
+class _ModelAndModeState extends State<_ModelAndMode> {
+  /// Which provider's form is open, if any. One at a time.
+  String? _connecting;
 
   @override
   Widget build(BuildContext context) {
-    final available = bench.models.where((m) => m.available).toList();
-    final listed = available.isEmpty ? bench.models : available;
+    final bench = widget.bench;
+    // The catalogue's own order, grouped. Dart neither sorts the providers nor
+    // names them: both come from the core.
+    final order = <String>[];
+    final byProvider = <String, List<ModelDescriptor>>{};
+    for (final model in bench.models) {
+      byProvider.putIfAbsent(model.providerId, () {
+        order.add(model.providerId);
+        return <ModelDescriptor>[];
+      }).add(model);
+    }
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: Zc.panel(fill: Zc.card, edge: Zc.line, radius: 9),
       child: Column(
@@ -571,26 +606,20 @@ class _ModelAndMode extends StatelessWidget {
         children: [
           Text('Model', style: Zc.tiny.copyWith(color: Zc.ink4)),
           const SizedBox(height: 6),
-          // The names come from the core's catalogue. No model is named in
-          // this file, which is the point of the catalogue.
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _Chip(
-                label: 'As configured',
-                on: bench.chosenModel == null,
-                onTap: () => bench.chooseModel(null),
-              ),
-              for (final model in listed)
-                _Chip(
-                  label: model.displayName,
-                  on: bench.chosenModel == model.modelId,
-                  onTap: () => bench.chooseModel(model.modelId),
-                ),
-            ],
+          _Chip(
+            label: 'As configured',
+            on: bench.chosenModel == null,
+            onTap: () => bench.chooseModel(null),
           ),
-          const SizedBox(height: 12),
+          for (final id in order) ...[
+            const SizedBox(height: 12),
+            _provider(id, byProvider[id] ?? const []),
+          ],
+          if (order.isEmpty) ...[
+            const SizedBox(height: 10),
+            const Text('This build carries no catalogue.', style: Zc.small),
+          ],
+          const SizedBox(height: 14),
           Text('What travels', style: Zc.tiny.copyWith(color: Zc.ink4)),
           const SizedBox(height: 6),
           Row(
@@ -621,6 +650,64 @@ class _ModelAndMode extends StatelessWidget {
       ),
     );
   }
+
+  /// One provider: its name, its models, and — when it is not connected — the
+  /// way in, beside the name rather than two doors away.
+  Widget _provider(String id, List<ModelDescriptor> models) {
+    final rows = widget.ground.providers.where((p) => p.id == id).toList();
+    final row = rows.isEmpty ? null : rows.first;
+    // «Connected» is the core's word, and a model that needs no credential is
+    // reachable whether or not anything is stored — which is why this reads
+    // the catalogue's own `available` rather than deciding for itself.
+    final reachable = models.any((m) => m.available);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              row?.label ?? id,
+              style: Zc.small.copyWith(color: Zc.ink3, fontWeight: FontWeight.w600),
+            ),
+            if (!reachable) ...[
+              const SizedBox(width: 10),
+              TextButton(
+                onPressed: row == null
+                    ? null
+                    : () => setState(() => _connecting = _connecting == id ? null : id),
+                style: TextButton.styleFrom(
+                  foregroundColor: Zc.clay,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Connect', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final model in models)
+              _Chip(
+                label: model.displayName,
+                on: widget.bench.chosenModel == model.modelId,
+                // Greyed, not hidden: a model this build knows about is worth
+                // seeing even when the key for it is not here yet.
+                onTap: model.available ? () => widget.bench.chooseModel(model.modelId) : null,
+              ),
+          ],
+        ),
+        if (_connecting == id && row != null) ...[
+          const SizedBox(height: 10),
+          ConnectForm(ground: widget.ground, row: row, local: row.onThisComputer),
+        ],
+      ],
+    );
+  }
 }
 
 class _Chip extends StatelessWidget {
@@ -628,13 +715,19 @@ class _Chip extends StatelessWidget {
 
   final String label;
   final bool on;
-  final VoidCallback onTap;
+
+  /// `null` means out of reach: the chip is drawn and says its name, and a
+  /// press does nothing because there is nothing behind it yet.
+  final VoidCallback? onTap;
   final bool warn;
 
   @override
   Widget build(BuildContext context) {
     final tint = warn ? Zc.amber : Zc.river;
-    return InkWell(
+    final reachable = onTap != null;
+    return Opacity(
+      opacity: reachable ? 1 : 0.45,
+      child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
@@ -651,6 +744,7 @@ class _Chip extends StatelessWidget {
             fontWeight: on ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
+      ),
       ),
     );
   }
