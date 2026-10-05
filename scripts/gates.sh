@@ -470,6 +470,29 @@ else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
 fi
 
+# ------------------------------------------------- the name dictionary
+# German Name Dictionary V1: a signal for Person detection and never a verdict.
+# Two things are checked here. The file must have the shape the loader expects —
+# `--check` needs no network, so the owner's own CSV can be dropped in and
+# checked the same way. And the rule must never raise a word to Auto on the
+# strength of a list of names: that is item B of his paper, and the test that
+# holds it is named here so it cannot be deleted quietly.
+if [ -f scripts/build_de_names.py ]; then
+  if OUT=$(python3 scripts/build_de_names.py --check 2>&1); then
+    pass "the name dictionary: $(echo "$OUT" | sed 's/^PASS  //')"
+  else
+    fail "the name dictionary: $(echo "$OUT" | head -2 | tr '\n' ' ')"
+  fi
+else
+  skip "the name dictionary" "no generator yet"
+fi
+if grep -q 'Confidence::Suggest' z_core/src/scanner/packs/de.rs 2>/dev/null \
+   && ! grep -A6 'fn dictionary_names' z_core/src/scanner/packs/de.rs 2>/dev/null | grep -q 'Confidence::Auto'; then
+  pass "  the name dictionary never protects by itself"
+else
+  fail "  the name dictionary can raise a word to Auto on a list match alone"
+fi
+
 # ------------------------------------------------- the build's own stamp
 # `core_version()` names the build: version, date, commit. Two things have to
 # hold for that to be worth anything — the Windows workflow must read the stamp
@@ -568,6 +591,10 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          carries_the_numbers_and_none_of_the_words a_refused_file_still_has_a_report \
          the_team_page_is_protected_and_the_code_tables_are_not \
          an_icd_code_after_frau_is_not_a_person a_title_at_the_start_of_a_name \
+         the_dictionary_loads_the_names_it_ships_with german_letters_survive_the_way_in \
+         a_given_name_and_a_surname_in_a_row_are_offered a_single_name_on_its_own_is_never \
+         the_dictionary_never_protects_anything_by_itself a_german_word_that_is_also_a_name \
+         a_small_german_set_positive_and_negative the_rules_that_were_there_before_still_hold \
          a_title_with_no_name_after_it_is_nothing a_degree_after_the_name_is_left \
          frau_as_an_ordinary_noun_names_nobody a_word_like_den_in_front_of_a_salutation \
          an_austrian_title_is_stepped_over replaces_what_was_selected \

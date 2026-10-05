@@ -141,6 +141,7 @@ pub(crate) fn scan(text: &str) -> Vec<Candidate> {
     let mut out = Vec::new();
     salutations(&words, &mut out);
     titled_names(&words, &mut out);
+    dictionary_names(&words, &mut out);
     signatures(&words, &mut out);
     companies(&words, &mut out);
     addresses(&words, &mut out);
@@ -473,6 +474,65 @@ fn titled_names(words: &[Word<'_>], out: &mut Vec<Candidate>) {
             }
         }
         i = after.max(i + 1);
+    }
+}
+
+/// «Thomas Müller» — two names in a row, and nothing in the sentence saying so.
+///
+/// The one thing the German Name Dictionary V1 adds. Everything else about a
+/// person this pack already knew: a salutation names the person after it, a
+/// title introduces one. What it could not see was a name standing on its own
+/// in a sentence — a signature, a line in a table, «… hat Thomas Müller
+/// unterschrieben» — because nothing there announces a person.
+///
+/// Three rules hold it to a signal rather than a verdict:
+///
+/// * **both halves**, a given name then a surname. One hit is a word that
+///   happens to be in a list: «Im August», «Die Rose», «Der Max».
+/// * **offered, never protected.** `Confidence::Suggest`, always. A list of
+///   310 names may not decide that a word is somebody's name; a person decides,
+///   or another rule does.
+/// * **it yields.** A salutation or a title in front means another rule owns
+///   this name and has already protected it, so this one says nothing.
+fn dictionary_names(words: &[Word<'_>], out: &mut Vec<Candidate>) {
+    let names = super::de_names::dictionary();
+    let mut i = 0usize;
+    while i + 1 < words.len() {
+        let (Some(first), Some(second)) = (words.get(i), words.get(i + 1)) else { break };
+        let given = bare(first.text).trim_end_matches(['.', ',', ';', ':']);
+        let family = bare(second.text).trim_end_matches(['.', ',', ';', ':']);
+        if !(name_shaped(first.text) && name_shaped(second.text))
+            || second.newline_before
+            || !names.given(given)
+            || !names.family(family)
+        {
+            i += 1;
+            continue;
+        }
+        // Another rule's ground: a salutation or a title in front of this pair
+        // protects it outright, and two findings on one name is one too many.
+        let claimed = i.checked_sub(1).and_then(|k| words.get(k)).is_some_and(|prev| {
+            let n = bare_keep_dot(prev.text);
+            SALUTATIONS.iter().any(|t| t.eq_ignore_ascii_case(n))
+                || TITLES.iter().any(|t| t.eq_ignore_ascii_case(n))
+                || TITLE_PARTS.iter().any(|t| t.eq_ignore_ascii_case(n))
+        });
+        if claimed {
+            i += 2;
+            continue;
+        }
+        out.push(candidate(
+            first.start,
+            trimmed_end(second),
+            Kind::Person,
+            // Never Auto. This is the whole of item B of the owner's paper.
+            Confidence::Suggest,
+            "name-dictionary",
+            format!(
+                "«{given}» is one of the 300 given names and «{family}» one of the ten surnames in the German name dictionary — two names in a row, offered for your word"
+            ),
+        ));
+        i += 2;
     }
 }
 
