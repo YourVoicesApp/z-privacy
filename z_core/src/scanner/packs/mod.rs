@@ -9,6 +9,7 @@
 //! first line.
 
 pub(crate) mod de;
+pub(crate) mod de_names;
 
 use super::Candidate;
 
