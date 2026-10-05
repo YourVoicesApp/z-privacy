@@ -152,12 +152,12 @@ fn trimmed_end(word: &Word<'_>) -> usize {
     word.end.saturating_sub(cut)
 }
 
-pub(crate) fn scan(text: &str) -> Vec<Candidate> {
+pub(crate) fn scan(text: &str, taught: &[(String, bool)]) -> Vec<Candidate> {
     let words = words(text);
     let mut out = Vec::new();
     salutations(&words, &mut out);
     titled_names(&words, &mut out);
-    dictionary_names(&words, &mut out);
+    dictionary_names(&words, taught, &mut out);
     signatures(&words, &mut out);
     companies(&words, &mut out);
     addresses(&words, &mut out);
@@ -493,6 +493,107 @@ fn titled_names(words: &[Word<'_>], out: &mut Vec<Candidate>) {
     }
 }
 
+/// A word this document uses as a name, which no dictionary of ours knows.
+///
+/// Phase 2's whole idea: Z does not need a dictionary of every surname on
+/// earth. It needs to **notice** the names a document keeps using, gather each
+/// one once, and ask about it once — «I have 17 names for you to look at» for a
+/// 700-page file. What comes back is a candidate, never a finding: nothing here
+/// protects anything, and nothing here writes to a dictionary.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct NameHint {
+    /// Where the word sits in the text, so the session can keep the place.
+    pub start: usize,
+    pub end: usize,
+    /// What the document is using it as.
+    pub family: bool,
+    /// Which rule noticed it, for the «why» a person is owed.
+    pub rule: &'static str,
+}
+
+/// The two rules of Phase 1 of Phase 2, measured and no wider.
+///
+/// **«Kowalski, Thomas»** — a word, a comma, then a given name this build
+/// knows. That is a list of people, written the way lists of people are
+/// written, and the word before the comma is a surname. The comma alone proves
+/// nothing: «Berlin, Hauptstadt» is not a person.
+///
+/// **«Mahmoud Al-Hassan»** — a known given name, then a word that is shaped
+/// like a name and is in no dictionary. The given name is the evidence; the
+/// word after it is the candidate.
+///
+/// Neither fires on a lone capitalised word, and the function-word guard of
+/// Phase 1 holds here too: «An Bauer» and «Nur Richter» are a preposition and
+/// an adverb, whatever follows them.
+pub(crate) fn discover_names(text: &str, taught: &dyn Fn(&str) -> bool) -> Vec<NameHint> {
+    let names = super::de_names::dictionary();
+    let words = words(text);
+    let mut out: Vec<NameHint> = Vec::new();
+    let known = |word: &str| {
+        let bare = bare(word).trim_end_matches(['.', ',', ';', ':']);
+        names.given(bare) || names.family(bare) || taught(bare)
+    };
+
+    // Where a trimmed slice really sits. `bare` takes characters off **both**
+    // ends, so a span built as «the word's start plus the trimmed length»
+    // points at the wrong place as soon as anything was trimmed from the front:
+    // measured on the owner's 734-page file, «(BMASGPK)» came back as
+    // «(BMASGP». A span that is one character out is a protection in the wrong
+    // place, which is the one mistake this project will not make twice.
+    let span_of = |word: &Word<'_>, slice: &str| -> (usize, usize) {
+        let at = word.text.find(slice).unwrap_or(0);
+        (word.start + at, word.start + at + slice.len())
+    };
+
+    for (i, word) in words.iter().enumerate() {
+        let bare_now = bare(word.text).trim_end_matches([',', ';', ':']);
+        // «Kowalski, Thomas» — the comma is part of the form, so it is read
+        // from the raw word and not trimmed away first.
+        if word.text.ends_with(',') && name_shaped(bare_now) && !known(bare_now) {
+            let next = words.get(i + 1);
+            let follows_given = next.is_some_and(|n| {
+                let n_bare = bare(n.text).trim_end_matches(['.', ',', ';', ':']);
+                !n.newline_before
+                    && names.given(n_bare)
+                    && !FUNCTION_WORDS.contains(&n_bare.to_lowercase().as_str())
+            });
+            if follows_given {
+                let (start, end) = span_of(word, bare_now);
+                out.push(NameHint {
+                    start,
+                    end,
+                    family: true,
+                    rule: "surname-before-a-known-given-name",
+                });
+                continue;
+            }
+        }
+        // «Mahmoud Al-Hassan» — a known given name, then an unknown name.
+        let given = bare(word.text).trim_end_matches(['.', ',', ';', ':']);
+        if !names.given(given)
+            || FUNCTION_WORDS.contains(&given.to_lowercase().as_str())
+            || !name_shaped(word.text)
+        {
+            continue;
+        }
+        let Some(next) = words.get(i + 1) else { continue };
+        if next.newline_before || is_label(next.text) || next.text.starts_with(['(', '[', '«', '"']) {
+            continue;
+        }
+        let candidate = bare(next.text).trim_end_matches(['.', ',', ';', ':']);
+        if name_shaped(candidate) && !known(candidate) && !COMPANY_FORMS.contains(&candidate) {
+            let (start, end) = span_of(next, candidate);
+            out.push(NameHint {
+                start,
+                end,
+                family: true,
+                rule: "unknown-name-after-a-known-given-name",
+            });
+        }
+    }
+    out
+}
+
 /// «Thomas Müller» — two names in a row, and nothing in the sentence saying so.
 ///
 /// The one thing the German Name Dictionary V1 adds. Everything else about a
@@ -510,8 +611,13 @@ fn titled_names(words: &[Word<'_>], out: &mut Vec<Candidate>) {
 ///   or another rule does.
 /// * **it yields.** A salutation or a title in front means another rule owns
 ///   this name and has already protected it, so this one says nothing.
-fn dictionary_names(words: &[Word<'_>], out: &mut Vec<Candidate>) {
+fn dictionary_names(words: &[Word<'_>], taught: &[(String, bool)], out: &mut Vec<Candidate>) {
     let names = super::de_names::dictionary();
+    // Three layers, kept apart: what this build ships with, what the person
+    // taught, and — in `discover_names` — what nobody has decided yet. A
+    // taught name is as good as a shipped one here: the person said so.
+    let taught_given = |word: &str| taught.iter().any(|(t, family)| !family && t.eq_ignore_ascii_case(word));
+    let taught_family = |word: &str| taught.iter().any(|(t, family)| *family && t.eq_ignore_ascii_case(word));
     let mut i = 0usize;
     while i + 1 < words.len() {
         let (Some(first), Some(second)) = (words.get(i), words.get(i + 1)) else { break };
@@ -520,8 +626,8 @@ fn dictionary_names(words: &[Word<'_>], out: &mut Vec<Candidate>) {
         if !(name_shaped(first.text) && name_shaped(second.text))
             || second.newline_before
             || FUNCTION_WORDS.contains(&given.to_lowercase().as_str())
-            || !names.given(given)
-            || !names.family(family)
+            || !(names.given(given) || taught_given(given))
+            || !(names.family(family) || taught_family(family))
         {
             i += 1;
             continue;
@@ -697,7 +803,7 @@ mod tests {
     use super::*;
 
     fn found(text: &str) -> Vec<(Kind, Confidence, String)> {
-        scan(text)
+        scan(text, &[])
             .into_iter()
             .map(|c| {
                 (
@@ -764,7 +870,7 @@ mod tests {
 
     #[test]
     fn every_finding_says_which_pack_and_why() {
-        for c in scan("Frau Anna Weber, Kundennummer: 41-88203, Nordstern Consulting GmbH") {
+        for c in scan("Frau Anna Weber, Kundennummer: 41-88203, Nordstern Consulting GmbH", &[]) {
             assert!(c.source_detail.starts_with("de:"), "{}", c.source_detail);
             assert!(!c.reason.is_empty());
         }

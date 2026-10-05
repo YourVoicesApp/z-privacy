@@ -637,6 +637,43 @@ pub enum Refusal {
     EmptyDocument,
 }
 
+/// A name the person taught, for the list that shows what Z has learned.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TaughtNameRow {
+    pub id: u32,
+    pub text: String,
+    /// A surname, or a given name.
+    pub family: bool,
+    /// `None` is everywhere; `Some(profile)` is one client.
+    pub profile_id: Option<String>,
+    pub learned_at: u64,
+}
+
+/// A name a document keeps using that no dictionary of ours knows.
+///
+/// Phase 2's answer to «a dictionary of every surname on earth»: Z notices the
+/// names this document uses, gathers each one once, and asks about it once. A
+/// candidate is **not** a finding — nothing about it is protected, and nothing
+/// is written to a dictionary until a person says so.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NameCandidate {
+    /// The word, as the document writes it.
+    pub text: String,
+    /// What the document is using it as. A surname, so far: the two rules that
+    /// find candidates both read the position of a known given name.
+    pub family: bool,
+    /// How many times the word stands in this document.
+    pub occurrences: u32,
+    /// How many pages it stands on, which is how much reading it would take to
+    /// check it by hand.
+    pub pages: u32,
+    /// Up to three lines it appears in, so one look is enough to decide. Local
+    /// only, like the document itself.
+    pub examples: Vec<String>,
+    /// Which rule noticed it.
+    pub why: String,
+}
+
 /// What a copied report is about.
 ///
 /// Two states and no third: a document the core is holding, or a file it
@@ -1256,6 +1293,15 @@ pub fn import_document(session: SessionId, name: String, bytes: Vec<u8>, kind: D
     crate::ops::import_document(session, name, bytes, kind)
 }
 
+/// The names this document uses that no dictionary knows, one row each.
+///
+/// Sorted by how much a single decision buys: the name that stands in the most
+/// places first. The owner's measure of this phase is not how many names Z
+/// knows, but how few decisions a person makes before a document is understood.
+pub fn name_candidates(session: SessionId) -> ApiResult<Vec<NameCandidate>> {
+    crate::ops::name_candidates(session)
+}
+
 /// The report a person can copy when something is wrong with a document.
 ///
 /// **Numbers only, by contract**: sizes, counts, the kinds by name, the
@@ -1612,6 +1658,25 @@ pub fn rule_sets() -> ApiResult<Vec<RuleSetRow>> {
 /// Switch which rule sets a profile runs. Several at once, on purpose.
 pub fn set_profile_languages(profile_id: String, languages: Vec<String>) -> ApiResult<ProfileRow> {
     crate::ops::set_profile_languages(profile_id, languages)
+}
+
+/// Teach a name: «Al-Hassan is a family name». One word at a time.
+///
+/// Knowledge, not a protection: it tells the rules what kind of word this is,
+/// and the rules decide what to do with it. Local, in the vault, and undone by
+/// `forget_name`.
+pub fn teach_name(text: String, family: bool, profile_id: Option<String>) -> ApiResult<u32> {
+    crate::ops::teach_name(text, family, profile_id)
+}
+
+/// Unlearn a taught name. An open document keeps the tokens it already has.
+pub fn forget_name(id: u32) -> ApiResult<()> {
+    crate::ops::forget_name(id)
+}
+
+/// Every name the person taught, newest first.
+pub fn taught_names() -> ApiResult<Vec<TaughtNameRow>> {
+    crate::ops::taught_names()
 }
 
 /// Teach a label rule: «the value after this word is a customer number».

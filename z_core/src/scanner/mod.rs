@@ -75,10 +75,11 @@ pub(crate) fn scan(
     taught: &[rules::LabelRule],
     hints: &[VaultHint],
     exceptions: &[UserException],
+    names: &[(String, bool)],
 ) -> Vec<Candidate> {
     let mut all = general_rules::scan(text);
     for id in active {
-        all.extend(packs::scan(text, id));
+        all.extend(packs::scan(text, id, names));
     }
     let mut label_rules = sets::rules_for(active);
     label_rules.extend(taught.iter().cloned());
@@ -281,7 +282,7 @@ mod tests {
         // "IBAN:" is a German-pack label, and the number itself passes the mod-97
         // check. Two layers, one thing — and the reason must name both.
         let text = "IBAN: DE89 3704 0044 0532 0130 00";
-        let found = scan(text, &["de".to_string()], &[], &[], &[]);
+        let found = scan(text, &["de".to_string()], &[], &[], &[], &[]);
         assert_eq!(found.len(), 1, "{found:?}");
         let only = found.first().expect("one");
         assert_eq!(only.confidence, Confidence::Auto);
@@ -291,7 +292,7 @@ mod tests {
     #[test]
     fn plain_words_are_what_is_left() {
         let text = "Herr Thomas Müller hat die Nummer +49 171 2345678 genannt.";
-        let found = scan(text, &["de".to_string()], &[], &[], &[]);
+        let found = scan(text, &["de".to_string()], &[], &[], &[], &[]);
         let plain = plain_word_count(text, &found);
         let words = text.split_whitespace().count() as u32;
         assert!(plain < words, "some words are inside findings");

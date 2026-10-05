@@ -155,6 +155,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Mark> dco_decode_list_mark(dynamic raw);
 
   @protected
+  List<NameCandidate> dco_decode_list_name_candidate(dynamic raw);
+
+  @protected
   List<PackRow> dco_decode_list_pack_row(dynamic raw);
 
   @protected
@@ -188,6 +191,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TaughtExceptionRow> dco_decode_list_taught_exception_row(dynamic raw);
 
   @protected
+  List<TaughtNameRow> dco_decode_list_taught_name_row(dynamic raw);
+
+  @protected
   List<TaughtValueRow> dco_decode_list_taught_value_row(dynamic raw);
 
   @protected
@@ -201,6 +207,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MarkState dco_decode_mark_state(dynamic raw);
+
+  @protected
+  NameCandidate dco_decode_name_candidate(dynamic raw);
 
   @protected
   NetworkRefusal dco_decode_network_refusal(dynamic raw);
@@ -321,6 +330,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TaughtExceptionRow dco_decode_taught_exception_row(dynamic raw);
+
+  @protected
+  TaughtNameRow dco_decode_taught_name_row(dynamic raw);
 
   @protected
   TaughtReach dco_decode_taught_reach(dynamic raw);
@@ -502,6 +514,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Mark> sse_decode_list_mark(SseDeserializer deserializer);
 
   @protected
+  List<NameCandidate> sse_decode_list_name_candidate(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<PackRow> sse_decode_list_pack_row(SseDeserializer deserializer);
 
   @protected
@@ -541,6 +558,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<TaughtNameRow> sse_decode_list_taught_name_row(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<TaughtValueRow> sse_decode_list_taught_value_row(
     SseDeserializer deserializer,
   );
@@ -556,6 +578,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MarkState sse_decode_mark_state(SseDeserializer deserializer);
+
+  @protected
+  NameCandidate sse_decode_name_candidate(SseDeserializer deserializer);
 
   @protected
   NetworkRefusal sse_decode_network_refusal(SseDeserializer deserializer);
@@ -686,6 +711,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TaughtExceptionRow sse_decode_taught_exception_row(
     SseDeserializer deserializer,
   );
+
+  @protected
+  TaughtNameRow sse_decode_taught_name_row(SseDeserializer deserializer);
 
   @protected
   TaughtReach sse_decode_taught_reach(SseDeserializer deserializer);
@@ -903,6 +931,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_mark(List<Mark> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_name_candidate(
+    List<NameCandidate> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_pack_row(List<PackRow> self, SseSerializer serializer);
 
   @protected
@@ -957,6 +991,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_taught_name_row(
+    List<TaughtNameRow> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_taught_value_row(
     List<TaughtValueRow> self,
     SseSerializer serializer,
@@ -973,6 +1013,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_mark_state(MarkState self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_name_candidate(NameCandidate self, SseSerializer serializer);
 
   @protected
   void sse_encode_network_refusal(
@@ -1123,6 +1166,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     TaughtExceptionRow self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_taught_name_row(TaughtNameRow self, SseSerializer serializer);
 
   @protected
   void sse_encode_taught_reach(TaughtReach self, SseSerializer serializer);

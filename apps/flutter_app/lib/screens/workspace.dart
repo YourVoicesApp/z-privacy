@@ -24,6 +24,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/widgets/name_review.dart';
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/widgets/tokens.dart';
@@ -109,7 +110,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           onSay: (line) => setState(() => _said = line),
                         ),
                       ),
-                      if (bench.reviewOpen)
+                      // The names panel takes the same place as the review
+                      // panel: one panel at a time, and the one asked for.
+                      if (bench.reviewingNames)
+                        NameReviewPanel(bench: bench, width: panel)
+                      else if (bench.reviewOpen)
                         ReviewPanel(bench: bench, width: panel),
                       if (bench.tokensOpen)
                         TokensPanel(bench: bench, width: panel),

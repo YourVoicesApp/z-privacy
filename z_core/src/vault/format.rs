@@ -9,6 +9,7 @@
 //! Adding a kind means adding a number at the end. Nothing else may move.
 
 use std::collections::BTreeMap;
+use crate::vault::model::UserName;
 
 use crate::api::{ApiError, ApiResult, EntityKind, Kind, Policy};
 use crate::secret::Secret;
@@ -32,7 +33,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 7;
+pub(crate) const MODEL_VERSION: u16 = 8;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -242,6 +243,24 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
         put_str(&mut out, &rule.label);
         out.extend_from_slice(&rule.learned_at.to_be_bytes());
     }
+    // Model 8 — the names the person taught. Appended, like every model before
+    // it: an older build reads up to its own version and stops, and a vault
+    // written by this build loses nothing when read by the next.
+    out.extend_from_slice(&vault.next_taught_name.to_be_bytes());
+    out.extend_from_slice(&(vault.taught_names.len() as u32).to_be_bytes());
+    for name in &vault.taught_names {
+        out.extend_from_slice(&name.id.to_be_bytes());
+        out.push(u8::from(name.family));
+        match &name.profile_id {
+            Some(id) => {
+                out.push(1);
+                put_str(&mut out, id);
+            }
+            None => out.push(0),
+        }
+        put_str(&mut out, &name.text);
+        out.extend_from_slice(&name.learned_at.to_be_bytes());
+    }
     Ok(out)
 }
 
@@ -429,6 +448,27 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         (1, Vec::new())
     };
 
+    // Model 8 — the taught names.
+    let (next_taught_name, taught_names) = if version >= 8 {
+        let next_taught_name = u32::from_be_bytes(r.array::<4>()?);
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        let mut taught_names = Vec::new();
+        for _ in 0..count {
+            let id = u32::from_be_bytes(r.array::<4>()?);
+            let family = r.byte()? != 0;
+            let profile_id = match r.byte()? {
+                0 => None,
+                _ => Some(r.string()?),
+            };
+            let text = r.string()?;
+            let learned_at = u64::from_be_bytes(r.array::<8>()?);
+            taught_names.push(UserName { id, text, family, profile_id, learned_at });
+        }
+        (next_taught_name, taught_names)
+    } else {
+        (1, Vec::new())
+    };
+
     Ok(Vault {
         entities,
         profiles,
@@ -438,6 +478,8 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         exceptions,
         next_label_rule,
         label_rules,
+        next_taught_name,
+        taught_names,
         settings,
         provider_logins,
     })
@@ -556,6 +598,10 @@ mod tests {
             put_str(&mut out, "de");
             out.extend_from_slice(&1u32.to_be_bytes()); // next label rule
             out.extend_from_slice(&0u32.to_be_bytes()); // no taught rules
+        }
+        if version >= 8 {
+            out.extend_from_slice(&1u32.to_be_bytes()); // next taught name
+            out.extend_from_slice(&0u32.to_be_bytes()); // none taught
         }
         out
     }

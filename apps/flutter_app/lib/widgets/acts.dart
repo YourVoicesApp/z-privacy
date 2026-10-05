@@ -74,6 +74,21 @@ class ActsBar extends StatelessWidget {
                     : () => bench.reviewOpen ? bench.closeReview() : bench.openReview(),
                 hint: bench.findings.isEmpty ? 'The scan found nothing to review' : null,
               ),
+              // Names this document uses that Z does not know. The badge is
+              // how many decisions are waiting — and with none waiting it is
+              // gone, not zero, like the one beside it.
+              ZButton(
+                label: 'Names',
+                icon: Icons.person_search_outlined,
+                tint: bench.openCandidates.isNotEmpty ? Zc.river : null,
+                badge: bench.openCandidates.isEmpty ? null : bench.openCandidates.length,
+                onPressed: bench.busy
+                    ? null
+                    : () => bench.reviewingNames ? bench.closeNameReview() : bench.openNameReview(),
+                hint: bench.openCandidates.isEmpty
+                    ? 'Z knows every name this document uses'
+                    : null,
+              ),
               ZButton(
                 label: 'Tokens',
                 icon: Icons.key_outlined,

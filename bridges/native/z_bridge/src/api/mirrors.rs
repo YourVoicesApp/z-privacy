@@ -479,6 +479,36 @@ pub enum _Refusal {
     EmptyDocument,
 }
 
+#[frb(mirror(TaughtNameRow))]
+pub struct _TaughtNameRow {
+    pub id: u32,
+    pub text: String,
+    /// A surname, or a given name.
+    pub family: bool,
+    /// `None` is everywhere; `Some(profile)` is one client.
+    pub profile_id: Option<String>,
+    pub learned_at: u64,
+}
+
+#[frb(mirror(NameCandidate))]
+pub struct _NameCandidate {
+    /// The word, as the document writes it.
+    pub text: String,
+    /// What the document is using it as. A surname, so far: the two rules that
+    /// find candidates both read the position of a known given name.
+    pub family: bool,
+    /// How many times the word stands in this document.
+    pub occurrences: u32,
+    /// How many pages it stands on, which is how much reading it would take to
+    /// check it by hand.
+    pub pages: u32,
+    /// Up to three lines it appears in, so one look is enough to decide. Local
+    /// only, like the document itself.
+    pub examples: Vec<String>,
+    /// Which rule noticed it.
+    pub why: String,
+}
+
 #[frb(mirror(ReportSubject))]
 pub enum _ReportSubject {
     /// A document that was imported. Every number comes from the core's own
