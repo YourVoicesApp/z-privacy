@@ -1,4 +1,4 @@
-//! The German Name Dictionary V1 — 310 names, and not one verdict among them.
+//! The German Name Dictionary — 901 names, and not one verdict among them.
 //!
 //! The owner's rule, in his own order: «Herr Thomas Müller» is very high
 //! confidence, «Thomas Müller» is high, «Thomas» alone is a dictionary match
@@ -87,7 +87,11 @@ mod tests {
     fn the_dictionary_loads_the_names_it_ships_with() {
         let (given, family) = dictionary().counts();
         assert_eq!(given, 300, "the 300 given names of Berlin 2023");
-        assert_eq!(family, 10, "the ten surnames of the Germany subset");
+        // V2: 600 from Wikidata, plus the one of V1's ten that Wikidata does
+        // not have — no family-name item labelled «Schmidt» in German has
+        // German-citizen holders there, and it is the second commonest surname
+        // in the country. Two sources, because one has a hole.
+        assert_eq!(family, 601, "600 from Wikidata and Schmidt from the CC0 ten");
     }
 
     #[test]

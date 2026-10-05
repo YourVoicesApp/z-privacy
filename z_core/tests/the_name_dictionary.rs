@@ -203,3 +203,58 @@ fn a_german_word_that_is_also_a_name_stays_harmless() {
         );
     }
 }
+
+/// V2 — 600 surnames instead of ten, and the one false positive that widening
+/// makes reachable.
+///
+/// Measured before the list was widened: 43 of the 600 are ordinary German
+/// words (Koch a cook, Richter a judge, Bauer a farmer, Vogel a bird). On their
+/// own they are harmless, because the rule needs a given name in front. But two
+/// of the 300 given names are German **function** words — `An` (at, to) and
+/// `Nur` (only) — and «An Müller GmbH» is how a German letter is addressed.
+///
+/// Swept over 880 pages of the owner's own documents, that pair never occurs.
+/// It is constructible, common in business German, and would be a protection
+/// offered on the word «to». So a function word cannot open a name.
+#[test]
+fn a_function_word_does_not_open_a_name() {
+    for doc in [
+        "An Müller GmbH, Lindenstraße 8, 86150 Augsburg",
+        "An Koch ist die Rechnung zu senden.",
+        "Nur Richter dürfen darüber entscheiden.",
+        "Nur Bauer und Fischer sind zugelassen.",
+        "An Schmidt: bitte um Rückruf.",
+    ] {
+        assert!(
+            people(doc).is_empty(),
+            "«{doc}» offered a person — a German function word opened a name: {:?}",
+            people(doc)
+        );
+    }
+}
+
+/// And the names the widening actually buys, which is the point of Phase 1.
+///
+/// Five of the seven surnames in the owner's letter are in the list now, where
+/// one of ten was before — but a pair needs **both** halves, and that is the
+/// measurement that matters: 3 of his 7 people are now reachable by this rule
+/// (Katharina Lindemann, Jonas Petersen, Sophie Brandt), up from 0. The other
+/// four fail on the half nobody widened: «Tobias» and «Markus» are not among
+/// the 300 names Berlin gave its children in 2023, and «Haddad» and «Demir»
+/// are not German surnames — they are the surnames of people living in
+/// Germany, which is not the same list and not this source.
+#[test]
+fn the_surnames_of_a_real_letter_are_in_the_list_now() {
+    for (doc, who) in [
+        ("Katharina Lindemann hat den Vertrag geprüft.", "Katharina Lindemann"),
+
+        ("Jonas Petersen schickt die Unterlagen.", "Jonas Petersen"),
+        ("Sophie Brandt bereitet den Vertrag vor.", "Sophie Brandt"),
+    ] {
+        assert_eq!(
+            people(doc),
+            vec![(MarkState::Suggested, who.to_string())],
+            "«{doc}»"
+        );
+    }
+}
