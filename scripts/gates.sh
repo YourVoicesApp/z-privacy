@@ -762,7 +762,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "the line still says who decided" "stays wavy, whoever found it" \
          "put back in the answer is drawn dotted" \
          "own report, and none of the words" \
-         "selection in blue, not in nothing" "wash covers it" \
+         "selection in blue, not in nothing" "reads through a mark" \
+         "survives the rebuild the Workspace does" "a tap still asks" \
          "asks once per name, with what the decision is worth" \
          "no model is named in Dart" "the original is a chosen thing" \
          "never inherits the last one"; do

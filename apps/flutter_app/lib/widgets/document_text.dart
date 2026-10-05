@@ -5,6 +5,7 @@
 // Spans arrive in UTF-16 code units, which is exactly how Dart counts a string,
 // so a span can be used to slice directly. The core refuses a span that falls
 // inside a character, so a slice here can never cut one in half.
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -94,6 +95,29 @@ class _OriginalTextState extends State<OriginalText> {
   /// nothing complains about until it is a lot of them.
   final List<TapGestureRecognizer> _taps = [];
 
+  /// The spans, kept between builds — **and this is what keeps a selection
+  /// alive.**
+  ///
+  /// The Workspace rebuilds this column on every selection change: the drag
+  /// reports, the bench is told, the bench notifies. Measured on the published
+  /// build: a drag across protected words ended `-1..-1` after that rebuild,
+  /// while the same drag on text with no marks on it survived as `0..39`. The
+  /// difference was a `TapGestureRecognizer` built fresh for every mark on
+  /// every build — `TextSpan` compares its recognizer by identity, so a rebuilt
+  /// tree is never equal to the old one, and `SelectableText` answers an
+  /// unequal span by replacing its controller, which is where the selection
+  /// lived.
+  ///
+  /// So the spans are built once per (text, marks, focus) and handed back
+  /// unchanged until one of those three really changes. The recognizers read
+  /// `widget.onAsk` at the moment of the tap rather than closing over the
+  /// callback they were built with, so a kept recognizer never calls into a
+  /// build that has gone.
+  List<InlineSpan>? _cached;
+  String? _cachedText;
+  List<Mark>? _cachedMarks;
+  Span? _cachedFocus;
+
   @override
   void dispose() {
     _clearTaps();
@@ -107,6 +131,20 @@ class _OriginalTextState extends State<OriginalText> {
     _taps.clear();
   }
 
+  List<InlineSpan> _keptSpans() {
+    final same = _cached != null &&
+        _cachedText == text &&
+        _cachedFocus == focus &&
+        _cachedMarks != null &&
+        listEquals(_cachedMarks, marks);
+    if (same) return _cached!;
+    _cached = _spans();
+    _cachedText = text;
+    _cachedMarks = List<Mark>.unmodifiable(marks);
+    _cachedFocus = focus;
+    return _cached!;
+  }
+
   String get text => widget.text;
   List<Mark> get marks => widget.marks;
   Span? get focus => widget.focus;
@@ -116,7 +154,7 @@ class _OriginalTextState extends State<OriginalText> {
   Widget build(BuildContext context) {
     final onSelection = widget.onSelection;
     return SelectableText.rich(
-      TextSpan(children: _spans(), style: Zc.document),
+      TextSpan(children: _keptSpans(), style: Zc.document),
       style: Zc.document,
       onSelectionChanged: onSelection == null
           ? null
@@ -192,7 +230,9 @@ class _OriginalTextState extends State<OriginalText> {
     TapGestureRecognizer? tap;
     final ask = widget.onAsk;
     if (ask != null && !suggested) {
-      tap = TapGestureRecognizer()..onTap = () => ask(m);
+      // Read through the widget at tap time: this recognizer outlives the build
+      // that made it, and a closure over `ask` would outlive it too.
+      tap = TapGestureRecognizer()..onTap = () => widget.onAsk?.call(m);
       _taps.add(tap);
     }
     return TextSpan(
@@ -200,9 +240,21 @@ class _OriginalTextState extends State<OriginalText> {
       recognizer: tap,
       mouseCursor: tap == null ? null : SystemMouseCursors.click,
       style: TextStyle(
+        // Translucent, so a selection drawn **under** the text still reads
+        // through it. A span's background is painted after the selection
+        // rectangle, which is why an opaque wash hid it: photographed on 4
+        // October, a marked word inside a selection was (247, 231, 218) —
+        // `Zc.clayWash`, unchanged by being selected — while the plain text
+        // beside it was the blue. The owner's decision, 6 October: the washes
+        // give way. Over paper they read a little lighter than before, and that
+        // is the whole of the cost.
         backgroundColor: isFocus
             ? tint.withValues(alpha: 0.30)
-            : (suggested ? Zc.amberWash : (m.source == Source.vault ? Zc.riverWash : Zc.clayWash)),
+            : (suggested
+                  ? Zc.amberWash.withValues(alpha: _wash)
+                  : (m.source == Source.vault
+                        ? Zc.riverWash.withValues(alpha: _wash)
+                        : Zc.clayWash.withValues(alpha: _wash))),
         color: tint,
         fontWeight: FontWeight.w600,
         // The line is drawn under every mark now, and it is the one thing the
@@ -218,6 +270,11 @@ class _OriginalTextState extends State<OriginalText> {
     );
   }
 }
+
+/// How much of a mark's wash is left standing, so the selection can be seen
+/// through it. Measured against `Zc.river` at 0.40, which is what the selection
+/// is painted with.
+const double _wash = 0.55;
 
 /// The right column: what the AI will receive. Not a preview of the request —
 /// the request. The text is built in Rust and handed over as it stands.

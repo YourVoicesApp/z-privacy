@@ -120,13 +120,12 @@ void main() {
   ///   plain text under the selection   (12, 37, 60) — `Zc.river` × 0.40
   ///   a marked word under it          (247, 231, 218) — `Zc.clayWash`, opaque
   ///
-  /// The second is a limit worth knowing rather than a defect to hide: a mark's
-  /// wash is a text-span background, and a span background is painted **after**
-  /// the selection rectangle, so selecting across a word that is already
-  /// protected shows the wash and not the blue. Making the three washes
-  /// translucent enough to show it through would change colours the owner chose,
-  /// so it is his call and not this file's.
-  testWidgets('the blue is really on the screen, and a mark\'s wash covers it', (tester) async {
+  /// The second was a limit, and on 6 October the owner made the call this file
+  /// said was his: the washes give way. They are drawn at 0.55 now, so the blue
+  /// reads through a protected word instead of stopping at it — measured below,
+  /// in the same pixels, and in `a_selection_that_stays_test.dart` against the
+  /// unselected colour of the very same word.
+  testWidgets('the blue is really on the screen, and it reads through a mark\'s wash', (tester) async {
     const doc = 'Herr Thomas Mueller wohnt hier und dort und zahlt.';
     final marks = [
       Mark(
@@ -198,12 +197,16 @@ void main() {
       }
     }
 
-    // «Thomas Mueller» — marked, and inside the same selection.
+    // «Thomas Mueller» — marked, and inside the same selection. The wash at
+    // 0.55 over the selection's own blue: no longer the opaque (247, 231, 218)
+    // this test was written on, and bluer than the wash alone would be.
     final wash = at(130, 20);
+    final opaque = [(Zc.clayWash.r * 255).round(), (Zc.clayWash.g * 255).round(), (Zc.clayWash.b * 255).round()];
+    expect(wash, isNot(opaque), reason: 'the wash still covers the selection whole');
     expect(
-      [(Zc.clayWash.r * 255).round(), (Zc.clayWash.g * 255).round(), (Zc.clayWash.b * 255).round()],
-      wash,
-      reason: 'the mark no longer covers the selection — if that was intended, this is the test to change',
+      wash[2] / (wash[0] + 1) > opaque[2] / (opaque[0] + 1),
+      isTrue,
+      reason: 'the selected mark is no bluer than the wash itself: $wash against $opaque',
     );
   });
 }
