@@ -9,6 +9,6 @@ Comment=Protect names and numbers in a document before it reaches an AI
 Exec=@EXEC@
 Icon=zprivacy
 Terminal=false
-Categories=Office;Utility;
+Categories=Office;
 Keywords=privacy;AI;redaction;GDPR;
 StartupWMClass=zprivacy
