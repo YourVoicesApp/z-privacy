@@ -12,16 +12,14 @@
 # It runs on `main` as well as on this branch. That is the whole of what the
 # merge changed: a workflow that triggers on a branch which no longer receives
 # commits does not fail — it stops running, and a build that stops silently is
-# the one nobody notices is gone. A tag starting with `v` builds too, so a
-# release has an installer of its own.
+# the one nobody notices is gone. Since 5 Oct 2026 it is manual only: see
+# the trigger below.
 name: windows
 
 on:
-  push:
-    branches: [main, platform/windows]
-    tags: ['v*']
-  pull_request:
-    branches: [main, platform/windows]
+  # Manual only while Linux is the development platform (the owner, 5 Oct
+  # 2026): Windows is built when a milestone is to be tested on a Windows
+  # machine, from the Actions tab's «Run workflow», and never on a push.
   workflow_dispatch:
 
 permissions:
