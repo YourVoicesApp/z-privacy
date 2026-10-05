@@ -206,6 +206,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TokenRow> dco_decode_list_token_row(dynamic raw);
 
   @protected
+  List<UserNameRow> dco_decode_list_user_name_row(dynamic raw);
+
+  @protected
   List<ValueRow> dco_decode_list_value_row(dynamic raw);
 
   @protected
@@ -228,6 +231,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   NameCandidate dco_decode_name_candidate(dynamic raw);
+
+  @protected
+  NameImport dco_decode_name_import(dynamic raw);
 
   @protected
   NetworkRefusal dco_decode_network_refusal(dynamic raw);
@@ -375,6 +381,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void dco_decode_unit(dynamic raw);
+
+  @protected
+  UserNameKind dco_decode_user_name_kind(dynamic raw);
+
+  @protected
+  UserNameRow dco_decode_user_name_row(dynamic raw);
 
   @protected
   ValueRow dco_decode_value_row(dynamic raw);
@@ -599,6 +611,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TokenRow> sse_decode_list_token_row(SseDeserializer deserializer);
 
   @protected
+  List<UserNameRow> sse_decode_list_user_name_row(SseDeserializer deserializer);
+
+  @protected
   List<ValueRow> sse_decode_list_value_row(SseDeserializer deserializer);
 
   @protected
@@ -621,6 +636,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   NameCandidate sse_decode_name_candidate(SseDeserializer deserializer);
+
+  @protected
+  NameImport sse_decode_name_import(SseDeserializer deserializer);
 
   @protected
   NetworkRefusal sse_decode_network_refusal(SseDeserializer deserializer);
@@ -778,6 +796,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_decode_unit(SseDeserializer deserializer);
+
+  @protected
+  UserNameKind sse_decode_user_name_kind(SseDeserializer deserializer);
+
+  @protected
+  UserNameRow sse_decode_user_name_row(SseDeserializer deserializer);
 
   @protected
   ValueRow sse_decode_value_row(SseDeserializer deserializer);
@@ -1058,6 +1082,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_token_row(List<TokenRow> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_user_name_row(
+    List<UserNameRow> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_value_row(List<ValueRow> self, SseSerializer serializer);
 
   @protected
@@ -1086,6 +1116,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_name_candidate(NameCandidate self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_name_import(NameImport self, SseSerializer serializer);
 
   @protected
   void sse_encode_network_refusal(
@@ -1266,6 +1299,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_user_name_kind(UserNameKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_user_name_row(UserNameRow self, SseSerializer serializer);
 
   @protected
   void sse_encode_value_row(ValueRow self, SseSerializer serializer);

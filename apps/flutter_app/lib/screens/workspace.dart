@@ -129,7 +129,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       // The names panel takes the same place as the review
                       // panel: one panel at a time, and the one asked for.
                       if (bench.reviewingNames)
-                        NameReviewPanel(bench: bench, width: panel)
+                        NameReviewPanel(bench: bench, width: panel, onVault: widget.onVault)
                       else if (bench.reviewOpen)
                         ReviewPanel(bench: bench, width: panel, onVault: widget.onVault),
                       if (bench.tokensOpen)
@@ -284,7 +284,33 @@ class _TopBar extends StatelessWidget {
           ],
           const Spacer(),
           _ProfileFact(bench: bench, ground: ground, value: profile),
-          _Fact(label: 'Pack', value: pack.label),
+          // The rule set, and a way to change it. Every pack this build carries
+          // comes from the core's own list — nothing here is written in Dart —
+          // and the one that ran is marked. Switching is a rescan, which is why
+          // it says so before it happens rather than afterwards.
+          PopupMenuButton<String>(
+            tooltip: 'Read this document with another rule set',
+            enabled: !bench.busy && ground.packs.isNotEmpty,
+            onSelected: (id) => bench.switchPack(id),
+            itemBuilder: (_) => [
+              for (final p in ground.packs)
+                PopupMenuItem<String>(
+                  value: p.id,
+                  child: Row(
+                    children: [
+                      Icon(
+                        ran.contains(p.id) ? Icons.check : Icons.check_box_outline_blank,
+                        size: 15,
+                        color: ran.contains(p.id) ? Zc.river : Colors.transparent,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(p.label, style: Zc.small),
+                    ],
+                  ),
+                ),
+            ],
+            child: _Fact(label: 'Pack', value: pack.label),
+          ),
           _Fact(
             label: 'Vault',
             value: switch (bench.snap?.vault ?? ground.vault) {

@@ -932,6 +932,8 @@ pub(crate) fn teach_name(text: String, family: bool, profile_id: Option<String>)
                 family,
                 profile_id: profile_id.clone(),
                 learned_at: crate::vault::model::now_seconds(),
+                source: None,
+                licence: None,
             });
             Ok(id)
         })
@@ -1052,4 +1054,327 @@ pub(crate) fn label_rules() -> ApiResult<Vec<crate::api::LabelRuleRow>> {
             rows
         })
     })
+}
+
+// ------------------------------------------------- the names a person adds
+
+/// The identity that holds the values a person typed in themselves.
+///
+/// Its own, and not the one `learn_value` fills from the review: forgetting a
+/// name a person added must never reach into what the review learned, and the
+/// two are told apart by the label they were created with.
+const OWN_NAMES: &str = "Names you added";
+
+fn own_names_entity(vault: &mut crate::vault::model::Vault, profile_id: Option<&str>) -> u32 {
+    let owner = profile_id.map(str::to_string);
+    if let Some(id) = vault
+        .entities
+        .iter()
+        .find(|e| e.profile_id == owner && e.label.expose() == OWN_NAMES)
+        .map(|e| e.id)
+    {
+        return id;
+    }
+    let id = vault.take_entity_id();
+    vault.entities.push(Entity {
+        id,
+        kind: EntityKind::Custom,
+        label: Secret::new(OWN_NAMES.to_string()),
+        profile_id: owner,
+        values: Vec::new(),
+    });
+    id
+}
+
+/// Put one value in that identity, or say it was already there.
+fn put_own_value(
+    vault: &mut crate::vault::model::Vault,
+    profile_id: Option<&str>,
+    kind: Kind,
+    text: &str,
+    policy: Policy,
+) -> Option<u32> {
+    let entity_id = own_names_entity(vault, profile_id);
+    // Already known anywhere in this profile's vault? Then it is already found
+    // by itself, and saying it twice would give one value two records.
+    if vault
+        .entities
+        .iter()
+        .filter(|e| e.profile_id.as_deref() == profile_id)
+        .any(|e| e.values.iter().any(|v| v.matches(text)))
+    {
+        return None;
+    }
+    let id = vault.take_value_id();
+    let target = vault.entities.iter_mut().find(|e| e.id == entity_id)?;
+    target.values.push(ValueRecord {
+        id,
+        kind,
+        value: Secret::new(text.to_string()),
+        aliases: Vec::new(),
+        policy,
+        learned_at: crate::vault::model::now_seconds(),
+    });
+    Some(id)
+}
+
+/// Add a name a person typed, with what it is and how far it reaches.
+///
+/// The kind decides the store — a word for the dictionary, a value for the
+/// vault — and `always` decides what Z does with it. A given or family name
+/// taught as «always» is both: the dictionary learns the word so the rules can
+/// read a full name around it, and the vault learns the value so the word is
+/// protected on sight without waiting to be asked about.
+pub(crate) fn add_user_name(
+    text: String,
+    kind: crate::api::UserNameKind,
+    always: bool,
+    profile_id: Option<String>,
+) -> ApiResult<u32> {
+    use crate::api::UserNameKind as K;
+    let text = crate::text::nfc(text.trim()).to_string();
+    if text.is_empty() {
+        return Err(ApiError::InputRefused {
+            reason: "a name needs a word".to_string(),
+        });
+    }
+    match kind {
+        K::Given | K::Family => {
+            // `teach_name` holds the one-word rule, and holds it alone.
+            let id = teach_name(text.clone(), matches!(kind, K::Family), profile_id.clone())?;
+            if always {
+                let owner = profile_id.clone();
+                with_core(|core| {
+                    core.vault.with_open_mut(|vault| {
+                        put_own_value(vault, owner.as_deref(), Kind::Person, &text, Policy::Always);
+                        Ok(())
+                    })
+                })?;
+                crate::session::bump_truth();
+            }
+            Ok(id)
+        }
+        K::Person | K::Company => {
+            let value_kind = if matches!(kind, K::Company) { Kind::Company } else { Kind::Person };
+            let policy = if always { Policy::Always } else { Policy::Suggest };
+            let owner = profile_id.clone();
+            let id = with_core(|core| {
+                core.vault.with_open_mut(|vault| {
+                    Ok(put_own_value(vault, owner.as_deref(), value_kind, &text, policy))
+                })
+            })?;
+            crate::session::bump_truth();
+            // Already there is not an error: the person's wish is already true.
+            Ok(id.unwrap_or(0))
+        }
+    }
+}
+
+/// Everything this device knows because a person said so, newest first.
+pub(crate) fn user_names(profile_id: Option<String>) -> ApiResult<Vec<crate::api::UserNameRow>> {
+    use crate::api::{UserNameKind as K, UserNameRow};
+    with_core(|core| {
+        core.vault.with_open(|vault| {
+            let owner = profile_id.clone();
+            let mut rows: Vec<UserNameRow> = Vec::new();
+            // The words. A word that is also an «always» value of the same
+            // spelling is one name to the person who typed it, so it is one row
+            // here, and that row says «always».
+            let own: Vec<&Entity> = vault
+                .entities
+                .iter()
+                .filter(|e| e.profile_id == owner && e.label.expose() == OWN_NAMES)
+                .collect();
+            for name in vault.taught_names.iter().filter(|n| n.profile_id == owner) {
+                let always = own
+                    .iter()
+                    .any(|e| e.values.iter().any(|v| v.policy == Policy::Always && v.matches(&name.text)));
+                rows.push(UserNameRow {
+                    id: name.id,
+                    entity_id: None,
+                    text: name.text.clone(),
+                    kind: if name.family { K::Family } else { K::Given },
+                    always,
+                    profile_id: name.profile_id.clone(),
+                    learned_at: name.learned_at,
+                });
+            }
+            // The values, except the ones that are a word's «always» twin.
+            for entity in &own {
+                for value in &entity.values {
+                    let text = value.value.expose().to_string();
+                    if vault
+                        .taught_names
+                        .iter()
+                        .any(|n| n.profile_id == owner && n.text.eq_ignore_ascii_case(&text))
+                    {
+                        continue;
+                    }
+                    rows.push(UserNameRow {
+                        id: value.id,
+                        entity_id: Some(entity.id),
+                        text,
+                        kind: if value.kind == Kind::Company { K::Company } else { K::Person },
+                        always: value.policy == Policy::Always,
+                        profile_id: entity.profile_id.clone(),
+                        learned_at: value.learned_at,
+                    });
+                }
+            }
+            rows.sort_by(|a, b| b.learned_at.cmp(&a.learned_at).then(a.text.cmp(&b.text)));
+            rows
+        })
+    })
+}
+
+/// Take one back. A word goes from the dictionary, and its «always» twin with
+/// it: one row on the screen is one name, and one press takes the whole of it.
+pub(crate) fn forget_user_name(id: u32, entity_id: Option<u32>) -> ApiResult<()> {
+    match entity_id {
+        Some(entity) => delete_value(entity, id),
+        None => {
+            let text = with_core(|core| {
+                core.vault
+                    .with_open(|vault| vault.taught_names.iter().find(|n| n.id == id).map(|n| (n.text.clone(), n.profile_id.clone())))
+            })?;
+            forget_name(id)?;
+            if let Some((text, owner)) = text {
+                with_core(|core| {
+                    core.vault.with_open_mut(|vault| {
+                        for entity in vault
+                            .entities
+                            .iter_mut()
+                            .filter(|e| e.profile_id == owner && e.label.expose() == OWN_NAMES)
+                        {
+                            entity.values.retain(|v| !v.matches(&text));
+                        }
+                        Ok(())
+                    })
+                })?;
+                crate::session::bump_truth();
+            }
+            Ok(())
+        }
+    }
+}
+
+/// Read a list of names: a CSV whose first line names its columns.
+///
+/// `name` and `type` are required, `source` and `licence` are kept when they
+/// are there. The whole file is read before anything is written, so a file
+/// that is refused leaves the vault exactly as it was.
+pub(crate) fn import_user_names(csv: String, profile_id: Option<String>) -> ApiResult<crate::api::NameImport> {
+    use crate::api::{NameImport, UserNameKind as K};
+    let mut lines = csv.lines().filter(|l| !l.trim().is_empty());
+    let Some(header) = lines.next() else {
+        return Err(ApiError::InputRefused {
+            reason: "that file is empty".to_string(),
+        });
+    };
+    let columns: Vec<String> = split_row(header).into_iter().map(|c| c.trim().to_lowercase()).collect();
+    let at = |want: &str| columns.iter().position(|c| c == want);
+    let (Some(name_at), Some(type_at)) = (at("name"), at("type")) else {
+        return Err(ApiError::InputRefused {
+            reason: "the first line must name the columns, and must include «name» and «type» — \
+                     for example: name,type or name,type,source,licence"
+                .to_string(),
+        });
+    };
+    let source_at = at("source");
+    let licence_at = at("licence");
+
+    let mut plan: Vec<(String, K, Option<String>, Option<String>)> = Vec::new();
+    let mut reasons: Vec<String> = Vec::new();
+    for (number, line) in lines.enumerate() {
+        let row = split_row(line);
+        let at_row = |i: Option<usize>| i.and_then(|i| row.get(i)).map(|c| c.trim().to_string());
+        let text = at_row(Some(name_at)).unwrap_or_default();
+        let kind_word = at_row(Some(type_at)).unwrap_or_default().to_lowercase();
+        let line_no = number + 2; // the header is line 1, and people count from 1
+        if text.is_empty() {
+            reasons.push(format!("line {line_no}: no name"));
+            continue;
+        }
+        let kind = match kind_word.as_str() {
+            "given" => K::Given,
+            "family" => K::Family,
+            "person" => K::Person,
+            "company" => K::Company,
+            "" => {
+                reasons.push(format!("line {line_no}: «{text}» has no type"));
+                continue;
+            }
+            other => {
+                reasons.push(format!(
+                    "line {line_no}: «{text}» is a «{other}», and the types are given, family, person and company"
+                ));
+                continue;
+            }
+        };
+        if matches!(kind, K::Given | K::Family) && text.split_whitespace().count() != 1 {
+            reasons.push(format!(
+                "line {line_no}: «{text}» is two words — a given name and a family name are two rows"
+            ));
+            continue;
+        }
+        plan.push((text, kind, at_row(source_at), at_row(licence_at)));
+    }
+
+    let mut added = 0u32;
+    let mut already = 0u32;
+    for (text, kind, source, licence) in plan {
+        let known = user_names(profile_id.clone())?
+            .into_iter()
+            .any(|row| row.text.eq_ignore_ascii_case(&text) && row.kind == kind);
+        if known {
+            already = already.saturating_add(1);
+            continue;
+        }
+        // Imported names are knowledge, not protection: a list is a dictionary,
+        // and a dictionary suggests. «Always» stays a decision per name.
+        match add_user_name(text.clone(), kind, false, profile_id.clone()) {
+            Ok(id) => {
+                added = added.saturating_add(1);
+                if (source.is_some() || licence.is_some()) && matches!(kind, K::Given | K::Family) {
+                    with_core(|core| {
+                        core.vault.with_open_mut(|vault| {
+                            if let Some(name) = vault.taught_names.iter_mut().find(|n| n.id == id) {
+                                name.source = source.clone().filter(|s| !s.is_empty());
+                                name.licence = licence.clone().filter(|s| !s.is_empty());
+                            }
+                            Ok(())
+                        })
+                    })?;
+                }
+            }
+            Err(ApiError::InputRefused { reason }) => reasons.push(format!("«{text}»: {reason}")),
+            Err(other) => return Err(other),
+        }
+    }
+    crate::session::bump_truth();
+    Ok(NameImport {
+        added,
+        already_known: already,
+        refused: reasons.len() as u32,
+        reasons,
+    })
+}
+
+/// One CSV row into its cells. Commas and semicolons both separate — a list
+/// exported by a German spreadsheet uses semicolons — and a quoted cell keeps
+/// whatever is inside it.
+fn split_row(line: &str) -> Vec<String> {
+    let separator = if line.contains(';') && !line.contains(',') { ';' } else { ',' };
+    let mut cells = Vec::new();
+    let mut cell = String::new();
+    let mut quoted = false;
+    for c in line.chars() {
+        match c {
+            '"' => quoted = !quoted,
+            x if x == separator && !quoted => cells.push(std::mem::take(&mut cell)),
+            other => cell.push(other),
+        }
+    }
+    cells.push(cell);
+    cells
 }

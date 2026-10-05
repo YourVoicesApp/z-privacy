@@ -560,6 +560,38 @@ pub struct _TaughtNameRow {
     pub learned_at: u64,
 }
 
+#[frb(mirror(UserNameKind))]
+pub enum _UserNameKind {
+    Given,
+    Family,
+    Person,
+    Company,
+}
+
+#[frb(mirror(UserNameRow))]
+pub struct _UserNameRow {
+    pub id: u32,
+    /// The identity this value lives in, when the row is a vault value.
+    /// `None` when it is a taught word, and the two ids are not comparable.
+    pub entity_id: Option<u32>,
+    pub text: String,
+    pub kind: UserNameKind,
+    /// Protected the moment it appears, rather than suggested and waiting.
+    pub always: bool,
+    pub profile_id: Option<String>,
+    pub learned_at: u64,
+}
+
+#[frb(mirror(NameImport))]
+pub struct _NameImport {
+    pub added: u32,
+    pub already_known: u32,
+    pub refused: u32,
+    /// One sentence per refused row, in the file's order, so a person can fix
+    /// the file rather than guess at it. Never the whole file back.
+    pub reasons: Vec<String>,
+}
+
 #[frb(mirror(NameCandidate))]
 pub struct _NameCandidate {
     /// The word, as the document writes it.

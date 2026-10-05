@@ -745,6 +745,47 @@ pub struct TaughtNameRow {
     pub learned_at: u64,
 }
 
+/// What a person says a word is when they add it themselves.
+///
+/// Two of these are **words** — a given name, a family name — and go into the
+/// name dictionary beside the packs, where the rules that know how names are
+/// written can use them. Two are **values** — a whole person, a company — and
+/// go into the vault, because «Nordstern Consulting GmbH» is not a word any
+/// rule can be taught, it is a thing to be found.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UserNameKind {
+    Given,
+    Family,
+    Person,
+    Company,
+}
+
+/// One row of «your names»: what this device knows because a person said so.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UserNameRow {
+    pub id: u32,
+    /// The identity this value lives in, when the row is a vault value.
+    /// `None` when it is a taught word, and the two ids are not comparable.
+    pub entity_id: Option<u32>,
+    pub text: String,
+    pub kind: UserNameKind,
+    /// Protected the moment it appears, rather than suggested and waiting.
+    pub always: bool,
+    pub profile_id: Option<String>,
+    pub learned_at: u64,
+}
+
+/// What an imported list did. Three numbers and the reasons for the third.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NameImport {
+    pub added: u32,
+    pub already_known: u32,
+    pub refused: u32,
+    /// One sentence per refused row, in the file's order, so a person can fix
+    /// the file rather than guess at it. Never the whole file back.
+    pub reasons: Vec<String>,
+}
+
 /// A name a document keeps using that no dictionary of ours knows.
 ///
 /// Phase 2's answer to «a dictionary of every surname on earth»: Z notices the
@@ -1807,6 +1848,40 @@ pub fn forget_name(id: u32) -> ApiResult<()> {
 /// Every name the person taught, newest first.
 pub fn taught_names() -> ApiResult<Vec<TaughtNameRow>> {
     crate::ops::taught_names()
+}
+
+/// Add a name a person types themselves, with what it is and how far it reaches.
+///
+/// The kind decides where it is kept and the strength decides what Z does with
+/// it: a given or family name is a word for the dictionary, a person or a
+/// company is a value for the vault, and «always» means protected on sight
+/// instead of suggested. Needs an open vault, like everything else a person
+/// teaches this device.
+pub fn add_user_name(text: String, kind: UserNameKind, always: bool, profile_id: Option<String>) -> ApiResult<u32> {
+    crate::ops::add_user_name(text, kind, always, profile_id)
+}
+
+/// Everything this device knows because a person said so, newest first.
+///
+/// Both stores in one list, because a person who added four names does not
+/// think of them as living in two places.
+pub fn user_names(profile_id: Option<String>) -> ApiResult<Vec<UserNameRow>> {
+    crate::ops::user_names(profile_id)
+}
+
+/// Take one of those back. `entity_id` is the row's own, or `None` for a word.
+pub fn forget_user_name(id: u32, entity_id: Option<u32>) -> ApiResult<()> {
+    crate::ops::forget_user_name(id, entity_id)
+}
+
+/// Read a list of names: a CSV whose first line names its columns.
+///
+/// `name` and `type` are required; `source` and `licence` are kept with each
+/// name if they are there. Nothing is written until the whole file has been
+/// read, and what comes back is three numbers and a sentence for every row
+/// that was refused.
+pub fn import_user_names(csv: String, profile_id: Option<String>) -> ApiResult<NameImport> {
+    crate::ops::import_user_names(csv, profile_id)
 }
 
 /// Teach a label rule: «the value after this word is a customer number».

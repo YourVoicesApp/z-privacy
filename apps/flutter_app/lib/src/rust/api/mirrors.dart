@@ -987,6 +987,40 @@ class NameCandidate {
           why == other.why;
 }
 
+class NameImport {
+  final int added;
+  final int alreadyKnown;
+  final int refused;
+
+  /// One sentence per refused row, in the file's order, so a person can fix
+  /// the file rather than guess at it. Never the whole file back.
+  final List<String> reasons;
+
+  const NameImport({
+    required this.added,
+    required this.alreadyKnown,
+    required this.refused,
+    required this.reasons,
+  });
+
+  @override
+  int get hashCode =>
+      added.hashCode ^
+      alreadyKnown.hashCode ^
+      refused.hashCode ^
+      reasons.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NameImport &&
+          runtimeType == other.runtimeType &&
+          added == other.added &&
+          alreadyKnown == other.alreadyKnown &&
+          refused == other.refused &&
+          reasons == other.reasons;
+}
+
 @freezed
 sealed class NetworkRefusal with _$NetworkRefusal {
   const NetworkRefusal._();
@@ -2139,6 +2173,56 @@ sealed class UndoOutcome with _$UndoOutcome {
     required int places,
     String? createdEntity,
   }) = UndoOutcome_Undone;
+}
+
+enum UserNameKind { given, family, person, company }
+
+class UserNameRow {
+  final int id;
+
+  /// The identity this value lives in, when the row is a vault value.
+  /// `None` when it is a taught word, and the two ids are not comparable.
+  final int? entityId;
+  final String text;
+  final UserNameKind kind;
+
+  /// Protected the moment it appears, rather than suggested and waiting.
+  final bool always;
+  final String? profileId;
+  final BigInt learnedAt;
+
+  const UserNameRow({
+    required this.id,
+    this.entityId,
+    required this.text,
+    required this.kind,
+    required this.always,
+    this.profileId,
+    required this.learnedAt,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      entityId.hashCode ^
+      text.hashCode ^
+      kind.hashCode ^
+      always.hashCode ^
+      profileId.hashCode ^
+      learnedAt.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UserNameRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          entityId == other.entityId &&
+          text == other.text &&
+          kind == other.kind &&
+          always == other.always &&
+          profileId == other.profileId &&
+          learnedAt == other.learnedAt;
 }
 
 class ValueRow {

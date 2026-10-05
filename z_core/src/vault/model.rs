@@ -162,6 +162,14 @@ pub(crate) struct UserName {
     /// `None` is everywhere; `Some(profile)` is this client only.
     pub profile_id: Option<String>,
     pub learned_at: u64,
+    /// Where an imported list came from, and under what licence — the two
+    /// optional columns of the CSV, kept with the name they arrived with.
+    ///
+    /// Nothing shows them yet. They are kept because a list's provenance is the
+    /// owner's to answer for, and a name that outlives the file it came from
+    /// without its provenance is a name nobody can account for. Model 9.
+    pub source: Option<String>,
+    pub licence: Option<String>,
 }
 
 impl UserLabelRule {

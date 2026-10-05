@@ -19,6 +19,8 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 9 — where an imported name list came from, and under what licence.
+/// * 8 — the names the person taught.
 /// * 7 — a profile's active rule sets, and the label rules a person taught.
 /// * 6 — user-taught exceptions are sealed with the rest of the vault.
 /// * 5 — provider credentials are bound to a normalized destination.
@@ -33,7 +35,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 8;
+pub(crate) const MODEL_VERSION: u16 = 9;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -261,7 +263,32 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
         put_str(&mut out, &name.text);
         out.extend_from_slice(&name.learned_at.to_be_bytes());
     }
+    // Model 9 — the provenance of imported names, as its own section rather
+    // than two more fields inside model 8's records. A section can be stopped
+    // before; a wider record cannot, and an older build reading model 8's names
+    // record by record would walk straight into the new bytes.
+    let with_provenance: Vec<&crate::vault::model::UserName> = vault
+        .taught_names
+        .iter()
+        .filter(|n| n.source.is_some() || n.licence.is_some())
+        .collect();
+    out.extend_from_slice(&(with_provenance.len() as u32).to_be_bytes());
+    for name in with_provenance {
+        out.extend_from_slice(&name.id.to_be_bytes());
+        put_opt_str(&mut out, name.source.as_deref());
+        put_opt_str(&mut out, name.licence.as_deref());
+    }
     Ok(out)
+}
+
+fn put_opt_str(out: &mut Vec<u8>, text: Option<&str>) {
+    match text {
+        Some(t) => {
+            out.push(1);
+            put_str(out, t);
+        }
+        None => out.push(0),
+    }
 }
 
 fn put_str(out: &mut Vec<u8>, text: &str) {
@@ -462,12 +489,41 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
             };
             let text = r.string()?;
             let learned_at = u64::from_be_bytes(r.array::<8>()?);
-            taught_names.push(UserName { id, text, family, profile_id, learned_at });
+            taught_names.push(UserName {
+                id,
+                text,
+                family,
+                profile_id,
+                learned_at,
+                source: None,
+                licence: None,
+            });
         }
         (next_taught_name, taught_names)
     } else {
         (1, Vec::new())
     };
+
+    // Model 9 — the provenance of the names that came from a list.
+    let mut taught_names = taught_names;
+    if version >= 9 {
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        for _ in 0..count {
+            let id = u32::from_be_bytes(r.array::<4>()?);
+            let source = match r.byte()? {
+                0 => None,
+                _ => Some(r.string()?),
+            };
+            let licence = match r.byte()? {
+                0 => None,
+                _ => Some(r.string()?),
+            };
+            if let Some(name) = taught_names.iter_mut().find(|n| n.id == id) {
+                name.source = source;
+                name.licence = licence;
+            }
+        }
+    }
 
     Ok(Vault {
         entities,
@@ -603,6 +659,9 @@ mod tests {
             out.extend_from_slice(&1u32.to_be_bytes()); // next taught name
             out.extend_from_slice(&0u32.to_be_bytes()); // none taught
         }
+        if version >= 9 {
+            out.extend_from_slice(&0u32.to_be_bytes()); // no name carries a provenance
+        }
         out
     }
 
@@ -736,6 +795,35 @@ mod tests {
         before.settings.scan_on_import = false;
         let after = dec(&enc(&before)).expect("decode");
         assert_eq!(after.settings, before.settings);
+
+        // Model 9 — a list's provenance survives the round trip, and a name
+        // without one costs nothing. Nothing shows these yet; they are kept so
+        // that a name can still say where it came from after the file it came
+        // from is gone.
+        let mut with_lists = sample();
+        with_lists.taught_names.push(crate::vault::model::UserName {
+            id: 1,
+            text: "Lindqvist".to_string(),
+            family: true,
+            profile_id: None,
+            learned_at: 0,
+            source: Some("SCB 2024".to_string()),
+            licence: Some("CC0".to_string()),
+        });
+        with_lists.taught_names.push(crate::vault::model::UserName {
+            id: 2,
+            text: "Anneli".to_string(),
+            family: false,
+            profile_id: None,
+            learned_at: 0,
+            source: None,
+            licence: None,
+        });
+        let read = dec(&enc(&with_lists)).expect("decode");
+        assert_eq!(read.taught_names.len(), 2);
+        assert_eq!(read.taught_names[0].source.as_deref(), Some("SCB 2024"));
+        assert_eq!(read.taught_names[0].licence.as_deref(), Some("CC0"));
+        assert_eq!(read.taught_names[1].source, None, "a name without a list grew one");
 
         // A model-2 file, as a model-2 build wrote one.
         let opened = dec(&a_file_from_model(2)).expect("a model-2 vault still opens");
