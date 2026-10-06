@@ -82,3 +82,42 @@ fn what_a_social_insurance_number_is_not() {
         "a phone or an IBAN was read as a social-insurance number"
     );
 }
+
+// ------------------------------------------------------- the eleven digits
+
+/// The *steuerliche Identifikationsnummer*: eleven digits that carry their own
+/// proof. Two rules together, both published by the BZSt — a check digit
+/// (ISO 7064, MOD 11,10) and a structure (among the first ten, exactly one
+/// digit appears twice or three times, at least one digit is missing, and the
+/// first is not zero). Eleven digits that pass both are not a coincidence.
+#[test]
+fn a_tax_identification_number_is_proven_by_its_check_and_its_shape() {
+    for number in ["98 765 432 114", "25 813 794 623", "98765432114"] {
+        let doc = format!("Steuerliche Identifikationsnummer {number}.");
+        let got = kinds_of(&doc, Kind::TaxId);
+        assert_eq!(got.len(), 1, "«{number}» was not read as a tax ID: {got:?}");
+        assert_eq!(got[0].0, MarkState::Protected, "«{number}» was only offered");
+        assert_eq!(got[0].1, number, "the span is not the whole number");
+    }
+}
+
+#[test]
+fn eleven_digits_that_fail_either_rule_are_not_a_tax_id() {
+    for (number, why) in [
+        ("98 765 432 115", "one off the check digit"),
+        ("12 345 678 903", "no digit appears twice, so it is not one of these"),
+        ("08 765 432 116", "a tax ID never begins with zero"),
+        ("98 765 432 11", "ten digits"),
+    ] {
+        let doc = format!("Nummer {number} steht im Formular.");
+        let got = kinds_of(&doc, Kind::TaxId);
+        assert!(got.is_empty(), "«{number}» passed as a tax ID — {why}: {got:?}");
+    }
+}
+
+/// And the eleven digits of something else are not it either.
+#[test]
+fn what_eleven_digits_are_not() {
+    let doc = "IBAN DE89 3704 0044 0532 0130 00 und Telefon 089 1234 5699.";
+    assert!(kinds_of(doc, Kind::TaxId).is_empty(), "an IBAN or a phone was read as a tax ID");
+}
