@@ -89,8 +89,16 @@ const _en = _Promise(
 class FirstRunScreen extends StatefulWidget {
   const FirstRunScreen({super.key, required this.ground, required this.onStart});
 
+  /// The second step's sentence, in one place: what the vault is for, said
+  /// before it is offered. Not a warning and not a sales line — the reason.
+  static const vaultWhy =
+      'What you teach Z lives here: the names you add, the values you protect '
+      'for good, and the keys to any AI you connect. It stays on this computer, '
+      'and nothing is written anywhere else.';
+
   final Ground ground;
-  final void Function(String language) onStart;
+  /// `wantsVault` is the second step's answer: make one now, or later.
+  final void Function(String language, {required bool wantsVault}) onStart;
 
   @override
   State<FirstRunScreen> createState() => _FirstRunScreenState();
@@ -100,6 +108,14 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
   /// Null until a person chooses. **Not** a default — this page has no right to
   /// one, because the question it asks is which language they read.
   String? _language;
+
+  /// The second step: the vault, offered once, before any work.
+  ///
+  /// The owner's sentence is «the vault should be opened before starting work
+  /// so we can save the words», and the first page is the only place that can
+  /// be said before the work. It is an offer and stays one: «Later» is a
+  /// button of the same size, and nothing about this page insists.
+  bool _atTheVault = false;
 
   @override
   Widget build(BuildContext context) {
@@ -188,11 +204,39 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  ZButton(
-                    label: chosen.start,
-                    filled: true,
-                    onPressed: () => widget.onStart(_language!),
-                  ),
+                  if (!_atTheVault)
+                    ZButton(
+                      label: chosen.start,
+                      filled: true,
+                      onPressed: () => setState(() => _atTheVault = true),
+                    )
+                  else ...[
+                    const Eyebrow('Your vault'),
+                    const SizedBox(height: 8),
+                    Text(FirstRunScreen.vaultWhy, style: Zc.small),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      children: [
+                        ZButton(
+                          label: 'Create a vault',
+                          filled: true,
+                          onPressed: () => widget.onStart(_language!, wantsVault: true),
+                        ),
+                        ZButton(
+                          label: 'Later',
+                          onPressed: () => widget.onStart(_language!, wantsVault: false),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'You can make one at any time — the band above your document '
+                      'offers it too.',
+                      style: Zc.tiny.copyWith(letterSpacing: 0),
+                    ),
+                  ],
                 ],
                 const SizedBox(height: 34),
                 Text('by YourVoices', style: Zc.tiny.copyWith(letterSpacing: 0.4)),

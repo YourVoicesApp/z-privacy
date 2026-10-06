@@ -224,7 +224,7 @@ void main() {
     String? chosen;
 
     await tester.pumpWidget(MaterialApp(
-      home: FirstRunScreen(ground: ground, onStart: (l) => chosen = l),
+      home: FirstRunScreen(ground: ground, onStart: (l, {required bool wantsVault}) => chosen = l),
     ));
     await settle(tester, rounds: 1);
 
@@ -302,6 +302,11 @@ void main() {
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Starten'));
     await settle(tester, rounds: 1);
+    // 041-E — Start now opens the second step, where the vault is offered
+    // once. The language is carried through it either way.
+    expect(find.text('Later'), findsOneWidget, reason: 'the vault is not offered before the work');
+    await tester.tap(find.text('Later'));
+    await settle(tester, rounds: 1);
     expect(chosen, 'de');
   });
 
@@ -338,6 +343,11 @@ void main() {
     await tester.tap(find.text('Deutsch'));
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Starten'));
+    await settle(tester);
+    // 041-E — the vault is offered between the choice and the end of the first
+    // run. «Later» is the answer this test is about: what is kept must be kept
+    // either way.
+    await tester.tap(find.text('Later'));
     await settle(tester);
 
     // Written, and read back from the core rather than from the widget.
