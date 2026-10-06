@@ -434,7 +434,7 @@ fn dictionary_names(
             || second.newline_before
             || pack.function_words.contains(&given.to_lowercase().as_str())
             || !(names.given(given) || taught_given(given))
-            || !(names.family(family) || taught_family(family))
+            || !(names.family(family) || taught_family(family) || ends_like_a_family_name(second.text, pack))
         {
             i += 1;
             continue;
@@ -553,6 +553,42 @@ fn companies(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>) 
     }
 }
 
+
+/// Does this word end the way a surname ends in this language?
+///
+/// The owner's rule, and a signal of exactly a dictionary hit's strength: it can
+/// make the scanner offer a name, never protect one. Three conditions keep it
+/// off ordinary words, and each one was measured:
+///
+/// * **a capital**, because a Swedish sentence does not capitalise its nouns —
+///   «person» is a word, «Person» at the start of a sentence is caught by the
+///   stop-word list, and nothing else in five pages of Swedish prose survives
+///   both;
+/// * **five letters at least**, so «son» and «berg» standing alone are words;
+/// * **not a word the pack already set aside** — a stop word or a function
+///   word is never a name, whatever it ends with.
+fn ends_like_a_family_name(word: &str, pack: &LanguagePack) -> bool {
+    if pack.family_suffixes.is_empty() {
+        return false;
+    }
+    let bare = bare(word);
+    if bare.chars().count() < 5 || !bare.chars().next().is_some_and(char::is_uppercase) {
+        return false;
+    }
+    let lower = bare.to_lowercase();
+    if pack.stop_words.iter().any(|w| w.eq_ignore_ascii_case(bare))
+        || pack.function_words.contains(&lower.as_str())
+        || pack.roles.iter().any(|w| w.eq_ignore_ascii_case(bare))
+        || pack.closings.iter().any(|w| w.eq_ignore_ascii_case(bare))
+    {
+        return false;
+    }
+    // The ending must be an ending, not the whole word: «Berg» is a mountain.
+    pack.family_suffixes
+        .iter()
+        .any(|suffix| lower.len() > suffix.len() && lower.ends_with(suffix))
+}
+
 /// «Reinhardt, Tobias» — the way a ledger, a staff list and a form write a
 /// person: the surname, a comma, the given name.
 ///
@@ -643,7 +679,9 @@ fn reversed_pairs(
         }
         // Both halves known is a stronger line than one, and the reason says
         // which — a person deciding is owed the difference.
-        let both = names.family(family) || taught.iter().any(|(t, f)| *f && t.eq_ignore_ascii_case(family));
+        let both = names.family(family)
+            || taught.iter().any(|(t, f)| *f && t.eq_ignore_ascii_case(family))
+            || ends_like_a_family_name(family, pack);
         out.push(candidate(
             pack,
             first.start,

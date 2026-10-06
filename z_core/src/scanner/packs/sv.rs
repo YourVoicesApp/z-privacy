@@ -55,6 +55,57 @@ const COMPANY_FORMS: &[&str] = &["AB", "HB", "KB", "AB.", "Ekonomisk", "Handelsb
 /// «Lindgren & Söner», «Andersson och Partner».
 const CONJUNCTIONS: &[&str] = &["&", "och"];
 
+/// What makes a Swedish word a surname: how it ends.
+///
+/// The owner's sentence, 6 October: «every word ending in son is a surname in
+/// Sweden; in Denmark perhaps sen». A patronymic is not a dictionary entry —
+/// it is a pattern, and Sweden has a few million of them. So the ending is a
+/// signal of exactly the strength a dictionary hit has: it can make the scanner
+/// **offer** a name it would have walked past, and it can never protect one by
+/// itself.
+///
+/// Each one below earned its place on SV-1 and on five pages of a Swedish
+/// research magazine; the ones that earned nothing, or that brought ordinary
+/// words with them, are not here and the task's report says which and why.
+///
+/// `-dotter` is the old feminine patronymic — Andersdotter — and the owner
+/// added it. Iceland's `-dóttir` and `-sson` belong to an Icelandic pack if one
+/// is ever built; they are not Swedish and are not here.
+///
+/// Danish `-sen` is deliberately absent: this is the Swedish pack, and
+/// «Hilsen» — what a Danish letter closes with — ends in it.
+/// Measured on SV-1 and on five pages of a Swedish research magazine, and what
+/// is here is what earned its place:
+///
+/// ```text
+///     son      Pettersson · Reinholdsson · Ericsson · Holgersson · Johansson
+///              · Karlsson · Larsson · Ragnarsson        — the owner's own case
+///     ström    Bergström · Rådström
+///     qvist    Lindqvist
+///     berg     Ekeberg · Wallenberg
+///     lund     Eklund · Marklund
+///     gren     Holmgren
+///     stedt    Wallerstedt
+///     dotter   nothing in either document — the owner's addition, and a
+///              patronymic no Swedish common noun can collide with
+/// ```
+///
+/// And what was deleted, each with the measurement that deleted it:
+///
+/// ```text
+///     ling     «AI-utveckling», «Bröstcancerbehandling» — `-ling` builds
+///              ordinary Swedish nouns, and five pages gave two of them against
+///              one surname. The one surname it would have found, «Hjerling»,
+///              is still a name to look at.
+///     holm     «Stockholm». A city, and not one surname in either document.
+///     sson     every word ending in «sson» ends in «son»; this was the same
+///              rule written twice.
+///     strom · kvist · blom · dahl   real endings that caught nothing here.
+///              They come back the day a document earns them, with the
+///              measurement that earns them.
+/// ```
+const FAMILY_SUFFIXES: &[&str] = &["son", "dotter", "ström", "qvist", "berg", "lund", "gren", "stedt"];
+
 /// What a Swedish signature writes under the name.
 const ROLES: &[&str] = &["vd", "ägare", "chef", "ordförande", "styrelseledamot", "konsult"];
 
@@ -74,6 +125,7 @@ pub(crate) fn pack() -> LanguagePack {
         roles: ROLES,
         company_forms: COMPANY_FORMS,
         conjunctions: CONJUNCTIONS,
+        family_suffixes: FAMILY_SUFFIXES,
         order: NameOrder::GivenThenFamily,
         names: CSV,
         provenance: "Wikidata (CC0) — given and family names of people recorded as Swedish citizens; see z_core/assets/licenses/swedish_names_sources.md",

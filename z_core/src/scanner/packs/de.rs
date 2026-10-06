@@ -56,6 +56,11 @@ pub(crate) fn pack() -> LanguagePack {
         roles: ROLES,
         company_forms: COMPANY_FORMS,
         conjunctions: CONJUNCTIONS,
+        // German surnames are not built from an ending. «-mann» and «-berg» end
+        // many of them and end many ordinary words too, and nothing here earns
+        // a signal: the list is empty, and that is why 038-B moved no German
+        // number by one.
+        family_suffixes: &[],
         order: NameOrder::GivenThenFamily,
         names: super::de_names::CSV,
         provenance: "Berlin, Bonn, Dortmund and Koeln newborn registers (CC BY 3.0 DE · CC0 · DL-DE-Zero 2.0) · Wikidata (CC0) · sigpwned/popular-names-by-country (CC0) — see z_core/assets/licenses/german_names_sources.md",
