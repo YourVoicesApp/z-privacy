@@ -142,6 +142,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               ground: widget.ground,
               onHome: widget.onHome,
               onPage: _goToPage,
+              onVault: widget.onVault,
+              onLockVault: () => unawaited(widget.ground.lockVault()),
             ),
             _Band(bench: bench, onVault: widget.onVault),
             if (bench.trouble != null)
@@ -235,6 +237,8 @@ class _TopBar extends StatelessWidget {
     required this.ground,
     required this.onHome,
     required this.onPage,
+    required this.onVault,
+    required this.onLockVault,
   });
 
   final Workbench bench;
@@ -243,6 +247,10 @@ class _TopBar extends StatelessWidget {
 
   /// Go to a page: the Original column scrolls to the first finding on it.
   final void Function(int page) onPage;
+
+  /// The bar's own way to the vault, and its own way to shut it.
+  final VoidCallback onVault;
+  final VoidCallback onLockVault;
 
   @override
   Widget build(BuildContext context) {
@@ -408,6 +416,12 @@ class _TopBar extends StatelessWidget {
             ],
             child: _Fact(label: 'Pack', value: pack.label),
           ),
+          // The permanent door. 041-N made the vault the way in, and the bar
+          // was left stating a fact nobody could act on: the only ways back to
+          // it from a document were the review panels' buttons, and a person
+          // with nothing to review had none. One press opens it; a second,
+          // while it is open, shuts it — the thing a person wants when they
+          // stand up from the desk.
           _Fact(
             label: 'Vault',
             value: switch (bench.snap?.vault ?? ground.vault) {
@@ -418,6 +432,28 @@ class _TopBar extends StatelessWidget {
             tint: (bench.snap?.vault ?? ground.vault) == VaultState.unlocked
                 ? Zc.river
                 : Zc.ink4,
+            onTap: () async {
+              final open = (bench.snap?.vault ?? ground.vault) == VaultState.unlocked;
+              if (!open) {
+                onVault();
+                return;
+              }
+              // Open already: the press asks which of the two things it meant.
+              final what = await showMenu<String>(
+                context: context,
+                position: RelativeRect.fromLTRB(1e4, 54, 12, 0),
+                color: Zc.paper,
+                items: const [
+                  PopupMenuItem(value: 'open', child: Text('Open Z Vault')),
+                  PopupMenuItem(value: 'lock', child: Text('Lock now')),
+                ],
+              );
+              if (what == 'open') onVault();
+              if (what == 'lock') onLockVault();
+            },
+            hint: (bench.snap?.vault ?? ground.vault) == VaultState.unlocked
+                ? 'Open Z Vault, or lock it now'
+                : 'Open Z Vault',
           ),
           // **Which page.** The owner, 7 October: a page must show its
           // beginning and its end — and once it does, a person wants to go to
@@ -726,15 +762,20 @@ class _ProfileSwitcherState extends State<ProfileSwitcher> {
 }
 
 class _Fact extends StatelessWidget {
-  const _Fact({required this.label, required this.value, this.tint});
+  const _Fact({required this.label, required this.value, this.tint, this.onTap, this.hint});
 
   final String label;
   final String value;
   final Color? tint;
 
+  /// A fact that can be acted on — the vault since 041-N, which is the way in
+  /// and so is never absent from the bar.
+  final VoidCallback? onTap;
+  final String? hint;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final fact = Padding(
       padding: const EdgeInsets.only(left: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -750,6 +791,15 @@ class _Fact extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+    if (onTap == null) return fact;
+    return Tooltip(
+      message: hint ?? '',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: fact,
       ),
     );
   }

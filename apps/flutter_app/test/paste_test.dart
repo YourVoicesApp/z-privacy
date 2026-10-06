@@ -489,11 +489,27 @@ void _p27() {
     expect(marked, isNotNull, reason: 'the protected word is not its own span');
     expect(marked!.mouseCursor, SystemMouseCursors.click,
         reason: 'the one pressable thing does not say so to a pointer');
-    final tap = marked!.recognizer;
-    expect(tap, isA<TapGestureRecognizer>(), reason: 'the Original mark lost its tap');
 
-    // Fired through the production callback, not a re-implementation of it.
-    (tap! as TapGestureRecognizer).onTap!();
+    // Pressed where it is drawn, the way a person presses it. Until 041-K/the
+    // bubble task this reached into the span's own `TapGestureRecognizer` and
+    // called it; the marks carry no recognizer any more, because inside a
+    // `SelectableText` one is out-voted by the text's drag-selection the
+    // moment a mouse slips two pixels. The press is a pointer event now, so
+    // this test presses.
+    final column = tester.renderObject<RenderBox>(find.byType(OriginalText).first);
+    final layout = TextPainter(
+      text: TextSpan(text: bench.document!.text, style: Zc.document),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: column.size.width);
+    final at = bench.document!.text.indexOf(word);
+    final whereItIs = column.localToGlobal(
+      layout
+          .getBoxesForSelection(TextSelection(baseOffset: at, extentOffset: at + word.length))
+          .first
+          .toRect()
+          .center,
+    );
+    await tester.tapAt(whereItIs, kind: PointerDeviceKind.mouse);
     await settle(tester);
     expect(find.byType(WhySheet), findsOneWidget, reason: 'the Original mark did not open Why');
     expect(find.text('Why is this protected?'), findsOneWidget);
