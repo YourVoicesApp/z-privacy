@@ -142,7 +142,7 @@ fn vault_pass(text: &str, hints: &[VaultHint]) -> Vec<Candidate> {
             format!("vault:{}", first.entity_handle)
         };
 
-        for (start, end) in occurrences(text, &first.text) {
+        for (start, end) in crate::text::occurrences(text, &first.text) {
             out.push(Candidate {
                 start,
                 end,
@@ -154,36 +154,6 @@ fn vault_pass(text: &str, hints: &[VaultHint]) -> Vec<Candidate> {
                 entities: entities.clone(),
                 also: Vec::new(),
             });
-        }
-    }
-    out
-}
-
-/// Every place `needle` appears **as a value of its own**, left to right,
-/// without overlapping itself.
-///
-/// 041-P: a piece of a word is not the word. See `text::stands_alone` for what
-/// that means in a script with spaces and in one with clitics, and for the
-/// numbers that made the rule.
-fn occurrences(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
-    let mut out = Vec::new();
-    if needle.is_empty() {
-        return out;
-    }
-    let mut from = 0usize;
-    while let Some(rest) = haystack.get(from..) {
-        match rest.find(needle) {
-            Some(at) => {
-                let start = from + at;
-                let end = start + needle.len();
-                if crate::text::stands_alone(haystack, start, end) {
-                    out.push((start, end));
-                }
-                // Past this one either way: a fragment inside a word does not
-                // become a match by being looked at again.
-                from = end;
-            }
-            None => break,
         }
     }
     out

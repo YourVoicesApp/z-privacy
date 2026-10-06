@@ -150,7 +150,7 @@ pub(crate) fn name_candidates(session: SessionId) -> ApiResult<Vec<NameCandidate
 
         let mut out: Vec<NameCandidate> = Vec::new();
         for (word, (family, rule)) in rows {
-            let places = occurrences(&text, &word);
+            let places = text::occurrences(&text, &word);
             let mut pages: Vec<u32> = places
                 .iter()
                 .filter_map(|(start, _)| s.place_of(*start).map(|p| p.page))
@@ -967,7 +967,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
         Ok(SelectionView {
             empty: false,
             kind: guessed.or(from_mark).or_else(|| looks_like_a_person(&selected)).unwrap_or(Kind::Custom),
-            matches: occurrences(s.original_str(), &selected).len() as u32,
+            matches: text::occurrences(s.original_str(), &selected).len() as u32,
             protected_as: exact.map(|p| p.token.clone()),
             protected_by: exact.map(|p| p.source),
             protected_detail: exact.map(|p| p.source_detail.clone()).unwrap_or_default(),
@@ -1337,7 +1337,7 @@ fn protect_inner(
         let act = s.take_act_id();
         let mut places = Vec::new();
         if all_matches {
-            places.extend(occurrences(s.original_str(), &selected));
+            places.extend(text::occurrences(s.original_str(), &selected));
         } else {
             places.push((start, end));
         }
@@ -1430,33 +1430,6 @@ fn protect_range(
     Some(token)
 }
 
-/// Every place `needle` appears in `haystack`, as byte ranges, left to right and
-/// non-overlapping.
-fn occurrences(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
-    let mut out = Vec::new();
-    if needle.is_empty() {
-        return out;
-    }
-    let mut from = 0usize;
-    while let Some(rest) = haystack.get(from..) {
-        match rest.find(needle) {
-            Some(at) => {
-                let start = from + at;
-                let end = start + needle.len();
-                // 041-P: «all matches» means every place this value stands, not
-                // every place these letters appear. `text::stands_alone` holds
-                // the rule and the measurement behind it.
-                if text::stands_alone(haystack, start, end) {
-                    out.push((start, end));
-                }
-                from = end;
-            }
-            None => break,
-        }
-    }
-    out
-}
-
 /// Remove one protection, here, by a person's word.
 ///
 /// The one thing that takes a protection back. A rescan does not; forgetting a
@@ -1536,7 +1509,7 @@ pub(crate) fn add_alias(session: SessionId, token: String, alias: String) -> Api
             None => return Err(ApiError::UnknownToken),
         };
         let mut applied = 0u32;
-        for (from, to) in occurrences(s.original_str(), &alias) {
+        for (from, to) in text::occurrences(s.original_str(), &alias) {
             if s.protections.iter().any(|p| p.start < to && from < p.end) {
                 continue;
             }
@@ -1828,7 +1801,7 @@ fn rescan_with(
                     let selected = s.original_str().get(c.start..c.end).map(str::to_string);
                     let mut here = None;
                     if let Some(selected) = selected {
-                        for (from, to) in occurrences(s.original_str(), &selected) {
+                        for (from, to) in text::occurrences(s.original_str(), &selected) {
                             if s.protections.iter().any(|p| p.start < to && from < p.end) {
                                 continue;
                             }
