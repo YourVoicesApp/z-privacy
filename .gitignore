@@ -34,3 +34,11 @@ apps/flutter_app/rust_builder/cargokit/build_tool/pubspec.lock
 # a function beside the function.
 dist/
 __pycache__/
+
+# The name bank's tier 3 — every spelling one single city register ever used.
+#
+# 60,548 rows, 13.1 MB, and nothing loads them: `include_str!` carries only the
+# bank itself, and tier 3 exists so the next task does not have to download
+# four cities again. `scripts/build_de_names.py --fetch` writes it beside the
+# bank; git does not carry it, and the gate compares the bank alone.
+z_core/assets/de_names_v2_tier3.csv
