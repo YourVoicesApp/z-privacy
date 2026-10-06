@@ -209,6 +209,7 @@ void main() {
           packId: before.packId,
           language: before.language,
           firstRunDone: before.firstRunDone,
+          originalPanePercent: before.originalPanePercent,
           sessionOnly: before.sessionOnly,
         )));
     await settle(tester, rounds: 1);

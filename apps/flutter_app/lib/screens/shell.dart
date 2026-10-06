@@ -278,6 +278,7 @@ class _ShellState extends State<ZShell> {
             // picks the privacy pack». M7.10B shipped an English set and turned
             // that into a plain untruth on the first screen of the product.
             packId: language == 'de' ? 'de' : 'en',
+            originalPanePercent: config.originalPanePercent,
             language: language,
             firstRunDone: true,
             sessionOnly: config.sessionOnly,

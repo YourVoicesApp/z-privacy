@@ -114,7 +114,9 @@ fn nothing_of_the_user_s_work_reaches_the_settings_file() {
             "«{secret}» reached the unencrypted settings file:\n{text}"
         );
     }
-    // And the shape: a header and exactly the four allowed names.
+    // And the shape: a header and exactly the allowed names. The fifth arrived
+    // with 041-F — where the handle between the two columns was left — and it
+    // is a number between 20 and 80, which can name nobody.
     let keys: Vec<&str> = text
         .lines()
         .skip(1)
@@ -122,7 +124,13 @@ fn nothing_of_the_user_s_work_reaches_the_settings_file() {
         .collect();
     assert_eq!(
         keys,
-        ["schema_version", "first_run_completed", "ui_language", "default_privacy_pack"],
+        [
+            "schema_version",
+            "first_run_completed",
+            "ui_language",
+            "default_privacy_pack",
+            "original_pane_percent"
+        ],
         "the file holds the allowlist and nothing else"
     );
 

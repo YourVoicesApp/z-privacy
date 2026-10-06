@@ -220,6 +220,7 @@ void main() {
           revealSeconds: 20,
           autoLockMinutes: 15,
           packId: 'de',
+          originalPanePercent: 50,
           language: 'en',
           firstRunDone: false,
           sessionOnly: true,

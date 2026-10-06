@@ -63,6 +63,7 @@ class OriginalText extends StatefulWidget {
     this.focus,
     this.focusKey,
     this.onAsk,
+    this.onChoose,
   });
 
   final String text;
@@ -84,6 +85,15 @@ class OriginalText extends StatefulWidget {
   /// Tapping a protected word asks the one question this whole layer exists to
   /// answer: **why is this protected?**
   final void Function(Mark mark)? onAsk;
+
+  /// Tapping a word that is still **waiting** offers the choice, where the word
+  /// is. The owner, 6 October: «the suggested names must appear on the text
+  /// itself, not as a separate list, and the choices a small message that
+  /// disappears when it is pressed».
+  ///
+  /// The position is where the finger or the pointer went down, in global
+  /// coordinates, because that is what a bubble has to be anchored to.
+  final void Function(Mark mark, Offset at)? onChoose;
 
   @override
   State<OriginalText> createState() => _OriginalTextState();
@@ -114,6 +124,7 @@ class _OriginalTextState extends State<OriginalText> {
   /// callback they were built with, so a kept recognizer never calls into a
   /// build that has gone.
   List<InlineSpan>? _cached;
+  bool _cachedChoosable = false;
   String? _cachedText;
   List<Mark>? _cachedMarks;
   Span? _cachedFocus;
@@ -135,10 +146,12 @@ class _OriginalTextState extends State<OriginalText> {
     final same = _cached != null &&
         _cachedText == text &&
         _cachedFocus == focus &&
+        _cachedChoosable == (widget.onChoose != null) &&
         _cachedMarks != null &&
         listEquals(_cachedMarks, marks);
     if (same) return _cached!;
     _cached = _spans();
+    _cachedChoosable = widget.onChoose != null;
     _cachedText = text;
     _cachedMarks = List<Mark>.unmodifiable(marks);
     _cachedFocus = focus;
@@ -229,10 +242,18 @@ class _OriginalTextState extends State<OriginalText> {
     final isFocus = f != null && f.start == m.span.start && f.end == m.span.end;
     TapGestureRecognizer? tap;
     final ask = widget.onAsk;
-    if (ask != null && !suggested) {
+    final choose = widget.onChoose;
+    if (!suggested && ask != null) {
       // Read through the widget at tap time: this recognizer outlives the build
       // that made it, and a closure over `ask` would outlive it too.
       tap = TapGestureRecognizer()..onTap = () => widget.onAsk?.call(m);
+      _taps.add(tap);
+    } else if (suggested && choose != null) {
+      // A word still waiting answers a different question — not «why is this
+      // protected» but «what do you want done with it» — and it is answered
+      // where the word is.
+      tap = TapGestureRecognizer()
+        ..onTapUp = (details) => widget.onChoose?.call(m, details.globalPosition);
       _taps.add(tap);
     }
     return TextSpan(

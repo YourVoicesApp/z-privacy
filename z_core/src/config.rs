@@ -42,11 +42,12 @@ const SCHEMA_VERSION: u32 = 1;
 
 /// The whole allowlist, in one place. A reader and a writer both use it, and a
 /// gate counts it.
-const ALLOWED: [&str; 4] = [
+const ALLOWED: [&str; 5] = [
     "schema_version",
     "first_run_completed",
     "ui_language",
     "default_privacy_pack",
+    "original_pane_percent",
 ];
 
 /// The non-secret settings, as they sit in the file.
@@ -55,6 +56,14 @@ pub(crate) struct AppConfig {
     pub first_run_completed: bool,
     pub ui_language: String,
     pub default_privacy_pack: String,
+    /// How much of the Workspace's width the Original column takes, as a
+    /// percentage — the one thing on this list that is about a window.
+    ///
+    /// It lives here and not in the vault because the Workspace is drawn before
+    /// any vault exists, and a person who never makes one would lose the
+    /// handle's position at every launch. It names nothing of anybody's work:
+    /// it is a number between 20 and 80.
+    pub original_pane_percent: u32,
 }
 
 impl Default for AppConfig {
@@ -63,6 +72,9 @@ impl Default for AppConfig {
             first_run_completed: false,
             ui_language: "en".to_string(),
             default_privacy_pack: "de".to_string(),
+            // Half and half: the product's whole claim is that a person can
+            // compare the two columns, so neither starts larger than the other.
+            original_pane_percent: 50,
         }
     }
 }
@@ -87,10 +99,12 @@ impl AppConfig {
              schema_version={SCHEMA_VERSION}\n\
              first_run_completed={}\n\
              ui_language={}\n\
-             default_privacy_pack={}\n",
+             default_privacy_pack={}\n\
+             original_pane_percent={}\n",
             self.first_run_completed,
             self.ui_language,
             self.default_privacy_pack,
+            self.original_pane_percent.clamp(20, 80),
         )
     }
 
@@ -134,6 +148,13 @@ impl AppConfig {
                 "ui_language" if is_a_plain_tag(value) => out.ui_language = value.to_string(),
                 "default_privacy_pack" if is_a_plain_tag(value) => {
                     out.default_privacy_pack = value.to_string()
+                }
+                // A number, and a number in its own range: a file edited by
+                // hand cannot make a column disappear.
+                "original_pane_percent" => {
+                    if let Ok(percent) = value.parse::<u32>() {
+                        out.original_pane_percent = percent.clamp(20, 80);
+                    }
                 }
                 _ => {}
             }
@@ -201,11 +222,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_file_holds_four_names_and_no_others() {
+    fn the_file_holds_its_names_and_no_others() {
         let text = AppConfig {
             first_run_completed: true,
             ui_language: "de".to_string(),
             default_privacy_pack: "de".to_string(),
+            original_pane_percent: 55,
         }
         .to_text();
 
@@ -218,6 +240,12 @@ mod tests {
         assert_eq!(keys, ALLOWED, "the file's keys are the allowlist, in order");
         assert!(text.contains("schema_version=1"));
         assert!(text.contains("first_run_completed=true"));
+        // 041-F — the one window preference, written as a number in its range.
+        assert!(text.contains("original_pane_percent=55"));
+        let read = AppConfig::from_text(&text);
+        assert_eq!(read.original_pane_percent, 55, "the handle's place did not survive the file");
+        let silly = AppConfig::from_text(&text.replace("original_pane_percent=55", "original_pane_percent=0"));
+        assert_eq!(silly.original_pane_percent, 20, "a column could be made to disappear by hand");
     }
 
     #[test]
@@ -237,6 +265,7 @@ mod tests {
                 first_run_completed: true,
                 ui_language: bad.to_string(),
                 default_privacy_pack: "de".to_string(),
+                original_pane_percent: 50,
             };
             assert!(c.checked().is_err(), "«{bad}» should not be writable");
         }
@@ -246,6 +275,7 @@ mod tests {
                 first_run_completed: false,
                 ui_language: good.to_string(),
                 default_privacy_pack: good.to_string(),
+                original_pane_percent: 50,
             };
             assert!(c.checked().is_ok(), "«{good}» is a setting");
         }

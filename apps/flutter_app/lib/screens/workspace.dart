@@ -14,6 +14,8 @@
 //
 // They are side by side and typographically identical on purpose. The whole
 // claim of this product is that a person can compare them.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -62,6 +64,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   final _focusKey = GlobalKey();
   int? _wasFocused;
 
+  /// The word a person just pressed, and where on the screen they pressed it.
+  ///
+  /// The owner, 6 October: «the suggested names must appear on the text itself,
+  /// not as a separate list, and the choices a small message that disappears
+  /// when it is pressed». So the choice is a bubble at the word, and the review
+  /// panel is what somebody opens from the Review button when they want the
+  /// list of what is left — never what a press on a word opens.
+  Finding? _choosing;
+  Offset _choosingAt = Offset.zero;
+
+  void _closeBubble() {
+    if (_choosing != null) setState(() => _choosing = null);
+  }
+
   /// «Page 17» has to be a place you arrive at, not a label. When the review
   /// list points somewhere new, the column scrolls there after the frame that
   /// drew the anchor.
@@ -95,11 +111,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       builder: (context, _) => CallbackShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): widget.onHome,
+          // A bubble closes the way every small thing closes.
+          const SingleActivator(LogicalKeyboardKey.escape): _closeBubble,
         },
         child: Focus(
         autofocus: true,
         child: Scaffold(
-        body: Column(
+        body: Stack(
+          children: [
+        Column(
           children: [
             _TopBar(bench: bench, ground: widget.ground, onHome: widget.onHome),
             _Band(bench: bench, onVault: widget.onVault),
@@ -124,6 +144,19 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           said: _said,
                           focusKey: _focusKey,
                           onSay: (line) => setState(() => _said = line),
+                          onChoose: (mark, at) {
+                            // The finding behind the mark, by the place it
+                            // stands: a mark carries no id, and the span is
+                            // what the two share.
+                            final found = bench.findings.where(
+                              (f) => f.span.start == mark.span.start && f.span.end == mark.span.end,
+                            );
+                            if (found.isEmpty) return;
+                            setState(() {
+                              _choosing = found.first;
+                              _choosingAt = at;
+                            });
+                          },
                         ),
                       ),
                       // The names panel takes the same place as the review
@@ -141,6 +174,28 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 },
               ),
             ),
+          ],
+        ),
+        // The choice at the word. Over everything, because it belongs to the
+        // word and not to a column; and nothing else on this screen moves while
+        // it is open.
+        if (_choosing != null) ...[
+          Positioned.fill(
+            // A press anywhere else closes it and does nothing — the owner's
+            // «disappears when it is pressed» cuts both ways.
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _closeBubble,
+            ),
+          ),
+          ChoiceBubble(
+            bench: bench,
+            finding: _choosing!,
+            at: _choosingAt,
+            onVault: widget.onVault,
+            onDone: _closeBubble,
+          ),
+        ],
           ],
         ),
       ),
@@ -767,13 +822,14 @@ class _Band extends StatelessWidget {
 }
 
 /// The two columns.
-class _Columns extends StatelessWidget {
+class _Columns extends StatefulWidget {
   const _Columns({
     required this.bench,
     required this.ground,
     required this.said,
     required this.onSay,
     required this.focusKey,
+    required this.onChoose,
   });
 
   final Workbench bench;
@@ -781,63 +837,161 @@ class _Columns extends StatelessWidget {
   final String? said;
   final void Function(String) onSay;
   final GlobalKey focusKey;
+  final void Function(Mark mark, Offset at) onChoose;
+
+  @override
+  State<_Columns> createState() => _ColumnsState();
+}
+
+/// **The handle between the two columns.**
+///
+/// The owner, 6 October: «the ability to change the size of the two screens,
+/// the text screen and the result screen». Dragged with the mouse, and neither
+/// side may fall below [_floor] — the whole claim of this product is that a
+/// person can compare the two sides, and a column that has been dragged shut
+/// cannot be compared with anything.
+///
+/// Where it was left is a per-device preference and lives in `settings.zcfg`
+/// beside the first-run flag: the Workspace is drawn long before any vault
+/// exists, so the vault is the one place it could not live.
+class _ColumnsState extends State<_Columns> {
+  static const double _floor = 280;
+
+  /// The Original column, for the test that drags the handle.
+  static const originalPane = ValueKey<String>('workspace-original-pane');
+
+  /// What the file says, until a drag says otherwise. Null means «not yet read».
+  double? _percent;
+  bool _dragging = false;
 
   @override
   Widget build(BuildContext context) {
+    final bench = widget.bench;
+    final ground = widget.ground;
     final doc = bench.document;
     final safe = bench.payload;
+    final kept = (ground.config?.originalPanePercent ?? 50).toDouble();
+    final percent = _percent ?? kept;
 
-    return Row(
-      children: [
-        Expanded(
-          child: _Side(
-            eyebrow: 'Original — local only',
-            rule: 'Never sent to AI · Send cannot read this side',
-            tint: Zc.ink4,
-            footer: doc == null
-                ? null
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (said != null) _Said(said!),
-                      ActsBar(bench: bench, ground: ground, onSay: onSay),
-                    ],
-                  ),
-            child: doc == null
-                ? const _Empty('Nothing is open.')
-                : Builder(
-                    builder: (inner) => OriginalText(
-                      text: doc.text,
-                      marks: doc.marks,
-                      focus: bench.focusedFinding?.span,
-                      focusKey: focusKey,
-                      onSelection: (start, end) => bench.select(
-                        end > start ? Span(start: start, end: end) : null,
+    return LayoutBuilder(
+      builder: (context, box) {
+        // The handle is three pixels of grab and one of line. Below the floor
+        // on either side it simply does not go: a column dragged shut is a
+        // comparison nobody can make.
+        const handle = 7.0;
+        final usable = box.maxWidth - handle;
+        final lowest = usable <= _floor * 2 ? usable / 2 : _floor;
+        final left = (usable * percent / 100).clamp(lowest, usable - lowest);
+
+        return Row(
+          children: [
+            SizedBox(
+              // Named, so a test can measure the column itself rather than
+              // something inside it.
+              key: _ColumnsState.originalPane,
+              width: left,
+              child: _Side(
+                eyebrow: 'Original — local only',
+                rule: 'Never sent to AI · Send cannot read this side',
+                tint: Zc.ink4,
+                footer: doc == null
+                    ? null
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.said != null) _Said(widget.said!),
+                          ActsBar(bench: bench, ground: ground, onSay: widget.onSay),
+                        ],
                       ),
-                      // Tapping a protected word asks the question this whole
-                      // layer exists to answer.
-                      onAsk: (mark) => _ask(inner, bench, doc, mark),
+                child: doc == null
+                    ? const _Empty('Nothing is open.')
+                    : Builder(
+                        builder: (inner) => OriginalText(
+                          text: doc.text,
+                          marks: doc.marks,
+                          focus: bench.focusedFinding?.span,
+                          focusKey: widget.focusKey,
+                          onSelection: (start, end) => bench.select(
+                            end > start ? Span(start: start, end: end) : null,
+                          ),
+                          // Tapping a protected word asks the question this
+                          // whole layer exists to answer.
+                          onAsk: (mark) => _ask(inner, bench, doc, mark),
+                          // And tapping one that is still waiting answers it.
+                          onChoose: widget.onChoose,
+                        ),
+                      ),
+              ),
+            ),
+            MouseRegion(
+              cursor: SystemMouseCursors.resizeColumn,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onHorizontalDragStart: (_) => setState(() => _dragging = true),
+                onHorizontalDragUpdate: (drag) {
+                  final wanted = (left + drag.delta.dx).clamp(lowest, usable - lowest);
+                  setState(() => _percent = wanted / usable * 100);
+                },
+                onHorizontalDragEnd: (_) {
+                  setState(() => _dragging = false);
+                  // `_percent` and not the `percent` this build closed over:
+                  // that one is where the handle **was** when the drag began,
+                  // and writing it back remembers the wrong place. Measured by
+                  // the test that drags twice.
+                  _remember(_percent ?? percent);
+                },
+                child: SizedBox(
+                  width: handle,
+                  child: Center(
+                    child: Container(
+                      width: 1,
+                      color: _dragging ? Zc.clay : Zc.line,
                     ),
                   ),
-          ),
-        ),
-        Container(width: 1, color: Zc.line),
-        Expanded(
-          child: _Side(
-            eyebrow: 'Safe — AI will receive',
-            rule: 'The request itself, not a preview of it',
-            tint: Zc.clay,
-            trailing: _ChipSwitch(bench: bench),
-            footer: safe == null
-                ? null
-                : _SafeFooter(payload: safe, bench: bench, ground: ground),
-            child: safe == null
-                ? const _Empty('There is nothing to send yet.')
-                : SafeText(text: safe.text, chips: bench.chips),
-          ),
-        ),
-      ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: _Side(
+                eyebrow: 'Safe — AI will receive',
+                rule: 'The request itself, not a preview of it',
+                tint: Zc.clay,
+                trailing: _ChipSwitch(bench: bench),
+                footer: safe == null
+                    ? null
+                    : _SafeFooter(payload: safe, bench: bench, ground: ground),
+                child: safe == null
+                    ? const _Empty('There is nothing to send yet.')
+                    : SafeText(text: safe.text, chips: bench.chips),
+              ),
+            ),
+          ],
+        );
+      },
     );
+  }
+
+  /// Where the handle was left, kept for the next time this document is open.
+  ///
+  /// Written through the core's settings, which is the only durable per-device
+  /// store this app has and already holds the first-run flag. Nothing of the
+  /// person's work goes with it: it is a number between 20 and 80, and the core
+  /// clamps it again on the way in.
+  void _remember(double percent) {
+    final config = widget.ground.config;
+    if (config == null) return;
+    final rounded = percent.round().clamp(20, 80);
+    if (rounded == config.originalPanePercent) return;
+    unawaited(widget.ground.saveConfig(Settings(
+      scanOnImport: config.scanOnImport,
+      revealSeconds: config.revealSeconds,
+      autoLockMinutes: config.autoLockMinutes,
+      packId: config.packId,
+      language: config.language,
+      firstRunDone: config.firstRunDone,
+      originalPanePercent: rounded,
+      sessionOnly: config.sessionOnly,
+    )));
   }
 }
 

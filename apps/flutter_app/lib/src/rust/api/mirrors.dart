@@ -1866,6 +1866,11 @@ class SessionId {
 }
 
 class Settings {
+  /// How much of the Workspace's width the Original column takes, 20 to 80.
+  /// A window's preference, kept per device beside the first-run flag, and
+  /// readable with no vault — the two columns are drawn long before one.
+  final int originalPanePercent;
+
   /// Scan the moment a document arrives, with no dialog. On by default: the
   /// boards' rule is that nobody has to press anything to be protected.
   final bool scanOnImport;
@@ -1902,6 +1907,7 @@ class Settings {
   final bool sessionOnly;
 
   const Settings({
+    required this.originalPanePercent,
     required this.scanOnImport,
     required this.revealSeconds,
     required this.autoLockMinutes,
@@ -1913,6 +1919,7 @@ class Settings {
 
   @override
   int get hashCode =>
+      originalPanePercent.hashCode ^
       scanOnImport.hashCode ^
       revealSeconds.hashCode ^
       autoLockMinutes.hashCode ^
@@ -1926,6 +1933,7 @@ class Settings {
       identical(this, other) ||
       other is Settings &&
           runtimeType == other.runtimeType &&
+          originalPanePercent == other.originalPanePercent &&
           scanOnImport == other.scanOnImport &&
           revealSeconds == other.revealSeconds &&
           autoLockMinutes == other.autoLockMinutes &&

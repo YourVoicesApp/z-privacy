@@ -520,13 +520,21 @@ fn zcfg_remembers_the_first_run_on_a_device_with_no_vault() {
     assert!(back.first_run_done, "and the first folder remembers");
     assert_eq!(back.language, "de");
 
-    // The file itself: readable, and holding only the four allowed names.
+    // The file itself: readable, and holding only the allowed names. 041-F
+    // added the fifth — where the handle between the two columns was left —
+    // which is a window's preference and names nothing of anybody's work.
     let text = std::fs::read_to_string(dir.join("settings.zcfg")).expect("the file exists");
     assert!(text.starts_with("ZCFG1"));
-    for name in ["schema_version", "first_run_completed", "ui_language", "default_privacy_pack"] {
+    for name in [
+        "schema_version",
+        "first_run_completed",
+        "ui_language",
+        "default_privacy_pack",
+        "original_pane_percent",
+    ] {
         assert!(text.contains(name), "{name} is missing from {text}");
     }
-    assert_eq!(text.lines().count(), 5, "a header and four settings, nothing else:\n{text}");
+    assert_eq!(text.lines().count(), 6, "a header and five settings, nothing else:\n{text}");
 
     let _ = std::fs::remove_dir_all(&dir);
 }

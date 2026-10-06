@@ -461,6 +461,7 @@ pub(crate) fn settings() -> ApiResult<Settings> {
             pack_id: file.default_privacy_pack,
             language: file.ui_language,
             first_run_done: file.first_run_completed,
+            original_pane_percent: file.original_pane_percent,
             // Says only what it has always said: whether the settings that need
             // a vault will survive the app closing. The three above always do.
             session_only: kept_for_this_run,
@@ -487,6 +488,10 @@ pub(crate) fn save_settings(settings: Settings) -> ApiResult<Settings> {
         first_run_completed: settings.first_run_done,
         ui_language: stored.language.clone(),
         default_privacy_pack: stored.pack_id.clone(),
+        // Bounded here as the reveal is: a screen that sent 0 would hide a
+        // column, and the one thing this product may not do is stop a person
+        // comparing the two sides.
+        original_pane_percent: settings.original_pane_percent.clamp(20, 80),
     };
     let written = with_core(|core| core.config.save(file))?;
 
@@ -512,6 +517,7 @@ pub(crate) fn save_settings(settings: Settings) -> ApiResult<Settings> {
         pack_id: written.default_privacy_pack,
         language: written.ui_language,
         first_run_done: written.first_run_completed,
+        original_pane_percent: written.original_pane_percent,
         session_only: !sealed,
     })
 }
