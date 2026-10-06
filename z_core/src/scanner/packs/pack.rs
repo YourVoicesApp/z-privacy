@@ -161,6 +161,13 @@ pub(crate) struct LanguagePack {
     /// is not part of the name, and a signature rule that did not know them
     /// read «Markus Weber Geschäftsführer» as a three-word name.
     pub roles: &'static [&'static str],
+    /// What stands between a role and a name in «<role> är X».
+    ///
+    /// A word of the language, so it is data. Empty in a pack means that shape
+    /// is not read in that language — which is how 038-B/2 is Swedish only and
+    /// German is left exactly where it was, by construction rather than by an
+    /// `if`.
+    pub copulas: &'static [&'static str],
     /// The legal forms a company name ends with: «GmbH», «AB».
     pub company_forms: &'static [&'static str],
     /// Conjunctions a company name may contain: «Müller **und** Partner».

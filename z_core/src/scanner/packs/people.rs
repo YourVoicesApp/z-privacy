@@ -43,6 +43,7 @@ pub(crate) fn scan_with(
     dictionary_names(&words, pack, taught, &mut out);
     reversed_pairs(text, &words, pack, taught, &mut out);
     signatures(&words, pack, &mut out);
+    roles_beside_a_name(&words, pack, taught, &mut out);
     companies(&words, pack, &mut out);
     // And what this language needs that no other can use, each named in its
     // pack so the list can be counted.
@@ -144,6 +145,151 @@ fn signatures(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>)
             why.to_string(),
         ));
     }
+}
+
+/// A name beside what the person is, in a running sentence.
+///
+/// 038-B/2, from the owner's Swedish supplement. Two shapes, and they are the
+/// two a prose page uses:
+///
+/// ```text
+/// Cicek Cavdar, projektledare        a name, a comma, the part they play
+/// Projektledare är Cicek Cavdar      the part they play, «är», the name
+/// ```
+///
+/// **Suggest, never Auto**, and that is the whole weight of the rule: a role is
+/// strong evidence that the capitalised words beside it are a person, and it is
+/// not proof. «Foto:» is proof, because nothing but a photographer is written
+/// after it; «professor» stands next to buildings, prizes and chairs.
+///
+/// Both shapes are read from pack **data** — the roles and the copula — so a
+/// language with an empty list is left exactly as it was.
+fn roles_beside_a_name(
+    words: &[Word<'_>],
+    pack: &LanguagePack,
+    taught: &[(String, bool)],
+    out: &mut Vec<Candidate>,
+) {
+    if pack.roles.is_empty() {
+        return;
+    }
+    let is_role = |word: &str| {
+        let n = bare_keep_dot(word).trim_end_matches([',', '.', ';', ':']).to_lowercase();
+        pack.roles.iter().any(|r| *r == n)
+    };
+
+    for (i, word) in words.iter().enumerate() {
+        // «<role> är X» — the role opens the sentence, so it must be the whole
+        // of its word and the copula has to follow it.
+        if is_role(word.text) && !word.text.ends_with(',') {
+            let copula_ok = words
+                .get(i + 1)
+                .is_some_and(|w| !w.newline_before && pack.copulas.iter().any(|c| *c == bare(w.text).to_lowercase()));
+            if copula_ok {
+                // **The copula carries this one.** «Projektledare är X Y» is
+                // a sentence that asserts the person, so a name-shaped pair is
+                // enough — and it has to be, measured: «Cicek Cavdar» is in no
+                // Swedish list and ends like nothing, and he is the project
+                // leader the supplement names. It stays **Suggest**, so what
+                // this buys is a question, never a verdict.
+                //
+                // And it is Swedish only without an `if` about Swedish: the
+                // copula is pack data, and German's list is empty.
+                if let Some((from, to)) = pair_at(words, i + 2, pack, taught, false) {
+                    out.push(candidate(
+                        pack,
+                        from,
+                        to,
+                        Kind::Person,
+                        Confidence::Suggest,
+                        "role-beside-a-name",
+                        format!(
+                            "«{}» names what a person does, and two names follow it — offered for your word",
+                            bare(word.text).to_lowercase()
+                        ),
+                    ));
+                }
+            }
+        }
+        // «X, <role>» — the comma is the evidence, and it is written on the
+        // name's last word, so the role is looked for after it.
+        if word.text.ends_with(',') {
+            let role_follows = words.get(i + 1).is_some_and(|w| !w.newline_before && is_role(w.text));
+            if !role_follows {
+                continue;
+            }
+            // Walk back over the capitalised words that end here.
+            let mut first = i;
+            while first > 0 {
+                let Some(prev) = words.get(first - 1) else { break };
+                if !name_shaped(prev.text, pack) || prev.newline_before || prev.text.ends_with(',') {
+                    break;
+                }
+                first -= 1;
+            }
+            // **The comma does not carry as much.** A role after a comma is
+            // weaker evidence than a role asserting with a verb, and this shape
+            // reads in German too — the roles are shared. So here the pair must
+            // still be one the dictionary or the person knows, which is what
+            // keeps German exactly where it was.
+            if let Some((from, to)) = pair_at(words, first, pack, taught, true) {
+                if from <= word.start {
+                    out.push(candidate(
+                        pack,
+                        from,
+                        to,
+                        Kind::Person,
+                        Confidence::Suggest,
+                        "role-beside-a-name",
+                        format!(
+                            "«{}» names what a person does, and it follows two names — offered for your word",
+                            bare(words.get(i + 1).map_or("", |w| w.text)).to_lowercase()
+                        ),
+                    ));
+                }
+            }
+        }
+    }
+}
+
+/// Two name-shaped words starting here, as a byte range.
+///
+/// `require_known` is the difference between the two shapes this rule reads:
+/// with it, the pair must be one the dictionary or the person knows — the same
+/// conjunction the plain pair rule asks for, so a comma plus a role is not a
+/// new way to call any two capitalised words a person. Without it, the
+/// sentence's own verb is the evidence.
+fn pair_at(
+    words: &[Word<'_>],
+    first: usize,
+    pack: &LanguagePack,
+    taught: &[(String, bool)],
+    require_known: bool,
+) -> Option<(usize, usize)> {
+    let a = words.get(first)?;
+    let b = words.get(first + 1)?;
+    // A page break, and not a line break: the same line 038-I drew, and the
+    // same mistake it found — `page_break_before` is its own fact because a
+    // form feed is not a newline, so asking for both would never refuse
+    // anything. A wrapped line is one sentence; the bottom of a page and the
+    // top of the next are not.
+    if b.page_break_before {
+        return None;
+    }
+    if !(name_shaped(a.text, pack) && name_shaped(b.text, pack)) {
+        return None;
+    }
+    if !require_known {
+        return Some((a.start, trimmed_end(b)));
+    }
+    let names = de_names::dictionary_of(pack.locale, pack.names);
+    let given = bare(a.text).trim_end_matches(['.', ',', ';', ':']);
+    let family = bare(b.text).trim_end_matches(['.', ',', ';', ':']);
+    let known_given = names.given(given) || taught.iter().any(|(t, f)| !f && t.eq_ignore_ascii_case(given));
+    let known_family = names.family(family)
+        || taught.iter().any(|(t, f)| *f && t.eq_ignore_ascii_case(family))
+        || ends_like_a_family_name(b.text, pack);
+    (known_given || known_family).then(|| (a.start, trimmed_end(b)))
 }
 
 /// Is this word shaped like a name? A capital letter, then letters — a hyphen

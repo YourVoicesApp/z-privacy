@@ -30,6 +30,18 @@ const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
     // the same decision German made for its own address label.
     ("sv-10", "adress", Kind::Address, Validator::Any, Confidence::Suggest),
     ("sv-11", "kontaktperson", Kind::Person, Validator::Any, Confidence::Suggest),
+    // 038-B/2, from the owner's own Swedish supplement: a magazine credits the
+    // photographer beside the picture, and the three labels it uses are these.
+    // A credit is **proof** — nobody writes «Foto:» before anything but a
+    // person — so these protect without asking, and they are the first rows in
+    // this folder to do that for a name.
+    //
+    // `NamePair` and not `Name`, measured on the same page: «Bild: Stockholm»
+    // is a caption, and one capitalised word after these labels is not a
+    // credit. The price of Auto is a given name **and** a surname.
+    ("sv-12", "foto", Kind::Person, Validator::NamePair, Confidence::Auto),
+    ("sv-13", "fotograf", Kind::Person, Validator::NamePair, Confidence::Auto),
+    ("sv-14", "bild", Kind::Person, Validator::NamePair, Confidence::Auto),
 ];
 
 /// What Swedish puts between a label and a name.

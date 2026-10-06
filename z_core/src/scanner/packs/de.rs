@@ -54,6 +54,10 @@ pub(crate) fn pack() -> LanguagePack {
         stop_words: STOP_WORDS,
         closings: CLOSINGS,
         roles: ROLES,
+        // German is left exactly where it was: 038-B/2 is measured on a
+        // Swedish page, and «ist» will be added the day it is measured on a
+        // German one.
+        copulas: &[],
         company_forms: COMPANY_FORMS,
         conjunctions: CONJUNCTIONS,
         // German surnames are not built from an ending. «-mann» and «-berg» end

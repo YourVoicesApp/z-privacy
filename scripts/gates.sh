@@ -687,6 +687,23 @@ else
   skip "the second golden: a public book keeps its own words" "the book is not on this machine"
 fi
 
+# ------------------------------------------------- the Swedish supplement
+# SV-16: ten pages of a Swedish research magazine, the owner's own file. The
+# first Swedish document with a guard of its own, added with 038-B/2 — which was
+# measured here and moved the numbers by name: auto 3 → 13 and people 27 → 36,
+# five photographers who had been in the clear and four names offered beside
+# what the person does. Not in the repository: a skip, not a pass.
+SUPP="${ZPRIVACY_SWEDISH_SUPPLEMENT:-$HOME/Documents/framtidens-forskning-p1-10.pdf}"
+if [ -f "$SUPP" ]; then
+  if cargo test --quiet --test the_swedish_supplement >/dev/null 2>&1; then
+    pass "the Swedish supplement: the credits are protected, the captions are not"
+  else
+    fail "the Swedish supplement: the credits are protected, the captions are not (cargo test --test the_swedish_supplement)"
+  fi
+else
+  skip "the Swedish supplement: the credits are protected, the captions are not" "the supplement is not on this machine"
+fi
+
 # A green run proves nothing unless the invariant tests actually exist. A test
 # that is quietly deleted takes its invariant with it and the suite still passes.
 for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty \
@@ -713,6 +730,11 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_pair_rule_reads_across_a_wrapped_line \
          the_pair_rule_does_not_read_across_a_page \
          two_words_on_two_lines_are_still_two_words \
+         a_photo_credit_is_a_person_without_being_asked a_caption_is_not_a_credit \
+         a_role_beside_a_name_is_offered_not_decided \
+         the_column_shows_what_the_page_did_to_the_names \
+         discovery_is_still_blind_to_a_break the_german_pack_reads_none_of_this \
+         the_credits_are_protected_and_the_captions_are_not \
          remove_protection_here_leaves forget_from_this_profile_keeps \
          forget_everywhere_reaches nothing_taught_reports_no_reach \
          locked_by_hand locks_itself does_not_postpone_the_lock tell_one_story \
