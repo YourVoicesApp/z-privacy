@@ -127,14 +127,7 @@ void main() {
     await settle(tester);
 
     // Past the first run, the way the routing test does it.
-    await tester.tap(find.text('English'));
-    await settle(tester, rounds: 1);
-    await tester.tap(find.text('Start'));
-    await settle(tester);
-    // 041-E — the first run offers a vault before any work, and «Later» is a
-    // whole answer. These tests are about what comes after it.
-    await tester.tap(find.text('Later'));
-    await settle(tester);
+    await pastTheFirstRun(tester);
 
     // A session typed by hand, carrying something a general rule will protect
     // on its own — no vault, no pack of any language needed.
@@ -257,14 +250,7 @@ void main() {
     // The language is chosen first because there is no Start before one: this
     // test is about which screen the shell picks, and it has to make the
     // page's own decision to get past it.
-    await tester.tap(find.text('English'));
-    await settle(tester, rounds: 1);
-    await tester.tap(find.text('Start'));
-    await settle(tester);
-    // 041-E — the first run offers a vault before any work, and «Later» is a
-    // whole answer. These tests are about what comes after it.
-    await tester.tap(find.text('Later'));
-    await settle(tester);
+    await pastTheFirstRun(tester);
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.byType(FirstRunScreen), findsNothing);
     expect(find.text('Open Z Vault'), findsOneWidget);
@@ -276,4 +262,28 @@ class _Shown {
   _Shown(this.remainingMs);
 
   final int remainingMs;
+}
+
+/// Past the first run, the way a person goes through it since 041-N: the
+/// language, then the vault — which is the only way on, because everything Z
+/// learns while they work is kept in it.
+Future<void> pastTheFirstRun(WidgetTester tester, {String language = 'English', String start = 'Start'}) async {
+  await tester.tap(find.text(language));
+  await settle(tester, rounds: 1);
+  await tester.tap(find.text(start));
+  await settle(tester);
+  await tester.tap(find.text('Create a vault'));
+  await settle(tester);
+  // The passphrase goes in through the core rather than through the two
+  // fields: a widget that awaits the core does not resume under `testWidgets`,
+  // which is why no test in this app presses «Create the vault» itself. What
+  // is being tested here is the routing either side of it.
+  await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort für den Tresor'));
+  await settle(tester);
+  // The vault screen is a door, not a room: «Back» is what reaches Home.
+  final back = find.text('Back');
+  if (back.evaluate().isNotEmpty) {
+    await tester.tap(back.first);
+    await settle(tester, rounds: 8);
+  }
 }

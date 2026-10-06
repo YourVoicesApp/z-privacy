@@ -46,7 +46,7 @@ void main() {
           // A finding is focused, as one is through a whole review.
           focus: const Span(start: 28, end: 38),
           focusKey: key,
-          onSelection: (_, __) {},
+          onSelection: (_, _) {},
         ),
       ),
     ));
