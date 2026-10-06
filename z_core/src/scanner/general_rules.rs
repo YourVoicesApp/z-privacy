@@ -263,6 +263,18 @@ fn phones(text: &str, out: &mut Vec<Candidate>) {
         } else {
             digits += 1; // the leading 0
         }
+        // A date is not a telephone number, whatever its digits add up to.
+        //
+        // Measured on a payslip: «01.02.2019», «02.11.1979» and «09.05.1985»
+        // were offered as local numbers, because a German date that begins with
+        // a zero is eight digits with separators between them — which is the
+        // whole of the local-phone shape. Three false questions on one page,
+        // each about a date the document itself calls a date.
+        let run = text.get(i..last_digit_end).unwrap_or_default();
+        if looks_like_a_date(run) {
+            i += 1;
+            continue;
+        }
         if (8..=15).contains(&digits) && boundary_after(bytes, last_digit_end) {
             if starts_intl {
                 out.push(candidate(
@@ -600,4 +612,24 @@ fn tax_id_ok(digits: &str) -> bool {
     }
     let wanted = (11 - product) % 10;
     b.get(10).is_some_and(|d| u32::from(d - b'0') == wanted)
+}
+
+/// `DD.MM.YYYY` and `D.M.YYYY`, the two ways a German writes a date.
+///
+/// Only a date: `12.3456.78` is not one, and neither is a run with a space or a
+/// slash in it — those stay a telephone number's business.
+fn looks_like_a_date(run: &str) -> bool {
+    let parts: Vec<&str> = run.split('.').collect();
+    let [day, month, year] = parts[..] else { return false };
+    if !(1..=2).contains(&day.len()) || !(1..=2).contains(&month.len()) || year.len() != 4 {
+        return false;
+    }
+    if !run.bytes().all(|b| b.is_ascii_digit() || b == b'.') {
+        return false;
+    }
+    let (Ok(day), Ok(month), Ok(_year)) = (day.parse::<u32>(), month.parse::<u32>(), year.parse::<u32>())
+    else {
+        return false;
+    };
+    (1..=12).contains(&month) && day >= 1 && day <= days_in_month(month)
 }

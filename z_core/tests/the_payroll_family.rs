@@ -121,3 +121,31 @@ fn what_eleven_digits_are_not() {
     let doc = "IBAN DE89 3704 0044 0532 0130 00 und Telefon 089 1234 5699.";
     assert!(kinds_of(doc, Kind::TaxId).is_empty(), "an IBAN or a phone was read as a tax ID");
 }
+
+// ------------------------------------------------------- the phone stops
+
+/// A date is not a telephone number, and a payslip is full of dates.
+///
+/// Measured on DE-6 before this: «01.02.2019», «02.11.1979» and «09.05.1985»
+/// were offered as local telephone numbers, because a German date that begins
+/// with a zero is eight digits with separators between them — which is exactly
+/// what the local-phone shape is. Three false questions on one page, each of
+/// them a date the document says is a date.
+#[test]
+fn a_german_date_is_never_a_telephone_number() {
+    for date in ["01.02.2019", "02.11.1979", "09.05.1985", "08.12.2026", "01.01.2000"] {
+        let doc = format!("Eintrittsdatum: {date} laut Vertrag.");
+        let got = kinds_of(&doc, Kind::Phone);
+        assert!(got.is_empty(), "«{date}» was offered as a telephone number: {got:?}");
+    }
+}
+
+/// And the telephone numbers are still telephone numbers.
+#[test]
+fn the_real_numbers_still_read_as_numbers() {
+    let doc = "Durchwahl 089 1234 5699, mobil +49 171 2345678.";
+    let got = kinds_of(doc, Kind::Phone);
+    assert_eq!(got.len(), 2, "a real number stopped being one: {got:?}");
+    assert!(got.iter().any(|(state, text)| *state == MarkState::Protected && text == "+49 171 2345678"));
+    assert!(got.iter().any(|(_, text)| text == "089 1234 5699"));
+}
