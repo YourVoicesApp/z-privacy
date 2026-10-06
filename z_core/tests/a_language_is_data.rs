@@ -56,9 +56,21 @@ fn a_swedish_letter_is_read_by_a_pack_that_is_only_data() {
     );
     // And what a list of 150 does not reach is a candidate, which is the
     // Phase 2 mechanism working in a language it was not written for.
+    //
+    // 038-B/1 moved the line this test draws, and moved it on purpose:
+    // «Lindberg» is not in the 150 either, but it **ends** like a Swedish
+    // surname, and that is now a signal of a dictionary hit's strength. So the
+    // word that is nobody until somebody says so has to be one that ends like
+    // nothing — «Mazur» is such a word, and it stands in the Swedish magazine
+    // SV-16 as a name to look at.
+    assert_eq!(
+        people("sv", "Avtalet undertecknades av Anna Lindberg i Stockholm."),
+        vec!["Anna Lindberg".to_string()],
+        "«-berg» is how a Swedish surname ends, and the pair rule reads it"
+    );
     assert!(
-        people("sv", "Avtalet undertecknades av Anna Lindberg i Stockholm.").is_empty(),
-        "«Lindberg» is not among the 150 surnames, so it is nobody yet"
+        people("sv", "Avtalet undertecknades av Anna Mazur i Stockholm.").is_empty(),
+        "«Mazur» is in no list and ends like nothing, so it is nobody yet"
     );
     assert_eq!(
         people("sv", "Med vänliga hälsningar\nErik Johansson"),

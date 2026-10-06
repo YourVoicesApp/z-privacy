@@ -156,6 +156,15 @@ pub(crate) struct LanguagePack {
     pub company_forms: &'static [&'static str],
     /// Conjunctions a company name may contain: «Müller **und** Partner».
     pub conjunctions: &'static [&'static str],
+    /// Endings that make a word a surname in this language, whatever dictionary
+    /// knows it — Swedish `-sson`, `-ström`, `-berg`.
+    ///
+    /// The owner's sentence: «every word ending in son is a surname in Sweden».
+    /// It is a **signal**, exactly as a dictionary hit is: it can make the
+    /// scanner offer a name it would have walked past, and it can never protect
+    /// one by itself. Empty for a language whose surnames are not built this
+    /// way — German's is empty, and that is why nothing German moves.
+    pub family_suffixes: &'static [&'static str],
     /// Which half comes first.
     #[allow(dead_code, reason = "see NameOrder: declared, and nothing branches on it yet")]
     pub order: NameOrder,
