@@ -32,6 +32,14 @@ pub(crate) struct Word<'a> {
     /// line, and neither does a labelled value. Without it, «Ansprechpartner:
     /// Herr Thomas Müller\nTelefon:» reads as a three-word name.
     pub newline_before: bool,
+    /// True when a **page** ended between this word and the one before it.
+    ///
+    /// A different fact from a line break, and 038-I is why it had to become
+    /// one: a name wrapped at the end of a line is still one name, and a rule
+    /// may read across it — but the bottom of a page and the top of the next
+    /// are separated by whatever the page carries in between, so a word there
+    /// is not the neighbour it looks like.
+    pub page_break_before: bool,
 }
 
 /// Is this word a label — «Telefon:», «BIC:» — rather than a value?
@@ -55,6 +63,7 @@ pub(crate) fn words(text: &str) -> Vec<Word<'_>> {
                 end,
                 text: token,
                 newline_before: gap.contains('\n'),
+                page_break_before: gap.contains('\u{c}'),
             });
             index = end;
         }

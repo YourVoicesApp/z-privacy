@@ -430,8 +430,16 @@ fn dictionary_names(
         let (Some(first), Some(second)) = (words.get(i), words.get(i + 1)) else { break };
         let given = bare(first.text).trim_end_matches(['.', ',', ';', ':']);
         let family = bare(second.text).trim_end_matches(['.', ',', ';', ':']);
+        // **A wrapped line does not break the pair (038-I).** From his file:
+        // «Sven\nNelander» is one person, and the rule used to refuse the pair
+        // for the line break alone. What still refuses it is a **page** break:
+        // the last word of one page and the first of the next are not
+        // neighbours, whatever the whitespace between them looks like.
+        //
+        // The span then runs across the break, so the payload carries the name
+        // as one token rather than two halves — which is the rest of 038-I.
         if !(name_shaped(first.text, pack) && name_shaped(second.text, pack))
-            || second.newline_before
+            || second.page_break_before
             || pack.function_words.contains(&given.to_lowercase().as_str())
             || !(names.given(given) || taught_given(given))
             || !(names.family(family) || taught_family(family) || ends_like_a_family_name(second.text, pack))
