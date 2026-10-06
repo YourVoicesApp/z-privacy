@@ -4035,6 +4035,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<PageEdge> dco_decode_list_page_edge(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_page_edge).toList();
+  }
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as List<int>;
@@ -4347,6 +4353,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PageEdge dco_decode_page_edge(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return PageEdge(at: dco_decode_u_32(arr[0]), page: dco_decode_u_32(arr[1]));
+  }
+
+  @protected
   PayloadHandle dco_decode_payload_handle(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -4363,12 +4378,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PayloadView dco_decode_payload_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return PayloadView(
       text: dco_decode_String(arr[0]),
       protectedCount: dco_decode_u_32(arr[1]),
       openSuggestions: dco_decode_u_32(arr[2]),
+      pageEdges: dco_decode_list_page_edge(arr[3]),
     );
   }
 
@@ -4714,17 +4730,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return Settings(
       originalPanePercent: dco_decode_u_32(arr[0]),
-      scanOnImport: dco_decode_bool(arr[1]),
-      revealSeconds: dco_decode_u_32(arr[2]),
-      autoLockMinutes: dco_decode_u_32(arr[3]),
-      packId: dco_decode_String(arr[4]),
-      language: dco_decode_String(arr[5]),
-      firstRunDone: dco_decode_bool(arr[6]),
-      sessionOnly: dco_decode_bool(arr[7]),
+      columnsInStep: dco_decode_bool(arr[1]),
+      scanOnImport: dco_decode_bool(arr[2]),
+      revealSeconds: dco_decode_u_32(arr[3]),
+      autoLockMinutes: dco_decode_u_32(arr[4]),
+      packId: dco_decode_String(arr[5]),
+      language: dco_decode_String(arr[6]),
+      firstRunDone: dco_decode_bool(arr[7]),
+      sessionOnly: dco_decode_bool(arr[8]),
     );
   }
 
@@ -5611,6 +5628,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<PageEdge> sse_decode_list_page_edge(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <PageEdge>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_page_edge(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -6106,6 +6135,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PageEdge sse_decode_page_edge(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_at = sse_decode_u_32(deserializer);
+    var var_page = sse_decode_u_32(deserializer);
+    return PageEdge(at: var_at, page: var_page);
+  }
+
+  @protected
   PayloadHandle sse_decode_payload_handle(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_u_32(deserializer);
@@ -6124,10 +6161,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_text = sse_decode_String(deserializer);
     var var_protectedCount = sse_decode_u_32(deserializer);
     var var_openSuggestions = sse_decode_u_32(deserializer);
+    var var_pageEdges = sse_decode_list_page_edge(deserializer);
     return PayloadView(
       text: var_text,
       protectedCount: var_protectedCount,
       openSuggestions: var_openSuggestions,
+      pageEdges: var_pageEdges,
     );
   }
 
@@ -6492,6 +6531,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings sse_decode_settings(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_originalPanePercent = sse_decode_u_32(deserializer);
+    var var_columnsInStep = sse_decode_bool(deserializer);
     var var_scanOnImport = sse_decode_bool(deserializer);
     var var_revealSeconds = sse_decode_u_32(deserializer);
     var var_autoLockMinutes = sse_decode_u_32(deserializer);
@@ -6501,6 +6541,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_sessionOnly = sse_decode_bool(deserializer);
     return Settings(
       originalPanePercent: var_originalPanePercent,
+      columnsInStep: var_columnsInStep,
       scanOnImport: var_scanOnImport,
       revealSeconds: var_revealSeconds,
       autoLockMinutes: var_autoLockMinutes,
@@ -7347,6 +7388,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_page_edge(
+    List<PageEdge> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_page_edge(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_loose(
     List<int> self,
     SseSerializer serializer,
@@ -7781,6 +7834,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_page_edge(PageEdge self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.at, serializer);
+    sse_encode_u_32(self.page, serializer);
+  }
+
+  @protected
   void sse_encode_payload_handle(PayloadHandle self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self.id, serializer);
@@ -7794,6 +7854,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.text, serializer);
     sse_encode_u_32(self.protectedCount, serializer);
     sse_encode_u_32(self.openSuggestions, serializer);
+    sse_encode_list_page_edge(self.pageEdges, serializer);
   }
 
   @protected
@@ -8073,6 +8134,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_settings(Settings self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self.originalPanePercent, serializer);
+    sse_encode_bool(self.columnsInStep, serializer);
     sse_encode_bool(self.scanOnImport, serializer);
     sse_encode_u_32(self.revealSeconds, serializer);
     sse_encode_u_32(self.autoLockMinutes, serializer);

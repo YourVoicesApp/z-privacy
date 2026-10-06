@@ -116,7 +116,10 @@ fn nothing_of_the_user_s_work_reaches_the_settings_file() {
     }
     // And the shape: a header and exactly the allowed names. The fifth arrived
     // with 041-F — where the handle between the two columns was left — and it
-    // is a number between 20 and 80, which can name nobody.
+    // is a number between 20 and 80, which can name nobody. The sixth arrived
+    // with 041-L and is one bit: whether the two columns scroll together. Both
+    // are window preferences, and this test is here to say so each time one is
+    // added rather than to let it in quietly.
     let keys: Vec<&str> = text
         .lines()
         .skip(1)
@@ -129,7 +132,8 @@ fn nothing_of_the_user_s_work_reaches_the_settings_file() {
             "first_run_completed",
             "ui_language",
             "default_privacy_pack",
-            "original_pane_percent"
+            "original_pane_percent",
+            "columns_in_step"
         ],
         "the file holds the allowlist and nothing else"
     );

@@ -262,6 +262,7 @@ void main() {
           autoLockMinutes: 15,
           packId: 'de',
           originalPanePercent: 50,
+          columnsInStep: true,
           language: 'en',
           firstRunDone: false,
           sessionOnly: true,

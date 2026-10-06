@@ -60,6 +60,7 @@ void main() {
           language: now.language,
           firstRunDone: now.firstRunDone,
           originalPanePercent: now.originalPanePercent,
+          columnsInStep: now.columnsInStep,
           sessionOnly: now.sessionOnly,
         ),
       );
@@ -179,6 +180,7 @@ void main() {
           language: now.language,
           firstRunDone: now.firstRunDone,
           originalPanePercent: now.originalPanePercent,
+          columnsInStep: now.columnsInStep,
           sessionOnly: now.sessionOnly,
         ),
       );

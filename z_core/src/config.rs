@@ -19,9 +19,11 @@
 //!
 //! ## How that is made true, rather than promised
 //!
-//! There is **no map** here. The file is written from a struct with four fields,
-//! each a scalar, and the writer emits those four names and nothing else — so a
-//! field that is not in the list cannot be written, because it does not exist.
+//! There is **no map** here. The file is written from a struct of five scalar
+//! fields, and the writer emits those names and nothing else — so a field that
+//! is not in the list cannot be written, because it does not exist. The list's
+//! own length is declared once and counted by gate **G18a**, which is why the
+//! number is not repeated in prose that can drift away from it.
 //!
 //! And the two fields that are text are **checked before they are written**:
 //! a language is two lowercase letters, a pack id is short and plain. Without
@@ -42,12 +44,13 @@ const SCHEMA_VERSION: u32 = 1;
 
 /// The whole allowlist, in one place. A reader and a writer both use it, and a
 /// gate counts it.
-const ALLOWED: [&str; 5] = [
+const ALLOWED: [&str; 6] = [
     "schema_version",
     "first_run_completed",
     "ui_language",
     "default_privacy_pack",
     "original_pane_percent",
+    "columns_in_step",
 ];
 
 /// The non-secret settings, as they sit in the file.
@@ -64,6 +67,13 @@ pub(crate) struct AppConfig {
     /// handle's position at every launch. It names nothing of anybody's work:
     /// it is a number between 20 and 80.
     pub original_pane_percent: u32,
+    /// Do the two columns scroll together? (041-L.)
+    ///
+    /// Beside the handle's position and for the same reason: the Workspace is
+    /// drawn before any vault exists, and a person who never makes one should
+    /// not have to switch this on at every launch. It is one bit and it names
+    /// nothing — not a document, not a page, not a person.
+    pub columns_in_step: bool,
 }
 
 impl Default for AppConfig {
@@ -75,6 +85,10 @@ impl Default for AppConfig {
             // Half and half: the product's whole claim is that a person can
             // compare the two columns, so neither starts larger than the other.
             original_pane_percent: 50,
+            // On, because the complaint this answers was «I work on the first
+            // screen and do not find my work on the second». A person who
+            // wants the columns apart says so once.
+            columns_in_step: true,
         }
     }
 }
@@ -92,7 +106,7 @@ fn is_a_plain_tag(value: &str) -> bool {
 }
 
 impl AppConfig {
-    /// The file's text. Four names, in one place, with nothing dynamic.
+    /// The file's text. The names, in one place, with nothing dynamic.
     fn to_text(&self) -> String {
         format!(
             "{MAGIC}\n\
@@ -100,11 +114,13 @@ impl AppConfig {
              first_run_completed={}\n\
              ui_language={}\n\
              default_privacy_pack={}\n\
-             original_pane_percent={}\n",
+             original_pane_percent={}\n\
+             columns_in_step={}\n",
             self.first_run_completed,
             self.ui_language,
             self.default_privacy_pack,
             self.original_pane_percent.clamp(20, 80),
+            self.columns_in_step,
         )
     }
 
@@ -139,12 +155,13 @@ impl AppConfig {
             let (key, value) = (key.trim(), value.trim());
             // An unknown key is skipped, so a file from a later build still
             // opens. It is never written back, because there is nowhere to put
-            // it: this struct has four fields and no map.
+            // it: this struct has its fields and no map.
             if !ALLOWED.contains(&key) {
                 continue;
             }
             match key {
                 "first_run_completed" => out.first_run_completed = value == "true",
+                "columns_in_step" => out.columns_in_step = value == "true",
                 "ui_language" if is_a_plain_tag(value) => out.ui_language = value.to_string(),
                 "default_privacy_pack" if is_a_plain_tag(value) => {
                     out.default_privacy_pack = value.to_string()
@@ -228,6 +245,7 @@ mod tests {
             ui_language: "de".to_string(),
             default_privacy_pack: "de".to_string(),
             original_pane_percent: 55,
+            columns_in_step: false,
         }
         .to_text();
 
@@ -246,6 +264,22 @@ mod tests {
         assert_eq!(read.original_pane_percent, 55, "the handle's place did not survive the file");
         let silly = AppConfig::from_text(&text.replace("original_pane_percent=55", "original_pane_percent=0"));
         assert_eq!(silly.original_pane_percent, 20, "a column could be made to disappear by hand");
+
+        // 041-L — the other window preference, and it is one bit. It is written
+        // as it stands, read back as it stands, and **absent** means the
+        // default, which is on: a file from an older build must leave the
+        // columns following each other, not drifting apart silently.
+        assert!(text.contains("columns_in_step=false"));
+        assert!(!AppConfig::from_text(&text).columns_in_step);
+        let older = text
+            .lines()
+            .filter(|l| !l.starts_with("columns_in_step="))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(
+            AppConfig::from_text(&older).columns_in_step,
+            "a file written before 041-L must still bring the columns in step"
+        );
     }
 
     #[test]
@@ -266,6 +300,7 @@ mod tests {
                 ui_language: bad.to_string(),
                 default_privacy_pack: "de".to_string(),
                 original_pane_percent: 50,
+                columns_in_step: true,
             };
             assert!(c.checked().is_err(), "«{bad}» should not be writable");
         }
@@ -276,6 +311,7 @@ mod tests {
                 ui_language: good.to_string(),
                 default_privacy_pack: good.to_string(),
                 original_pane_percent: 50,
+                columns_in_step: true,
             };
             assert!(c.checked().is_ok(), "«{good}» is a setting");
         }

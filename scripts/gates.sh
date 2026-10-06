@@ -702,6 +702,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          reports_nothing_it_does_not_know take_back_an_answer \
          lie_always_without_vault lie_missing_credential lie_rescan_is_named \
          keyless_login_claims_a_key \
+         a_three_page_document_hands_over_two_edges a_token_moves_every_edge_after_it \
+         a_swallowed_break_does_not_renumber_the_pages \
+         the_payload_is_what_it_was_before \
          remove_protection_here_leaves forget_from_this_profile_keeps \
          forget_everywhere_reaches nothing_taught_reports_no_reach \
          locked_by_hand locks_itself does_not_postpone_the_lock tell_one_story \
@@ -766,6 +769,7 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "says how much, and what to do" \
          "name the reach they would forget" "is the pack that is kept" \
          "display only, and Why lives" "its own next move" \
+         "two edges in both columns" "moves the other, and Apart stops it" \
          "takes the reveal with it" "takes the revealed tokens with it" \
          "hides rather than keeps" "no longer in front" "gone from the screen" \
          "in the frame after the window does" \

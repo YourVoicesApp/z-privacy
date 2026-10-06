@@ -1173,6 +1173,28 @@ class PackRow {
           family == other.family;
 }
 
+class PageEdge {
+  /// UTF-16 offset of the character the page begins at.
+  final int at;
+
+  /// «Page 2» is the first edge a document can have: page one begins at the
+  /// top, where no rule is drawn.
+  final int page;
+
+  const PageEdge({required this.at, required this.page});
+
+  @override
+  int get hashCode => at.hashCode ^ page.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PageEdge &&
+          runtimeType == other.runtimeType &&
+          at == other.at &&
+          page == other.page;
+}
+
 class PayloadHandle {
   final int id;
   final int session;
@@ -1202,15 +1224,37 @@ class PayloadView {
   final int protectedCount;
   final int openSuggestions;
 
+  /// Where a page begins **in this text**, with the page's own number.
+  ///
+  /// The Original column can find its own edges: the reader leaves a form
+  /// feed between page and page and the column draws where it falls. The
+  /// payload cannot — `build` turns each form feed into an ordinary line
+  /// break, because a control character is of no use to a model, and one
+  /// `\n` is indistinguishable from every other. So the builder says where
+  /// they went, and it is the builder that says it because it is the only
+  /// place that holds the document's offsets and the payload's at the same
+  /// moment. Deriving this afterwards from the protections would be a second
+  /// opinion about one fact, which in this project is how two screens come
+  /// to disagree.
+  ///
+  /// Offsets are UTF-16 code units, like every other offset the UI is given.
+  /// Adding this changes nothing that leaves the device: it is read off the
+  /// payload, never written into it.
+  final List<PageEdge> pageEdges;
+
   const PayloadView({
     required this.text,
     required this.protectedCount,
     required this.openSuggestions,
+    required this.pageEdges,
   });
 
   @override
   int get hashCode =>
-      text.hashCode ^ protectedCount.hashCode ^ openSuggestions.hashCode;
+      text.hashCode ^
+      protectedCount.hashCode ^
+      openSuggestions.hashCode ^
+      pageEdges.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -1219,7 +1263,8 @@ class PayloadView {
           runtimeType == other.runtimeType &&
           text == other.text &&
           protectedCount == other.protectedCount &&
-          openSuggestions == other.openSuggestions;
+          openSuggestions == other.openSuggestions &&
+          pageEdges == other.pageEdges;
 }
 
 class Place {
@@ -1918,6 +1963,9 @@ class Settings {
   /// readable with no vault — the two columns are drawn long before one.
   final int originalPanePercent;
 
+  /// Do the two columns scroll together? On by default (041-L).
+  final bool columnsInStep;
+
   /// Scan the moment a document arrives, with no dialog. On by default: the
   /// boards' rule is that nobody has to press anything to be protected.
   final bool scanOnImport;
@@ -1955,6 +2003,7 @@ class Settings {
 
   const Settings({
     required this.originalPanePercent,
+    required this.columnsInStep,
     required this.scanOnImport,
     required this.revealSeconds,
     required this.autoLockMinutes,
@@ -1967,6 +2016,7 @@ class Settings {
   @override
   int get hashCode =>
       originalPanePercent.hashCode ^
+      columnsInStep.hashCode ^
       scanOnImport.hashCode ^
       revealSeconds.hashCode ^
       autoLockMinutes.hashCode ^
@@ -1981,6 +2031,7 @@ class Settings {
       other is Settings &&
           runtimeType == other.runtimeType &&
           originalPanePercent == other.originalPanePercent &&
+          columnsInStep == other.columnsInStep &&
           scanOnImport == other.scanOnImport &&
           revealSeconds == other.revealSeconds &&
           autoLockMinutes == other.autoLockMinutes &&

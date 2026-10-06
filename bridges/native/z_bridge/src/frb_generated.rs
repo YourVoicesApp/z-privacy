@@ -3140,6 +3140,11 @@ const _: fn() = || {
         let _: u32 = PackRow.family;
     }
     {
+        let PageEdge = None::<crate::api::mirrors::PageEdge>.unwrap();
+        let _: u32 = PageEdge.at;
+        let _: u32 = PageEdge.page;
+    }
+    {
         let PayloadHandle = None::<crate::api::mirrors::PayloadHandle>.unwrap();
         let _: u32 = PayloadHandle.id;
         let _: u32 = PayloadHandle.session;
@@ -3150,6 +3155,7 @@ const _: fn() = || {
         let _: String = PayloadView.text;
         let _: u32 = PayloadView.protected_count;
         let _: u32 = PayloadView.open_suggestions;
+        let _: Vec<crate::api::mirrors::PageEdge> = PayloadView.page_edges;
     }
     {
         let Place = None::<crate::api::mirrors::Place>.unwrap();
@@ -3338,6 +3344,7 @@ const _: fn() = || {
     {
         let Settings = None::<crate::api::mirrors::Settings>.unwrap();
         let _: u32 = Settings.original_pane_percent;
+        let _: bool = Settings.columns_in_step;
         let _: bool = Settings.scan_on_import;
         let _: u32 = Settings.reveal_seconds;
         let _: u32 = Settings.auto_lock_minutes;
@@ -4111,6 +4118,18 @@ impl SseDecode for Vec<crate::api::mirrors::PackRow> {
     }
 }
 
+impl SseDecode for Vec<crate::api::mirrors::PageEdge> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::PageEdge>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4617,6 +4636,18 @@ impl SseDecode for crate::api::mirrors::PackRow {
     }
 }
 
+impl SseDecode for crate::api::mirrors::PageEdge {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_at = <u32>::sse_decode(deserializer);
+        let mut var_page = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::PageEdge {
+            at: var_at,
+            page: var_page,
+        };
+    }
+}
+
 impl SseDecode for crate::api::mirrors::PayloadHandle {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4637,10 +4668,12 @@ impl SseDecode for crate::api::mirrors::PayloadView {
         let mut var_text = <String>::sse_decode(deserializer);
         let mut var_protectedCount = <u32>::sse_decode(deserializer);
         let mut var_openSuggestions = <u32>::sse_decode(deserializer);
+        let mut var_pageEdges = <Vec<crate::api::mirrors::PageEdge>>::sse_decode(deserializer);
         return crate::api::mirrors::PayloadView {
             text: var_text,
             protected_count: var_protectedCount,
             open_suggestions: var_openSuggestions,
+            page_edges: var_pageEdges,
         };
     }
 }
@@ -5092,6 +5125,7 @@ impl SseDecode for crate::api::mirrors::Settings {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_originalPanePercent = <u32>::sse_decode(deserializer);
+        let mut var_columnsInStep = <bool>::sse_decode(deserializer);
         let mut var_scanOnImport = <bool>::sse_decode(deserializer);
         let mut var_revealSeconds = <u32>::sse_decode(deserializer);
         let mut var_autoLockMinutes = <u32>::sse_decode(deserializer);
@@ -5101,6 +5135,7 @@ impl SseDecode for crate::api::mirrors::Settings {
         let mut var_sessionOnly = <bool>::sse_decode(deserializer);
         return crate::api::mirrors::Settings {
             original_pane_percent: var_originalPanePercent,
+            columns_in_step: var_columnsInStep,
             scan_on_import: var_scanOnImport,
             reveal_seconds: var_revealSeconds,
             auto_lock_minutes: var_autoLockMinutes,
@@ -6299,6 +6334,22 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::PackRow>>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PageEdge> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.at.into_into_dart().into_dart(),
+            self.0.page.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::PageEdge> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::PageEdge>> for crate::api::mirrors::PageEdge {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::PageEdge> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PayloadHandle> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -6324,6 +6375,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PayloadVi
             self.0.text.into_into_dart().into_dart(),
             self.0.protected_count.into_into_dart().into_dart(),
             self.0.open_suggestions.into_into_dart().into_dart(),
+            self.0.page_edges.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -6848,6 +6900,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Settings>
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.0.original_pane_percent.into_into_dart().into_dart(),
+            self.0.columns_in_step.into_into_dart().into_dart(),
             self.0.scan_on_import.into_into_dart().into_dart(),
             self.0.reveal_seconds.into_into_dart().into_dart(),
             self.0.auto_lock_minutes.into_into_dart().into_dart(),
@@ -7769,6 +7822,16 @@ impl SseEncode for Vec<crate::api::mirrors::PackRow> {
     }
 }
 
+impl SseEncode for Vec<crate::api::mirrors::PageEdge> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::PageEdge>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -8181,6 +8244,14 @@ impl SseEncode for crate::api::mirrors::PackRow {
     }
 }
 
+impl SseEncode for crate::api::mirrors::PageEdge {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.at, serializer);
+        <u32>::sse_encode(self.page, serializer);
+    }
+}
+
 impl SseEncode for crate::api::mirrors::PayloadHandle {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -8196,6 +8267,7 @@ impl SseEncode for crate::api::mirrors::PayloadView {
         <String>::sse_encode(self.text, serializer);
         <u32>::sse_encode(self.protected_count, serializer);
         <u32>::sse_encode(self.open_suggestions, serializer);
+        <Vec<crate::api::mirrors::PageEdge>>::sse_encode(self.page_edges, serializer);
     }
 }
 
@@ -8538,6 +8610,7 @@ impl SseEncode for crate::api::mirrors::Settings {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <u32>::sse_encode(self.original_pane_percent, serializer);
+        <bool>::sse_encode(self.columns_in_step, serializer);
         <bool>::sse_encode(self.scan_on_import, serializer);
         <u32>::sse_encode(self.reveal_seconds, serializer);
         <u32>::sse_encode(self.auto_lock_minutes, serializer);

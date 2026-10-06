@@ -302,6 +302,7 @@ class _ShellState extends State<ZShell> {
             // that into a plain untruth on the first screen of the product.
             packId: language == 'de' ? 'de' : 'en',
             originalPanePercent: config.originalPanePercent,
+            columnsInStep: config.columnsInStep,
             language: language,
             firstRunDone: true,
             sessionOnly: config.sessionOnly,

@@ -462,6 +462,7 @@ pub(crate) fn settings() -> ApiResult<Settings> {
             language: file.ui_language,
             first_run_done: file.first_run_completed,
             original_pane_percent: file.original_pane_percent,
+            columns_in_step: file.columns_in_step,
             // Says only what it has always said: whether the settings that need
             // a vault will survive the app closing. The three above always do.
             session_only: kept_for_this_run,
@@ -492,6 +493,7 @@ pub(crate) fn save_settings(settings: Settings) -> ApiResult<Settings> {
         // column, and the one thing this product may not do is stop a person
         // comparing the two sides.
         original_pane_percent: settings.original_pane_percent.clamp(20, 80),
+        columns_in_step: settings.columns_in_step,
     };
     let written = with_core(|core| core.config.save(file))?;
 
@@ -518,6 +520,7 @@ pub(crate) fn save_settings(settings: Settings) -> ApiResult<Settings> {
         language: written.ui_language,
         first_run_done: written.first_run_completed,
         original_pane_percent: written.original_pane_percent,
+        columns_in_step: written.columns_in_step,
         session_only: !sealed,
     })
 }

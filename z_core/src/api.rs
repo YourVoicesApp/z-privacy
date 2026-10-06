@@ -353,6 +353,8 @@ pub struct Settings {
     /// A window's preference, kept per device beside the first-run flag, and
     /// readable with no vault — the two columns are drawn long before one.
     pub original_pane_percent: u32,
+    /// Do the two columns scroll together? On by default (041-L).
+    pub columns_in_step: bool,
     /// Scan the moment a document arrives, with no dialog. On by default: the
     /// boards' rule is that nobody has to press anything to be protected.
     pub scan_on_import: bool,
@@ -970,6 +972,40 @@ pub struct PayloadView {
     pub text: String,
     pub protected_count: u32,
     pub open_suggestions: u32,
+    /// Where a page begins **in this text**, with the page's own number.
+    ///
+    /// The Original column can find its own edges: the reader leaves a form
+    /// feed between page and page and the column draws where it falls. The
+    /// payload cannot — `build` turns each form feed into an ordinary line
+    /// break, because a control character is of no use to a model, and one
+    /// `\n` is indistinguishable from every other. So the builder says where
+    /// they went, and it is the builder that says it because it is the only
+    /// place that holds the document's offsets and the payload's at the same
+    /// moment. Deriving this afterwards from the protections would be a second
+    /// opinion about one fact, which in this project is how two screens come
+    /// to disagree.
+    ///
+    /// Offsets are UTF-16 code units, like every other offset the UI is given.
+    /// Adding this changes nothing that leaves the device: it is read off the
+    /// payload, never written into it.
+    pub page_edges: Vec<PageEdge>,
+}
+
+/// One page boundary: where it is, and which page begins there.
+///
+/// The number is the document's, not the index of this row. A protection may
+/// swallow a page break — a selection that spans one is replaced by a single
+/// token — and then that edge is simply absent from the payload while the
+/// pages after it keep the numbers they have in the document. Carrying the
+/// number rather than counting rows is what stops the two columns labelling
+/// the same page differently.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PageEdge {
+    /// UTF-16 offset of the character the page begins at.
+    pub at: u32,
+    /// «Page 2» is the first edge a document can have: page one begins at the
+    /// top, where no rule is drawn.
+    pub page: u32,
 }
 
 /// A row of the tokens panel. The real value is not in it.

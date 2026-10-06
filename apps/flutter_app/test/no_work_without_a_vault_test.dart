@@ -137,6 +137,7 @@ Future<void> _firstRunIsDone(Ground ground) async {
   final now = await z.settings();
   await ground.saveConfig(Settings(
     originalPanePercent: now.originalPanePercent,
+    columnsInStep: now.columnsInStep,
     scanOnImport: now.scanOnImport,
     revealSeconds: now.revealSeconds,
     autoLockMinutes: now.autoLockMinutes,

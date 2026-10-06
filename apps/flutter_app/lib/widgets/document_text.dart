@@ -219,7 +219,13 @@ class _OriginalTextState extends State<OriginalText> {
         if (text.contains('\u{c}'))
           Positioned.fill(
             key: OriginalText.pageEdges,
-            child: CustomPaint(painter: _PageEdges(text: text, style: Zc.document)),
+            child: CustomPaint(
+              painter: PageEdgePainter(
+                text: text,
+                style: Zc.document,
+                edges: edgesOfDocument(text),
+              ),
+            ),
           ),
         SelectableText.rich(
       TextSpan(children: _keptSpans(), style: Zc.document),
@@ -365,9 +371,25 @@ const double _wash = 0.55;
 /// The right column: what the AI will receive. Not a preview of the request —
 /// the request. The text is built in Rust and handed over as it stands.
 class SafeText extends StatelessWidget {
-  const SafeText({super.key, required this.text, this.chips = true});
+  const SafeText({
+    super.key,
+    required this.text,
+    this.edges = const [],
+    this.chips = true,
+  });
 
   final String text;
+
+  /// Where the pages begin **in this text**, from the core.
+  ///
+  /// 041-L. The owner, on the published build: «a screen with page numbers and
+  /// a screen without». This column could not find its own edges — the payload
+  /// has no form feed in it — so the builder reports them, and the same painter
+  /// that rules the Original column rules this one.
+  final List<PageEdge> edges;
+
+  /// The rules, for the test that counts them against the other column's.
+  static const pageEdges = ValueKey<String>('safe-page-edges');
 
   /// Chips draw each token as a small block; plain shows the literal token the
   /// model will read. Both are the same string — the boards' «Chips / Plain»
@@ -380,10 +402,25 @@ class SafeText extends StatelessWidget {
   Widget build(BuildContext context) {
     // The parent scrolls this text. An inner Scrollable would swallow the wheel
     // over the whole payload and leave only a sliver of the outer sheet movable.
-    return SelectableText.rich(
+    final body = SelectableText.rich(
       TextSpan(children: _spans(), style: Zc.document),
       style: Zc.document,
       scrollPhysics: const NeverScrollableScrollPhysics(),
+    );
+    if (edges.isEmpty) return body;
+    // Painted behind the words for the reason the Original column's are: a
+    // rule or a label **inside** the text would move every offset after it by
+    // one, and the chips are drawn from offsets.
+    return Stack(
+      children: [
+        Positioned.fill(
+          key: SafeText.pageEdges,
+          child: CustomPaint(
+            painter: PageEdgePainter(text: text, style: Zc.document, edges: edges),
+          ),
+        ),
+        body,
+      ],
     );
   }
 
@@ -434,45 +471,169 @@ class SafeText extends StatelessWidget {
 }
 
 
+/// Where each page begins in a column, in that column's own pixels.
+///
+/// **One function for both columns (041-L).** It is not only the painter that
+/// needs these: keeping the two columns in step needs them too, and a second
+/// piece of arithmetic for the same y is how two halves of one screen come to
+/// disagree. So the layout is done once, here, and the painter and the
+/// scrolling both read the answer.
+///
+/// Nothing is added to either text: the same spans are laid out at the same
+/// width and asked where a character landed, so every offset stays exactly
+/// what the core said it was.
+List<double> pageEdgeYs({
+  required String text,
+  required TextStyle style,
+  required double width,
+  required List<PageEdge> edges,
+}) {
+  if (edges.isEmpty || width <= 0) return const [];
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: style),
+    textDirection: TextDirection.ltr,
+  )..layout(maxWidth: width);
+  final out = <double>[];
+  for (final edge in edges) {
+    if (edge.at < 0 || edge.at >= text.length) continue;
+    final boxes = painter.getBoxesForSelection(
+      TextSelection(baseOffset: edge.at, extentOffset: edge.at + 1),
+    );
+    out.add(boxes.isEmpty ? double.nan : boxes.first.toRect().center.dy);
+  }
+  return out;
+}
+
+/// The edges of a document, found in the document itself.
+///
+/// The Original column can do this and the Safe column cannot: the reader puts
+/// a single form feed between page and page, and it is still there. The payload
+/// has no form feed — `build_payload` turns each one into an ordinary line
+/// break, because a control character is of no use to a model — so that column
+/// is given its edges by the core instead. Same shape, two honest sources, and
+/// a test that holds them to the same labels.
+List<PageEdge> edgesOfDocument(String text) {
+  final out = <PageEdge>[];
+  var page = 1;
+  for (var at = 0; at < text.length; at++) {
+    if (text.codeUnitAt(at) != 0x0c) continue;
+    page += 1;
+    out.add(PageEdge(at: at, page: page));
+  }
+  return out;
+}
+
+/// The two columns' page positions, aligned on the pages they both have.
+///
+/// A page can be in one column and not the other: a protection that spans a
+/// break leaves the whole stretch as one token, and that boundary is simply not
+/// in the payload. Pairing by **page number** rather than by row is what keeps
+/// the two columns pointing at the same page when that happens. A position the
+/// layout could not give is dropped with its partner, so the two lists are
+/// always the same length and always about the same pages.
+({List<double> mine, List<double> theirs}) alignedEdges({
+  required List<PageEdge> myEdges,
+  required List<double> myYs,
+  required List<PageEdge> theirEdges,
+  required List<double> theirYs,
+}) {
+  final theirs = <int, double>{};
+  for (var i = 0; i < theirEdges.length && i < theirYs.length; i++) {
+    if (!theirYs[i].isNaN) theirs[theirEdges[i].page] = theirYs[i];
+  }
+  final a = <double>[];
+  final b = <double>[];
+  for (var i = 0; i < myEdges.length && i < myYs.length; i++) {
+    if (myYs[i].isNaN) continue;
+    final match = theirs[myEdges[i].page];
+    if (match == null) continue;
+    a.add(myYs[i]);
+    b.add(match);
+  }
+  return (mine: a, theirs: b);
+}
+
+/// Where the other column must sit so that the same place is under the eye.
+///
+/// **The most accurate basis available, and it says which one it used.** With
+/// page edges in both columns it maps page to page and then measures how far
+/// into that page the eye has gone, scaled by the two pages' own heights — the
+/// pages are not the same length on both sides, because a token is not the
+/// length of the name it replaced. With no edges to go by it falls back to the
+/// plain ratio of the scrollable extents, which is all there is.
+///
+/// Pure on purpose: no widget, no layout, no pixels of its own, so the
+/// arithmetic can be held to account on its own.
+double inStepOffset({
+  required double from,
+  required List<double> mine,
+  required List<double> theirs,
+  required double myExtent,
+  required double theirExtent,
+}) {
+  if (theirExtent <= 0) return 0;
+  double ratio() => myExtent <= 0 ? 0 : (from / myExtent) * theirExtent;
+
+  if (mine.isEmpty || mine.length != theirs.length) {
+    return ratio().clamp(0.0, theirExtent);
+  }
+
+  // Above the first page break: the stretch from the top to that break is the
+  // only thing the two columns can be measured against.
+  if (from < mine.first) {
+    final target = mine.first <= 0 ? 0.0 : (from / mine.first) * theirs.first;
+    return target.clamp(0.0, theirExtent);
+  }
+
+  var i = 0;
+  for (var k = 0; k < mine.length; k++) {
+    if (mine[k] <= from) i = k;
+  }
+  final myNext = i + 1 < mine.length ? mine[i + 1] : myExtent;
+  final theirNext = i + 1 < theirs.length ? theirs[i + 1] : theirExtent;
+  final myHeight = myNext - mine[i];
+  final theirHeight = theirNext - theirs[i];
+  final into = from - mine[i];
+  final scaled = myHeight <= 0 ? 0.0 : into * (theirHeight <= 0 ? 1.0 : theirHeight / myHeight);
+  return (theirs[i] + scaled).clamp(0.0, theirExtent);
+}
+
 /// Where one page ends and the next begins.
 ///
-/// The reader puts a single form feed between pages, and this paints a hairline
-/// and «Page N» across the column wherever one falls. Nothing is added to the
-/// text: the painter lays the same spans out with the same width and asks where
-/// that character landed, so every offset in the document is exactly what the
-/// core said it was.
+/// A hairline and «Page N» across the column wherever a page starts. The same
+/// painter serves both columns, because «the same numbering in both» is only
+/// true if one piece of code decides what is drawn and what it is called.
 ///
-/// It is therefore not selectable, not protectable, and not sendable — and the
-/// last of those is measured rather than assumed: `build_payload` drops the
-/// form feed and leaves a blank line in its place, so the edge of a page never
-/// travels to a model.
-class _PageEdges extends CustomPainter {
-  _PageEdges({required this.text, required this.style});
+/// It is not selectable, not protectable, and not sendable — and the last of
+/// those is measured rather than assumed: `z_core/tests/page_edges.rs` proves
+/// the outgoing text is byte-for-byte what it was before these edges were
+/// reported at all.
+class PageEdgePainter extends CustomPainter {
+  PageEdgePainter({required this.text, required this.style, required this.edges});
 
   final String text;
   final TextStyle style;
+  final List<PageEdge> edges;
+
+  /// The width this painter last laid the text out at.
+  ///
+  /// Only a test reads it, and it reads it so that it measures **the layout
+  /// that was drawn** rather than a width it worked out for itself — a test
+  /// that guesses the width would pass while the screen was wrong.
+  double lastWidth = 0;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: size.width);
-
+    lastWidth = size.width;
+    final ys = pageEdgeYs(text: text, style: style, width: size.width, edges: edges);
     final line = Paint()
       ..color = Zc.line
       ..strokeWidth = 1;
-    var page = 1;
-    for (var at = 0; at < text.length; at++) {
-      if (text.codeUnitAt(at) != 0x0c) continue;
-      page += 1;
-      final boxes = painter.getBoxesForSelection(
-        TextSelection(baseOffset: at, extentOffset: at + 1),
-      );
-      if (boxes.isEmpty) continue;
-      final y = boxes.first.toRect().center.dy;
+    for (var i = 0; i < ys.length && i < edges.length; i++) {
+      final y = ys[i];
+      if (y.isNaN) continue;
       final label = TextPainter(
-        text: TextSpan(text: 'Page $page', style: Zc.tiny.copyWith(color: Zc.ink4)),
+        text: TextSpan(text: 'Page ${edges[i].page}', style: Zc.tiny.copyWith(color: Zc.ink4)),
         textDirection: TextDirection.ltr,
       )..layout();
       const gap = 10.0;
@@ -482,5 +643,6 @@ class _PageEdges extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_PageEdges old) => old.text != text || old.style != style;
+  bool shouldRepaint(PageEdgePainter old) =>
+      old.text != text || old.style != style || old.edges != edges;
 }
