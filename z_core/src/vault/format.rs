@@ -63,6 +63,7 @@ fn kind_code(kind: Kind) -> u8 {
         Kind::Vehicle => 17,
         // Added 6 October, for the payroll family (038-G).
         Kind::SocialInsuranceNo => 18,
+        Kind::EmployeeNo => 19,
     }
 }
 
@@ -86,6 +87,7 @@ fn kind_of(code: u8) -> ApiResult<Kind> {
         16 => Kind::Birthdate,
         17 => Kind::Vehicle,
         18 => Kind::SocialInsuranceNo,
+        19 => Kind::EmployeeNo,
         other => {
             return Err(ApiError::PayloadRefused {
                 reason: format!("this vault holds a kind ({other}) this build does not know"),

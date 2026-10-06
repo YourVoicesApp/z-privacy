@@ -149,3 +149,46 @@ fn the_real_numbers_still_read_as_numbers() {
     assert!(got.iter().any(|(state, text)| *state == MarkState::Protected && text == "+49 171 2345678"));
     assert!(got.iter().any(|(_, text)| text == "089 1234 5699"));
 }
+
+// ------------------------------------------------------- the payroll labels
+
+/// A ledger calls its people by a personnel number, and nothing else follows
+/// that word. It is pack data, like «Kundennummer» — and it is **not**
+/// `CustomerNo`: the kind's word is read twice, in the explain card and in the
+/// token the model is asked about, and «customer number» is wrong in both on a
+/// payslip.
+#[test]
+fn a_personnel_number_is_named_by_its_label() {
+    for label in ["Personal-Nr.", "Personalnummer", "Pers.-Nr.", "Personalnr."] {
+        let doc = format!("{label}: 004711\nKostenstelle: 2100\n");
+        let got = kinds_of(&doc, Kind::EmployeeNo);
+        assert_eq!(got.len(), 1, "«{label}» named no personnel number: {got:?}");
+        assert_eq!(got[0], (MarkState::Protected, "004711".to_string()));
+    }
+    // The label stays a label: the number is protected, the word is not.
+    let doc = "Personal-Nr.: 004711";
+    assert!(
+        found(doc).iter().all(|(_, _, text)| !text.contains("Personal")),
+        "the label itself was protected"
+    );
+}
+
+/// And the label that begins with the same letters is still itself: an identity
+/// card is not a personnel number.
+#[test]
+fn the_identity_card_label_is_not_shadowed() {
+    let doc = "Personalausweisnummer L01X00T47 liegt vor.";
+    let got = kinds_of(doc, Kind::IdCard);
+    assert_eq!(got.len(), 1, "the identity card was lost to a longer label list: {got:?}");
+    assert!(kinds_of(doc, Kind::EmployeeNo).is_empty(), "an identity card became a personnel number");
+}
+
+/// The two identifier labels a payslip writes, for the numbers that cannot
+/// prove themselves — a tax ID written in a form the check cannot reach, or a
+/// social-insurance number from another country's office.
+#[test]
+fn the_payroll_labels_name_their_kinds() {
+    let doc = "Sozialversicherungsnummer: 65 140388 L 516\nSteuer-ID: 86 095 742 719\n";
+    assert_eq!(kinds_of(doc, Kind::SocialInsuranceNo).len(), 1);
+    assert_eq!(kinds_of(doc, Kind::TaxId).len(), 1);
+}

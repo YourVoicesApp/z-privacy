@@ -72,6 +72,17 @@ const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
     ("de-28", "geburtsdatum", Kind::Birthdate, Validator::Word, Confidence::Auto),
     ("de-29", "name", Kind::Person, Validator::Name, Confidence::Auto),
     ("de-30", "durchwahl", Kind::Phone, Validator::Number, Confidence::Auto),
+    // Added 6 October, from the payroll family (038-G). A ledger calls its
+    // people by these, and nothing else follows them.
+    ("de-31", "personalnummer", Kind::EmployeeNo, Validator::Number, Confidence::Auto),
+    ("de-32", "personal-nr.", Kind::EmployeeNo, Validator::Number, Confidence::Auto),
+    ("de-33", "personalnr.", Kind::EmployeeNo, Validator::Number, Confidence::Auto),
+    ("de-34", "pers.-nr.", Kind::EmployeeNo, Validator::Number, Confidence::Auto),
+    ("de-35", "sozialversicherungsnummer", Kind::SocialInsuranceNo, Validator::Word, Confidence::Auto),
+    ("de-36", "sv-nummer", Kind::SocialInsuranceNo, Validator::Word, Confidence::Auto),
+    ("de-37", "rentenversicherungsnummer", Kind::SocialInsuranceNo, Validator::Word, Confidence::Auto),
+    ("de-38", "steuer-id", Kind::TaxId, Validator::Word, Confidence::Auto),
+    ("de-39", "steuerliche identifikationsnummer", Kind::TaxId, Validator::Word, Confidence::Auto),
     // An invoice number may be the company's own and may be the customer's.
     // The owner decides this one, so it is a question and not an answer.
     ("de-31", "rechnung", Kind::Contract, Validator::Any, Confidence::Suggest),

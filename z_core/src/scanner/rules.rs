@@ -126,6 +126,7 @@ fn kind_word(kind: Kind) -> &'static str {
         Kind::Birthdate => "date of birth",
         Kind::Vehicle => "vehicle plate",
         Kind::SocialInsuranceNo => "social-insurance number",
+        Kind::EmployeeNo => "personnel number",
         Kind::Contract => "contract",
         Kind::Project => "project",
         Kind::Client => "client",

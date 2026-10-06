@@ -92,6 +92,7 @@ pub(crate) fn kind_word(kind: Kind) -> &'static str {
         Kind::Birthdate => "BORN",
         Kind::Vehicle => "PLATE",
         Kind::SocialInsuranceNo => "SVNR",
+        Kind::EmployeeNo => "EMPNO",
         Kind::Contract => "CONTRACT",
         Kind::Project => "PROJECT",
         Kind::Client => "CLIENT",

@@ -656,6 +656,11 @@ pub enum Kind {
     /// It carries a birth date inside it, so it is not only an identifier: a
     /// person whose number is read has had their date of birth read with it.
     SocialInsuranceNo,
+    /// A personnel number — *Personalnummer*, what a payroll ledger calls an
+    /// employee. Not a customer number: the word is read twice, once in the
+    /// explain card and once in the token the model is asked about, and
+    /// «customer» is wrong in both on a payslip.
+    EmployeeNo,
     Custom,
 }
 
