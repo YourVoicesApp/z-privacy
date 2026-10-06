@@ -4476,16 +4476,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return Settings(
-      scanOnImport: dco_decode_bool(arr[0]),
-      revealSeconds: dco_decode_u_32(arr[1]),
-      autoLockMinutes: dco_decode_u_32(arr[2]),
-      packId: dco_decode_String(arr[3]),
-      language: dco_decode_String(arr[4]),
-      firstRunDone: dco_decode_bool(arr[5]),
-      sessionOnly: dco_decode_bool(arr[6]),
+      originalPanePercent: dco_decode_u_32(arr[0]),
+      scanOnImport: dco_decode_bool(arr[1]),
+      revealSeconds: dco_decode_u_32(arr[2]),
+      autoLockMinutes: dco_decode_u_32(arr[3]),
+      packId: dco_decode_String(arr[4]),
+      language: dco_decode_String(arr[5]),
+      firstRunDone: dco_decode_bool(arr[6]),
+      sessionOnly: dco_decode_bool(arr[7]),
     );
   }
 
@@ -6175,6 +6176,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   Settings sse_decode_settings(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_originalPanePercent = sse_decode_u_32(deserializer);
     var var_scanOnImport = sse_decode_bool(deserializer);
     var var_revealSeconds = sse_decode_u_32(deserializer);
     var var_autoLockMinutes = sse_decode_u_32(deserializer);
@@ -6183,6 +6185,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_firstRunDone = sse_decode_bool(deserializer);
     var var_sessionOnly = sse_decode_bool(deserializer);
     return Settings(
+      originalPanePercent: var_originalPanePercent,
       scanOnImport: var_scanOnImport,
       revealSeconds: var_revealSeconds,
       autoLockMinutes: var_autoLockMinutes,
@@ -7686,6 +7689,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_settings(Settings self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.originalPanePercent, serializer);
     sse_encode_bool(self.scanOnImport, serializer);
     sse_encode_u_32(self.revealSeconds, serializer);
     sse_encode_u_32(self.autoLockMinutes, serializer);

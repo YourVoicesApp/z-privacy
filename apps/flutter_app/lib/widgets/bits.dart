@@ -1,7 +1,12 @@
 // Small pieces used on more than one screen. Nothing here holds state.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/src/rust/api/mirrors.dart';
+import 'package:zprivacy/widgets/document_text.dart' show kindName;
 
 /// The mark. A plain square with a Z — the boards' one piece of identity.
 /// The owner's own picture: a lighthouse in a ring, on a night.
@@ -282,6 +287,174 @@ class _CopyReportButtonState extends State<CopyReportButton> {
       icon: icon,
       label: Text(_done ? 'Copied' : widget.label, style: Zc.small),
       style: style,
+    );
+  }
+}
+
+/// **The choice, at the word.**
+///
+/// The owner, 6 October: «the suggested names must appear on the text itself,
+/// not as a separate list, and the choices a small message that disappears when
+/// it is pressed».
+///
+/// So a press on a word that is still waiting opens this, anchored where the
+/// press happened; the four answers are the four the review panel has, named
+/// the same; pressing one applies it and closes; pressing anywhere else, or
+/// Escape, closes it and does nothing. It never opens the review panel — that
+/// list is what the Review button is for, and it is still there for the person
+/// who wants to walk through what is left.
+///
+/// It stays inside the window: near the bottom it flips above the word, and it
+/// is clamped to both edges. A bubble half off the screen is a bubble that
+/// cannot be answered.
+class ChoiceBubble extends StatelessWidget {
+  const ChoiceBubble({
+    super.key,
+    required this.bench,
+    required this.finding,
+    required this.at,
+    required this.onVault,
+    required this.onDone,
+  });
+
+  final Workbench bench;
+  final Finding finding;
+
+  /// Where the press happened, in the window's own coordinates.
+  final Offset at;
+
+  /// Where «Always» sends a person who has no vault — the same door the review
+  /// panel's button opens, and the same sentence on it.
+  final VoidCallback onVault;
+  final VoidCallback onDone;
+
+  static const double _width = 320;
+
+  @override
+  Widget build(BuildContext context) {
+    final window = MediaQuery.sizeOf(context);
+    final vault = bench.snap?.vault ?? VaultState.absent;
+    final vaultOpen = vault == VaultState.unlocked;
+    final needs = vault == VaultState.locked ? 'Always · unlock the vault' : 'Always · needs a vault';
+    // Guessed tall enough to decide which way to open, and never used as a
+    // size: the bubble is as tall as its own content.
+    const guess = 190.0;
+    final below = at.dy + 14;
+    final flip = below + guess > window.height;
+    final left = (at.dx - _width / 2).clamp(12.0, (window.width - _width - 12).clamp(12.0, double.infinity));
+
+    return Positioned(
+      left: left,
+      top: flip ? null : below,
+      bottom: flip ? (window.height - at.dy + 14) : null,
+      width: _width,
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          decoration: BoxDecoration(
+            color: Zc.card,
+            border: Border.all(color: Zc.clayEdge),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: const [
+              BoxShadow(color: Color(0x22000000), blurRadius: 18, offset: Offset(0, 6)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Text(kindName(finding.kind), style: Zc.tiny.copyWith(color: Zc.ink4)),
+                  const Spacer(),
+                  // What one press settles, from the core. 041-B counts it.
+                  if (finding.occurrences > 1)
+                    Text('in ${finding.occurrences} places', style: Zc.tiny.copyWith(color: Zc.clay)),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Text(finding.reason, style: Zc.small.copyWith(color: Zc.ink3), maxLines: 3),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _BubbleAct(
+                    label: 'Protect',
+                    primary: true,
+                    onPressed: () {
+                      unawaited(bench.answer(finding.id, FindingAnswer.protect));
+                      onDone();
+                    },
+                  ),
+                  _BubbleAct(
+                    label: vaultOpen ? 'Always' : needs,
+                    onPressed: () {
+                      if (vaultOpen) {
+                        unawaited(bench.answer(finding.id, FindingAnswer.always));
+                        onDone();
+                      } else {
+                        onDone();
+                        onVault();
+                      }
+                    },
+                  ),
+                  _BubbleAct(
+                    label: 'Not sensitive',
+                    onPressed: () {
+                      unawaited(bench.answer(finding.id, FindingAnswer.notSensitive));
+                      onDone();
+                    },
+                  ),
+                  _BubbleAct(
+                    label: 'Skip',
+                    onPressed: () {
+                      unawaited(bench.answer(finding.id, FindingAnswer.skip));
+                      onDone();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BubbleAct extends StatelessWidget {
+  const _BubbleAct({required this.label, required this.onPressed, this.primary = false});
+
+  final String label;
+  final VoidCallback onPressed;
+  final bool primary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: primary ? Zc.clay : Colors.transparent,
+      borderRadius: BorderRadius.circular(7),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(7),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: primary ? Colors.transparent : Zc.line),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: primary ? Colors.white : Zc.ink2,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

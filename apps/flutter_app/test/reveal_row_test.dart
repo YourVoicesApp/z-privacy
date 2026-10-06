@@ -59,6 +59,7 @@ void main() {
           packId: now.packId,
           language: now.language,
           firstRunDone: now.firstRunDone,
+          originalPanePercent: now.originalPanePercent,
           sessionOnly: now.sessionOnly,
         ),
       );
@@ -177,6 +178,7 @@ void main() {
           packId: now.packId,
           language: now.language,
           firstRunDone: now.firstRunDone,
+          originalPanePercent: now.originalPanePercent,
           sessionOnly: now.sessionOnly,
         ),
       );

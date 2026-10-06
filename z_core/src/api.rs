@@ -340,6 +340,10 @@ pub struct SelectionView {
 /// rather than pretending otherwise.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Settings {
+    /// How much of the Workspace's width the Original column takes, 20 to 80.
+    /// A window's preference, kept per device beside the first-run flag, and
+    /// readable with no vault — the two columns are drawn long before one.
+    pub original_pane_percent: u32,
     /// Scan the moment a document arrives, with no dialog. On by default: the
     /// boards' rule is that nobody has to press anything to be protected.
     pub scan_on_import: bool,

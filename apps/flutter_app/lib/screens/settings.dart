@@ -458,6 +458,9 @@ Settings _with(
       packId: packId ?? c.packId,
       language: language ?? c.language,
       firstRunDone: firstRunDone ?? c.firstRunDone,
+      // Where the handle between the two columns was left. No screen here
+      // changes it; it travels so that saving a setting does not move it.
+      originalPanePercent: c.originalPanePercent,
       sessionOnly: c.sessionOnly,
     );
 
