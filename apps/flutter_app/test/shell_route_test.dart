@@ -138,8 +138,7 @@ void main() {
 
     // A session typed by hand, carrying something a general rule will protect
     // on its own — no vault, no pack of any language needed.
-    await tester.tap(find.text('New private session'));
-    await settle(tester);
+    // 041-G — the box is the home: no sheet, no question, just the text.
     await tester.enterText(
       find.byType(TextField).first,
       'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.',

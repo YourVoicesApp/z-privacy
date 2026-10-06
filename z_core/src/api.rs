@@ -1915,6 +1915,25 @@ pub fn label_rules() -> ApiResult<Vec<LabelRuleRow>> {
     crate::ops::label_rules()
 }
 
+/// A language this build does not carry yet.
+///
+/// Shown under a line, greyed and unchoosable, so that a person can see where
+/// the product is going without being offered something that is not there. The
+/// list lives in the core beside the packs themselves: a screen with its own
+/// copy would go on promising a language after it had shipped, or after it had
+/// been dropped.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PlannedPack {
+    pub id: String,
+    /// The language's own name for itself.
+    pub label: String,
+}
+
+/// The languages that are coming, and are not here.
+pub fn planned_packs() -> ApiResult<Vec<PlannedPack>> {
+    Ok(crate::scanner::packs::planned())
+}
+
 /// The installed privacy packs. A pack is a detection engine, not a UI language.
 pub fn packs() -> ApiResult<Vec<PackRow>> {
     crate::ops::packs()

@@ -193,6 +193,9 @@ void main() {
       'forgetLabelRule': () => forgetLabelRule(id: 1),
       'labelRules': () => labelRules(),
       'switchPack': () => switchPack(session: session, packId: 'de'),
+      // 041-G — the languages that are coming, so a screen never carries its
+      // own list of promises.
+      'plannedPacks': () => plannedPacks(),
       'providers': () => providers(),
       'connectProvider': () => connectProvider(
         provider: provider,
@@ -287,7 +290,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 91, reason: 'the contract has 91 functions');
+    expect(calls.length, 92, reason: 'the contract has 92 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

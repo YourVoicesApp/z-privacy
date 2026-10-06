@@ -24,6 +24,33 @@ use super::Candidate;
 /// contributes nothing rather than failing — the same rule the label sets
 /// follow, and for the same reason: a profile that names a pack a later build
 /// removed must still scan.
+/// The languages this build does **not** carry yet, and says so.
+///
+/// A list of what is coming belongs where the packs themselves are, so that the
+/// day one of these ships it moves up by being written once — a screen that
+/// kept its own list would go on promising a language that had already arrived,
+/// or promising one that was dropped.
+///
+/// They are offered nowhere: every screen that shows them draws them under a
+/// line, greyed, and they cannot be chosen. Arabic is the one with a paper
+/// already (the pack of Phase 3's plan); the three Germanic ones are the
+/// neighbours of the two that exist.
+pub(crate) fn planned() -> Vec<crate::api::PlannedPack> {
+    [
+        ("en", "English"),
+        ("da", "Dansk"),
+        ("nb", "Norsk"),
+        ("ar", "العربية"),
+    ]
+    .into_iter()
+    .filter(|(id, _)| !installed().iter().any(|p| p.id == *id))
+    .map(|(id, label)| crate::api::PlannedPack {
+        id: id.to_string(),
+        label: label.to_string(),
+    })
+    .collect()
+}
+
 pub(crate) fn installed_packs() -> Vec<pack::LanguagePack> {
     vec![de::pack(), sv::pack()]
 }

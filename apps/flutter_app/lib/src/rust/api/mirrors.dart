@@ -1210,6 +1210,26 @@ class Place {
           paragraph == other.paragraph;
 }
 
+class PlannedPack {
+  final String id;
+
+  /// The language's own name for itself.
+  final String label;
+
+  const PlannedPack({required this.id, required this.label});
+
+  @override
+  int get hashCode => id.hashCode ^ label.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PlannedPack &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label;
+}
+
 enum Policy {
   /// Replaced the moment it appears.
   always,

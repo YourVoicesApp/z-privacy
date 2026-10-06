@@ -363,6 +363,23 @@ class _TopBar extends StatelessWidget {
                     ],
                   ),
                 ),
+              // A line, and under it what is coming. The owner, 6 October: the
+              // list shows both, and the line is what tells them apart. They
+              // are disabled, so pressing one does nothing at all — and the
+              // list of them is the core's, never this file's.
+              if (ground.plannedPacks.isNotEmpty) const PopupMenuDivider(),
+              for (final planned in ground.plannedPacks)
+                PopupMenuItem<String>(
+                  enabled: false,
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 23),
+                      Text(planned.label, style: Zc.small.copyWith(color: Zc.ink4)),
+                      const SizedBox(width: 10),
+                      Text('coming', style: Zc.tiny.copyWith(color: Zc.ink4)),
+                    ],
+                  ),
+                ),
             ],
             child: _Fact(label: 'Pack', value: pack.label),
           ),

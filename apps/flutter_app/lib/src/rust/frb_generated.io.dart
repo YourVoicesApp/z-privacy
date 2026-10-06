@@ -165,6 +165,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<PackRow> dco_decode_list_pack_row(dynamic raw);
 
   @protected
+  List<PlannedPack> dco_decode_list_planned_pack(dynamic raw);
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
 
   @protected
@@ -271,6 +274,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Place dco_decode_place(dynamic raw);
+
+  @protected
+  PlannedPack dco_decode_planned_pack(dynamic raw);
 
   @protected
   Policy dco_decode_policy(dynamic raw);
@@ -560,6 +566,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<PackRow> sse_decode_list_pack_row(SseDeserializer deserializer);
 
   @protected
+  List<PlannedPack> sse_decode_list_planned_pack(SseDeserializer deserializer);
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
 
   @protected
@@ -682,6 +691,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Place sse_decode_place(SseDeserializer deserializer);
+
+  @protected
+  PlannedPack sse_decode_planned_pack(SseDeserializer deserializer);
 
   @protected
   Policy sse_decode_policy(SseDeserializer deserializer);
@@ -1014,6 +1026,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_pack_row(List<PackRow> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_planned_pack(
+    List<PlannedPack> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
 
   @protected
@@ -1174,6 +1192,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_place(Place self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_planned_pack(PlannedPack self, SseSerializer serializer);
 
   @protected
   void sse_encode_policy(Policy self, SseSerializer serializer);
