@@ -326,6 +326,15 @@ pub struct SelectionView {
     /// The whole protected items this selection cuts into. Non-empty means
     /// Protect would snap to these instead of taking the selection as drawn.
     pub snaps_to: Vec<Span>,
+    /// What Protect will actually take: the selection grown out to whole words
+    /// and tidied of the marks at its edges (041-K). The same as the span that
+    /// was asked about whenever that one was already whole, and the screen
+    /// draws **this** so what is highlighted is what will happen.
+    pub word_span: Span,
+    /// The capitalised word standing one space before it — «Björn» in front of
+    /// «Sandström». An offer the bubble makes and a person answers; the core
+    /// never takes it unasked.
+    pub also_before: Option<Span>,
 }
 
 /// What the app has been told to do by itself.

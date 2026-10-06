@@ -4298,6 +4298,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Span? dco_decode_opt_box_autoadd_span(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_span(raw);
+  }
+
+  @protected
   TaughtReach? dco_decode_opt_box_autoadd_taught_reach(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_taught_reach(raw);
@@ -4678,8 +4684,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   SelectionView dco_decode_selection_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return SelectionView(
       empty: dco_decode_bool(arr[0]),
       kind: dco_decode_kind(arr[1]),
@@ -4689,6 +4695,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       protectedDetail: dco_decode_String(arr[5]),
       entities: dco_decode_list_String(arr[6]),
       snapsTo: dco_decode_list_span(arr[7]),
+      wordSpan: dco_decode_span(arr[8]),
+      alsoBefore: dco_decode_opt_box_autoadd_span(arr[9]),
     );
   }
 
@@ -6030,6 +6038,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Span? sse_decode_opt_box_autoadd_span(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_span(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   TaughtReach? sse_decode_opt_box_autoadd_taught_reach(
     SseDeserializer deserializer,
   ) {
@@ -6444,6 +6463,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_protectedDetail = sse_decode_String(deserializer);
     var var_entities = sse_decode_list_String(deserializer);
     var var_snapsTo = sse_decode_list_span(deserializer);
+    var var_wordSpan = sse_decode_span(deserializer);
+    var var_alsoBefore = sse_decode_opt_box_autoadd_span(deserializer);
     return SelectionView(
       empty: var_empty,
       kind: var_kind,
@@ -6453,6 +6474,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       protectedDetail: var_protectedDetail,
       entities: var_entities,
       snapsTo: var_snapsTo,
+      wordSpan: var_wordSpan,
+      alsoBefore: var_alsoBefore,
     );
   }
 
@@ -7702,6 +7725,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_span(Span? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_span(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_taught_reach(
     TaughtReach? self,
     SseSerializer serializer,
@@ -8023,6 +8056,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.protectedDetail, serializer);
     sse_encode_list_String(self.entities, serializer);
     sse_encode_list_span(self.snapsTo, serializer);
+    sse_encode_span(self.wordSpan, serializer);
+    sse_encode_opt_box_autoadd_span(self.alsoBefore, serializer);
   }
 
   @protected

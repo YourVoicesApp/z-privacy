@@ -2,6 +2,8 @@
 // gives it. A disabled control here always says *why* it is disabled — «Select
 // text, then Protect» — because a greyed button with no reason is the most
 // common way an app lies about what it can do.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
@@ -43,6 +45,17 @@ class ActsBar extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _protect(context, state, v),
+              // 041-K: a surname selected on its own, with a capitalised word
+              // one space in front of it. Offered, never taken: «Björn
+              // Sandström» is two decisions and the second one is the
+              // person's.
+              if (v != null && v.alsoBefore != null && state != ProtectState.known)
+                ZButton(
+                  label: 'Also the word before',
+                  icon: Icons.chevron_left,
+                  onPressed: bench.busy ? null : () => unawaited(bench.alsoTakeTheWordBefore()),
+                  hint: 'Takes the capitalised word in front of the selection too',
+                ),
               if (state == ProtectState.ready || state == ProtectState.asks)
                 if ((v?.matches ?? 0) > 1)
                   ZButton(

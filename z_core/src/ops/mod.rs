@@ -877,8 +877,23 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
                 protected_detail: String::new(),
                 entities: Vec::new(),
                 snaps_to: Vec::new(),
+                word_span: span,
+                also_before: None,
             });
         }
+
+        // What Protect will really take, and the offer beside it. Worked out
+        // here so the bubble can draw the truth before anything is pressed.
+        let (word_start, word_end) = text::whole_words(s.original_str(), start, end);
+        let (word_start, word_end) = if word_start < word_end {
+            (word_start, word_end)
+        } else {
+            (start, end)
+        };
+        let word_span = text::bytes_to_span(s.original_str(), word_start, word_end)?;
+        let also_before = text::capitalised_word_before(s.original_str(), word_start)
+            .map(|(b, e)| text::bytes_to_span(s.original_str(), b, e))
+            .transpose()?;
 
         // What it touches. Exactly one, exactly covering it, is «already
         // protected»; anything else that overlaps means Protect would snap.
@@ -958,6 +973,8 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             protected_detail: exact.map(|p| p.source_detail.clone()).unwrap_or_default(),
             entities,
             snaps_to,
+            word_span,
+            also_before,
         })
     })
 }
@@ -1136,7 +1153,30 @@ fn day_of(seconds: u64) -> String {
     format!("{d} {month} {year}")
 }
 
+/// What a selection drawn with a mouse actually covers.
+///
+/// 041-K: the pointer lands after the first character at the left margin, so a
+/// name selected at the start of a line used to be protected from its *second*
+/// letter — `J__Z_…`, with the J still in the text. Every path that turns a
+/// selection into an act goes through here first, so the rule is one rule and
+/// not three, and a caller that is already exact gets its own span back.
+pub(crate) fn as_whole_words(session: SessionId, span: Span) -> ApiResult<Span> {
+    with_session(session.id, |s| {
+        let text = s.original_str();
+        let (start, end) = text::span_to_bytes(text, span)?;
+        let (start, end) = text::whole_words(text, start, end);
+        if start >= end {
+            // Nothing but marks and space: leave it as drawn and let the act
+            // refuse it with its own sentence.
+            return Ok(span);
+        }
+        text::bytes_to_span(text, start, end)
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
 pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
+    let span = as_whole_words(session, span)?;
     // The scope decides the breadth. Until task 034 it was only a label — the
     // breadth came from which function was called — so «this conversation»
     // could protect one place and «always» could reach nothing at all.
@@ -1186,6 +1226,7 @@ fn remember_in_vault(session: SessionId, span: Span, scope: Scope, kind: Kind) -
 }
 
 pub(crate) fn protect_all_matches(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
+    let span = as_whole_words(session, span)?;
     if matches!(scope, Scope::Always | Scope::Profile) {
         require_open_vault()?;
     }

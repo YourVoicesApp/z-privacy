@@ -93,6 +93,140 @@ pub(crate) fn bytes_to_span(s: &str, start: usize, end: usize) -> ApiResult<Span
     })
 }
 
+/// The marks a selection drops from its own edges.
+///
+/// Not «every punctuation character»: `+` opens a telephone number, `@` holds
+/// an address together, `/` and `#` carry a reference number, and a selection
+/// that includes one meant to. These are the marks a sentence puts **around** a
+/// word — the ones a person's drag catches by accident at the end of a line or
+/// the start of a quote — and each one here was written down on purpose.
+const EDGE_MARKS: &[char] = &[
+    '.', ',', ';', ':', '!', '?', '…', '"', '\'', '«', '»', '(', ')', '[', ']', '{', '}', '„', '“',
+    '”', '‘', '’', '—', '–', '،', '؛', '؟',
+];
+
+/// Is this character part of a word?
+///
+/// A letter or a digit anywhere in the world, and the two marks that stand
+/// **inside** names rather than around them: «Al-Hassan» is one word and so is
+/// «O'Brien». At an edge those two are dropped like any other mark, which is
+/// why this answers about the character and `whole_words` decides about the
+/// position.
+fn is_word(c: char) -> bool {
+    c.is_alphanumeric() || c == '_'
+}
+
+/// Does this character join two word characters into one word?
+fn joins_a_word(c: char) -> bool {
+    matches!(c, '-' | '\'' | '’' | '.' | '/')
+}
+
+/// Is this position inside a word rather than between two of them?
+///
+/// True when a word character stands on both sides of it — and a joining mark
+/// counts as one when a word character stands on *its* far side, so `Al-Hassan`
+/// and `O'Brien` are each one word while `Müller,` ends at the comma.
+fn cuts_a_word(s: &str, at: usize) -> bool {
+    let before = match s.get(..at).and_then(|h| h.chars().next_back()) {
+        Some(c) => c,
+        None => return false,
+    };
+    let after = match s.get(at..).and_then(|t| t.chars().next()) {
+        Some(c) => c,
+        None => return false,
+    };
+    let word_side = |c: char, far: Option<char>| is_word(c) || (joins_a_word(c) && far.is_some_and(is_word));
+    let far_before = s.get(..at - before.len_utf8()).and_then(|h| h.chars().next_back());
+    let far_after = s.get(at + after.len_utf8()..).and_then(|t| t.chars().next());
+    word_side(before, far_before) && word_side(after, far_after)
+}
+
+/// Grow a selection out to whole words, and drop the marks at its edges.
+///
+/// The owner, 6 October, from a live run: protections came out as `J__Z_…`,
+/// `S__Z_…` and `Björn __Z_…`, and a token with a stray letter in front of it
+/// is a leak of the first letter of a name. The cause is not the person's aim —
+/// at the left margin the mouse lands *after* the first character, every time —
+/// and the fix is not to ask them to aim better.
+///
+/// Two rules, in this order:
+///
+/// 1. **Out, never in.** Each end moves outward while the character beside it
+///    belongs to the same word, so a drag that starts one letter late still
+///    takes the whole name. A selection that already covers whole words does
+///    not move at all.
+/// 2. **Then the edges are tidied**, of the marks a sentence puts around a word
+///    and never of the ones a value is made of. So «Müller,» becomes «Müller»
+///    and «+49 228» stays exactly as it was drawn.
+///
+/// Returns byte offsets into `s`, and never returns an empty range: a selection
+/// of nothing but marks is handed back untouched for the caller to refuse.
+pub(crate) fn whole_words(s: &str, start: usize, end: usize) -> (usize, usize) {
+    let (mut start, mut end) = (start.min(s.len()), end.min(s.len()));
+    if start >= end {
+        return (start, end);
+    }
+
+    // 1. Outward, but only while the edge stands **in the middle of a word**.
+    //    An edge that already sits on a space or a mark is where the person
+    //    put it, and moving it would swallow the next word — «Sandström, »
+    //    must not become «Sandström, tack».
+    while cuts_a_word(s, start) {
+        match s.get(..start).and_then(|head| head.chars().next_back()) {
+            Some(c) => start -= c.len_utf8(),
+            None => break,
+        }
+    }
+    while cuts_a_word(s, end) {
+        match s.get(end..).and_then(|tail| tail.chars().next()) {
+            Some(c) => end += c.len_utf8(),
+            None => break,
+        }
+    }
+
+    // 2. Inward, over the marks a sentence leaves at an edge — and over the
+    //    space a drag picks up past the end of a word.
+    let tidy = |c: char| EDGE_MARKS.contains(&c) || c.is_whitespace();
+    while let Some(c) = s.get(start..end).and_then(|t| t.chars().next()) {
+        if !tidy(c) {
+            break;
+        }
+        start += c.len_utf8();
+    }
+    while let Some(c) = s.get(start..end).and_then(|t| t.chars().next_back()) {
+        if !tidy(c) {
+            break;
+        }
+        end -= c.len_utf8();
+    }
+    if start >= end {
+        return (start.min(end), end.max(start));
+    }
+    (start, end)
+}
+
+/// The whole word standing immediately before this one, when it is capitalised
+/// and only a single space away — «Björn» before «Sandström».
+///
+/// A question, never an act: a surname selected on its own is the commonest
+/// thing a person does, and taking the given name with it unasked would protect
+/// a word nobody chose. The screen offers it; the core only finds it.
+pub(crate) fn capitalised_word_before(s: &str, start: usize) -> Option<(usize, usize)> {
+    let head = s.get(..start)?;
+    let gap = head.chars().next_back()?;
+    if gap != ' ' {
+        return None;
+    }
+    let end = start - gap.len_utf8();
+    let (word_start, word_end) = whole_words(s, end.checked_sub(1)?, end);
+    let word = s.get(word_start..word_end)?;
+    let first = word.chars().next()?;
+    if !first.is_uppercase() || word.chars().count() < 2 {
+        return None;
+    }
+    Some((word_start, word_end))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

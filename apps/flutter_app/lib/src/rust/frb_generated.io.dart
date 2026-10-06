@@ -264,6 +264,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Source? dco_decode_opt_box_autoadd_source(dynamic raw);
 
   @protected
+  Span? dco_decode_opt_box_autoadd_span(dynamic raw);
+
+  @protected
   TaughtReach? dco_decode_opt_box_autoadd_taught_reach(dynamic raw);
 
   @protected
@@ -688,6 +691,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Source? sse_decode_opt_box_autoadd_source(SseDeserializer deserializer);
+
+  @protected
+  Span? sse_decode_opt_box_autoadd_span(SseDeserializer deserializer);
 
   @protected
   TaughtReach? sse_decode_opt_box_autoadd_taught_reach(
@@ -1203,6 +1209,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     Source? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_opt_box_autoadd_span(Span? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_taught_reach(

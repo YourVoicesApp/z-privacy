@@ -3327,6 +3327,8 @@ const _: fn() = || {
         let _: String = SelectionView.protected_detail;
         let _: Vec<String> = SelectionView.entities;
         let _: Vec<crate::api::mirrors::Span> = SelectionView.snaps_to;
+        let _: crate::api::mirrors::Span = SelectionView.word_span;
+        let _: Option<crate::api::mirrors::Span> = SelectionView.also_before;
     }
     {
         let SessionId = None::<crate::api::mirrors::SessionId>.unwrap();
@@ -4543,6 +4545,17 @@ impl SseDecode for Option<crate::api::mirrors::Source> {
     }
 }
 
+impl SseDecode for Option<crate::api::mirrors::Span> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::mirrors::Span>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<crate::api::mirrors::TaughtReach> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -5047,6 +5060,8 @@ impl SseDecode for crate::api::mirrors::SelectionView {
         let mut var_protectedDetail = <String>::sse_decode(deserializer);
         let mut var_entities = <Vec<String>>::sse_decode(deserializer);
         let mut var_snapsTo = <Vec<crate::api::mirrors::Span>>::sse_decode(deserializer);
+        let mut var_wordSpan = <crate::api::mirrors::Span>::sse_decode(deserializer);
+        let mut var_alsoBefore = <Option<crate::api::mirrors::Span>>::sse_decode(deserializer);
         return crate::api::mirrors::SelectionView {
             empty: var_empty,
             kind: var_kind,
@@ -5056,6 +5071,8 @@ impl SseDecode for crate::api::mirrors::SelectionView {
             protected_detail: var_protectedDetail,
             entities: var_entities,
             snaps_to: var_snapsTo,
+            word_span: var_wordSpan,
+            also_before: var_alsoBefore,
         };
     }
 }
@@ -6796,6 +6813,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Selection
             self.0.protected_detail.into_into_dart().into_dart(),
             self.0.entities.into_into_dart().into_dart(),
             self.0.snaps_to.into_into_dart().into_dart(),
+            self.0.word_span.into_into_dart().into_dart(),
+            self.0.also_before.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -8105,6 +8124,16 @@ impl SseEncode for Option<crate::api::mirrors::Source> {
     }
 }
 
+impl SseEncode for Option<crate::api::mirrors::Span> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::mirrors::Span>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<crate::api::mirrors::TaughtReach> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -8488,6 +8517,8 @@ impl SseEncode for crate::api::mirrors::SelectionView {
         <String>::sse_encode(self.protected_detail, serializer);
         <Vec<String>>::sse_encode(self.entities, serializer);
         <Vec<crate::api::mirrors::Span>>::sse_encode(self.snaps_to, serializer);
+        <crate::api::mirrors::Span>::sse_encode(self.word_span, serializer);
+        <Option<crate::api::mirrors::Span>>::sse_encode(self.also_before, serializer);
     }
 }
 
