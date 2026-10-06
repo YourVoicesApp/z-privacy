@@ -58,7 +58,7 @@ pub(crate) fn pack() -> LanguagePack {
         conjunctions: CONJUNCTIONS,
         order: NameOrder::GivenThenFamily,
         names: super::de_names::CSV,
-        provenance: "Berlin Open Data (CC BY 3.0 DE) · sigpwned/popular-names-by-country (CC0) · Wikidata (CC0) — see z_core/assets/licenses/german_names_sources.md",
+        provenance: "Berlin, Bonn, Dortmund and Koeln newborn registers (CC BY 3.0 DE · CC0 · DL-DE-Zero 2.0) · Wikidata (CC0) · sigpwned/popular-names-by-country (CC0) — see z_core/assets/licenses/german_names_sources.md",
         extra: &[
             // A national plate format: «B-MW 2041» says where a car is
             // registered in Germany. Nothing about it generalises.
@@ -116,7 +116,21 @@ const TITLE_PARTS: &[&str] = &["med.", "rer.", "nat.", "phil.", "techn.", "univ.
 /// A function word cannot open a name. It is kept here, in the rule, and not
 /// taken out of the owner's list: the list says what Berlin named its children,
 /// which is true, and this says what a sentence can mean, which is also true.
-const FUNCTION_WORDS: &[&str] = &["an", "nur"];
+/// German words that are also given names, and are words far more often.
+///
+/// «An» and «Nur» came from Phase 1's measurement. «Per», «Mal» and «Anders»
+/// come from 038-H's: the bank carries 5,712 given names where there were 300,
+/// and three of the new ones are ordinary German function words — measured on
+/// the two large German documents, which write «per Post», «Mal sehen» and
+/// «anders als geplant» and mean none of them as a name. Without this list,
+/// «Per Post versandt» offers «Per Post» as a person, and «per Post» is in
+/// every second German business letter.
+///
+/// The cost, named: a person really called Per, Mal or Anders is not offered
+/// by the dictionary rule in a German document. They are still protected by a
+/// salutation, a title, a signature or a person's own word — the same price
+/// «An» and «Nur» have paid since Phase 1.
+const FUNCTION_WORDS: &[&str] = &["an", "nur", "per", "mal", "anders"];
 
 /// Degrees that follow a name. They are not part of it and do not start one.
 const DEGREES: &[&str] = &["MBA", "MSc", "BSc", "BA", "MA", "LL.M.", "PhD", "MPH", "MAS", "CFA"];

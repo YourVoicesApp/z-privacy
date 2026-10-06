@@ -33,3 +33,4 @@ apps/flutter_app/rust_builder/cargokit/build_tool/pubspec.lock
 # from a commit by a script — putting it in git would be storing the output of
 # a function beside the function.
 dist/
+__pycache__/

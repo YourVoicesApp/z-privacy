@@ -194,6 +194,23 @@ fn a_german_word_that_is_also_a_name_stays_harmless() {
         "An Finanzamt Berlin-Mitte, Abteilung 4.",
         "Max Zulässige Höhe laut Anlage 2.",
         "Rose Blüte und Blatt, Anlage 7.",
+        // 038-H brought 5,712 given names where there were 300, so the list of
+        // words that are also names grew with it. Measured on the two large
+        // German documents: 17 tier-1 given names appear there in **lowercase**
+        // — «nur» 114 times, then «vera», «ellen», «mal», «per», «anders»,
+        // «alba», «ben» — and German capitalises its nouns, so «Ernst»
+        // (seriousness), «Fritz», «Stefan», «Mark» and «Christian» collide
+        // without any lowercase form to catch them. Each one here stands as the
+        // word it is, and names nobody.
+        "Ernst gemeint war das nicht.",
+        "Fritz Angaben fehlen in der Anlage.",
+        "Mark Betrag in alter Währung, Anlage 9.",
+        "Christian Glaube und Gemeinde, Seite 12.",
+        "Stefan Angabe fehlt im Formular.",
+        "Vera Angaben sind unvollständig.",
+        "Per Post versandt am 3. März.",
+        "Mal sehen, ob die Frist reicht.",
+        "Anders als geplant wurde nichts geliefert.",
     ] {
         assert!(
             people(doc).is_empty(),
@@ -255,6 +272,40 @@ fn the_surnames_of_a_real_letter_are_in_the_list_now() {
             people(doc),
             vec![(MarkState::Suggested, who.to_string())],
             "«{doc}»"
+        );
+    }
+}
+
+
+/// What a bank of 5,712 given names and 3,246 surnames costs, measured on a
+/// text written to trip it.
+///
+/// Two ordinary German words can both be names — «August Vogel» is birdwatching
+/// in August, «Christian Koch» is a Christian cook, «Ernst Richter» is a
+/// serious judge — and the pair rule cannot tell them from the people who are
+/// really called that. So it does not try: it **offers**, and a person answers
+/// once. Nothing here is ever protected by the list alone, which is item B of
+/// the owner's paper and the line this bank may not cross.
+///
+/// Measured on the nine sentences below: the dictionary of 300 given names
+/// offered five of them, the bank of 5,712 offers seven — two more, on a text
+/// built for the purpose. On the five German goldens it added **no** false
+/// suggestion at all, and on none of them a false protection.
+#[test]
+fn two_ordinary_words_that_are_both_names_are_offered_and_never_protected() {
+    let page = "Im August Vogel beobachten wir die Zugvögel.\n\
+        Die Rose Klein ist eine alte Sorte.\n\
+        Der Christian Koch hat die Prüfung bestanden.\n\
+        Ernst Richter sprach über das Verfahren.\n\
+        Max Bauer der Messwerte liegt bei 40 Grad.\n\
+        Stefan Klein schrieb die Anlage.\n";
+    let found = people(page);
+    assert!(!found.is_empty(), "the pair rule fired on none of them, so this proves nothing");
+    for (state, text) in &found {
+        assert_eq!(
+            *state,
+            MarkState::Suggested,
+            "«{text}» was protected by two words that are also German nouns"
         );
     }
 }

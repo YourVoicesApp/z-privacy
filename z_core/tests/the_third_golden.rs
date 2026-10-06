@@ -52,9 +52,14 @@ fn the_team_page_is_protected_and_the_code_tables_are_not() {
     let report = scan(session).expect("scan");
     assert_eq!(
         (report.auto, report.suggested),
-        (18, 1),
-        "the people on the team page, and the one company offered for a word: {report:?}"
+        (18, 2),
+        "the people on the team page, the company and the person offered for a word: {report:?}"
     );
+    // 038-H moved the second number, and upwards: «Gregor Keller» is on the
+    // team page and was in the clear until the name bank carried both halves
+    // of him. One more real person offered, no false protection anywhere on
+    // 734 pages, and the code tables and chapter letters are still untouched —
+    // which the rest of this test checks line by line.
 
     let units: Vec<u16> = view.text.encode_utf16().collect();
     let findings = list_findings(session).expect("findings");
@@ -79,7 +84,15 @@ fn the_team_page_is_protected_and_the_code_tables_are_not() {
     }
     assert_eq!(
         shape.iter().map(|(k, n)| format!("{k} ×{n}")).collect::<Vec<_>>(),
-        ["Protected Email ×1", "Protected Person ×16", "Protected Phone ×1", "Suggested Company ×1"],
+        [
+            "Protected Email ×1",
+            "Protected Person ×16",
+            "Protected Phone ×1",
+            "Suggested Company ×1",
+            // 038-H: «Gregor Keller», offered and not protected — a dictionary
+            // hit is a signal, never a verdict, on 734 pages as anywhere else.
+            "Suggested Person ×1",
+        ],
         "the shape of what it found has changed"
     );
 

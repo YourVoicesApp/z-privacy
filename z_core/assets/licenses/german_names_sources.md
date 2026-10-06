@@ -1,117 +1,107 @@
-# German Name Dictionary V1 — where the names came from
+# The German name bank — where every name came from
 
-`z_core/assets/de_names_v1.csv` holds 310 names: 300 given names and 10
-surnames. It is compiled into the binary (`include_str!`), so a scan reads no
-file and reaches no network. The file is built by
-`scripts/build_de_names.py --fetch`, which is a development step and never runs
-in the product.
+`z_core/assets/de_names_v2.csv` holds **12,732 names**: 9,486 given names and
+3,246 surnames, in tiers. It is compiled into the binary (`include_str!`), so a
+scan reads no file and reaches no network. Tier 3 — a spelling one single city
+register ever used — is written beside it as `de_names_v2_tier3.csv` and is
+compiled into nothing.
 
-Both sources require attribution, and both requirements are met here and in the
-header of the CSV itself.
+The file is built by `scripts/build_de_names.py --fetch`, which is a
+development step and never runs in the product. Which tiers a build believes is
+`LOADED_TIERS` in `z_core/src/scanner/packs/de_names.rs`; today it is tier 1,
+and `docs/THE_NUMBERS.md` §2 has the measurement that let it in.
 
-## 1 · Given names — Berlin Open Data, häufige Vornamen 2023
+Every source below allows redistribution. Three of the four require
+attribution, and the required wording is quoted here and carried in the CSV's
+own header. **A list with no licence does not enter this file**: the lists that
+were refused, and why, are in the lead's register (`~/work-now/names/REGISTER.md`).
 
-* **What was taken**: the 300 most used first names in the twelve districts of
-  Berlin for 2023, with the count summed across districts and across name
-  positions (first name, second name, …). The gender is recorded as `m`, `w`, or
-  `mw` where the data gives a name to both.
-* **Data type**: names of children born in Berlin in 2023, published after
-  cleaning and anonymisation.
-* **Year**: 2023.
-* **Licence**: CC BY 3.0 DE —
-  <https://creativecommons.org/licenses/by/3.0/de/>
+---
+
+## 1 · Given names — Berlin, häufige Vornamen 2012–2023
+
+* **What was taken**: every spelling in the registers of the twelve Berlin
+  districts for twelve years, with the count summed across districts, years and
+  name positions. 154,909 rows read.
+* **Data type**: first names of children born in Berlin, published after
+  cleaning and anonymisation. No person, no birth, no address.
+* **Publisher**: BerlinOnline Stadtportal GmbH & Co. KG, on data of the
+  Landesamt für Bürger- und Ordnungsangelegenheiten (LABO).
+* **Licence**: CC BY 3.0 DE — <https://creativecommons.org/licenses/by/3.0/de/>
 * **Attribution required** (the repository's own wording, quoted):
   > BerlinOnline GmbH, auf Basis von Daten des Berliner Landesamtes für
   > Bürger- und Ordnungsangelegenheiten (LABO)
-* **And the repository URL must be given in the source statement**, which that
-  licence section states in as many words:
-  <https://github.com/berlin/haeufige-vornamen-berlin>
+* **Repository**: <https://github.com/berlin/haeufige-vornamen-berlin>
 * **Dataset page**:
   <https://daten.berlin.de/datensaetze/liste-der-h-ufigen-vornamen-2023>
-* **What the count is not**: it is the count inside Berlin 2023 only. It is not
-  presented as Germany, and the `scope` column of every row says so.
-* The repository's *code* is MIT (BerlinOnline GmbH, 2019–2025). No code was
-  taken from it; only data.
 
-## 2 · Surnames — popular-names-by-country-dataset, Germany subset
+## 2 · Given names — Bonn, Vornamen von Neugeborenen 2017–2024
 
-* **What was taken**: the ten rows of `common-surnames-by-country.csv` whose
-  `Country` is `DE`, in the dataset's own rank order — Müller, Schmidt,
-  Schneider, Fischer, Meyer, Weber, Wagner, Schulz, Becker, Hoffmann.
-* **Licence**: CC0 1.0 Universal — no attribution is required, and it is given
-  anyway, because a product whose argument is «you can check this» owes the
-  reader the ability to.
-* **Source**:
+* **What was taken**: every spelling in the city's yearly files, 31,324 rows,
+  counts summed across years and name positions.
+* **Publisher**: Bundesstadt Bonn — Offene Daten Bonn.
+* **Licence**: CC0 1.0 (`cc-zero`), as stated on each dataset page. No
+  attribution is required; it is given anyway.
+* **Dataset pages**:
+  <https://opendata.bonn.de/dataset/vornamen-von-neugeborenen-im-jahr-2024>
+  (one page per year, 2017–2024)
+* **Note for whoever rebuilds this**: the 2018 file is encoded cp1252, not
+  UTF-8. The builder reads it as such; nothing else in the four cities is.
+
+## 3 · Given names — Dortmund, Vornamen der Geburten seit 2021
+
+* **What was taken**: every spelling in the city's export, 17,643 rows,
+  2021–2025.
+* **Publisher**: Stadt Dortmund — Open Data Dortmund.
+* **Licence**: Datenlizenz Deutschland – Zero – Version 2.0 —
+  <https://www.govdata.de/dl-de/zero-2-0>. No attribution is required; it is
+  given anyway.
+* **Dataset page**:
+  <https://open-data.dortmund.de/explore/dataset/vornamen-geburten-in-dortmund-gesamt/>
+* **Note**: this city writes the gender as `mannlich`/`weiblich` rather than
+  `m`/`w`, and its own column order.
+
+## 4 · Given names — Köln, Vornamen 2019–2023
+
+* **What was taken**: every spelling in the two published files, 33,782 rows.
+* **Publisher**: Stadt Köln — Offene Daten Köln.
+* **Licence**: Datenlizenz Deutschland – Zero – Version 2.0 —
+  <https://www.govdata.de/dl-de/zero-2-0>. No attribution is required; it is
+  given anyway.
+* **Dataset pages**: <https://offenedaten-koeln.de/dataset/vornamen-2019-2022>
+  and <https://offenedaten-koeln.de/dataset/vornamen-2023>
+* **Note**: the two files have two different column orders.
+
+## 5 · Surnames — Wikidata, people with German citizenship
+
+* **What was taken**: every family name borne by a person Wikidata records as a
+  German citizen, with the number of such people as the count — 49,363
+  spellings, of which the 3,246 with ten bearers or more are loaded.
+* **Publisher**: Wikidata — <https://www.wikidata.org>
+* **Licence**: CC0 1.0. No attribution is required; it is given anyway.
+* **How it was asked**: a SPARQL query through QLever
+  (<https://qlever.dev/api/wikidata>), because Wikidata's own endpoint times
+  out on this question at 60 seconds — measured, including split by first
+  letter. The query is in `scripts/build_de_names.py`.
+* **What this count is not**: it is people recorded in Wikidata, not the
+  population of Germany. A surname's rank here is a rank among the notable.
+
+## 6 · Surnames — the ten of V1 (`popular-names-by-country-dataset`)
+
+* **What was taken**: the German subset, and of it only the names Wikidata does
+  not have at all. In practice that is **Schmidt** — no family-name item
+  labelled «Schmidt» in German has German-citizen holders in Wikidata, and it
+  is the second commonest surname in the country.
+* **Publisher**: sigpwned —
   <https://github.com/sigpwned/popular-names-by-country-dataset>
+* **Licence**: CC0 1.0.
 
-## 3 · Surnames, V2 — Wikidata, family names of people recorded as German
+---
 
-Added 5 October 2026, for Phase 1. The ten names of source 2 were the
-bottleneck: measured on the owner's three files, they matched 1 of the 7
-surnames in the German letter and 0 of the 15 in the Austrian document.
+## What the bank is, and is not
 
-* **What was taken**: the 600 most borne family names, ranked by how many
-  people Wikidata records with that family name (`P734`) **and** citizenship of
-  Germany (`P27` = `Q183`), keeping only single-word labels shaped like a name.
-  The German label of the family-name item is the name as written.
-* **Data type**: structured data from Wikidata's main namespace.
-* **Version**: the live endpoint as queried on 2026-10-05; the query is in
-  `scripts/build_de_names.py` and gives the same list from the same data.
-* **Licence**: **CC0 1.0** — Wikidata's own statement, read from its API and
-  not assumed: «All structured data from the main and property namespace is
-  available under the Creative Commons CC0 License»
-  (<https://www.wikidata.org/wiki/Wikidata:Copyright>).
-* **Attribution**: none required by CC0. Given anyway: Wikidata contributors,
-  <https://www.wikidata.org>.
-* **Engine**: the query is answered by QLever
-  (<https://qlever.dev/api/wikidata>), which serves the same Wikidata data.
-  Wikidata's own endpoint refuses this aggregation — it times out at 60 seconds,
-  measured repeatedly, including split by first letter. The engine changes
-  nothing about the data or its licence.
-* **What the count is and is not**: it is the number of *people Wikidata
-  records*, which is a count of the notable, not of the population. It orders
-  the list; it is not a frequency claim about Germany, and the `scope` column of
-  every row says `Wikidata, German citizens`.
-* **A hole this source has, measured**: no family-name item labelled `Schmidt`
-  in German has German-citizen holders in Wikidata, so the second commonest
-  surname in Germany is **absent** from its ranked output. The ten names of
-  source 2 are therefore kept as rows beside it — a union of the two covers
-  what either misses, and each row says which source it came from.
-* **Known limit, named rather than hidden**: the criterion is citizenship of
-  Germany, so Austrian and Swiss surnames are not in it. On the owner's
-  Austrian document this shows plainly: 12 of its 15 surnames are absent at any
-  list size. The fix is the same query with `Q40` or `Q39`, and it is a decision
-  for a later phase, not something to slip in here.
-
-## Sources considered and not used, and why
-
-Recorded because «no vague licence» is a rule, and because the next person to
-widen this list should not have to measure the same things again.
-
-* **German Wikipedia's lists of surnames** and **Wiktionary** — CC BY-SA. A
-  share-alike licence on a compilation that would ship inside a product
-  licensed Apache-2.0 is a conflict, not a formality. Not used.
-* **`philipperemy/name-dataset`** and anything else derived from the 2019
-  Facebook scrape — a leaked dataset. Not used, on the owner's rule and on its
-  own merits.
-* **Forebears.io**, **Geogen** — the best frequency data for German surnames,
-  and proprietary. Not used.
-* **German open government data** — publishes *given* names from birth
-  registers (source 1 above) and deliberately does not publish surname
-  frequencies. There is no official list to take.
-
-## What the dictionary is allowed to do
-
-A signal, never a verdict. A match can make the scanner **offer** a name it
-would otherwise have walked past; it can never make it protect one. The rule
-that uses it — `dictionary_names` in `z_core/src/scanner/packs/de.rs` — requires
-both halves of a name, yields to a salutation or a title, and returns
-`Confidence::Suggest` and nothing else. `z_core/tests/the_name_dictionary.rs`
-holds that to account.
-
-## Replacing this file
-
-The owner's own `de_names_v1.csv` drops in unchanged: the same eleven columns,
-read by the same loader. Run `python3 scripts/build_de_names.py --check` on it
-first — it needs no network and says whether the file has the shape the product
-expects.
+A dictionary hit is a **signal**, never a verdict. A name in this file can make
+the scanner offer a word it would otherwise have walked past; it can never make
+the scanner protect one by itself. That rule is item B of the owner's paper, it
+is tested in `z_core/tests/the_name_dictionary.rs`, and 038-H did not touch it:
+what changed in that task is only what the dictionary knows.
