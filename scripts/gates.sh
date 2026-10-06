@@ -708,6 +708,11 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_taught_name_is_found_in_every_case a_longer_lowercase_does_not_move_the_span \
          protecting_every_place_is_case_blind_too a_lowercase_word_is_still_not_a_name \
          full_case_folding_is_not_claimed \
+         a_surname_broken_at_a_line_end_is_one_name what_it_finds_it_can_find_again \
+         a_value_without_a_hyphen_is_not_found_across_a_real_one \
+         the_pair_rule_reads_across_a_wrapped_line \
+         the_pair_rule_does_not_read_across_a_page \
+         two_words_on_two_lines_are_still_two_words \
          remove_protection_here_leaves forget_from_this_profile_keeps \
          forget_everywhere_reaches nothing_taught_reports_no_reach \
          locked_by_hand locks_itself does_not_postpone_the_lock tell_one_story \

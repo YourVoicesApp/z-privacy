@@ -358,30 +358,128 @@ pub(crate) fn occurrences(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
 }
 
 /// How many **haystack bytes** `needle` takes starting at `start`, comparing
-/// without regard to case, or `None` if it is not there.
+/// without regard to case and across the breaks a page puts inside a word, or
+/// `None` if it is not there.
 fn case_blind_match(haystack: &str, start: usize, needle: &str) -> Option<usize> {
+    let want: Vec<char> = needle.chars().flat_map(char::to_lowercase).collect();
+    let mut w = 0usize;
+    let mut at = start;
     // The lowercase characters of the haystack character we are part way
     // through, in reverse so the next one is the last.
     let mut pending: Vec<char> = Vec::new();
-    let mut at = start;
-    let mut wanted = needle.chars().flat_map(char::to_lowercase);
 
-    loop {
-        let Some(want) = wanted.next() else {
-            // The needle is spent. It has to have ended where a haystack
-            // character ends, or there is no byte to call the end.
-            return pending.is_empty().then_some(at - start);
-        };
+    while let Some(&wanted) = want.get(w) {
         if pending.is_empty() {
+            // **A word the page broke.** 038-I: `Yn-` at the end of a line and
+            // `nerman` at the start of the next are one surname, and half a
+            // protected name travelling to a model is worse than none. Skipped
+            // only where the value itself has no hyphen there, so «Anna-Lena»
+            // broken after its own hyphen is still «Anna-Lena» and not
+            // «AnnaLena».
+            if wanted != '-' {
+                if let Some(skip) = line_break_hyphen(haystack, at) {
+                    at += skip;
+                    continue;
+                }
+            } else if haystack
+                .get(at..)
+                .and_then(|r| r.chars().next())
+                .is_some_and(|c| matches!(c, '-' | '\u{2010}' | '\u{ad}'))
+            {
+                // **A name's own hyphen, broken at exactly that hyphen.**
+                // «Anna-Lena» printed as «Anna-\nLena» is still «Anna-Lena»:
+                // the hyphen is matched as itself, and the line break behind it
+                // is the page's, not the name's. Narrow on purpose — only ever
+                // right after a hyphen the value itself asked for, so two
+                // ordinary words on two lines are never run together.
+                let c = haystack.get(at..)?.chars().next()?;
+                at += c.len_utf8();
+                w += 1;
+                // Only where the value does not ask for the break itself.
+                //
+                // **Measured, and it cost a wrong diagnosis:** the automatic
+                // path re-protects every place the matched text appears by
+                // handing that text back here as the needle — so a needle may
+                // arrive already carrying `-\n`. Eating the break here left
+                // «Yn-\nnerman» unable to find itself, and the whole finding
+                // vanished rather than failing loudly.
+                if want.get(w).is_some_and(|c| !c.is_whitespace()) {
+                    at += whitespace_run(haystack, at);
+                }
+                continue;
+            }
+            // **A space in the value is any run of space in the text**, so a
+            // value of more than one word survives being wrapped. The run is
+            // taken whole: a line break between two words is one gap, not two.
+            if wanted.is_whitespace() {
+                let run = whitespace_run(haystack, at);
+                if run > 0 {
+                    at += run;
+                    while want.get(w).is_some_and(|c| c.is_whitespace()) {
+                        w += 1;
+                    }
+                    continue;
+                }
+            }
             let c = haystack.get(at..)?.chars().next()?;
             at += c.len_utf8();
             pending = c.to_lowercase().collect();
             pending.reverse();
         }
-        if pending.pop()? != want {
+        if pending.pop()? != wanted {
             return None;
         }
+        w += 1;
     }
+    // The needle is spent. It has to have ended where a haystack character
+    // ends, or there is no byte to call the end.
+    pending.is_empty().then_some(at - start)
+}
+
+/// A hyphen that is there because the line ended, and how many bytes it and the
+/// break after it take.
+///
+/// The owner's rule, and it is what tells a break from a real compound: the
+/// hyphen is the last thing on its line, and **the next line begins with a
+/// small letter**. A line that begins with a capital is a new word, so the
+/// hyphen before it is the word's own.
+fn line_break_hyphen(haystack: &str, at: usize) -> Option<usize> {
+    let rest = haystack.get(at..)?;
+    let mut chars = rest.char_indices();
+    // Any of the three a reader may leave behind: the ordinary hyphen-minus,
+    // the typographic hyphen, and the soft hyphen that means exactly this.
+    let (_, first) = chars.next()?;
+    if !matches!(first, '-' | '\u{2010}' | '\u{ad}') {
+        return None;
+    }
+    let mut seen_break = false;
+    for (offset, c) in chars {
+        match c {
+            '\n' | '\r' => seen_break = true,
+            ' ' | '\t' => {}
+            _ if seen_break => {
+                // The first real character of the next line decides.
+                return c.is_lowercase().then_some(offset);
+            }
+            // Something other than space between the hyphen and the end of the
+            // line: this hyphen belongs to the text.
+            _ => return None,
+        }
+    }
+    None
+}
+
+/// How many bytes of whitespace start here.
+fn whitespace_run(haystack: &str, at: usize) -> usize {
+    haystack
+        .get(at..)
+        .map(|rest| {
+            rest.chars()
+                .take_while(|c| c.is_whitespace())
+                .map(char::len_utf8)
+                .sum()
+        })
+        .unwrap_or(0)
 }
 
 pub(crate) fn stands_alone(s: &str, start: usize, end: usize) -> bool {
@@ -494,5 +592,77 @@ mod tests {
             span_to_bytes(GERMAN, Span { start: 9, end: 4 }),
             Err(ApiError::BadSpan { .. })
         ));
+    }
+
+    /// What `occurrences` finds, as the text it covers — the pure function on
+    /// its own, before any vault, pack or screen is involved.
+    fn found<'a>(haystack: &'a str, needle: &str) -> Vec<&'a str> {
+        occurrences(haystack, needle)
+            .into_iter()
+            .map(|(a, b)| &haystack[a..b])
+            .collect()
+    }
+
+    #[test]
+    fn a_value_is_found_whatever_its_case() {
+        assert_eq!(
+            found("Leifland och LEIFLAND och leifland", "Leifland"),
+            vec!["Leifland", "LEIFLAND", "leifland"]
+        );
+    }
+
+    #[test]
+    fn a_word_the_page_broke_is_one_word() {
+        assert_eq!(found("Anders Yn-\nnerman leder", "Ynnerman"), vec!["Yn-\nnerman"]);
+        // The indent the next line may carry goes with it.
+        assert_eq!(found("Yn-\n   nerman", "Ynnerman"), vec!["Yn-\n   nerman"]);
+    }
+
+    /// **What this finds, it must be able to find again.**
+    ///
+    /// The automatic path protects every place the matched text appears by
+    /// handing that text back as the needle, so a needle may arrive already
+    /// carrying the break the page put in it. A matcher that cannot find its
+    /// own answer drops the finding altogether — which is how this was found,
+    /// as zero marks rather than as a wrong one.
+    #[test]
+    fn what_it_finds_it_can_find_again() {
+        let doc = "Professor Anders Yn-\nnerman leder gruppen.\n";
+        let first = found(doc, "Ynnerman");
+        assert_eq!(first, vec!["Yn-\nnerman"]);
+        assert_eq!(found(doc, first[0]), first, "the matcher cannot find its own answer");
+
+        let own = "H\u{e4}lsningar Anna-\nLena Bergstr\u{f6}m\n";
+        let hit = found(own, "Anna-Lena Bergstr\u{f6}m");
+        assert_eq!(hit, vec!["Anna-\nLena Bergstr\u{f6}m"]);
+        assert_eq!(found(own, hit[0]), hit);
+    }
+
+    #[test]
+    fn a_capital_after_the_break_keeps_the_hyphen() {
+        assert!(found("Anna-\nLena", "AnnaLena").is_empty());
+        assert_eq!(found("Anna-\nLena", "Anna-Lena"), vec!["Anna-\nLena"]);
+    }
+
+    #[test]
+    fn a_space_in_the_value_is_any_space_in_the_text() {
+        assert_eq!(
+            found("Kungl.\nIngenj\u{f6}rs", "Kungl. Ingenj\u{f6}rs"),
+            vec!["Kungl.\nIngenj\u{f6}rs"]
+        );
+        // But a gap the value does not ask for is not crossed.
+        assert!(found("Sven\nNelander", "SvenNelander").is_empty());
+    }
+
+    #[test]
+    fn the_range_is_the_haystack_s_own_even_when_lowercase_is_longer() {
+        // `\u{130}` lowercases to two code points, so the value is a byte
+        // longer than the text it matches.
+        assert_eq!(found("Fabrik \u{130}stanbul AB", "i\u{307}stanbul"), vec!["\u{130}stanbul"]);
+    }
+
+    #[test]
+    fn a_piece_of_a_word_is_not_the_word() {
+        assert!(found("Nordsternstra\u{df}e", "Nordstern").is_empty());
     }
 }
