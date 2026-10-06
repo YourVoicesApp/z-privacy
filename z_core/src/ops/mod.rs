@@ -966,7 +966,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
 
         Ok(SelectionView {
             empty: false,
-            kind: guessed.or(from_mark).unwrap_or(Kind::Custom),
+            kind: guessed.or(from_mark).or_else(|| looks_like_a_person(&selected)).unwrap_or(Kind::Custom),
             matches: occurrences(s.original_str(), &selected).len() as u32,
             protected_as: exact.map(|p| p.token.clone()),
             protected_by: exact.map(|p| p.source),
@@ -977,6 +977,39 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             also_before,
         })
     })
+}
+
+/// One or two capitalised words, and nothing else in them.
+///
+/// 041-P, from the owner's live run: his hand-made protections went out as
+/// `CUSTOM`, and a model reads `PERSON`. The dialog has to offer *something*
+/// first, and when a person draws a line round «Björn Sandström» the honest
+/// default is a person — not because the app knows, but because this is the
+/// commonest thing a hand selects in a letter, and the dialog is where it is
+/// confirmed or changed before anything happens.
+///
+/// It is the **last** guess, after the pack, the finding under the selection
+/// and the mark that overlaps it. Each of those knows more than this does.
+/// Three words or more is prose, a lower-case word is a word, and anything
+/// carrying a digit or a mark is not a name — all of those stay `Custom`.
+fn looks_like_a_person(selected: &str) -> Option<Kind> {
+    let words: Vec<&str> = selected.split_whitespace().collect();
+    if words.is_empty() || words.len() > 2 {
+        return None;
+    }
+    for word in &words {
+        let mut chars = word.chars();
+        match chars.next() {
+            Some(first) if first.is_uppercase() => {}
+            _ => return None,
+        }
+        // A hyphen inside a name is a name — «Al-Hassan», «Marie-Luise» — and
+        // everything else that is not a letter says this is not one.
+        if !chars.all(|c| c.is_alphabetic() || c == '-' || c == '\'') {
+            return None;
+        }
+    }
+    Some(Kind::Person)
 }
 
 /// Why is this protected?
@@ -1410,7 +1443,12 @@ fn occurrences(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
             Some(at) => {
                 let start = from + at;
                 let end = start + needle.len();
-                out.push((start, end));
+                // 041-P: «all matches» means every place this value stands, not
+                // every place these letters appear. `text::stands_alone` holds
+                // the rule and the measurement behind it.
+                if text::stands_alone(haystack, start, end) {
+                    out.push((start, end));
+                }
                 from = end;
             }
             None => break,
