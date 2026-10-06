@@ -16,14 +16,19 @@ import 'package:zprivacy/widgets/name_review.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
-/// A staff list, as one is written. «Kowalski» and «Yilmaz» are in no
-/// dictionary this build ships with; «Thomas» and «Sophie» are.
+/// A staff list, as one is written. «Al-Hassan» and «Okonkwo» are in no
+/// dictionary this build ships with; «Mahmoud» and «Sophie» are.
+// 038-H gave the pack 5,712 given names and 3,246 surnames, and «Kowalski» is
+// one of them now — a word this build knows is not a word it asks about. So
+// the two names this panel is about are two the bank still does not carry:
+// «Al-Hassan» and «Okonkwo», each written twice, each introduced by a given
+// name the bank does know.
 const _doc =
     'Projektteam 2026\n'
-    'Kowalski, Thomas — Bauleitung\n'
-    'Yilmaz, Sophie — Elektroplanung\n'
-    'Die Bauleitung liegt bei Thomas Kowalski.\n'
-    'Rückfragen an Sophie Yilmaz.\n';
+    'Al-Hassan, Mahmoud — Bauleitung\n'
+    'Okonkwo, Sophie — Elektroplanung\n'
+    'Die Bauleitung liegt bei Mahmoud Al-Hassan.\n'
+    'Rückfragen an Sophie Okonkwo.\n';
 
 Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
   for (var i = 0; i < rounds; i++) {
@@ -81,14 +86,14 @@ void main() {
     expect(find.byType(NameReviewPanel), findsOneWidget);
     expect(find.text('2 names to look at'), findsOneWidget);
     // One row per name — never one per occurrence.
-    expect(find.text('Kowalski'), findsOneWidget);
-    expect(find.text('Yilmaz'), findsOneWidget);
+    expect(find.text('Al-Hassan'), findsOneWidget);
+    expect(find.text('Okonkwo'), findsOneWidget);
     // What the decision is worth, as the core counted it.
     expect(find.text('2 places · 1 page'), findsNWidgets(2));
     expect(find.text('Add as family name'), findsNWidgets(2));
     // And a line of context, as the document writes it.
     expect(
-      find.textContaining('Kowalski, Thomas', findRichText: true),
+      find.textContaining('Al-Hassan, Mahmoud', findRichText: true),
       findsWidgets,
       reason: 'a row without an example is a row nobody can decide on',
     );

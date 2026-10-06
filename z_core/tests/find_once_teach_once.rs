@@ -62,9 +62,16 @@ fn a_document_offers_its_unknown_names_once_each_with_what_a_decision_is_worth()
 
     let found = name_candidates(session).expect("candidates");
     let names: Vec<String> = found.iter().map(|c| c.text.clone()).collect();
+    // 038-H moved this, and the move is the point of that task. «Kowalski» is
+    // a family name the bank now carries (19 bearers in Wikidata) and «Yilmaz»
+    // a given name three of the four city registers carry — a word this build
+    // knows is not a word it has to ask about. What is left to ask about is
+    // «Al-Hassan», which Phase 2 measured as the gap and could not reach,
+    // because the evidence the rule needs is the **given** name and «Mahmoud»
+    // was in neither list. Four city registers have it, 255 children.
     assert_eq!(
         names,
-        vec!["Kowalski".to_string(), "Yilmaz".to_string()],
+        vec!["Al-Hassan".to_string()],
         "one row per name, the most places first"
     );
 
@@ -103,8 +110,19 @@ fn a_candidate_protects_nothing_until_it_is_taught() {
     );
     let marked = people(session, TEAM);
     assert!(
-        marked.iter().all(|(_, text)| !text.contains("Kowalski") && !text.contains("Al-Hassan")),
+        marked
+            .iter()
+            .all(|(state, text)| *state != MarkState::Protected
+                || (!text.contains("Kowalski") && !text.contains("Al-Hassan"))),
         "a candidate was protected before anybody said so: {marked:?}"
+    );
+    // Offered is not protected, and 038-H changed which of the two this is:
+    // «Thomas Kowalski» is a known given name followed by a known family name
+    // now, so the dictionary rule offers it — at Suggest, never Auto, which is
+    // the whole of item B of the owner's paper.
+    assert!(
+        marked.iter().any(|(state, text)| *state == MarkState::Suggested && text == "Thomas Kowalski"),
+        "both halves are in the bank and nothing offered the pair: {marked:?}"
     );
     // The scan is the scan it was: discovery is a separate layer and adds no
     // findings of its own.
@@ -114,19 +132,17 @@ fn a_candidate_protects_nothing_until_it_is_taught() {
     );
 }
 
-/// The gap this phase measured, named so that it is not discovered twice.
+/// The gap Phase 2 measured, closed by 038-H — and this test is the one that
+/// said it would be the test to rewrite.
 ///
-/// «Al-Hassan, Mahmoud» is the very form rule one is built for, and it finds
-/// nothing — because the evidence the rule needs is the **given** name, and
-/// «Mahmoud» is in neither list this build ships with. Measured on the same
-/// source as the surnames: Wikidata's given names of German citizens would
-/// bring «Tobias» (rank 97) and «Markus» (65), and still not «Mahmoud».
-///
-/// So the next source question is not a longer German list. It is the names of
-/// the people who live in Germany, which is a different list — and the same
-/// answer the surnames gave for «Haddad» and «Demir».
+/// «Al-Hassan, Mahmoud» is the very form rule one is built for, and it found
+/// nothing, because the evidence the rule needs is the **given** name and
+/// «Mahmoud» was in neither list this build shipped. Phase 2's note said the
+/// answer was not a longer German list but «the names of the people who live
+/// in Germany» — which is what four German cities' newborn registers are.
+/// Measured: Mahmoud is in all four, 255 children.
 #[test]
-fn a_name_whose_given_half_is_unknown_is_still_invisible() {
+fn a_name_whose_given_half_was_unknown_is_found_now() {
     let _dir = a_device("gap");
     let session = open_session(None, "de".to_string()).expect("open");
     import_text(session, TEAM.to_string()).expect("import");
@@ -137,8 +153,12 @@ fn a_name_whose_given_half_is_unknown_is_still_invisible() {
         .map(|c| c.text)
         .collect();
     assert!(
-        !names.contains(&"Al-Hassan".to_string()),
-        "«Al-Hassan» is found now — the given-name list was widened, and this \
-         test is the one to rewrite with the new numbers: {names:?}"
+        names.contains(&"Al-Hassan".to_string()),
+        "the given half is in the bank and the surname is still invisible: {names:?}"
     );
+    // And the rule is still a rule: the bank now carries «Berlin» as a family
+    // name — 23 people in Wikidata are called that — and «Anlage 3, Berlin,
+    // Hauptstadt» is still not a person, because a comma proves nothing and no
+    // known given name follows it.
+    assert!(!names.contains(&"Berlin".to_string()), "«Berlin» was offered as a name");
 }

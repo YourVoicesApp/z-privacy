@@ -18,8 +18,20 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
-/// The dictionary as shipped. 310 rows and five comment lines.
-pub(crate) const CSV: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/de_names_v1.csv"));
+/// The bank as shipped: tiers 1 and 2, 12,732 names, built by
+/// `scripts/build_de_names.py` from four cities' newborn registers and
+/// Wikidata. Tier 3 — a name one single city ever used — is written beside it
+/// and compiled into nothing: 60,548 rows nobody reads would be 14 MB of
+/// download in every copy of the product.
+pub(crate) const CSV: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/de_names_v2.csv"));
+
+/// Which tiers this build actually believes.
+///
+/// A tier is a measurement, not a guess: each one was run against every German
+/// golden and the Swedish control before it was put here, and the numbers are
+/// in `docs/THE_NUMBERS.md`. A tier that cost a false protection anywhere does
+/// not go in this list, whatever it would have gained.
+pub(crate) const LOADED_TIERS: &[u8] = &[1];
 
 /// Names folded to lowercase, because a name is matched by its letters and not
 /// by its case — and the shape of the word is judged elsewhere, by the rules
@@ -77,10 +89,10 @@ pub(crate) fn dictionary() -> &'static Dictionary {
     dictionary_of("de-DE", CSV)
 }
 
-/// The two fields this code needs are the first two, and neither can hold a
-/// comma — so the line is split on the first two commas and the rest, which may
-/// be quoted prose, is left alone. A full CSV reader would be a dependency for
-/// nothing.
+/// Three fields this code needs, and none of them can hold a comma: the name
+/// and the type are the first two, and the tier is the last. Everything
+/// between them may be quoted prose and is left alone — a full CSV reader
+/// would be a dependency for nothing.
 fn parse(text: &str) -> Dictionary {
     let mut given = BTreeSet::new();
     let mut family = BTreeSet::new();
@@ -88,6 +100,21 @@ fn parse(text: &str) -> Dictionary {
         let line = line.trim();
         if line.is_empty() || line.starts_with('#') || line.starts_with("name,") {
             continue;
+        }
+        // The tier is the last field, and a row whose tier this build does not
+        // believe is read past: the file is the whole bank, the dictionary is
+        // what has been measured.
+        //
+        // A file with **no** tier column is a file from before tiers — the
+        // Swedish pack's is one — and all of it loads. Reading its last field
+        // as a tier and finding prose there once emptied the Swedish
+        // dictionary without a word: SV-1 lost two of its four people, and the
+        // German task that caused it had never touched Swedish. The control
+        // caught it, which is what a control is for.
+        if let Some(tier) = line.rsplit(',').next().and_then(|t| t.trim().parse::<u8>().ok()) {
+            if !LOADED_TIERS.contains(&tier) {
+                continue;
+            }
         }
         let mut fields = line.splitn(3, ',');
         let (Some(name), Some(kind)) = (fields.next(), fields.next()) else { continue };
@@ -111,12 +138,18 @@ mod tests {
     #[test]
     fn the_dictionary_loads_the_names_it_ships_with() {
         let (given, family) = dictionary().counts();
-        assert_eq!(given, 300, "the 300 given names of Berlin 2023");
-        // V2: 600 from Wikidata, plus the one of V1's ten that Wikidata does
-        // not have — no family-name item labelled «Schmidt» in German has
-        // German-citizen holders there, and it is the second commonest surname
-        // in the country. Two sources, because one has a hole.
-        assert_eq!(family, 601, "600 from Wikidata and Schmidt from the CC0 ten");
+        // 038-H. Given names are tiered by how many of four city registers
+        // carry them, and only tier 1 — three cities or four — is loaded.
+        // Tier 2 was measured on every golden and did not earn its place: it
+        // found no person any golden was missing, and it turned «Vorfinanzierung,
+        // da …» into a name to look at, because two cities once gave a child
+        // the name «Da».
+        assert_eq!(given, 5712, "the given names in three cities or four");
+        // Family names: Wikidata's German citizens with at least ten bearers,
+        // plus the one of V1's CC0 ten that Wikidata does not have — no
+        // family-name item labelled «Schmidt» in German has German-citizen
+        // holders there, and it is the second commonest surname in the country.
+        assert_eq!(family, 3246, "the family names of tier 1");
     }
 
     #[test]

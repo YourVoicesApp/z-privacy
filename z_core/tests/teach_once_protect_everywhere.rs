@@ -45,26 +45,52 @@ fn a_person_answers_twice_and_a_whole_document_is_understood() {
     import_text(session, TEAM.to_string()).expect("import");
     let before = scan(session).expect("scan");
     assert!(
-        people(session).is_empty(),
-        "nothing is known about these people yet, which is the premise: {:?}",
+        people(session).iter().all(|(state, _)| *state != MarkState::Protected),
+        "nothing is protected about these people yet, which is the premise: {:?}",
         people(session)
     );
 
     // What needs a word, and what each word is worth.
+    //
+    // 038-H moved this, and the move is worth reading. «Kowalski» is in the
+    // name bank now (19 bearers), so «Thomas Kowalski» is **offered** rather
+    // than asked about — one less decision, which is this phase's whole
+    // measure. «Al-Hassan» is the one name left to look at, and it is here at
+    // all because «Mahmoud» is in four cities' registers: the gap Phase 2
+    // measured, closed.
+    //
+    // And «Yilmaz» is the cost, named: three of the four cities gave a child
+    // that name, so the bank knows it as a **given** name, and the comma rule
+    // walks past a word it knows. A surname that is also a first name is
+    // invisible to discovery until «known» there means «known as a surname» —
+    // which is a rule, and 038-H changes no rules. The person types it instead,
+    // the way the Names panel lets them since 041-D.
     let candidates = name_candidates(session).expect("candidates");
-    assert_eq!(candidates.len(), 2, "two names for a whole document");
-    assert!(candidates.iter().all(|c| c.occurrences == 2 && !c.examples.is_empty()));
+    assert!(
+        candidates.is_empty(),
+        "nothing on this page is unknown any more: {candidates:?}"
+    );
+    // «Thomas Kowalski» is offered by the bank itself — one decision fewer,
+    // which is this phase's whole measure.
+    assert!(
+        people(session).iter().any(|(state, text)| *state == MarkState::Suggested && text == "Thomas Kowalski"),
+        "the pair the bank knows was not offered: {:?}",
+        people(session)
+    );
 
-    // Two answers. This is all a person does.
-    let mut decisions = 0u32;
-    for candidate in &candidates {
-        teach_name(candidate.text.clone(), true, None).expect("teach");
-        decisions += 1;
-    }
-    assert_eq!(decisions, 2);
+    // One answer. This is all a person does — and the one name that still
+    // needs it is the cost 038-H measured: three of the four city registers
+    // gave a child the name «Yilmaz», so the bank knows it as a **given** name
+    // and the comma rule walks past a word it knows. A surname that is also a
+    // first name is invisible to discovery until «known» there means «known as
+    // a surname», which is a rule, and 038-H changes no rules. The person
+    // types it instead, the way the Names panel lets them since 041-D.
+    teach_name("Yilmaz".to_string(), true, None).expect("teach the surname by hand");
+    let decisions = 1u32;
+    assert_eq!(decisions, 1);
     let learned = taught_names().expect("taught");
-    assert_eq!(learned.len(), 2);
-    assert!(learned.iter().all(|row| row.family), "both were taught as surnames");
+    assert_eq!(learned.len(), 1);
+    assert!(learned.iter().all(|row| row.family), "it was taught as a surname");
 
     // And the rescan sees every place, including the lines nobody read.
     let after = scan(session).expect("rescan");
@@ -93,8 +119,8 @@ fn a_person_answers_twice_and_a_whole_document_is_understood() {
 
     // Reversible, and one word at a time.
     assert_eq!(
-        teach_name("kowalski".to_string(), true, None).expect("again"),
-        learned.iter().find(|r| r.text == "Kowalski").expect("it").id,
+        teach_name("yilmaz".to_string(), true, None).expect("again"),
+        learned.iter().find(|r| r.text == "Yilmaz").expect("it").id,
         "taught twice is taught once"
     );
     assert!(matches!(
@@ -109,16 +135,23 @@ fn a_person_answers_twice_and_a_whole_document_is_understood() {
     // rescan is what reconsiders it.
     assert!(!people(session).is_empty(), "forgetting a lesson emptied the document");
 
-    // A locked vault has nothing to say, rather than a flag to check.
+    // A locked vault has nothing to say, rather than a flag to check — and the
+    // bank is not in the vault. What the person taught is silent; what this
+    // build ships with still works, which is the whole point of compiling it
+    // in: a scan on an aeroplane finds what a scan in an office finds.
     vault_lock().expect("lock");
     assert!(taught_names().is_err(), "a locked vault listed what it holds");
     let session = open_session(None, "de".to_string()).expect("open again");
     import_text(session, TEAM.to_string()).expect("import");
     scan(session).expect("scan");
+    let marked = people(session);
     assert!(
-        people(session).is_empty(),
-        "a locked vault still answered: {:?}",
-        people(session)
+        marked.iter().all(|(_, text)| text != "Sophie Yilmaz"),
+        "a locked vault still answered with what it was taught: {marked:?}"
+    );
+    assert!(
+        marked.iter().any(|(_, text)| text == "Thomas Kowalski"),
+        "the shipped bank went quiet when the vault did: {marked:?}"
     );
 
     let _ = std::fs::remove_dir_all(&dir);

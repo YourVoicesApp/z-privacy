@@ -30,6 +30,7 @@ Three rules this page keeps:
 | id | language | what it is | pages | words | lives | licence |
 |---|---|---|---|---|---|---|
 | DE-1 | German | a business letter we wrote: 7 people, IBAN, BIC, phones, e-mails, ID card, plate, tax numbers | 1 | 227 | `z_core/tests/fixtures/Brief_Weber.txt` | ours, every value invented |
+| DE-6 | German | a payslip we wrote: a four-row yearly table of «Nachname, Vorname», social-security and tax numbers, IBAN, BIC, a clerk with her direct line | 1 | 182 | `z_core/tests/fixtures/Lohnabrechnung_Weber.txt` | ours, every value invented |
 | DE-2 | German | a contract we wrote | 1 | 447 | `z_core/tests/fixtures/Vertrag_Nordstern.txt` | ours, invented |
 | DE-3 | German | a public tax guide, «Steuern von A bis Z» | 146 | 29 593 | the owner's machine, `~/Documents/steuern-von-a-z.pdf` (`ZPRIVACY_SECOND_GOLDEN`) | public, not redistributed |
 | DE-4 | German | an Austrian ICD-10 edition: code tables, one team page | 734 | 200 202 | the owner's machine, `~/Downloads/tysk1.pdf` (`ZPRIVACY_THIRD_GOLDEN`) | public, not redistributed |
@@ -54,6 +55,51 @@ Pack `de` (300 given names from Berlin 2023 · 601 family names from Wikidata ·
 | DE-2 contract | **9** | **1** | 426 | 3 / 6 | 1 / 1 | 0 | **1** — the line under the closing («Abteilung …», a department) is protected as a person: the signature rule takes whatever follows the closing |
 | DE-3 tax guide | **2** | **4** | 29 579 | 1 / 1 | 0 / 0 | 0 | 0 |
 | DE-4 ICD-10 | **18** | **1** | 200 165 | 2 / 18 | 16 auto, all on the team page (the page's own count is not taken by hand here) | **5** (536 places) | 0 — the test asserts the code tables and chapter letters stay clear |
+
+### 2a · After 038-H — the name bank, tier 1 (6 Oct 2026)
+
+Pack `de` now carries **5,712 given names** (every spelling in three or four of
+the Berlin, Bonn, Dortmund and Köln newborn registers) and **3,246 surnames**
+(Wikidata's German citizens with ten bearers or more, plus Schmidt). Tier 2 —
+the 3,774 spellings two cities carry — was measured and **left out**; tier 3 is
+written beside the bank and never loaded. Nothing in the detection path
+changed: the rules are the rules of Phase 2.
+
+| document | auto | suggested | normal | persons found / present | name candidates | false protections | false suggestions |
+|---|---|---|---|---|---|---|---|
+| DE-1 letter | 20 → **21** | 8 → **8** | 162 → 160 | 7 / 7 → **7 / 7** | 2 → **1** | 0 → **0** | 0 → **0** |
+| DE-2 contract | 9 → **9** | 1 → **1** | 426 | 1 / 1 → 1 / 1 | 0 → **0** | 1 → **1** (the old department line) | 0 → **0** |
+| DE-3 tax guide | 2 → **2** | 4 → **4** | 29 579 | 0 / 0 | 0 → **2** («Euro», «Rechtsgrundlage») | 0 → **0** | 0 → **0** |
+| DE-4 ICD-10 | 18 → **18** | 1 → **2** | 200 165 → 200 163 | 15 → **16** distinct | 5 → **19** (12 of the 14 new ones are the team page's own surnames) | 0 → **0** | 0 → **0** |
+| DE-6 payslip | 6 → **6** | 9 → **9** | 136 | 2 / 5 → **2 / 5** | 2 → **1** | 0 → **0** | 0 → **0** |
+| SV-1 (control) | 10 → **10** | 5 → **5** | 171 | 2+2 → **2+2** | 2 → **2** | 0 | 0 |
+
+What moved, and why:
+
+* **DE-1 gains an auto.** «Markus Weber» is written twice; the signature rule
+  protected both places and only one of them carried a finding. The bank's pair
+  rule now names the second place as well, and a post-scan pass settles its
+  state to Protected — before that pass it was offered and could not be
+  answered, because the place was already protected.
+* **DE-4 gains a suggestion.** «Gregor Keller» is on the team page and was in
+  the clear until the bank carried both halves of him.
+* **DE-1 and DE-6 each lose a candidate.** «Demir» and «Reinhardt» are in the
+  bank now, and the comma rule only *discovers* a surname it does not know. A
+  surname that is also a given name — «Demir», «Yilmaz» — is invisible to
+  discovery until «known» there means «known as a surname», which is a rule and
+  not this task.
+* **Tier 2 was refused.** It found no person any golden was missing, added 25
+  more candidates across DE-3 and DE-4, and turned «Vorfinanzierung, da …» into
+  a name to look at, because two cities once gave a child the name «Da».
+* **Three function words were added to the pack** — `per`, `mal`, `anders` —
+  measured: without them «Per Post versandt» offers «Per Post» as a person, and
+  «per Post» is in every second German business letter.
+
+DE-6 (`Lohnabrechnung_Weber.txt`, written for this task) is the one golden the
+bank does **not** help: its four people are written «Nachname, Vorname» in a
+table, and that form is a discovery rule for *unknown* surnames only. Knowing
+more names cannot find them; a rule that reads the reversed pair can, and that
+is 038-A/E/G's ground.
 
 DE-1 by kind: Person 7 · Phone 3 · Email 2 · TaxId 2 · Iban 1 · Bic 1 ·
 CustomerNo 1 · IdCard 1 · Birthdate 1 · Vehicle 1 (all auto); Address 4 ·

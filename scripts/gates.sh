@@ -595,20 +595,31 @@ else
 fi
 
 # ------------------------------------------------- the name dictionary
-# German Name Dictionary V1: a signal for Person detection and never a verdict.
-# Two things are checked here. The file must have the shape the loader expects —
-# `--check` needs no network, so the owner's own CSV can be dropped in and
-# checked the same way. And the rule must never raise a word to Auto on the
-# strength of a list of names: that is item B of his paper, and the test that
-# holds it is named here so it cannot be deleted quietly.
+# The German name bank: a signal for Person detection and never a verdict.
+# Three things are checked here. The file must have the shape the loader
+# expects — `--check` needs no network, so the owner's own CSV can be dropped
+# in and checked the same way. Where the sources are on the machine, the bank
+# is **rebuilt into a temp directory and compared byte for byte**, as the brand
+# gate does, so a name cannot be edited into the file by hand. And the rule
+# must never raise a word to Auto on the strength of a list of names: that is
+# item B of his paper, and the test that holds it is named here so it cannot be
+# deleted quietly.
 if [ -f scripts/build_de_names.py ]; then
   if OUT=$(python3 scripts/build_de_names.py --check 2>&1); then
-    pass "the name dictionary: $(echo "$OUT" | sed 's/^PASS  //')"
+    pass "the name bank: $(echo "$OUT" | sed 's/^PASS  //')"
   else
-    fail "the name dictionary: $(echo "$OUT" | head -2 | tr '\n' ' ')"
+    fail "the name bank: $(echo "$OUT" | head -2 | tr '\n' ' ')"
+  fi
+  if OUT=$(python3 scripts/build_de_names.py --rebuild-check 2>&1 | tail -1); then
+    case "$OUT" in
+      ----*) skip "  the bank is what the sources make" "$(echo "$OUT" | sed 's/^----  //')" ;;
+      *) pass "  $(echo "$OUT" | sed 's/^PASS  //')" ;;
+    esac
+  else
+    fail "  the bank is not what the sources and the script make"
   fi
 else
-  skip "the name dictionary" "no generator yet"
+  skip "the name bank" "no generator yet"
 fi
 if grep -q 'Confidence::Suggest' z_core/src/scanner/packs/de.rs 2>/dev/null \
    && ! grep -A6 'fn dictionary_names' z_core/src/scanner/packs/de.rs 2>/dev/null | grep -q 'Confidence::Auto'; then
@@ -720,7 +731,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_dictionary_never_protects_anything_by_itself a_german_word_that_is_also_a_name \
          a_function_word_does_not_open_a_name the_surnames_of_a_real_letter_are_in_the_list \
          offers_its_unknown_names_once_each a_candidate_protects_nothing_until_it_is_taught \
-         a_name_whose_given_half_is_unknown_is_still_invisible \
+         a_name_whose_given_half_was_unknown_is_found_now \
          a_person_answers_twice_and_a_whole_document_is_understood \
          a_swedish_letter_is_read_by_a_pack_that_is_only_data \
          a_swedish_word_that_is_also_a_name_opens_nothing \

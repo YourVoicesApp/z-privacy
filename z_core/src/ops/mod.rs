@@ -1785,6 +1785,31 @@ fn rescan_with(
         });
     }
 
+    // One more pass, because order decided the state above and order is not a
+    // fact about a document.
+    //
+    // A candidate is Suggested when nothing protects its place **yet**. An
+    // Auto candidate further down the page then protects every occurrence of
+    // its value — the owner's own letter is why — and a place that was offered
+    // a moment ago is now protected, while the finding over it still says it
+    // is waiting. Measured on DE-1 the day the name bank grew: «Markus Weber»
+    // on line 16 was offered, the signature on line 22 protected both places,
+    // and pressing Protect on the offer answered «that place is already
+    // covered by another protection». A suggestion that cannot be answered is
+    // a review that cannot be finished, and Send stays shut behind it.
+    //
+    // Nothing here detects anything: it is the state of a finding brought back
+    // into line with what the session has actually protected.
+    let covered: Vec<(usize, usize)> = s.protections.iter().map(|p| (p.start, p.end)).collect();
+    for f in s.findings.iter_mut() {
+        if f.state == MarkState::Suggested
+            && !f.decided
+            && covered.iter().any(|(start, end)| *start < f.end && f.start < *end)
+        {
+            f.state = MarkState::Protected;
+        }
+    }
+
     s.normal_words = scanner::plain_word_count(s.original_str(), &candidates);
     s.bump();
     orphaned
