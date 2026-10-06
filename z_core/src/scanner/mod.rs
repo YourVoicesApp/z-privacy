@@ -10,6 +10,7 @@
 //!   protections.
 
 pub(crate) mod general_rules;
+pub(crate) mod languages;
 pub(crate) mod packs;
 pub(crate) mod rules;
 pub(crate) mod sets;

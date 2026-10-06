@@ -1584,8 +1584,11 @@ pub(crate) fn move_user_list(from: String, to: String) -> ApiResult<u32> {
 /// caller and the one-list-per-language rule holds by construction.
 fn clean_list_name(name: String) -> ApiResult<String> {
     let name = crate::text::nfc(name.trim()).to_lowercase();
-    let known = crate::scanner::packs::installed().into_iter().any(|p| p.id == name)
-        || crate::scanner::packs::planned().into_iter().any(|p| p.id == name);
+    // 041-Q: every language in the core's table, not only the ones with rules.
+    // A person builds an Arabic list long before an Arabic pack exists — that
+    // is the whole of «the Arabic names are self training» — and the owner had
+    // a build where the list existed and the language could not be chosen.
+    let known = crate::scanner::languages::known(&name);
     if !known {
         return Err(ApiError::InputRefused {
             reason: format!(

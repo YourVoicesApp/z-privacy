@@ -1980,15 +1980,26 @@ pub fn label_rules() -> ApiResult<Vec<LabelRuleRow>> {
 /// copy would go on promising a language after it had shipped, or after it had
 /// been dropped.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PlannedPack {
+pub struct LanguageRow {
+    /// ISO 639-1.
     pub id: String,
-    /// The language's own name for itself.
+    /// The language's own name for itself — what a person looks for.
     pub label: String,
+    /// Does this build carry rules of its own for it? False means the general
+    /// rules, the vault and the person's own list, and no dictionary.
+    pub has_rules: bool,
 }
 
-/// The languages that are coming, and are not here.
-pub fn planned_packs() -> ApiResult<Vec<PlannedPack>> {
-    Ok(crate::scanner::packs::planned())
+/// Every language a person may choose, the ones with rules first.
+///
+/// 041-Q: this used to be `planned_packs`, a short list of languages «that are
+/// coming», and a language not on it could not be chosen at all. The owner
+/// could not pick Arabic on a build whose vault had an Arabic list in it. A
+/// language with no pack is still a language: the general rules run, the rows
+/// in `sets/world.rs` run, the vault runs, and the person's own list for that
+/// language runs. Only another language's dictionary stays off.
+pub fn languages() -> ApiResult<Vec<LanguageRow>> {
+    Ok(crate::scanner::languages::all())
 }
 
 /// The installed privacy packs. A pack is a detection engine, not a UI language.

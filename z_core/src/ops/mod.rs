@@ -2243,9 +2243,12 @@ pub(crate) fn switch_profile(session: SessionId, profile_id: Option<String>) -> 
 }
 
 pub(crate) fn switch_pack(session: SessionId, pack_id: String) -> ApiResult<RescanOutcome> {
-    if !scanner::packs::installed().iter().any(|p| p.id == pack_id) {
+    // 041-Q: any language in the table, with rules or without. Without, the
+    // general rules and the person's own list do the work and no other
+    // language's dictionary is left running — see `scanner::languages`.
+    if !scanner::languages::known(&pack_id) {
         return Err(ApiError::NotFound {
-            reason: format!("there is no privacy pack called «{pack_id}»"),
+            reason: format!("«{pack_id}» is not a language this build knows"),
         });
     }
     with_session(session.id, |s| s.pack_id = pack_id.clone()).ok_or(ApiError::InvalidSession)?;

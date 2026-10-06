@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -585326581;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2048137772;
 
 // Section: executor
 
@@ -1296,6 +1296,33 @@ fn wire__z_core__api__label_rules_impl(
         },
     )
 }
+fn wire__z_core__api__languages_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "languages",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::languages()?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__z_core__api__list_findings_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -1543,33 +1570,6 @@ fn wire__z_core__api__payload_view_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
                     let output_ok = z_core::api::payload_view(api_handle)?;
-                    std::result::Result::Ok(output_ok)
-                })())
-            }
-        },
-    )
-}
-fn wire__z_core__api__planned_packs_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
-    rust_vec_len_: i32,
-    data_len_: i32,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "planned_packs",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let message = unsafe {
-                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
-            };
-            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
-            deserializer.end();
-            move |context| {
-                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
-                    let output_ok = z_core::api::planned_packs()?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -3043,6 +3043,12 @@ const _: fn() = || {
         let _: u64 = LabelRuleRow.learned_at;
     }
     {
+        let LanguageRow = None::<crate::api::mirrors::LanguageRow>.unwrap();
+        let _: String = LanguageRow.id;
+        let _: String = LanguageRow.label;
+        let _: bool = LanguageRow.has_rules;
+    }
+    {
         let LayerCount = None::<crate::api::mirrors::LayerCount>.unwrap();
         let _: crate::api::mirrors::Source = LayerCount.source;
         let _: String = LayerCount.detail;
@@ -3149,11 +3155,6 @@ const _: fn() = || {
         let Place = None::<crate::api::mirrors::Place>.unwrap();
         let _: u32 = Place.page;
         let _: u32 = Place.paragraph;
-    }
-    {
-        let PlannedPack = None::<crate::api::mirrors::PlannedPack>.unwrap();
-        let _: String = PlannedPack.id;
-        let _: String = PlannedPack.label;
     }
     {
         let PrivacyRulesSnapshot = None::<crate::api::mirrors::PrivacyRulesSnapshot>.unwrap();
@@ -3926,6 +3927,20 @@ impl SseDecode for crate::api::mirrors::LabelRuleRow {
     }
 }
 
+impl SseDecode for crate::api::mirrors::LanguageRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_label = <String>::sse_decode(deserializer);
+        let mut var_hasRules = <bool>::sse_decode(deserializer);
+        return crate::api::mirrors::LanguageRow {
+            id: var_id,
+            label: var_label,
+            has_rules: var_hasRules,
+        };
+    }
+}
+
 impl SseDecode for crate::api::mirrors::LayerCount {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4012,6 +4027,18 @@ impl SseDecode for Vec<crate::api::mirrors::LabelRuleRow> {
     }
 }
 
+impl SseDecode for Vec<crate::api::mirrors::LanguageRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::LanguageRow>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::mirrors::LayerCount> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4079,18 +4106,6 @@ impl SseDecode for Vec<crate::api::mirrors::PackRow> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::mirrors::PackRow>::sse_decode(deserializer));
-        }
-        return ans_;
-    }
-}
-
-impl SseDecode for Vec<crate::api::mirrors::PlannedPack> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut len_ = <i32>::sse_decode(deserializer);
-        let mut ans_ = Vec::with_capacity(len_ as usize);
-        for idx_ in 0..len_ {
-            ans_.push(<crate::api::mirrors::PlannedPack>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -4638,18 +4653,6 @@ impl SseDecode for crate::api::mirrors::Place {
         return crate::api::mirrors::Place {
             page: var_page,
             paragraph: var_paragraph,
-        };
-    }
-}
-
-impl SseDecode for crate::api::mirrors::PlannedPack {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_id = <String>::sse_decode(deserializer);
-        let mut var_label = <String>::sse_decode(deserializer);
-        return crate::api::mirrors::PlannedPack {
-            id: var_id,
-            label: var_label,
         };
     }
 }
@@ -5518,16 +5521,16 @@ fn pde_ffi_dispatcher_primary_impl(
         41 => wire__z_core__api__inspect_selection_impl(port, ptr, rust_vec_len, data_len),
         42 => wire__z_core__api__kinds_impl(port, ptr, rust_vec_len, data_len),
         43 => wire__z_core__api__label_rules_impl(port, ptr, rust_vec_len, data_len),
-        44 => wire__z_core__api__list_findings_impl(port, ptr, rust_vec_len, data_len),
-        45 => wire__z_core__api__list_tokens_impl(port, ptr, rust_vec_len, data_len),
-        46 => wire__z_core__api__models_impl(port, ptr, rust_vec_len, data_len),
-        47 => wire__z_core__api__move_entity_impl(port, ptr, rust_vec_len, data_len),
-        48 => wire__z_core__api__move_user_list_impl(port, ptr, rust_vec_len, data_len),
-        49 => wire__z_core__api__name_candidates_impl(port, ptr, rust_vec_len, data_len),
-        50 => wire__z_core__api__open_session_impl(port, ptr, rust_vec_len, data_len),
-        51 => wire__z_core__api__packs_impl(port, ptr, rust_vec_len, data_len),
-        52 => wire__z_core__api__payload_view_impl(port, ptr, rust_vec_len, data_len),
-        53 => wire__z_core__api__planned_packs_impl(port, ptr, rust_vec_len, data_len),
+        44 => wire__z_core__api__languages_impl(port, ptr, rust_vec_len, data_len),
+        45 => wire__z_core__api__list_findings_impl(port, ptr, rust_vec_len, data_len),
+        46 => wire__z_core__api__list_tokens_impl(port, ptr, rust_vec_len, data_len),
+        47 => wire__z_core__api__models_impl(port, ptr, rust_vec_len, data_len),
+        48 => wire__z_core__api__move_entity_impl(port, ptr, rust_vec_len, data_len),
+        49 => wire__z_core__api__move_user_list_impl(port, ptr, rust_vec_len, data_len),
+        50 => wire__z_core__api__name_candidates_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__z_core__api__open_session_impl(port, ptr, rust_vec_len, data_len),
+        52 => wire__z_core__api__packs_impl(port, ptr, rust_vec_len, data_len),
+        53 => wire__z_core__api__payload_view_impl(port, ptr, rust_vec_len, data_len),
         54 => wire__z_core__api__privacy_rules_snapshot_impl(port, ptr, rust_vec_len, data_len),
         55 => wire__z_core__api__profiles_impl(port, ptr, rust_vec_len, data_len),
         56 => wire__z_core__api__protect_impl(port, ptr, rust_vec_len, data_len),
@@ -6032,6 +6035,25 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::LabelRule
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::LanguageRow> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.id.into_into_dart().into_dart(),
+            self.0.label.into_into_dart().into_dart(),
+            self.0.has_rules.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::LanguageRow> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::LanguageRow>>
+    for crate::api::mirrors::LanguageRow
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::LanguageRow> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::LayerCount> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -6327,24 +6349,6 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Place> {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Place> {}
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Place>> for crate::api::mirrors::Place {
     fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Place> {
-        self.into()
-    }
-}
-// Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PlannedPack> {
-    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [
-            self.0.id.into_into_dart().into_dart(),
-            self.0.label.into_into_dart().into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::PlannedPack> {}
-impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::PlannedPack>>
-    for crate::api::mirrors::PlannedPack
-{
-    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::PlannedPack> {
         self.into()
     }
 }
@@ -7617,6 +7621,15 @@ impl SseEncode for crate::api::mirrors::LabelRuleRow {
     }
 }
 
+impl SseEncode for crate::api::mirrors::LanguageRow {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.label, serializer);
+        <bool>::sse_encode(self.has_rules, serializer);
+    }
+}
+
 impl SseEncode for crate::api::mirrors::LayerCount {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -7686,6 +7699,16 @@ impl SseEncode for Vec<crate::api::mirrors::LabelRuleRow> {
     }
 }
 
+impl SseEncode for Vec<crate::api::mirrors::LanguageRow> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::LanguageRow>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::api::mirrors::LayerCount> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -7742,16 +7765,6 @@ impl SseEncode for Vec<crate::api::mirrors::PackRow> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::mirrors::PackRow>::sse_encode(item, serializer);
-        }
-    }
-}
-
-impl SseEncode for Vec<crate::api::mirrors::PlannedPack> {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <i32>::sse_encode(self.len() as _, serializer);
-        for item in self {
-            <crate::api::mirrors::PlannedPack>::sse_encode(item, serializer);
         }
     }
 }
@@ -8191,14 +8204,6 @@ impl SseEncode for crate::api::mirrors::Place {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <u32>::sse_encode(self.page, serializer);
         <u32>::sse_encode(self.paragraph, serializer);
-    }
-}
-
-impl SseEncode for crate::api::mirrors::PlannedPack {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <String>::sse_encode(self.id, serializer);
-        <String>::sse_encode(self.label, serializer);
     }
 }
 

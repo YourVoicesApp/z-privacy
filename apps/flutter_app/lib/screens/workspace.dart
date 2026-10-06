@@ -264,14 +264,11 @@ class _TopBar extends StatelessWidget {
         .expand((p) => p.languages)
         .toList();
     final ran = active.isEmpty ? [bench.packId] : active;
-    final packLabel = ran
-        .map(
-          (id) => ground.packs
-              .firstWhere((p) => p.id == id, orElse: () => _unknownPack(id))
-              .label,
-        )
-        .join(' · ');
-    final pack = _unknownPack(ran.join('+'), label: packLabel);
+    // One name per language, from the core's table — so the bar, the menu and
+    // the vault's lists all call a language the same thing.
+    final packLabel = ran.map(ground.languageName).join(' · ');
+    // «general rules» is said when **nothing** that ran has rules of its own.
+    final bare = ran.every((id) => !ground.hasRules(id));
 
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 13, 18, 13),
@@ -388,25 +385,42 @@ class _TopBar extends StatelessWidget {
                     ],
                   ),
                 ),
-              // A line, and under it what is coming. The owner, 6 October: the
-              // list shows both, and the line is what tells them apart. They
-              // are disabled, so pressing one does nothing at all — and the
-              // list of them is the core's, never this file's.
-              if (ground.plannedPacks.isNotEmpty) const PopupMenuDivider(),
-              for (final planned in ground.plannedPacks)
+              // A line, and under it every other language. The owner, 6
+              // October: the list shows both, and the line is what tells them
+              // apart — and since 041-Q both halves can be chosen, because a
+              // language with no dictionary still has the general rules, the
+              // vault, and the person's own list. The list is the core's.
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                enabled: false,
+                child: Text('General rules only', style: Zc.tiny),
+              ),
+              for (final other in ground.languages.where((l) => !l.hasRules))
                 PopupMenuItem<String>(
-                  enabled: false,
+                  value: other.id,
                   child: Row(
                     children: [
-                      const SizedBox(width: 23),
-                      Text(planned.label, style: Zc.small.copyWith(color: Zc.ink4)),
+                      Icon(
+                        ran.contains(other.id) ? Icons.check : Icons.check_box_outline_blank,
+                        size: 15,
+                        color: ran.contains(other.id) ? Zc.river : Colors.transparent,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(other.label, style: Zc.small)),
                       const SizedBox(width: 10),
-                      Text('coming', style: Zc.tiny.copyWith(color: Zc.ink4)),
+                      Text(other.id.toUpperCase(), style: Zc.tiny.copyWith(color: Zc.ink4)),
                     ],
                   ),
                 ),
             ],
-            child: _Fact(label: 'Pack', value: pack.label),
+            // The bar names the language — from the core's table, so one
+            // language has one name everywhere — and says when all it has is
+            // the general rules. «Svenska» and «العربية · general rules» are
+            // read the same way: this is what ran.
+            child: _Fact(
+              label: 'Pack',
+              value: bare ? '$packLabel · general rules' : packLabel,
+            ),
           ),
           _Fact(
             label: 'Vault',
@@ -480,21 +494,6 @@ class _TopBar extends StatelessWidget {
     );
   }
 }
-
-/// A row for a language the core did not send one for: a profile may name a
-/// pack this build no longer carries, and the bar still has to say its name.
-/// Everything the core would have filled stays empty, because Dart knows none
-/// of it and may not invent it.
-PackRow _unknownPack(String id, {String? label}) => PackRow(
-      id: id,
-      label: label ?? id,
-      locale: '',
-      version: '',
-      ownRules: const [],
-      provenance: '',
-      given: 0,
-      family: 0,
-    );
 
 class _ProfileFact extends StatelessWidget {
   const _ProfileFact({

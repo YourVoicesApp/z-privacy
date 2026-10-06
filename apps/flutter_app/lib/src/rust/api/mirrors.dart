@@ -730,6 +730,36 @@ class LabelRuleRow {
           learnedAt == other.learnedAt;
 }
 
+class LanguageRow {
+  /// ISO 639-1.
+  final String id;
+
+  /// The language's own name for itself — what a person looks for.
+  final String label;
+
+  /// Does this build carry rules of its own for it? False means the general
+  /// rules, the vault and the person's own list, and no dictionary.
+  final bool hasRules;
+
+  const LanguageRow({
+    required this.id,
+    required this.label,
+    required this.hasRules,
+  });
+
+  @override
+  int get hashCode => id.hashCode ^ label.hashCode ^ hasRules.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LanguageRow &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          hasRules == other.hasRules;
+}
+
 class LayerCount {
   final Source source;
   final String detail;
@@ -1208,26 +1238,6 @@ class Place {
           runtimeType == other.runtimeType &&
           page == other.page &&
           paragraph == other.paragraph;
-}
-
-class PlannedPack {
-  final String id;
-
-  /// The language's own name for itself.
-  final String label;
-
-  const PlannedPack({required this.id, required this.label});
-
-  @override
-  int get hashCode => id.hashCode ^ label.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is PlannedPack &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          label == other.label;
 }
 
 enum Policy {
