@@ -232,7 +232,8 @@ void main() {
       'switchPack': () => switchPack(session: session, packId: 'de'),
       // 041-G — the languages that are coming, so a screen never carries its
       // own list of promises.
-      'plannedPacks': () => plannedPacks(),
+      // 041-Q — every language, the ones with rules first.
+      'languages': () => languages(),
       'providers': () => providers(),
       'connectProvider': () => connectProvider(
         provider: provider,

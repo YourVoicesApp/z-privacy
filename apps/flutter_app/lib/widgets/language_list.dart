@@ -3,19 +3,24 @@
 //
 // The owner, 6 October: «we make a list of languages, and a line separates the
 // supported languages from the unsupported ones». So the list has two halves:
-// above the line what this build actually carries, from `packs()`, with the one
-// in use marked; below it what is coming, greyed, unchoosable, each with the
-// word «coming» beside it.
+// above the line what this build carries rules for, with the one in use
+// marked; below it every other language.
 //
-// **Neither half is written here.** Both come from the core — the installed
-// ones from the rule sets, the planned ones from a list that lives beside the
-// packs themselves — so the day a language ships it moves across the line by
-// being written once, and no screen is left promising something that arrived or
-// was dropped.
+// 041-Q, the same evening, after he could not choose Arabic on a build whose
+// vault already held an Arabic list: «the language list holds every language;
+// we have no problem with the language rules — we will not include them all».
+// So **both halves can be chosen**. Below the line a language runs the general
+// rules, the person's own list for it, and nothing else — and the row says so
+// rather than promising something that is coming.
+//
+// **Neither half is written here.** Both come from the core's own table of
+// languages, so the day a language gets rules it moves across the line by one
+// row changing, and no screen is left saying otherwise.
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 
 /// The sheet shown after a file is chosen and before it is read.
@@ -96,91 +101,103 @@ class _ChooseLanguageState extends State<ChooseLanguage> {
   }
 }
 
-/// The list itself: the packs this build carries, a line, and what is coming.
+/// The list itself: the languages with rules, a line, and all the rest.
 class LanguageChoices extends StatelessWidget {
   const LanguageChoices({
     super.key,
     required this.ground,
     required this.chosen,
     required this.onChoose,
-    this.plannedChoosable = false,
+    this.plannedChoosable = true,
   });
 
   final Ground ground;
   final String? chosen;
   final void Function(String id) onChoose;
 
-  /// Whether what is under the line can be pressed.
-  ///
-  /// False where the question is «which rules read this document», because
-  /// there are no rules for a language that is not here. True where it is
-  /// «which language are these names», because a person builds their Arabic
-  /// list by hand long before an Arabic pack exists — which is the whole of
-  /// «the Arabic names are self training».
+  /// Kept so the two callers read the same, and true since 041-Q: a language
+  /// without rules is still a language a person may work in.
   final bool plannedChoosable;
 
   /// The line, so a test can find it by what it is rather than by looking for
   /// a one-pixel box among many.
   static const divider = ValueKey<String>('languages-supported-line');
 
+  /// The scroller, likewise: seventy-odd languages do not fit a dialog.
+  static const scroller = ValueKey<String>('languages-scroller');
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final pack in ground.packs)
-          InkWell(
-            onTap: () => onChoose(pack.id),
-            borderRadius: BorderRadius.circular(7),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-              child: Row(
-                children: [
-                  Icon(
-                    pack.id == chosen ? Icons.check : Icons.check_box_outline_blank,
-                    size: 16,
-                    color: pack.id == chosen ? Zc.river : Colors.transparent,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(pack.label, style: Zc.body),
-                ],
+    final withRules = ground.languages.where((l) => l.hasRules).toList();
+    final rest = ground.languages.where((l) => !l.hasRules).toList();
+
+    return ConstrainedBox(
+      // Tall enough to read, short enough to leave the buttons on screen.
+      constraints: const BoxConstraints(maxHeight: 330),
+      child: Scrollbar(
+        child: ListView(
+          key: scroller,
+          shrinkWrap: true,
+          primary: true,
+          children: [
+            for (final language in withRules) _Choice(language: language, chosen: chosen, onChoose: onChoose),
+            if (rest.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(key: divider, height: 1, color: Zc.line),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(6, 8, 6, 4),
+                child: Text('General rules only — no dictionary yet', style: Zc.tiny),
+              ),
+              for (final language in rest)
+                _Choice(language: language, chosen: chosen, onChoose: plannedChoosable ? onChoose : null),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One language, and whether it is the one in use.
+class _Choice extends StatelessWidget {
+  const _Choice({required this.language, required this.chosen, required this.onChoose});
+
+  final LanguageRow language;
+  final String? chosen;
+  final void Function(String id)? onChoose;
+
+  @override
+  Widget build(BuildContext context) {
+    final picked = language.id == chosen;
+    final press = onChoose;
+    return InkWell(
+      onTap: press == null ? null : () => press(language.id),
+      borderRadius: BorderRadius.circular(7),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+              picked ? Icons.check : Icons.check_box_outline_blank,
+              size: 16,
+              color: picked ? Zc.river : Colors.transparent,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                language.label,
+                style: Zc.body.copyWith(color: language.hasRules || press != null ? Zc.ink : Zc.ink4),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ),
-        if (ground.plannedPacks.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Container(key: divider, height: 1, color: Zc.line),
-          const SizedBox(height: 8),
-          for (final planned in ground.plannedPacks)
-            InkWell(
-              onTap: plannedChoosable ? () => onChoose(planned.id) : null,
-              borderRadius: BorderRadius.circular(7),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                child: Row(
-                  children: [
-                    Icon(
-                      planned.id == chosen ? Icons.check : Icons.check_box_outline_blank,
-                      size: 16,
-                      color: planned.id == chosen ? Zc.river : Colors.transparent,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      planned.label,
-                      style: Zc.body.copyWith(color: plannedChoosable ? Zc.ink2 : Zc.ink4),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      plannedChoosable ? 'no pack yet' : 'coming',
-                      style: Zc.tiny.copyWith(color: Zc.ink4),
-                    ),
-                  ],
-                ),
-              ),
+            const SizedBox(width: 10),
+            Text(
+              language.id.toUpperCase(),
+              style: Zc.tiny.copyWith(color: Zc.ink4),
             ),
-        ],
-      ],
+          ],
+        ),
+      ),
     );
   }
 }

@@ -43,9 +43,28 @@ class Ground extends ChangeNotifier {
   List<ProfileRow> get profiles => home?.profiles ?? const [];
   List<PackRow> get packs => home?.packs ?? const [];
 
-  /// The languages that are coming and are not here, from the core — so a
-  /// screen never carries its own list of promises.
-  List<PlannedPack> plannedPacks = const [];
+  /// Every language a person may choose, from the core's own table — the ones
+  /// with rules first. 041-Q: this used to be «the languages that are coming»,
+  /// and a language that was not on that short list could not be chosen at
+  /// all, on a build whose vault already held a list for it.
+  List<LanguageRow> languages = const [];
+
+  /// The language's own name, for a bar or a heading. Falls back to the code,
+  /// because a screen must be able to draw whatever is stored.
+  String languageName(String id) {
+    for (final row in languages) {
+      if (row.id == id) return row.label;
+    }
+    return id.toUpperCase();
+  }
+
+  /// Does this build carry rules for it, or only the general ones?
+  bool hasRules(String id) {
+    for (final row in languages) {
+      if (row.id == id) return row.hasRules;
+    }
+    return false;
+  }
 
   /// The rule sets this build carries. A pack and a rule set are the same
   /// thing seen from two screens, and both are read from the core so that
@@ -62,7 +81,7 @@ class Ground extends ChangeNotifier {
   Future<void> refresh() async {
     try {
       home = await z.homeSnapshot();
-      plannedPacks = await z.plannedPacks();
+      languages = await z.languages();
       vaultSnap = await z.vaultSnapshot();
       privacyRules = (home?.vault == VaultState.unlocked)
           ? await z.privacyRulesSnapshot(profileId: null)

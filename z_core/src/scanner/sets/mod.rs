@@ -12,6 +12,7 @@
 mod de;
 mod en;
 mod sv;
+mod world;
 
 use super::rules::LabelRule;
 
@@ -35,7 +36,9 @@ pub(crate) struct RuleSet {
 /// a set a later build removed must still scan, with less knowledge and a
 /// truthful list of what actually ran.
 pub(crate) fn rules_for(active: &[String]) -> Vec<LabelRule> {
-    let mut out = Vec::new();
+    // The rows that belong to no language run whatever language is chosen —
+    // see `world.rs` for which, and for the measurement that put them there.
+    let mut out = world::set().rules;
     for set in all() {
         if active.iter().any(|a| a == set.id) {
             out.extend(set.rules);

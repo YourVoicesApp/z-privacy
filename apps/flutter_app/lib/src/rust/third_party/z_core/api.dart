@@ -617,9 +617,16 @@ Future<void> forgetLabelRule({required int id}) =>
 Future<List<LabelRuleRow>> labelRules() =>
     RustLib.instance.api.zCoreApiLabelRules();
 
-/// The languages that are coming, and are not here.
-Future<List<PlannedPack>> plannedPacks() =>
-    RustLib.instance.api.zCoreApiPlannedPacks();
+/// Every language a person may choose, the ones with rules first.
+///
+/// 041-Q: this used to be `planned_packs`, a short list of languages «that are
+/// coming», and a language not on it could not be chosen at all. The owner
+/// could not pick Arabic on a build whose vault had an Arabic list in it. A
+/// language with no pack is still a language: the general rules run, the rows
+/// in `sets/world.rs` run, the vault runs, and the person's own list for that
+/// language runs. Only another language's dictionary stays off.
+Future<List<LanguageRow>> languages() =>
+    RustLib.instance.api.zCoreApiLanguages();
 
 /// The installed privacy packs. A pack is a detection engine, not a UI language.
 Future<List<PackRow>> packs() => RustLib.instance.api.zCoreApiPacks();

@@ -669,22 +669,14 @@ Future<String?> askForAName(
   return (name == null || name.isEmpty) ? null : name;
 }
 
-/// A language's own name, as the core gives it — installed or planned — and the
-/// id itself when neither knows it, which can only happen to a list made by an
-/// older build.
-String languageName(Ground ground, String id) {
-  for (final pack in ground.packs) {
-    if (pack.id == id) return pack.label;
-  }
-  for (final planned in ground.plannedPacks) {
-    if (planned.id == id) return planned.label;
-  }
-  return id;
-}
+/// A language's own name, as the core's table gives it, and the code itself
+/// when the table does not know it — which can only happen to a list made by a
+/// build that knew a language this one does not.
+String languageName(Ground ground, String id) => ground.languageName(id);
 
 /// Which language's list? The same two halves as everywhere else — what this
-/// build carries, a line, and what is coming — because a person builds their
-/// Arabic list by hand long before an Arabic pack exists.
+/// build has rules for, a line, and every other language — because a person
+/// builds their Arabic list by hand long before an Arabic pack exists.
 Future<String?> askForALanguage(
   BuildContext context, {
   required Ground ground,

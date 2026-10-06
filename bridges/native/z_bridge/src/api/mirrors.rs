@@ -1038,10 +1038,14 @@ pub struct _UserListRow {
     pub enabled: bool,
 }
 
-#[frb(mirror(PlannedPack))]
-pub struct _PlannedPack {
+#[frb(mirror(LanguageRow))]
+pub struct _LanguageRow {
+    /// ISO 639-1.
     pub id: String,
-    /// The language's own name for itself.
+    /// The language's own name for itself — what a person looks for.
     pub label: String,
+    /// Does this build carry rules of its own for it? False means the general
+    /// rules, the vault and the person's own list, and no dictionary.
+    pub has_rules: bool,
 }
 

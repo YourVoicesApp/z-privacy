@@ -123,7 +123,7 @@ void main() {
     expect(find.byType(ChooseLanguage), findsNothing);
   });
 
-  testWidgets('the language list has a line, and what is under it cannot be chosen', (tester) async {
+  testWidgets('the language list has a line, and every language under it can be chosen', (tester) async {
     await tester.binding.setSurfaceSize(const Size(900, 900));
     final ground = await _fresh(tester, 'languages');
     String? chosen;
@@ -139,28 +139,34 @@ void main() {
     ));
     await settle(tester, rounds: 1);
 
-    // Above the line: what this build carries, named by the core.
-    for (final pack in ground.packs) {
-      expect(find.text(pack.label), findsOneWidget, reason: '«${pack.label}» is missing');
+    // Above the line: what this build has rules for, named by the core.
+    final withRules = ground.languages.where((l) => l.hasRules).toList();
+    final rest = ground.languages.where((l) => !l.hasRules).toList();
+    expect(withRules, isNotEmpty);
+    expect(rest, isNotEmpty, reason: 'the core knows only the languages it has rules for');
+    for (final language in withRules) {
+      expect(find.text(language.label), findsOneWidget, reason: '«${language.label}» is missing');
     }
-    // The line itself.
+    // The line itself, and what it is for.
     expect(find.byKey(LanguageChoices.divider), findsOneWidget, reason: 'there is no line');
-    // Under it: what is coming, from the core and not from this screen.
-    expect(ground.plannedPacks, isNotEmpty, reason: 'the core promises nothing, so this proves nothing');
-    for (final planned in ground.plannedPacks) {
-      expect(find.text(planned.label), findsOneWidget, reason: '«${planned.label}» is missing');
-    }
-    expect(find.text('coming'), findsNWidgets(ground.plannedPacks.length));
+    expect(find.textContaining('General rules only'), findsOneWidget,
+        reason: 'the line does not say what is under it');
 
-    // And pressing one does nothing at all.
-    await tester.tap(find.text(ground.plannedPacks.first.label));
+    // A language with rules answers, as it always did.
+    await tester.tap(find.text(withRules.last.label));
     await settle(tester, rounds: 1);
-    expect(chosen, isNull, reason: 'a language that is not here was chosen');
+    expect(chosen, withRules.last.id);
 
-    // While one that is here answers.
-    await tester.tap(find.text(ground.packs.last.label));
+    // 041-Q — and so does every language under the line. The owner could not
+    // pick Arabic on a build whose vault already held an Arabic list.
+    final arabic = rest.firstWhere((l) => l.id == 'ar');
+    expect(arabic.label, 'العربية', reason: 'Arabic is not named in Arabic');
+    await tester.scrollUntilVisible(find.text(arabic.label), 60,
+        scrollable: find.descendant(
+            of: find.byKey(LanguageChoices.scroller), matching: find.byType(Scrollable)));
+    await tester.tap(find.text(arabic.label));
     await settle(tester, rounds: 1);
-    expect(chosen, ground.packs.last.id);
+    expect(chosen, 'ar', reason: 'a language with no pack could not be chosen');
   });
 }
 
