@@ -207,6 +207,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TokenRow> dco_decode_list_token_row(dynamic raw);
 
   @protected
+  List<UserListRow> dco_decode_list_user_list_row(dynamic raw);
+
+  @protected
   List<UserNameRow> dco_decode_list_user_name_row(dynamic raw);
 
   @protected
@@ -385,6 +388,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void dco_decode_unit(dynamic raw);
+
+  @protected
+  UserListRow dco_decode_user_list_row(dynamic raw);
 
   @protected
   UserNameKind dco_decode_user_name_kind(dynamic raw);
@@ -618,6 +624,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TokenRow> sse_decode_list_token_row(SseDeserializer deserializer);
 
   @protected
+  List<UserListRow> sse_decode_list_user_list_row(SseDeserializer deserializer);
+
+  @protected
   List<UserNameRow> sse_decode_list_user_name_row(SseDeserializer deserializer);
 
   @protected
@@ -806,6 +815,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_decode_unit(SseDeserializer deserializer);
+
+  @protected
+  UserListRow sse_decode_user_list_row(SseDeserializer deserializer);
 
   @protected
   UserNameKind sse_decode_user_name_kind(SseDeserializer deserializer);
@@ -1098,6 +1110,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_token_row(List<TokenRow> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_user_list_row(
+    List<UserListRow> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_user_name_row(
     List<UserNameRow> self,
     SseSerializer serializer,
@@ -1318,6 +1336,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_unit(void self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_user_list_row(UserListRow self, SseSerializer serializer);
 
   @protected
   void sse_encode_user_name_kind(UserNameKind self, SseSerializer serializer);

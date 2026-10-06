@@ -152,6 +152,24 @@ pub(crate) struct UserLabelRule {
 ///
 /// In the vault, encrypted, because the surname of a person's client is as much
 /// theirs as the client's address.
+/// The list a name goes into when nothing says otherwise: the pack the
+/// settings hold. A list **is a language** — the owner, 6 October: «the
+/// language list is what establishes the word lists inside the vault: if you
+/// choose Arabic an Arabic list is made, and one list per language». So there
+/// is no list called «My names»: there is `de`, `sv`, `ar`, and a person builds
+/// their Arabic list by hand long before an Arabic pack exists.
+pub(crate) const DEFAULT_LIST: &str = "de";
+
+/// A list of names a person keeps, and whether it is in use.
+///
+/// It exists as a row of its own so that an empty list can exist: «New list»
+/// has to be pressable before there is anything to put in it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct UserList {
+    pub name: String,
+    pub enabled: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct UserName {
     pub id: u32,
@@ -170,6 +188,20 @@ pub(crate) struct UserName {
     /// without its provenance is a name nobody can account for. Model 9.
     pub source: Option<String>,
     pub licence: Option<String>,
+    /// Which list this name belongs to — **a language id**: `de`, `sv`, `ar`.
+    ///
+    /// The owner, 6 October: «the language list is what establishes the word
+    /// lists inside the vault: if you choose Arabic an Arabic list is made,
+    /// then if you move to another language and so on — but one list per
+    /// language». So a list is not a thing a person names; it is the language
+    /// they were working in when they taught the name, and a list exists the
+    /// moment its first name does.
+    ///
+    /// The switch is per language: turn Arabic off and its names stop being
+    /// used, without forgetting one of them. Model 10; a name taught before
+    /// there were lists belongs to the pack the settings held when the vault
+    /// was last written.
+    pub list: String,
 }
 
 impl UserLabelRule {
@@ -201,6 +233,8 @@ pub(crate) struct Vault {
     /// apart from the lists this build ships with and from the candidates
     /// nobody has decided about yet. Written in Phase 2.
     pub taught_names: Vec<UserName>,
+    /// The lists those names are kept in, with the switch on each. Model 10.
+    pub lists: Vec<UserList>,
     /// What the app has been told to do by itself. In the vault because the
     /// vault is the only file we write (G15), and because a setting that
     /// survives a restart has to live somewhere that does. Written in task 030.
@@ -282,6 +316,7 @@ impl Vault {
             label_rules: Vec::new(),
             next_taught_name: 1,
             taught_names: Vec::new(),
+            lists: Vec::new(),
             exceptions: Vec::new(),
             settings: StoredSettings::default(),
             provider_logins: BTreeMap::new(),
@@ -378,8 +413,23 @@ impl Vault {
                 None => true,
                 Some(owner) => Some(owner) == active_profile,
             })
+            // **The switch, where it has to be.** A list that is off is not a
+            // list that was forgotten: its names are all still here, and the
+            // scanner is simply not told about them. This is the one place that
+            // decides it, so no caller can forget to ask.
+            .filter(|n| self.list_is_on(&n.list))
             .cloned()
             .collect()
+    }
+
+    /// Is this list in use? A list nobody has written a row for is on: a name
+    /// cannot be silenced by a list that does not exist.
+    pub(crate) fn list_is_on(&self, list: &str) -> bool {
+        self.lists
+            .iter()
+            .find(|l| l.name == list)
+            .map(|l| l.enabled)
+            .unwrap_or(true)
     }
 
     pub(crate) fn label_rules_for(&self, active_profile: Option<&str>) -> Vec<UserLabelRule> {

@@ -115,7 +115,7 @@ void main() {
       // like for anything that writes to the vault.
       'addUserName': () async {
         try {
-          await addUserName(text: 'Lindqvist', kind: UserNameKind.family, always: false);
+          await addUserName(text: 'Lindqvist', kind: UserNameKind.family, always: false, list: 'sv');
         } on ApiError {
           // the vault is shut
         }
@@ -123,6 +123,35 @@ void main() {
       'userNames': () async {
         try {
           await userNames();
+        } on ApiError {
+          // the same
+        }
+      },
+      // 041-I — the lists, one per language.
+      'userLists': () async {
+        try {
+          await userLists();
+        } on ApiError {
+          // the vault is shut
+        }
+      },
+      'setUserListEnabled': () async {
+        try {
+          await setUserListEnabled(name: 'sv', enabled: false);
+        } on ApiError {
+          // the same
+        }
+      },
+      'userListPlan': () async {
+        try {
+          await userListPlan(name: 'sv');
+        } on ApiError {
+          // the same
+        }
+      },
+      'forgetUserList': () async {
+        try {
+          await forgetUserList(name: 'sv');
         } on ApiError {
           // the same
         }
@@ -136,7 +165,7 @@ void main() {
       },
       'importUserNames': () async {
         try {
-          await importUserNames(csv: 'name,type\nLindqvist,family\n');
+          await importUserNames(csv: 'name,type\nLindqvist,family\n', list: 'sv');
         } on ApiError {
           // the same
         }
@@ -290,7 +319,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 92, reason: 'the contract has 92 functions');
+    expect(calls.length, 96, reason: 'the contract has 96 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

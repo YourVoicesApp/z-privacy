@@ -730,6 +730,14 @@ class Workbench extends ChangeNotifier {
   /// nothing to say rather than something to guess.
   List<UserNameRow> userNames = const [];
 
+  /// The lists the person keeps their names in, from the core.
+  List<UserListRow> userLists = const [];
+
+  /// Which language's list a new name goes into. A list **is** a language —
+  /// the owner, 6 October — so this is a pack id, and it starts as the one the
+  /// document is being read with.
+  String intoList = 'de';
+
   /// The last import's three numbers, for the sentence under the button.
   NameImport? lastImport;
 
@@ -741,20 +749,51 @@ class Workbench extends ChangeNotifier {
 
   Future<void> refreshUserNames() async {
     List<UserNameRow> got;
+    List<UserListRow> lists;
     try {
       got = await z.userNames();
+      lists = await z.userLists();
     } on ApiError {
       got = const [];
+      lists = const [];
     }
     if (_gone) return;
     userNames = got;
+    userLists = lists;
+
     notifyListeners();
   }
+
+  /// Turn a language's list off or on, or forget one with its names. Each goes
+  /// through the same door as the names themselves, so the sentence and the
+  /// busy flag are the same. There is no «new list» and no rename: a list is a
+  /// language, it exists when its first name does, and its name is the
+  /// language's.
+  Future<String?> setListEnabled(String name, bool enabled) =>
+      _aboutNames(() async {
+        await z.setUserListEnabled(name: name, enabled: enabled);
+        return enabled ? '«$name» is in use again.' : '«$name» is off — its names are still here.';
+      });
+
+  /// How many names forgetting this list would take — asked before it is done.
+  Future<int> listCost(String name) async {
+    try {
+      return await z.userListPlan(name: name);
+    } on ApiError {
+      return 0;
+    }
+  }
+
+  Future<String?> forgetList(String name) =>
+      _aboutNames(() async {
+        final gone = await z.forgetUserList(name: name);
+        return 'Forgot «$name» and ${gone == 1 ? "1 name" : "$gone names"}.';
+      });
 
   /// Add one name a person typed. The core decides where it is kept.
   Future<String?> addUserName(String text, {required UserNameKind kind, required bool always}) async {
     return _aboutNames(() async {
-      await z.addUserName(text: text, kind: kind, always: always);
+      await z.addUserName(text: text, kind: kind, always: always, list: intoList);
       return 'Added «$text».';
     });
   }
@@ -768,9 +807,10 @@ class Workbench extends ChangeNotifier {
 
   /// Read a list of names. The three numbers come back from the core, which is
   /// the only thing that knows which of them were already known.
-  Future<String?> importUserNames(String csv) async {
+  Future<String?> importUserNames(String csv, {String? into}) async {
     return _aboutNames(() async {
-      final report = await z.importUserNames(csv: csv);
+      final report = await z.importUserNames(csv: csv, list: into ?? intoList);
+      if (into != null) intoList = into;
       lastImport = report;
       return '${report.added} added · ${report.alreadyKnown} already known · '
           '${report.refused} refused';

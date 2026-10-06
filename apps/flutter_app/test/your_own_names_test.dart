@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
+import 'package:zprivacy/widgets/name_review.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -174,12 +175,100 @@ void main() {
 
     bench.dispose();
   });
+
+
+  testWidgets('a list has a name, a count and a switch, and off is not forgotten', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1100));
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await z.vaultLock();
+      final dir = Directory('${Directory.systemTemp.path}/zprivacy-lists-$pid');
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      await z.setDataDir(dir: dir.path);
+      await z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort');
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: _doc);
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+      // Two lists, each with a name of its own.
+      await z.addUserName(
+        text: 'Okonkwo',
+        kind: UserNameKind.family,
+        always: false,
+        list: 'ar',
+      );
+      await z.addUserName(
+        text: 'Lindqvist',
+        kind: UserNameKind.family,
+        always: false,
+        list: 'sv',
+      );
+      await bench.refreshUserNames();
+    });
+
+    await _openNames(tester, bench, ground);
+
+    // «Your names» is at the foot of a panel that scrolls, and a list that
+    // scrolls does not build what is below the window — so the test goes there
+    // the way a person would.
+    await tester.drag(find.byType(NameReviewPanel), const Offset(0, -500));
+    await settle(tester, rounds: 2);
+    // Each list says its language and how many names are in it — a list **is**
+    // a language, and «العربية» has no pack in this build at all, which is the
+    // point: a person builds that list by hand before the pack exists.
+    // The heads are rich text — a name, a count and sometimes «off» in one
+    // line — so the finder has to read inside the spans.
+    expect(find.textContaining('العربية', findRichText: true), findsOneWidget);
+    expect(find.textContaining('Svenska', findRichText: true), findsWidgets);
+    expect(find.byType(Switch), findsNWidgets(bench.userLists.length));
+
+    // Turning one off leaves its names on screen — faded, not gone.
+    final head = find
+        .ancestor(
+          of: find.textContaining('العربية', findRichText: true),
+          matching: find.byType(Row),
+        )
+        .first;
+    await tester.tap(find.descendant(of: head, matching: find.byType(Switch)));
+    await settle(tester, rounds: 8);
+
+    expect(
+      bench.userLists.firstWhere((l) => l.name == 'ar').enabled,
+      isFalse,
+      reason: 'the switch did not turn the list off',
+    );
+    expect(
+      bench.userNames.where((r) => r.list == 'ar').length,
+      1,
+      reason: 'a switch forgot a name',
+    );
+    expect(
+      find.textContaining('Okonkwo', findRichText: true),
+      findsWidgets,
+      reason: 'the names of an off list vanished',
+    );
+    expect(
+      find.textContaining('off', findRichText: true),
+      findsWidgets,
+      reason: 'nothing says the list is off',
+    );
+
+    bench.dispose();
+  });
 }
 
-Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
+/// Pumps with a real moment between them — and **no `pumpAndSettle`**.
+///
+/// Measured here: once «Your names» holds a list, the panel carries a `Switch`,
+/// and `pumpAndSettle` on this screen never returns — it waits for a frame
+/// where nothing is scheduled, and that frame does not come. Explicit pumps
+/// settle everything this file asserts about, which is what the other screen
+/// tests get from `pumpAndSettle` anyway.
+Future<void> settle(WidgetTester tester, {int rounds = 6}) async {
   for (var i = 0; i < rounds; i++) {
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 120)));
   }
-  await tester.pumpAndSettle();
 }

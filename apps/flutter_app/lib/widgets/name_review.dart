@@ -15,6 +15,7 @@
 // No dictionary editor. Z brings what needs a decision, and nothing else.
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
@@ -22,11 +23,23 @@ import 'package:flutter/material.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
+import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/language_list.dart';
 
 class NameReviewPanel extends StatelessWidget {
-  const NameReviewPanel({super.key, required this.bench, required this.width, required this.onVault});
+  const NameReviewPanel({
+    super.key,
+    required this.bench,
+    required this.ground,
+    required this.width,
+    required this.onVault,
+  });
 
   final Workbench bench;
+
+  /// For the language list under «Your names»: what this build carries and
+  /// what is coming, both from the core.
+  final Ground ground;
   final double width;
 
   /// Adding a name writes to the vault, so without one the acts say what they
@@ -90,7 +103,7 @@ class NameReviewPanel extends StatelessWidget {
                   _Row(bench: bench, candidate: c),
                   Container(height: 1, color: Zc.lineSoft),
                 ],
-                YourNames(bench: bench, onVault: onVault),
+                YourNames(bench: bench, ground: ground, onVault: onVault),
               ],
             ),
           ),
@@ -211,9 +224,13 @@ class _Act extends StatelessWidget {
 /// — the same button-carries-its-state rule as «Always» in the review, and the
 /// same door.
 class YourNames extends StatefulWidget {
-  const YourNames({super.key, required this.bench, required this.onVault});
+  const YourNames({super.key, required this.bench, required this.ground, required this.onVault});
 
   final Workbench bench;
+
+  /// For the language list: which packs this build carries, and which are
+  /// coming. Both from the core, as everywhere else.
+  final Ground ground;
   final VoidCallback onVault;
 
   @override
@@ -258,7 +275,16 @@ class _YourNamesState extends State<YourNames> {
     if (file == null || !mounted) return;
     final csv = await file.readAsString();
     if (!mounted) return;
-    unawaited(widget.bench.importUserNames(csv));
+    // Which language's list it joins. A list is a language, so this is the
+    // same question the top bar asks, with the document's own pack in front.
+    final into = await askForALanguage(
+      context,
+      ground: widget.ground,
+      chosen: widget.bench.packId,
+      title: 'Which language are these names?',
+    );
+    if (into == null || !mounted) return;
+    unawaited(widget.bench.importUserNames(csv, into: into));
   }
 
   @override
@@ -304,6 +330,7 @@ class _YourNamesState extends State<YourNames> {
                 label: _vaultOpen ? 'Import a list' : 'Import a list · $_needs',
                 onPressed: widget.bench.busy ? null : (_vaultOpen ? _import : widget.onVault),
               ),
+
             ],
           ),
           const SizedBox(height: 6),
@@ -369,43 +396,56 @@ class _YourNamesState extends State<YourNames> {
             Text(widget.bench.namesSaid!, style: Zc.small.copyWith(color: Zc.river)),
           ],
           const SizedBox(height: 12),
-          if (rows.isEmpty)
+          if (rows.isEmpty && widget.bench.userLists.every((l) => l.names == 0))
             Text(
               _vaultOpen ? 'Nothing yet.' : '',
               style: Zc.small.copyWith(color: Zc.ink4),
             )
           else
-            for (final row in rows)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(text: row.text, style: Zc.body.copyWith(fontWeight: FontWeight.w600)),
+            // **Grouped by list.** The owner, 6 October: «we make it possible
+            // to create lists inside the vault, for example Arabic, English,
+            // German and so on». Each list has its name, how many names are in
+            // it, the switch that stops them being used without forgetting
+            // them, and the three things that can be done to the list itself.
+            for (final list in widget.bench.userLists) ...[
+              _ListHead(bench: widget.bench, ground: widget.ground, list: list),
+              for (final row in rows.where((r) => r.list == list.name))
+                Padding(
+                  padding: const EdgeInsets.only(left: 6, bottom: 6),
+                  child: Opacity(
+                    // A list that is off is not a list that was forgotten, and
+                    // the screen says so by showing every name in it, faded.
+                    opacity: list.enabled ? 1 : 0.5,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text.rich(
                             TextSpan(
-                              text: '  ${_kindWord(row.kind)}${row.always ? " · always" : ""}',
-                              style: Zc.tiny.copyWith(color: Zc.ink4),
+                              children: [
+                                TextSpan(text: row.text, style: Zc.body.copyWith(fontWeight: FontWeight.w600)),
+                                TextSpan(
+                                  text: '  ${_kindWord(row.kind)}${row.always ? " · always" : ""}',
+                                  style: Zc.tiny.copyWith(color: Zc.ink4),
+                                ),
+                              ],
                             ),
-                          ],
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                        IconButton(
+                          tooltip: 'Forget «${row.text}»',
+                          icon: const Icon(Icons.close, size: 15),
+                          color: Zc.ink4,
+                          visualDensity: VisualDensity.compact,
+                          onPressed: widget.bench.busy
+                              ? null
+                              : () => unawaited(widget.bench.forgetUserName(row)),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      tooltip: 'Forget «${row.text}»',
-                      icon: const Icon(Icons.close, size: 15),
-                      color: Zc.ink4,
-                      visualDensity: VisualDensity.compact,
-                      onPressed: widget.bench.busy
-                          ? null
-                          : () => unawaited(widget.bench.forgetUserName(row)),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+            ],
         ],
       ),
     );
@@ -449,4 +489,210 @@ class _Pick extends StatelessWidget {
       ),
     );
   }
+}
+
+/// One list's own row: its name, how many names are in it, the switch, and the
+/// three things that can be done to the list itself.
+///
+/// The switch is the point of a list. Off is **not** forgotten — every name is
+/// still here, drawn faded under the head — so a person can read the same
+/// document with a dictionary and without it and see what the dictionary did.
+class _ListHead extends StatelessWidget {
+  const _ListHead({required this.bench, required this.ground, required this.list});
+
+  final Workbench bench;
+  final Ground ground;
+  final UserListRow list;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    // The language's own name where there is one, and its id
+                    // otherwise — a list for a language this build does not
+                    // carry yet is the whole point of letting a person build it.
+                    text: languageName(ground, list.name),
+                    style: Zc.small.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: list.enabled ? Zc.ink : Zc.ink4,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '  ${list.names}',
+                    style: Zc.tiny.copyWith(color: Zc.ink4),
+                  ),
+                  if (!list.enabled)
+                    TextSpan(text: '  off', style: Zc.tiny.copyWith(color: Zc.amber)),
+                ],
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Tooltip(
+            message: list.enabled ? 'Stop using these names' : 'Use these names again',
+            child: Switch(
+              value: list.enabled,
+              onChanged: bench.busy
+                  ? null
+                  : (on) => unawaited(bench.setListEnabled(list.name, on)),
+            ),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'What to do with «${list.name}»',
+            icon: const Icon(Icons.more_horiz, size: 18, color: Zc.ink4),
+            onSelected: (what) => unawaited(_act(context, what)),
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'export', child: Text('Export CSV')),
+              PopupMenuItem(value: 'remove', child: Text('Remove list')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _act(BuildContext context, String what) async {
+    switch (what) {
+      case 'export':
+        await _export(context);
+      case 'remove':
+        // What it costs, before it is done — the same rule forgetting a value
+        // follows: the app says the price and a person agrees to it.
+        final cost = await bench.listCost(list.name);
+        if (!context.mounted) return;
+        final sure = await showDialog<bool>(
+          context: context,
+          builder: (inner) => AlertDialog(
+            backgroundColor: Zc.paper,
+            title: Text('Remove «${list.name}»?', style: Zc.h2),
+            content: Text(
+              cost == 1
+                  ? 'One name goes with it. Nothing else is touched.'
+                  : '$cost names go with it. Nothing else is touched.',
+              style: Zc.body,
+            ),
+            actions: [
+              ZButton(label: 'Keep it', onPressed: () => Navigator.of(inner).pop(false)),
+              ZButton(label: 'Remove', filled: true, onPressed: () => Navigator.of(inner).pop(true)),
+            ],
+          ),
+        );
+        if (sure ?? false) unawaited(bench.forgetList(list.name));
+    }
+  }
+
+  /// The list, as the file it could have come from: `name,type,source,licence`.
+  Future<void> _export(BuildContext context) async {
+    final rows = bench.userNames.where((r) => r.list == list.name);
+    final csv = StringBuffer('name,type,source,licence\n');
+    for (final row in rows) {
+      csv.writeln('${_csv(row.text)},${_kindWord(row.kind).split(' ').first},,');
+    }
+    final where = await getSaveLocation(suggestedName: '${list.name}.csv');
+    if (where == null) return;
+    await XFile.fromData(
+      Uint8List.fromList(csv.toString().codeUnits),
+      mimeType: 'text/csv',
+    ).saveTo(where.path);
+  }
+
+  static String _csv(String value) =>
+      value.contains(',') || value.contains('"') ? '"${value.replaceAll('"', '""')}"' : value;
+}
+
+/// One short name, asked for in one field. Used for a new list, a rename, and
+/// the name an import suggests from its file.
+Future<String?> askForAName(
+  BuildContext context, {
+  required String title,
+  required String hint,
+  String? initial,
+}) async {
+  final field = TextEditingController(text: initial);
+  final name = await showDialog<String>(
+    context: context,
+    builder: (inner) => AlertDialog(
+      backgroundColor: Zc.paper,
+      title: Text(title, style: Zc.h2),
+      content: TextField(
+        controller: field,
+        autofocus: true,
+        style: Zc.body,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: Zc.body.copyWith(color: Zc.ink4),
+          border: const OutlineInputBorder(),
+        ),
+        onSubmitted: (value) => Navigator.of(inner).pop(value.trim()),
+      ),
+      actions: [
+        ZButton(label: 'Cancel', onPressed: () => Navigator.of(inner).pop()),
+        ZButton(
+          label: 'Save',
+          filled: true,
+          onPressed: () => Navigator.of(inner).pop(field.text.trim()),
+        ),
+      ],
+    ),
+  );
+  field.dispose();
+  return (name == null || name.isEmpty) ? null : name;
+}
+
+/// A language's own name, as the core gives it — installed or planned — and the
+/// id itself when neither knows it, which can only happen to a list made by an
+/// older build.
+String languageName(Ground ground, String id) {
+  for (final pack in ground.packs) {
+    if (pack.id == id) return pack.label;
+  }
+  for (final planned in ground.plannedPacks) {
+    if (planned.id == id) return planned.label;
+  }
+  return id;
+}
+
+/// Which language's list? The same two halves as everywhere else — what this
+/// build carries, a line, and what is coming — because a person builds their
+/// Arabic list by hand long before an Arabic pack exists.
+Future<String?> askForALanguage(
+  BuildContext context, {
+  required Ground ground,
+  required String chosen,
+  required String title,
+}) async {
+  var picked = chosen;
+  return showDialog<String>(
+    context: context,
+    builder: (inner) => StatefulBuilder(
+      builder: (inner, setState) => AlertDialog(
+        backgroundColor: Zc.paper,
+        title: Text(title, style: Zc.h2),
+        content: SizedBox(
+          width: 360,
+          child: SingleChildScrollView(
+            child: LanguageChoices(
+              ground: ground,
+              chosen: picked,
+              onChoose: (id) => setState(() => picked = id),
+              // A list may be made for a language this build does not carry:
+              // that is how an Arabic list exists before an Arabic pack does.
+              plannedChoosable: true,
+            ),
+          ),
+        ),
+        actions: [
+          ZButton(label: 'Cancel', onPressed: () => Navigator.of(inner).pop()),
+          ZButton(label: 'Save', filled: true, onPressed: () => Navigator.of(inner).pop(picked)),
+        ],
+      ),
+    ),
+  );
 }

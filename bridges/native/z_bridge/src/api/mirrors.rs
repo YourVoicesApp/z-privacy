@@ -596,6 +596,10 @@ pub struct _UserNameRow {
     pub always: bool,
     pub profile_id: Option<String>,
     pub learned_at: u64,
+    /// Which list it is kept in. A whole person or a company is a value in the
+    /// vault rather than a word in a dictionary, and is always in the default
+    /// one.
+    pub list: String,
 }
 
 #[frb(mirror(NameImport))]
@@ -1014,6 +1018,15 @@ pub struct _RevealState {
     pub entity: Option<u32>,
     pub value_id: Option<u32>,
     pub remaining_ms: u32,
+}
+
+#[frb(mirror(UserListRow))]
+pub struct _UserListRow {
+    pub name: String,
+    /// How many names are in it.
+    pub names: u32,
+    /// Off means the scanner is not told about them — not that they are gone.
+    pub enabled: bool,
 }
 
 #[frb(mirror(PlannedPack))]
