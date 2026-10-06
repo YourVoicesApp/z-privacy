@@ -25,6 +25,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+const _pass = 'ein gutes Passwort für den Tresor';
 const _text = 'Kunde: Nordstern Consulting GmbH, Ansprechpartner Herr Thomas Müller.';
 
 Future<Ground> _fresh(WidgetTester tester, String name) async {
@@ -94,13 +95,22 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: ZShell(dataDir: dir.path, ground: ground)));
     await settle(tester);
 
-    // Past the first run, the shortest way.
+    // Past the first run — and through the vault, which since 041-N is the
+    // way in rather than an offer. The passphrase goes in through the core:
+    // a widget that awaits it does not resume under `testWidgets`, so no test
+    // in this app presses «Create the vault» itself.
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Start'));
     await settle(tester);
-    await tester.tap(find.text('Later'));
+    await tester.tap(find.text('Create a vault'));
     await settle(tester);
+    await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: _pass));
+    await settle(tester);
+    await tester.tap(find.text('Back'));
+    // The way back runs through the core: close, refresh, and a frame for the
+    // shell to notice. Measured at five rounds; eight is room to breathe.
+    await settle(tester, rounds: 8);
 
     expect(find.byType(HomeScreen), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, _text);

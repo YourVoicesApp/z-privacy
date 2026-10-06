@@ -151,15 +151,23 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: ZShell(dataDir: dir.path, ground: ground)));
     await settle(tester);
 
-    // Past the first run — and «Later», because a vault is offered and never
-    // forced.
+    // Past the first run — and through the vault, which since 041-N is the
+    // way in rather than an offer. The passphrase goes in through the core:
+    // a widget that awaits it does not resume under `testWidgets`, so no test
+    // in this app presses «Create the vault» itself.
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Start'));
     await settle(tester);
-    await tester.tap(find.text('Later'));
+    await tester.tap(find.text('Create a vault'));
     await settle(tester);
-    expect(find.byType(HomeScreen), findsOneWidget, reason: '«Later» did not reach Home');
+    await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: _pass));
+    await settle(tester);
+    await tester.tap(find.text('Back'));
+    // The way back runs through the core: close, refresh, and a frame for the
+    // shell to notice.
+    await settle(tester, rounds: 8);
+    expect(find.byType(HomeScreen), findsOneWidget, reason: 'the vault did not lead on to Home');
 
     // 041-G — the box is the home: no sheet, no question, just the text.
     await tester.enterText(find.byType(TextField).first, _doc);
@@ -168,27 +176,17 @@ void main() {
     await settle(tester);
     expect(find.byType(WorkspaceScreen), findsOneWidget, reason: 'the session did not open');
 
-    // The band, pressed.
-    await tester.tap(find.text('Create a vault'));
-    await settle(tester);
-    expect(find.byType(VaultScreen), findsOneWidget, reason: 'the band did not open the vault');
+    // 041-N changed what this journey is. The band used to be where a person
+    // first met the vault, because a document could be opened without one; now
+    // the vault is behind them before the first word is typed, so the band has
+    // nothing to ask for and the sentences that asked are gone.
+    expect(find.textContaining('No vault'), findsNothing, reason: 'the band asks for a vault that is open');
+    expect(find.text('Create a vault'), findsNothing, reason: 'the band offers a vault that exists');
+    expect(find.textContaining('Vault locked'), findsNothing, reason: 'the band says a shut vault is shut');
 
-    await tester.enterText(find.byType(TextField).at(0), _pass);
-    await tester.enterText(find.byType(TextField).at(1), _pass);
-    await settle(tester, rounds: 1);
-    await tester.tap(find.text('Create the vault'));
-    await settle(tester, rounds: 8);
-
-    // Back to the work, by the door the person came through.
-    await tester.tap(find.text('Back'));
-    await settle(tester, rounds: 10);
-    expect(find.byType(WorkspaceScreen), findsOneWidget, reason: 'the vault screen did not give the document back');
-    expect(find.textContaining('No vault'), findsNothing, reason: 'the band still says there is no vault');
-    expect(
-      find.textContaining('after the vault'),
-      findsOneWidget,
-      reason: 'the band does not say the document was read again',
-    );
+    // What the top bar says instead, which is the whole of what is left to
+    // say about it: the vault is open.
+    expect(find.text('Unlocked'), findsOneWidget, reason: 'the bar does not say the vault is open');
   });
 
   testWidgets('the first page offers the vault and explains it, and never insists', (tester) async {
@@ -209,16 +207,18 @@ void main() {
     await tester.tap(find.text('Start'));
     await settle(tester);
 
-    // One sentence saying why, and two ways on.
+    // One sentence saying why, and one way on. 041-E offered the vault with a
+    // «Later» beside it; 041-N took the «Later» out, because what Z learns
+    // while a person works is kept in the vault and nowhere else.
     expect(
       find.textContaining('What you teach Z'),
       findsOneWidget,
-      reason: 'the page offers a vault without saying what it is for',
+      reason: 'the page asks for a vault without saying what it is for',
     );
     expect(find.text('Create a vault'), findsOneWidget);
-    expect(find.text('Later'), findsOneWidget);
+    expect(find.text('Later'), findsNothing, reason: 'there is still a way past the vault');
 
-    // Creating goes straight there, and the first run is over either way.
+    // And it goes straight there.
     await tester.tap(find.text('Create a vault'));
     await settle(tester);
     expect(find.byType(VaultScreen), findsOneWidget, reason: '«Create a vault» went nowhere');

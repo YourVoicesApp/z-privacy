@@ -178,6 +178,15 @@ class _ShellState extends State<ZShell> {
   /// In both paths the scan runs the moment the text is in: nobody has to press
   /// anything to be protected.
   Future<void> _begin({required bool typing, String? text}) async {
+    // 041-N, the owner: «you cannot begin without an open vault». Not a
+    // warning and not a line in a band — the door opens instead of the work.
+    // Everything a person does to start — «+», a pasted page, the composer —
+    // comes through here, so this is the one place that has to hold.
+    if (_ground.vault != VaultState.unlocked) {
+      setState(() => _vaultOpen = true);
+      return;
+    }
+
     XFile? file;
     DocumentKind? kind;
     String packId = _ground.config?.packId ?? 'de';
@@ -312,7 +321,13 @@ class _ShellState extends State<ZShell> {
     // Before the Workspace, not after it: the vault has to be reachable **from
     // a document**, because that is where «Always» is pressed. Closing it puts
     // the document back exactly as it was — the bench is untouched by any of it.
-    if (_vaultOpen) {
+    // The vault stands in front of the home, every time, until it is open:
+    // on the first run after the language is chosen, and on every later start
+    // where it is locked. A document already open is not interrupted — the
+    // gate is about *starting* work, and a person in the middle of a review
+    // whose vault auto-locked still has their document in front of them.
+    final mustOpenTheVault = _bench == null && _ground.vault != VaultState.unlocked;
+    if (_vaultOpen || mustOpenTheVault) {
       return VaultScreen(
         ground: _ground,
         onClose: () async {

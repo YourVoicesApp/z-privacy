@@ -303,10 +303,10 @@ void main() {
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Starten'));
     await settle(tester, rounds: 1);
-    // 041-E — Start now opens the second step, where the vault is offered
-    // once. The language is carried through it either way.
-    expect(find.text('Later'), findsOneWidget, reason: 'the vault is not offered before the work');
-    await tester.tap(find.text('Later'));
+    // 041-N — Start opens the second step, and the vault is the only way out
+    // of it. The language is carried through it.
+    expect(find.text('Later'), findsNothing, reason: 'a way past the vault is still on the page');
+    await tester.tap(find.text('Create a vault'));
     await settle(tester, rounds: 1);
     expect(chosen, 'de');
   });
@@ -345,10 +345,9 @@ void main() {
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Starten'));
     await settle(tester);
-    // 041-E — the vault is offered between the choice and the end of the first
-    // run. «Later» is the answer this test is about: what is kept must be kept
-    // either way.
-    await tester.tap(find.text('Later'));
+    // 041-N — the vault stands between the choice and the end of the first
+    // run, and is the only way past it. What is kept must be kept through it.
+    await tester.tap(find.text('Create a vault'));
     await settle(tester);
 
     // Written, and read back from the core rather than from the widget.

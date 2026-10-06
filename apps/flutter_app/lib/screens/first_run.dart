@@ -97,7 +97,8 @@ class FirstRunScreen extends StatefulWidget {
       'and nothing is written anywhere else.';
 
   final Ground ground;
-  /// `wantsVault` is the second step's answer: make one now, or later.
+  /// `wantsVault` is always true since 041-N — the vault is the way in, not an
+  /// offer — and the parameter stays so the shell's door keeps one shape.
   final void Function(String language, {required bool wantsVault}) onStart;
 
   @override
@@ -109,12 +110,15 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
   /// one, because the question it asks is which language they read.
   String? _language;
 
-  /// The second step: the vault, offered once, before any work.
+  /// The second step: the vault, before any work.
   ///
-  /// The owner's sentence is «the vault should be opened before starting work
-  /// so we can save the words», and the first page is the only place that can
-  /// be said before the work. It is an offer and stays one: «Later» is a
-  /// button of the same size, and nothing about this page insists.
+  /// The owner's sentence in 041-E was «the vault should be opened before
+  /// starting work so we can save the words», and this page offered it with a
+  /// «Later» beside it. 041-N, after a live run: «you cannot begin without an
+  /// open vault». So the offer became the way in. There is no «Later» here any
+  /// more — not because a person must be pushed, but because everything Z
+  /// learns while they work is kept in the vault, and work done without one is
+  /// work thrown away at the end of the day.
   bool _atTheVault = false;
 
   @override
@@ -215,25 +219,15 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
                     const SizedBox(height: 8),
                     Text(FirstRunScreen.vaultWhy, style: Zc.small),
                     const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      children: [
-                        ZButton(
-                          label: 'Create a vault',
-                          filled: true,
-                          onPressed: () => widget.onStart(_language!, wantsVault: true),
-                        ),
-                        ZButton(
-                          label: 'Later',
-                          onPressed: () => widget.onStart(_language!, wantsVault: false),
-                        ),
-                      ],
+                    ZButton(
+                      label: 'Create a vault',
+                      filled: true,
+                      onPressed: () => widget.onStart(_language!, wantsVault: true),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'You can make one at any time — the band above your document '
-                      'offers it too.',
+                      'One passphrase, kept on this device. Everything Z learns while '
+                      'you work — your names, your lists, your decisions — is kept in it.',
                       style: Zc.tiny.copyWith(letterSpacing: 0),
                     ),
                   ],
