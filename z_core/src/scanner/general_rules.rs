@@ -18,6 +18,7 @@ pub(crate) fn scan(text: &str) -> Vec<Candidate> {
     let mut out = Vec::new();
     ibans(text, &mut out);
     emails(text, &mut out);
+    social_insurance(text, &mut out);
     phones(text, &mut out);
     out
 }
@@ -366,5 +367,136 @@ mod tests {
             assert!(!c.reason.is_empty(), "a finding with no reason is not allowed");
             assert!(!c.source_detail.is_empty(), "the rule must name itself");
         }
+    }
+}
+
+// ------------------------------------------- social-insurance number (038-G)
+
+/// A German *Sozialversicherungsnummer*, proven by its own check digit.
+///
+/// Twelve characters: `NN DDMMYY L NNN` — the area number of the issuing
+/// office, the bearer's birth date, the first letter of their birth name, two
+/// digits of serial, and a check digit over all of it. Written with spaces on
+/// a payslip and without them in a form, and both are read here.
+///
+/// The arithmetic is published and is what earns `Auto`: the letter becomes two
+/// digits of its position in the alphabet, the twelve digits are weighted
+/// `2 1 2 5 7 1 2 1 2 1 2 1`, every product is replaced by the sum of its own
+/// digits, and the total modulo ten is the check digit. A number one digit off
+/// fails it, which is the whole point — this rule may never guess.
+///
+/// It is a general rule and not a German one. The shape is German, but nothing
+/// else in any language has it: six digits that must be a real date, a single
+/// capital in the middle, and a checksum that has to come out.
+fn social_insurance(text: &str, out: &mut Vec<Candidate>) {
+    let bytes = text.as_bytes();
+    let mut at = 0usize;
+    while at < bytes.len() {
+        let Some(found) = read_social_insurance(text, at) else {
+            at += 1;
+            continue;
+        };
+        let (start, end) = found;
+        out.push(candidate(
+            start,
+            end,
+            Kind::SocialInsuranceNo,
+            Confidence::Auto,
+            "social-insurance number",
+            "a social-insurance number: an area number, a birth date, the first letter of a \
+             birth name and a check digit that comes out",
+        ));
+        at = end;
+    }
+}
+
+/// One number at `at`, or nothing. Returns the span including its spaces.
+fn read_social_insurance(text: &str, at: usize) -> Option<(usize, usize)> {
+    let bytes = text.as_bytes();
+    if !boundary_before(bytes, at) {
+        return None;
+    }
+    // Twelve characters, with a space allowed where a payslip puts one.
+    let mut compact = String::with_capacity(12);
+    let mut i = at;
+    while compact.len() < 12 {
+        let b = *bytes.get(i)?;
+        if b == b' ' {
+            // A space only between the groups a payslip separates, never two.
+            if !matches!(compact.len(), 2 | 8 | 9) || bytes.get(i + 1)? == &b' ' {
+                return None;
+            }
+            i += 1;
+            continue;
+        }
+        if !b.is_ascii_alphanumeric() {
+            return None;
+        }
+        compact.push(b as char);
+        i += 1;
+    }
+    if !boundary_after(bytes, i) {
+        return None;
+    }
+    social_insurance_ok(&compact).then_some((at, i))
+}
+
+/// The published check: the shape, a real date, and the check digit.
+fn social_insurance_ok(compact: &str) -> bool {
+    let b = compact.as_bytes();
+    if b.len() != 12 {
+        return false;
+    }
+    let digits_ok = |range: std::ops::Range<usize>| {
+        range.clone().all(|i| b.get(i).is_some_and(u8::is_ascii_digit))
+    };
+    if !digits_ok(0..8) || !digits_ok(9..12) {
+        return false;
+    }
+    let Some(letter) = b.get(8).copied() else { return false };
+    if !letter.is_ascii_uppercase() {
+        return false;
+    }
+    // The birth date is a date, or this is twelve characters of something else.
+    let two = |i: usize| -> u32 {
+        compact.get(i..i + 2).and_then(|s| s.parse::<u32>().ok()).unwrap_or(99)
+    };
+    let (day, month) = (two(2), two(4));
+    if !(1..=12).contains(&month) || day == 0 || day > days_in_month(month) {
+        return false;
+    }
+
+    // The letter counts as two digits of its place in the alphabet.
+    let mut digits: Vec<u32> = Vec::with_capacity(12);
+    for i in 0..8 {
+        digits.push(u32::from(b.get(i).copied().unwrap_or(b'0') - b'0'));
+    }
+    let place = u32::from(letter - b'A') + 1;
+    digits.push(place / 10);
+    digits.push(place % 10);
+    for i in 9..11 {
+        digits.push(u32::from(b.get(i).copied().unwrap_or(b'0') - b'0'));
+    }
+    const WEIGHTS: [u32; 12] = [2, 1, 2, 5, 7, 1, 2, 1, 2, 1, 2, 1];
+    let total: u32 = digits
+        .iter()
+        .zip(WEIGHTS.iter())
+        .map(|(d, w)| {
+            let p = d * w;
+            p / 10 + p % 10
+        })
+        .sum();
+    let wanted = total % 10;
+    let written = u32::from(b.get(11).copied().unwrap_or(b'0') - b'0');
+    wanted == written
+}
+
+/// Days in a month, February long enough for any year: a birth date inside an
+/// identifier is checked for being a date at all, not for its own year.
+fn days_in_month(month: u32) -> u32 {
+    match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        _ => 29,
     }
 }

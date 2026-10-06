@@ -649,6 +649,13 @@ pub enum Kind {
     Birthdate,
     /// A vehicle's registration plate.
     Vehicle,
+    /// A German social-insurance number — *Sozialversicherungsnummer*, the one
+    /// a payslip carries: an area number, the bearer's birth date, the first
+    /// letter of their birth name, a serial and a check digit over all of it.
+    ///
+    /// It carries a birth date inside it, so it is not only an identifier: a
+    /// person whose number is read has had their date of birth read with it.
+    SocialInsuranceNo,
     Custom,
 }
 
