@@ -297,6 +297,93 @@ fn letter_after(s: &str, at: usize) -> Option<char> {
 /// the Arabic book through the §4.3 path, the five taught characters matched
 /// **462** places and still match 462 — the clitics are the reason the rule
 /// has an Arabic half at all.
+/// Every place `needle` stands in `haystack`, as byte ranges, left to right and
+/// without overlapping — **whatever case either of them is written in**.
+///
+/// 041-R, from the owner's own file: «Leifland» and «Wihlborg» were in his list
+/// and protected in the running text, and left in the clear in
+/// «TEXT: CRISTINA LEIFLAND». Six places. A name is the same name shouted.
+///
+/// **Two things this is careful about, and both are the reason it is not a
+/// `to_lowercase()` on each side and a `find`:**
+///
+/// * **The range returned is the haystack's own.** Lowercasing can change a
+///   string's length (`İ` becomes two code points), so a span measured on a
+///   lowercased copy can land in the middle of a character of the original.
+///   An offset that is one out is a protection in the wrong place — the
+///   mistake this project will not make twice. So the haystack is walked as it
+///   is, and only the comparison is case-blind.
+/// * **A match must end on a character boundary.** If a haystack character
+///   expands to two lowercase ones and the needle only wants the first, that is
+///   not a match: there would be no honest byte to end it at.
+///
+/// **What it does not claim:** this is `char::to_lowercase`, the simple
+/// mapping, not full Unicode case folding. Measured consequence — German `ß`
+/// and `SS` are *not* the same here (`'ß'.to_lowercase()` is `ß`), so a vault
+/// value «Weiß» is not found in «WEISS». That is a real gap and it is written
+/// down rather than implied; closing it needs a folding table, and the owner's
+/// Swedish and German lists do not need one today.
+///
+/// Case is read as a **signal** by the packs — a capital is how German marks a
+/// noun — and none of that changes: this function is what the vault layer and
+/// «protect every place» use to find a value they were *given*, never what a
+/// rule uses to decide whether a word looks like a name.
+pub(crate) fn occurrences(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
+    let mut out = Vec::new();
+    let Some(first) = needle.chars().next().and_then(|c| c.to_lowercase().next()) else {
+        return out;
+    };
+    let mut from = 0usize;
+    while from < haystack.len() {
+        let Some(here) = haystack.get(from..).and_then(|r| r.chars().next()) else {
+            break;
+        };
+        // A cheap gate before the character-by-character walk: on a 200,000-word
+        // document the walk is asked at every position otherwise.
+        if here.to_lowercase().next() == Some(first) {
+            if let Some(len) = case_blind_match(haystack, from, needle) {
+                let end = from + len;
+                if stands_alone(haystack, from, end) {
+                    out.push((from, end));
+                }
+                // Past this one either way: a fragment inside a word does not
+                // become a match by being looked at again.
+                from = end;
+                continue;
+            }
+        }
+        from += here.len_utf8();
+    }
+    out
+}
+
+/// How many **haystack bytes** `needle` takes starting at `start`, comparing
+/// without regard to case, or `None` if it is not there.
+fn case_blind_match(haystack: &str, start: usize, needle: &str) -> Option<usize> {
+    // The lowercase characters of the haystack character we are part way
+    // through, in reverse so the next one is the last.
+    let mut pending: Vec<char> = Vec::new();
+    let mut at = start;
+    let mut wanted = needle.chars().flat_map(char::to_lowercase);
+
+    loop {
+        let Some(want) = wanted.next() else {
+            // The needle is spent. It has to have ended where a haystack
+            // character ends, or there is no byte to call the end.
+            return pending.is_empty().then_some(at - start);
+        };
+        if pending.is_empty() {
+            let c = haystack.get(at..)?.chars().next()?;
+            at += c.len_utf8();
+            pending = c.to_lowercase().collect();
+            pending.reverse();
+        }
+        if pending.pop()? != want {
+            return None;
+        }
+    }
+}
+
 pub(crate) fn stands_alone(s: &str, start: usize, end: usize) -> bool {
     let Some(value) = s.get(start..end) else {
         return false;

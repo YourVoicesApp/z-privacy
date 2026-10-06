@@ -705,6 +705,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_three_page_document_hands_over_two_edges a_token_moves_every_edge_after_it \
          a_swallowed_break_does_not_renumber_the_pages \
          the_payload_is_what_it_was_before \
+         a_taught_name_is_found_in_every_case a_longer_lowercase_does_not_move_the_span \
+         protecting_every_place_is_case_blind_too a_lowercase_word_is_still_not_a_name \
+         full_case_folding_is_not_claimed \
          remove_protection_here_leaves forget_from_this_profile_keeps \
          forget_everywhere_reaches nothing_taught_reports_no_reach \
          locked_by_hand locks_itself does_not_postpone_the_lock tell_one_story \
