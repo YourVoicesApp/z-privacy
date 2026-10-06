@@ -57,6 +57,14 @@ pub(crate) enum Validator {
     /// set lists skipped so it stays in the clear — a model still needs «Herr»
     /// to write a correct German reply.
     Name,
+    /// Two capitalised words at least — a given name **and** a surname.
+    ///
+    /// 038-B/2. A magazine credits its photographer as «Foto: Gonzalo
+    /// Irigoyen», and that is proof enough to protect without asking. But the
+    /// same three labels caption pictures: «Bild: Stockholm» is a city, and
+    /// `Name` would have taken it, because `Name` asks only for a capital. A
+    /// label this strong has to be paid for with a shape this strict.
+    NamePair,
     /// Whatever follows, as one word. Used by rules a person teaches, who
     /// should not have to describe a shape to be understood.
     Any,
@@ -295,7 +303,7 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
                 Validator::Number => is_numberish(n) || (j == value_start && n.starts_with('+') && n.len() > 1),
                 Validator::Word | Validator::Any => j == value_start && !n.is_empty(),
                 Validator::Grouped => !n.is_empty() && n.chars().all(|c| c.is_ascii_alphanumeric()),
-                Validator::Name => starts_upper(n) && j - value_start < 4,
+                Validator::Name | Validator::NamePair => starts_upper(n) && j - value_start < 4,
             };
             if fits && j - value_start < 8 {
                 last = Some(j);
@@ -307,6 +315,12 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
         let (Some(last), Some(start_word)) = (last, words.get(value_start)) else {
             continue;
         };
+        // One capitalised word is not a pair. Checked here rather than inside
+        // the loop because the loop takes the run and only afterwards is there
+        // a run to measure.
+        if rule.validator == Validator::NamePair && last == value_start {
+            continue;
+        }
         let Some(end_word) = words.get(last) else { continue };
         out.push(Candidate {
             start: start_word.start,
@@ -391,6 +405,13 @@ fn table_columns(text: &str, rules: &[LabelRule]) -> Vec<Candidate> {
                         Validator::Word | Validator::Any => !value.is_empty(),
                         Validator::Grouped => value.chars().all(|c| c.is_ascii_alphanumeric() || c == ' '),
                         Validator::Name => starts_upper(value),
+                        // In a table a cell is one value, so the pair has to be
+                        // inside the cell.
+                        Validator::NamePair => {
+                            let mut words = value.split_whitespace();
+                            words.next().is_some_and(starts_upper)
+                                && words.next().is_some_and(starts_upper)
+                        }
                     };
                     if value.is_empty() || !fits {
                         continue;

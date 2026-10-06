@@ -107,7 +107,32 @@ const CONJUNCTIONS: &[&str] = &["&", "och"];
 const FAMILY_SUFFIXES: &[&str] = &["son", "dotter", "ström", "qvist", "berg", "lund", "gren", "stedt"];
 
 /// What a Swedish signature writes under the name.
-const ROLES: &[&str] = &["vd", "ägare", "chef", "ordförande", "styrelseledamot", "konsult"];
+/// What a Swedish text calls a person's part in something.
+///
+/// Read two ways: under a name on its own line, which is a signature, and
+/// beside a name in a sentence, which is 038-B/2. The six added on 7 October
+/// are the owner's, from his supplement — «Projektledare är Cicek Cavdar» was
+/// in the clear until the second reading existed.
+const ROLES: &[&str] = &[
+    "vd",
+    "ägare",
+    "chef",
+    "ordförande",
+    "styrelseledamot",
+    "konsult",
+    "projektledare",
+    "professor",
+    "forskningssekreterare",
+    "programchef",
+    "direktör",
+];
+
+/// "«<role> är X»" — what stands between the role and the name.
+///
+/// Data, because it is a word of the language and not a rule of the world. The
+/// German pack's list is empty until the same shape is measured on a German
+/// page.
+const COPULAS: &[&str] = &["är"];
 
 pub(crate) fn pack() -> LanguagePack {
     LanguagePack {
@@ -123,6 +148,7 @@ pub(crate) fn pack() -> LanguagePack {
         stop_words: STOP_WORDS,
         closings: CLOSINGS,
         roles: ROLES,
+        copulas: COPULAS,
         company_forms: COMPANY_FORMS,
         conjunctions: CONJUNCTIONS,
         family_suffixes: FAMILY_SUFFIXES,
