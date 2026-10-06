@@ -59,7 +59,11 @@ fn expected_payload(session: SessionId) -> String {
         at = end;
     }
     out.push_str(&String::from_utf16_lossy(units.get(at..).unwrap_or_default()));
-    out
+    // 041-J — the page's edge is for the person reading, not for the model, so
+    // the payload turns each form feed into an ordinary line break on the way
+    // out. One character for one character: this comparison still holds the
+    // whole text to account, position by position.
+    out.replace('\u{c}', "\n")
 }
 
 /// Protect one stretch, named by its text, the way a person selects it: by

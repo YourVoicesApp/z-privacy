@@ -64,6 +64,18 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
     for (index, page_ref) in pages.iter().enumerate() {
         budget.check()?;
         let page_number = index as u32 + 1;
+        // **One form feed between page and page.** The owner, 7 October: «while
+        // reviewing, the page must show its beginning and its end». A document
+        // that was one long scroll had no edges in it at all, and a person
+        // checking page 17 had nothing to check against.
+        //
+        // `\f` and not a line of dashes: it is the character that has meant
+        // «new page» since the teleprinter, it is one byte, every reader of
+        // this text knows to treat it as whitespace, and nothing in a document
+        // can contain it by accident — a PDF's own text never carries one.
+        if pages_with_text > 0 {
+            out.push_break("\u{c}");
+        }
         let Some(page) = objects.get(page_ref).map(|o| o.dict.clone()) else { continue };
 
         // Fail-closed, before a single character is believed: if this page's fonts

@@ -39,7 +39,12 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
             if !first {
                 page = page.saturating_add(1);
                 paragraph = 1;
-                out.push_break("\n");
+                // The form feed stays in the text, as it does in a PDF since
+                // 041-J: the page's edge is a thing a person reading has to be
+                // able to see, and the column draws a rule wherever one falls.
+                // It was a newline here, which numbered the pages and then hid
+                // where they ended.
+                out.push_break("\u{c}");
             }
             first = false;
             out.push(piece, page, paragraph)?;

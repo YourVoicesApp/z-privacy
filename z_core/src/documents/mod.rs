@@ -31,8 +31,9 @@ pub(crate) mod limits {
     pub(crate) const FILE_BYTES: usize = 25 * 1024 * 1024;
     /// Pages in one document.
     ///
-    /// Measured, not chosen: the owner's 734-page Word export holds 1,589,050
-    /// characters, which is 2,165 a page, and `TEXT_BYTES` below stops at
+    /// Measured, not chosen: the owner's 734-page Word export holds 1,589,783
+    /// characters — 1,589,050 of its own and 733 page edges, one between every
+    /// two pages — which is 2,166 a page, and `TEXT_BYTES` below stops at
     /// 1,937 pages of that density. So the real guard is the text, and this
     /// number is set where the text runs out rather than under it — a document
     /// of 600 pages was refused by a limit of 500 that defended nothing.
