@@ -86,6 +86,15 @@ impl SafePayload {
             text.push_str(rest);
         }
 
+        // **The page's edge is for the person reading, not for the model.**
+        //
+        // Since 041-J the readers keep a form feed between page and page so the
+        // Original column can draw where one ends. A model has no use for a
+        // control character, and this text is the one thing that leaves the
+        // device, so the edge becomes an ordinary line break here — one
+        // character for one character, which leaves every offset where it was.
+        let text = text.replace('\u{c}', "\n");
+
         Self {
             id,
             session: session.id,

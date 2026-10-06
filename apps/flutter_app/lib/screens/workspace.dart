@@ -78,6 +78,22 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     if (_choosing != null) setState(() => _choosing = null);
   }
 
+  /// Go to a page by pointing the column's own anchor at it.
+  ///
+  /// The anchor already exists — it is how «page 17» in the review list became
+  /// a place a person arrives at — so going to a page is choosing which finding
+  /// it points at: the first one on that page.
+  void _goToPage(int page) {
+    final onIt = widget.bench.findings.where((f) => f.place?.page == page);
+    if (onIt.isEmpty) {
+      // Nothing was found on it, so there is nothing to point at — and saying
+      // so is better than a jump that does not happen.
+      setState(() => _said = 'Page $page has nothing the scanner marked.');
+      return;
+    }
+    widget.bench.focusOn(onIt.first.id);
+  }
+
   /// «Page 17» has to be a place you arrive at, not a label. When the review
   /// list points somewhere new, the column scrolls there after the frame that
   /// drew the anchor.
@@ -121,7 +137,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           children: [
         Column(
           children: [
-            _TopBar(bench: bench, ground: widget.ground, onHome: widget.onHome),
+            _TopBar(
+              bench: bench,
+              ground: widget.ground,
+              onHome: widget.onHome,
+              onPage: _goToPage,
+            ),
             _Band(bench: bench, onVault: widget.onVault),
             if (bench.trouble != null)
               Padding(
@@ -213,11 +234,15 @@ class _TopBar extends StatelessWidget {
     required this.bench,
     required this.ground,
     required this.onHome,
+    required this.onPage,
   });
 
   final Workbench bench;
   final Ground ground;
   final VoidCallback onHome;
+
+  /// Go to a page: the Original column scrolls to the first finding on it.
+  final void Function(int page) onPage;
 
   @override
   Widget build(BuildContext context) {
@@ -394,6 +419,28 @@ class _TopBar extends StatelessWidget {
                 ? Zc.river
                 : Zc.ink4,
           ),
+          // **Which page.** The owner, 7 October: a page must show its
+          // beginning and its end — and once it does, a person wants to go to
+          // one. The column scrolls to the first finding on that page, or to
+          // the page's own edge when nothing on it was found.
+          if (doc != null && doc.pages > 1) ...[
+            const SizedBox(width: 10),
+            PopupMenuButton<int>(
+              tooltip: 'Go to a page',
+              onSelected: onPage,
+              itemBuilder: (_) => [
+                for (var page = 1; page <= doc.pages; page++)
+                  PopupMenuItem<int>(value: page, child: Text('Page $page', style: Zc.small)),
+              ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Page', style: Zc.small.copyWith(color: Zc.ink3, fontWeight: FontWeight.w600)),
+                  const Icon(Icons.arrow_drop_down, size: 18, color: Zc.ink3),
+                ],
+              ),
+            ),
+          ],
           // The AI door, open at any time. The choice of provider, model and
           // mode is not a reward for finishing the review: it is the first
           // thing a person wants to see, and the review gates the **send**.

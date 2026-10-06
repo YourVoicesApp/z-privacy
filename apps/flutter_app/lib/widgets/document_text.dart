@@ -69,6 +69,10 @@ class OriginalText extends StatefulWidget {
   final String text;
   final List<Mark> marks;
 
+  /// The page rules, for the test that counts them: present only when the
+  /// document has an edge in it at all.
+  static const pageEdges = ValueKey<String>('original-page-edges');
+
   /// The stretch the user has selected, if any.
   final TextRange? selection;
 
@@ -166,7 +170,23 @@ class _OriginalTextState extends State<OriginalText> {
   @override
   Widget build(BuildContext context) {
     final onSelection = widget.onSelection;
-    return SelectableText.rich(
+    // **The page's edges, drawn behind the words.** The owner, 7 October:
+    // «while reviewing, the page must show its beginning and its end».
+    //
+    // Painted rather than inserted: a widget span or a line of dashes inside
+    // the text would move every offset after it by one, and an offset that is
+    // one out is a protection in the wrong place — the mistake this project
+    // will not make twice. The reader puts a single form feed between page and
+    // page; this draws a rule where each one falls and leaves the text exactly
+    // as the core read it.
+    return Stack(
+      children: [
+        if (text.contains('\u{c}'))
+          Positioned.fill(
+            key: OriginalText.pageEdges,
+            child: CustomPaint(painter: _PageEdges(text: text, style: Zc.document)),
+          ),
+        SelectableText.rich(
       TextSpan(children: _keptSpans(), style: Zc.document),
       style: Zc.document,
       onSelectionChanged: onSelection == null
@@ -175,6 +195,8 @@ class _OriginalTextState extends State<OriginalText> {
                 sel.start < 0 ? 0 : sel.start,
                 sel.end < 0 ? 0 : sel.end,
               ),
+        ),
+      ],
     );
   }
 
@@ -366,4 +388,56 @@ class SafeText extends StatelessWidget {
           ),
         ),
       );
+}
+
+
+/// Where one page ends and the next begins.
+///
+/// The reader puts a single form feed between pages, and this paints a hairline
+/// and «Page N» across the column wherever one falls. Nothing is added to the
+/// text: the painter lays the same spans out with the same width and asks where
+/// that character landed, so every offset in the document is exactly what the
+/// core said it was.
+///
+/// It is therefore not selectable, not protectable, and not sendable — and the
+/// last of those is measured rather than assumed: `build_payload` drops the
+/// form feed and leaves a blank line in its place, so the edge of a page never
+/// travels to a model.
+class _PageEdges extends CustomPainter {
+  _PageEdges({required this.text, required this.style});
+
+  final String text;
+  final TextStyle style;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: size.width);
+
+    final line = Paint()
+      ..color = Zc.line
+      ..strokeWidth = 1;
+    var page = 1;
+    for (var at = 0; at < text.length; at++) {
+      if (text.codeUnitAt(at) != 0x0c) continue;
+      page += 1;
+      final boxes = painter.getBoxesForSelection(
+        TextSelection(baseOffset: at, extentOffset: at + 1),
+      );
+      if (boxes.isEmpty) continue;
+      final y = boxes.first.toRect().center.dy;
+      final label = TextPainter(
+        text: TextSpan(text: 'Page $page', style: Zc.tiny.copyWith(color: Zc.ink4)),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      const gap = 10.0;
+      canvas.drawLine(Offset(0, y), Offset(size.width - label.width - gap * 2, y), line);
+      label.paint(canvas, Offset(size.width - label.width, y - label.height / 2));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PageEdges old) => old.text != text || old.style != style;
 }
