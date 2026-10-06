@@ -31,6 +31,10 @@ class Ground extends ChangeNotifier {
   List<ProfileRow> get profiles => home?.profiles ?? const [];
   List<PackRow> get packs => home?.packs ?? const [];
 
+  /// The languages that are coming and are not here, from the core — so a
+  /// screen never carries its own list of promises.
+  List<PlannedPack> plannedPacks = const [];
+
   /// The rule sets this build carries. A pack and a rule set are the same
   /// thing seen from two screens, and both are read from the core so that
   /// adding a language never means editing a list in Dart.
@@ -46,6 +50,7 @@ class Ground extends ChangeNotifier {
   Future<void> refresh() async {
     try {
       home = await z.homeSnapshot();
+      plannedPacks = await z.plannedPacks();
       vaultSnap = await z.vaultSnapshot();
       privacyRules = (home?.vault == VaultState.unlocked)
           ? await z.privacyRulesSnapshot(profileId: null)

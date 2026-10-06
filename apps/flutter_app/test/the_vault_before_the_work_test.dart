@@ -161,8 +161,7 @@ void main() {
     await settle(tester);
     expect(find.byType(HomeScreen), findsOneWidget, reason: '«Later» did not reach Home');
 
-    await tester.tap(find.text('New private session'));
-    await settle(tester);
+    // 041-G — the box is the home: no sheet, no question, just the text.
     await tester.enterText(find.byType(TextField).first, _doc);
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Open and scan'));

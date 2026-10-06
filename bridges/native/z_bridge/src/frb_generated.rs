@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 813287903;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -577258630;
 
 // Section: executor
 
@@ -1483,6 +1483,33 @@ fn wire__z_core__api__payload_view_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
                     let output_ok = z_core::api::payload_view(api_handle)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__planned_packs_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "planned_packs",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::planned_packs()?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -2979,6 +3006,11 @@ const _: fn() = || {
         let _: u32 = Place.paragraph;
     }
     {
+        let PlannedPack = None::<crate::api::mirrors::PlannedPack>.unwrap();
+        let _: String = PlannedPack.id;
+        let _: String = PlannedPack.label;
+    }
+    {
         let PrivacyRulesSnapshot = None::<crate::api::mirrors::PrivacyRulesSnapshot>.unwrap();
         let _: u32 = PrivacyRulesSnapshot.state_revision;
         let _: Option<String> = PrivacyRulesSnapshot.profile_id;
@@ -3898,6 +3930,18 @@ impl SseDecode for Vec<crate::api::mirrors::PackRow> {
     }
 }
 
+impl SseDecode for Vec<crate::api::mirrors::PlannedPack> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::PlannedPack>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4406,6 +4450,18 @@ impl SseDecode for crate::api::mirrors::Place {
         return crate::api::mirrors::Place {
             page: var_page,
             paragraph: var_paragraph,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::PlannedPack {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_label = <String>::sse_decode(deserializer);
+        return crate::api::mirrors::PlannedPack {
+            id: var_id,
+            label: var_label,
         };
     }
 }
@@ -5261,49 +5317,50 @@ fn pde_ffi_dispatcher_primary_impl(
         48 => wire__z_core__api__open_session_impl(port, ptr, rust_vec_len, data_len),
         49 => wire__z_core__api__packs_impl(port, ptr, rust_vec_len, data_len),
         50 => wire__z_core__api__payload_view_impl(port, ptr, rust_vec_len, data_len),
-        51 => wire__z_core__api__privacy_rules_snapshot_impl(port, ptr, rust_vec_len, data_len),
-        52 => wire__z_core__api__profiles_impl(port, ptr, rust_vec_len, data_len),
-        53 => wire__z_core__api__protect_impl(port, ptr, rust_vec_len, data_len),
-        54 => wire__z_core__api__protect_all_matches_impl(port, ptr, rust_vec_len, data_len),
-        55 => wire__z_core__api__provider_snapshot_impl(port, ptr, rust_vec_len, data_len),
-        56 => wire__z_core__api__providers_impl(port, ptr, rust_vec_len, data_len),
-        57 => wire__z_core__api__remove_value_alias_impl(port, ptr, rust_vec_len, data_len),
-        58 => wire__z_core__api__rename_entity_impl(port, ptr, rust_vec_len, data_len),
-        59 => wire__z_core__api__rename_profile_impl(port, ptr, rust_vec_len, data_len),
-        60 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
-        61 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
-        62 => wire__z_core__api__reveal_state_impl(port, ptr, rust_vec_len, data_len),
-        63 => wire__z_core__api__reveal_value_impl(port, ptr, rust_vec_len, data_len),
-        64 => wire__z_core__api__revealed_tokens_impl(port, ptr, rust_vec_len, data_len),
-        65 => wire__z_core__api__rule_sets_impl(port, ptr, rust_vec_len, data_len),
-        66 => wire__z_core__api__save_settings_impl(port, ptr, rust_vec_len, data_len),
-        67 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
-        68 => wire__z_core__api__search_vault_impl(port, ptr, rust_vec_len, data_len),
-        69 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
-        70 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
-        71 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
-        72 => wire__z_core__api__set_profile_languages_impl(port, ptr, rust_vec_len, data_len),
-        73 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
-        74 => wire__z_core__api__settings_impl(port, ptr, rust_vec_len, data_len),
-        75 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
-        76 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
-        77 => wire__z_core__api__taught_names_impl(port, ptr, rust_vec_len, data_len),
-        78 => wire__z_core__api__teach_exception_impl(port, ptr, rust_vec_len, data_len),
-        79 => wire__z_core__api__teach_label_rule_impl(port, ptr, rust_vec_len, data_len),
-        80 => wire__z_core__api__teach_name_impl(port, ptr, rust_vec_len, data_len),
-        81 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
-        82 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
-        83 => wire__z_core__api__unprotect_impl(port, ptr, rust_vec_len, data_len),
-        84 => wire__z_core__api__user_names_impl(port, ptr, rust_vec_len, data_len),
-        85 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        86 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        87 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
-        88 => wire__z_core__api__vault_snapshot_impl(port, ptr, rust_vec_len, data_len),
-        89 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
-        90 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        91 => wire__z_core__api__window_focus_lost_impl(port, ptr, rust_vec_len, data_len),
-        92 => wire__z_core__api__window_hidden_impl(port, ptr, rust_vec_len, data_len),
-        93 => wire__z_core__api__workspace_snapshot_impl(port, ptr, rust_vec_len, data_len),
+        51 => wire__z_core__api__planned_packs_impl(port, ptr, rust_vec_len, data_len),
+        52 => wire__z_core__api__privacy_rules_snapshot_impl(port, ptr, rust_vec_len, data_len),
+        53 => wire__z_core__api__profiles_impl(port, ptr, rust_vec_len, data_len),
+        54 => wire__z_core__api__protect_impl(port, ptr, rust_vec_len, data_len),
+        55 => wire__z_core__api__protect_all_matches_impl(port, ptr, rust_vec_len, data_len),
+        56 => wire__z_core__api__provider_snapshot_impl(port, ptr, rust_vec_len, data_len),
+        57 => wire__z_core__api__providers_impl(port, ptr, rust_vec_len, data_len),
+        58 => wire__z_core__api__remove_value_alias_impl(port, ptr, rust_vec_len, data_len),
+        59 => wire__z_core__api__rename_entity_impl(port, ptr, rust_vec_len, data_len),
+        60 => wire__z_core__api__rename_profile_impl(port, ptr, rust_vec_len, data_len),
+        61 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
+        62 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
+        63 => wire__z_core__api__reveal_state_impl(port, ptr, rust_vec_len, data_len),
+        64 => wire__z_core__api__reveal_value_impl(port, ptr, rust_vec_len, data_len),
+        65 => wire__z_core__api__revealed_tokens_impl(port, ptr, rust_vec_len, data_len),
+        66 => wire__z_core__api__rule_sets_impl(port, ptr, rust_vec_len, data_len),
+        67 => wire__z_core__api__save_settings_impl(port, ptr, rust_vec_len, data_len),
+        68 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
+        69 => wire__z_core__api__search_vault_impl(port, ptr, rust_vec_len, data_len),
+        70 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
+        71 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
+        72 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
+        73 => wire__z_core__api__set_profile_languages_impl(port, ptr, rust_vec_len, data_len),
+        74 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
+        75 => wire__z_core__api__settings_impl(port, ptr, rust_vec_len, data_len),
+        76 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
+        77 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
+        78 => wire__z_core__api__taught_names_impl(port, ptr, rust_vec_len, data_len),
+        79 => wire__z_core__api__teach_exception_impl(port, ptr, rust_vec_len, data_len),
+        80 => wire__z_core__api__teach_label_rule_impl(port, ptr, rust_vec_len, data_len),
+        81 => wire__z_core__api__teach_name_impl(port, ptr, rust_vec_len, data_len),
+        82 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
+        83 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
+        84 => wire__z_core__api__unprotect_impl(port, ptr, rust_vec_len, data_len),
+        85 => wire__z_core__api__user_names_impl(port, ptr, rust_vec_len, data_len),
+        86 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        87 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        88 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
+        89 => wire__z_core__api__vault_snapshot_impl(port, ptr, rust_vec_len, data_len),
+        90 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
+        91 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        92 => wire__z_core__api__window_focus_lost_impl(port, ptr, rust_vec_len, data_len),
+        93 => wire__z_core__api__window_hidden_impl(port, ptr, rust_vec_len, data_len),
+        94 => wire__z_core__api__workspace_snapshot_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -6057,6 +6114,24 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Place> {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Place> {}
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Place>> for crate::api::mirrors::Place {
     fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Place> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PlannedPack> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.id.into_into_dart().into_dart(),
+            self.0.label.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::PlannedPack> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::PlannedPack>>
+    for crate::api::mirrors::PlannedPack
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::PlannedPack> {
         self.into()
     }
 }
@@ -7436,6 +7511,16 @@ impl SseEncode for Vec<crate::api::mirrors::PackRow> {
     }
 }
 
+impl SseEncode for Vec<crate::api::mirrors::PlannedPack> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::PlannedPack>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -7841,6 +7926,14 @@ impl SseEncode for crate::api::mirrors::Place {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <u32>::sse_encode(self.page, serializer);
         <u32>::sse_encode(self.paragraph, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::PlannedPack {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.label, serializer);
     }
 }
 

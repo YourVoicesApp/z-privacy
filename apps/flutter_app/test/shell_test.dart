@@ -78,7 +78,7 @@ void main() {
           ground: ground,
           version: 'z_core 0.1.0',
           onImport: () {},
-          onType: () {},
+          onType: (_) {},
           onVault: () {},
           onSettings: () {},
         ),
@@ -87,8 +87,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Z Privacy'), findsOneWidget);
-    expect(find.text('Import a document'), findsOneWidget);
-    expect(find.text('New private session'), findsOneWidget);
+    // 041-G — the home is the composer. «Import a document» and «New private
+    // session» were two buttons and one of them opened a sheet that asked a
+    // language first; the page is a box to write in now, with a «+» for a file,
+    // and the vault is still a press away.
+    expect(find.byType(TextField), findsOneWidget, reason: 'the home is not a box to write in');
+    expect(find.byTooltip('Add a document — PDF, Word or text'), findsOneWidget);
     expect(find.text('Open Z Vault'), findsOneWidget);
     // No invented history: a session lives in memory, and Home says so once.
     expect(find.text('LOCAL CONVERSATIONS'), findsNothing);

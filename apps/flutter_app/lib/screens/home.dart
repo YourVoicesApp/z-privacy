@@ -16,7 +16,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.ground,
@@ -28,14 +28,44 @@ class HomeScreen extends StatelessWidget {
   });
 
   final Ground ground;
+
+  /// The **+**: choose a file. The language is asked afterwards, because by
+  /// then there is a document to ask about.
   final VoidCallback onImport;
-  final VoidCallback onType;
+
+  /// What was typed or pasted, opened with the pack the settings already hold.
+  /// No question before it: a person who writes a sentence is not asking to be
+  /// interviewed.
+  final void Function(String text) onType;
   final VoidCallback onVault;
   final VoidCallback onSettings;
   final String version;
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _text = TextEditingController();
+  final _focus = FocusNode();
+
+  @override
+  void dispose() {
+    _text.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _open() {
+    final text = _text.text.trim();
+    if (text.isEmpty) return;
+    widget.onType(text);
+    _text.clear();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final ground = widget.ground;
     return ListenableBuilder(
       listenable: ground,
       builder: (context, _) => Scaffold(
@@ -56,7 +86,7 @@ class HomeScreen extends StatelessWidget {
                     // the workspace top bar taught that lesson on 3 October.
                     Flexible(
                       child: Text(
-                        version,
+                        widget.version,
                         style: Zc.tiny.copyWith(fontFamily: Zc.mono),
                         overflow: TextOverflow.ellipsis,
                         softWrap: false,
@@ -68,7 +98,7 @@ class HomeScreen extends StatelessWidget {
                       tooltip: 'Settings',
                       icon: const Icon(Icons.tune, size: 18),
                       color: Zc.ink3,
-                      onPressed: onSettings,
+                      onPressed: widget.onSettings,
                     ),
                   ],
                 ),
@@ -76,26 +106,89 @@ class HomeScreen extends StatelessWidget {
                 const Text('What stays on this device, and what leaves it.', style: Zc.h2),
                 const SizedBox(height: 10),
                 const Text(
-                  'Bring in a document and it is scanned before you read it. What the scanner is '
-                  'sure of is already protected; what it is unsure of it asks you about. Then you '
-                  'see the exact text that will go.',
+                  'Write or paste what you want to send an AI. It is scanned before you read it: '
+                  'what the scanner is sure of is already protected, what it is unsure of it asks '
+                  'you about, and then you see the exact text that would go.',
                   style: Zc.body,
                 ),
-                const SizedBox(height: 24),
-                Wrap(
-                  spacing: 11,
-                  runSpacing: 11,
-                  children: [
-                    ZButton(label: 'Import a document', filled: true, icon: Icons.description_outlined, onPressed: onImport),
-                    ZButton(label: 'New private session', icon: Icons.edit_outlined, onPressed: onType),
-                    ZButton(label: 'Open Z Vault', icon: Icons.lock_outline, tint: Zc.river, onPressed: onVault),
-                  ],
+                const SizedBox(height: 18),
+                // **The composer is the home.** The owner, 6 October: the
+                // writing screen is the main screen, and a file is a «+» as it
+                // is in a chat. So the box is the first thing on the page and
+                // the first thing with the focus — a person who opened this
+                // app to paste a letter can paste it.
+                Container(
+                  decoration: Zc.panel(fill: Zc.card, radius: 12),
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: _text,
+                        focusNode: _focus,
+                        autofocus: true,
+                        minLines: 5,
+                        maxLines: 12,
+                        style: Zc.document.copyWith(fontSize: 14),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          isDense: true,
+                          hintText: 'Write or paste your text here…',
+                          hintStyle: Zc.body.copyWith(color: Zc.ink4),
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          // The file, as a chat offers one.
+                          Tooltip(
+                            message: 'Add a document — PDF, Word or text',
+                            child: IconButton(
+                              icon: const Icon(Icons.add, size: 20),
+                              color: Zc.clay,
+                              onPressed: widget.onImport,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'PDF · Word · TXT',
+                            style: Zc.tiny.copyWith(color: Zc.ink4),
+                          ),
+                          const Spacer(),
+                          // Flexible, because the disabled button carries a
+                          // sentence beside it and a narrow window must wrap it
+                          // rather than push it off the edge — the same lesson
+                          // the top bar taught on 3 October.
+                          Flexible(
+                            child: ZButton(
+                              label: 'Open and scan',
+                              filled: true,
+                              icon: Icons.shield_outlined,
+                              onPressed: _text.text.trim().isEmpty ? null : _open,
+                              hint: _text.text.trim().isEmpty ? 'Write or paste something first' : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 9),
                 Text(
-                  'PDF · Word · TXT to begin with.   Nothing is uploaded to be read.   '
-                  'Conversations are not saved after you close the app.',
+                  'Nothing is uploaded to be read.   Conversations are not saved after you close '
+                  'the app.',
                   style: Zc.small.copyWith(color: Zc.ink4),
+                ),
+                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ZButton(
+                    label: 'Open Z Vault',
+                    icon: Icons.lock_outline,
+                    tint: Zc.river,
+                    onPressed: widget.onVault,
+                  ),
                 ),
                 const SizedBox(height: 30),
                 if (ground.trouble != null) ...[Trouble(ground.trouble!), const SizedBox(height: 18)],
@@ -110,6 +203,7 @@ class HomeScreen extends StatelessWidget {
 
   /// The four facts that decide what a scan can do today. All four from Rust.
   Widget _ground(BuildContext context) {
+    final ground = widget.ground;
     final vault = switch (ground.vault) {
       VaultState.unlocked => ('${ground.entityCount}', 'identities the app knows, holding ${ground.valueCount} values'),
       VaultState.locked => ('Locked', 'the vault layer is skipped — rules and the pack still run'),

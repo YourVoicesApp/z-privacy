@@ -15,7 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/home.dart';
-import 'package:zprivacy/screens/new_session.dart';
+import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -163,18 +163,26 @@ class _ShellState extends State<ZShell> {
     super.dispose();
   }
 
-  /// Ask for the ground, then open the session. In both paths the scan runs
-  /// immediately after the text is in — nobody has to press anything to be
-  /// protected, which is the behaviour board's rule for import.
-  Future<void> _begin({required bool typing}) async {
-    final wish = await showDialog<SessionWish>(
-      context: context,
-      builder: (_) => NewSessionSheet(ground: _ground, typing: typing),
-    );
-    if (wish == null || !mounted) return;
-
+  /// Open a session. Two ways in, and they ask for different things.
+  ///
+  /// **Typed or pasted**: nothing is asked. The text is read with the pack the
+  /// settings already hold, which is the one the top bar names and can change.
+  /// The owner, 6 October: the writing screen is the main screen, and a person
+  /// who writes a sentence is not asking to be interviewed first.
+  ///
+  /// **A file**: the language is asked *after* it is chosen and before it is
+  /// read, because by then there is a document to ask about — and because a
+  /// file is the case where the answer is most often not the usual one. That
+  /// step is temporary: 043 gives the pack a vote of its own.
+  ///
+  /// In both paths the scan runs the moment the text is in: nobody has to press
+  /// anything to be protected.
+  Future<void> _begin({required bool typing, String? text}) async {
     XFile? file;
     DocumentKind? kind;
+    String packId = _ground.config?.packId ?? 'de';
+    final profileId = null as String?;
+
     if (!typing) {
       file = await openFile(
         acceptedTypeGroups: const [
@@ -191,13 +199,19 @@ class _ShellState extends State<ZShell> {
         });
         return;
       }
+      final chosen = await showDialog<String>(
+        context: context,
+        builder: (_) => ChooseLanguage(ground: _ground, fileName: file!.name),
+      );
+      if (chosen == null || !mounted) return;
+      packId = chosen;
     }
 
     try {
-      final session = await z.openSession(profileId: wish.profileId, packId: wish.packId);
-      final bench = Workbench(session: session, profileId: wish.profileId, packId: wish.packId);
+      final session = await z.openSession(profileId: profileId, packId: packId);
+      final bench = Workbench(session: session, profileId: profileId, packId: packId);
       if (typing) {
-        await z.importText(session: session, text: wish.text!);
+        await z.importText(session: session, text: text ?? '');
       } else {
         await z.importDocument(
           session: session,
@@ -332,7 +346,7 @@ class _ShellState extends State<ZShell> {
           ground: _ground,
           version: coreVersion(),
           onImport: () => _begin(typing: false),
-          onType: () => _begin(typing: true),
+          onType: (text) => _begin(typing: true, text: text),
           onVault: () => setState(() => _vaultOpen = true),
           onSettings: () => setState(() => _settingsOpen = true),
         ),

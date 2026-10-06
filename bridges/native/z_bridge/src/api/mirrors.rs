@@ -1016,3 +1016,10 @@ pub struct _RevealState {
     pub remaining_ms: u32,
 }
 
+#[frb(mirror(PlannedPack))]
+pub struct _PlannedPack {
+    pub id: String,
+    /// The language's own name for itself.
+    pub label: String,
+}
+
