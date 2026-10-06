@@ -196,8 +196,44 @@ class _OriginalTextState extends State<OriginalText> {
                 sel.end < 0 ? 0 : sel.end,
               ),
         ),
+        // Where «go to this finding» scrolls to — a zero-size box placed
+        // *beside* the text at the focused line, never inside it.
+        //
+        // 041-K, measured: it used to be a `WidgetSpan` dropped into the spans,
+        // and a placeholder span is one U+FFFC character in the text the
+        // selection counts in. The span tree was 57 characters where the
+        // document was 56, so every offset a person selected **after** the
+        // focused finding came back one too high, and the protection landed one
+        // character late: `J__Z_…` with the J still standing in the document.
+        // The note above says an offset that is one out is the mistake this
+        // project will not make twice; this was that mistake, found in a live
+        // run and now out of the text for good.
+        if (focus != null && focusKey != null)
+          Positioned(
+            top: _anchorAt(context, focus!.start),
+            left: 0,
+            child: SizedBox(key: focusKey, width: 0, height: 0),
+          ),
       ],
     );
+  }
+
+  /// How far down the text the focused offset falls.
+  ///
+  /// Measured with the same painter that draws the page rules, and like them it
+  /// is a drawing rather than a fact: the marks make some words bolder than
+  /// this plain measurement knows, so a long document can be a line or two out.
+  /// That is a scroll landing slightly high — not an offset, and nothing is
+  /// protected from it.
+  double _anchorAt(BuildContext context, int offset) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: Zc.document),
+      textDirection: Directionality.of(context),
+    )..layout(maxWidth: MediaQuery.sizeOf(context).width);
+    final boxes = painter.getBoxesForSelection(
+      TextSelection(baseOffset: offset.clamp(0, text.length), extentOffset: (offset + 1).clamp(0, text.length)),
+    );
+    return boxes.isEmpty ? 0 : boxes.first.toRect().top;
   }
 
   List<InlineSpan> _spans() {
@@ -207,22 +243,8 @@ class _OriginalTextState extends State<OriginalText> {
     final sorted = [...marks]..sort((a, b) => a.span.start.compareTo(b.span.start));
     final out = <InlineSpan>[];
     var at = 0;
-    var anchored = false;
 
     void upTo(int limit) {
-      // The anchor is a zero-size widget dropped in at the focused offset. It
-      // adds nothing to the text — `toPlainText` still returns the document —
-      // and gives `ensureVisible` something to aim at.
-      final f = focus;
-      if (!anchored && f != null && focusKey != null && f.start >= at && f.start <= limit) {
-        if (f.start > at) out.add(TextSpan(text: text.substring(at, f.start)));
-        out.add(WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: SizedBox(key: focusKey, width: 0, height: 0),
-        ));
-        at = f.start;
-        anchored = true;
-      }
       if (limit > at) out.add(TextSpan(text: text.substring(at, limit)));
       at = limit;
     }

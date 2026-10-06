@@ -1834,6 +1834,17 @@ class SelectionView {
   /// Protect would snap to these instead of taking the selection as drawn.
   final List<Span> snapsTo;
 
+  /// What Protect will actually take: the selection grown out to whole words
+  /// and tidied of the marks at its edges (041-K). The same as the span that
+  /// was asked about whenever that one was already whole, and the screen
+  /// draws **this** so what is highlighted is what will happen.
+  final Span wordSpan;
+
+  /// The capitalised word standing one space before it — «Björn» in front of
+  /// «Sandström». An offer the bubble makes and a person answers; the core
+  /// never takes it unasked.
+  final Span? alsoBefore;
+
   const SelectionView({
     required this.empty,
     required this.kind,
@@ -1843,6 +1854,8 @@ class SelectionView {
     required this.protectedDetail,
     required this.entities,
     required this.snapsTo,
+    required this.wordSpan,
+    this.alsoBefore,
   });
 
   @override
@@ -1854,7 +1867,9 @@ class SelectionView {
       protectedBy.hashCode ^
       protectedDetail.hashCode ^
       entities.hashCode ^
-      snapsTo.hashCode;
+      snapsTo.hashCode ^
+      wordSpan.hashCode ^
+      alsoBefore.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -1868,7 +1883,9 @@ class SelectionView {
           protectedBy == other.protectedBy &&
           protectedDetail == other.protectedDetail &&
           entities == other.entities &&
-          snapsTo == other.snapsTo;
+          snapsTo == other.snapsTo &&
+          wordSpan == other.wordSpan &&
+          alsoBefore == other.alsoBefore;
 }
 
 class SessionId {

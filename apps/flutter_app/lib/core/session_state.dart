@@ -370,13 +370,29 @@ class Workbench extends ChangeNotifier {
       return;
     }
     try {
-      selected = await z.inspectSelection(session: session, span: span);
+      final view = await z.inspectSelection(session: session, span: span);
+      // 041-K: what the core will take is what the screen shows. A drag that
+      // started one letter late — which is what happens at the left margin —
+      // grew out to the whole word before it became anything, so the highlight
+      // moves with it rather than lying about the act that is on offer.
+      selection = view.wordSpan;
+      selected = view;
       trouble = null;
     } on ApiError catch (e) {
       selected = null;
       trouble = humanMessage(e);
     }
     notifyListeners();
+  }
+
+  /// Take the capitalised word standing in front of the selection too —
+  /// «Björn» in front of «Sandström». An offer the core finds and a person
+  /// answers; nothing here is automatic.
+  Future<void> alsoTakeTheWordBefore() async {
+    final also = selected?.alsoBefore;
+    final now = selection;
+    if (also == null || now == null) return;
+    await select(Span(start: also.start, end: now.end));
   }
 
   /// Protect what is selected. Returns what the core did, so the screen can say
