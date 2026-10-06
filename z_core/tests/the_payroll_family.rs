@@ -192,3 +192,57 @@ fn the_payroll_labels_name_their_kinds() {
     assert_eq!(kinds_of(doc, Kind::SocialInsuranceNo).len(), 1);
     assert_eq!(kinds_of(doc, Kind::TaxId).len(), 1);
 }
+
+// ------------------------------------------------------- the reversed pair
+
+/// «Reinhardt, Tobias» is a person, and a ledger writes its people that way.
+///
+/// Phase 2 could only *discover* that form: the rule fired when the word before
+/// the comma was a surname **nobody knew**, and offered it as a name to look at.
+/// 038-H then made it worse by knowing more: «Demir» is a given name in three
+/// city registers now, so the comma rule walked past it and the person vanished
+/// from the review entirely — knowing more names found fewer people.
+///
+/// So the reversed pair becomes a rule of its own. The evidence is the **given**
+/// name after the comma; the word before it is a surname whether this build has
+/// heard of it or not. Offered, never protected — a list may not decide that a
+/// word is somebody's name.
+#[test]
+fn a_ledger_writes_its_people_backwards_and_they_are_still_people() {
+    let page = "Personal-Nr.  Name                  Eintritt\n\
+        004712        Reinhardt, Tobias     02.11.1979\n\
+        004713        Haddad, Amira         23.07.1991\n\
+        004714        Demir, Yusuf          09.05.1985\n";
+    let people: Vec<(MarkState, String)> = kinds_of(page, Kind::Person);
+    for who in ["Reinhardt, Tobias", "Haddad, Amira", "Demir, Yusuf"] {
+        assert!(
+            people.iter().any(|(_, text)| text == who),
+            "«{who}» is not a person here: {people:?}"
+        );
+    }
+    for (state, text) in &people {
+        assert_eq!(*state, MarkState::Suggested, "«{text}» was protected by a dictionary pair");
+    }
+}
+
+/// What it must not do: a comma between two ordinary words is still a comma.
+#[test]
+fn a_comma_is_not_a_person() {
+    for doc in [
+        "Berlin, Hauptstadt der Bundesrepublik.",
+        "Anlage 3, Seite 7 des Vertrags.",
+        "Vorfinanzierung, da Material und Fertigung vorher bezahlt werden.",
+        "Krankheiten des Ösophagus, des Magens und des Duodenums (K20).",
+    ] {
+        let got = kinds_of(doc, Kind::Person);
+        assert!(got.is_empty(), "«{doc}» named a person: {got:?}");
+    }
+}
+
+/// And after a label it is still protected outright, as it was.
+#[test]
+fn the_labelled_reversed_pair_is_still_auto() {
+    let got = kinds_of("Name: Lindemann, Katharina\n", Kind::Person);
+    assert_eq!(got.len(), 1, "the labelled form stopped working: {got:?}");
+    assert_eq!(got[0].0, MarkState::Protected);
+}

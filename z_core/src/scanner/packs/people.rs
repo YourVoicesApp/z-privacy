@@ -41,6 +41,7 @@ pub(crate) fn scan_with(
     salutations(&words, pack, &mut out);
     titled_names(&words, pack, &mut out);
     dictionary_names(&words, pack, taught, &mut out);
+    reversed_pairs(text, &words, pack, taught, &mut out);
     signatures(&words, pack, &mut out);
     companies(&words, pack, &mut out);
     // And what this language needs that no other can use, each named in its
@@ -549,5 +550,113 @@ fn companies(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>) 
             "company-form",
             format!("a name ending in «{w}», which is a German legal form — probably this client's company"),
         ));
+    }
+}
+
+/// «Reinhardt, Tobias» — the way a ledger, a staff list and a form write a
+/// person: the surname, a comma, the given name.
+///
+/// Phase 2 could only **discover** this form: `discover_names` fires when the
+/// word before the comma is a surname nobody knows, and offers it as a name to
+/// look at. That had two faults, and 038-H made the second one visible.
+///
+/// * A person whose surname **is** known was found by nothing at all. «Demir»
+///   is a given name in three city registers now, so the comma rule walked past
+///   it and Yusuf Demir vanished from the review — knowing more names found
+///   fewer people.
+/// * And a candidate is not a finding: the person stood in the clear while the
+///   app asked whether the word was a name.
+///
+/// So the pair is a rule. **The evidence is the given name after the comma**,
+/// which is the same evidence `dictionary_names` uses in the other direction;
+/// the word before it is a surname whether this build has heard of it or not.
+/// `Confidence::Suggest`, always — a list of names may not decide that a word
+/// is somebody's name, which is item B of the owner's paper and holds here too.
+///
+/// What it yields to: a label in front («Name: Lindemann, Katharina») is
+/// another rule's ground and protects outright, and the discovery rule still
+/// offers an unknown surname as a name to look at.
+fn reversed_pairs(
+    text: &str,
+    words: &[Word<'_>],
+    pack: &LanguagePack,
+    taught: &[(String, bool)],
+    out: &mut Vec<Candidate>,
+) {
+    let names = de_names::dictionary_of(pack.locale, pack.names);
+    let taught_given = |word: &str| taught.iter().any(|(t, family)| !family && t.eq_ignore_ascii_case(word));
+    let mut i = 0usize;
+    while i + 1 < words.len() {
+        let (Some(first), Some(second)) = (words.get(i), words.get(i + 1)) else { break };
+        // The comma is part of the form, so it is read before anything is
+        // trimmed away.
+        let family = bare(first.text).trim_end_matches([',', ';', ':']);
+        let given = bare(second.text).trim_end_matches(['.', ',', ';', ':']);
+        if !first.text.ends_with(',')
+            || second.newline_before
+            || !name_shaped(family, pack)
+            || !name_shaped(second.text, pack)
+            || pack.function_words.contains(&family.to_lowercase().as_str())
+            || pack.function_words.contains(&given.to_lowercase().as_str())
+            || pack.stop_words.iter().any(|w| w.eq_ignore_ascii_case(family))
+            || !(names.given(given) || taught_given(given))
+        {
+            i += 1;
+            continue;
+        }
+        // **A list entry ends where its field ends.** Measured on 734 pages of
+        // an ICD-10 catalogue: «Ösophagus, Pars abdominalis» and
+        // «Mehrlingsgeburt, Art der Geburt» are Latin and German running on,
+        // and «Pars» and «Art» are given names four and three cities gave a
+        // child. Six false offers on one document. What the real rows have and
+        // those do not is the end of a field after the given name: the line
+        // ends, or a column's run of spaces begins. A single space and another
+        // word is a phrase continuing, and this rule leaves it alone.
+        let ends_the_field = match words.get(i + 2) {
+            None => true,
+            Some(next) => {
+                next.newline_before
+                    || text
+                        .get(trimmed_end(second)..next.start)
+                        .is_some_and(|gap| gap.contains('\t') || gap.contains("  "))
+            }
+        };
+        if !ends_the_field {
+            i += 1;
+            continue;
+        }
+        // A label or a salutation in front owns this name already.
+        let claimed = i.checked_sub(1).and_then(|k| words.get(k)).is_some_and(|prev| {
+            let n = bare_keep_dot(prev.text);
+            let bare_label = n.trim_end_matches(':');
+            pack.salutations.iter().any(|t| t.eq_ignore_ascii_case(n))
+                || pack.titles.iter().any(|t| t.eq_ignore_ascii_case(n))
+                || pack.title_parts.iter().any(|t| t.eq_ignore_ascii_case(n))
+                || prev.text.ends_with(':')
+                || crate::scanner::sets::all()
+                    .iter()
+                    .any(|set| set.rules.iter().any(|rule| rule.label.eq_ignore_ascii_case(bare_label)))
+        });
+        if claimed {
+            i += 2;
+            continue;
+        }
+        // Both halves known is a stronger line than one, and the reason says
+        // which — a person deciding is owed the difference.
+        let both = names.family(family) || taught.iter().any(|(t, f)| *f && t.eq_ignore_ascii_case(family));
+        out.push(candidate(
+            pack,
+            first.start,
+            trimmed_end(second),
+            Kind::Person,
+            Confidence::Suggest,
+            "name-reversed-pair",
+            if both {
+                format!("«{family}, {given}» — a surname and a given name this build knows, written the way a list of people is written")
+            } else {
+                format!("«{given}» is a given name this build knows, and «{family}» stands before it with a comma — the way a list of people is written")
+            },
+        ));
+        i += 2;
     }
 }
