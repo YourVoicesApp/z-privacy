@@ -205,6 +205,135 @@ pub(crate) fn whole_words(s: &str, start: usize, end: usize) -> (usize, usize) {
     (start, end)
 }
 
+/// The one-letter words Arabic writes **attached** to the next word.
+///
+/// «ودمنة» is «and Dimna»; «لدمنة» is «for Dimna». The name is the same name,
+/// and a reader sees one word. So a value may carry exactly one of these in
+/// front of it and still be that value — and nothing may be attached after it,
+/// because what follows a name in Arabic is a different word or a vowel mark.
+///
+/// «مدمنة» is not «م + دمنة»: `م` is not one of these, and that is the whole
+/// difference between a clitic and the first letter of another word.
+const ARABIC_CLITICS: &[char] = &['و', 'ب', 'ل', 'ف', 'ك'];
+
+/// Which rule about word edges a script keeps.
+enum Edges {
+    /// Written with spaces between words: a value must stand between them.
+    BetweenSpaces,
+    /// The same, but one attached clitic may stand in front.
+    ArabicClitics,
+    /// Written without spaces between words, so there is no edge to test and
+    /// a substring is the only thing a match can be. Chinese, Japanese, Thai.
+    None,
+}
+
+fn edges_of(value: &str) -> Edges {
+    for c in value.chars() {
+        if !c.is_alphabetic() {
+            continue;
+        }
+        return match c {
+            // Arabic, and its supplements and presentation forms.
+            '\u{0600}'..='\u{06FF}'
+            | '\u{0750}'..='\u{077F}'
+            | '\u{08A0}'..='\u{08FF}'
+            | '\u{FB50}'..='\u{FDFF}'
+            | '\u{FE70}'..='\u{FEFF}' => Edges::ArabicClitics,
+            // The scripts that put no space between words.
+            '\u{0E00}'..='\u{0E7F}'
+            | '\u{1000}'..='\u{109F}'
+            | '\u{1780}'..='\u{17FF}'
+            | '\u{2E80}'..='\u{9FFF}'
+            | '\u{AC00}'..='\u{D7AF}'
+            | '\u{F900}'..='\u{FAFF}' => Edges::None,
+            _ => Edges::BetweenSpaces,
+        };
+    }
+    // Digits and marks only — an account number, a date. Those have edges.
+    Edges::BetweenSpaces
+}
+
+/// A mark that belongs to the letter beside it rather than standing as a
+/// letter of its own: the Arabic harakat, and the combining accents.
+///
+/// Unicode gives the harakat the **Alphabetic** property, so `دمنةٌ` ends in
+/// something `char::is_alphanumeric` calls a letter. Reading that as the start
+/// of another word would undo a measured part of the contract: §4.3 of
+/// `docs/THE_NUMBERS.md` says a taught value must match *through* the vowel
+/// marks, and 101 of the book's occurrences carry one.
+fn is_attached_mark(c: char) -> bool {
+    matches!(c,
+        '\u{0300}'..='\u{036F}'      // combining accents
+        | '\u{064B}'..='\u{065F}'    // Arabic harakat
+        | '\u{0670}'
+        | '\u{06D6}'..='\u{06ED}'    // Quranic marks
+        | '\u{0E31}' | '\u{0E34}'..='\u{0E3A}' | '\u{0E47}'..='\u{0E4E}'
+    )
+}
+
+/// The letter standing before this position, with any marks attached to it
+/// stepped over.
+fn letter_before(s: &str, at: usize) -> Option<char> {
+    s.get(..at)?.chars().rev().find(|c| !is_attached_mark(*c))
+}
+
+/// The letter standing after this position, likewise.
+fn letter_after(s: &str, at: usize) -> Option<char> {
+    s.get(at..)?.chars().find(|c| !is_attached_mark(*c))
+}
+
+/// Does the text at `start..end` stand as a value of its own, or is it a piece
+/// of a longer word?
+///
+/// The owner, 6 October, from a live run on a Swedish page: he selected «Sven»
+/// and — through the placeholder bug 041-K closed — «ven» reached the library.
+/// The matcher then found it inside «Svensk» and «svenska» and wrote
+/// `S__Z_…sk` into the text three times. 041-K closed the source of the
+/// fragment; this closes what a fragment can do.
+///
+/// Measured, 6 October, on one Swedish line holding «Sven», «svensk» and
+/// «Svensk»: «ven» taught matched **3** places and now matches **0**; «Sven»
+/// taught matched 2 (one of them inside «Svensk») and now matches 1. And on
+/// the Arabic book through the §4.3 path, the five taught characters matched
+/// **462** places and still match 462 — the clitics are the reason the rule
+/// has an Arabic half at all.
+pub(crate) fn stands_alone(s: &str, start: usize, end: usize) -> bool {
+    let Some(value) = s.get(start..end) else {
+        return false;
+    };
+    let before = letter_before(s, start);
+    let after = letter_after(s, end);
+    let open = |c: Option<char>| c.is_none_or(|c| !c.is_alphanumeric());
+
+    match edges_of(value) {
+        Edges::None => true,
+        Edges::BetweenSpaces => open(before) && open(after),
+        Edges::ArabicClitics => {
+            if !open(after) {
+                return false;
+            }
+            if open(before) {
+                return true;
+            }
+            // What is attached in front must be clitics and nothing else, all
+            // the way back to a space. «ودمنة» and «ولدمنة» are both the name
+            // with words attached; «مدمنة» is another word, because `م` is not
+            // one of the five. The leader's rule said one letter; Arabic writes
+            // «ولـ» and «وبـ» as readily as «وـ», and measured on the book the
+            // two readings give the same 462 — so the faithful one is here,
+            // and narrowing it back is one line.
+            let mut at = start;
+            loop {
+                match letter_before(s, at) {
+                    None => return true,
+                    Some(c) if ARABIC_CLITICS.contains(&c) => at -= c.len_utf8(),
+                    Some(c) => return !c.is_alphanumeric(),
+                }
+            }
+        }
+    }
+}
+
 /// The whole word standing immediately before this one, when it is capitalised
 /// and only a single space away — «Björn» before «Sandström».
 ///
