@@ -184,7 +184,7 @@ class Workbench extends ChangeNotifier {
     required this.session,
     required this.profileId,
     required this.packId,
-  });
+  }) : intoList = packId;
 
   final SessionId session;
   String? profileId;
@@ -735,8 +735,10 @@ class Workbench extends ChangeNotifier {
 
   /// Which language's list a new name goes into. A list **is** a language —
   /// the owner, 6 October — so this is a pack id, and it starts as the one the
-  /// document is being read with.
-  String intoList = 'de';
+  /// document is being read with. `Workbench.adopt` sets it from the session
+  /// the moment there is one, and a pack switch moves it, so the dialog offers
+  /// the language on the bar rather than the one on the settings page.
+  String intoList;
 
   /// The last import's three numbers, for the sentence under the button.
   NameImport? lastImport;
@@ -783,6 +785,19 @@ class Workbench extends ChangeNotifier {
       return 0;
     }
   }
+
+  /// Move every name in one list into another language's, in one act.
+  ///
+  /// The repair for a list learned under the wrong language: the owner's 75
+  /// Swedish surnames, taught while the bar said «Svenska» and filed under
+  /// German, move in one answer rather than 75.
+  Future<String?> moveList(String from, String to) => _aboutNames(() async {
+        final moved = await z.moveUserList(from: from, to: to);
+        if (intoList == from) intoList = to;
+        return moved == 1
+            ? 'Moved one name to ${to.toUpperCase()}.'
+            : 'Moved $moved names to ${to.toUpperCase()}.';
+      });
 
   Future<String?> forgetList(String name) =>
       _aboutNames(() async {
@@ -869,6 +884,9 @@ class Workbench extends ChangeNotifier {
     try {
       await z.switchPack(session: session, packId: id);
       packId = id;
+      // The bar is what a person reads before they add a name, so the language
+      // it names is the one a new name is offered to.
+      intoList = id;
     } on ApiError catch (e) {
       refused = humanMessage(e);
       trouble = refused;
@@ -883,7 +901,10 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
     String? refused;
     try {
-      await z.teachName(text: text, family: family);
+      // The session, not the settings: a name met in a Swedish document is a
+      // Swedish name even on a device set up in German. The owner found this
+      // the hard way, 75 surnames at a time.
+      await z.teachName(text: text, family: family, session: session);
       await rescan();
       await refreshUserNames();
     } on ApiError catch (e) {

@@ -260,6 +260,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Place? dco_decode_opt_box_autoadd_place(dynamic raw);
 
   @protected
+  SessionId? dco_decode_opt_box_autoadd_session_id(dynamic raw);
+
+  @protected
   Source? dco_decode_opt_box_autoadd_source(dynamic raw);
 
   @protected
@@ -679,6 +682,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Place? sse_decode_opt_box_autoadd_place(SseDeserializer deserializer);
+
+  @protected
+  SessionId? sse_decode_opt_box_autoadd_session_id(
+    SseDeserializer deserializer,
+  );
 
   @protected
   Source? sse_decode_opt_box_autoadd_source(SseDeserializer deserializer);
@@ -1185,6 +1193,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_place(Place? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_session_id(
+    SessionId? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_box_autoadd_source(

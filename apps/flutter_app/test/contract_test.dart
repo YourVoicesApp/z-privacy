@@ -149,6 +149,14 @@ void main() {
           // the same
         }
       },
+      // 041-I/2 — a list learned under the wrong language moves in one act.
+      'moveUserList': () async {
+        try {
+          await moveUserList(from: 'de', to: 'sv');
+        } on ApiError {
+          // the vault is shut
+        }
+      },
       'forgetUserList': () async {
         try {
           await forgetUserList(name: 'sv');
@@ -319,7 +327,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 96, reason: 'the contract has 96 functions');
+    expect(calls.length, 97, reason: 'the contract has 97 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

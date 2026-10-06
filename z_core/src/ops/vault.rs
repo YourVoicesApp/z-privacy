@@ -909,10 +909,31 @@ pub(crate) fn set_profile_languages(profile_id: String, languages: Vec<String>) 
 /// says what kind of word it is, so the rules that already know how names are
 /// written can see it: «Mahmoud Al-Hassan» becomes a pair, «Herr Al-Hassan» a
 /// name a salutation introduces.
-pub(crate) fn teach_name(text: String, family: bool, profile_id: Option<String>) -> ApiResult<u32> {
-    // The language a person is working in is the list their names go into.
-    let list = with_core(|core| core.config.get().default_privacy_pack);
-    teach_name_into(text, family, profile_id, list)
+pub(crate) fn teach_name(
+    text: String,
+    family: bool,
+    profile_id: Option<String>,
+    session: Option<crate::api::SessionId>,
+) -> ApiResult<u32> {
+    teach_name_into(text, family, profile_id, learning_language(session))
+}
+
+/// Which list a name learned right now belongs in.
+///
+/// The owner, 6 October, from a live run: working on a Swedish attachment with
+/// the bar saying «Svenska (SV)», 75 surnames taught from the panel — and all
+/// 75 under «German (DE)», because this answer used to be the **settings**
+/// pack. The settings pack is the language this device starts with; it is not
+/// the language of the document in front of the person, and after a switch the
+/// two are different on purpose.
+///
+/// So the session answers whenever there is one. With no document open there
+/// is no document language, and the device's own is the only answer there is.
+fn learning_language(session: Option<crate::api::SessionId>) -> String {
+    let of_the_session = session
+        .and_then(|s| crate::session::with_session(s.id, |s| s.pack_id.clone()))
+        .filter(|pack| !pack.is_empty());
+    of_the_session.unwrap_or_else(|| with_core(|core| core.config.get().default_privacy_pack))
 }
 
 /// The same, into a list a person named.
@@ -1512,6 +1533,47 @@ pub(crate) fn forget_user_list(name: String) -> ApiResult<u32> {
     })?;
     crate::session::bump_truth();
     Ok(gone)
+}
+
+/// Move every name in one list into another language's list, in one act.
+///
+/// The repair the owner needed the day the defect was found: 75 Swedish
+/// surnames sitting in the German list, and no appetite for teaching them
+/// again one at a time. It asks once and moves all of them, and it is not a
+/// rename — the destination may already have names of its own, and they stay.
+///
+/// What comes back is how many names moved. An emptied list is taken off the
+/// screen rather than left as a box with a language's name and nothing in it,
+/// because a list exists here the moment its first name does.
+pub(crate) fn move_user_list(from: String, to: String) -> ApiResult<u32> {
+    let from = clean_list_name(from)?;
+    let to = clean_list_name(to)?;
+    if from == to {
+        return Err(ApiError::InputRefused {
+            reason: "that list is already this language".to_string(),
+        });
+    }
+    let moved: u32 = with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let mut moved = 0u32;
+            for name in vault.taught_names.iter_mut().filter(|n| n.list == from) {
+                name.list = to.clone();
+                moved = moved.saturating_add(1);
+            }
+            if moved > 0 && !vault.lists.iter().any(|l| l.name == to) {
+                vault.lists.push(crate::vault::model::UserList {
+                    name: to.clone(),
+                    enabled: true,
+                });
+            }
+            // What it left behind holds nothing now, and an empty list is not a
+            // list — the same rule `user_lists` reads by.
+            vault.lists.retain(|l| l.name != from);
+            Ok(moved)
+        })
+    })?;
+    crate::session::bump_truth();
+    Ok(moved)
 }
 
 /// A list is a **language**, and only one this build has heard of.
