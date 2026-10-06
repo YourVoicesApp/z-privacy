@@ -28,6 +28,18 @@ class Ground extends ChangeNotifier {
   String? trouble;
 
   VaultState get vault => home?.vault ?? VaultState.absent;
+
+  /// Shut the vault now, from wherever a person is.
+  ///
+  /// 041-N made the vault the way in, which left the bar saying «Unlocked»
+  /// with nothing to press. The leader, 6 October: the bar's own «Vault» opens
+  /// the screen, and a second press locks it. Locking is the core's act — the
+  /// timer lives there too — and the ground reads the answer back rather than
+  /// assuming it.
+  Future<void> lockVault() async {
+    await z.vaultLock();
+    await refresh();
+  }
   List<ProfileRow> get profiles => home?.profiles ?? const [];
   List<PackRow> get packs => home?.packs ?? const [];
 

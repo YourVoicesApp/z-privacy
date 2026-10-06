@@ -6,7 +6,6 @@
 // so a span can be used to slice directly. The core refuses a span that falls
 // inside a character, so a slice here can never cut one in half.
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
@@ -104,10 +103,25 @@ class OriginalText extends StatefulWidget {
 }
 
 class _OriginalTextState extends State<OriginalText> {
-  /// One recognizer per protected mark, rebuilt when the marks change and
-  /// disposed with them — a gesture recognizer left behind is a leak that
-  /// nothing complains about until it is a lot of them.
-  final List<TapGestureRecognizer> _taps = [];
+  /// Where a press went down, so the press can be told from a drag.
+  Offset? _downAt;
+
+  /// How far a pointer may slip between down and up and still be a press.
+  ///
+  /// Measured, 6 October, on the owner's «the bubble does not come out»: the
+  /// marks used to carry a `TapGestureRecognizer` each, and inside a
+  /// `SelectableText` that recognizer is in the gesture arena against the
+  /// text's own drag-selection. Flutter gives a **mouse** one pixel of slop,
+  /// so the arena went to the drag the moment the pointer moved two — and
+  /// nobody presses a mouse button without moving two pixels. Measured
+  /// exactly: 1 px opened the bubble, 2 px and 4 px and 8 px opened nothing
+  /// at all, and no selection was made either, so the press simply vanished.
+  ///
+  /// So the press is read from raw pointer events, which are delivered to
+  /// every listener and are in no arena, and this is the line between a press
+  /// and a drag. Six pixels is a hand on a mouse; a drag that means to select
+  /// a word crosses it easily.
+  static const _slop = 6.0;
 
   /// The spans, kept between builds — **and this is what keeps a selection
   /// alive.**
@@ -133,17 +147,32 @@ class _OriginalTextState extends State<OriginalText> {
   List<Mark>? _cachedMarks;
   Span? _cachedFocus;
 
-  @override
-  void dispose() {
-    _clearTaps();
-    super.dispose();
-  }
+  /// A press that ended where it began, on a word that is marked.
+  ///
+  /// The offset is found with a painter over the very spans that are drawn, so
+  /// what is hit is what is seen. A protected word asks «why is this
+  /// protected»; one still waiting asks «what do you want done with it»; and a
+  /// press on ordinary text asks nothing and does nothing.
+  void _pressEnded(PointerUpEvent event, Size size) {
+    final down = _downAt;
+    _downAt = null;
+    if (down == null || (event.position - down).distance > _slop) return;
 
-  void _clearTaps() {
-    for (final t in _taps) {
-      t.dispose();
+    final painter = TextPainter(
+      text: TextSpan(children: _keptSpans(), style: Zc.document),
+      textDirection: Directionality.of(context),
+    )..layout(maxWidth: size.width);
+    final offset = painter.getPositionForOffset(event.localPosition).offset;
+
+    for (final m in widget.marks) {
+      if (offset < m.span.start || offset >= m.span.end) continue;
+      if (m.state == MarkState.suggested) {
+        widget.onChoose?.call(m, event.position);
+      } else {
+        widget.onAsk?.call(m);
+      }
+      return;
     }
-    _taps.clear();
   }
 
   List<InlineSpan> _keptSpans() {
@@ -179,7 +208,13 @@ class _OriginalTextState extends State<OriginalText> {
     // will not make twice. The reader puts a single form feed between page and
     // page; this draws a rule where each one falls and leaves the text exactly
     // as the core read it.
-    return Stack(
+    // The press is read here rather than by a recognizer on each word: a raw
+    // `Listener` sees every pointer event, takes part in no gesture arena, and
+    // so cannot be out-voted by the text's own drag-selection. See `_slop`.
+    return Listener(
+      onPointerDown: (e) => _downAt = e.position,
+      onPointerUp: (e) => _pressEnded(e, (context.findRenderObject() as RenderBox?)?.size ?? Size.zero),
+      child: Stack(
       children: [
         if (text.contains('\u{c}'))
           Positioned.fill(
@@ -215,6 +250,7 @@ class _OriginalTextState extends State<OriginalText> {
             child: SizedBox(key: focusKey, width: 0, height: 0),
           ),
       ],
+      ),
     );
   }
 
@@ -237,7 +273,6 @@ class _OriginalTextState extends State<OriginalText> {
   }
 
   List<InlineSpan> _spans() {
-    _clearTaps();
     // Marks may arrive in any order and must not overlap on screen; the core
     // settles overlaps before they get here, so sorting is enough.
     final sorted = [...marks]..sort((a, b) => a.span.start.compareTo(b.span.start));
@@ -284,26 +319,12 @@ class _OriginalTextState extends State<OriginalText> {
     final tint = suggested ? Zc.amber : sourceTint(m.source);
     final f = focus;
     final isFocus = f != null && f.start == m.span.start && f.end == m.span.end;
-    TapGestureRecognizer? tap;
-    final ask = widget.onAsk;
-    final choose = widget.onChoose;
-    if (!suggested && ask != null) {
-      // Read through the widget at tap time: this recognizer outlives the build
-      // that made it, and a closure over `ask` would outlive it too.
-      tap = TapGestureRecognizer()..onTap = () => widget.onAsk?.call(m);
-      _taps.add(tap);
-    } else if (suggested && choose != null) {
-      // A word still waiting answers a different question — not «why is this
-      // protected» but «what do you want done with it» — and it is answered
-      // where the word is.
-      tap = TapGestureRecognizer()
-        ..onTapUp = (details) => widget.onChoose?.call(m, details.globalPosition);
-      _taps.add(tap);
-    }
+    // No recognizer here any more — see `_pressEnded`. The cursor still says
+    // the word can be pressed, because it can.
+    final pressable = (!suggested && widget.onAsk != null) || (suggested && widget.onChoose != null);
     return TextSpan(
       text: slice,
-      recognizer: tap,
-      mouseCursor: tap == null ? null : SystemMouseCursors.click,
+      mouseCursor: pressable ? SystemMouseCursors.click : null,
       style: TextStyle(
         // Translucent, so a selection drawn **under** the text still reads
         // through it. A span's background is painted after the selection
