@@ -99,7 +99,30 @@ DE-6 (`Lohnabrechnung_Weber.txt`, written for this task) is the one golden the
 bank does **not** help: its four people are written «Nachname, Vorname» in a
 table, and that form is a discovery rule for *unknown* surnames only. Knowing
 more names cannot find them; a rule that reads the reversed pair can, and that
-is 038-A/E/G's ground.
+is 038-G's ground — where it was built.
+
+### 2b · After 038-G — the payroll family (6 Oct 2026)
+
+Six rule changes, each measured before the next. The fixture's own invented
+identifiers were corrected first: none of its four social-insurance numbers and
+three of its four tax IDs failed the published checks, and a golden that carries
+impossible numbers cannot measure a rule that validates them.
+
+| DE-6, by kind | before | after |
+|---|---|---|
+| people found / present | 2 / 5 | **5 / 5** — four protected, one offered |
+| Sozialversicherungsnummer | 0 / 4 | **4 / 4 auto** |
+| Steuer-ID (11 digits) | 0 / 4 | **4 / 4 auto** |
+| birth dates | 1 / 5 | **5 / 5 auto** |
+| Personal-Nr. | 0 / 5 | **5 / 5 auto** |
+| false phone suggestions | 5 | **0** |
+| auto · suggested · normal | 6 · 9 · 136 | **29 · 4 · 88** |
+
+And on every other golden, after all six: **nothing moved.** DE-1 (21 · 8 ·
+160), DE-2 (9 · 1 · 426), DE-3 (2 · 4 · 29 579), DE-4 (18 · 2 · 200 163) and
+SV-1 (10 · 5 · 171) are what 038-H left them. The column rule in particular
+touched **zero** things in 734 pages of ICD-10 tables, because a table of codes
+has no header any pack knows — which is the condition that rule is built on.
 
 DE-1 by kind: Person 7 · Phone 3 · Email 2 · TaxId 2 · Iban 1 · Bic 1 ·
 CustomerNo 1 · IdCard 1 · Birthdate 1 · Vehicle 1 (all auto); Address 4 ·

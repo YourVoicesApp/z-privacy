@@ -7,7 +7,7 @@ Geburtsdatum: 14.03.1988
 Anschrift: Bahnhofstraße 27, 80335 München
 Steuer-ID: 86 095 742 719
 Steuerklasse: I
-Sozialversicherungsnummer: 65 140388 L 512
+Sozialversicherungsnummer: 65 140388 L 516
 Krankenkasse: Techniker Krankenkasse
 Eintrittsdatum: 01.02.2019
 Kostenstelle: 2100
@@ -33,9 +33,9 @@ Auszahlung am 28.09.2026 auf das oben genannte Konto.
 
 Jahreslohnkonto 2026 — Auszug (Kostenstelle 2100)
 Personal-Nr.  Name                    Geburtsdatum  SV-Nummer         Steuer-ID       Gesamtbrutto
-004711        Lindemann, Katharina    14.03.1988    65 140388 L 512   86 095 742 719  38.970,00
-004712        Reinhardt, Tobias       02.11.1979    12 021179 R 207   47 321 668 905  41.400,00
-004713        Haddad, Amira           23.07.1991    33 230791 H 044   59 870 213 466  52.200,00
-004714        Demir, Yusuf            09.05.1985    54 090585 D 318   21 456 009 873  36.120,00
+004711        Lindemann, Katharina    14.03.1988    65 140388 L 516   86 095 742 719  38.970,00
+004712        Reinhardt, Tobias       02.11.1979    12 021179 R 201   47 321 668 908  41.400,00
+004713        Haddad, Amira           23.07.1991    33 230791 H 048   59 870 213 403  52.200,00
+004714        Demir, Yusuf            09.05.1985    54 090585 D 312   21 456 009 876  36.120,00
 
 Sachbearbeiterin: Sophie Brandt, Durchwahl 089 1234 5699, s.brandt@weber-elektrotechnik.de

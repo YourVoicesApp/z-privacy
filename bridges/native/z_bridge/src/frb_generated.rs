@@ -3684,7 +3684,9 @@ impl SseDecode for crate::api::mirrors::Kind {
             13 => crate::api::mirrors::Kind::IdCard,
             14 => crate::api::mirrors::Kind::Birthdate,
             15 => crate::api::mirrors::Kind::Vehicle,
-            16 => crate::api::mirrors::Kind::Custom,
+            16 => crate::api::mirrors::Kind::SocialInsuranceNo,
+            17 => crate::api::mirrors::Kind::EmployeeNo,
+            18 => crate::api::mirrors::Kind::Custom,
             _ => unreachable!("Invalid variant for Kind: {}", inner),
         };
     }
@@ -5685,7 +5687,9 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Kind> {
             crate::api::mirrors::Kind::IdCard => 13.into_dart(),
             crate::api::mirrors::Kind::Birthdate => 14.into_dart(),
             crate::api::mirrors::Kind::Vehicle => 15.into_dart(),
-            crate::api::mirrors::Kind::Custom => 16.into_dart(),
+            crate::api::mirrors::Kind::SocialInsuranceNo => 16.into_dart(),
+            crate::api::mirrors::Kind::EmployeeNo => 17.into_dart(),
+            crate::api::mirrors::Kind::Custom => 18.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -7249,7 +7253,9 @@ impl SseEncode for crate::api::mirrors::Kind {
                 crate::api::mirrors::Kind::IdCard => 13,
                 crate::api::mirrors::Kind::Birthdate => 14,
                 crate::api::mirrors::Kind::Vehicle => 15,
-                crate::api::mirrors::Kind::Custom => 16,
+                crate::api::mirrors::Kind::SocialInsuranceNo => 16,
+                crate::api::mirrors::Kind::EmployeeNo => 17,
+                crate::api::mirrors::Kind::Custom => 18,
                 _ => {
                     unimplemented!("");
                 }

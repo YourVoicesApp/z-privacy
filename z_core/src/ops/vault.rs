@@ -413,6 +413,15 @@ pub(crate) fn kinds() -> ApiResult<Vec<KindRow>> {
         (Kind::Account, "Account number"),
         (Kind::TaxId, "Tax ID"),
         (Kind::CustomerNo, "Customer number"),
+        // A kind the scanner can find and a person cannot choose is half a
+        // kind: these five were added to the detection side in October and
+        // never to this list, so a person could not hold one in the vault by
+        // hand. 038-G added the last two and found the other three missing.
+        (Kind::IdCard, "Identity card number"),
+        (Kind::Birthdate, "Date of birth"),
+        (Kind::Vehicle, "Vehicle plate"),
+        (Kind::SocialInsuranceNo, "Social-insurance number"),
+        (Kind::EmployeeNo, "Personnel number"),
         (Kind::Custom, "Something else"),
     ]
     .into_iter()
