@@ -19,6 +19,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 10 — the lists a person keeps their names in, and the switch on each.
 /// * 9 — where an imported name list came from, and under what licence.
 /// * 8 — the names the person taught.
 /// * 7 — a profile's active rule sets, and the label rules a person taught.
@@ -35,7 +36,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 9;
+pub(crate) const MODEL_VERSION: u16 = 10;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -283,6 +284,25 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
         put_opt_str(&mut out, name.source.as_deref());
         put_opt_str(&mut out, name.licence.as_deref());
     }
+    // Model 10 — the lists, and which list each name is in. Two tables, because
+    // a list exists before it has a name in it: «New list» has to be pressable.
+    // Only the names that are **not** in the default list are written, so a
+    // vault that never made a list costs four bytes.
+    out.extend_from_slice(&(vault.lists.len() as u32).to_be_bytes());
+    for list in &vault.lists {
+        put_str(&mut out, &list.name);
+        out.push(u8::from(list.enabled));
+    }
+    let elsewhere: Vec<&crate::vault::model::UserName> = vault
+        .taught_names
+        .iter()
+        .filter(|n| n.list != crate::vault::model::DEFAULT_LIST)
+        .collect();
+    out.extend_from_slice(&(elsewhere.len() as u32).to_be_bytes());
+    for name in elsewhere {
+        out.extend_from_slice(&name.id.to_be_bytes());
+        put_str(&mut out, &name.list);
+    }
     Ok(out)
 }
 
@@ -502,6 +522,10 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
                 learned_at,
                 source: None,
                 licence: None,
+                // Everything taught before there were lists is in the one every
+                // vault starts with. Model 10's own section moves whatever is
+                // elsewhere; this is where the rest stays.
+                list: crate::vault::model::DEFAULT_LIST.to_string(),
             });
         }
         (next_taught_name, taught_names)
@@ -530,6 +554,25 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         }
     }
 
+    // Model 10 — the lists, and the names that are not in the default one.
+    let mut lists: Vec<crate::vault::model::UserList> = Vec::new();
+    if version >= 10 {
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        for _ in 0..count {
+            let name = r.string()?;
+            let enabled = r.byte()? != 0;
+            lists.push(crate::vault::model::UserList { name, enabled });
+        }
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        for _ in 0..count {
+            let id = u32::from_be_bytes(r.array::<4>()?);
+            let list = r.string()?;
+            if let Some(name) = taught_names.iter_mut().find(|n| n.id == id) {
+                name.list = list;
+            }
+        }
+    }
+
     Ok(Vault {
         entities,
         profiles,
@@ -541,6 +584,7 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         label_rules,
         next_taught_name,
         taught_names,
+        lists,
         settings,
         provider_logins,
     })
@@ -666,6 +710,10 @@ mod tests {
         }
         if version >= 9 {
             out.extend_from_slice(&0u32.to_be_bytes()); // no name carries a provenance
+        }
+        if version >= 10 {
+            out.extend_from_slice(&0u32.to_be_bytes()); // no lists
+            out.extend_from_slice(&0u32.to_be_bytes()); // and nothing outside the default one
         }
         out
     }
@@ -814,6 +862,7 @@ mod tests {
             learned_at: 0,
             source: Some("SCB 2024".to_string()),
             licence: Some("CC0".to_string()),
+            list: "Svenska".to_string(),
         });
         with_lists.taught_names.push(crate::vault::model::UserName {
             id: 2,
@@ -823,12 +872,17 @@ mod tests {
             learned_at: 0,
             source: None,
             licence: None,
+            list: crate::vault::model::DEFAULT_LIST.to_string(),
         });
         let read = dec(&enc(&with_lists)).expect("decode");
         assert_eq!(read.taught_names.len(), 2);
         assert_eq!(read.taught_names[0].source.as_deref(), Some("SCB 2024"));
         assert_eq!(read.taught_names[0].licence.as_deref(), Some("CC0"));
         assert_eq!(read.taught_names[1].source, None, "a name without a list grew one");
+        // Model 10 — the list a name is in survives the file, and the one in
+        // the default list says so without a row of its own.
+        assert_eq!(read.taught_names[0].list, "Svenska");
+        assert_eq!(read.taught_names[1].list, crate::vault::model::DEFAULT_LIST);
 
         // A model-2 file, as a model-2 build wrote one.
         let opened = dec(&a_file_from_model(2)).expect("a model-2 vault still opens");

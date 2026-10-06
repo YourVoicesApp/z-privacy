@@ -2217,6 +2217,34 @@ sealed class UndoOutcome with _$UndoOutcome {
   }) = UndoOutcome_Undone;
 }
 
+class UserListRow {
+  final String name;
+
+  /// How many names are in it.
+  final int names;
+
+  /// Off means the scanner is not told about them — not that they are gone.
+  final bool enabled;
+
+  const UserListRow({
+    required this.name,
+    required this.names,
+    required this.enabled,
+  });
+
+  @override
+  int get hashCode => name.hashCode ^ names.hashCode ^ enabled.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UserListRow &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          names == other.names &&
+          enabled == other.enabled;
+}
+
 enum UserNameKind { given, family, person, company }
 
 class UserNameRow {
@@ -2233,6 +2261,11 @@ class UserNameRow {
   final String? profileId;
   final BigInt learnedAt;
 
+  /// Which list it is kept in. A whole person or a company is a value in the
+  /// vault rather than a word in a dictionary, and is always in the default
+  /// one.
+  final String list;
+
   const UserNameRow({
     required this.id,
     this.entityId,
@@ -2241,6 +2274,7 @@ class UserNameRow {
     required this.always,
     this.profileId,
     required this.learnedAt,
+    required this.list,
   });
 
   @override
@@ -2251,7 +2285,8 @@ class UserNameRow {
       kind.hashCode ^
       always.hashCode ^
       profileId.hashCode ^
-      learnedAt.hashCode;
+      learnedAt.hashCode ^
+      list.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -2264,7 +2299,8 @@ class UserNameRow {
           kind == other.kind &&
           always == other.always &&
           profileId == other.profileId &&
-          learnedAt == other.learnedAt;
+          learnedAt == other.learnedAt &&
+          list == other.list;
 }
 
 class ValueRow {

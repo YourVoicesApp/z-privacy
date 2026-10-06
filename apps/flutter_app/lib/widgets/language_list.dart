@@ -103,11 +103,21 @@ class LanguageChoices extends StatelessWidget {
     required this.ground,
     required this.chosen,
     required this.onChoose,
+    this.plannedChoosable = false,
   });
 
   final Ground ground;
   final String? chosen;
   final void Function(String id) onChoose;
+
+  /// Whether what is under the line can be pressed.
+  ///
+  /// False where the question is «which rules read this document», because
+  /// there are no rules for a language that is not here. True where it is
+  /// «which language are these names», because a person builds their Arabic
+  /// list by hand long before an Arabic pack exists — which is the whole of
+  /// «the Arabic names are self training».
+  final bool plannedChoosable;
 
   /// The line, so a test can find it by what it is rather than by looking for
   /// a one-pixel box among many.
@@ -143,15 +153,30 @@ class LanguageChoices extends StatelessWidget {
           Container(key: divider, height: 1, color: Zc.line),
           const SizedBox(height: 8),
           for (final planned in ground.plannedPacks)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-              child: Row(
-                children: [
-                  const SizedBox(width: 24),
-                  Text(planned.label, style: Zc.body.copyWith(color: Zc.ink4)),
-                  const SizedBox(width: 10),
-                  Text('coming', style: Zc.tiny.copyWith(color: Zc.ink4)),
-                ],
+            InkWell(
+              onTap: plannedChoosable ? () => onChoose(planned.id) : null,
+              borderRadius: BorderRadius.circular(7),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      planned.id == chosen ? Icons.check : Icons.check_box_outline_blank,
+                      size: 16,
+                      color: planned.id == chosen ? Zc.river : Colors.transparent,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      planned.label,
+                      style: Zc.body.copyWith(color: plannedChoosable ? Zc.ink2 : Zc.ink4),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      plannedChoosable ? 'no pack yet' : 'coming',
+                      style: Zc.tiny.copyWith(color: Zc.ink4),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],

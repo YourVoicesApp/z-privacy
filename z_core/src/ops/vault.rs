@@ -910,6 +910,19 @@ pub(crate) fn set_profile_languages(profile_id: String, languages: Vec<String>) 
 /// written can see it: «Mahmoud Al-Hassan» becomes a pair, «Herr Al-Hassan» a
 /// name a salutation introduces.
 pub(crate) fn teach_name(text: String, family: bool, profile_id: Option<String>) -> ApiResult<u32> {
+    // The language a person is working in is the list their names go into.
+    let list = with_core(|core| core.config.get().default_privacy_pack);
+    teach_name_into(text, family, profile_id, list)
+}
+
+/// The same, into a list a person named.
+pub(crate) fn teach_name_into(
+    text: String,
+    family: bool,
+    profile_id: Option<String>,
+    list: String,
+) -> ApiResult<u32> {
+    let list = clean_list_name(list)?;
     let text = crate::text::nfc(text.trim()).to_string();
     if text.is_empty() {
         return Err(ApiError::InputRefused {
@@ -939,6 +952,13 @@ pub(crate) fn teach_name(text: String, family: bool, profile_id: Option<String>)
             }) {
                 return Ok(existing.id);
             }
+            // A list exists the moment a name is put in it.
+            if !vault.lists.iter().any(|l| l.name == list) {
+                vault.lists.push(crate::vault::model::UserList {
+                    name: list.clone(),
+                    enabled: true,
+                });
+            }
             let id = vault.next_taught_name;
             vault.next_taught_name = vault.next_taught_name.saturating_add(1);
             vault.taught_names.push(crate::vault::model::UserName {
@@ -949,6 +969,7 @@ pub(crate) fn teach_name(text: String, family: bool, profile_id: Option<String>)
                 learned_at: crate::vault::model::now_seconds(),
                 source: None,
                 licence: None,
+                list: list.clone(),
             });
             Ok(id)
         })
@@ -1145,6 +1166,7 @@ pub(crate) fn add_user_name(
     kind: crate::api::UserNameKind,
     always: bool,
     profile_id: Option<String>,
+    list: String,
 ) -> ApiResult<u32> {
     use crate::api::UserNameKind as K;
     let text = crate::text::nfc(text.trim()).to_string();
@@ -1156,7 +1178,7 @@ pub(crate) fn add_user_name(
     match kind {
         K::Given | K::Family => {
             // `teach_name` holds the one-word rule, and holds it alone.
-            let id = teach_name(text.clone(), matches!(kind, K::Family), profile_id.clone())?;
+            let id = teach_name_into(text.clone(), matches!(kind, K::Family), profile_id.clone(), list.clone())?;
             if always {
                 let owner = profile_id.clone();
                 with_core(|core| {
@@ -1212,6 +1234,7 @@ pub(crate) fn user_names(profile_id: Option<String>) -> ApiResult<Vec<crate::api
                     always,
                     profile_id: name.profile_id.clone(),
                     learned_at: name.learned_at,
+                    list: name.list.clone(),
                 });
             }
             // The values, except the ones that are a word's «always» twin.
@@ -1233,6 +1256,11 @@ pub(crate) fn user_names(profile_id: Option<String>) -> ApiResult<Vec<crate::api
                         always: value.policy == Policy::Always,
                         profile_id: entity.profile_id.clone(),
                         learned_at: value.learned_at,
+                        // A whole person or a company is a value in the vault,
+                        // not a word in a dictionary, so it is in no list: the
+                        // lists are the name dictionary's, and the vault room
+                        // is where a value is managed.
+                        list: crate::vault::model::DEFAULT_LIST.to_string(),
                     });
                 }
             }
@@ -1278,7 +1306,11 @@ pub(crate) fn forget_user_name(id: u32, entity_id: Option<u32>) -> ApiResult<()>
 /// `name` and `type` are required, `source` and `licence` are kept when they
 /// are there. The whole file is read before anything is written, so a file
 /// that is refused leaves the vault exactly as it was.
-pub(crate) fn import_user_names(csv: String, profile_id: Option<String>) -> ApiResult<crate::api::NameImport> {
+pub(crate) fn import_user_names(
+    csv: String,
+    profile_id: Option<String>,
+    list: String,
+) -> ApiResult<crate::api::NameImport> {
     use crate::api::{NameImport, UserNameKind as K};
     let mut lines = csv.lines().filter(|l| !l.trim().is_empty());
     let Some(header) = lines.next() else {
@@ -1341,13 +1373,14 @@ pub(crate) fn import_user_names(csv: String, profile_id: Option<String>) -> ApiR
         let known = user_names(profile_id.clone())?
             .into_iter()
             .any(|row| row.text.eq_ignore_ascii_case(&text) && row.kind == kind);
+        let _ = &list;
         if known {
             already = already.saturating_add(1);
             continue;
         }
         // Imported names are knowledge, not protection: a list is a dictionary,
         // and a dictionary suggests. «Always» stays a decision per name.
-        match add_user_name(text.clone(), kind, false, profile_id.clone()) {
+        match add_user_name(text.clone(), kind, false, profile_id.clone(), list.clone()) {
             Ok(id) => {
                 added = added.saturating_add(1);
                 if (source.is_some() || licence.is_some()) && matches!(kind, K::Given | K::Family) {
@@ -1392,4 +1425,111 @@ fn split_row(line: &str) -> Vec<String> {
     }
     cells.push(cell);
     cells
+}
+
+// ------------------------------------------------- the lists (041-I)
+
+/// The lists a person keeps their names in, with the count and the switch.
+///
+/// The owner, 6 October: «we make it possible to create lists inside the vault,
+/// for example Arabic, English, German and so on». A list is a name and a
+/// switch: turning it off stops its names being used without forgetting one of
+/// them, which is what makes a list worth having — a person can try a document
+/// with and without a dictionary and see the difference.
+pub(crate) fn user_lists() -> ApiResult<Vec<crate::api::UserListRow>> {
+    with_core(|core| {
+        core.vault.with_open(|vault| {
+            let mut rows: Vec<crate::api::UserListRow> = Vec::new();
+            let mut seen: Vec<String> = Vec::new();
+            for list in &vault.lists {
+                seen.push(list.name.clone());
+                rows.push(crate::api::UserListRow {
+                    name: list.name.clone(),
+                    names: vault.taught_names.iter().filter(|n| n.list == list.name).count() as u32,
+                    enabled: list.enabled,
+                });
+            }
+            // A list a name claims without a row of its own is still a list.
+            for name in &vault.taught_names {
+                if !seen.iter().any(|s| s == &name.list) {
+                    seen.push(name.list.clone());
+                    rows.push(crate::api::UserListRow {
+                        name: name.list.clone(),
+                        names: vault.taught_names.iter().filter(|n| n.list == name.list).count() as u32,
+                        enabled: true,
+                    });
+                }
+            }
+            // A list exists when its first name does, so an empty vault has
+            // no lists at all — and the screen says «nothing yet» rather than
+            // offering an empty box called something.
+            rows.sort_by(|a, b| a.name.cmp(&b.name));
+            rows
+        })
+    })
+}
+
+/// Turn a list off, or on. Off is **not** forgotten: every name is still here.
+pub(crate) fn set_user_list_enabled(name: String, enabled: bool) -> ApiResult<()> {
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            match vault.lists.iter_mut().find(|l| l.name == name) {
+                Some(list) => list.enabled = enabled,
+                // A list that only exists because names claim it gets its row
+                // the moment somebody switches it.
+                None => vault.lists.push(crate::vault::model::UserList {
+                    name: name.clone(),
+                    enabled,
+                }),
+            }
+            Ok(())
+        })
+    })?;
+    crate::session::bump_truth();
+    Ok(())
+}
+
+/// How many names forgetting this list would take with it.
+///
+/// Asked before it is done, the way `forget_plan` is: a list is a thing a
+/// person built, and the app says what it costs before it takes it.
+pub(crate) fn user_list_plan(name: String) -> ApiResult<u32> {
+    with_core(|core| {
+        core.vault
+            .with_open(|vault| vault.taught_names.iter().filter(|n| n.list == name).count() as u32)
+    })
+}
+
+/// Forget a list and the names in it — and nothing else.
+pub(crate) fn forget_user_list(name: String) -> ApiResult<u32> {
+    let gone: u32 = with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let before = vault.taught_names.len();
+            vault.taught_names.retain(|n| n.list != name);
+            vault.lists.retain(|l| l.name != name);
+            Ok(before.saturating_sub(vault.taught_names.len()) as u32)
+        })
+    })?;
+    crate::session::bump_truth();
+    Ok(gone)
+}
+
+/// A list is a **language**, and only one this build has heard of.
+///
+/// Installed or planned: a person builds their Arabic list by hand long before
+/// an Arabic pack exists, which is the whole of «the Arabic names are self
+/// training». Anything else is refused, so a list cannot be invented by a
+/// caller and the one-list-per-language rule holds by construction.
+fn clean_list_name(name: String) -> ApiResult<String> {
+    let name = crate::text::nfc(name.trim()).to_lowercase();
+    let known = crate::scanner::packs::installed().into_iter().any(|p| p.id == name)
+        || crate::scanner::packs::planned().into_iter().any(|p| p.id == name);
+    if !known {
+        return Err(ApiError::InputRefused {
+            reason: format!(
+                "«{name}» is not a language this build knows; a list is a language, one for each"
+            ),
+        });
+    }
+    Ok(name)
 }

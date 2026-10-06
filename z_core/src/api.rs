@@ -789,6 +789,10 @@ pub struct UserNameRow {
     pub always: bool,
     pub profile_id: Option<String>,
     pub learned_at: u64,
+    /// Which list it is kept in. A whole person or a company is a value in the
+    /// vault rather than a word in a dictionary, and is always in the default
+    /// one.
+    pub list: String,
 }
 
 /// What an imported list did. Three numbers and the reasons for the third.
@@ -1873,8 +1877,39 @@ pub fn taught_names() -> ApiResult<Vec<TaughtNameRow>> {
 /// company is a value for the vault, and «always» means protected on sight
 /// instead of suggested. Needs an open vault, like everything else a person
 /// teaches this device.
-pub fn add_user_name(text: String, kind: UserNameKind, always: bool, profile_id: Option<String>) -> ApiResult<u32> {
-    crate::ops::add_user_name(text, kind, always, profile_id)
+pub fn add_user_name(text: String, kind: UserNameKind, always: bool, profile_id: Option<String>, list: String) -> ApiResult<u32> {
+    crate::ops::add_user_name(text, kind, always, profile_id, list)
+}
+
+/// One list of names a person keeps — **one per language**, named by the
+/// language's own id, with its size and its switch.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UserListRow {
+    pub name: String,
+    /// How many names are in it.
+    pub names: u32,
+    /// Off means the scanner is not told about them — not that they are gone.
+    pub enabled: bool,
+}
+
+/// The lists, with what is in them.
+pub fn user_lists() -> ApiResult<Vec<UserListRow>> {
+    crate::ops::user_lists()
+}
+
+/// Turn one off, or on. Off is not forgotten: every name in it is still here.
+pub fn set_user_list_enabled(name: String, enabled: bool) -> ApiResult<()> {
+    crate::ops::set_user_list_enabled(name, enabled)
+}
+
+/// How many names forgetting this list would take with it — asked first.
+pub fn user_list_plan(name: String) -> ApiResult<u32> {
+    crate::ops::user_list_plan(name)
+}
+
+/// Forget a list and the names in it, and nothing else.
+pub fn forget_user_list(name: String) -> ApiResult<u32> {
+    crate::ops::forget_user_list(name)
 }
 
 /// Everything this device knows because a person said so, newest first.
@@ -1896,8 +1931,8 @@ pub fn forget_user_name(id: u32, entity_id: Option<u32>) -> ApiResult<()> {
 /// name if they are there. Nothing is written until the whole file has been
 /// read, and what comes back is three numbers and a sentence for every row
 /// that was refused.
-pub fn import_user_names(csv: String, profile_id: Option<String>) -> ApiResult<NameImport> {
-    crate::ops::import_user_names(csv, profile_id)
+pub fn import_user_names(csv: String, profile_id: Option<String>, list: String) -> ApiResult<NameImport> {
+    crate::ops::import_user_names(csv, profile_id, list)
 }
 
 /// Teach a label rule: «the value after this word is a customer number».

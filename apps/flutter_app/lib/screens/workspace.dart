@@ -162,7 +162,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       // The names panel takes the same place as the review
                       // panel: one panel at a time, and the one asked for.
                       if (bench.reviewingNames)
-                        NameReviewPanel(bench: bench, width: panel, onVault: widget.onVault)
+                        NameReviewPanel(bench: bench, ground: widget.ground, width: panel, onVault: widget.onVault)
                       else if (bench.reviewOpen)
                         ReviewPanel(bench: bench, width: panel, onVault: widget.onVault),
                       if (bench.tokensOpen)

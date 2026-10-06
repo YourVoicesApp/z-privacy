@@ -23,6 +23,8 @@ fn a_vault(name: &str) {
 
 #[test]
 fn the_names_a_person_builds_themselves() {
+    a_list_that_is_off_is_not_a_list_that_was_forgotten();
+    a_list_is_imported_and_forgotten();
     a_word_goes_to_the_dictionary_and_a_company_to_the_vault();
     always_is_one_row_and_one_forget();
     a_list_comes_back_counted();
@@ -33,9 +35,9 @@ fn the_names_a_person_builds_themselves() {
 
 fn a_word_goes_to_the_dictionary_and_a_company_to_the_vault() {
     a_vault("one");
-    let given = add_user_name("Anneli".to_string(), UserNameKind::Given, false, None).expect("given");
-    let family = add_user_name("Lindqvist".to_string(), UserNameKind::Family, false, None).expect("family");
-    add_user_name("Nordstern Consulting GmbH".to_string(), UserNameKind::Company, true, None).expect("company");
+    let given = add_user_name("Anneli".to_string(), UserNameKind::Given, false, None, "de".to_string()).expect("given");
+    let family = add_user_name("Lindqvist".to_string(), UserNameKind::Family, false, None, "de".to_string()).expect("family");
+    add_user_name("Nordstern Consulting GmbH".to_string(), UserNameKind::Company, true, None, "de".to_string()).expect("company");
 
     let rows = user_names(None).expect("rows");
     assert_eq!(rows.len(), 3, "{rows:?}");
@@ -62,7 +64,7 @@ fn a_word_goes_to_the_dictionary_and_a_company_to_the_vault() {
 /// and a value, and one press takes the whole of it back.
 fn always_is_one_row_and_one_forget() {
     a_vault("two");
-    let id = add_user_name("Lindqvist".to_string(), UserNameKind::Family, true, None).expect("family");
+    let id = add_user_name("Lindqvist".to_string(), UserNameKind::Family, true, None, "de".to_string()).expect("family");
 
     let rows = user_names(None).expect("rows");
     assert_eq!(rows.len(), 1, "an «always» word shows twice: {rows:?}");
@@ -76,7 +78,7 @@ fn always_is_one_row_and_one_forget() {
 
 fn a_list_comes_back_counted() {
     a_vault("three");
-    add_user_name("Lindqvist".to_string(), UserNameKind::Family, false, None).expect("already there");
+    add_user_name("Lindqvist".to_string(), UserNameKind::Family, false, None, "de".to_string()).expect("already there");
 
     let csv = "name,type,source,licence\n\
                Anneli,given,SCB 2024,CC0\n\
@@ -85,7 +87,7 @@ fn a_list_comes_back_counted() {
                ,given,,\n\
                Olle Berg,given,,\n\
                Svensson,surname,,\n";
-    let report = import_user_names(csv.to_string(), None).expect("import");
+    let report = import_user_names(csv.to_string(), None, "de".to_string()).expect("import");
 
     assert_eq!(report.added, 2, "{report:?}");
     assert_eq!(report.already_known, 1, "{report:?}");
@@ -103,7 +105,7 @@ fn a_list_comes_back_counted() {
 
 fn a_file_without_a_type_column_is_refused_with_a_sentence() {
     a_vault("four");
-    let bad = import_user_names("name\nAnneli\nLindqvist\n".to_string(), None);
+    let bad = import_user_names("name\nAnneli\nLindqvist\n".to_string(), None, "de".to_string());
     match bad {
         Err(ApiError::InputRefused { reason }) => {
             assert!(reason.contains("type"), "the sentence does not name the missing column: {reason}");
@@ -118,12 +120,12 @@ fn everything_here_needs_an_open_vault() {
     a_vault("five");
     vault_lock().expect("lock");
     assert!(matches!(
-        add_user_name("Anneli".to_string(), UserNameKind::Given, false, None),
+        add_user_name("Anneli".to_string(), UserNameKind::Given, false, None, "de".to_string()),
         Err(ApiError::VaultLocked)
     ));
     assert!(matches!(user_names(None), Err(ApiError::VaultLocked)));
     assert!(matches!(
-        import_user_names("name,type\nAnneli,given\n".to_string(), None),
+        import_user_names("name,type\nAnneli,given\n".to_string(), None, "de".to_string()),
         Err(ApiError::VaultLocked)
     ));
 }
@@ -132,6 +134,116 @@ fn everything_here_needs_an_open_vault() {
 /// are German and Swedish.
 fn a_semicolon_file_reads_the_same() {
     a_vault("six");
-    let report = import_user_names("name;type\nAnneli;given\nLindqvist;family\n".to_string(), None).expect("import");
+    let report = import_user_names("name;type\nAnneli;given\nLindqvist;family\n".to_string(), None, "de".to_string()).expect("import");
     assert_eq!((report.added, report.already_known, report.refused), (2, 0, 0), "{report:?}");
+}
+
+// ------------------------------------------------- the lists (041-I)
+
+/// The owner, 6 October: «the language list is what establishes the word lists
+/// inside the vault: if you choose Arabic an Arabic list is made, then if you
+/// move to another language and so on — but one list per language».
+///
+/// So a list **is** a language, and the switch is the whole claim: turning one
+/// off stops its names being used **without forgetting one of them**, so a
+/// person can read the same document with a dictionary and without it and see
+/// what the dictionary did.
+fn a_list_that_is_off_is_not_a_list_that_was_forgotten() {
+    a_vault("lists");
+    // Two languages, each with the surname of somebody the packs do not know.
+    // «ar» has no pack in this build at all, and that is the point: a person
+    // builds their Arabic list by hand long before an Arabic pack exists.
+    add_user_name("Okonkwo".to_string(), UserNameKind::Family, false, None, "ar".to_string())
+        .expect("one");
+    add_user_name("Lindqvist".to_string(), UserNameKind::Family, false, None, "sv".to_string())
+        .expect("two");
+    // And a list is a language this build has heard of, installed or planned.
+    assert!(
+        matches!(
+            add_user_name("Nobody".to_string(), UserNameKind::Family, false, None, "My names".to_string()),
+            Err(ApiError::InputRefused { .. })
+        ),
+        "a list was invented out of free text"
+    );
+
+    let lists = user_lists().expect("lists");
+    // Two, because a list exists when its first name does and not before.
+    assert_eq!(lists.len(), 2, "{lists:?}");
+    assert!(lists.iter().all(|l| l.enabled && l.names == 1), "{lists:?}");
+
+    // The document both of them are in. Neither surname is in any pack, and
+    // both given names are: the pair rule needs the taught half.
+    let doc = "Die Unterlagen kamen von Sophie Okonkwo und von Thomas Lindqvist.";
+    let people = |text: &str| -> Vec<String> {
+        let session = open_session(None, "de".to_string()).expect("open");
+        import_text(session, text.to_string()).expect("import");
+        scan(session).expect("scan");
+        let units: Vec<u16> = text.encode_utf16().collect();
+        list_findings(session)
+            .expect("findings")
+            .into_iter()
+            .filter(|f| f.kind == Kind::Person)
+            .map(|f| {
+                String::from_utf16_lossy(
+                    units.get(f.span.start as usize..f.span.end as usize).unwrap_or_default(),
+                )
+            })
+            .collect()
+    };
+    let both = people(doc);
+    assert!(both.iter().any(|t| t == "Sophie Okonkwo"), "{both:?}");
+    assert!(both.iter().any(|t| t == "Thomas Lindqvist"), "{both:?}");
+
+    // Off: the names are still here, and the scanner is not told about them.
+    set_user_list_enabled("ar".to_string(), false).expect("off");
+    let after = people(doc);
+    assert!(
+        !after.iter().any(|t| t == "Sophie Okonkwo"),
+        "a list that is off still protected its name: {after:?}"
+    );
+    assert!(
+        after.iter().any(|t| t == "Thomas Lindqvist"),
+        "turning one list off took another list's name with it: {after:?}"
+    );
+    assert_eq!(
+        user_names(None).expect("names").len(),
+        2,
+        "a name was forgotten by a switch"
+    );
+
+    // And on again, with nothing taught twice.
+    set_user_list_enabled("ar".to_string(), true).expect("on");
+    assert!(people(doc).iter().any(|t| t == "Sophie Okonkwo"), "the switch does not come back");
+}
+
+/// Imported into a language's list, and forgotten — with the cost said first,
+/// the way forgetting a value says it.
+fn a_list_is_imported_and_forgotten() {
+    a_vault("lists-two");
+    let report = import_user_names(
+        "name,type\nAnneli,given\nLindqvist,family\nOkonkwo,family\n".to_string(),
+        None,
+        "sv".to_string(),
+    )
+    .expect("import");
+    assert_eq!(report.added, 3, "{report:?}");
+
+    let lists = user_lists().expect("lists");
+    let imported = lists.iter().find(|l| l.name == "sv").expect("the list");
+    assert_eq!(imported.names, 3, "the file's names are not in the language's list");
+
+    // One name in another language, to prove forgetting takes only its own.
+    add_user_name("Haddad".to_string(), UserNameKind::Family, false, None, "ar".to_string())
+        .expect("one more");
+
+    // What it costs, before it is done.
+    assert_eq!(user_list_plan("sv".to_string()).expect("plan"), 3);
+    assert_eq!(forget_user_list("sv".to_string()).expect("forget"), 3);
+    let left = user_names(None).expect("names");
+    assert_eq!(left.len(), 1, "forgetting a list took more than its own: {left:?}");
+    assert_eq!(left[0].text, "Haddad");
+    assert!(
+        user_lists().expect("lists").iter().all(|l| l.name != "sv"),
+        "the list outlived its names"
+    );
 }
