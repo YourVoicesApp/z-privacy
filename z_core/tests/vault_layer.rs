@@ -531,10 +531,14 @@ fn zcfg_remembers_the_first_run_on_a_device_with_no_vault() {
         "ui_language",
         "default_privacy_pack",
         "original_pane_percent",
+        "columns_in_step",
     ] {
         assert!(text.contains(name), "{name} is missing from {text}");
     }
-    assert_eq!(text.lines().count(), 6, "a header and five settings, nothing else:\n{text}");
+    // The count, and not only the names: a line this list does not know about
+    // is a setting nobody declared. The number moves when `ALLOWED` does, and
+    // gate G18a is what keeps `ALLOWED` honest about its own length.
+    assert_eq!(text.lines().count(), 7, "a header and six settings, nothing else:\n{text}");
 
     let _ = std::fs::remove_dir_all(&dir);
 }

@@ -461,6 +461,7 @@ Settings _with(
       // Where the handle between the two columns was left. No screen here
       // changes it; it travels so that saving a setting does not move it.
       originalPanePercent: c.originalPanePercent,
+      columnsInStep: c.columnsInStep,
       sessionOnly: c.sessionOnly,
     );
 

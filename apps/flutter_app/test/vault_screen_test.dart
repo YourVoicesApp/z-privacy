@@ -210,6 +210,7 @@ void main() {
           language: before.language,
           firstRunDone: before.firstRunDone,
           originalPanePercent: before.originalPanePercent,
+          columnsInStep: before.columnsInStep,
           sessionOnly: before.sessionOnly,
         )));
     await settle(tester, rounds: 1);

@@ -6,7 +6,7 @@
 //! payload back in as text, which is why a bug in the UI cannot send the
 //! original — there is no signature for it.
 
-use crate::api::{ApiError, ApiResult, PayloadHandle, PayloadView};
+use crate::api::{ApiError, ApiResult, PageEdge, PayloadHandle, PayloadView};
 use crate::session::Session;
 use std::fmt;
 
@@ -31,6 +31,11 @@ pub(crate) struct SafePayload {
     pub allowed_token_ids: Vec<String>,
     pub protected: u32,
     pub open_suggestions: u32,
+    /// Where the pages begin in `text`, recorded while it was built. Read by
+    /// the Safe column so it can draw the same edges the Original draws; never
+    /// written into `text`, so the bytes that leave are the bytes that left
+    /// before 041-L.
+    page_edges: Vec<PageEdge>,
     send_state: PayloadSendState,
 }
 
@@ -46,9 +51,38 @@ impl fmt::Debug for SafePayload {
             .field("allowed_tokens", &self.allowed_token_ids.len())
             .field("protected", &self.protected)
             .field("open_suggestions", &self.open_suggestions)
+            .field("pages", &(self.page_edges.len() + 1))
             .field("send_state", &self.send_state)
             .finish()
     }
+}
+
+/// Copy a stretch of the document into the payload, counting the pages it
+/// crosses and remembering where each one begins **in the payload**.
+///
+/// Separate from `build` only because it is called from two places in it, and
+/// a page edge found by two different pieces of arithmetic would be the kind
+/// of disagreement this file exists to prevent.
+fn keep(
+    slice: &str,
+    text: &mut String,
+    page: &mut u32,
+    written: &mut usize,
+    edges: &mut Vec<PageEdge>,
+) {
+    for ch in slice.chars() {
+        if ch == '\u{c}' {
+            *page = page.saturating_add(1);
+            // The offset of the break itself, before its own length is added —
+            // the same character the Original column draws its rule across.
+            edges.push(PageEdge {
+                at: *written as u32,
+                page: *page,
+            });
+        }
+        *written += ch.len_utf16();
+    }
+    text.push_str(slice);
 }
 
 impl SafePayload {
@@ -67,15 +101,34 @@ impl SafePayload {
         let mut cursor = 0usize;
         let mut applied = 0u32;
 
+        // The page count and the payload's own offsets, kept **here** because
+        // this loop is the one place that walks the document and the payload
+        // together. `page` counts every form feed in the document, whether it
+        // survives or not, so a page keeps its number even when a protection
+        // swallows the break before it; `written` counts what has gone into
+        // the payload, in the UTF-16 units the UI uses.
+        let mut page = 1u32;
+        let mut written = 0usize;
+        let mut page_edges: Vec<PageEdge> = Vec::new();
+
         for p in ranges {
             if p.start < cursor || p.end > session.original.len() || p.start >= p.end {
                 continue;
             }
             match session.original_str().get(cursor..p.start) {
-                Some(before) => text.push_str(before),
+                Some(before) => {
+                    keep(before, &mut text, &mut page, &mut written, &mut page_edges);
+                }
                 None => continue,
             }
+            // A protected stretch leaves the payload as one token. Any page
+            // break inside it is gone from the text, so the page is counted
+            // and no edge is recorded — the next page still knows its number.
+            if let Some(swallowed) = session.original_str().get(p.start..p.end) {
+                page = page.saturating_add(swallowed.matches('\u{c}').count() as u32);
+            }
             text.push_str(&p.token);
+            written += crate::text::utf16_len(&p.token);
             if !allowed_token_ids.iter().any(|t| t == &p.token) {
                 allowed_token_ids.push(p.token.clone());
             }
@@ -83,7 +136,7 @@ impl SafePayload {
             applied = applied.saturating_add(1);
         }
         if let Some(rest) = session.original_str().get(cursor..) {
-            text.push_str(rest);
+            keep(rest, &mut text, &mut page, &mut written, &mut page_edges);
         }
 
         // **The page's edge is for the person reading, not for the model.**
@@ -93,7 +146,13 @@ impl SafePayload {
         // control character, and this text is the one thing that leaves the
         // device, so the edge becomes an ordinary line break here — one
         // character for one character, which leaves every offset where it was.
+        // One character for one character, so every offset above — including
+        // each `page_edges.at` — still points at what it pointed at.
         let text = text.replace('\u{c}', "\n");
+        debug_assert!(
+            page_edges.iter().all(|e| (e.at as usize) < crate::text::utf16_len(&text)),
+            "a page edge landed outside the payload"
+        );
 
         Self {
             id,
@@ -108,6 +167,7 @@ impl SafePayload {
             // receive» while `send` was refusing the same payload for open
             // suggestions. Two screens, two answers, and the reassuring one wrong.
             open_suggestions: session.open_suggestions(),
+            page_edges,
             send_state: PayloadSendState::Ready,
         }
     }
@@ -126,6 +186,7 @@ impl SafePayload {
             text: self.text.clone(),
             protected_count: self.protected,
             open_suggestions: self.open_suggestions,
+            page_edges: self.page_edges.clone(),
         }
     }
 

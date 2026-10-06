@@ -973,9 +973,116 @@ class _ColumnsState extends State<_Columns> {
   /// The Original column, for the test that drags the handle.
   static const originalPane = ValueKey<String>('workspace-original-pane');
 
+  /// The Safe column. Named for the same reason its neighbour is: a test that
+  /// found these two by their position among every scrollable on the screen
+  /// would pass or fail on the order of unrelated widgets.
+  static const safePane = ValueKey<String>('workspace-safe-pane');
+
+  /// The button that lets the columns go their own way, for the test.
+  static const stepLock = ValueKey<String>('workspace-step-lock');
+
   /// What the file says, until a drag says otherwise. Null means «not yet read».
   double? _percent;
   bool _dragging = false;
+
+  /// One controller each, so one column can be told where the other has gone.
+  final _left = ScrollController();
+  final _right = ScrollController();
+
+  /// Null until a tap says otherwise, like `_percent`: the file's answer is
+  /// the answer until this session's person gives another.
+  bool? _inStep;
+
+  /// Which column is being followed right now.
+  ///
+  /// Without this the two controllers chase each other: moving the right one
+  /// fires its own listener, which moves the left, which moves the right. The
+  /// column the hand is on leads until it stops.
+  String? _leading;
+
+  /// The width each column's text was laid out at, remembered from the build so
+  /// the scroll listener can lay the same text out the same way. A different
+  /// width would give different page positions, and the columns would step to
+  /// the wrong place — quietly, which is worse.
+  double _leftWidth = 0;
+  double _rightWidth = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _left.addListener(() => _follow(from: 'left'));
+    _right.addListener(() => _follow(from: 'right'));
+  }
+
+  @override
+  void dispose() {
+    _left.dispose();
+    _right.dispose();
+    super.dispose();
+  }
+
+  bool get _stepping =>
+      _inStep ?? widget.ground.config?.columnsInStep ?? true;
+
+  /// Move the other column to the place that matches this one.
+  void _follow({required String from}) {
+    if (!_stepping) return;
+    if (_leading != null && _leading != from) return;
+    final doc = widget.bench.document;
+    final safe = widget.bench.payload;
+    if (doc == null || safe == null) return;
+    final me = from == 'left' ? _left : _right;
+    final other = from == 'left' ? _right : _left;
+    if (!me.hasClients || !other.hasClients) return;
+
+    _leading = from;
+    final myText = from == 'left' ? doc.text : safe.text;
+    final theirText = from == 'left' ? safe.text : doc.text;
+    final myEdges = from == 'left' ? edgesOfDocument(doc.text) : safe.pageEdges;
+    final theirEdges = from == 'left' ? safe.pageEdges : edgesOfDocument(doc.text);
+    final myWidth = from == 'left' ? _leftWidth : _rightWidth;
+    final theirWidth = from == 'left' ? _rightWidth : _leftWidth;
+
+    final pairs = alignedEdges(
+      myEdges: myEdges,
+      myYs: pageEdgeYs(text: myText, style: Zc.document, width: myWidth, edges: myEdges),
+      theirEdges: theirEdges,
+      theirYs: pageEdgeYs(text: theirText, style: Zc.document, width: theirWidth, edges: theirEdges),
+    );
+    final target = inStepOffset(
+      from: me.offset,
+      mine: pairs.mine,
+      theirs: pairs.theirs,
+      myExtent: me.position.maxScrollExtent,
+      theirExtent: other.position.maxScrollExtent,
+    );
+    if ((other.offset - target).abs() > 0.5) other.jumpTo(target);
+    // Released on the next frame rather than here: `jumpTo` fires the other
+    // controller's listener before this one returns.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_leading == from) _leading = null;
+    });
+  }
+
+  /// Let them go their own way, or bring them back — and remember which.
+  void _toggleStep() {
+    final now = !_stepping;
+    setState(() => _inStep = now);
+    final config = widget.ground.config;
+    if (config == null || config.columnsInStep == now) return;
+    unawaited(widget.ground.saveConfig(Settings(
+      scanOnImport: config.scanOnImport,
+      revealSeconds: config.revealSeconds,
+      autoLockMinutes: config.autoLockMinutes,
+      packId: config.packId,
+      language: config.language,
+      firstRunDone: config.firstRunDone,
+      originalPanePercent: config.originalPanePercent,
+      columnsInStep: now,
+      sessionOnly: config.sessionOnly,
+    )));
+    if (now) _follow(from: 'left');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -995,6 +1102,11 @@ class _ColumnsState extends State<_Columns> {
         final usable = box.maxWidth - handle;
         final lowest = usable <= _floor * 2 ? usable / 2 : _floor;
         final left = (usable * percent / 100).clamp(lowest, usable - lowest);
+        // `_Side` pads its scroll view by 18 on each side; the text is laid out
+        // inside that. Kept here so the scroll listener measures the same
+        // layout this build drew, never a guess at it.
+        _leftWidth = left - 36;
+        _rightWidth = usable - left - 36;
 
         return Row(
           children: [
@@ -1007,6 +1119,11 @@ class _ColumnsState extends State<_Columns> {
                 eyebrow: 'Original — local only',
                 rule: 'Never sent to AI · Send cannot read this side',
                 tint: Zc.ink4,
+                controller: _left,
+                // The control sits here because this is the column a person
+                // reads and scrolls: the complaint it answers was «I work on
+                // the first screen and do not find my work on the second».
+                trailing: _StepLock(inStep: _stepping, onTap: _toggleStep),
                 footer: doc == null
                     ? null
                     : Column(
@@ -1065,17 +1182,23 @@ class _ColumnsState extends State<_Columns> {
               ),
             ),
             Expanded(
+              key: _ColumnsState.safePane,
               child: _Side(
                 eyebrow: 'Safe — AI will receive',
                 rule: 'The request itself, not a preview of it',
                 tint: Zc.clay,
                 trailing: _ChipSwitch(bench: bench),
+                controller: _right,
                 footer: safe == null
                     ? null
                     : _SafeFooter(payload: safe, bench: bench, ground: ground),
                 child: safe == null
                     ? const _Empty('There is nothing to send yet.')
-                    : SafeText(text: safe.text, chips: bench.chips),
+                    : SafeText(
+                    text: safe.text,
+                    edges: safe.pageEdges,
+                    chips: bench.chips,
+                  ),
               ),
             ),
           ],
@@ -1103,6 +1226,7 @@ class _ColumnsState extends State<_Columns> {
       language: config.language,
       firstRunDone: config.firstRunDone,
       originalPanePercent: rounded,
+      columnsInStep: config.columnsInStep,
       sessionOnly: config.sessionOnly,
     )));
   }
@@ -1175,6 +1299,48 @@ class _Empty extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Whether the two columns move together.
+///
+/// 041-L. It says what is true now, not what pressing it will do — the same
+/// rule as every other state in this app: «In step» with the link closed, «Apart»
+/// with it open. A person who wants to read one column on its own says so once,
+/// and the answer is kept beside the handle's position.
+class _StepLock extends StatelessWidget {
+  const _StepLock({required this.inStep, required this.onTap});
+
+  final bool inStep;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        key: _ColumnsState.stepLock,
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                inStep ? Icons.link : Icons.link_off,
+                size: 14,
+                color: inStep ? Zc.clayDeep : Zc.ink4,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                inStep ? 'In step' : 'Apart',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: inStep ? Zc.clayDeep : Zc.ink4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }
 
 /// «Chips / Plain». Both draw the same string; one of them draws it the way the
@@ -1316,6 +1482,7 @@ class _Side extends StatelessWidget {
     required this.rule,
     required this.tint,
     required this.child,
+    this.controller,
     this.trailing,
     this.footer,
   });
@@ -1324,6 +1491,9 @@ class _Side extends StatelessWidget {
   final String rule;
   final Color tint;
   final Widget child;
+
+  /// Given from outside so the two columns can be kept in step (041-L).
+  final ScrollController? controller;
   final Widget? trailing;
   final Widget? footer;
 
@@ -1355,6 +1525,7 @@ class _Side extends StatelessWidget {
         Container(height: 1, color: Zc.lineSoft),
         Expanded(
           child: SingleChildScrollView(
+            controller: controller,
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
             child: child,
           ),
