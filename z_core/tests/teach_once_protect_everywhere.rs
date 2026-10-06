@@ -85,7 +85,7 @@ fn a_person_answers_twice_and_a_whole_document_is_understood() {
     // first name is invisible to discovery until «known» there means «known as
     // a surname», which is a rule, and 038-H changes no rules. The person
     // types it instead, the way the Names panel lets them since 041-D.
-    teach_name("Yilmaz".to_string(), true, None).expect("teach the surname by hand");
+    teach_name("Yilmaz".to_string(), true, None, Some(session)).expect("teach the surname by hand");
     let decisions = 1u32;
     assert_eq!(decisions, 1);
     let learned = taught_names().expect("taught");
@@ -119,12 +119,12 @@ fn a_person_answers_twice_and_a_whole_document_is_understood() {
 
     // Reversible, and one word at a time.
     assert_eq!(
-        teach_name("yilmaz".to_string(), true, None).expect("again"),
+        teach_name("yilmaz".to_string(), true, None, Some(session)).expect("again"),
         learned.iter().find(|r| r.text == "Yilmaz").expect("it").id,
         "taught twice is taught once"
     );
     assert!(matches!(
-        teach_name("Thomas Kowalski".to_string(), true, None),
+        teach_name("Thomas Kowalski".to_string(), true, None, Some(session)),
         Err(ApiError::InputRefused { .. })
     ));
     for row in &learned {

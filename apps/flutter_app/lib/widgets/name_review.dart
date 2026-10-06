@@ -549,6 +549,7 @@ class _ListHead extends StatelessWidget {
             icon: const Icon(Icons.more_horiz, size: 18, color: Zc.ink4),
             onSelected: (what) => unawaited(_act(context, what)),
             itemBuilder: (_) => const [
+              PopupMenuItem(value: 'move', child: Text('Move to…')),
               PopupMenuItem(value: 'export', child: Text('Export CSV')),
               PopupMenuItem(value: 'remove', child: Text('Remove list')),
             ],
@@ -560,6 +561,8 @@ class _ListHead extends StatelessWidget {
 
   Future<void> _act(BuildContext context, String what) async {
     switch (what) {
+      case 'move':
+        await _move(context);
       case 'export':
         await _export(context);
       case 'remove':
@@ -586,6 +589,26 @@ class _ListHead extends StatelessWidget {
         );
         if (sure ?? false) unawaited(bench.forgetList(list.name));
     }
+  }
+
+  /// Move the whole list into another language — one question, one act.
+  ///
+  /// A list learned under the wrong language is a thing that happens: the
+  /// owner taught 75 Swedish surnames while the device was set up in German,
+  /// and teaching them again one at a time is not a repair. The language is
+  /// asked the same way it is asked everywhere else, and the count is said
+  /// before the move so nobody moves 75 names meaning to move three.
+  Future<void> _move(BuildContext context) async {
+    final into = await askForALanguage(
+      context,
+      ground: ground,
+      chosen: bench.packId,
+      title: list.names == 1
+          ? 'Move one name from ${languageName(ground, list.name)} to…'
+          : 'Move ${list.names} names from ${languageName(ground, list.name)} to…',
+    );
+    if (into == null || into == list.name) return;
+    unawaited(bench.moveList(list.name, into));
   }
 
   /// The list, as the file it could have come from: `name,type,source,licence`.

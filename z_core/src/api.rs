@@ -1856,8 +1856,13 @@ pub fn set_profile_languages(profile_id: String, languages: Vec<String>) -> ApiR
 /// Knowledge, not a protection: it tells the rules what kind of word this is,
 /// and the rules decide what to do with it. Local, in the vault, and undone by
 /// `forget_name`.
-pub fn teach_name(text: String, family: bool, profile_id: Option<String>) -> ApiResult<u32> {
-    crate::ops::teach_name(text, family, profile_id)
+///
+/// `session` is the document it was learned from, and it decides which
+/// language's list the name goes into: a name met in a Swedish document is a
+/// Swedish name even on a device set up in German. `None` is for a name typed
+/// with nothing open, and then the device's own language is the only answer.
+pub fn teach_name(text: String, family: bool, profile_id: Option<String>, session: Option<SessionId>) -> ApiResult<u32> {
+    crate::ops::teach_name(text, family, profile_id, session)
 }
 
 /// Unlearn a taught name. An open document keeps the tokens it already has.
@@ -1895,6 +1900,14 @@ pub struct UserListRow {
 /// The lists, with what is in them.
 pub fn user_lists() -> ApiResult<Vec<UserListRow>> {
     crate::ops::user_lists()
+}
+
+/// Move every name in one list into another language's list, in one act.
+///
+/// Not a rename: the destination keeps the names it already has, and the list
+/// that is emptied stops being a list. What comes back is how many moved.
+pub fn move_user_list(from: String, to: String) -> ApiResult<u32> {
+    crate::ops::move_user_list(from, to)
 }
 
 /// Turn one off, or on. Off is not forgotten: every name in it is still here.
