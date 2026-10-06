@@ -188,6 +188,7 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
     if rules.is_empty() {
         return Vec::new();
     }
+    let mut columns = table_columns(text, rules);
     // The longest label any set carries, in words. `Contact person:` is two,
     // and nothing today is three — but the engine reads it from the data
     // rather than assuming, so a set may add a longer one without asking.
@@ -318,6 +319,147 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             entities: Vec::new(),
             also: Vec::new(),
         });
+    }
+    out.append(&mut columns);
+    out
+}
+
+/// **A table says what its columns are once, at the top.**
+///
+/// A label rule reads the word before a value; in a table the word before a
+/// value is whatever stands in the column to its left, and the label is three
+/// lines up. So a ledger's four birth dates and four personnel numbers carry no
+/// label at all — measured on DE-6, where the one date with a word in front of
+/// it was protected and the four in the column were not.
+///
+/// The smallest honest version, and every condition earns its place:
+///
+/// * a **block** is two or more lines that each split into the same number of
+///   cells on runs of two spaces or a tab — one space is prose;
+/// * the first line of the block is the **header**, and a header cell counts
+///   only when it is a label some active rule set already knows (`Geburtsdatum`,
+///   `Personal-Nr.`, `Name` …). Dart invents nothing and nor does this: the
+///   vocabulary is the pack's;
+/// * a cell belongs to a column when it **starts** within the header cell's own
+///   span of characters, give or take two — which is what makes a left-aligned
+///   column a column;
+/// * and the value still has to pass the row's own validator, so a word under
+///   `Geburtsdatum` that is not a date is not protected as one.
+///
+/// A table of codes has no header this build knows, so nothing happens to it.
+/// That is what keeps 734 pages of ICD-10 — every page of it a table — outside
+/// this rule, and it is measured rather than hoped for: zero findings there.
+fn table_columns(text: &str, rules: &[LabelRule]) -> Vec<Candidate> {
+    let mut out = Vec::new();
+    let lines: Vec<(usize, &str)> = line_offsets(text);
+    let mut at = 0usize;
+    while at < lines.len() {
+        let Some((_header_start, header)) = lines.get(at).copied() else { break };
+        let header_cells = cells(header);
+        if header_cells.len() < 2 {
+            at += 1;
+            continue;
+        }
+        // The rows under it, while they keep the same number of cells.
+        let mut rows: Vec<(usize, &str)> = Vec::new();
+        let mut next = at + 1;
+        while let Some((start, line)) = lines.get(next).copied() {
+            if cells(line).len() != header_cells.len() {
+                break;
+            }
+            rows.push((start, line));
+            next += 1;
+        }
+        if rows.is_empty() {
+            at += 1;
+            continue;
+        }
+        for (column_at, column_text) in &header_cells {
+            let wanted = crate::text::nfc(column_text.trim_end_matches(':')).to_lowercase();
+            let Some(rule) = rules.iter().find(|r| r.label == wanted) else { continue };
+            for (row_start, row) in &rows {
+                for (cell_at, value) in cells(row) {
+                    // Left-aligned, give or take two characters.
+                    if cell_at + 2 < *column_at || *column_at + 2 < cell_at {
+                        continue;
+                    }
+                    let value = value.trim();
+                    // The cell still has to be the shape the row names: a word
+                    // under «Geburtsdatum» that is not a date is not a date.
+                    let fits = match rule.validator {
+                        Validator::Number => is_numberish(value),
+                        Validator::Word | Validator::Any => !value.is_empty(),
+                        Validator::Grouped => value.chars().all(|c| c.is_ascii_alphanumeric() || c == ' '),
+                        Validator::Name => starts_upper(value),
+                    };
+                    if value.is_empty() || !fits {
+                        continue;
+                    }
+                    let Some(offset) = row.find(value) else { continue };
+                    let start = row_start + offset;
+                    out.push(Candidate {
+                        start,
+                        end: start + value.len(),
+                        kind: rule.kind,
+                        confidence: rule.decision,
+                        source: rule.source,
+                        source_detail: rule.detail(),
+                        reason: format!(
+                            "under «{column_text}» in a table, and that column's own header says what stands in it"
+                        ),
+                        entities: Vec::new(),
+                        also: Vec::new(),
+                    });
+                }
+            }
+        }
+        at = next.max(at + 1);
+    }
+    out
+}
+
+/// Every line with where it starts.
+fn line_offsets(text: &str) -> Vec<(usize, &str)> {
+    let mut out = Vec::new();
+    let mut at = 0usize;
+    for line in text.split('\n') {
+        out.push((at, line));
+        at += line.len() + 1;
+    }
+    out
+}
+
+/// A line's cells: runs separated by two or more spaces, or a tab. One space is
+/// prose, which is the whole of what keeps a sentence out of this rule.
+fn cells(line: &str) -> Vec<(usize, &str)> {
+    let mut out = Vec::new();
+    let bytes = line.as_bytes();
+    let mut i = 0usize;
+    while i < bytes.len() {
+        while matches!(bytes.get(i), Some(b' ' | b'\t')) {
+            i += 1;
+        }
+        let start = i;
+        let mut end = i;
+        while i < bytes.len() {
+            match bytes.get(i) {
+                Some(b'\t') => break,
+                Some(b' ') if bytes.get(i + 1) == Some(&b' ') => break,
+                Some(_) => {
+                    i += 1;
+                    end = i;
+                }
+                None => break,
+            }
+        }
+        if end > start {
+            if let Some(cell) = line.get(start..end) {
+                out.push((start, cell));
+            }
+        }
+        if i == start {
+            i += 1;
+        }
     }
     out
 }

@@ -302,87 +302,6 @@ fn phones(text: &str, out: &mut Vec<Candidate>) {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn found(text: &str) -> Vec<(Kind, Confidence, String)> {
-        scan(text)
-            .into_iter()
-            .map(|c| (c.kind, c.confidence, text.get(c.start..c.end).unwrap_or_default().to_string()))
-            .collect()
-    }
-
-    #[test]
-    fn an_iban_is_proven_not_guessed() {
-        // A real-shaped German IBAN with a correct checksum.
-        let good = "IBAN: DE89 3704 0044 0532 0130 00 ist das Konto.";
-        // This module reports what each rule saw; the digits inside an IBAN also
-        // look like a local telephone number, and settling that overlap into one
-        // finding is the scanner's job (see scanner::tests).
-        assert!(
-            found(good).contains(&(
-                Kind::Iban,
-                Confidence::Auto,
-                "DE89 3704 0044 0532 0130 00".to_string()
-            )),
-            "{:?}",
-            found(good)
-        );
-
-        // One digit changed: the checksum fails, so we do not call it an IBAN.
-        let bad = "IBAN: DE89 3704 0044 0532 0130 01 ist das Konto.";
-        assert!(
-            !found(bad).iter().any(|(k, _, _)| *k == Kind::Iban),
-            "a failing checksum must not be called an IBAN: {:?}",
-            found(bad)
-        );
-    }
-
-    #[test]
-    fn an_iban_inside_a_longer_word_is_not_an_iban() {
-        let text = "XXDE89370400440532013000 und DE89 3704 0044 0532 0130 00";
-        let ibans: Vec<_> = found(text).into_iter().filter(|(k, _, _)| *k == Kind::Iban).collect();
-        assert_eq!(ibans.len(), 1, "{ibans:?}");
-    }
-
-    #[test]
-    fn an_email_needs_a_real_ending() {
-        assert_eq!(
-            found("Schreiben an t.mueller@nordstern-consulting.de."),
-            vec![(
-                Kind::Email,
-                Confidence::Auto,
-                "t.mueller@nordstern-consulting.de".to_string()
-            )]
-        );
-        assert!(found("a@b").is_empty());
-        assert!(found("@nordstern.de").is_empty(), "a mention is not an address");
-    }
-
-    #[test]
-    fn an_international_number_is_certain_a_local_one_is_a_question() {
-        assert_eq!(
-            found("Telefon: +49 171 2345678"),
-            vec![(Kind::Phone, Confidence::Auto, "+49 171 2345678".to_string())]
-        );
-        assert_eq!(
-            found("Telefon: 0171 2345678"),
-            vec![(Kind::Phone, Confidence::Suggest, "0171 2345678".to_string())]
-        );
-        // Too short to be a telephone number, so nothing is claimed.
-        assert!(found("Zimmer 0171").is_empty());
-    }
-
-    #[test]
-    fn every_candidate_says_why() {
-        for c in scan("t.mueller@nordstern.de +49 171 2345678 DE89 3704 0044 0532 0130 00") {
-            assert!(!c.reason.is_empty(), "a finding with no reason is not allowed");
-            assert!(!c.source_detail.is_empty(), "the rule must name itself");
-        }
-    }
-}
-
 // ------------------------------------------- social-insurance number (038-G)
 
 /// A German *Sozialversicherungsnummer*, proven by its own check digit.
@@ -632,4 +551,85 @@ fn looks_like_a_date(run: &str) -> bool {
         return false;
     };
     (1..=12).contains(&month) && day >= 1 && day <= days_in_month(month)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn found(text: &str) -> Vec<(Kind, Confidence, String)> {
+        scan(text)
+            .into_iter()
+            .map(|c| (c.kind, c.confidence, text.get(c.start..c.end).unwrap_or_default().to_string()))
+            .collect()
+    }
+
+    #[test]
+    fn an_iban_is_proven_not_guessed() {
+        // A real-shaped German IBAN with a correct checksum.
+        let good = "IBAN: DE89 3704 0044 0532 0130 00 ist das Konto.";
+        // This module reports what each rule saw; the digits inside an IBAN also
+        // look like a local telephone number, and settling that overlap into one
+        // finding is the scanner's job (see scanner::tests).
+        assert!(
+            found(good).contains(&(
+                Kind::Iban,
+                Confidence::Auto,
+                "DE89 3704 0044 0532 0130 00".to_string()
+            )),
+            "{:?}",
+            found(good)
+        );
+
+        // One digit changed: the checksum fails, so we do not call it an IBAN.
+        let bad = "IBAN: DE89 3704 0044 0532 0130 01 ist das Konto.";
+        assert!(
+            !found(bad).iter().any(|(k, _, _)| *k == Kind::Iban),
+            "a failing checksum must not be called an IBAN: {:?}",
+            found(bad)
+        );
+    }
+
+    #[test]
+    fn an_iban_inside_a_longer_word_is_not_an_iban() {
+        let text = "XXDE89370400440532013000 und DE89 3704 0044 0532 0130 00";
+        let ibans: Vec<_> = found(text).into_iter().filter(|(k, _, _)| *k == Kind::Iban).collect();
+        assert_eq!(ibans.len(), 1, "{ibans:?}");
+    }
+
+    #[test]
+    fn an_email_needs_a_real_ending() {
+        assert_eq!(
+            found("Schreiben an t.mueller@nordstern-consulting.de."),
+            vec![(
+                Kind::Email,
+                Confidence::Auto,
+                "t.mueller@nordstern-consulting.de".to_string()
+            )]
+        );
+        assert!(found("a@b").is_empty());
+        assert!(found("@nordstern.de").is_empty(), "a mention is not an address");
+    }
+
+    #[test]
+    fn an_international_number_is_certain_a_local_one_is_a_question() {
+        assert_eq!(
+            found("Telefon: +49 171 2345678"),
+            vec![(Kind::Phone, Confidence::Auto, "+49 171 2345678".to_string())]
+        );
+        assert_eq!(
+            found("Telefon: 0171 2345678"),
+            vec![(Kind::Phone, Confidence::Suggest, "0171 2345678".to_string())]
+        );
+        // Too short to be a telephone number, so nothing is claimed.
+        assert!(found("Zimmer 0171").is_empty());
+    }
+
+    #[test]
+    fn every_candidate_says_why() {
+        for c in scan("t.mueller@nordstern.de +49 171 2345678 DE89 3704 0044 0532 0130 00") {
+            assert!(!c.reason.is_empty(), "a finding with no reason is not allowed");
+            assert!(!c.source_detail.is_empty(), "the rule must name itself");
+        }
+    }
 }

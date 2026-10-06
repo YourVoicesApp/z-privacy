@@ -209,8 +209,10 @@ fn the_payroll_labels_name_their_kinds() {
 /// word is somebody's name.
 #[test]
 fn a_ledger_writes_its_people_backwards_and_they_are_still_people() {
-    let page = "Personal-Nr.  Name                  Eintritt\n\
-        004712        Reinhardt, Tobias     02.11.1979\n\
+    // No header: this is the rule on its own, and what it offers it offers.
+    // A column headed «Name» is another rule and protects outright — that is
+    // 038-G/6, and it has its own test.
+    let page = "004712        Reinhardt, Tobias     02.11.1979\n\
         004713        Haddad, Amira         23.07.1991\n\
         004714        Demir, Yusuf          09.05.1985\n";
     let people: Vec<(MarkState, String)> = kinds_of(page, Kind::Person);
@@ -245,4 +247,56 @@ fn the_labelled_reversed_pair_is_still_auto() {
     let got = kinds_of("Name: Lindemann, Katharina\n", Kind::Person);
     assert_eq!(got.len(), 1, "the labelled form stopped working: {got:?}");
     assert_eq!(got[0].0, MarkState::Protected);
+}
+
+// ------------------------------------------------------- a column of values
+
+/// A table says what its columns are, once, at the top — and then never again.
+///
+/// A ledger's four birth dates stand under the word «Geburtsdatum» and carry no
+/// label of their own; so do its four personnel numbers. A label rule reads the
+/// word before a value, and in a table the word before a value is the value in
+/// the column to its left. The header is the label, and it labels a column.
+#[test]
+fn a_header_names_the_column_under_it() {
+    let page = "Personal-Nr.  Name                  Geburtsdatum  Eintritt\n\
+        004712        Reinhardt, Tobias     02.11.1979    01.03.2019\n\
+        004713        Haddad, Amira         23.07.1991    15.08.2020\n\
+        004714        Demir, Yusuf          09.05.1985    01.02.2019\n";
+    let dates = kinds_of(page, Kind::Birthdate);
+    assert_eq!(dates.len(), 3, "the birth-date column was not read: {dates:?}");
+    for (state, text) in &dates {
+        assert_eq!(*state, MarkState::Protected, "«{text}» was only offered");
+        assert!(["02.11.1979", "23.07.1991", "09.05.1985"].contains(&text.as_str()), "«{text}»");
+    }
+    let staff = kinds_of(page, Kind::EmployeeNo);
+    assert_eq!(staff.len(), 3, "the personnel-number column was not read: {staff:?}");
+
+    // The column beside it is not a birth date: «Eintritt» is nobody's label.
+    assert!(
+        !dates.iter().any(|(_, text)| text == "01.03.2019"),
+        "a date from another column was read as a birth date"
+    );
+}
+
+/// What it must not do: prose is not a table, and a line that happens to have
+/// two spaces in it is not a column.
+#[test]
+fn prose_is_not_a_table() {
+    let page = "Geburtsdatum des Kindes\n\
+        Die Lieferung erfolgt am 14.03.1988 und am 02.11.1979.\n\
+        Der Vertrag läuft weiter.\n";
+    let dates = kinds_of(page, Kind::Birthdate);
+    assert!(dates.is_empty(), "a sentence under a word became a column: {dates:?}");
+}
+
+/// And a table of codes has no header this build knows, so nothing happens to
+/// it — which is what keeps 734 pages of ICD-10 out of this rule.
+#[test]
+fn a_table_whose_header_is_not_a_label_is_left_alone() {
+    let page = "Kode      Bezeichnung                  Seite\n\
+        A00.0     Cholera, durch Vibrio cholerae    17\n\
+        A00.1     Cholera, durch Vibrio eltor       18\n";
+    assert!(found(page).iter().all(|(_, kind, _)| *kind != Kind::Birthdate));
+    assert!(found(page).iter().all(|(_, kind, _)| *kind != Kind::EmployeeNo));
 }
