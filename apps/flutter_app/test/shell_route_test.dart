@@ -131,6 +131,10 @@ void main() {
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Start'));
     await settle(tester);
+    // 041-E — the first run offers a vault before any work, and «Later» is a
+    // whole answer. These tests are about what comes after it.
+    await tester.tap(find.text('Later'));
+    await settle(tester);
 
     // A session typed by hand, carrying something a general rule will protect
     // on its own — no vault, no pack of any language needed.
@@ -257,6 +261,10 @@ void main() {
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Start'));
+    await settle(tester);
+    // 041-E — the first run offers a vault before any work, and «Later» is a
+    // whole answer. These tests are about what comes after it.
+    await tester.tap(find.text('Later'));
     await settle(tester);
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.byType(FirstRunScreen), findsNothing);

@@ -332,6 +332,9 @@ class Workbench extends ChangeNotifier {
   /// the same call the Rescan button makes later.
   Future<void> rescan() async {
     busy = true;
+    // Any other scan clears the note: «after the vault opened» is about the
+    // scan that is on screen, and about no later one.
+    scanNote = null;
     notifyListeners();
     String? refused;
     try {
@@ -788,6 +791,25 @@ class Workbench extends ChangeNotifier {
     await rescan();
     notifyListeners();
     return refused;
+  }
+
+  /// Why the last scan happened, when nobody pressed Rescan for it.
+  ///
+  /// `null` for a scan on import or a scan a person asked for; the band says
+  /// «manual rescan» for those, and that sentence has to stay true.
+  String? scanNote;
+
+  /// Read the document again now that the vault is open.
+  ///
+  /// A document opened before the vault was unlocked was read without the
+  /// vault layer — the rules and the pack ran, the vault did not, and the band
+  /// said so. Once there is an open vault the answer can change, so the
+  /// document is read again rather than left standing on an answer that is no
+  /// longer the best one this build can give.
+  Future<void> rescanAfterVault() async {
+    await rescan();
+    scanNote = 'after the vault opened';
+    notifyListeners();
   }
 
   /// Run this document against another rule set, from the top bar.

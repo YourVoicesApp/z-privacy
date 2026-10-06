@@ -102,7 +102,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         body: Column(
           children: [
             _TopBar(bench: bench, ground: widget.ground, onHome: widget.onHome),
-            _Band(bench: bench),
+            _Band(bench: bench, onVault: widget.onVault),
             if (bench.trouble != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
@@ -639,9 +639,14 @@ class _Fact extends StatelessWidget {
 /// «Scanned on import — 7 protected automatically · 2 need your word · 428 normal».
 /// Every one of those numbers is `ScanReport`, straight from the core.
 class _Band extends StatelessWidget {
-  const _Band({required this.bench});
+  const _Band({required this.bench, required this.onVault});
 
   final Workbench bench;
+
+  /// The way to the vault from the band's own line. The line said «No vault»
+  /// and could not be pressed: the owner read it, agreed with it, and had
+  /// nowhere to go.
+  final VoidCallback onVault;
 
   @override
   Widget build(BuildContext context) {
@@ -680,11 +685,15 @@ class _Band extends StatelessWidget {
             const Icon(Icons.check, size: 15, color: Zc.clayDeep),
             const SizedBox(width: 8),
             Text(
-              switch (bench.scanOrigin) {
-                ScanOrigin.onImport => 'Scanned on import',
-                ScanOrigin.rescan => 'Last scan: manual rescan',
-                ScanOrigin.notScanned => 'Not scanned yet',
-              },
+              // A scan nobody asked for says why it happened, rather than
+              // calling itself manual.
+              bench.scanNote != null
+                  ? 'Last scan: ${bench.scanNote}'
+                  : switch (bench.scanOrigin) {
+                      ScanOrigin.onImport => 'Scanned on import',
+                      ScanOrigin.rescan => 'Last scan: manual rescan',
+                      ScanOrigin.notScanned => 'Not scanned yet',
+                    },
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -711,16 +720,43 @@ class _Band extends StatelessWidget {
             Flexible(
               child: Padding(
                 padding: const EdgeInsets.only(left: 14),
-                child: Text(
-                  r.vault == VaultState.locked
-                      ? 'Vault locked — rules and pack ran, the vault layer did not'
-                      : 'No vault — nothing is recognised by name',
-                  style: Zc.small.copyWith(
-                    color: Zc.amber,
-                    fontWeight: FontWeight.w600,
+                child: InkWell(
+                  onTap: onVault,
+                  borderRadius: BorderRadius.circular(7),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            r.vault == VaultState.locked
+                                ? 'Vault locked — rules and pack ran, the vault layer did not'
+                                : 'No vault — nothing is recognised by name',
+                            style: Zc.small.copyWith(
+                              color: Zc.amber,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // The act, in the band, where the fact is. «Create» and
+                        // «Unlock» are different moves and the line knows which
+                        // one this is — the same distinction the core's two
+                        // refusals make.
+                        Text(
+                          r.vault == VaultState.locked ? 'Unlock' : 'Create a vault',
+                          style: Zc.small.copyWith(
+                            color: Zc.clayDeep,
+                            fontWeight: FontWeight.w700,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
                 ),
               ),
             ),

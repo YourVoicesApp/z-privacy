@@ -258,8 +258,14 @@ class _ShellState extends State<ZShell> {
     if (config != null && !config.firstRunDone && !_firstRunPassed) {
       return FirstRunScreen(
         ground: _ground,
-        onStart: (language) async {
-          setState(() => _firstRunPassed = true);
+        onStart: (language, {required bool wantsVault}) async {
+          // The vault screen is reached the ordinary way — the shell's own
+          // door — so the first run ends in exactly one place whatever was
+          // pressed.
+          setState(() {
+            _firstRunPassed = true;
+            _vaultOpen = wantsVault;
+          });
           await _ground.saveConfig(Settings(
             scanOnImport: config.scanOnImport,
             revealSeconds: config.revealSeconds,
@@ -294,9 +300,19 @@ class _ShellState extends State<ZShell> {
     if (_vaultOpen) {
       return VaultScreen(
         ground: _ground,
-        onClose: () {
+        onClose: () async {
+          final was = _ground.vault;
           setState(() => _vaultOpen = false);
-          _ground.refresh();
+          await _ground.refresh();
+          // A document that was read without the vault was read without a
+          // whole layer. If the vault's state changed while this screen was
+          // open, the answer on the other side of it can change too, so the
+          // document is read again on the way back — the owner's «open the
+          // vault before starting work», for a person who did not.
+          final bench = _bench;
+          if (bench != null && _ground.vault != was) {
+            await bench.rescanAfterVault();
+          }
         },
       );
     }

@@ -44,7 +44,15 @@ class _VaultScreenState extends State<VaultScreen> {
   @override
   void initState() {
     super.initState();
-    widget.ground.readVault();
+    // After the build, not inside it. `readVault` notifies straight away when
+    // the vault is not open — it has nothing to read and says so — and a
+    // listener marked dirty while the tree is being built is an unsound
+    // rebuild: `'!_dirty': is not true`, measured the moment 041-E made this
+    // screen reachable from inside a document and from the first run. It was
+    // only ever opened from Home before, where nothing else was building.
+    unawaited(Future<void>.microtask(() {
+      if (mounted) widget.ground.readVault();
+    }));
   }
 
   @override
