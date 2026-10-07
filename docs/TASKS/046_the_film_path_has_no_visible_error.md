@@ -273,11 +273,8 @@ a page that still looks typeset to anyone who cannot read the script.
   (UAX #9, P2/P3) — not one setting for the file, because a client's letter is
   German and Arabic in the same document and one setting gets one of them
   wrong.
-- **A `__Z_…__` token does not vote.** Its letters are Latin and they are
-  *ours*. Counted as strong they decide the direction of any line whose first
-  word was protected — so protecting an Arabic name would lay that line out
-  left to right, and the document would read differently after protection than
-  before it. **Protection may not change how a document reads.**
+- **A `__Z_…__` token does not vote** — see the rule below, which came out of
+  this and is bigger than it.
 - **A neutral line — blank, or only figures — takes the direction around it**
   and never starts a run of its own. Counted as left-to-right it cut an Arabic
   passage into three and the blank lines vanished from the page. *Found by
@@ -329,9 +326,27 @@ one direction for the whole file (the mixed document's Arabic line unshaped);
 the token allowed to vote; a neutral line counted as left-to-right (the passage
 split); the mark on only the first line of a block.
 
+### A PRODUCT RULE, adopted by the lead 7 Oct out of this item
+
+> **A `__Z_…__` token must not vote on direction — its letters are Latin and
+> *we* put them in the person's line; protection may not change how a document
+> reads.**
+
+It belongs beside «the left column is the document byte for byte», and it
+generalises past the PDF: **no act of protection may alter layout, direction,
+pagination or reading order anywhere.** A token is our word standing in the
+person's sentence, and a word of ours may not move their words about.
+
 **Not in this item:** the document column's direction and the selection clitic
 rule (both 045), shaping in the app's own screens, and the footer and `/Info`
 rules, which stand.
+
+**A debt, recorded not fixed:** `scripts/gates.sh` writes its flutter output to
+`/tmp/gd.$$`, a path two concurrent runs in two worktrees can confuse — each
+run reads back its own `$$` so no verdict is ever wrong, but the leftovers are
+read by people, and one was nearly reported as another worktree's count. A
+private temp directory per run, removed at the end. For whoever next touches
+that script.
 
 **One thing to know, and it is not fixable here.** A reader that uses glyph
 positions — every viewer, and poppler — gets this file right. **Our own reader
