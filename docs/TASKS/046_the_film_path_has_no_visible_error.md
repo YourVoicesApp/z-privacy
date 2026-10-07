@@ -348,6 +348,25 @@ read by people, and one was nearly reported as another worktree's count. A
 private temp directory per run, removed at the end. For whoever next touches
 that script.
 
+**One thing to know, and it is not fixable here — now folded into 038-C.** A
+reader that uses glyph positions, every viewer and poppler, gets this file
+right. **Our own reader does not**: it walks the content stream, so it returns
+the words in logical order with each word's letters in visual order, which is
+neither one thing nor the other. It touches neither the protection nor the
+page; it means an Arabic PDF handed to a model that extracts text the way we do
+would read oddly.
+
+That is `z_core/src/documents/pdf.rs`, and it is **the same defect
+`038C_arabic_arrives_as_it_is_read.md` measured from the reading side on 5
+October** — 7 of 7 people found in an Arabic letter given as text against 0 of
+461 in the same book given as a PDF, while poppler read that file into
+180 / 209 / 67. Our writer and our reader disagree about the same file, and the
+reader is the one that is wrong. Written into 038-C rather than started again:
+see its last two sections, which also carry the pair of rules this item and
+that one produced together.
+
+---
+
 **One thing to know, and it is not fixable here.** A reader that uses glyph
 positions — every viewer, and poppler — gets this file right. **Our own reader
 does not**: it walks the content stream, so it returns the words in logical
