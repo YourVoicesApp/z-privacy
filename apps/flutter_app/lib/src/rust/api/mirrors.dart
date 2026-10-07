@@ -784,6 +784,35 @@ class LayerCount {
           count == other.count;
 }
 
+class LineSelection {
+  /// How many lines are selected. «All» is simply every line.
+  final int lines;
+
+  /// Values already protected inside them.
+  final int protected;
+
+  /// Values inside them still waiting for an answer.
+  final int open;
+
+  const LineSelection({
+    required this.lines,
+    required this.protected,
+    required this.open,
+  });
+
+  @override
+  int get hashCode => lines.hashCode ^ protected.hashCode ^ open.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LineSelection &&
+          runtimeType == other.runtimeType &&
+          lines == other.lines &&
+          protected == other.protected &&
+          open == other.open;
+}
+
 class Mark {
   final Span span;
   final MarkState state;

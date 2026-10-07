@@ -759,6 +759,16 @@ pub struct _DocumentView {
     pub pages: u32,
 }
 
+#[frb(mirror(LineSelection))]
+pub struct _LineSelection {
+    /// How many lines are selected. «All» is simply every line.
+    pub lines: u32,
+    /// Values already protected inside them.
+    pub protected: u32,
+    /// Values inside them still waiting for an answer.
+    pub open: u32,
+}
+
 #[frb(mirror(QuestionView))]
 pub struct _QuestionView {
     pub text: String,
