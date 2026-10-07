@@ -47,7 +47,6 @@ import 'drawn_document.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
-const _originalPane = ValueKey<String>('workspace-original-pane');
 const _band = ValueKey<String>('held-lines-band');
 
 /// A payroll sheet in the shape the owner's own is in: cells separated by two
@@ -338,6 +337,66 @@ void main() {
     // matching a word is how a guard goes green while the sheet never opened.
     expect(find.byType(WhySheet), findsOneWidget,
         reason: 'a protected word inside a selection asked nothing');
+  });
+
+  // -------------------------- 6b · the card carries the act the press meant
+
+  testWidgets('the explain card carries the column act, so no press is wasted', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1600, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (_, bench) = await _open(tester, 'both');
+
+    // **The lead's case, 7 October.** One of the account numbers is already
+    // protected — as it would be if it happened to match a value in his list —
+    // and *that* is the cell he presses, meaning «do this column». The press
+    // is not wrong and the card is not wrong; what would be wrong is a press
+    // that can mean only one of the two.
+    final at = _indexOf('9999 000 01');
+    await tester.runAsync(() async {
+      await bench.select(Span(start: at, end: at + '9999 000 01'.length));
+      await bench.protectSelection(scope: Scope.once, kind: Kind.account, allMatches: false);
+      await bench.select(null);
+    });
+    await settle(tester, rounds: 10);
+    expect(_protectedNow(bench), 1, reason: 'the one value was not protected first');
+
+    await tester.dragFrom(_gutterAt(tester, 1), _gutterAt(tester, 4) - _gutterAt(tester, 1));
+    await settle(tester, rounds: 12);
+
+    // He presses the cell that is already protected.
+    await tester.tapAt(_whereIs(tester, at + 2));
+    await settle(tester, rounds: 16);
+
+    expect(find.byType(WhySheet), findsOneWidget, reason: 'the question was not answered');
+    expect(_protectedNow(bench), 1, reason: 'the press acted instead of asking');
+    // And the card carries the act, named with the number of lines held.
+    final act = find.widgetWithText(ZButton, 'Protect this column in the 4 held lines');
+    expect(act, findsOneWidget,
+        reason: 'the card answers the question and loses the instruction');
+
+    await tester.tap(act);
+    await settle(tester, rounds: 20);
+
+    expect(find.byType(WhySheet), findsNothing, reason: 'the card stayed over a changed document');
+    expect(_protectedNow(bench), 4, reason: 'the act on the card reached the other three');
+    final leaves = bench.payload!.text;
+    for (final account in ['9999 000 01', '9999 000 02', '9999 000 03', '9999 000 04']) {
+      expect(leaves.contains(account), isFalse, reason: '$account is still in what leaves');
+    }
+    expect(leaves.contains('42 500'), isTrue, reason: 'an amount was swallowed');
+
+    // **And the offer is not made about lines the word is not in.** The cell's
+    // order is read from its **own** line, so a card over a word outside the
+    // hold would offer to protect a column he never pointed at. Hold the last
+    // line alone and ask about the first one.
+    await tester.tapAt(_gutterAt(tester, 4));
+    await settle(tester, rounds: 12);
+    expect(bench.linesHold!.lines, 1, reason: 'the hold is not one line');
+    await tester.tapAt(_whereIs(tester, at + 2));
+    await settle(tester, rounds: 16);
+    expect(find.byType(WhySheet), findsOneWidget, reason: 'the question went unanswered');
+    expect(find.widgetWithText(ZButton, 'Protect this column in the line held'), findsNothing,
+        reason: 'the card offered an act about a line this word is not on');
   });
 
   // --------------------------------------------- 7 · a row that wraps

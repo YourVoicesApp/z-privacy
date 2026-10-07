@@ -842,7 +842,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "takes that line, and the core says what is in it" \
          "protects that cell in every held line" \
          "between two columns says why" \
-         "a wrapped row still presses the cell"; do
+         "a wrapped row still presses the cell" \
+         "carries the column act, so no press is wasted"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

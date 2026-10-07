@@ -34,6 +34,19 @@ List<int> lineStarts(String text) {
   return out;
 }
 
+/// Which logical line an offset falls on, counting from zero.
+///
+/// One implementation, read by the press that decides whether it is inside the
+/// held lines and by the card that offers the act for them. Two places that can
+/// disagree about the same fact is one place already wrong.
+int lineOfOffset(String text, int offset) {
+  final starts = lineStarts(text);
+  for (var i = starts.length - 1; i >= 0; i--) {
+    if (offset >= starts[i]) return i;
+  }
+  return 0;
+}
+
 /// Where every logical line of the drawn text sits, and how tall the whole of
 /// it is.
 class GutterLayout {
