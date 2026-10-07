@@ -74,6 +74,15 @@ String humanMessage(Object error) {
     ApiError_DocumentRefused(:final reason) => _document(reason),
     ApiError_BadSpan() =>
       'That selection could not be read. Try selecting the words again.',
+    // 046/Q. **Why, and not merely that it will not** (the lead's condition):
+    // the press was read without trouble, so «could not be read» would be
+    // false, and the person's next move is to press on a value rather than to
+    // press again in the same place. Snapping to the nearest cell would have
+    // needed no sentence at all — and would have been the app deciding which
+    // column he meant.
+    ApiError_BetweenColumns() =>
+      'That press landed in the space between two columns, so it names no '
+          'value — and Z Privacy will not choose a column for you.',
     ApiError_UnknownToken() =>
       'That protected value is not in this conversation.',
     ApiError_NothingToSend() =>

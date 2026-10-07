@@ -1,6 +1,6 @@
 // 046/Q · the line is the unit, and a column is reached by example.
 //
-// **The owner, 8 October:** «بشأن الأعمدة، نحن لا نحتاج الأعمدة. نعتمد فقط على
+// **The owner, 7 October:** «بشأن الأعمدة، نحن لا نحتاج الأعمدة. نعتمد فقط على
 // الأسطر — في حال تحديد الكل نحسب كم سطر في النص.»
 //
 // He cancelled the column rule 038-G item 6 after it had been measured, and
@@ -323,8 +323,15 @@ fn a_click_outside_a_cell_is_refused() {
     let s = scanned(TINY, "en");
     // The three spaces in the middle of the first line.
     let gap = Span { start: 2, end: 4 };
+    //
+    // **Its own type, and not `BadSpan`.** `BadSpan`'s sentence is «that
+    // selection could not be read», which is true of a span inside a character
+    // and false of this: the span was read perfectly and there is simply no
+    // value where it points. The lead's condition, 7 October: the sentence must
+    // say *why* the app cannot choose, not merely that it will not — and a
+    // screen can only say that if the type it is given says it.
     match protect_cell_in_lines(s, gap, 0, 1, Scope::Conversation, Kind::Custom) {
-        Err(ApiError::BadSpan { reason }) => assert!(reason.contains("inside a cell"), "{reason}"),
+        Err(ApiError::BetweenColumns) => {}
         other => panic!("a click between columns chose a column anyway: {other:?}"),
     }
     close_session(s).ok();

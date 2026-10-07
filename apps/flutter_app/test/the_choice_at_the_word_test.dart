@@ -15,11 +15,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zprivacy/core/palette.dart';
+
+import 'drawn_document.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/bits.dart';
-import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -59,19 +59,17 @@ Future<void> _pump(WidgetTester tester, Workbench bench, Ground ground, {VoidCal
   await settle(tester);
 }
 
-/// Where a waiting word stands on the screen.
+/// Where a waiting word stands on the screen — taken from the text as it is
+/// drawn. See `drawn_document.dart` for why this file no longer lays the
+/// document out for itself.
 Offset _atSuggestion(WidgetTester tester, Workbench bench) {
   final waiting = bench.suggested.first;
-  final box = tester.renderObject<RenderBox>(find.byType(OriginalText).first);
-  final painter = TextPainter(
-    text: TextSpan(text: bench.document!.text, style: Zc.document),
-    textDirection: TextDirection.ltr,
-  )..layout(maxWidth: box.size.width);
-  final rect = painter
-      .getBoxesForSelection(TextSelection(baseOffset: waiting.span.start, extentOffset: waiting.span.end))
-      .first
-      .toRect();
-  return box.localToGlobal(rect.center);
+  return whereIsInDocument(
+    tester,
+    'Nordstern',
+    waiting.span.start,
+    span: waiting.span.end - waiting.span.start,
+  );
 }
 
 void main() {

@@ -193,6 +193,19 @@ sealed class ApiError with _$ApiError implements FrbException {
   /// and there is not one. Named so a press that cannot keep its promise cannot
   /// look like success.
   const factory ApiError.vaultRequired() = ApiError_VaultRequired;
+
+  /// **A press in the whitespace between two columns** (046/Q). The span was
+  /// read without trouble; there is simply no value where it points, and
+  /// resolving it to the nearest cell would be the app choosing a column for
+  /// the person.
+  ///
+  /// Not `BadSpan`: that one means a selection this crate could not read — out
+  /// of range, reversed, or cut through a character — and its sentence tells
+  /// the person to select again, which is wrong advice here. The same
+  /// reasoning that split `ImportRefused` on 30 September: a different story
+  /// needs a different type, because the screen can only say why if the type
+  /// says why.
+  const factory ApiError.betweenColumns() = ApiError_BetweenColumns;
 }
 
 enum CredentialState {

@@ -135,7 +135,41 @@ Two things the measurement corrected while this was built:
 * `line_selection(0, 999)` on a nine-line document answered **`lines: 1000`**. It checked the first line number and not the last — a number shaped like a fact, which is the one thing this product may never print. Found by the function's own test, on the end nobody thinks about.
 * A click in the **whitespace between two columns** names no cell. It is refused in words rather than resolved to the nearest one: choosing a column for the person is the inference this whole design exists to avoid.
 
+## 8 · The gesture, as the lead placed it — and the two pixels that nearly cost a column
+
+His decision, 7 October: **lines are selected in a gutter, words are selected in the text.** A line-number gutter down the left of the document column — click a number for one line, drag for a range, a control at its head for all of them — and nothing in the text's own behaviour changes, so 041-K's word selection and the question a mark answers are untouched. No mode, no modifier key, nothing to be told about. It also answers something the owner has asked for twice in other words: he can see where he is in a long document.
+
+What it draws and what it refuses:
+
+| | |
+|---|---|
+| the three numbers | «8 lines · 25 protected in them · 0 open», from `line_selection`, said **before** any press |
+| the act | one press on a value inside the held lines, **no confirmation** — only an act that leaves values in the clear asks |
+| the exception | a press on a word **already protected** still asks «why is this protected?»: for that cell the act has nothing left to do |
+| scope and kind | `conversation`, and the kind is **the core's own reading of the cell he pressed** — the example names the kind as well as the column |
+| the gap between columns | refused in a sentence that says *why the app cannot choose*, never snapped to the nearest cell |
+| releasing it | only a press. An act leaves the lines held, so the next column is one press away; a rescan does not move them either |
+
+**And two defects of my own, both found by the tests that were written to catch exactly them.**
+
+*A drag from line 1 to line 4 held lines **2** to 4.* Flutter's `GestureDetector` defaults to `DragStartBehavior.start`, which reports the point where a drag was *recognised* — twenty pixels past the press, which on a twenty-five-pixel line is the next one. A person who presses line 1 and pulls down to line 4 means four lines, and losing the first of them is the off-by-one family this project keeps finding.
+
+*A press meant for an account number protected the invoice reference at the far end of the line — in three rows at once.* The gutter first measured the lines with a `TextPainter` of its own, given the same spans and the same width as the screen. `RenderEditable` lays its text out at the width it is given **less a three-pixel caret margin** (`_kCaretGap + cursorWidth`, both private to Flutter). Three pixels moved a word to the next row; four wrapping rows became seven; and the press came back as an offset on another line of the document.
+
+```text
+    the owner's wrapping sheet, 714.5 px wide
+        drawn by the screen      400 px tall      16 rows
+        measured by my painter   325 px tall      13 rows
+        the cost                 a protection in the wrong place, three times over
+```
+
+The fix is not the constant. There is now **one source of geometry and it is the drawing**: the gutter reads every line's top from the `RenderEditable` itself, and a press asks that same object `getPositionForPoint`. A private constant that can change under us without a compile error is not a thing to copy into our file.
+
+Measured, so it is paid once and not per frame: **3 000 lines read in 30 ms**, kept until the spans or the drawn size really change; and the numbers are painted with the canvas's own clip, so a 600-pixel window draws **under 40** of 5 000 numbers.
+
+The test that found the second defect is the one worth keeping in mind: a sheet whose rows **fit on one line proves nothing about width**, because laying such a document out three pixels too wide moves no offset at all. Measured — the press test passes against the defect on the short sheet. It took a document that wraps.
+
 ## Not in this paper
 
-- The screen's gesture for selecting lines. The core answers «how many lines, how many protected, how many open» and performs the act; drawing the selection is the next item and is not built.
 - Anything Arabic. The owner's priority, 7 October: not needed at present. The 045 debts stay exactly as they are, with their tests.
+- A table separated by a **single** space. §5's reader debt stands, and every gap the owner's own reader emits is two.

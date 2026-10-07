@@ -1208,6 +1208,10 @@ class _ColumnsState extends State<_Columns> {
                     : Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // **What a selection of lines is worth, before any
+                          // press** (046/Q). Above the acts, because it is the
+                          // reason one of them is about to be worth pressing.
+                          if (bench.lines != null) _LineBand(bench: bench),
                           if (widget.said != null) _Said(widget.said!),
                           ActsBar(bench: bench, ground: ground, onSay: widget.onSay),
                           // **What should the model do with this?** (046/N.)
@@ -1237,6 +1241,12 @@ class _ColumnsState extends State<_Columns> {
                           onAsk: (mark) => _ask(inner, bench, doc, mark),
                           // And tapping one that is still waiting answers it.
                           onChoose: widget.onChoose,
+                          // 046/Q — lines are taken in the gutter, words in
+                          // the text, so neither gesture has to ask which one
+                          // a press meant.
+                          heldLines: bench.lines,
+                          onLines: (from, to) => unawaited(bench.holdLines(from, to)),
+                          onColumn: (offset) => unawaited(_column(bench, offset)),
                         ),
                       ),
               ),
@@ -1299,6 +1309,42 @@ class _ColumnsState extends State<_Columns> {
     );
   }
 
+  /// **One press, and the same cell is protected down every held line.**
+  ///
+  /// No dialog: the lead's ruling of 7 October, resting on the asymmetry L
+  /// established — only an act that leaves values **in the clear** asks, and
+  /// asks with the number in the sentence. Protecting is never a leak, so it
+  /// may happen on one press.
+  ///
+  /// A press in the gap between two columns comes back as a refusal with its
+  /// own name, and `Workbench` turns it into the sentence that says why the app
+  /// cannot choose a column. Nothing is snapped to the nearest cell.
+  Future<void> _column(Workbench bench, int offset) async {
+    final outcome = await bench.protectColumnAt(offset);
+    if (outcome == null) {
+      // The core refused, and the refusal is already worded. Say it where the
+      // acts say everything else, so a press that did nothing cannot look like
+      // a press that was not noticed.
+      final trouble = bench.trouble;
+      if (trouble != null) widget.onSay(trouble);
+      return;
+    }
+    widget.onSay(switch (outcome) {
+      ProtectOutcome_Applied(:final token, :final places) => switch (places) {
+        0 => 'Every cell in that column was already protected.',
+        1 => 'Protected one cell, as $token.',
+        _ => 'Protected $places cells down that column, the first as $token.',
+      },
+      ProtectOutcome_AlreadyProtected(:final token, :final source) =>
+        'Already protected as $token, by ${sourceName(source).toLowerCase()}.',
+      ProtectOutcome_BelongsToEntity(:final entity, :final token) =>
+        'That belongs to $entity and keeps its token $token.',
+      ProtectOutcome_Snapped(:final spans) =>
+        'That cell cuts into protected text, so nothing changed. It would snap to '
+            '${spans.length} whole ${spans.length == 1 ? "item" : "items"}.',
+    });
+  }
+
   /// Where the handle was left, kept for the next time this document is open.
   ///
   /// Written through the core's settings, which is the only durable per-device
@@ -1311,6 +1357,73 @@ class _ColumnsState extends State<_Columns> {
     final rounded = percent.round().clamp(20, 80);
     if (rounded == config.originalPanePercent) return;
     unawaited(widget.ground.saveConfig(config.with_(originalPanePercent: rounded)));
+  }
+}
+
+/// **«8 lines · 25 protected in them · 0 open»** — what a selection of lines
+/// holds, said before anything is pressed (046/Q).
+///
+/// Not one of these three numbers is worked out here. They come back from
+/// `line_selection` in Rust, because they are facts about findings, and a
+/// screen that counted them would be a second source for a number the core
+/// already holds — the two would disagree the first time a rescan moved one.
+///
+/// The way out of a selection is here rather than at the head of the gutter,
+/// because this band is under the document and always on screen while the
+/// gutter's head scrolls away. Nothing releases the lines on its own: an act
+/// leaves them held, so the next column is one press away.
+class _LineBand extends StatelessWidget {
+  const _LineBand({required this.bench});
+
+  final Workbench bench;
+
+  static const band = ValueKey<String>('held-lines-band');
+
+  @override
+  Widget build(BuildContext context) {
+    final hold = bench.linesHold;
+    return Container(
+      key: _LineBand.band,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+      decoration: const BoxDecoration(
+        color: Zc.clayWash,
+        border: Border(top: BorderSide(color: Zc.clayEdge)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  // Before the core has answered it says nothing rather than a
+                  // zero, by the same rule `kindName` follows: a number that is
+                  // not known yet is not «none».
+                  hold == null
+                      ? 'Reading what those lines hold…'
+                      : hold.lines == 1
+                            ? '1 line · ${hold.protected} protected in it · ${hold.open} open'
+                            : '${hold.lines} lines · ${hold.protected} protected in them · '
+                                  '${hold.open} open',
+                  style: Zc.small.copyWith(color: Zc.clayDeep, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Press a value to protect the same cell in every held line.',
+                  style: Zc.tiny.copyWith(letterSpacing: 0),
+                ),
+              ],
+            ),
+          ),
+          ZButton(
+            label: 'Let the lines go',
+            icon: Icons.close,
+            onPressed: bench.releaseLines,
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -10,6 +10,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'drawn_document.dart';
 import 'package:flutter/material.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -496,19 +498,10 @@ void _p27() {
     // `SelectableText` one is out-voted by the text's drag-selection the
     // moment a mouse slips two pixels. The press is a pointer event now, so
     // this test presses.
-    final column = tester.renderObject<RenderBox>(find.byType(OriginalText).first);
-    final layout = TextPainter(
-      text: TextSpan(text: bench.document!.text, style: Zc.document),
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: column.size.width);
     final at = bench.document!.text.indexOf(word);
-    final whereItIs = column.localToGlobal(
-      layout
-          .getBoxesForSelection(TextSelection(baseOffset: at, extentOffset: at + word.length))
-          .first
-          .toRect()
-          .center,
-    );
+    // From the drawing, not from a painter built here — see
+    // `drawn_document.dart`.
+    final whereItIs = whereIsInDocument(tester, word, at, span: word.length);
     await tester.tapAt(whereItIs, kind: PointerDeviceKind.mouse);
     await settle(tester);
     expect(find.byType(WhySheet), findsOneWidget, reason: 'the Original mark did not open Why');
