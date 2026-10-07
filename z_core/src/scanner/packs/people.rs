@@ -218,14 +218,30 @@ fn roles_beside_a_name(
             if !role_follows {
                 continue;
             }
-            // Walk back over the capitalised words that end here.
-            let mut first = i;
-            while first > 0 {
-                let Some(prev) = words.get(first - 1) else { break };
-                if !name_shaped(prev.text, pack) || prev.newline_before || prev.text.ends_with(',') {
-                    break;
-                }
-                first -= 1;
+            // **The two words that end at the comma** — and that is the whole
+            // of it (046/C).
+            //
+            // This used to walk back over every name-shaped word and then ask
+            // `pair_at` for the pair **starting** there, which is a different
+            // pair the moment the run is longer than two. Measured, on German
+            // prose with no label rule in it at all:
+            //
+            // ```text
+            //     Der Vorgang: Thomas Müller, Geschäftsführer
+            //         └── «Vorgang: Thomas» offered as a person ──┘
+            // ```
+            //
+            // Two mistakes in one line, both mine from 038-B/2: the walk-back
+            // crossed a **label** («Vorgang:», «Ansprechpartner:»), which is a
+            // word ending in a colon and never a name; and the pair taken was
+            // the first two of the run rather than the two the comma ends.
+            //
+            // There is nothing for a walk-back to do: this shape is two words,
+            // so it is the comma's word and the one before it, or it is not
+            // this shape.
+            let Some(first) = i.checked_sub(1) else { continue };
+            if words.get(first).is_some_and(|w| is_label(w.text) || w.newline_before) {
+                continue;
             }
             // **The comma does not carry as much.** A role after a comma is
             // weaker evidence than a role asserting with a verb, and this shape

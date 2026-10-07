@@ -308,6 +308,51 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             if fits && j - value_start < 8 {
                 last = Some(j);
                 j += 1;
+                // **A name ends at a comma** (046/C).
+                //
+                // `bare()` strips the comma before the word is judged, so
+                // «Whitfield,» reads as «Whitfield» and the run kept going
+                // through «Finance Director» — one Person finding with a job
+                // title inside the token, which is what the lead measured on
+                // both English film documents. The title is nobody's secret
+                // and the model needs it to write the sentence, exactly as it
+                // needs the honorific this run already steps over.
+                //
+                // The word **before** the comma is taken, because that is
+                // where the name ends; `trimmed_end` then leaves the comma
+                // out of the span.
+                //
+                // Only for a name. A grouped value writes an IBAN in groups
+                // and a number may be written «1,234» — neither is a sentence
+                // that a comma ends.
+                //
+                // **And only once the name is already whole**, which is the
+                // line measurement drew rather than taste. «Ansprechpartner:
+                // Müller, Thomas» is the German reversed pair, and behind a
+                // label it is covered by **this** rule and by nothing else —
+                // `reversed_pairs` wants the surname at the start of a line,
+                // so stopping at every comma left «Thomas» in the clear beside
+                // a protected «Müller», which is the exact shape of the defect
+                // the owner met in 038-I. A comma after one word is the
+                // reversed shape; after two it is a job title.
+                //
+                // What this costs, named so it is a decision: «Label:
+                // Surname, Role» — one name and a role — keeps the role inside
+                // the name. Measured on all four film documents: not one
+                // writes that shape, and
+                // `a_name_ends_where_the_name_ends.rs` pins it.
+                //
+                // And it cannot reach the two rules that read across a comma
+                // on purpose: the German reversed pair «Nachname, Vorname» and
+                // the Swedish «X, <role>» are in `packs/people.rs`, not in
+                // this label path. Both are measured in
+                // `a_name_ends_where_the_name_ends.rs` rather than trusted.
+                if matches!(rule.validator, Validator::Name | Validator::NamePair)
+                    && next.text.ends_with(',')
+                    && j - value_start >= 2
+                {
+                    break;
+                }
             } else {
                 break;
             }
