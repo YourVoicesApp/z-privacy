@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -108,8 +109,101 @@ void main() {
 
     // And the screen says what the core did, with the core's own number.
     expect(find.textContaining('one value replaced'), findsOneWidget);
-    expect(find.textContaining('not here yet'), findsOneWidget,
-        reason: 'the screen promises a conversation it does not have');
+  });
+
+  /// **The sentence a later tidy-up removes as redundant** (046/N).
+  ///
+  /// It is not about this build's shape, which is why it has a test of its own
+  /// and why that test says so here. It is about what a person will otherwise
+  /// assume from «answer 1 of 2» — that the model remembered the earlier
+  /// questions — and the assumption would be **ours to have planted**.
+  /// `history` with roles has been the deferred debt since Phase 4; until it
+  /// lands, each question is asked alone and the screen admits it.
+  ///
+  /// And the pair of sentences is deliberate, because two different things are
+  /// in play: the **request** is replaced, and the **answers** are kept. A line
+  /// saying only «the second question replaces this» is true of the request and
+  /// misleading about what a person can still see.
+  testWidgets('the screen says that each question is asked on its own', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (_, bench) = await _open(tester, 'alone');
+
+    await tester.enterText(find.byKey(_field), 'Summarise it.');
+    await settle(tester, rounds: 2);
+    await tester.tap(find.byKey(_attach));
+    await settle(tester, rounds: 16);
+
+    expect(
+      find.textContaining('the model does not see the earlier ones'),
+      findsOneWidget,
+      reason: 'nothing tells a person the model has no memory of the earlier '
+          'questions — «answer 1 of 2» invites exactly that assumption',
+    );
+    // And the other half of the pair: what is replaced, and what is kept.
+    expect(find.textContaining('a new question replaces the request'), findsOneWidget);
+    expect(
+      find.textContaining('the answers are kept'),
+      findsOneWidget,
+      reason: 'the screen says the request is replaced and is silent about the '
+          'answers, which is the half a person would read as loss',
+    );
+    expect(bench.question, 'Summarise it.');
+  });
+
+  /// **The question at the head of its answer**, and it follows the tab.
+  ///
+  /// The owner asked that the answer appear under the question rather than in a
+  /// third screen, and it never was in a third screen — this panel has been in
+  /// the workspace all along. What was missing was the **legibility of the
+  /// pair**. Quoting the raw sentence above «as the model wrote it» would say
+  /// the model had read a name it never saw, so the head follows the tab.
+  testWidgets('the answer panel quotes the question, in the words of the open tab', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (_, bench) = await _open(tester, 'quoted');
+
+    await tester.enterText(find.byKey(_field), 'What did Thomas Müller earn?');
+    await settle(tester, rounds: 2);
+    await tester.tap(find.byKey(_attach));
+    await settle(tester, rounds: 16);
+
+    // An answer through the door that works offline: the safe text goes out by
+    // hand and comes back. The panel then has something to head.
+    await tester.runAsync(() async {
+      bench.rememberCopiedPayload();
+      await bench.pasteAnswer('They earned 42 500.');
+    });
+    await settle(tester, rounds: 12);
+
+    expect(find.text('You asked'), findsOneWidget,
+        reason: 'the answer does not say which request it answered');
+
+    // **Inside the panel**, and not anywhere on the screen: the field itself
+    // still holds the sentence a person typed, so an unscoped finder was green
+    // for the field rather than for the head. The same trap three other
+    // guards fell into today.
+    // No return type written out: `Finding` is the core's own type and it is
+    // imported here, so annotating this `Finding` compiled and then threw at
+    // run time. Two names, one word, and the compiler had no reason to object.
+    inPanel(String text) => find.descendant(
+          of: find.byType(AnswerPanel),
+          matching: find.textContaining(text),
+        );
+
+    // Restored view: the question as the person typed it, name and all —
+    // because this side of the panel is the side where values come back.
+    expect(inPanel('What did Thomas Müller earn?'), findsOneWidget);
+
+    // The model's view: the question as the model received it. The name is a
+    // token there, or the panel would claim the model read it.
+    await tester.tap(find.text('As the model wrote it'));
+    await settle(tester, rounds: 4);
+    expect(inPanel('Thomas Müller'), findsNothing,
+        reason: 'the model view quotes a name the model never saw');
+    expect(inPanel('__Z_'), findsWidgets);
+    // No `dispose` here: `_open` registered one as a tear-down, and calling it
+    // twice is an error the harness reports as a failure of the test.
   });
 
   testWidgets('taking the request out leaves the document as it was', (tester) async {

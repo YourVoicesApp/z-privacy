@@ -1693,9 +1693,31 @@ class _TheQuestionState extends State<_TheQuestion> {
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.clayDeep),
             ),
             const SizedBox(height: 3),
+            // **Two sentences, because two different things are in play**
+            // (046/N, the lead's wording and the distinction my own report
+            // turned up): the **request** is replaced, and the **answers** are
+            // kept. A line saying only «the second question replaces this» is
+            // true of the request and misleading about what a person can still
+            // see.
             Text(
-              'One request at a time: asking again replaces this one. A '
-              'conversation of several turns is not here yet.',
+              'One request at a time — a new question replaces the request, '
+              'and the answers are kept.',
+              style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
+            ),
+            const SizedBox(height: 3),
+            // **And the one a later tidy-up would delete as redundant.**
+            //
+            // It is not about this build's shape. It is about what a person
+            // will otherwise assume from «answer 1 of 2» — that the model
+            // remembered — and that assumption would be ours to have planted.
+            // `history` with roles is the deferred debt; until it lands, each
+            // question is asked alone, and the screen says so.
+            //
+            // `the_question_is_on_the_screen_test.dart` guards this sentence by
+            // name, for exactly the reason a tidy-up would remove it.
+            Text(
+              'Each question is asked on its own: the model does not see the '
+              'earlier ones.',
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
             ),
           ],

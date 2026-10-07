@@ -175,6 +175,41 @@ class _AnswerPanelState extends State<AnswerPanel> {
             ),
           ),
           Container(height: 1, color: Zc.lineSoft),
+          // **The question at the head of its answer** (046/N).
+          //
+          // The owner asked that the answer appear under the question and not
+          // in a third screen, and it never was in a third screen — this panel
+          // has lived in the workspace all along. What was missing was not
+          // geometry but the **legibility of the pair**: side by side, nothing
+          // said which request this answered. Stacking the panel under the
+          // field would have fought 046/K's centred half for no gain.
+          //
+          // It follows the tab, which is the only honest way to quote it: in
+          // the restored view it is the question **as the person typed it**,
+          // and in the model's view it is the question **as the model received
+          // it**. Showing the raw sentence above «as the model wrote it» would
+          // say the model had read a name it never saw.
+          if (_quoted(bench).isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              decoration: const BoxDecoration(
+                color: Zc.warmCard,
+                border: Border(bottom: BorderSide(color: Zc.lineSoft)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('You asked', style: Zc.tiny.copyWith(color: Zc.ink4)),
+                  const SizedBox(height: 3),
+                  SelectableText(
+                    _quoted(bench),
+                    style: Zc.small.copyWith(color: Zc.ink2),
+                    maxLines: 4,
+                  ),
+                ],
+              ),
+            ),
           // A column fills its height; a page grows to the text. The builder is
           // the same one either way.
           _Fill(
@@ -313,6 +348,14 @@ class _AnswerPanelState extends State<AnswerPanel> {
       ),
     );
   }
+
+  /// The question this answer answered, in the words the current tab is about.
+  ///
+  /// Empty when there was no request: a document may be sent with no
+  /// instruction, and a head that said «You asked» over nothing would be a
+  /// sentence about something that did not happen.
+  String _quoted(Workbench bench) =>
+      _restored ? bench.question.trim() : bench.questionSafe.trim();
 
   /// The restored string holds the real values. The clipboard is the system's,
   /// so writing it is named and confirmed every time — not a tutorial, a
