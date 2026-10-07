@@ -145,10 +145,12 @@ What it draws and what it refuses:
 |---|---|
 | the three numbers | «8 lines · 25 protected in them · 0 open», from `line_selection`, said **before** any press |
 | the act | one press on a value inside the held lines, **no confirmation** — only an act that leaves values in the clear asks |
-| the exception | a press on a word **already protected** still asks «why is this protected?»: for that cell the act has nothing left to do |
+| the exception | a press on a word **already protected** asks «why is this protected?» **and the card carries the act** |
 | scope and kind | `conversation`, and the kind is **the core's own reading of the cell he pressed** — the example names the kind as well as the column |
 | the gap between columns | refused in a sentence that says *why the app cannot choose*, never snapped to the nearest cell |
 | releasing it | only a press. An act leaves the lines held, so the next column is one press away; a rescan does not move them either |
+
+**The exception, and the case that settled it.** The lead, 7 October: suppose one of the eight account numbers is already protected because it matched a value in the owner's list, and *that* is the cell he presses, meaning «do this column». A press that can mean only one of the two hands him an explain card and loses the instruction, with no hint that the act was there. So the card answers the question **and** carries it: «Protect this column in the 8 held lines», under the answer rather than among Close and Remove and Forget — those three are about the one word, this one is about the column he was pointing at. The offer is absent when the word stands **outside** the held lines, because the cell's order is read from its own line and offering it there would protect a column he never pointed at. A word still *waiting* is unchanged: the act is the answer.
 
 **And two defects of my own, both found by the tests that were written to catch exactly them.**
 

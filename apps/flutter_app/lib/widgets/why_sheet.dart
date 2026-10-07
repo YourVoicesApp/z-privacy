@@ -29,6 +29,32 @@ const kRemoveHere = 'Remove protection here';
 const kForgetThisProfile = 'Forget from this profile';
 const kForgetEverywhere = 'Forget everywhere';
 
+/// 046/Q — **the act a press on an already-protected cell also meant.**
+///
+/// The lead's ruling, 7 October, and the case that decided it: one of the eight
+/// account numbers on the owner's sheet is already protected because it matched
+/// a value in his list, and *that* is the cell he presses, meaning «do this
+/// column». The press is not wrong and the card is not wrong — what would be
+/// wrong is a press that can mean only one of the two. So the card answers the
+/// question **and** carries the instruction, and nothing is chosen for him.
+///
+/// The count is in the name, by the same rule the three acts above follow:
+/// action and scope must be readable from the act itself.
+String columnActLabel(int lines) => lines == 1
+    ? 'Protect this column in the line held'
+    : 'Protect this column in the $lines held lines';
+
+/// What the card may do about the lines held behind it.
+class ColumnOffer {
+  const ColumnOffer({required this.lines, required this.act});
+
+  /// How many lines are held — the core's number, not a count made on a screen.
+  final int lines;
+
+  /// Protect the same cell in every one of them.
+  final Future<void> Function() act;
+}
+
 class WhySheet extends StatefulWidget {
   const WhySheet({
     super.key,
@@ -37,6 +63,7 @@ class WhySheet extends StatefulWidget {
     required this.span,
     required this.onChanged,
     required this.onUnprotect,
+    this.column,
   });
 
   final Explanation why;
@@ -50,6 +77,10 @@ class WhySheet extends StatefulWidget {
   /// Called when something was forgotten, so the document can be scanned again
   /// with the knowledge gone.
   final Future<void> Function() onChanged;
+
+  /// Present only when lines are held **and this word stands inside them**, so
+  /// the card never offers an act about a column it is not looking at.
+  final ColumnOffer? column;
 
   @override
   State<WhySheet> createState() => _WhySheetState();
@@ -118,6 +149,38 @@ class _WhySheetState extends State<WhySheet> {
                   padding: const EdgeInsets.only(left: 25, bottom: 4),
                   child: Text(line, style: Zc.small),
                 ),
+
+              // **And the act the press also meant** — under the answer,
+              // where the lead put it. Not down among Close and Remove and
+              // Forget: those three are about this one word, and this one is
+              // about the column he was pointing at.
+              if (widget.column != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
+                  decoration: Zc.panel(fill: Zc.clayWash, edge: Zc.clayEdge, radius: 9),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ZButton(
+                        label: columnActLabel(widget.column!.lines),
+                        tint: Zc.clay,
+                        onPressed: () async {
+                          await widget.column!.act();
+                          if (context.mounted) Navigator.of(context).pop();
+                        },
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        'The same cell of every held line, each value its own token. This one '
+                        'is protected already and stays as it is.',
+                        style: Zc.tiny.copyWith(letterSpacing: 0),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 18),
               _Row('What it is', kindName(why.kind)),

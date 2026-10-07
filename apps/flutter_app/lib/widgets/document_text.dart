@@ -258,7 +258,7 @@ class _OriginalTextState extends State<OriginalText> {
     if (held != null && column != null) {
       final lo = held.from < held.to ? held.from : held.to;
       final hi = held.from < held.to ? held.to : held.from;
-      final line = _lineOf(offset);
+      final line = lineOfOffset(text, offset);
       final protectedHere = marked.any((m) => m.state != MarkState.suggested);
       if (line >= lo && line <= hi && !protectedHere) {
         column(offset);
@@ -274,15 +274,6 @@ class _OriginalTextState extends State<OriginalText> {
       }
       return;
     }
-  }
-
-  /// Which logical line an offset falls on, counting from zero.
-  int _lineOf(int offset) {
-    final starts = lineStarts(text);
-    for (var i = starts.length - 1; i >= 0; i--) {
-      if (offset >= starts[i]) return i;
-    }
-    return 0;
   }
 
   List<InlineSpan> _keptSpans() {

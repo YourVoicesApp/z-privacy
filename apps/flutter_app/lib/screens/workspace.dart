@@ -26,6 +26,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/widgets/line_gutter.dart';
 import 'package:zprivacy/widgets/name_review.dart';
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
@@ -1238,7 +1239,8 @@ class _ColumnsState extends State<_Columns> {
                           ),
                           // Tapping a protected word asks the question this
                           // whole layer exists to answer.
-                          onAsk: (mark) => _ask(inner, bench, doc, mark),
+                          onAsk: (mark) =>
+                              _ask(inner, bench, doc, mark, column: _offerFor(bench, doc, mark)),
                           // And tapping one that is still waiting answers it.
                           onChoose: widget.onChoose,
                           // 046/Q — lines are taken in the gutter, words in
@@ -1306,6 +1308,32 @@ class _ColumnsState extends State<_Columns> {
           ],
         );
       },
+    );
+  }
+
+  /// **What the card may offer**, when the word it explains stands inside the
+  /// held lines (046/Q).
+  ///
+  /// The lead's ruling, 7 October: a press on an already-protected cell asks
+  /// its question **and** carries the instruction, because on the owner's own
+  /// sheet the cell he presses may be the one his list already protected — and
+  /// a press that can mean only one of the two loses his intent with no hint
+  /// that the act was there.
+  ///
+  /// `null` when the word is outside the held lines, because the cell's order
+  /// is read from **its own** line: offering the act for a word on another line
+  /// would protect a column he never pointed at.
+  ColumnOffer? _offerFor(Workbench bench, DocumentView doc, Mark mark) {
+    final held = bench.lines;
+    final hold = bench.linesHold;
+    if (held == null || hold == null) return null;
+    final lo = held.from < held.to ? held.from : held.to;
+    final hi = held.from < held.to ? held.to : held.from;
+    final line = lineOfOffset(doc.text, mark.span.start);
+    if (line < lo || line > hi) return null;
+    return ColumnOffer(
+      lines: hold.lines,
+      act: () => _column(bench, mark.span.start),
     );
   }
 
@@ -1462,8 +1490,9 @@ Future<void> _ask(
   BuildContext context,
   Workbench bench,
   DocumentView doc,
-  Mark mark,
-) async {
+  Mark mark, {
+  ColumnOffer? column,
+}) async {
   final why = await bench.why(mark.span);
   if (why == null || !context.mounted) return;
   await showDialog<void>(
@@ -1474,6 +1503,7 @@ Future<void> _ask(
       span: mark.span,
       onChanged: bench.rescan,
       onUnprotect: (span) async => bench.unprotect(span),
+      column: column,
     ),
   );
 }
