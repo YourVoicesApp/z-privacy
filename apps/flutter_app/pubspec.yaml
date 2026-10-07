@@ -7,11 +7,22 @@ environment:
   sdk: ^3.12.2
 
 dependencies:
+  # sha256 for the PDF's footer (046/O). Pure Dart, BSD-3-Clause, and already
+  # under `pdf` — declared here because this code calls it directly.
+  crypto: ^3.0.0
   file_selector: ^1.1.0
   flutter:
     sdk: flutter
   flutter_rust_bridge: 2.13.0
   freezed_annotation: ^3.1.0
+  # «Save as PDF» (046/O). Pure Dart — no native library, no platform channel,
+  # nothing to build. `printing`, its sibling, is the one with the native half
+  # and a print dialog; it is deliberately **not** here. Apache-2.0.
+  #
+  # G5a asks for no network package: this one speaks no protocol, and neither
+  # does anything it brings (archive, barcode, bidi, image, path_parsing,
+  # vector_math, xml). G5b still holds in the usual way — the UI names no socket.
+  pdf: ^3.13.0
   z_bridge:
     path: rust_builder
 
@@ -29,3 +40,10 @@ flutter:
     # `brand/source.png` by `scripts/build_brand.py` and never edited by hand —
     # a gate rebuilds them into a temp directory and compares the bytes.
     - assets/brand/
+    # DejaVu Sans, embedded in every saved PDF (046/O). Without an embedded font
+    # a PDF promises Helvetica and gets whatever the reader has: ä ö ü and å ä ö
+    # come out as the wrong letter or as nothing, and the file would be lying
+    # about its own text. 759,720 bytes — the licence is in
+    # packaging/linux/third-party/dejavu-LICENSE.txt and it is named in
+    # NOTICES.txt beside the others.
+    - assets/fonts/

@@ -142,6 +142,123 @@ Creating a client and putting this document in it must be two clicks from the do
 
 ---
 
+## O · Save the protected text as a PDF (ADDED 7 Oct, the owner's word; built by the designer seat)
+
+**The owner, 7 October:** «زرُّ النسخ نحافظ عليه كما هو، ونضيف إليه خيار نسخة PDF ليقوم التطبيق بحفظ النص في الجهاز كملف PDF.»
+
+So «Copy Protected» in `send_sheet.dart` is untouched, and a second act stands
+beside it: **Save as PDF**, writing the protected text to a file on this
+machine. Neither act sends anything.
+
+**Built, with the numbers measured on `202cd88`:**
+
+- `apps/flutter_app/lib/core/protected_pdf.dart` — the writer. Dart, because
+  G15 allows the filesystem in `z_core/src` only on the vault's own marked
+  lines; the core gives the text and the numbers, Dart writes the file.
+- `pdf 3.13.1` (Apache-2.0), pure Dart — **not** its sibling `printing`, which
+  is the half with the native plugin. G5a reads for network packages and this
+  is none; nor is anything it brings.
+- **DejaVu Sans embedded**, 759,720 bytes of asset. Without an embedded font a
+  PDF promises Helvetica and gets whatever the reader has: ä ö ü, å ä ö and ß
+  come out as the wrong letter or as nothing, and the file lies about its own
+  text. Only a subset of it reaches each PDF. Chosen over a smaller face
+  because it also carries Arabic, so this is not a decision to take twice.
+- **One footer line**, and only what a reader can check: the build stamp
+  (`coreVersion()`, verbatim), how many places were replaced and how many
+  values by kind, and a **sha256 of the protected text** — the same string Copy
+  Protected copies, so the claim is checkable with `sha256sum` and nothing of
+  ours. No logo, no serial, no seal.
+- **No `/Info` dictionary at all**: no title, no author, no creation timestamp.
+  This file exists to be handed to a model or a person, and a document's name
+  is not protected text — «Müller-Scheidung» in `/Title` would leave the device
+  inside the very file made to stop that. The name stays on the local file
+  name, where the owner asked for it and where it does not travel.
+- `~/Documents/zprivacy/<document>-protected-<date>.pdf`, **said in full on the
+  screen** after the write, and never an overwrite: a second save becomes `-2`.
+
+**The test, and why it is not a byte search.** A PDF with an embedded TrueType
+font writes its text as glyph indices in a CID font, so `grep` finds «Markus
+Weber» nowhere in the file even when the page shows it, compressed or not.
+`a_pdf_keeps_the_promise_test.dart` keeps that demonstration — an original
+written in the clear, uncompressed, invisible to the byte search — because the
+next person will reach for that search and must see it fail. The real guard
+reads the file back through **our own PDF reader** (`z_core::documents::pdf`,
+which decodes `Identity-H` through the font's `/ToUnicode` map) and asserts no
+original value comes out, with a control proving the same reader **does** find a
+planted one. Seven tests, and **five breaks on purpose**:
+
+| broken | what happened |
+|---|---|
+| the original written instead of the payload | red — «Markus Weber» is readable in the PDF |
+| the digest dropped from the footer | red — the sha256 is not in the file |
+| an empty body | red — the control fired first: «our reader cannot read our own PDF» |
+| the disk's own catch deleted | **stayed green.** The catch-all below it also says «could not», so the test asserted «a failure is reported» while claiming to assert «the disk's failure is reported by name». Strengthened to assert the folder is named — then red. |
+| the body no longer a spanning widget | red — 120 lines came out as one page |
+
+The fourth is the one worth keeping: a guard green for a reason broader than its
+own subject, found only by breaking it. It is the third of this family this week.
+
+**Confirmed outside our own code**, on a real one-page letter: `pdftotext`
+(poppler) extracts the tokens whole, every umlaut and Nordic letter
+(ä ö ü ß Ä Ö Ü å ä ö Å Ä Ö æ ø é è ñ ç) and **none of the seven originals**; and
+`sha256sum` over the protected text answers the digit the footer states,
+`df7530952c84…ede7fc8`. The page was rendered and looked at, not inferred.
+
+**One defect of the feature, found by its own test and fixed in the same
+commit:** `pasteAnswer` refuses with «Copy the safe text first» unless a payload
+is bound, so a person who saved the PDF, took it to a model and came back was
+told to do the thing they had just done. The act is taking the text out, not the
+clipboard, so a save that happened binds it too.
+
+**What it cost in bundle size**, release, measured against `202cd88`:
+
+| | before | after | added |
+|---|---|---|---|
+| bundle | 37,161,720 | 39,655,958 | **+2,494,238** |
+| `lib/libapp.so` (Dart AOT) | 6,292,368 | 8,029,072 | +1,736,704 |
+| `data/flutter_assets` | 3,114,056 | 3,871,590 | +757,534 |
+
+The font is 0.72 MiB of that and the Dart code 1.66 MiB: `pdf`'s widget layer
+reaches `image` unconditionally, so tree-shaking keeps it. Measured in the
+shipped `libapp.so`: `image` survives (155 references), while `barcode`, `qr`,
+`svg`, `xml`, `posix` and `ffi` are all shaken out — so the two packages in the
+tree that call libc are **not in the binary**. Writing the content stream by
+hand against `package:pdf/pdf.dart` alone would win most of the 1.66 MiB back
+and cost text layout and font subsetting. **A megabyte is the owner's to
+accept, not ours to spend quietly** — it is his call, and a separate task.
+
+## What is NOT delivered, measured rather than assumed
+
+**Arabic is not supported, and it fails in the worse of the two ways.** The
+font carries the glyphs, but `pdf` runs its shaping and its bidi pass only when
+the text direction is `rtl`, and the writer sets none. Rendered and looked at:
+«السيد» draws as «ديسلا» — the line is laid out left to right and comes out
+**mirrored**. That matters more than «Arabic comes out as nothing» would: a
+page that is visibly empty gets fixed, and a page that is quietly backwards
+does not. The direction belongs per paragraph with the Latin tokens isolated
+inside each RTL run — the same problem 043's S9 board drew — and it is its own
+item.
+
+**The catch-all in `saveProtectedPdf` has no test that reaches it.** The tested
+failure is the disk's, which the branch above it answers; the catch-all exists
+so that a throw from `buildProtectedPdf` cannot leave the button on «Saving…»
+for the rest of the session. Named rather than claimed.
+
+**`~/Documents` is hard-coded**, not read from `XDG_DOCUMENTS_DIR`. On a German
+desktop a person's own documents folder may be `~/Dokumente`. What is created
+here is **our** folder and we create it, so nothing depends on theirs existing,
+and the full path is on the screen — but if the lead wants the XDG name, it is
+a line, and a shell-out to `xdg-user-dir`.
+
+**`rememberCopiedPayload` now understates what it does** — the act is taking
+the text out, and two doors do it. The rename touches four test files and was
+left alone to keep this one item one item.
+
+**Also not in this item:** the question Copy is to ask («for a person, or for
+an AI?»), Print as a sealed envelope, and a logo or a seal in the footer.
+
+---
+
 ## P · A key is set up in Settings, not in the middle of sending (WRITTEN, NOT ORDERED)
 
 **The owner, 7 Oct, offered as cosmetic:** «نقل إعدادات الموديلات إلى قسم الإعدادات بدلاً من جعلها شاشة في وسط السياق.»

@@ -71,7 +71,8 @@ cp -f "$ROOT/packaging/linux/README.txt" "$STAGE/README.txt" || die "no packagin
 # ---------------------------------------------------------------- third party
 mkdir -p "$STAGE/third-party"
 cp -f "$ROOT/site/third-party/flutter-engine-LICENSE.txt" "$STAGE/third-party/" 2>/dev/null
-for f in NOTICES.txt flutter-sdk-LICENSE.txt material-icons-LICENSE.txt; do
+for f in NOTICES.txt flutter-sdk-LICENSE.txt material-icons-LICENSE.txt \
+         dejavu-LICENSE.txt dart-pdf-LICENSE.txt; do
   [ -f "$ROOT/packaging/linux/third-party/$f" ] && cp -f "$ROOT/packaging/linux/third-party/$f" "$STAGE/third-party/"
 done
 # Generated, not copied from September: the crates are whatever this tree

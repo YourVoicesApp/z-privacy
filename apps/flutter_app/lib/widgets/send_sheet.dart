@@ -24,17 +24,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/protected_pdf.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/src/rust/api/core.dart' show coreVersion;
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
 class SendSheet extends StatefulWidget {
-  const SendSheet({super.key, required this.bench, required this.ground});
+  const SendSheet({
+    super.key,
+    required this.bench,
+    required this.ground,
+    this.saveFolder,
+  });
 
   final Workbench bench;
   final Ground ground;
+
+  /// Where «Save as PDF» writes. Null is the product's own place,
+  /// `~/Documents/zprivacy`, and nothing in the product passes anything else —
+  /// a test gives a temporary folder so that running the tests never writes
+  /// into the person's documents.
+  final String? saveFolder;
 
   /// The payload preview — the only region that accepts a wheel on the first page.
   static const previewKey = ValueKey<String>('send-sheet-preview');
@@ -61,6 +74,56 @@ class _SendSheetState extends State<SendSheet> {
   final _previewScroll = ScrollController();
   bool _copied = false;
   bool _pasting = false;
+
+  /// Where the last save went, in full. A path is the whole of the answer to
+  /// «where did it go», so it is shown whole and not as «Saved».
+  String? _savedTo;
+  bool _saving = false;
+
+  /// Write the protected text to a file, and say where it went.
+  ///
+  /// The same text Copy Protected copies, and like Copy it sends nothing. The
+  /// numbers in the footer are the core's: the places are
+  /// `PayloadView.protected_count`, and a kind is counted only for a token that
+  /// actually stands in **this** text — a footer describing the file must be
+  /// about the file.
+  Future<void> _savePdf(PayloadView payload) async {
+    setState(() {
+      _saving = true;
+      _trouble = null;
+      _savedTo = null;
+    });
+    final byKind = <String, int>{};
+    for (final row in widget.bench.tokens) {
+      if (!payload.text.contains(row.token)) continue;
+      final name = widget.ground.nameOfKind(row.kind);
+      byKind[name] = (byKind[name] ?? 0) + 1;
+    }
+    final out = await saveProtectedPdf(
+      text: payload.text,
+      documentName: widget.bench.document?.name ?? '',
+      folder: widget.saveFolder,
+      stamp: PdfStamp(
+        build: coreVersion(),
+        places: payload.protectedCount,
+        byKind: byKind,
+        sha256: sha256OfText(payload.text),
+      ),
+    );
+    // **The act is taking the text out, not the clipboard.** `pasteAnswer`
+    // refuses with «Copy the safe text first» unless a payload is bound, so
+    // without this a person who saved the PDF, took it to a model and came back
+    // would be told to do the thing they had just done — and the door above
+    // promises that restoring works the same either way. Bound only on a save
+    // that happened: a refusal took no text anywhere.
+    if (out.path != null) widget.bench.rememberCopiedPayload();
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      _savedTo = out.path;
+      _trouble = out.trouble;
+    });
+  }
 
   /// Read the clipboard and put it in the answer field. Nothing else.
   ///
@@ -264,9 +327,10 @@ class _SendSheetState extends State<SendSheet> {
             // endpoint (the owner, 30 September).
             title: 'Manual AI',
             what:
-                'Use an AI chat you already have. Copy the text above, paste it into any '
-                'model you like, and bring the answer back here. Restoring works the same '
-                'either way — no account, no key.',
+                'Use an AI chat you already have. Take the text above — to the clipboard, '
+                'or as a PDF saved on this machine — paste it into any model you like, and '
+                'bring the answer back here. Restoring works the same either way — no '
+                'account, no key. Neither way sends anything from here.',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -287,6 +351,16 @@ class _SendSheetState extends State<SendSheet> {
                               if (mounted) setState(() => _copied = true);
                             },
                     ),
+                    // The second way out, and the only difference from the
+                    // first is where the text lands. It writes a file on this
+                    // machine; it opens nothing and sends nothing.
+                    ZButton(
+                      label: _saving ? 'Saving…' : 'Save as PDF',
+                      icon: Icons.picture_as_pdf_outlined,
+                      onPressed: payload == null || _saving
+                          ? null
+                          : () => _savePdf(payload),
+                    ),
                     ZButton(
                       label: 'Paste AI answer',
                       icon: Icons.content_paste_go,
@@ -294,6 +368,18 @@ class _SendSheetState extends State<SendSheet> {
                     ),
                   ],
                 ),
+                if (_savedTo != null) ...[
+                  const SizedBox(height: 10),
+                  // **Said in words, in full.** «Saved» is not an answer to
+                  // «where», and a person who cannot find the file has to
+                  // trust us that there is one.
+                  Text(
+                    'Saved to ${_savedTo!}\n'
+                    'The protected text, with the build stamp, the counts and a sha256 of '
+                    'that text in the footer. Nothing was sent.',
+                    style: Zc.small.copyWith(color: Zc.ink2),
+                  ),
+                ],
                 if (_pasting) ...[
                   const SizedBox(height: 12),
                   TextField(
