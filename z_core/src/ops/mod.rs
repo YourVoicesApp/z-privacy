@@ -575,6 +575,7 @@ pub(crate) struct ProtectedLines {
 /// case is a token where a person wanted a word — and the asymmetry 046/L drew
 /// is the same one.
 fn protect_lines(session: u32, lines: Vec<String>) -> ApiResult<ProtectedLines> {
+    name_tokens_from_the_vault(session);
     if lines.iter().all(|l| l.trim().is_empty()) {
         let marks = lines.iter().map(|_| Vec::new()).collect();
         return Ok(ProtectedLines { text: lines, marks, tokens: Vec::new() });
@@ -669,7 +670,7 @@ fn protect_lines(session: u32, lines: Vec<String>) -> ApiResult<ProtectedLines> 
                     if let Some(already) = s.tokens.token_for(value) {
                         return Ok(already.to_string());
                     }
-                    let fresh = s.mint.mint(kind, &s.tokens);
+                    let fresh = s.mint.mint(kind, value, &s.tokens);
                     s.tokens.insert(
                         fresh.clone(),
                         crate::tokens::TokenEntry {
@@ -1744,6 +1745,8 @@ fn protect_inner(
     kind: Kind,
     all_matches: bool,
 ) -> ApiResult<ProtectOutcome> {
+    // Before the lock below, not inside it: this takes the core lock itself.
+    name_tokens_from_the_vault(session.id);
     with_session(session.id, |s| {
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
         let selected = match s.original_str().get(start..end) {
@@ -1785,7 +1788,7 @@ fn protect_inner(
         let token = match s.tokens.token_for(&selected) {
             Some(existing) => existing.to_string(),
             None => {
-                let minted = s.mint.mint(kind, &s.tokens);
+                let minted = s.mint.mint(kind, &selected, &s.tokens);
                 s.tokens.insert(
                     minted.clone(),
                     TokenEntry {
@@ -1866,7 +1869,7 @@ fn protect_range(
     let token = match s.tokens.token_for(&value) {
         Some(existing) => existing.to_string(),
         None => {
-            let minted = s.mint.mint(kind, &s.tokens);
+            let minted = s.mint.mint(kind, &value, &s.tokens);
             s.tokens.insert(
                 minted.clone(),
                 TokenEntry {
@@ -2202,7 +2205,36 @@ pub(crate) fn session_pack(session: Option<SessionId>) -> Option<String> {
     crate::session::with_session(session.id, |s| s.pack_id.clone())
 }
 
+/// **Name this session's tokens from the vault's key** — 046/U item 2.
+///
+/// Idempotent, and it does nothing while the vault is shut. Called wherever a
+/// token might be minted, because the two facts it needs — the document's
+/// bytes and the vault's key — arrive at different moments: a person may
+/// unlock the vault long after opening the file.
+///
+/// **Tokens already minted keep their names.** That is not tidiness, it is the
+/// only honest choice: renaming a token that has already gone to a model would
+/// make the answer in that person's hand unrestorable.
+fn name_tokens_from_the_vault(session: u32) {
+    with_core(|core| {
+        let Some((s, vault)) = core.session_and_vault(session) else { return };
+        if s.mint.names_from_the_vault() || s.original.is_empty() {
+            return;
+        }
+        let profile = s.profile_id.clone();
+        let document = s.original_str().to_string();
+        if let Some(naming) = vault.naming_for(profile.as_deref(), &document) {
+            if let Some((s, _)) = core.session_and_vault(session) {
+                s.mint.name_from(naming);
+            }
+        }
+    });
+}
+
 pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
+    // Before the scan, because the scan protects what the vault already knows
+    // and those tokens must carry the derived name like every other.
+    name_tokens_from_the_vault(session.id);
     let report = with_core(|core| {
         let vault_state = core.vault.state();
         let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;

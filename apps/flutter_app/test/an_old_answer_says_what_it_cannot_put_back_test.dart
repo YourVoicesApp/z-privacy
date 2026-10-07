@@ -42,6 +42,14 @@ const _pass = 'a passphrase long enough for two days apart';
 const _letter = 'Sehr geehrte Frau Hedvig Palmgren,\n'
     'der Kontostand von GB29 NWBK 6016 1331 9268 19 beträgt 42 500 EUR.\n';
 
+/// The same letter with one figure changed — a **different document**, and
+/// since 046/U item 2 that is what gives an old answer names this conversation
+/// does not know. The same file now keeps its names, which is the point of
+/// item 2; an edited one honestly does not, which is why item 1 had to exist
+/// first.
+const _edited = 'Sehr geehrte Frau Hedvig Palmgren,\n'
+    'der Kontostand von GB29 NWBK 6016 1331 9268 19 beträgt 42 900 EUR.\n';
+
 Future<void> settle(WidgetTester tester, {int rounds = 8}) async {
   for (var i = 0; i < rounds; i++) {
     await tester.pump();
@@ -73,16 +81,20 @@ TextStyle? _styleOf(WidgetTester tester, String text) {
 
 /// One working day in a client's profile: the letter, the account protected so
 /// the **vault keeps it**, and the text that would go to a model.
-Future<(Workbench, String)> _aDay(WidgetTester tester, String profile) async {
+Future<(Workbench, String)> _aDay(
+  WidgetTester tester,
+  String profile, {
+  String document = _letter,
+}) async {
   late Workbench bench;
   late String text;
   await tester.runAsync(() async {
     final session = await z.openSession(profileId: profile, packId: 'de');
     bench = Workbench(session: session, profileId: profile, packId: 'de');
-    await z.importText(session: session, text: _letter);
+    await z.importText(session: session, text: document);
     await bench.rescan();
     const iban = 'GB29 NWBK 6016 1331 9268 19';
-    final at = _letter.indexOf(iban);
+    final at = document.indexOf(iban);
     await bench.select(Span(start: at, end: at + iban.length));
     await bench.protectSelection(scope: Scope.profile, kind: Kind.iban, allMatches: false);
     await bench.refresh();
@@ -145,8 +157,9 @@ void main() {
     });
     monday.dispose();
 
-    // Friday — the same letter, the same client, and Monday's answer in hand.
-    final (friday, _) = await _aDay(tester, profile);
+    // Friday — one figure changed, so another document, the same client, and
+    // Monday's answer in hand.
+    final (friday, _) = await _aDay(tester, profile, document: _edited);
     addTearDown(friday.dispose);
     final fromMonday = 'I checked $oldIban for $oldPerson: the balance is 42 500.';
     await tester.runAsync(() async {

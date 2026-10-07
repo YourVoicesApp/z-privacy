@@ -31,6 +31,11 @@ const PASS: &str = "a passphrase long enough for two days apart";
 const LETTER: &str = "Sehr geehrte Frau Hedvig Palmgren,\n\
 der Kontostand von GB29 NWBK 6016 1331 9268 19 beträgt 42 500 EUR.\n";
 
+/// The same letter with one figure changed — a **different document**, and
+/// since 046/U item 2 that means different token names.
+const EDITED: &str = "Sehr geehrte Frau Hedvig Palmgren,\n\
+der Kontostand von GB29 NWBK 6016 1331 9268 19 beträgt 42 900 EUR.\n";
+
 fn serial() -> MutexGuard<'static, ()> {
     static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
     match LOCK.get_or_init(|| Mutex::new(())).lock() {
@@ -58,10 +63,14 @@ fn span_of(text: &str, what: &str) -> Span {
 /// One working day: open the document in this profile, protect the IBAN so the
 /// **vault keeps it**, and build what would go to the model.
 fn a_day(profile: &str) -> (SessionId, PayloadHandle, String) {
+    a_day_on(profile, LETTER)
+}
+
+fn a_day_on(profile: &str, document: &str) -> (SessionId, PayloadHandle, String) {
     let s = open_session(Some(profile.to_string()), "de".to_string()).expect("session");
-    import_text(s, LETTER.to_string()).expect("import");
+    import_text(s, document.to_string()).expect("import");
     scan(s).expect("scan");
-    protect(s, span_of(LETTER, "GB29 NWBK 6016 1331 9268 19"), Scope::Profile, Kind::Iban)
+    protect(s, span_of(document, "GB29 NWBK 6016 1331 9268 19"), Scope::Profile, Kind::Iban)
         .expect("protect the account");
     let handle = build_payload(s).expect("payload");
     let text = payload_view(handle).expect("the text").text;
@@ -78,14 +87,19 @@ fn token_in(text: &str, kind: &str) -> String {
     panic!("no {kind} token in «{text}»");
 }
 
-/// **The lead's measurement, as it stands today.**
+/// **The lead's measurement, and its correction — in one place on purpose.**
 ///
-/// Not a fix and not a wish: the token's name is minted per session, so the
-/// same value in the same client is a different token the next day. It is
-/// recorded here because item 2 is about to change it, and a property nobody
-/// wrote down is a property nobody can prove changed.
+/// This test was written the other way round. It asserted `assert_ne!`: the
+/// same value in the same client got **a new token the next day**, because the
+/// name was minted per session. That was the fault, pinned so that the fix
+/// would be provable rather than asserted — «a property nobody wrote down is a
+/// property nobody can prove changed».
+///
+/// Item 2 landed and this line turned red, which is the only way a recorded
+/// fault is worth recording. It now asserts the opposite, and the history
+/// stays here because the next person to read it should see both halves.
 #[test]
-fn today_the_same_value_gets_a_new_token_the_next_day() {
+fn the_same_value_now_keeps_its_token_the_next_day() {
     let _g = serial();
     fresh_vault("renamed");
     let profile = create_profile("Nordstern".to_string(), None).expect("profile");
@@ -98,17 +112,24 @@ fn today_the_same_value_gets_a_new_token_the_next_day() {
     let now = token_in(&friday, "_IBAN_");
     close_session(second).ok();
 
-    assert_ne!(
+    assert_eq!(
         was, now,
-        "the token is stable already, so item 2 is either done or this test is measuring nothing"
+        "the same value in the same file got a new name, so days away still lose the answer"
     );
     vault_lock().ok();
 }
 
-/// **The fault this file closes.** Monday's answer, pasted on Friday.
+/// **The fault this file closes.** Monday's answer about one document, pasted
+/// on Friday while another is open.
 ///
-/// It must not come back as if the model had written `__Z_…__` in the middle
-/// of a sentence. The view reports every token it could not resolve, by name,
+/// Since item 2 the same file in the same client gives the same names, so the
+/// case that reaches this code is the one the lead named when he chose that
+/// shape: **an edited document.** It is a different document, it honestly gets
+/// different names, and that is only safe because of what this file does — the
+/// old answer says so instead of passing the old tokens through as prose.
+///
+/// The answer must not come back as if the model had written `__Z_…__` in the
+/// middle of a sentence. Every token it could not resolve is reported by name,
 /// and the piece carrying one is **not** the model's own words.
 #[test]
 fn an_answer_from_another_conversation_is_reported_and_not_passed_through() {
@@ -121,9 +142,10 @@ fn an_answer_from_another_conversation_is_reported_and_not_passed_through() {
     let old_person = token_in(&monday_text, "_PERSON_");
     close_session(monday).ok();
 
-    // Friday. The same letter, the same client — and the model's answer from
-    // Monday is what he has in front of him.
-    let (friday, handle, _) = a_day(&profile);
+    // Friday. One figure in the letter has changed, so this is another
+    // document — and the model's answer from Monday is what he has in front of
+    // him.
+    let (friday, handle, _) = a_day_on(&profile, EDITED);
     let from_monday = format!("I checked {old_iban} for {old_person}: the balance is 42 500.");
     let answer = ingest_answer(handle, from_monday.clone()).expect("ingest");
 
