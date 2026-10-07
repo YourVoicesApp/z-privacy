@@ -3347,6 +3347,8 @@ const _: fn() = || {
         let Settings = None::<crate::api::mirrors::Settings>.unwrap();
         let _: u32 = Settings.original_pane_percent;
         let _: bool = Settings.columns_in_step;
+        let _: bool = Settings.safe_column_open;
+        let _: bool = Settings.review_panel_wide;
         let _: bool = Settings.scan_on_import;
         let _: u32 = Settings.reveal_seconds;
         let _: u32 = Settings.auto_lock_minutes;
@@ -5139,6 +5141,8 @@ impl SseDecode for crate::api::mirrors::Settings {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_originalPanePercent = <u32>::sse_decode(deserializer);
         let mut var_columnsInStep = <bool>::sse_decode(deserializer);
+        let mut var_safeColumnOpen = <bool>::sse_decode(deserializer);
+        let mut var_reviewPanelWide = <bool>::sse_decode(deserializer);
         let mut var_scanOnImport = <bool>::sse_decode(deserializer);
         let mut var_revealSeconds = <u32>::sse_decode(deserializer);
         let mut var_autoLockMinutes = <u32>::sse_decode(deserializer);
@@ -5149,6 +5153,8 @@ impl SseDecode for crate::api::mirrors::Settings {
         return crate::api::mirrors::Settings {
             original_pane_percent: var_originalPanePercent,
             columns_in_step: var_columnsInStep,
+            safe_column_open: var_safeColumnOpen,
+            review_panel_wide: var_reviewPanelWide,
             scan_on_import: var_scanOnImport,
             reveal_seconds: var_revealSeconds,
             auto_lock_minutes: var_autoLockMinutes,
@@ -6914,6 +6920,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Settings>
         [
             self.0.original_pane_percent.into_into_dart().into_dart(),
             self.0.columns_in_step.into_into_dart().into_dart(),
+            self.0.safe_column_open.into_into_dart().into_dart(),
+            self.0.review_panel_wide.into_into_dart().into_dart(),
             self.0.scan_on_import.into_into_dart().into_dart(),
             self.0.reveal_seconds.into_into_dart().into_dart(),
             self.0.auto_lock_minutes.into_into_dart().into_dart(),
@@ -8634,6 +8642,8 @@ impl SseEncode for crate::api::mirrors::Settings {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <u32>::sse_encode(self.original_pane_percent, serializer);
         <bool>::sse_encode(self.columns_in_step, serializer);
+        <bool>::sse_encode(self.safe_column_open, serializer);
+        <bool>::sse_encode(self.review_panel_wide, serializer);
         <bool>::sse_encode(self.scan_on_import, serializer);
         <u32>::sse_encode(self.reveal_seconds, serializer);
         <u32>::sse_encode(self.auto_lock_minutes, serializer);

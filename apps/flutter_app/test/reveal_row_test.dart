@@ -61,6 +61,8 @@ void main() {
           firstRunDone: now.firstRunDone,
           originalPanePercent: now.originalPanePercent,
           columnsInStep: now.columnsInStep,
+          safeColumnOpen: true,
+          reviewPanelWide: false,
           sessionOnly: now.sessionOnly,
         ),
       );
@@ -181,6 +183,8 @@ void main() {
           firstRunDone: now.firstRunDone,
           originalPanePercent: now.originalPanePercent,
           columnsInStep: now.columnsInStep,
+          safeColumnOpen: true,
+          reviewPanelWide: false,
           sessionOnly: now.sessionOnly,
         ),
       );

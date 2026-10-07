@@ -138,6 +138,8 @@ Future<void> _firstRunIsDone(Ground ground) async {
   await ground.saveConfig(Settings(
     originalPanePercent: now.originalPanePercent,
     columnsInStep: now.columnsInStep,
+    safeColumnOpen: true,
+    reviewPanelWide: false,
     scanOnImport: now.scanOnImport,
     revealSeconds: now.revealSeconds,
     autoLockMinutes: now.autoLockMinutes,

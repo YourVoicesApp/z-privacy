@@ -462,6 +462,12 @@ Settings _with(
       // changes it; it travels so that saving a setting does not move it.
       originalPanePercent: c.originalPanePercent,
       columnsInStep: c.columnsInStep,
+      // **Carried, never set** (046/K). This helper is «change one setting»,
+      // and writing a literal here would mean that saving the reveal timer
+      // re-opened a column the person had closed — the app changing a state
+      // only a press may change, which is the one thing the rule forbids.
+      safeColumnOpen: c.safeColumnOpen,
+      reviewPanelWide: c.reviewPanelWide,
       sessionOnly: c.sessionOnly,
     );
 

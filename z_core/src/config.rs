@@ -44,13 +44,15 @@ const SCHEMA_VERSION: u32 = 1;
 
 /// The whole allowlist, in one place. A reader and a writer both use it, and a
 /// gate counts it.
-const ALLOWED: [&str; 6] = [
+const ALLOWED: [&str; 8] = [
     "schema_version",
     "first_run_completed",
     "ui_language",
     "default_privacy_pack",
     "original_pane_percent",
     "columns_in_step",
+    "safe_column_open",
+    "review_panel_wide",
 ];
 
 /// The non-secret settings, as they sit in the file.
@@ -74,6 +76,20 @@ pub(crate) struct AppConfig {
     /// not have to switch this on at every launch. It is one bit and it names
     /// nothing — not a document, not a page, not a person.
     pub columns_in_step: bool,
+    /// Is the Safe column open? (046/K.)
+    ///
+    /// **The owner's standing rule, 7 October:** «بشرط أن الطوي والفتح لا يتم
+    /// تلقائياً، يتم بالضغط على إشارة محددة» — a collapse or an expand is
+    /// always a person's press on a visible control. The app never folds or
+    /// unfolds anything by itself: not when a panel opens, not when the window
+    /// is resized, not when a document arrives, not when a scan ends.
+    ///
+    /// Which is exactly why it is written down here beside `columns_in_step`:
+    /// a state the app may not change by itself is a state it must be able to
+    /// remember, or closing the program would change it for him.
+    pub safe_column_open: bool,
+    /// Is the side panel at its wider width? (046/K, the same rule.)
+    pub review_panel_wide: bool,
 }
 
 impl Default for AppConfig {
@@ -89,6 +105,13 @@ impl Default for AppConfig {
             // screen and do not find my work on the second». A person who
             // wants the columns apart says so once.
             columns_in_step: true,
+            // Open, because the product's claim is that a person sees the
+            // document and what will leave it side by side. Closing it is an
+            // act, and so is opening it again.
+            safe_column_open: true,
+            // Narrow, which is the width the panel has always had. Wide is the
+            // second state and it is reached by a press.
+            review_panel_wide: false,
         }
     }
 }
@@ -115,12 +138,16 @@ impl AppConfig {
              ui_language={}\n\
              default_privacy_pack={}\n\
              original_pane_percent={}\n\
-             columns_in_step={}\n",
+             columns_in_step={}\n\
+             safe_column_open={}\n\
+             review_panel_wide={}\n",
             self.first_run_completed,
             self.ui_language,
             self.default_privacy_pack,
             self.original_pane_percent.clamp(20, 80),
             self.columns_in_step,
+            self.safe_column_open,
+            self.review_panel_wide,
         )
     }
 
@@ -162,6 +189,8 @@ impl AppConfig {
             match key {
                 "first_run_completed" => out.first_run_completed = value == "true",
                 "columns_in_step" => out.columns_in_step = value == "true",
+                "safe_column_open" => out.safe_column_open = value == "true",
+                "review_panel_wide" => out.review_panel_wide = value == "true",
                 "ui_language" if is_a_plain_tag(value) => out.ui_language = value.to_string(),
                 "default_privacy_pack" if is_a_plain_tag(value) => {
                     out.default_privacy_pack = value.to_string()
@@ -246,6 +275,8 @@ mod tests {
             default_privacy_pack: "de".to_string(),
             original_pane_percent: 55,
             columns_in_step: false,
+            safe_column_open: false,
+            review_panel_wide: true,
         }
         .to_text();
 
@@ -301,6 +332,8 @@ mod tests {
                 default_privacy_pack: "de".to_string(),
                 original_pane_percent: 50,
                 columns_in_step: true,
+                safe_column_open: true,
+                review_panel_wide: false,
             };
             assert!(c.checked().is_err(), "«{bad}» should not be writable");
         }
@@ -312,6 +345,8 @@ mod tests {
                 default_privacy_pack: good.to_string(),
                 original_pane_percent: 50,
                 columns_in_step: true,
+                safe_column_open: true,
+                review_panel_wide: false,
             };
             assert!(c.checked().is_ok(), "«{good}» is a setting");
         }

@@ -20,6 +20,43 @@ import 'package:zprivacy/core/messages.dart';
 
 /// What the app knows before any document exists: the ground the Workspace stands
 /// on, and what Home draws.
+/// One place that knows every field of `Settings`.
+///
+/// The generated class has no `copyWith`, so every screen that changed one
+/// setting listed all of them — and each new field was a compile error in four
+/// files and a silent wrong default in any that was missed. 046/K added two,
+/// and this is what it added instead of a fifth copy of the list.
+extension SettingsCopy on Settings {
+  Settings with_({
+    int? originalPanePercent,
+    bool? columnsInStep,
+    bool? safeColumnOpen,
+    bool? reviewPanelWide,
+    bool? scanOnImport,
+    int? revealSeconds,
+    int? autoLockMinutes,
+    String? packId,
+    String? language,
+    bool? firstRunDone,
+  }) =>
+      Settings(
+        originalPanePercent: originalPanePercent ?? this.originalPanePercent,
+        columnsInStep: columnsInStep ?? this.columnsInStep,
+        safeColumnOpen: safeColumnOpen ?? this.safeColumnOpen,
+        reviewPanelWide: reviewPanelWide ?? this.reviewPanelWide,
+        scanOnImport: scanOnImport ?? this.scanOnImport,
+        revealSeconds: revealSeconds ?? this.revealSeconds,
+        autoLockMinutes: autoLockMinutes ?? this.autoLockMinutes,
+        packId: packId ?? this.packId,
+        language: language ?? this.language,
+        firstRunDone: firstRunDone ?? this.firstRunDone,
+        // Never copied from a caller: the core reports whether a setting will
+        // survive the app closing, and a screen that could set it would be a
+        // screen promising something it does not do.
+        sessionOnly: sessionOnly,
+      );
+}
+
 class Ground extends ChangeNotifier {
   HomeSnapshot? home;
   VaultSnapshot? vaultSnap;

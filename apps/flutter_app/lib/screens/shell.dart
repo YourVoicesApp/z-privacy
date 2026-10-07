@@ -359,6 +359,10 @@ class _ShellState extends State<ZShell> {
             packId: language == 'de' ? 'de' : 'en',
             originalPanePercent: config.originalPanePercent,
             columnsInStep: config.columnsInStep,
+            // Carried from what is already there, as every other field on this
+            // page is: the first run chooses a language, and nothing else.
+            safeColumnOpen: config.safeColumnOpen,
+            reviewPanelWide: config.reviewPanelWide,
             language: language,
             firstRunDone: true,
             sessionOnly: config.sessionOnly,

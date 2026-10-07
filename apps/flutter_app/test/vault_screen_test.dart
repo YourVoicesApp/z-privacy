@@ -211,6 +211,8 @@ void main() {
           firstRunDone: before.firstRunDone,
           originalPanePercent: before.originalPanePercent,
           columnsInStep: before.columnsInStep,
+          safeColumnOpen: true,
+          reviewPanelWide: false,
           sessionOnly: before.sessionOnly,
         )));
     await settle(tester, rounds: 1);

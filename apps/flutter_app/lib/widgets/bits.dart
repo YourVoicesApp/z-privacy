@@ -191,12 +191,32 @@ class ZButton extends StatelessWidget {
     );
 
     if (!on && hint != null) {
+      // **No `mainAxisSize.min` here, and a tight `Flexible`.**
+      //
+      // The pair is the trap: a `min` row sizes itself to its children's
+      // natural widths and gives a flex child nothing, so the hint took the
+      // width it wanted and the row overran its own bounds — 58 pixels, with
+      // the reason a person needs running off the edge of the screen. It is
+      // the same shape as the three overflows of 2 October, and the answer is
+      // the same one: the row gives, the sentence is not shortened.
+      //
+      // Reached for the first time by 046/J, which finds twelve more values on
+      // a payroll sheet: a document that had nothing to answer now has
+      // something, so this disabled button with its hint is drawn where it
+      // never was before.
       return Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          button,
+          // The button gives too, not only the sentence beside it: `ZButton`
+          // wraps its own label (P2-5), and it can only do that if something
+          // bounds its width. Unbounded, the button alone was already wider
+          // than the row and flexing the hint changed nothing — measured
+          // twice, 58 pixels both times.
+          Flexible(child: button),
           const SizedBox(width: 10),
-          Flexible(child: Text(hint!, style: Zc.small.copyWith(color: Zc.ink4))),
+          Flexible(
+            fit: FlexFit.tight,
+            child: Text(hint!, style: Zc.small.copyWith(color: Zc.ink4)),
+          ),
         ],
       );
     }

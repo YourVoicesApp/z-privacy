@@ -532,13 +532,20 @@ fn zcfg_remembers_the_first_run_on_a_device_with_no_vault() {
         "default_privacy_pack",
         "original_pane_percent",
         "columns_in_step",
+        // 046/K: the Safe column's and the panel's own widths. They are here
+        // for the reason the owner's rule makes unavoidable — a state that only
+        // a person's press may change has to survive the app closing, or
+        // closing it would change it for them — and they are each one bit that
+        // names nothing: not a document, not a page, not a person.
+        "safe_column_open",
+        "review_panel_wide",
     ] {
         assert!(text.contains(name), "{name} is missing from {text}");
     }
     // The count, and not only the names: a line this list does not know about
     // is a setting nobody declared. The number moves when `ALLOWED` does, and
     // gate G18a is what keeps `ALLOWED` honest about its own length.
-    assert_eq!(text.lines().count(), 7, "a header and six settings, nothing else:\n{text}");
+    assert_eq!(text.lines().count(), 9, "a header and eight settings, nothing else:\n{text}");
 
     let _ = std::fs::remove_dir_all(&dir);
 }

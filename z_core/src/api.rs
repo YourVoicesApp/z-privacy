@@ -355,6 +355,17 @@ pub struct Settings {
     pub original_pane_percent: u32,
     /// Do the two columns scroll together? On by default (041-L).
     pub columns_in_step: bool,
+    /// Is the Safe column open? On by default (046/K).
+    ///
+    /// **The owner's standing rule, 7 October:** «بشرط أن الطوي والفتح لا يتم
+    /// تلقائياً، يتم بالضغط على إشارة محددة» — a collapse or an expand is
+    /// always a person's press on a visible control, and the app never folds
+    /// or unfolds anything by itself. A state nothing but a person may change
+    /// has to be remembered, or closing the program would change it for them.
+    pub safe_column_open: bool,
+    /// Is the side panel at its wider width? Narrow by default, which is the
+    /// width it has always had (046/K, the same rule).
+    pub review_panel_wide: bool,
     /// Scan the moment a document arrives, with no dialog. On by default: the
     /// boards' rule is that nobody has to press anything to be protected.
     pub scan_on_import: bool,

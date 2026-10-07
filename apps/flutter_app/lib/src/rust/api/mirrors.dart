@@ -1966,6 +1966,19 @@ class Settings {
   /// Do the two columns scroll together? On by default (041-L).
   final bool columnsInStep;
 
+  /// Is the Safe column open? On by default (046/K).
+  ///
+  /// **The owner's standing rule, 7 October:** «بشرط أن الطوي والفتح لا يتم
+  /// تلقائياً، يتم بالضغط على إشارة محددة» — a collapse or an expand is
+  /// always a person's press on a visible control, and the app never folds
+  /// or unfolds anything by itself. A state nothing but a person may change
+  /// has to be remembered, or closing the program would change it for them.
+  final bool safeColumnOpen;
+
+  /// Is the side panel at its wider width? Narrow by default, which is the
+  /// width it has always had (046/K, the same rule).
+  final bool reviewPanelWide;
+
   /// Scan the moment a document arrives, with no dialog. On by default: the
   /// boards' rule is that nobody has to press anything to be protected.
   final bool scanOnImport;
@@ -2004,6 +2017,8 @@ class Settings {
   const Settings({
     required this.originalPanePercent,
     required this.columnsInStep,
+    required this.safeColumnOpen,
+    required this.reviewPanelWide,
     required this.scanOnImport,
     required this.revealSeconds,
     required this.autoLockMinutes,
@@ -2017,6 +2032,8 @@ class Settings {
   int get hashCode =>
       originalPanePercent.hashCode ^
       columnsInStep.hashCode ^
+      safeColumnOpen.hashCode ^
+      reviewPanelWide.hashCode ^
       scanOnImport.hashCode ^
       revealSeconds.hashCode ^
       autoLockMinutes.hashCode ^
@@ -2032,6 +2049,8 @@ class Settings {
           runtimeType == other.runtimeType &&
           originalPanePercent == other.originalPanePercent &&
           columnsInStep == other.columnsInStep &&
+          safeColumnOpen == other.safeColumnOpen &&
+          reviewPanelWide == other.reviewPanelWide &&
           scanOnImport == other.scanOnImport &&
           revealSeconds == other.revealSeconds &&
           autoLockMinutes == other.autoLockMinutes &&

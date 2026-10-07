@@ -117,9 +117,20 @@ fn nothing_of_the_user_s_work_reaches_the_settings_file() {
     // And the shape: a header and exactly the allowed names. The fifth arrived
     // with 041-F — where the handle between the two columns was left — and it
     // is a number between 20 and 80, which can name nobody. The sixth arrived
-    // with 041-L and is one bit: whether the two columns scroll together. Both
-    // are window preferences, and this test is here to say so each time one is
-    // added rather than to let it in quietly.
+    // with 041-L and is one bit: whether the two columns scroll together.
+    //
+    // The seventh and eighth arrived with **046/K**, and the case this test
+    // asks for each time is the owner's own rule: «الطوي والفتح لا يتم
+    // تلقائياً، يتم بالضغط على إشارة محددة». A collapse is always a person's
+    // press, so the app may never change these two by itself — and a state the
+    // app may not change has to survive the app closing, or closing it would
+    // change it for them. Each is one bit about a window: is the Safe column
+    // open, is the side panel at its wider width. Neither can name a document,
+    // a page or a person.
+    //
+    // All of them are window preferences, and this test is here to make that
+    // case **out loud** each time one is added rather than to let it in
+    // quietly. It did exactly that on the run that added these two.
     let keys: Vec<&str> = text
         .lines()
         .skip(1)
@@ -133,7 +144,9 @@ fn nothing_of_the_user_s_work_reaches_the_settings_file() {
             "ui_language",
             "default_privacy_pack",
             "original_pane_percent",
-            "columns_in_step"
+            "columns_in_step",
+            "safe_column_open",
+            "review_panel_wide"
         ],
         "the file holds the allowlist and nothing else"
     );

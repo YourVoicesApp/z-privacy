@@ -4754,18 +4754,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 9)
-      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return Settings(
       originalPanePercent: dco_decode_u_32(arr[0]),
       columnsInStep: dco_decode_bool(arr[1]),
-      scanOnImport: dco_decode_bool(arr[2]),
-      revealSeconds: dco_decode_u_32(arr[3]),
-      autoLockMinutes: dco_decode_u_32(arr[4]),
-      packId: dco_decode_String(arr[5]),
-      language: dco_decode_String(arr[6]),
-      firstRunDone: dco_decode_bool(arr[7]),
-      sessionOnly: dco_decode_bool(arr[8]),
+      safeColumnOpen: dco_decode_bool(arr[2]),
+      reviewPanelWide: dco_decode_bool(arr[3]),
+      scanOnImport: dco_decode_bool(arr[4]),
+      revealSeconds: dco_decode_u_32(arr[5]),
+      autoLockMinutes: dco_decode_u_32(arr[6]),
+      packId: dco_decode_String(arr[7]),
+      language: dco_decode_String(arr[8]),
+      firstRunDone: dco_decode_bool(arr[9]),
+      sessionOnly: dco_decode_bool(arr[10]),
     );
   }
 
@@ -6573,6 +6575,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_originalPanePercent = sse_decode_u_32(deserializer);
     var var_columnsInStep = sse_decode_bool(deserializer);
+    var var_safeColumnOpen = sse_decode_bool(deserializer);
+    var var_reviewPanelWide = sse_decode_bool(deserializer);
     var var_scanOnImport = sse_decode_bool(deserializer);
     var var_revealSeconds = sse_decode_u_32(deserializer);
     var var_autoLockMinutes = sse_decode_u_32(deserializer);
@@ -6583,6 +6587,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     return Settings(
       originalPanePercent: var_originalPanePercent,
       columnsInStep: var_columnsInStep,
+      safeColumnOpen: var_safeColumnOpen,
+      reviewPanelWide: var_reviewPanelWide,
       scanOnImport: var_scanOnImport,
       revealSeconds: var_revealSeconds,
       autoLockMinutes: var_autoLockMinutes,
@@ -8192,6 +8198,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self.originalPanePercent, serializer);
     sse_encode_bool(self.columnsInStep, serializer);
+    sse_encode_bool(self.safeColumnOpen, serializer);
+    sse_encode_bool(self.reviewPanelWide, serializer);
     sse_encode_bool(self.scanOnImport, serializer);
     sse_encode_u_32(self.revealSeconds, serializer);
     sse_encode_u_32(self.autoLockMinutes, serializer);

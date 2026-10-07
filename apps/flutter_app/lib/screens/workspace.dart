@@ -64,6 +64,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   final _focusKey = GlobalKey();
   int? _wasFocused;
 
+  /// Remember the panel's width, which is a state only a press may change.
+  ///
+  /// Written through the core's settings beside `columnsInStep`, for the reason
+  /// 046/K makes explicit: a state the app may not change by itself is a state
+  /// it must be able to remember, or closing the program would change it for
+  /// the person at every launch.
+  void _rememberPanelWidth(bool wide) {
+    final config = widget.ground.config;
+    if (config == null || config.reviewPanelWide == wide) return;
+    unawaited(widget.ground.saveConfig(config.with_(reviewPanelWide: wide)));
+  }
+
   /// The word a person just pressed, and where on the screen they pressed it.
   ///
   /// The owner, 6 October: «the suggested names must appear on the text itself,
@@ -119,7 +131,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final bench = widget.bench;
     _jumpIfMoved();
     return ListenableBuilder(
-      listenable: bench,
+      // **Both**, since 046/K. This screen has always read `ground` — the pack
+      // label, the handle's remembered position — while listening only to
+      // `bench`, so a `ground` change was redrawn whenever the bench happened
+      // to notify next. The two column states are changed by a press that
+      // touches `ground` and nothing else, so that «happened to» became a
+      // column that did not come back. Measured by the rule test: the config
+      // said open and the screen still drew the rail.
+      listenable: Listenable.merge([bench, widget.ground]),
       // Alt+Left is the back door of every document reader there is, and the
       // owner reached for it before he found the arrow. `CallbackShortcuts`
       // needs somewhere for the keys to land, so the focus node under it is
@@ -158,10 +177,39 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                   // 460 and never less than 280: the two columns are the product
                   // and must stay readable behind whatever is open over them.
                   final panel = (box.maxWidth * 0.33).clamp(280.0, 460.0);
+                  // **While a panel is open the document comes to the middle**
+                  // (046/K, the owner: «أريد جعل النص في حالة المعاينة ينتقل
+                  // إلى نصف الشاشة ليصبح مركزياً بدلاً من تركه إلى جانب
+                  // الهامش»).
+                  //
+                  // `Expanded` took everything the panel left, so at 1920 the
+                  // columns were 1460 wide and began hard against the left
+                  // edge while the review sat on the right. That edge is the
+                  // margin he means.
+                  //
+                  // Capped at half the window and centred in what is left.
+                  // Nothing here touches `_Columns`, the split inside it, or
+                  // `originalPanePercent` — the person's own setting keeps its
+                  // meaning, applied to a narrower block.
+                  final panelOpen = bench.reviewingNames
+                      || bench.reviewOpen
+                      || bench.tokensOpen
+                      || bench.showing != null;
+                  // **The panel's second width, reached by a press** (046/K,
+                  // the owner: «الطوي والفتح لا يتم تلقائياً، يتم بالضغط على
+                  // إشارة محددة»). Wider is a state the person chose and it is
+                  // remembered in `zcfg`; nothing here widens by itself.
+                  final wide = widget.ground.config?.reviewPanelWide ?? false;
+                  final panelWidth = wide
+                      ? (box.maxWidth * 0.5).clamp(380.0, 760.0)
+                      : panel;
                   return Row(
                     children: [
                       Expanded(
-                        child: _Columns(
+                        child: _Middle(
+                          centred: panelOpen,
+                          width: box.maxWidth / 2,
+                          child: _Columns(
                           bench: bench,
                           ground: widget.ground,
                           said: _said,
@@ -180,18 +228,27 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                               _choosingAt = at;
                             });
                           },
+                          ),
                         ),
                       ),
                       // The names panel takes the same place as the review
                       // panel: one panel at a time, and the one asked for.
+                      // One arrow for whichever panel is open, because it is
+                      // about the panel's width and not about its contents.
+                      // Four copies of it would be four places to word one act.
+                      if (panelOpen)
+                        _PanelArrow(
+                          wide: wide,
+                          onTap: () => _rememberPanelWidth(!wide),
+                        ),
                       if (bench.reviewingNames)
-                        NameReviewPanel(bench: bench, ground: widget.ground, width: panel, onVault: widget.onVault)
+                        NameReviewPanel(bench: bench, ground: widget.ground, width: panelWidth, onVault: widget.onVault)
                       else if (bench.reviewOpen)
-                        ReviewPanel(bench: bench, width: panel, onVault: widget.onVault),
+                        ReviewPanel(bench: bench, width: panelWidth, onVault: widget.onVault),
                       if (bench.tokensOpen)
-                        TokensPanel(bench: bench, width: panel),
+                        TokensPanel(bench: bench, width: panelWidth),
                       if (bench.showing != null)
-                        AnswerPanel(bench: bench, width: panel),
+                        AnswerPanel(bench: bench, width: panelWidth),
                     ],
                   );
                 },
@@ -1064,23 +1121,33 @@ class _ColumnsState extends State<_Columns> {
     });
   }
 
+  /// **Collapse the Safe column, or bring it back — by a press and only by a
+  /// press** (046/K).
+  ///
+  /// The owner's rule in one line: «الطوي والفتح لا يتم تلقائياً، يتم بالضغط
+  /// على إشارة محددة». So nothing in this file closes this column when a panel
+  /// opens, when the window narrows, when a document arrives or when a scan
+  /// ends — and `the_states_change_only_by_a_press_test.dart` is that sentence
+  /// as a test.
+  ///
+  /// Remembered in `zcfg`, like the step lock and the handle's position, for
+  /// the reason the rule makes unavoidable: a state the app may not change by
+  /// itself must survive the app closing, or closing it would change it.
+  void _toggleSafe() {
+    final config = widget.ground.config;
+    if (config == null) return;
+    unawaited(widget.ground.saveConfig(
+      config.with_(safeColumnOpen: !config.safeColumnOpen),
+    ));
+  }
+
   /// Let them go their own way, or bring them back — and remember which.
   void _toggleStep() {
     final now = !_stepping;
     setState(() => _inStep = now);
     final config = widget.ground.config;
     if (config == null || config.columnsInStep == now) return;
-    unawaited(widget.ground.saveConfig(Settings(
-      scanOnImport: config.scanOnImport,
-      revealSeconds: config.revealSeconds,
-      autoLockMinutes: config.autoLockMinutes,
-      packId: config.packId,
-      language: config.language,
-      firstRunDone: config.firstRunDone,
-      originalPanePercent: config.originalPanePercent,
-      columnsInStep: now,
-      sessionOnly: config.sessionOnly,
-    )));
+    unawaited(widget.ground.saveConfig(config.with_(columnsInStep: now)));
     if (now) _follow(from: 'left');
   }
 
@@ -1099,9 +1166,21 @@ class _ColumnsState extends State<_Columns> {
         // on either side it simply does not go: a column dragged shut is a
         // comparison nobody can make.
         const handle = 7.0;
-        final usable = box.maxWidth - handle;
+        // The Safe column's own state, read from the person's settings and
+        // never from what else is on screen (046/K).
+        final safeOpen = ground.config?.safeColumnOpen ?? true;
+        // Closed, the column becomes a rail that still carries its arrow: a
+        // handle is what makes a collapse undoable, and a collapse with no
+        // handle is a thing a person has lost.
+        const rail = 26.0;
+        final usable = box.maxWidth - (safeOpen ? handle : rail);
         final lowest = usable <= _floor * 2 ? usable / 2 : _floor;
-        final left = (usable * percent / 100).clamp(lowest, usable - lowest);
+        final left = safeOpen
+            ? (usable * percent / 100).clamp(lowest, usable - lowest)
+            // Closed, the Original has the whole of it. The person's own
+            // `originalPanePercent` is untouched and is what the column
+            // returns to.
+            : usable;
         // `_Side` pads its scroll view by 18 on each side; the text is laid out
         // inside that. Kept here so the scroll listener measures the same
         // layout this build drew, never a guess at it.
@@ -1123,7 +1202,7 @@ class _ColumnsState extends State<_Columns> {
                 // The control sits here because this is the column a person
                 // reads and scrolls: the complaint it answers was «I work on
                 // the first screen and do not find my work on the second».
-                trailing: _StepLock(inStep: _stepping, onTap: _toggleStep),
+                trailing: safeOpen ? _StepLock(inStep: _stepping, onTap: _toggleStep) : null,
                 footer: doc == null
                     ? null
                     : Column(
@@ -1153,6 +1232,9 @@ class _ColumnsState extends State<_Columns> {
                       ),
               ),
             ),
+            if (!safeOpen)
+              _SafeRail(onTap: _toggleSafe)
+            else
             MouseRegion(
               cursor: SystemMouseCursors.resizeColumn,
               child: GestureDetector(
@@ -1181,13 +1263,14 @@ class _ColumnsState extends State<_Columns> {
                 ),
               ),
             ),
+            if (safeOpen)
             Expanded(
               key: _ColumnsState.safePane,
               child: _Side(
                 eyebrow: 'Safe — AI will receive',
                 rule: 'The request itself, not a preview of it',
                 tint: Zc.clay,
-                trailing: _ChipSwitch(bench: bench),
+                trailing: _SafeTrailing(bench: bench, onClose: _toggleSafe),
                 controller: _right,
                 footer: safe == null
                     ? null
@@ -1218,17 +1301,7 @@ class _ColumnsState extends State<_Columns> {
     if (config == null) return;
     final rounded = percent.round().clamp(20, 80);
     if (rounded == config.originalPanePercent) return;
-    unawaited(widget.ground.saveConfig(Settings(
-      scanOnImport: config.scanOnImport,
-      revealSeconds: config.revealSeconds,
-      autoLockMinutes: config.autoLockMinutes,
-      packId: config.packId,
-      language: config.language,
-      firstRunDone: config.firstRunDone,
-      originalPanePercent: rounded,
-      columnsInStep: config.columnsInStep,
-      sessionOnly: config.sessionOnly,
-    )));
+    unawaited(widget.ground.saveConfig(config.with_(originalPanePercent: rounded)));
   }
 }
 
@@ -1471,6 +1544,134 @@ class _SafeFooter extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// **The Safe column, collapsed to a rail that still carries its arrow.**
+///
+/// 046/K. The rail exists for one reason and it is the owner's: a person who
+/// closed something must be able to open it again, and the only thing that can
+/// promise that is a control still on the screen.
+class _SafeRail extends StatelessWidget {
+  const _SafeRail({required this.onTap});
+
+  final VoidCallback onTap;
+
+  static const named = ValueKey<String>('workspace-safe-rail');
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 26,
+      decoration: const BoxDecoration(
+        color: Zc.warmCard,
+        border: Border(left: BorderSide(color: Zc.line)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          IconButton(
+            key: named,
+            tooltip: 'Show what the AI will receive',
+            icon: const Icon(Icons.chevron_left, size: 18),
+            color: Zc.clay,
+            visualDensity: VisualDensity.compact,
+            onPressed: onTap,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The Safe column's own two controls: the chip switch it has always had, and
+/// the arrow that closes the column (046/K).
+class _SafeTrailing extends StatelessWidget {
+  const _SafeTrailing({required this.bench, required this.onClose});
+
+  final Workbench bench;
+  final VoidCallback onClose;
+
+  static const closeKey = ValueKey<String>('workspace-safe-close');
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ChipSwitch(bench: bench),
+        IconButton(
+          key: closeKey,
+          tooltip: 'Hide this column',
+          icon: const Icon(Icons.chevron_right, size: 18),
+          color: Zc.ink3,
+          visualDensity: VisualDensity.compact,
+          onPressed: onClose,
+        ),
+      ],
+    );
+  }
+}
+
+/// **An arrow, and what it does said in its own tooltip.**
+///
+/// The owner's standing rule of 7 October: «بشرط أن الطوي والفتح لا يتم
+/// تلقائياً، يتم بالضغط على إشارة محددة» — a collapse or an expand is always a
+/// person's press on a visible control. So this is a control, it says which way
+/// it goes, and it is **always drawn while a panel is open**: a collapsed thing
+/// that leaves no handle is a thing a person has lost.
+class _PanelArrow extends StatelessWidget {
+  const _PanelArrow({required this.wide, required this.onTap});
+
+  final bool wide;
+  final VoidCallback onTap;
+
+  /// Named, so a test presses the control a person presses.
+  static const named = ValueKey<String>('workspace-panel-arrow');
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 22,
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          IconButton(
+            key: named,
+            // P2-5: the name of the act carries what it does.
+            tooltip: wide ? 'Narrow this panel' : 'Widen this panel',
+            icon: Icon(wide ? Icons.chevron_right : Icons.chevron_left, size: 18),
+            color: Zc.ink3,
+            visualDensity: VisualDensity.compact,
+            onPressed: onTap,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Half the window, in the middle of what is left — or the whole of it.
+///
+/// One widget rather than a conditional tree, so the case where no panel is
+/// open is provably the case that existed before 046/K: `centred: false`
+/// returns the child untouched.
+class _Middle extends StatelessWidget {
+  const _Middle({required this.centred, required this.width, required this.child});
+
+  final bool centred;
+  final double width;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!centred) return child;
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: width),
+        child: child,
       ),
     );
   }

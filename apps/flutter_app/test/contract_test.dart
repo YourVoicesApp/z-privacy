@@ -267,6 +267,8 @@ void main() {
           packId: 'de',
           originalPanePercent: 50,
           columnsInStep: true,
+          safeColumnOpen: true,
+          reviewPanelWide: false,
           language: 'en',
           firstRunDone: false,
           sessionOnly: true,
