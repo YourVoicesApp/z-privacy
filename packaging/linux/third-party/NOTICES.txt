@@ -22,6 +22,24 @@ below do require when a binary is redistributed.
     Shipped as data/flutter_assets/fonts/MaterialIcons-Regular.otf
     material-icons-LICENSE.txt
 
+  DejaVu Sans
+    Copyright 2003 Bitstream, Inc. — Bitstream Vera Fonts Copyright;
+    the DejaVu project's own changes are in the public domain.
+    Shipped as data/flutter_assets/assets/fonts/DejaVuSans.ttf (759,720 bytes)
+    and embedded, as a subset, in every PDF that «Save as PDF» writes —
+    without it a saved file would promise Helvetica and lose every letter that
+    is not plain ASCII. Chosen over a smaller face because it also carries
+    Arabic, so the same one file will serve when that pack lands; the writer
+    sets no text direction yet, so Arabic is not supported today.
+    dejavu-LICENSE.txt
+
+  dart_pdf (the `pdf` package)
+    Copyright 2017 David PHAM-VAN — Apache-2.0
+    Pure Dart, compiled into data/app.so with the rest of the UI; it adds no
+    shared library to this archive. It is the only thing in the product that
+    writes a PDF; reading one is the core's own code.
+    dart-pdf-LICENSE.txt
+
   Rust crates
     142 packages compiled into lib/libz_bridge.so, listed with the licence
     each one states.
@@ -35,3 +53,11 @@ below do require when a binary is redistributed.
 Nothing here reaches the network on its own. The one HTTP client in the
 product is `ureq`, in the core, and it speaks only to the AI provider you
 connect yourself.
+
+`pdf` brings eleven Dart packages with it (archive, barcode, bidi, crypto,
+ffi, image, path_parsing, petitparser, posix, qr, xml). None speaks a
+protocol. Two of them — posix and ffi — call libc, and they arrive under
+`archive`, which `pdf` imports on the **web** target only: on Linux it
+deflates with dart:io's own zlib, so nothing in the saving path reaches
+either one. They are listed because they are in the dependency tree, not
+because they run.
