@@ -139,3 +139,21 @@ Creating a client and putting this document in it must be two clicks from the do
 
 - Two lists at once in one session. One session has one list today, and a value saved «everywhere» is the escape hatch. The owner knows and it is his later decision.
 - The subscription bundle, the sealed export, the Arabic direction (045), the SCB bank (038-B).
+
+---
+
+## P · A key is set up in Settings, not in the middle of sending (WRITTEN, NOT ORDERED)
+
+**The owner, 7 Oct, offered as cosmetic:** «نقل إعدادات الموديلات إلى قسم الإعدادات بدلاً من جعلها شاشة في وسط السياق.»
+
+**It is not cosmetic, and that is the argument for doing it:** a **configuration** act does not belong inside a **work** act. Today `send_sheet.dart` carries the provider, the model, the mode **and the connect form with the key**, so «I want to send this document» can turn into «type an API key» in the middle of a sentence. Two different kinds of decision, one screen.
+
+**The split:**
+- **Settings** gets the providers: which are connected, the key, the base address, the «keep for this run only" choice, and «Connect» / «Forget». Set up once, where setting up belongs.
+- **The send moment keeps the choice**: which provider and model, among what is connected, with the rest greyed as 041-A/3 built it — choosing a model is part of the act; typing a key is not.
+- **With nothing connected**, the sheet shows **one line that leads to Settings**, never the form itself: «No provider is connected — open Settings». A door, not a desk.
+- 041-A/2's order stays: provider · model · mode first, then the text, then the doors.
+
+**And a reason of the hour:** on Friday the owner shares his screen. A key form that can open by accident in front of someone is a risk with no upside; a Settings screen he never visits during a demo is not.
+
+**Done means:** no key field anywhere outside Settings (a test asserts it) · the catalogue still lists every provider with the unconnected greyed · `usage.model_id` still changes on the next send · no model name in Dart · gates, clippy, counts before and after.
