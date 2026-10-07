@@ -168,11 +168,14 @@ machine. Neither act sends anything.
   values by kind, and a **sha256 of the protected text** — the same string Copy
   Protected copies, so the claim is checkable with `sha256sum` and nothing of
   ours. No logo, no serial, no seal.
-- **No `/Info` dictionary at all**: no title, no author, no creation timestamp.
-  This file exists to be handed to a model or a person, and a document's name
-  is not protected text — «Müller-Scheidung» in `/Title` would leave the device
-  inside the very file made to stop that. The name stays on the local file
-  name, where the owner asked for it and where it does not travel.
+- **A RULE, not a choice (the lead adopted it, 7 Oct): a file Z Privacy writes
+  carries no document metadata.** No `/Info` dictionary at all — no title, no
+  author, no creation timestamp. This file exists to be handed to a model or a
+  person, and a document's name is not protected text: «Müller-Scheidung» in
+  `/Title` would leave the device inside the very file made to stop that
+  leaving. The name stays on the local file name, where the owner asked for it
+  and where it does not travel. **Do not add a title for tidiness.** If a
+  future format needs one, it needs a decision first, in writing, here.
 - `~/Documents/zprivacy/<document>-protected-<date>.pdf`, **said in full on the
   screen** after the write, and never an overwrite: a second save becomes `-2`.
 
@@ -229,15 +232,8 @@ accept, not ours to spend quietly** — it is his call, and a separate task.
 
 ## What is NOT delivered, measured rather than assumed
 
-**Arabic is not supported, and it fails in the worse of the two ways.** The
-font carries the glyphs, but `pdf` runs its shaping and its bidi pass only when
-the text direction is `rtl`, and the writer sets none. Rendered and looked at:
-«السيد» draws as «ديسلا» — the line is laid out left to right and comes out
-**mirrored**. That matters more than «Arabic comes out as nothing» would: a
-page that is visibly empty gets fixed, and a page that is quietly backwards
-does not. The direction belongs per paragraph with the Latin tokens isolated
-inside each RTL run — the same problem 043's S9 board drew — and it is its own
-item.
+**Right-to-left writing was refused for an hour, and is now written.** See
+**046/R** below; the refusal is gone.
 
 **The catch-all in `saveProtectedPdf` has no test that reaches it.** The tested
 failure is the disk's, which the branch above it answers; the catch-all exists
@@ -256,3 +252,92 @@ left alone to keep this one item one item.
 
 **Also not in this item:** the question Copy is to ask («for a person, or for
 an AI?»), Print as a sealed envelope, and a logo or a seal in the footer.
+
+
+---
+
+## R · The PDF writes Arabic the way it is read (7 Oct, after O)
+
+**The owner:** «وأفرح إذا حسمنا مشكلة اللغة العربية». The lead measured his
+machine first and corrected his own diagnosis: **22 Arabic-capable fonts
+installed**, `Noto Sans Arabic` matching `:lang=ar`. His machine was never the
+fault. `protected_pdf.dart` and its tests only.
+
+**What was wrong.** `pdf` runs neither its shaping nor its bidi pass unless the
+text direction is `rtl`, and the writer set none, so «السيد» drew as «ديسلا» —
+a page that still looks typeset to anyone who cannot read the script.
+
+**What is built.**
+
+- **Direction per paragraph, from the paragraph's own first strong letter**
+  (UAX #9, P2/P3) — not one setting for the file, because a client's letter is
+  German and Arabic in the same document and one setting gets one of them
+  wrong.
+- **A `__Z_…__` token does not vote.** Its letters are Latin and they are
+  *ours*. Counted as strong they decide the direction of any line whose first
+  word was protected — so protecting an Arabic name would lay that line out
+  left to right, and the document would read differently after protection than
+  before it. **Protection may not change how a document reads.**
+- **A neutral line — blank, or only figures — takes the direction around it**
+  and never starts a run of its own. Counted as left-to-right it cut an Arabic
+  passage into three and the blank lines vanished from the page. *Found by
+  rendering a letter and looking at it, not by a test.*
+- **Every right-to-left line carries U+200F.** The bidi library decides the
+  base direction for itself, by the same first-strong rule, and it counts the
+  token's Latin letters. So a line beginning with a protected name was
+  **ordered** left to right by the library while being **aligned** right by us,
+  and the token sat at the wrong end. U+200F is strong, zero width and carries
+  no glyph. The isolates U+2067/U+2069 say it better and were tried first:
+  DejaVu has no glyph for them and they drew as two `.notdef` boxes.
+- **Each block is wrapped in a `Partition`.** A `MultiPage` hands its children
+  a loose width and `RichText` then takes the width of its longest line, so
+  `textAlign: right` aligned inside *that* box. Measured: one Arabic block sat
+  flush left at x=44 while the block above it, which happened to contain a
+  wrapping line and so had been given the full width, sat at x=553 — two
+  passages in one document aligned two different ways by accident of line
+  length. A `Partition` constrains tightly **and** hands `canSpan` and
+  `hasMoreWidgets` to its child, so paging survives. A `Column` with `stretch`
+  gives the same width and does not: it threw `PdfTooBigPageException` on the
+  120-line guard.
+
+**The guard, and why it is not the one that was asked for.** An order assertion
+over the extracted Latin runs cannot work here, and that is measured, not
+argued: our reader walks the **content stream**, and `pdf` writes words into it
+in logical order whatever the direction, so the IBAN and the amount come back
+at *identical* indices from a right page and a mirrored one. What does separate
+them is the glyphs — a shaped, bidi-ordered page is written in Arabic
+**presentation forms** (U+FB50..U+FEFF), an unshaped one in **base letters**
+(U+0620..U+064A). Measured: 20 presentation / 0 base with the direction set,
+0 / 20 without. Both are asserted. Beside them: the Latin islands must come back
+verbatim and in their own order (a token swept into the reversal restores as
+nothing), a Latin-only page must carry no presentation form and keep its word
+order, and a long Arabic document must page with a footer on each page.
+
+**The acceptance was a rendered page, looked at.** A client's letter — Arabic
+with a German line in it, tokens where the names were, an IBAN, `1,250.00`, and
+a line deliberately *beginning* with a token. Measured at 150 dpi with
+`pdftotext -bbox-layout`, content box x 44..551: every Arabic line ends at
+551..553 and the German line begins at 44.0. By eye: the salutation is right
+aligned with «السيد» rightmost and the token an island inside it; the body wraps
+over two lines and reads right to left; the account line keeps the IBAN token
+and `1,250.00` forward; the token-first line now carries its token at the right
+end. Before the mark, that one line put its token at the left — which is what
+the rendering caught and no test did.
+
+**Breaks on purpose, five, each red:** the direction dropped (nothing shaped);
+one direction for the whole file (the mixed document's Arabic line unshaped);
+the token allowed to vote; a neutral line counted as left-to-right (the passage
+split); the mark on only the first line of a block.
+
+**Not in this item:** the document column's direction and the selection clitic
+rule (both 045), shaping in the app's own screens, and the footer and `/Info`
+rules, which stand.
+
+**One thing to know, and it is not fixable here.** A reader that uses glyph
+positions — every viewer, and poppler — gets this file right. **Our own reader
+does not**: it walks the content stream, so it returns the words in logical
+order with each word's letters in visual order, which is neither one thing nor
+the other. It does not touch the protection and it does not touch the page; it
+means that an Arabic PDF handed to a model that extracts text the way we do
+would read oddly. The reader is `z_core/src/documents/pdf.rs`, which is not
+this item's file.

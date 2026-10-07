@@ -118,6 +118,7 @@ Future<DocumentView> readView(Uint8List bytes) async {
 void main() {
   late Directory data;
   late Directory out;
+  late Directory arabicOut;
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
@@ -129,7 +130,8 @@ void main() {
     await RustLib.init();
     data = Directory('${Directory.systemTemp.path}/zprivacy-pdf-data-$pid');
     out = Directory('${Directory.systemTemp.path}/zprivacy-pdf-out-$pid');
-    for (final d in [data, out]) {
+    arabicOut = Directory('${Directory.systemTemp.path}/zprivacy-pdf-ar-$pid');
+    for (final d in [data, out, arabicOut]) {
       if (d.existsSync()) d.deleteSync(recursive: true);
       d.createSync(recursive: true);
     }
@@ -137,7 +139,7 @@ void main() {
   });
 
   tearDownAll(() {
-    for (final d in [data, out]) {
+    for (final d in [data, out, arabicOut]) {
       if (d.existsSync()) d.deleteSync(recursive: true);
     }
   });
@@ -366,6 +368,242 @@ void main() {
         reason: 'the refusal does not name the folder, so it cannot be acted on');
     expect(find.text('Save as PDF'), findsOneWidget, reason: 'the button is still «Saving…»');
     expect(bench.copiedPayload, isNull, reason: 'a refusal bound a payload nothing took');
+  });
+
+  // ------------------------------------------- 046/R · Arabic, written to be read
+  //
+  // The owner: «وأفرح إذا حسمنا مشكلة اللغة العربية». The refusal that stood
+  // here is gone, because the page is right — rendered and looked at, not
+  // inferred from a test that did not throw.
+  //
+  // **What distinguishes a right page from a mirrored one, measured.** Our own
+  // reader walks the content stream, and dart_pdf emits words into it in
+  // logical order whatever the direction — so the Latin islands come back at
+  // the *same* indices either way and an order assertion over them cannot tell
+  // the two apart. What does tell them apart is the glyphs: a shaped,
+  // bidi-ordered page is written in Arabic **presentation forms**
+  // (U+FB50..U+FEFF) and an unshaped one in **base letters** (U+0620..U+064A).
+  // Measured on 7 October: 20 presentation / 0 base when the direction is set,
+  // 0 presentation / 20 base when it is not.
+  final shaped = RegExp(r'[\uFB50-\uFDFF\uFE70-\uFEFF]');
+  final unshaped = RegExp(r'[\u0620-\u064A]');
+
+  const arabicLine = 'رقم الحساب: __Z_0001_IBAN_0003__ والمبلغ 1,250.00 يورو';
+  const germanLine = 'Sehr geehrter Herr __Z_0001_PERSON_0002__, Grüßen aus Köln.';
+
+  test('an Arabic paragraph is shaped and laid out right to left', () async {
+    final bytes = await buildProtectedPdf(
+      text: arabicLine,
+      stamp: PdfStamp(
+        build: 'z_core 0.0.0 · 0000-00-00 · control',
+        places: 1,
+        byKind: const <String, int>{'IBAN': 1},
+        sha256: _zeroes,
+      ),
+    );
+    final back = await readBack(bytes);
+    expect(shaped.hasMatch(back), isTrue,
+        reason: 'no Arabic presentation form in the file, so nothing was shaped');
+    expect(unshaped.hasMatch(back), isFalse,
+        reason: 'base Arabic letters are in the file, so the bidi pass never ran '
+            'and the page is mirrored');
+  });
+
+  test('a Latin run inside an Arabic line is not reversed', () async {
+    final bytes = await buildProtectedPdf(
+      text: arabicLine,
+      stamp: PdfStamp(
+        build: 'z_core 0.0.0 · 0000-00-00 · control',
+        places: 1,
+        byKind: const <String, int>{'IBAN': 1},
+        sha256: _zeroes,
+      ),
+    );
+    final back = await readBack(bytes);
+    // **The part that goes wrong quietly.** A token or an amount swept up in
+    // the reversal comes out backwards and restores as nothing, while the page
+    // still looks like Arabic to anyone who cannot read it.
+    expect(back, contains('__Z_0001_IBAN_0003__'),
+        reason: 'the token did not survive the right-to-left run whole');
+    expect(back, contains('1,250.00'), reason: 'the amount was reversed');
+    expect(back.contains('00.052,1'), isFalse);
+    expect(back.indexOf('__Z_0001_IBAN_0003__'), lessThan(back.indexOf('1,250.00')),
+        reason: 'the two Latin islands swapped places');
+  });
+
+  test('a Latin-only page is untouched by the Arabic work', () async {
+    final bytes = await buildProtectedPdf(
+      text: 'Sehr geehrter Herr __Z_0001_PERSON_0002__,\n$germanLine\nRäksmörgås å ä ö.',
+      stamp: PdfStamp(
+        build: 'z_core 0.0.0 · 0000-00-00 · control',
+        places: 1,
+        byKind: const <String, int>{'Person': 1},
+        sha256: _zeroes,
+      ),
+    );
+    final back = await readBack(bytes);
+    expect(shaped.hasMatch(back), isFalse, reason: 'a German page was shaped');
+    // Order, which is the thing a reordering fix would break.
+    expect(back.indexOf('Sehr'), lessThan(back.indexOf('Grüßen')));
+    expect(back.indexOf('Grüßen'), lessThan(back.indexOf('Köln')));
+    expect(back.indexOf('Köln'), lessThan(back.indexOf('Räksmörgås')));
+    expect(back, contains('__Z_0001_PERSON_0002__'));
+  });
+
+  test('direction is per paragraph, not per file', () async {
+    // The real shape of a client's document: a German line, an Arabic line and
+    // a German line again. One setting for the file gets one of them wrong.
+    final bytes = await buildProtectedPdf(
+      text: '$germanLine\n$arabicLine\nMit freundlichen Grüßen',
+      stamp: PdfStamp(
+        build: 'z_core 0.0.0 · 0000-00-00 · control',
+        places: 2,
+        byKind: const <String, int>{'Person': 1, 'IBAN': 1},
+        sha256: _zeroes,
+      ),
+    );
+    final back = await readBack(bytes);
+    expect(shaped.hasMatch(back), isTrue, reason: 'the Arabic line was not shaped');
+    expect(unshaped.hasMatch(back), isFalse, reason: 'the Arabic line is mirrored');
+    expect(back.indexOf('Sehr'), lessThan(back.indexOf('Mit freundlichen')),
+        reason: 'the German lines were reordered by the Arabic line beside them');
+    expect(back, contains('__Z_0001_PERSON_0002__'));
+    expect(back, contains('__Z_0001_IBAN_0003__'));
+  });
+
+  test('the direction of a paragraph is its own first strong letter', () {
+    expect(paragraphIsRightToLeft('Sehr geehrter Herr'), isFalse);
+    expect(paragraphIsRightToLeft('السيد المحترم'), isTrue);
+    expect(paragraphIsRightToLeft('שלום'), isTrue, reason: 'Hebrew is right to left too');
+    // A number first does not decide: the first **strong** letter does, which
+    // is the Unicode rule and not a rule of ours.
+    expect(paragraphIsRightToLeft('1,250.00 يورو'), isTrue);
+    // **And a token does not decide either**, though its letters are Latin and
+    // strong. We put it there. If it voted, protecting the first name on an
+    // Arabic line would lay that line out left to right, and the document
+    // would read differently after protection than before it.
+    expect(paragraphIsRightToLeft('__Z_0001_IBAN_0003__ والمبلغ'), isTrue);
+    expect(paragraphIsRightToLeft('__Z_0001_IBAN_0003__ und mehr'), isFalse);
+    expect(paragraphIsRightToLeft('__Z_0001_PERSON_0002__'), isFalse,
+        reason: 'a line that is only a token has no direction of its own');
+    // Nothing strong at all is left to right, as the algorithm says.
+    expect(paragraphIsRightToLeft('1,250.00 — 42 %'), isFalse);
+    expect(paragraphIsRightToLeft(''), isFalse);
+  });
+
+  // Found by rendering a letter and looking at it, not by a test: with a blank
+  // line counted as left to right, an Arabic passage was cut into three blocks
+  // and its blank lines vanished from the page. A neutral line has no opinion
+  // and must take the one around it.
+  test('a blank line inside a passage does not break it in two', () {
+    expect(paragraphDirection(''), isNull);
+    expect(paragraphDirection('   '), isNull);
+    expect(paragraphDirection('1,250.00 — 42 %'), isNull);
+    expect(paragraphDirection('__Z_0001_PERSON_0002__'), isNull,
+        reason: 'a line that is only a token is ours, so it has no direction');
+    expect(paragraphDirection('السيد'), isTrue);
+    expect(paragraphDirection('Sehr'), isFalse);
+
+    expect(
+      directionBlocks('السيد المحترم\n\nمع خالص التحية'),
+      const [DirectionBlock(true, 'السيد المحترم\n\nمع خالص التحية')],
+      reason: 'the blank line split the Arabic passage in two',
+    );
+    expect(
+      directionBlocks('Sehr geehrter Herr,\n\nMit freundlichen Grüßen'),
+      const [DirectionBlock(false, 'Sehr geehrter Herr,\n\nMit freundlichen Grüßen')],
+      reason: 'a document with no Arabic in it is no longer one block, so its '
+          'page is not the page it was before this existed',
+    );
+    expect(
+      directionBlocks('Sehr geehrter Herr,\n\nالسيد المحترم\n\nMit Grüßen'),
+      const [
+        DirectionBlock(false, 'Sehr geehrter Herr,\n'),
+        DirectionBlock(true, 'السيد المحترم\n'),
+        DirectionBlock(false, 'Mit Grüßen'),
+      ],
+      reason: 'the blank lines went to the wrong side of the change',
+    );
+    // Leading neutral lines wait for the first paragraph that has a direction.
+    expect(directionBlocks('\n\nالسيد'), const [DirectionBlock(true, '\n\nالسيد')]);
+  });
+
+  // Paging is the thing the Partition wrapper could have cost: a Column with
+  // `stretch` gives the same tight width and threw `PdfTooBigPageException`
+  // here, because it does not hand `canSpan` through to its child.
+  test('a long Arabic document pages itself too', () async {
+    final line = 'نحيطكم علماً بأننا استلمنا المستندات الخاصة بالسنة المالية '
+        'المنصرمة وقد تمت مراجعتها بالكامل من قبل الفريق المختص.\n';
+    final digest = sha256OfText(line * 120);
+    final bytes = await buildProtectedPdf(
+      text: line * 120,
+      stamp: PdfStamp(
+        build: 'z_core 0.0.0 · 0000-00-00 · control',
+        places: 0,
+        byKind: const <String, int>{},
+        sha256: digest,
+      ),
+    );
+    final view = await readView(bytes);
+    expect(view.pages, greaterThan(1), reason: '120 Arabic lines came out as one page');
+    final stamps = digest.allMatches(view.text.replaceAll(RegExp(r'\s+'), '')).length;
+    expect(stamps, view.pages, reason: 'the footer is on $stamps of ${view.pages} pages');
+    expect(shaped.hasMatch(view.text), isTrue, reason: 'the pages are not shaped');
+    expect(unshaped.hasMatch(view.text), isFalse, reason: 'the pages are mirrored');
+  });
+
+  // The bidi library decides the base direction for itself, by the same
+  // first-strong rule — and it counts a token's Latin letters, which we put
+  // there. A line beginning with a protected name was therefore **ordered**
+  // left to right by the library while being **aligned** right by us, and the
+  // token sat at the wrong end of the line. Measured on the rendered page at
+  // 150 dpi, and fixed with a mark the page cannot show.
+  test('every right-to-left line carries the mark that sets its direction', () {
+    const rlm = '\u200F';
+    expect(const DirectionBlock(false, 'Sehr geehrter Herr,\nGrüßen').laidOut,
+        'Sehr geehrter Herr,\nGrüßen',
+        reason: 'a left-to-right block was marked, so a German page changed');
+    expect(const DirectionBlock(true, 'السيد\n\nالمحترم').laidOut,
+        '$rlm' 'السيد\n$rlm\n$rlm' 'المحترم',
+        reason: 'the algorithm works a paragraph at a time, and a block is '
+            'several paragraphs — one mark at the front is not enough');
+  });
+
+  testWidgets('a document with Arabic in it is saved, not refused', (tester) async {
+    tester.view.physicalSize = const Size(1500, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      await ground.refresh();
+      final session = await z.openSession(profileId: null, packId: 'de');
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await z.importText(session: session, text: 'السيد محمد المحترم\nIBAN: DE89370400440532013000\n');
+      await bench.rescan();
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: SendSheet(bench: bench, ground: ground, saveFolder: arabicOut.path)),
+    ));
+    await settle(tester);
+    await tester.tap(find.text('Continue'));
+    await settle(tester);
+    await tester.tap(find.text('Save as PDF'));
+    await settle(tester, rounds: 16);
+
+    expect(find.textContaining('backwards'), findsNothing, reason: 'it still refuses');
+    expect(find.textContaining('Saved to'), findsOneWidget, reason: 'nothing was written');
+    final written = arabicOut.listSync().whereType<File>().toList();
+    expect(written, hasLength(1));
+    late final String back;
+    await tester.runAsync(() async => back = await readBack(await written.single.readAsBytes()));
+    expect(shaped.hasMatch(back), isTrue, reason: 'the saved file is not shaped');
+    expect(unshaped.hasMatch(back), isFalse, reason: 'the saved file is mirrored');
+    // And the promise of O still holds on an Arabic document.
+    expect(back.contains('DE89370400440532013000'), isFalse,
+        reason: 'the IBAN is readable in the PDF');
   });
 
   test('the stated folder is the one the owner was told', () {
