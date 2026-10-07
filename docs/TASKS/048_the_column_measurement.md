@@ -1,8 +1,8 @@
 # 048 · The column measurement, and the rule it was going to justify
 
-**Status: MEASURED, AND THE RULE IS CANCELLED** · 8 Oct 2026 · programmer, at the lead's order · **no code was shipped from this.**
+**Status: MEASURED · THE RULE IS CANCELLED · AND 046/Q IS WHAT THE MEASUREMENT BOUGHT** · 7 Oct 2026 · programmer, at the lead's order · **no code was shipped from this.**
 
-The owner, 8 October: «بشأن الأعمدة، نحن لا نحتاج الأعمدة. نعتمد فقط على الأسطر — في حال تحديد الكل نحسب كم سطر في النص.»
+The owner, 7 October: «بشأن الأعمدة، نحن لا نحتاج الأعمدة. نعتمد فقط على الأسطر — في حال تحديد الكل نحسب كم سطر في النص.»
 
 So **038-G item 6 is not being built.** This paper exists because the measurement that was going to justify it is worth keeping whatever is built instead: it says what a table costs us today, it settles two questions about the PDF reader that nobody had measured, and it corrects a sentence in 038-G's own paper that was written from the shape of the wrong file.
 
@@ -99,7 +99,43 @@ Written by whoever measured the gap, in the words a person would read:
 >
 > In those four cases the values in the table are read as ordinary text, and whatever the ordinary rules find is what is found.
 
+## 7 · And what the owner's own answer reaches instead — 046/Q
+
+His sentence was the better design, and the four shapes above are the argument. **He selects the lines, clicks one value, and the same cell is protected in all of them** — the cell identified by its **order** among the runs, which §3 proved is the only thing about a table that survives his PDF reader.
+
+| | a header-driven rule (cancelled) | a person's click (046/Q) |
+|---|---|---|
+| the owner's sheet, `account no.` | 8 values | **8 values, in one press** |
+| a row whose cell count differs from its heading | nothing | nothing — the rows selected are the rows acted on |
+| a table with **no heading** | nothing | **reached** — measured |
+| a heading in a language this build does not carry | nothing | **reached** — measured, on a Turkish heading |
+| a heading that is not a label | nothing | **reached** |
+| a table separated by a **single** space | nothing | nothing — the reader debt of §5 stands |
+
+Measured, with the act's cost in presses:
+
+```text
+the owner's English payroll sheet · the account no. column
+    selection          8 lines · 25 values already protected in them · 0 open
+    protected          45  →  53        the act reached 8 places
+    presses            8 by hand, one at a time  →  1
+    must still reach the model   7 of 7
+        42 500 · 34 800 · 31 200 · 28 400 · 27 900 · 26 500 · 2 400
+
+DE-6 Lohnabrechnung · the Gesamtbrutto column
+    selection          4 lines · 20 already protected · 0 open
+    protected          29  →  33        the act reached 4 places
+    presses            4  →  1
+```
+
+**That the amounts still reach the model is the real subject**, not the eight: 046/M took an amount back out of a token so the model could do arithmetic on it, and an act over lines that swallowed a row would be the same defect arriving by another door. So each value becomes **its own token** — eight accounts, eight tokens, measured — and a line is never taken whole.
+
+Two things the measurement corrected while this was built:
+
+* `line_selection(0, 999)` on a nine-line document answered **`lines: 1000`**. It checked the first line number and not the last — a number shaped like a fact, which is the one thing this product may never print. Found by the function's own test, on the end nobody thinks about.
+* A click in the **whitespace between two columns** names no cell. It is refused in words rather than resolved to the nearest one: choosing a column for the person is the inference this whole design exists to avoid.
+
 ## Not in this paper
 
-- The line-based selection the owner's sentence points at. That is the lead's to shape from his words, and it is not mine to guess at.
-- Anything Arabic. The owner's priority, 8 October: not needed at present. The 045 debts stay exactly as they are, with their tests.
+- The screen's gesture for selecting lines. The core answers «how many lines, how many protected, how many open» and performs the act; drawing the selection is the next item and is not built.
+- Anything Arabic. The owner's priority, 7 October: not needed at present. The 045 debts stay exactly as they are, with their tests.

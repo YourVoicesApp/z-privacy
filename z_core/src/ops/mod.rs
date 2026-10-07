@@ -15,9 +15,9 @@ use std::collections::BTreeMap;
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
     Explanation, Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId,
-    NameCandidate, ProviderRow, QuestionView, ReportSubject, RevealedToken, RevealedValue,
-    SelectionView,
-    RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome,
+    LineSelection, NameCandidate, ProviderRow, QuestionView, ReportSubject, RevealedToken,
+    RevealedValue,
+    SelectionView, RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome,
     TaughtReach, TokenRow, UndoOutcome,
 };
 use crate::secret::Secret;
@@ -1541,6 +1541,197 @@ pub(crate) fn protect_all_matches(session: SessionId, span: Span, scope: Scope, 
     let outcome = protect_inner(session, span, scope, kind, true)?;
     crate::session::bump_truth();
     Ok(outcome)
+}
+
+/// The lines of this document, as byte ranges, newline not included.
+fn line_ranges(text: &str) -> Vec<(usize, usize)> {
+    let mut out = Vec::new();
+    let mut at = 0usize;
+    for line in text.split('\n') {
+        out.push((at, at + line.len()));
+        at += line.len() + 1;
+    }
+    out
+}
+
+/// The runs of a line, split on **two or more spaces or a tab**.
+///
+/// One space groups a number and two separate a column — 046/M drew that line
+/// for a run of words and 048 measured it on the owner's own bank statement,
+/// where every gap the PDF reader emits is exactly two spaces. It is the only
+/// thing about a table that survives his reader, which is why the cell is
+/// identified by its **order** here and never by a character position.
+fn runs(line: &str) -> Vec<(usize, usize)> {
+    let mut out = Vec::new();
+    let bytes = line.as_bytes();
+    let mut i = 0usize;
+    while i < bytes.len() {
+        while matches!(bytes.get(i), Some(b' ' | b'\t')) {
+            i += 1;
+        }
+        let start = i;
+        let mut end = i;
+        while i < bytes.len() {
+            match bytes.get(i) {
+                Some(b'\t') => break,
+                Some(b' ') if bytes.get(i + 1) == Some(&b' ') => break,
+                Some(_) => {
+                    i += 1;
+                    end = i;
+                }
+                None => break,
+            }
+        }
+        if end > start {
+            out.push((start, end));
+        }
+        if i == start {
+            i += 1;
+        }
+    }
+    out
+}
+
+/// **What a selection of lines holds** (046/Q).
+///
+/// The owner, 8 October: «نعتمد فقط على الأسطر — في حال تحديد الكل نحسب كم سطر
+/// في النص.» The line is the unit a person works with, so the count of lines
+/// is said out loud — and with it the two numbers that decide what an act over
+/// them is worth: how many values in there are already protected, and how many
+/// are still waiting.
+///
+/// The core answers it because they are facts about **findings**, and a screen
+/// that counted them would be a second source for a number Rust already holds.
+pub(crate) fn line_selection(session: SessionId, from: u32, to: u32) -> ApiResult<LineSelection> {
+    with_session(session.id, |s| {
+        let text = s.original_str();
+        let lines = line_ranges(text);
+        let (lo, hi) = (from.min(to) as usize, from.max(to) as usize);
+        // **Both ends, not only the first.** Checking `lo` alone returned
+        // `lines: 1000` for a nine-line document — a number shaped like a fact,
+        // which is the one thing this product may never print. Found by this
+        // function's own test, on the end nobody thinks about.
+        let (Some(first), Some(last)) = (lines.get(lo), lines.get(hi)) else {
+            return Err(ApiError::BadSpan {
+                reason: "that line is not in this document".to_string(),
+            });
+        };
+        let (start, end) = (first.0, last.1);
+        let inside = |a: usize, b: usize| a < end && start < b;
+        let protected = s.protections.iter().filter(|p| inside(p.start, p.end)).count() as u32;
+        let open = s
+            .findings
+            .iter()
+            .filter(|f| f.state == MarkState::Suggested && inside(f.start, f.end))
+            .count() as u32;
+        Ok(LineSelection {
+            lines: (hi - lo + 1) as u32,
+            protected,
+            open,
+        })
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+/// **The same cell, in every selected line** (046/Q).
+///
+/// He selects the lines, clicks **one** value, and the cell it stands in is
+/// protected in all of them. No inference about what a column means: the
+/// column is reached by **example**, and the example is a person's own click.
+///
+/// Measured in 048: a column rule driven by a header list would have reached
+/// eight values in one column of one document and would have missed a table
+/// with no header, a header in a language we do not carry, or a header that is
+/// not a label. This reaches all of them, because a person pointed.
+///
+/// The cell is cell **k** of the row, counting runs separated by two or more
+/// spaces or a tab — by order, never by character position, which is the one
+/// thing 048 proved does not survive the PDF reader on his real documents.
+///
+/// **Each value becomes its own token.** Never the line as one token: a line
+/// swallowed whole would destroy the row and take the amounts with it, which
+/// is 046/M's defect arriving by another door.
+pub(crate) fn protect_cell_in_lines(
+    session: SessionId,
+    span: Span,
+    from: u32,
+    to: u32,
+    scope: Scope,
+    kind: Kind,
+) -> ApiResult<ProtectOutcome> {
+    if matches!(scope, Scope::Always | Scope::Profile) {
+        require_open_vault()?;
+    }
+    // Which cell was clicked, and in which line.
+    let (which, lo, hi) = with_session(session.id, |s| {
+        let text = s.original_str();
+        let (start, _end) = text::span_to_bytes(text, span)?;
+        let lines = line_ranges(text);
+        let (lo, hi) = (from.min(to) as usize, from.max(to) as usize);
+        let here = lines
+            .iter()
+            .position(|(a, b)| start >= *a && start <= *b)
+            .ok_or_else(|| ApiError::BadSpan {
+                reason: "that selection is not on a line of this document".to_string(),
+            })?;
+        let Some((line_start, line_end)) = lines.get(here).copied() else {
+            return Err(ApiError::BadSpan {
+                reason: "that selection is not on a line of this document".to_string(),
+            });
+        };
+        let line = text.get(line_start..line_end).unwrap_or_default();
+        let inner = start - line_start;
+        let which = runs(line)
+            .iter()
+            .position(|(a, b)| inner >= *a && inner < *b)
+            .ok_or_else(|| ApiError::BadSpan {
+                reason: "that selection is not inside a cell of its line".to_string(),
+            })?;
+        Ok((which, lo, hi))
+    })
+    .ok_or(ApiError::InvalidSession)??;
+
+    // The same cell of every line in the range, as spans, before anything is
+    // changed: protecting shifts nothing in the original, but reading the
+    // document once and acting afterwards is the habit that keeps offsets
+    // honest.
+    let wanted = with_session(session.id, |s| {
+        let text = s.original_str();
+        let lines = line_ranges(text);
+        let mut out: Vec<Span> = Vec::new();
+        for index in lo..=hi {
+            let Some((line_start, line_end)) = lines.get(index).copied() else { continue };
+            let line = text.get(line_start..line_end).unwrap_or_default();
+            let Some((a, b)) = runs(line).get(which).copied() else { continue };
+            if let Ok(span) = text::bytes_to_span(text, line_start + a, line_start + b) {
+                out.push(span);
+            }
+        }
+        out
+    })
+    .ok_or(ApiError::InvalidSession)?;
+
+    let mut places = 0u32;
+    let mut token = String::new();
+    for one in wanted {
+        remember_in_vault(session, one, scope, kind)?;
+        match protect_inner(session, one, scope, kind, false)? {
+            ProtectOutcome::Applied { token: t, .. } => {
+                places = places.saturating_add(1);
+                if token.is_empty() {
+                    token = t;
+                }
+            }
+            // Already protected, or snapped to a whole item: both are honest
+            // outcomes for one line and neither stops the rest.
+            ProtectOutcome::AlreadyProtected { token: t, .. } if token.is_empty() => {
+                token = t;
+            }
+            _ => {}
+        }
+    }
+    crate::session::bump_truth();
+    Ok(ProtectOutcome::Applied { token, places })
 }
 
 fn protect_inner(

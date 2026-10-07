@@ -187,6 +187,17 @@ void main() {
       // calling it here is calling the protection as well as the setter.
       'setQuestion': () => setQuestion(session: session, text: 'Summarise it.'),
       'question': () => question(session: session),
+      // 046/Q. Both are about lines, so both are called on line 0 of whatever
+      // the contract's session holds.
+      'lineSelection': () => lineSelection(session: session, from: 0, to: 0),
+      'protectCellInLines': () => protectCellInLines(
+        session: session,
+        span: const Span(start: 0, end: 1),
+        from: 0,
+        to: 0,
+        scope: Scope.conversation,
+        kind: Kind.custom,
+      ),
       'protect': () => protect(
         session: session,
         span: span,
@@ -339,7 +350,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 99, reason: 'the contract has 99 functions');
+    expect(calls.length, 101, reason: 'the contract has 101 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

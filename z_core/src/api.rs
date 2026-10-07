@@ -977,6 +977,22 @@ pub struct DocumentView {
     pub pages: u32,
 }
 
+/// **What a selection of lines holds** (046/Q).
+///
+/// The owner, 8 October: «نعتمد فقط على الأسطر — في حال تحديد الكل نحسب كم سطر
+/// في النص.» The line is the unit a person works with, so the count is said
+/// out loud — and with it the two numbers that decide what an act over those
+/// lines is worth.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LineSelection {
+    /// How many lines are selected. «All» is simply every line.
+    pub lines: u32,
+    /// Values already protected inside them.
+    pub protected: u32,
+    /// Values inside them still waiting for an answer.
+    pub open: u32,
+}
+
 /// **The question that travels with the document**, as it stands (046/N).
 ///
 /// `text` is what would **leave** — protected — and `marks` are over the
@@ -1731,6 +1747,34 @@ pub fn set_question(session: SessionId, text: String) -> ApiResult<QuestionView>
 /// scan of the same sentence.
 pub fn question(session: SessionId) -> ApiResult<QuestionView> {
     crate::ops::question(session)
+}
+
+/// **What a selection of lines holds** (046/Q): how many lines, how many values
+/// in them are already protected, and how many are still waiting.
+///
+/// `from` and `to` are line numbers from zero, in either order. The core
+/// answers because these are facts about findings; a screen that counted them
+/// would be a second source for a number Rust already holds.
+pub fn line_selection(session: SessionId, from: u32, to: u32) -> ApiResult<LineSelection> {
+    crate::ops::line_selection(session, from, to)
+}
+
+/// **Protect the same cell in every selected line** (046/Q).
+///
+/// A person selects the lines, clicks **one** value, and the cell it stands in
+/// is protected in all of them. The column is reached by **example** — the
+/// example being a person's own click — and never by inference about what a
+/// header means.
+///
+/// The cell is cell **k** of the row, counting runs separated by two or more
+/// spaces or a tab: by **order**, never by character position, which 048
+/// measured as the only thing about a table that survives this build's PDF
+/// reader on the owner's real documents.
+///
+/// **Each value becomes its own token.** Never the line as one token: a line
+/// swallowed whole would destroy the row and take its amounts with it.
+pub fn protect_cell_in_lines(session: SessionId, span: Span, from: u32, to: u32, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
+    crate::ops::protect_cell_in_lines(session, span, from, to, scope, kind)
 }
 
 /// Incoming only: hand the core an answer as it arrived, tied to the payload the

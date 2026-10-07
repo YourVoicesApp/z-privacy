@@ -135,6 +135,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   LayerCount dco_decode_layer_count(dynamic raw);
 
   @protected
+  LineSelection dco_decode_line_selection(dynamic raw);
+
+  @protected
   List<String> dco_decode_list_String(dynamic raw);
 
   @protected
@@ -553,6 +556,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   LayerCount sse_decode_layer_count(SseDeserializer deserializer);
+
+  @protected
+  LineSelection sse_decode_line_selection(SseDeserializer deserializer);
 
   @protected
   List<String> sse_decode_list_String(SseDeserializer deserializer);
@@ -1032,6 +1038,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_layer_count(LayerCount self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_line_selection(LineSelection self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
