@@ -158,7 +158,10 @@ abstract class RustLibApi extends BaseApi {
     String? profileId,
   });
 
-  Future<String> zCoreApiCreateProfile({required String name});
+  Future<String> zCoreApiCreateProfile({
+    required String name,
+    SessionId? session,
+  });
 
   Future<String> zCoreApiDefaultDataDir();
 
@@ -942,12 +945,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
-  Future<String> zCoreApiCreateProfile({required String name}) {
+  Future<String> zCoreApiCreateProfile({
+    required String name,
+    SessionId? session,
+  }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
+          sse_encode_opt_box_autoadd_session_id(session, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -960,14 +967,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_api_error,
         ),
         constMeta: kZCoreApiCreateProfileConstMeta,
-        argValues: [name],
+        argValues: [name, session],
         apiImpl: this,
       ),
     );
   }
 
-  TaskConstMeta get kZCoreApiCreateProfileConstMeta =>
-      const TaskConstMeta(debugName: "create_profile", argNames: ["name"]);
+  TaskConstMeta get kZCoreApiCreateProfileConstMeta => const TaskConstMeta(
+    debugName: "create_profile",
+    argNames: ["name", "session"],
+  );
 
   @override
   Future<String> zCoreApiDefaultDataDir() {

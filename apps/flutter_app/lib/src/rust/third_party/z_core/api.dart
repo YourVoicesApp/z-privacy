@@ -453,8 +453,14 @@ Future<Settings> settings() => RustLib.instance.api.zCoreApiSettings();
 Future<Settings> saveSettings({required Settings settings}) =>
     RustLib.instance.api.zCoreApiSaveSettings(settings: settings);
 
-Future<String> createProfile({required String name}) =>
-    RustLib.instance.api.zCoreApiCreateProfile(name: name);
+/// Make a client, and return its id.
+///
+/// `session` is the open document's session when the client is made from the
+/// document screen, and `None` from the vault screen. It decides one thing: the
+/// language the client starts with, because the document in front of the person
+/// is the only language the app is not guessing at that moment.
+Future<String> createProfile({required String name, SessionId? session}) =>
+    RustLib.instance.api.zCoreApiCreateProfile(name: name, session: session);
 
 Future<void> renameProfile({required String profileId, required String name}) =>
     RustLib.instance.api.zCoreApiRenameProfile(

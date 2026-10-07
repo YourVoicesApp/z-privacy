@@ -207,8 +207,8 @@ fn forgetting_for_one_client_leaves_another_client_alone() {
     // The same text, learned separately by two clients. Forgetting it for one
     // must not reach into the other — which is the whole reason `Scope::Profile`
     // exists, tested from the other end.
-    let a = create_profile("Client A".to_string()).expect("profile");
-    let b = create_profile("Client B".to_string()).expect("profile");
+    let a = create_profile("Client A".to_string(), None).expect("profile");
+    let b = create_profile("Client B".to_string(), None).expect("profile");
     let ea = create_entity(EntityKind::Client, "A".to_string(), Some(a)).expect("entity");
     let va = set_value(ea, None, Kind::Project, "Apollo".to_string(), Policy::Always).expect("value");
     let eb = create_entity(EntityKind::Client, "B".to_string(), Some(b.clone())).expect("entity");

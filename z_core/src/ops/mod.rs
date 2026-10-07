@@ -1688,21 +1688,41 @@ pub(crate) fn default_pack_id() -> String {
 
 /// Which rule sets run for this session.
 ///
-/// The profile decides, because a firm's languages are a property of the client
-/// they work for, not of the app. A session with no profile — or a profile from
-/// a vault written before model 7 — falls back to the one pack it was opened
-/// with, so nothing that used to be detected stops being detected.
+/// **The session's language is always active, and the profile's languages are
+/// added to it.** Two lines below, `scan` reads the hints and the taught rules
+/// of a profile and says in its own comment that a document may be German and
+/// English at once — a list that *replaced* the session's language could not
+/// say that, and it did not: a client profile is born with one language, so
+/// choosing English in the bar ran German rows (046/A). The person's choice in
+/// front of the document is the one thing here that is never a guess.
+///
+/// A firm's languages are still a property of the client they work for. They
+/// are a widening, not a swap. The order is the session's language first,
+/// because that is the document being read, and duplicates are dropped so that
+/// one number is never two marks.
 fn active_sets(s: &Session, vault: &crate::vault::VaultStore) -> Vec<String> {
+    let mut sets = vec![s.pack_id.clone()];
     let from_profile = s
         .profile_id
         .as_deref()
         .map(|id| vault.languages_of(id))
         .unwrap_or_default();
-    if from_profile.is_empty() {
-        vec![s.pack_id.clone()]
-    } else {
-        from_profile
+    for language in from_profile {
+        if !sets.contains(&language) {
+            sets.push(language);
+        }
     }
+    sets
+}
+
+/// The language a session is reading in — `None` when the handle names no
+/// session that is still open.
+///
+/// Takes the core lock, so it is read **before** any `with_core` closure that
+/// needs it, for the reason `create_profile` states in full.
+pub(crate) fn session_pack(session: Option<SessionId>) -> Option<String> {
+    let session = session?;
+    crate::session::with_session(session.id, |s| s.pack_id.clone())
 }
 
 pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {

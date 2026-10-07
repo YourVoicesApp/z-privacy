@@ -1844,8 +1844,14 @@ pub fn save_settings(settings: Settings) -> ApiResult<Settings> {
     crate::ops::save_settings(settings)
 }
 
-pub fn create_profile(name: String) -> ApiResult<String> {
-    crate::ops::create_profile(name)
+/// Make a client, and return its id.
+///
+/// `session` is the open document's session when the client is made from the
+/// document screen, and `None` from the vault screen. It decides one thing: the
+/// language the client starts with, because the document in front of the person
+/// is the only language the app is not guessing at that moment.
+pub fn create_profile(name: String, session: Option<SessionId>) -> ApiResult<String> {
+    crate::ops::create_profile(name, session)
 }
 
 pub fn rename_profile(profile_id: String, name: String) -> ApiResult<()> {

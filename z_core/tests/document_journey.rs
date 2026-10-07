@@ -98,7 +98,7 @@ fn a_twenty_page_document_walks_the_whole_journey() {
     fresh_vault("journey");
 
     // The vault knows this client's contact by name — the fourth layer.
-    let profile = create_profile("Client Nordstern".to_string()).expect("profile");
+    let profile = create_profile("Client Nordstern".to_string(), None).expect("profile");
     let contact = create_entity(EntityKind::Person, "Kontakt Nordstern".to_string(), Some(profile.clone()))
         .expect("entity");
     let value = set_value(contact, None, Kind::Person, "Thomas Müller".to_string(), Policy::Always)

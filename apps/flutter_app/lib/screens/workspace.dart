@@ -725,7 +725,7 @@ class _ProfileSwitcherState extends State<ProfileSwitcher> {
   Future<void> _create() async {
     final made = await showDialog<ProfileRow>(
       context: context,
-      builder: (_) => ProfileForm(ground: widget.ground),
+      builder: (_) => ProfileForm(ground: widget.ground, session: widget.bench.session),
     );
     if (!mounted || made == null) return;
     setState(() {

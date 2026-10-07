@@ -162,7 +162,7 @@ fn rule_two_only_what_the_vault_actually_holds_becomes_automatic() {
 fn rule_two_a_value_in_another_profile_is_not_loaded() {
     let _guard = serial();
     fresh_vault("rule-two-profile");
-    let other = create_profile("Client Andere".to_string()).expect("profile");
+    let other = create_profile("Client Andere".to_string(), None).expect("profile");
     identity("Andere", Some(&other), Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
 
     // No profile active: an entity that belongs to one profile is not loaded.
@@ -271,8 +271,8 @@ fn the_vault_list_and_its_cards_never_print_a_value() {
 fn switching_a_profile_keeps_the_tokens_already_given() {
     let _guard = serial();
     fresh_vault("switch");
-    let p1 = create_profile("Client Eins".to_string()).expect("profile");
-    let p2 = create_profile("Client Zwei".to_string()).expect("profile");
+    let p1 = create_profile("Client Eins".to_string(), None).expect("profile");
+    let p2 = create_profile("Client Zwei".to_string(), None).expect("profile");
     identity("Eins", Some(&p1), Kind::Company, "Nordstern Consulting GmbH", &[], Policy::Always);
 
     let (s, _) = scanned(Some(&p1));
@@ -306,7 +306,7 @@ fn the_golden_document_with_an_open_vault_asks_nothing() {
     fresh_vault("golden");
     let fixture = include_str!("fixtures/Vertrag_Nordstern.txt");
 
-    let profile = create_profile("Client Nordstern".to_string()).expect("profile");
+    let profile = create_profile("Client Nordstern".to_string(), None).expect("profile");
     identity(
         "Nordstern Consulting",
         Some(&profile),
@@ -366,7 +366,7 @@ fn the_golden_document_with_an_open_vault_asks_nothing() {
 fn an_identity_can_be_renamed_moved_and_pruned() {
     let _lock = serial();
     fresh_vault("manage");
-    let profile = create_profile("Client A".to_string()).expect("profile");
+    let profile = create_profile("Client A".to_string(), None).expect("profile");
     let id = identity("Nordstern", None, Kind::Company, "Nordstern Consulting GmbH", &["Nordstern"], Policy::Always);
 
     rename_entity(id, "Nordstern Consulting".to_string()).expect("rename");
@@ -1133,7 +1133,7 @@ fn a_wrong_passphrase_reports_nothing_it_does_not_know() {
 fn always_and_profile_actually_reach_the_vault() {
     let _lock = serial();
     fresh_vault("scope");
-    let profile = create_profile("Client Nordstern".to_string()).expect("profile");
+    let profile = create_profile("Client Nordstern".to_string(), None).expect("profile");
 
     // «Always» — every profile. The dialog has promised this since M7.3 and
     // nothing wrote it down until task 034.
@@ -1180,7 +1180,7 @@ fn always_and_profile_actually_reach_the_vault() {
     close_session(same_client).expect("close");
 
     // In another client's, it is not — and that is the whole point of the scope.
-    let other = create_profile("Client B".to_string()).expect("profile");
+    let other = create_profile("Client B".to_string(), None).expect("profile");
     let elsewhere = open_session(Some(other), "de".to_string()).expect("session");
     import_text(elsewhere, "Nordstern Consulting GmbH meldet sich.".to_string()).expect("import");
     let outside = scan(elsewhere).expect("scan");

@@ -50,7 +50,7 @@ fn first() {
     vault_create_with_passphrase(PASS.to_string()).expect("create");
 
     // A new client, taught by hand, as a person would on their first day.
-    let profile = create_profile("Client Nordstern".to_string()).expect("profile");
+    let profile = create_profile("Client Nordstern".to_string(), None).expect("profile");
     let client = create_entity(EntityKind::Client, "Nordstern".to_string(), Some(profile.clone()))
         .expect("entity");
     let company = set_value(

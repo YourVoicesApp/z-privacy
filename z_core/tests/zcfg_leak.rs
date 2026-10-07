@@ -49,7 +49,7 @@ fn nothing_of_the_user_s_work_reaches_the_settings_file() {
 
     // ---------------------------------------------------------- the journey
     vault_create_with_passphrase(PASS.to_string()).expect("vault");
-    let profile = create_profile("Client Nordstern".to_string()).expect("profile");
+    let profile = create_profile("Client Nordstern".to_string(), None).expect("profile");
     let client = create_entity(EntityKind::Client, "Nordstern".to_string(), Some(profile.clone()))
         .expect("entity");
     let value = set_value(

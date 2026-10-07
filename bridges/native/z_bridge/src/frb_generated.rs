@@ -491,10 +491,11 @@ fn wire__z_core__api__create_profile_impl(
             };
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_name = <String>::sse_decode(&mut deserializer);
+            let api_session = <Option<crate::api::mirrors::SessionId>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
-                    let output_ok = z_core::api::create_profile(api_name)?;
+                    let output_ok = z_core::api::create_profile(api_name, api_session)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }

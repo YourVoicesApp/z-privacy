@@ -50,7 +50,7 @@ fn scan_under(profile: &str, doc: &str) -> Vec<(Kind, String)> {
 fn a_profile_runs_two_languages_in_one_scan() {
     let _guard = serial();
     fresh("two-languages");
-    let profile = create_profile("Profile A".to_string()).expect("profile");
+    let profile = create_profile("Profile A".to_string(), None).expect("profile");
     let row = set_profile_languages(profile.clone(), vec!["de".to_string(), "en".to_string()])
         .expect("languages");
     assert_eq!(row.languages, vec!["de".to_string(), "en".to_string()]);
@@ -81,8 +81,8 @@ fn a_profile_runs_two_languages_in_one_scan() {
 fn a_taught_rule_survives_a_restart_and_stays_in_its_profile() {
     let _guard = serial();
     let dir = fresh("taught");
-    let a = create_profile("Client A".to_string()).expect("a");
-    let b = create_profile("Client B".to_string()).expect("b");
+    let a = create_profile("Client A".to_string(), None).expect("a");
+    let b = create_profile("Client B".to_string(), None).expect("b");
     for p in [&a, &b] {
         set_profile_languages(p.clone(), vec!["de".to_string()]).expect("languages");
     }
@@ -113,8 +113,8 @@ fn a_taught_rule_survives_a_restart_and_stays_in_its_profile() {
 fn a_rule_taught_everywhere_reaches_every_profile() {
     let _guard = serial();
     fresh("everywhere");
-    let a = create_profile("Client A".to_string()).expect("a");
-    let b = create_profile("Client B".to_string()).expect("b");
+    let a = create_profile("Client A".to_string(), None).expect("a");
+    let b = create_profile("Client B".to_string(), None).expect("b");
     for p in [&a, &b] {
         set_profile_languages(p.clone(), vec!["de".to_string()]).expect("languages");
     }
@@ -136,7 +136,7 @@ fn a_rule_taught_everywhere_reaches_every_profile() {
 fn a_taught_rule_explains_itself_and_can_be_forgotten() {
     let _guard = serial();
     fresh("explain");
-    let profile = create_profile("Nordstern".to_string()).expect("profile");
+    let profile = create_profile("Nordstern".to_string(), None).expect("profile");
     set_profile_languages(profile.clone(), vec!["de".to_string()]).expect("languages");
     let rule_id = teach_label_rule("Mandantenkennung".to_string(), Kind::CustomerNo, Some(profile.clone()))
         .expect("teach");
@@ -188,7 +188,7 @@ fn a_taught_rule_explains_itself_and_can_be_forgotten() {
 fn the_snapshot_reports_the_rules_and_the_sets_that_actually_ran() {
     let _guard = serial();
     fresh("snapshot");
-    let profile = create_profile("Nordstern".to_string()).expect("profile");
+    let profile = create_profile("Nordstern".to_string(), None).expect("profile");
     set_profile_languages(profile.clone(), vec!["de".to_string(), "en".to_string()])
         .expect("languages");
     teach_label_rule("Mandantenkennung".to_string(), Kind::CustomerNo, Some(profile.clone()))
@@ -225,7 +225,7 @@ fn the_why_card_names_a_reach_and_never_the_client() {
     let _guard = serial();
     fresh("reach");
     let display = "Nordstern Consulting GmbH";
-    let profile = create_profile(display.to_string()).expect("profile");
+    let profile = create_profile(display.to_string(), None).expect("profile");
     set_profile_languages(profile.clone(), vec!["de".to_string()]).expect("languages");
     teach_label_rule("Mandantenkennung".to_string(), Kind::CustomerNo, Some(profile.clone()))
         .expect("teach");
@@ -266,7 +266,7 @@ fn a_refusal_never_echoes_a_profile_id() {
     let _guard = serial();
     fresh("no-echo");
     let display = "Nordstern Consulting GmbH";
-    let profile = create_profile(display.to_string()).expect("profile");
+    let profile = create_profile(display.to_string(), None).expect("profile");
     assert!(
         profile.contains("nordstern"),
         "the id stopped being derived from the name; this test guards the wrong thing now"

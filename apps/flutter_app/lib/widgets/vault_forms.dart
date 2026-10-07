@@ -587,7 +587,7 @@ class _ValueFormState extends State<ValueForm> {
 
 /// A new profile — one dictionary per client.
 class ProfileForm extends StatefulWidget {
-  const ProfileForm({super.key, this.profile, this.ground});
+  const ProfileForm({super.key, this.profile, this.ground, this.session});
 
   final ProfileRow? profile;
 
@@ -595,6 +595,12 @@ class ProfileForm extends StatefulWidget {
   /// call sites keep working; without it the language row is not drawn, and
   /// the profile keeps whatever the core gave it.
   final Ground? ground;
+
+  /// The open document's session, when this form is opened from the document
+  /// screen. It decides the language a new client starts with — the one
+  /// language nobody is guessing at that moment is the one on screen (046/A).
+  /// `null` from the vault screen, where no document is open.
+  final SessionId? session;
 
   @override
   State<ProfileForm> createState() => _ProfileFormState();
@@ -711,12 +717,19 @@ class _ProfileFormState extends State<ProfileForm> {
       final profile = widget.profile;
       final chosen = _languages.toList()..sort();
       if (profile == null) {
-        final id = await z.createProfile(name: name);
-        // The core gives a new profile the device's pack. Only overwrite that
+        final id = await z.createProfile(name: name, session: widget.session);
+        // The core gives a new client the language of the document it was made
+        // from, and the device's pack when there is none. Only overwrite that
         // when the person actually chose something, so an empty selection is
-        // never read as «no rule sets at all».
+        // never read as «no rule sets at all» — and when they did not choose,
+        // ask the core what it did rather than drawing an empty list, which
+        // would be a row on screen saying the client has no languages while
+        // the vault holds one.
         final row = chosen.isEmpty
-            ? ProfileRow(id: id, name: name, languages: const [])
+            ? (await z.profiles()).firstWhere(
+                (p) => p.id == id,
+                orElse: () => ProfileRow(id: id, name: name, languages: const []),
+              )
             : await z.setProfileLanguages(profileId: id, languages: chosen);
         if (mounted) Navigator.of(context).pop(row);
       } else {

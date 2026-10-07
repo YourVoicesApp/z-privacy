@@ -168,8 +168,8 @@ fn workspace_snapshot_names_the_active_profile_and_rename_keeps_the_id() {
     let _guard = serial();
     fresh_dir("profiles");
     vault_create_with_passphrase(PASS.to_string()).expect("create");
-    let client_a = create_profile("Client A".to_string()).expect("a");
-    let client_b = create_profile("Client B".to_string()).expect("b");
+    let client_a = create_profile("Client A".to_string(), None).expect("a");
+    let client_b = create_profile("Client B".to_string(), None).expect("b");
     let s = open_session(Some(client_a.clone()), "de".to_string()).expect("open");
     import_text(s, DOC.to_string()).expect("import");
     scan(s).expect("scan");

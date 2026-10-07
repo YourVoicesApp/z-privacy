@@ -92,8 +92,8 @@ fn text_of(row: &TaughtValueRow) -> String {
 fn values_and_exceptions_are_vault_knowledge_with_profile_scope() {
     let _guard = serial();
     fresh("journey");
-    let profile_a = create_profile("Client A".to_string()).expect("a");
-    let profile_b = create_profile("Client B".to_string()).expect("b");
+    let profile_a = create_profile("Client A".to_string(), None).expect("a");
+    let profile_b = create_profile("Client B".to_string(), None).expect("b");
 
     let doc = "Kunde: Nordstern Consulting GmbH";
     let s = open_session(Some(profile_a.clone()), "de".to_string()).expect("session");

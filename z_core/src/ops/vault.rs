@@ -10,7 +10,8 @@ use std::path::PathBuf;
 
 use crate::api::{
     ApiError, ApiResult, EntityCard, EntityKind, EntityRow, Kind, KindRow, Policy, ProfileRow,
-    ForgetPlan, RevealedValue, RevealState, Settings, VaultState, VaultUnlockOutcome, ValueRow,
+    ForgetPlan, RevealedValue, RevealState, SessionId, Settings, VaultState, VaultUnlockOutcome,
+    ValueRow,
 };
 use crate::secret::Secret;
 use crate::session::with_core;
@@ -786,18 +787,24 @@ fn no_such_profile() -> String {
     "that profile is not in this vault".to_string()
 }
 
-pub(crate) fn create_profile(name: String) -> ApiResult<String> {
+/// Make a client, in the language of the document the person is looking at.
+///
+/// `session` is the document screen's own session when the client is made from
+/// there — two clicks, which is what `Scope::Profile` needs to exist at all —
+/// and `None` from the vault screen, where no document is open.
+pub(crate) fn create_profile(name: String, session: Option<SessionId>) -> ApiResult<String> {
     let name = name.trim().to_string();
     if name.is_empty() {
         return Err(ApiError::InputRefused {
             reason: "a profile needs a name you will recognise".to_string(),
         });
     }
-    // Read BEFORE the lock, never inside it: `default_pack_id` takes the core
-    // mutex, and calling it from within the closure below is exactly the
+    // Read BEFORE the lock, never inside it: both of these take the core
+    // mutex, and calling either from within the closure below is exactly the
     // deadlock G19 exists to forbid. It cost this milestone one hung test run
     // to prove the rule is not theoretical.
-    let starting_pack = crate::ops::default_pack_id();
+    let starting_pack = crate::ops::session_pack(session)
+        .unwrap_or_else(crate::ops::default_pack_id);
     let id = with_core(|core| {
         core.vault.with_open_mut(|vault| {
             // An id made from the name, so a log line names a client only as the
@@ -810,9 +817,15 @@ pub(crate) fn create_profile(name: String) -> ApiResult<String> {
             vault.profiles.push(crate::vault::model::Profile {
                 id: id.clone(),
                 name,
-                // A new profile starts with the pack the device already uses,
-                // and the person adds languages from the profile screen. An
+                // A new profile starts with the language of the document it
+                // was made from, and the device's pack when there is no
+                // document — the person adds more from the profile screen. An
                 // empty list would silently mean «no label rules at all».
+                //
+                // 046/A: this used to be the device's pack either way, so a
+                // client made while reading an English letter was a German
+                // client, and `active_sets` then let that replace the English
+                // the person had chosen.
                 languages: vec![starting_pack.clone()],
             });
             Ok(id)

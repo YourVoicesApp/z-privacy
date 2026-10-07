@@ -103,7 +103,7 @@ fn values_in_vault() -> u32 {
 fn remove_protection_here_leaves_the_knowledge_alone() {
     let _g = serial();
     fresh_vault("remove-here");
-    let profile = create_profile("A".to_string()).expect("profile");
+    let profile = create_profile("A".to_string(), None).expect("profile");
     teach(Some(&profile));
 
     let s = scanned(Some(&profile));
@@ -130,7 +130,7 @@ fn remove_protection_here_leaves_the_knowledge_alone() {
 fn forget_from_this_profile_keeps_the_protection_already_applied() {
     let _g = serial();
     fresh_vault("forget-profile");
-    let profile = create_profile("A".to_string()).expect("profile");
+    let profile = create_profile("A".to_string(), None).expect("profile");
     let (entity, value) = teach(Some(&profile));
 
     let s = scanned(Some(&profile));
@@ -166,7 +166,7 @@ fn forget_from_this_profile_keeps_the_protection_already_applied() {
 fn forget_everywhere_reaches_profiles_that_do_not_exist_yet() {
     let _g = serial();
     fresh_vault("forget-everywhere");
-    let first = create_profile("A".to_string()).expect("profile");
+    let first = create_profile("A".to_string(), None).expect("profile");
     // Taught to no profile, so every profile knows it.
     let (entity, value) = teach(None);
 
@@ -192,7 +192,7 @@ fn forget_everywhere_reaches_profiles_that_do_not_exist_yet() {
 
     // A profile made **after** the act. The promise «everywhere» is about
     // tomorrow's documents as much as today's.
-    let later = create_profile("B".to_string()).expect("profile B");
+    let later = create_profile("B".to_string(), None).expect("profile B");
     assert!(
         !a_new_document_knows_it(Some(&later)),
         "a profile created after «Forget everywhere» still recognised the value"
@@ -230,7 +230,7 @@ fn nothing_taught_reports_no_reach() {
 fn moving_an_identity_changes_the_name_of_the_act() {
     let _g = serial();
     fresh_vault("reach-moves");
-    let profile = create_profile("A".to_string()).expect("profile");
+    let profile = create_profile("A".to_string(), None).expect("profile");
     let (entity, _) = teach(None);
 
     let s = scanned(Some(&profile));
