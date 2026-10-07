@@ -300,6 +300,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PayloadView dco_decode_payload_view(dynamic raw);
 
   @protected
+  Piece dco_decode_piece(dynamic raw);
+
+  @protected
   Place dco_decode_place(dynamic raw);
 
   @protected
@@ -747,6 +750,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PayloadView sse_decode_payload_view(SseDeserializer deserializer);
+
+  @protected
+  Piece sse_decode_piece(SseDeserializer deserializer);
 
   @protected
   Place sse_decode_place(SseDeserializer deserializer);
@@ -1284,6 +1290,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_payload_view(PayloadView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_piece(Piece self, SseSerializer serializer);
 
   @protected
   void sse_encode_place(Place self, SseSerializer serializer);

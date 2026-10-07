@@ -88,6 +88,15 @@ pub(crate) enum Purpose {
     /// something else later — the owner's `future-profile key`.
     #[allow(dead_code)]
     Profile,
+    /// **Names the tokens of one document** — 046/U item 2.
+    ///
+    /// Nothing is sealed with this key and nothing is stored under it: a token
+    /// name is derived from it every time, out of the client, the document's
+    /// own bytes and the value. That is what makes the same file in the same
+    /// client give the same token for ever with no record kept, and it is why
+    /// the key must never leave this crate — a name derived under a key that
+    /// did leave would be a value anybody could test a guess against.
+    TokenName,
 }
 
 impl Purpose {
@@ -96,6 +105,7 @@ impl Purpose {
             Self::Data => b"z-privacy/vault/1/data",
             Self::Provider => b"z-privacy/vault/1/provider-credential",
             Self::Profile => b"z-privacy/vault/1/profile",
+            Self::TokenName => b"z-privacy/vault/1/token-name",
         }
     }
 }
@@ -118,6 +128,29 @@ pub(crate) fn derive(master: &SecretKey, purpose: Purpose) -> ApiResult<SecretKe
         reason: "key derivation produced the wrong length".to_string(),
     })?;
     Ok(Zeroizing::new(bytes))
+}
+
+/// **A keyed tag over a message** — the same primitive as `derive`, used as a
+/// MAC rather than as a KDF.
+///
+/// `label` separates one use of the same key from another, so «the namespace
+/// of this document» and «the tail of this value» can share a key without
+/// one being computable from the other. Both are length-prefixed by the
+/// caller, because a separator alone lets an input ending in it forge another.
+///
+/// 046/U item 2 is the only caller. Nothing sealed, nothing stored: the output
+/// is a name, derived again every time it is needed.
+pub(crate) fn mac(key: &SecretKey, label: &[u8], message: &[u8]) -> ApiResult<[u8; KEY_LEN]> {
+    let mut mac = <Blake2bMac<U32> as Mac>::new_from_slice(key.as_ref()).map_err(|_| ApiError::PayloadRefused {
+        reason: "the key has the wrong length for a tag".to_string(),
+    })?;
+    mac.update(&(label.len() as u64).to_be_bytes());
+    mac.update(label);
+    mac.update(message);
+    let out = mac.finalize().into_bytes();
+    out.as_slice().try_into().map_err(|_| ApiError::PayloadRefused {
+        reason: "a tag came out the wrong length".to_string(),
+    })
 }
 
 /// Seal something with a purpose's key. Used by `format.rs` for a credential.

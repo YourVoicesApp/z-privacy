@@ -1095,11 +1095,42 @@ pub struct RevealedValue {
     pub ttl_ms: u32,
 }
 
-/// A piece of a restored answer. `restored` is true for words put back here.
+/// What one piece of a restored answer **is** — 046/U.
+///
+/// Three states and not two bools: a piece is the model's words, or a value we
+/// put back, or a token we could not. Two bools would have a fourth corner
+/// that means nothing, and this project has paid for an impossible state
+/// before.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Piece {
+    /// The model's own words.
+    Words,
+    /// A value this conversation put back where its token stood.
+    Restored,
+    /// **A token this conversation does not know.**
+    ///
+    /// It is kept in the view, word for word, because the model really did
+    /// write it and removing it would be a second lie. What changes is that it
+    /// is no longer indistinguishable from the answer: it says what it is, and
+    /// `AnswerSnapshot::unknown_tokens` names every one of them.
+    ///
+    /// The commonest cause, and the one the owner met: an answer from another
+    /// conversation. A token is minted per session today, so Monday's answer
+    /// carries names Friday's conversation never made.
+    Unresolved,
+}
+
+/// A piece of a restored answer.
+///
+/// `piece` and no `restored: bool` beside it. The bool was there first and this
+/// change could have left it — three readers, one line each — but
+/// `restored == (piece == Restored)` is the same fact written twice, and
+/// wherever two places can disagree about one fact, one of them is already
+/// wrong. The three readers were changed instead.
 #[derive(Clone, PartialEq, Eq)]
 pub struct Segment {
     pub text: String,
-    pub restored: bool,
+    pub piece: Piece,
 }
 
 /// How many items each layer caught.
@@ -1270,7 +1301,7 @@ impl fmt::Debug for Segment {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Segment")
             .field("text", &format_args!("[REDACTED {} bytes]", self.text.len()))
-            .field("restored", &self.restored)
+            .field("piece", &self.piece)
             .finish()
     }
 }
@@ -1440,6 +1471,17 @@ pub struct AnswerSnapshot {
     pub next: Option<AnswerId>,
     pub restored: Vec<Segment>,
     pub as_written: String,
+    /// **Every token in this answer that this conversation could not resolve**
+    /// — 046/U, by name and in the order they appear.
+    ///
+    /// Empty is the ordinary case and the only one a person need not be told
+    /// about. Non-empty means the answer was built somewhere else: a screen
+    /// that drew these as the model's own words would be telling a person that
+    /// `__Z_5CDD_IBAN_5B32__` is what the model said about their account.
+    ///
+    /// Named here as well as marked in the pieces so that the count in the
+    /// sentence and the marks in the text are **one** fact.
+    pub unknown_tokens: Vec<String>,
 }
 
 impl fmt::Debug for WorkspaceSnapshot {

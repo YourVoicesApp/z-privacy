@@ -73,7 +73,7 @@ fn main() -> Result<(), ApiError> {
     println!("RESTORED — read on this device, with your words back");
     println!("  {text}\n");
 
-    println!("  put back here: {:?}", restored.iter().filter(|s| s.restored).map(|s| &s.text).collect::<Vec<_>>());
+    println!("  put back here: {:?}", restored.iter().filter(|s| s.piece == Piece::Restored).map(|s| &s.text).collect::<Vec<_>>());
     println!("  the invented token was left alone, because it is not ours.");
 
     // And the one thing that must be impossible: there is no call that would

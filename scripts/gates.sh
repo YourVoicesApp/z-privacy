@@ -802,7 +802,15 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          frau_as_an_ordinary_noun_names_nobody a_word_like_den_in_front_of_a_salutation \
          an_austrian_title_is_stepped_over replaces_what_was_selected \
          salutation_stays_and_the_company \
-         never_mentions_are_counted codes_with_no_characters; do
+         never_mentions_are_counted codes_with_no_characters \
+         the_same_value_now_keeps_its_token_the_next_day \
+         an_answer_from_another_conversation_is_reported_and_not_passed_through \
+         something_that_is_not_a_token_is_not_reported \
+         the_same_document_gives_the_same_token_days_apart \
+         two_clients_do_not_share_a_name_for_the_same_value \
+         another_document_gives_another_name_for_the_same_value \
+         without_a_vault_the_name_is_random_again \
+         an_answer_from_monday_restores_on_friday; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -843,7 +851,9 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "protects that cell in every held line" \
          "between two columns says why" \
          "a wrapped row still presses the cell" \
-         "carries the column act, so no press is wasted"; do
+         "carries the column act, so no press is wasted" \
+         "another conversation says so, by name, above the answer" \
+         "own answer restores with nothing said"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

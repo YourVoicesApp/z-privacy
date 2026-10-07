@@ -847,10 +847,29 @@ pub struct _RevealedValue {
     pub ttl_ms: u32,
 }
 
+#[frb(mirror(Piece))]
+pub enum _Piece {
+    /// The model's own words.
+    Words,
+    /// A value this conversation put back where its token stood.
+    Restored,
+    /// **A token this conversation does not know.**
+    ///
+    /// It is kept in the view, word for word, because the model really did
+    /// write it and removing it would be a second lie. What changes is that it
+    /// is no longer indistinguishable from the answer: it says what it is, and
+    /// `AnswerSnapshot::unknown_tokens` names every one of them.
+    ///
+    /// The commonest cause, and the one the owner met: an answer from another
+    /// conversation. A token is minted per session today, so Monday's answer
+    /// carries names Friday's conversation never made.
+    Unresolved,
+}
+
 #[frb(mirror(Segment))]
 pub struct _Segment {
     pub text: String,
-    pub restored: bool,
+    pub piece: Piece,
 }
 
 #[frb(mirror(LayerCount))]
@@ -1087,6 +1106,17 @@ pub struct _AnswerSnapshot {
     pub next: Option<AnswerId>,
     pub restored: Vec<Segment>,
     pub as_written: String,
+    /// **Every token in this answer that this conversation could not resolve**
+    /// — 046/U, by name and in the order they appear.
+    ///
+    /// Empty is the ordinary case and the only one a person need not be told
+    /// about. Non-empty means the answer was built somewhere else: a screen
+    /// that drew these as the model's own words would be telling a person that
+    /// `__Z_5CDD_IBAN_5B32__` is what the model said about their account.
+    ///
+    /// Named here as well as marked in the pieces so that the count in the
+    /// sentence and the marks in the text are **one** fact.
+    pub unknown_tokens: Vec<String>,
 }
 
 #[frb(mirror(RevealState))]

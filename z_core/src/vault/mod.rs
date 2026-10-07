@@ -397,6 +397,25 @@ impl VaultStore {
     /// The rule sets switched on for one profile. Empty when the vault is
     /// locked or the profile is unknown — and the caller then falls back to the
     /// session's own pack rather than scanning with nothing.
+    /// **The key and the namespace this document's token names come from** —
+    /// 046/U item 2.
+    ///
+    /// `None` while the vault is shut, and that is the honest answer rather
+    /// than a weaker name: with no vault there is no value kept either, so
+    /// there is nothing for a stable name to be stable *for*. The tokens fall
+    /// back to the random ones they have always been and an older answer is
+    /// **reported** rather than passed through — which is item 1's whole job.
+    pub(crate) fn naming_for(&mut self, profile: Option<&str>, document: &str) -> Option<crate::tokens::Naming> {
+        // `state()` and not `self.master.is_some()`: the auto-lock fires inside
+        // the tick and the master key is dropped there, so this asks the one
+        // thing that knows.
+        if self.state() != VaultState::Unlocked {
+            return None;
+        }
+        let master = self.master.as_ref()?;
+        crate::tokens::Naming::derive(master, profile, document).ok()
+    }
+
     pub(crate) fn languages_of(&self, profile_id: &str) -> Vec<String> {
         self.open
             .as_ref()
