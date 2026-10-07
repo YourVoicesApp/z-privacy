@@ -43,6 +43,7 @@ final _everyError = <ApiError>[
   const ApiError.vaultAuthenticationFailed(),
   const ApiError.payloadAlreadySent(),
   const ApiError.vaultRequired(),
+  const ApiError.betweenColumns(),
 ];
 
 /// Every shape the two nested enums take, because a reason inside an error is
@@ -87,8 +88,8 @@ void _readsAsHuman(String message, String what) {
 
 void main() {
   test('every ApiError variant has a human sentence', () {
-    expect(_everyError.length, 23,
-        reason: 'the contract has 23 ApiError variants');
+    expect(_everyError.length, 24,
+        reason: 'the contract has 24 ApiError variants');
     for (final e in _everyError) {
       _readsAsHuman(humanMessage(e), e.runtimeType.toString());
     }

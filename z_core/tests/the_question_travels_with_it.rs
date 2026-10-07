@@ -1,6 +1,6 @@
 // 046/N, second half · the question is in the column that says what leaves.
 //
-// **The decision, and the invariant it rests on** (the lead, 8 October): the
+// **The decision, and the invariant it rests on** (the lead, 7 October): the
 // promise is that the **left** column is the document byte for byte. The right
 // column means **everything that leaves**. So a question that leaves and is not
 // in that column makes the column a lie — the one shape this whole round has

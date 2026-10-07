@@ -3814,6 +3814,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return ApiError_PayloadAlreadySent();
       case 22:
         return ApiError_VaultRequired();
+      case 23:
+        return ApiError_BetweenColumns();
       default:
         throw Exception("unreachable");
     }
@@ -5320,6 +5322,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return ApiError_PayloadAlreadySent();
       case 22:
         return ApiError_VaultRequired();
+      case 23:
+        return ApiError_BetweenColumns();
       default:
         throw UnimplementedError('');
     }
@@ -7209,6 +7213,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_i_32(21, serializer);
       case ApiError_VaultRequired():
         sse_encode_i_32(22, serializer);
+      case ApiError_BetweenColumns():
+        sse_encode_i_32(23, serializer);
     }
   }
 

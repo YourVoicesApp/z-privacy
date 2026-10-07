@@ -27,14 +27,14 @@ import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zprivacy/core/palette.dart';
+
+import 'drawn_document.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
-import 'package:zprivacy/widgets/document_text.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
@@ -91,20 +91,16 @@ void main() {
     await settle(tester);
     expect(bench.suggested, isNotEmpty, reason: 'nothing is waiting, so this proves nothing');
 
-    final column = tester.renderObject<RenderBox>(find.byType(OriginalText).first);
-    final painter = TextPainter(
-      text: TextSpan(text: doc, style: Zc.document),
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: column.size.width);
+    // Taken from the text as it is drawn — see `drawn_document.dart`. This
+    // used to lay the document out with a painter of its own over the
+    // `OriginalText` box, which stopped being where the text is the moment a
+    // gutter stood beside it.
     final waiting = bench.suggested.first;
-    final at = column.localToGlobal(
-      painter
-          .getBoxesForSelection(
-            TextSelection(baseOffset: waiting.span.start, extentOffset: waiting.span.end),
-          )
-          .first
-          .toRect()
-          .center,
+    final at = whereIsInDocument(
+      tester,
+      'Nordstern',
+      waiting.span.start,
+      span: waiting.span.end - waiting.span.start,
     );
 
     Future<void> away() async {

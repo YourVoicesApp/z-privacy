@@ -838,7 +838,11 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "the band" "read again once there is one" "never insists" \
          "asks once per name, with what the decision is worth" \
          "no model is named in Dart" "the original is a chosen thing" \
-         "never inherits the last one"; do
+         "never inherits the last one" \
+         "takes that line, and the core says what is in it" \
+         "protects that cell in every held line" \
+         "between two columns says why" \
+         "a wrapped row still presses the cell"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

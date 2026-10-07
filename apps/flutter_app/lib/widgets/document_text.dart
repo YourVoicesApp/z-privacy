@@ -7,9 +7,11 @@
 // inside a character, so a slice here can never cut one in half.
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
+import 'package:zprivacy/widgets/line_gutter.dart';
 
 /// What each source is called on screen, and why the mark is there.
 String sourceName(Source s) => switch (s) {
@@ -63,6 +65,9 @@ class OriginalText extends StatefulWidget {
     this.focusKey,
     this.onAsk,
     this.onChoose,
+    this.heldLines,
+    this.onLines,
+    this.onColumn,
   });
 
   final String text;
@@ -97,6 +102,24 @@ class OriginalText extends StatefulWidget {
   /// The position is where the finger or the pointer went down, in global
   /// coordinates, because that is what a bubble has to be anchored to.
   final void Function(Mark mark, Offset at)? onChoose;
+
+  /// 046/Q — **the lines held now**, from zero, or null for none. The gutter
+  /// is drawn only when `onLines` is given, so every screen that does not
+  /// offer the gesture keeps exactly the layout it had.
+  final ({int from, int to})? heldLines;
+
+  /// A press or a drag in the gutter: where it began and where it ended.
+  final void Function(int from, int to)? onLines;
+
+  /// **A press on a value inside the held lines.** One press, no confirmation:
+  /// the lead's ruling of 7 October, and the asymmetry it rests on — only an
+  /// act that leaves values in the clear asks, because protecting is never a
+  /// leak.
+  ///
+  /// The offset is a place in the document, and the core turns it into a cell
+  /// by its order among the line's runs. A press in the whitespace between two
+  /// columns is refused there by name, and nothing here guesses a column.
+  final void Function(int offset)? onColumn;
 
   @override
   State<OriginalText> createState() => _OriginalTextState();
@@ -147,25 +170,103 @@ class _OriginalTextState extends State<OriginalText> {
   List<Mark>? _cachedMarks;
   Span? _cachedFocus;
 
+  /// The text as it is drawn, so that nothing here has to work out where a line
+  /// begins. `null` until the first layout, which is before any press or paint.
+  final GlobalKey _drawn = GlobalKey();
+
+  RenderEditable? _editable() {
+    final from = _drawn.currentContext?.findRenderObject();
+    return from == null ? null : _findEditable(from);
+  }
+
+  /// `SelectableText` keeps its `RenderEditable` a few layers down — inside an
+  /// `EditableText`, inside that widget's own viewport — and exposes no handle
+  /// to it. So it is found by walking, once per call, and the walk stops at the
+  /// first one. The alternative was to copy Flutter's private caret-margin
+  /// constant into this file, which is a number that can change under us
+  /// without a compile error.
+  RenderEditable? _findEditable(RenderObject from) {
+    if (from is RenderEditable) return from;
+    RenderEditable? found;
+    from.visitChildren((child) {
+      found ??= _findEditable(child);
+    });
+    return found;
+  }
+
+  /// Where the lines were read, and at what size.
+  ///
+  /// Reading asks the laid-out text for the top of **every** logical line, and
+  /// 048 holds documents of 5 770 and 82 468 lines. Doing that on every paint
+  /// would make scrolling cost what opening the file cost. It is kept until the
+  /// spans or the drawn size really change — the size, because that is what
+  /// changes where the wraps fall.
+  GutterLayout? _measured;
+  List<InlineSpan>? _measuredFrom;
+  Size? _measuredAt;
+
+  GutterLayout? _lines() {
+    final drawn = _editable();
+    if (drawn == null || !drawn.hasSize) return null;
+    final spans = _keptSpans();
+    final kept = _measured;
+    if (kept != null && identical(_measuredFrom, spans) && _measuredAt == drawn.size) {
+      return kept;
+    }
+    final now = linesOf(drawn, text);
+    _measured = now;
+    _measuredFrom = spans;
+    _measuredAt = drawn.size;
+    return now;
+  }
+
   /// A press that ended where it began, on a word that is marked.
   ///
   /// The offset is found with a painter over the very spans that are drawn, so
   /// what is hit is what is seen. A protected word asks «why is this
   /// protected»; one still waiting asks «what do you want done with it»; and a
   /// press on ordinary text asks nothing and does nothing.
-  void _pressEnded(PointerUpEvent event, Size size) {
+  void _pressEnded(PointerUpEvent event) {
     final down = _downAt;
     _downAt = null;
     if (down == null || (event.position - down).distance > _slop) return;
 
-    final painter = TextPainter(
-      text: TextSpan(children: _keptSpans(), style: Zc.document),
-      textDirection: Directionality.of(context),
-    )..layout(maxWidth: size.width);
-    final offset = painter.getPositionForOffset(event.localPosition).offset;
+    // **Asked of the text that is drawn, not of a painter built here.**
+    // Measured, 7 October, on a sheet whose rows wrap: a painter given the same
+    // spans and the same width wrapped the document into 13 rows where the
+    // screen drew 16, because `RenderEditable` lays its text out at the width
+    // it is given **less a three-pixel caret margin**. The press for an account
+    // number came back as an offset on another line, and the act protected the
+    // invoice reference at the far end of three rows. One geometry, and it is
+    // the one on screen.
+    final drawn = _editable();
+    if (drawn == null) return;
+    final offset = drawn.getPositionForPoint(event.position).offset;
 
-    for (final m in widget.marks) {
-      if (offset < m.span.start || offset >= m.span.end) continue;
+    final marked = widget.marks.where((m) => offset >= m.span.start && offset < m.span.end);
+
+    // **Inside held lines, a press is the column act** (046/Q) — one press and
+    // no confirmation.
+    //
+    // With one exception, and it is not a hedge: a press on a word that is
+    // **already protected** still asks «why is this protected?», because for
+    // that cell the act has nothing left to do and the question is the only
+    // thing the press could usefully mean. A word still *waiting* is no
+    // exception: protecting its whole column is exactly the answer.
+    final held = widget.heldLines;
+    final column = widget.onColumn;
+    if (held != null && column != null) {
+      final lo = held.from < held.to ? held.from : held.to;
+      final hi = held.from < held.to ? held.to : held.from;
+      final line = _lineOf(offset);
+      final protectedHere = marked.any((m) => m.state != MarkState.suggested);
+      if (line >= lo && line <= hi && !protectedHere) {
+        column(offset);
+        return;
+      }
+    }
+
+    for (final m in marked) {
       if (m.state == MarkState.suggested) {
         widget.onChoose?.call(m, event.position);
       } else {
@@ -173,6 +274,15 @@ class _OriginalTextState extends State<OriginalText> {
       }
       return;
     }
+  }
+
+  /// Which logical line an offset falls on, counting from zero.
+  int _lineOf(int offset) {
+    final starts = lineStarts(text);
+    for (var i = starts.length - 1; i >= 0; i--) {
+      if (offset >= starts[i]) return i;
+    }
+    return 0;
   }
 
   List<InlineSpan> _keptSpans() {
@@ -198,23 +308,80 @@ class _OriginalTextState extends State<OriginalText> {
 
   @override
   Widget build(BuildContext context) {
-    final onSelection = widget.onSelection;
-    // **The page's edges, drawn behind the words.** The owner, 7 October:
-    // «while reviewing, the page must show its beginning and its end».
-    //
-    // Painted rather than inserted: a widget span or a line of dashes inside
-    // the text would move every offset after it by one, and an offset that is
-    // one out is a protection in the wrong place — the mistake this project
-    // will not make twice. The reader puts a single form feed between page and
-    // page; this draws a rule where each one falls and leaves the text exactly
-    // as the core read it.
     // The press is read here rather than by a recognizer on each word: a raw
     // `Listener` sees every pointer event, takes part in no gesture arena, and
     // so cannot be out-voted by the text's own drag-selection. See `_slop`.
-    return Listener(
-      onPointerDown: (e) => _downAt = e.position,
-      onPointerUp: (e) => _pressEnded(e, (context.findRenderObject() as RenderBox?)?.size ?? Size.zero),
-      child: Stack(
+    //
+    // It wraps the **text** and not the row: a `Listener` is a hit-test target
+    // like any other, so scoping it here is what keeps a press in the gutter
+    // from also being read as a press in the document.
+    final body = Builder(
+      builder: (inner) => Listener(
+        onPointerDown: (e) => _downAt = e.position,
+        onPointerUp: _pressEnded,
+        child: _body(inner),
+      ),
+    );
+    if (widget.onLines == null) return body;
+    final lines = lineStarts(text).length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // **The control that takes every line**, at the head of the gutter —
+        // the lead's words, 7 October. A band above the whole of it rather than
+        // above the numbers alone: a band over the gutter would push the
+        // numbers down while the text stayed, and every number would point one
+        // row high for the length of the document.
+        //
+        // It scrolls away with the document, which is why the way *out* of a
+        // selection is not here but in the band under the document, where it is
+        // always on screen.
+        AllLinesBand(lines: lines, onPressed: () => widget.onLines!(0, lines - 1)),
+        // **A `Stack`, so the document decides how tall both columns are.**
+        // The text is the only child that sizes the stack; the gutter is
+        // stretched to it top and bottom. A `Row` would have had to be told a
+        // height, and a height worked out here is a second opinion about where
+        // the lines fall — which is the mistake that cost this file an
+        // afternoon.
+        Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: LineGutter.width),
+              child: body,
+            ),
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: LineGutter.width,
+              child: LineGutter(
+                key: LineGutter.gutter,
+                lines: _lines,
+                from: widget.heldLines?.from,
+                to: widget.heldLines?.to,
+                onRange: widget.onLines!,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// The document itself, with everything that is drawn over it.
+  ///
+  /// **The page's edges, drawn behind the words.** The owner, 7 October: «while
+  /// reviewing, the page must show its beginning and its end».
+  ///
+  /// Painted rather than inserted: a widget span or a line of dashes inside the
+  /// text would move every offset after it by one, and an offset that is one
+  /// out is a protection in the wrong place — the mistake this project will not
+  /// make twice. The reader puts a single form feed between page and page; this
+  /// draws a rule where each one falls and leaves the text exactly as the core
+  /// read it.
+  Widget _body(BuildContext context) {
+    final onSelection = widget.onSelection;
+    return Stack(
       children: [
         if (text.contains('\u{c}'))
           Positioned.fill(
@@ -228,6 +395,7 @@ class _OriginalTextState extends State<OriginalText> {
             ),
           ),
         SelectableText.rich(
+      key: _drawn,
       TextSpan(children: _keptSpans(), style: Zc.document),
       style: Zc.document,
       onSelectionChanged: onSelection == null
@@ -256,7 +424,6 @@ class _OriginalTextState extends State<OriginalText> {
             child: SizedBox(key: focusKey, width: 0, height: 0),
           ),
       ],
-      ),
     );
   }
 

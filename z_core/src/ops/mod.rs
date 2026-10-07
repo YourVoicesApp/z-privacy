@@ -1594,7 +1594,7 @@ fn runs(line: &str) -> Vec<(usize, usize)> {
 
 /// **What a selection of lines holds** (046/Q).
 ///
-/// The owner, 8 October: «نعتمد فقط على الأسطر — في حال تحديد الكل نحسب كم سطر
+/// The owner, 7 October: «نعتمد فقط على الأسطر — في حال تحديد الكل نحسب كم سطر
 /// في النص.» The line is the unit a person works with, so the count of lines
 /// is said out loud — and with it the two numbers that decide what an act over
 /// them is worth: how many values in there are already protected, and how many
@@ -1681,12 +1681,15 @@ pub(crate) fn protect_cell_in_lines(
         };
         let line = text.get(line_start..line_end).unwrap_or_default();
         let inner = start - line_start;
+        // **Refused, never snapped to the nearest cell.** The press was read
+        // perfectly; it simply points at the gap between two columns, and
+        // choosing one for the person is the inference this whole design
+        // exists to avoid. Its own type, so the screen can say *why* rather
+        // than «that selection could not be read», which would be false.
         let which = runs(line)
             .iter()
             .position(|(a, b)| inner >= *a && inner < *b)
-            .ok_or_else(|| ApiError::BadSpan {
-                reason: "that selection is not inside a cell of its line".to_string(),
-            })?;
+            .ok_or(ApiError::BetweenColumns)?;
         Ok((which, lo, hi))
     })
     .ok_or(ApiError::InvalidSession)??;

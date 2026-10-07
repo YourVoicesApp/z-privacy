@@ -285,6 +285,17 @@ class Workbench extends ChangeNotifier {
   Span? selection;
   SelectionView? selected;
 
+  /// 046/Q — **the lines held now**, from zero, and what the core says is in
+  /// them.
+  ///
+  /// Two fields and not one: the range is a thing the screen owns, because a
+  /// person's press made it; the three numbers are facts about findings and
+  /// belong to Rust. A screen that counted the protections inside a range
+  /// would be a second source for a number `line_selection` already holds, and
+  /// the two would disagree the first time a rescan moved one.
+  ({int from, int to})? lines;
+  LineSelection? linesHold;
+
   /// Matches what `undoLastProtection` would actually do.
   bool get canUndo => snap?.canUndo ?? false;
 
@@ -489,6 +500,82 @@ class Workbench extends ChangeNotifier {
       await refresh();
       // The selection still stands, but what it *is* has changed.
       await select(span);
+      return outcome;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// A press or a drag in the gutter. The range is kept, and the core is asked
+  /// what is inside it before anything is offered.
+  Future<void> holdLines(int from, int to) async {
+    lines = (from: from, to: to);
+    notifyListeners();
+    try {
+      linesHold = await z.lineSelection(session: session, from: from, to: to);
+      trouble = null;
+    } on ApiError catch (e) {
+      linesHold = null;
+      trouble = humanMessage(e);
+    }
+    notifyListeners();
+  }
+
+  /// Let the lines go — **only ever by a press.** Nothing in this file calls it
+  /// on its own: the lead's rule of 7 October is that nothing folds or opens by
+  /// itself, and a selection that vanished after an act would take with it the
+  /// one thing that makes a second column one press away.
+  void releaseLines() {
+    lines = null;
+    linesHold = null;
+    notifyListeners();
+  }
+
+  /// **The same cell of every held line, from one press** (046/Q).
+  ///
+  /// The offset is where the person pressed. Rust turns it into a cell by its
+  /// order among the line's runs — never by character position, which 048
+  /// measured does not survive the PDF reader — and refuses by name when the
+  /// press is in the gap between two columns.
+  ///
+  /// **Scope and kind are not asked for, and neither is invented here.** The
+  /// lead's ruling of 7 October is one press and no confirmation, which leaves
+  /// two values to settle without a dialog:
+  ///
+  ///   * the scope is `conversation` — every appearance here, under one token,
+  ///     gone when the conversation is. The narrowest scope that can cover a
+  ///     column, and the only one that writes nothing into the vault, so a
+  ///     press that asked nothing has promised nothing about tomorrow.
+  ///   * the kind is **the core's own reading of the cell he pressed**. The
+  ///     whole design is «a column reached by example», and the example names
+  ///     the kind as well as the column. The kind travels inside the token, so
+  ///     getting it from Rust rather than from a default here is the difference
+  ///     between the model being told «an account» and being told nothing.
+  Future<ProtectOutcome?> protectColumnAt(int offset) async {
+    final held = lines;
+    final text = document?.text;
+    if (held == null || text == null || text.isEmpty) return null;
+    // One character, the one under the press. The core reads only where it
+    // begins; the end is here because a `Span` is a range, and it is clamped so
+    // a press at the very end of the document is still a span the core accepts.
+    final at = offset.clamp(0, text.length - 1);
+    final one = Span(start: at, end: at + 1);
+    try {
+      final read = await z.inspectSelection(session: session, span: one);
+      final outcome = await z.protectCellInLines(
+        session: session,
+        span: one,
+        from: held.from,
+        to: held.to,
+        scope: Scope.conversation,
+        kind: read.kind,
+      );
+      await refresh();
+      // The lines are still held — see `releaseLines` — so the numbers in the
+      // band have to be asked again rather than left as they were.
+      await holdLines(held.from, held.to);
       return outcome;
     } on ApiError catch (e) {
       trouble = humanMessage(e);
