@@ -173,7 +173,11 @@ void main() {
       },
       'importUserNames': () async {
         try {
-          await importUserNames(csv: 'name,type\nLindqvist,family\n', list: 'sv');
+          await importUserNames(
+            csv: 'name,type\nLindqvist,family\n',
+            list: 'sv',
+            scope: null,
+          );
         } on ApiError {
           // the same
         }

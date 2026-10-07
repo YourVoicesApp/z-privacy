@@ -1146,10 +1146,11 @@ fn wire__z_core__api__import_user_names_impl(
             let api_csv = <String>::sse_decode(&mut deserializer);
             let api_profile_id = <Option<String>>::sse_decode(&mut deserializer);
             let api_list = <String>::sse_decode(&mut deserializer);
+            let api_scope = <Option<crate::api::mirrors::Scope>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
-                    let output_ok = z_core::api::import_user_names(api_csv, api_profile_id, api_list)?;
+                    let output_ok = z_core::api::import_user_names(api_csv, api_profile_id, api_list, api_scope)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -4552,6 +4553,17 @@ impl SseDecode for Option<crate::api::mirrors::Place> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<crate::api::mirrors::Place>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::mirrors::Scope> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::mirrors::Scope>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -8177,6 +8189,16 @@ impl SseEncode for Option<crate::api::mirrors::Place> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <crate::api::mirrors::Place>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::mirrors::Scope> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::mirrors::Scope>::sse_encode(value, serializer);
         }
     }
 }

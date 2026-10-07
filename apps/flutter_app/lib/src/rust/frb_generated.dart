@@ -235,6 +235,7 @@ abstract class RustLibApi extends BaseApi {
     required String csv,
     String? profileId,
     required String list,
+    Scope? scope,
   });
 
   Future<AnswerId> zCoreApiIngestAnswer({
@@ -1648,6 +1649,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String csv,
     String? profileId,
     required String list,
+    Scope? scope,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -1656,6 +1658,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(csv, serializer);
           sse_encode_opt_String(profileId, serializer);
           sse_encode_String(list, serializer);
+          sse_encode_opt_box_autoadd_scope(scope, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -1668,7 +1671,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_api_error,
         ),
         constMeta: kZCoreApiImportUserNamesConstMeta,
-        argValues: [csv, profileId, list],
+        argValues: [csv, profileId, list, scope],
         apiImpl: this,
       ),
     );
@@ -1676,7 +1679,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kZCoreApiImportUserNamesConstMeta => const TaskConstMeta(
     debugName: "import_user_names",
-    argNames: ["csv", "profileId", "list"],
+    argNames: ["csv", "profileId", "list", "scope"],
   );
 
   @override
@@ -3709,6 +3712,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Scope dco_decode_box_autoadd_scope(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_scope(raw);
+  }
+
+  @protected
   SessionId dco_decode_box_autoadd_session_id(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_session_id(raw);
@@ -4311,6 +4320,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Place? dco_decode_opt_box_autoadd_place(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_place(raw);
+  }
+
+  @protected
+  Scope? dco_decode_opt_box_autoadd_scope(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_scope(raw);
   }
 
   @protected
@@ -5181,6 +5196,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_report_subject(deserializer));
+  }
+
+  @protected
+  Scope sse_decode_box_autoadd_scope(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_scope(deserializer));
   }
 
   @protected
@@ -6056,6 +6077,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_place(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Scope? sse_decode_opt_box_autoadd_scope(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_scope(deserializer));
     } else {
       return null;
     }
@@ -7039,6 +7071,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_scope(Scope self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_scope(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_session_id(
     SessionId self,
     SseSerializer serializer,
@@ -7767,6 +7805,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_place(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_scope(Scope? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_scope(self, serializer);
     }
   }
 

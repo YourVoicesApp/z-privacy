@@ -60,6 +60,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ReportSubject dco_decode_box_autoadd_report_subject(dynamic raw);
 
   @protected
+  Scope dco_decode_box_autoadd_scope(dynamic raw);
+
+  @protected
   SessionId dco_decode_box_autoadd_session_id(dynamic raw);
 
   @protected
@@ -262,6 +265,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Place? dco_decode_opt_box_autoadd_place(dynamic raw);
+
+  @protected
+  Scope? dco_decode_opt_box_autoadd_scope(dynamic raw);
 
   @protected
   SessionId? dco_decode_opt_box_autoadd_session_id(dynamic raw);
@@ -469,6 +475,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ReportSubject sse_decode_box_autoadd_report_subject(
     SseDeserializer deserializer,
   );
+
+  @protected
+  Scope sse_decode_box_autoadd_scope(SseDeserializer deserializer);
 
   @protected
   SessionId sse_decode_box_autoadd_session_id(SseDeserializer deserializer);
@@ -695,6 +704,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Place? sse_decode_opt_box_autoadd_place(SseDeserializer deserializer);
+
+  @protected
+  Scope? sse_decode_opt_box_autoadd_scope(SseDeserializer deserializer);
 
   @protected
   SessionId? sse_decode_opt_box_autoadd_session_id(
@@ -927,6 +939,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     ReportSubject self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_scope(Scope self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_session_id(
@@ -1215,6 +1230,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_box_autoadd_place(Place? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_scope(Scope? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_session_id(

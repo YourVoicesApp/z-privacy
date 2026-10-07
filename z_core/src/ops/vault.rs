@@ -1338,17 +1338,67 @@ pub(crate) fn forget_user_name(id: u32, entity_id: Option<u32>) -> ApiResult<()>
     }
 }
 
+/// How far an imported book reaches: which vault it is written into, and
+/// whether it protects on arrival.
+///
+/// The scope is the app's own word, the same one `protect` takes, so the
+/// review screen that will one day sit on top of this import can hand it
+/// through unchanged instead of translating it (the lead, 7 Oct). What the
+/// four values mean for a **book** rather than for a place:
+///
+/// * `None` — «offer them and I decide». The names are knowledge: a value the
+///   scanner suggests, a word the rules can read, and no protection.
+/// * `Some(Profile)` — this client's book. Protected on sight in this client's
+///   documents and in no other client's, which is the sentence the whole
+///   product is sold on.
+/// * `Some(Always)` — every client's. The row is written with no profile at
+///   all, word and value both, because that is what «everywhere» means.
+/// * `Some(Once)` and `Some(Conversation)` are **refused**, and the refusal
+///   says why: both are about a place in a document, and a list has no places
+///   in it. Nothing is written, so a refused file leaves the vault as it was.
+///
+/// Returns the vault the rows belong to and whether they arrive protected.
+fn book_reach(
+    scope: Option<crate::api::Scope>,
+    profile_id: Option<String>,
+) -> ApiResult<(Option<String>, bool)> {
+    use crate::api::Scope as S;
+    match scope {
+        None => Ok((profile_id, false)),
+        Some(S::Profile) => match profile_id {
+            Some(profile) => Ok((Some(profile), true)),
+            None => Err(ApiError::InputRefused {
+                reason: "these names would be kept for this client, and this conversation is not in one — open a client first, or choose «everywhere»".to_string(),
+            }),
+        },
+        Some(S::Always) => Ok((None, true)),
+        Some(S::Once | S::Conversation) => Err(ApiError::InputRefused {
+            reason: "a list of names has no places in it yet, so it is kept for this client or for every client — «this one place» and «this conversation» are answers about a document".to_string(),
+        }),
+    }
+}
+
 /// Read a list of names: a CSV whose first line names its columns.
 ///
 /// `name` and `type` are required, `source` and `licence` are kept when they
 /// are there. The whole file is read before anything is written, so a file
 /// that is refused leaves the vault exactly as it was.
+///
+/// `scope` is asked once for the whole file, and `book_reach` above is the
+/// whole of what it means. Before 046/F there was no such word here and every
+/// row was written as a suggestion with nobody asked, so a staff list a person
+/// had already written down by hand arrived as a pile of questions — 18 of
+/// them on the owner's own payroll sheet, against 2 before the import.
 pub(crate) fn import_user_names(
     csv: String,
     profile_id: Option<String>,
     list: String,
+    scope: Option<crate::api::Scope>,
 ) -> ApiResult<crate::api::NameImport> {
     use crate::api::{NameImport, UserNameKind as K};
+    // Before the file is read, because a scope nobody can honour must refuse
+    // the whole act rather than half of it.
+    let (owner, always) = book_reach(scope, profile_id)?;
     let mut lines = csv.lines().filter(|l| !l.trim().is_empty());
     let Some(header) = lines.next() else {
         return Err(ApiError::InputRefused {
@@ -1407,7 +1457,7 @@ pub(crate) fn import_user_names(
     let mut added = 0u32;
     let mut already = 0u32;
     for (text, kind, source, licence) in plan {
-        let known = user_names(profile_id.clone())?
+        let known = user_names(owner.clone())?
             .into_iter()
             .any(|row| row.text.eq_ignore_ascii_case(&text) && row.kind == kind);
         let _ = &list;
@@ -1415,9 +1465,11 @@ pub(crate) fn import_user_names(
             already = already.saturating_add(1);
             continue;
         }
-        // Imported names are knowledge, not protection: a list is a dictionary,
-        // and a dictionary suggests. «Always» stays a decision per name.
-        match add_user_name(text.clone(), kind, false, profile_id.clone(), list.clone()) {
+        // The file's own answer, for every row in it. A list a person chose
+        // from their own disk is their own knowledge, so it may be protection
+        // as well — and the question is asked once about the file rather than
+        // once about each of twenty-one names, which is the same act.
+        match add_user_name(text.clone(), kind, always, owner.clone(), list.clone()) {
             Ok(id) => {
                 added = added.saturating_add(1);
                 if (source.is_some() || licence.is_some()) && matches!(kind, K::Given | K::Family) {

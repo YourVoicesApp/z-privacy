@@ -594,14 +594,30 @@ Future<void> forgetUserName({required int id, int? entityId}) =>
 /// name if they are there. Nothing is written until the whole file has been
 /// read, and what comes back is three numbers and a sentence for every row
 /// that was refused.
+///
+/// `scope` is asked once for the whole file, in the app's own word — the same
+/// `Scope` `protect` takes, so a review screen over this import hands it
+/// through rather than translating it:
+///
+/// * `None` — «offer them and I decide»: knowledge, no protection.
+/// * `Some(Profile)` — this client's book, protected on sight in this client's
+///   documents and in no other client's.
+/// * `Some(Always)` — every client's, kept with no profile at all.
+/// * `Some(Once)` / `Some(Conversation)` — refused, because both are answers
+///   about a place in a document and a list has no places in it.
+///
+/// It decides what a row **becomes**; a name the vault already holds keeps the
+/// reach it was given by hand, and is counted as already known.
 Future<NameImport> importUserNames({
   required String csv,
   String? profileId,
   required String list,
+  Scope? scope,
 }) => RustLib.instance.api.zCoreApiImportUserNames(
   csv: csv,
   profileId: profileId,
   list: list,
+  scope: scope,
 );
 
 /// Teach a label rule: «the value after this word is a customer number».

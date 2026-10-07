@@ -105,6 +105,7 @@ void main() {
         'Anneli,given,SCB 2024,CC0\n'
         'Lindqvist,family,SCB 2024,CC0\n'
         'Olle Berg,given,,\n',
+        scope: null,
       );
     });
     expect(refused, isNull);
@@ -117,7 +118,7 @@ void main() {
 
     // A file with no «type» column is refused in a sentence that names it.
     late final String? bad;
-    await tester.runAsync(() async => bad = await bench.importUserNames('name\nAnneli\n'));
+    await tester.runAsync(() async => bad = await bench.importUserNames('name\nAnneli\n', scope: null));
     expect(bad, isNotNull);
     expect(bad, contains('type'), reason: 'the refusal does not say what is missing: $bad');
 
@@ -254,6 +255,99 @@ void main() {
       findsWidgets,
       reason: 'nothing says the list is off',
     );
+
+    bench.dispose();
+  });
+
+  // ------------------------------------------------------------------ 046/F
+
+  testWidgets('a file is asked how far it reaches, in the words of the three answers', (tester) async {
+    // The question itself, and nothing around it: the file picker cannot be
+    // driven from a widget test, so what is tested is the thing that was
+    // missing — that the question exists, that each answer is a whole sentence
+    // saying what it does and where (P2-5), and that closing it answers
+    // nothing rather than quietly choosing the weakest.
+    late BuildContext held;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            held = context;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    // One · a client is open, so all three answers are there and the client is
+    // named in the act itself rather than in a line under it.
+    var answer = askHowFarAListReaches(held, client: 'Faruk AB');
+    await tester.pump();
+    expect(find.text('Protect them for Faruk AB'), findsOneWidget,
+        reason: 'the act does not name the client it would protect for');
+    expect(find.text('Protect them everywhere'), findsOneWidget);
+    expect(find.text('Offer them and I decide'), findsOneWidget);
+    expect(find.text('OK'), findsNothing, reason: 'a reach was asked as a yes/no');
+    await tester.tap(find.text('Protect them for Faruk AB'));
+    await tester.pumpAndSettle();
+    expect((await answer)?.scope, Scope.profile);
+
+    // Two · everywhere is the other protection, and it is the core's own word.
+    answer = askHowFarAListReaches(held, client: 'Faruk AB');
+    await tester.pump();
+    await tester.tap(find.text('Protect them everywhere'));
+    await tester.pumpAndSettle();
+    expect((await answer)?.scope, Scope.always);
+
+    // Three · offering is no scope at all, which is what makes the reach a
+    // question and not a formality.
+    answer = askHowFarAListReaches(held, client: 'Faruk AB');
+    await tester.pump();
+    await tester.tap(find.text('Offer them and I decide'));
+    await tester.pumpAndSettle();
+    final offered = await answer;
+    expect(offered, ListReach.offer);
+    expect(offered?.scope, isNull);
+
+    // Four · with no client open, «for this client» is not drawn at all. The
+    // core refuses that reach in a sentence, and a button drawn to fail is the
+    // kind of thing a jury sees.
+    answer = askHowFarAListReaches(held);
+    await tester.pump();
+    expect(find.textContaining('Protect them for'), findsNothing);
+    expect(find.text('Protect them everywhere'), findsOneWidget);
+    Navigator.of(held).pop();
+    await tester.pumpAndSettle();
+    expect(await answer, isNull, reason: 'closing the question answered it');
+  });
+
+  testWidgets('a list imported for this client needs no answering', (tester) async {
+    final ground = Ground();
+    final bench = await _bench(tester, ground, vault: true);
+    await _openNames(tester, bench, ground);
+
+    // A client, and a document of this client's with two names the German pack
+    // does not know. The measurement is what the document does with them.
+    await tester.runAsync(() async {
+      final id = await z.createProfile(name: 'Faruk AB', session: bench.session);
+      await bench.switchProfile(id);
+      await z.importText(
+        session: bench.session,
+        text: 'Lönekörning: Hedvig Palmgren hos Faruk AB.\n',
+      );
+      await bench.importUserNames(
+        'name,type\nHedvig Palmgren,person\nFaruk AB,company\n',
+        scope: Scope.profile,
+        into: 'de',
+      );
+    });
+    await settle(tester, rounds: 12);
+
+    final marks = bench.document?.marks ?? const <Mark>[];
+    final protected = marks.where((m) => m.state == MarkState.protected).length;
+    final asked = marks.where((m) => m.state == MarkState.suggested).length;
+    expect(protected, 2, reason: 'the book did not protect: $marks');
+    expect(asked, 0, reason: 'the book still asked: $marks');
 
     bench.dispose();
   });

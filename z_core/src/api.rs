@@ -1995,8 +1995,22 @@ pub fn forget_user_name(id: u32, entity_id: Option<u32>) -> ApiResult<()> {
 /// name if they are there. Nothing is written until the whole file has been
 /// read, and what comes back is three numbers and a sentence for every row
 /// that was refused.
-pub fn import_user_names(csv: String, profile_id: Option<String>, list: String) -> ApiResult<NameImport> {
-    crate::ops::import_user_names(csv, profile_id, list)
+///
+/// `scope` is asked once for the whole file, in the app's own word — the same
+/// `Scope` `protect` takes, so a review screen over this import hands it
+/// through rather than translating it:
+///
+/// * `None` — «offer them and I decide»: knowledge, no protection.
+/// * `Some(Profile)` — this client's book, protected on sight in this client's
+///   documents and in no other client's.
+/// * `Some(Always)` — every client's, kept with no profile at all.
+/// * `Some(Once)` / `Some(Conversation)` — refused, because both are answers
+///   about a place in a document and a list has no places in it.
+///
+/// It decides what a row **becomes**; a name the vault already holds keeps the
+/// reach it was given by hand, and is counted as already known.
+pub fn import_user_names(csv: String, profile_id: Option<String>, list: String, scope: Option<Scope>) -> ApiResult<NameImport> {
+    crate::ops::import_user_names(csv, profile_id, list, scope)
 }
 
 /// Teach a label rule: «the value after this word is a customer number».

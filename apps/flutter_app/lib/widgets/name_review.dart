@@ -251,6 +251,19 @@ class _YourNamesState extends State<YourNames> {
 
   bool get _vaultOpen => (widget.bench.snap?.vault ?? VaultState.absent) == VaultState.unlocked;
 
+  /// The open client's own name, or `null` when this conversation is in none.
+  ///
+  /// The name and not the id: a profile id is `p-<slug>-<n>` and the person
+  /// never typed it, which is the rule the vault's own refusals follow.
+  String? get _clientName {
+    final id = widget.bench.profileId;
+    if (id == null) return null;
+    for (final p in widget.ground.profiles) {
+      if (p.id == id) return p.name;
+    }
+    return null;
+  }
+
   String get _needs =>
       (widget.bench.snap?.vault ?? VaultState.absent) == VaultState.locked
           ? 'Unlock the vault'
@@ -284,7 +297,12 @@ class _YourNamesState extends State<YourNames> {
       title: 'Which language are these names?',
     );
     if (into == null || !mounted) return;
-    unawaited(widget.bench.importUserNames(csv, into: into));
+    // And how far they reach. One question for the whole file, because that is
+    // the act: nobody chooses a file of twenty-one names in order to answer
+    // twenty-one questions about them (046/F).
+    final reach = await askHowFarAListReaches(context, client: _clientName);
+    if (reach == null || !mounted) return;
+    unawaited(widget.bench.importUserNames(csv, scope: reach.scope, into: into));
   }
 
   @override
@@ -677,6 +695,84 @@ String languageName(Ground ground, String id) => ground.languageName(id);
 /// Which language's list? The same two halves as everywhere else — what this
 /// build has rules for, a line, and every other language — because a person
 /// builds their Arabic list by hand long before an Arabic pack exists.
+/// How far a file of names reaches — asked once for the whole file.
+///
+/// Three answers, because the core takes a `Scope` and not a flag of its own,
+/// and because a client book kept for **this client** and one kept for
+/// **everywhere** are different promises. Making one of them the default would
+/// be the 046/F defect again under another name: a reach nobody chose.
+///
+/// Each answer is a whole sentence on its own button, which is P2-5's rule —
+/// the name of the act carries what it does and where, and the line above only
+/// explains. The words are 046/E's, the same four the dialog, the card, the
+/// panel and the explain sheet use: Once · This conversation · This client ·
+/// Everywhere. «Once» and «this conversation» are not here, because they are
+/// answers about a place in a document and a list has no places in it.
+///
+/// What comes back: `ListReach.offer` (no scope), `ListReach.thisClient`
+/// (`Scope.profile`), `ListReach.everywhere` (`Scope.always`), and `null` when
+/// the person closed the question — and then nothing is imported at all.
+enum ListReach {
+  offer(null),
+  thisClient(Scope.profile),
+  everywhere(Scope.always);
+
+  const ListReach(this.scope);
+
+  /// The core's own word for this answer. `null` is «offer them and I decide».
+  final Scope? scope;
+}
+
+Future<ListReach?> askHowFarAListReaches(BuildContext context, {String? client}) {
+  return showDialog<ListReach>(
+    context: context,
+    builder: (inner) => AlertDialog(
+      backgroundColor: Zc.paper,
+      title: const Text('How far do these names reach?', style: Zc.h2),
+      content: SizedBox(
+        width: 460,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Protecting them means Z blackens them the moment they appear, '
+              'with no question. Offering them means Z marks them and waits '
+              'for you.',
+              style: Zc.small.copyWith(color: Zc.ink3),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'You can change any one of them afterwards, name by name.',
+              style: Zc.tiny.copyWith(color: Zc.ink4),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        ZButton(
+          label: 'Offer them and I decide',
+          onPressed: () => Navigator.of(inner).pop(ListReach.offer),
+        ),
+        ZButton(
+          label: 'Protect them everywhere',
+          onPressed: () => Navigator.of(inner).pop(ListReach.everywhere),
+        ),
+        // The client's own book is offered first among the two protections,
+        // and named: «what you learn about one of them does not become a rule
+        // about all of them». Without a client open the core refuses it in a
+        // sentence, so the button is not drawn rather than drawn to fail.
+        if (client != null)
+          ZButton(
+            label: 'Protect them for $client',
+            filled: true,
+            onPressed: () => Navigator.of(inner).pop(ListReach.thisClient),
+          ),
+      ],
+    ),
+  );
+}
+
 Future<String?> askForALanguage(
   BuildContext context, {
   required Ground ground,

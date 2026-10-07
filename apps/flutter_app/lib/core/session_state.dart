@@ -869,9 +869,21 @@ class Workbench extends ChangeNotifier {
 
   /// Read a list of names. The three numbers come back from the core, which is
   /// the only thing that knows which of them were already known.
-  Future<String?> importUserNames(String csv, {String? into}) async {
+  ///
+  /// `scope` is the file's answer to one question, and it is `required` here on
+  /// purpose — including when it is `null`, which is «offer them and I decide».
+  /// Before 046/F there was no such word and the core was told «suggest» for
+  /// every row with nobody asked, so a staff list arrived as eighteen
+  /// questions. A caller that cannot say which the person chose has not asked
+  /// them, and a default would be this defect with a different name.
+  Future<String?> importUserNames(String csv, {required Scope? scope, String? into}) async {
     return _aboutNames(() async {
-      final report = await z.importUserNames(csv: csv, list: into ?? intoList);
+      final report = await z.importUserNames(
+        csv: csv,
+        profileId: profileId,
+        list: into ?? intoList,
+        scope: scope,
+      );
       if (into != null) intoList = into;
       lastImport = report;
       return '${report.added} added · ${report.alreadyKnown} already known · '

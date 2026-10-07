@@ -87,7 +87,7 @@ fn a_list_comes_back_counted() {
                ,given,,\n\
                Olle Berg,given,,\n\
                Svensson,surname,,\n";
-    let report = import_user_names(csv.to_string(), None, "de".to_string()).expect("import");
+    let report = import_user_names(csv.to_string(), None, "de".to_string(), None).expect("import");
 
     assert_eq!(report.added, 2, "{report:?}");
     assert_eq!(report.already_known, 1, "{report:?}");
@@ -105,7 +105,7 @@ fn a_list_comes_back_counted() {
 
 fn a_file_without_a_type_column_is_refused_with_a_sentence() {
     a_vault("four");
-    let bad = import_user_names("name\nAnneli\nLindqvist\n".to_string(), None, "de".to_string());
+    let bad = import_user_names("name\nAnneli\nLindqvist\n".to_string(), None, "de".to_string(), None);
     match bad {
         Err(ApiError::InputRefused { reason }) => {
             assert!(reason.contains("type"), "the sentence does not name the missing column: {reason}");
@@ -125,7 +125,7 @@ fn everything_here_needs_an_open_vault() {
     ));
     assert!(matches!(user_names(None), Err(ApiError::VaultLocked)));
     assert!(matches!(
-        import_user_names("name,type\nAnneli,given\n".to_string(), None, "de".to_string()),
+        import_user_names("name,type\nAnneli,given\n".to_string(), None, "de".to_string(), None),
         Err(ApiError::VaultLocked)
     ));
 }
@@ -134,7 +134,7 @@ fn everything_here_needs_an_open_vault() {
 /// are German and Swedish.
 fn a_semicolon_file_reads_the_same() {
     a_vault("six");
-    let report = import_user_names("name;type\nAnneli;given\nLindqvist;family\n".to_string(), None, "de".to_string()).expect("import");
+    let report = import_user_names("name;type\nAnneli;given\nLindqvist;family\n".to_string(), None, "de".to_string(), None).expect("import");
     assert_eq!((report.added, report.already_known, report.refused), (2, 0, 0), "{report:?}");
 }
 
@@ -224,6 +224,7 @@ fn a_list_is_imported_and_forgotten() {
         "name,type\nAnneli,given\nLindqvist,family\nOkonkwo,family\n".to_string(),
         None,
         "sv".to_string(),
+        None,
     )
     .expect("import");
     assert_eq!(report.added, 3, "{report:?}");
