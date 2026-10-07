@@ -21,6 +21,7 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/widgets/bits.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -209,6 +210,60 @@ void main() {
       expect(find.text(p.label), findsWidgets, reason: '«${p.label}» is not a heading in the chooser');
     }
     expect(find.text('Connect'), findsWidgets, reason: 'an unconnected provider offers no way to connect');
+
+    // ---------------------------------------------------------------- 046/H
+    //
+    // **The owner, 7 October: «the model that has a key is drawn in a
+    // different colour».** Six companies are in the list and two have keys —
+    // grey was saying «out of reach», and nothing was saying «ready». One
+    // token in the palette, `Zc.ready`, and it is read off the rendered label
+    // rather than from a flag the test sets itself.
+    //
+    // Read again, after the key: `catalogue` above was taken before
+    // `connectProvider`, so every row in it says «no key» and a test built on
+    // it would have been green for the wrong reason.
+    late final List<ModelDescriptor> withAKey;
+    await tester.runAsync(() async => withAKey = await z.models());
+    final keyed = withAKey.where((m) => m.available).toList();
+    final unkeyed = withAKey.where((m) => !m.available).toList();
+    expect(keyed, isNotEmpty, reason: 'nothing in the catalogue has a key, so this proves nothing');
+    expect(unkeyed, isNotEmpty, reason: 'everything has a key, so this proves nothing either');
+    for (final model in keyed) {
+      expect(
+        tester.widget<Text>(find.text(model.displayName)).style?.color,
+        Zc.ready,
+        reason: '«${model.displayName}» has a key and is not drawn as ready',
+      );
+    }
+    for (final model in unkeyed) {
+      expect(
+        tester.widget<Text>(find.text(model.displayName)).style?.color,
+        isNot(Zc.ready),
+        reason: '«${model.displayName}» has no key and is drawn as if it had one',
+      );
+    }
+    // And the company's own name agrees with its models, so the group and its
+    // chips never say two different things.
+    final ready = ground.providers.where((p) => p.connected).toList();
+    expect(ready, isNotEmpty);
+    for (final p in ready) {
+      expect(
+        tester.widget<Text>(find.text(p.label).first).style?.color,
+        Zc.ready,
+        reason: '«${p.label}» has a key and its heading is not drawn as ready',
+      );
+    }
+    // The four that arrived in 046/H have never been called, and the screen
+    // must not suggest otherwise.
+    for (final id in ['xai', 'deepseek', 'moonshot', 'google']) {
+      final row = ground.providers.firstWhere((p) => p.id == id);
+      expect(row.connected, isFalse, reason: '«$id» reports itself connected');
+      expect(
+        tester.widget<Text>(find.text(row.label).first).style?.color,
+        isNot(Zc.ready),
+        reason: '«${row.label}» is drawn as ready and has no key',
+      );
+    }
 
     // Switching the model changes what answers — at the provider and in usage.
     final theirs = catalogue.firstWhere((m) => m.providerId == 'openai' && m.modelId != 'the-configured-one');

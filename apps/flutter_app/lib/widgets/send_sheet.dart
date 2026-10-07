@@ -667,7 +667,10 @@ class _ModelAndModeState extends State<_ModelAndMode> {
           children: [
             Text(
               row?.label ?? id,
-              style: Zc.small.copyWith(color: Zc.ink3, fontWeight: FontWeight.w600),
+              style: Zc.small.copyWith(
+                color: reachable ? Zc.ready : Zc.ink3,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             if (!reachable) ...[
               const SizedBox(width: 10),
@@ -695,6 +698,12 @@ class _ModelAndModeState extends State<_ModelAndMode> {
               _Chip(
                 label: model.displayName,
                 on: widget.bench.chosenModel == model.modelId,
+                // **The colour the owner asked for**: a model whose key is
+                // here reads as ready, and one whose key is not stays as it
+                // was — greyed, with «Connect» beside its company's name.
+                // `available` is the core's own word for it, so the screen
+                // decides nothing.
+                ready: model.available,
                 // Greyed, not hidden: a model this build knows about is worth
                 // seeing even when the key for it is not here yet.
                 onTap: model.available ? () => widget.bench.chooseModel(model.modelId) : null,
@@ -711,7 +720,13 @@ class _ModelAndModeState extends State<_ModelAndMode> {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.on, required this.onTap, this.warn = false});
+  const _Chip({
+    required this.label,
+    required this.on,
+    required this.onTap,
+    this.warn = false,
+    this.ready = false,
+  });
 
   final String label;
   final bool on;
@@ -721,9 +736,22 @@ class _Chip extends StatelessWidget {
   final VoidCallback? onTap;
   final bool warn;
 
+  /// **A key for this provider is in this run** (046/H, the owner: «the model
+  /// that has a key is drawn in a different colour»).
+  ///
+  /// Not the same fact as `on`, which is «this is the one I chose», and not the
+  /// same as reachable, which was being said in grey alone. Grey says «off»;
+  /// this says «ready», and the two readings are what a person needs in a list
+  /// of six companies of which two have keys.
+  final bool ready;
+
   @override
   Widget build(BuildContext context) {
-    final tint = warn ? Zc.amber : Zc.river;
+    final tint = warn
+        ? Zc.amber
+        : ready
+            ? Zc.ready
+            : Zc.river;
     final reachable = onTap != null;
     return Opacity(
       opacity: reachable ? 1 : 0.45,
@@ -733,14 +761,27 @@ class _Chip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: on ? tint.withValues(alpha: 0.12) : Colors.transparent,
-          border: Border.all(color: on ? tint : Zc.line),
+          // A ready chip carries its colour even before it is chosen, which is
+          // the whole point: the difference a person is looking for is «can
+          // this answer me», not «did I already press it».
+          color: on
+              ? tint.withValues(alpha: 0.12)
+              : ready
+                  ? Zc.readyWash
+                  : Colors.transparent,
+          border: Border.all(
+            color: on
+                ? tint
+                : ready
+                    ? Zc.readyEdge
+                    : Zc.line,
+          ),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
           style: Zc.small.copyWith(
-            color: on ? tint : Zc.ink3,
+            color: on || ready ? tint : Zc.ink3,
             fontWeight: on ? FontWeight.w600 : FontWeight.w400,
           ),
         ),

@@ -7,6 +7,7 @@
 //   clay   — Z Privacy itself: protection, the brand, anything the app did *for* you
 //   river  — the vault: an identity the app knows by name
 //   amber  — a suggestion: unanswered, still in the clear, waiting for your word
+//   ready  — a key is here: this provider can answer (046/H)
 //   paper  — this device
 //   white  — what leaves
 //
@@ -43,6 +44,18 @@ class Zc {
   static const amber = Color(0xFF7A5A2C);
   static const amberWash = Color(0xFFF1E8D8);
   static const amberEdge = Color(0xFFC08149);
+
+  // Ready — a key is here, and this can answer
+  //
+  // **One token, not a colour per company** (the lead, 046/H). The owner asked
+  // that a model with a key be drawn differently; six brand colours would turn
+  // the list into a logo wall and would say nothing about what a person can
+  // actually do with it. So this means exactly one thing: a credential for
+  // this provider is in this run. Grey was doing that work before, and grey
+  // says «off», not «ready».
+  static const ready = Color(0xFF2E6B4F);
+  static const readyWash = Color(0xFFE4F0EA);
+  static const readyEdge = Color(0xFF9FC6B2);
 
   // Text
   static const mono = 'monospace';

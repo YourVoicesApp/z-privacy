@@ -89,6 +89,32 @@ impl Provider for OpenAiCompatible {
         text: &str,
         instructions: &str,
     ) -> ProviderAttempt<Said> {
+        ask_chat_completions(self, credential, base, model, text, instructions)
+    }
+}
+
+/// The chat-completions request, in one place, for every company that speaks it.
+///
+/// Four more providers arrived in 046/H — xAI, DeepSeek, Moonshot and Google —
+/// and all four document the same request at their own address. Writing the
+/// body and the parse five times would mean five places to get the escaping or
+/// the answer's shape wrong, and the one thing this folder exists to be is
+/// narrow. So the **shape** is here and each company's own facts stay in its
+/// own file: its id, its address, its catalogue, its `authorisation`, and
+/// whether a key is needed.
+///
+/// The provider is passed in so that its own `authorisation` is used. There is
+/// no fallback and no second attempt: a provider that refuses is reported as
+/// that provider refusing.
+pub(super) fn ask_chat_completions(
+    provider: &dyn Provider,
+    credential: &str,
+    base: &str,
+    model: &str,
+    text: &str,
+    instructions: &str,
+) -> ProviderAttempt<Said> {
+    {
         if credential.is_empty() && !http::is_loopback_url(base) {
             return ProviderAttempt::not_sent(refuse(
                 NetworkRefusal::NotConnected,
@@ -116,7 +142,7 @@ impl Provider for OpenAiCompatible {
         })
         .to_string();
 
-        http::post_json(&url, &self.authorisation(credential), &body).map(|answer| {
+        http::post_json(&url, &provider.authorisation(credential), &body).map(|answer| {
             if answer.status != 200 {
                 return Err(refuse(
                     NetworkRefusal::BadStatus { status: answer.status },
@@ -141,7 +167,11 @@ fn endpoint(base: &str) -> String {
     let trimmed = base.trim_end_matches('/');
     if trimmed.ends_with("/chat/completions") {
         trimmed.to_string()
-    } else if trimmed.ends_with("/v1") {
+    } else if trimmed.ends_with("/v1") || trimmed.ends_with("/openai") {
+        // `/openai` is Google's: the base URL its own page gives for use with
+        // the OpenAI libraries is `…/v1beta/openai/`, and appending `/v1` to
+        // that would ask for an address that does not exist. One named tail,
+        // not a guess about every company's path (046/H).
         format!("{trimmed}/chat/completions")
     } else {
         format!("{trimmed}/v1/chat/completions")

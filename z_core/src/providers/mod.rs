@@ -16,8 +16,12 @@
 #[cfg(feature = "fake_provider")]
 pub(crate) mod fake;
 mod anthropic;
+mod deepseek;
+mod google;
 mod http;
+mod moonshot;
 mod openai;
+mod xai;
 
 use zeroize::Zeroizing;
 
@@ -184,6 +188,21 @@ pub(crate) fn known() -> Vec<Box<dyn Provider>> {
         // The second provider, added one file at a time as the owner asked —
         // official API, no aggregator.
         Box::new(anthropic::Anthropic),
+        // 046/H, the owner: the chat screen carries a chosen list of models
+        // that is to become a subscribable bundle. Four more companies, each a
+        // file, each the company's own API and no aggregator — and all four
+        // documenting the same chat-completions request, so what they share is
+        // `openai::ask_chat_completions` and what differs stays in their own
+        // files.
+        //
+        // **Only the first two have ever been called.** The owner's keys are
+        // for OpenAI and Anthropic; these four are in the catalogue awaiting a
+        // key, which is what `ModelDescriptor::available` reports and what the
+        // screen draws. Nothing here implies a key exists.
+        Box::new(xai::Xai),
+        Box::new(deepseek::DeepSeek),
+        Box::new(moonshot::Moonshot),
+        Box::new(google::Google),
     ];
     // Only in a build made for the tests. A release has no echo provider to pick.
     #[cfg(feature = "fake_provider")]

@@ -110,3 +110,32 @@ Creating a client and putting this document in it must be two clicks from the do
 - `flutter test` the gates' way, gates, clippy, counts before/after. **No publish, no owner test** — the owner asked for the fix only.
 
 **Order from here:** G · D · then B if the evening allows; C and E after. The panel-truth defect F found (a book imported «everywhere» with a client open protects but shows 0 rows) comes with G, because the owner may press that button on camera.
+
+---
+
+## I · A list is filled the way a document is read (the owner's plan, 7 Oct evening)
+
+**His words, in three parts.** (1) «عند الضغط على إضافة تضيف خيار قوائم، وعند الضغط عليه ندخل إلى ملف الخزنة لإنشاء قائمة. مبدئياً لا نحذف خيار اللغة. الفرق الوحيد المضاف: في خيار قوائم نجعل المستخدم يضيف اسم القائمة، وفي خيار لغة نضع نحن اسم القائمة.» (2) «خيار قائمة المفترض أن يظهر لك القوائم المخزّنة سابقاً، وإضافة قائمة جديدة.» (3) «نضيف ملف أو نص للقائمة ثم نذهب للخطوات التالية كما نفعل الآن — نجعل الخيارات نفسها وكل شيء نفسه — وإضافة مفردات جديدة للقائمة كما هو الآن.»
+
+**What his rule uncovers, and why it is cheap:** who names the list is the same line as **which layer it feeds**. A list the person names is a book of **values** — people and companies in the vault, matched in any language with no pack (`vault_pass`). A list we name is a **dictionary** of words for that language's rules, which is how the engine discovers a name nobody taught it. Both live behind the one passphrase, both have a switch, both can be imported. That is the architecture already agreed on 7 October; this task only puts a door on it.
+
+**And «the same steps as now» is nearly free, because the pipeline already does it:** pressing Protect with a scope *is* writing into the vault. Feeding a list is therefore the ordinary pipeline — import text or a file, scan, the same cards, the same options — with the list as the destination instead of the document.
+
+### What to build
+
+1. **Add → Lists.** The **+** on the chat screen gains «Lists» beside «a document» and «text». It opens a chooser: **the lists already stored** (name · how many names · on/off), and **«A new list»** where the person types its name. The language lists stay, named by us, in the same chooser and marked as what they are.
+2. **A user-named list is allowed.** `clean_list_name` refuses every name that is not a language — «a list is a language, one for each». It must accept a person's own name for a list while keeping the language names reserved and still refusing an empty or whitespace name. A named list's rows are values; a language list's rows are dictionary words; the core decides that by the list's kind, never by guessing from the row.
+3. **Fill a list through the ordinary pipeline.** With a list chosen, «add a file» and «add text» feed **the list**: the same scan, the same cards, the same scope options, and confirming a card writes the value into that list rather than replacing it in a document. Adding one name by hand stays exactly as it is.
+4. **A list-filling session has no model door, and says so.** This is the lead's addition and it is not optional: the raw file a person feeds a list — a staff register, a patient roster — is the most sensitive document they own, and it is not a thing they ever meant to send. So in a list-filling session the AI door is **absent**, Send does not exist, and the document is dropped when the list is saved. A build where a staff register can be sent to a model by one wrong press is a build that will eventually do it.
+
+### Done means
+
+- Red first on each of: a stored list is listed · a person-named list is created and refused when empty · a file feeds a list and its names land in that list and not in the document · **a list-filling session offers no model door**.
+- The document path's numbers do not move: DE-1 · DE-2 · DE-3 · DE-4 · DE-6 · SV-1 · SV-16 and the English rows unchanged to the digit.
+- The vault model's version rises if the list kind is stored, with a migration that reads every older vault.
+- Gates, clippy, counts before and after. **No publish, no owner test.**
+
+### Not in this task
+
+- Two lists at once in one session. One session has one list today, and a value saved «everywhere» is the escape hatch. The owner knows and it is his later decision.
+- The subscription bundle, the sealed export, the Arabic direction (045), the SCB bank (038-B).
