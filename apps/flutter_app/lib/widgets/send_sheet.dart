@@ -20,6 +20,7 @@
 //   footer   Cancel / Back / Continue, always on screen
 import 'dart:async';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -80,6 +81,10 @@ class _SendSheetState extends State<SendSheet> {
   String? _savedTo;
   bool _saving = false;
 
+  /// Where this sheet will write, when the person has said so. Null means the
+  /// folder the screen states.
+  String? _folder;
+
   /// Write the protected text to a file, and say where it went.
   ///
   /// The same text Copy Protected copies, and like Copy it sends nothing. The
@@ -93,23 +98,54 @@ class _SendSheetState extends State<SendSheet> {
       _trouble = null;
       _savedTo = null;
     });
-    final byKind = <String, int>{};
+    // Counted once, by **kind**, and turned into labels for the footer.
+    //
+    // Two consumers, one count: the footer inside the file reads in whatever
+    // language the screen was in, and the record in the vault must outlive that
+    // language — so the record keeps the `Kind` and the footer keeps the word.
+    // Counting twice would let a file and its own row disagree about the one
+    // number both of them state.
+    final counted = <Kind, int>{};
     for (final row in widget.bench.tokens) {
       if (!payload.text.contains(row.token)) continue;
-      final name = widget.ground.nameOfKind(row.kind);
-      byKind[name] = (byKind[name] ?? 0) + 1;
+      counted[row.kind] = (counted[row.kind] ?? 0) + 1;
     }
+    final byKind = <String, int>{};
+    counted.forEach((kind, n) {
+      final name = widget.ground.nameOfKind(kind);
+      byKind[name] = (byKind[name] ?? 0) + n;
+    });
+    final digest = sha256OfText(payload.text);
     final out = await saveProtectedPdf(
       text: payload.text,
       documentName: widget.bench.document?.name ?? '',
-      folder: widget.saveFolder,
+      folder: _folder ?? widget.saveFolder,
       stamp: PdfStamp(
         build: coreVersion(),
         places: payload.protectedCount,
         byKind: byKind,
-        sha256: sha256OfText(payload.text),
+        sha256: digest,
       ),
     );
+    // **The record, in the same act that wrote the file** (046/S).
+    //
+    // Only on a write that happened: a refusal produced no file, and a row with
+    // no file behind it would be the one lie the documents room exists to
+    // prevent. And a refusal to write the **row** is said out loud beside the
+    // path, because a file this app cannot account for is exactly what the room
+    // is for — silence about it would be worse than the missing row.
+    String? unrecorded;
+    if (out.path != null) {
+      unrecorded = await widget.ground.recordProduced(
+        fromDocument: widget.bench.document?.name ?? '',
+        places: payload.protectedCount,
+        byKind: [
+          for (final e in counted.entries) KindCount(kind: e.key, count: e.value),
+        ],
+        sha256: digest,
+        path: out.path!,
+      );
+    }
     // **The act is taking the text out, not the clipboard.** `pasteAnswer`
     // refuses with «Copy the safe text first» unless a payload is bound, so
     // without this a person who saved the PDF, took it to a model and came back
@@ -121,8 +157,40 @@ class _SendSheetState extends State<SendSheet> {
     setState(() {
       _saving = false;
       _savedTo = out.path;
-      _trouble = out.trouble;
+      _trouble = out.trouble ??
+          (unrecorded == null
+              ? null
+              : 'The file was written, but Z Privacy could not write it down in your '
+                    'documents list — $unrecorded');
     });
+  }
+
+  /// **Choose where it goes**, and the stated folder stays the default.
+  ///
+  /// `file_selector` is already in this tree, so the hard-coded `~/Documents`
+  /// the designer named closes without a new dependency. The folder is a choice
+  /// and not a setting: it lasts as long as this sheet, because a place chosen
+  /// once for one document is not a promise about the next one — and a place
+  /// silently remembered is a file a person later cannot find.
+  Future<void> _chooseFolder() async {
+    final here = _folder ?? widget.saveFolder ?? protectedPdfFolder();
+    final picked = await getDirectoryPath(
+      initialDirectory: here.isEmpty ? null : here,
+      confirmButtonText: 'Save here',
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _folder = picked;
+      _savedTo = null;
+    });
+  }
+
+  /// The folder as a sentence: the person's choice, the caller's folder, or
+  /// ours — and never an empty string, which would read as «it will be saved
+  /// in .».
+  String _stated() {
+    final ours = widget.saveFolder ?? protectedPdfFolder();
+    return ours.isEmpty ? 'a folder Z Privacy will ask you for' : ours;
   }
 
   /// Read the clipboard and put it in the answer field. Nothing else.
@@ -361,6 +429,15 @@ class _SendSheetState extends State<SendSheet> {
                           ? null
                           : () => _savePdf(payload),
                     ),
+                    // Offered beside it, not in front of it: the common case
+                    // is the folder the line below already states, and a
+                    // chooser a person must dismiss to save is a dialog
+                    // between them and the act.
+                    ZButton(
+                      label: 'Choose where to save',
+                      icon: Icons.folder_outlined,
+                      onPressed: _saving ? null : () => unawaited(_chooseFolder()),
+                    ),
                     ZButton(
                       label: 'Paste AI answer',
                       icon: Icons.content_paste_go,
@@ -368,6 +445,18 @@ class _SendSheetState extends State<SendSheet> {
                     ),
                   ],
                 ),
+                // **Where it will go, before it goes there.** The folder is
+                // said in words whether it is ours or the person's, so «Save as
+                // PDF» is never a press into somewhere unnamed.
+                if (_savedTo == null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    _folder == null
+                        ? 'It will be saved in ${_stated()}.'
+                        : 'It will be saved in $_folder, because you chose that folder.',
+                    style: Zc.small.copyWith(color: Zc.ink3),
+                  ),
+                ],
                 if (_savedTo != null) ...[
                   const SizedBox(height: 10),
                   // **Said in words, in full.** «Saved» is not an answer to

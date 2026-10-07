@@ -207,6 +207,58 @@ class Ground extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// **What Z Privacy has produced** — 046/S, newest first, from the vault.
+  ///
+  /// Empty while the vault is locked, and that is not a state to paper over: a
+  /// row names a document and a path, which is as much a person's business as
+  /// the names inside it. The room says so in words rather than showing an
+  /// empty list.
+  List<ProducedDocument> produced = const [];
+
+  Future<void> readProduced() async {
+    if (vault != VaultState.unlocked) {
+      produced = const [];
+      notifyListeners();
+      return;
+    }
+    try {
+      produced = await z.producedDocuments();
+      trouble = null;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+    }
+    notifyListeners();
+  }
+
+  /// **Write down that a document was produced**, in the same act that wrote
+  /// the file.
+  ///
+  /// Returns the reason it could not be written, or null. A refusal here is
+  /// said out loud beside the path: a file on disk that this app cannot
+  /// account for is exactly the thing the room exists to prevent, and silence
+  /// about it would be worse than the missing row.
+  Future<String?> recordProduced({
+    required String fromDocument,
+    required int places,
+    required List<KindCount> byKind,
+    required String sha256,
+    required String path,
+  }) async {
+    try {
+      await z.recordProducedDocument(
+        fromDocument: fromDocument,
+        places: places,
+        byKind: byKind,
+        sha256: sha256,
+        path: path,
+      );
+      await readProduced();
+      return null;
+    } on ApiError catch (e) {
+      return humanMessage(e);
+    }
+  }
+
   Future<void> searchVaultFor(String query) async {
     vaultQuery = query;
     await readVault();

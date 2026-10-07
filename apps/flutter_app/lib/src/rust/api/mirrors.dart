@@ -667,6 +667,24 @@ enum Kind {
   custom,
 }
 
+class KindCount {
+  final Kind kind;
+  final int count;
+
+  const KindCount({required this.kind, required this.count});
+
+  @override
+  int get hashCode => kind.hashCode ^ count.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is KindCount &&
+          runtimeType == other.runtimeType &&
+          kind == other.kind &&
+          count == other.count;
+}
+
 class KindRow {
   final Kind kind;
 
@@ -1394,6 +1412,72 @@ class PrivacyRulesSnapshot {
           ruleSets == other.ruleSets &&
           activeSets == other.activeSets &&
           rulesBuilt == other.rulesBuilt;
+}
+
+class ProducedDocument {
+  final int id;
+
+  /// Unix seconds.
+  final BigInt madeAt;
+
+  /// The document it came from, by the name the person saw.
+  final String fromDocument;
+
+  /// How many places in it were replaced.
+  final int places;
+
+  /// How many values stand behind those places, by kind.
+  final List<KindCount> byKind;
+
+  /// Of the protected text, lower hex — the same number the file's own
+  /// footer states.
+  final String sha256;
+
+  /// Where it was written, **as last known**. Whether anything is still
+  /// there is a question about a disk, and this crate writes to none but the
+  /// vault's own (G15), so the screen asks it.
+  final String path;
+
+  /// Empty in every row this build writes: a serial is 044's, and the place
+  /// for it exists from this model's first version so that adding one costs
+  /// no migration.
+  final String serial;
+
+  const ProducedDocument({
+    required this.id,
+    required this.madeAt,
+    required this.fromDocument,
+    required this.places,
+    required this.byKind,
+    required this.sha256,
+    required this.path,
+    required this.serial,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      madeAt.hashCode ^
+      fromDocument.hashCode ^
+      places.hashCode ^
+      byKind.hashCode ^
+      sha256.hashCode ^
+      path.hashCode ^
+      serial.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProducedDocument &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          madeAt == other.madeAt &&
+          fromDocument == other.fromDocument &&
+          places == other.places &&
+          byKind == other.byKind &&
+          sha256 == other.sha256 &&
+          path == other.path &&
+          serial == other.serial;
 }
 
 class ProfileRow {

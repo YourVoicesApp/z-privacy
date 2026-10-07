@@ -830,6 +830,47 @@ pub struct UserNameRow {
     pub list: String,
 }
 
+/// How many values of one kind. A pair, because a map would arrive in Dart
+/// keyed by a label and a label is a word in one language.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct KindCount {
+    pub kind: Kind,
+    pub count: u32,
+}
+
+/// One document this app produced — 046/S.
+///
+/// **A fingerprint proves the content; a record proves the act.** The footer
+/// inside the file states the build stamp, the counts by kind and a sha256 of
+/// the protected text, and a reader can check every one of those for
+/// themselves. What none of them answers is «did this app produce this, and
+/// when», which is the question a client or a regulator asks — so there is a
+/// record, it lives in the vault, and it is not a listing of a folder. A folder
+/// can be moved, emptied or synced away.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProducedDocument {
+    pub id: u32,
+    /// Unix seconds.
+    pub made_at: u64,
+    /// The document it came from, by the name the person saw.
+    pub from_document: String,
+    /// How many places in it were replaced.
+    pub places: u32,
+    /// How many values stand behind those places, by kind.
+    pub by_kind: Vec<KindCount>,
+    /// Of the protected text, lower hex — the same number the file's own
+    /// footer states.
+    pub sha256: String,
+    /// Where it was written, **as last known**. Whether anything is still
+    /// there is a question about a disk, and this crate writes to none but the
+    /// vault's own (G15), so the screen asks it.
+    pub path: String,
+    /// Empty in every row this build writes: a serial is 044's, and the place
+    /// for it exists from this model's first version so that adding one costs
+    /// no migration.
+    pub serial: String,
+}
+
 /// What an imported list did. Three numbers and the reasons for the third.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NameImport {
@@ -2228,6 +2269,25 @@ pub fn home_snapshot() -> ApiResult<HomeSnapshot> {
 /// The workspace, as one read. Counts are derived from `findings`.
 pub fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnapshot> {
     crate::ops::workspace_snapshot(session)
+}
+
+/// **Write down that a document was produced** — 046/S.
+///
+/// Called in the same act that writes the file, so the two cannot disagree: if
+/// the write fails there is no record, and a record with no file behind it
+/// would be the one lie this room exists to prevent.
+///
+/// The numbers are the caller's because they are the numbers that went **into
+/// that file's own footer**. A second count made here could differ from the one
+/// a reader holds in their hand.
+pub fn record_produced_document(from_document: String, places: u32, by_kind: Vec<KindCount>, sha256: String, path: String) -> ApiResult<u32> {
+    crate::ops::record_produced_document(from_document, places, by_kind, sha256, path)
+}
+
+/// What this app has produced, newest first. A locked vault answers nothing,
+/// the same rule as everything else in there.
+pub fn produced_documents() -> ApiResult<Vec<ProducedDocument>> {
+    crate::ops::produced_documents()
 }
 
 /// The vault room, as one read. Header and body draw from this object.

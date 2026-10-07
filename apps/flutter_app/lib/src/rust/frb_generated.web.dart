@@ -122,6 +122,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Kind dco_decode_kind(dynamic raw);
 
   @protected
+  KindCount dco_decode_kind_count(dynamic raw);
+
+  @protected
   KindRow dco_decode_kind_row(dynamic raw);
 
   @protected
@@ -150,6 +153,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Finding> dco_decode_list_finding(dynamic raw);
+
+  @protected
+  List<KindCount> dco_decode_list_kind_count(dynamic raw);
 
   @protected
   List<KindRow> dco_decode_list_kind_row(dynamic raw);
@@ -186,6 +192,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<ProducedDocument> dco_decode_list_produced_document(dynamic raw);
 
   @protected
   List<ProfileRow> dco_decode_list_profile_row(dynamic raw);
@@ -309,6 +318,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PrivacyRulesSnapshot dco_decode_privacy_rules_snapshot(dynamic raw);
+
+  @protected
+  ProducedDocument dco_decode_produced_document(dynamic raw);
 
   @protected
   ProfileRow dco_decode_profile_row(dynamic raw);
@@ -545,6 +557,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Kind sse_decode_kind(SseDeserializer deserializer);
 
   @protected
+  KindCount sse_decode_kind_count(SseDeserializer deserializer);
+
+  @protected
   KindRow sse_decode_kind_row(SseDeserializer deserializer);
 
   @protected
@@ -573,6 +588,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Finding> sse_decode_list_finding(SseDeserializer deserializer);
+
+  @protected
+  List<KindCount> sse_decode_list_kind_count(SseDeserializer deserializer);
 
   @protected
   List<KindRow> sse_decode_list_kind_row(SseDeserializer deserializer);
@@ -617,6 +635,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<ProducedDocument> sse_decode_list_produced_document(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<ProfileRow> sse_decode_list_profile_row(SseDeserializer deserializer);
@@ -760,6 +783,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PrivacyRulesSnapshot sse_decode_privacy_rules_snapshot(
     SseDeserializer deserializer,
   );
+
+  @protected
+  ProducedDocument sse_decode_produced_document(SseDeserializer deserializer);
 
   @protected
   ProfileRow sse_decode_profile_row(SseDeserializer deserializer);
@@ -1024,6 +1050,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_kind(Kind self, SseSerializer serializer);
 
   @protected
+  void sse_encode_kind_count(KindCount self, SseSerializer serializer);
+
+  @protected
   void sse_encode_kind_row(KindRow self, SseSerializer serializer);
 
   @protected
@@ -1058,6 +1087,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_finding(List<Finding> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_kind_count(
+    List<KindCount> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_kind_row(List<KindRow> self, SseSerializer serializer);
@@ -1113,6 +1148,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_produced_document(
+    List<ProducedDocument> self,
     SseSerializer serializer,
   );
 
@@ -1296,6 +1337,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_privacy_rules_snapshot(
     PrivacyRulesSnapshot self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_produced_document(
+    ProducedDocument self,
     SseSerializer serializer,
   );
 

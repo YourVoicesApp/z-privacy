@@ -235,6 +235,10 @@ pub(crate) struct Vault {
     pub taught_names: Vec<UserName>,
     /// The lists those names are kept in, with the switch on each. Model 10.
     pub lists: Vec<UserList>,
+    pub next_produced: u32,
+    /// **What this app has produced** — model 11, 046/S. Newest last here and
+    /// newest first on the way out.
+    pub produced: Vec<ProducedDoc>,
     /// What the app has been told to do by itself. In the vault because the
     /// vault is the only file we write (G15), and because a setting that
     /// survives a restart has to live somewhere that does. Written in task 030.
@@ -244,6 +248,46 @@ pub(crate) struct Vault {
     /// nothing outside the core can read it back: `providers()` reports only
     /// whether a row has a credential. Written in task 020.
     pub provider_logins: BTreeMap<String, ProviderLogin>,
+}
+
+/// A document this app produced, as the vault records it. Model 11.
+///
+/// **Evidence of the act, not of the content.** The footer inside the file
+/// fingerprints the text and a reader can check every figure in it for
+/// themselves. What a fingerprint cannot answer is «did this app produce this,
+/// and when» — the question a client or a regulator asks — and that answer
+/// needs a record kept somewhere a folder cannot take with it.
+///
+/// So it is in the vault. A folder can be moved, emptied or synced away; this
+/// is sealed with everything else a person keeps, and a locked vault says
+/// nothing about it, which is the same rule as the rest of that file.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ProducedDoc {
+    pub id: u32,
+    /// Unix seconds, from the same clock every other record in here uses.
+    pub made_at: u64,
+    /// The document it came from, by the name the person saw on screen.
+    pub from_document: String,
+    /// How many places in that document were replaced.
+    pub places: u32,
+    /// How many values stand behind those places, by kind. The **kind**, not
+    /// its label: a label is a word in one language and this file outlives the
+    /// language the screen was in when it was written.
+    pub by_kind: Vec<(Kind, u32)>,
+    /// Of the protected text, lower hex — the same number the file's own
+    /// footer states, so the two can be held against each other.
+    pub sha256: String,
+    /// Where the file was written. **As last known**, and never trusted to
+    /// still be there: the row's whole purpose is to outlive it.
+    pub path: String,
+    /// Empty in every row this build writes.
+    ///
+    /// A serial and the record of issuing it are **044**, and a serial means
+    /// nothing without a record to put it in — so the place for it is written
+    /// from this model's first version. A field added to a record later is a
+    /// model version and a migration for every vault on earth; a field written
+    /// empty from the start costs five bytes.
+    pub serial: String,
 }
 
 /// The settings, as they are kept. `session_only` is not here: whether these
@@ -317,6 +361,8 @@ impl Vault {
             next_taught_name: 1,
             taught_names: Vec::new(),
             lists: Vec::new(),
+            next_produced: 1,
+            produced: Vec::new(),
             exceptions: Vec::new(),
             settings: StoredSettings::default(),
             provider_logins: BTreeMap::new(),

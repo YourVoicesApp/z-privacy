@@ -36,6 +36,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/documents_room.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -345,11 +346,28 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 14),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: ZButton(
-                    label: 'Open Z Vault',
-                    icon: Icons.lock_outline,
-                    tint: Zc.river,
-                    onPressed: widget.onVault,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ZButton(
+                        label: 'Open Z Vault',
+                        icon: Icons.lock_outline,
+                        tint: Zc.river,
+                        onPressed: widget.onVault,
+                      ),
+                      // **The documents room** (046/S). Here, on the screen
+                      // where his own documents are, because «ورثائق PDF
+                      // المحفوظة» is a thing he goes looking for and not a
+                      // setting. It is not called «Documents»: that word is
+                      // already the way back to this screen, and one word may
+                      // not mean two places.
+                      ZButton(
+                        label: 'Documents I saved',
+                        icon: Icons.inventory_2_outlined,
+                        onPressed: () => unawaited(showDocumentsRoom(context, ground)),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 30),

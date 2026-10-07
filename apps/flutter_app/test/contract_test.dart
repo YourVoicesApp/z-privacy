@@ -190,6 +190,16 @@ void main() {
       // 046/Q. Both are about lines, so both are called on line 0 of whatever
       // the contract's session holds.
       'lineSelection': () => lineSelection(session: session, from: 0, to: 0),
+      // 046/S — the documents room. Both need an open vault, which this test
+      // has, and neither touches a disk outside it.
+      'recordProducedDocument': () => recordProducedDocument(
+        fromDocument: 'a.txt',
+        places: 1,
+        byKind: const [KindCount(kind: Kind.person, count: 1)],
+        sha256: 'a' * 64,
+        path: '/tmp/zprivacy-contract/a.pdf',
+      ),
+      'producedDocuments': () => producedDocuments(),
       'protectCellInLines': () => protectCellInLines(
         session: session,
         span: const Span(start: 0, end: 1),
@@ -350,7 +360,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 101, reason: 'the contract has 101 functions');
+    expect(calls.length, 103, reason: 'the contract has 103 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

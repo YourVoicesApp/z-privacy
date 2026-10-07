@@ -1254,6 +1254,83 @@ pub(crate) fn add_user_name(
     }
 }
 
+/// **Write down that a document was produced** — 046/S.
+///
+/// The row is evidence of the act. It is refused without a path and without a
+/// digest, because a row with neither is evidence of nothing: the path is what
+/// lets a person find the file or be told honestly that it has gone, and the
+/// digest is what lets the row be held against the footer inside it.
+///
+/// `serial` is written empty. A serial is 044's, and the field exists from this
+/// model's first version so that giving a document one later is a value and not
+/// a migration.
+pub(crate) fn record_produced_document(
+    from_document: String,
+    places: u32,
+    by_kind: Vec<crate::api::KindCount>,
+    sha256: String,
+    path: String,
+) -> ApiResult<u32> {
+    let path = path.trim().to_string();
+    if path.is_empty() {
+        return Err(ApiError::InputRefused {
+            reason: "a produced document needs the path it was written to".to_string(),
+        });
+    }
+    let sha256 = sha256.trim().to_ascii_lowercase();
+    if sha256.len() != 64 || !sha256.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return Err(ApiError::InputRefused {
+            reason: "a produced document needs the sha256 of the text that went into it".to_string(),
+        });
+    }
+    with_core(|core| {
+        core.vault.with_open_mut(|vault| {
+            let id = vault.next_produced;
+            vault.next_produced = vault.next_produced.saturating_add(1);
+            vault.produced.push(crate::vault::model::ProducedDoc {
+                id,
+                made_at: crate::vault::model::now_seconds(),
+                from_document,
+                places,
+                by_kind: by_kind.iter().map(|k| (k.kind, k.count)).collect(),
+                sha256,
+                path,
+                serial: String::new(),
+            });
+            Ok(id)
+        })
+    })
+}
+
+/// What this app has produced, **newest first** — a person looking for what
+/// they just made looks at the top.
+pub(crate) fn produced_documents() -> ApiResult<Vec<crate::api::ProducedDocument>> {
+    use crate::api::{KindCount, ProducedDocument};
+    with_core(|core| {
+        core.vault.with_open(|vault| {
+            let mut rows: Vec<ProducedDocument> = vault
+                .produced
+                .iter()
+                .map(|d| ProducedDocument {
+                    id: d.id,
+                    made_at: d.made_at,
+                    from_document: d.from_document.clone(),
+                    places: d.places,
+                    by_kind: d.by_kind.iter().map(|(kind, count)| KindCount { kind: *kind, count: *count }).collect(),
+                    sha256: d.sha256.clone(),
+                    path: d.path.clone(),
+                    serial: d.serial.clone(),
+                })
+                .collect();
+            // By id and not by `made_at`: two files saved inside the same
+            // second would order by a coin toss, and the ids are the order the
+            // acts happened in.
+            rows.sort_by(|a, b| b.id.cmp(&a.id));
+            Ok(rows)
+        })
+    })?
+}
+
 /// Everything this device knows because a person said so, newest first.
 pub(crate) fn user_names(profile_id: Option<String>) -> ApiResult<Vec<crate::api::UserNameRow>> {
     use crate::api::{UserNameKind as K, UserNameRow};

@@ -636,6 +636,36 @@ pub struct _UserNameRow {
     pub list: String,
 }
 
+#[frb(mirror(KindCount))]
+pub struct _KindCount {
+    pub kind: Kind,
+    pub count: u32,
+}
+
+#[frb(mirror(ProducedDocument))]
+pub struct _ProducedDocument {
+    pub id: u32,
+    /// Unix seconds.
+    pub made_at: u64,
+    /// The document it came from, by the name the person saw.
+    pub from_document: String,
+    /// How many places in it were replaced.
+    pub places: u32,
+    /// How many values stand behind those places, by kind.
+    pub by_kind: Vec<KindCount>,
+    /// Of the protected text, lower hex — the same number the file's own
+    /// footer states.
+    pub sha256: String,
+    /// Where it was written, **as last known**. Whether anything is still
+    /// there is a question about a disk, and this crate writes to none but the
+    /// vault's own (G15), so the screen asks it.
+    pub path: String,
+    /// Empty in every row this build writes: a serial is 044's, and the place
+    /// for it exists from this model's first version so that adding one costs
+    /// no migration.
+    pub serial: String,
+}
+
 #[frb(mirror(NameImport))]
 pub struct _NameImport {
     pub added: u32,

@@ -19,6 +19,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 11 — the documents this app has produced, and where each one was written.
 /// * 10 — the lists a person keeps their names in, and the switch on each.
 /// * 9 — where an imported name list came from, and under what licence.
 /// * 8 — the names the person taught.
@@ -36,7 +37,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 10;
+pub(crate) const MODEL_VERSION: u16 = 11;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -302,6 +303,29 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
     for name in elsewhere {
         out.extend_from_slice(&name.id.to_be_bytes());
         put_str(&mut out, &name.list);
+    }
+    // Model 11 — the documents this app has produced (046/S). At the end, like
+    // every section before it, so an older build stops here and opens the vault
+    // with an empty room rather than reading a name out of a path.
+    //
+    // `serial` is written **empty** by every row this build makes: a serial is
+    // 044's, and the place for it is here from the first version so that adding
+    // one later is a value and not a migration.
+    out.extend_from_slice(&vault.next_produced.to_be_bytes());
+    out.extend_from_slice(&(vault.produced.len() as u32).to_be_bytes());
+    for doc in &vault.produced {
+        out.extend_from_slice(&doc.id.to_be_bytes());
+        out.extend_from_slice(&doc.made_at.to_be_bytes());
+        put_str(&mut out, &doc.from_document);
+        out.extend_from_slice(&doc.places.to_be_bytes());
+        out.extend_from_slice(&(doc.by_kind.len() as u32).to_be_bytes());
+        for (kind, count) in &doc.by_kind {
+            out.push(kind_code(*kind));
+            out.extend_from_slice(&count.to_be_bytes());
+        }
+        put_str(&mut out, &doc.sha256);
+        put_str(&mut out, &doc.path);
+        put_str(&mut out, &doc.serial);
     }
     Ok(out)
 }
@@ -573,6 +597,36 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         }
     }
 
+    // Model 11 — what this app has produced.
+    let mut next_produced = 1u32;
+    let mut produced: Vec<crate::vault::model::ProducedDoc> = Vec::new();
+    if version >= 11 {
+        next_produced = u32::from_be_bytes(r.array::<4>()?);
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        for _ in 0..count {
+            let id = u32::from_be_bytes(r.array::<4>()?);
+            let made_at = u64::from_be_bytes(r.array::<8>()?);
+            let from_document = r.string()?;
+            let places = u32::from_be_bytes(r.array::<4>()?);
+            let kinds = u32::from_be_bytes(r.array::<4>()?);
+            let mut by_kind: Vec<(Kind, u32)> = Vec::new();
+            for _ in 0..kinds {
+                let kind = kind_of(r.byte()?)?;
+                by_kind.push((kind, u32::from_be_bytes(r.array::<4>()?)));
+            }
+            produced.push(crate::vault::model::ProducedDoc {
+                id,
+                made_at,
+                from_document,
+                places,
+                by_kind,
+                sha256: r.string()?,
+                path: r.string()?,
+                serial: r.string()?,
+            });
+        }
+    }
+
     Ok(Vault {
         entities,
         profiles,
@@ -585,6 +639,8 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         next_taught_name,
         taught_names,
         lists,
+        next_produced,
+        produced,
         settings,
         provider_logins,
     })
@@ -715,6 +771,10 @@ mod tests {
             out.extend_from_slice(&0u32.to_be_bytes()); // no lists
             out.extend_from_slice(&0u32.to_be_bytes()); // and nothing outside the default one
         }
+        if version >= 11 {
+            out.extend_from_slice(&1u32.to_be_bytes()); // next produced id
+            out.extend_from_slice(&0u32.to_be_bytes()); // nothing produced yet
+        }
         out
     }
 
@@ -751,6 +811,19 @@ mod tests {
         });
         v.next_entity = 18;
         v.next_value = 3;
+        // Model 11 — one produced document, so the round trip below is a test
+        // of the bytes and not of an empty section.
+        v.next_produced = 2;
+        v.produced.push(crate::vault::model::ProducedDoc {
+            id: 1,
+            made_at: 1_760_000_000,
+            from_document: "Lohnabrechnung_Weber.txt".to_string(),
+            places: 12,
+            by_kind: vec![(Kind::Person, 3), (Kind::Account, 8)],
+            sha256: "d".repeat(64),
+            path: "/home/anna/Documents/zprivacy/Weber-protected-2026-10-07.pdf".to_string(),
+            serial: String::new(),
+        });
         v
     }
 
@@ -773,6 +846,18 @@ mod tests {
         assert_eq!(entity.values[0].aliases.len(), 2);
         assert_eq!(entity.values[0].policy, Policy::Always);
         assert_eq!(entity.values[1].kind, Kind::Bic, "a BIC is still a BIC after a reload");
+
+        // Model 11 — the record of what was produced, field by field. The path
+        // and the digest are the two the room cannot do without.
+        assert_eq!(after.next_produced, 2);
+        assert_eq!(after.produced.len(), 1, "the produced document did not survive");
+        let doc = &after.produced[0];
+        assert_eq!(doc.from_document, "Lohnabrechnung_Weber.txt");
+        assert_eq!(doc.places, 12);
+        assert_eq!(doc.by_kind, vec![(Kind::Person, 3), (Kind::Account, 8)]);
+        assert_eq!(doc.sha256, "d".repeat(64));
+        assert!(doc.path.ends_with("Weber-protected-2026-10-07.pdf"), "{}", doc.path);
+        assert_eq!(doc.serial, "", "this build writes no serial — 044 does");
     }
 
     #[test]
