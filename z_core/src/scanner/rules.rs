@@ -147,26 +147,73 @@ struct Word<'a> {
     start: usize,
     text: &'a str,
     newline_before: bool,
+    /// **Is the space before this word a column boundary?** (046/M.)
+    ///
+    /// Two or more spaces, or a tab. One space is a thousands separator and
+    /// keeps a number together — `42 500`, `9999 000 01`. Two is a table
+    /// laying out its columns, and nothing on the far side of it is part of
+    /// the number on this side.
+    ///
+    /// The lead measured what its absence cost on the film's own payroll
+    /// sheet. Section B reads
+    ///
+    /// ```text
+    ///     25 February 2027   Hedvig Palmgren      account 7210     42 500
+    /// ```
+    ///
+    /// and the `account` row protected **`7210     42 500`** — so every one of
+    /// the eight ledger amounts went to the model inside a token. The demo's
+    /// whole point is that the model finds a 2 400 difference by arithmetic on
+    /// amounts and dates while seeing no names, and it was being asked to do
+    /// that with half the numbers gone. It might still have answered from the
+    /// reconciliation lines at the foot, which is worse: a demo that works by
+    /// luck.
+    ///
+    /// And wrong on its own terms: `7210` is a ledger account code, not
+    /// anybody's bank account, and the amount beside it is not personal data
+    /// at all.
+    ///
+    /// This is 038-G/3's family — «the phone rule stops where a grouped id
+    /// stands» — arriving from the other side.
+    column_gap_before: bool,
 }
 
 fn words(text: &str) -> Vec<Word<'_>> {
     let mut out = Vec::new();
     let mut newline = false;
+    let mut gap = 0usize;
+    let mut tab = false;
     let mut cursor = 0usize;
     for (i, ch) in text.char_indices() {
         if ch.is_whitespace() {
             if cursor < i {
-                out.push(Word { start: cursor, text: &text[cursor..i], newline_before: newline });
+                out.push(Word {
+                    start: cursor,
+                    text: &text[cursor..i],
+                    newline_before: newline,
+                    column_gap_before: gap > 1 || tab,
+                });
                 newline = false;
+                gap = 0;
+                tab = false;
             }
             if ch == '\n' {
                 newline = true;
             }
+            if ch == '\t' {
+                tab = true;
+            }
+            gap += 1;
             cursor = i + ch.len_utf8();
         }
     }
     if cursor < text.len() {
-        out.push(Word { start: cursor, text: &text[cursor..], newline_before: newline });
+        out.push(Word {
+            start: cursor,
+            text: &text[cursor..],
+            newline_before: newline,
+            column_gap_before: gap > 1 || tab,
+        });
     }
     out
 }
@@ -296,6 +343,16 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             // The field ends at a line break, or where another label begins —
             // this is what stops «IBAN:» from eating the «BIC:» line under it.
             if next.newline_before || is_label(next.text, rules) {
+                break;
+            }
+            // **And a number ends at a column boundary** (046/M). Only for the
+            // two validators that read a run of digits across spaces: a name
+            // may legitimately be laid out with two spaces between its words,
+            // and a `Word`/`Any` value is one word anyway.
+            if matches!(rule.validator, Validator::Number | Validator::Grouped)
+                && next.column_gap_before
+                && j > value_start
+            {
                 break;
             }
             let n = bare(next.text);
