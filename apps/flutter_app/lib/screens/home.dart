@@ -335,7 +335,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
                 const SizedBox(height: 9),
                 Text(
-                  'Nothing is uploaded to be read.   Conversations are not saved after you close '
+                  // Two sentences, one space between them. There were three,
+                  // on the first screen of the product — 046/D's sweep found
+                  // it in Dart after the two in the core.
+                  'Nothing is uploaded to be read. Conversations are not saved after you close '
                   'the app.',
                   style: Zc.small.copyWith(color: Zc.ink4),
                 ),

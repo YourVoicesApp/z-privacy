@@ -1090,7 +1090,13 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
             // Said plainly, because it is the one case where the reason a thing
             // was protected no longer exists and the protection does.
             because.push(
-                "What found this no longer claims it — the value was forgotten, or the pack                  changed. It stays protected here so that taking it back does not expose it.                  «Remove protection» is the way to take it back."
+                // Wrapped with «\\», which is the only way: without it the
+                // newline and the indentation after it are **in the sentence**,
+                // and this one carried two holes of eighteen spaces each onto
+                // the Why card (046/D).
+                "What found this no longer claims it — the value was forgotten, or the pack \
+                 changed. It stays protected here so that taking it back does not expose it. \
+                 «Remove protection» is the way to take it back."
                     .to_string(),
             );
         }
@@ -1250,7 +1256,11 @@ fn remember_in_vault(session: SessionId, span: Span, scope: Scope, kind: Kind) -
 
     if profile_only && profile.is_none() {
         return Err(ApiError::InputRefused {
-            reason: "this conversation is not in a profile, so there is no profile to remember it                      for — choose «always», or open a profile first"
+            // The sentence 046/D was written for: nineteen spaces sat between
+            // «it» and «for», because the literal was wrapped across two lines
+            // with no «\\» to eat the newline and the indentation.
+            reason: "this conversation is not in a profile, so there is no profile to remember \
+                     it for — choose «always», or open a profile first"
                 .to_string(),
         });
     }

@@ -67,6 +67,30 @@ else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
 fi
 
+# ---------------------------------------------------------------- G25
+# A sentence a person reads is one line of prose, not a wrapped literal.
+#
+# 046/D, from the owner's own screen: the refusal for «this client» with no
+# client open carried **nineteen spaces inside the sentence**, because the Rust
+# literal was wrapped across two lines with no trailing «\» to eat the newline
+# and the indentation.
+#
+# The sweep found three, not one: that refusal, the Why card's sentence for a
+# protection whose reason no longer exists (two holes of eighteen spaces each),
+# and the home screen's own line about what is uploaded — three spaces between
+# two sentences, in Dart, on the first screen of the product. So the gate reads
+# the hand-written Flutter code as well as the core: a sentence does not become
+# truer for being written in another language.
+if [ -f scripts/check_sentences.py ]; then
+  if OUT=$(python3 scripts/check_sentences.py z_core/src "$FLUTTER_LIB" 2>&1); then
+    pass "G25 no screen sentence carries a run of spaces"
+  else
+    fail "G25 a sentence has a hole in it:"; printf '%s\n' "$OUT" | sed 's/^/        /'
+  fi
+else
+  skip "G25 no sentence carries a run of spaces" "no checker yet"
+fi
+
 # ---------------------------------------------------------------- G24
 # One watcher for the window, and it only reports.
 #
