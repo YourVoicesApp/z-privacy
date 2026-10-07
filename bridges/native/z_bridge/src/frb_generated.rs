@@ -3030,6 +3030,7 @@ const _: fn() = || {
         let _: Option<crate::api::mirrors::AnswerId> = AnswerSnapshot.next;
         let _: Vec<crate::api::mirrors::Segment> = AnswerSnapshot.restored;
         let _: String = AnswerSnapshot.as_written;
+        let _: Vec<String> = AnswerSnapshot.unknown_tokens;
     }
     match None::<crate::api::mirrors::ApiError>.unwrap() {
         crate::api::mirrors::ApiError::NotImplemented => {}
@@ -3463,7 +3464,7 @@ const _: fn() = || {
     {
         let Segment = None::<crate::api::mirrors::Segment>.unwrap();
         let _: String = Segment.text;
-        let _: bool = Segment.restored;
+        let _: crate::api::mirrors::Piece = Segment.piece;
     }
     {
         let SelectionView = None::<crate::api::mirrors::SelectionView>.unwrap();
@@ -3651,6 +3652,7 @@ impl SseDecode for crate::api::mirrors::AnswerSnapshot {
         let mut var_next = <Option<crate::api::mirrors::AnswerId>>::sse_decode(deserializer);
         let mut var_restored = <Vec<crate::api::mirrors::Segment>>::sse_decode(deserializer);
         let mut var_asWritten = <String>::sse_decode(deserializer);
+        let mut var_unknownTokens = <Vec<String>>::sse_decode(deserializer);
         return crate::api::mirrors::AnswerSnapshot {
             state_revision: var_stateRevision,
             answer: var_answer,
@@ -3660,6 +3662,7 @@ impl SseDecode for crate::api::mirrors::AnswerSnapshot {
             next: var_next,
             restored: var_restored,
             as_written: var_asWritten,
+            unknown_tokens: var_unknownTokens,
         };
     }
 }
@@ -4849,6 +4852,19 @@ impl SseDecode for crate::api::mirrors::PayloadView {
     }
 }
 
+impl SseDecode for crate::api::mirrors::Piece {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::mirrors::Piece::Words,
+            1 => crate::api::mirrors::Piece::Restored,
+            2 => crate::api::mirrors::Piece::Unresolved,
+            _ => unreachable!("Invalid variant for Piece: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for crate::api::mirrors::Place {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -5260,10 +5276,10 @@ impl SseDecode for crate::api::mirrors::Segment {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_text = <String>::sse_decode(deserializer);
-        let mut var_restored = <bool>::sse_decode(deserializer);
+        let mut var_piece = <crate::api::mirrors::Piece>::sse_decode(deserializer);
         return crate::api::mirrors::Segment {
             text: var_text,
-            restored: var_restored,
+            piece: var_piece,
         };
     }
 }
@@ -5846,6 +5862,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::AnswerSna
             self.0.next.into_into_dart().into_dart(),
             self.0.restored.into_into_dart().into_dart(),
             self.0.as_written.into_into_dart().into_dart(),
+            self.0.unknown_tokens.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -6600,6 +6617,23 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::PayloadVi
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Piece> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::Piece::Words => 0.into_dart(),
+            crate::api::mirrors::Piece::Restored => 1.into_dart(),
+            crate::api::mirrors::Piece::Unresolved => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::Piece> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::Piece>> for crate::api::mirrors::Piece {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::Piece> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Place> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -7075,7 +7109,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Segment> 
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
             self.0.text.into_into_dart().into_dart(),
-            self.0.restored.into_into_dart().into_dart(),
+            self.0.piece.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -7556,6 +7590,7 @@ impl SseEncode for crate::api::mirrors::AnswerSnapshot {
         <Option<crate::api::mirrors::AnswerId>>::sse_encode(self.next, serializer);
         <Vec<crate::api::mirrors::Segment>>::sse_encode(self.restored, serializer);
         <String>::sse_encode(self.as_written, serializer);
+        <Vec<String>>::sse_encode(self.unknown_tokens, serializer);
     }
 }
 
@@ -8524,6 +8559,23 @@ impl SseEncode for crate::api::mirrors::PayloadView {
     }
 }
 
+impl SseEncode for crate::api::mirrors::Piece {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::mirrors::Piece::Words => 0,
+                crate::api::mirrors::Piece::Restored => 1,
+                crate::api::mirrors::Piece::Unresolved => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
 impl SseEncode for crate::api::mirrors::Place {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -8840,7 +8892,7 @@ impl SseEncode for crate::api::mirrors::Segment {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.text, serializer);
-        <bool>::sse_encode(self.restored, serializer);
+        <crate::api::mirrors::Piece>::sse_encode(self.piece, serializer);
     }
 }
 

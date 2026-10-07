@@ -3737,8 +3737,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AnswerSnapshot dco_decode_answer_snapshot(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 8)
-      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return AnswerSnapshot(
       stateRevision: dco_decode_u_32(arr[0]),
       answer: dco_decode_answer_id(arr[1]),
@@ -3748,6 +3748,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       next: dco_decode_opt_box_autoadd_answer_id(arr[5]),
       restored: dco_decode_list_segment(arr[6]),
       asWritten: dco_decode_String(arr[7]),
+      unknownTokens: dco_decode_list_String(arr[8]),
     );
   }
 
@@ -4590,6 +4591,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Piece dco_decode_piece(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return Piece.values[raw as int];
+  }
+
+  @protected
   Place dco_decode_place(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -4906,7 +4913,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return Segment(
       text: dco_decode_String(arr[0]),
-      restored: dco_decode_bool(arr[1]),
+      piece: dco_decode_piece(arr[1]),
     );
   }
 
@@ -5244,6 +5251,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_next = sse_decode_opt_box_autoadd_answer_id(deserializer);
     var var_restored = sse_decode_list_segment(deserializer);
     var var_asWritten = sse_decode_String(deserializer);
+    var var_unknownTokens = sse_decode_list_String(deserializer);
     return AnswerSnapshot(
       stateRevision: var_stateRevision,
       answer: var_answer,
@@ -5253,6 +5261,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       next: var_next,
       restored: var_restored,
       asWritten: var_asWritten,
+      unknownTokens: var_unknownTokens,
     );
   }
 
@@ -6418,6 +6427,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Piece sse_decode_piece(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return Piece.values[inner];
+  }
+
+  @protected
   Place sse_decode_place(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_page = sse_decode_u_32(deserializer);
@@ -6744,8 +6760,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Segment sse_decode_segment(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_text = sse_decode_String(deserializer);
-    var var_restored = sse_decode_bool(deserializer);
-    return Segment(text: var_text, restored: var_restored);
+    var var_piece = sse_decode_piece(deserializer);
+    return Segment(text: var_text, piece: var_piece);
   }
 
   @protected
@@ -7147,6 +7163,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_answer_id(self.next, serializer);
     sse_encode_list_segment(self.restored, serializer);
     sse_encode_String(self.asWritten, serializer);
+    sse_encode_list_String(self.unknownTokens, serializer);
   }
 
   @protected
@@ -8143,6 +8160,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_piece(Piece self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_place(Place self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_u_32(self.page, serializer);
@@ -8398,7 +8421,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_segment(Segment self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.text, serializer);
-    sse_encode_bool(self.restored, serializer);
+    sse_encode_piece(self.piece, serializer);
   }
 
   @protected

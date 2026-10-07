@@ -14,7 +14,7 @@
 
 use std::collections::BTreeMap;
 
-use crate::api::{Kind, Scope, Segment, Source, TokenRow};
+use crate::api::{Kind, Piece, Scope, Segment, Source, TokenRow};
 use crate::secret::Secret;
 use crate::text::nfc;
 
@@ -213,11 +213,22 @@ impl TokenStore {
 /// (`__Z_FAKE_123__`, a model inventing one), or a real token from elsewhere in
 /// the session, is left exactly as it arrived: the core does not guess, and does
 /// not pretend to know what it does not know. That is invariant G9.
-pub(crate) fn restore(raw: &str, store: &TokenStore, allowed: &[String]) -> Vec<Segment> {
+/// A restored answer, and what could not be restored in it.
+///
+/// Two fields rather than one return value, because the names are the thing a
+/// person is told and the pieces are the thing they read. Collecting the names
+/// from the pieces at the screen would be a second count of the same fact.
+pub(crate) struct Restoration {
+    pub segments: Vec<Segment>,
+    pub unknown: Vec<String>,
+}
+
+pub(crate) fn restore(raw: &str, store: &TokenStore, allowed: &[String]) -> Restoration {
     const OPEN: &str = "__Z_";
     const CLOSE: &str = "__";
 
     let mut out: Vec<Segment> = Vec::new();
+    let mut unknown: Vec<String> = Vec::new();
     let mut plain = String::new();
     let mut cursor = 0usize;
 
@@ -247,19 +258,81 @@ pub(crate) fn restore(raw: &str, store: &TokenStore, allowed: &[String]) -> Vec<
         match allowed_here.then(|| store.get(candidate)).flatten() {
             Some(entry) => {
                 if !plain.is_empty() {
-                    out.push(Segment { text: std::mem::take(&mut plain), restored: false });
+                    out.push(Segment { text: std::mem::take(&mut plain), piece: Piece::Words });
                 }
-                out.push(Segment { text: entry.value.expose().to_string(), restored: true });
+                out.push(Segment {
+                    text: entry.value.expose().to_string(),
+                    piece: Piece::Restored,
+                });
             }
-            // Not ours: it stays word for word.
-            None => plain.push_str(candidate),
+            // **Not ours — and that is now said out loud** (046/U).
+            //
+            // This line used to read «it stays word for word» and push the
+            // token into the plain text, which is how an answer from another
+            // conversation came back looking like the model's own sentence
+            // with `__Z_5CDD_IBAN_5B32__` in the middle of it. No error, no
+            // warning: the lie the owner met after days away.
+            //
+            // It still stays word for word, because the model really did write
+            // it and dropping it would be a second lie. What changes is that
+            // it is a piece of its own, and its name is reported.
+            //
+            // A candidate that merely **looks** like a token is text: the
+            // shape test is `is_token`, so the model is free to write about
+            // tokens without raising a false alarm a person cannot act on.
+            None => {
+                if is_token(candidate) {
+                    if !plain.is_empty() {
+                        out.push(Segment {
+                            text: std::mem::take(&mut plain),
+                            piece: Piece::Words,
+                        });
+                    }
+                    out.push(Segment {
+                        text: candidate.to_string(),
+                        piece: Piece::Unresolved,
+                    });
+                    if !unknown.iter().any(|t| t == candidate) {
+                        unknown.push(candidate.to_string());
+                    }
+                } else {
+                    plain.push_str(candidate);
+                }
+            }
         }
         cursor = end;
     }
     if !plain.is_empty() {
-        out.push(Segment { text: plain, restored: false });
+        out.push(Segment { text: plain, piece: Piece::Words });
     }
-    out
+    Restoration { segments: out, unknown }
+}
+
+/// Is this candidate one of **our** token names?
+///
+/// By shape and nothing else: `__Z_` + four of the namespace + `_` + a kind in
+/// capitals + `_` + four more + `__`, which is what `TokenMint` writes. It says
+/// nothing about whether this conversation knows it — that is the caller's
+/// question, and the whole point of 046/U is that the two are different.
+///
+/// Deliberately strict. A loose test would turn «tokens look like __Z_ and end
+/// in __» into two warnings about an answer that is perfectly fine.
+fn is_token(candidate: &str) -> bool {
+    let Some(middle) = candidate.strip_prefix("__Z_").and_then(|m| m.strip_suffix("__")) else {
+        return false;
+    };
+    let mut parts = middle.split('_');
+    let (Some(namespace), Some(kind), Some(tail), None) =
+        (parts.next(), parts.next(), parts.next(), parts.next())
+    else {
+        return false;
+    };
+    namespace.len() == 4
+        && namespace.bytes().all(|b| b.is_ascii_alphanumeric())
+        && !kind.is_empty()
+        && kind.bytes().all(|b| b.is_ascii_uppercase() || b.is_ascii_digit())
+        && tail.len() == 4
+        && tail.bytes().all(|b| b.is_ascii_alphanumeric())
 }
 
 #[cfg(test)]

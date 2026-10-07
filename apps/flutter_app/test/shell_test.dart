@@ -930,7 +930,7 @@ void main() {
         reason: 'and restoring puts it back, here',
       );
       expect(
-        segments.any((s) => s.restored),
+        segments.any((s) => s.piece == Piece.restored),
         isTrue,
         reason: 'the core marks what it put back',
       );

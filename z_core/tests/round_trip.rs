@@ -67,11 +67,14 @@ fn round_trip_original_to_safe_to_answer_to_restored() {
     // The UI needs to know which words it put back, to mark them.
     let restored: Vec<&str> = segments
         .iter()
-        .filter(|x| x.restored)
+        .filter(|x| x.piece == Piece::Restored)
         .map(|x| x.text.as_str())
         .collect();
     assert_eq!(restored, vec!["Thomas Müller", "Nordstern GmbH"]);
-    assert!(segments.iter().any(|x| !x.restored), "the model's own words are marked as its own");
+    assert!(
+        segments.iter().any(|x| x.piece == Piece::Words),
+        "the model's own words are marked as its own"
+    );
 }
 
 #[test]

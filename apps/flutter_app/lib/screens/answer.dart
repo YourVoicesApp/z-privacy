@@ -45,6 +45,11 @@ class AnswerPanel extends StatefulWidget {
   /// column.
   bool get inline => width == null;
 
+  /// The band that says an answer carries tokens this conversation cannot
+  /// resolve (046/U). Named so a test finds it by what it is rather than by
+  /// the words on it.
+  static const unresolved = ValueKey<String>('answer-unresolved-tokens');
+
   @override
   State<AnswerPanel> createState() => _AnswerPanelState();
 }
@@ -237,6 +242,7 @@ class _AnswerPanelState extends State<AnswerPanel> {
                 }
                 final segments = snap.data!.restored;
                 final raw = snap.data!.asWritten;
+                final unknown = snap.data!.unknownTokens;
                 return ListView(
                   // On the home this list is inside the page's own scroller,
                   // so it must take its height from its children and scroll
@@ -245,6 +251,79 @@ class _AnswerPanelState extends State<AnswerPanel> {
                   physics: inline ? const NeverScrollableScrollPhysics() : null,
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                   children: [
+                    // **An answer this conversation cannot restore says so,
+                    // above the answer** (046/U).
+                    //
+                    // The owner, 7 October: he comes back after days away, with
+                    // other documents in between, and pastes the answer he was
+                    // given. Until this, every token of that older conversation
+                    // came back **as the model's own words** — he would read
+                    // `__Z_5CDD_IBAN_5B32__` in the middle of a sentence about
+                    // his account with nothing to tell him whether the app had
+                    // failed or the model had written that.
+                    //
+                    // Above and not below: it changes how the whole answer is
+                    // to be read, and a warning under the text is a warning
+                    // read after the damage.
+                    if (_restored && unknown.isNotEmpty) ...[
+                      Container(
+                        key: AnswerPanel.unresolved,
+                        padding: const EdgeInsets.fromLTRB(13, 11, 13, 11),
+                        decoration: Zc.panel(fill: Zc.amberWash, edge: Zc.amberEdge, radius: 9),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.help_outline, size: 16, color: Zc.amber),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    unknown.length == 1
+                                        ? 'This answer carries 1 token this conversation does not '
+                                              'know — it was made in another conversation.'
+                                        : 'This answer carries ${unknown.length} tokens this '
+                                              'conversation does not know — they were made in '
+                                              'another conversation.',
+                                    style: Zc.small.copyWith(
+                                      color: Zc.amber,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            // **Named, so the sentence can be checked.** A
+                            // count on its own is a claim; the names are what
+                            // let a person find them in the text in front of
+                            // them.
+                            Padding(
+                              padding: const EdgeInsets.only(left: 24),
+                              child: Text(
+                                unknown.join('\n'),
+                                style: Zc.tiny.copyWith(letterSpacing: 0, fontFamily: Zc.mono),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 24),
+                              child: Text(
+                                // The honest rule, said where it is needed:
+                                // restoring across days works for what was
+                                // kept, and nothing else.
+                                'They are left exactly as the model wrote them. Restoring an older '
+                                'answer works for values you chose to keep — «this client» or '
+                                '«always» — because the vault still has those.',
+                                style: Zc.tiny.copyWith(letterSpacing: 0),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
                     if (_restored)
                       SelectableText.rich(
                         TextSpan(
@@ -257,17 +336,37 @@ class _AnswerPanelState extends State<AnswerPanel> {
                                 // in the document's own column; this is the only
                                 // place a word can carry this one, because it is
                                 // the only place a value comes back.
-                                style: seg.restored
-                                    ? const TextStyle(
-                                        backgroundColor: Zc.clayWash,
-                                        color: Zc.clayDeep,
-                                        fontWeight: FontWeight.w600,
-                                        decoration: TextDecoration.underline,
-                                        decorationStyle: TextDecorationStyle.dotted,
-                                        decorationColor: Zc.clayDeep,
-                                        decorationThickness: 1.5,
-                                      )
-                                    : null,
+                                style: switch (seg.piece) {
+                                  // The fourth mark: dotted for a value that
+                                  // was put back here, locally.
+                                  Piece.restored => const TextStyle(
+                                    backgroundColor: Zc.clayWash,
+                                    color: Zc.clayDeep,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                    decorationStyle: TextDecorationStyle.dotted,
+                                    decorationColor: Zc.clayDeep,
+                                    decorationThickness: 1.5,
+                                  ),
+                                  // **And a token we could not resolve is not
+                                  // drawn as the answer.** Amber, which in
+                                  // this app means «not decided, still in the
+                                  // clear» and is the only honest colour for
+                                  // a name standing where a value should be.
+                                  // Struck through, because it is the one
+                                  // thing in the text that is not what the
+                                  // sentence appears to say.
+                                  Piece.unresolved => const TextStyle(
+                                    backgroundColor: Zc.amberWash,
+                                    color: Zc.amber,
+                                    fontFamily: Zc.mono,
+                                    fontSize: 13,
+                                    decoration: TextDecoration.lineThrough,
+                                    decorationColor: Zc.amberEdge,
+                                    decorationThickness: 1.5,
+                                  ),
+                                  Piece.words => null,
+                                },
                               ),
                           ],
                         ),
@@ -278,8 +377,11 @@ class _AnswerPanelState extends State<AnswerPanel> {
                     const SizedBox(height: 16),
                     Text(
                       _restored
-                          ? 'The marked words were put back here, on this device. The model never '
-                                'saw them.'
+                          ? unknown.isEmpty
+                                ? 'The marked words were put back here, on this device. The model '
+                                      'never saw them.'
+                                : 'The dotted words were put back here, on this device. The struck '
+                                      'ones are tokens this conversation cannot put back.'
                           : 'This is the answer exactly as it arrived, with the tokens still in it.',
                       style: Zc.tiny.copyWith(letterSpacing: 0),
                     ),

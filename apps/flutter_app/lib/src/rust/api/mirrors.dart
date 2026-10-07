@@ -42,6 +42,18 @@ class AnswerSnapshot {
   final List<Segment> restored;
   final String asWritten;
 
+  /// **Every token in this answer that this conversation could not resolve**
+  /// — 046/U, by name and in the order they appear.
+  ///
+  /// Empty is the ordinary case and the only one a person need not be told
+  /// about. Non-empty means the answer was built somewhere else: a screen
+  /// that drew these as the model's own words would be telling a person that
+  /// `__Z_5CDD_IBAN_5B32__` is what the model said about their account.
+  ///
+  /// Named here as well as marked in the pieces so that the count in the
+  /// sentence and the marks in the text are **one** fact.
+  final List<String> unknownTokens;
+
   const AnswerSnapshot({
     required this.stateRevision,
     required this.answer,
@@ -51,6 +63,7 @@ class AnswerSnapshot {
     this.next,
     required this.restored,
     required this.asWritten,
+    required this.unknownTokens,
   });
 
   @override
@@ -62,7 +75,8 @@ class AnswerSnapshot {
       previous.hashCode ^
       next.hashCode ^
       restored.hashCode ^
-      asWritten.hashCode;
+      asWritten.hashCode ^
+      unknownTokens.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -76,7 +90,8 @@ class AnswerSnapshot {
           previous == other.previous &&
           next == other.next &&
           restored == other.restored &&
-          asWritten == other.asWritten;
+          asWritten == other.asWritten &&
+          unknownTokens == other.unknownTokens;
 }
 
 @freezed
@@ -1309,6 +1324,26 @@ class PayloadView {
           pageEdges == other.pageEdges;
 }
 
+enum Piece {
+  /// The model's own words.
+  words,
+
+  /// A value this conversation put back where its token stood.
+  restored,
+
+  /// **A token this conversation does not know.**
+  ///
+  /// It is kept in the view, word for word, because the model really did
+  /// write it and removing it would be a second lie. What changes is that it
+  /// is no longer indistinguishable from the answer: it says what it is, and
+  /// `AnswerSnapshot::unknown_tokens` names every one of them.
+  ///
+  /// The commonest cause, and the one the owner met: an answer from another
+  /// conversation. A token is minted per session today, so Monday's answer
+  /// carries names Friday's conversation never made.
+  unresolved,
+}
+
 class Place {
   final int page;
   final int paragraph;
@@ -1905,12 +1940,12 @@ enum Scope {
 
 class Segment {
   final String text;
-  final bool restored;
+  final Piece piece;
 
-  const Segment({required this.text, required this.restored});
+  const Segment({required this.text, required this.piece});
 
   @override
-  int get hashCode => text.hashCode ^ restored.hashCode;
+  int get hashCode => text.hashCode ^ piece.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -1918,7 +1953,7 @@ class Segment {
       other is Segment &&
           runtimeType == other.runtimeType &&
           text == other.text &&
-          restored == other.restored;
+          piece == other.piece;
 }
 
 class SelectionView {

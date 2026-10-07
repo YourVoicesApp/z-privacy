@@ -11,7 +11,7 @@ use crate::session::{with_core, Session};
 
 use super::{
     build_payload, document_view, kinds, list_findings, list_tokens, packs, payload_view, profiles,
-    restored_view, settings, vault_state,
+    settings, vault_state,
 };
 
 pub(crate) fn home_snapshot() -> ApiResult<HomeSnapshot> {
@@ -224,6 +224,10 @@ pub(crate) fn answer_snapshot(session: SessionId, answer: AnswerId) -> ApiResult
         let next = ids.get(at + 1).map(|id| AnswerId { id: *id });
         Ok(((at as u32).saturating_add(1), total, previous, next))
     })?;
+    // One walk, both facts: the pieces a person reads and the names they are
+    // told about. Two calls would be two walks over the same answer and a
+    // chance for the sentence to disagree with the text under it.
+    let restoration = super::restoration(session, answer)?;
     Ok(AnswerSnapshot {
         state_revision: truth_revision(),
         answer,
@@ -231,8 +235,9 @@ pub(crate) fn answer_snapshot(session: SessionId, answer: AnswerId) -> ApiResult
         total,
         previous,
         next,
-        restored: restored_view(session, answer)?,
+        restored: restoration.segments,
         as_written: super::ai_view(session, answer)?,
+        unknown_tokens: restoration.unknown,
     })
 }
 

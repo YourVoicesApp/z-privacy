@@ -2128,6 +2128,15 @@ pub(crate) fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<An
 }
 
 pub(crate) fn restored_view(session: SessionId, answer: AnswerId) -> ApiResult<Vec<Segment>> {
+    Ok(restoration(session, answer)?.segments)
+}
+
+/// The restored answer **and the names it could not resolve** (046/U).
+///
+/// One walk over the answer for both, because the count in the sentence and
+/// the marks in the text have to be the same fact. `restored_view` is the
+/// segments alone, for every screen that was reading them before this.
+pub(crate) fn restoration(session: SessionId, answer: AnswerId) -> ApiResult<crate::tokens::Restoration> {
     with_session(session.id, |s| match s.answers.get(&answer.id) {
         Some(answer) => {
             let payload = s.payloads.get(&answer.payload).ok_or(ApiError::InvalidHandle)?;
