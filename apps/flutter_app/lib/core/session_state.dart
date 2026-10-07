@@ -800,7 +800,14 @@ class Workbench extends ChangeNotifier {
     List<UserNameRow> got;
     List<UserListRow> lists;
     try {
-      got = await z.userNames();
+      // **With the open client, and not without it** (046/G).
+      //
+      // This call passed nothing, so the panel always read the global vault
+      // alone: a name taught or imported for a client went into that client's
+      // vault and appeared on no screen at all. The core now answers with the
+      // client's rows **and** the global ones, which is what the scan reads,
+      // and each row says which of the two it is.
+      got = await z.userNames(profileId: profileId);
       lists = await z.userLists();
     } on ApiError {
       got = const [];

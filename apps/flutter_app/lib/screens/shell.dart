@@ -60,6 +60,15 @@ class ZShell extends StatefulWidget {
 class _ShellState extends State<ZShell> {
   late final Ground _ground = widget.ground ?? Ground();
   Workbench? _bench;
+
+  /// **The home's own conversation** (046/G).
+  ///
+  /// A second bench, beside the document's, and deliberately not the same one:
+  /// `_bench` being non-null is what puts the Workspace on screen, so a chat
+  /// held there would throw a person out of the home the moment they asked
+  /// something. This one is opened at the first question and lives until the
+  /// app closes, which is what «conversations are not saved» already promises.
+  Workbench? _chat;
   String? _trouble;
 
   /// The report the core wrote about the file it would not open. Built at the
@@ -159,8 +168,55 @@ class _ShellState extends State<ZShell> {
     _window.dispose();
     _ground.removeListener(_groundChanged);
     _bench?.dispose();
+    _chat?.dispose();
     _ground.dispose();
     super.dispose();
+  }
+
+  /// Read the home's line into the conversation and scan it.
+  ///
+  /// The vault gate is the same one `_begin` holds and for the same reason
+  /// (041-N, the owner: «you cannot begin without an open vault») — the door
+  /// opens instead of the work, and asking a model is beginning work. The
+  /// session is opened once and reused, so the answers of one conversation
+  /// stay in it; the text of each question replaces the last, which is what
+  /// the core's one-document-per-session shape already means.
+  ///
+  /// It scans and stops. What happens next belongs to the screen, because it
+  /// depends on what the scan found — and the one thing that may not happen
+  /// here is sending.
+  Future<void> _askFromHome(String text) async {
+    if (_ground.vault != VaultState.unlocked) {
+      setState(() => _vaultOpen = true);
+      return;
+    }
+    final packId = _ground.config?.packId ?? 'de';
+    try {
+      var chat = _chat;
+      if (chat == null || chat.packId != packId) {
+        // The pack is the one the settings hold, as the typed path has always
+        // done: a person who writes a sentence is not asking to be
+        // interviewed. A changed setting opens a new conversation rather than
+        // scanning tomorrow's question with yesterday's language.
+        final session = await z.openSession(profileId: null, packId: packId);
+        chat?.dispose();
+        chat = Workbench(session: session, profileId: null, packId: packId);
+      }
+      await z.importText(session: chat.session, text: text);
+      await chat.rescan();
+      if (!mounted) return;
+      setState(() {
+        _chat = chat;
+        _trouble = null;
+        _troubleReport = null;
+      });
+    } on ApiError catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _trouble = humanMessage(e);
+        _troubleReport = null;
+      });
+    }
   }
 
   /// Open a session. Two ways in, and they ask for different things.
@@ -361,8 +417,10 @@ class _ShellState extends State<ZShell> {
         HomeScreen(
           ground: _ground,
           version: coreVersion(),
+          chat: _chat,
           onImport: () => _begin(typing: false),
           onType: (text) => _begin(typing: true, text: text),
+          onAsk: _askFromHome,
           onVault: () => setState(() => _vaultOpen = true),
           onSettings: () => setState(() => _settingsOpen = true),
         ),

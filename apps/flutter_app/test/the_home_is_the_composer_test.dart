@@ -60,6 +60,7 @@ void main() {
         version: 'z_core 0.1.0',
         onImport: () {},
         onType: (text) => opened = text,
+        onAsk: (_) async {},
         onVault: () {},
         onSettings: () {},
       ),

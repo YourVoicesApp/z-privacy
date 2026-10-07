@@ -25,14 +25,25 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 
 class AnswerPanel extends StatefulWidget {
-  const AnswerPanel({super.key, required this.bench, required this.width});
+  const AnswerPanel({super.key, required this.bench, this.width});
 
   final Workbench bench;
 
   /// Set by the Workspace from the window's width: two columns must stay
   /// readable, and a panel that squeezes them off the screen is worse than a
   /// narrow panel.
-  final double width;
+  ///
+  /// **`null` is the home's shape** (046/G): the answer sits under the question
+  /// in the page's own flow, with no width of its own and no column border, and
+  /// it grows to the height of what the model wrote instead of filling a column.
+  /// Everything else about it — the two views, the fourth mark on a restored
+  /// value, the two named copies and the clipboard confirmation — is the same
+  /// code, because the owner's rule is that a sentence lives in one place.
+  final double? width;
+
+  /// True when this is the home's inline answer rather than the Workspace's
+  /// column.
+  bool get inline => width == null;
 
   @override
   State<AnswerPanel> createState() => _AnswerPanelState();
@@ -60,13 +71,17 @@ class _AnswerPanelState extends State<AnswerPanel> {
       _facts = bench.answerFacts(answer);
     }
 
+    final inline = widget.inline;
     return Container(
       width: widget.width,
-      decoration: const BoxDecoration(
-        color: Zc.card,
-        border: Border(left: BorderSide(color: Zc.line)),
-      ),
+      decoration: inline
+          ? Zc.panel(fill: Zc.card, radius: 12)
+          : const BoxDecoration(
+              color: Zc.card,
+              border: Border(left: BorderSide(color: Zc.line)),
+            ),
       child: Column(
+        mainAxisSize: inline ? MainAxisSize.min : MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
@@ -160,7 +175,10 @@ class _AnswerPanelState extends State<AnswerPanel> {
             ),
           ),
           Container(height: 1, color: Zc.lineSoft),
-          Expanded(
+          // A column fills its height; a page grows to the text. The builder is
+          // the same one either way.
+          _Fill(
+            inline: inline,
             child: FutureBuilder<AnswerSnapshot>(
               future: _facts,
               builder: (context, snap) {
@@ -185,6 +203,11 @@ class _AnswerPanelState extends State<AnswerPanel> {
                 final segments = snap.data!.restored;
                 final raw = snap.data!.asWritten;
                 return ListView(
+                  // On the home this list is inside the page's own scroller,
+                  // so it must take its height from its children and scroll
+                  // with the page rather than against it.
+                  shrinkWrap: inline,
+                  physics: inline ? const NeverScrollableScrollPhysics() : null,
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                   children: [
                     if (_restored)
@@ -328,6 +351,20 @@ class _AnswerPanelState extends State<AnswerPanel> {
     if (!mounted) return;
     setState(() => _copyNote = null);
   }
+}
+
+/// `Expanded` in a column, and plain in a page.
+///
+/// One widget rather than two copies of the body: the Workspace's answer fills
+/// the column it is given, and the home's grows to what the model wrote.
+class _Fill extends StatelessWidget {
+  const _Fill({required this.inline, required this.child});
+
+  final bool inline;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => inline ? child : Expanded(child: child);
 }
 
 class _Tab extends StatelessWidget {

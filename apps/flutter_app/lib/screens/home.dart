@@ -1,4 +1,4 @@
-// Home — what stays on this device, and what leaves it.
+// Home — what stays on this device, and what leaves it. **And the conversation.**
 //
 // Every number on this screen was reported by z_core.
 //
@@ -9,12 +9,34 @@
 // or only the safe version, under which key, what happens to old tokens, can a
 // person erase every trace — and those deserve a stage of their own rather than
 // a feature slipped in here.
+//
+// ---
+//
+// **046/G, the owner, 7 October:** «after the vault I go to a chat screen — does
+// it exist?» The measured answer was no. This screen was a composer: the model
+// lived in a sheet that could only be opened from the Workspace, so it existed
+// only once a document was open, and the answer lived in a third destination.
+// From the home there was no door to a model at all.
+//
+// So the box below is the conversation's line, the AI door is here, and the
+// answer appears under the question. **Nothing moved in the Workspace** — the
+// sheet is the same sheet and the answer is the same widget, in its inline
+// shape.
+//
+// And the gate is the same gate, said out loud: type → protect in place → see
+// what will leave → send. Asking is blocked while a suggestion is unanswered,
+// and the button carries the reason beside it. A chat that could send before
+// the review is answered would break the one promise this product makes.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/send_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -25,9 +47,20 @@ class HomeScreen extends StatefulWidget {
     required this.onVault,
     required this.onSettings,
     required this.version,
+    required this.onAsk,
+    this.chat,
   });
 
   final Ground ground;
+
+  /// The home's own conversation, once there is one. `null` until the first
+  /// question — a session is not opened for a screen that was only looked at.
+  final Workbench? chat;
+
+  /// Ask with what is in the line: open the conversation if there is none,
+  /// read the text into it and scan it. What happens next is this screen's,
+  /// because it depends on what the scan found.
+  final Future<void> Function(String text) onAsk;
 
   /// The **+**: choose a file. The language is asked afterwards, because by
   /// then there is a document to ask about.
@@ -56,6 +89,13 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  /// True while the question is being read and scanned.
+  bool _asking = false;
+
+  /// What the last ask said, when it said anything: «open the vault first»,
+  /// or the core's own refusal.
+  String? _said;
+
   void _open() {
     final text = _text.text.trim();
     if (text.isEmpty) return;
@@ -63,11 +103,50 @@ class _HomeScreenState extends State<HomeScreen> {
     _text.clear();
   }
 
+  /// **The conversation's one act.**
+  ///
+  /// Read the line, scan it, and — only if there is nothing left to answer —
+  /// open the same sheet the Workspace opens, where the exact text that would
+  /// leave is shown before anything is sent. When there **is** something to
+  /// answer the sheet does not open and the screen says so, with the door to
+  /// the place the answering happens. «Send anyway» does not exist.
+  Future<void> _ask() async {
+    final text = _text.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _asking = true;
+      _said = null;
+    });
+    await widget.onAsk(text);
+    if (!mounted) return;
+    final chat = widget.chat;
+    setState(() {
+      _asking = false;
+      // The vault gate turned the press into a door instead of work, or the
+      // core refused the text. Either way the line is still there to try again.
+      _said = chat?.trouble;
+    });
+    if (chat == null || !mounted) return;
+    if (chat.openSuggestions > 0) return;
+    await showDialog<bool>(
+      context: context,
+      builder: (_) => SendSheet(bench: chat, ground: widget.ground),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ground = widget.ground;
+    final chat = widget.chat;
+    // One read of each fact, named once. `openSuggestions` is the core's own
+    // count — the screen never works it out.
+    final empty = _text.text.trim().isEmpty;
+    final waiting = chat?.openSuggestions ?? 0;
+    final blocked = waiting > 0;
     return ListenableBuilder(
-      listenable: ground,
+      // The conversation changes what this page draws, so the page listens to
+      // it as well as to the ground.
+      listenable: chat == null ? ground : Listenable.merge([ground, chat]),
       builder: (context, _) => Scaffold(
         body: Center(
           child: ConstrainedBox(
@@ -156,17 +235,41 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: Zc.tiny.copyWith(color: Zc.ink4),
                           ),
                           const Spacer(),
-                          // Flexible, because the disabled button carries a
+                          // Flexible, because a disabled button carries a
                           // sentence beside it and a narrow window must wrap it
                           // rather than push it off the edge — the same lesson
                           // the top bar taught on 3 October.
                           Flexible(
-                            child: ZButton(
-                              label: 'Open and scan',
-                              filled: true,
-                              icon: Icons.shield_outlined,
-                              onPressed: _text.text.trim().isEmpty ? null : _open,
-                              hint: _text.text.trim().isEmpty ? 'Write or paste something first' : null,
+                            child: Wrap(
+                              alignment: WrapAlignment.end,
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                // The review path, unchanged: the two columns,
+                                // the suggestions, protecting by hand.
+                                ZButton(
+                                  label: 'Open and scan',
+                                  icon: Icons.shield_outlined,
+                                  onPressed: empty ? null : _open,
+                                  hint: empty ? 'Write or paste something first' : null,
+                                ),
+                                // **The AI door, on the home** (046/G). The
+                                // reason is on the button, because «send
+                                // anyway» does not exist and never will.
+                                ZButton(
+                                  label: 'Ask the AI',
+                                  filled: true,
+                                  icon: Icons.auto_awesome_outlined,
+                                  onPressed: empty || _asking || blocked ? null : () => unawaited(_ask()),
+                                  hint: empty
+                                      ? 'Write or paste something first'
+                                      : blocked
+                                          ? waiting == 1
+                                              ? 'Answer the one suggestion first'
+                                              : 'Answer the $waiting suggestions first'
+                                          : null,
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -174,6 +277,62 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+                if (_said != null) ...[
+                  const SizedBox(height: 10),
+                  Trouble(_said!),
+                ],
+                // **The gate, said out loud and with the way through it.**
+                //
+                // A question that scanned up something unsure is not sent, and
+                // this is where the person is told what is waiting and where
+                // the answering happens — the Workspace's own review, which is
+                // what «Open and scan» opens.
+                if (blocked) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(14, 11, 14, 12),
+                    decoration: Zc.panel(fill: Zc.warmCard, radius: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          waiting == 1
+                              ? 'One word in your question is not certain yet.'
+                              : '$waiting words in your question are not certain yet.',
+                          style: Zc.body,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Z does not send a question with an unanswered '
+                          'suggestion in it. Open it to say yes or no to each '
+                          'one, and then ask.',
+                          style: Zc.small.copyWith(color: Zc.ink3),
+                        ),
+                        const SizedBox(height: 9),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: ZButton(
+                            label: 'Open the question and answer them',
+                            icon: Icons.fact_check_outlined,
+                            // The line still holds the question — it is not
+                            // cleared by asking, because it is the question and
+                            // a person may want to change it. So the review
+                            // opens on exactly the text that was scanned.
+                            onPressed: empty ? null : _open,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                // **The answer, under the question, in this screen.** The same
+                // widget the Workspace draws, in its inline shape, so the two
+                // views, the fourth mark, the two named copies and the
+                // clipboard confirmation are one implementation and not two.
+                if (chat != null && chat.showing != null) ...[
+                  const SizedBox(height: 12),
+                  AnswerPanel(bench: chat),
+                ],
                 const SizedBox(height: 9),
                 Text(
                   'Nothing is uploaded to be read.   Conversations are not saved after you close '

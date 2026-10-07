@@ -1250,6 +1250,20 @@ pub(crate) fn user_names(profile_id: Option<String>) -> ApiResult<Vec<crate::api
     with_core(|core| {
         core.vault.with_open(|vault| {
             let owner = profile_id.clone();
+            // **What the scanner reads, and nothing less.**
+            //
+            // With a client open the scan reads that client's vault **and the
+            // global one** — a value taught «everywhere» protects inside every
+            // client, which `a_book_kept_everywhere_reaches_a_client_made_
+            // afterwards` measures. This list used to read the client's rows
+            // alone, so a book imported «everywhere» with a client open said
+            // «21 added» and drew nothing: the panel was less truthful than the
+            // engine behind it, which is the shape of defect this project has
+            // paid for more than once (046/G).
+            //
+            // Each row carries its own `profile_id`, so the screen says which
+            // of the two it is rather than mixing them into one list.
+            let mine = |row: &Option<String>| *row == owner || row.is_none();
             let mut rows: Vec<UserNameRow> = Vec::new();
             // The words. A word that is also an «always» value of the same
             // spelling is one name to the person who typed it, so it is one row
@@ -1257,9 +1271,9 @@ pub(crate) fn user_names(profile_id: Option<String>) -> ApiResult<Vec<crate::api
             let own: Vec<&Entity> = vault
                 .entities
                 .iter()
-                .filter(|e| e.profile_id == owner && e.label.expose() == OWN_NAMES)
+                .filter(|e| mine(&e.profile_id) && e.label.expose() == OWN_NAMES)
                 .collect();
-            for name in vault.taught_names.iter().filter(|n| n.profile_id == owner) {
+            for name in vault.taught_names.iter().filter(|n| mine(&n.profile_id)) {
                 let always = own
                     .iter()
                     .any(|e| e.values.iter().any(|v| v.policy == Policy::Always && v.matches(&name.text)));
@@ -1281,7 +1295,7 @@ pub(crate) fn user_names(profile_id: Option<String>) -> ApiResult<Vec<crate::api
                     if vault
                         .taught_names
                         .iter()
-                        .any(|n| n.profile_id == owner && n.text.eq_ignore_ascii_case(&text))
+                        .any(|n| mine(&n.profile_id) && n.text.eq_ignore_ascii_case(&text))
                     {
                         continue;
                     }
@@ -1457,8 +1471,14 @@ pub(crate) fn import_user_names(
     let mut added = 0u32;
     let mut already = 0u32;
     for (text, kind, source, licence) in plan {
+        // The book's own vault, and not the wider list `user_names` now
+        // returns: «already known» here means already in the book being
+        // written. A name taught everywhere is not a reason to refuse a row
+        // for one client, and reading the panel's wider answer would have made
+        // 046/G silently change what an import does.
         let known = user_names(owner.clone())?
             .into_iter()
+            .filter(|row| row.profile_id == owner)
             .any(|row| row.text.eq_ignore_ascii_case(&text) && row.kind == kind);
         let _ = &list;
         if known {

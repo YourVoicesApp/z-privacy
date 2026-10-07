@@ -86,3 +86,27 @@ Creating a client and putting this document in it must be two clicks from the do
 - An English name dictionary (its own task, with a licence file, after the film).
 - 038-G, 038-B (SCB), 038-C, 043, 045 — all still queued.
 - Any change to the German or Swedish packs.
+
+---
+
+## G · The home is the conversation (ADDED 7 Oct, the owner's first fix — before B)
+
+**The owner, 7 October:** «دعنا نبدأ الإصلاح الأول، بدون نشر أو تجربة. الخطوة الأولى: إنشاء الخزنة ثم الانتقال إلى شاشة شات — هل هذه موجودة؟»
+
+**Measured answer: no.** `shell.dart` puts the vault in front of the home and then shows `HomeScreen` — a composer with «Write or paste your text here…», «Open and scan», «Add a document», «Open Z Vault», «Profiles», «Settings». The model is not a screen: it is the send sheet, opened from the workspace's AI button, which exists **only once a document is open**, and the answer lands in a third screen (`answer.dart`). From the home there is no door to a model at all.
+
+**Build — 043's heart without 043's restructure. Nothing moves in the workspace.**
+
+1. The home's own text box becomes the conversation's line. No new widget, no new screen: the composer it already has is the input.
+2. **The AI door comes down to the home.** A person who has just made a vault can ask a model without first opening a document. Same sheet, same catalogue, same modes.
+3. **The answer appears under the question, in the same screen**, instead of `answer.dart` as a separate destination. That alone is what makes it read as a conversation. `answer.dart`'s reveal/copy behaviour and its clipboard warning move with it unchanged — the warning is not optional.
+4. **The gate stays, and says why.** Type → protect in place → see what will leave → send. Send remains blocked while any suggestion is unanswered, and the button carries the reason. A chat that can send before the review is answered breaks the product's one promise.
+
+**Done means**
+
+- Red first on «from the home, with no document open, a question can be asked and its answer appears in the same screen».
+- The document path's numbers do not move: DE-1 · DE-2 · DE-3 · DE-4 · DE-6 · SV-1 · SV-16 unchanged to the digit, and the English rows of §5 unchanged.
+- No model name in Dart (the existing test); strings in en.
+- `flutter test` the gates' way, gates, clippy, counts before/after. **No publish, no owner test** — the owner asked for the fix only.
+
+**Order from here:** G · D · then B if the evening allows; C and E after. The panel-truth defect F found (a book imported «everywhere» with a client open protects but shows 0 rows) comes with G, because the owner may press that button on camera.

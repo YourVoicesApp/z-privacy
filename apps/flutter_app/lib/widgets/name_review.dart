@@ -308,6 +308,8 @@ class _YourNamesState extends State<YourNames> {
   @override
   Widget build(BuildContext context) {
     final rows = widget.bench.userNames;
+    // Which rows belong to no language list — see `_inNoListOf`.
+    bool inNoList(UserNameRow row) => _inNoListOf(widget.bench.userLists, row);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 14, 18),
       child: Column(
@@ -428,43 +430,101 @@ class _YourNamesState extends State<YourNames> {
             for (final list in widget.bench.userLists) ...[
               _ListHead(bench: widget.bench, ground: widget.ground, list: list),
               for (final row in rows.where((r) => r.list == list.name))
-                Padding(
-                  padding: const EdgeInsets.only(left: 6, bottom: 6),
-                  child: Opacity(
-                    // A list that is off is not a list that was forgotten, and
-                    // the screen says so by showing every name in it, faded.
-                    opacity: list.enabled ? 1 : 0.5,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(text: row.text, style: Zc.body.copyWith(fontWeight: FontWeight.w600)),
-                                TextSpan(
-                                  text: '  ${_kindWord(row.kind)}${row.always ? " · always" : ""}',
-                                  style: Zc.tiny.copyWith(color: Zc.ink4),
-                                ),
-                              ],
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Forget «${row.text}»',
-                          icon: const Icon(Icons.close, size: 15),
-                          color: Zc.ink4,
-                          visualDensity: VisualDensity.compact,
-                          onPressed: widget.bench.busy
-                              ? null
-                              : () => unawaited(widget.bench.forgetUserName(row)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                // A list that is off is not a list that was forgotten, and the
+                // screen says so by showing every name in it, faded.
+                _NameRow(bench: widget.bench, row: row, faded: !list.enabled),
+            ],
+            // **And the names that are in no list at all** (046/G).
+            //
+            // A whole person or a company is a **value in the vault**, not a
+            // word in a dictionary, so it belongs to no language list — and
+            // this panel used to draw only the rows that fell under a list
+            // head. Measured on the owner's own book, imported into his own
+            // client: «21 added», and 0 of 21 rows drawn. The core had them,
+            // the scan protected them, and the screen showed nothing.
+            if (rows.any(inNoList)) ...[
+              const SizedBox(height: 4),
+              const Eyebrow('Whole names, kept in the vault'),
+              const SizedBox(height: 2),
+              Text(
+                'A whole person or company is a value, not a dictionary word, '
+                'so it is in no language list. Z Vault is where each one is '
+                'managed.',
+                style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
+              ),
+              const SizedBox(height: 6),
+              for (final row in rows.where(inNoList))
+                _NameRow(bench: widget.bench, row: row, faded: false),
             ],
         ],
+      ),
+    );
+  }
+}
+
+/// A row that belongs to no language list: a value in the vault.
+///
+/// `userLists` holds the dictionary's lists, so a row whose list is not among
+/// them is one of these. Asked of the lists rather than of the row's `list`
+/// field, because that field carries the device's default list name as padding
+/// for a value — which 047 is where it stops doing.
+bool _inNoListOf(List<UserListRow> lists, UserNameRow row) =>
+    !lists.any((l) => l.name == row.list);
+
+/// One taught name: what it is, how far it reaches, and one press to take it
+/// back.
+///
+/// **The reach is on the row** (046/G): a name kept for the open client and one
+/// kept for every client are two different promises, and «Forget» on the second
+/// forgets it for every client. The words are 046/E's — This client ·
+/// Everywhere — so the panel, the dialog and the explain sheet say one thing.
+class _NameRow extends StatelessWidget {
+  const _NameRow({required this.bench, required this.row, required this.faded});
+
+  final Workbench bench;
+  final UserNameRow row;
+  final bool faded;
+
+  @override
+  Widget build(BuildContext context) {
+    final here = bench.profileId;
+    // Only worth saying while a client is open: with none open every row is
+    // everywhere's, and a word on every row is a word that says nothing.
+    final reach = here == null
+        ? ''
+        : row.profileId == null
+            ? ' · everywhere'
+            : ' · this client';
+    return Padding(
+      padding: const EdgeInsets.only(left: 6, bottom: 6),
+      child: Opacity(
+        opacity: faded ? 0.5 : 1,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(text: row.text, style: Zc.body.copyWith(fontWeight: FontWeight.w600)),
+                    TextSpan(
+                      text: '  ${_kindWord(row.kind)}'
+                          '${row.always ? " · always" : ""}$reach',
+                      style: Zc.tiny.copyWith(color: Zc.ink4),
+                    ),
+                  ],
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            IconButton(
+              tooltip: 'Forget «${row.text}»',
+              icon: const Icon(Icons.close, size: 15),
+              color: Zc.ink4,
+              visualDensity: VisualDensity.compact,
+              onPressed: bench.busy ? null : () => unawaited(bench.forgetUserName(row)),
+            ),
+          ],
+        ),
       ),
     );
   }

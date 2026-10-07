@@ -321,6 +321,64 @@ void main() {
     expect(await answer, isNull, reason: 'closing the question answered it');
   });
 
+  // ------------------------------------------------------------------ 046/G
+
+  testWidgets('a book of whole names is on the screen, and says how far it reaches', (tester) async {
+    // Measured on the owner's own 21-name book before this was touched:
+    // «21 added», and **0 of 21 rows drawn**. A whole person or company is a
+    // value in the vault and belongs to no language list, and this panel drew
+    // only the rows that fell under a list head. The core had them, the scan
+    // protected them, and the screen showed nothing — the screen claiming less
+    // than the engine, which is the family of defect that costs trust.
+    final ground = Ground();
+    final bench = await _bench(tester, ground, vault: true);
+    await _openNames(tester, bench, ground);
+
+    late String client;
+    await tester.runAsync(() async {
+      client = await z.createProfile(name: 'Faruk AB', session: bench.session);
+      await bench.switchProfile(client);
+      // One for this client, one for every client: two different promises, and
+      // a person pressing «Forget» on the second forgets it everywhere.
+      await bench.importUserNames(
+        'name,type\nHedvig Palmgren,person\n',
+        scope: Scope.profile,
+        into: 'de',
+      );
+      await z.importUserNames(
+        csv: 'name,type\nPellbrook & Vance,company\n',
+        list: 'de',
+        scope: Scope.always,
+      );
+      await bench.refreshUserNames();
+    });
+    await settle(tester, rounds: 10);
+
+    expect(
+      bench.userNames.length,
+      2,
+      reason: 'the core does not hand both vaults to the panel: ${bench.userNames}',
+    );
+    expect(find.textContaining('Hedvig Palmgren', findRichText: true), findsWidgets,
+        reason: "the client's own name is not drawn");
+    expect(find.textContaining('Pellbrook & Vance', findRichText: true), findsWidgets,
+        reason: 'the global name is not drawn');
+    expect(find.text('Nothing yet.'), findsNothing);
+    // And each row says which of the two it is, in 046/E's words.
+    expect(
+      find.textContaining('this client', findRichText: true),
+      findsWidgets,
+      reason: "a row does not say it is kept for this client",
+    );
+    expect(
+      find.textContaining('everywhere', findRichText: true),
+      findsWidgets,
+      reason: 'a row does not say it is kept for every client',
+    );
+
+    bench.dispose();
+  });
+
   testWidgets('a list imported for this client needs no answering', (tester) async {
     final ground = Ground();
     final bench = await _bench(tester, ground, vault: true);
