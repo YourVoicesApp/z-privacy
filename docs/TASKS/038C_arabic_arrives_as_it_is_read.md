@@ -58,6 +58,53 @@ The owner: «إذا خرجت الأرقام مختلفة، لا نقول إن ا
 
 «كتاب عربي حقيقي → القارئ يفشل → التطبيع يصلحه → المستخدم يعلّم خمس شخصيات → Z يجد مئات المواضع من دون قراءة 221 صفحة.» And the lion: `دمنة` is a definite name → **Always**; `الأسد` may be a character or an ordinary word → **Suggest**. Teaching Z is not a blind word list: the user says which knowledge is certain in their world and which needs context.
 
+## The other half of the same defect, found from the writing side (7 Oct, 046/R)
+
+Building «Save as PDF» met this paper's defect from the opposite direction, and
+the two halves are one thing:
+
+**Our writer and our reader disagree about the same file, and the reader is the
+one that is wrong.**
+
+046/R made the PDF writer lay Arabic out as it is read — direction per
+paragraph, shaping and the bidi pass on, the Latin runs isolated inside each
+right-to-left line. The page is correct: measured with `pdftotext -bbox-layout`
+on a client's letter, every Arabic line ends at the right margin and the German
+line beside it begins at the left, and poppler extracts the Arabic in logical
+order. **Our own reader, handed that same correct file, returns the words in
+logical order with each word's letters in visual order** — neither one thing nor
+the other. It is the same two faults this paper already names, presentation
+forms and visual order, meeting us on our own output instead of a stranger's.
+
+Why that matters more than tidiness: a file Z Privacy writes exists to be handed
+to a model, and the owner will one day open an Arabic **PDF** rather than an
+Arabic text file. His complaint of 7 October about Arabic text — «النص العربي
+مقطع وغير مفهوم» — is what he would meet again, from a file we made ourselves.
+
+**Nothing here changes what this task builds.** It adds one acceptance: a PDF
+written by `apps/flutter_app/lib/core/protected_pdf.dart` and read back by this
+reader must return the text that went in. That guard did not exist before,
+because until 046/R we had no Arabic PDF of our own to test against.
+
+## The pair of rules this and 046/R together produced
+
+Put side by side, because they are one promise facing two directions:
+
+> **Protection may not change how a document reads** — a `__Z_…__` token must
+> not vote on direction; its letters are Latin and *we* put them in the
+> person's line. (046/R, adopted 7 Oct.)
+>
+> **And ingestion may not either** — the reader undoes what the extraction
+> broke and changes nothing a person wrote. (This task.)
+
+Between them they answer three arguments this project has already had: why the
+reader carries page edges as **positions beside** the text and not as
+characters inside it; why a hyphen is joined in the **matcher** and not in the
+reader; and why the matching view of step 3 is a view and not a rewrite —
+«التطبيع للمقارنة، لا لتغيير الوثيقة». A normalisation that reaches the
+document is ingestion changing how a document reads, which is the same fault as
+a token moving a person's words about.
+
 ## Not in this task
 
 - The Arabic pack's own rules (honorifics, kinship particles, company forms, Gulf phone and ID shapes).
