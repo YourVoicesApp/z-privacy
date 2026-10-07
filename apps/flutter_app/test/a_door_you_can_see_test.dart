@@ -131,7 +131,15 @@ void main() {
     expect(tester.widget<ZButton>(onwards).onPressed, isNotNull, reason: 'the doors are still shut');
     await tester.tap(onwards);
     await settle(tester);
-    expect(find.textContaining('Answer the review first'), findsWidgets, reason: 'the gate says nothing');
+    // 046/L: the gate names what is waiting. It said «Answer the review
+    // first», which named no number — and this assertion was finding the
+    // **workspace's** copy of that sentence through the open dialog, not the
+    // sheet's own, which is only drawn beside a connected provider.
+    expect(
+      find.textContaining('left', findRichText: true),
+      findsWidgets,
+      reason: 'the gate says nothing about what is waiting',
+    );
 
     bench.dispose();
   });

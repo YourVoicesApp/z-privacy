@@ -45,6 +45,7 @@ class ReviewPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(open.length),
+          if (open.length > 1) _AllOfThem(bench: bench, open: open),
           Container(height: 1, color: Zc.lineSoft),
           Expanded(
             child: bench.walking && open.isNotEmpty
@@ -314,11 +315,126 @@ class _Tag extends StatelessWidget {
   }
 }
 
-/// The three answers. «Skip» is offered and is honest about what it costs: the
-/// item stays in the clear and still counts, so Send stays shut. There is no
-/// fourth button that sends anyway — that one was deleted from the product.
+/// **All of them, in one press — and the two directions do not cost the same.**
+///
+/// 041-O, queued since the owner's first evening, and his words on 7 October:
+/// «خيار مثل تحديد الكل… هذا مفيد جداً في القوائم». On his own payroll sheet
+/// that was eighteen presses.
+///
+/// **The asymmetry is the design and not an oversight**, so it is written here
+/// where someone would otherwise tidy it into symmetry:
+///
+///   * **Protect them all** is one press and asks nothing. Over-protecting is
+///     never a leak; the worst case is a token where a person wanted a word,
+///     and that is undone in one press on the row itself.
+///   * **Leave them all in the clear** asks once, with the number in the
+///     sentence. One press may not expose eighteen people, and a confirmation
+///     that does not say how many is not a confirmation.
+///
+/// If the two were built the same way, the cheap direction would be as
+/// expensive as the dangerous one — or, far worse, the dangerous one would
+/// become as cheap as the cheap one.
+class _AllOfThem extends StatelessWidget {
+  const _AllOfThem({required this.bench, required this.open});
+
+  final Workbench bench;
+  final List<Finding> open;
+
+  static const protectKey = ValueKey<String>('review-all-protect');
+  static const leaveKey = ValueKey<String>('review-all-leave');
+
+  Future<void> _leaveThemAll(BuildContext context) async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (inner) => AlertDialog(
+        backgroundColor: Zc.paper,
+        title: const Text('Leave them in the clear?', style: Zc.h2),
+        content: Text(
+          'All ${open.length} of them will be sent exactly as they are written. '
+          'Z will not replace any of them, in this document or in the request '
+          'that leaves this computer.',
+          style: Zc.body,
+        ),
+        actions: [
+          ZButton(label: 'Cancel', onPressed: () => Navigator.of(inner).pop(false)),
+          ZButton(
+            // The number is in the act's own name, which is P2-5's rule and
+            // the reason this dialog exists at all — **and «Yes» in front of
+            // it**, so the confirmation is not word for word the same as the
+            // button that opened it. Two different acts wearing one name on
+            // screen at the same time is the same family of defect as a chip
+            // that looks pressable: found here by a test that could not tell
+            // which of the two to press.
+            label: 'Yes — leave all ${open.length} in the clear',
+            filled: true,
+            onPressed: () => Navigator.of(inner).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (sure != true) return;
+    for (final f in open) {
+      await bench.answer(f.id, FindingAnswer.notSensitive);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 12, 12),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          ZButton(
+            key: protectKey,
+            label: 'Protect all ${open.length}',
+            icon: Icons.shield_outlined,
+            onPressed: bench.busy
+                ? null
+                : () async {
+                    for (final f in open) {
+                      await bench.answer(f.id, FindingAnswer.protect);
+                    }
+                  },
+          ),
+          ZButton(
+            key: leaveKey,
+            label: 'Leave all ${open.length} in the clear',
+            onPressed: bench.busy ? null : () => _leaveThemAll(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The answers — **and «Later», which is not one of them** (046/L).
+///
+/// **The owner, 7 October:** «لأنه الآن في حال كانت ريفو تحتوي على أي خيار، لا
+/// يمكن الانتقال إلى الخطوات التالية.» One open item and he could not go on.
+///
+/// Measured: `answer_finding` on `Skip` carries the core's own comment —
+/// «Skipping is not deciding: it stays open and stays counted» — and only
+/// Protect, Always and «Not sensitive» open the door. And `Skip` sat **in this
+/// same row**, the same size and the same shape as the two answers. So it
+/// reads as a decision, the count does not fall when it is pressed, and the
+/// conclusion a reasonable person draws is «the review is blocking me» rather
+/// than «that button meant later».
+///
+/// It is not the gate that was wrong. The gate stays shut while a question is
+/// open, and that is the one sentence this product rests on. What was wrong is
+/// that one of the buttons lied about which kind of thing it was. So: its own
+/// word, its own line, and no border — a dismissal of the card, not an answer
+/// to the question.
+///
+/// There is still no button that sends anyway. That one was deleted from the
+/// product.
 class _Answers extends StatelessWidget {
   const _Answers({required this.bench, required this.finding, required this.onVault});
+
+  /// Named so a test presses the thing a person presses.
+  static const laterKey = ValueKey<String>('review-later');
 
   final Workbench bench;
   final Finding finding;
@@ -431,8 +547,31 @@ class _Answers extends StatelessWidget {
             if (bench.profileId != null)
               remember('Not sensitive in profile', Scope.profile),
             remember('Not sensitive everywhere', Scope.always),
-            one('Skip', FindingAnswer.skip, Zc.ink4),
           ],
+        ),
+        const SizedBox(height: 8),
+        // **«Later», on its own line and in its own shape** (046/L). Not in the
+        // Wrap above: a thing that is not an answer may not be drawn as one.
+        Align(
+          alignment: Alignment.centerLeft,
+          child: InkWell(
+            key: laterKey,
+            onTap: () => bench.answer(finding.id, FindingAnswer.skip),
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Text(
+                // P2-5: the act's own name carries what happens. «Skip» said
+                // nothing about the count; this says the whole of it.
+                'Later — stays open',
+                style: Zc.small.copyWith(
+                  color: Zc.ink4,
+                  decoration: TextDecoration.underline,
+                  decorationColor: Zc.ink4,
+                ),
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 6),
         // What «Always» is, in one sentence, beside the button rather than in
@@ -525,7 +664,8 @@ class _Walk extends StatelessWidget {
         _Answers(bench: bench, finding: current, onVault: onVault),
         const SizedBox(height: 10),
         Text(
-          'Skip leaves it in the clear and still counted — skipping is not deciding.',
+          '«Later» is not an answer: the value stays in the clear, it is still '
+          'counted, and sending stays shut until you say yes or no to it.',
           style: Zc.tiny.copyWith(letterSpacing: 0),
         ),
       ],

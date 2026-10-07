@@ -791,9 +791,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Shut, with the reason beside it. There is no «send anyway» to look for.
-      expect(bench.payload!.openSuggestions, greaterThan(0));
-      expect(find.text('Answer the review first'), findsOneWidget);
+      // Shut, and the line beside it names the count and offers the way
+      // through (046/L). It used to say «Answer the review first», which named
+      // no number, no value and no way in. There is still no «send anyway» to
+      // look for — that is the half of this that did not change.
+      final open = bench.payload!.openSuggestions;
+      expect(open, greaterThan(0));
+      expect(
+        find.textContaining('question', findRichText: true),
+        findsWidgets,
+        reason: 'the shut door says nothing about what is waiting',
+      );
       expect(find.textContaining('send anyway'), findsNothing);
 
       // Answer everything, and the door opens.
@@ -809,7 +817,9 @@ void main() {
       });
       await tester.pumpAndSettle();
       expect(bench.payload!.openSuggestions, 0);
-      expect(find.text('Answer the review first'), findsNothing);
+      // With nothing open the way-through line is gone with the questions.
+      expect(find.textContaining('questions left'), findsNothing);
+      expect(find.textContaining('question left'), findsNothing);
 
       // The sheet offers the door that needs no account at all, first. Continue
       // is the step into that door — the payload review does not share a scroller

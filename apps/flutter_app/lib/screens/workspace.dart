@@ -1533,7 +1533,7 @@ class _SafeFooter extends StatelessWidget {
                         context: context,
                         builder: (_) => SendSheet(bench: bench, ground: ground),
                       ),
-                hint: open > 0 ? 'Answer the review first' : null,
+                hint: null,
               ),
               if (bench.answers.isNotEmpty && bench.showing == null)
                 ZButton(
@@ -1543,8 +1543,108 @@ class _SafeFooter extends StatelessWidget {
                 ),
             ],
           ),
+          // **A gate that does not hand you the key is a wall** (046/L).
+          //
+          // The owner, 7 October: «في حال كانت ريفو تحتوي على أي خيار، لا يمكن
+          // الانتقال إلى الخطوات التالية.» The door stays shut while a question
+          // is open — that does not change and it is the one sentence this
+          // product rests on. What changes is that the rule is now **answerable
+          // in one press from where he stands**: the line says how many are
+          // left and what the first one is, it takes him to it, and when there
+          // is exactly one it carries the two answers itself.
+          //
+          // «Answer the review first» said none of that: it named no number, no
+          // value and no way through.
+          if (open > 0) ...[
+            const SizedBox(height: 9),
+            _TheWayThrough(bench: bench, ground: ground, open: open),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// **The one question, answerable from here** (046/L).
+///
+/// Three things, and the third is the owner's own case: how many are left, the
+/// way to the first of them, and — when exactly one is open — the two answers
+/// on this line so he never has to go looking. On his own sheet, with his list
+/// imported, that is the real case: 61 findings and one open question, an
+/// address.
+///
+/// No fourth button that sends anyway. The gate is not loosened; it is handed
+/// its key.
+class _TheWayThrough extends StatelessWidget {
+  const _TheWayThrough({required this.bench, required this.ground, required this.open});
+
+  final Workbench bench;
+  final Ground ground;
+  final int open;
+
+  static const goKey = ValueKey<String>('workspace-go-to-question');
+  static const protectKey = ValueKey<String>('workspace-one-protect');
+  static const leaveKey = ValueKey<String>('workspace-one-leave');
+
+  @override
+  Widget build(BuildContext context) {
+    final waiting = bench.suggested;
+    final first = waiting.isEmpty ? null : waiting.first;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 9,
+          runSpacing: 9,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            ZButton(
+              key: goKey,
+              // The number is in the name of the act, not in a line under it
+              // (P2-5). «1 question left — go to it» is a different sentence
+              // from «Answer the review first», and it is the one a person can
+              // act on.
+              label: open == 1
+                  ? '1 question left — go to it'
+                  : '$open questions left — go to the first',
+              icon: Icons.east,
+              onPressed: first == null
+                  ? null
+                  : () {
+                      bench.openReview(walk: true);
+                      bench.focusOn(first.id);
+                    },
+            ),
+            // **And when there is only one, it is answerable right here.**
+            if (open == 1 && first != null) ...[
+              ZButton(
+                key: protectKey,
+                label: 'Protect it',
+                icon: Icons.shield_outlined,
+                onPressed: bench.busy
+                    ? null
+                    : () => unawaited(bench.answer(first.id, FindingAnswer.protect)),
+              ),
+              ZButton(
+                key: leaveKey,
+                label: 'Leave it in the clear',
+                onPressed: bench.busy
+                    ? null
+                    : () => unawaited(bench.answer(first.id, FindingAnswer.notSensitive)),
+              ),
+            ],
+          ],
+        ),
+        if (open == 1 && first != null) ...[
+          const SizedBox(height: 6),
+          // What it is, so the two answers above are about something. The kind
+          // is the core's own word for it.
+          Text(
+            'The one left is ${ground.nameOfKind(first.kind).toLowerCase()}.',
+            style: Zc.tiny.copyWith(letterSpacing: 0),
+          ),
+        ],
+      ],
     );
   }
 }

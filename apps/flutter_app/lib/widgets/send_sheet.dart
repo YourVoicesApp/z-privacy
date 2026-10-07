@@ -379,7 +379,18 @@ class _SendSheetState extends State<SendSheet> {
                                     setState(() => _trouble = bad);
                                   }
                                 },
-                          hint: open > 0 ? 'Answer the review first' : null,
+                          // **The count, here too** (046/L). This sheet held a
+                          // second copy of «Answer the review first» — two
+                          // places wording one promise, and the weaker
+                          // wording. The workspace's own line now names the
+                          // number and offers the way through; this one at
+                          // least names the number, because a person reading
+                          // it has already left that line behind.
+                          hint: open == 1
+                              ? '1 question left — answer it first'
+                              : open > 1
+                                  ? '$open questions left — answer them first'
+                                  : null,
                         ),
                     ],
                   ),
