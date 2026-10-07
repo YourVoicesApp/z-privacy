@@ -326,6 +326,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ProviderSnapshot dco_decode_provider_snapshot(dynamic raw);
 
   @protected
+  QuestionView dco_decode_question_view(dynamic raw);
+
+  @protected
   Refusal dco_decode_refusal(dynamic raw);
 
   @protected
@@ -769,6 +772,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProviderSnapshot sse_decode_provider_snapshot(SseDeserializer deserializer);
+
+  @protected
+  QuestionView sse_decode_question_view(SseDeserializer deserializer);
 
   @protected
   Refusal sse_decode_refusal(SseDeserializer deserializer);
@@ -1307,6 +1313,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     ProviderSnapshot self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_question_view(QuestionView self, SseSerializer serializer);
 
   @protected
   void sse_encode_refusal(Refusal self, SseSerializer serializer);

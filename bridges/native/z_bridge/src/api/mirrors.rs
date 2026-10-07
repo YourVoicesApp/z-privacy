@@ -759,6 +759,12 @@ pub struct _DocumentView {
     pub pages: u32,
 }
 
+#[frb(mirror(QuestionView))]
+pub struct _QuestionView {
+    pub text: String,
+    pub marks: Vec<Mark>,
+}
+
 #[frb(mirror(PayloadView))]
 pub struct _PayloadView {
     pub text: String,

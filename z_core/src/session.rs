@@ -157,6 +157,27 @@ pub(crate) struct Session {
     /// Which tokens are shown locally right now, and until when. The value is
     /// not here: it is in `tokens`, and it was handed over once when asked for.
     pub revealed: BTreeMap<String, ShownToken>,
+    /// **What the person is asking the model to do with this document**
+    /// (046/N).
+    ///
+    /// The owner, 7 October: «ليس لدينا شات — شات مع نموذج… لا يوجد خيار مثلاً
+    /// مباشرة إلى الشات.» Before this the document reached the model bare, with
+    /// `Context { workspace, history }` both empty, so whatever came back was
+    /// the model's own guess at what was wanted.
+    ///
+    /// Three fields and not one, because the three say different things:
+    ///
+    ///   * `question` is what he typed. It is his own writing, so it is a
+    ///     `Secret` and it never prints itself, exactly as `original` does not.
+    ///   * `question_safe` is what leaves. It is built once, when the question
+    ///     is set, because protecting it mints tokens and that may not happen
+    ///     on every keystroke or inside the payload builder, which holds the
+    ///     session immutably.
+    ///   * `question_tokens` is what the payload must allow, or an answer that
+    ///     echoes one of them would come back as the token instead of the name.
+    pub question: Secret,
+    pub question_safe: String,
+    pub question_tokens: Vec<String>,
 }
 
 impl Session {
@@ -189,6 +210,11 @@ impl Session {
             next_answer: 1,
             scan_origin: crate::api::ScanOrigin::NotScanned,
             revealed: BTreeMap::new(),
+            // Empty is a real answer: a document may be sent with no request,
+            // and the sheet says so rather than inventing one (046/N).
+            question: Secret::new(String::new()),
+            question_safe: String::new(),
+            question_tokens: Vec::new(),
         }
     }
 

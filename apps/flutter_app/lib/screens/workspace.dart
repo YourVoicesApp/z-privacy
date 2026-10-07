@@ -1210,6 +1210,15 @@ class _ColumnsState extends State<_Columns> {
                         children: [
                           if (widget.said != null) _Said(widget.said!),
                           ActsBar(bench: bench, ground: ground, onSay: widget.onSay),
+                          // **What should the model do with this?** (046/N.)
+                          //
+                          // Under the document, where the person is reading
+                          // it, because the question is about this document
+                          // and nothing else. It is **not** in the send sheet:
+                          // that sheet's own row of acts belongs to 046/O in
+                          // another worktree, and two sessions editing one row
+                          // is how a merge loses a line.
+                          _TheQuestion(bench: bench),
                         ],
                       ),
                 child: doc == null
@@ -1565,6 +1574,137 @@ class _SafeFooter extends StatelessWidget {
   }
 }
 
+/// **The request that travels with the document** (046/N).
+///
+/// The owner, 7 October: «ليس لدينا شات — شات مع نموذج… لا يوجد خيار مثلاً
+/// مباشرة إلى الشات.» A document used to reach the model with no request at
+/// all, so whatever came back was its own guess at what was wanted.
+///
+/// Three things this widget does **not** do, and each is the point:
+///
+///   * it does not decide what is sensitive. `setQuestion` hands the sentence
+///     to the core, which reads it with the same packs, the same vault and the
+///     same lists the document was read with — and with what this document has
+///     already protected, so a name that is a token in the sheet is the *same*
+///     token here. A field that scanned itself would be a second scanner;
+///   * it does not send. The question joins what leaves, and what leaves still
+///     leaves through the review and the one gate;
+///   * it does not promise a conversation. One question at a time replaces the
+///     last, and the line under it says so rather than letting a person
+///     discover it by losing something.
+class _TheQuestion extends StatefulWidget {
+  const _TheQuestion({required this.bench});
+
+  final Workbench bench;
+
+  static const field = ValueKey<String>('workspace-question');
+  static const attach = ValueKey<String>('workspace-question-attach');
+
+  @override
+  State<_TheQuestion> createState() => _TheQuestionState();
+}
+
+class _TheQuestionState extends State<_TheQuestion> {
+  late final TextEditingController _text =
+      TextEditingController(text: widget.bench.question);
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bench = widget.bench;
+    final typed = _text.text.trim();
+    final attached = bench.question.trim();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+      color: Zc.warmCard,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('What should the AI do with this?', style: Zc.tiny.copyWith(color: Zc.ink4)),
+          const SizedBox(height: 5),
+          Container(
+            decoration: Zc.panel(fill: Zc.card, radius: 9),
+            padding: const EdgeInsets.fromLTRB(11, 8, 11, 8),
+            child: TextField(
+              key: _TheQuestion.field,
+              controller: _text,
+              minLines: 2,
+              maxLines: 5,
+              style: Zc.body,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                hintText: 'Reconcile section A against section B and tell me where the difference is.',
+                hintStyle: Zc.small.copyWith(color: Zc.ink4),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          const SizedBox(height: 7),
+          Wrap(
+            spacing: 9,
+            runSpacing: 7,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              ZButton(
+                key: _TheQuestion.attach,
+                // The act's own name says what it does and where it goes
+                // (P2-5). Not «Send»: nothing leaves until the review and the
+                // gate are satisfied, and this press does neither.
+                label: typed == attached && typed.isNotEmpty
+                    ? 'In what will leave'
+                    : 'Add it to what will leave',
+                icon: Icons.help_outline,
+                onPressed: bench.busy || typed == attached
+                    ? null
+                    : () => unawaited(bench.setQuestion(typed)),
+                hint: typed.isEmpty && attached.isEmpty
+                    ? 'A document can be sent with no request, and then the model is given no instruction'
+                    : null,
+              ),
+              if (attached.isNotEmpty)
+                ZButton(
+                  label: 'Take it out',
+                  onPressed: bench.busy
+                      ? null
+                      : () {
+                          _text.clear();
+                          unawaited(bench.setQuestion(''));
+                        },
+                ),
+            ],
+          ),
+          if (attached.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              // Measured facts, both of them the core's: how many words of the
+              // question were replaced, and that the Safe column is where it
+              // can be read before anything is pressed.
+              bench.questionMarks.isEmpty
+                  ? 'Your request is in the Safe column, with nothing in it to protect.'
+                  : bench.questionMarks.length == 1
+                      ? 'Your request is in the Safe column, with one value replaced.'
+                      : 'Your request is in the Safe column, with ${bench.questionMarks.length} values replaced.',
+              style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.clayDeep),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'One request at a time: asking again replaces this one. A '
+              'conversation of several turns is not here yet.',
+              style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// **The one question, answerable from here** (046/L).
 ///
 /// Three things, and the third is the owner's own case: how many are left, the
@@ -1831,7 +1971,23 @@ class _Side extends StatelessWidget {
             child: child,
           ),
         ),
-        ?footer,
+        // **The footer gives, and nothing is pushed off the screen.**
+        //
+        // It used to sit here at its natural height after an `Expanded`, so the
+        // moment it grew by a line the column overran — measured at exactly
+        // **1 pixel** when 046/N added the request field under the document,
+        // which is the same family as the three overflows of 2 October and the
+        // 58 of 046/K: a row or a column with no give, breaking on the next
+        // string somebody adds.
+        //
+        // `Flexible` so it takes what it needs up to what is left, and a
+        // scroller inside it so a short window scrolls the acts rather than
+        // hiding them. The reason a person needs is never the thing that falls
+        // off the edge.
+        if (footer != null)
+          Flexible(
+            child: SingleChildScrollView(child: footer),
+          ),
       ],
     );
   }

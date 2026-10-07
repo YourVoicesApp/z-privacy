@@ -183,6 +183,10 @@ void main() {
         }
       },
       'scan': () => scan(session: session),
+      // 046/N. The question is scanned in the core before it goes anywhere, so
+      // calling it here is calling the protection as well as the setter.
+      'setQuestion': () => setQuestion(session: session, text: 'Summarise it.'),
+      'question': () => question(session: session),
       'protect': () => protect(
         session: session,
         span: span,
@@ -335,7 +339,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 97, reason: 'the contract has 97 functions');
+    expect(calls.length, 99, reason: 'the contract has 99 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

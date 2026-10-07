@@ -15,7 +15,8 @@ use std::collections::BTreeMap;
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
     Explanation, Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId,
-    NameCandidate, ProviderRow, ReportSubject, RevealedToken, RevealedValue, SelectionView,
+    NameCandidate, ProviderRow, QuestionView, ReportSubject, RevealedToken, RevealedValue,
+    SelectionView,
     RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome,
     TaughtReach, TokenRow, UndoOutcome,
 };
@@ -477,7 +478,9 @@ pub(crate) fn ask_model(
     // screen that protected its own field would be a second implementation of
     // the scanner, and the first time the two disagreed the quieter one would
     // win.
-    let workspace = protect_each(handle.session, workspace, handle)?;
+    let safe = protect_lines(handle.session, workspace)?;
+    allow_tokens(handle, &safe.tokens)?;
+    let workspace = safe.text;
     let answer = crate::gateway::send(crate::gateway::Request {
         target: crate::gateway::Target {
             provider_id: provider.id.clone(),
@@ -495,6 +498,57 @@ pub(crate) fn ask_model(
         text: answer.text,
         usage: answer.usage,
     })
+}
+
+/// **Set the question that travels with this document** (046/N).
+///
+/// It is protected **here**, when it is set, and not in the payload builder:
+/// protecting mints tokens, and `SafePayload::build` holds the session
+/// immutably on purpose — the payload is a view of a conversation and may not
+/// change it. So the one place that mints is the one place a person decides
+/// something.
+///
+/// What comes back is the protected text, so the screen can show what it just
+/// did, and the marks over the **raw** question, so the field can draw them the
+/// way the document's own column does. Both are measurements of one act; a
+/// screen that worked either of them out for itself would be a second scanner.
+pub(crate) fn set_question(session: SessionId, text: String) -> ApiResult<QuestionView> {
+    let safe = protect_lines(session.id, vec![text.clone()])?;
+    let question_safe = safe.text.first().cloned().unwrap_or_default();
+    let tokens = safe.tokens.clone();
+    with_session(session.id, |s| {
+        s.question = crate::secret::Secret::new(text.clone());
+        s.question_safe = question_safe.clone();
+        s.question_tokens = tokens.clone();
+    })
+    .ok_or(ApiError::InvalidSession)?;
+    // A new question is a new thing that would leave, so a payload built
+    // before it is stale: the Safe column must not show yesterday's request,
+    // and a handle from before it must not be sendable. `bump` is the same
+    // call every act that changes the document makes.
+    with_session(session.id, |s| s.bump()).ok_or(ApiError::InvalidSession)?;
+    crate::session::bump_truth();
+    Ok(QuestionView {
+        text: question_safe,
+        marks: safe.marks.first().cloned().unwrap_or_default(),
+    })
+}
+
+/// The question as it stands: what was typed, and what would leave.
+pub(crate) fn question(session: SessionId) -> ApiResult<QuestionView> {
+    with_session(session.id, |s| QuestionView {
+        text: s.question_safe.clone(),
+        marks: Vec::new(),
+    })
+    .ok_or(ApiError::InvalidSession)
+}
+
+/// What `protect_lines` found: the safe text, the marks over the original, and
+/// the tokens it used.
+pub(crate) struct ProtectedLines {
+    pub text: Vec<String>,
+    pub marks: Vec<Vec<Mark>>,
+    pub tokens: Vec<String>,
 }
 
 /// Protect every line a person typed, against this session's own knowledge.
@@ -520,13 +574,10 @@ pub(crate) fn ask_model(
 /// explicitly forbidden to touch. Over-protecting is never a leak — the worst
 /// case is a token where a person wanted a word — and the asymmetry 046/L drew
 /// is the same one.
-fn protect_each(
-    session: u32,
-    lines: Vec<String>,
-    handle: PayloadHandle,
-) -> ApiResult<Vec<String>> {
+fn protect_lines(session: u32, lines: Vec<String>) -> ApiResult<ProtectedLines> {
     if lines.iter().all(|l| l.trim().is_empty()) {
-        return Ok(lines);
+        let marks = lines.iter().map(|_| Vec::new()).collect();
+        return Ok(ProtectedLines { text: lines, marks, tokens: Vec::new() });
     }
     let (sets, taught, hints, exceptions, names) = with_core(|core| {
         let (s, vault) = core.session_and_vault(session).ok_or(ApiError::InvalidSession)?;
@@ -541,113 +592,152 @@ fn protect_each(
         ))
     })?;
 
-    // **What this document has already protected is knowledge too** — and this
-    // is the half the first version of the test proved missing.
+    // **What this document has already protected is knowledge too.**
     //
     // «Hedvig Palmgren» is protected in the sheet because «Prepared by:» names
-    // her there. The question «what did Hedvig Palmgren earn?» carries no
-    // label, and her name is in no list we ship, so the scanner found nothing
-    // in it and the name left in the clear **while the document's copy of it
-    // was a token**. Protected on one line and bare on the next is worse than
-    // either, because it tells the model exactly which token the name belongs
-    // to.
-    //
-    // So every value this session already stands for is looked for first, by
-    // `text::occurrences` — the one matcher 041-R made single, which reads a
-    // name in any case and across a line the page broke. The token that stands
-    // for it is reused, which is also what makes the question answerable.
-    let known: Vec<(String, String)> = with_core(|core| {
+    // her there. In the question «what did Hedvig Palmgren earn?» there is no
+    // label and her name is in no list we ship, so the scanner finds nothing —
+    // and without this pass the name left in the clear **while the document's
+    // copy of it was a token**. Protected on one line and bare on the next is
+    // worse than either: it tells the model exactly which token the name
+    // belongs to.
+    let known: Vec<(String, String, Kind)> = with_core(|core| {
         let s = core.get(session).ok_or(ApiError::InvalidSession)?;
         Ok(s
             .tokens
             .all_secrets()
             .into_iter()
-            .filter_map(|v| s.tokens.token_for(&v).map(|t| (v.clone(), t.to_string())))
+            .filter_map(|v| {
+                let token = s.tokens.token_for(&v)?.to_string();
+                let kind = s.tokens.get(&token)?.kind;
+                Some((v, token, kind))
+            })
             .collect())
     })?;
 
     let mut out = Vec::with_capacity(lines.len());
+    let mut all_marks = Vec::with_capacity(lines.len());
     let mut minted: Vec<String> = Vec::new();
-    for line in &lines {
-        // The longest first, so «Anna Nilsson» is not half-replaced by «Anna».
-        let mut by_length = known.clone();
-        by_length.sort_by_key(|(v, _)| std::cmp::Reverse(v.len()));
-        let mut line = line.clone();
-        for (value, token) in &by_length {
+    for raw in &lines {
+        // **One walk over the text the person typed.**
+        //
+        // The first version of this rewrote the line with the known values and
+        // then ran the scanner over the rewritten line, which produced the
+        // right text and **no marks at all** for a known value — and offsets
+        // over a string the person had never seen for the rest. Both halves are
+        // gathered as spans over the raw line instead, and the substitution
+        // happens once, at the end.
+        let mut hits: Vec<(usize, usize, Kind, Option<String>, Source, String)> = Vec::new();
+        for (value, token, kind) in &known {
             if value.trim().is_empty() {
                 continue;
             }
-            let places = crate::text::occurrences(&line, value);
-            for (start, end) in places.into_iter().rev() {
-                if let (Some(before), Some(after)) = (line.get(..start), line.get(end..)) {
-                    line = format!("{before}{token}{after}");
-                }
+            for (start, end) in crate::text::occurrences(raw, value) {
+                hits.push((
+                    start,
+                    end,
+                    *kind,
+                    Some(token.clone()),
+                    Source::Vault,
+                    "already protected in this document".to_string(),
+                ));
             }
         }
-        let line = &line;
-        let candidates = scanner::scan(line, &sets, &taught, &hints, &exceptions, &names);
-        let mut ranges: Vec<&scanner::Candidate> = candidates.iter().collect();
-        ranges.sort_by_key(|c| c.start);
-        let mut safe = String::with_capacity(line.len());
+        for c in scanner::scan(raw, &sets, &taught, &hints, &exceptions, &names) {
+            hits.push((c.start, c.end, c.kind, None, c.source, c.source_detail.clone()));
+        }
+        // Longest first at the same start, and a value we already have a token
+        // for wins a tie: it is certain, and reusing its token is what makes
+        // the question answerable as well as safe.
+        hits.sort_by_key(|(s, e, _, t, _, _)| (*s, std::cmp::Reverse(*e - *s), t.is_none()));
+
+        let mut safe = String::with_capacity(raw.len());
+        let mut marks: Vec<Mark> = Vec::new();
         let mut cursor = 0usize;
-        for c in ranges {
-            if c.start < cursor || c.end > line.len() || c.start >= c.end {
+        for (start, end, kind, existing, source, detail) in hits {
+            if start < cursor || end > raw.len() || start >= end {
                 continue;
             }
-            let Some(before) = line.get(cursor..c.start) else { continue };
-            let Some(value) = line.get(c.start..c.end) else { continue };
+            let (Some(before), Some(value)) = (raw.get(cursor..start), raw.get(start..end)) else {
+                continue;
+            };
             safe.push_str(before);
-            let token = with_core(|core| {
-                let s = core.get(session).ok_or(ApiError::InvalidSession)?;
-                if let Some(existing) = s.tokens.token_for(value) {
-                    return Ok(existing.to_string());
-                }
-                let fresh = s.mint.mint(c.kind, &s.tokens);
-                s.tokens.insert(
-                    fresh.clone(),
-                    crate::tokens::TokenEntry {
-                        value: crate::secret::Secret::new(value.to_string()),
-                        aliases: Vec::new(),
-                        kind: c.kind,
-                        // The question belongs to this conversation and to no
-                        // document, so nothing here is written to the vault:
-                        // asking about a name is not teaching it.
-                        scope: Scope::Conversation,
-                        source: c.source,
-                        decided: false,
-                        source_detail: c.source_detail.clone(),
-                    },
-                );
-                Ok(fresh)
-            })?;
+            let token = match existing {
+                Some(t) => t,
+                None => with_core(|core| {
+                    let s = core.get(session).ok_or(ApiError::InvalidSession)?;
+                    if let Some(already) = s.tokens.token_for(value) {
+                        return Ok(already.to_string());
+                    }
+                    let fresh = s.mint.mint(kind, &s.tokens);
+                    s.tokens.insert(
+                        fresh.clone(),
+                        crate::tokens::TokenEntry {
+                            value: crate::secret::Secret::new(value.to_string()),
+                            aliases: Vec::new(),
+                            kind,
+                            // The question belongs to this conversation and to
+                            // no document, so nothing here is written to the
+                            // vault: asking about a name is not teaching it.
+                            scope: Scope::Conversation,
+                            source,
+                            decided: false,
+                            source_detail: detail.clone(),
+                        },
+                    );
+                    Ok(fresh)
+                })?,
+            };
             if !minted.contains(&token) {
                 minted.push(token.clone());
             }
             safe.push_str(&token);
-            cursor = c.end;
+            if let Ok(span) = crate::text::bytes_to_span(raw, start, end) {
+                marks.push(Mark {
+                    span,
+                    state: MarkState::Protected,
+                    token: Some(token),
+                    kind,
+                    source,
+                    source_detail: detail,
+                    decided: false,
+                    // A question has no pages and no paragraphs: it is one line
+                    // a person typed, and «page 1» about it would be a number
+                    // with nothing behind it.
+                    place: None,
+                });
+            }
+            cursor = end;
         }
-        if let Some(rest) = line.get(cursor..) {
+        if let Some(rest) = raw.get(cursor..) {
             safe.push_str(rest);
         }
         out.push(safe);
+        all_marks.push(marks);
     }
 
-    // **The answer may echo a token the question introduced**, and a token the
-    // payload does not allow is not restored — `restore` reads
-    // `allowed_token_ids` and leaves anything else exactly as the model wrote
-    // it. So the payload learns the question's tokens, or a person would read
-    // their own token back in the answer instead of the name it stands for.
+    Ok(ProtectedLines { text: out, marks: all_marks, tokens: minted })
+}
+
+/// **The answer may echo a token this text introduced**, and a token the
+/// payload does not allow is not restored — `restore` reads
+/// `allowed_token_ids` and leaves anything else exactly as the model wrote it.
+/// So the payload learns them, or a person would read their own token back in
+/// the answer instead of the name it stands for.
+fn allow_tokens(handle: PayloadHandle, tokens: &[String]) -> ApiResult<()> {
+    if tokens.is_empty() {
+        return Ok(());
+    }
     with_core(|core| {
-        let s = core.get(session).ok_or(ApiError::InvalidSession)?;
+        let s = core.get(handle.session).ok_or(ApiError::InvalidSession)?;
         let payload = s.payloads.get_mut(&handle.id).ok_or(ApiError::InvalidHandle)?;
-        for token in &minted {
+        for token in tokens {
             if !payload.allowed_token_ids.iter().any(|t| t == token) {
                 payload.allowed_token_ids.push(token.clone());
             }
         }
         Ok(())
-    })?;
-    Ok(out)
+    })
 }
 
 /// The direct door: text the person chose to send as it stands.

@@ -977,6 +977,19 @@ pub struct DocumentView {
     pub pages: u32,
 }
 
+/// **The question that travels with the document**, as it stands (046/N).
+///
+/// `text` is what would **leave** — protected — and `marks` are over the
+/// question the person typed, so the field can draw them the way the Original
+/// column draws its own. The raw question is not in this type: it is already
+/// in the field a person is looking at, and a view that handed it back would be
+/// one more copy of their writing crossing the bridge for nothing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QuestionView {
+    pub text: String,
+    pub marks: Vec<Mark>,
+}
+
 /// What the AI will receive, for showing in the right-hand column.
 #[derive(Clone, PartialEq, Eq)]
 pub struct PayloadView {
@@ -1692,6 +1705,32 @@ pub fn ask_model(handle: PayloadHandle, provider: ProviderId, model: Option<Stri
 /// machine.
 pub fn ask_model_directly(session: SessionId, text: String, provider: ProviderId, model: Option<String>, workspace: Vec<String>, history: Vec<String>) -> ApiResult<ModelAnswer> {
     crate::ops::ask_model_directly(session, text, provider, model, workspace, history)
+}
+
+/// **Set the question that travels with this document** (046/N).
+///
+/// The owner, 7 October: «ليس لدينا شات — شات مع نموذج… لا يوجد خيار مثلاً
+/// مباشرة إلى الشات.» Before this a document reached the model with no request
+/// at all, so whatever came back was the model's own guess at what was wanted.
+///
+/// **The question is text, and text is scanned.** It is protected here, by the
+/// same packs, the same vault and the same lists the document was read with —
+/// and by what this document has already protected, so a name that is a token
+/// in the sheet is the *same* token in the question. A question field that
+/// bypassed the scanner would be the one hole big enough to sink the product.
+///
+/// What comes back is what would **leave**, and the marks over what was typed.
+/// Setting it makes any payload built before it stale, because the Safe column
+/// must not show yesterday's request.
+pub fn set_question(session: SessionId, text: String) -> ApiResult<QuestionView> {
+    crate::ops::set_question(session, text)
+}
+
+/// The question as it stands, protected. Marks are empty here: they belong to
+/// the act of setting it, and re-deriving them on every read would be a second
+/// scan of the same sentence.
+pub fn question(session: SessionId) -> ApiResult<QuestionView> {
+    crate::ops::question(session)
 }
 
 /// Incoming only: hand the core an answer as it arrived, tied to the payload the

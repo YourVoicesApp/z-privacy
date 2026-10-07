@@ -1570,6 +1570,24 @@ class ProviderSnapshot {
           providers == other.providers;
 }
 
+class QuestionView {
+  final String text;
+  final List<Mark> marks;
+
+  const QuestionView({required this.text, required this.marks});
+
+  @override
+  int get hashCode => text.hashCode ^ marks.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is QuestionView &&
+          runtimeType == other.runtimeType &&
+          text == other.text &&
+          marks == other.marks;
+}
+
 @freezed
 sealed class Refusal with _$Refusal {
   const Refusal._();

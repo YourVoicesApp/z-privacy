@@ -149,6 +149,36 @@ impl SafePayload {
         // One character for one character, so every offset above — including
         // each `page_edges.at` — still points at what it pointed at.
         let text = text.replace('\u{c}', "\n");
+
+        // **The question joins what leaves** (046/N).
+        //
+        // The decision, and the invariant it rests on: the promise is that the
+        // **left** column is the document byte for byte. The right column
+        // means **everything that leaves**. So a question that leaves and is
+        // not in that column would make the column a lie — the one shape this
+        // round has spent itself removing, a screen claiming less than the
+        // engine does.
+        //
+        // With a separator and a label, because the model is being handed two
+        // different things and so is the person reading the column: this is a
+        // request about a document, not a line of it. The label is in English
+        // because every string that leaves this device is, and because a model
+        // reads it.
+        //
+        // Its tokens are already minted — `set_question` did that, since
+        // minting needs the session mutably and a payload may not change the
+        // conversation it is a view of — so here they are only **allowed**, by
+        // the same list the document's own tokens enter.
+        let text = if session.question_safe.trim().is_empty() {
+            text
+        } else {
+            format!("{text}\n\n--- Request ---\n{}\n", session.question_safe)
+        };
+        for token in &session.question_tokens {
+            if !allowed_token_ids.iter().any(|t| t == token) {
+                allowed_token_ids.push(token.clone());
+            }
+        }
         debug_assert!(
             page_edges.iter().all(|e| (e.at as usize) < crate::text::utf16_len(&text)),
             "a page edge landed outside the payload"

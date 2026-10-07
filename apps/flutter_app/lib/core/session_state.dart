@@ -763,6 +763,39 @@ class Workbench extends ChangeNotifier {
     copiedPayload = handle;
   }
 
+  /// **The question that travels with this document** (046/N).
+  ///
+  /// What the person typed stays here only so the field can keep it between
+  /// rebuilds; what **leaves** is `questionSafe`, which the core built, and the
+  /// marks are the core's too. Nothing here works out what is sensitive: the
+  /// field would have been a second scanner, and the first time the two
+  /// disagreed the quieter one would win.
+  String question = '';
+  String questionSafe = '';
+  List<Mark> questionMarks = const [];
+
+  /// Set it, and keep what the core says about it.
+  ///
+  /// A new question makes the payload stale on purpose — the Safe column must
+  /// not show yesterday's request — so the document is read again afterwards,
+  /// the same way every act that changes what would leave does.
+  Future<String?> setQuestion(String text) async {
+    question = text;
+    try {
+      final view = await z.setQuestion(session: session, text: text);
+      questionSafe = view.text;
+      questionMarks = view.marks;
+      trouble = null;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+      return humanMessage(e);
+    }
+    await refresh();
+    notifyListeners();
+    return null;
+  }
+
   void show(AnswerId? answer) {
     showing = answer;
     notifyListeners();
