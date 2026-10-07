@@ -53,6 +53,140 @@ import 'package:pdf/widgets.dart' as pw;
 /// is what Copy Protected copies — one number, checkable from the clipboard.
 String sha256OfText(String text) => c.sha256.convert(utf8.encode(text)).toString();
 
+/// The strong right-to-left letters, by the blocks they fall in.
+///
+/// Arabic and its supplements and presentation forms; Hebrew; Syriac, Thaana,
+/// NKo and Samaritan between them. **Arabic here is a script, not a language**
+/// — Persian and Urdu are written with it and read the same way, so the test
+/// is the block and never the pack that happens to be loaded.
+final _strongRtl = RegExp(
+  r'[֐-׿؀-ۿ܀-ݏݐ-ݿހ-޿'
+  r'߀-߿ࠀ-࠿ࢠ-ࣿיִ-ﭏﭐ-﷿ﹰ-﻿]',
+);
+
+/// The strong left-to-right letters. Latin, Greek and Cyrillic are enough for
+/// what this product reads; anything outside both sets is not strong and does
+/// not get a vote.
+final _strongLtr = RegExp(r'[A-Za-zÀ-ʯͰ-֏]');
+
+/// A token, which is ours and not the person's writing.
+final _token = RegExp(r'__Z_[A-Z0-9_]+__');
+
+/// Which way this one paragraph runs, or null when it has no opinion.
+///
+/// **The first strong letter decides** — the Unicode rule (UAX #9, P2/P3), not
+/// one of ours. So a line opening with an amount or a date takes its direction
+/// from the first real word after it, which is how an Arabic payroll line that
+/// begins with a number comes out right. A paragraph with no strong letter at
+/// all is left to right, as the algorithm says.
+///
+/// **With one subtraction: a `__Z_…__` token does not vote.** Its letters are
+/// Latin and they are *ours* — we put them in the person's line. Counted as
+/// strong they would decide the direction of any line whose first word was
+/// protected, so protecting an Arabic name would silently lay that line out
+/// left to right and the same document would read differently before and after
+/// protection. Protection may not change how a document reads; that is close
+/// to the whole promise. So the tokens come out before the question is asked.
+bool paragraphIsRightToLeft(String paragraph) =>
+    paragraphDirection(paragraph) ?? false;
+
+/// True for right to left, false for left to right, **null for a paragraph
+/// with no strong letter in it at all** — a blank line, a rule of dashes, a
+/// line that is only a figure.
+///
+/// Null is not «left to right». A neutral line takes the direction of the
+/// paragraphs around it, because a blank line between two Arabic paragraphs is
+/// part of that Arabic passage and not a left-to-right interruption of it.
+/// Treating it as left to right split the passage in three and the blank lines
+/// disappeared from the page — found by rendering a letter and looking at it,
+/// not by a test.
+bool? paragraphDirection(String paragraph) {
+  // Replaced by a space rather than removed, so the words either side of a
+  // token stay separate words.
+  final letters = paragraph.replaceAll(_token, ' ');
+  final rtl = _strongRtl.firstMatch(letters);
+  final ltr = _strongLtr.firstMatch(letters);
+  if (rtl == null && ltr == null) return null;
+  if (rtl == null) return false;
+  if (ltr == null) return true;
+  return rtl.start < ltr.start;
+}
+
+/// One run of neighbouring paragraphs that share a direction.
+///
+/// Grouping matters for more than tidiness: a document with no right-to-left
+/// writing in it becomes **exactly one** block, so the page it produces is the
+/// page it produced before any of this existed, and a German or Swedish
+/// document cannot be disturbed by work done for Arabic.
+class DirectionBlock {
+  const DirectionBlock(this.rtl, this.text);
+  final bool rtl;
+  final String text;
+
+  /// The text as it is handed to the writer, with a RIGHT-TO-LEFT MARK in
+  /// front of every right-to-left line.
+  ///
+  /// **Because the bidi library decides the base direction for itself**, by the
+  /// same first-strong rule — and it counts the Latin letters of a `__Z_…__`
+  /// token, which we put there. So a line beginning with a protected name was
+  /// ordered left to right by the library while being right-aligned by us: the
+  /// token sat at the left-hand end of a right-aligned Arabic line. Measured on
+  /// a rendered page, which is the only place it shows.
+  ///
+  /// U+200F is strong, zero width and carries no glyph of its own — the page
+  /// with it and the page without it are identical wherever the direction was
+  /// already right. The isolates U+2067/U+2069 would say it better and were
+  /// tried first; DejaVu has no glyph for them and they drew as two `.notdef`
+  /// boxes on the page.
+  ///
+  /// Every line, not just the first: the algorithm works a paragraph at a time
+  /// and a block here is several paragraphs.
+  String get laidOut => rtl
+      ? text.split('\n').map((line) => '\u200F$line').join('\n')
+      : text;
+
+  @override
+  bool operator ==(Object other) =>
+      other is DirectionBlock && other.rtl == rtl && other.text == text;
+
+  @override
+  int get hashCode => Object.hash(rtl, text);
+
+  @override
+  String toString() => '${rtl ? 'rtl' : 'ltr'}: ${text.replaceAll('\n', '⏎')}';
+}
+
+/// Cut the text into runs of paragraphs that share a direction.
+///
+/// A neutral paragraph — blank, or only figures — joins whatever run it finds
+/// itself in and never starts one, so the blank line inside an Arabic passage
+/// stays inside it and is still a blank line on the page. Leading neutral
+/// lines wait for the first paragraph that has a direction and take it.
+List<DirectionBlock> directionBlocks(String text) {
+  final out = <DirectionBlock>[];
+  bool? dir;
+  final held = <String>[];
+
+  void close() {
+    if (held.isEmpty) return;
+    out.add(DirectionBlock(dir ?? false, held.join('\n')));
+    held.clear();
+  }
+
+  for (final line in text.split('\n')) {
+    final here = paragraphDirection(line);
+    if (here != null && dir != null && here != dir) {
+      close();
+      dir = here;
+    } else {
+      dir ??= here;
+    }
+    held.add(line);
+  }
+  close();
+  return out;
+}
+
 /// Where a saved PDF goes. Said in words on the screen before it is written.
 String protectedPdfFolder() {
   final home = Platform.environment['HOME'];
@@ -128,6 +262,7 @@ Future<pw.Font> _embeddedFont() async {
 
 /// The PDF's bytes. Separate from writing them so a test can read the file back
 /// without a disk in the way, and so `compress: false` is reachable.
+
 Future<Uint8List> buildProtectedPdf({
   required String text,
   required PdfStamp stamp,
@@ -152,26 +287,55 @@ Future<Uint8List> buildProtectedPdf({
         child: pw.Text(stamp.line, style: footer),
       ),
       build: (_) => [
-        // One Text, flowing across pages. `TextOverflow.span` is what makes it
-        // a spanning widget, so a long document pages itself instead of being
-        // pushed whole onto a page it does not fit.
+        // One Text per run of paragraphs that share a direction, each flowing
+        // across pages. `TextOverflow.span` is what makes a Text a spanning
+        // widget, so a long document pages itself instead of being pushed
+        // whole onto a page it does not fit.
         //
         // Words break on whitespace and never inside a word, which is the
         // property the tokens depend on: a token split across two lines would
         // come out of a reader in halves and restore as nothing. The test
         // checks each token comes back whole rather than trusting this.
         //
-        // **No `textDirection`, so Arabic is not supported here yet — and it
-        // fails in the worse of the two ways.** The embedded font carries the
-        // glyphs, and `pdf` runs its shaping and its bidi pass only when the
-        // direction is `rtl`; with none set, an Arabic line is laid out
-        // left to right and comes out **mirrored**. Rendered and looked at on
-        // 7 October: «السيد» drew as «ديسلا». That reads as a typeset document
-        // at a glance, which is why it is written down here — a page that is
-        // visibly empty gets fixed, and a page that is quietly backwards does
-        // not. The direction belongs per paragraph, with the Latin tokens
-        // isolated inside an RTL run, and that is its own item.
-        pw.Text(text, style: body, overflow: pw.TextOverflow.span),
+        // **`textDirection` is what turns the shaping and the bidi pass on.**
+        // `pdf` runs neither unless it is `rtl`; with none set an Arabic line
+        // is laid out left to right and comes out **mirrored** — rendered and
+        // looked at on 7 October, «السيد» drew as «ديسلا», which still reads as
+        // a typeset page to anyone who cannot read the script. Set per
+        // paragraph rather than per file, because a client's letter is German
+        // and Arabic in the same document and one setting gets one of them
+        // wrong. The Latin runs inside an Arabic line — an IBAN, an amount, a
+        // `__Z_…__` token — are kept forward by the bidi algorithm itself,
+        // which is the part that goes wrong quietly and has its own test.
+        //
+        // **Wrapped in a Partition, because a Text on its own shrink-wraps.**
+        // A MultiPage hands its children a loose width and `RichText` then
+        // takes the width of its longest line, so `textAlign: right` aligns
+        // inside *that* box and not against the page. Measured on a rendered
+        // letter: a block whose lines all fit sat flush left at x=44 while the
+        // block above it, which happened to contain one wrapping line and so
+        // had been given the full width, sat correctly at x=553 — two Arabic
+        // passages in one document aligned two different ways, by accident of
+        // line length. A `Partition` constrains its child's width **tightly**
+        // and hands `canSpan` and `hasMoreWidgets` straight through, so the
+        // paging a long document depends on is untouched. A `Column` with
+        // `stretch` gives the same width and does **not** pass spanning
+        // through: it threw `PdfTooBigPageException` on the 120-line guard.
+        for (final block in directionBlocks(text))
+          pw.Partitions(
+            children: [
+              pw.Partition(
+                child: pw.Text(
+                  block.laidOut,
+                  style: body,
+                  textDirection:
+                      block.rtl ? pw.TextDirection.rtl : pw.TextDirection.ltr,
+                  textAlign: block.rtl ? pw.TextAlign.right : pw.TextAlign.left,
+                  overflow: pw.TextOverflow.span,
+                ),
+              ),
+            ],
+          ),
       ],
     ),
   );
