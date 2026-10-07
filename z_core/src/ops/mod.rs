@@ -457,6 +457,27 @@ pub(crate) fn ask_model(
     if open > 0 {
         return Err(ApiError::OpenSuggestions { count: open });
     }
+    // **A question is text, and text is scanned** (046/N).
+    //
+    // The owner, 7 October: «ليس لدينا شات — شات مع نموذج… لا يوجد خيار مثلاً
+    // مباشرة إلى الشات.» A document used to reach the model bare, with
+    // `workspace` and `history` both empty, so whatever came back was the
+    // model's own guess at what was wanted. A question travels with it now.
+    //
+    // And it travels **protected**. This is the one hole big enough to sink
+    // the product: the whole promise is that nothing reaches a model
+    // unexamined, and a sentence a person typed is not an exception. If he
+    // asks «what did Hedvig Palmgren earn?», the name has to leave as the
+    // token the document already gave it, or the protection of the document
+    // was theatre.
+    //
+    // It is done **here** rather than in the screen, and that is the whole of
+    // why the promise holds: `ask_model` is the only door a question can enter
+    // by, so there is no path through which a raw one reaches a provider. A
+    // screen that protected its own field would be a second implementation of
+    // the scanner, and the first time the two disagreed the quieter one would
+    // win.
+    let workspace = protect_each(handle.session, workspace, handle)?;
     let answer = crate::gateway::send(crate::gateway::Request {
         target: crate::gateway::Target {
             provider_id: provider.id.clone(),
@@ -474,6 +495,159 @@ pub(crate) fn ask_model(
         text: answer.text,
         usage: answer.usage,
     })
+}
+
+/// Protect every line a person typed, against this session's own knowledge.
+///
+/// The same layers the document was read with — the general shapes, the active
+/// packs, the vault's values, the person's own lists — because a question read
+/// by a weaker set of rules would be a second, quieter standard for the same
+/// text (046/N).
+///
+/// **One value, one token.** `token_for` is asked first, so a name the document
+/// already replaced leaves the question as the *same* token: the model has to
+/// be able to see that the person is asking about somebody who appears in the
+/// sheet, and two tokens for one person would make the question unanswerable
+/// as well as unprotected.
+///
+/// A new value — one that is in the question and nowhere in the document —
+/// gets a token of its own, and that token is added to the payload's allowed
+/// list so the answer can be restored through it.
+///
+/// **Everything found is replaced, whether the scan was sure or not.** A
+/// question is typed in the moment and must not open a second review queue
+/// beside the document's: that would be a way around the gate, which 046/N is
+/// explicitly forbidden to touch. Over-protecting is never a leak — the worst
+/// case is a token where a person wanted a word — and the asymmetry 046/L drew
+/// is the same one.
+fn protect_each(
+    session: u32,
+    lines: Vec<String>,
+    handle: PayloadHandle,
+) -> ApiResult<Vec<String>> {
+    if lines.iter().all(|l| l.trim().is_empty()) {
+        return Ok(lines);
+    }
+    let (sets, taught, hints, exceptions, names) = with_core(|core| {
+        let (s, vault) = core.session_and_vault(session).ok_or(ApiError::InvalidSession)?;
+        let sets = active_sets(s, vault);
+        let profile = s.profile_id.clone();
+        Ok((
+            sets,
+            vault.label_rules(profile.as_deref()),
+            vault.hints(profile.as_deref()),
+            vault.exceptions(profile.as_deref()),
+            vault.taught_names(profile.as_deref()),
+        ))
+    })?;
+
+    // **What this document has already protected is knowledge too** — and this
+    // is the half the first version of the test proved missing.
+    //
+    // «Hedvig Palmgren» is protected in the sheet because «Prepared by:» names
+    // her there. The question «what did Hedvig Palmgren earn?» carries no
+    // label, and her name is in no list we ship, so the scanner found nothing
+    // in it and the name left in the clear **while the document's copy of it
+    // was a token**. Protected on one line and bare on the next is worse than
+    // either, because it tells the model exactly which token the name belongs
+    // to.
+    //
+    // So every value this session already stands for is looked for first, by
+    // `text::occurrences` — the one matcher 041-R made single, which reads a
+    // name in any case and across a line the page broke. The token that stands
+    // for it is reused, which is also what makes the question answerable.
+    let known: Vec<(String, String)> = with_core(|core| {
+        let s = core.get(session).ok_or(ApiError::InvalidSession)?;
+        Ok(s
+            .tokens
+            .all_secrets()
+            .into_iter()
+            .filter_map(|v| s.tokens.token_for(&v).map(|t| (v.clone(), t.to_string())))
+            .collect())
+    })?;
+
+    let mut out = Vec::with_capacity(lines.len());
+    let mut minted: Vec<String> = Vec::new();
+    for line in &lines {
+        // The longest first, so «Anna Nilsson» is not half-replaced by «Anna».
+        let mut by_length = known.clone();
+        by_length.sort_by_key(|(v, _)| std::cmp::Reverse(v.len()));
+        let mut line = line.clone();
+        for (value, token) in &by_length {
+            if value.trim().is_empty() {
+                continue;
+            }
+            let places = crate::text::occurrences(&line, value);
+            for (start, end) in places.into_iter().rev() {
+                if let (Some(before), Some(after)) = (line.get(..start), line.get(end..)) {
+                    line = format!("{before}{token}{after}");
+                }
+            }
+        }
+        let line = &line;
+        let candidates = scanner::scan(line, &sets, &taught, &hints, &exceptions, &names);
+        let mut ranges: Vec<&scanner::Candidate> = candidates.iter().collect();
+        ranges.sort_by_key(|c| c.start);
+        let mut safe = String::with_capacity(line.len());
+        let mut cursor = 0usize;
+        for c in ranges {
+            if c.start < cursor || c.end > line.len() || c.start >= c.end {
+                continue;
+            }
+            let Some(before) = line.get(cursor..c.start) else { continue };
+            let Some(value) = line.get(c.start..c.end) else { continue };
+            safe.push_str(before);
+            let token = with_core(|core| {
+                let s = core.get(session).ok_or(ApiError::InvalidSession)?;
+                if let Some(existing) = s.tokens.token_for(value) {
+                    return Ok(existing.to_string());
+                }
+                let fresh = s.mint.mint(c.kind, &s.tokens);
+                s.tokens.insert(
+                    fresh.clone(),
+                    crate::tokens::TokenEntry {
+                        value: crate::secret::Secret::new(value.to_string()),
+                        aliases: Vec::new(),
+                        kind: c.kind,
+                        // The question belongs to this conversation and to no
+                        // document, so nothing here is written to the vault:
+                        // asking about a name is not teaching it.
+                        scope: Scope::Conversation,
+                        source: c.source,
+                        decided: false,
+                        source_detail: c.source_detail.clone(),
+                    },
+                );
+                Ok(fresh)
+            })?;
+            if !minted.contains(&token) {
+                minted.push(token.clone());
+            }
+            safe.push_str(&token);
+            cursor = c.end;
+        }
+        if let Some(rest) = line.get(cursor..) {
+            safe.push_str(rest);
+        }
+        out.push(safe);
+    }
+
+    // **The answer may echo a token the question introduced**, and a token the
+    // payload does not allow is not restored — `restore` reads
+    // `allowed_token_ids` and leaves anything else exactly as the model wrote
+    // it. So the payload learns the question's tokens, or a person would read
+    // their own token back in the answer instead of the name it stands for.
+    with_core(|core| {
+        let s = core.get(session).ok_or(ApiError::InvalidSession)?;
+        let payload = s.payloads.get_mut(&handle.id).ok_or(ApiError::InvalidHandle)?;
+        for token in &minted {
+            if !payload.allowed_token_ids.iter().any(|t| t == token) {
+                payload.allowed_token_ids.push(token.clone());
+            }
+        }
+        Ok(())
+    })?;
+    Ok(out)
 }
 
 /// The direct door: text the person chose to send as it stands.
