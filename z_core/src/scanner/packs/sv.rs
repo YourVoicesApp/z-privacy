@@ -125,6 +125,12 @@ const ROLES: &[&str] = &[
     "forskningssekreterare",
     "programchef",
     "direktör",
+    // 046/J, from the owner's own payroll sheet: «Sammanställd av: Amina
+    // Saleh, Löneassistent». The label above carries that line now, and this
+    // is the role beside the name on the same page — the «X, <role>» shape
+    // 038-B/2 reads. Added because a document we hold writes it, which is the
+    // only reason any word in this file is here.
+    "löneassistent",
 ];
 
 /// "«<role> är X»" — what stands between the role and the name.

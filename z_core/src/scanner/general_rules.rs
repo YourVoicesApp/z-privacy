@@ -19,6 +19,7 @@ pub(crate) fn scan(text: &str) -> Vec<Candidate> {
     ibans(text, &mut out);
     emails(text, &mut out);
     social_insurance(text, &mut out);
+    national_identity(text, &mut out);
     tax_identification(text, &mut out);
     phones(text, &mut out);
     out
@@ -300,6 +301,152 @@ fn phones(text: &str, out: &mut Vec<Candidate>) {
         }
         i += 1;
     }
+}
+
+// ------------------------------------------- national identity number (046/J)
+
+/// A national identity number by its **shape**, in any language.
+///
+/// The lead measured the owner's own payroll sheet in English and in Swedish
+/// and found the same document leaking different values each way: the Swedish
+/// session caught the identity numbers by their label and missed the account
+/// numbers; the English session caught the accounts and missed **ten identity
+/// numbers**, one of them the managing director's. Each language found what its
+/// own labels happened to name, **and both leaked in silence** — no card, no
+/// mark, no question.
+///
+/// A label cannot be the answer to that, for a reason the document itself
+/// shows: nine of those ten sit in a **table column** under a header, not after
+/// a label on their own line, and `Boundary::AfterLabelSameField` reaches only
+/// the tenth. The column is 038-G/6's job. **A shape is what finds the other
+/// nine**, and a shape belongs to nobody's language — which is why this is here
+/// and not in a pack.
+///
+/// The shape: six or eight digits that are a **real date**, a separator, and
+/// four digits. `YYMMDD-NNNN` is how Sweden, Norway and Denmark write it;
+/// `YYYYMMDD-NNNN` is the long Swedish form; `+` in place of the hyphen is the
+/// Swedish mark for a bearer over a hundred.
+///
+/// **The separator is required, and that is a measured line, not caution.** A
+/// bare ten-digit run is also how an account number and a telephone number are
+/// written, and the entry rule for this task is that a rule costing one false
+/// protection does not ship. The separator-less forms are a measured debt with
+/// the numbers beside them in the task report.
+///
+/// **The check digit raises the explanation, never the finding.** Sweden
+/// publishes a Luhn over the first nine digits, and when it comes out the
+/// reason says so. When it does not, the value is still protected: our own
+/// invented documents carry deliberately invalid numbers, a real document
+/// carries typed ones, and a person whose number was mistyped needs it hidden
+/// exactly as much. A rule that protected only arithmetic that came out would
+/// be a rule that leaks the careless half of the world.
+fn national_identity(text: &str, out: &mut Vec<Candidate>) {
+    let bytes = text.as_bytes();
+    let mut at = 0usize;
+    while at < bytes.len() {
+        let Some((start, end, luhn)) = read_national_identity(text, at) else {
+            at += 1;
+            continue;
+        };
+        out.push(candidate(
+            start,
+            end,
+            // The same kind the Swedish «personnummer» row has carried since
+            // the set was written: in Sweden this number **is** the tax
+            // registration number, so one value does not become two kinds, and
+            // the two layers agree instead of superseding each other.
+            Kind::TaxId,
+            Confidence::Auto,
+            "national identity number",
+            if luhn {
+                "a national identity number: a real date, four digits, and the published check digit comes out"
+            } else {
+                "a national identity number: a real date and four digits. Its check digit does not come out, which changes nothing about hiding it"
+            },
+        ));
+        at = end;
+    }
+}
+
+/// One number at `at`, or nothing: the span, and whether the check digit came
+/// out.
+fn read_national_identity(text: &str, at: usize) -> Option<(usize, usize, bool)> {
+    let bytes = text.as_bytes();
+    if !boundary_before(bytes, at) {
+        return None;
+    }
+    let digits_from = |i: usize, n: usize| -> Option<&str> {
+        let s = text.get(i..i + n)?;
+        s.bytes().all(|b| b.is_ascii_digit()).then_some(s)
+    };
+    // Six digits and a date, or eight digits and a date with its century.
+    let (lead, date_ok) = match digits_from(at, 8) {
+        Some(eight) if is_a_long_date(eight) && !bytes.get(at + 8).is_some_and(u8::is_ascii_digit) => (8, true),
+        _ => match digits_from(at, 6) {
+            Some(six) if is_a_short_date(six) => (6, true),
+            _ => (0, false),
+        },
+    };
+    if !date_ok {
+        return None;
+    }
+    // The separator, and then exactly four digits.
+    if !matches!(bytes.get(at + lead), Some(b'-') | Some(b'+')) {
+        return None;
+    }
+    let tail = digits_from(at + lead + 1, 4)?;
+    let end = at + lead + 1 + 4;
+    if !boundary_after(bytes, end) {
+        return None;
+    }
+    // Luhn over the nine digits before the last one, in the Swedish form.
+    let nine: String = text
+        .get(at..end)?
+        .bytes()
+        .filter(u8::is_ascii_digit)
+        .map(|b| b as char)
+        .collect();
+    let luhn = nine.len() >= 10 && luhn_ok(&nine[nine.len() - 10..]);
+    let _ = tail;
+    Some((at, end, luhn))
+}
+
+/// `YYMMDD`: a month and a day that exist. The year is two digits and belongs
+/// to no century, so there is nothing in it to check.
+fn is_a_short_date(six: &str) -> bool {
+    let two = |i: usize| six.get(i..i + 2).and_then(|s| s.parse::<u32>().ok()).unwrap_or(99);
+    let (month, day) = (two(2), two(4));
+    (1..=12).contains(&month) && day >= 1 && day <= days_in_month(month)
+}
+
+/// `YYYYMMDD`: the same, and a year a person could have been born in.
+fn is_a_long_date(eight: &str) -> bool {
+    let year = eight.get(0..4).and_then(|s| s.parse::<u32>().ok()).unwrap_or(0);
+    if !(1850..=2100).contains(&year) {
+        return false;
+    }
+    let two = |i: usize| eight.get(i..i + 2).and_then(|s| s.parse::<u32>().ok()).unwrap_or(99);
+    let (month, day) = (two(4), two(6));
+    (1..=12).contains(&month) && day >= 1 && day <= days_in_month(month)
+}
+
+/// The published Luhn, over exactly ten digits: nine and the check.
+fn luhn_ok(ten: &str) -> bool {
+    if ten.len() != 10 {
+        return false;
+    }
+    let mut total = 0u32;
+    for (i, b) in ten.bytes().enumerate() {
+        if !b.is_ascii_digit() {
+            return false;
+        }
+        let d = u32::from(b - b'0');
+        // Every second digit from the left is doubled, which is where the
+        // Swedish form starts.
+        let p = if i % 2 == 0 { d * 2 } else { d };
+        total += p / 10 + p % 10;
+    }
+    total % 10 == 0
 }
 
 // ------------------------------------------- social-insurance number (038-G)
