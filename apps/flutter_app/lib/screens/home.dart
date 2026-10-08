@@ -191,8 +191,9 @@ class _HomeScreenState extends State<HomeScreen> {
         _keepTheAnswerInView();
         return Scaffold(
           body: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 940),
+            child: LayoutBuilder(
+              builder: (context, room) => ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 940),
               // **The chat reads like a chat.** The owner, 8 October:
               // «الكتابة في أسفل الشاشة والإجابة تظهر في أعلى» — the writing
               // at the bottom of the screen, and the answer above it.
@@ -279,9 +280,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   // 3 · The writing. Pinned, with whatever the last press has
                   // to say standing immediately over it — which is where a
                   // chat puts «this did not go».
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(34, 0, 34, 18),
-                    child: Column(
+                  //
+                  // **Capped at half the window, and it scrolls inside its own
+                  // band.** Three bands in a `Column` have a floor that one
+                  // scroller did not: measured on the first build, at 360 px of
+                  // height this page reported «A RenderFlex overflowed by 53
+                  // pixels on the bottom» — an overflow stripe where the old
+                  // shape would merely have scrolled. The cap is what removes
+                  // it: the writing gives way before the conversation is pushed
+                  // off the glass, and the box a person types in is the first
+                  // thing its own scroll shows.
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: room.maxHeight / 2),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(34, 0, 34, 18),
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (_said != null) ...[Trouble(_said!), const SizedBox(height: 10)],
@@ -425,10 +438,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           'the app.',
                           style: Zc.small.copyWith(color: Zc.ink4),
                         ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

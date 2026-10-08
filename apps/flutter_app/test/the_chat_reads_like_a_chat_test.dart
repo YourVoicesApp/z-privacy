@@ -132,6 +132,23 @@ Rect _conversation(WidgetTester tester) => tester.getRect(find.byType(ListView).
 double _scrolled(WidgetTester tester) =>
     tester.state<ScrollableState>(find.byType(Scrollable).first).position.pixels;
 
+
+/// Every exception the last frames reported, not just the first.
+///
+/// `takeException()` hands back **one at a time**, and a `RenderFlex` reports an
+/// overflow **once per render object** — so the first form of this measurement
+/// read «overflowed by 53 pixels» at 360 px of height and then «none» at 320,
+/// 280, 240 and 200, which are all worse. A single `takeException()` is an
+/// instrument that goes quiet after it has spoken once.
+List<String> _drain(WidgetTester tester) {
+  final found = <String>[];
+  for (;;) {
+    final e = tester.takeException();
+    if (e == null) return found;
+    found.add(e.toString().split('\n').first);
+  }
+}
+
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
@@ -143,6 +160,67 @@ void main() {
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async => null);
+  });
+
+  // **The instrument first.** A zero from a measurement that was never shown to
+  // read non-zero is not a measurement. This overflows on purpose, in this
+  // file, through the same drain the guard below uses.
+  testWidgets('e0 — CONTROL: the overflow drain reads an overflow when there is one', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(300, 300));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              SizedBox(height: 200, width: 10),
+              SizedBox(height: 200, width: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final said = _drain(tester);
+    expect(
+      said,
+      isNotEmpty,
+      reason: 'the drain read nothing from a Column 100 px taller than its window — '
+          'so a clean reading from it below would mean nothing',
+    );
+    expect(said.first, contains('overflowed'), reason: 'it read something, but not an overflow: $said');
+  });
+
+  // e · Three bands in a `Column` have a floor that one scroller did not, and
+  // this is where it is. Stands on the drained queue above, at every height in
+  // turn, with the page rebuilt from scratch each time so that a `RenderFlex`
+  // which has already spoken once cannot stay silent for the next one.
+  testWidgets('e — the page does not overflow at any window a person can drag it to', (tester) async {
+    final ground = await _vault(tester, 'short');
+    final chat = await _answered(tester);
+    final complaints = <String, List<String>>{};
+
+    for (final height in [760.0, 600.0, 500.0, 420.0, 360.0, 300.0, 240.0, 180.0, 140.0]) {
+      await tester.binding.setSurfaceSize(Size(900, height));
+      // A fresh tree, not a resize: an overflow is reported once per render
+      // object, so re-using the last one would hide every height after the
+      // first that complained.
+      await tester.pumpWidget(const MaterialApp(home: SizedBox.shrink()));
+      await tester.pump();
+      _drain(tester);
+      await tester.pumpWidget(_home(ground, chat));
+      await settle(tester, rounds: 3);
+      final said = _drain(tester);
+      if (said.isNotEmpty) complaints['${height.toInt()}'] = said;
+    }
+
+    expect(
+      complaints,
+      isEmpty,
+      reason: 'the page overflowed its window: $complaints. Before the writing band was capped '
+          'this read {360: [A RenderFlex overflowed by 53 pixels on the bottom.]}',
+    );
+
+    chat.dispose();
   });
 
   testWidgets('a — the writing is below the answer, not above it', (tester) async {
