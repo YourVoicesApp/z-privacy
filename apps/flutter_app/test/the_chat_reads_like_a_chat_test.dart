@@ -198,6 +198,9 @@ void main() {
     final ground = await _vault(tester, 'short');
     final chat = await _answered(tester);
     final complaints = <String, List<String>>{};
+    // Kept apart from the counts on purpose: one of these can go quiet, the
+    // other cannot.
+    final offGlass = <String, String>{};
 
     for (final height in [760.0, 600.0, 500.0, 420.0, 360.0, 300.0, 240.0, 180.0, 140.0]) {
       await tester.binding.setSurfaceSize(Size(900, height));
@@ -211,13 +214,38 @@ void main() {
       await settle(tester, rounds: 3);
       final said = _drain(tester);
       if (said.isNotEmpty) complaints['${height.toInt()}'] = said;
+
+      // **And a rectangle, because a count can only fail by rising.**
+      //
+      // The drain above fixes the silence but not the shape of the claim: «the
+      // queue was empty» is still a count, and the session that built 063
+      // reverted a wrapper of its own expecting red and watched 2.8 px of
+      // overflow pass straight through a count-based guard. A rect has no
+      // report-once problem — it can be read at every height, in any order, on
+      // any tree — so the property rides on geometry and the counts carry only
+      // the number.
+      final thread = _conversation(tester);
+      final writing = _composer(tester);
+      if (thread.top < -0.5 || thread.bottom > height + 0.5) {
+        offGlass['${height.toInt()}'] = 'the conversation is at $thread in a ${height.toInt()} px window';
+      }
+      if (writing.top < thread.bottom - 1) {
+        offGlass['${height.toInt()}'] =
+            'the writing starts at y=${writing.top.toStringAsFixed(0)} and the conversation runs '
+            'to y=${thread.bottom.toStringAsFixed(0)} — the chat order broke at this height';
+      }
     }
 
+    expect(
+      offGlass,
+      isEmpty,
+      reason: 'the bands left the window or swapped order: $offGlass',
+    );
     expect(
       complaints,
       isEmpty,
       reason: 'the page overflowed its window: $complaints. Before the writing band was capped '
-          'this read {360: [A RenderFlex overflowed by 53 pixels on the bottom.]}',
+          'this read {360: 53 px, 300: 113 px, 240: 173 px, 180: 233 px, 140: 273 px}',
     );
 
     chat.dispose();
