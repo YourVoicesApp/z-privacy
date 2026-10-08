@@ -1093,7 +1093,48 @@ pub struct PayloadView {
     /// Adding this changes nothing that leaves the device: it is read off the
     /// payload, never written into it.
     pub page_edges: Vec<PageEdge>,
+    /// **Which of the owner's sessions this payload belongs to** — 064d.
+    ///
+    /// `None` means it belongs to none, and that is the whole reason this field
+    /// exists. The core does not force a session to be born at an exit: doing
+    /// so would put a session line in 94 call sites, so by the lead's ruling the
+    /// screen asks at the exit — and a screen that forgets to ask would have
+    /// sent text with no session and **nothing would have said so**. A missing
+    /// line was silent.
+    ///
+    /// It is not silent now: it is written on the payload itself, where a guard
+    /// can read it and a screen can show it. Recorded when the payload is
+    /// **built**, because a payload is a snapshot of what would leave and the
+    /// session it belonged to is a fact about that snapshot, not about the
+    /// moment somebody looks at it later.
+    pub session: Option<PayloadSession>,
 }
+
+/// The session a payload belongs to: its number and its name, together.
+///
+/// Together in one struct and not as two optional fields beside each other,
+/// because a number without a name and a name without a number are two ways for
+/// one fact to disagree with itself.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PayloadSession {
+    pub number: u32,
+    pub name: String,
+}
+
+// **There is no «these names predate the session» state, and that is a fact
+// about the core rather than an omission here** — 064d.
+//
+// A count of names not made for the open session was built, guarded, and then
+// removed: it could not rise. `ops::name_tokens_from_the_vault` runs at the head
+// of `protect` and of `scan`, so a bench that mints anything while a session is
+// open is given that session's naming first; and `begin`/`enter` re-derive every
+// token already on the bench. Every path that could produce a straggler closes
+// one of those two ways.
+//
+// So a payload either belongs to a session and wears its names, or belongs to
+// none. The screen has two sentences to write, not three, and the second state
+// is not «named for later» — it is unreachable, and `a_name_made_outside_the_
+// session_is_counted` is the record of why.
 
 /// One page boundary: where it is, and which page begins there.
 ///

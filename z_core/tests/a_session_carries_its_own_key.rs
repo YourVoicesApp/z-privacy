@@ -196,6 +196,101 @@ fn an_answer_from_a_deleted_session_refuses_and_names_it() {
     close_session(bench).ok();
 }
 
+// ------------------------------- 6b · the payload says whose session it is
+
+/// **A payload with no session says so, on itself** — 064d.
+///
+/// The failure this closes is the one thing in 064 that was silent. The core
+/// does not force a session to be born at an exit (94 call sites would have had
+/// to pass one), so the screen asks — and a screen that forgot would have sent
+/// text with no session while every guard stayed green. No guard can cover the
+/// join between a press and the core: a core call started in a widget callback
+/// does not complete under `testWidgets`, measured. So the fact is moved onto
+/// the payload, where a guard reads it and a screen can show it.
+#[test]
+fn a_payload_says_which_session_it_belongs_to() {
+    let _g = serial();
+    fresh_vault("marked");
+
+    // Built before any session exists — the state a forgotten line leaves.
+    let bench = bench_with(ONE);
+    let bare = payload_view(build_payload(bench).expect("build")).expect("view");
+    assert!(
+        bare.session.is_none(),
+        "a payload built with no session open claims one: {:?}",
+        bare.session
+    );
+
+    // And after a birth it carries the session's number **and** its name, so a
+    // screen can say which one without asking a second question.
+    let row = conversation_begin("höstgranskningen".to_string(), Some(bench)).expect("begin");
+    let marked = payload_view(build_payload(bench).expect("build")).expect("view");
+    let Some(whose) = marked.session else {
+        panic!("a payload built inside a session does not name it");
+    };
+    assert_eq!(whose.number, row.number, "the payload names another session");
+    assert_eq!(whose.name, "höstgranskningen", "the payload does not carry the name");
+    // **Two states, not three.** There is no «some of these names predate the
+    // session» to report — see `a_second_bench_is_named_into_the_open_session`
+    // for the mechanism that makes it unreachable, and for what would have to
+    // break before a screen needed a third sentence.
+    close_session(bench).ok();
+}
+
+/// **There is no «these names predate the session» state, and here is why.**
+///
+/// A count of names not made for the open session was built, guarded, and then
+/// removed, because it **could not rise**. The lever that should have produced a
+/// straggler — a second bench, never entered into the session, minting its own
+/// random names while the session is open — produces none: `protect` calls
+/// `name_tokens_from_the_vault` before it mints, and so does `scan`, so a bench
+/// that mints anything while a session is open is given that session's naming
+/// first. The other direction is already covered: `begin` and `enter` re-derive
+/// every token already on a bench.
+///
+/// So this test records the mechanism rather than a number. If either of those
+/// two calls is ever removed from the head of `protect` or `scan`, this goes red
+/// — and the screen will need a third sentence it does not need today.
+#[test]
+fn a_second_bench_is_named_into_the_open_session() {
+    let _g = serial();
+    fresh_vault("stragglers");
+
+    let first = bench_with(ONE);
+    conversation_begin("granskning".to_string(), Some(first)).expect("begin");
+    let a = the_one_token(first);
+    close_session(first).ok();
+
+    // A second bench, and nobody enters the session on it. Under 046/U this
+    // would have been a different namespace — the document's text decided it.
+    let second = open_session(None, "sv".to_string()).expect("open");
+    import_text(second, TWO.to_string()).expect("import");
+    let at = TWO.find(NAME).expect("the fixture must contain the name");
+    protect(
+        second,
+        Span { start: at as u32, end: (at + NAME.len()) as u32 },
+        Scope::Conversation,
+        Kind::Person,
+    )
+    .expect("protect");
+    let b = the_one_token(second);
+
+    assert_eq!(
+        namespace_of(&a),
+        namespace_of(&b),
+        "a bench that minted inside an open session did not take the session's namespace, so a \
+         payload can now carry names the session never made and nothing reports it"
+    );
+    // And the payload says whose it is, with no third state to report.
+    let view = payload_view(build_payload(second).expect("build")).expect("view");
+    assert_eq!(
+        view.session.map(|w| w.number),
+        Some(1),
+        "the payload does not belong to the open session"
+    );
+    close_session(second).ok();
+}
+
 // ------------------------------------------------- 4 · a lock is not a power cut
 
 /// 062 §D: the sealed file survives a lock; only the key is forgotten, and the

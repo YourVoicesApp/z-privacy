@@ -388,12 +388,32 @@ fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
 // ---------------------------------------------------------------- payload
 
 pub(crate) fn build_payload(session: SessionId) -> ApiResult<PayloadHandle> {
+    // **Read before the payload is built, and stamped into it** — 064d. The
+    // session a payload belongs to is a fact about the snapshot, so it is taken
+    // at the moment of the snapshot and not looked up again later when the
+    // answer could have changed. `None` is a payload built with no session
+    // open, which is the state a forgotten question at the exit leaves and the
+    // one thing in 064 that used to be invisible.
+    let whose = with_core(|core| {
+        let number = core.open_conversation?;
+        if core.vault.state() != crate::api::VaultState::Unlocked {
+            return None;
+        }
+        core.vault
+            .conversations()
+            .into_iter()
+            .find(|(n, _, _)| *n == number)
+            // The count is **not** set here: only the builder holds the text
+            // that will leave, and it fills this in off that string. Setting it
+            // here would be a guess made before the thing it describes exists.
+            .map(|(number, name, _)| crate::api::PayloadSession { number, name })
+    });
     with_session(session.id, |s| {
         if s.original.is_empty() {
             return Err(ApiError::NothingToSend);
         }
         let id = s.take_payload_id();
-        let payload = SafePayload::build(s, id);
+        let payload = SafePayload::build(s, id, whose);
         // Invariant G3, enforced at run time and not only in the tests: a payload
         // that does not pass its own audit is never handed out.
         payload.audit(s)?;

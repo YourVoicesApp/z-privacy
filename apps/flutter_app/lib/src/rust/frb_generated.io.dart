@@ -48,6 +48,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PayloadHandle dco_decode_box_autoadd_payload_handle(dynamic raw);
 
   @protected
+  PayloadSession dco_decode_box_autoadd_payload_session(dynamic raw);
+
+  @protected
   PayloadView dco_decode_box_autoadd_payload_view(dynamic raw);
 
   @protected
@@ -276,6 +279,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   PayloadHandle? dco_decode_opt_box_autoadd_payload_handle(dynamic raw);
 
   @protected
+  PayloadSession? dco_decode_opt_box_autoadd_payload_session(dynamic raw);
+
+  @protected
   PayloadView? dco_decode_opt_box_autoadd_payload_view(dynamic raw);
 
   @protected
@@ -307,6 +313,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PayloadHandle dco_decode_payload_handle(dynamic raw);
+
+  @protected
+  PayloadSession dco_decode_payload_session(dynamic raw);
 
   @protected
   PayloadView dco_decode_payload_view(dynamic raw);
@@ -480,6 +489,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PayloadHandle sse_decode_box_autoadd_payload_handle(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  PayloadSession sse_decode_box_autoadd_payload_session(
     SseDeserializer deserializer,
   );
 
@@ -736,6 +750,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  PayloadSession? sse_decode_opt_box_autoadd_payload_session(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   PayloadView? sse_decode_opt_box_autoadd_payload_view(
     SseDeserializer deserializer,
   );
@@ -773,6 +792,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   PayloadHandle sse_decode_payload_handle(SseDeserializer deserializer);
+
+  @protected
+  PayloadSession sse_decode_payload_session(SseDeserializer deserializer);
 
   @protected
   PayloadView sse_decode_payload_view(SseDeserializer deserializer);
@@ -960,6 +982,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_payload_handle(
     PayloadHandle self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_payload_session(
+    PayloadSession self,
     SseSerializer serializer,
   );
 
@@ -1288,6 +1316,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_payload_session(
+    PayloadSession? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_payload_view(
     PayloadView? self,
     SseSerializer serializer,
@@ -1331,6 +1365,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_payload_handle(PayloadHandle self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_payload_session(
+    PayloadSession self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_payload_view(PayloadView self, SseSerializer serializer);

@@ -854,6 +854,27 @@ pub struct _PayloadView {
     /// Adding this changes nothing that leaves the device: it is read off the
     /// payload, never written into it.
     pub page_edges: Vec<PageEdge>,
+    /// **Which of the owner's sessions this payload belongs to** — 064d.
+    ///
+    /// `None` means it belongs to none, and that is the whole reason this field
+    /// exists. The core does not force a session to be born at an exit: doing
+    /// so would put a session line in 94 call sites, so by the lead's ruling the
+    /// screen asks at the exit — and a screen that forgets to ask would have
+    /// sent text with no session and **nothing would have said so**. A missing
+    /// line was silent.
+    ///
+    /// It is not silent now: it is written on the payload itself, where a guard
+    /// can read it and a screen can show it. Recorded when the payload is
+    /// **built**, because a payload is a snapshot of what would leave and the
+    /// session it belonged to is a fact about that snapshot, not about the
+    /// moment somebody looks at it later.
+    pub session: Option<PayloadSession>,
+}
+
+#[frb(mirror(PayloadSession))]
+pub struct _PayloadSession {
+    pub number: u32,
+    pub name: String,
 }
 
 #[frb(mirror(PageEdge))]

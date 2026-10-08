@@ -4140,6 +4140,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PayloadSession dco_decode_box_autoadd_payload_session(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_payload_session(raw);
+  }
+
+  @protected
   PayloadView dco_decode_box_autoadd_payload_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_payload_view(raw);
@@ -4811,6 +4817,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PayloadSession? dco_decode_opt_box_autoadd_payload_session(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_payload_session(raw);
+  }
+
+  @protected
   PayloadView? dco_decode_opt_box_autoadd_payload_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_payload_view(raw);
@@ -4899,16 +4911,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PayloadSession dco_decode_payload_session(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return PayloadSession(
+      number: dco_decode_u_32(arr[0]),
+      name: dco_decode_String(arr[1]),
+    );
+  }
+
+  @protected
   PayloadView dco_decode_payload_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return PayloadView(
       text: dco_decode_String(arr[0]),
       protectedCount: dco_decode_u_32(arr[1]),
       openSuggestions: dco_decode_u_32(arr[2]),
       pageEdges: dco_decode_list_page_edge(arr[3]),
+      session: dco_decode_opt_box_autoadd_payload_session(arr[4]),
     );
   }
 
@@ -5698,6 +5723,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_payload_handle(deserializer));
+  }
+
+  @protected
+  PayloadSession sse_decode_box_autoadd_payload_session(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_payload_session(deserializer));
   }
 
   @protected
@@ -6654,6 +6687,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PayloadSession? sse_decode_opt_box_autoadd_payload_session(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_payload_session(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   PayloadView? sse_decode_opt_box_autoadd_payload_view(
     SseDeserializer deserializer,
   ) {
@@ -6792,17 +6838,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  PayloadSession sse_decode_payload_session(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_number = sse_decode_u_32(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    return PayloadSession(number: var_number, name: var_name);
+  }
+
+  @protected
   PayloadView sse_decode_payload_view(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_text = sse_decode_String(deserializer);
     var var_protectedCount = sse_decode_u_32(deserializer);
     var var_openSuggestions = sse_decode_u_32(deserializer);
     var var_pageEdges = sse_decode_list_page_edge(deserializer);
+    var var_session = sse_decode_opt_box_autoadd_payload_session(deserializer);
     return PayloadView(
       text: var_text,
       protectedCount: var_protectedCount,
       openSuggestions: var_openSuggestions,
       pageEdges: var_pageEdges,
+      session: var_session,
     );
   }
 
@@ -7666,6 +7722,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_payload_session(
+    PayloadSession self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_payload_session(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_payload_view(
     PayloadView self,
     SseSerializer serializer,
@@ -8465,6 +8530,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_payload_session(
+    PayloadSession? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_payload_session(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_payload_view(
     PayloadView? self,
     SseSerializer serializer,
@@ -8585,12 +8663,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_payload_session(
+    PayloadSession self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.number, serializer);
+    sse_encode_String(self.name, serializer);
+  }
+
+  @protected
   void sse_encode_payload_view(PayloadView self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.text, serializer);
     sse_encode_u_32(self.protectedCount, serializer);
     sse_encode_u_32(self.openSuggestions, serializer);
     sse_encode_list_page_edge(self.pageEdges, serializer);
+    sse_encode_opt_box_autoadd_payload_session(self.session, serializer);
   }
 
   @protected
