@@ -44,6 +44,7 @@ final _everyError = <ApiError>[
   const ApiError.payloadAlreadySent(),
   const ApiError.vaultRequired(),
   const ApiError.betweenColumns(),
+  const ApiError.vaultChangedElsewhere(),
 ];
 
 /// Every shape the two nested enums take, because a reason inside an error is
@@ -88,8 +89,8 @@ void _readsAsHuman(String message, String what) {
 
 void main() {
   test('every ApiError variant has a human sentence', () {
-    expect(_everyError.length, 24,
-        reason: 'the contract has 24 ApiError variants');
+    expect(_everyError.length, 25,
+        reason: 'the contract has 25 ApiError variants');
     for (final e in _everyError) {
       _readsAsHuman(humanMessage(e), e.runtimeType.toString());
     }
@@ -104,6 +105,37 @@ void main() {
       final e = ApiError.networkRefused(reason: r, detail: 'an address must be https');
       _readsAsHuman(humanMessage(e), r.runtimeType.toString());
     }
+  });
+
+  /// **050/A · the conflict's sentence does not blame the folder.**
+  ///
+  /// The first answer to the owner's two-copies attack refused with
+  /// `StorageRefused`, which reads «Z Privacy will not use that location — the
+  /// vault file changed on disk while this copy was open; lock and unlock
+  /// before changing it». Three things wrong in one line: the location is
+  /// fine, the cause is another window of this program, and «lock and unlock»
+  /// was also being said to copies that were already locked.
+  ///
+  /// The locked half is fixed in the core and measured there
+  /// (`a_locked_copy_over_a_changed_file_says_it_is_locked`). This is the half
+  /// a person reads.
+  test('a vault changed by another window does not blame the folder', () {
+    final said = humanMessage(const ApiError.vaultChangedElsewhere());
+    expect(said.toLowerCase(), isNot(contains('location')),
+        reason: 'the place is fine, and saying otherwise sends them to look at it: $said');
+    expect(said.toLowerCase(), contains('another copy'),
+        reason: 'the cause is a second window of Z, and the sentence must name it: $said');
+    expect(
+      said.toLowerCase(),
+      anyOf(contains('close'), contains('lock and unlock')),
+      reason: 'a refusal without a next move leaves them holding a vault they cannot save: $said',
+    );
+    // And the control: the variant it was carved out of still means a place.
+    final place = humanMessage(
+      const ApiError.storageRefused(reason: 'the vault folder: a temporary file was left behind'),
+    );
+    expect(place.toLowerCase(), contains('location'),
+        reason: 'StorageRefused went back to meaning a place that cannot be used: $place');
   });
 
   // What the owner saw on 3 October: a Swedish annual report whose page 5 is

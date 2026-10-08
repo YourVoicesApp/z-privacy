@@ -54,6 +54,16 @@ pub enum _ApiError {
     ///
     /// Nothing the person typed is wrong here, so it is not `InputRefused`.
     StorageRefused { reason: String },
+    /// **Another copy of Z Privacy changed this vault since this one read it.**
+    ///
+    /// Its own variant, and not `StorageRefused`, because the place is fine:
+    /// the folder is writable, the file is intact, and a second window of this
+    /// program wrote to it. 050/A — the first answer to the owner's two-copies
+    /// attack refused with `StorageRefused`, which renders as «Z Privacy will
+    /// not use that location», and the location was never the trouble. It
+    /// carries no reason because there is only one: a person does not need a
+    /// byte count to be told to close the other window.
+    VaultChangedElsewhere,
     /// A document was not imported, with the named reason and a detail for the
     /// user («page 3 of 20 has no text layer»).
     DocumentRefused { reason: Refusal, detail: String },
