@@ -96,9 +96,12 @@ dies: every document and every message protected in this session.
 
 ## Not in this task
 
-Recovery (`059`) — deferred by the owner, and now heavier than it was: the vault
-holds the keys to everything a person has done, so losing the passphrase loses
-the work and not only the knowledge. **059 comes before or with this**, by his
-own ordering, and that is a condition on starting, not a note.
+Recovery (`059`) — **re-ordered by the owner, 8 Oct evening**: sessions are built
+now, recovery is the workshop immediately after, and this is built **assuming a
+recovery path will exist**. The format already satisfies that assumption — the
+second wrapped-master slot does not know or care where its secret lives — so the
+assumption changes wording, not bytes: the passphrase-loss warning will say
+«your passphrase AND your recovery key», and the session-delete warning stays
+absolute, because deletion is a chosen act no recovery undoes.
 
 Shamir, and any «several recovery blocks» field in the format: out, as settled.
