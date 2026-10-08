@@ -36,6 +36,26 @@ completing a conversation with the model · finding an old protection ·
 
 ---
 
+## 0 · The name: the first three words — of the question, not the document
+
+The owner's rule is the first three words. **Of which text** is the one thing it
+does not say, and the answer matters: the document's name is already shown beside
+the row, and **two sessions on one document are told apart only by what was
+asked.** So the question's first three words, and the document's name beside it:
+
+```
+3 · «أين المشكلة المحاسبية»     EN-3_overtime_ledger.txt    today 18:41
+2 · «هل هناك أسماء باقية»       Brief_Weber.txt             yesterday
+```
+
+The **number is the identity** and never changes; the **name is a handle** and may
+be changed at any time. That is already the rule for a profile id, `p-<slug>-<n>`,
+whose comment reads: *the person never typed it*.
+
+And where a session is **created** is not settled: the owner offered settings, but
+settings do not exist inside a document (061 §5), so a session could not be begun
+while working. One of those two has to move.
+
 ## A · The vault holds the keys. The sessions are their own files.
 
 His sentence already says it — *«فك الكود الخاص بها يحفظ في الخزنة»* — and it is
