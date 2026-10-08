@@ -115,6 +115,78 @@ class Ground extends ChangeNotifier {
 
   /// Read it all again from Rust. One snapshot per screen, not a handful of
   /// calls that can disagree.
+  // ------------------------------------------------- the owner's sessions, 064
+
+  /// Every session the vault keeps, newest number last. Empty while the vault
+  /// is shut, because the keys are in it.
+  List<ConversationRow> sessions = const [];
+
+  /// Which session is open, by number. `None` until the first one is begun or
+  /// entered — and `None` again after a lock, because the core forgets the
+  /// number with the key rather than leaving one no key opens.
+  int? openSession;
+
+  /// The open session's row, for a bar or a heading to name it.
+  ConversationRow? get openSessionRow =>
+      sessions.where((s) => s.number == openSession).firstOrNull;
+
+  /// **Begin one.** The name is asked where the press happened — in the panel
+  /// for a deliberate clean break, at the exit for a person who never pressed
+  /// the button. Both paths land here, and the core does the rest: 32 bytes in
+  /// the vault, and every token on the bench named again from them.
+  ///
+  /// Returns how many tokens were renamed, so the screen can say that the
+  /// names it was showing have just become this session's. Null is a refusal,
+  /// already in `trouble`.
+  Future<int?> beginSession(String name, {SessionId? bench}) async {
+    try {
+      final row = await z.conversationBegin(name: name, bench: bench);
+      await refresh();
+      return row.renamedTokens;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// **Enter an existing one.** Asks nothing — the owner's rule.
+  Future<int?> enterSession(int number, {SessionId? bench}) async {
+    try {
+      final row = await z.conversationEnter(number: number, bench: bench);
+      await refresh();
+      return row.renamedTokens;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// **Delete one, key and file together.** Returns the name that went, so the
+  /// screen can say what it was rather than a number.
+  Future<String?> forgetSession(int number) async {
+    try {
+      final name = await z.conversationForget(number: number);
+      await refresh();
+      return name;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+      return null;
+    }
+  }
+
+  Future<void> renameSession(int number, String name) async {
+    try {
+      await z.conversationRename(number: number, name: name);
+      await refresh();
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+    }
+  }
+
   Future<void> refresh() async {
     try {
       home = await z.homeSnapshot();
@@ -124,6 +196,17 @@ class Ground extends ChangeNotifier {
           ? await z.privacyRulesSnapshot(profileId: null)
           : null;
       providerSnap = await z.providerSnapshot();
+      // The sessions and which one is open. Asked of the core, never kept here
+      // as a second copy: after a lock the core answers `None` because it
+      // forgot the key, and a screen holding its own idea of «open» would draw
+      // a session nobody can read.
+      if (home?.vault == VaultState.unlocked) {
+        sessions = await z.conversations();
+        openSession = await z.conversationOpen();
+      } else {
+        sessions = const [];
+        openSession = null;
+      }
       rememberKinds(kinds);
       trouble = null;
     } on ApiError catch (e) {
