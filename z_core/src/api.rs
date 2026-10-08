@@ -77,6 +77,27 @@ pub enum ApiError {
     /// carries no reason because there is only one: a person does not need a
     /// byte count to be told to close the other window.
     VaultChangedElsewhere,
+    /// **Z Privacy could write here and is declining to, because the person
+    /// said otherwise.**
+    ///
+    /// The folder that holds Z's own files has had a permission taken off it.
+    /// `secure_dir` used to set `0o700` unconditionally on every write path, so
+    /// from `0o500` it **gave Z back the write bit the person removed, in
+    /// silence** — under a comment that called the line «narrowing» (058).
+    ///
+    /// Its own variant, and not `StorageRefused`, because the next move is a
+    /// different one: `StorageRefused` means *choose somewhere else*, and this
+    /// means *change the permission yourself, or choose somewhere else — and
+    /// know Z will not change it for you.* The deeper reason is that Z is not
+    /// refusing the folder at all: the folder is perfectly usable, and Z is
+    /// deferring to a decision. A variant that cannot say that is the wrong
+    /// variant. **One variant per next move, not per cause** (the lead,
+    /// 8 October 2026).
+    ///
+    /// **The sentence must carry the promise** — that Z will not change a
+    /// permission the person set. Naming the cause and omitting the promise
+    /// says the small half.
+    StoragePermissionsKept { reason: String },
     /// A document was not imported, with the named reason and a detail for the
     /// user («page 3 of 20 has no text layer»).
     DocumentRefused { reason: Refusal, detail: String },
@@ -167,6 +188,9 @@ impl fmt::Display for ApiError {
             Self::StorageRefused { reason } => write!(f, "that place cannot be used safely: {reason}"),
             Self::VaultChangedElsewhere => {
                 write!(f, "another copy of Z Privacy changed this vault")
+            }
+            Self::StoragePermissionsKept { reason } => {
+                write!(f, "a permission you set was kept, so nothing was written: {reason}")
             }
             Self::DocumentRefused { reason, detail } => {
                 write!(f, "this document was not imported ({reason:?}): {detail}")

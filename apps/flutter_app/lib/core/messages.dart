@@ -81,6 +81,17 @@ String humanMessage(Object error) {
     ApiError_VaultChangedElsewhere() =>
       'Another copy of Z Privacy changed this vault. Close that window, or '
           'lock and unlock here to take in its work.',
+    // 058. **The promise, and not only the cause.** Z could write here; it is
+    // declining to, because the person took a permission off the folder. So
+    // this does not say «will not use that location» — the location is the one
+    // they chose and it is perfectly usable — and it does not quietly mend the
+    // folder, which is what the core used to do. The promise comes first
+    // because it is the part they cannot find out any other way, and both next
+    // moves are theirs to pick.
+    ApiError_StoragePermissionsKept(:final reason) =>
+      'Z Privacy will not change a permission you set, so nothing was saved — '
+          '${_lower(reason)}. Change the permission yourself, or choose another '
+          'folder.',
     ApiError_DocumentRefused(:final reason) => _document(reason),
     ApiError_BadSpan() =>
       'That selection could not be read. Try selecting the words again.',

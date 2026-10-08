@@ -45,6 +45,9 @@ final _everyError = <ApiError>[
   const ApiError.vaultRequired(),
   const ApiError.betweenColumns(),
   const ApiError.vaultChangedElsewhere(),
+  const ApiError.storagePermissionsKept(
+    reason: 'vault.zv: the folder that holds it is set to 500',
+  ),
 ];
 
 /// Every shape the two nested enums take, because a reason inside an error is
@@ -89,8 +92,8 @@ void _readsAsHuman(String message, String what) {
 
 void main() {
   test('every ApiError variant has a human sentence', () {
-    expect(_everyError.length, 25,
-        reason: 'the contract has 25 ApiError variants');
+    expect(_everyError.length, 26,
+        reason: 'the contract has 26 ApiError variants');
     for (final e in _everyError) {
       _readsAsHuman(humanMessage(e), e.runtimeType.toString());
     }
@@ -136,6 +139,37 @@ void main() {
     );
     expect(place.toLowerCase(), contains('location'),
         reason: 'StorageRefused went back to meaning a place that cannot be used: $place');
+  });
+
+  /// **058 · a locked folder is told the promise, not only the cause.**
+  ///
+  /// The lead's condition: *a sentence that names the cause and omits the
+  /// promise has said the small half.* Z is not refusing the folder — it could
+  /// write there, and is deferring to a decision — so «Z Privacy will not use
+  /// that location» would be wrong for the second time in one morning, and
+  /// this is the variant that exists to be able to say so.
+  test('a folder the person locked hears that Z will not change it', () {
+    final said = humanMessage(
+      const ApiError.storagePermissionsKept(
+        reason: 'vault.zv: the folder that holds it is set to 500',
+      ),
+    );
+    expect(said.toLowerCase(), contains('will not change a permission'),
+        reason: 'the promise is the half they cannot find out any other way: $said');
+    expect(said.toLowerCase(), isNot(contains('will not use that location')),
+        reason: 'the location is the one they chose, and it is usable: $said');
+    expect(
+      said.toLowerCase(),
+      allOf(contains('change the permission yourself'), contains('another')),
+      reason: 'both next moves are theirs to pick: $said',
+    );
+    // The control: the variant this was carved out of still means a place
+    // found unsuitable, which is a different next move.
+    final place = humanMessage(
+      const ApiError.storageRefused(reason: 'the vault folder: a temporary file was left behind'),
+    );
+    expect(place.toLowerCase(), contains('location'));
+    expect(place.toLowerCase(), isNot(contains('will not change a permission')));
   });
 
   // What the owner saw on 3 October: a Swedish annual report whose page 5 is

@@ -62,9 +62,37 @@ pub(crate) fn secure_dir(dir: &Path, label: &str) -> ApiResult<()> {
         return Err(refused(label, "the data directory is not a directory"));
     }
 
-    // G15-ok: narrowing the private folder that holds ZVLT and ZCFG.
-    std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700))
-        .map_err(|e| refused(label, format!("the data directory permissions could not be set: {e}")))?;
+    // **Narrow in silence, never widen in silence** (058).
+    //
+    // This line used to set `0o700` unconditionally, on every write path. From
+    // `0o755` that is a mend — the mode a folder gets from the default umask,
+    // nobody's decision, and nothing to tell anyone about. From `0o500` it was
+    // the opposite: Z handed itself back the write permission the owner of the
+    // machine had taken off, and said nothing, under a comment that called the
+    // line «narrowing». For a product whose claim is that nothing happens to
+    // your data without your word, «the app re-granted itself a permission I
+    // had removed» is a sentence that loses a room.
+    //
+    // It also made a read-only folder useless as a test lever: Z mended the
+    // folder and wrote anyway, so `chmod 500` bought a **false green**. The
+    // lever that works is a leftover `vault.zv.new`, which is what a write
+    // killed half-way leaves behind — see
+    // `a_create_that_cannot_reach_the_disk_keeps_nothing` in `vault/mod.rs`.
+    let mode = meta.permissions().mode() & 0o777;
+    if mode & 0o700 != 0o700 {
+        // Z **could** write here. It is declining to, because the person said
+        // otherwise — which is a different sentence from «that place cannot be
+        // used safely», and so a different variant.
+        return Err(ApiError::StoragePermissionsKept {
+            reason: format!("{label}: the folder that holds it is set to {mode:03o}"),
+        });
+    }
+    if mode != 0o700 {
+        // G15-ok: narrowing the private folder that holds ZVLT and ZCFG.
+        std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700)).map_err(|e| {
+            refused(label, format!("the data directory permissions could not be set: {e}"))
+        })?;
+    }
     Ok(())
 }
 
@@ -226,4 +254,99 @@ pub(crate) fn replace_atomically(path: &Path, temp_extension: &str, bytes: &[u8]
     std::fs::rename(&temp, path)
         .map_err(|e| refused(label, format!("the complete file could not be put in place: {e}")))?;
     Ok(())
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+
+    fn test_dir(name: &str) -> PathBuf {
+        // G15-ok: a test's own folder, for the two files this module is allowed.
+        let dir = std::env::temp_dir().join(format!("zprivacy-perm-{name}-{}", std::process::id()));
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+        // G15-ok: making a test's own folder.
+        std::fs::create_dir_all(&dir).expect("make the folder");
+        dir
+    }
+
+    fn mode_of(dir: &Path) -> u32 {
+        // G15-ok: reading the mode of a test's own folder.
+        std::fs::metadata(dir).expect("stat").permissions().mode() & 0o777
+    }
+
+    fn set_mode(dir: &Path, mode: u32) {
+        // G15-ok: setting the mode of a test's own folder.
+        std::fs::set_permissions(dir, std::fs::Permissions::from_mode(mode)).expect("chmod");
+    }
+
+    /// **058, the guard that would have caught it: a refused write leaves the
+    /// folder exactly as the person set it.**
+    ///
+    /// `secure_dir` ran `set_permissions(dir, 0o700)` unconditionally on every
+    /// write path, so from `0o500` Z gave itself back the write bit the owner
+    /// of the machine had removed — and said nothing. Found while building a
+    /// lever for 050/C: a read-only folder does not make a write fail, because
+    /// Z mends the folder and writes anyway.
+    #[test]
+    fn a_folder_the_person_locked_is_left_exactly_as_it_was() {
+        let dir = test_dir("locked");
+        set_mode(&dir, 0o500);
+
+        let refused = replace_atomically(&dir.join("vault.zv"), "zv.new", b"a vault", "vault.zv");
+
+        assert_eq!(
+            mode_of(&dir),
+            0o500,
+            "Z changed a permission the person set, which is the whole of 058"
+        );
+        match refused {
+            Err(ApiError::StoragePermissionsKept { reason }) => {
+                assert!(
+                    reason.contains("vault.zv") && reason.contains("500"),
+                    "the refusal must name which folder and what it is set to: «{reason}»"
+                );
+            }
+            other => panic!("a folder the person locked gave {other:?}"),
+        }
+        assert!(
+            !dir.join("vault.zv").exists(),
+            "nothing was written, and the refusal must not have lied about it"
+        );
+
+        set_mode(&dir, 0o700);
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// **And the other half, which must stay silent.** A folder made by the
+    /// default umask is `0o755`, which is the common case and a mend, not a
+    /// decision of the person's. Narrow in silence.
+    #[test]
+    fn a_folder_wider_than_it_should_be_is_narrowed_without_a_word() {
+        let dir = test_dir("wide");
+        set_mode(&dir, 0o755);
+
+        replace_atomically(&dir.join("vault.zv"), "zv.new", b"a vault", "vault.zv")
+            .expect("a folder nobody locked is written to");
+
+        assert_eq!(mode_of(&dir), 0o700, "a world-readable folder was left as it was");
+        assert!(dir.join("vault.zv").exists());
+
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A folder already exactly right is not touched at all — there is nothing
+    /// to mend, and a syscall on every write that changes nothing is a syscall
+    /// that can fail for nothing.
+    #[test]
+    fn a_folder_already_right_is_left_alone() {
+        let dir = test_dir("exact");
+        set_mode(&dir, 0o700);
+        replace_atomically(&dir.join("vault.zv"), "zv.new", b"a vault", "vault.zv").expect("write");
+        assert_eq!(mode_of(&dir), 0o700);
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }
