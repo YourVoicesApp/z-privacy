@@ -36,6 +36,15 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
+///
+/// ⚠ **046/S's parked WIP on `fix/the-documents-room` also calls itself 11.**
+/// Per the lead's ruling, 8 October 2026: **this is 11; that becomes 12 when it
+/// is unparked.** Nothing was ever written by that branch, so no vault on earth
+/// is at its 11 — but two formats sharing one number means the second is read
+/// with the first's sections, and no test can see a collision between a commit
+/// and a branch that is parked. The warning is here because this is the line a
+/// person edits, and a paper on another branch is a guard nobody is standing
+/// next to.
 pub(crate) const MODEL_VERSION: u16 = 11;
 
 // ---------------------------------------------------------------- stable codes
