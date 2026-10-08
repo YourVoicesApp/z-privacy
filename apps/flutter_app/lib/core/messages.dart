@@ -71,6 +71,27 @@ String humanMessage(Object error) {
     // the reason names which one and why.
     ApiError_StorageRefused(:final reason) =>
       'Z Privacy will not use that location — ${_lower(reason)}',
+    // 050/A. **The place is fine.** This used to be a `StorageRefused`, so a
+    // person whose second window had written was told «Z Privacy will not use
+    // that location» about a folder that is writable and a file that is
+    // intact. It carries no reason from the core because there is only one,
+    // and it ends with the two things that work — close the other window, or
+    // take in its work — because a refusal without a next move leaves the
+    // person holding an open vault they cannot save.
+    ApiError_VaultChangedElsewhere() =>
+      'Another copy of Z Privacy changed this vault. Close that window, or '
+          'lock and unlock here to take in its work.',
+    // 058. **The promise, and not only the cause.** Z could write here; it is
+    // declining to, because the person took a permission off the folder. So
+    // this does not say «will not use that location» — the location is the one
+    // they chose and it is perfectly usable — and it does not quietly mend the
+    // folder, which is what the core used to do. The promise comes first
+    // because it is the part they cannot find out any other way, and both next
+    // moves are theirs to pick.
+    ApiError_StoragePermissionsKept(:final reason) =>
+      'Z Privacy will not change a permission you set, so nothing was saved — '
+          '${_lower(reason)}. Change the permission yourself, or choose another '
+          'folder.',
     ApiError_DocumentRefused(:final reason) => _document(reason),
     ApiError_BadSpan() =>
       'That selection could not be read. Try selecting the words again.',

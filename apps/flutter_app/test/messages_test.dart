@@ -44,6 +44,10 @@ final _everyError = <ApiError>[
   const ApiError.payloadAlreadySent(),
   const ApiError.vaultRequired(),
   const ApiError.betweenColumns(),
+  const ApiError.vaultChangedElsewhere(),
+  const ApiError.storagePermissionsKept(
+    reason: 'vault.zv: the folder that holds it is set to 500',
+  ),
 ];
 
 /// Every shape the two nested enums take, because a reason inside an error is
@@ -88,8 +92,8 @@ void _readsAsHuman(String message, String what) {
 
 void main() {
   test('every ApiError variant has a human sentence', () {
-    expect(_everyError.length, 24,
-        reason: 'the contract has 24 ApiError variants');
+    expect(_everyError.length, 26,
+        reason: 'the contract has 26 ApiError variants');
     for (final e in _everyError) {
       _readsAsHuman(humanMessage(e), e.runtimeType.toString());
     }
@@ -104,6 +108,68 @@ void main() {
       final e = ApiError.networkRefused(reason: r, detail: 'an address must be https');
       _readsAsHuman(humanMessage(e), r.runtimeType.toString());
     }
+  });
+
+  /// **050/A · the conflict's sentence does not blame the folder.**
+  ///
+  /// The first answer to the owner's two-copies attack refused with
+  /// `StorageRefused`, which reads «Z Privacy will not use that location — the
+  /// vault file changed on disk while this copy was open; lock and unlock
+  /// before changing it». Three things wrong in one line: the location is
+  /// fine, the cause is another window of this program, and «lock and unlock»
+  /// was also being said to copies that were already locked.
+  ///
+  /// The locked half is fixed in the core and measured there
+  /// (`a_locked_copy_over_a_changed_file_says_it_is_locked`). This is the half
+  /// a person reads.
+  test('a vault changed by another window does not blame the folder', () {
+    final said = humanMessage(const ApiError.vaultChangedElsewhere());
+    expect(said.toLowerCase(), isNot(contains('location')),
+        reason: 'the place is fine, and saying otherwise sends them to look at it: $said');
+    expect(said.toLowerCase(), contains('another copy'),
+        reason: 'the cause is a second window of Z, and the sentence must name it: $said');
+    expect(
+      said.toLowerCase(),
+      anyOf(contains('close'), contains('lock and unlock')),
+      reason: 'a refusal without a next move leaves them holding a vault they cannot save: $said',
+    );
+    // And the control: the variant it was carved out of still means a place.
+    final place = humanMessage(
+      const ApiError.storageRefused(reason: 'the vault folder: a temporary file was left behind'),
+    );
+    expect(place.toLowerCase(), contains('location'),
+        reason: 'StorageRefused went back to meaning a place that cannot be used: $place');
+  });
+
+  /// **058 · a locked folder is told the promise, not only the cause.**
+  ///
+  /// The lead's condition: *a sentence that names the cause and omits the
+  /// promise has said the small half.* Z is not refusing the folder — it could
+  /// write there, and is deferring to a decision — so «Z Privacy will not use
+  /// that location» would be wrong for the second time in one morning, and
+  /// this is the variant that exists to be able to say so.
+  test('a folder the person locked hears that Z will not change it', () {
+    final said = humanMessage(
+      const ApiError.storagePermissionsKept(
+        reason: 'vault.zv: the folder that holds it is set to 500',
+      ),
+    );
+    expect(said.toLowerCase(), contains('will not change a permission'),
+        reason: 'the promise is the half they cannot find out any other way: $said');
+    expect(said.toLowerCase(), isNot(contains('will not use that location')),
+        reason: 'the location is the one they chose, and it is usable: $said');
+    expect(
+      said.toLowerCase(),
+      allOf(contains('change the permission yourself'), contains('another')),
+      reason: 'both next moves are theirs to pick: $said',
+    );
+    // The control: the variant this was carved out of still means a place
+    // found unsuitable, which is a different next move.
+    final place = humanMessage(
+      const ApiError.storageRefused(reason: 'the vault folder: a temporary file was left behind'),
+    );
+    expect(place.toLowerCase(), contains('location'));
+    expect(place.toLowerCase(), isNot(contains('will not change a permission')));
   });
 
   // What the owner saw on 3 October: a Swedish annual report whose page 5 is

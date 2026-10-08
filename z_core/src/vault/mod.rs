@@ -26,6 +26,12 @@ pub(crate) struct VaultStore {
     dir: Option<PathBuf>,
     /// The file as it sits on disk, whether or not it is open.
     sealed: Option<SealedVault>,
+    /// The exact bytes `sealed` came from on disk, if it came from disk.
+    ///
+    /// Two desktop instances have two `VaultStore`s. Atomic replace protects the
+    /// file from being torn in half, but not from "last writer wins"; this keeps
+    /// an unlocked copy from overwriting a vault another copy has changed since.
+    disk_bytes: Option<Vec<u8>>,
     /// A file was present, but could not be parsed. Kept so `state()` can stay
     /// infallible and `unlock()` can still name the refusal.
     sealed_error: Option<ApiError>,
@@ -104,16 +110,21 @@ impl VaultStore {
             Ok(Some(bytes)) => match SealedVault::from_bytes(&bytes) {
                 Ok(sealed) => {
                     self.sealed = Some(sealed);
+                    self.disk_bytes = Some(bytes);
                     self.sealed_error = None;
                 }
                 Err(err) => {
                     self.sealed = None;
+                    self.disk_bytes = Some(bytes);
                     self.sealed_error = Some(err);
                 }
             },
-            Ok(None) => {}
+            Ok(None) => {
+                self.disk_bytes = None;
+            }
             Err(err) => {
                 self.sealed = None;
+                self.disk_bytes = None;
                 self.sealed_error = Some(err);
             }
         }
@@ -200,11 +211,30 @@ impl VaultStore {
         sealed.reseal_body(&master, &body)?;
         crypto::wipe(body);
         let minutes = model.settings.auto_lock_minutes;
+        // **The file before the memory** (050/C). These four fields used to be
+        // set first, so a `create` that failed for any reason afterwards left
+        // this copy holding an open vault that is **not on disk**, under a
+        // passphrase the file does not know. A read-only folder shows it with
+        // no race involved, which is the point: the defect was never timing.
+        //
+        // And a file that appeared since `load_sealed` above is a vault that
+        // already exists. That is the true cause and the name the person
+        // needs — not «this place cannot be used», which is what the generic
+        // look would have said about a folder that is perfectly fine.
+        let mut on_disk = None;
+        if let Some(path) = self.path() {
+            if crate::secure_file::read_no_follow(&path, "vault.zv")?.is_some() {
+                return Err(ApiError::VaultAlreadyExists);
+            }
+            let bytes = sealed.to_bytes();
+            crate::secure_file::replace_atomically(&path, "zv.new", &bytes, "vault.zv")?;
+            on_disk = Some(bytes);
+        }
         self.sealed = Some(sealed);
         self.master = Some(master);
         self.open = Some(OpenVault { vault: model, revealed: None });
+        self.disk_bytes = on_disk;
         self.set_idle_limit(minutes);
-        self.write_to_disk()?;
         Ok((0, 0))
     }
 
@@ -262,6 +292,7 @@ impl VaultStore {
         if let Some(err) = self.sealed_error.clone() {
             return Err(err);
         }
+        self.ensure_disk_unchanged()?;
         let sealed = self.sealed.as_mut().ok_or(ApiError::VaultAbsent)?;
         sealed.change_passphrase(old, replacement)?;
         self.write_to_disk()
@@ -288,6 +319,15 @@ impl VaultStore {
     /// Change the open vault and seal it again. Nothing here can leave the device.
     pub(crate) fn with_open_mut<R>(&mut self, f: impl FnOnce(&mut Vault) -> ApiResult<R>) -> ApiResult<R> {
         self.tick();
+        // **This copy's own state first, and the disk after it** (050/A). The
+        // other order told a copy whose vault was *locked* that the file had
+        // changed and it should lock — advice to lock, given to someone already
+        // locked, about a copy that is not open. A call that cannot happen at
+        // all has nothing to say about another window.
+        if self.open.is_none() || self.master.is_none() {
+            return Err(ApiError::VaultLocked);
+        }
+        self.ensure_disk_unchanged()?;
         let (Some(open), Some(master)) = (self.open.as_mut(), self.master.as_ref()) else {
             return Err(ApiError::VaultLocked);
         };
@@ -424,7 +464,25 @@ impl VaultStore {
             .unwrap_or_default()
     }
 
-    fn write_to_disk(&self) -> ApiResult<()> {
+    /// Has the file moved underneath this copy since it read it?
+    ///
+    /// The refusal is `VaultChangedElsewhere` and carries no reason (050/A).
+    /// It used to be `StorageRefused`, which the app renders as «Z Privacy
+    /// will not use that location» — and the location is fine: the folder is
+    /// writable, the file is intact, and a second window of this program
+    /// wrote to it. One sentence, worded in `messages.dart` and nowhere else.
+    fn ensure_disk_unchanged(&self) -> ApiResult<()> {
+        let Some(path) = self.path() else {
+            return Ok(());
+        };
+        let current = crate::secure_file::read_no_follow(&path, "vault.zv")?;
+        if current != self.disk_bytes {
+            return Err(ApiError::VaultChangedElsewhere);
+        }
+        Ok(())
+    }
+
+    fn write_to_disk(&mut self) -> ApiResult<()> {
         let (Some(path), Some(sealed)) = (self.path(), self.sealed.as_ref()) else {
             // No folder set: the vault lives for this run only. Used by tests and
             // by a first run before the app has told us where to put it.
@@ -432,6 +490,7 @@ impl VaultStore {
         };
         let bytes = sealed.to_bytes();
         crate::secure_file::replace_atomically(&path, "zv.new", &bytes, "vault.zv")?;
+        self.disk_bytes = Some(bytes);
         Ok(())
     }
 }
@@ -516,6 +575,236 @@ mod tests {
         let hints = again.hints(None);
         assert_eq!(hints.len(), 2, "the value and its alias");
         assert_eq!(hints[0].entity_handle, "CLIENT #17");
+
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// **050/A · a locked copy is not told to lock.**
+    ///
+    /// `with_open_mut` looked at the disk before it looked at its own state, so
+    /// a copy whose vault was **locked** over a changed file was refused with
+    /// «the vault file changed on disk while this copy was open; lock and
+    /// unlock before changing it» — advice to lock, given to someone already
+    /// locked, about a copy that is not open. The true answer is one word:
+    /// `VaultLocked`.
+    #[test]
+    fn a_locked_copy_over_a_changed_file_says_it_is_locked() {
+        let dir = test_dir("locked-and-changed");
+        let pass = "ein gutes Passwort für den Test";
+
+        let mut first = VaultStore::default();
+        first.set_dir(dir.clone()).expect("dir");
+        first.create(pass).expect("create");
+
+        let mut copy = VaultStore::default();
+        copy.set_dir(dir.clone()).expect("dir copy");
+        copy.unlock(pass).expect("unlock copy");
+
+        // The control: locked, disk untouched. If this were anything but
+        // `VaultLocked` the test below would prove nothing about the disk.
+        copy.lock();
+        match copy.with_open_mut(|_| Ok(())) {
+            Err(ApiError::VaultLocked) => {}
+            other => panic!("locked with the disk untouched gave {other:?}"),
+        }
+
+        // And now the disk moves underneath it. The copy is still locked, and
+        // that is still the whole of what is wrong with the call.
+        first
+            .with_open_mut(|vault| {
+                vault.entities.push(cheap_entity(17));
+                vault.next_entity = 18;
+                Ok(())
+            })
+            .expect("the other copy writes");
+        match copy.with_open_mut(|_| Ok(())) {
+            Err(ApiError::VaultLocked) => {}
+            other => panic!("a locked copy over a changed file was told to lock: {other:?}"),
+        }
+
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// **050/A · the conflict has its own name, and its own sentence.**
+    ///
+    /// `StorageRefused` renders as «Z Privacy will not use that location», and
+    /// the location is fine — another window of Z wrote. The variant above it
+    /// carries the contract this broke: *the fault is in a location, and the
+    /// reason names which one and why*.
+    #[test]
+    fn a_conflict_is_named_for_the_other_window_not_for_the_folder() {
+        let dir = test_dir("named-conflict");
+        let pass = "ein gutes Passwort für den Test";
+
+        let mut first = VaultStore::default();
+        first.set_dir(dir.clone()).expect("dir");
+        first.create(pass).expect("create");
+        let mut copy = VaultStore::default();
+        copy.set_dir(dir.clone()).expect("dir copy");
+        copy.unlock(pass).expect("unlock copy");
+
+        first
+            .with_open_mut(|vault| {
+                vault.entities.push(cheap_entity(17));
+                vault.next_entity = 18;
+                Ok(())
+            })
+            .expect("the other copy writes");
+
+        match copy.with_open_mut(|vault| {
+            vault.entities.push(cheap_entity(18));
+            Ok(())
+        }) {
+            Err(ApiError::VaultChangedElsewhere) => {}
+            other => panic!("the conflict is still named after a folder: {other:?}"),
+        }
+
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// **050/C, the part that is real: a `create` that fails must leave the copy
+    /// as it was.**
+    ///
+    /// The paper's own case — a second copy pressing create minutes later —
+    /// does **not** reproduce: `create` calls `load_sealed()` first, which
+    /// re-reads whenever nothing is held, so it is refused with
+    /// `VaultAlreadyExists` before anything is touched. That is measured in
+    /// `a_refused_create_leaves_the_copy_as_it_was`, which was green before a
+    /// line of 050/C was written.
+    ///
+    /// What is real is the ordering underneath it: `master` and `open` were set
+    /// **before** the disk was written, so a `create` that failed for any
+    /// reason left memory holding an open vault that is not on disk, under a
+    /// passphrase the file does not know. No race is needed to show it, which
+    /// is the point — the defect was never about timing.
+    ///
+    /// The lever is a leftover `vault.zv.new`, which is what a write killed
+    /// half-way through leaves behind: `replace_atomically` opens its temp file
+    /// with `create_new`, so it refuses rather than write over one. A read-only
+    /// folder is **not** a lever, and that is worth knowing — `secure_dir`
+    /// repairs the folder to 0o700 on the way past, so Z mends its own
+    /// permissions before it writes.
+    #[test]
+    fn a_create_that_cannot_reach_the_disk_keeps_nothing() {
+        let dir = test_dir("create-no-disk");
+        // `set_dir` makes the folder itself, through `secure_dir` — so this
+        // test touches the filesystem once, for the leftover below, and G15
+        // has one exemption to count rather than two.
+        let mut store = VaultStore::default();
+        store.set_dir(dir.clone()).expect("dir");
+        assert_eq!(store.state(), VaultState::Absent);
+
+        // G15-ok: a test's own folder, standing in for a half-written file.
+        std::fs::write(dir.join("vault.zv.new"), b"half a vault").expect("the leftover");
+
+        let refused = store.create("ein gutes Passwort für den Test");
+        assert!(refused.is_err(), "a create that could not write said {refused:?}");
+        assert_eq!(
+            store.state(),
+            VaultState::Absent,
+            "a create that never reached the disk left this copy holding an open vault"
+        );
+        assert!(
+            !dir.join(FILE_NAME).exists(),
+            "there is no vault on disk, and the copy must not pretend otherwise"
+        );
+
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// **050/C · a copy that was started first does not create into memory.**
+    ///
+    /// A copy opened while no vault existed still shows the create screen after
+    /// another copy has made one. The person types a passphrase and presses
+    /// create — and `master` and `open` were set before anything looked at the
+    /// disk, so a refusal left memory holding an open vault that is not on disk
+    /// under a passphrase the file does not know.
+    ///
+    /// What this asserts is the only thing a person can check: **`state()` is
+    /// exactly what it was before the press.**
+    #[test]
+    fn a_refused_create_leaves_the_copy_as_it_was() {
+        let dir = test_dir("refused-create");
+        let pass = "ein gutes Passwort für den Test";
+
+        // The copy that was started first, while there was nothing here. It
+        // asks once — which is what a first run does — and finds nothing.
+        let mut early = VaultStore::default();
+        early.set_dir(dir.clone()).expect("dir early");
+        let before = early.state();
+        assert_eq!(before, VaultState::Absent, "the early copy saw a vault that was not there");
+
+        // Another copy creates one.
+        let mut other = VaultStore::default();
+        other.set_dir(dir.clone()).expect("dir other");
+        other.create(pass).expect("create");
+
+        // The early copy still shows its create screen, and the person presses.
+        match early.create("ein ganz anderes Passwort") {
+            Err(ApiError::VaultAlreadyExists) => {}
+            other => panic!("the second create gave {other:?}"),
+        }
+        assert_eq!(
+            early.state(),
+            VaultState::Locked,
+            "a refused create left this copy holding something: {:?}",
+            early.state()
+        );
+
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn two_open_copies_do_not_overwrite_each_other() {
+        let dir = test_dir("two-copies");
+        let pass = "ein gutes Passwort für den Test";
+
+        let mut first = VaultStore::default();
+        first.set_dir(dir.clone()).expect("dir");
+        first.create(pass).expect("create");
+
+        let mut copy_a = VaultStore::default();
+        copy_a.set_dir(dir.clone()).expect("dir a");
+        copy_a.unlock(pass).expect("unlock a");
+
+        let mut copy_b = VaultStore::default();
+        copy_b.set_dir(dir.clone()).expect("dir b");
+        copy_b.unlock(pass).expect("unlock b");
+
+        copy_a
+            .with_open_mut(|vault| {
+                vault.entities.push(cheap_entity(17));
+                vault.next_entity = 18;
+                Ok(())
+            })
+            .expect("copy a writes");
+
+        match copy_b.with_open_mut(|vault| {
+            vault.entities.push(cheap_entity(18));
+            Ok(())
+        }) {
+            // It refused with `StorageRefused { "…changed on disk…" }` when this
+            // guard was written, and 050/A gave the conflict its own name: the
+            // place was never the trouble. The property it measures — a stale
+            // copy does not overwrite — has not changed at all.
+            Err(ApiError::VaultChangedElsewhere) => {}
+            other => panic!("a stale open copy must not overwrite the vault: {other:?}"),
+        }
+
+        let mut again = VaultStore::default();
+        again.set_dir(dir.clone()).expect("dir again");
+        again.unlock(pass).expect("unlock again");
+        again
+            .with_open(|vault| {
+                assert_eq!(vault.entities.len(), 1, "the first writer's change survived");
+                assert_eq!(vault.entities[0].id, 17);
+            })
+            .expect("read again");
 
         // G15-ok: cleaning a test's own folder.
         let _ = std::fs::remove_dir_all(&dir);
