@@ -821,8 +821,15 @@ Future<ListReach?> askHowFarAListReaches(BuildContext context, {String? client})
           label: 'Offer them and I decide',
           onPressed: () => Navigator.of(inner).pop(ListReach.offer),
         ),
+        // Filled when it is the only protection offered, so the row always has
+        // exactly one primary act. Without a client the third button is not
+        // drawn, and the owner met two plain buttons with no weight between
+        // them: he pressed the first, which is the one that does **not**
+        // protect, and the consequence lived in the paragraph above rather
+        // than on the button he pressed.
         ZButton(
           label: 'Protect them everywhere',
+          filled: client == null,
           onPressed: () => Navigator.of(inner).pop(ListReach.everywhere),
         ),
         // The client's own book is offered first among the two protections,

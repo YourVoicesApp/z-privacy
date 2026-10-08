@@ -53,9 +53,17 @@ static void set_window_icon(GtkWindow* window) {
     gtk_window_set_icon_list(window, icons);
     gtk_window_set_default_icon_list(icons);
     g_list_free_full(icons, g_object_unref);
+    // And nothing more. The name is **not** free here: GTK3 implements
+    // `gtk_window_set_icon_name` by freeing the icon list and resolving the
+    // name through the icon theme instead. Said after the list, it threw all
+    // six pixbufs away — measured at six before and zero after — and then the
+    // theme lookup failed, because a tarball installs nothing into it. The
+    // bundle shipped eight icons and the window showed none. Task 060.
+    return;
   }
-  // Said whether or not a file was found: a desktop file names this, and the
-  // name costs nothing when the icon is already set.
+  // Only when the bundle could not supply one: a `.desktop` file saying
+  // `Icon=zprivacy` and this window are then still understood as the same
+  // application, and there is no list left to lose.
   gtk_window_set_icon_name(window, "zprivacy");
 }
 

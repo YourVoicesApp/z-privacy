@@ -24,6 +24,7 @@
 //!
 //! This test is the thaw detector. It is deliberately not a unit test: it has to
 //! see the stamp as a consumer sees it, through the public `core_version()`.
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing)]
 
 use std::process::Command;
 

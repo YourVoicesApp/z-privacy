@@ -85,7 +85,10 @@ fn watch_the_commit() -> bool {
 /// A path git names but that does not exist is treated as no answer: cargo would
 /// take a missing file as a reason to re-run for ever.
 fn git_path(name: &str) -> Option<String> {
-    let out = Command::new("git").args(["rev-parse", "--git-path", name]).output().ok()?;
+    let out = Command::new("git")
+        .args(["rev-parse", "--git-path", name])
+        .output()
+        .ok()?;
     if !out.status.success() {
         return None;
     }
