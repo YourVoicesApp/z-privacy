@@ -273,6 +273,17 @@ void main() {
       'forgetValue': () =>
           forgetValue(entity: 1, valueId: 1, everywhere: false),
       'forgetException': () => forgetException(id: 1),
+      // 064 · the owner's sessions. Called with numbers that do not exist on
+      // purpose: what G7 defends is that an answer comes back — a value or a
+      // typed error the UI can read — and never a panic across the boundary.
+      'conversations': () => conversations(),
+      'conversationOpen': () => conversationOpen(),
+      'conversationBegin': () => conversationBegin(name: 'ett samtal', bench: null),
+      'conversationEnter': () => conversationEnter(number: 9999, bench: null),
+      'conversationRename': () => conversationRename(number: 9999, name: 'nytt namn'),
+      'conversationRecord': () => conversationRecord(question: 'fråga', answer: 'svar'),
+      'conversationForget': () => conversationForget(number: 9999),
+      'conversationDocumentMatches': () => conversationDocumentMatches(bench: const SessionId(id: 9999)),
       'settings': () => settings(),
       'saveSettings': () => saveSettings(
         settings: const Settings(
@@ -350,7 +361,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 101, reason: 'the contract has 101 functions');
+    expect(calls.length, 109, reason: 'the contract has 109 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

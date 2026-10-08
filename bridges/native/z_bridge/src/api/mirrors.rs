@@ -1164,6 +1164,23 @@ pub struct _AnswerSnapshot {
     pub unknown_tokens: Vec<String>,
 }
 
+#[frb(mirror(ConversationRow))]
+pub struct _ConversationRow {
+    /// The identity. Never changes, never reused — not even after a deletion.
+    pub number: u32,
+    /// The handle, which the person may change at any time.
+    pub name: String,
+    /// Seconds since 1970.
+    pub began_at: u64,
+    /// How many exchanges its own sealed file holds.
+    pub turns: u32,
+    /// **How many tokens were named again** when this session was entered or
+    /// born. Reported rather than hidden: at a birth the names on the screen
+    /// change, and a number a person can see beats a silent redraw. Zero for a
+    /// row that was merely listed.
+    pub renamed_tokens: u32,
+}
+
 #[frb(mirror(RevealState))]
 pub struct _RevealState {
     pub entity: Option<u32>,

@@ -88,7 +88,27 @@ pub(crate) enum Purpose {
     /// something else later — the owner's `future-profile key`.
     #[allow(dead_code)]
     Profile,
-    /// **Names the tokens of one document** — 046/U item 2.
+    /// **Seals one session's 32-byte key, inside the vault body** — 064.
+    ///
+    /// Exactly the shape task 021 gave a provider credential, and for exactly
+    /// the same reason. 062 §A claimed that a leak of the decoded vault body
+    /// was still not a leak of a conversation. As first specified that was
+    /// false: the session key lay in the body, and whoever held the decoded
+    /// body held the key and therefore the conversation sealed under it. One
+    /// more derived key makes the sentence true — the body's bytes for this
+    /// field are ciphertext even though the body as a whole is already
+    /// encrypted.
+    Session,
+    /// **Reserved since 064, and the string stays claimed.**
+    ///
+    /// This named the tokens of one document — 046/U item 2 — from
+    /// `profile ‖ document-text`. 064 replaced that with the session's own key,
+    /// so nothing derives this any more. The variant stays for the reason
+    /// `Profile` does: a purpose string is never reused, and deleting the
+    /// variant would leave `z-privacy/vault/1/token-name` free for somebody to
+    /// claim for something else. The code that used it is gone; the string is
+    /// spent for ever.
+    #[allow(dead_code)]
     ///
     /// Nothing is sealed with this key and nothing is stored under it: a token
     /// name is derived from it every time, out of the client, the document's
@@ -97,6 +117,23 @@ pub(crate) enum Purpose {
     /// the key must never leave this crate — a name derived under a key that
     /// did leave would be a value anybody could test a guess against.
     TokenName,
+    /// **Seals one session's own file** — 064. Derived from the *session* key,
+    /// not from the vault's master.
+    SessionSeal,
+    /// **Names the tokens of one session** — 064, and this is what replaces
+    /// 046/U's `profile ‖ document-text` namespace.
+    ///
+    /// Derived from the session key, so the same person protected in two
+    /// documents of one session carries **one** token, and in two sessions
+    /// carries two. 046/U's rule — that stability across days and linkability
+    /// across requests are the same property — is not repealed by this; it is
+    /// handed to the person, who makes a clean break by starting a session and
+    /// keeps continuity by staying in one.
+    SessionNamespace,
+    /// **The tails of one session's tokens** — 064. Derived from the session
+    /// key, never from the master: two sessions must not be able to produce the
+    /// same tail for the same spelling.
+    SessionValue,
 }
 
 impl Purpose {
@@ -106,11 +143,27 @@ impl Purpose {
             Self::Provider => b"z-privacy/vault/1/provider-credential",
             Self::Profile => b"z-privacy/vault/1/profile",
             Self::TokenName => b"z-privacy/vault/1/token-name",
+            Self::Session => b"z-privacy/vault/1/session-key",
+            // These three hang off a **session** key, so they are named for the
+            // session ladder and not the vault's. The number in the path is the
+            // ladder's version, as it is above — not a session's number, which
+            // must never enter a domain string: one session's key deriving
+            // another's by counting is precisely what the separate random keys
+            // exist to prevent.
+            Self::SessionSeal => b"z-privacy/session/1/seal",
+            Self::SessionNamespace => b"z-privacy/session/1/namespace",
+            Self::SessionValue => b"z-privacy/session/1/value",
         }
     }
 }
 
-/// One purpose's key, from the master key.
+/// One purpose's key, from a key above it in the ladder.
+///
+/// Usually the vault's master key. Since 064 it is also called with a
+/// **session** key for the three `Session*` purposes — the function is a PRF
+/// and does not care which key it is given, but the caller must: a purpose
+/// string belongs to exactly one ladder, and mixing them would let a session
+/// key produce a vault-level key or the reverse. The variants say which.
 ///
 /// Keyed BLAKE2b — a PRF, used the way libsodium's `crypto_kdf` uses it: the
 /// master key is the key, the domain string is the message, the output is 32
@@ -235,6 +288,14 @@ pub(crate) struct SealedVault {
     pub wrapped_master: Vec<u8>,
     /// The vault's contents, sealed by the master key.
     pub body: Vec<u8>,
+}
+
+/// **A session's own 32 bytes** — 064. Asked of the operating system, never
+/// derived from anything: no path may lead from one session's key to another's,
+/// which is the same property the domain strings keep by refusing to carry a
+/// session number.
+pub(crate) fn random_key() -> ApiResult<SecretKey> {
+    Ok(Zeroizing::new(random_array::<KEY_LEN>()?))
 }
 
 fn random_array<const N: usize>() -> ApiResult<[u8; N]> {

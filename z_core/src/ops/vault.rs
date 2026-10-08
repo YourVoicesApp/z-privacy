@@ -62,7 +62,15 @@ pub(crate) fn vault_locks_now() -> u64 {
 }
 
 pub(crate) fn vault_lock() -> ApiResult<()> {
-    with_core(|core| core.vault.lock());
+    with_core(|core| {
+        core.vault.lock();
+        // **The open session is forgotten with the master key** — 064. Its
+        // sealed file survives and its record survives; only the way into them
+        // goes, and the next unlock plus an `enter` brings both back. That is
+        // 062 §D: a lock must not become the power cut the whole task exists to
+        // prevent, and it must not leave a number standing that no key opens.
+        core.open_conversation = None;
+    });
     crate::session::bump_truth();
     Ok(())
 }

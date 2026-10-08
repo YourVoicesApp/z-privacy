@@ -98,23 +98,41 @@ fn token_in(text: &str, kind: &str) -> String {
 /// Item 2 landed and this line turned red, which is the only way a recorded
 /// fault is worth recording. It now asserts the opposite, and the history
 /// stays here because the next person to read it should see both halves.
+///
+/// **Third half, 064.** The unit moved again: the name was keyed on the client
+/// and the document's text, and it is now keyed on **the session**. So «the
+/// next day» is only the same day's work if it is the same session, and this
+/// test enters one rather than assuming the document is enough. The owner's
+/// property is untouched — a value he protected still carries its name when he
+/// comes back — and what changed is what «comes back» means: re-entering the
+/// session, not re-opening the file.
 #[test]
 fn the_same_value_now_keeps_its_token_the_next_day() {
     let _g = serial();
     fresh_vault("renamed");
     let profile = create_profile("Nordstern".to_string(), None).expect("profile");
 
-    let (first, _, monday) = a_day(&profile);
+    // The day's work, then the session it leaves in. `a_day` built a payload
+    // before the session existed; what matters is what leaves **after** it, so
+    // the payload is built again inside it — which is the ordinary order, since
+    // the session is born at the exit.
+    let (first, _, _before_the_session) = a_day(&profile);
+    let talk = conversation_begin("Nordstern".to_string(), Some(first))
+        .expect("begin")
+        .number;
+    let monday = payload_view(build_payload(first).expect("payload")).expect("view").text;
     let was = token_in(&monday, "_IBAN_");
     close_session(first).ok();
 
-    let (second, _, friday) = a_day(&profile);
+    let (second, _, _friday) = a_day(&profile);
+    conversation_enter(talk, Some(second)).expect("enter");
+    let friday = payload_view(build_payload(second).expect("payload")).expect("view").text;
     let now = token_in(&friday, "_IBAN_");
     close_session(second).ok();
 
     assert_eq!(
         was, now,
-        "the same value in the same file got a new name, so days away still lose the answer"
+        "the same value in the same session got a new name, so days away still lose the answer"
     );
     vault_lock().ok();
 }

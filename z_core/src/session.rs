@@ -94,6 +94,18 @@ pub(crate) struct AnswerRecord {
     pub session: u32,
     pub payload: u32,
     pub raw: String,
+    /// **Which of the owner's sessions this answer was taken in** — 064: the
+    /// number, and the handle as it read at that moment.
+    ///
+    /// The handle is copied rather than looked up, because the look-up is
+    /// exactly what fails: once the session is deleted there is nothing left to
+    /// ask for its name, and «session 3 is gone» is not what a person called it.
+    /// The number alone could not carry the refusal the owner asked for.
+    ///
+    /// `None` is an answer taken with no session open — reachable only when
+    /// something left without the UI asking first, which is the named limit of
+    /// birth-at-the-exit.
+    pub conversation: Option<(u32, String)>,
 }
 
 impl std::fmt::Debug for AnswerRecord {
@@ -102,6 +114,7 @@ impl std::fmt::Debug for AnswerRecord {
             .field("id", &self.id)
             .field("session", &self.session)
             .field("payload", &self.payload)
+            .field("conversation", &self.conversation.as_ref().map(|(n, _)| *n))
             .field("bytes", &self.raw.len())
             .finish()
     }
@@ -216,6 +229,59 @@ impl Session {
             question_safe: String::new(),
             question_tokens: Vec::new(),
         }
+    }
+
+    /// **Name every token again, from the session's key** — 064's re-derivation
+    /// at the moment the owner's session is born.
+    ///
+    /// Five places hold a token as a string and all five move together: the
+    /// store's keys, each `Protection`, the `revealed` map, `question_tokens`,
+    /// and the safe question's own text. Payloads built before this instant are
+    /// dropped rather than rewritten — a payload is a snapshot of what would
+    /// leave, and a snapshot of names that no longer exist is worse than none.
+    ///
+    /// **An answer taken before the session was born keeps the names it was
+    /// taken with**, so its tokens will no longer resolve and 046/U item 1 will
+    /// *report* them instead of passing them through as prose. That is visible,
+    /// not silent, and it is reachable only when something left the machine
+    /// without the UI asking for a session first — the named limit of
+    /// birth-at-the-exit. Nothing here can repair an answer already in
+    /// somebody's hand, and pretending otherwise is what item 1 exists to stop.
+    pub(crate) fn names_again_from(&mut self, naming: crate::tokens::Naming) -> usize {
+        let pairs = self.mint.rename_all(naming, &mut self.tokens);
+        if pairs.is_empty() {
+            return 0;
+        }
+        let moved: std::collections::BTreeMap<&str, &str> =
+            pairs.iter().map(|(old, new)| (old.as_str(), new.as_str())).collect();
+
+        for protection in &mut self.protections {
+            if let Some(new) = moved.get(protection.token.as_str()) {
+                protection.token = (*new).to_string();
+            }
+        }
+
+        let shown = std::mem::take(&mut self.revealed);
+        self.revealed = shown
+            .into_iter()
+            .map(|(token, what)| match moved.get(token.as_str()) {
+                Some(new) => ((*new).to_string(), what),
+                None => (token, what),
+            })
+            .collect();
+
+        for token in &mut self.question_tokens {
+            if let Some(new) = moved.get(token.as_str()) {
+                *token = (*new).to_string();
+            }
+        }
+        for (old, new) in &pairs {
+            self.question_safe = self.question_safe.replace(old, new);
+        }
+
+        self.payloads.clear();
+        self.bump();
+        pairs.len()
     }
 
     /// Something changed that affects the safe text: every handle built before
@@ -399,6 +465,18 @@ pub(crate) struct Core {
     pub session_settings: crate::vault::model::StoredSettings,
     /// Bumped when a displayed fact changes. A check, not a source of drawing.
     pub state_revision: u32,
+    /// **Which of the owner's sessions is open** — 064, by its number.
+    ///
+    /// `None` is «no session», which is the state a person is in until the
+    /// first exit: tokens then carry the random names they always have, exactly
+    /// as they do while the vault is shut. It is not a session's *bench*: the
+    /// benches are in `sessions` above and one owner-session may hold several,
+    /// which is the whole of the owner's «same name, two documents, one token».
+    ///
+    /// Forgotten on lock, like the master key, and restored by entering a
+    /// session again — 062 §D: the sealed file survives the lock, only the key
+    /// is forgotten, so an auto-lock must not become the power cut again.
+    pub open_conversation: Option<u32>,
 }
 
 impl Core {
@@ -411,6 +489,7 @@ impl Core {
             session_logins: std::collections::BTreeMap::new(),
             session_settings: crate::vault::model::StoredSettings::default(),
             state_revision: 1,
+            open_conversation: None,
         }
     }
 
@@ -435,6 +514,12 @@ impl Core {
 
     pub(crate) fn close(&mut self, id: u32) -> bool {
         self.sessions.remove(&id).is_some()
+    }
+
+    /// One bench, read only. `get` below hands out a mutable one, which a
+    /// caller that is also holding the vault cannot have.
+    pub(crate) fn sessions_get(&self, id: u32) -> Option<&Session> {
+        self.sessions.get(&id)
     }
 
     pub(crate) fn get(&mut self, id: u32) -> Option<&mut Session> {

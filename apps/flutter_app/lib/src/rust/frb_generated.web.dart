@@ -41,6 +41,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnswerId dco_decode_box_autoadd_answer_id(dynamic raw);
 
   @protected
+  bool dco_decode_box_autoadd_bool(dynamic raw);
+
+  @protected
   NetworkRefusal dco_decode_box_autoadd_network_refusal(dynamic raw);
 
   @protected
@@ -81,6 +84,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
+
+  @protected
+  ConversationRow dco_decode_conversation_row(dynamic raw);
 
   @protected
   CredentialState dco_decode_credential_state(dynamic raw);
@@ -144,6 +150,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<AnswerId> dco_decode_list_answer_id(dynamic raw);
+
+  @protected
+  List<ConversationRow> dco_decode_list_conversation_row(dynamic raw);
 
   @protected
   List<EntityRow> dco_decode_list_entity_row(dynamic raw);
@@ -261,6 +270,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   AnswerId? dco_decode_opt_box_autoadd_answer_id(dynamic raw);
+
+  @protected
+  bool? dco_decode_opt_box_autoadd_bool(dynamic raw);
 
   @protected
   PayloadHandle? dco_decode_opt_box_autoadd_payload_handle(dynamic raw);
@@ -461,6 +473,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnswerId sse_decode_box_autoadd_answer_id(SseDeserializer deserializer);
 
   @protected
+  bool sse_decode_box_autoadd_bool(SseDeserializer deserializer);
+
+  @protected
   NetworkRefusal sse_decode_box_autoadd_network_refusal(
     SseDeserializer deserializer,
   );
@@ -507,6 +522,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  ConversationRow sse_decode_conversation_row(SseDeserializer deserializer);
 
   @protected
   CredentialState sse_decode_credential_state(SseDeserializer deserializer);
@@ -570,6 +588,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<AnswerId> sse_decode_list_answer_id(SseDeserializer deserializer);
+
+  @protected
+  List<ConversationRow> sse_decode_list_conversation_row(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<EntityRow> sse_decode_list_entity_row(SseDeserializer deserializer);
@@ -705,6 +728,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   AnswerId? sse_decode_opt_box_autoadd_answer_id(SseDeserializer deserializer);
+
+  @protected
+  bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer);
 
   @protected
   PayloadHandle? sse_decode_opt_box_autoadd_payload_handle(
@@ -925,6 +951,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_network_refusal(
     NetworkRefusal self,
     SseSerializer serializer,
@@ -986,6 +1015,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_conversation_row(
+    ConversationRow self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_credential_state(
@@ -1055,6 +1090,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_answer_id(List<AnswerId> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_conversation_row(
+    List<ConversationRow> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_entity_row(
@@ -1238,6 +1279,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     AnswerId? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_payload_handle(

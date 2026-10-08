@@ -258,6 +258,53 @@ sealed class ApiError with _$ApiError implements FrbException {
   const factory ApiError.betweenColumns() = ApiError_BetweenColumns;
 }
 
+class ConversationRow {
+  /// The identity. Never changes, never reused — not even after a deletion.
+  final int number;
+
+  /// The handle, which the person may change at any time.
+  final String name;
+
+  /// Seconds since 1970.
+  final BigInt beganAt;
+
+  /// How many exchanges its own sealed file holds.
+  final int turns;
+
+  /// **How many tokens were named again** when this session was entered or
+  /// born. Reported rather than hidden: at a birth the names on the screen
+  /// change, and a number a person can see beats a silent redraw. Zero for a
+  /// row that was merely listed.
+  final int renamedTokens;
+
+  const ConversationRow({
+    required this.number,
+    required this.name,
+    required this.beganAt,
+    required this.turns,
+    required this.renamedTokens,
+  });
+
+  @override
+  int get hashCode =>
+      number.hashCode ^
+      name.hashCode ^
+      beganAt.hashCode ^
+      turns.hashCode ^
+      renamedTokens.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ConversationRow &&
+          runtimeType == other.runtimeType &&
+          number == other.number &&
+          name == other.name &&
+          beganAt == other.beganAt &&
+          turns == other.turns &&
+          renamedTokens == other.renamedTokens;
+}
+
 enum CredentialState {
   /// No credential is stored for this provider, in the vault or in memory.
   missing,

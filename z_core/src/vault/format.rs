@@ -19,6 +19,11 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 12 — the owner's sessions: number, handle, sealed key, when, and which
+///   document each belongs to (064). The conversations themselves are **not**
+///   here; each is its own sealed file with its own version — see
+///   `SESSION_FORMAT_VERSION` in `crate::conversation`.
+/// * 11 — which imported list a value came from.
 /// * 10 — the lists a person keeps their names in, and the switch on each.
 /// * 9 — where an imported name list came from, and under what licence.
 /// * 8 — the names the person taught.
@@ -37,15 +42,27 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
 ///
-/// ⚠ **046/S's parked WIP on `fix/the-documents-room` also calls itself 11.**
-/// Per the lead's ruling, 8 October 2026: **this is 11; that becomes 12 when it
-/// is unparked.** Nothing was ever written by that branch, so no vault on earth
-/// is at its 11 — but two formats sharing one number means the second is read
-/// with the first's sections, and no test can see a collision between a commit
-/// and a branch that is parked. The warning is here because this is the line a
-/// person edits, and a paper on another branch is a guard nobody is standing
-/// next to.
-pub(crate) const MODEL_VERSION: u16 = 11;
+/// ⚠ **046/S's parked WIP on `fix/the-documents-room` calls itself 11, and 064
+/// has now spent 12.** The lead's ruling of 8 October was *«this is 11; that
+/// becomes 12 when it is unparked»*; with sessions taking 12, **046/S becomes
+/// 13.** Recorded here and in 064's paper on purpose — a ruling that lives in
+/// one file is one deletion from never having existed.
+///
+/// Nothing was ever written by that branch, so no vault on earth is at its 11 —
+/// but two formats sharing one number means the second is read with the first's
+/// sections, and no test can see a collision between a commit and a branch that
+/// is parked. The warning is here because this is the line a person edits.
+///
+/// **Three numbers now, and this is the fence between them** (the lead's
+/// request, since three versions triple the room for the two-places-disagree
+/// mistake):
+///
+/// | number | where | what it governs |
+/// |---|---|---|
+/// | `crypto::FORMAT_VERSION` = 2 | the vault file's envelope | Argon2 params, the wrapped master key, the nonce. **Unmoved by 064:** the envelope does not change, only what the body says. |
+/// | `MODEL_VERSION` = 12 | the vault body, below | identities, values, lists, settings, credentials — and since 064 the session records. |
+/// | `conversation::SESSION_FORMAT_VERSION` = 1 | each session's own file | one conversation's turns. A different format in a different file; it must never borrow this number. |
+pub(crate) const MODEL_VERSION: u16 = 12;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -328,6 +345,32 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
     for (id, list) in imported {
         out.extend_from_slice(&id.to_be_bytes());
         put_str(&mut out, list);
+    }
+
+    // Model 12 — the owner's sessions. Its own section at the end, like every
+    // section before it, so a build that stops here opens the vault with no
+    // sessions rather than reading a key as the next value's length.
+    //
+    // **The 32 bytes are sealed inside this already-encrypted body**, under
+    // their own derived key, exactly as a provider credential has been since
+    // task 021 — which is what makes 062 §A's sentence true: a leak of the
+    // *decoded* body is still not a leak of a conversation.
+    out.extend_from_slice(&vault.next_conversation.to_be_bytes());
+    out.extend_from_slice(&(vault.conversations.len() as u32).to_be_bytes());
+    for talk in &vault.conversations {
+        out.extend_from_slice(&talk.number.to_be_bytes());
+        put_str(&mut out, &talk.name);
+        out.extend_from_slice(&talk.began_at.to_be_bytes());
+        let sealed = crypto::seal_for(master, Purpose::Session, &talk.key)?;
+        out.extend_from_slice(&(sealed.len() as u32).to_be_bytes());
+        out.extend_from_slice(&sealed);
+        match &talk.document {
+            Some(hash) => {
+                out.push(1);
+                out.extend_from_slice(hash);
+            }
+            None => out.push(0),
+        }
     }
     Ok(out)
 }
@@ -618,6 +661,42 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         }
     }
 
+    // Model 12 — the sessions, and their keys unsealed with the body's own
+    // master. A vault from before 064 simply stops above and opens with none.
+    let mut next_conversation = 1;
+    let mut conversations = Vec::new();
+    if version >= 12 {
+        next_conversation = u32::from_be_bytes(r.array::<4>()?);
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        for _ in 0..count {
+            let number = u32::from_be_bytes(r.array::<4>()?);
+            let name = r.string()?;
+            let began_at = u64::from_be_bytes(r.array::<8>()?);
+            let sealed_len = u32::from_be_bytes(r.array::<4>()?) as usize;
+            let blob = r.take(sealed_len)?;
+            let plain = crypto::open_for(master, Purpose::Session, blob)?;
+            let key: [u8; 32] = plain.as_slice().try_into().map_err(|_| ApiError::PayloadRefused {
+                reason: format!("session {number}'s key is not 32 bytes"),
+            })?;
+            let document = match r.array::<1>()?[0] {
+                0 => None,
+                1 => Some(r.array::<32>()?),
+                other => {
+                    return Err(ApiError::PayloadRefused {
+                        reason: format!("session {number} has an unknown document marker {other}"),
+                    })
+                }
+            };
+            conversations.push(crate::vault::model::Conversation {
+                number,
+                name,
+                key,
+                began_at,
+                document,
+            });
+        }
+    }
+
     Ok(Vault {
         entities,
         profiles,
@@ -632,6 +711,8 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         lists,
         settings,
         provider_logins,
+        conversations,
+        next_conversation,
     })
 }
 
@@ -762,6 +843,10 @@ mod tests {
         }
         if version >= 11 {
             out.extend_from_slice(&0u32.to_be_bytes()); // no value came from a list
+        }
+        if version >= 12 {
+            out.extend_from_slice(&1u32.to_be_bytes()); // the next session number
+            out.extend_from_slice(&0u32.to_be_bytes()); // and no sessions yet
         }
         out
     }

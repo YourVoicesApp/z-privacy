@@ -167,6 +167,57 @@ pub(crate) struct UserLabelRule {
 /// their Arabic list by hand long before an Arabic pack exists.
 pub(crate) const DEFAULT_LIST: &str = "de";
 
+/// **One of the owner's sessions, as the vault keeps it** — 064, model 12.
+///
+/// The word in code is `Conversation` and the word a person reads is
+/// «session», because `session::Session` already means one document's bench
+/// and the API's `session: u32` is that bench's id. Two nouns were wearing one
+/// word; task 066 pays the rename, and until it does this is the fence between
+/// them. Precedent for a code name a person never sees: `p-<slug>-<n>`.
+///
+/// What is here is only what must survive: the number, the handle, the key, and
+/// when it began. **The conversation itself is not here** — it is a sealed file
+/// of its own, because `vault.zv` is re-sealed whole on every change
+/// (`format::encode` → `reseal_body`) and a conversation inside this body would
+/// rewrite every byte a person owns on every save, without a ceiling. That is
+/// 062 §A, and guard 5 measures it in bytes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Conversation {
+    /// **The identity, and it never changes.** Numbers are not reused: a
+    /// deleted session's number is spent for ever, so a stale reference to it
+    /// cannot land on somebody else's conversation.
+    pub number: u32,
+    /// **The handle, and it may be changed at any time.** The owner's rule is
+    /// the first three words of the *question* — not of the document, whose
+    /// name is already shown beside the row, because two sessions on one
+    /// document are told apart only by what was asked (062 §0).
+    pub name: String,
+    /// **The 32 bytes everything in this session hangs off**, sealed inside
+    /// this body under `Purpose::Session` exactly as a provider credential has
+    /// been since task 021 — so a leak of the *decoded* body is still not a
+    /// leak of a conversation. Without that sealing 062 §A's sentence was
+    /// simply false, which is why the fourth purpose exists.
+    ///
+    /// Deleting a session destroys these 32 bytes, and that is what makes the
+    /// owner's warning a **fact** rather than a caution: the key dies, and
+    /// nothing derives anything. No token in any document protected in this
+    /// session can be resolved again by anyone, including us.
+    pub key: [u8; 32],
+    /// When it began — **seconds** since 1970, the same unit and the same
+    /// helper as `UserName::learned_at`, because two units for one kind of fact
+    /// is two places that can disagree. `now_seconds()` is a few lines above.
+    pub began_at: u64,
+    /// **Which document this session belongs to** — 062 §C, and the reason a
+    /// restored session can refuse instead of guessing.
+    ///
+    /// The document's own text, hashed, never its path or its name. `None` is a
+    /// session born before any document was on the bench, which the birth-at-
+    /// Copy rule makes impossible today and which is still written as `Option`
+    /// rather than as a lie: the first build that can open a session with no
+    /// document must not find a zeroed hash and believe it.
+    pub document: Option<[u8; 32]>,
+}
+
 /// A list of names a person keeps, and whether it is in use.
 ///
 /// It exists as a row of its own so that an empty list can exist: «New list»
@@ -251,6 +302,13 @@ pub(crate) struct Vault {
     /// nothing outside the core can read it back: `providers()` reports only
     /// whether a row has a credential. Written in task 020.
     pub provider_logins: BTreeMap<String, ProviderLogin>,
+    /// The owner's sessions — number, handle, key, when. Model 12. The
+    /// conversations themselves are their own sealed files; see
+    /// [`Conversation`].
+    pub conversations: Vec<Conversation>,
+    /// The next session number, and it only ever goes up. A deleted number is
+    /// never handed out again: see [`Conversation::number`].
+    pub next_conversation: u32,
 }
 
 /// The settings, as they are kept. `session_only` is not here: whether these
@@ -327,7 +385,22 @@ impl Vault {
             exceptions: Vec::new(),
             settings: StoredSettings::default(),
             provider_logins: BTreeMap::new(),
+            conversations: Vec::new(),
+            // 1, not 0, for the same reason a revision starts at 1: zero must
+            // never be mistakable for a session that exists.
+            next_conversation: 1,
         }
+    }
+
+    /// The next session number. It only goes up, and a deleted one is spent.
+    pub(crate) fn take_conversation_number(&mut self) -> u32 {
+        let number = self.next_conversation;
+        self.next_conversation = self.next_conversation.saturating_add(1);
+        number
+    }
+
+    pub(crate) fn conversation(&self, number: u32) -> Option<&Conversation> {
+        self.conversations.iter().find(|c| c.number == number)
     }
 
     pub(crate) fn entity(&self, id: u32) -> Option<&Entity> {
