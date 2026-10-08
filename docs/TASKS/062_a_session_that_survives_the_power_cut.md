@@ -72,7 +72,11 @@ rewriting a vault — the same move `change_passphrase` already makes.
 And the key takes **its own purpose string**, as `crypto.rs:76` requires of every
 new purpose. `Purpose::Profile` is already reserved there as the owner's
 "future-profile key"; a session purpose sits beside it. A leak of the decoded
-vault body is then still not a leak of a conversation.
+vault body is then still not a leak of a conversation — **true only once the
+session key is itself sealed inside the body under a fourth purpose,
+`z-privacy/vault/1/session-key`, the provider-credential pattern of 021. The
+builder caught this sentence running ahead of its mechanism; 064 carries the
+fourth purpose for it.**
 
 ## B · Today's loss is smaller than it looks, and the difference is measurable
 

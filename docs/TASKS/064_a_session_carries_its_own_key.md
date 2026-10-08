@@ -83,6 +83,43 @@ dies: every document and every message protected in this session.
 4. **Deleting the name and deleting the map are one act here**, because the key
    is the map. They cannot be separated, so they must not be offered separately.
 
+## The birth and the mint — ruled, 8 Oct night
+
+Tokens are minted at protection; the session is born at Copy. For the first
+document those are different moments, so the paper as first written made guard 2
+false for the exact pair the owner will test first.
+
+**Ruled: the names that LEAVE are the session's names.** At the session's birth,
+every token in the bench is re-derived from the session key, and the payload
+built for Copy or PDF is made of those. Three grounds, the second decisive:
+
+1. 046/U: a token name is derived every time and nothing is stored — this is not
+   a migration, it is the first derivation that had a key.
+2. **The promise attaches at the boundary.** Copy is the first exit; a name that
+   changes before anything left has broken no promise to anybody, and one that
+   changed after would.
+3. It makes the owner's continuity true on first use instead of false on it.
+
+The visible cost is kept visible: the Tokens panel's names change at the instant
+of birth, and the naming dialog says so in one sentence. The alternatives are
+recorded and refused: birth at first protection contradicts the owner's «born at
+Copy or PDF»; governing only later documents leaves his first document outside
+its own session for ever, which reads as a bug.
+
+**And a sixth guard, the payload's purity:** protect before birth, then copy —
+every token in what leaves verifies against the session key, and none against
+the pre-birth fallback. A mixed payload is the failure this ruling exists to
+prevent.
+
+## The fourth purpose — 062's sentence was ahead of its mechanism
+
+062 §A promises that a leak of the decoded vault body is still not a leak of a
+conversation. With the session key sitting plain in the decoded body, that is
+false. So the session key is sealed **inside** the body under its own derived
+purpose — `z-privacy/vault/1/session-key` — exactly the provider-credential
+pattern of task 021. Four purpose strings, not three. Until this exists, 062's
+sentence is not to be quoted.
+
 ## Guards, written first and watched to fail
 
 1. Protect the same name in two sessions; **the tokens differ.**
