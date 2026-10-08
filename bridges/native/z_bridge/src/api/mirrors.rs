@@ -644,6 +644,20 @@ pub struct _NameImport {
     /// One sentence per refused row, in the file's order, so a person can fix
     /// the file rather than guess at it. Never the whole file back.
     pub reasons: Vec<String>,
+    /// How many **values** the table taught beyond its names — the customer
+    /// numbers, contracts and accounts in its other columns.
+    ///
+    /// Without this `added: 2` meant «two names and six numbers ignored» and
+    /// read as success (056).
+    pub values: u32,
+    /// The header columns this build could not place, by name and in the
+    /// file's own order.
+    ///
+    /// **Nothing is discarded quietly.** A column nobody can name a kind for
+    /// stays out of the vault, and the person is told which ones they were so
+    /// they can see the difference between «imported» and «imported the
+    /// names».
+    pub columns_not_used: Vec<String>,
 }
 
 #[frb(mirror(NameCandidate))]
@@ -1129,8 +1143,15 @@ pub struct _RevealState {
 #[frb(mirror(UserListRow))]
 pub struct _UserListRow {
     pub name: String,
-    /// How many names are in it.
+    /// How many **names** are in it: words in the dictionary and whole people
+    /// and companies in the vault, which are one thing to the person who
+    /// imported them.
     pub names: u32,
+    /// How many **other values** are in it — a customer number, a contract, a
+    /// phone. A client table teaches these and nothing else does, so they are
+    /// counted apart: «21 names» and «21 names and 6 numbers» are different
+    /// answers to «what did that file teach me?» (056).
+    pub values: u32,
     /// Off means the scanner is not told about them — not that they are gone.
     pub enabled: bool,
 }

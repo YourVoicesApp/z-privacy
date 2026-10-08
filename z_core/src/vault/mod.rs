@@ -464,6 +464,7 @@ mod tests {
                 value: Secret::new("Nordstern Consulting GmbH"),
                 aliases: vec![Secret::new("Nordstern")],
                 policy: Policy::Always,
+                list: None,
             }],
         }
     }

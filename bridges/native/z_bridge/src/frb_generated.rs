@@ -3242,6 +3242,8 @@ const _: fn() = || {
         let _: u32 = NameImport.already_known;
         let _: u32 = NameImport.refused;
         let _: Vec<String> = NameImport.reasons;
+        let _: u32 = NameImport.values;
+        let _: Vec<String> = NameImport.columns_not_used;
     }
     match None::<crate::api::mirrors::NetworkRefusal>.unwrap() {
         crate::api::mirrors::NetworkRefusal::NotConnected => {}
@@ -3564,6 +3566,7 @@ const _: fn() = || {
         let UserListRow = None::<crate::api::mirrors::UserListRow>.unwrap();
         let _: String = UserListRow.name;
         let _: u32 = UserListRow.names;
+        let _: u32 = UserListRow.values;
         let _: bool = UserListRow.enabled;
     }
     {
@@ -4606,11 +4609,15 @@ impl SseDecode for crate::api::mirrors::NameImport {
         let mut var_alreadyKnown = <u32>::sse_decode(deserializer);
         let mut var_refused = <u32>::sse_decode(deserializer);
         let mut var_reasons = <Vec<String>>::sse_decode(deserializer);
+        let mut var_values = <u32>::sse_decode(deserializer);
+        let mut var_columnsNotUsed = <Vec<String>>::sse_decode(deserializer);
         return crate::api::mirrors::NameImport {
             added: var_added,
             already_known: var_alreadyKnown,
             refused: var_refused,
             reasons: var_reasons,
+            values: var_values,
+            columns_not_used: var_columnsNotUsed,
         };
     }
 }
@@ -5546,10 +5553,12 @@ impl SseDecode for crate::api::mirrors::UserListRow {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_name = <String>::sse_decode(deserializer);
         let mut var_names = <u32>::sse_decode(deserializer);
+        let mut var_values = <u32>::sse_decode(deserializer);
         let mut var_enabled = <bool>::sse_decode(deserializer);
         return crate::api::mirrors::UserListRow {
             name: var_name,
             names: var_names,
+            values: var_values,
             enabled: var_enabled,
         };
     }
@@ -6487,6 +6496,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::NameImpor
             self.0.already_known.into_into_dart().into_dart(),
             self.0.refused.into_into_dart().into_dart(),
             self.0.reasons.into_into_dart().into_dart(),
+            self.0.values.into_into_dart().into_dart(),
+            self.0.columns_not_used.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -7383,6 +7394,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::UserListR
         [
             self.0.name.into_into_dart().into_dart(),
             self.0.names.into_into_dart().into_dart(),
+            self.0.values.into_into_dart().into_dart(),
             self.0.enabled.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -8361,6 +8373,8 @@ impl SseEncode for crate::api::mirrors::NameImport {
         <u32>::sse_encode(self.already_known, serializer);
         <u32>::sse_encode(self.refused, serializer);
         <Vec<String>>::sse_encode(self.reasons, serializer);
+        <u32>::sse_encode(self.values, serializer);
+        <Vec<String>>::sse_encode(self.columns_not_used, serializer);
     }
 }
 
@@ -9094,6 +9108,7 @@ impl SseEncode for crate::api::mirrors::UserListRow {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <String>::sse_encode(self.name, serializer);
         <u32>::sse_encode(self.names, serializer);
+        <u32>::sse_encode(self.values, serializer);
         <bool>::sse_encode(self.enabled, serializer);
     }
 }

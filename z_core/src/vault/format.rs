@@ -36,7 +36,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// (task 021), so the bytes written here are ciphertext even though the body as a
 /// whole is already encrypted. Whether they are sealed is decided by the *file's*
 /// format version, not this one — see `crypto::SealedVault::credentials_are_sealed`.
-pub(crate) const MODEL_VERSION: u16 = 10;
+pub(crate) const MODEL_VERSION: u16 = 11;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -303,6 +303,23 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
         out.extend_from_slice(&name.id.to_be_bytes());
         put_str(&mut out, &name.list);
     }
+    // Model 11 — which list a **value** came from, for the values that came
+    // from one. Its own section at the end, not a field inside model 1's value
+    // record: a value record is read in a loop by every build back to the
+    // first, and one more byte inside it would walk an older build into the
+    // next value. A vault whose values were all taught by hand costs four
+    // bytes, which is every vault written before 054.
+    let imported: Vec<(u32, &str)> = vault
+        .entities
+        .iter()
+        .flat_map(|e| e.values.iter())
+        .filter_map(|v| v.list.as_deref().map(|l| (v.id, l)))
+        .collect();
+    out.extend_from_slice(&(imported.len() as u32).to_be_bytes());
+    for (id, list) in imported {
+        out.extend_from_slice(&id.to_be_bytes());
+        put_str(&mut out, list);
+    }
     Ok(out)
 }
 
@@ -383,6 +400,10 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
                 aliases,
                 policy,
                 learned_at,
+                // Model 11's own section below moves whatever came from a list.
+                // Everything written before there were lists of values is in
+                // nobody's, which is where it stays.
+                list: None,
             });
         }
         entities.push(Entity {
@@ -573,6 +594,21 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         }
     }
 
+    // Model 11 — the values that came from a list. A value id is unique across
+    // the whole vault, so it finds its own record without naming the entity.
+    if version >= 11 {
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        for _ in 0..count {
+            let id = u32::from_be_bytes(r.array::<4>()?);
+            let list = r.string()?;
+            if let Some(value) =
+                entities.iter_mut().flat_map(|e| e.values.iter_mut()).find(|v| v.id == id)
+            {
+                value.list = Some(list);
+            }
+        }
+    }
+
     Ok(Vault {
         entities,
         profiles,
@@ -715,6 +751,9 @@ mod tests {
             out.extend_from_slice(&0u32.to_be_bytes()); // no lists
             out.extend_from_slice(&0u32.to_be_bytes()); // and nothing outside the default one
         }
+        if version >= 11 {
+            out.extend_from_slice(&0u32.to_be_bytes()); // no value came from a list
+        }
         out
     }
 
@@ -738,6 +777,7 @@ mod tests {
                     value: Secret::new("Nordstern Consulting GmbH"),
                     aliases: vec![Secret::new("Nordstern"), Secret::new("NC GmbH")],
                     policy: Policy::Always,
+                    list: None,
                 },
                 ValueRecord {
                     learned_at: 1_759_000_000,
@@ -746,6 +786,7 @@ mod tests {
                     value: Secret::new("COBADEFFXXX"),
                     aliases: Vec::new(),
                     policy: Policy::Suggest,
+                    list: Some("sv".to_string()),
                 },
             ],
         });
@@ -883,11 +924,27 @@ mod tests {
         // the default list says so without a row of its own.
         assert_eq!(read.taught_names[0].list, "Svenska");
         assert_eq!(read.taught_names[1].list, crate::vault::model::DEFAULT_LIST);
+        // Model 11 — the list a **value** came from, and the silence of a value
+        // that came from nobody's. `sample()` carries one of each on purpose,
+        // so this is read in both directions rather than asserted in one.
+        let both = dec(&enc(&sample())).expect("decode");
+        assert_eq!(both.entities[0].values[0].list, None, "a value taught by hand grew a list");
+        assert_eq!(both.entities[0].values[1].list.as_deref(), Some("sv"));
 
         // A model-2 file, as a model-2 build wrote one.
         let opened = dec(&a_file_from_model(2)).expect("a model-2 vault still opens");
         assert_eq!(opened.settings, StoredSettings::default(), "and takes today's defaults");
         assert_eq!(opened.entities.len(), 1, "with nothing else lost");
+
+        // And the other direction, which is the one people actually live in: a
+        // vault written before values had lists opens, and its values are
+        // simply in nobody's list. A switch cannot silence what never came
+        // from a file.
+        let old = dec(&a_file_from_model(10)).expect("a model-10 vault still opens");
+        assert_eq!(
+            old.entities[0].values[0].list, None,
+            "a value written before model 11 grew a list it never had"
+        );
 
         // And every model this build claims to read, read in one place — so
         // «an old vault still opens» is a statement about all of them.
@@ -933,6 +990,25 @@ mod tests {
         match dec(&future) {
             Err(ApiError::PayloadRefused { reason }) => assert!(reason.contains("newer version")),
             other => panic!("expected a refusal, got {other:?}"),
+        }
+        // **And the realistic one, which the model 11 bump raised.** 0xFF00 is
+        // an absurd version and could be caught by almost anything; `+ 1` is
+        // the version a person actually meets, by downgrading or by copying a
+        // vault to an older machine. Its sections are this build's own, so
+        // only the version check can be what refuses it — and the worry was
+        // that a build which parsed what it knew and then found one section
+        // more would refuse with `TrailingVaultData`, a sentence about bytes
+        // after the end of the structure, which is true about the file and
+        // useless to the person. The version is judged before anything is
+        // parsed, and the refusal names **both** numbers, which is the whole
+        // of what the person needs: «a newer Z wrote this».
+        match dec(&a_file_from_model(MODEL_VERSION + 1)) {
+            Err(ApiError::PayloadRefused { reason }) => assert!(
+                reason.contains(&format!("model {}", MODEL_VERSION + 1))
+                    && reason.contains(&MODEL_VERSION.to_string()),
+                "a newer vault must be refused by naming both versions: «{reason}»"
+            ),
+            other => panic!("a vault from a newer Z gave {other:?}"),
         }
     }
 }

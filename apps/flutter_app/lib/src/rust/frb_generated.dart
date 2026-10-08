@@ -4428,13 +4428,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   NameImport dco_decode_name_import(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return NameImport(
       added: dco_decode_u_32(arr[0]),
       alreadyKnown: dco_decode_u_32(arr[1]),
       refused: dco_decode_u_32(arr[2]),
       reasons: dco_decode_list_String(arr[3]),
+      values: dco_decode_u_32(arr[4]),
+      columnsNotUsed: dco_decode_list_String(arr[5]),
     );
   }
 
@@ -5114,12 +5116,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   UserListRow dco_decode_user_list_row(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return UserListRow(
       name: dco_decode_String(arr[0]),
       names: dco_decode_u_32(arr[1]),
-      enabled: dco_decode_bool(arr[2]),
+      values: dco_decode_u_32(arr[2]),
+      enabled: dco_decode_bool(arr[3]),
     );
   }
 
@@ -6192,11 +6195,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_alreadyKnown = sse_decode_u_32(deserializer);
     var var_refused = sse_decode_u_32(deserializer);
     var var_reasons = sse_decode_list_String(deserializer);
+    var var_values = sse_decode_u_32(deserializer);
+    var var_columnsNotUsed = sse_decode_list_String(deserializer);
     return NameImport(
       added: var_added,
       alreadyKnown: var_alreadyKnown,
       refused: var_refused,
       reasons: var_reasons,
+      values: var_values,
+      columnsNotUsed: var_columnsNotUsed,
     );
   }
 
@@ -6995,8 +7002,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_name = sse_decode_String(deserializer);
     var var_names = sse_decode_u_32(deserializer);
+    var var_values = sse_decode_u_32(deserializer);
     var var_enabled = sse_decode_bool(deserializer);
-    return UserListRow(name: var_name, names: var_names, enabled: var_enabled);
+    return UserListRow(
+      name: var_name,
+      names: var_names,
+      values: var_values,
+      enabled: var_enabled,
+    );
   }
 
   @protected
@@ -7955,6 +7968,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_32(self.alreadyKnown, serializer);
     sse_encode_u_32(self.refused, serializer);
     sse_encode_list_String(self.reasons, serializer);
+    sse_encode_u_32(self.values, serializer);
+    sse_encode_list_String(self.columnsNotUsed, serializer);
   }
 
   @protected
@@ -8591,6 +8606,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.name, serializer);
     sse_encode_u_32(self.names, serializer);
+    sse_encode_u_32(self.values, serializer);
     sse_encode_bool(self.enabled, serializer);
   }
 
