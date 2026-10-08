@@ -18,7 +18,12 @@ use crate::session::with_core;
 fn clean(name: &str) -> ApiResult<String> {
     let name = name.trim();
     if name.is_empty() {
-        return Err(ApiError::PayloadRefused {
+        // **`InputRefused`, not `PayloadRefused`** — one variant per next move.
+        // Nothing is wrong with a payload here; what is missing is a word the
+        // person has not typed yet, and the move is to type it. The screen's
+        // sentence follows the variant, so the variant has to be the one whose
+        // sentence tells them what to do.
+        return Err(ApiError::InputRefused {
             reason: "a session needs a name — it is the only thing that tells two apart"
                 .to_string(),
         });

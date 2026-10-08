@@ -196,6 +196,42 @@ fn an_answer_from_a_deleted_session_refuses_and_names_it() {
     close_session(bench).ok();
 }
 
+// ------------------------------- a name is asked once, so it must be asked for
+
+/// **An empty name is refused as input, and the sentence says what to do.**
+///
+/// The owner's rule is that the name is asked **once**, at the moment a session
+/// is born — so there is no second chance to fix a nameless row, and a session
+/// with no name is a line in the list that cannot be told from another line.
+///
+/// `InputRefused` and not `PayloadRefused`: one variant per next move. Nothing
+/// is wrong with a payload; a word has not been typed, and the move is to type
+/// it. The screen's sentence follows the variant, which is why the variant is
+/// part of the promise and not an implementation detail.
+#[test]
+fn a_session_with_no_name_is_refused_as_input() {
+    let _g = serial();
+    fresh_vault("nameless");
+
+    let bench = bench_with(ONE);
+    for empty in ["", "   ", "\t\n "] {
+        match conversation_begin(empty.to_string(), Some(bench)) {
+            Err(ApiError::InputRefused { reason }) => assert!(
+                reason.contains("needs a name"),
+                "the refusal does not say what is missing: «{reason}»"
+            ),
+            other => panic!("«{empty}» was accepted as a session name: {other:?}"),
+        }
+    }
+    // And nothing was half-made on the way out of the refusal.
+    assert!(
+        conversations().expect("rows").is_empty(),
+        "a refused name still left a session in the vault"
+    );
+    assert_eq!(conversation_open().expect("open"), None, "a refused name still opened a session");
+    close_session(bench).ok();
+}
+
 // ------------------------------- 6b · the payload says whose session it is
 
 /// **A payload with no session says so, on itself** — 064d.
