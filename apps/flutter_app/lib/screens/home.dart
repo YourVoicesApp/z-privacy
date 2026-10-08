@@ -149,7 +149,16 @@ class _HomeScreenState extends State<HomeScreen> {
     if (chat.openSuggestions > 0) return;
     await showDialog<bool>(
       context: context,
-      builder: (_) => SendSheet(bench: chat, ground: widget.ground, onSettings: widget.onSettings),
+      // Only when pressing it would **open** the panel. The shell's
+      // `onSettings` is a toggle, so handing it on while the panel is
+      // already standing would give the sheet a door labelled «Open
+      // Settings» that shuts them. A surface with nowhere to send the
+      // press draws no door — 063's rule, and this is the case it covers.
+      builder: (_) => SendSheet(
+        bench: chat,
+        ground: widget.ground,
+        onSettings: widget.settingsOpen ? null : widget.onSettings,
+      ),
     );
   }
 

@@ -150,6 +150,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     });
   }
 
+  /// The way to the settings, handed on **only while the panel is shut**.
+  ///
+  /// The shell's `onSettings` is a toggle — `_settingsOpen = !_settingsOpen`
+  /// — and the ✨AI control stays on the bar while the panel stands, so the
+  /// send sheet can be opened over an open panel. Handing the toggle on there
+  /// would give the sheet a door labelled «Open Settings» that **shuts** them.
+  /// Null instead: the sheet says its line, draws no door, and closing it
+  /// uncovers the panel that is already there. A surface with nowhere to send
+  /// the press draws no door — 063's rule, in a case that only shows up from
+  /// the sheet.
+  VoidCallback? get _toSettings => widget.settingsOpen ? null : widget.onSettings;
+
   @override
   Widget build(BuildContext context) {
     final bench = widget.bench;
@@ -187,7 +199,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onPage: _goToPage,
               onVault: widget.onVault,
               onLockVault: () => unawaited(widget.ground.lockVault()),
-              onSettings: widget.onSettings,
+              onSettings: _toSettings,
               settingsOpen: widget.settingsOpen,
             ),
             _Band(bench: bench, onVault: widget.onVault),
@@ -240,7 +252,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           ground: widget.ground,
                           said: _said,
                           focusKey: _focusKey,
-                          onSettings: widget.onSettings,
+                          onSettings: _toSettings,
                           onSay: (line) => setState(() => _said = line),
                           onChoose: (mark, at) {
                             // The finding behind the mark, by the place it

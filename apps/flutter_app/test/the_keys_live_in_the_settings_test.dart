@@ -54,6 +54,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
+import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -393,6 +394,74 @@ void main() {
       isNull,
       reason: 'the form overflowed or threw at the width the panel really gives it',
     );
+  });
+
+  // j · **A door labelled «Open Settings» must not close them.**
+  //
+  // Found by reading the chain rather than the screen: `shell.dart` passes
+  // `onSettings` as a **toggle**, and `workspace.dart` hides its own settings
+  // door while the panel stands but leaves the ✨AI control on the bar. So the
+  // sheet can be opened over an open panel, and its door would have shut the
+  // thing it names.
+  //
+  // Stands on the two states of one screen, in one test, so the second half is
+  // the first half's control: with the panel shut the door is there, with it
+  // open the door is gone. Either assertion alone could pass for the wrong
+  // reason — a sheet that never draws a door would satisfy the second.
+  testWidgets('j — the sheet offers no settings door while the panel already stands', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final ground = await _vault(tester, 'already-open');
+
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      final session = await z.openSession(profileId: null, packId: 'de');
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await z.importText(session: session, text: _doc);
+      await bench.rescan();
+      await ground.refresh();
+    });
+
+    Future<void> openTheSheet({required bool panelStanding}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: WorkspaceScreen(
+            bench: bench,
+            ground: ground,
+            onHome: () {},
+            onVault: () {},
+            onSettings: () => askedForSettings++,
+            settingsOpen: panelStanding,
+          ),
+        ),
+      );
+      await settle(tester);
+      await tester.tap(find.byTooltip('Choose the AI and what travels to it'));
+      await settle(tester);
+      await tester.tap(find.text('Continue'));
+      await settle(tester);
+    }
+
+    // The control first: with the panel shut, the door is drawn.
+    await openTheSheet(panelStanding: false);
+    expect(
+      find.text('Open Settings'),
+      findsWidgets,
+      reason: 'the sheet draws no door even with the panel shut, so the absence below proves nothing',
+    );
+    await tester.tap(find.text('Cancel'));
+    await settle(tester);
+
+    // And with it standing, no door — because pressing one would have closed it.
+    await openTheSheet(panelStanding: true);
+    expect(
+      find.text('Open Settings'),
+      findsNothing,
+      reason: 'a door labelled «Open Settings» is offered over an already-open panel, and the '
+          'shell\'s callback is a toggle — pressing it would shut them',
+    );
+
+    bench.dispose();
   });
 
   // h · **An anchor, not a guard.** Green before this change and after it. The
