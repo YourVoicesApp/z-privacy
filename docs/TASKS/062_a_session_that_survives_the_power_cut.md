@@ -119,12 +119,42 @@ the same shape as 059: the user chooses their own risk, and we state the price.
 
 ---
 
-## Awaiting the owner's word
+## F · Settled by the owner, 8 Oct — and my question was the wrong one
 
-1. **Every session saved, or only one he names?** A session nobody named is
-   probably a session nobody wants kept.
-2. **How long does a saved session live** — for ever, or until he deletes it?
-3. **Deleting a session: the name alone, or the map with it?** They are not the
-   same act and must not share a button.
+I asked whether every session is saved or only a named one. He had already
+answered it, and the answer is better than the question: **a name is not asked
+for a session, it is asked when there is no session.**
+
+```
+working with no session  →  press Copy, or export a PDF  →  asked once, the session is born
+entering an old session  →  nothing is asked
+```
+
+A session is therefore **never created by a button**. It is born of the act that
+makes it necessary — text leaving the machine — and that dissolves the problem
+of where a «New session» control would live (061 §5): nowhere, because there is
+no such control.
+
+### What is kept follows where the conversation happens
+
+* **Inside the app** (a key is connected) — the conversation whole.
+* **Outside the app** (he copies into a browser) — **the question, which is what
+  was copied, and the answer, which is what came back.** That pair is the least
+  that restores, and we do not pretend to hold what we never saw.
+
+### Deleting is easy, and it carries a warning
+
+His words: any protected document or message **cannot be unprotected after its
+session is deleted**.
+
+That is the right wording, and it is stronger than the mechanism strictly
+requires — deliberately. A token is derived, not stored, so a value **still
+taught to the vault** may be re-derived from the same document. But **a value
+protected once and never learned dies with the session**, and a promise of
+partial recovery is worse than none. So the warning says the hard thing.
+
+**And that is exactly the property §B says is unmeasured.** The same test settles
+both: it tells us how much the warning overstates, and whether 062 is a feature
+or a debt.
 
 Nothing here is built. The freeze stands, and this is a new feature.
