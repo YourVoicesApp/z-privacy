@@ -822,7 +822,36 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
-    skip "  test present: $t" "not written yet"
+    fail "  test MISSING: $t (renamed, or deleted — this roster is not a wish list)"
+  fi
+done
+
+# ---------------------------------------------------------------- the owed list
+# **«Not written yet» is a declaration, never a silence** — the lead's ruling,
+# 9 October 2026, and the reason the loop above now fails.
+#
+# It used to `skip` for a name it could not find, so «we have not got to it» and
+# «somebody renamed it» read identically — and when 064 renamed three tests, the
+# gate stopped measuring three properties and said «not written yet» about tests
+# that existed. Absence was being read as progress. That is the same family as an
+# overflow counter that cannot rise, and as a check that prints PASSED because the
+# words «FAILED» are absent from an empty log.
+#
+# So a test that is genuinely owed is declared **here**, by name, with the number
+# of the paper that owes it. The list is empty today, and an empty list is the
+# honest state: every name in the roster above exists. When something appears
+# here it carries its debt in writing, and when it is written it moves up.
+#
+#   OWED="the_name_of_the_test:071 another_one:072"
+OWED=""
+for entry in $OWED; do
+  [ -z "$entry" ] && continue
+  t=${entry%%:*}
+  paper=${entry#*:}
+  if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
+    pass "  owed test now written: $t (paper $paper) — move it up into the roster"
+  else
+    printf '  \033[33mOWED\033[0m  %s\n' "test not written yet: $t — owed by paper $paper"
   fi
 done
 

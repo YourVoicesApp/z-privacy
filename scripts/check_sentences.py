@@ -276,7 +276,10 @@ def main() -> int:
         print(
             f'{len(bad)} literal(s) carry a run of spaces, or a newline with '
             'indentation after it. Wrap a long sentence with a trailing '
-            'backslash in Rust, or as two adjacent literals in Dart.'
+            'backslash in Rust, or as two adjacent literals in Dart. The two are not '
+            'interchangeable: Rust does not join adjacent literals, so that advice is '
+            'Dart-only and a Rust sentence wraps with a trailing backslash, which eats '
+            'the newline and the indentation after it.'
         )
         return 1
     return 0
