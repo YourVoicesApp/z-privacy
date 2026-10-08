@@ -302,7 +302,21 @@ void main() {
     bench.dispose();
   });
 
-  // i · **The claims that came with the form.** `shell_test.dart` used to
+  // i · **The claims that came with the form — and the only guard here that
+  // was green on arrival, which is why it was gone back to.**
+  //
+  // Its assertions were inherited from `shell_test.dart`, where they were
+  // already passing, so nothing about them had ever been watched to fail. Two
+  // of the three turned out not to bite at all:
+  //
+  //   · «literal loopback address», unscoped, was satisfied by the Local AI
+  //     card's own description one widget up — green with the form's copy
+  //     deleted. It measured the label on the box, not the box.
+  //   · the width, read off the `ConnectForm`'s own rect, could not move: a
+  //     child wider than its box leaves the box where it was.
+  //
+  // Both re-aimed, and each of the three claims then broken on purpose and
+  // watched to name itself. **The claims that came with the form.** `shell_test.dart` used to
   // assert these against the two forms the send sheet mounted — one API KEY,
   // two ADDRESS fields, the loopback sentence — and they are not about the
   // sheet at all: they are about what `ConnectForm` asks for, and they moved
@@ -376,23 +390,49 @@ void main() {
       findsNWidgets(ground.providers.length + 1),
       reason: 'one address per provider card and one for the Local AI card — the count disagrees',
     );
-    // Twice in the panel, not once as in the sheet: the Local AI card states
-    // the rule and the form beneath it states it again. The claim is that the
-    // rule is said, not that it is said once.
-    expect(find.textContaining('literal loopback address'), findsWidgets);
+    // **Scoped to the form, because the card above it says the same sentence.**
+    // Unscoped, this assertion was green with the form's own copy deleted: the
+    // Local AI `_Card`'s `what:` text at `settings.dart:270` satisfied it, so
+    // it was measuring the description and not the thing described. Found by
+    // breaking the form's copy on purpose while closing this guard.
+    expect(
+      find.descendant(
+        of: find.byType(ConnectForm),
+        matching: find.textContaining('literal loopback address'),
+      ),
+      findsWidgets,
+      reason: 'the form itself no longer states the loopback rule',
+    );
     expect(find.text('http://127.0.0.1:11434'), findsWidgets);
 
     // And it reads at this width — nothing of it is pushed off the panel.
-    final form = tester.getRect(find.byType(ConnectForm).first);
+    //
+    // **Measured on the fields, not on the form.** The first version read the
+    // `ConnectForm`'s own rect, and that cannot catch this: a child wider than
+    // its box leaves the box where it was, so a 900 px field inside a 444 px
+    // column left the form's rect at 444 and the guard green. It is the rule
+    // the floor guard was written against — *measure the rect of the thing
+    // whose position the fault moves, never the rect of the box the fault
+    // happens inside* — and I had just broken it here.
+    final fields = find.descendant(of: find.byType(ConnectForm), matching: find.byType(TextField));
+    expect(fields, findsWidgets, reason: 'the form draws no fields at all');
+    final tooWide = <String>[];
+    for (final element in fields.evaluate()) {
+      final box = tester.getRect(find.byElementPredicate((e) => e == element));
+      if (box.right > 480.0 || box.left < 0.0) {
+        tooWide.add(box.toString());
+      }
+    }
+    // What this reads is a **position**, and that is the fault it can catch. A
+    // field merely *given* too much width cannot happen: `SizedBox` enforces
+    // its width against the incoming constraints, so a 900 px field inside the
+    // 444 px column comes back 444 and nothing has moved. The reachable fault
+    // is a field pushed sideways — by padding, a `Transform`, a `Row` — and a
+    // 300 px nudge is what this was proven on.
     expect(
-      form.right,
-      lessThanOrEqualTo(480.0),
-      reason: 'the form runs to x=${form.right.toStringAsFixed(0)} in a 480 px panel',
-    );
-    expect(
-      tester.takeException(),
-      isNull,
-      reason: 'the form overflowed or threw at the width the panel really gives it',
+      tooWide,
+      isEmpty,
+      reason: 'a field runs off the 480 px panel: $tooWide',
     );
   });
 
