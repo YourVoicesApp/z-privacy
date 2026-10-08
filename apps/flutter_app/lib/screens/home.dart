@@ -91,10 +91,20 @@ class _HomeScreenState extends State<HomeScreen> {
   final _text = TextEditingController();
   final _focus = FocusNode();
 
+  /// The conversation's own scroller — the middle band, and the only thing on
+  /// this page that scrolls.
+  final _conversation = ScrollController();
+
+  /// Which answer the conversation was last taken to the end for. Null until
+  /// there is one, and compared rather than counted so that re-reading an old
+  /// answer does not drag the person away from where they were looking.
+  AnswerId? _shown;
+
   @override
   void dispose() {
     _text.dispose();
     _focus.dispose();
+    _conversation.dispose();
     super.dispose();
   }
 
@@ -143,6 +153,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Keep the newest answer where the person is looking.
+  ///
+  /// The conversation opens at its end, as a chat does. Without this the
+  /// arrangement would be right and the screen still wrong: at 900×520 the
+  /// answer was measured to be *never built* — the end of a scroller nobody
+  /// moved — and «the answer appears above the writing» would have been true
+  /// of the layout and false of the screen.
+  ///
+  /// Only when the answer **changes**, never on every frame, because a jump on
+  /// every frame is a conversation a person cannot scroll back through.
+  void _keepTheAnswerInView() {
+    final showing = widget.chat?.showing;
+    if (showing == _shown) return;
+    _shown = showing;
+    if (showing == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_conversation.hasClients) return;
+      _conversation.jumpTo(_conversation.position.maxScrollExtent);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final ground = widget.ground;
@@ -156,215 +187,253 @@ class _HomeScreenState extends State<HomeScreen> {
       // The conversation changes what this page draws, so the page listens to
       // it as well as to the ground.
       listenable: chat == null ? ground : Listenable.merge([ground, chat]),
-      builder: (context, _) => Scaffold(
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 940),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(34, 40, 34, 40),
-              children: [
-                Row(
-                  children: [
-                    const ZMark(size: 36),
-                    const SizedBox(width: 12),
-                    const Text('Z Privacy', style: Zc.h1),
-                    const Spacer(),
-                    // The stamp is three times the length of «z_core 0.1.0», so
-                    // it is given room to shrink rather than room to overflow —
-                    // the workspace top bar taught that lesson on 3 October.
-                    Flexible(
-                      child: Text(
-                        widget.version,
-                        style: Zc.tiny.copyWith(fontFamily: Zc.mono),
-                        overflow: TextOverflow.ellipsis,
-                        softWrap: false,
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    if (!widget.settingsOpen)
-                      SettingsDoor(open: false, onTap: widget.onSettings),
-                  ],
-                ),
-                const SizedBox(height: 26),
-                const Text('What stays on this device, and what leaves it.', style: Zc.h2),
-                const SizedBox(height: 10),
-                const Text(
-                  'Write or paste what you want to send an AI. It is scanned before you read it: '
-                  'what the scanner is sure of is already protected, what it is unsure of it asks '
-                  'you about, and then you see the exact text that would go.',
-                  style: Zc.body,
-                ),
-                const SizedBox(height: 18),
-                // **The composer is the home.** The owner, 6 October: the
-                // writing screen is the main screen, and a file is a «+» as it
-                // is in a chat. So the box is the first thing on the page and
-                // the first thing with the focus — a person who opened this
-                // app to paste a letter can paste it.
-                Container(
-                  decoration: Zc.panel(fill: Zc.card, radius: 12),
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextField(
-                        controller: _text,
-                        focusNode: _focus,
-                        autofocus: true,
-                        minLines: 5,
-                        maxLines: 12,
-                        style: Zc.document.copyWith(fontSize: 14),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          isDense: true,
-                          hintText: 'Write or paste your text here…',
-                          hintStyle: Zc.body.copyWith(color: Zc.ink4),
+      builder: (context, _) {
+        _keepTheAnswerInView();
+        return Scaffold(
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 940),
+              // **The chat reads like a chat.** The owner, 8 October:
+              // «الكتابة في أسفل الشاشة والإجابة تظهر في أعلى» — the writing
+              // at the bottom of the screen, and the answer above it.
+              //
+              // This was one `ListView` with the writing box as its fourth
+              // child and the answer as its eighth, so the person wrote at the
+              // top and the answer arrived underneath: the reverse of every
+              // chat they have used. Three bands now, and the middle one is
+              // the only thing that scrolls — a composer that travels with the
+              // thread is not a composer, it is a paragraph.
+              child: Column(
+                children: [
+                  // 1 · The strip. Fixed, because a chat's name does not
+                  // scroll away from it.
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(34, 30, 34, 0),
+                    child: Row(
+                      children: [
+                        const ZMark(size: 36),
+                        const SizedBox(width: 12),
+                        const Text('Z Privacy', style: Zc.h1),
+                        const Spacer(),
+                        // The stamp is three times the length of «z_core 0.1.0», so
+                        // it is given room to shrink rather than room to overflow —
+                        // the workspace top bar taught that lesson on 3 October.
+                        Flexible(
+                          child: Text(
+                            widget.version,
+                            style: Zc.tiny.copyWith(fontFamily: Zc.mono),
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: false,
+                            textAlign: TextAlign.right,
+                          ),
                         ),
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          // The file, as a chat offers one.
-                          Tooltip(
-                            message: 'Add a document — PDF, Word or text',
-                            child: IconButton(
-                              icon: const Icon(Icons.add, size: 20),
-                              color: Zc.clay,
-                              onPressed: widget.onImport,
-                            ),
+                        const SizedBox(width: 12),
+                        if (!widget.settingsOpen)
+                          SettingsDoor(open: false, onTap: widget.onSettings),
+                      ],
+                    ),
+                  ),
+                  // 2 · The conversation. The page's own opening matter is at
+                  // the top of it and scrolls away as a chat's empty state
+                  // does; the answer is last, so it stands directly above the
+                  // writing.
+                  Expanded(
+                    child: ListView(
+                      controller: _conversation,
+                      padding: const EdgeInsets.fromLTRB(34, 24, 34, 14),
+                      children: [
+                        const Text('What stays on this device, and what leaves it.', style: Zc.h2),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Write or paste what you want to send an AI. It is scanned before you read it: '
+                          'what the scanner is sure of is already protected, what it is unsure of it asks '
+                          'you about, and then you see the exact text that would go.',
+                          style: Zc.body,
+                        ),
+                        const SizedBox(height: 18),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: ZButton(
+                            label: 'Open Z Vault',
+                            icon: Icons.lock_outline,
+                            tint: Zc.river,
+                            onPressed: widget.onVault,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'PDF · Word · TXT',
-                            style: Zc.tiny.copyWith(color: Zc.ink4),
-                          ),
-                          const Spacer(),
-                          // Flexible, because a disabled button carries a
-                          // sentence beside it and a narrow window must wrap it
-                          // rather than push it off the edge — the same lesson
-                          // the top bar taught on 3 October.
-                          Flexible(
-                            child: Wrap(
-                              alignment: WrapAlignment.end,
-                              spacing: 8,
-                              runSpacing: 8,
+                        ),
+                        const SizedBox(height: 22),
+                        if (ground.trouble != null) ...[Trouble(ground.trouble!), const SizedBox(height: 18)],
+                        _ground(context),
+                        // **The answer, under the question and above the
+                        // writing, in this screen.** The same widget the
+                        // Workspace draws, in its inline shape, so the two
+                        // views, the fourth mark, the two named copies and the
+                        // clipboard confirmation are one implementation and
+                        // not two.
+                        if (chat != null && chat.showing != null) ...[
+                          const SizedBox(height: 22),
+                          AnswerPanel(bench: chat),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // 3 · The writing. Pinned, with whatever the last press has
+                  // to say standing immediately over it — which is where a
+                  // chat puts «this did not go».
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(34, 0, 34, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_said != null) ...[Trouble(_said!), const SizedBox(height: 10)],
+                        // **The gate, said out loud and with the way through it.**
+                        //
+                        // A question that scanned up something unsure is not sent, and
+                        // this is where the person is told what is waiting and where
+                        // the answering happens — the Workspace's own review, which is
+                        // what «Open and scan» opens.
+                        if (blocked) ...[
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(14, 11, 14, 12),
+                            decoration: Zc.panel(fill: Zc.warmCard, radius: 10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // The review path, unchanged: the two columns,
-                                // the suggestions, protecting by hand.
-                                ZButton(
-                                  label: 'Open and scan',
-                                  icon: Icons.shield_outlined,
-                                  onPressed: empty ? null : _open,
-                                  hint: empty ? 'Write or paste something first' : null,
+                                Text(
+                                  waiting == 1
+                                      ? 'One word in your question is not certain yet.'
+                                      : '$waiting words in your question are not certain yet.',
+                                  style: Zc.body,
                                 ),
-                                // **The AI door, on the home** (046/G). The
-                                // reason is on the button, because «send
-                                // anyway» does not exist and never will.
-                                ZButton(
-                                  label: 'Ask the AI',
-                                  filled: true,
-                                  icon: Icons.auto_awesome_outlined,
-                                  onPressed: empty || _asking || blocked ? null : () => unawaited(_ask()),
-                                  hint: empty
-                                      ? 'Write or paste something first'
-                                      : blocked
-                                          ? waiting == 1
-                                              ? 'Answer the one suggestion first'
-                                              : 'Answer the $waiting suggestions first'
-                                          : null,
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Z does not send a question with an unanswered '
+                                  'suggestion in it. Open it to say yes or no to each '
+                                  'one, and then ask.',
+                                  style: Zc.small.copyWith(color: Zc.ink3),
+                                ),
+                                const SizedBox(height: 9),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: ZButton(
+                                    label: 'Open the question and answer them',
+                                    icon: Icons.fact_check_outlined,
+                                    // The line still holds the question — it is not
+                                    // cleared by asking, because it is the question and
+                                    // a person may want to change it. So the review
+                                    // opens on exactly the text that was scanned.
+                                    onPressed: empty ? null : _open,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
+                          const SizedBox(height: 10),
                         ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (_said != null) ...[
-                  const SizedBox(height: 10),
-                  Trouble(_said!),
-                ],
-                // **The gate, said out loud and with the way through it.**
-                //
-                // A question that scanned up something unsure is not sent, and
-                // this is where the person is told what is waiting and where
-                // the answering happens — the Workspace's own review, which is
-                // what «Open and scan» opens.
-                if (blocked) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(14, 11, 14, 12),
-                    decoration: Zc.panel(fill: Zc.warmCard, radius: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          waiting == 1
-                              ? 'One word in your question is not certain yet.'
-                              : '$waiting words in your question are not certain yet.',
-                          style: Zc.body,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Z does not send a question with an unanswered '
-                          'suggestion in it. Open it to say yes or no to each '
-                          'one, and then ask.',
-                          style: Zc.small.copyWith(color: Zc.ink3),
-                        ),
-                        const SizedBox(height: 9),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: ZButton(
-                            label: 'Open the question and answer them',
-                            icon: Icons.fact_check_outlined,
-                            // The line still holds the question — it is not
-                            // cleared by asking, because it is the question and
-                            // a person may want to change it. So the review
-                            // opens on exactly the text that was scanned.
-                            onPressed: empty ? null : _open,
+                        // **The composer is the home.** The owner, 6 October: the
+                        // writing screen is the main screen, and a file is a «+» as it
+                        // is in a chat. So the box has the focus — a person who opened
+                        // this app to paste a letter can paste it — and since
+                        // 8 October it is where a chat keeps it, at the bottom.
+                        Container(
+                          decoration: Zc.panel(fill: Zc.card, radius: 12),
+                          padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextField(
+                                controller: _text,
+                                focusNode: _focus,
+                                autofocus: true,
+                                minLines: 3,
+                                maxLines: 8,
+                                style: Zc.document.copyWith(fontSize: 14),
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  hintText: 'Write or paste your text here…',
+                                  hintStyle: Zc.body.copyWith(color: Zc.ink4),
+                                ),
+                                onChanged: (_) => setState(() {}),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  // The file, as a chat offers one.
+                                  Tooltip(
+                                    message: 'Add a document — PDF, Word or text',
+                                    child: IconButton(
+                                      icon: const Icon(Icons.add, size: 20),
+                                      color: Zc.clay,
+                                      onPressed: widget.onImport,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'PDF · Word · TXT',
+                                    style: Zc.tiny.copyWith(color: Zc.ink4),
+                                  ),
+                                  const Spacer(),
+                                  // Flexible, because a disabled button carries a
+                                  // sentence beside it and a narrow window must wrap it
+                                  // rather than push it off the edge — the same lesson
+                                  // the top bar taught on 3 October.
+                                  Flexible(
+                                    child: Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        // The review path, unchanged: the two columns,
+                                        // the suggestions, protecting by hand.
+                                        ZButton(
+                                          label: 'Open and scan',
+                                          icon: Icons.shield_outlined,
+                                          onPressed: empty ? null : _open,
+                                          hint: empty ? 'Write or paste something first' : null,
+                                        ),
+                                        // **The AI door, on the home** (046/G). The
+                                        // reason is on the button, because «send
+                                        // anyway» does not exist and never will.
+                                        ZButton(
+                                          label: 'Ask the AI',
+                                          filled: true,
+                                          icon: Icons.auto_awesome_outlined,
+                                          onPressed: empty || _asking || blocked ? null : () => unawaited(_ask()),
+                                          hint: empty
+                                              ? 'Write or paste something first'
+                                              : blocked
+                                              ? waiting == 1
+                                                    ? 'Answer the one suggestion first'
+                                                    : 'Answer the $waiting suggestions first'
+                                              : null,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          // Two sentences, one space between them. There were three,
+                          // on the first screen of the product — 046/D's sweep found
+                          // it in Dart after the two in the core. Under the writing
+                          // now, which is where a chat keeps the line about itself.
+                          'Nothing is uploaded to be read. Conversations are not saved after you close '
+                          'the app.',
+                          style: Zc.small.copyWith(color: Zc.ink4),
                         ),
                       ],
                     ),
                   ),
                 ],
-                // **The answer, under the question, in this screen.** The same
-                // widget the Workspace draws, in its inline shape, so the two
-                // views, the fourth mark, the two named copies and the
-                // clipboard confirmation are one implementation and not two.
-                if (chat != null && chat.showing != null) ...[
-                  const SizedBox(height: 12),
-                  AnswerPanel(bench: chat),
-                ],
-                const SizedBox(height: 9),
-                Text(
-                  // Two sentences, one space between them. There were three,
-                  // on the first screen of the product — 046/D's sweep found
-                  // it in Dart after the two in the core.
-                  'Nothing is uploaded to be read. Conversations are not saved after you close '
-                  'the app.',
-                  style: Zc.small.copyWith(color: Zc.ink4),
-                ),
-                const SizedBox(height: 14),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: ZButton(
-                    label: 'Open Z Vault',
-                    icon: Icons.lock_outline,
-                    tint: Zc.river,
-                    onPressed: widget.onVault,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                if (ground.trouble != null) ...[Trouble(ground.trouble!), const SizedBox(height: 18)],
-                _ground(context),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

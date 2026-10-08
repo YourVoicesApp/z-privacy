@@ -10,7 +10,9 @@
 // So three things are held here, and the third is the one that matters most:
 //
 //   1. with no document open, a question can be asked from the home;
-//   2. its answer appears **in the same screen**, under the question;
+//   2. its answer appears **in the same screen** rather than in a third
+//      destination — and since 8 October it stands above the writing and
+//      not below it, which `the_chat_reads_like_a_chat_test.dart` measures;
 //   3. **it cannot be asked while a suggestion is unanswered**, and the
 //      reason is on the button rather than in a message afterwards.
 //
@@ -132,7 +134,7 @@ void main() {
     expect(find.textContaining('Write or paste something first'), findsWidgets);
   });
 
-  testWidgets('the answer appears under the question, in the same screen', (tester) async {
+  testWidgets('the answer appears in the same screen, not in a third one', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1300, 1100));
     final ground = await _vault(tester, 'answer');
 
