@@ -26,6 +26,12 @@ pub(crate) struct VaultStore {
     dir: Option<PathBuf>,
     /// The file as it sits on disk, whether or not it is open.
     sealed: Option<SealedVault>,
+    /// The exact bytes `sealed` came from on disk, if it came from disk.
+    ///
+    /// Two desktop instances have two `VaultStore`s. Atomic replace protects the
+    /// file from being torn in half, but not from "last writer wins"; this keeps
+    /// an unlocked copy from overwriting a vault another copy has changed since.
+    disk_bytes: Option<Vec<u8>>,
     /// A file was present, but could not be parsed. Kept so `state()` can stay
     /// infallible and `unlock()` can still name the refusal.
     sealed_error: Option<ApiError>,
@@ -104,16 +110,21 @@ impl VaultStore {
             Ok(Some(bytes)) => match SealedVault::from_bytes(&bytes) {
                 Ok(sealed) => {
                     self.sealed = Some(sealed);
+                    self.disk_bytes = Some(bytes);
                     self.sealed_error = None;
                 }
                 Err(err) => {
                     self.sealed = None;
+                    self.disk_bytes = Some(bytes);
                     self.sealed_error = Some(err);
                 }
             },
-            Ok(None) => {}
+            Ok(None) => {
+                self.disk_bytes = None;
+            }
             Err(err) => {
                 self.sealed = None;
+                self.disk_bytes = None;
                 self.sealed_error = Some(err);
             }
         }
@@ -204,6 +215,7 @@ impl VaultStore {
         self.master = Some(master);
         self.open = Some(OpenVault { vault: model, revealed: None });
         self.set_idle_limit(minutes);
+        self.ensure_disk_unchanged()?;
         self.write_to_disk()?;
         Ok((0, 0))
     }
@@ -262,6 +274,7 @@ impl VaultStore {
         if let Some(err) = self.sealed_error.clone() {
             return Err(err);
         }
+        self.ensure_disk_unchanged()?;
         let sealed = self.sealed.as_mut().ok_or(ApiError::VaultAbsent)?;
         sealed.change_passphrase(old, replacement)?;
         self.write_to_disk()
@@ -288,6 +301,7 @@ impl VaultStore {
     /// Change the open vault and seal it again. Nothing here can leave the device.
     pub(crate) fn with_open_mut<R>(&mut self, f: impl FnOnce(&mut Vault) -> ApiResult<R>) -> ApiResult<R> {
         self.tick();
+        self.ensure_disk_unchanged()?;
         let (Some(open), Some(master)) = (self.open.as_mut(), self.master.as_ref()) else {
             return Err(ApiError::VaultLocked);
         };
@@ -424,7 +438,20 @@ impl VaultStore {
             .unwrap_or_default()
     }
 
-    fn write_to_disk(&self) -> ApiResult<()> {
+    fn ensure_disk_unchanged(&mut self) -> ApiResult<()> {
+        let Some(path) = self.path() else {
+            return Ok(());
+        };
+        let current = crate::secure_file::read_no_follow(&path, "vault.zv")?;
+        if current != self.disk_bytes {
+            return Err(ApiError::StorageRefused {
+                reason: "vault.zv: the vault file changed on disk while this copy was open; lock and unlock before changing it".to_string(),
+            });
+        }
+        Ok(())
+    }
+
+    fn write_to_disk(&mut self) -> ApiResult<()> {
         let (Some(path), Some(sealed)) = (self.path(), self.sealed.as_ref()) else {
             // No folder set: the vault lives for this run only. Used by tests and
             // by a first run before the app has told us where to put it.
@@ -432,6 +459,7 @@ impl VaultStore {
         };
         let bytes = sealed.to_bytes();
         crate::secure_file::replace_atomically(&path, "zv.new", &bytes, "vault.zv")?;
+        self.disk_bytes = Some(bytes);
         Ok(())
     }
 }
@@ -515,6 +543,55 @@ mod tests {
         let hints = again.hints(None);
         assert_eq!(hints.len(), 2, "the value and its alias");
         assert_eq!(hints[0].entity_handle, "CLIENT #17");
+
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn two_open_copies_do_not_overwrite_each_other() {
+        let dir = test_dir("two-copies");
+        let pass = "ein gutes Passwort für den Test";
+
+        let mut first = VaultStore::default();
+        first.set_dir(dir.clone()).expect("dir");
+        first.create(pass).expect("create");
+
+        let mut copy_a = VaultStore::default();
+        copy_a.set_dir(dir.clone()).expect("dir a");
+        copy_a.unlock(pass).expect("unlock a");
+
+        let mut copy_b = VaultStore::default();
+        copy_b.set_dir(dir.clone()).expect("dir b");
+        copy_b.unlock(pass).expect("unlock b");
+
+        copy_a
+            .with_open_mut(|vault| {
+                vault.entities.push(cheap_entity(17));
+                vault.next_entity = 18;
+                Ok(())
+            })
+            .expect("copy a writes");
+
+        match copy_b.with_open_mut(|vault| {
+            vault.entities.push(cheap_entity(18));
+            Ok(())
+        }) {
+            Err(ApiError::StorageRefused { reason }) => {
+                assert!(reason.contains("changed on disk"), "{reason}");
+            }
+            other => panic!("a stale open copy must not overwrite the vault: {other:?}"),
+        }
+
+        let mut again = VaultStore::default();
+        again.set_dir(dir.clone()).expect("dir again");
+        again.unlock(pass).expect("unlock again");
+        again
+            .with_open(|vault| {
+                assert_eq!(vault.entities.len(), 1, "the first writer's change survived");
+                assert_eq!(vault.entities[0].id, 17);
+            })
+            .expect("read again");
 
         // G15-ok: cleaning a test's own folder.
         let _ = std::fs::remove_dir_all(&dir);
