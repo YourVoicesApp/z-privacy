@@ -94,6 +94,28 @@ dies: every document and every message protected in this session.
 5. The vault body does **not** grow with a conversation: write a long one, and
    `vault.zv` is unchanged in size.
 
+## Versions, settled with the builder (8 Oct, night)
+
+Three numbers now, each owning one artifact, none borrowing another's:
+
+* `FORMAT_VERSION` stays **2** — the envelope (Argon2 params, wrapped master)
+  does not move.
+* `MODEL_VERSION` 11 → **12** — session records (number, name, 32-byte key) join
+  the body, their own section at the end as 11's was. **This spends the number
+  the 8 Oct ruling had reserved for 046/S, which becomes 13.** The lead's ruling
+  moves, said here and in the comment above the constant, not in one of them.
+* `SESSION_FORMAT_VERSION = 1` — the sealed session files are not this format
+  and must not borrow its version. Its comment names the other two numbers and
+  what each governs, the way the MODEL_VERSION comment already does, because
+  three version numbers triple the room for the two-places-disagree mistake.
+
+And the noun: the core's `Session` (session.rs:112) is **one document's bench**,
+not this task's thing. The new type is `Conversation` in code and «session» in
+every word a person reads — the `p-<slug>-<n>` precedent, a code name the person
+never typed. The API parameter `session: u32` keeps meaning the bench until 066
+pays that debt; it is named there, numbered, and scheduled, so it cannot rot
+quietly.
+
 ## Not in this task
 
 Recovery (`059`) — **re-ordered by the owner, 8 Oct evening**: sessions are built
