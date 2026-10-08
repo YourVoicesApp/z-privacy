@@ -291,7 +291,13 @@ void main() {
   });
 
   testWidgets('b — the writing is against the bottom of the window', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1000, 760));
+    // **One fact, in one place.** The bound each assertion below compares
+    // against is derived from this, not restated beside it: the session that
+    // built 063 found its own guards stating the window three ways, one of
+    // which had already gone stale and was asserting about a point outside the
+    // panel — green, and about nothing. Mine stated it four times.
+    const window = Size(1000, 760);
+    await tester.binding.setSurfaceSize(window);
     final ground = await _vault(tester, 'bottom');
     final chat = await _answered(tester);
 
@@ -302,10 +308,10 @@ void main() {
 
     expect(
       writing.center.dy,
-      greaterThan(760 / 2),
+      greaterThan(window.height / 2),
       reason:
           'the box a person types in is centred at y=${writing.center.dy.toStringAsFixed(0)} '
-          'of 760 — it is in the upper half of the window',
+          'of ${window.height.toInt()} — it is in the upper half of the window',
     );
 
     // The last line the page draws. It belongs to the writing — a chat keeps
@@ -327,15 +333,16 @@ void main() {
     final last = tester.getRect(lastLine);
     expect(
       last.bottom,
-      lessThanOrEqualTo(760.0),
+      lessThanOrEqualTo(window.height),
       reason:
-          'the page\'s last line ends at y=${last.bottom.toStringAsFixed(0)} in a 760 px window — '
-          'it is not on the screen, so nothing here is pinned to anything',
+          'the page\'s last line ends at y=${last.bottom.toStringAsFixed(0)} in a '
+          '${window.height.toInt()} px window — it is not on the screen, so nothing here is '
+          'pinned to anything',
     );
     // No fixed number: the composer's own height is the measure. Whatever
     // padding stands under the band, it is less than the box itself — and at
     // the top of a page it could not be.
-    final below = 760 - last.bottom;
+    final below = window.height - last.bottom;
     expect(
       below,
       lessThan(writing.height),
@@ -406,7 +413,8 @@ void main() {
     // answer at the end of a scroll nobody moved is an answer the person never
     // sees, and «the answer appears above» would be true of the layout and
     // false of the screen.
-    await tester.binding.setSurfaceSize(const Size(900, 520));
+    const window = Size(900, 520);
+    await tester.binding.setSurfaceSize(window);
     final ground = await _vault(tester, 'onscreen');
     final chat = await _answered(tester);
 
@@ -426,8 +434,10 @@ void main() {
     );
     expect(
       answer.top,
-      lessThan(520.0),
-      reason: 'the answer begins at y=${answer.top.toStringAsFixed(0)} in a 520 px window — off the screen',
+      lessThan(window.height),
+      reason:
+          'the answer begins at y=${answer.top.toStringAsFixed(0)} in a '
+          '${window.height.toInt()} px window — off the screen',
     );
 
     chat.dispose();
