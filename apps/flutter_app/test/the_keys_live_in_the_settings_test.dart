@@ -195,6 +195,15 @@ void main() {
   // says why, and a sheet that is **gone** afterwards. The third is the one
   // that matters — a door that opens the panel without closing the sheet opens
   // a panel the person cannot touch.
+  //
+  // **What this guard does not hold, said rather than assumed.** It proves the
+  // door renders and that pressing it closes the sheet and asks for the panel.
+  // It cannot prove the panel then opens, because the panel lives in the shell
+  // and the mount here is a bare screen with a recorded callback. That half is
+  // guard a of `the_settings_cover_the_work_test.dart`, which presses through
+  // the real shell. **The property is whole across the two files and neither
+  // one holds it alone** — raised by the session that built 063, after reading
+  // this file.
   testWidgets('f — with nothing connected the AI page says so, and its door closes the sheet', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 950));
     addTearDown(() => tester.binding.setSurfaceSize(null));
