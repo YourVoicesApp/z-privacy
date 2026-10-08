@@ -1050,8 +1050,7 @@ class Workbench extends ChangeNotifier {
       );
       if (into != null) intoList = into;
       lastImport = report;
-      return '${report.added} added · ${report.alreadyKnown} already known · '
-          '${report.refused} refused';
+      return importSaid(report);
     });
   }
 
@@ -1279,4 +1278,37 @@ class Workbench extends ChangeNotifier {
     z.closeSession(session: session).catchError((_) {});
     super.dispose();
   }
+}
+
+/// What an import did, in one sentence — **including what it did not do.**
+///
+/// 056: the sentence used to be «2 added · 0 already known · 0 refused» for a
+/// client table whose other four columns had been dropped without a word. It
+/// read as success, and a person who imports a client book and is told nothing
+/// was refused has been told something untrue about their own protection.
+///
+/// So the sentence says the values a table taught beyond its names, and names
+/// the columns this build could not place. Worded here and nowhere else.
+String importSaid(NameImport report) {
+  final parts = <String>[
+    '${report.added} added',
+    '${report.alreadyKnown} already known',
+    '${report.refused} refused',
+    if (report.values > 0) '${report.values} values',
+  ];
+  final said = parts.join(' · ');
+  if (report.columnsNotUsed.isEmpty) return said;
+  return '$said\n${columnsNotUsedSaid(report.columnsNotUsed)}';
+}
+
+/// The columns a table carried that this build could not name a kind for.
+///
+/// Named, never dropped: a person must be able to see the difference between
+/// «imported» and «imported the names». And it says what to do about it,
+/// because a column is a word in their own file and they can change it.
+String columnsNotUsedSaid(List<String> columns) {
+  final which = columns.join(', ');
+  return columns.length == 1
+      ? 'One column was not used: $which — name the kind for it, or it stays out.'
+      : '${columns.length} columns were not used: $which — name the kind for each, or they stay out.';
 }

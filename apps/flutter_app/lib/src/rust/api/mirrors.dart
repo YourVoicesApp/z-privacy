@@ -1097,11 +1097,29 @@ class NameImport {
   /// the file rather than guess at it. Never the whole file back.
   final List<String> reasons;
 
+  /// How many **values** the table taught beyond its names — the customer
+  /// numbers, contracts and accounts in its other columns.
+  ///
+  /// Without this `added: 2` meant «two names and six numbers ignored» and
+  /// read as success (056).
+  final int values;
+
+  /// The header columns this build could not place, by name and in the
+  /// file's own order.
+  ///
+  /// **Nothing is discarded quietly.** A column nobody can name a kind for
+  /// stays out of the vault, and the person is told which ones they were so
+  /// they can see the difference between «imported» and «imported the
+  /// names».
+  final List<String> columnsNotUsed;
+
   const NameImport({
     required this.added,
     required this.alreadyKnown,
     required this.refused,
     required this.reasons,
+    required this.values,
+    required this.columnsNotUsed,
   });
 
   @override
@@ -1109,7 +1127,9 @@ class NameImport {
       added.hashCode ^
       alreadyKnown.hashCode ^
       refused.hashCode ^
-      reasons.hashCode;
+      reasons.hashCode ^
+      values.hashCode ^
+      columnsNotUsed.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -1119,7 +1139,9 @@ class NameImport {
           added == other.added &&
           alreadyKnown == other.alreadyKnown &&
           refused == other.refused &&
-          reasons == other.reasons;
+          reasons == other.reasons &&
+          values == other.values &&
+          columnsNotUsed == other.columnsNotUsed;
 }
 
 @freezed
@@ -2412,8 +2434,16 @@ sealed class UndoOutcome with _$UndoOutcome {
 class UserListRow {
   final String name;
 
-  /// How many names are in it.
+  /// How many **names** are in it: words in the dictionary and whole people
+  /// and companies in the vault, which are one thing to the person who
+  /// imported them.
   final int names;
+
+  /// How many **other values** are in it — a customer number, a contract, a
+  /// phone. A client table teaches these and nothing else does, so they are
+  /// counted apart: «21 names» and «21 names and 6 numbers» are different
+  /// answers to «what did that file teach me?» (056).
+  final int values;
 
   /// Off means the scanner is not told about them — not that they are gone.
   final bool enabled;
@@ -2421,11 +2451,13 @@ class UserListRow {
   const UserListRow({
     required this.name,
     required this.names,
+    required this.values,
     required this.enabled,
   });
 
   @override
-  int get hashCode => name.hashCode ^ names.hashCode ^ enabled.hashCode;
+  int get hashCode =>
+      name.hashCode ^ names.hashCode ^ values.hashCode ^ enabled.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -2434,6 +2466,7 @@ class UserListRow {
           runtimeType == other.runtimeType &&
           name == other.name &&
           names == other.names &&
+          values == other.values &&
           enabled == other.enabled;
 }
 

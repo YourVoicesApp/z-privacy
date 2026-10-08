@@ -39,6 +39,13 @@ pub(crate) struct ValueRecord {
     /// «Added 27 Sep 2026» is part of the answer to «why is this protected?»,
     /// and a person cannot judge a rule they cannot date.
     pub learned_at: u64,
+    /// Which imported list this value arrived in, if it arrived in one.
+    ///
+    /// `None` is a value a person taught by hand or accepted in a document, and
+    /// no switch can silence it: they asked for this one by itself. `Some(list)`
+    /// came from a file, and the list's switch governs it exactly as it governs
+    /// a taught word — which is the whole of 054's third guard. Model 11.
+    pub list: Option<String>,
 }
 
 impl ValueRecord {
@@ -369,6 +376,15 @@ impl Vault {
                 if value.policy == Policy::Manual {
                     continue;
                 }
+                // **The switch, for values, where it has to be.** A list that
+                // is off is not a list that was forgotten. Before 054 only
+                // taught words asked this question, so the switch on the only
+                // list a client book ever makes changed nothing that left.
+                if let Some(list) = &value.list {
+                    if !self.list_is_on(list) {
+                        continue;
+                    }
+                }
                 for spelling in value.spellings() {
                     if spelling.is_empty() {
                         continue;
@@ -465,6 +481,7 @@ mod tests {
                     value: Secret::new(text),
                     aliases: Vec::new(),
                     policy,
+                    list: None,
                 })
                 .collect(),
         }

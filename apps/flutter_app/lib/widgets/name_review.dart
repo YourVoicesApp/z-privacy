@@ -416,7 +416,8 @@ class _YourNamesState extends State<YourNames> {
             Text(widget.bench.namesSaid!, style: Zc.small.copyWith(color: Zc.river)),
           ],
           const SizedBox(height: 12),
-          if (rows.isEmpty && widget.bench.userLists.every((l) => l.names == 0))
+          if (rows.isEmpty &&
+              widget.bench.userLists.every((l) => l.names == 0 && l.values == 0))
             Text(
               _vaultOpen ? 'Nothing yet.' : '',
               style: Zc.small.copyWith(color: Zc.ink4),
@@ -603,7 +604,13 @@ class _ListHead extends StatelessWidget {
                     ),
                   ),
                   TextSpan(
-                    text: '  ${list.names}',
+                    // What the list holds, and the two things apart. A client
+                    // table teaches names **and** numbers, and one count over
+                    // both would be the untruth 056 was about in a smaller
+                    // place: «21» where the file taught 2 names and 4 numbers.
+                    text: list.values == 0
+                        ? '  ${list.names}'
+                        : '  ${list.names} · ${list.values} values',
                     style: Zc.tiny.copyWith(color: Zc.ink4),
                   ),
                   if (!list.enabled)

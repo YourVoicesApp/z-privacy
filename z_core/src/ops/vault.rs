@@ -191,6 +191,9 @@ pub(crate) fn set_value(
                         value: Secret::new(text),
                         aliases: Vec::new(),
                         policy,
+                        // A value a person typed into the vault room by hand.
+                        // Nobody's list, so no switch reaches it.
+                        list: None,
                     });
                     Ok(fresh_id)
                 }
@@ -604,6 +607,8 @@ pub(crate) fn learn_value(profile_id: Option<String>, kind: Kind, text: String) 
                     value: Secret::new(text),
                     aliases: Vec::new(),
                     policy: Policy::Always,
+                    // Accepted in a document, one press at a time.
+                    list: None,
                 });
             }
             Ok(())
@@ -999,13 +1004,7 @@ pub(crate) fn teach_name_into(
             }) {
                 return Ok(existing.id);
             }
-            // A list exists the moment a name is put in it.
-            if !vault.lists.iter().any(|l| l.name == list) {
-                vault.lists.push(crate::vault::model::UserList {
-                    name: list.clone(),
-                    enabled: true,
-                });
-            }
+            ensure_list(vault, &list);
             let id = vault.next_taught_name;
             vault.next_taught_name = vault.next_taught_name.saturating_add(1);
             vault.taught_names.push(crate::vault::model::UserName {
@@ -1170,12 +1169,18 @@ fn own_names_entity(vault: &mut crate::vault::model::Vault, profile_id: Option<&
 }
 
 /// Put one value in that identity, or say it was already there.
+///
+/// `list` is where it came from: `Some` for a row read out of a file, `None`
+/// for a name a person typed. Before 054 this function took no list at all, so
+/// the only kind of row a client book is made of — a person and a company —
+/// had the list the person chose accepted and thrown away in silence.
 fn put_own_value(
     vault: &mut crate::vault::model::Vault,
     profile_id: Option<&str>,
     kind: Kind,
     text: &str,
     policy: Policy,
+    list: Option<&str>,
 ) -> Option<u32> {
     let entity_id = own_names_entity(vault, profile_id);
     // Already known anywhere in this profile's vault? Then it is already found
@@ -1197,8 +1202,21 @@ fn put_own_value(
         aliases: Vec::new(),
         policy,
         learned_at: crate::vault::model::now_seconds(),
+        list: list.map(str::to_string),
     });
     Some(id)
+}
+
+/// A list exists the moment something is put in it — **whichever path put it
+/// there.** One place decides, so neither the word path nor the value path can
+/// make a list the other cannot see.
+fn ensure_list(vault: &mut crate::vault::model::Vault, list: &str) {
+    if !vault.lists.iter().any(|l| l.name == list) {
+        vault.lists.push(crate::vault::model::UserList {
+            name: list.to_string(),
+            enabled: true,
+        });
+    }
 }
 
 /// Add a name a person typed, with what it is and how far it reaches.
@@ -1216,6 +1234,11 @@ pub(crate) fn add_user_name(
     list: String,
 ) -> ApiResult<u32> {
     use crate::api::UserNameKind as K;
+    // **The same question, before the kind is looked at.** 054: a `given` row
+    // was refused for an unknown list and a `person` row was accepted, so one
+    // file answered two ways depending on a column. The refusal is worded in
+    // `clean_list_name` and nowhere else.
+    let list = clean_list_name(list)?;
     let text = crate::text::nfc(text.trim()).to_string();
     if text.is_empty() {
         return Err(ApiError::InputRefused {
@@ -1228,9 +1251,17 @@ pub(crate) fn add_user_name(
             let id = teach_name_into(text.clone(), matches!(kind, K::Family), profile_id.clone(), list.clone())?;
             if always {
                 let owner = profile_id.clone();
+                let list = list.clone();
                 with_core(|core| {
                     core.vault.with_open_mut(|vault| {
-                        put_own_value(vault, owner.as_deref(), Kind::Person, &text, Policy::Always);
+                        put_own_value(
+                            vault,
+                            owner.as_deref(),
+                            Kind::Person,
+                            &text,
+                            Policy::Always,
+                            Some(&list),
+                        );
                         Ok(())
                     })
                 })?;
@@ -1244,7 +1275,8 @@ pub(crate) fn add_user_name(
             let owner = profile_id.clone();
             let id = with_core(|core| {
                 core.vault.with_open_mut(|vault| {
-                    Ok(put_own_value(vault, owner.as_deref(), value_kind, &text, policy))
+                    ensure_list(vault, &list);
+                    Ok(put_own_value(vault, owner.as_deref(), value_kind, &text, policy, Some(&list)))
                 })
             })?;
             crate::session::bump_truth();
@@ -1301,6 +1333,16 @@ pub(crate) fn user_names(profile_id: Option<String>) -> ApiResult<Vec<crate::api
             // The values, except the ones that are a word's «always» twin.
             for entity in &own {
                 for value in &entity.values {
+                    // **A name, and not a number.** Since 056 a client table
+                    // puts its other columns in this same book — a customer
+                    // number, a contract — and this screen is the names. A
+                    // number listed here would be the panel saying «person»
+                    // about something that is not one; the vault room is where
+                    // a value is read, and `user_lists().values` is where the
+                    // person is told how many of them a file taught.
+                    if !matches!(value.kind, Kind::Person | Kind::Company) {
+                        continue;
+                    }
                     let text = value.value.expose().to_string();
                     if vault
                         .taught_names
@@ -1317,11 +1359,15 @@ pub(crate) fn user_names(profile_id: Option<String>) -> ApiResult<Vec<crate::api
                         always: value.policy == Policy::Always,
                         profile_id: entity.profile_id.clone(),
                         learned_at: value.learned_at,
-                        // A whole person or a company is a value in the vault,
-                        // not a word in a dictionary, so it is in no list: the
-                        // lists are the name dictionary's, and the vault room
-                        // is where a value is managed.
-                        list: crate::vault::model::DEFAULT_LIST.to_string(),
+                        // The list it arrived in, now that it has one. Before
+                        // 054 a person or a company carried no list at all and
+                        // this row said «the default one» about a name that had
+                        // been imported into another — the panel and the file
+                        // disagreeing about one fact.
+                        list: value
+                            .list
+                            .clone()
+                            .unwrap_or_else(|| crate::vault::model::DEFAULT_LIST.to_string()),
                     });
                 }
             }
@@ -1421,27 +1467,58 @@ pub(crate) fn import_user_names(
 ) -> ApiResult<crate::api::NameImport> {
     use crate::api::{NameImport, UserNameKind as K};
     // Before the file is read, because a scope nobody can honour must refuse
-    // the whole act rather than half of it.
+    // the whole act rather than half of it. **A list nobody can honour is the
+    // same kind of answer** — before 054 it was checked inside the row loop
+    // and only for a word, so one file was refused or accepted depending on a
+    // column in it.
     let (owner, always) = book_reach(scope, profile_id)?;
+    let list = clean_list_name(list)?;
     let mut lines = csv.lines().filter(|l| !l.trim().is_empty());
     let Some(header) = lines.next() else {
         return Err(ApiError::InputRefused {
             reason: "that file is empty".to_string(),
         });
     };
-    let columns: Vec<String> = split_row(header).into_iter().map(|c| c.trim().to_lowercase()).collect();
+    // As the person wrote them, and as this build reads them. A header is
+    // matched without case, and said back **in their own spelling** — a report
+    // that answers «kundnummer» to a file that says «Kundnummer» sends them
+    // looking for a column that is not there.
+    let written: Vec<String> = split_row(header).into_iter().map(|c| c.trim().to_string()).collect();
+    let columns: Vec<String> = written.iter().map(|c| c.to_lowercase()).collect();
     let at = |want: &str| columns.iter().position(|c| c == want);
     let (Some(name_at), Some(type_at)) = (at("name"), at("type")) else {
         return Err(ApiError::InputRefused {
             reason: "the first line must name the columns, and must include «name» and «type» — \
-                     for example: name,type or name,type,source,licence"
+                     for example: name,type or name,type,kundnummer,avtal"
                 .to_string(),
         });
     };
     let source_at = at("source");
     let licence_at = at("licence");
 
-    let mut plan: Vec<(String, K, Option<String>, Option<String>)> = Vec::new();
+    // **The other columns.** A client table's whole point is the columns that
+    // are not the name: the customer number, the contract, the account. Each
+    // header that names a kind becomes one, and each header that names none is
+    // kept by name to be said out loud — **nothing is discarded quietly**.
+    let mut value_columns: Vec<(usize, Kind)> = Vec::new();
+    let mut columns_not_used: Vec<String> = Vec::new();
+    let taken = [Some(name_at), Some(type_at), source_at, licence_at];
+    for (index, column) in columns.iter().enumerate() {
+        if taken.contains(&Some(index)) {
+            continue;
+        }
+        match kind_of_column(column) {
+            Some(kind) => value_columns.push((index, kind)),
+            // An empty header cell is a trailing separator, not a column a
+            // person meant to write. Saying «one column was not used: ""»
+            // would be noise where the rule is to be understood.
+            None if column.is_empty() => {}
+            None => columns_not_used.push(written.get(index).cloned().unwrap_or_default()),
+        }
+    }
+
+    type Row = (String, K, Option<String>, Option<String>, Vec<(Kind, String)>);
+    let mut plan: Vec<Row> = Vec::new();
     let mut reasons: Vec<String> = Vec::new();
     for (number, line) in lines.enumerate() {
         let row = split_row(line);
@@ -1475,12 +1552,22 @@ pub(crate) fn import_user_names(
             ));
             continue;
         }
-        plan.push((text, kind, at_row(source_at), at_row(licence_at)));
+        // A client without a contract is still a client, so an empty cell is
+        // not a refusal — it is a fact the table does not carry.
+        let values: Vec<(Kind, String)> = value_columns
+            .iter()
+            .filter_map(|(index, kind)| {
+                at_row(Some(*index)).filter(|cell| !cell.is_empty()).map(|cell| (*kind, cell))
+            })
+            .collect();
+        plan.push((text, kind, at_row(source_at), at_row(licence_at), values));
     }
 
     let mut added = 0u32;
     let mut already = 0u32;
-    for (text, kind, source, licence) in plan {
+    let mut learned_values = 0u32;
+    let policy = if always { Policy::Always } else { Policy::Suggest };
+    for (text, kind, source, licence, values) in plan {
         // The book's own vault, and not the wider list `user_names` now
         // returns: «already known» here means already in the book being
         // written. A name taught everywhere is not a reason to refuse a row
@@ -1490,7 +1577,32 @@ pub(crate) fn import_user_names(
             .into_iter()
             .filter(|row| row.profile_id == owner)
             .any(|row| row.text.eq_ignore_ascii_case(&text) && row.kind == kind);
-        let _ = &list;
+        // **The row's own columns, whether or not its name is new.** A table
+        // imported a second time with a column added must still teach that
+        // column: counting the row «already known» and walking away would be
+        // the silent discard this whole task is about. `put_own_value` keeps
+        // one value one record, so nothing arrives twice.
+        for (value_kind, cell) in &values {
+            let cell = crate::text::nfc(cell.trim()).to_string();
+            let owner = owner.clone();
+            let list = list.clone();
+            let learned = with_core(|core| {
+                core.vault.with_open_mut(|vault| {
+                    ensure_list(vault, &list);
+                    Ok(put_own_value(
+                        vault,
+                        owner.as_deref(),
+                        *value_kind,
+                        &cell,
+                        policy,
+                        Some(&list),
+                    ))
+                })
+            })?;
+            if learned.is_some() {
+                learned_values = learned_values.saturating_add(1);
+            }
+        }
         if known {
             already = already.saturating_add(1);
             continue;
@@ -1524,6 +1636,59 @@ pub(crate) fn import_user_names(
         already_known: already,
         refused: reasons.len() as u32,
         reasons,
+        values: learned_values,
+        columns_not_used,
+    })
+}
+
+/// Which kind a header column names, if this build can name one.
+///
+/// **A header is a person's own word, in their own language**, so the table is
+/// read in all three the build speaks rather than in English alone — a Swedish
+/// accountant writes `kundnummer` and a German one `Kundennummer`, and neither
+/// of them is going to translate a column to get their own clients protected.
+///
+/// `personnummer` is `TaxId` because that is the kind the Swedish rule
+/// `sv-05` has carried since it was written: a column and a rule that disagreed
+/// about one number would make the explain card say two things about it.
+///
+/// Anything not here is **not guessed at**. It is returned by name in
+/// `columns_not_used`, because a column placed wrongly protects the right text
+/// under the wrong word, and a person reading the explain card would be told
+/// something untrue.
+fn kind_of_column(column: &str) -> Option<Kind> {
+    let tidy: String = column.chars().filter(|c| c.is_alphanumeric()).collect();
+    Some(match tidy.as_str() {
+        "customerno" | "customernumber" | "customer" | "kundnummer" | "kundnr"
+        | "kundennummer" | "kundennr" => Kind::CustomerNo,
+        "contract" | "contractno" | "avtal" | "avtalsnummer" | "vertrag"
+        | "vertragsnummer" => Kind::Contract,
+        "account" | "accountno" | "accountnumber" | "konto" | "kontonummer" | "kontonr" => {
+            Kind::Account
+        }
+        "iban" => Kind::Iban,
+        "bic" | "swift" => Kind::Bic,
+        "email" | "emailaddress" | "mail" | "epost" | "eposta" | "epostadress" => Kind::Email,
+        "phone" | "phoneno" | "phonenumber" | "telephone" | "tel" | "telefon"
+        | "telefonnummer" | "telefonnr" | "mobil" | "mobile" => Kind::Phone,
+        "taxid" | "vat" | "vatno" | "personnummer" | "personnr" | "orgnr"
+        | "organisationsnummer" | "steuernummer" | "steuerid" | "ustid" => Kind::TaxId,
+        "idcard" | "idcardno" | "idnummer" | "personalausweis"
+        | "personalausweisnummer" => Kind::IdCard,
+        "socialinsuranceno" | "sozialversicherungsnummer" | "svnummer" => {
+            Kind::SocialInsuranceNo
+        }
+        "employeeno" | "employeenumber" | "personalnummer" | "anstallningsnummer"
+        | "anstnr" => Kind::EmployeeNo,
+        "birthdate" | "dateofbirth" | "dob" | "fodelsedatum" | "geburtsdatum" => {
+            Kind::Birthdate
+        }
+        "vehicle" | "vehicleplate" | "registreringsnummer" | "regnr" | "kennzeichen" => {
+            Kind::Vehicle
+        }
+        "address" | "adress" | "adresse" => Kind::Address,
+        "project" | "projekt" | "projektnummer" => Kind::Project,
+        _ => return None,
     })
 }
 
@@ -1558,23 +1723,58 @@ fn split_row(line: &str) -> Vec<String> {
 pub(crate) fn user_lists() -> ApiResult<Vec<crate::api::UserListRow>> {
     with_core(|core| {
         core.vault.with_open(|vault| {
+            // What one list holds, counted in one place so a row and the
+            // panel cannot disagree. A whole person or company is a **name**;
+            // a customer number is not, and a count that mixed them would be
+            // the same untruth 056 is about.
+            let held = |list: &str| -> (u32, u32) {
+                let words = vault.taught_names.iter().filter(|n| n.list == list).count();
+                let (mut names, mut values) = (0usize, 0usize);
+                for value in vault.entities.iter().flat_map(|e| e.values.iter()) {
+                    if value.list.as_deref() != Some(list) {
+                        continue;
+                    }
+                    if matches!(value.kind, Kind::Person | Kind::Company) {
+                        names += 1;
+                    } else {
+                        values += 1;
+                    }
+                }
+                ((words + names) as u32, values as u32)
+            };
             let mut rows: Vec<crate::api::UserListRow> = Vec::new();
             let mut seen: Vec<String> = Vec::new();
             for list in &vault.lists {
                 seen.push(list.name.clone());
+                let (names, values) = held(&list.name);
                 rows.push(crate::api::UserListRow {
                     name: list.name.clone(),
-                    names: vault.taught_names.iter().filter(|n| n.list == list.name).count() as u32,
+                    names,
+                    values,
                     enabled: list.enabled,
                 });
             }
-            // A list a name claims without a row of its own is still a list.
-            for name in &vault.taught_names {
-                if !seen.iter().any(|s| s == &name.list) {
-                    seen.push(name.list.clone());
+            // A list something claims without a row of its own is still a list
+            // — a name in the dictionary or a value in the vault, either way.
+            let claimed = vault
+                .taught_names
+                .iter()
+                .map(|n| n.list.clone())
+                .chain(
+                    vault
+                        .entities
+                        .iter()
+                        .flat_map(|e| e.values.iter())
+                        .filter_map(|v| v.list.clone()),
+                );
+            for list in claimed {
+                if !seen.iter().any(|s| s == &list) {
+                    seen.push(list.clone());
+                    let (names, values) = held(&list);
                     rows.push(crate::api::UserListRow {
-                        name: name.list.clone(),
-                        names: vault.taught_names.iter().filter(|n| n.list == name.list).count() as u32,
+                        name: list,
+                        names,
+                        values,
                         enabled: true,
                     });
                 }
