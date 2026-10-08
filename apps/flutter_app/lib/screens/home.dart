@@ -34,6 +34,7 @@ import 'package:flutter/material.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
@@ -46,6 +47,7 @@ class HomeScreen extends StatefulWidget {
     required this.onType,
     required this.onVault,
     required this.onSettings,
+    this.settingsOpen = false,
     required this.version,
     required this.onAsk,
     this.chat,
@@ -72,6 +74,13 @@ class HomeScreen extends StatefulWidget {
   final void Function(String text) onType;
   final VoidCallback onVault;
   final VoidCallback onSettings;
+
+  /// Whether the settings panel is standing over this page. The heading hides
+  /// its own door while it is — the panel covers the right 480 and this door
+  /// is under it — so there is exactly one «Settings» on the glass, and it is
+  /// the panel's. 063. The shell sets this and shows the panel, so the two
+  /// facts have one owner; a Home standing on its own has no panel over it.
+  final bool settingsOpen;
   final String version;
 
   @override
@@ -173,12 +182,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    IconButton(
-                      tooltip: 'Settings',
-                      icon: const Icon(Icons.tune, size: 18),
-                      color: Zc.ink3,
-                      onPressed: widget.onSettings,
-                    ),
+                    if (!widget.settingsOpen)
+                      SettingsDoor(open: false, onTap: widget.onSettings),
                   ],
                 ),
                 const SizedBox(height: 26),

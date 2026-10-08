@@ -26,6 +26,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
 import 'package:zprivacy/widgets/name_review.dart';
 import 'package:zprivacy/widgets/review.dart';
@@ -41,6 +42,8 @@ class WorkspaceScreen extends StatefulWidget {
     required this.ground,
     required this.onHome,
     required this.onVault,
+    this.onSettings,
+    this.settingsOpen = false,
   });
 
   final Workbench bench;
@@ -51,6 +54,26 @@ class WorkspaceScreen extends StatefulWidget {
   /// Workspace that cannot reach the vault has buttons that refuse into a
   /// sentence nobody sees, which is exactly what 041-B is about.
   final VoidCallback onVault;
+
+  /// Open the settings panel, or shut it — one press does both, because the
+  /// shell holds the state and this is the only thing that moves it.
+  ///
+  /// Null, and not required as `onVault` is, because the bar draws the door
+  /// only when there is somewhere for it to go. The paper asked for «exactly
+  /// as it already takes onVault», and `_TopBar` does take it exactly that
+  /// way — but requiring it **here** would have made fifty places in the test
+  /// suite pass `() {}`, which is fifty doors that open nothing: a lie the
+  /// compiler would have been enforcing. What 063 was actually about is not a
+  /// screen that could not be *given* the door — it is a screen nobody gave it
+  /// to, which no signature can catch and
+  /// `the_settings_cover_the_work_test.dart` does.
+  final VoidCallback? onSettings;
+
+  /// Whether the panel is already standing over this screen, so the bar can
+  /// hide its own door while the panel covers the spot that door sits in. One
+  /// owner sets both this and the panel — the shell — so the two cannot
+  /// disagree, and a Workspace standing on its own has no panel over it.
+  final bool settingsOpen;
 
   @override
   State<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -164,6 +187,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onPage: _goToPage,
               onVault: widget.onVault,
               onLockVault: () => unawaited(widget.ground.lockVault()),
+              onSettings: widget.onSettings,
+              settingsOpen: widget.settingsOpen,
             ),
             _Band(bench: bench, onVault: widget.onVault),
             if (bench.trouble != null)
@@ -297,6 +322,8 @@ class _TopBar extends StatelessWidget {
     required this.onPage,
     required this.onVault,
     required this.onLockVault,
+    required this.onSettings,
+    required this.settingsOpen,
   });
 
   final Workbench bench;
@@ -309,6 +336,14 @@ class _TopBar extends StatelessWidget {
   /// The bar's own way to the vault, and its own way to shut it.
   final VoidCallback onVault;
   final VoidCallback onLockVault;
+
+  /// The bar's way to the settings — 063. Until it existed the settings were
+  /// worse than a dead end from a document: they were unreachable, because a
+  /// full-screen settings page reached from here would have hidden the
+  /// document. Null means this bar has nowhere to send a press, and then it
+  /// draws no door rather than a dead one.
+  final VoidCallback? onSettings;
+  final bool settingsOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -347,17 +382,32 @@ class _TopBar extends StatelessWidget {
           // The way back, with an arrow on it. The mark beside it went home
           // too, and still does — but nothing on a logo says «back», and the
           // owner spent his first evening without a way out of a document.
-          Tooltip(
-            message: 'Back to your documents · Alt+Left',
-            child: TextButton.icon(
-              onPressed: onHome,
-              icon: const Icon(Icons.arrow_back, size: 17),
-              label: const Text('Documents', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600)),
-              style: TextButton.styleFrom(
-                foregroundColor: Zc.ink,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          // Flexible since 063, and measured: with the settings door added the
+          // bar's own content came to 941 at a one-page document, so at a
+          // 900-wide window it overflowed by 41 and the door — last on the bar
+          // — hung off the glass at x=907 where no press could reach it. That
+          // is 063's own defect in miniature: a settings control nobody can
+          // press. The word gives way instead, exactly as the product's name
+          // already does a few lines below, and the arrow and the tooltip stay.
+          // Before: 5.9 px over at 900 with no door at all. After: nothing.
+          Flexible(
+            child: Tooltip(
+              message: 'Back to your documents · Alt+Left',
+              child: TextButton.icon(
+                onPressed: onHome,
+                icon: const Icon(Icons.arrow_back, size: 17),
+                label: const Text(
+                  'Documents',
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: Zc.ink,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
             ),
           ),
@@ -420,9 +470,19 @@ class _TopBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 9),
-            Text(
-              doc.pages == 1 ? '1 page' : '${doc.pages} pages',
-              style: Zc.small.copyWith(color: Zc.ink4),
+            // Flexible for the same reason the word «Documents» is, and
+            // measured in the same breath: the back control alone brought 900
+            // from 41 px over to 2.8, which is a margin of one and a half
+            // pixels — a longer pack name or a second page would spend it. The
+            // page count is the lowest-value text on a crowded bar and the
+            // Page menu says it again whenever there is more than one.
+            Flexible(
+              child: Text(
+                doc.pages == 1 ? '1 page' : '${doc.pages} pages',
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: Zc.small.copyWith(color: Zc.ink4),
+              ),
             ),
           ],
           const Spacer(),
@@ -582,6 +642,15 @@ class _TopBar extends StatelessWidget {
                 await Clipboard.setData(ClipboardData(text: await bench.reportText()));
               },
             ),
+          ],
+          // **The settings, 063.** Last on the bar, beside the AI door, and
+          // drawn only while the panel is shut: the panel covers the right 480
+          // and this spot is under it, so the door a person presses to close it
+          // is the panel's own — the same widget, at the same point on the
+          // glass, because the two paddings are the same 18/13.
+          if (!settingsOpen && onSettings != null) ...[
+            const SizedBox(width: 4),
+            SettingsDoor(open: false, onTap: onSettings!),
           ],
         ],
       ),

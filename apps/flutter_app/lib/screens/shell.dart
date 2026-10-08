@@ -333,6 +333,36 @@ class _ShellState extends State<ZShell> {
 
   @override
   Widget build(BuildContext context) {
+    // **063 — the settings cover the work, they do not replace it.**
+    //
+    // Everything below `_body` is a chain of early returns and the settings
+    // used to be one of them, which is why they could not be reached from a
+    // document: a control that unmounted the document could not be put on the
+    // document's own bar. They are a panel over whatever the chain chose now,
+    // 480 wide against the right edge — the owner's number — and the chain
+    // itself is untouched but for the one return that became this panel.
+    return Stack(
+      children: [
+        _body(context),
+        if (_settingsOpen)
+          Positioned(
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: 480,
+            child: SettingsScreen(
+              ground: _ground,
+              onClose: () {
+                setState(() => _settingsOpen = false);
+                _ground.refresh();
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _body(BuildContext context) {
     final config = _ground.config;
     if (config != null && !config.firstRunDone && !_firstRunPassed) {
       return FirstRunScreen(
@@ -370,15 +400,9 @@ class _ShellState extends State<ZShell> {
         },
       );
     }
-    if (_settingsOpen) {
-      return SettingsScreen(
-        ground: _ground,
-        onClose: () {
-          setState(() => _settingsOpen = false);
-          _ground.refresh();
-        },
-      );
-    }
+    // The settings used to return here, and that return is the whole of 063:
+    // it is now the panel in `build` above, so the screen the chain picks below
+    // stays on the glass behind it.
     // Before the Workspace, not after it: the vault has to be reachable **from
     // a document**, because that is where «Always» is pressed. Closing it puts
     // the document back exactly as it was — the bench is untouched by any of it.
@@ -414,6 +438,8 @@ class _ShellState extends State<ZShell> {
         ground: _ground,
         onHome: _home,
         onVault: () => setState(() => _vaultOpen = true),
+        onSettings: () => setState(() => _settingsOpen = !_settingsOpen),
+        settingsOpen: _settingsOpen,
       );
     }
     return Stack(
@@ -426,7 +452,8 @@ class _ShellState extends State<ZShell> {
           onType: (text) => _begin(typing: true, text: text),
           onAsk: _askFromHome,
           onVault: () => setState(() => _vaultOpen = true),
-          onSettings: () => setState(() => _settingsOpen = true),
+          onSettings: () => setState(() => _settingsOpen = !_settingsOpen),
+          settingsOpen: _settingsOpen,
         ),
         if (_trouble != null)
           Positioned(

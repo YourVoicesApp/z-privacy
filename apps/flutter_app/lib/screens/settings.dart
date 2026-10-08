@@ -12,6 +12,15 @@
 // Nothing here can make something leave the device. These switches decide only
 // how far the app goes on its own — and one of them is missing on purpose:
 // there is no «send anyway», not as a setting, not as a hidden flag.
+//
+// **063 — this is a panel, not a page.** It used to be one of the shell's early
+// returns, so opening it unmounted whatever was on the screen: a person with a
+// document in front of them could not reach the settings at all, because a
+// control that hid their document could not have been put in the top bar. It is
+// now 480 wide against the right edge with the work still behind it, which is
+// why there is no back arrow on it any more — there is nothing to go back to.
+// The owner, 8 October: «نجعل نافذة الإعدادات خيار في الأعلى يفتح قائمة إلى يمين
+// الشاشة وتغلق بالضغط عليها», and 480 is his number.
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
@@ -21,6 +30,43 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 
 enum SettingsRoom { ai, privacy, language, vault }
+
+/// **The one door to the settings, and the one way back out.**
+///
+/// The same widget in the top bar, in the home page's heading, and in the
+/// panel's own corner — and never two of them at once: every surface that
+/// carries it hides it while the panel is open, because the panel covers the
+/// right 480 and a second door under it would be a door nobody can press. The
+/// bar's padding and the panel's are the same, so the door does not move on the
+/// glass when it is pressed: one press opens, the next closes, in the place the
+/// finger already is.
+///
+/// The tooltip names the room and not the act, in both states, because that is
+/// what the person is looking for — and because exactly one «Settings» on the
+/// screen is the property the 063 guards assert.
+class SettingsDoor extends StatelessWidget {
+  const SettingsDoor({super.key, required this.open, required this.onTap});
+
+  /// Whether the panel is showing. It changes the tint, not the icon: a toggle
+  /// that becomes a different picture is two controls to learn.
+  final bool open;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Settings',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(7),
+          child: Icon(Icons.tune, size: 17, color: open ? Zc.clayDeep : Zc.ink3),
+        ),
+      ),
+    );
+  }
+}
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, required this.ground, required this.onClose, this.room});
@@ -41,9 +87,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final g = widget.ground;
     return ListenableBuilder(
       listenable: g,
-      builder: (context, _) => Scaffold(
-        body: Column(
+      builder: (context, _) => Material(
+        color: Zc.paper,
+        elevation: 10,
+        shape: const Border(left: BorderSide(color: Zc.line)),
+        // **The `Material` is what stops what it covers**, and that is measured
+        // rather than assumed: a press on the top strip and a press in the
+        // middle of the room both end inside this panel and reach nothing in
+        // the work behind it. There was a `GestureDetector(opaque)` here first,
+        // on the belief that a painted box does not take presses — the guard
+        // said the panel was already tight with it taken out, twice, so it went
+        // rather than stand as a line claiming work it was not doing. If this
+        // ever becomes a plain `Container`, the hit test in
+        // `the_settings_cover_the_work_test.dart` is what will say so.
+        child: Column(
           children: [
+            // The top strip, where the full-screen header used to be. It
+            // carries the room's name and the door that shuts it, and the
+            // padding is the top bar's own — so the door is at the same point
+            // on the glass as the one that opened it.
             Container(
               padding: const EdgeInsets.fromLTRB(18, 13, 18, 13),
               decoration: const BoxDecoration(
@@ -52,45 +114,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               child: Row(
                 children: [
-                  InkWell(
-                    onTap: widget.onClose,
-                    borderRadius: BorderRadius.circular(8),
-                    child: const Padding(
-                      padding: EdgeInsets.all(5),
-                      child: Row(
-                        children: [
-                          Icon(Icons.chevron_left, size: 18, color: Zc.ink3),
-                          SizedBox(width: 4),
-                          Text('Back', style: Zc.small),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
                   const Text('Settings', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink)),
+                  const Spacer(),
+                  SettingsDoor(open: true, onTap: widget.onClose),
                 ],
               ),
             ),
+            _rooms(),
             Expanded(
-              child: Row(
-                children: [
-                  _rooms(),
-                  Container(width: 1, color: Zc.line),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(28, 24, 28, 40),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 680),
-                        child: switch (_room) {
-                          SettingsRoom.ai => _AiRoom(ground: g),
-                          SettingsRoom.privacy => _PrivacyRoom(ground: g),
-                          SettingsRoom.language => _LanguageRoom(ground: g),
-                          SettingsRoom.vault => _VaultRoom(ground: g),
-                        },
-                      ),
-                    ),
-                  ),
-                ],
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 36),
+                child: switch (_room) {
+                  SettingsRoom.ai => _AiRoom(ground: g),
+                  SettingsRoom.privacy => _PrivacyRoom(ground: g),
+                  SettingsRoom.language => _LanguageRoom(ground: g),
+                  SettingsRoom.vault => _VaultRoom(ground: g),
+                },
               ),
             ),
           ],
@@ -99,41 +138,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// The four rooms, across the top rather than down the side.
+  ///
+  /// They were a 210-wide rail, which left 269 of the panel's 480 for the room
+  /// itself. A `Wrap` was chosen over a horizontal scroll on purpose: the four
+  /// labels come to a few pixels more than 480, and a strip that has to be
+  /// scrolled sideways to find «Vault & security» hides the one room a person
+  /// comes here looking for. It flows onto a second line instead, and cannot
+  /// overflow at any width. The names are the file's own four and none of them
+  /// changed — 063 moves this room, it does not furnish it.
   Widget _rooms() {
     Widget one(SettingsRoom r, String label, IconData icon) {
       final on = _room == r;
-      return InkWell(
-        onTap: () => setState(() => _room = r),
-        child: Container(
-          width: 210,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          color: on ? Zc.clayWash : Colors.transparent,
-          child: Row(
-            children: [
-              Icon(icon, size: 17, color: on ? Zc.clayDeep : Zc.ink3),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Text(
+      return Material(
+        color: on ? Zc.clayWash : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: () => setState(() => _room = r),
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: on ? Zc.clayDeep : Zc.ink3),
+                const SizedBox(width: 8),
+                Text(
                   label,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 13.5,
+                    fontSize: 13,
                     fontWeight: on ? FontWeight.w600 : FontWeight.w500,
                     color: on ? Zc.clayDeep : Zc.ink2,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
     }
 
     return Container(
-      color: Zc.warmCard,
-      padding: const EdgeInsets.only(top: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: const BoxDecoration(
+        color: Zc.warmCard,
+        border: Border(bottom: BorderSide(color: Zc.line)),
+      ),
+      padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
         children: [
           one(SettingsRoom.ai, 'AI', Icons.hub_outlined),
           one(SettingsRoom.privacy, 'Privacy', Icons.shield_outlined),
