@@ -76,6 +76,27 @@ A privacy product whose user cannot find their own vault has failed a promise it
 never thought to make. The person who most needs to know where the sealed file
 lives is the person who chose this product for the sealing.
 
+## 5 · The second door, and it is in the opposite wrong room
+
+Later the same evening, the owner: *«الإعدادات لا تظهر إلا في الشاشة الأولى»*.
+Measured, and exactly right:
+
+```
+screens/shell.dart:429   onSettings is handed to HomeScreen and to nothing else
+screens/home.dart:180    one IconButton, tooltip 'Settings' — the only one
+widgets/acts.dart        nine labels on a document, and settings is not among them
+```
+
+Open a document and settings cease to exist until you leave it.
+
+**So the two doors fail in opposite directions.** The library is locked *inside*
+a document; settings are locked *outside* one. Neither is missing; both are in
+the wrong room.
+
+And they collide with 062. Put «new session» in settings, as the owner first
+suggested, and a session cannot be started **while working** — the one moment a
+person wants one.
+
 ## Do
 
 Decisions for the owner, not for my hand:
@@ -87,8 +108,11 @@ Decisions for the owner, not for my hand:
    Either the hint names what can be done, or the import moves out.
 3. **Say where the vault is**, in one line, somewhere a person can find twice.
    The path is already in hand; nothing needs computing.
-4. Guard, and it must bite: a screen test that reaches «Import a list» **with no
-   document open**. Against today's code it cannot, which is the finding.
+4. **Settings reachable from a document**, or «new session» does not live there.
+   One of the two; they cannot both stand.
+5. Guard, and it must bite: a screen test that reaches «Import a list» **with no
+   document open**, and one that reaches settings **with a document open**.
+   Against today's code neither can, which is the finding.
 
 ## The family
 
