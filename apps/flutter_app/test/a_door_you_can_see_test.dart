@@ -197,7 +197,20 @@ void main() {
     });
 
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {})),
+      MaterialApp(
+        home: WorkspaceScreen(
+          bench: bench,
+          ground: ground,
+          onHome: () {},
+          onVault: () {},
+          // **Setup, changed on 8 October; the claim below did not.**
+          // The way to connect an unreached provider is now the settings
+          // panel, so this screen has to have one for the chooser to draw
+          // the door at all — a surface with nowhere to send the press
+          // draws no door rather than a dead one.
+          onSettings: () {},
+        ),
+      ),
     );
     await settle(tester);
     await tester.tap(find.byTooltip('Choose the AI and what travels to it'));
@@ -217,7 +230,16 @@ void main() {
     for (final p in ground.providers) {
       expect(find.text(p.label), findsWidgets, reason: '«${p.label}» is not a heading in the chooser');
     }
-    expect(find.text('Connect'), findsWidgets, reason: 'an unconnected provider offers no way to connect');
+    // The way in, beside the provider's own name. It was an «API key» form
+    // opening in place until 8 October and it is the door to the settings
+    // panel now — the owner put the AI settings there so that they never
+    // appear during work. **What this line is about is that a way exists**,
+    // which was the defect on the owner's first evening: there was none.
+    expect(
+      find.text('Connect in Settings'),
+      findsWidgets,
+      reason: 'an unconnected provider offers no way to connect',
+    );
 
     // ---------------------------------------------------------------- 046/H
     //

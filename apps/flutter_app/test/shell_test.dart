@@ -26,6 +26,7 @@ import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/protect_dialog.dart';
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/widgets/tokens.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
@@ -786,7 +787,18 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+          home: WorkspaceScreen(
+            bench: bench,
+            ground: ground,
+            onHome: () {},
+            onVault: () {},
+            // Given a panel to open because this test asks the sheet for its
+            // way to the settings, and a surface with nowhere to send the
+            // press draws no door rather than a dead one. The other fourteen
+            // mounts in this file are left alone: fourteen doors that open
+            // nothing would be fourteen lies the compiler was enforcing.
+            onSettings: () {},
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -875,34 +887,28 @@ void main() {
       expect(find.text('Direct API'), findsOneWidget);
       expect(find.text('Local AI'), findsOneWidget);
 
-      // Nothing is connected in this test, so the internet door shows its form —
-      // address, model, key — and says where the key would live.
-      expect(find.text('API KEY'), findsOneWidget);
-      expect(find.textContaining('for this run only'), findsOneWidget);
-
-      // The local door is a fold, and it is below the sheet's scroll: it has to be
-      // brought into view before it can be tapped, exactly as a person would.
-      final localDoor = find.text('Set up a local model');
-      await tester.ensureVisible(localDoor);
-      await settle(tester, rounds: 1);
-      await tester.tap(localDoor);
-      await settle(tester, rounds: 1);
-
-      // A model on this machine is asked for no key at all — one field fewer, not
-      // an empty one. The internet door's own key field is still on screen, so the
-      // claim is about the count: opening this door added a form and no key.
+      // **The setup changed on 8 October; the claim above did not.** Both doors
+      // used to show their own `ConnectForm` here — address, model, key — and
+      // this test asserted the fields: one API KEY, two ADDRESS, the loopback
+      // sentence. The owner moved every one of those out of the work: «وضعنا
+      // إعدادات الذكاء في شاشة الإعدادات وبالتالي لا تظهر أثناء العمل أبداً».
+      //
+      // So what the sheet is asked for here is what it now offers — the way to
+      // the one place a key is given, and no form. **The field claims were not
+      // dropped**: they are about `ConnectForm`'s own content and they moved
+      // with it, to `the_keys_live_in_the_settings_test.dart`, where they are
+      // asserted against the settings panel at the 444 px its content really
+      // gets.
       expect(
-        find.text('API KEY'),
-        findsOneWidget,
-        reason: 'the local form added a second key field',
+        find.byType(ConnectForm),
+        findsNothing,
+        reason: 'a key form stands in the send flow, where the owner said it never appears',
       );
       expect(
-        find.text('ADDRESS'),
-        findsNWidgets(2),
-        reason: 'two forms, two addresses',
+        find.text('Open Settings'),
+        findsWidgets,
+        reason: 'no form and no way to reach the place a key is given',
       );
-      expect(find.textContaining('literal loopback address'), findsOneWidget);
-      expect(find.text('http://127.0.0.1:11434'), findsWidgets);
 
       // Bring an answer back by hand — the token store does not care how it
       // travelled — and the real values come home.

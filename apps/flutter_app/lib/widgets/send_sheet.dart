@@ -9,6 +9,16 @@
 //   2. A connected provider      the request goes from here
 //   3. A model on this machine   no key, no account, nothing leaves the machine
 //
+// **8 October — no key is asked for here.** The owner: «وضعنا إعدادات الذكاء في
+// شاشة الإعدادات وبالتالي لا تظهر أثناء العمل أبداً» — the AI settings live in the
+// settings screen, so they never appear during work. This sheet used to carry a
+// `ConnectForm` — endpoint, model, API key — in four places, and one of them was
+// on the page it opens on: a person who pressed ✨AI to choose a model was one
+// press from a key form. It carries none now. Each route that needs a credential
+// says so in a line and offers the way to the settings panel, which 063 made
+// able to stand over the work. The form's one home is `settings.dart`'s
+// `_AiRoom`, where it already was — nothing was added there.
+//
 // The text shown is the payload the core built. It is not re-assembled here, and
 // what is copied to the clipboard is the same string that would be sent.
 //
@@ -29,7 +39,6 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/core.dart' show coreVersion;
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
-import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
 class SendSheet extends StatefulWidget {
@@ -38,10 +47,21 @@ class SendSheet extends StatefulWidget {
     required this.bench,
     required this.ground,
     this.saveFolder,
+    this.onSettings,
   });
 
   final Workbench bench;
   final Ground ground;
+
+  /// The way to the settings panel, which is the one place a provider's
+  /// address, model and key are asked for.
+  ///
+  /// Nullable, and not required as `bench` is, for the reason 063 gave for
+  /// `_TopBar`: a surface with nowhere to send the press draws no door rather
+  /// than a dead one. Requiring it would have made every test that opens this
+  /// sheet pass `() {}` — doors that open nothing, with the compiler enforcing
+  /// the lie.
+  final VoidCallback? onSettings;
 
   /// Where «Save as PDF» writes. Null is the product's own place,
   /// `~/Documents/zprivacy`, and nothing in the product passes anything else —
@@ -274,7 +294,7 @@ class _SendSheetState extends State<SendSheet> {
           // Provider, model and mode first. A person opens this sheet to
           // decide **who answers**; the text they are about to send is the
           // second question, and the doors are the third.
-          _ModelAndMode(bench: widget.bench, ground: widget.ground),
+          _ModelAndMode(bench: widget.bench, ground: widget.ground, onSettings: widget.onSettings),
           if (open > 0) ...[
             Trouble(
               open == 1
@@ -427,7 +447,11 @@ class _SendSheetState extends State<SendSheet> {
                       'provider still sees the ordinary facts of a connection — your address, '
                       'the time, the model.',
             child: connected.isEmpty
-                ? _connectHere(local: false)
+                ? _toTheSettings(
+                    context,
+                    'No provider is connected. The address and the key are given once, in '
+                    'Settings — this screen never asks for them.',
+                  )
                 : Wrap(
                     spacing: 9,
                     runSpacing: 9,
@@ -490,9 +514,9 @@ class _SendSheetState extends State<SendSheet> {
                 style: Zc.tiny.copyWith(letterSpacing: 0),
               ),
             const SizedBox(height: 10),
-            _More(
-              label: 'Change the address, the model, or the key',
-              child: _connectHere(local: false),
+            _toTheSettings(
+              context,
+              'The address, the model and the key are changed in Settings.',
             ),
           ],
           const SizedBox(height: 14),
@@ -503,9 +527,9 @@ class _SendSheetState extends State<SendSheet> {
                 'Studio, anything that answers the same shape. No key, no account, and '
                 'the request never leaves this computer. It is the only route that sees '
                 'none of the ordinary facts above.',
-            child: _More(
-              label: 'Set up a local model',
-              child: _connectHere(local: true),
+            child: _toTheSettings(
+              context,
+              'A model on this computer is set up in Settings — there is no key to give.',
             ),
           ),
         ],
@@ -548,9 +572,12 @@ class _SendSheetState extends State<SendSheet> {
               label: 'Continue',
               filled: true,
               // Open suggestions do not shut this door any more: they shut the
-              // send, where the sentence beside the button says so. A person
-              // who cannot reach the doors cannot connect a provider either,
-              // and connecting is exactly what a first evening needs.
+              // send, where the sentence beside the button says so. The reason
+              // was once that a person who cannot reach the doors cannot
+              // connect a provider either — which stopped being the reason on
+              // 8 October, when connecting moved to the settings panel. The
+              // door still opens, because choosing **who answers** is not a
+              // reward for finishing the review.
               onPressed: payload == null
                   ? null
                   : () => setState(() => _page = _SheetPage.ai),
@@ -560,12 +587,38 @@ class _SendSheetState extends State<SendSheet> {
     );
   }
 
-  /// The form, for whichever provider row this door is about.
-  Widget _connectHere({required bool local}) {
-    final rows = widget.ground.providers;
-    if (rows.isEmpty)
-      return const Text('This build knows no providers.', style: Zc.small);
-    return ConnectForm(ground: widget.ground, row: rows.first, local: local);
+  /// One line about why there is nothing to fill in here, and the way to the
+  /// place where there is.
+  ///
+  /// **The sheet closes on the way out**, and that is the whole reason this is
+  /// a door and not a form. 063's settings are a `Positioned` inside
+  /// `ZShell.build`, inside the route `MaterialApp`'s Navigator holds, while
+  /// this sheet is a route pushed on top of that one — so with the sheet still
+  /// up the panel stands under the modal barrier. Measured on `fcdbabd`: a hit
+  /// test at the panel's own door and at the middle of its room both return
+  /// false, and the front-most target over the panel is the barrier's
+  /// `_RenderColoredBox`. The panel **still paints**, full rect, merely dimmed
+  /// — so a person would watch the settings open and find they answer nothing.
+  /// That is worse than a door that did not open, and it is why this pops
+  /// first and asks second.
+  Widget _toTheSettings(BuildContext context, String why) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(why, style: Zc.small.copyWith(color: Zc.ink2)),
+        if (widget.onSettings != null) ...[
+          const SizedBox(height: 10),
+          ZButton(
+            label: 'Open Settings',
+            icon: Icons.tune,
+            onPressed: () {
+              Navigator.of(context).pop();
+              widget.onSettings!();
+            },
+          ),
+        ],
+      ],
+    );
   }
 
   Widget _door({
@@ -598,58 +651,6 @@ class _SendSheetState extends State<SendSheet> {
   }
 }
 
-/// A fold. The form behind it is for the person who wants it, and out of the
-/// way of the person who does not — which is most people, most of the time.
-class _More extends StatefulWidget {
-  const _More({required this.label, required this.child});
-
-  final String label;
-  final Widget child;
-
-  @override
-  State<_More> createState() => _MoreState();
-}
-
-class _MoreState extends State<_More> {
-  bool _open = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: () => setState(() => _open = !_open),
-          borderRadius: BorderRadius.circular(6),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _open ? Icons.expand_less : Icons.expand_more,
-                  size: 16,
-                  color: Zc.clay,
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  widget.label,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: Zc.clay,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (_open) ...[const SizedBox(height: 10), widget.child],
-      ],
-    );
-  }
-}
-
 /// Which model answers, and what travels to it.
 ///
 /// **The whole catalogue, grouped by provider** — not only the models a
@@ -659,8 +660,15 @@ class _MoreState extends State<_More> {
 /// was two doors further down, under a button that stayed disabled until the
 /// review was finished.
 ///
-/// So an unconnected provider's models are shown greyed, with «Connect» beside
-/// the provider's own name and its form opening right there.
+/// So an unconnected provider's models are shown greyed, with the way in beside
+/// the provider's own name rather than two doors away.
+///
+/// **8 October: the way in is a door, not a form.** The form used to open right
+/// here, on the page this sheet opens on — a person who pressed ✨AI to choose a
+/// model was one press from an endpoint, a model name and an API key. The owner:
+/// the AI settings live in the settings screen and never appear during work. So
+/// «Connect in Settings» closes the sheet and opens the panel, which 063 made
+/// able to stand over the document.
 ///
 /// The second choice is the only place in this app where a person can decide
 /// to send their document as it stands, and it says so in those words:
@@ -668,19 +676,20 @@ class _MoreState extends State<_More> {
 /// provider, with the protected text — so the unredacted mode is never called
 /// «direct» on a screen.
 class _ModelAndMode extends StatefulWidget {
-  const _ModelAndMode({required this.bench, required this.ground});
+  const _ModelAndMode({required this.bench, required this.ground, this.onSettings});
 
   final Workbench bench;
   final Ground ground;
+
+  /// The way to the settings panel. Null means this chooser has nowhere to send
+  /// the press, and then it draws no door rather than a dead one.
+  final VoidCallback? onSettings;
 
   @override
   State<_ModelAndMode> createState() => _ModelAndModeState();
 }
 
 class _ModelAndModeState extends State<_ModelAndMode> {
-  /// Which provider's form is open, if any. One at a time.
-  String? _connecting;
-
   @override
   Widget build(BuildContext context) {
     final bench = widget.bench;
@@ -710,7 +719,7 @@ class _ModelAndModeState extends State<_ModelAndMode> {
           ),
           for (final id in order) ...[
             const SizedBox(height: 12),
-            _provider(id, byProvider[id] ?? const []),
+            _provider(context, id, byProvider[id] ?? const []),
           ],
           if (order.isEmpty) ...[
             const SizedBox(height: 10),
@@ -750,7 +759,7 @@ class _ModelAndModeState extends State<_ModelAndMode> {
 
   /// One provider: its name, its models, and — when it is not connected — the
   /// way in, beside the name rather than two doors away.
-  Widget _provider(String id, List<ModelDescriptor> models) {
+  Widget _provider(BuildContext context, String id, List<ModelDescriptor> models) {
     final rows = widget.ground.providers.where((p) => p.id == id).toList();
     final row = rows.isEmpty ? null : rows.first;
     // «Connected» is the core's word, and a model that needs no credential is
@@ -769,19 +778,26 @@ class _ModelAndModeState extends State<_ModelAndMode> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            if (!reachable) ...[
+            // The way in, and it leads out of this sheet. Drawn only when
+            // there is somewhere for it to lead: a surface that was given no
+            // panel shows no door rather than one that does nothing.
+            if (!reachable && row != null && widget.onSettings != null) ...[
               const SizedBox(width: 10),
               TextButton(
-                onPressed: row == null
-                    ? null
-                    : () => setState(() => _connecting = _connecting == id ? null : id),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onSettings!();
+                },
                 style: TextButton.styleFrom(
                   foregroundColor: Zc.clay,
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('Connect', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Connect in Settings',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
               ),
             ],
           ],
@@ -797,7 +813,8 @@ class _ModelAndModeState extends State<_ModelAndMode> {
                 on: widget.bench.chosenModel == model.modelId,
                 // **The colour the owner asked for**: a model whose key is
                 // here reads as ready, and one whose key is not stays as it
-                // was — greyed, with «Connect» beside its company's name.
+                // was — greyed, with the door to the settings beside its
+                // company's name.
                 // `available` is the core's own word for it, so the screen
                 // decides nothing.
                 ready: model.available,
@@ -807,10 +824,6 @@ class _ModelAndModeState extends State<_ModelAndMode> {
               ),
           ],
         ),
-        if (_connecting == id && row != null) ...[
-          const SizedBox(height: 10),
-          ConnectForm(ground: widget.ground, row: row, local: row.onThisComputer),
-        ],
       ],
     );
   }

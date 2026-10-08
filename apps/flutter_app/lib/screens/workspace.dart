@@ -240,6 +240,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           ground: widget.ground,
                           said: _said,
                           focusKey: _focusKey,
+                          onSettings: widget.onSettings,
                           onSay: (line) => setState(() => _said = line),
                           onChoose: (mark, at) {
                             // The finding behind the mark, by the place it
@@ -619,7 +620,7 @@ class _TopBar extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: () => showDialog<bool>(
                   context: context,
-                  builder: (_) => SendSheet(bench: bench, ground: ground),
+                  builder: (_) => SendSheet(bench: bench, ground: ground, onSettings: onSettings),
                 ),
                 icon: const Icon(Icons.auto_awesome_outlined, size: 16),
                 label: const Text('AI', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -1070,6 +1071,7 @@ class _Columns extends StatefulWidget {
     required this.onSay,
     required this.focusKey,
     required this.onChoose,
+    this.onSettings,
   });
 
   final Workbench bench;
@@ -1078,6 +1080,10 @@ class _Columns extends StatefulWidget {
   final void Function(String) onSay;
   final GlobalKey focusKey;
   final void Function(Mark mark, Offset at) onChoose;
+
+  /// Handed down to the Safe column's footer, which opens the send sheet —
+  /// and the sheet carries the only door to where a provider's key is given.
+  final VoidCallback? onSettings;
 
   @override
   State<_Columns> createState() => _ColumnsState();
@@ -1364,7 +1370,7 @@ class _ColumnsState extends State<_Columns> {
                 controller: _right,
                 footer: safe == null
                     ? null
-                    : _SafeFooter(payload: safe, bench: bench, ground: ground),
+                    : _SafeFooter(payload: safe, bench: bench, ground: ground, onSettings: widget.onSettings),
                 child: safe == null
                     ? const _Empty('There is nothing to send yet.')
                     : SafeText(
@@ -1689,11 +1695,17 @@ class _SafeFooter extends StatelessWidget {
     required this.payload,
     required this.bench,
     required this.ground,
+    this.onSettings,
   });
 
   final PayloadView payload;
   final Workbench bench;
   final Ground ground;
+
+  /// Handed on to the send sheet, which carries the only door to the place a
+  /// provider's key is given. Null means there is no panel to open, and then
+  /// the sheet draws no door.
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -1752,7 +1764,7 @@ class _SafeFooter extends StatelessWidget {
                     ? null
                     : () => showDialog<bool>(
                         context: context,
-                        builder: (_) => SendSheet(bench: bench, ground: ground),
+                        builder: (_) => SendSheet(bench: bench, ground: ground, onSettings: onSettings),
                       ),
                 hint: null,
               ),

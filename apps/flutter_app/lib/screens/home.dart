@@ -149,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (chat.openSuggestions > 0) return;
     await showDialog<bool>(
       context: context,
-      builder: (_) => SendSheet(bench: chat, ground: widget.ground),
+      builder: (_) => SendSheet(bench: chat, ground: widget.ground, onSettings: widget.onSettings),
     );
   }
 
