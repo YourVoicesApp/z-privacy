@@ -303,23 +303,28 @@ fn a_value_the_document_itself_wrapped_is_protected_by_its_longer_half() {
     assert!(!payload.contains("Nelander"), "the half that was taken is still in the clear");
 }
 
-/// And the one crossing this rule stands aside for: a page break.
+/// A page break is a line break as well, and that took a measurement to settle.
 ///
-/// 041-L is the older and measured promise — «a selection may cross a page
-/// boundary, and then the whole stretch leaves as one token and that break is
-/// not in the payload at all», with the page after it keeping its own number.
-/// The reader leaves a form feed between page and page with a newline beside it,
-/// so every selection that crosses a page break crosses a line break too. Rule
-/// 0 therefore does not look at a span that holds a form feed, and the cost is
-/// this: an overshoot **across a page boundary** still grows into the first word
-/// of the next page, exactly as it used to inside a line.
+/// 041-L says «a selection may cross a page boundary, and then the whole stretch
+/// leaves as one token and that break is not in the payload at all», and the
+/// reader leaves a form feed with an ordinary newline beside it — so every
+/// crossing of a page break is a crossing of a line break and the two rules
+/// meet head on. Carving a hole in this one would have been the easy answer and
+/// the wrong one: the crossing was 041-L's **setup**, never its subject, which
+/// is the page numbering. Measured: a break is still swallowed with no hand
+/// drawn across it, by «protect every place this value appears» — the matcher
+/// reads an exact value over any run of whitespace, a form feed included — so
+/// 041-L keeps its claim, its test keeps its subject, and this rule has no
+/// exception.
 ///
-/// Asserted as it is, not as it should be. The day a page break counts as a
-/// line break as well, this test is the one that has to be rewritten, and the
-/// rewrite will show what the owner is choosing between.
+/// The three now say one coherent thing. The scanner's pair rule refuses to
+/// read across a page break (038-I: «the last word of one page and the first of
+/// the next are not neighbours»). A hand selection refuses too, here. An exact
+/// value the person pointed at still crosses it — because that is a value and
+/// the other two are guesses.
 #[test]
-fn an_overshoot_across_a_page_break_is_not_clipped_and_this_is_known() {
-    let doc = "Kund: Nordstern AB\n\u{c}Sida två: Storgatan 1\n";
+fn an_overshoot_across_a_page_break_is_clipped_like_any_other() {
+    let doc = "Kund: Nordstern AB\n\u{c}Sida tv\u{e5}: Storgatan 1\n";
     let session = a_document(doc);
     let start = at(doc, "Nordstern AB");
     // Three characters too far: the newline, the page break, and one letter of
@@ -327,7 +332,32 @@ fn an_overshoot_across_a_page_break_is_not_clipped_and_this_is_known() {
     let span = Span { start, end: start + units("Nordstern AB") + 3 };
     assert_eq!(
         what_protect_would_take(session, span),
-        "Nordstern AB\n\u{c}Sida",
-        "a page break is now clipped like a line break — 041-L has to be read again",
+        "Nordstern AB",
+        "the overshoot walked onto the next page",
     );
+}
+
+/// And the act that still crosses a page break, because 041-L leans on it:
+/// every place an exact value appears.
+///
+/// The value stands once on a line of its own and once straddling the break.
+/// One hand selection, crossing nothing, protects both — and the form feed
+/// between the halves of the second one leaves with the token.
+#[test]
+fn every_place_an_exact_value_appears_still_reads_across_a_page() {
+    let doc = "Sida ett\n\nKontakt: Sven Nelander\n\nFr\u{e5}gor till Sven\u{c}Nelander svarar.\n";
+    let session = a_document(doc);
+    let outcome =
+        protect_all_matches(session, Span {
+            start: at(doc, "Sven Nelander"),
+            end: at(doc, "Sven Nelander") + units("Sven Nelander"),
+        }, Scope::Once, Kind::Person)
+        .expect("protect every place");
+    assert!(
+        matches!(outcome, ProtectOutcome::Applied { places: 2, .. }),
+        "the place straddling the page break was not found: {outcome:?}",
+    );
+    let payload = payload_view(build_payload(session).expect("build")).expect("view").text;
+    assert!(!payload.contains('\u{c}'), "the swallowed page break is still in the payload");
+    assert!(!payload.contains("Nelander"), "half the name is still in the clear: {payload:?}");
 }

@@ -153,27 +153,14 @@ fn cuts_a_word(s: &str, at: usize) -> bool {
 /// not a candidate.
 ///
 /// Counted in characters and not in bytes, because a line of Arabic is two bytes
-/// a letter and would otherwise outweigh a longer line of Swedish.
+/// a letter and would otherwise outweigh a longer line of Swedish — and only
+/// the characters that are not space, because a column of padding and the form
+/// feed that marks a page are not what anybody is aiming at.
 ///
 /// `None` when the selection stays on one line, which is almost every selection.
 fn one_line_of(s: &str, start: usize, end: usize) -> Option<(usize, usize)> {
     let drawn = s.get(start..end)?;
     if !drawn.contains('\n') {
-        return None;
-    }
-    // A page break is the one crossing that is already somebody else's rule.
-    // 041-L: «a selection may cross a page boundary, and then the whole stretch
-    // leaves as one token and that break is not in the payload at all» — and
-    // the page after it keeps the number it has in the document. The reader
-    // leaves a form feed between page and page with an ordinary newline beside
-    // it, so a selection that crosses a page break always crosses a line break
-    // too, and the two rules meet head on. 041-L is the older promise and it is
-    // measured, so it wins here — and the cost is written down rather than
-    // hidden: an overshoot across a *page* boundary still grows into the first
-    // word of the next page. Pinned in `a_selection_may_not_cross_a_line.rs`,
-    // so the day a page break counts as a line break too, that test says so
-    // before anybody reads this comment.
-    if drawn.contains('\u{c}') {
         return None;
     }
     let mut best: Option<(usize, usize, usize)> = None;
@@ -184,7 +171,7 @@ fn one_line_of(s: &str, start: usize, end: usize) -> Option<(usize, usize)> {
         if piece.trim().is_empty() {
             continue;
         }
-        let characters = piece.chars().count();
+        let characters = piece.chars().filter(|c| !c.is_whitespace()).count();
         if best.is_none_or(|(_, _, most)| characters > most) {
             best = Some((from, to, characters));
         }
@@ -209,7 +196,10 @@ fn one_line_of(s: &str, start: usize, end: usize) -> Option<(usize, usize)> {
 ///    «559000-0000\nAdress», which joined two of his lines into one, took the
 ///    word «Adress» out of what the model receives, and stored a value that is
 ///    never that organisation number again. Protection may not change how a
-///    document reads.
+///    document reads. A **page** break counts as a line break here: the
+///    scanner's pair rule already refuses to read across one (038-I), and what
+///    still crosses it is an exact value the person pointed at, which is a
+///    different kind of claim from a drag.
 /// 1. **Out, never in.** Each end moves outward while the character beside it
 ///    belongs to the same word, so a drag that starts one letter late still
 ///    takes the whole name. A selection that already covers whole words does
@@ -761,8 +751,11 @@ mod tests {
         // Two halves of the same size: the one the selection started on, so the
         // answer does not depend on which way the person dragged.
         assert_eq!(one_line_of("AB\nCD\n", 0, 5), Some((0, 2)));
-        // And a page break is not this rule's business either — 041-L's
-        // promise, and the form feed the reader leaves is how it is recognised.
-        assert_eq!(one_line_of("AB\n\u{c}CD\n", 0, 6), None);
+        // A page break is a line break as well. 041-L used to need the
+        // opposite — a hand selection drawn across a page boundary — and that
+        // was its *setup*, not its subject: a break is still swallowed by «every
+        // place this value appears», because the matcher reads an exact value
+        // across any run of whitespace. So this rule has no exception.
+        assert_eq!(one_line_of("AB\n\u{c}CD\n", 0, 6), Some((0, 2)));
     }
 }

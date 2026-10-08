@@ -38,6 +38,13 @@ fn fresh_dir(name: &str) {
 /// move the offsets that follow it.
 const THREE: &str = "Seite eins\n\nKunde: Nordstern Consulting GmbH\n\u{c}Seite zwei\n\nRechnung an Thomas Müller\n\u{c}Seite drei\n\nMit freundlichen Grüßen\n";
 
+/// The same three pages with one name standing twice: once on a line of its
+/// own, and once straddling the first break. 053 forbids a hand selection drawn
+/// across a page boundary, so the swallowed break below is arranged the way a
+/// person arranges it far more often — «protect every place this value appears»
+/// — and no hand crosses anything.
+const WRAPPED: &str = "Seite eins\n\nRechnung an Thomas Müller\n\nFreigegeben von Thomas\u{c}Müller am Montag.\n\nSeite zwei\n\u{c}Mit freundlichen Grüßen\n";
+
 /// UTF-16 offset of the nth occurrence of a character, counting from 0.
 fn utf16_of(s: &str, needle: char, nth: usize) -> u32 {
     let mut units = 0u32;
@@ -170,24 +177,37 @@ fn a_token_moves_every_edge_after_it() {
 
 /// A protection that swallows a break: the edge is gone, the numbers are not.
 ///
-/// A selection may cross a page boundary, and then the whole stretch leaves as
-/// one token and that break is not in the payload at all. The page after it
-/// still has the number it has in the document — which is why an edge carries
-/// its number rather than its position in the list.
+/// A protection may still cover a page boundary, and then the whole stretch
+/// leaves as one token and that break is not in the payload at all. The page
+/// after it still has the number it has in the document — which is why an edge
+/// carries its number rather than its position in the list.
+///
+/// **The setup changed with 053; the claim did not.** This used to arrange the
+/// swallowed break with a hand selection drawn across the boundary, and 053
+/// forbids that: a hand selection is cut down to one line before it becomes
+/// anything. That crossing was this test's setup, never its subject — the
+/// subject is the numbering. A break is still swallowed without any hand
+/// crossing it, because the matcher reads an **exact value** over any run of
+/// whitespace and a form feed is whitespace. The scanner's pair rule does not
+/// (038-I) and a hand selection no longer does (053); a value the person
+/// pointed at still does, which is the difference between a value and a guess.
 #[test]
 fn a_swallowed_break_does_not_renumber_the_pages() {
     let _g = serial();
     fresh_dir("swallowed");
     let s = open_session(None, "de".to_string()).expect("open");
-    import_text(s, THREE.to_string()).expect("import");
+    import_text(s, WRAPPED.to_string()).expect("import");
     scan(s).expect("scan");
 
-    // One stretch, from before the first break to after it.
-    let across = Span {
-        start: utf16_of(THREE, '\u{c}', 0) - 6,
-        end: utf16_of(THREE, '\u{c}', 0) + 6,
-    };
-    protect(s, across, Scope::Once, Kind::Custom).expect("protect across the break");
+    // The occurrence on a line of its own. It crosses nothing; the other place
+    // the same value stands straddles the first break.
+    let outcome =
+        protect_all_matches(s, span_of(WRAPPED, "Thomas Müller"), Scope::Once, Kind::Person)
+            .expect("protect every place");
+    assert!(
+        matches!(outcome, ProtectOutcome::Applied { places: 2, .. }),
+        "the place straddling the break was not found, so nothing was swallowed: {outcome:?}"
+    );
 
     let payload = payload_of(s);
     assert_eq!(
