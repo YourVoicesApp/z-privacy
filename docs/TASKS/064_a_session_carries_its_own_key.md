@@ -19,8 +19,15 @@ the language — the environment, as he ruled on 7 Oct
 
 A session is born of the act that needs it: pressing **Copy**, or exporting a
 **PDF**, while no session is open. The name is asked **once**, then. Entering an
-existing session asks nothing. **There is no «new session» button**, which is why
-there is no argument about where it would live.
+existing session asks nothing. ~~**There is no «new session» button**, which is
+why there is no argument about where it would live.~~
+
+**Struck 9 Oct** — the owner's assignment had already placed the button: «نجعل
+داخل الإعدادات إنشاء جلسة جديدة، البنك، وقائمة بأسماء الجلسات السابقة». See
+062 §F for the correction in full. The panel's button asks the name in place and
+opens a fresh session deliberately; its key is born in the vault at that moment
+and the bench's tokens re-mint exactly as at an exit birth. The exit-ask stays,
+for whoever never pressed it. Two doors, one birth.
 
 What a session keeps follows where the conversation happened:
 

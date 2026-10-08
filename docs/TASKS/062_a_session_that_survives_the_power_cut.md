@@ -134,10 +134,21 @@ working with no session  →  press Copy, or export a PDF  →  asked once, the 
 entering an old session  →  nothing is asked
 ```
 
-A session is therefore **never created by a button**. It is born of the act that
+~~A session is therefore **never created by a button**. It is born of the act that
 makes it necessary — text leaving the machine — and that dissolves the problem
 of where a «New session» control would live (061 §5): nowhere, because there is
-no such control.
+no such control.~~
+
+**Struck 9 Oct, and the mistake was this paper's, not his.** The owner's own
+assignment of the workshop had already named the control, in the same breath as
+the panel: «نجعل داخل الإعدادات إنشاء جلسة جديدة، البنك، وقائمة بأسماء الجلسات
+السابقة». The sentence above was the lead's over-extension from the exit-birth
+design, written on a night when the exit was the only door in the program. Both
+doors exist and they produce **the same birth**: the panel's «جلسة جديدة» asks
+the name in place and opens a fresh session on purpose; the exit still asks when
+no session is open, as the net under whoever never pressed the button. The
+deliberate road and the inevitable road meet at the same vault write, so the
+promise still attaches at the boundary either way.
 
 ### What is kept follows where the conversation happens
 
