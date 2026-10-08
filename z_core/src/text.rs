@@ -141,6 +141,57 @@ fn cuts_a_word(s: &str, at: usize) -> bool {
     word_side(before, far_before) && word_side(after, far_after)
 }
 
+/// The one line a hand-drawn selection is about, when it was drawn across more
+/// than one.
+///
+/// A value is a thing on one line: 046/C says a name ends where the name ends,
+/// and the owner's own file says a drag does too. A selection that crosses a
+/// line break is an overshoot at one end of it — the person was aiming at one of
+/// the two lines, never at both — so this answers which line it is an overshoot
+/// *of*: the one it holds the most of, and the first of them when two hold the
+/// same. A piece that is only spaces has nothing in it to be aiming at and is
+/// not a candidate.
+///
+/// Counted in characters and not in bytes, because a line of Arabic is two bytes
+/// a letter and would otherwise outweigh a longer line of Swedish.
+///
+/// `None` when the selection stays on one line, which is almost every selection.
+fn one_line_of(s: &str, start: usize, end: usize) -> Option<(usize, usize)> {
+    let drawn = s.get(start..end)?;
+    if !drawn.contains('\n') {
+        return None;
+    }
+    // A page break is the one crossing that is already somebody else's rule.
+    // 041-L: «a selection may cross a page boundary, and then the whole stretch
+    // leaves as one token and that break is not in the payload at all» — and
+    // the page after it keeps the number it has in the document. The reader
+    // leaves a form feed between page and page with an ordinary newline beside
+    // it, so a selection that crosses a page break always crosses a line break
+    // too, and the two rules meet head on. 041-L is the older promise and it is
+    // measured, so it wins here — and the cost is written down rather than
+    // hidden: an overshoot across a *page* boundary still grows into the first
+    // word of the next page. Pinned in `a_selection_may_not_cross_a_line.rs`,
+    // so the day a page break counts as a line break too, that test says so
+    // before anybody reads this comment.
+    if drawn.contains('\u{c}') {
+        return None;
+    }
+    let mut best: Option<(usize, usize, usize)> = None;
+    let mut at = start;
+    for piece in drawn.split('\n') {
+        let (from, to) = (at, at + piece.len());
+        at = to + '\n'.len_utf8();
+        if piece.trim().is_empty() {
+            continue;
+        }
+        let characters = piece.chars().count();
+        if best.is_none_or(|(_, _, most)| characters > most) {
+            best = Some((from, to, characters));
+        }
+    }
+    best.map(|(from, to, _)| (from, to))
+}
+
 /// Grow a selection out to whole words, and drop the marks at its edges.
 ///
 /// The owner, 6 October, from a live run: protections came out as `J__Z_…`,
@@ -149,8 +200,16 @@ fn cuts_a_word(s: &str, at: usize) -> bool {
 /// at the left margin the mouse lands *after* the first character, every time —
 /// and the fix is not to ask them to aim better.
 ///
-/// Two rules, in this order:
+/// Three rules, in this order:
 ///
+/// 0. **One line.** A selection drawn across a line break is cut down to the
+///    line it holds most of, before anything grows. Without this, rule 1 grows
+///    the overshoot outward into a whole word on the *other* line: two
+///    characters past «559000-0000» on the owner's payroll file protected
+///    «559000-0000\nAdress», which joined two of his lines into one, took the
+///    word «Adress» out of what the model receives, and stored a value that is
+///    never that organisation number again. Protection may not change how a
+///    document reads.
 /// 1. **Out, never in.** Each end moves outward while the character beside it
 ///    belongs to the same word, so a drag that starts one letter late still
 ///    takes the whole name. A selection that already covers whole words does
@@ -165,6 +224,15 @@ pub(crate) fn whole_words(s: &str, start: usize, end: usize) -> (usize, usize) {
     let (mut start, mut end) = (start.min(s.len()), end.min(s.len()));
     if start >= end {
         return (start, end);
+    }
+
+    // 0. One line, chosen before any edge moves. The growth in rule 1 is what
+    //    turns a two-character overshoot into a whole word on the next line,
+    //    and it cannot be stopped at the break: by the time it runs, the break
+    //    is already inside the span the person drew.
+    if let Some((line_start, line_end)) = one_line_of(s, start, end) {
+        start = line_start;
+        end = line_end;
     }
 
     // 1. Outward, but only while the edge stands **in the middle of a word**.
@@ -664,5 +732,37 @@ mod tests {
     #[test]
     fn a_piece_of_a_word_is_not_the_word() {
         assert!(found("Nordsternstra\u{df}e", "Nordstern").is_empty());
+    }
+
+    /// 053 — a newline was never a word character, so rule 1's growth has
+    /// always stopped *at* a line break. Both of these were already false on
+    /// 82d5858, before this item changed anything, which is why rule 0 had to
+    /// exist: the harm was never growth across a break, it was growth on the far
+    /// side of a break the person had already drawn across.
+    #[test]
+    fn a_line_break_never_cut_a_word() {
+        assert!(!cuts_a_word("0\nA", 1), "the boundary before the break");
+        assert!(!cuts_a_word("0\nA", 2), "the boundary after it");
+        assert!(cuts_a_word("0\nAd", 3), "and inside the word on the next line it did");
+    }
+
+    /// Rule 0's own answer: the line the selection holds most of.
+    #[test]
+    fn one_line_of_picks_the_line_the_selection_holds_most_of() {
+        let s = "Organisationsnummer: 559000-0000\nAdress: Storgatan 1\n";
+        let value = s.find("559000-0000").expect("the value");
+        // Two characters past the end of the organisation number.
+        assert_eq!(one_line_of(s, value, value + 13), Some((value, value + 11)));
+        // The same overshoot backwards, from inside the line below.
+        let adress = s.find("Adress").expect("the label");
+        assert_eq!(one_line_of(s, adress - 2, adress + 6), Some((adress, adress + 6)));
+        // A selection that stays on one line is not this function's business.
+        assert_eq!(one_line_of(s, value, value + 11), None);
+        // Two halves of the same size: the one the selection started on, so the
+        // answer does not depend on which way the person dragged.
+        assert_eq!(one_line_of("AB\nCD\n", 0, 5), Some((0, 2)));
+        // And a page break is not this rule's business either — 041-L's
+        // promise, and the form feed the reader leaves is how it is recognised.
+        assert_eq!(one_line_of("AB\n\u{c}CD\n", 0, 6), None);
     }
 }
