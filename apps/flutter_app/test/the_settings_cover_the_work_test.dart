@@ -35,6 +35,22 @@ const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _doc = 'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.';
 const _needle = 'DE02120300000000202051';
 
+/// **The owner's 480**, stated once in this file and asserted against the
+/// product everywhere below. Written here rather than read from the widget: a
+/// guard that takes its number from the thing it measures can only ever catch
+/// disagreement, never a wrong answer the two of them share.
+const panelWidth = 480.0;
+
+/// The two windows these guards stand in. Named, because the size used to be
+/// written twice in every guard that measured a rect against it — once in
+/// `setSurfaceSize` and again as a literal in the `expect`. Change one and the
+/// other goes quietly wrong: at a wider surface the press-through guard's
+/// `dx > 1120` would have admitted a point that is **not** under the panel and
+/// then proved nothing about leaking, green. Wherever two places can disagree
+/// about one fact, one of them is already wrong.
+const wide = Size(1600, 1100);
+const narrow = Size(900, 800);
+
 /// The one control. It is the same tooltip in the top bar and in the panel's
 /// own corner, because it is the same widget in the same place on the glass —
 /// the owner's «تغلق بالضغط عليها», and the reason `findsOneWidget` below is an
@@ -158,7 +174,7 @@ void main() {
   // ---------------------------------------------------------------- guard a
 
   testWidgets('the settings open over a document and the document is still there', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1600, 1100));
+    await tester.binding.setSurfaceSize(wide);
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await aDocumentOnTheBench(tester, 'over-the-work');
@@ -179,18 +195,18 @@ void main() {
         reason: 'the document is no longer drawn behind the panel');
 
     // 480 is the owner's number and belongs in a guard rather than in a comment.
-    expect(tester.getSize(find.byType(SettingsScreen)).width, 480,
-        reason: 'the panel is not 480 wide');
+    expect(tester.getSize(find.byType(SettingsScreen)).width, panelWidth,
+        reason: 'the panel is not $panelWidth wide');
     final box = tester.getRect(find.byType(SettingsScreen));
-    expect(box.right, 1600, reason: 'the panel is not against the right edge');
+    expect(box.right, wide.width, reason: 'the panel is not against the right edge');
     expect(box.top, 0, reason: 'the panel does not start at the top');
-    expect(box.bottom, 1100, reason: 'the panel does not reach the bottom');
+    expect(box.bottom, wide.height, reason: 'the panel does not reach the bottom');
   });
 
   // ---------------------------------------------------------------- guard b
 
   testWidgets('the same press that opens the panel closes it', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1600, 1100));
+    await tester.binding.setSurfaceSize(wide);
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await aDocumentOnTheBench(tester, 'twice');
@@ -220,7 +236,7 @@ void main() {
   // ---------------------------------------------------------------- guard c
 
   testWidgets('at 900 wide with the panel open, nothing overflows', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1600, 1100));
+    await tester.binding.setSurfaceSize(wide);
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await aDocumentOnTheBench(tester, 'narrow');
@@ -251,7 +267,7 @@ void main() {
     // exactly 360», with every shorter height silent.
     expect(complaints(tester), isEmpty, reason: 'this build already overflows at 1600');
 
-    await tester.binding.setSurfaceSize(const Size(900, 800));
+    await tester.binding.setSurfaceSize(narrow);
     await settle(tester);
     final shut = complaints(tester);
 
@@ -262,12 +278,12 @@ void main() {
     // by nobody.
     void doorIsOnTheGlass(String when) {
       final box = tester.getRect(_door);
-      expect(box.right, lessThanOrEqualTo(900),
-          reason: 'the settings door hangs off the right edge at 900, $when: $box');
+      expect(box.right, lessThanOrEqualTo(narrow.width),
+          reason: 'the settings door hangs off the right edge at ${narrow.width}, $when: $box');
       expect(box.left, greaterThanOrEqualTo(0),
-          reason: 'the settings door is off the left edge at 900, $when: $box');
-      expect(box.bottom, lessThanOrEqualTo(800),
-          reason: 'the settings door is below the window at 900, $when: $box');
+          reason: 'the settings door is off the left edge at ${narrow.width}, $when: $box');
+      expect(box.bottom, lessThanOrEqualTo(narrow.height),
+          reason: 'the settings door is below the window at ${narrow.width}, $when: $box');
     }
 
     doorIsOnTheGlass('with the panel shut');
@@ -283,8 +299,9 @@ void main() {
     // named before the count is read.
     expect(find.byType(WorkspaceScreen), findsOneWidget,
         reason: 'the work is not behind the panel, so this is not the narrow case 063 is about');
-    expect(tester.getSize(find.byType(SettingsScreen)).width, 480,
-        reason: 'the panel is not 480 wide at 900, so the 420 left for the work is not what was measured');
+    expect(tester.getSize(find.byType(SettingsScreen)).width, panelWidth,
+        reason: 'the panel is not $panelWidth wide at ${narrow.width}, so the '
+            '${narrow.width - panelWidth} left for the work is not what was measured');
 
     // **Both readings are asserted, and they are about different things.**
     // `shut` is the only reliable reading the *bar* will ever give at 900 —
@@ -306,7 +323,7 @@ void main() {
   // stretch of the panel lands in whatever is under that pixel, and at 1600 the
   // right 480 has the Workspace's own review buttons under it.
   testWidgets('a press on the panel does not reach the work behind it', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1600, 1100));
+    await tester.binding.setSurfaceSize(wide);
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await aDocumentOnTheBench(tester, 'does-not-leak');
@@ -318,9 +335,9 @@ void main() {
     final ai = find.byTooltip('Choose the AI and what travels to it');
     expect(ai, findsOneWidget, reason: 'the AI door is not on this screen');
     final at = tester.getCenter(ai);
-    expect(at.dx, greaterThan(1120),
-        reason: 'the AI door is not under where the 480 panel will stand, so a press there would '
-            'prove nothing about leaking');
+    expect(at.dx, greaterThan(wide.width - panelWidth),
+        reason: 'the AI door is not under where the $panelWidth panel will stand, so a press '
+            'there would prove nothing about leaking');
 
     // Before: that point is the work, and a press there reaches it. Without
     // this line the assertion below could hold because the point was never
@@ -331,6 +348,12 @@ void main() {
     await tester.tap(_door);
     await settle(tester);
     expect(find.byType(SettingsScreen), findsOneWidget);
+
+    // And the point is inside the panel that actually stood up, not inside one
+    // worked out by arithmetic. This is the line a changed window cannot fool:
+    // the rect is the panel's own.
+    expect(tester.getRect(find.byType(SettingsScreen)).contains(at), isTrue,
+        reason: 'the point pressed below is not inside the panel, so nothing below is measured');
 
     // After: the same point, with the panel over it. Two of them — the strip
     // at the top, which is a bar, and a point in the middle of the room, which
