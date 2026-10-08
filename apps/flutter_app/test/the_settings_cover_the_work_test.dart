@@ -238,13 +238,45 @@ void main() {
     //
     // The count is taken with the panel shut first all the same — a number
     // whose before is unknown is not a measurement.
+    //
+    // **And the wide reading is drained before the window narrows**, which is
+    // not tidiness. `DebugOverflowIndicatorMixin` reports **once per render
+    // object for its whole life**: `_overflowReportNeeded` is cleared on the
+    // first report and never set again. So on one tree the bar can complain at
+    // 1600 and is then silent at 900 for ever — and an undrained 1600 report
+    // would arrive in the reading below wearing 900's name, while the 900
+    // reading itself came back empty. That is this guard going green on a bar
+    // that overflows at both widths. Found by monopeaks-5e, who hit the same
+    // mixin reading five window heights down one tree and got «overflows at
+    // exactly 360», with every shorter height silent.
+    expect(complaints(tester), isEmpty, reason: 'this build already overflows at 1600');
+
     await tester.binding.setSurfaceSize(const Size(900, 800));
     await settle(tester);
     final shut = complaints(tester);
 
+    // Geometry, because a count cannot be trusted to rise twice and a rect can
+    // always be read. This is the property the count was standing in for: the
+    // door is **on the glass**, not merely in the tree. At 941 px of bar it sat
+    // at x=907.4 in a 900-wide view — mounted, found by every finder, pressable
+    // by nobody.
+    void doorIsOnTheGlass(String when) {
+      final box = tester.getRect(_door);
+      expect(box.right, lessThanOrEqualTo(900),
+          reason: 'the settings door hangs off the right edge at 900, $when: $box');
+      expect(box.left, greaterThanOrEqualTo(0),
+          reason: 'the settings door is off the left edge at 900, $when: $box');
+      expect(box.bottom, lessThanOrEqualTo(800),
+          reason: 'the settings door is below the window at 900, $when: $box');
+    }
+
+    doorIsOnTheGlass('with the panel shut');
+
     await tester.tap(_door);
     await settle(tester);
     final open = complaints(tester);
+
+    doorIsOnTheGlass('with the panel open');
 
     // Same reason as in guard b: «nothing overflows at 900» is easiest of all
     // to satisfy by not putting a panel there, so what is being measured is
@@ -254,8 +286,16 @@ void main() {
     expect(tester.getSize(find.byType(SettingsScreen)).width, 480,
         reason: 'the panel is not 480 wide at 900, so the 420 left for the work is not what was measured');
 
-    expect(open, isEmpty,
-        reason: 'the panel overflows at 900 — with it shut this build reported ${shut.length}: $shut');
+    // **Both readings are asserted, and they are about different things.**
+    // `shut` is the only reliable reading the *bar* will ever give at 900 —
+    // once per render object, so whatever it says here it will never say
+    // again on this tree. `open` is about the panel, whose render objects are
+    // new and can therefore still speak. Asserting only `open` left this guard
+    // green on a 2.8-pixel bar overflow, measured: that is what reverting one
+    // of the two Flexible wrappers does, and the control said nothing until
+    // this line existed.
+    expect(shut, isEmpty, reason: 'the work behind the panel overflows at 900: $shut');
+    expect(open, isEmpty, reason: 'the panel overflows at 900, with the bar reporting $shut');
   });
 
   // ------------------------------------------------------- covering is stopping
