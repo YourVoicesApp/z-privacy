@@ -1263,8 +1263,31 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// **One slot, one boolean** — 070, the owner's second finding of 9 October.
+  ///
+  /// He pressed Review on a 146-page document whose badge said 8 and got the
+  /// *Names* panel's «No names to look at», with the «8 questions left» button
+  /// still under it. The cause was here and not in either counter: this method
+  /// set **both** booleans, `openReview` never cleared `reviewingNames`, and
+  /// `workspace.dart` chooses between the two panels with
+  /// `if (reviewingNames) … else if (reviewOpen) …`. So once the names panel
+  /// had been opened, Review could never show the review again: the key read
+  /// `reviewOpen == true`, called `closeReview()`, and cleared the boolean
+  /// nobody was reading.
+  ///
+  /// `panelOpen` in the workspace already counts `reviewingNames`, so setting
+  /// `reviewOpen` here was redundant **and** harmful at once.
+  ///
+  /// Two booleans for one slot have a fourth corner that means nothing, which
+  /// is the rule written over `Piece` in the core's own api.rs and obeyed
+  /// there. Four panels share this slot and four booleans describe them
+  /// (`tokensOpen` and `showing` too), so the real repair is one value that
+  /// names which panel is open — task **071**, with its own paper. Not dropped
+  /// into tonight's fix.
+  ///
+  /// Reproduced by the other seat before either of us touched it, red by
+  /// design, with the control beside it: `the_badge_and_the_door_test`.
   void openNameReview() {
-    reviewOpen = true;
     reviewingNames = true;
     notifyListeners();
     unawaited(refreshCandidates());
@@ -1280,6 +1303,10 @@ class Workbench extends ChangeNotifier {
 
   void openReview({bool? walk}) {
     reviewOpen = true;
+    // The other panel in this slot gives way, because the workspace reads it
+    // first (070). Without this line the names panel wins for ever after the
+    // first time it is opened.
+    reviewingNames = false;
     if (walk != null) walking = walk;
     // Walking starts at the first thing still waiting, not at the top of a list
     // the user has already been through.
