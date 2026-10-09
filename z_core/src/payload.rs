@@ -36,6 +36,10 @@ pub(crate) struct SafePayload {
     /// written into `text`, so the bytes that leave are the bytes that left
     /// before 041-L.
     page_edges: Vec<PageEdge>,
+    /// **Which of the owner's sessions this payload belongs to**, recorded when
+    /// it was built — 064d. `None` is a payload built with none open, which is
+    /// a real state and the one worth being able to see.
+    conversation: Option<crate::api::PayloadSession>,
     send_state: PayloadSendState,
 }
 
@@ -92,7 +96,11 @@ impl SafePayload {
     /// Protections are applied in order and are expected not to overlap; an
     /// overlapping one is skipped rather than corrupting the text, because a
     /// wrong replacement could leave half a real name in the payload.
-    pub(crate) fn build(session: &Session, id: u32) -> Self {
+    pub(crate) fn build(
+        session: &Session,
+        id: u32,
+        conversation: Option<crate::api::PayloadSession>,
+    ) -> Self {
         let mut ranges: Vec<&crate::session::Protection> = session.protections.iter().collect();
         ranges.sort_by_key(|p| p.start);
 
@@ -198,6 +206,7 @@ impl SafePayload {
             // suggestions. Two screens, two answers, and the reassuring one wrong.
             open_suggestions: session.open_suggestions(),
             page_edges,
+            conversation,
             send_state: PayloadSendState::Ready,
         }
     }
@@ -217,6 +226,7 @@ impl SafePayload {
             protected_count: self.protected,
             open_suggestions: self.open_suggestions,
             page_edges: self.page_edges.clone(),
+            session: self.conversation.clone(),
         }
     }
 

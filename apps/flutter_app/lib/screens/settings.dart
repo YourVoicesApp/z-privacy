@@ -29,7 +29,12 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 
-enum SettingsRoom { ai, privacy, language, vault }
+/// **Appended, never inserted** — 064. `_SettingsScreenState` defaults to
+/// `SettingsRoom.ai` and the send sheet's own door relies on landing there,
+/// where a key is asked for. Its guards name the room rather than its position,
+/// so a room added at the end costs that door nothing and a changed default
+/// would cost it everything.
+enum SettingsRoom { ai, privacy, language, vault, sessions }
 
 /// **The one door to the settings, and the one way back out.**
 ///
@@ -69,11 +74,25 @@ class SettingsDoor extends StatelessWidget {
 }
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, required this.ground, required this.onClose, this.room});
+  const SettingsScreen({
+    super.key,
+    required this.ground,
+    required this.onClose,
+    this.room,
+    this.bench,
+  });
 
   final Ground ground;
   final VoidCallback onClose;
   final SettingsRoom? room;
+
+  /// **The document open behind the panel, if there is one** — 064f.
+  ///
+  /// A session begun in the Sessions room must re-derive the names already on
+  /// that document, and the core refuses a birth that does not name it. Null is
+  /// a panel opened with nothing on the bench, which is legitimate: there is
+  /// nothing to rename and the core allows it.
+  final SessionId? bench;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -129,6 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   SettingsRoom.privacy => _PrivacyRoom(ground: g),
                   SettingsRoom.language => _LanguageRoom(ground: g),
                   SettingsRoom.vault => _VaultRoom(ground: g),
+                  SettingsRoom.sessions => _SessionsRoom(ground: g, bench: widget.bench),
                 },
               ),
             ),
@@ -192,6 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           one(SettingsRoom.privacy, 'Privacy', Icons.shield_outlined),
           one(SettingsRoom.language, 'Language & rules', Icons.translate),
           one(SettingsRoom.vault, 'Vault & security', Icons.lock_outline),
+          one(SettingsRoom.sessions, 'Sessions', Icons.layers_outlined),
         ],
       ),
     );
@@ -542,6 +563,271 @@ class _Title extends StatelessWidget {
           ],
         ),
       );
+}
+
+// ---------------------------------------------------------------- Sessions
+
+/// **The owner's sessions** — 064, and the room he asked for: «نجعل داخل
+/// الإعدادات إنشاء جلسة جديدة، البنك، وقائمة بأسماء الجلسات السابقة».
+///
+/// Two of the three are here. **The bank waits for its paper**, which is the
+/// lead's own debt as of 9 October — a room is not furnished twice on a guess,
+/// so there is no placeholder for it and no half-built card pretending to be
+/// one.
+///
+/// A session is created **two ways and they are the same birth**: deliberately,
+/// by the button below, and inevitably, at the first exit for a person who
+/// never pressed it. 062 §F once said there would be no such button; that was
+/// the lead's inference from a build where only the exit could make one, and
+/// the owner's later words supersede it.
+class _SessionsRoom extends StatefulWidget {
+  const _SessionsRoom({required this.ground, this.bench});
+
+  final Ground ground;
+
+  /// The document open behind the panel. Passed to the birth so the names on it
+  /// move into the new session — see [SettingsScreen.bench].
+  final SessionId? bench;
+
+  @override
+  State<_SessionsRoom> createState() => _SessionsRoomState();
+}
+
+class _SessionsRoomState extends State<_SessionsRoom> {
+  final _name = TextEditingController();
+  bool _busy = false;
+
+  /// **What the birth actually did**, in the core's own number — 064f.
+  ///
+  /// The card promises that what is already protected on the open document is
+  /// renamed into the new session. Before this the promise was made and the
+  /// result was invisible: a birth that renamed nothing returned 0 and the room
+  /// showed the same thing as a birth that renamed nine. A promise displayed
+  /// and not shown kept is how the panel's own «Begin» hid a defect for a day.
+  String? _said;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  Future<void> _begin() async {
+    final name = _name.text.trim();
+    if (name.isEmpty || _busy) return;
+    setState(() => _busy = true);
+    final renamed = await widget.ground.beginSession(name, bench: widget.bench);
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      if (renamed == null) {
+        // The refusal is already in `ground.trouble`, in the core's own words.
+        _said = null;
+        return;
+      }
+      _name.clear();
+      // Worded in `session_state.dart`, where a test can read it — see
+      // `sessionBegunSaid`. The room shows the sentence; it does not write it.
+      _said = sessionBegunSaid(renamed, hadDocument: widget.bench != null);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final g = widget.ground;
+    if (g.vault != VaultState.unlocked) {
+      return const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Title('Sessions', 'A session keeps its own key, and the keys are in the vault.'),
+          Trouble('The vault is shut, so there are no sessions to show. Open it and they come back — '
+              'the conversations themselves were never in it.'),
+        ],
+      );
+    }
+
+    final rows = [...g.sessions]..sort((a, b) => b.number.compareTo(a.number));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _Title(
+          'Sessions',
+          'Each session has its own encryption. The same name in two sessions takes two different '
+          'tokens, and in one session it takes the same one wherever it appears — so a session is '
+          'how you choose what an AI can line up and what it cannot.',
+        ),
+        _Card(
+          title: 'New session',
+          what: 'It becomes the session you are working in straight away. Anything already '
+              'protected on the document in front of you is renamed into it — nothing has been '
+              'sent yet, so nothing that left is affected.',
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _name,
+                  onSubmitted: (_) => _begin(),
+                  style: Zc.small,
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    hintText: 'What is this one about?',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ZButton(label: 'Begin', onPressed: _busy ? null : _begin),
+            ],
+          ),
+        ),
+        if (_said != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Text(_said!, style: Zc.small.copyWith(color: Zc.clayDeep)),
+          ),
+        ],
+        if (rows.isEmpty)
+          _Fixed(
+            title: 'No sessions yet',
+            what: 'One is born the first time you copy safe text or ask for a PDF, and it asks for '
+                'a name then. You never have to make one by hand first.',
+          )
+        else
+          for (final row in rows) _SessionRow(ground: g, row: row, open: row.number == g.openSession),
+      ],
+    );
+  }
+}
+
+/// One session: number, name, when, how many exchanges — and the two acts.
+class _SessionRow extends StatelessWidget {
+  const _SessionRow({required this.ground, required this.row, required this.open});
+
+  final Ground ground;
+  final ConversationRow row;
+  final bool open;
+
+  /// The core's own seconds, drawn as a day. Nothing is computed about it that
+  /// the core did not say — the number is read, not invented.
+  String get _when {
+    final at = DateTime.fromMillisecondsSinceEpoch(row.beganAt.toInt() * 1000);
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${at.year}-${two(at.month)}-${two(at.day)} ${two(at.hour)}:${two(at.minute)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(15, 12, 11, 12),
+      decoration: Zc.panel(fill: open ? Zc.clayWash : Zc.card, radius: 11),
+      child: Row(
+        children: [
+          Text('${row.number}', style: Zc.small.copyWith(fontFamily: Zc.mono, color: Zc.ink4)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  row.name,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: open ? Zc.clayDeep : Zc.ink,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  open
+                      ? '$_when · ${_exchanges(row.turns)} · the one you are in'
+                      : '$_when · ${_exchanges(row.turns)}',
+                  style: Zc.tiny.copyWith(color: Zc.ink4),
+                ),
+              ],
+            ),
+          ),
+          if (!open)
+            Tooltip(
+              message: 'Work in this session',
+              child: TextButton(
+                onPressed: () => ground.enterSession(row.number),
+                child: const Text('Enter', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          Tooltip(
+            message: 'Delete this session',
+            child: IconButton(
+              icon: const Icon(Icons.delete_outline, size: 17),
+              color: Zc.ink3,
+              onPressed: () => _confirm(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _exchanges(int turns) =>
+      turns == 1 ? '1 exchange' : '$turns exchanges';
+
+  /// **The warning is a statement, not a caution** — because 064 made it true.
+  ///
+  /// The lead's own note on the paper: he had told the owner this wording was
+  /// stronger than the mechanism required, since a token is derived and a value
+  /// still in the vault could be derived again. With a key per session that is
+  /// no longer so. The key is destroyed here, and nothing derives anything
+  /// afterwards — not the person, not Z Privacy. So the sentence says what
+  /// happens rather than warning that something might.
+  Future<void> _confirm(BuildContext context) async {
+    final gone = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Zc.paper,
+        title: Text('Delete «${row.name}»?', style: Zc.h2),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'This destroys the key this session was protected with.',
+                style: Zc.body,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Every document and every message protected in it can never be unprotected '
+                'again — not by you, and not by Z Privacy. The key was the only thing that '
+                'could have done it, and it will not exist.',
+                style: Zc.small,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Anything you sent out of this session stays exactly as it was. What goes is '
+                'the way back from it.',
+                style: Zc.small.copyWith(color: Zc.ink4),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep it'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Zc.clayDeep),
+            child: const Text('Delete the session'),
+          ),
+        ],
+      ),
+    );
+    if (gone == true) await ground.forgetSession(row.number);
+  }
 }
 
 class _Card extends StatelessWidget {

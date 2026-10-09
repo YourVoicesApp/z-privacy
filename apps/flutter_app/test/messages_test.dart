@@ -20,6 +20,7 @@ final _everyError = <ApiError>[
   const ApiError.stalePayload(expected: 3, got: 2),
   const ApiError.vaultLocked(),
   const ApiError.providerUnavailable(provider: 'openai'),
+  const ApiError.sessionWithoutItsDocument(reason: 'a document is open and this call did not name it'),
   const ApiError.openSuggestions(count: 2),
   const ApiError.inputRefused(reason: 'a profile needs a name you will recognise'),
   const ApiError.notFound(reason: 'there is no rule set called «sv»'),
@@ -92,8 +93,8 @@ void _readsAsHuman(String message, String what) {
 
 void main() {
   test('every ApiError variant has a human sentence', () {
-    expect(_everyError.length, 26,
-        reason: 'the contract has 26 ApiError variants');
+    expect(_everyError.length, 27,
+        reason: 'the contract has 27 ApiError variants');
     for (final e in _everyError) {
       _readsAsHuman(humanMessage(e), e.runtimeType.toString());
     }

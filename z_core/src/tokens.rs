@@ -66,47 +66,50 @@ impl std::fmt::Debug for Naming {
 }
 
 impl Naming {
-    /// **Keyed on the client and the document's own bytes.**
+    /// **The naming of one session** — 064, and what supersedes `derive` above
+    /// for every name that leaves.
     ///
-    /// The client, so two clients never share a name for the same spelling —
-    /// a property the per-session prefix was only providing by accident, and
-    /// losing it would be a real leak between them.
+    /// Two keys off the session's own 32 bytes and nothing else in the input:
+    /// not the profile, not the document's text. That is the whole of the
+    /// owner's «كل جلسة لها تشفيرها» — the same spelling in two documents of
+    /// one session is one token, and in two sessions is two.
     ///
-    /// The document's **own content**, never its path or its name: a file moved
-    /// or renamed still restores, and an edited file is a different document
-    /// and honestly gets different names. 046/U item 1 is what makes that safe
-    /// — the old answer says «2 tokens this conversation does not know»
-    /// instead of passing them through as prose.
+    /// **What this gives up, said here because `derive` above spent four
+    /// paragraphs earning it:** the document is no longer in the namespace, so
+    /// a document edited inside a session keeps its names instead of honestly
+    /// getting new ones. That was 046/U's safety net against restoring an old
+    /// answer onto changed text, and the net moves rather than vanishes — the
+    /// session records which document it belongs to and **refuses** when it no
+    /// longer matches, which is 062 §C. A refusal is a better net than a
+    /// changed name: it says so, where a changed name only fails to resolve.
     ///
-    /// **The content is the text the reader extracted, not the file's bytes**,
-    /// and that is the better of the two: a PDF re-saved with new metadata, or
-    /// the same letter exported twice by Word, reads as the same document and
-    /// keeps its names. It is also the only one available — the core holds the
-    /// text and drops the bytes, which is why nothing here can be told from a
-    /// file it has not read.
+    /// The profile is gone from the input too. Two clients in one session now
+    /// share a namespace — which is the person's own doing and visible to them,
+    /// where before it was a property they could not see or choose.
     ///
-    /// **The cost, named here because a later round will meet it:** when one
-    /// conversation spans two documents — «compare this payroll with last
-    /// month's» — the same person carries two different names and a model
-    /// cannot tell they are one. Nothing is lost today, because
-    /// `Context.workspace` goes out empty. Whoever builds multi-document
-    /// context has to decide this deliberately rather than discover it.
-    pub(crate) fn derive(
-        master: &crate::vault::crypto::SecretKey,
-        profile: Option<&str>,
-        document: &str,
+    /// **And it closes the cost 046/U wrote down and could not pay.** That
+    /// comment ended: *when one conversation spans two documents — «compare
+    /// this payroll with last month's» — the same person carries two different
+    /// names and a model cannot tell they are one. Whoever builds
+    /// multi-document context has to decide this deliberately rather than
+    /// discover it.* This is that decision, made by the owner: the session is
+    /// the unit, so one person is one name across every document in it.
+    ///
+    /// What the old derivation keyed on, kept here because the reasoning still
+    /// explains the shape: the **document's own content**, never its path or
+    /// its name — a file moved or renamed still restored, and the content was
+    /// the text the reader extracted rather than the file's bytes, so a PDF
+    /// re-saved with new metadata read as the same document. None of that is an
+    /// input any more; the session's 32 bytes are the whole of it.
+    pub(crate) fn of_session(
+        session_key: &crate::vault::crypto::SecretKey,
     ) -> crate::api::ApiResult<Self> {
-        let key = crate::vault::crypto::derive(master, crate::vault::crypto::Purpose::TokenName)?;
-        // Length-prefixed, so «ab» + «c» and «a» + «bc» are different inputs.
-        // A separator alone would let a profile id ending in the separator
-        // forge another profile's names.
-        let mut message: Vec<u8> = Vec::new();
-        let profile = profile.unwrap_or("");
-        message.extend_from_slice(&(profile.len() as u64).to_be_bytes());
-        message.extend_from_slice(profile.as_bytes());
-        message.extend_from_slice(&(document.len() as u64).to_be_bytes());
-        message.extend_from_slice(document.as_bytes());
-        let namespace = hex_of(&crate::vault::crypto::mac(&key, b"namespace", &message)?, 4);
+        use crate::vault::crypto::{derive, Purpose};
+        // Four hex of a derived key, not of a MAC over a message: there is no
+        // message left to MAC. The namespace is a handle, not a secret, and a
+        // one-way function of 32 random bytes is all it has to be.
+        let namespace = hex_of(derive(session_key, Purpose::SessionNamespace)?.as_ref(), 4);
+        let key = derive(session_key, Purpose::SessionValue)?;
         Ok(Self { key, namespace })
     }
 
@@ -175,12 +178,54 @@ impl TokenMint {
         self.naming = Some(naming);
     }
 
+    /// **Name every token again, from this session's key** — 064.
+    ///
+    /// The owner's session is born at the first exit — Copy, a PDF, a question
+    /// sent to a model — and the names were minted before that, while there was
+    /// no session key to derive them from. The lead's wording for why this is
+    /// allowed: **the promise attaches at the boundary.** Copy is the first
+    /// exit; a token that changes before anything left has broken no promise to
+    /// anybody, and one that changed after would have. 046/U already says a
+    /// name is derived every time and nothing is stored, so this is not a
+    /// migration — it is the first derivation that had a key to use.
+    ///
+    /// Returns old → new for the places outside the store that hold a token as
+    /// a string. The value never leaves this module: the tail is computed here,
+    /// beside the store, rather than handing plaintext to a caller.
+    pub(crate) fn rename_all(
+        &mut self,
+        naming: Naming,
+        store: &mut TokenStore,
+    ) -> Vec<(String, String)> {
+        let namespace = naming.namespace.clone();
+        let mut pairs = Vec::new();
+        let mut taken = std::collections::BTreeSet::new();
+        for (old, entry) in store.entries.iter() {
+            let Some(tail) = naming.tail(entry.value.expose()) else {
+                continue;
+            };
+            let new = format!("__Z_{}_{}_{}__", namespace, kind_word(entry.kind), tail);
+            // A name that is already right needs no move, and two values that
+            // derive the same name keep the first — the same rule `mint` uses,
+            // for the same reason: a collision in a derived name is not a retry.
+            if new == *old || !taken.insert(new.clone()) {
+                continue;
+            }
+            pairs.push((old.clone(), new));
+        }
+        store.rekey(&pairs);
+        self.namespace = namespace;
+        self.naming = Some(naming);
+        pairs
+    }
+
     /// A token of this kind for this value, not already in `taken`.
     ///
     /// **Derived when the vault is open**, so the same value in the same file
     /// in the same client is the same token for ever, with nothing stored.
-    /// Random otherwise — see `Naming::derive` for why that is the honest
-    /// fallback and not a weaker one.
+    /// Random otherwise — with no session open there is no key, so there is
+    /// nothing for a stable name to be stable *for*, and 046/U item 1 reports
+    /// an older answer's tokens rather than passing them through as prose.
     pub(crate) fn mint(&mut self, kind: Kind, value: &str, taken: &TokenStore) -> String {
         if let Some(naming) = self.naming.as_ref() {
             if let Some(tail) = naming.tail(value) {
@@ -301,6 +346,22 @@ impl TokenStore {
             }
             None => false,
         }
+    }
+
+    /// Replace the keys, keeping every entry — 064's re-derivation at birth.
+    ///
+    /// What a token **stands for** does not change here; only what it is
+    /// called. Done in two passes through one fresh map rather than in place,
+    /// because a new name may be the old name of a token not yet moved and an
+    /// in-place rename would then overwrite it.
+    fn rekey(&mut self, pairs: &[(String, String)]) {
+        let mut moved = BTreeMap::new();
+        for (old, new) in pairs {
+            if let Some(entry) = self.entries.remove(old) {
+                moved.insert(new.clone(), entry);
+            }
+        }
+        self.entries.append(&mut moved);
     }
 
     pub(crate) fn remove(&mut self, token: &str) {

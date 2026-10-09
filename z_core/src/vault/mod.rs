@@ -421,6 +421,13 @@ impl VaultStore {
         }
     }
 
+    /// The rule sets switched on for one profile. Empty when the vault is
+    /// locked or the profile is unknown — and the caller then falls back to the
+    /// session's own pack rather than scanning with nothing.
+    ///
+    /// (This comment sat *below* this function and above `naming_for`, which it
+    /// did not describe. Deleting `naming_for` in 064 left it dangling and so
+    /// found it; it is put where it belongs rather than deleted.)
     pub(crate) fn label_rules(&mut self, active_profile: Option<&str>) -> Vec<crate::scanner::rules::LabelRule> {
         self.tick();
         match self.open.as_ref() {
@@ -434,26 +441,125 @@ impl VaultStore {
         }
     }
 
-    /// The rule sets switched on for one profile. Empty when the vault is
-    /// locked or the profile is unknown — and the caller then falls back to the
-    /// session's own pack rather than scanning with nothing.
-    /// **The key and the namespace this document's token names come from** —
-    /// 046/U item 2.
+    // ------------------------------------------------- the owner's sessions, 064
+
+    /// The private folder the vault's own file sits in, which is where each
+    /// session's sealed file goes too. `None` before a data directory is set.
+    pub(crate) fn dir(&self) -> Option<&std::path::Path> {
+        self.dir.as_deref()
+    }
+
+    /// Every session: number, handle, when it began. **The key is not here**,
+    /// and no accessor hands it out — the two things that need it, the naming
+    /// and the file's seal, are both below.
+    pub(crate) fn conversations(&self) -> Vec<(u32, String, u64)> {
+        self.open
+            .as_ref()
+            .map(|o| {
+                o.vault
+                    .conversations
+                    .iter()
+                    .map(|c| (c.number, c.name.clone(), c.began_at))
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
+    /// **Begin one** — 32 bytes from the operating system, a number that is
+    /// never handed out twice, and the handle the person was asked for once.
     ///
-    /// `None` while the vault is shut, and that is the honest answer rather
-    /// than a weaker name: with no vault there is no value kept either, so
-    /// there is nothing for a stable name to be stable *for*. The tokens fall
-    /// back to the random ones they have always been and an older answer is
-    /// **reported** rather than passed through — which is item 1's whole job.
-    pub(crate) fn naming_for(&mut self, profile: Option<&str>, document: &str) -> Option<crate::tokens::Naming> {
-        // `state()` and not `self.master.is_some()`: the auto-lock fires inside
-        // the tick and the master key is dropped there, so this asks the one
-        // thing that knows.
+    /// `document` is the text of what is on the bench, hashed under this
+    /// session's own key, so a restored session can tell that its document
+    /// moved and refuse instead of guessing (062 §C). Keyed rather than plain
+    /// because it is only ever compared inside the session that wrote it, and a
+    /// keyed hash says nothing to anybody else.
+    pub(crate) fn begin_conversation(&mut self, name: &str, document: Option<&str>) -> ApiResult<u32> {
+        let key = crypto::random_key()?;
+        let hash = match document {
+            Some(text) => Some(crypto::mac(&key, b"document", text.as_bytes())?),
+            None => None,
+        };
+        let name = name.to_string();
+        // `Zeroizing<[u8; 32]>` derefs to a slice through `as_ref`; the array
+        // itself is what the record keeps, so take it by value.
+        let bytes: [u8; 32] = *key;
+        self.with_open_mut(|vault| {
+            let number = vault.take_conversation_number();
+            vault.conversations.push(crate::vault::model::Conversation {
+                number,
+                name,
+                key: bytes,
+                began_at: crate::vault::model::now_seconds(),
+                document: hash,
+            });
+            Ok(number)
+        })
+    }
+
+    /// Rename one. The number is the identity and never moves; the handle is a
+    /// handle, and the owner may change it whenever he likes (062 §0).
+    pub(crate) fn rename_conversation(&mut self, number: u32, name: &str) -> ApiResult<()> {
+        let name = name.to_string();
+        self.with_open_mut(|vault| {
+            match vault.conversations.iter_mut().find(|c| c.number == number) {
+                Some(talk) => {
+                    talk.name = name;
+                    Ok(())
+                }
+                None => Err(ApiError::PayloadRefused {
+                    reason: format!("there is no session {number}"),
+                }),
+            }
+        })
+    }
+
+    /// **Destroy one's key and record.** The sealed file is removed by the
+    /// caller, which owns the data directory — and the key dying here is what
+    /// makes the owner's warning a fact: nothing derives anything afterwards.
+    pub(crate) fn forget_conversation(&mut self, number: u32) -> ApiResult<String> {
+        self.with_open_mut(|vault| {
+            let Some(at) = vault.conversations.iter().position(|c| c.number == number) else {
+                return Err(ApiError::PayloadRefused {
+                    reason: format!("there is no session {number}"),
+                });
+            };
+            let gone = vault.conversations.remove(at);
+            Ok(gone.name)
+        })
+    }
+
+    /// This session's key, for sealing its own file. Private to the crate and
+    /// handed out nowhere else.
+    pub(crate) fn conversation_key(&self, number: u32) -> Option<crypto::SecretKey> {
+        let talk = self.open.as_ref()?.vault.conversation(number)?;
+        Some(zeroize::Zeroizing::new(talk.key))
+    }
+
+    /// **The naming this session's tokens come from** — 064, and what replaced
+    /// `naming_for`'s profile-and-document namespace.
+    ///
+    /// `None` while the vault is shut or the number is unknown, which is the
+    /// same honest answer `naming_for` gave: with no key there is nothing for a
+    /// stable name to be stable for, the tokens fall back to random ones, and
+    /// an older answer is reported rather than passed through.
+    pub(crate) fn naming_of(&mut self, number: u32) -> Option<crate::tokens::Naming> {
         if self.state() != VaultState::Unlocked {
             return None;
         }
-        let master = self.master.as_ref()?;
-        crate::tokens::Naming::derive(master, profile, document).ok()
+        let key = self.conversation_key(number)?;
+        crate::tokens::Naming::of_session(&key).ok()
+    }
+
+    /// Does this session still belong to the document on the bench? — 062 §C.
+    ///
+    /// `None` when the session kept no document, which today cannot happen and
+    /// is still not treated as «yes»: a build that can open a session with no
+    /// document must not find a zeroed hash and believe it.
+    pub(crate) fn conversation_matches(&self, number: u32, document: &str) -> Option<bool> {
+        let key = self.conversation_key(number)?;
+        let kept = self.open.as_ref()?.vault.conversation(number)?.document?;
+        let now = crypto::mac(&key, b"document", document.as_bytes()).ok()?;
+        Some(kept == now)
     }
 
     pub(crate) fn languages_of(&self, profile_id: &str) -> Vec<String> {

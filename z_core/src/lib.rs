@@ -20,6 +20,7 @@ pub mod api;
 mod documents;
 mod ops;
 mod config;
+mod conversation;
 mod data_dir;
 mod gateway;
 mod payload;

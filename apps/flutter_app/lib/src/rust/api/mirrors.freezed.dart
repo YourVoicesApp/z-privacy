@@ -55,7 +55,7 @@ extension ApiErrorPatterns on ApiError {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_InputRefused value)?  inputRefused,TResult Function( ApiError_NotFound value)?  notFound,TResult Function( ApiError_VaultAbsent value)?  vaultAbsent,TResult Function( ApiError_VaultAlreadyExists value)?  vaultAlreadyExists,TResult Function( ApiError_StorageRefused value)?  storageRefused,TResult Function( ApiError_VaultChangedElsewhere value)?  vaultChangedElsewhere,TResult Function( ApiError_StoragePermissionsKept value)?  storagePermissionsKept,TResult Function( ApiError_DocumentRefused value)?  documentRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,TResult Function( ApiError_PayloadRefused value)?  payloadRefused,TResult Function( ApiError_NetworkRefused value)?  networkRefused,TResult Function( ApiError_UnsupportedKdfParameters value)?  unsupportedKdfParameters,TResult Function( ApiError_TrailingVaultData value)?  trailingVaultData,TResult Function( ApiError_VaultAuthenticationFailed value)?  vaultAuthenticationFailed,TResult Function( ApiError_PayloadAlreadySent value)?  payloadAlreadySent,TResult Function( ApiError_VaultRequired value)?  vaultRequired,TResult Function( ApiError_BetweenColumns value)?  betweenColumns,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ApiError_NotImplemented value)?  notImplemented,TResult Function( ApiError_InvalidSession value)?  invalidSession,TResult Function( ApiError_InvalidHandle value)?  invalidHandle,TResult Function( ApiError_StalePayload value)?  stalePayload,TResult Function( ApiError_VaultLocked value)?  vaultLocked,TResult Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult Function( ApiError_InputRefused value)?  inputRefused,TResult Function( ApiError_NotFound value)?  notFound,TResult Function( ApiError_VaultAbsent value)?  vaultAbsent,TResult Function( ApiError_VaultAlreadyExists value)?  vaultAlreadyExists,TResult Function( ApiError_StorageRefused value)?  storageRefused,TResult Function( ApiError_VaultChangedElsewhere value)?  vaultChangedElsewhere,TResult Function( ApiError_StoragePermissionsKept value)?  storagePermissionsKept,TResult Function( ApiError_DocumentRefused value)?  documentRefused,TResult Function( ApiError_BadSpan value)?  badSpan,TResult Function( ApiError_UnknownToken value)?  unknownToken,TResult Function( ApiError_NothingToSend value)?  nothingToSend,TResult Function( ApiError_PayloadRefused value)?  payloadRefused,TResult Function( ApiError_SessionWithoutItsDocument value)?  sessionWithoutItsDocument,TResult Function( ApiError_NetworkRefused value)?  networkRefused,TResult Function( ApiError_UnsupportedKdfParameters value)?  unsupportedKdfParameters,TResult Function( ApiError_TrailingVaultData value)?  trailingVaultData,TResult Function( ApiError_VaultAuthenticationFailed value)?  vaultAuthenticationFailed,TResult Function( ApiError_PayloadAlreadySent value)?  payloadAlreadySent,TResult Function( ApiError_VaultRequired value)?  vaultRequired,TResult Function( ApiError_BetweenColumns value)?  betweenColumns,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -77,7 +77,8 @@ return documentRefused(_that);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
-return payloadRefused(_that);case ApiError_NetworkRefused() when networkRefused != null:
+return payloadRefused(_that);case ApiError_SessionWithoutItsDocument() when sessionWithoutItsDocument != null:
+return sessionWithoutItsDocument(_that);case ApiError_NetworkRefused() when networkRefused != null:
 return networkRefused(_that);case ApiError_UnsupportedKdfParameters() when unsupportedKdfParameters != null:
 return unsupportedKdfParameters(_that);case ApiError_TrailingVaultData() when trailingVaultData != null:
 return trailingVaultData(_that);case ApiError_VaultAuthenticationFailed() when vaultAuthenticationFailed != null:
@@ -102,7 +103,7 @@ return betweenColumns(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_InputRefused value)  inputRefused,required TResult Function( ApiError_NotFound value)  notFound,required TResult Function( ApiError_VaultAbsent value)  vaultAbsent,required TResult Function( ApiError_VaultAlreadyExists value)  vaultAlreadyExists,required TResult Function( ApiError_StorageRefused value)  storageRefused,required TResult Function( ApiError_VaultChangedElsewhere value)  vaultChangedElsewhere,required TResult Function( ApiError_StoragePermissionsKept value)  storagePermissionsKept,required TResult Function( ApiError_DocumentRefused value)  documentRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,required TResult Function( ApiError_PayloadRefused value)  payloadRefused,required TResult Function( ApiError_NetworkRefused value)  networkRefused,required TResult Function( ApiError_UnsupportedKdfParameters value)  unsupportedKdfParameters,required TResult Function( ApiError_TrailingVaultData value)  trailingVaultData,required TResult Function( ApiError_VaultAuthenticationFailed value)  vaultAuthenticationFailed,required TResult Function( ApiError_PayloadAlreadySent value)  payloadAlreadySent,required TResult Function( ApiError_VaultRequired value)  vaultRequired,required TResult Function( ApiError_BetweenColumns value)  betweenColumns,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ApiError_NotImplemented value)  notImplemented,required TResult Function( ApiError_InvalidSession value)  invalidSession,required TResult Function( ApiError_InvalidHandle value)  invalidHandle,required TResult Function( ApiError_StalePayload value)  stalePayload,required TResult Function( ApiError_VaultLocked value)  vaultLocked,required TResult Function( ApiError_ProviderUnavailable value)  providerUnavailable,required TResult Function( ApiError_OpenSuggestions value)  openSuggestions,required TResult Function( ApiError_InputRefused value)  inputRefused,required TResult Function( ApiError_NotFound value)  notFound,required TResult Function( ApiError_VaultAbsent value)  vaultAbsent,required TResult Function( ApiError_VaultAlreadyExists value)  vaultAlreadyExists,required TResult Function( ApiError_StorageRefused value)  storageRefused,required TResult Function( ApiError_VaultChangedElsewhere value)  vaultChangedElsewhere,required TResult Function( ApiError_StoragePermissionsKept value)  storagePermissionsKept,required TResult Function( ApiError_DocumentRefused value)  documentRefused,required TResult Function( ApiError_BadSpan value)  badSpan,required TResult Function( ApiError_UnknownToken value)  unknownToken,required TResult Function( ApiError_NothingToSend value)  nothingToSend,required TResult Function( ApiError_PayloadRefused value)  payloadRefused,required TResult Function( ApiError_SessionWithoutItsDocument value)  sessionWithoutItsDocument,required TResult Function( ApiError_NetworkRefused value)  networkRefused,required TResult Function( ApiError_UnsupportedKdfParameters value)  unsupportedKdfParameters,required TResult Function( ApiError_TrailingVaultData value)  trailingVaultData,required TResult Function( ApiError_VaultAuthenticationFailed value)  vaultAuthenticationFailed,required TResult Function( ApiError_PayloadAlreadySent value)  payloadAlreadySent,required TResult Function( ApiError_VaultRequired value)  vaultRequired,required TResult Function( ApiError_BetweenColumns value)  betweenColumns,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
@@ -124,7 +125,8 @@ return documentRefused(_that);case ApiError_BadSpan():
 return badSpan(_that);case ApiError_UnknownToken():
 return unknownToken(_that);case ApiError_NothingToSend():
 return nothingToSend(_that);case ApiError_PayloadRefused():
-return payloadRefused(_that);case ApiError_NetworkRefused():
+return payloadRefused(_that);case ApiError_SessionWithoutItsDocument():
+return sessionWithoutItsDocument(_that);case ApiError_NetworkRefused():
 return networkRefused(_that);case ApiError_UnsupportedKdfParameters():
 return unsupportedKdfParameters(_that);case ApiError_TrailingVaultData():
 return trailingVaultData(_that);case ApiError_VaultAuthenticationFailed():
@@ -145,7 +147,7 @@ return betweenColumns(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_InputRefused value)?  inputRefused,TResult? Function( ApiError_NotFound value)?  notFound,TResult? Function( ApiError_VaultAbsent value)?  vaultAbsent,TResult? Function( ApiError_VaultAlreadyExists value)?  vaultAlreadyExists,TResult? Function( ApiError_StorageRefused value)?  storageRefused,TResult? Function( ApiError_VaultChangedElsewhere value)?  vaultChangedElsewhere,TResult? Function( ApiError_StoragePermissionsKept value)?  storagePermissionsKept,TResult? Function( ApiError_DocumentRefused value)?  documentRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,TResult? Function( ApiError_PayloadRefused value)?  payloadRefused,TResult? Function( ApiError_NetworkRefused value)?  networkRefused,TResult? Function( ApiError_UnsupportedKdfParameters value)?  unsupportedKdfParameters,TResult? Function( ApiError_TrailingVaultData value)?  trailingVaultData,TResult? Function( ApiError_VaultAuthenticationFailed value)?  vaultAuthenticationFailed,TResult? Function( ApiError_PayloadAlreadySent value)?  payloadAlreadySent,TResult? Function( ApiError_VaultRequired value)?  vaultRequired,TResult? Function( ApiError_BetweenColumns value)?  betweenColumns,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ApiError_NotImplemented value)?  notImplemented,TResult? Function( ApiError_InvalidSession value)?  invalidSession,TResult? Function( ApiError_InvalidHandle value)?  invalidHandle,TResult? Function( ApiError_StalePayload value)?  stalePayload,TResult? Function( ApiError_VaultLocked value)?  vaultLocked,TResult? Function( ApiError_ProviderUnavailable value)?  providerUnavailable,TResult? Function( ApiError_OpenSuggestions value)?  openSuggestions,TResult? Function( ApiError_InputRefused value)?  inputRefused,TResult? Function( ApiError_NotFound value)?  notFound,TResult? Function( ApiError_VaultAbsent value)?  vaultAbsent,TResult? Function( ApiError_VaultAlreadyExists value)?  vaultAlreadyExists,TResult? Function( ApiError_StorageRefused value)?  storageRefused,TResult? Function( ApiError_VaultChangedElsewhere value)?  vaultChangedElsewhere,TResult? Function( ApiError_StoragePermissionsKept value)?  storagePermissionsKept,TResult? Function( ApiError_DocumentRefused value)?  documentRefused,TResult? Function( ApiError_BadSpan value)?  badSpan,TResult? Function( ApiError_UnknownToken value)?  unknownToken,TResult? Function( ApiError_NothingToSend value)?  nothingToSend,TResult? Function( ApiError_PayloadRefused value)?  payloadRefused,TResult? Function( ApiError_SessionWithoutItsDocument value)?  sessionWithoutItsDocument,TResult? Function( ApiError_NetworkRefused value)?  networkRefused,TResult? Function( ApiError_UnsupportedKdfParameters value)?  unsupportedKdfParameters,TResult? Function( ApiError_TrailingVaultData value)?  trailingVaultData,TResult? Function( ApiError_VaultAuthenticationFailed value)?  vaultAuthenticationFailed,TResult? Function( ApiError_PayloadAlreadySent value)?  payloadAlreadySent,TResult? Function( ApiError_VaultRequired value)?  vaultRequired,TResult? Function( ApiError_BetweenColumns value)?  betweenColumns,}){
 final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
@@ -167,7 +169,8 @@ return documentRefused(_that);case ApiError_BadSpan() when badSpan != null:
 return badSpan(_that);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken(_that);case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend(_that);case ApiError_PayloadRefused() when payloadRefused != null:
-return payloadRefused(_that);case ApiError_NetworkRefused() when networkRefused != null:
+return payloadRefused(_that);case ApiError_SessionWithoutItsDocument() when sessionWithoutItsDocument != null:
+return sessionWithoutItsDocument(_that);case ApiError_NetworkRefused() when networkRefused != null:
 return networkRefused(_that);case ApiError_UnsupportedKdfParameters() when unsupportedKdfParameters != null:
 return unsupportedKdfParameters(_that);case ApiError_TrailingVaultData() when trailingVaultData != null:
 return trailingVaultData(_that);case ApiError_VaultAuthenticationFailed() when vaultAuthenticationFailed != null:
@@ -191,7 +194,7 @@ return betweenColumns(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  inputRefused,TResult Function( String reason)?  notFound,TResult Function()?  vaultAbsent,TResult Function()?  vaultAlreadyExists,TResult Function( String reason)?  storageRefused,TResult Function()?  vaultChangedElsewhere,TResult Function( String reason)?  storagePermissionsKept,TResult Function( Refusal reason,  String detail)?  documentRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,TResult Function( String reason)?  payloadRefused,TResult Function( NetworkRefusal reason,  String detail)?  networkRefused,TResult Function( String reason)?  unsupportedKdfParameters,TResult Function()?  trailingVaultData,TResult Function()?  vaultAuthenticationFailed,TResult Function()?  payloadAlreadySent,TResult Function()?  vaultRequired,TResult Function()?  betweenColumns,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notImplemented,TResult Function()?  invalidSession,TResult Function()?  invalidHandle,TResult Function( int expected,  int got)?  stalePayload,TResult Function()?  vaultLocked,TResult Function( String provider)?  providerUnavailable,TResult Function( int count)?  openSuggestions,TResult Function( String reason)?  inputRefused,TResult Function( String reason)?  notFound,TResult Function()?  vaultAbsent,TResult Function()?  vaultAlreadyExists,TResult Function( String reason)?  storageRefused,TResult Function()?  vaultChangedElsewhere,TResult Function( String reason)?  storagePermissionsKept,TResult Function( Refusal reason,  String detail)?  documentRefused,TResult Function( String reason)?  badSpan,TResult Function()?  unknownToken,TResult Function()?  nothingToSend,TResult Function( String reason)?  payloadRefused,TResult Function( String reason)?  sessionWithoutItsDocument,TResult Function( NetworkRefusal reason,  String detail)?  networkRefused,TResult Function( String reason)?  unsupportedKdfParameters,TResult Function()?  trailingVaultData,TResult Function()?  vaultAuthenticationFailed,TResult Function()?  payloadAlreadySent,TResult Function()?  vaultRequired,TResult Function()?  betweenColumns,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -212,7 +215,8 @@ return documentRefused(_that.reason,_that.detail);case ApiError_BadSpan() when b
 return badSpan(_that.reason);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
-return payloadRefused(_that.reason);case ApiError_NetworkRefused() when networkRefused != null:
+return payloadRefused(_that.reason);case ApiError_SessionWithoutItsDocument() when sessionWithoutItsDocument != null:
+return sessionWithoutItsDocument(_that.reason);case ApiError_NetworkRefused() when networkRefused != null:
 return networkRefused(_that.reason,_that.detail);case ApiError_UnsupportedKdfParameters() when unsupportedKdfParameters != null:
 return unsupportedKdfParameters(_that.reason);case ApiError_TrailingVaultData() when trailingVaultData != null:
 return trailingVaultData();case ApiError_VaultAuthenticationFailed() when vaultAuthenticationFailed != null:
@@ -237,7 +241,7 @@ return betweenColumns();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  inputRefused,required TResult Function( String reason)  notFound,required TResult Function()  vaultAbsent,required TResult Function()  vaultAlreadyExists,required TResult Function( String reason)  storageRefused,required TResult Function()  vaultChangedElsewhere,required TResult Function( String reason)  storagePermissionsKept,required TResult Function( Refusal reason,  String detail)  documentRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,required TResult Function( String reason)  payloadRefused,required TResult Function( NetworkRefusal reason,  String detail)  networkRefused,required TResult Function( String reason)  unsupportedKdfParameters,required TResult Function()  trailingVaultData,required TResult Function()  vaultAuthenticationFailed,required TResult Function()  payloadAlreadySent,required TResult Function()  vaultRequired,required TResult Function()  betweenColumns,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notImplemented,required TResult Function()  invalidSession,required TResult Function()  invalidHandle,required TResult Function( int expected,  int got)  stalePayload,required TResult Function()  vaultLocked,required TResult Function( String provider)  providerUnavailable,required TResult Function( int count)  openSuggestions,required TResult Function( String reason)  inputRefused,required TResult Function( String reason)  notFound,required TResult Function()  vaultAbsent,required TResult Function()  vaultAlreadyExists,required TResult Function( String reason)  storageRefused,required TResult Function()  vaultChangedElsewhere,required TResult Function( String reason)  storagePermissionsKept,required TResult Function( Refusal reason,  String detail)  documentRefused,required TResult Function( String reason)  badSpan,required TResult Function()  unknownToken,required TResult Function()  nothingToSend,required TResult Function( String reason)  payloadRefused,required TResult Function( String reason)  sessionWithoutItsDocument,required TResult Function( NetworkRefusal reason,  String detail)  networkRefused,required TResult Function( String reason)  unsupportedKdfParameters,required TResult Function()  trailingVaultData,required TResult Function()  vaultAuthenticationFailed,required TResult Function()  payloadAlreadySent,required TResult Function()  vaultRequired,required TResult Function()  betweenColumns,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented():
 return notImplemented();case ApiError_InvalidSession():
@@ -258,7 +262,8 @@ return documentRefused(_that.reason,_that.detail);case ApiError_BadSpan():
 return badSpan(_that.reason);case ApiError_UnknownToken():
 return unknownToken();case ApiError_NothingToSend():
 return nothingToSend();case ApiError_PayloadRefused():
-return payloadRefused(_that.reason);case ApiError_NetworkRefused():
+return payloadRefused(_that.reason);case ApiError_SessionWithoutItsDocument():
+return sessionWithoutItsDocument(_that.reason);case ApiError_NetworkRefused():
 return networkRefused(_that.reason,_that.detail);case ApiError_UnsupportedKdfParameters():
 return unsupportedKdfParameters(_that.reason);case ApiError_TrailingVaultData():
 return trailingVaultData();case ApiError_VaultAuthenticationFailed():
@@ -279,7 +284,7 @@ return betweenColumns();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  inputRefused,TResult? Function( String reason)?  notFound,TResult? Function()?  vaultAbsent,TResult? Function()?  vaultAlreadyExists,TResult? Function( String reason)?  storageRefused,TResult? Function()?  vaultChangedElsewhere,TResult? Function( String reason)?  storagePermissionsKept,TResult? Function( Refusal reason,  String detail)?  documentRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,TResult? Function( String reason)?  payloadRefused,TResult? Function( NetworkRefusal reason,  String detail)?  networkRefused,TResult? Function( String reason)?  unsupportedKdfParameters,TResult? Function()?  trailingVaultData,TResult? Function()?  vaultAuthenticationFailed,TResult? Function()?  payloadAlreadySent,TResult? Function()?  vaultRequired,TResult? Function()?  betweenColumns,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notImplemented,TResult? Function()?  invalidSession,TResult? Function()?  invalidHandle,TResult? Function( int expected,  int got)?  stalePayload,TResult? Function()?  vaultLocked,TResult? Function( String provider)?  providerUnavailable,TResult? Function( int count)?  openSuggestions,TResult? Function( String reason)?  inputRefused,TResult? Function( String reason)?  notFound,TResult? Function()?  vaultAbsent,TResult? Function()?  vaultAlreadyExists,TResult? Function( String reason)?  storageRefused,TResult? Function()?  vaultChangedElsewhere,TResult? Function( String reason)?  storagePermissionsKept,TResult? Function( Refusal reason,  String detail)?  documentRefused,TResult? Function( String reason)?  badSpan,TResult? Function()?  unknownToken,TResult? Function()?  nothingToSend,TResult? Function( String reason)?  payloadRefused,TResult? Function( String reason)?  sessionWithoutItsDocument,TResult? Function( NetworkRefusal reason,  String detail)?  networkRefused,TResult? Function( String reason)?  unsupportedKdfParameters,TResult? Function()?  trailingVaultData,TResult? Function()?  vaultAuthenticationFailed,TResult? Function()?  payloadAlreadySent,TResult? Function()?  vaultRequired,TResult? Function()?  betweenColumns,}) {final _that = this;
 switch (_that) {
 case ApiError_NotImplemented() when notImplemented != null:
 return notImplemented();case ApiError_InvalidSession() when invalidSession != null:
@@ -300,7 +305,8 @@ return documentRefused(_that.reason,_that.detail);case ApiError_BadSpan() when b
 return badSpan(_that.reason);case ApiError_UnknownToken() when unknownToken != null:
 return unknownToken();case ApiError_NothingToSend() when nothingToSend != null:
 return nothingToSend();case ApiError_PayloadRefused() when payloadRefused != null:
-return payloadRefused(_that.reason);case ApiError_NetworkRefused() when networkRefused != null:
+return payloadRefused(_that.reason);case ApiError_SessionWithoutItsDocument() when sessionWithoutItsDocument != null:
+return sessionWithoutItsDocument(_that.reason);case ApiError_NetworkRefused() when networkRefused != null:
 return networkRefused(_that.reason,_that.detail);case ApiError_UnsupportedKdfParameters() when unsupportedKdfParameters != null:
 return unsupportedKdfParameters(_that.reason);case ApiError_TrailingVaultData() when trailingVaultData != null:
 return trailingVaultData();case ApiError_VaultAuthenticationFailed() when vaultAuthenticationFailed != null:
@@ -1268,6 +1274,72 @@ class _$ApiError_PayloadRefusedCopyWithImpl<$Res>
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? reason = null,}) {
   return _then(ApiError_PayloadRefused(
+reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ApiError_SessionWithoutItsDocument extends ApiError {
+  const ApiError_SessionWithoutItsDocument({required this.reason}): super._();
+  
+
+ final  String reason;
+
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ApiError_SessionWithoutItsDocumentCopyWith<ApiError_SessionWithoutItsDocument> get copyWith => _$ApiError_SessionWithoutItsDocumentCopyWithImpl<ApiError_SessionWithoutItsDocument>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ApiError_SessionWithoutItsDocument&&(identical(other.reason, reason) || other.reason == reason));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,reason);
+
+@override
+String toString() {
+  return 'ApiError.sessionWithoutItsDocument(reason: $reason)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ApiError_SessionWithoutItsDocumentCopyWith<$Res> implements $ApiErrorCopyWith<$Res> {
+  factory $ApiError_SessionWithoutItsDocumentCopyWith(ApiError_SessionWithoutItsDocument value, $Res Function(ApiError_SessionWithoutItsDocument) _then) = _$ApiError_SessionWithoutItsDocumentCopyWithImpl;
+@useResult
+$Res call({
+ String reason
+});
+
+
+
+
+}
+/// @nodoc
+class _$ApiError_SessionWithoutItsDocumentCopyWithImpl<$Res>
+    implements $ApiError_SessionWithoutItsDocumentCopyWith<$Res> {
+  _$ApiError_SessionWithoutItsDocumentCopyWithImpl(this._self, this._then);
+
+  final ApiError_SessionWithoutItsDocument _self;
+  final $Res Function(ApiError_SessionWithoutItsDocument) _then;
+
+/// Create a copy of ApiError
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? reason = null,}) {
+  return _then(ApiError_SessionWithoutItsDocument(
 reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
 as String,
   ));

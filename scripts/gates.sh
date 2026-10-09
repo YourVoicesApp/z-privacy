@@ -806,15 +806,52 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_same_value_now_keeps_its_token_the_next_day \
          an_answer_from_another_conversation_is_reported_and_not_passed_through \
          something_that_is_not_a_token_is_not_reported \
-         the_same_document_gives_the_same_token_days_apart \
-         two_clients_do_not_share_a_name_for_the_same_value \
-         another_document_gives_another_name_for_the_same_value \
+         the_same_session_gives_the_same_token_days_apart \
+         two_sessions_do_not_share_a_name_for_the_same_value \
+         two_clients_in_one_session_now_share_a_name \
+         another_document_in_the_same_session_keeps_the_name \
+         an_edited_document_keeps_its_name_inside_the_session \
          without_a_vault_the_name_is_random_again \
-         an_answer_from_monday_restores_on_friday; do
+         an_answer_from_monday_restores_on_friday \
+         the_same_name_in_two_sessions_takes_two_tokens \
+         the_same_name_in_two_documents_of_one_session_takes_one_token \
+         an_answer_from_a_deleted_session_refuses_and_names_it \
+         a_session_survives_the_vault_being_locked \
+         a_long_conversation_does_not_grow_the_vault \
+         every_token_that_leaves_belongs_to_the_session; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
-    skip "  test present: $t" "not written yet"
+    fail "  test MISSING: $t (renamed, or deleted — this roster is not a wish list)"
+  fi
+done
+
+# ---------------------------------------------------------------- the owed list
+# **«Not written yet» is a declaration, never a silence** — the lead's ruling,
+# 9 October 2026, and the reason the loop above now fails.
+#
+# It used to `skip` for a name it could not find, so «we have not got to it» and
+# «somebody renamed it» read identically — and when 064 renamed three tests, the
+# gate stopped measuring three properties and said «not written yet» about tests
+# that existed. Absence was being read as progress. That is the same family as an
+# overflow counter that cannot rise, and as a check that prints PASSED because the
+# words «FAILED» are absent from an empty log.
+#
+# So a test that is genuinely owed is declared **here**, by name, with the number
+# of the paper that owes it. The list is empty today, and an empty list is the
+# honest state: every name in the roster above exists. When something appears
+# here it carries its debt in writing, and when it is written it moves up.
+#
+#   OWED="the_name_of_the_test:071 another_one:072"
+OWED=""
+for entry in $OWED; do
+  [ -z "$entry" ] && continue
+  t=${entry%%:*}
+  paper=${entry#*:}
+  if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
+    pass "  owed test now written: $t (paper $paper) — move it up into the roster"
+  else
+    printf '  \033[33mOWED\033[0m  %s\n' "test not written yet: $t — owed by paper $paper"
   fi
 done
 

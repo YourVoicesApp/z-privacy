@@ -6,6 +6,7 @@
 
 mod vault;
 mod snapshots;
+pub(crate) mod conversation;
 
 pub(crate) use vault::*;
 pub(crate) use snapshots::*;
@@ -387,12 +388,29 @@ fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
 // ---------------------------------------------------------------- payload
 
 pub(crate) fn build_payload(session: SessionId) -> ApiResult<PayloadHandle> {
+    // **Read before the payload is built, and stamped into it** — 064d. The
+    // session a payload belongs to is a fact about the snapshot, so it is taken
+    // at the moment of the snapshot and not looked up again later when the
+    // answer could have changed. `None` is a payload built with no session
+    // open, which is the state a forgotten question at the exit leaves and the
+    // one thing in 064 that used to be invisible.
+    let whose = with_core(|core| {
+        let number = core.open_conversation?;
+        if core.vault.state() != crate::api::VaultState::Unlocked {
+            return None;
+        }
+        core.vault
+            .conversations()
+            .into_iter()
+            .find(|(n, _, _)| *n == number)
+            .map(|(number, name, _)| crate::api::PayloadSession { number, name })
+    });
     with_session(session.id, |s| {
         if s.original.is_empty() {
             return Err(ApiError::NothingToSend);
         }
         let id = s.take_payload_id();
-        let payload = SafePayload::build(s, id);
+        let payload = SafePayload::build(s, id, whose);
         // Invariant G3, enforced at run time and not only in the tests: a payload
         // that does not pass its own audit is never handed out.
         payload.audit(s)?;
@@ -2110,6 +2128,17 @@ pub(crate) fn hide(session: SessionId, token: String) -> ApiResult<()> {
 
 pub(crate) fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<AnswerId> {
     with_payload_record(payload, |_| ())?;
+    // Read before the answer is stored, so the answer carries the session it was
+    // actually taken in rather than whichever one is open when it is next read.
+    let in_session = with_core(|core| {
+        core.open_conversation.and_then(|number| {
+            core.vault
+                .conversations()
+                .into_iter()
+                .find(|(n, _, _)| *n == number)
+                .map(|(n, name, _)| (n, name))
+        })
+    });
     let out = with_session(payload.session, |s| {
         let id = s.take_answer_id();
         s.answers.insert(
@@ -2119,6 +2148,7 @@ pub(crate) fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<An
                 session: payload.session,
                 payload: payload.id,
                 raw,
+                conversation: in_session,
             },
         );
         // An answer coming in changes nothing about what would go out, so the
@@ -2140,6 +2170,33 @@ pub(crate) fn restored_view(session: SessionId, answer: AnswerId) -> ApiResult<V
 /// the marks in the text have to be the same fact. `restored_view` is the
 /// segments alone, for every screen that was reading them before this.
 pub(crate) fn restoration(session: SessionId, answer: AnswerId) -> ApiResult<crate::tokens::Restoration> {
+    // **An answer whose session was deleted cannot be restored, and says so by
+    // name** — 064 guard 3. The key died with the session, so nothing derives
+    // the names in this answer any more: not us, not anybody. That is what
+    // makes the owner's deletion warning a fact rather than a caution, and a
+    // refusal that named only a number would not be what he called it.
+    //
+    // Asked of the vault, not of the bench: the bench may still hold a store in
+    // memory from before the deletion, and restoring out of that would be the
+    // product quietly contradicting the warning it just showed.
+    let gone = with_core(|core| {
+        let s = core.sessions_get(session.id)?;
+        let record = s.answers.get(&answer.id)?;
+        let (number, name) = record.conversation.clone()?;
+        if core.vault.state() != crate::api::VaultState::Unlocked {
+            return None;
+        }
+        let still_there = core.vault.conversations().iter().any(|(n, _, _)| *n == number);
+        if still_there { None } else { Some(name) }
+    });
+    if let Some(name) = gone {
+        return Err(ApiError::PayloadRefused {
+            reason: format!(
+                "this answer was taken in the session «{name}», which has been deleted. \
+                 Its key was destroyed with it, so nothing can be unprotected from it again."
+            ),
+        });
+    }
     with_session(session.id, |s| match s.answers.get(&answer.id) {
         Some(answer) => {
             let payload = s.payloads.get(&answer.payload).ok_or(ApiError::InvalidHandle)?;
@@ -2215,15 +2272,26 @@ pub(crate) fn session_pack(session: Option<SessionId>) -> Option<String> {
 /// **Tokens already minted keep their names.** That is not tidiness, it is the
 /// only honest choice: renaming a token that has already gone to a model would
 /// make the answer in that person's hand unrestorable.
+///
+/// **064 moved where the names come from, and did not repeal that sentence.**
+/// The namespace is the open session's key now, not `profile ‖ document-text`,
+/// so this asks `naming_of` rather than `naming_for`. The one case where names
+/// *do* move is a session's birth, and it moves them for the reason this
+/// comment gives rather than against it: at a birth nothing has gone to a model
+/// yet, because the birth is the first exit. The promise attaches at the
+/// boundary.
+///
+/// With no session open there is no key, and the tokens keep the random names
+/// they have always had — exactly what a shut vault gives, and for the same
+/// reason: nothing for a stable name to be stable for.
 fn name_tokens_from_the_vault(session: u32) {
     with_core(|core| {
-        let Some((s, vault)) = core.session_and_vault(session) else { return };
+        let Some(number) = core.open_conversation else { return };
+        let Some((s, _)) = core.session_and_vault(session) else { return };
         if s.mint.names_from_the_vault() || s.original.is_empty() {
             return;
         }
-        let profile = s.profile_id.clone();
-        let document = s.original_str().to_string();
-        if let Some(naming) = vault.naming_for(profile.as_deref(), &document) {
+        if let Some(naming) = core.vault.naming_of(number) {
             if let Some((s, _)) = core.session_and_vault(session) {
                 s.mint.name_from(naming);
             }

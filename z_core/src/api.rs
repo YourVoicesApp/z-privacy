@@ -110,6 +110,27 @@ pub enum ApiError {
     /// The built payload failed the core's own leak audit and was thrown away.
     /// This should never reach a user; if it does, the bug stayed inside.
     PayloadRefused { reason: String },
+    /// **A session was begun while a document was open, and the call did not
+    /// say which document** — so nothing was created, 064f.
+    ///
+    /// Its own variant because its next move is its own: not «change what you
+    /// typed» (`InputRefused`'s promise) and not a leak audit
+    /// (`PayloadRefused`'s). The move is to begin the session from the document
+    /// — and for the caller, to pass the bench.
+    ///
+    /// **Why the core refuses instead of carrying on.** A session's key is what
+    /// names its tokens, so a birth has to re-derive the names already on the
+    /// open document. A call that does not name the document cannot, and the
+    /// result is a payload stamped with the session while its text wears
+    /// pre-birth names — measured, and invisible to every instrument we have:
+    /// the payload *is* built after the birth, so its session marker matches.
+    /// It was reachable through the settings panel's own «Begin», which had no
+    /// bench to pass, and found by a reading of the code before anyone pressed
+    /// the button.
+    ///
+    /// A birth with **no** document open is legitimate and is not refused;
+    /// `renamed: 0` is honest there, because there was nothing to rename.
+    SessionWithoutItsDocument { reason: String },
     /// The network did not carry the question, and why. Never a response body:
     /// a provider's error page can quote the request back, so nothing that comes
     /// off the wire is allowed into this message.
@@ -200,6 +221,9 @@ impl fmt::Display for ApiError {
             Self::UnknownToken => write!(f, "no such token in this session"),
             Self::NothingToSend => write!(f, "there is nothing to send"),
             Self::PayloadRefused { reason } => write!(f, "this payload was refused by its own audit: {reason}"),
+            Self::SessionWithoutItsDocument { reason } => {
+                write!(f, "this session was not begun because the open document was not named: {reason}")
+            }
             Self::NetworkRefused { reason, detail } => {
                 write!(f, "the request did not go through ({reason:?}): {detail}")
             }
@@ -1093,7 +1117,56 @@ pub struct PayloadView {
     /// Adding this changes nothing that leaves the device: it is read off the
     /// payload, never written into it.
     pub page_edges: Vec<PageEdge>,
+    /// **Which of the owner's sessions this payload belongs to** — 064d.
+    ///
+    /// `None` means it belongs to none, and that is the whole reason this field
+    /// exists. The core does not force a session to be born at an exit: doing
+    /// so would put a session line in 94 call sites, so by the lead's ruling the
+    /// screen asks at the exit — and a screen that forgets to ask would have
+    /// sent text with no session and **nothing would have said so**. A missing
+    /// line was silent.
+    ///
+    /// It is not silent now: it is written on the payload itself, where a guard
+    /// can read it and a screen can show it. Recorded when the payload is
+    /// **built**, because a payload is a snapshot of what would leave and the
+    /// session it belonged to is a fact about that snapshot, not about the
+    /// moment somebody looks at it later.
+    pub session: Option<PayloadSession>,
 }
+
+/// The session a payload belongs to: its number and its name, together.
+///
+/// Together in one struct and not as two optional fields beside each other,
+/// because a number without a name and a name without a number are two ways for
+/// one fact to disagree with itself.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PayloadSession {
+    pub number: u32,
+    pub name: String,
+}
+
+// **There is no «these names predate the session» state — and this comment was
+// wrong once, which is worth more than the claim it now makes** (064d, corrected
+// in 064f).
+//
+// A count of such names was built, guarded, and removed because it could not
+// rise. The justification written here read: «`name_tokens_from_the_vault` runs
+// at the head of `protect` and of `scan`… and `begin`/`enter` re-derive every
+// token already on the bench. Every path that could produce a straggler closes
+// one of those two ways.»
+//
+// **The premise was narrower than the sentence.** `begin`/`enter` re-derive the
+// bench they are *given*, and the settings panel's own «Begin» had no bench to
+// give — so that path closed neither way, and the deleted counter is precisely
+// the instrument that would have been non-zero on it. Found by a reading of the
+// code, not by any test of mine, before the owner ever pressed the button.
+//
+// It is true now because 064f made it true rather than by restating it: a birth
+// that does not name the open document is **refused**
+// (`SessionWithoutItsDocument`), so there is no path left that mints under one
+// naming and leaves under another. The claim and its condition are in the same
+// place on purpose — see `a_birth_with_no_bench_still_names_the_document` and
+// `a_second_bench_is_named_into_the_open_session` for the two halves.
 
 /// One page boundary: where it is, and which page begins there.
 ///
@@ -1620,8 +1693,89 @@ impl fmt::Debug for AnswerSnapshot {
 
 // ---------------------------------------------------------------- session
 
+// ------------------------------------------------------- the owner's sessions
+
+/// **One of the owner's sessions** — 064. «Session» is the word he uses; in the
+/// core it is a `Conversation`, because `SessionId` below already means one
+/// document's bench. Task 066 pays that rename.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConversationRow {
+    /// The identity. Never changes, never reused — not even after a deletion.
+    pub number: u32,
+    /// The handle, which the person may change at any time.
+    pub name: String,
+    /// Seconds since 1970.
+    pub began_at: u64,
+    /// How many exchanges its own sealed file holds.
+    pub turns: u32,
+    /// **How many tokens were named again** when this session was entered or
+    /// born. Reported rather than hidden: at a birth the names on the screen
+    /// change, and a number a person can see beats a silent redraw. Zero for a
+    /// row that was merely listed.
+    pub renamed_tokens: u32,
+}
+
+/// Begin a session, with the name the person was asked for once.
+///
+/// Called at the first exit — Copy, a PDF, a question sent to a model — when
+/// none is open. There is no "new session" button, by the owner's design.
+/// `bench` is the document in front of them, whose tokens are named again from
+/// this session's key: the names that leave are the session's names.
+pub fn conversation_begin(name: String, bench: Option<SessionId>) -> ApiResult<ConversationRow> {
+    crate::ops::conversation::begin(name, bench)
+}
+
+/// Enter an existing session. Asks nothing, and names the bench's tokens from
+/// that session's key.
+pub fn conversation_enter(number: u32, bench: Option<SessionId>) -> ApiResult<ConversationRow> {
+    crate::ops::conversation::enter(number, bench)
+}
+
+/// Which session is open, if any.
+pub fn conversation_open() -> ApiResult<Option<u32>> {
+    crate::ops::conversation::open()
+}
+
+/// Every session the vault keeps.
+pub fn conversations() -> ApiResult<Vec<ConversationRow>> {
+    crate::ops::conversation::rows()
+}
+
+/// Change a session's handle. The number is the identity and does not move.
+pub fn conversation_rename(number: u32, name: String) -> ApiResult<()> {
+    crate::ops::conversation::rename(number, name)
+}
+
+/// **Delete a session: its key and its file, together.**
+///
+/// Returns the name, so the screen can say what went. Nothing protected in this
+/// session can ever be unprotected again — the key is destroyed and nothing
+/// derives anything, which makes the owner's warning a fact rather than a
+/// caution. Key and file cannot be separated, because the key *is* the map.
+pub fn conversation_forget(number: u32) -> ApiResult<String> {
+    crate::ops::conversation::forget(number)
+}
+
+/// Write one exchange into the open session's file.
+pub fn conversation_record(question: String, answer: String) -> ApiResult<u32> {
+    crate::ops::conversation::record(question, answer)
+}
+
+/// Does the open session still belong to the document on this bench? — 062 §C.
+///
+/// `None` means there is nothing to compare: no session open, no document, or a
+/// session that kept none. **`None` is not «yes»** — a restored session whose
+/// document moved must refuse rather than guess, and reading this as agreement
+/// is the defect the `Option` exists to prevent.
+pub fn conversation_document_matches(bench: SessionId) -> ApiResult<Option<bool>> {
+    crate::ops::conversation::document_matches(bench)
+}
+
 /// Open a conversation. `pack_id` is the session's override; empty means the
 /// profile's pack, and failing that the app default.
+///
+/// **This is a document's bench, not one of the owner's sessions** — the two
+/// wore one word until 064 and task 066 pays the rename.
 pub fn open_session(profile_id: Option<String>, pack_id: String) -> ApiResult<SessionId> {
     crate::ops::open_session(profile_id, pack_id)
 }

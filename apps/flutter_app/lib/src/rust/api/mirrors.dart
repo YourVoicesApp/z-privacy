@@ -214,6 +214,29 @@ sealed class ApiError with _$ApiError implements FrbException {
   const factory ApiError.payloadRefused({required String reason}) =
       ApiError_PayloadRefused;
 
+  /// **A session was begun while a document was open, and the call did not
+  /// say which document** — so nothing was created, 064f.
+  ///
+  /// Its own variant because its next move is its own: not «change what you
+  /// typed» (`InputRefused`'s promise) and not a leak audit
+  /// (`PayloadRefused`'s). The move is to begin the session from the document
+  /// — and for the caller, to pass the bench.
+  ///
+  /// **Why the core refuses instead of carrying on.** A session's key is what
+  /// names its tokens, so a birth has to re-derive the names already on the
+  /// open document. A call that does not name the document cannot, and the
+  /// result is a payload stamped with the session while its text wears
+  /// pre-birth names — measured, and invisible to every instrument we have:
+  /// the payload *is* built after the birth, so its session marker matches.
+  /// It was reachable through the settings panel's own «Begin», which had no
+  /// bench to pass, and found by a reading of the code before anyone pressed
+  /// the button.
+  ///
+  /// A birth with **no** document open is legitimate and is not refused;
+  /// `renamed: 0` is honest there, because there was nothing to rename.
+  const factory ApiError.sessionWithoutItsDocument({required String reason}) =
+      ApiError_SessionWithoutItsDocument;
+
   /// The network did not carry the question, and why. Never a response body:
   /// a provider's error page can quote the request back, so nothing that comes
   /// off the wire is allowed into this message.
@@ -256,6 +279,53 @@ sealed class ApiError with _$ApiError implements FrbException {
   /// needs a different type, because the screen can only say why if the type
   /// says why.
   const factory ApiError.betweenColumns() = ApiError_BetweenColumns;
+}
+
+class ConversationRow {
+  /// The identity. Never changes, never reused — not even after a deletion.
+  final int number;
+
+  /// The handle, which the person may change at any time.
+  final String name;
+
+  /// Seconds since 1970.
+  final BigInt beganAt;
+
+  /// How many exchanges its own sealed file holds.
+  final int turns;
+
+  /// **How many tokens were named again** when this session was entered or
+  /// born. Reported rather than hidden: at a birth the names on the screen
+  /// change, and a number a person can see beats a silent redraw. Zero for a
+  /// row that was merely listed.
+  final int renamedTokens;
+
+  const ConversationRow({
+    required this.number,
+    required this.name,
+    required this.beganAt,
+    required this.turns,
+    required this.renamedTokens,
+  });
+
+  @override
+  int get hashCode =>
+      number.hashCode ^
+      name.hashCode ^
+      beganAt.hashCode ^
+      turns.hashCode ^
+      renamedTokens.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ConversationRow &&
+          runtimeType == other.runtimeType &&
+          number == other.number &&
+          name == other.name &&
+          beganAt == other.beganAt &&
+          turns == other.turns &&
+          renamedTokens == other.renamedTokens;
 }
 
 enum CredentialState {
@@ -1333,6 +1403,24 @@ class PayloadHandle {
           revision == other.revision;
 }
 
+class PayloadSession {
+  final int number;
+  final String name;
+
+  const PayloadSession({required this.number, required this.name});
+
+  @override
+  int get hashCode => number.hashCode ^ name.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PayloadSession &&
+          runtimeType == other.runtimeType &&
+          number == other.number &&
+          name == other.name;
+}
+
 class PayloadView {
   final String text;
   final int protectedCount;
@@ -1356,11 +1444,28 @@ class PayloadView {
   /// payload, never written into it.
   final List<PageEdge> pageEdges;
 
+  /// **Which of the owner's sessions this payload belongs to** — 064d.
+  ///
+  /// `None` means it belongs to none, and that is the whole reason this field
+  /// exists. The core does not force a session to be born at an exit: doing
+  /// so would put a session line in 94 call sites, so by the lead's ruling the
+  /// screen asks at the exit — and a screen that forgets to ask would have
+  /// sent text with no session and **nothing would have said so**. A missing
+  /// line was silent.
+  ///
+  /// It is not silent now: it is written on the payload itself, where a guard
+  /// can read it and a screen can show it. Recorded when the payload is
+  /// **built**, because a payload is a snapshot of what would leave and the
+  /// session it belonged to is a fact about that snapshot, not about the
+  /// moment somebody looks at it later.
+  final PayloadSession? session;
+
   const PayloadView({
     required this.text,
     required this.protectedCount,
     required this.openSuggestions,
     required this.pageEdges,
+    this.session,
   });
 
   @override
@@ -1368,7 +1473,8 @@ class PayloadView {
       text.hashCode ^
       protectedCount.hashCode ^
       openSuggestions.hashCode ^
-      pageEdges.hashCode;
+      pageEdges.hashCode ^
+      session.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -1378,7 +1484,8 @@ class PayloadView {
           text == other.text &&
           protectedCount == other.protectedCount &&
           openSuggestions == other.openSuggestions &&
-          pageEdges == other.pageEdges;
+          pageEdges == other.pageEdges &&
+          session == other.session;
 }
 
 enum Piece {

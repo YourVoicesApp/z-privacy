@@ -109,6 +109,15 @@ String humanMessage(Object error) {
     ApiError_NothingToSend() =>
       'There is nothing to send yet. Bring in a document or write some text.',
     ApiError_PayloadRefused(:final reason) => _sentence(reason),
+    // 064f. The person did nothing wrong and nothing was created, so the
+    // sentence says what did not happen and what to do — never «invalid call».
+    // It should not be reachable from this build: the panel hands the open
+    // document down. It exists so that no future door can make a session that
+    // cannot name the document in front of them.
+    ApiError_SessionWithoutItsDocument() =>
+      'The session was not started, because Z Privacy could not tell which document you have '
+          'open — and a session has to rename what is already protected on it. Nothing was '
+          'changed. Open the document and start the session from there.',
     ApiError_PayloadAlreadySent() =>
       'This request was already sent. Prepare it again to send once more.',
     ApiError_NetworkRefused(:final reason, :final detail) =>

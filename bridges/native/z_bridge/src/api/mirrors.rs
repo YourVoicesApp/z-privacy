@@ -97,6 +97,27 @@ pub enum _ApiError {
     /// The built payload failed the core's own leak audit and was thrown away.
     /// This should never reach a user; if it does, the bug stayed inside.
     PayloadRefused { reason: String },
+    /// **A session was begun while a document was open, and the call did not
+    /// say which document** — so nothing was created, 064f.
+    ///
+    /// Its own variant because its next move is its own: not «change what you
+    /// typed» (`InputRefused`'s promise) and not a leak audit
+    /// (`PayloadRefused`'s). The move is to begin the session from the document
+    /// — and for the caller, to pass the bench.
+    ///
+    /// **Why the core refuses instead of carrying on.** A session's key is what
+    /// names its tokens, so a birth has to re-derive the names already on the
+    /// open document. A call that does not name the document cannot, and the
+    /// result is a payload stamped with the session while its text wears
+    /// pre-birth names — measured, and invisible to every instrument we have:
+    /// the payload *is* built after the birth, so its session marker matches.
+    /// It was reachable through the settings panel's own «Begin», which had no
+    /// bench to pass, and found by a reading of the code before anyone pressed
+    /// the button.
+    ///
+    /// A birth with **no** document open is legitimate and is not refused;
+    /// `renamed: 0` is honest there, because there was nothing to rename.
+    SessionWithoutItsDocument { reason: String },
     /// The network did not carry the question, and why. Never a response body:
     /// a provider's error page can quote the request back, so nothing that comes
     /// off the wire is allowed into this message.
@@ -854,6 +875,27 @@ pub struct _PayloadView {
     /// Adding this changes nothing that leaves the device: it is read off the
     /// payload, never written into it.
     pub page_edges: Vec<PageEdge>,
+    /// **Which of the owner's sessions this payload belongs to** — 064d.
+    ///
+    /// `None` means it belongs to none, and that is the whole reason this field
+    /// exists. The core does not force a session to be born at an exit: doing
+    /// so would put a session line in 94 call sites, so by the lead's ruling the
+    /// screen asks at the exit — and a screen that forgets to ask would have
+    /// sent text with no session and **nothing would have said so**. A missing
+    /// line was silent.
+    ///
+    /// It is not silent now: it is written on the payload itself, where a guard
+    /// can read it and a screen can show it. Recorded when the payload is
+    /// **built**, because a payload is a snapshot of what would leave and the
+    /// session it belonged to is a fact about that snapshot, not about the
+    /// moment somebody looks at it later.
+    pub session: Option<PayloadSession>,
+}
+
+#[frb(mirror(PayloadSession))]
+pub struct _PayloadSession {
+    pub number: u32,
+    pub name: String,
 }
 
 #[frb(mirror(PageEdge))]
@@ -1162,6 +1204,23 @@ pub struct _AnswerSnapshot {
     /// Named here as well as marked in the pieces so that the count in the
     /// sentence and the marks in the text are **one** fact.
     pub unknown_tokens: Vec<String>,
+}
+
+#[frb(mirror(ConversationRow))]
+pub struct _ConversationRow {
+    /// The identity. Never changes, never reused — not even after a deletion.
+    pub number: u32,
+    /// The handle, which the person may change at any time.
+    pub name: String,
+    /// Seconds since 1970.
+    pub began_at: u64,
+    /// How many exchanges its own sealed file holds.
+    pub turns: u32,
+    /// **How many tokens were named again** when this session was entered or
+    /// born. Reported rather than hidden: at a birth the names on the screen
+    /// change, and a number a person can see beats a silent redraw. Zero for a
+    /// row that was merely listed.
+    pub renamed_tokens: u32,
 }
 
 #[frb(mirror(RevealState))]
