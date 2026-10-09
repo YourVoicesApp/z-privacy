@@ -75,6 +75,15 @@ class SendSheet extends StatefulWidget {
   /// Cancel / Back / Continue. Never inside the preview scroller.
   static const footerKey = ValueKey<String>('send-sheet-footer');
 
+  /// The session question, directly above the two exits.
+  ///
+  /// Keyed because what a guard asserts about it is **presence or absence**:
+  /// the strip has three states and they are told apart by which one is there.
+  static const theSessionBand = ValueKey<String>('send-sheet-session-band');
+
+  /// The one field the band carries.
+  static const theSessionName = ValueKey<String>('send-sheet-session-name');
+
   @override
   State<SendSheet> createState() => _SendSheetState();
 }
@@ -88,10 +97,21 @@ class _SendSheetState extends State<SendSheet> {
     // The catalogue, at the moment it is needed: a chooser that opens empty is
     // a chooser nobody can use.
     unawaited(widget.bench.refreshModels());
+    // **The document's name, offered and not imposed.** A pre-filled field
+    // still asks; an empty one in front of the only button that matters is a
+    // stall. It stays the person's to replace.
+    _sessionName.text = widget.bench.document?.name ?? '';
   }
 
   final _pasted = TextEditingController();
+  final _sessionName = TextEditingController();
+  final _nameFocus = FocusNode();
   final _previewScroll = ScrollController();
+
+  /// What the birth said, once one has happened at this sheet — the core's own
+  /// number in the house's one wording. Kept rather than recomputed: asking
+  /// again would be asking a different question and getting a different answer.
+  String? _begun;
   bool _copied = false;
   bool _pasting = false;
 
@@ -196,18 +216,25 @@ class _SendSheetState extends State<SendSheet> {
   @override
   void dispose() {
     _pasted.dispose();
+    _sessionName.dispose();
+    _nameFocus.dispose();
     _previewScroll.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bench = widget.bench;
-    final payload = bench.payload;
-    final open = payload?.openSuggestions ?? 0;
     return ListenableBuilder(
       listenable: Listenable.merge([widget.ground, widget.bench]),
       builder: (context, _) {
+        // **Read inside the builder, not above it.** A notify from the bench
+        // re-runs this closure and not `build`, so a payload captured one line
+        // up would keep the sheet — its counts, its preview, and the text its
+        // exits take out — showing a snapshot from before whatever just
+        // changed. That was latent while nothing in the sheet could change the
+        // bench; 064's birth at an exit is what made it reachable.
+        final payload = widget.bench.payload;
+        final open = payload?.openSuggestions ?? 0;
         final connected = widget.ground.providers
             .where((p) => p.connected)
             .toList();
@@ -291,10 +318,19 @@ class _SendSheetState extends State<SendSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Provider, model and mode first. A person opens this sheet to
-          // decide **who answers**; the text they are about to send is the
-          // second question, and the doors are the third.
+          // **The session question first, and only while it stands.** The
+          // comment this replaces said provider and model come first, because
+          // a person opens this sheet to decide who answers. That holds for
+          // every other visit: this question is asked once, it gates both
+          // exits, and measured below `_ModelAndMode` it began at y 888 on a
+          // 1000-tall window — a question nobody would see without scrolling.
+          // Who answers can also be changed in the panel; this cannot.
+          if (widget.ground.theSessionQuestionStands) ...[
+            _theBand(),
+            const SizedBox(height: 16),
+          ],
           _ModelAndMode(bench: widget.bench, ground: widget.ground, onSettings: widget.onSettings),
+          const SizedBox(height: 16),
           if (open > 0) ...[
             Trouble(
               open == 1
@@ -325,6 +361,152 @@ class _SendSheetState extends State<SendSheet> {
     );
   }
 
+  /// **Whose names are about to leave** — the three states, in one place.
+  ///
+  /// Exactly one of them is on the glass, because a person who cannot tell
+  /// them apart cannot know what they are about to take out:
+  ///
+  ///   * the text belongs to a session → its name, in the sheet's small ink;
+  ///   * it belongs to none, and one could be born → the question, with its field;
+  ///   * it belongs to none and none could be born → one line saying so.
+  ///
+  /// **The first state is read off the payload, not off the app.**
+  /// `ground.openSession` answers «which session is open»; this line claims
+  /// «whose names are in this text». They are two questions and they agree in
+  /// every case but one — a text built before the session began. The claim is
+  /// about the text, so it is taken from the text.
+  Widget _whoseNames(PayloadView? payload) {
+    final whose = payload?.session;
+    if (whose != null) {
+      return Text(
+        'Session ${whose.number} «${whose.name}» · these names are this session’s',
+        style: Zc.small.copyWith(color: Zc.ink4),
+      );
+    }
+    if (!widget.ground.theSessionQuestionStands) {
+      // No session, and none that could be born — the keys are in the vault
+      // and it is shut. Not a fault and not a warning: a true sentence about
+      // this text, and the only thing in this state that would go unsaid.
+      return Text(
+        'No session — these names were made for this document alone.',
+        style: Zc.small.copyWith(color: Zc.ink4),
+      );
+    }
+    final named = _sessionName.text.trim();
+    return Text(
+      named.isEmpty
+          ? 'No session yet — name it on the page before; either door begins it.'
+          : 'Either door begins session «$named».',
+      style: Zc.small.copyWith(color: Zc.ink4),
+    );
+  }
+
+  /// **The question, in prose, on the page before the doors** — and the
+  /// placement is a measurement, not a preference.
+  ///
+  /// It was drawn directly above the two exits, which is where the act is. It
+  /// does not fit there. The sheet is capped at 820px tall, so on **every**
+  /// window from 900px up the doors page has the same room — and with no
+  /// provider connected there is **124px** between the last door and the
+  /// bottom of its scroller, measured at 1100×950, against this band's 202px.
+  /// A band there pushed «Open Settings» under the scroll, and since 067 exiled
+  /// the key form from this sheet that door is the only place a key can be
+  /// given: a question about naming would have cost a person their only way to
+  /// connect a model. (At 1280×720 with nothing connected that door is already
+  /// under the scroll **without** anything of mine — a fault that predates this
+  /// work and is reported, not quietly absorbed.)
+  ///
+  /// So the prose is asked here, where the payload's own scroller yields the
+  /// room, directly above the text it is about; the doors page carries one line
+  /// saying what the press will do, and a press with no name comes back to this
+  /// field rather than refusing into a dead end.
+  Widget _theBand() {
+    // The question. **Not a dialog**: a dialog over this sheet is a third
+    // storey whose dismissing press looks like «cancel the send», and it would
+    // cover the two buttons it is about. It is also not a gate — the doors
+    // stay live beside it. It is the question answered before it is needed.
+    // The prose is whole here. It was cut to three lines while this stood
+    // above the doors, where 202px cost a door its place; on this page the
+    // payload's own scroller gives the room back, so the question keeps the
+    // words it was approved with.
+    return Container(
+      key: SendSheet.theSessionBand,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+      decoration: Zc.panel(fill: Zc.warmCard),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('This conversation has no session yet', style: Zc.h2),
+          const SizedBox(height: 6),
+          const Text(
+            'A session has its own key. The same name in two sessions takes two '
+            'different tokens, and inside one session it takes the same token '
+            'wherever it appears — that is how you choose what an AI can line up '
+            'and what it cannot.',
+            style: Zc.small,
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            key: SendSheet.theSessionName,
+            controller: _sessionName,
+            focusNode: _nameFocus,
+            style: Zc.body.copyWith(color: Zc.ink),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Zc.card,
+              isDense: true,
+              // **The room's hint, word for word.** Two doors, one birth, one
+              // question: a person who meets it twice meets one thing.
+              hintText: 'What is this one about?',
+              hintStyle: Zc.body.copyWith(color: Zc.ink4),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Zc.line),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // **Every clause is true from here, which is not where it was
+          // written for.** «behind this sheet», not the room's «in front of
+          // you»: the panel stands beside the document, this sheet covers it.
+          // «on the page after this», because the two doors are no longer the
+          // next thing under this field. And no number before the act — the
+          // count a person is told is the one the core returns, after the
+          // renaming it is counting.
+          const Text(
+            'Copy Protected or Save as PDF, on the page after this, begins it. '
+            'Everything already protected on the document behind this sheet is '
+            'renamed into it — nothing has left this machine yet, so nothing '
+            'that did is affected.',
+            style: Zc.small,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A press that took nothing out of the machine, and why, where it happened.
+  ///
+  /// The field takes focus while the question is the thing in the way, so the
+  /// next keystroke lands where it is needed. **Refusal is leaving**, which is
+  /// why there is no Cancel in the band: closing this sheet takes nothing out,
+  /// and that is what refusing means here.
+  void _nothingLeft(WhatMayLeave out) {
+    final needsAName =
+        widget.ground.theSessionQuestionStands && _sessionName.text.trim().isEmpty;
+    setState(() {
+      _trouble = out.refused;
+      // **Back to the question, not a dead end.** The field is one page back
+      // because the prose does not fit above the doors, so the press that
+      // cannot proceed takes the person to the field instead of telling them
+      // to go looking for it. Nothing left the machine — which is what
+      // refusing means here, and why there is no Cancel in the band.
+      if (needsAName) _page = _SheetPage.review;
+    });
+    if (needsAName) _nameFocus.requestFocus();
+  }
+
   Widget _aiDoors(
     PayloadView? payload,
     int open,
@@ -335,6 +517,14 @@ class _SendSheetState extends State<SendSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _whoseNames(payload),
+          if (_begun != null) ...[
+            const SizedBox(height: 8),
+            // The number in this sentence is the core's answer to the call
+            // this sheet made. Nothing here counts anything.
+            Text(_begun!, style: Zc.small.copyWith(color: Zc.ready)),
+          ],
+          const SizedBox(height: 12),
           if (_trouble != null) ...[
             Trouble(_trouble!),
             const SizedBox(height: 14),
@@ -361,14 +551,33 @@ class _SendSheetState extends State<SendSheet> {
                     ZButton(
                       label: _copied ? 'Copied' : 'Copy Protected',
                       icon: _copied ? Icons.check : Icons.copy_all_outlined,
+                      // **The order is not written here.** `beginThenRead`
+                      // holds it, where a guard can drive it; this press reads
+                      // the name, takes what it is handed, and says so.
                       onPressed: payload == null
                           ? null
                           : () async {
+                              final out = await beginThenRead(
+                                widget.ground,
+                                widget.bench,
+                                name: _sessionName.text,
+                              );
+                              if (!mounted) return;
+                              if (out.view == null) {
+                                _nothingLeft(out);
+                                return;
+                              }
                               await Clipboard.setData(
-                                ClipboardData(text: payload.text),
+                                // The fresh view, never the captured one.
+                                ClipboardData(text: out.view!.text),
                               );
                               widget.bench.rememberCopiedPayload();
-                              if (mounted) setState(() => _copied = true);
+                              if (!mounted) return;
+                              setState(() {
+                                _copied = true;
+                                _trouble = null;
+                                _begun = out.said ?? _begun;
+                              });
                             },
                     ),
                     // The second way out, and the only difference from the
@@ -379,7 +588,26 @@ class _SendSheetState extends State<SendSheet> {
                       icon: Icons.picture_as_pdf_outlined,
                       onPressed: payload == null || _saving
                           ? null
-                          : () => _savePdf(payload),
+                          : () async {
+                              final out = await beginThenRead(
+                                widget.ground,
+                                widget.bench,
+                                name: _sessionName.text,
+                              );
+                              if (!mounted) return;
+                              if (out.view == null) {
+                                _nothingLeft(out);
+                                return;
+                              }
+                              if (out.said != null) {
+                                setState(() => _begun = out.said);
+                              }
+                              // The same fresh view the clipboard would get —
+                              // and the footer's per-kind counts are built from
+                              // its text, so a stale one would have counted
+                              // nothing over fully protected text.
+                              await _savePdf(out.view!);
+                            },
                     ),
                     ZButton(
                       label: 'Paste AI answer',

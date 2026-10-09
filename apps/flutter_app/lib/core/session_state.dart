@@ -130,6 +130,21 @@ class Ground extends ChangeNotifier {
   ConversationRow? get openSessionRow =>
       sessions.where((s) => s.number == openSession).firstOrNull;
 
+  /// **Does the session question still stand?** — 064.
+  ///
+  /// One source for the two places that must agree: the band at an exit asks
+  /// the question when this is true, and [beginThenRead] births a session when
+  /// it is true. Two copies of the condition would be two screens able to
+  /// disagree about whether a person was ever asked.
+  ///
+  /// The vault is in it because the keys are. With it shut there is no session
+  /// to open and none that could be born, so a band asking for a name would
+  /// promise something the core would refuse. Protection itself never needed
+  /// the vault — which is why the exits stay live in that state, and say
+  /// instead that these names belong to no session.
+  bool get theSessionQuestionStands =>
+      vault == VaultState.unlocked && openSession == null;
+
   /// **Begin one.** The name is asked where the press happened — in the panel
   /// for a deliberate clean break, at the exit for a person who never pressed
   /// the button. Both paths land here, and the core does the rest: 32 bytes in
@@ -1403,6 +1418,120 @@ String sessionBegunSaid(int renamed, {required bool hadDocument}) {
   return renamed == 1
       ? 'Begun, and one name on this document moved into it.'
       : 'Begun, and $renamed names on this document moved into it.';
+}
+
+/// **What an exit may take out, once the session question is settled** — 064.
+///
+/// `view` is null when nothing may leave, and `refused` then carries the
+/// sentence the person reads at the press: a press that does nothing and says
+/// nothing is the one shape of refusal this project does not allow.
+class WhatMayLeave {
+  const WhatMayLeave({this.view, this.said, this.refused, this.renamed});
+
+  /// The payload whose text may leave — **read after the birth**, never the one
+  /// a `build` captured before it.
+  final PayloadView? view;
+
+  /// What the birth did, when one happened here: [sessionBegunSaid]'s sentence,
+  /// carrying the core's own number. Null when no session was born.
+  final String? said;
+
+  /// Why nothing may leave.
+  final String? refused;
+
+  /// How many tokens the core renamed into the new session. Null when no birth
+  /// happened; **0 is a real answer** and has its own sentence.
+  final int? renamed;
+}
+
+/// **The order an exit must follow — the one helper both exits use** (064).
+///
+/// Copy Protected and Save as PDF are one act in two directions, and the
+/// owner's rule puts the session's birth inside it: the name is asked once,
+/// where the text leaves. The order is the whole of the correctness:
+///
+///   1. no name typed → nothing leaves, and the sentence says what to do;
+///   2. `beginSession(name, bench:)` — **with the bench**, which the core now
+///      refuses to do without (064f): a birth that names no document renames
+///      nothing, and the text would then leave wearing pre-birth names while
+///      the payload claimed the new session;
+///   3. a refusal → nothing leaves, and `ground.trouble` is what it says;
+///   4. **refresh the bench** — every name on it has just changed;
+///   5. read the payload **again**, from the bench, and hand that one out.
+///
+/// ## Why this is not written inside the widget
+///
+/// A core call started in a widget callback does not resume under
+/// `testWidgets`, so an order followed inside `onPressed` cannot be measured —
+/// the same reason [sessionBegunSaid] is worded out here instead of in the
+/// room. Out here a guard drives it directly, and the press above it becomes
+/// one line with nothing left in it to get wrong.
+///
+/// ## Step 5 is the step that is easy to lose
+///
+/// The sheet captures its payload when it builds, and the birth happens after
+/// that: **nothing rebuilds between the act and the clipboard.** A closure
+/// holding the captured view would take out the pre-birth text with the new
+/// session's name stamped on it — true of the snapshot, false of the names.
+/// From the core's side nothing is wrong, and no core guard can see it.
+Future<WhatMayLeave> beginThenRead(
+  Ground ground,
+  Workbench bench, {
+  required String name,
+}) async {
+  int? renamed;
+  String? said;
+  if (ground.theSessionQuestionStands) {
+    if (name.trim().isEmpty) {
+      // Not a refusal by the core — the core is never asked. A name nobody has
+      // typed is a question still open, and the next move is one word.
+      return const WhatMayLeave(
+        refused: 'Give it a name first — one word is enough.',
+      );
+    }
+    renamed = await ground.beginSession(name, bench: bench.session);
+    if (renamed == null) {
+      return WhatMayLeave(
+        refused: ground.trouble ??
+            'The session was not begun, so nothing was taken out.',
+      );
+    }
+    said = sessionBegunSaid(renamed, hadDocument: bench.document != null);
+    await bench.refresh();
+  }
+  var view = bench.payload;
+  final open = ground.openSession;
+  if (open != null && view?.session?.number != open) {
+    // **Look again before refusing.** A view that does not belong to the open
+    // session is our own staleness and not the person's mistake, so the first
+    // answer is to re-read: a dead «no» at the moment of pressing Copy would
+    // be the wrong product for a fault of ours.
+    await bench.refresh();
+    view = bench.payload;
+  }
+  if (view == null) {
+    return WhatMayLeave(
+      said: said,
+      renamed: renamed,
+      refused: 'There is nothing to take out yet.',
+    );
+  }
+  // **What this check holds, and what it does not.** `PayloadView.session` is
+  // stamped when the payload is built, from whichever session was open then —
+  // so it answers «was this snapshot taken inside the session», not «were its
+  // tokens minted by it». Those two agree in every case but one: a birth that
+  // named no document renamed nothing, and a payload built after it would
+  // match here while its text wore older names. That half of the property
+  // lives in the core, which refuses such a birth (064f) — and if that refusal
+  // is ever removed, this check goes quiet without going red.
+  if (open != null && view.session?.number != open) {
+    return WhatMayLeave(
+      said: said,
+      renamed: renamed,
+      refused: 'Close this and open it again — something changed while it was open.',
+    );
+  }
+  return WhatMayLeave(view: view, said: said, renamed: renamed);
 }
 
 /// The columns a table carried that this build could not name a kind for.
