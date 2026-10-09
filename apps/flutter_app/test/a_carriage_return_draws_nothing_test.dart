@@ -86,10 +86,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart' show FontLoader, rootBundle;
+import 'package:flutter/services.dart'
+    show FontLoader, LogicalKeyboardKey, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/protected_pdf.dart';
+import 'package:zprivacy/main.dart' show zTheme;
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
 
@@ -170,8 +172,20 @@ Widget _fixed(Widget subject) => MaterialApp(
     body: Center(
       child: RepaintBoundary(
         key: _shot,
-        // One box for every drawing, so that two of them can be compared.
-        child: SizedBox(width: 460, height: 300, child: subject),
+        // **The page is painted inside the boundary**, and that is not tidying.
+        // A `RepaintBoundary` captures what is inside it and nothing behind it,
+        // so without this the canvas is transparent and every translucent layer
+        // comes back as accumulated alpha for a viewer to composite later. Two
+        // overlapping layers then *look* darker in the PNG while being nothing
+        // of the sort on a page. That mistake was made in this very file on
+        // 9 Oct and corrected by measuring again with the page under the
+        // drawing: a colour claim without an opaque ground is not a claim about
+        // what anybody sees.
+        child: ColoredBox(
+          color: Zc.paper,
+          // One box for every drawing, so that two of them can be compared.
+          child: SizedBox(width: 460, height: 300, child: subject),
+        ),
       ),
     ),
   ),
@@ -271,40 +285,84 @@ Future<double> _width(WidgetTester tester, String text) async {
   return tester.renderObject<RenderBox>(find.byType(RichText)).size.width;
 }
 
-/// The chat composer with every character of `text` selected, drawn.
+/// A drawing in the product's **own** theme, on its own page.
 ///
-/// The composer and not one of the read-only surfaces for one reason: a
-/// selection can be **set** on a controller, while a `SelectableText`'s is made
-/// by a gesture. The property measured belongs to the text layer underneath
-/// both, and the document column is held to it by geometry in the same group.
-Future<Uint8List> _drawSelected(
-  WidgetTester tester,
-  String text,
-  String dumpAs,
-) async {
-  final controller = TextEditingController(text: text)
-    ..selection = TextSelection(baseOffset: 0, extentOffset: text.length);
-  final focus = FocusNode();
-  await tester.pumpWidget(
-    _fixed(
-      TextField(
-        controller: controller,
-        focusNode: focus,
-        minLines: 3,
-        maxLines: 8,
-        style: Zc.document.copyWith(fontSize: 14),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
+/// The read group above compares shapes and may use any theme; a claim about a
+/// colour may not. `zTheme()` carries the selection colour this product chose
+/// and measured — `Zc.river` at alpha 0.40 (`main.dart:42`) — and the whole of
+/// the finding below is what happens when a translucent colour is painted more
+/// than once.
+Widget _onPaper(Widget subject) => MaterialApp(
+  debugShowCheckedModeBanner: false,
+  theme: zTheme(),
+  home: Scaffold(
+    backgroundColor: Zc.paper,
+    body: Center(
+      child: RepaintBoundary(
+        key: _shot,
+        child: ColoredBox(
+          color: Zc.paper,
+          child: SizedBox(
+            width: 460,
+            height: 300,
+            child: DefaultTextStyle(
+              style: const TextStyle(fontFamily: _family),
+              child: subject,
+            ),
+          ),
         ),
       ),
     ),
-  );
-  focus.requestFocus();
-  await _settle(tester);
-  final pixels = await _pixels(tester);
-  await _dump(tester, dumpAs);
-  return pixels;
+  ),
+);
+
+/// Select the whole text the way a person can — focus it and press Ctrl+A.
+///
+/// A gesture and not a controller, because the columns are `SelectableText`s
+/// and a `SelectableText` has no selection to set. The caller checks what was
+/// actually selected: «nothing was painted twice» is also what an empty
+/// selection says.
+Future<TextSelection> _selectAll(WidgetTester tester) async {
+  await tester.tap(find.byType(EditableText).first);
+  await tester.pump();
+  await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+  await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 60));
+  return tester
+      .state<EditableTextState>(find.byType(EditableText).first)
+      .textEditingValue
+      .selection;
+}
+
+/// What a layer of `top` leaves over `under`.
+///
+/// **Derived from the theme, never restated.** The one-layer and two-layer
+/// colours below are computed from the product's own selection colour, so a
+/// day when that colour changes is a day this guard follows it rather than a
+/// day it starts measuring a colour nobody uses.
+Color _over(Color top, Color under) => Color.fromARGB(
+  255,
+  ((top.r * top.a + under.r * (1 - top.a)) * 255).round(),
+  ((top.g * top.a + under.g * (1 - top.a)) * 255).round(),
+  ((top.b * top.a + under.b * (1 - top.a)) * 255).round(),
+);
+
+/// How many pixels of the canvas carry (near enough) this colour.
+int _pixelsOf(Uint8List rgba, Color want) {
+  final wr = (want.r * 255).round();
+  final wg = (want.g * 255).round();
+  final wb = (want.b * 255).round();
+  var found = 0;
+  for (var i = 0; i < rgba.length; i += 4) {
+    if ((rgba[i] - wr).abs() < 6 &&
+        (rgba[i + 1] - wg).abs() < 6 &&
+        (rgba[i + 2] - wb).abs() < 6) {
+      found++;
+    }
+  }
+  return found;
 }
 
 void main() {
@@ -457,44 +515,98 @@ void main() {
 
   // -------------------------------------------------------------------- the pin
   //
-  // **A record of what is true today, not a wish.** Do not «fix» these two by
+  // **A record of what is true today, not a wish.** Do not «fix» these by
   // changing them to equality: they are the measurement 074/W8's screen half
   // was closed on, and the day the behaviour changes they are what says so.
   //
-  // What they record: a carriage return draws no ink and still takes 8.95 px of
-  // width at the document's 14.5 px — DejaVu's `.notdef` advance. Reading, that
-  // costs nothing, which the group above proves. Selecting, the highlight runs
-  // past the last letter of every line, and where the `\r`'s box and the `\n`'s
-  // box overlap it is drawn twice and comes out darker.
+  // What they record, and the mechanism, which is Flutter's own:
+  // `RenderEditable`'s selection painter takes
+  // `getBoxesForSelection(...).toSet()` and then draws **one translucent rect
+  // per box** (`rendering/editable.dart:2914-2932`). `toSet()` removes only
+  // boxes that are *identical*; a selected carriage return makes the engine
+  // return an aggregate box for the line's tail **and** the two parts inside
+  // it, which are not identical, so the tail is filled two and three times
+  // over. At alpha 0.40 that is a visibly darker block at the end of every
+  // line — measured on the document column in the product's own theme:
+  // **8 582 pixels** of the twice-painted colour where the LF twin has none.
   //
-  // **Why the obvious fix was not made.** Stripping the `\r` *when drawing* the
+  // **Why the obvious fix was not made.** Stripping the `\r` when drawing the
   // document column would move every offset after it: the core's spans, the
   // marks, the gutter's line starts and the selection a person makes are all
   // counted in the very string being drawn, and this project has already paid
-  // for one «offset that is one out» (041-K, the placeholder span). Whether
-  // line endings should instead be settled **on the way in** — once, before any
-  // offset exists — is a product decision, and the lead's, not a drawing fix.
-  group('pinned: selected, a carriage return is not nothing', () {
-    testWidgets('the highlight behind a CRLF document is not the LF one', (
+  // for one «offset that is one out» (041-K, the placeholder span). The answer
+  // belongs in the drawing of the selection and nowhere else — 074/W8's own
+  // paper carries the candidates and what each was measured at.
+  group('pinned: selected, a carriage return is painted twice', () {
+    testWidgets('the document column, on its own page, in its own colours', (
       tester,
     ) async {
-      final lf = await _drawSelected(tester, _lf, 'selected-lf');
-      final crlf = await _drawSelected(tester, _crlf, 'selected-crlf');
+      final selectionColour = zTheme().textSelectionTheme.selectionColor!;
+      final once = _over(selectionColour, Zc.paper);
+      final twice = _over(selectionColour, once);
+
+      Future<({int once, int twice, TextSelection sel})> page(
+        String text,
+        String dumpAs,
+      ) async {
+        await tester.pumpWidget(
+          _onPaper(
+            OriginalText(text: text, marks: const [], onLines: (_, _) {}),
+          ),
+        );
+        await _settle(tester);
+        final sel = await _selectAll(tester);
+        final pixels = await _pixels(tester);
+        await _dump(tester, dumpAs);
+        return (
+          once: _pixelsOf(pixels, once),
+          twice: _pixelsOf(pixels, twice),
+          sel: sel,
+        );
+      }
+
+      final lf = await page(_lf, 'selected-column-lf');
+      final crlf = await page(_crlf, 'selected-column-crlf');
+
+      // Two controls first. «Nothing was painted twice» is also what an empty
+      // selection says, and what a page with no selection colour on it says.
       expect(
-        crlf,
-        isNot(lf),
+        [lf.sel.end, crlf.sel.end],
+        [_lf.length, _crlf.length],
         reason:
-            'the selected drawings are identical, so the tail this records is '
-            'gone — read the group comment and rewrite the pin, do not delete it',
+            'Ctrl+A did not take the whole text (${lf.sel}, ${crlf.sel}), so '
+            'neither count below is about a selected document',
+      );
+      expect(
+        [lf.once, crlf.once],
+        everyElement(greaterThan(1000)),
+        reason:
+            'the selection colour is barely on the page (${lf.once} and '
+            '${crlf.once} pixels), so counting a second layer of it means '
+            'nothing',
+      );
+
+      expect(
+        lf.twice,
+        0,
+        reason:
+            'the LF twin already paints ${lf.twice} pixels twice, so the extra '
+            'layer below is not the carriage return\'s and this pin names the '
+            'wrong cause',
+      );
+      expect(
+        crlf.twice,
+        greaterThan(0),
+        reason:
+            'no pixel of the CRLF page is painted twice any more — the darker '
+            'tail this records is gone, so rewrite the pin rather than '
+            'deleting it (9 Oct: 8 582 pixels against the twin\'s 0)',
       );
     });
 
-    testWidgets('and in the document column it is painted twice over', (
+    testWidgets('and the cause, in the boxes the painter is handed', (
       tester,
     ) async {
-      // Geometry rather than pixels, because a `SelectableText`'s selection is
-      // made by a gesture: these are the boxes the highlight is painted from,
-      // asked of the render object that would paint it.
       Future<List<Rect>> boxes(String text) async {
         await tester.pumpWidget(_fixed(_control(text)));
         await _settle(tester);
@@ -507,8 +619,8 @@ void main() {
             .toList();
       }
 
-      /// Two boxes on one row that cover the same pixels — the highlight drawn
-      /// over itself, which is what comes out darker.
+      /// Two boxes on one row covering the same pixels — one `drawRect` over
+      /// another, which is what comes out darker.
       int overlaps(List<Rect> boxes) {
         var found = 0;
         for (var i = 0; i < boxes.length; i++) {
@@ -532,32 +644,30 @@ void main() {
             'no selection boxes at all, so neither side of this comparison '
             'means anything',
       );
-      // Measured 9 Oct: five boxes against eleven, and the three extra pairs
-      // are the `\r` of each line painted over the `\n` beside it.
+      // Measured 9 Oct: five boxes against eleven, and no pair of the five
+      // overlaps while the eleven overlap three times over.
       expect(
         crlf.length,
         greaterThan(lf.length),
         reason:
-            'the CRLF document is painted in ${crlf.length} selection boxes and '
-            'its twin in ${lf.length} — on 9 Oct that was 11 against 5, and '
-            'equal counts mean the tail this records is gone',
+            'the CRLF document is handed ${crlf.length} selection boxes and its '
+            'twin ${lf.length} — on 9 Oct that was 11 against 5',
       );
       expect(
         overlaps(lf),
         0,
         reason:
-            'the LF twin paints ${overlaps(lf)} of its selection boxes over each '
-            'other, so «drawn twice» is not what makes the CRLF tail darker and '
-            'this pin names the wrong cause',
+            'the LF twin already hands the painter ${overlaps(lf)} overlapping '
+            'pairs, so overlap is not what distinguishes the CRLF page',
       );
       expect(
         overlaps(crlf),
         greaterThan(0),
         reason:
-            'no two of the CRLF boxes overlap any more, so the doubled tail is '
+            'no two CRLF boxes overlap any more, so the cause recorded here is '
             'gone — rewrite the pin rather than deleting it',
       );
-      // And how far past the last letter it runs: one `.notdef` advance.
+      // And how far past the last letter the selection runs: one advance.
       final lfRight = lf.map((b) => b.right).reduce((a, b) => a > b ? a : b);
       final crlfRight = crlf
           .map((b) => b.right)
@@ -569,6 +679,57 @@ void main() {
             'the selection runs ${crlfRight - lfRight} past its twin, and what '
             'was measured on 9 Oct is one `.notdef` advance of 8.95 px at '
             '14.5 px',
+      );
+    });
+
+    testWidgets('the chat composer is clear of it today, by one setting', (
+      tester,
+    ) async {
+      // **Recorded because the setting is load-bearing and looks like taste.**
+      // The same CRLF document in the composer paints nothing twice at the
+      // default `BoxWidthStyle.tight`; at `.max` it paints 1 485 pixels twice.
+      // Anyone reaching for `.max` to change how a selection wraps would be
+      // spreading this defect to the one surface free of it.
+      final selectionColour = zTheme().textSelectionTheme.selectionColor!;
+      final twice = _over(selectionColour, _over(selectionColour, Zc.paper));
+
+      Future<int> composer(ui.BoxWidthStyle style) async {
+        final controller = TextEditingController(
+          text: _crlf,
+        )..selection = TextSelection(baseOffset: 0, extentOffset: _crlf.length);
+        final focus = FocusNode();
+        await tester.pumpWidget(
+          _onPaper(
+            TextField(
+              controller: controller,
+              focusNode: focus,
+              minLines: 3,
+              maxLines: 8,
+              selectionWidthStyle: style,
+              style: Zc.document.copyWith(fontSize: 14, fontFamily: _family),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+              ),
+            ),
+          ),
+        );
+        focus.requestFocus();
+        await _settle(tester);
+        return _pixelsOf(await _pixels(tester), twice);
+      }
+
+      expect(
+        await composer(ui.BoxWidthStyle.tight),
+        0,
+        reason: 'the composer has begun painting its tail twice as well',
+      );
+      expect(
+        await composer(ui.BoxWidthStyle.max),
+        greaterThan(0),
+        reason:
+            'the width style no longer decides it, so the warning this records '
+            'is out of date',
       );
     });
   });
