@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Z Privacy — protect what you send to AI</title>
-<meta name="description" content="Z Privacy protects sensitive values on your device before text is sent to an AI provider.">
+<meta name="description" content="Z Privacy lets you use AI without moving sensitive information outside your device.">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="../assets/favicon-16.png" sizes="16x16" type="image/png">
@@ -22,17 +22,37 @@
 </header>
 
 <main>
-  <h1 lang="en">Z Privacy</h1>
-  <p class="tagline">Protect what you send to AI. Restore it on your device.</p>
+  <!-- The first screen, 9 October.
+       The owner asked for one clean first screen: the mark, the idea, and an
+       honest line about where the build stands. The four buttons that stood
+       here — two of them downloads — are gone from it by his ruling; the
+       button is a jump down to the idea, and the second is the address a
+       person can actually write to.
 
-  <div class="cta">
-    <a class="btn primary" href="#download">Download for Linux</a>
-    <a class="btn" href="https://github.com/YourVoicesApp/z-privacy">Source code</a>
-    <a class="btn" href="#download-windows">Download for Windows</a>
-    <a class="btn" href="#verify">Verify download</a>
+       The mark is in the head, at the size it has in the app's own heads. It is
+       not repeated here: one picture per screen. The page a stranger opens
+       first is the chooser at «/», and that one carries it large, the way
+       First Run does in the app. -->
+  <div class="hero">
+    <h1 lang="en">Z Privacy</h1>
+    <p class="hero-idea">Use AI without moving sensitive information outside your device.</p>
+    <p class="hero-word">Before anything is sent, you are shown exactly what will leave your device — and nothing leaves without your word.</p>
+    <p class="beta" lang="en" dir="ltr">Linux build, in beta — not yet released</p>
+    <div class="cta">
+      <a class="btn primary" href="#idea">How it works</a>
+      <a class="btn" href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a>
+    </div>
   </div>
 
-  <p class="lead">Z Privacy protects sensitive values on your device before text is sent to an AI provider. The protected answer returns to Z Privacy, where your original values can be restored locally.</p>
+  <!-- The idea, in the owner's own approved words: the two paragraphs of the
+       Qatar letter, as he approved them on 9 October. They are the source for
+       this page's English; the German and the Arabic are translations of them
+       and not a third text. -->
+  <section id="idea" aria-labelledby="h-idea">
+    <h2 id="h-idea">The idea</h2>
+    <p class="lead">The problem we are trying to solve is: how can individuals and companies benefit from AI and external services without having to move sensitive information outside their devices or organizations? For example, reviewing and verifying tax-related documents can take a significant amount of time, while AI can perform much of this work within minutes. The challenge is how to use AI without exposing clients’ names, personal information, or financial data.</p>
+    <p class="lead">Z Privacy works as an information vault inside the user’s computer. During the workflow, sensitive information is kept locally on the device and replaced with identifiers that Z Privacy can recognize and restore later. This allows the relevant content to be sent to an AI service without sending the original sensitive information. Before anything is sent, the user is shown exactly what will leave the device, and nothing leaves without their word. The interaction can take place either through a chat interface or through documents such as PDF files. When the AI response is received, Z Privacy restores the original information locally on the user’s device. Everything Z learns is kept in an encrypted vault on the user’s own machine — even the vault file on disk contains no readable name. Z Privacy is provider-independent and works with any AI service, including local models.</p>
+  </section>
 
   <section aria-labelledby="h-path">
     <h2 id="h-path">The path</h2>

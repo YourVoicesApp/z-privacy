@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Z Privacy — احمِ ما ترسله إلى الذكاء الاصطناعي</title>
-<meta name="description" content="يحمي Z Privacy القيم الحساسة على جهازك قبل إرسال النص إلى مزوّد الذكاء الاصطناعي.">
+<meta name="description" content="يتيح لك Z Privacy الانتفاع بالذكاء الاصطناعي دون أن تخرج المعلومات الحسّاسة من جهازك.">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="../assets/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="../assets/favicon-16.png" sizes="16x16" type="image/png">
@@ -22,17 +22,37 @@
 </header>
 
 <main>
-  <h1 lang="en">Z Privacy</h1>
-  <p class="tagline">احمِ ما ترسله إلى الذكاء الاصطناعي، واستعده على جهازك.</p>
+  <!-- The first screen, 9 October.
+       The owner asked for one clean first screen: the mark, the idea, and an
+       honest line about where the build stands. The four buttons that stood
+       here — two of them downloads — are gone from it by his ruling; the
+       button is a jump down to the idea, and the second is the address a
+       person can actually write to.
 
-  <div class="cta">
-    <a class="btn primary" href="#download">التنزيل للينكس</a>
-    <a class="btn" href="https://github.com/YourVoicesApp/z-privacy">الشفرة المصدرية</a>
-    <a class="btn" href="#download-windows">نزّل لويندوز</a>
-    <a class="btn" href="#verify">التحقّق من التنزيل</a>
+       The mark is in the head, at the size it has in the app's own heads. It is
+       not repeated here: one picture per screen. The page a stranger opens
+       first is the chooser at «/», and that one carries it large, the way
+       First Run does in the app. -->
+  <div class="hero">
+    <h1 lang="en">Z Privacy</h1>
+    <p class="hero-idea">استفد من الذكاء الاصطناعي دون أن تُخرج المعلومات الحسّاسة من جهازك.</p>
+    <p class="hero-word">قبل أن يُرسَل أيُّ شيء، تُعرَض عليك بالضبط ما سيغادر جهازك — ولا يغادره شيءٌ إلّا بكلمتك.</p>
+    <p class="beta">نسخة لينكس، في مرحلة beta — لم تُطلَق بعد</p>
+    <div class="cta">
+      <a class="btn primary" href="#idea">كيف يعمل</a>
+      <a class="btn" href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a>
+    </div>
   </div>
 
-  <p class="lead">يحمي Z Privacy القيم الحساسة على جهازك قبل إرسال النص إلى مزوّد الذكاء الاصطناعي. ثم تعود الإجابة المحمية إلى Z Privacy، حيث يمكن استعادة القيم الأصلية محليًا.</p>
+  <!-- The idea, in the owner's own approved words: the two paragraphs of the
+       Qatar letter, as he approved them on 9 October. They are the source for
+       this page's English; the German and the Arabic are translations of them
+       and not a third text. -->
+  <section id="idea" aria-labelledby="h-idea">
+    <h2 id="h-idea">الفكرة</h2>
+    <p class="lead">المشكلة التي نحاول حلّها: كيف ينتفع الأفراد والشركات بالذكاء الاصطناعي والخدمات الخارجية دون أن ينقلوا معلوماتهم الحسّاسة خارج أجهزتهم أو مؤسّساتهم؟ فمراجعة المستندات الضريبية والتحقّق منها، مثلاً، تستغرق وقتاً طويلاً، بينما يستطيع الذكاء الاصطناعي أن ينجز كثيراً من هذا العمل في دقائق. والسّؤال هو كيف نستخدمه دون أن نكشف أسماء العملاء أو بياناتهم الشخصية أو المالية.</p>
+    <p class="lead">يعمل Z Privacy كخزنةِ معلومات داخل حاسوب المستخدم. وخلال العمل تبقى المعلومات الحسّاسة محليّةً على الجهاز، ويحلّ محلّها معرّفاتٌ يستطيع Z Privacy أن يتعرّف عليها ويستعيدها لاحقاً. وبهذا يُرسَل المحتوى المطلوب إلى خدمة الذكاء الاصطناعي دون إرسال المعلومات الحسّاسة الأصلية. وقبل أن يُرسَل أيُّ شيء، يُعرَض على المستخدم بالضبط ما سيغادر الجهاز، ولا يغادره شيءٌ إلّا بكلمته. ويمكن أن يجري العملُ في محادثة أو عبر مستندات مثل ملفات PDF. وعندما تعود إجابةُ الذكاء الاصطناعي، يستعيد Z Privacy المعلومات الأصلية محليّاً على جهاز المستخدم. وكلُّ ما يتعلّمه Z يُحفَظ في خزنةٍ مشفّرة على حاسوبه وحده — حتّى ملفُّ الخزنة على القرص لا يحمل اسماً مقروءاً. وZ Privacy مستقلّ عن المزوّد، يعمل مع أيّ خدمة ذكاء اصطناعي، بل ومع النماذج المحلية.</p>
+  </section>
 
   <section aria-labelledby="h-path">
     <h2 id="h-path">المسار</h2>

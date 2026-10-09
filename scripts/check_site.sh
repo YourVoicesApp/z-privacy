@@ -92,6 +92,91 @@ for page in en de ar; do
 done
 [ "$MISSING" = 0 ] && say PASS "the mark is on all three pages, and its four files are here"
 
+# ---------------------------------------------------------------- the first screen
+#
+# The owner's ruling of 9 October, the same one that put the picture into the
+# app's four heads: «أريد أن تظهر صورة الشعار في شاشات التطبيق». The site is a
+# screen of this product too, so the mark here is not a lettered tile drawn in
+# CSS and not a second picture made for the web — it is **the same file**, and
+# that is checked by its fingerprint rather than by its name.
+#
+# A guard that compares names would have passed on the day the site carried a
+# clay square with a Z in it.
+MARKED=0
+for pair in \
+  "assets/logo-512.png:../apps/flutter_app/assets/brand/zprivacy-512.png" \
+  "assets/favicon-32.png:../apps/flutter_app/assets/brand/zprivacy-32.png" \
+  "assets/favicon-16.png:../apps/flutter_app/assets/brand/zprivacy-16.png"
+do
+  here="${pair%%:*}"; there="${pair##*:}"
+  if [ ! -f "$here" ] || [ ! -f "$there" ]; then
+    say FAIL "cannot compare $here with the app's own mark ($there)"; FAIL=1; MARKED=1
+  elif [ "$(sha256sum "$here" | cut -d' ' -f1)" != "$(sha256sum "$there" | cut -d' ' -f1)" ]; then
+    say FAIL "$here is not the app's own mark, byte for byte ($there)"; FAIL=1; MARKED=1
+  fi
+done
+[ "$MARKED" = 0 ] && say PASS "the mark on the site is the app's own picture, byte for byte"
+
+# One picture, and no lettered tile left anywhere. The app's rule, kept here:
+# one mark per screen, never two — and the thing the owner replaced may not
+# survive on a page nobody looks at twice.
+TILED=0
+if grep -rn '<span class="z"' --include='*.html' . 2>/dev/null; then
+  say FAIL "a lettered tile is still drawn instead of the owner's picture (above)"
+  FAIL=1; TILED=1
+fi
+for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html; do
+  n=$(grep -c 'assets/logo-512.png' "$f" 2>/dev/null || true); n=${n:-0}
+  [ "$n" = 1 ] || { say FAIL "$f draws the mark $n times, and the rule is exactly once"; FAIL=1; TILED=1; }
+  # The tab is a screen too, and three pages had no icon at all until today.
+  grep -q 'rel="icon"' "$f" || { say FAIL "$f asks for no icon, so its tab wears nothing"; FAIL=1; TILED=1; }
+done
+[ "$TILED" = 0 ] && say PASS "every page draws the picture exactly once, and no lettered tile is left"
+
+# The page a stranger actually opens first is «/» — the chooser. It is this
+# site's First Run, so the mark is large there, by the lead's weighting. «Large»
+# is a word; this is the number it was given, read off the attribute a browser
+# lays the picture out with.
+W=$(grep -o 'class="hero-mark"[^>]*width="[0-9]*"' index.html 2>/dev/null | grep -o 'width="[0-9]*"' | tr -cd '0-9')
+if [ -n "$W" ] && [ "$W" -ge 64 ]; then
+  say PASS "the first page a stranger opens carries the mark large (${W}px)"
+else
+  say FAIL "the chooser does not carry the mark large (read: '${W:-none}', wanted 64 or more)"; FAIL=1
+fi
+
+# What the first screen says, and what it does not offer.
+#
+# The idea sentence and the honest beta line are the owner's approved words;
+# the beta line is quoted here in full because a sentence that drifts by one
+# word stops being the one he approved. And the first screen offers no
+# download: his ruling, and the reason the four buttons that stood here are
+# gone.
+SAID=0
+grep -q 'class="beta"' index.html || { say FAIL "the chooser says nothing about the state of the build"; FAIL=1; SAID=1; }
+for f in en/index.html de/index.html ar/index.html; do
+  grep -q 'class="hero-idea"' "$f" || { say FAIL "$f has no idea sentence on its first screen"; FAIL=1; SAID=1; }
+  grep -q 'class="hero-word"' "$f" || { say FAIL "$f does not say that nothing leaves without the reader's word"; FAIL=1; SAID=1; }
+  grep -q 'class="beta"' "$f" || { say FAIL "$f says nothing about the state of the build"; FAIL=1; SAID=1; }
+  if sed -n '/<div class="hero">/,/<section id="idea"/p' "$f" | grep -q 'href="#download'; then
+    say FAIL "$f offers a download on the first screen"; FAIL=1; SAID=1
+  fi
+done
+if ! grep -q 'Linux build, in beta — not yet released' en/index.html 2>/dev/null; then
+  say FAIL "the English beta line is not the sentence that was approved"; FAIL=1; SAID=1
+fi
+[ "$SAID" = 0 ] && say PASS "the first screen carries the idea, the word, and the state of the build"
+
+# An anchor that lands nowhere. The first screen's own button is a jump down
+# the page, so this stops being a detail: a button that scrolls nowhere is the
+# first thing a visitor would press.
+JUMPS=0
+for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html; do
+  for a in $(grep -o 'href="#[A-Za-z0-9_-]*"' "$f" 2>/dev/null | sed -E 's/href="#//; s/"//' | sort -u); do
+    grep -q "id=\"$a\"" "$f" || { say FAIL "$f jumps to #$a, and nothing on that page has that id"; FAIL=1; JUMPS=1; }
+  done
+done
+[ "$JUMPS" = 0 ] && say PASS "every jump on every page lands on something"
+
 [ "$FAIL" = 0 ] && say PASS "all pages present"
 
 echo
