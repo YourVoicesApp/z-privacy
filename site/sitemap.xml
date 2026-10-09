@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Every page of z-privacy.com, and nothing else.
+
+  Nine addresses, each one the address its own page calls canonical, each
+  with the language versions that page itself names. Nothing is listed here
+  that a reader cannot reach from the site, and nothing the site serves is
+  left out: scripts/check_sitemap.py walks this list against the tree in
+  both directions, so a page added later and forgotten here goes red before
+  it is ever published.
+
+  The owner’s private preview folder is deliberately absent. A sitemap is a
+  public invitation, and keeping something out of the index is the server’s
+  work, not a line in a file that names it.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://z-privacy.com/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/en/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/de/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/ar/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://z-privacy.com/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/en/privacy/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/privacy/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/de/privacy/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/privacy/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/ar/privacy/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://z-privacy.com/en/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://z-privacy.com/de/privacy/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://z-privacy.com/ar/privacy/"/>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/license/</loc>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+  <url>
+    <loc>https://z-privacy.com/third-party/</loc>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+</urlset>

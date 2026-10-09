@@ -434,8 +434,17 @@ if command -v python3 >/dev/null 2>&1; then
   else
     FAIL=1
   fi
+  # The list of pages handed to a crawler, walked against the pages that exist.
+  # It needs an XML parser and it reads the tree, so it keeps its own file —
+  # and the verdict still comes back here, because one command answers.
+  if python3 ../scripts/check_sitemap.py; then
+    :
+  else
+    FAIL=1
+  fi
 else
   say FAIL "no python3, so no number on this site was checked against its deed"; FAIL=1
+  say FAIL "no python3, so the list of pages was never compared with the pages"; FAIL=1
 fi
 
 echo
