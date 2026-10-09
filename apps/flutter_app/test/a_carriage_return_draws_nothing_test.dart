@@ -10,10 +10,15 @@
 //
 // Both halves of that sentence have now been measured, and W8 is not built:
 //
-//   * **in the PDF** — measured at the programmer's seat on 9 October: the
-//     carriage return reaches no byte of the page. The commit beside this one
-//     pins that half, and names there the one value in a PDF of ours that is
-//     not the document.
+//   * **in the PDF** — the programmer's probe of 9 October reported the same
+//     document written with `\r\n` and with `\n` as byte-identical files. It
+//     is one step stronger than that is true: `pdf` writes a random `/ID` into
+//     every file it makes, so **no** two PDFs this product writes are identical
+//     byte for byte, including two of the same document. What is identical is
+//     every other byte — measured here uncompressed, where the page is written
+//     out in the clear, so the claim is about the content and not about what a
+//     compressor happened to do with it. Pinned in the last group, so the drop
+//     stays true by measurement and not by our memory of having made one.
 //   * **on the glass** — the lead's order was that the screen half be decided
 //     «on the glass, not in the code». It is: a CRLF document is drawn in the
 //     widgets the product draws it with, and the pixels are compared with the
@@ -84,6 +89,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart' show FontLoader, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/protected_pdf.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
 
@@ -557,4 +563,143 @@ void main() {
   // for today's `pdf` package and today's line breaker and nothing else holds it
   // for tomorrow — the day either changes, this reddens by itself instead of the
   // closure resting on our memory of a measurement.
+  group('the PDF a CRLF document writes is the PDF its LF twin writes', () {
+    PdfStamp stamp() => PdfStamp(
+      build: 'z_core 0.0.0 · 0000-00-00 · W8',
+      places: 0,
+      byKind: const <String, int>{},
+      sha256: '0' * 64,
+    );
+
+    test(
+      'the control: the same document twice is one file but for its id',
+      () async {
+        // **Before the subject, the instrument.** Without this, «the two files
+        // are the same» would also be what a writer that ignores its text says,
+        // and «they differ» would also be what the random id says on its own.
+        final once = await buildProtectedPdf(
+          text: _lf,
+          stamp: stamp(),
+          compress: false,
+        );
+        final twice = await buildProtectedPdf(
+          text: _lf,
+          stamp: stamp(),
+          compress: false,
+        );
+        expect(
+          twice,
+          isNot(once),
+          reason:
+              'two files of one document came out equal byte for byte, so the '
+              'random id is gone and the treatment below is doing nothing',
+        );
+        expect(
+          _withoutTheDocumentId(twice),
+          _withoutTheDocumentId(once),
+          reason:
+              'the same document written twice differs somewhere other than its '
+              'id, so nothing below can be concluded about a carriage return',
+        );
+      },
+    );
+
+    test(
+      'uncompressed, the carriage return reaches no byte of the page',
+      () async {
+        // Uncompressed on purpose: here the page is written out in the clear, so
+        // this is a statement about the content rather than about what a
+        // compressor made of it.
+        final lf = await buildProtectedPdf(
+          text: _lf,
+          stamp: stamp(),
+          compress: false,
+        );
+        final crlf = await buildProtectedPdf(
+          text: _crlf,
+          stamp: stamp(),
+          compress: false,
+        );
+        expect(
+          lf.length,
+          greaterThan(1000),
+          reason: 'an empty file is not a PDF',
+        );
+        expect(
+          String.fromCharCodes(lf.take(5)),
+          '%PDF-',
+          reason:
+              'whatever these bytes are, two of them being equal says nothing',
+        );
+        expect(
+          _withoutTheDocumentId(crlf),
+          _withoutTheDocumentId(lf),
+          reason:
+              'the carriage return reached the file: ${crlf.length} bytes against '
+              '${lf.length}. W8 was dropped on these two being one document',
+        );
+      },
+    );
+
+    test('and at the setting the product actually writes with', () async {
+      final lf = await buildProtectedPdf(text: _lf, stamp: stamp());
+      final crlf = await buildProtectedPdf(text: _crlf, stamp: stamp());
+      expect(
+        _withoutTheDocumentId(crlf),
+        _withoutTheDocumentId(lf),
+        reason:
+            'compressed — which is what «Save as PDF» writes — the two '
+            'documents are no longer one file',
+      );
+    });
+
+    test('the control: one ordinary letter does reach the file', () async {
+      final plain = await buildProtectedPdf(
+        text: _lf,
+        stamp: stamp(),
+        compress: false,
+      );
+      final changed = await buildProtectedPdf(
+        text: _lf.replaceFirst('Hedvig', 'Hedvigg'),
+        stamp: stamp(),
+        compress: false,
+      );
+      expect(
+        _withoutTheDocumentId(changed),
+        isNot(_withoutTheDocumentId(plain)),
+        reason:
+            'a letter changed in the document changed no byte of the PDF, so '
+            'the identity above is a property of the writer and not of the '
+            'carriage return',
+      );
+    });
+  });
+}
+
+/// `/ID[<…><…>]`, the one thing in a PDF of ours that is not the document.
+///
+/// `pdf` 3.13.1 builds it from the clock and 32 secure-random bytes
+/// (`document.dart:180`), so **no** two files this product writes are identical
+/// byte for byte — not even two of one document: measured 9 Oct, the same
+/// document written twice differs in 122 of its 14 524 bytes and every one of
+/// them is inside these brackets. A guard asserting whole-file identity would
+/// be red for a reason that has nothing to do with a carriage return, which is
+/// the same mistake as being green for one.
+final _documentId = RegExp(r'/ID\[<[0-9a-f]{64}><[0-9a-f]{64}>\]');
+
+/// The file with that one value set aside, and nothing else touched.
+Uint8List _withoutTheDocumentId(Uint8List bytes) {
+  final text = String.fromCharCodes(bytes);
+  expect(
+    _documentId.allMatches(text),
+    hasLength(1),
+    reason:
+        'the id this sets aside was not found exactly once, so either nothing '
+        'was set aside or something else was',
+  );
+  // The same length, so that nothing after it moves and the comparison stays a
+  // comparison of the bytes where they stand.
+  return Uint8List.fromList(
+    text.replaceAll(_documentId, '/ID[<${'0' * 64}><${'0' * 64}>]').codeUnits,
+  );
 }
