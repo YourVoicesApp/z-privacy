@@ -266,6 +266,32 @@ for page in en de ar; do
 done
 [ "$LEGAL" = 0 ] && say PASS "one publisher block, four facts, the same in every place that states them"
 
+# ---------------------------------------------------------------- no download
+#
+# The owner's ruling of 9 October: «نحذف الحزمَ القديمة جميعَها ونوقف وضعَ أي
+# حزمٍ جديدة — الموقعُ للتعريف حتى نرى أين نصل مع كارلوس، لا تنزيلَ فقط تعريفٌ
+# بالمنتج.» We delete every old package and stop putting up new ones; the site
+# introduces the product and offers nothing to download.
+#
+# Watched red against the site as it stood: two cards with live files behind
+# them, their fingerprints, and a section teaching a stranger how to verify
+# what they had downloaded.
+#
+# It does not search for the **word** «download». That lesson cost a red build
+# an hour earlier: a guard that searched for «analytics» went red when the
+# privacy page honestly said there was none. A download is a link to a file, a
+# fingerprint beside it, or a command for checking one — so those are what this
+# asks for, in any language, including the ones nobody has written yet.
+GONE=$(grep -rniE 'zprivacy-v1-|href="[^"]*\.(tar\.gz|tgz|zip|exe|deb|rpm|AppImage|dmg|msi)"|class="sha"|class="dlt"|href="#download|sha256sum|Get-FileHash|beta\.z-privacy\.com' \
+       --include='*.html' . 2>/dev/null || true)
+if [ -n "$(printf '%s' "$GONE" | tr -d '[:space:]')" ]; then
+  say FAIL "the site offers something to download:"
+  printf '%s\n' "$GONE" | cut -c1-120 | sed 's/^/           /'
+  FAIL=1
+else
+  say PASS "nothing on this site is offered for download"
+fi
+
 [ "$FAIL" = 0 ] && say PASS "all pages present"
 
 echo

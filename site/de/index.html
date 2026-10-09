@@ -73,37 +73,6 @@
     <ul class="promises"><li>Ihre Originaldaten bleiben auf Ihrem Gerät, sofern Sie wiederhergestellten Text nicht ausdrücklich exportieren.</li><li>Der Tresor ist lokal.</li><li>Z Privacy hat kein Konto und kein Z-Privacy-Backend für Ihre Dokumente.</li><li>Inhalte der Zwischenablage liegen außerhalb von Z Privacy, sobald sie kopiert wurden.</li></ul>
   </section>
 
-  <section id="download" class="card" aria-labelledby="h-dl">
-    <h2 id="h-dl">Download — Linux</h2>
-    <p class="dlt" lang="en">Z Privacy V1 — Linux x86_64</p>
-    <p class="file" dir="ltr"><a href="https://beta.z-privacy.com/zprivacy-v1-linux-x86_64.tar.gz">zprivacy-v1-linux-x86_64.tar.gz</a></p>
-    <p class="shalab" dir="ltr">SHA-256</p>
-    <p class="sha" dir="ltr">640fa8c12cf41a9aa58d94feb5d4e1763b14ca1a998db8d83851d9f75a7e1e0a</p>
-    <p class="shalab" dir="ltr">Build</p>
-    <p class="sha" dir="ltr">z_core 0.1.0 · 2026-10-06 · 2af5d95</p>
-    <p class="note">Linux-Desktop x86_64 mit GTK3. Nichts zu installieren: das Archiv bringt mit, was es braucht.</p>
-  </section>
-
-  <section id="download-windows" class="card" aria-labelledby="h-dlw">
-    <h2 id="h-dlw">Download — Windows</h2>
-    <p class="dlt" lang="en">Z Privacy V1 — Windows x86_64</p>
-    <p class="file" dir="ltr"><a href="https://beta.z-privacy.com/zprivacy-v1-windows-x86_64-setup.exe">zprivacy-v1-windows-x86_64-setup.exe</a></p>
-    <p class="shalab" dir="ltr">SHA-256</p>
-    <p class="sha" dir="ltr">a66f5c7af4a0b22cfece09b7a47083eaf94120889173d72eacbf5a3f4e9671ce</p>
-    <p class="shalab" dir="ltr">Build</p>
-    <p class="sha" dir="ltr">2026-10-04 · b9423c1</p>
-    <p class="note">Eine Datei, 12 MB. Sie wird in Ihrem eigenen Benutzerkonto installiert, es wird also kein Administratorkennwort verlangt. Windows 10 oder 11, 64-Bit.</p>
-    <p class="note">Windows warnt vor dem Start, weil das Installationsprogramm nicht mit einem Zertifikat signiert ist: wählen Sie <code>Weitere Informationen</code>, dann <code>Trotzdem ausführen</code>.</p>
-    <p class="honest">Dies ist die erste Windows-Version. Die beiden Dateien des Tresors werden mit einer Zugriffsliste angelegt, die keinem anderen Konto etwas gewährt und nichts vom darüberliegenden Ordner erbt — gemessen auf Windows selbst, wo alle sechs Speicherversprechen bei jedem Build geprüft werden. Der Ordner, der sie enthält, ist noch nicht ebenso eingeschränkt, und die Anwendung selbst wurde bisher auf keinem Windows-Rechner außer unserem gestartet. Weitere Versionen folgen.</p>
-  </section>
-
-  <section id="verify" class="card soft" aria-labelledby="h-ver">
-    <h2 id="h-ver">Prüfsumme überprüfen</h2>
-    <pre dir="ltr"><code>sha256sum -c zprivacy-v1-linux-x86_64.tar.gz.sha256</code></pre>
-    <p class="note">In PowerShell, im Ordner, in den Sie heruntergeladen haben:</p>
-    <pre dir="ltr"><code>Get-FileHash .\zprivacy-v1-windows-x86_64-setup.exe</code></pre>
-  </section>
-
   <section aria-labelledby="h-src">
     <h2 id="h-src">Quellcode und Lizenz</h2>
     <p class="srcline">Open Source — Apache License 2.0</p>

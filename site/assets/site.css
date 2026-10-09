@@ -195,21 +195,16 @@ html[dir="rtl"] .chain { justify-content: flex-end; }
 .promises { margin: 0; padding-inline-start: 20px; max-inline-size: 860px; }
 .promises li { margin: 0 0 9px; font-size: 15px; line-height: 1.55; color: var(--ink2); }
 
-/* ---------------------------------------------------------------- download */
+/* ---------------------------------------------------------------- panels */
+/* What is left of the download section's styles. The cards themselves went on
+   9 October — «الموقعُ للتعريف ... لا تنزيلَ فقط تعريفٌ بالمنتج» — and with
+   them `.dlt`, `.file`, `.shalab`, `.sha` and the rules that marked an unfilled
+   build value. A card and a `pre` are general: the licence pages use both. */
 .card {
   background: var(--white); border: 1px solid var(--line);
   border-radius: 12px; padding: clamp(20px, 3vw, 28px);
 }
 .card.soft { background: var(--card); margin-top: 22px; }
-.dlt { margin: 0; font-family: var(--disp); font-size: clamp(22px, 3vw, 27px); font-weight: 600; }
-.file { margin: 12px 0 0; font-family: var(--mono); font-size: 15px; }
-.file a { color: var(--clay); word-break: break-all; }
-.file a:hover { color: #8F4519; }
-.shalab {
-  margin: 14px 0 0; font-family: var(--sans); font-size: 11px; font-weight: 600;
-  letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted);
-}
-.sha { margin: 5px 0 0; font-family: var(--mono); font-size: 13px; line-height: 1.5; word-break: break-all; }
 pre {
   margin: 11px 0 0; font-family: var(--mono); font-size: 13.5px;
   background: var(--ground); border: 1px solid var(--line);
@@ -217,11 +212,6 @@ pre {
   overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere;
 }
 .srcline { margin: 0; font-size: 17px; }
-
-/* ---------------------------------------------------------------- the tokens */
-.tok, code:has(.tok) { }
-a[href^="{{"], a[href*="{{"] { border-style: dashed; color: var(--muted); }
-.sha:empty::before { content: "—"; }
 
 /* ---------------------------------------------------------------- footer */
 footer { margin-top: clamp(46px, 6vw, 70px); padding-bottom: 56px; }

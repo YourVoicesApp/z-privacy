@@ -667,12 +667,20 @@ if [ -f "$WF" ]; then
 else
   skip "the Windows build prints its own stamp" "no Windows workflow on this branch"
 fi
-if grep -rq '{{WINDOWS_BUILD}}' site/*/index.html 2>/dev/null; then
-  pass "  the download page names the build it is offering (unfilled, so unpublishable)"
-elif grep -rqE '>Build</p>' site/*/index.html 2>/dev/null; then
-  pass "  the download page names the build it is offering"
+# 9 October: the owner took the downloads off the site altogether — «الموقعُ
+# للتعريف ... لا تنزيلَ فقط تعريفٌ بالمنتج» — so the question this gate asks
+# has a third honest answer: no file is offered at all. It still catches what it
+# was written for, because it only asks about a page that offers a file.
+if grep -rqE 'zprivacy-v1-[a-z0-9_.-]+\.(tar\.gz|exe)' site/*/index.html 2>/dev/null; then
+  if grep -rq '{{WINDOWS_BUILD}}' site/*/index.html 2>/dev/null; then
+    pass "  the download page names the build it is offering (unfilled, so unpublishable)"
+  elif grep -rqE '>Build</p>' site/*/index.html 2>/dev/null; then
+    pass "  the download page names the build it is offering"
+  else
+    fail "  the download page offers a file without naming the build it came from"
+  fi
 else
-  fail "  the download page offers a file without naming the build it came from"
+  pass "  the site offers no file, so there is no build for it to name"
 fi
 
 # ------------------------------------------------- the third golden
