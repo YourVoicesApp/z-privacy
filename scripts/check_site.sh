@@ -376,6 +376,52 @@ while IFS= read -r f; do
 done < <(find . -name index.html | sort)
 [ "$CANON" = 0 ] && say PASS "every page names itself as canonical, at the absolute address its own path gives it"
 
+# A set of translations is a set: every page in it names the same members,
+# itself included, and a page with no translation names none.
+#
+# Found by measuring the live site on 9 October, not by reading the markup:
+# /license/ and /third-party/ exist in English only, and each told Google that
+# its German version was the German **home page** and its Arabic version the
+# Arabic home page. Google ignores an annotation the other page does not
+# return, so the lie was harmless to the ranking and still a lie in our own
+# source. The chooser at / had the mirror fault: it pointed at the three homes
+# and none of them pointed back, because what it needed was to be the
+# x-default of that set rather than a fourth language.
+#
+# The guard asks each page's set of its members, so a page cannot be the only
+# one telling the truth.
+sets_of() {
+  grep -oE '<link[^>]+rel="alternate"[^>]*>' "$1" 2>/dev/null \
+  | sed -E 's/.*hreflang="([^"]+)"[^>]*href="([^"]+)".*/\1 \2/' | sort
+}
+HREF=0
+h_fail() { say FAIL "$1"; FAIL=1; HREF=1; }
+while IFS= read -r f; do
+  rel="${f#./}"; me="/${rel%index.html}"
+  mine=$(sets_of "$f")
+  if [ -z "$mine" ]; then
+    # A page under a language folder is a translation of something, so it may
+    # not be the one page that keeps quiet about its siblings.
+    case "$rel" in
+      en/*|de/*|ar/*) h_fail "$rel is a translation and names no language version at all" ;;
+    esac
+    continue
+  fi
+  printf '%s\n' "$mine" | awk '{print $2}' | grep -qxF "$me" \
+    || h_fail "$rel lists language versions and leaves itself ($me) out of them"
+  for a in $(printf '%s\n' "$mine" | awk '{print $2}' | sort -u); do
+    tgt=".${a}index.html"
+    if [ ! -f "$tgt" ]; then
+      h_fail "$rel names $a as a language version of itself, and no page is there"
+      continue
+    fi
+    if [ "$(sets_of "$tgt")" != "$mine" ]; then
+      h_fail "$rel and $a disagree about who is in their set, so Google believes neither"
+    fi
+  done
+done < <(find . -name index.html | sort)
+[ "$HREF" = 0 ] && say PASS "every set of translations names the same members on every page in it"
+
 # ---------------------------------------------------------------- the numbers
 #
 # Every number on the site, and every word it borrowed from the app, against
