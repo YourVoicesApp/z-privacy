@@ -6,8 +6,11 @@
 #
 # Nothing is fixed before this has answered. Z Privacy has never been built or
 # tested off Linux — `secure_file.rs` guards the vault entirely under
-# `#[cfg(unix)]`, and the data directory is a hard-coded `~/.local/share` path —
-# so a red run here is the report we are asking for, not a failure to hide.
+# `#[cfg(unix)]` — so a red run here is the report we are asking for, not a
+# failure to hide. (The second half of that sentence was true when it was
+# written and is not any more: the data directory stopped being a guess in Dart
+# when `z_core/src/data_dir.rs` was given the job, and it answers
+# `%LOCALAPPDATA%\ZPrivacy` here.)
 #
 # It runs on `main` as well as on this branch. That is the whole of what the
 # merge changed: a workflow that triggers on a branch which no longer receives
@@ -106,17 +109,21 @@ jobs:
         shell: bash
         run: bash scripts/check_storage_contracts.sh
 
+      # Read, never typed. These three numbers sat in this file for a month
+      # naming `d685d7b` — 251 tests and 108 gates — while Linux had moved to
+      # more than twice that. `scripts/gates.sh` now compares the two that
+      # belong to the tree against every Linux run, so this table can only be
+      # as stale as the last time the gates were green.
       - name: What Linux says, for comparison
         if: always()
         shell: bash
         run: |
           {
-            echo "### Measured on Linux at d685d7b"
+            echo "### What Linux measured"
             echo ""
-            echo '| | |'
-            echo '|---|---|'
-            echo '| Rust tests | 251 passed, 0 failed |'
-            echo '| gates | 108 checks, 0 failed, 0 skipped |'
+            echo '```'
+            sed -n '/^  /p' docs/MEASURED_ON_LINUX.txt
+            echo '```'
             echo ""
             echo "Anything this Windows run reports differently is the port's work list."
           } >> "$GITHUB_STEP_SUMMARY"

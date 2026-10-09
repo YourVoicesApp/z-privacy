@@ -462,6 +462,10 @@ if cargo test --workspace $TEST_FEATURES --quiet >/tmp/gt.$$ 2>&1; then
 else
   fail "cargo test:"; tail -30 /tmp/gt.$$ | sed 's/^/        /'
 fi
+# How many that was, summed over every binary and the doc-tests, for the
+# comparison at the foot of this script. Taken from the output already in hand:
+# running the suite twice to count it would double the slowest gate.
+RUST_PASSED=$(grep -oE '[0-9]+ passed' /tmp/gt.$$ | awk '{s+=$1} END {print s+0}')
 rm -f /tmp/gt.$$
 
 
@@ -489,9 +493,14 @@ if [ -f "$LIB/libz_bridge.so" ] && command -v flutter >/dev/null 2>&1; then
   else
     fail "G7-dart flutter test:"; tail -20 /tmp/gd.$$ | sed 's/^/        /'
   fi
+  # The compact reporter's own running total, last word it says.
+  DART_PASSED=$(grep -oE '\+[0-9]+' /tmp/gd.$$ | tail -1 | tr -d '+')
   rm -f /tmp/gd.$$
 else
   skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
+  # Empty, never zero: «the Dart suite did not run here» and «the Dart suite
+  # found nothing» must not be spelled the same.
+  DART_PASSED=""
 fi
 
 # ------------------------------------------------- the mark
@@ -921,6 +930,39 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
     skip "  screen test present: $t" "not written yet"
   fi
 done
+
+# ------------------------------------------------- the line Windows is compared against
+# `docs/MEASURED_ON_LINUX.txt` is what the Windows job prints as «what Linux
+# says». Three numbers used to be typed into the workflow itself, where they sat
+# for a month naming an older commit. They live in one file now, the merging
+# hand writes them, and this compares them with what this run measured.
+#
+# Two of the three are compared. `gates` is not: the Rust and Dart counts belong
+# to the tree, while the number of checks a run prints belongs to the machine —
+# the owner's golden documents, clippy and flutter each turn a measurement into
+# a skip with the tree untouched. Every precondition below is its own assertion
+# with its own reason, so a red here can only mean the one thing it says.
+NUMBERS=docs/MEASURED_ON_LINUX.txt
+if [ ! -f "$NUMBERS" ]; then
+  fail "the numbers Windows is compared against: $NUMBERS is missing"
+else
+  WANT_RUST=$(awk '/^  rust[[:space:]]/ {print $2}' "$NUMBERS")
+  WANT_DART=$(awk '/^  dart[[:space:]]/ {print $2}' "$NUMBERS")
+  if [ -z "$WANT_RUST" ] || [ -z "$WANT_DART" ]; then
+    fail "the numbers Windows is compared against: $NUMBERS has no «rust» or «dart» line"
+  elif [ -z "$RUST_PASSED" ] || [ "$RUST_PASSED" -eq 0 ]; then
+    fail "the numbers Windows is compared against: this run measured no Rust tests at all"
+  elif [ "$RUST_PASSED" != "$WANT_RUST" ]; then
+    fail "the numbers Windows is compared against: this tree runs $RUST_PASSED Rust tests, $NUMBERS still says $WANT_RUST (the merging hand writes it)"
+  elif [ -z "$DART_PASSED" ]; then
+    pass "the numbers Windows is compared against: Rust $RUST_PASSED as written"
+    skip "  and the Dart half" "the suite did not run here, so its number was not checked"
+  elif [ "$DART_PASSED" != "$WANT_DART" ]; then
+    fail "the numbers Windows is compared against: this tree runs $DART_PASSED Dart tests, $NUMBERS still says $WANT_DART (the merging hand writes it)"
+  else
+    pass "the numbers Windows is compared against: Rust $RUST_PASSED and Dart $DART_PASSED, both as written in $NUMBERS"
+  fi
+fi
 
 echo
 if [ "$FAILED" -eq 0 ]; then
