@@ -100,11 +100,15 @@ void main() {
         reason: 'the home is not a box to write in');
     expect(find.byTooltip('Add a document — PDF, Word or text'), findsOneWidget);
     expect(find.text('Open Z Vault'), findsOneWidget);
-    // No invented history: a session lives in memory, and Home says so once.
+    // No invented history: Home says what is kept, once, and says it in the
+    // form that is true right now. **064/E changed the sentence, not the
+    // claim:** a session keeps its conversation sealed in the vault since the
+    // core began writing turns, so «conversations are not saved» is the honest
+    // line only while no session is open — which is this journey's own state.
     expect(find.text('LOCAL CONVERSATIONS'), findsNothing);
     expect(
       find.textContaining(
-        'Conversations are not saved after you close the app',
+        'No session is open — nothing of this conversation is kept',
       ),
       findsOneWidget,
     );

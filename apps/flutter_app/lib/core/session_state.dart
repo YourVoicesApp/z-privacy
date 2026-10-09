@@ -844,7 +844,7 @@ class Workbench extends ChangeNotifier {
   Future<String?> askModelProtected(String providerId) async {
     final h = handle;
     if (h == null) return 'There is nothing to send yet.';
-    return _ask(() async {
+    return _ask(leaving: payload?.text ?? '', () async {
       final said = await z.askModel(
         handle: h,
         provider: ProviderId(id: providerId),
@@ -870,7 +870,7 @@ class Workbench extends ChangeNotifier {
       return 'Choose «The original text» first — this app does not send a '
           'document unprotected on its own.';
     }
-    return _ask(() async {
+    return _ask(leaving: original, () async {
       final said = await z.askModelDirectly(
         session: session,
         text: original,
@@ -887,22 +887,92 @@ class Workbench extends ChangeNotifier {
 
   /// What both doors share: the busy flag, the refusal, and the refresh. The
   /// difference between them is the call, and it stays the call.
-  Future<String?> _ask(Future<void> Function() door) async {
+  ///
+  /// **And the journey, said step by step** (064/E). The owner's ruling of
+  /// 9 October: the press takes the person to the chat, and there they see what
+  /// was sent, then the answer when it comes back, then the answer pulled
+  /// inside — unwrapped, shown restored, and written into the session. Those
+  /// are three real moments of one request, so the stage is published as each
+  /// one happens rather than at the end: a person watching a slow model has the
+  /// right to know which of the three they are waiting in.
+  Future<String?> _ask(Future<void> Function() door, {required String leaving}) async {
     sending = true;
+    // **What actually left**, kept before the call rather than reconstructed
+    // after it: the payload is rebuilt by the refresh below, and «the request
+    // in its safe clothing» is a claim about the text that travelled.
+    sentAsItLeft = leaving;
+    stage = SendStage.sent;
+    turn = null;
     notifyListeners();
     try {
       await door();
       trouble = null;
       sending = false;
+      stage = SendStage.answered;
+      notifyListeners();
       await refresh();
+      // **The turn, read back from the session's own file** — and this is the
+      // order the owner named: pulled inside means written, and nothing
+      // restored is shown before it is. With no session open the core writes
+      // nothing (`record` refuses with «there is no session open to write
+      // to»), so there is no third step to show and the screen says that
+      // plainly instead of pretending.
+      await readTheTurn();
       return null;
     } on ApiError catch (e) {
       sending = false;
       trouble = humanMessage(e);
+      stage = SendStage.refused;
       notifyListeners();
       // A failure of one door is a failure of that door. Nothing here tries
       // the other one, and the mode is not touched.
       return humanMessage(e);
+    }
+  }
+
+  /// Where this request has got to. `none` until one is made.
+  SendStage stage = SendStage.none;
+
+  /// The text that travelled, in the clothing it travelled in.
+  String? sentAsItLeft;
+
+  /// The written turn, as the core restores it. Null until one is read, and
+  /// null for a send that no session could keep.
+  TurnRow? turn;
+
+  /// Read the open session's last turn, restored **inside the core**.
+  ///
+  /// The restoring happens there and crosses the boundary already done, with
+  /// `unresolved` naming every token it could not resolve: a raw turn on a
+  /// screen would put `__Z_5CDD_IBAN_5B32__` in the middle of a model's
+  /// sentence, which is the exact lie the restore path exists to prevent.
+  Future<void> readTheTurn() async {
+    final open = await _openConversation();
+    if (open == null) {
+      turn = null;
+      stage = stage == SendStage.answered ? SendStage.keptNowhere : stage;
+      notifyListeners();
+      return;
+    }
+    try {
+      final rows = await z.conversationTurns(number: open, bench: session);
+      turn = rows.isEmpty ? null : rows.last;
+      if (turn != null) stage = SendStage.pulledIn;
+    } on ApiError catch (e) {
+      // A turn that cannot be read is not an answer that did not arrive: the
+      // answer is still on the screen above, and this says only that the
+      // reading failed.
+      turn = null;
+      trouble = humanMessage(e);
+    }
+    notifyListeners();
+  }
+
+  Future<int?> _openConversation() async {
+    try {
+      return await z.conversationOpen();
+    } on ApiError {
+      return null;
     }
   }
 
@@ -1468,6 +1538,15 @@ String sessionBegunSaid(int renamed, {required bool hadDocument}) {
       ? 'Begun, and one name on this document moved into it.'
       : 'Begun, and $renamed names on this document moved into it.';
 }
+
+/// **Where a request has got to** — 064/E, the owner's three steps.
+///
+/// «What was sent appears; the answer appears when it returns; then the answer
+/// is pulled inside» — unwrapped, shown restored, and written into the session.
+/// `keptNowhere` is the honest fourth: an answer came back and no session was
+/// open to keep it, which the core refuses to write rather than inventing a
+/// file for.
+enum SendStage { none, sent, answered, pulledIn, keptNowhere, refused }
 
 /// **What an exit may take out, once the session question is settled** — 064.
 ///

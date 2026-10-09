@@ -662,10 +662,19 @@ class _TopBar extends StatelessWidget {
             Tooltip(
               message: 'Choose the AI and what travels to it',
               child: TextButton.icon(
-                onPressed: () => showDialog<bool>(
-                  context: context,
-                  builder: (_) => SendSheet(bench: bench, ground: ground, onSettings: onSettings),
-                ),
+                // **A send lands in the chat** — 064/E, the owner's ruling:
+                // the press takes the person to the screen where what was
+                // sent, what came back and what was pulled in are drawn in
+                // order. The sheet answers `true` when something actually
+                // left, so nothing else moves a person off their document:
+                // a cancel, a copy or a saved PDF leaves them where they are.
+                onPressed: () async {
+                  final sent = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => SendSheet(bench: bench, ground: ground, onSettings: onSettings),
+                  );
+                  if (sent == true) onHome();
+                },
                 icon: const Icon(Icons.auto_awesome_outlined, size: 16),
                 label: const Text('AI', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 style: TextButton.styleFrom(

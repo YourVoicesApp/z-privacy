@@ -37,6 +37,7 @@ import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/the_journey.dart';
 import 'package:zprivacy/widgets/the_session_question.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 
@@ -372,6 +373,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         // views, the fourth mark, the two named copies and the
                         // clipboard confirmation are one implementation and
                         // not two.
+                        // **The journey of a send** — 064/E, the owner's
+                        // three steps, where he asked for them: the press
+                        // lands here, and what was sent, what came back and
+                        // what was pulled in stand in the thread in that
+                        // order. Above the answer panel, which is the full
+                        // reading of the answer with its two views and its two
+                        // named copies.
+                        if (chat != null && chat.stage != SendStage.none) ...[
+                          const SizedBox(height: 22),
+                          TheJourney(bench: chat, ground: ground),
+                        ],
                         if (chat != null && chat.showing != null) ...[
                           const SizedBox(height: 22),
                           AnswerPanel(bench: chat),
@@ -546,8 +558,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           // on the first screen of the product — 046/D's sweep found
                           // it in Dart after the two in the core. Under the writing
                           // now, which is where a chat keeps the line about itself.
-                          'Nothing is uploaded to be read. Conversations are not saved after you close '
-                          'the app.',
+                          //
+                          // **And it has two forms since 064/E, because the truth
+                          // has two states.** It read «Conversations are not saved
+                          // after you close the app» — which stopped being true the
+                          // moment the core began writing a turn into the open
+                          // session's file: the conversation *is* kept, sealed in the
+                          // vault, and it is there after the app closes. A screen
+                          // promising what the core does not do is the defect that
+                          // started this whole round, and it is the same defect
+                          // facing the other way. The lead's wording, both halves.
+                          ground.openSessionRow != null
+                              ? 'Nothing is uploaded to be read. This session keeps its '
+                                    'conversation, sealed in your vault on this device — delete '
+                                    'the session and its key and its file go together.'
+                              : 'Nothing is uploaded to be read. No session is open — nothing of '
+                                    'this conversation is kept.',
                           style: Zc.small.copyWith(color: Zc.ink4),
                         ),
                         ],
