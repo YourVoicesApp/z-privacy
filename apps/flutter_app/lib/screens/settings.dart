@@ -163,6 +163,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               child: Row(
                 children: [
+                  // The owner's picture in the panel's head too — 072. Small,
+                  // because this strip stands over a person's document and the
+                  // door that shuts it is the thing they are reaching for.
+                  const BrandMark(size: 20),
+                  const SizedBox(width: 9),
                   const Text('Settings', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink)),
                   const Spacer(),
                   SettingsDoor(open: true, onTap: widget.onClose),

@@ -227,7 +227,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(34, 30, 34, 0),
                     child: Row(
                       children: [
-                        const ZMark(size: 36),
+                        // The owner's picture, at the lettered tile's own
+                        // size — 072, a swap and not an addition, so this
+                        // strip's width is untouched.
+                        const BrandMark(size: 36),
                         const SizedBox(width: 12),
                         const Text('Z Privacy', style: Zc.h1),
                         // **The session, in the head of the chat too** —

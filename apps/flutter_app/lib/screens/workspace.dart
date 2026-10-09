@@ -441,7 +441,11 @@ class _TopBar extends StatelessWidget {
                 padding: const EdgeInsets.all(3),
                 child: Row(
                   children: [
-                    const ZMark(size: 28),
+                    // The owner's picture, at the lettered tile's own 28 px
+                    // — 072. A swap on the most crowded strip in the app, which
+                    // is why the guard reads the overflow count at 900 rather
+                    // than trusting that a same-size swap costs nothing.
+                    const BrandMark(size: 28),
                     if (doc == null) ...[
                       const SizedBox(width: 10),
                       const Text(

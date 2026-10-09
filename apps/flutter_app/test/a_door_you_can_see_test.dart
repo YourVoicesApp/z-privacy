@@ -21,7 +21,6 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
-import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/widgets/bits.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -82,8 +81,12 @@ void main() {
     // And the mark stays a way home: nothing a person already learned is taken
     // away from them. The word beside it steps aside while a document is open —
     // the mark is what they tapped, and the mark is still there.
+    //
+    // **It is the owner's picture since 072**, at the same 28 px the lettered
+    // tile was: the claim here is about the mark being a door, not about what
+    // the mark is drawn from.
     expect(find.text('Z Privacy'), findsNothing, reason: 'the wordmark crowds the bar at 964');
-    await tester.tap(find.byType(ZMark));
+    await tester.tap(find.byType(BrandMark));
     await tester.pump();
     expect(home, 3, reason: 'the mark stopped being a way home');
 
@@ -151,7 +154,6 @@ void main() {
     final ground = Ground();
     late final Workbench bench;
     late final HttpServer server;
-    late final List<ModelDescriptor> catalogue;
     String? bodyReceived;
 
     await tester.runAsync(() async {
@@ -171,7 +173,6 @@ void main() {
         await z.answerFinding(session: session, finding: f.id, answer: FindingAnswer.protect);
       }
       await bench.refresh();
-      catalogue = await z.models();
 
       server.listen((req) async {
         bodyReceived = await utf8.decodeStream(req);
@@ -236,9 +237,10 @@ void main() {
     expect(control, findsOneWidget,
         reason: 'the review page does not name the model that will answer');
 
-    // Read after the key, because `catalogue` above was taken before
-    // `connectProvider` and every row in it says «no key» — a list built on it
-    // would have been green for the wrong reason.
+    // Read **after** the key: a catalogue taken before `connectProvider` says
+    // «no key» in every row, and a list built on it would be green for the
+    // wrong reason. The earlier read this file used to take is gone with the
+    // claims that moved — the colours and the grouping are the AI room's now.
     late final List<ModelDescriptor> withAKey;
     await tester.runAsync(() async => withAKey = await z.models());
     final theirs = withAKey.firstWhere((m) => m.providerId == 'openai' && m.available);
