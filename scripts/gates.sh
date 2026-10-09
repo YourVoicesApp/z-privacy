@@ -791,6 +791,12 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_name_whose_given_half_was_unknown_is_found_now \
          a_person_answers_twice_and_a_whole_document_is_understood \
          a_swedish_letter_is_read_by_a_pack_that_is_only_data \
+         english_is_installed_and_carries_its_names \
+         the_films_english_letter_is_read_by_a_pack_of_english_words \
+         an_english_company_ends_in_its_legal_form \
+         a_document_with_no_names_offers_nobody \
+         an_english_surname_that_ends_in_son_is_offered \
+         the_other_two_packs_did_not_move \
          a_swedish_word_that_is_also_a_name_opens_nothing \
          swedish_labels_are_rows_like_every_other_language \
          german_reads_exactly_what_it_read_before \
