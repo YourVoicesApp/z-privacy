@@ -3406,6 +3406,11 @@ const _: fn() = || {
         let _: bool = KindRow.custom;
     }
     {
+        let KindTally = None::<crate::api::mirrors::KindTally>.unwrap();
+        let _: crate::api::mirrors::Kind = KindTally.kind;
+        let _: u32 = KindTally.count;
+    }
+    {
         let LabelRuleRow = None::<crate::api::mirrors::LabelRuleRow>.unwrap();
         let _: u32 = LabelRuleRow.id;
         let _: String = LabelRuleRow.label;
@@ -3541,6 +3546,7 @@ const _: fn() = || {
         let _: u32 = PayloadView.protected_count;
         let _: u32 = PayloadView.open_suggestions;
         let _: Vec<crate::api::mirrors::PageEdge> = PayloadView.page_edges;
+        let _: Vec<crate::api::mirrors::KindTally> = PayloadView.by_kind;
         let _: Option<crate::api::mirrors::PayloadSession> = PayloadView.session;
     }
     {
@@ -4329,6 +4335,18 @@ impl SseDecode for crate::api::mirrors::KindRow {
     }
 }
 
+impl SseDecode for crate::api::mirrors::KindTally {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
+        let mut var_count = <u32>::sse_decode(deserializer);
+        return crate::api::mirrors::KindTally {
+            kind: var_kind,
+            count: var_count,
+        };
+    }
+}
+
 impl SseDecode for crate::api::mirrors::KnowledgeSource {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -4471,6 +4489,18 @@ impl SseDecode for Vec<crate::api::mirrors::KindRow> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::mirrors::KindRow>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::mirrors::KindTally> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::mirrors::KindTally>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -5172,12 +5202,14 @@ impl SseDecode for crate::api::mirrors::PayloadView {
         let mut var_protectedCount = <u32>::sse_decode(deserializer);
         let mut var_openSuggestions = <u32>::sse_decode(deserializer);
         let mut var_pageEdges = <Vec<crate::api::mirrors::PageEdge>>::sse_decode(deserializer);
+        let mut var_byKind = <Vec<crate::api::mirrors::KindTally>>::sse_decode(deserializer);
         let mut var_session = <Option<crate::api::mirrors::PayloadSession>>::sse_decode(deserializer);
         return crate::api::mirrors::PayloadView {
             text: var_text,
             protected_count: var_protectedCount,
             open_suggestions: var_openSuggestions,
             page_edges: var_pageEdges,
+            by_kind: var_byKind,
             session: var_session,
         };
     }
@@ -6607,6 +6639,22 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::KindRow>>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::KindTally> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.kind.into_into_dart().into_dart(),
+            self.0.count.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::KindTally> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::KindTally>> for crate::api::mirrors::KindTally {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::KindTally> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::KnowledgeSource> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self.0 {
@@ -6993,6 +7041,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PayloadVi
             self.0.protected_count.into_into_dart().into_dart(),
             self.0.open_suggestions.into_into_dart().into_dart(),
             self.0.page_edges.into_into_dart().into_dart(),
+            self.0.by_kind.into_into_dart().into_dart(),
             self.0.session.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -8327,6 +8376,14 @@ impl SseEncode for crate::api::mirrors::KindRow {
     }
 }
 
+impl SseEncode for crate::api::mirrors::KindTally {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
+        <u32>::sse_encode(self.count, serializer);
+    }
+}
+
 impl SseEncode for crate::api::mirrors::KnowledgeSource {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -8439,6 +8496,16 @@ impl SseEncode for Vec<crate::api::mirrors::KindRow> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::mirrors::KindRow>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::mirrors::KindTally> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::mirrors::KindTally>::sse_encode(item, serializer);
         }
     }
 }
@@ -9009,6 +9076,7 @@ impl SseEncode for crate::api::mirrors::PayloadView {
         <u32>::sse_encode(self.protected_count, serializer);
         <u32>::sse_encode(self.open_suggestions, serializer);
         <Vec<crate::api::mirrors::PageEdge>>::sse_encode(self.page_edges, serializer);
+        <Vec<crate::api::mirrors::KindTally>>::sse_encode(self.by_kind, serializer);
         <Option<crate::api::mirrors::PayloadSession>>::sse_encode(self.session, serializer);
     }
 }

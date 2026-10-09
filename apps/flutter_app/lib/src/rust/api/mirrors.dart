@@ -816,6 +816,24 @@ class KindRow {
           custom == other.custom;
 }
 
+class KindTally {
+  final Kind kind;
+  final int count;
+
+  const KindTally({required this.kind, required this.count});
+
+  @override
+  int get hashCode => kind.hashCode ^ count.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is KindTally &&
+          runtimeType == other.runtimeType &&
+          kind == other.kind &&
+          count == other.count;
+}
+
 enum KnowledgeSource { builtIn, userTaughtValue, userException }
 
 class LabelRuleRow {
@@ -1444,6 +1462,32 @@ class PayloadView {
   /// payload, never written into it.
   final List<PageEdge> pageEdges;
 
+  /// **How many distinct tokens of each kind stand in this text** — 068.
+  ///
+  /// The rule this exists for is the owner's own, at `022_shell.md:3`: «لا
+  /// mock data بعد ربط الشاشة — كلّ رقم على الشاشة قاله الـcore», governing
+  /// that file «and everything after it».
+  ///
+  /// The sentence that matters is narrower than «no arithmetic outside the
+  /// core», and the narrower one is the true one: **a figure about the payload
+  /// must come from the payload.** The protected-PDF footer's sha256 is
+  /// computed outside the core and cannot be wrong — it is a function of the
+  /// exact string being written, in the same breath as the write, one source.
+  /// The per-kind tally was computed outside and **could** be wrong, because
+  /// it crossed two sources: the outgoing text searched for the bench's
+  /// *current* tokens. With a payload captured before a session was born, that
+  /// came out **empty** over a fully protected document — a footer counting
+  /// nothing about a file whose every name was hidden. One source makes
+  /// disagreement impossible; two makes it merely unlikely.
+  ///
+  /// Counted here from `allowed_token_ids`, which **is** the set of distinct
+  /// tokens standing in this text — so the figure and the text are made in one
+  /// pass and cannot describe different things. Distinct tokens, not places:
+  /// two occurrences of one name are one token, and `protected_count` above is
+  /// the places. The two numbers answer different questions and the footer
+  /// shows both.
+  final List<KindTally> byKind;
+
   /// **Which of the owner's sessions this payload belongs to** — 064d.
   ///
   /// `None` means it belongs to none, and that is the whole reason this field
@@ -1465,6 +1509,7 @@ class PayloadView {
     required this.protectedCount,
     required this.openSuggestions,
     required this.pageEdges,
+    required this.byKind,
     this.session,
   });
 
@@ -1474,6 +1519,7 @@ class PayloadView {
       protectedCount.hashCode ^
       openSuggestions.hashCode ^
       pageEdges.hashCode ^
+      byKind.hashCode ^
       session.hashCode;
 
   @override
@@ -1485,6 +1531,7 @@ class PayloadView {
           protectedCount == other.protectedCount &&
           openSuggestions == other.openSuggestions &&
           pageEdges == other.pageEdges &&
+          byKind == other.byKind &&
           session == other.session;
 }
 

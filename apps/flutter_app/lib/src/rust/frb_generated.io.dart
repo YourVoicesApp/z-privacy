@@ -132,6 +132,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KindRow dco_decode_kind_row(dynamic raw);
 
   @protected
+  KindTally dco_decode_kind_tally(dynamic raw);
+
+  @protected
   KnowledgeSource dco_decode_knowledge_source(dynamic raw);
 
   @protected
@@ -163,6 +166,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<KindRow> dco_decode_list_kind_row(dynamic raw);
+
+  @protected
+  List<KindTally> dco_decode_list_kind_tally(dynamic raw);
 
   @protected
   List<LabelRuleRow> dco_decode_list_label_rule_row(dynamic raw);
@@ -581,6 +587,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   KindRow sse_decode_kind_row(SseDeserializer deserializer);
 
   @protected
+  KindTally sse_decode_kind_tally(SseDeserializer deserializer);
+
+  @protected
   KnowledgeSource sse_decode_knowledge_source(SseDeserializer deserializer);
 
   @protected
@@ -614,6 +623,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<KindRow> sse_decode_list_kind_row(SseDeserializer deserializer);
+
+  @protected
+  List<KindTally> sse_decode_list_kind_tally(SseDeserializer deserializer);
 
   @protected
   List<LabelRuleRow> sse_decode_list_label_rule_row(
@@ -1094,6 +1106,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_kind_row(KindRow self, SseSerializer serializer);
 
   @protected
+  void sse_encode_kind_tally(KindTally self, SseSerializer serializer);
+
+  @protected
   void sse_encode_knowledge_source(
     KnowledgeSource self,
     SseSerializer serializer,
@@ -1134,6 +1149,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_kind_row(List<KindRow> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_kind_tally(
+    List<KindTally> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_label_rule_row(

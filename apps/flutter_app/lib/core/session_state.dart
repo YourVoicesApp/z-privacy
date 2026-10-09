@@ -1384,11 +1384,6 @@ String importSaid(NameImport report) {
   return '$said\n${columnsNotUsedSaid(report.columnsNotUsed)}';
 }
 
-/// The columns a table carried that this build could not name a kind for.
-///
-/// Named, never dropped: a person must be able to see the difference between
-/// «imported» and «imported the names». And it says what to do about it,
-/// because a column is a word in their own file and they can change it.
 /// **What a birth did, in one sentence** — 064f.
 ///
 /// Worded here and not inside the room, for the reason `importSaid` below is:
@@ -1410,6 +1405,11 @@ String sessionBegunSaid(int renamed, {required bool hadDocument}) {
       : 'Begun, and $renamed names on this document moved into it.';
 }
 
+/// The columns a table carried that this build could not name a kind for.
+///
+/// Named, never dropped: a person must be able to see the difference between
+/// «imported» and «imported the names». And it says what to do about it,
+/// because a column is a word in their own file and they can change it.
 String columnsNotUsedSaid(List<String> columns) {
   final which = columns.join(', ');
   return columns.length == 1

@@ -40,6 +40,10 @@ pub(crate) struct SafePayload {
     /// it was built — 064d. `None` is a payload built with none open, which is
     /// a real state and the one worth being able to see.
     conversation: Option<crate::api::PayloadSession>,
+    /// **How many distinct tokens of each kind stand in `text`** — 068, counted
+    /// in the same breath as the text was assembled. See `api::PayloadView`'s
+    /// own comment for why the figure may not be worked out anywhere else.
+    by_kind: Vec<crate::api::KindTally>,
     send_state: PayloadSendState,
 }
 
@@ -192,6 +196,32 @@ impl SafePayload {
             "a page edge landed outside the payload"
         );
 
+        // **The kinds, from the very list that governs what may come back.**
+        //
+        // `allowed_token_ids` *is* the set of distinct tokens standing in
+        // `text`: the loop above pushed one for each protection it applied, and
+        // the question's own tokens were added beside them. So the tally needs
+        // no search of the text and no second opinion about what is in it —
+        // which is the whole point. A kind with no token here does not appear,
+        // rather than appearing as zero: the footer lists what is hidden, not
+        // what is not.
+        let mut tallies: std::collections::BTreeMap<u8, (crate::api::Kind, u32)> =
+            std::collections::BTreeMap::new();
+        for token in &allowed_token_ids {
+            if let Some(entry) = session.tokens.get(token) {
+                let slot = tallies
+                    .entry(crate::vault::format::kind_code(entry.kind))
+                    .or_insert((entry.kind, 0));
+                slot.1 = slot.1.saturating_add(1);
+            }
+        }
+        // Ordered by the kind's own persistence code, so two builds of one
+        // payload list them in one order and a screen never reshuffles.
+        let by_kind: Vec<crate::api::KindTally> = tallies
+            .into_values()
+            .map(|(kind, count)| crate::api::KindTally { kind, count })
+            .collect();
+
         Self {
             id,
             session: session.id,
@@ -207,6 +237,7 @@ impl SafePayload {
             open_suggestions: session.open_suggestions(),
             page_edges,
             conversation,
+            by_kind,
             send_state: PayloadSendState::Ready,
         }
     }
@@ -226,6 +257,7 @@ impl SafePayload {
             protected_count: self.protected,
             open_suggestions: self.open_suggestions,
             page_edges: self.page_edges.clone(),
+            by_kind: self.by_kind.clone(),
             session: self.conversation.clone(),
         }
     }
