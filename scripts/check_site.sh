@@ -186,6 +186,48 @@ for f in index.html en/index.html de/index.html ar/index.html license/index.html
 done
 [ "$JUMPS" = 0 ] && say PASS "every jump on every page lands on something"
 
+# ---------------------------------------------------------------- the two menus
+#
+# The owner's word after the preview: «نجعل اللغات قائمةً منسدلةً من أعلى
+# الشاشة تحت خيار اللغة، كما نجعل قاموسَ المفردات قائمةً منسدلةً تحت اسم
+# hjälp». Two menus at the top of every page — the languages under the
+# language's own name, and the vocabulary under Help in the page's own word.
+#
+# They are `<details>`, so the promise of no JavaScript survives them; the
+# counter guard above already refuses a script, and this one refuses a page
+# that quietly loses a menu.
+MENUS=0
+for pair in "index.html:" "en/index.html:Help" "de/index.html:Hilfe" "ar/index.html:مساعدة" \
+            "en/privacy/index.html:Help" "de/privacy/index.html:Hilfe" "ar/privacy/index.html:مساعدة" \
+            "license/index.html:Help" "third-party/index.html:Help"
+do
+  f="${pair%%:*}"; help="${pair##*:}"
+  if [ -z "$help" ]; then
+    # The chooser at «/» is the language menu, so it carries none.
+    grep -q '<nav class="menus"' "$f" && { say FAIL "$f is the chooser and should carry no menu"; FAIL=1; MENUS=1; }
+    continue
+  fi
+  n=$(grep -c '<details class="menu"' "$f" 2>/dev/null || true); n=${n:-0}
+  [ "$n" = 2 ] || { say FAIL "$f has $n menus at the top, and there should be two"; FAIL=1; MENUS=1; }
+  grep -qF "<summary>$help</summary>" "$f" || grep -qF ">$help</summary>" "$f" \
+    || { say FAIL "$f does not call its second menu «$help»"; FAIL=1; MENUS=1; }
+  for name in English Deutsch العربية; do
+    grep -qF ">$name</a>" "$f" || grep -qF ">$name</summary>" "$f" \
+      || { say FAIL "$f does not offer $name in its language menu"; FAIL=1; MENUS=1; }
+  done
+done
+# The vocabulary moved under Help, and it moved — it was not copied. One table
+# per language, and none anywhere else.
+for f in en/index.html de/index.html ar/index.html; do
+  n=$(grep -c '<div class="vocab">' "$f" 2>/dev/null || true); n=${n:-0}
+  [ "$n" = 1 ] || { say FAIL "$f holds $n vocabulary tables, and there should be one"; FAIL=1; MENUS=1; }
+  grep -q '<div class="menu-panel wide">' "$f" || { say FAIL "$f does not keep its vocabulary under Help"; FAIL=1; MENUS=1; }
+done
+for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html license/index.html third-party/index.html; do
+  grep -q '<div class="vocab">' "$f" && { say FAIL "$f carries a second copy of the vocabulary"; FAIL=1; MENUS=1; }
+done
+[ "$MENUS" = 0 ] && say PASS "two menus on every page but the chooser, and one vocabulary, under Help"
+
 # ---------------------------------------------------------------- the privacy page
 #
 # Three pages, one per language, and the rule they are written under: **every
