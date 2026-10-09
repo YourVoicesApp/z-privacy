@@ -402,6 +402,23 @@ void main() {
           dumpAs: 'crlf-$name',
         );
 
+        // **This surface's own control.** The instrument group proves the
+        // comparison can see a letter, and proves it in one subject. Two
+        // drawings of a surface that draws nothing at all are identical too,
+        // so each one is asked here to put its own text on the canvas.
+        final nudged = await _draw(
+          tester,
+          entry.value,
+          _lf.replaceFirst('Hedvig', 'Hedvigg'),
+        );
+        expect(
+          nudged.pixels,
+          isNot(lf.pixels),
+          reason:
+              'this surface drew two different documents the same way, so '
+              '«identical» below would be a statement about an empty box',
+        );
+
         expect(
           crlf.tops.length,
           lf.tops.length,
