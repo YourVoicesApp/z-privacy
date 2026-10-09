@@ -46,6 +46,22 @@ CONTRACTS=(
   "a_folder_already_right_is_left_alone:a folder already right is not touched at all"
 )
 
+# **Debts are declared, not left as a standing red.** The lead's ruling, 9 Oct:
+# a red whose cause everyone already knows is the mirror of a false green — a
+# reader learns to step over it, and steps over the next real one with it. So a
+# contract that *cannot* hold on a platform yet is named here, with the paper
+# that owes it and the reason, and this prints it as a debt rather than a
+# failure. It still bites both ways: a test appearing under an owed name is a
+# failure (the debt was paid and the list was not struck in the commit that
+# paid it), and a contract missing without being named here fails as before.
+# Same shape as the OWED roster in `gates.sh`, from 064b.
+#
+# name : platform : paper : why it cannot hold there yet
+OWED=(
+  "a_folder_wider_than_it_should_be_is_narrowed_without_a_word:Windows:074/W4b:there is no mode to narrow until the folder's own access list is written"
+  "a_folder_already_right_is_left_alone:Windows:074/W4b:«already right» has no meaning until that same list exists"
+)
+
 case "$(uname -s 2>/dev/null || echo unknown)" in
   Linux*)   PLATFORM="Linux" ;;
   Darwin*)  PLATFORM="macOS" ;;
@@ -79,13 +95,44 @@ fi
 LISTED=$(printf '%s\n%s\n' "$LAYER" "$UNITS")
 
 MISSING=0
+OWED_HERE=0
+MEASURED=0
 for entry in "${CONTRACTS[@]}"; do
   name=${entry%%:*}
   what=${entry#*:}
+
+  # Declared as owed on this platform?
+  owed_paper=""
+  owed_why=""
+  for debt in "${OWED[@]}"; do
+    debt_name=${debt%%:*}
+    rest=${debt#*:}
+    debt_platform=${rest%%:*}
+    rest=${rest#*:}
+    debt_paper=${rest%%:*}
+    debt_why=${rest#*:}
+    if [ "$debt_name" = "$name" ] && [ "$debt_platform" = "$PLATFORM" ]; then
+      owed_paper=$debt_paper
+      owed_why=$debt_why
+    fi
+  done
   # An integration test lists as its bare name, a unit test as
   # `secure_file::tests::<name>` — one contract, one name, either spelling.
   if printf '%s\n' "$LISTED" | grep -qE "(^|::)${name}\$"; then
-    printf '  \033[32mPASS\033[0m  %s\n' "$what"
+    if [ -n "$owed_paper" ]; then
+      # The debt was paid. Good news, and still a failure: a list that keeps
+      # naming a debt somebody settled is a list nobody reads.
+      printf '  \033[31mFAIL\033[0m  %s\n' "$what"
+      printf '        %s exists here now — strike it from OWED in the commit that wrote it (%s)\n' "$name" "$owed_paper"
+      MISSING=$((MISSING + 1))
+    else
+      printf '  \033[32mPASS\033[0m  %s\n' "$what"
+      MEASURED=$((MEASURED + 1))
+    fi
+  elif [ -n "$owed_paper" ]; then
+    printf '  \033[33mOWED\033[0m  %s\n' "$what"
+    printf '        owed by %s on %s: %s\n' "$owed_paper" "$PLATFORM" "$owed_why"
+    OWED_HERE=$((OWED_HERE + 1))
   else
     printf '  \033[31mFAIL\033[0m  %s\n' "$what"
     printf '        no test named %s exists on this platform\n' "$name"
@@ -96,12 +143,19 @@ done
 echo
 HOW_MANY=${#CONTRACTS[@]}
 if [ "$MISSING" -eq 0 ]; then
-  echo "all $HOW_MANY storage contracts are measured on $PLATFORM"
+  if [ "$OWED_HERE" -eq 0 ]; then
+    echo "all $HOW_MANY storage contracts are measured on $PLATFORM"
+  else
+    echo "$MEASURED of $HOW_MANY storage contracts are measured on $PLATFORM, $OWED_HERE owed by name"
+  fi
   exit 0
 fi
 
 cat <<EOF
-STORAGE PROTECTION NOT MEASURED ON $PLATFORM — $MISSING of $HOW_MANY contracts have no test here
+STORAGE PROTECTION NOT MEASURED ON $PLATFORM — $MISSING of $HOW_MANY contracts failed here
+($MEASURED measured; $OWED_HERE owed by name and not counted against this.)
+A failure is one of two things: a contract with no test on this platform, or a
+debt that was paid and left on the OWED list — the lines above say which.
 
 This is not a test that failed. It is a promise nobody checked.
 
@@ -113,6 +167,17 @@ the person narrowed it. That layer is \`#[cfg(unix)]\`, and so are its tests.
 
 The way out is not to delete these lines. It is to give this platform its own
 guard and its own test under the same name, so that one contract has one name
-and each platform proves it in its own terms.
+and each platform proves it in its own terms. 058's folder refusal was done
+that way on 9 October: Unix reads the folder's mode before writing, Windows
+learns the same fact when the write comes back ERROR_ACCESS_DENIED, and both
+return `StoragePermissionsKept` naming the file.
+
+The ones above are different from the two in OWED, which is why they fail here
+instead of being declared: Windows **does** keep those promises —
+`secure_file/windows.rs` writes an owner-only access list with inheritance cut
+and refuses a reparse point rather than following it — and what is missing is
+the test that measures it there. An implemented promise nobody measures is the
+thing this script exists to refuse. 074/W4c, once the workflow runs and can
+answer.
 EOF
 exit 1
