@@ -1,9 +1,9 @@
 What Linux measures — the line the Windows report is compared against.
 
   commit  528a03b
-  rust    568
+  rust    569
   dart    258
-  gates   307 checks, 0 failed, 0 skipped
+  gates   308 checks, 0 failed, 0 skipped
 
 `commit` names the last commit at which a full run was recorded here, which
 is not where the tree stands now: on a branch it is the commit *before* the one

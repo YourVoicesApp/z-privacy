@@ -9,9 +9,16 @@ set -uo pipefail
 cd "$(dirname "$0")/.." || exit 2
 
 FAILED=0
-pass() { printf '  \033[32mPASS\033[0m  %s\n' "$1"; }
-fail() { printf '  \033[31mFAIL\033[0m  %s\n' "$1"; FAILED=1; }
-skip() { printf '  ----  %s (skipped: %s)\n' "$1" "$2"; }
+# The script counts its own checks. Both seats counted them with `grep -c` until
+# 10 Oct, and both got it wrong the same night: a `----` line quoted *inside* a
+# failure's output was counted as a skip. The verdict of a run belongs to the run,
+# not to the arithmetic of whoever is reading it.
+CHECKS=0
+FAILS=0
+SKIPS=0
+pass() { printf '  \033[32mPASS\033[0m  %s\n' "$1"; CHECKS=$((CHECKS + 1)); }
+fail() { printf '  \033[31mFAIL\033[0m  %s\n' "$1"; FAILED=1; CHECKS=$((CHECKS + 1)); FAILS=$((FAILS + 1)); }
+skip() { printf '  ----  %s (skipped: %s)\n' "$1" "$2"; CHECKS=$((CHECKS + 1)); SKIPS=$((SKIPS + 1)); }
 
 # The two surfaces the UI can reach: the core contract and its bridge wrapper.
 API_FILES="z_core/src/api.rs bridges/native/z_bridge/src/api/core.rs"
@@ -489,13 +496,19 @@ rm -f /tmp/g4c.$$
 # The invariants that live as tests.
 if cargo test --workspace $TEST_FEATURES --quiet >/tmp/gt.$$ 2>&1; then
   pass "G3/G6/G9/G10/G11/G12 cargo test"
+  # How many that was, summed over every binary and the doc-tests, for the
+  # comparison at the foot of this script. Taken from the output already in
+  # hand: running the suite twice to count it would double the slowest gate.
+  RUST_PASSED=$(grep -oE '[0-9]+ passed' /tmp/gt.$$ | awk '{s+=$1} END {print s+0}')
 else
   fail "cargo test:"; tail -30 /tmp/gt.$$ | sed 's/^/        /'
+  # **Empty, not a number.** A suite that stopped half way counted half a tree:
+  # «472 passed» out of an aborted run is not a smaller measurement, it is not a
+  # measurement. Reported as a real count it produced a second red — against the
+  # 568 written down — for a cause that was not its own, and a red that is
+  # downstream of another red is noise in front of the one that matters.
+  RUST_PASSED=""
 fi
-# How many that was, summed over every binary and the doc-tests, for the
-# comparison at the foot of this script. Taken from the output already in hand:
-# running the suite twice to count it would double the slowest gate.
-RUST_PASSED=$(grep -oE '[0-9]+ passed' /tmp/gt.$$ | awk '{s+=$1} END {print s+0}')
 rm -f /tmp/gt.$$
 
 
@@ -883,7 +896,8 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_session_read_without_a_bench_names_what_it_cannot_resolve \
          a_send_with_no_session_open_is_not_refused_today \
          a_version_one_file_reads_with_no_allowed_list \
-         the_saved_files_and_the_vault_do_not_share_a_folder; do
+         the_saved_files_and_the_vault_do_not_share_a_folder \
+         each_fence_falls_when_a_value_is_planted_in_it; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -982,8 +996,10 @@ else
   WANT_DART=$(awk '/^  dart[[:space:]]/ {print $2}' "$NUMBERS")
   if [ -z "$WANT_RUST" ] || [ -z "$WANT_DART" ]; then
     fail "the numbers Windows is compared against: $NUMBERS has no «rust» or «dart» line"
-  elif [ -z "$RUST_PASSED" ] || [ "$RUST_PASSED" -eq 0 ]; then
-    fail "the numbers Windows is compared against: this run measured no Rust tests at all"
+  elif [ -z "$RUST_PASSED" ]; then
+    skip "the numbers Windows is compared against" "the Rust suite did not finish, so its count is not a measurement"
+  elif [ "$RUST_PASSED" -eq 0 ]; then
+    fail "the numbers Windows is compared against: the suite finished and counted no tests at all"
   elif [ "$RUST_PASSED" != "$WANT_RUST" ]; then
     fail "the numbers Windows is compared against: this tree runs $RUST_PASSED Rust tests, $NUMBERS still says $WANT_RUST (the merging hand writes it)"
   elif [ -z "$DART_PASSED" ]; then
@@ -997,6 +1013,7 @@ else
 fi
 
 echo
+echo "$CHECKS checks, $FAILS failed, $SKIPS skipped"
 if [ "$FAILED" -eq 0 ]; then
   echo "all gates passed"
 else
