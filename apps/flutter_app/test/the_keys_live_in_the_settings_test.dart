@@ -161,19 +161,26 @@ void main() {
   // e · Stands on the widget type. `ConnectForm` is the key form and nothing
   // else is; if one is anywhere in the tree after the press, the ruling is
   // broken whatever the screen looks like.
-  testWidgets('e — «Connect» on the sheet\'s first page opens no key form', (tester) async {
+  // **9 October, 064/C: the catalogue left this page and the door went with
+  // it.** «Connect in Settings» used to stand beside each unconnected
+  // company's name here — six of them, which is what the owner pointed at. The
+  // property this guard holds did not move an inch: the one AI control the
+  // review page carries must not open a key form inside the sheet, and its
+  // press must ask for the panel. With nothing connected that control says «No
+  // AI connected», and its press **is** the way in.
+  testWidgets('e — the first page\'s AI control opens no key form', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 950));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final ground = await _vault(tester, 'first-page');
     final bench = await _openSheet(tester, ground, toAiPage: false);
 
-    final connect = find.textContaining('Connect').hitTestable();
+    final control = find.byKey(TheModelThatAnswers.mark);
     expect(
-      connect,
-      findsWidgets,
-      reason: 'the sheet offers no provider to connect, so this test proves nothing either way',
+      control,
+      findsOneWidget,
+      reason: 'the review page names no AI at all, so this test proves nothing either way',
     );
-    await tester.tap(connect.first);
+    await tester.tap(control);
     await settle(tester);
 
     expect(

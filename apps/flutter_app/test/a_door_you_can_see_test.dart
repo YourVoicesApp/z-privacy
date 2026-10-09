@@ -144,7 +144,7 @@ void main() {
     bench.dispose();
   });
 
-  testWidgets('the list is the whole catalogue, grouped, and switching changes the model that answers', (
+  testWidgets('the model is chosen by name on the work surface, and the request carries it', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
@@ -156,6 +156,11 @@ void main() {
 
     await tester.runAsync(() async {
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      // This journey is about the wire, not about sessions: it never made a
+      // vault, the core's vault state is global, and after 064/A the send door
+      // asks for a session name while one is unlocked. The same line
+      // `reviewJourney` and «pressing Send really sends» carry.
+      await z.vaultLock();
       await ground.refresh();
       final session = await z.openSession(packId: 'de');
       await z.importText(session: session, text: _doc);
@@ -216,89 +221,39 @@ void main() {
     await tester.tap(find.byTooltip('Choose the AI and what travels to it'));
     await settle(tester);
 
-    // Every model this build knows, not only the ones a connected key reaches.
-    final unconnected = catalogue.where((m) => !m.available).toList();
-    expect(unconnected, isNotEmpty, reason: 'nothing in the catalogue is out of reach, so this proves nothing');
-    for (final model in catalogue) {
-      expect(
-        find.text(model.displayName),
-        findsOneWidget,
-        reason: '«${model.displayName}» (${model.providerId}) is missing from the chooser',
-      );
-    }
-    // Grouped by provider, with the unconnected ones offering the way in.
-    for (final p in ground.providers) {
-      expect(find.text(p.label), findsWidgets, reason: '«${p.label}» is not a heading in the chooser');
-    }
-    // The way in, beside the provider's own name. It was an «API key» form
-    // opening in place until 8 October and it is the door to the settings
-    // panel now — the owner put the AI settings there so that they never
-    // appear during work. **What this line is about is that a way exists**,
-    // which was the defect on the owner's first evening: there was none.
-    expect(
-      find.text('Connect in Settings'),
-      findsWidgets,
-      reason: 'an unconnected provider offers no way to connect',
-    );
+    // **The catalogue's own claims moved on 9 October** (064/C). The owner
+    // pointed at this page with his hand: six grey company groups and six
+    // «Connect in Settings» doors in the middle of his work. Grouping, the
+    // grey for a model no key reaches, the ready colour of 046/H and the way
+    // in are asserted where he put them — the panel's AI room, in
+    // `the_model_that_answers_test` guard 5. The claim moved with the code
+    // rather than dying with it.
+    //
+    // What this file keeps is the end of the wire, which is its own subject:
+    // the work surface names what will answer, a press lists what can, and the
+    // model chosen **by name** is the model the request carries.
+    final control = find.byKey(TheModelThatAnswers.mark);
+    expect(control, findsOneWidget,
+        reason: 'the review page does not name the model that will answer');
 
-    // ---------------------------------------------------------------- 046/H
-    //
-    // **The owner, 7 October: «the model that has a key is drawn in a
-    // different colour».** Six companies are in the list and two have keys —
-    // grey was saying «out of reach», and nothing was saying «ready». One
-    // token in the palette, `Zc.ready`, and it is read off the rendered label
-    // rather than from a flag the test sets itself.
-    //
-    // Read again, after the key: `catalogue` above was taken before
-    // `connectProvider`, so every row in it says «no key» and a test built on
-    // it would have been green for the wrong reason.
+    // Read after the key, because `catalogue` above was taken before
+    // `connectProvider` and every row in it says «no key» — a list built on it
+    // would have been green for the wrong reason.
     late final List<ModelDescriptor> withAKey;
     await tester.runAsync(() async => withAKey = await z.models());
-    final keyed = withAKey.where((m) => m.available).toList();
-    final unkeyed = withAKey.where((m) => !m.available).toList();
-    expect(keyed, isNotEmpty, reason: 'nothing in the catalogue has a key, so this proves nothing');
-    expect(unkeyed, isNotEmpty, reason: 'everything has a key, so this proves nothing either');
-    for (final model in keyed) {
-      expect(
-        tester.widget<Text>(find.text(model.displayName)).style?.color,
-        Zc.ready,
-        reason: '«${model.displayName}» has a key and is not drawn as ready',
-      );
-    }
-    for (final model in unkeyed) {
-      expect(
-        tester.widget<Text>(find.text(model.displayName)).style?.color,
-        isNot(Zc.ready),
-        reason: '«${model.displayName}» has no key and is drawn as if it had one',
-      );
-    }
-    // And the company's own name agrees with its models, so the group and its
-    // chips never say two different things.
-    final ready = ground.providers.where((p) => p.connected).toList();
-    expect(ready, isNotEmpty);
-    for (final p in ready) {
-      expect(
-        tester.widget<Text>(find.text(p.label).first).style?.color,
-        Zc.ready,
-        reason: '«${p.label}» has a key and its heading is not drawn as ready',
-      );
-    }
-    // The four that arrived in 046/H have never been called, and the screen
-    // must not suggest otherwise.
-    for (final id in ['xai', 'deepseek', 'moonshot', 'google']) {
-      final row = ground.providers.firstWhere((p) => p.id == id);
-      expect(row.connected, isFalse, reason: '«$id» reports itself connected');
-      expect(
-        tester.widget<Text>(find.text(row.label).first).style?.color,
-        isNot(Zc.ready),
-        reason: '«${row.label}» is drawn as ready and has no key',
-      );
-    }
+    final theirs = withAKey.firstWhere((m) => m.providerId == 'openai' && m.available);
+    final outOfReach = withAKey.where((m) => !m.available).toList();
+    expect(outOfReach, isNotEmpty, reason: 'everything has a key, so «names only» proves nothing');
 
+    await tester.tap(control);
+    await settle(tester);
+    // Names only: what cannot answer is not offered on a work surface.
+    for (final m in outOfReach) {
+      expect(find.text(m.displayName), findsNothing,
+          reason: '«${m.displayName}» cannot answer and is offered in the middle of the work');
+    }
     // Switching the model changes what answers — at the provider and in usage.
-    final theirs = catalogue.firstWhere((m) => m.providerId == 'openai' && m.modelId != 'the-configured-one');
-    await tester.ensureVisible(find.text(theirs.displayName));
-    await tester.tap(find.text(theirs.displayName));
+    await tester.tap(find.text(theirs.displayName).last);
     await settle(tester);
     expect(bench.chosenModel, theirs.modelId, reason: 'tapping a model chose nothing');
 
