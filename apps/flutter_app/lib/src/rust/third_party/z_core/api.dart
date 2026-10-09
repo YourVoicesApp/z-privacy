@@ -443,6 +443,13 @@ Future<void> setDataDir({required String dir}) =>
 Future<String> defaultDataDir() =>
     RustLib.instance.api.zCoreApiDefaultDataDir();
 
+/// Where a protected PDF is saved when the person has not chosen a folder —
+/// decided here for the same reason as the line above it. The screen asked
+/// `HOME` for this one, which on Windows is not set for a program with a
+/// window, so the third exit refused on that platform instead of writing.
+Future<String> defaultDocumentsDir() =>
+    RustLib.instance.api.zCoreApiDefaultDocumentsDir();
+
 /// Is it open? Locked means the vault layer is skipped, and the UI says so.
 Future<VaultState> vaultState() => RustLib.instance.api.zCoreApiVaultState();
 

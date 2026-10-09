@@ -606,7 +606,17 @@ void main() {
         reason: 'the IBAN is readable in the PDF');
   });
 
-  test('the stated folder is the one the owner was told', () {
-    expect(protectedPdfFolder(), '${Platform.environment['HOME']}/Documents/zprivacy');
+  test('the stated folder is the core\'s answer, and on Linux it is this one', () async {
+    final said = await protectedPdfFolder();
+    // Two assertions, because there are two claims. The first is the one
+    // 074/W1 is about: the screen has no answer of its own any more, so a
+    // platform where `HOME` means nothing is answered by the core instead of
+    // being refused. The second is what that answer is here — if the core's
+    // Linux path ever moves, the person's saved files move with it, and this
+    // is what notices.
+    expect(said, await z.defaultDocumentsDir(),
+        reason: 'the screen must not have an answer of its own');
+    expect(said, '${Platform.environment['HOME']}/Documents/zprivacy',
+        reason: 'and on Linux the core\'s answer is the folder people already have');
   });
 }

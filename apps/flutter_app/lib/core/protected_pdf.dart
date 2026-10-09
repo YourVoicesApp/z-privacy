@@ -47,6 +47,8 @@ import 'package:crypto/crypto.dart' as c;
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:zprivacy/src/rust/api/mirrors.dart';
+import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 /// sha256 of a string, the way a reader would compute it: UTF-8 bytes, lower
 /// hex. The footer states this over the protected text, and the protected text
@@ -187,13 +189,26 @@ List<DirectionBlock> directionBlocks(String text) {
   return out;
 }
 
-/// Where a saved PDF goes. Said in words on the screen before it is written.
-String protectedPdfFolder() {
-  final home = Platform.environment['HOME'];
-  // No home in the environment is not a place to guess at. The caller shows
-  // the refusal; it never writes somewhere else instead.
-  if (home == null || home.isEmpty) return '';
-  return '$home/Documents/zprivacy';
+/// Where a saved PDF goes — **the core's answer, not this file's guess.**
+///
+/// This read `Platform.environment['HOME']` and built `$home/Documents/zprivacy`
+/// from it. On Linux that is right. On Windows `HOME` is not set for a program
+/// with a window, so the folder came back empty and every «Save as PDF» ended
+/// in the refusal below: the third exit did not exist on the second platform.
+///
+/// It is the same mistake `z_core/src/data_dir.rs` was written to delete — the
+/// vault's folder was decided in Dart in one line just like this one — made
+/// again a month later for the other folder. So the answer comes from
+/// `default_documents_dir`, which says it in each platform's own terms.
+///
+/// A refusal still returns the empty string: the sentence a person reads for
+/// this belongs to the caller, which writes nothing and says so.
+Future<String> protectedPdfFolder() async {
+  try {
+    return await z.defaultDocumentsDir();
+  } on ApiError {
+    return '';
+  }
 }
 
 /// The facts the footer states. Not one of them is **discovered** here — the
@@ -366,11 +381,11 @@ Future<PdfSaved> saveProtectedPdf({
   String? folder,
   DateTime? now,
 }) async {
-  final into = folder ?? protectedPdfFolder();
+  final into = folder ?? await protectedPdfFolder();
   if (into.isEmpty) {
     return const PdfSaved.trouble(
-      'Z Privacy could not tell where your home folder is, so it has not guessed. '
-      'Nothing was written.',
+      'Z Privacy could not tell where your documents folder is, so it has not '
+      'guessed. Nothing was written.',
     );
   }
   final day = _day(now ?? DateTime.now());
