@@ -44,7 +44,7 @@ Unprotect   غيّر قرار الحماية هنا  → وهذا وحده يغ�
 | عدد الملفّات | `profiles()` |
 | «N connected of M» | `providers()` — `connected` لكلّ صفّ |
 | «DE · German (DE) · scan on import» | `settings().pack_id` مقابل `packs()`، والجملة من `settings().scan_on_import` |
-| «Conversations are not saved…» | ليس رقماً بل **وصفٌ صحيح**: الـcore لا يحفظ جلسةً بين تشغيلين |
+| «No session is open — nothing of this conversation is kept» / «This session keeps its conversation…» | ليس رقماً بل **وصفٌ صحيح بحالتين** (064/E): `conversation_open()` يقرّر أيُّ الجملتين تُعرَض. الأولى حين لا جلسة — والنواةُ ترفض الكتابة بـ«there is no session open to write to»؛ والثانية حين تكون مفتوحة، فالدورُ يُكتَب مختوماً في الخزانة ويُقرأ بـ`conversation_turns`. الجملةُ القديمة «Conversations are not saved after you close the app» صارت كاذبةً لحظةَ بدأت النواةُ تكتب الأدوار |
 
 ## الشريط العلويّ في Workspace
 

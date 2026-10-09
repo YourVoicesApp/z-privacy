@@ -142,7 +142,12 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
               children: [
                 Row(
                   children: [
-                    const ZMark(size: 38),
+                    // **The picture, large, where a person looks first** —
+                    // 072, the owner on 9 October: «أريد أن تظهر صورة الشعار في
+                    // شاشات التطبيق». The lettered tile that stood here was
+                    // drawn in Dart; this is his own picture, from the one
+                    // asset `scripts/build_brand.py` generates.
+                    const BrandMark(size: 64),
                     const SizedBox(width: 13),
                     Text('Z Privacy', style: Zc.h1.copyWith(fontSize: 28)),
                   ],
@@ -239,15 +244,16 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
           ),
         ),
           ),
-          // The mark itself, once, in the corner of the first page a person
-          // ever sees — and nowhere else in the app. A product that shows its
-          // badge on every screen is a product talking about itself; this one
-          // has work to do.
-          const Positioned(
-            right: 28,
-            bottom: 24,
-            child: Opacity(opacity: 0.9, child: BrandMark(size: 64)),
-          ),
+          // **The sentence that used to stand here, and what replaced it.**
+          // It read: «The mark itself, once, in the corner of the first page a
+          // person ever sees — and nowhere else in the app. A product that
+          // shows its badge on every screen is a product talking about itself;
+          // this one has work to do.» The owner ruled otherwise on 9 October —
+          // he wants his picture in the app's screens — so the mark moved into
+          // this page's own head, where a person looks first, and the heads of
+          // the chat, the panel and the work bar wear it at their own sizes.
+          // One picture per screen, never two: the reason the old sentence gave
+          // still holds against a badge in every corner.
         ],
       ),
     );

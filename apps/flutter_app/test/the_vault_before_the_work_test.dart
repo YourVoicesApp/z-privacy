@@ -170,7 +170,9 @@ void main() {
     expect(find.byType(HomeScreen), findsOneWidget, reason: 'the vault did not lead on to Home');
 
     // 041-G — the box is the home: no sheet, no question, just the text.
-    await tester.enterText(find.byType(TextField).first, _doc);
+    // By key since 064/D: this page has a second field while a person has no
+    // session — the session question — and it comes first in the tree.
+    await tester.enterText(find.byKey(HomeScreen.composer), _doc);
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Open and scan'));
     await settle(tester);

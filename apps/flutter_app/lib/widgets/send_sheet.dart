@@ -39,6 +39,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/core.dart' show coreVersion;
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/the_session_question.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
 class SendSheet extends StatefulWidget {
@@ -99,12 +100,15 @@ class _SendSheetState extends State<SendSheet> {
     unawaited(widget.bench.refreshModels());
     // **The document's name, offered and not imposed.** A pre-filled field
     // still asks; an empty one in front of the only button that matters is a
-    // stall. It stays the person's to replace.
-    _sessionName.text = widget.bench.document?.name ?? '';
+    // stall. It stays the person's to replace — and since 064/D the offer is
+    // only made when the person has not already answered somewhere else: a
+    // word typed in the chat is their own and outranks a file's name.
+    if (widget.ground.sessionNameWished.trim().isEmpty) {
+      widget.ground.wishSessionName(widget.bench.document?.name ?? '');
+    }
   }
 
   final _pasted = TextEditingController();
-  final _sessionName = TextEditingController();
   final _nameFocus = FocusNode();
   final _previewScroll = ScrollController();
 
@@ -216,7 +220,6 @@ class _SendSheetState extends State<SendSheet> {
   @override
   void dispose() {
     _pasted.dispose();
-    _sessionName.dispose();
     _nameFocus.dispose();
     _previewScroll.dispose();
     super.dispose();
@@ -392,11 +395,16 @@ class _SendSheetState extends State<SendSheet> {
         style: Zc.small.copyWith(color: Zc.ink4),
       );
     }
-    final named = _sessionName.text.trim();
+    final named = widget.ground.sessionNameWished.trim();
     return Text(
       named.isEmpty
-          ? 'No session yet — name it on the page before; either door begins it.'
-          : 'Either door begins session «$named».',
+          // **«Any door», because there are three** (064/A). It read «either
+          // door» while the exits were the clipboard and the PDF; the send
+          // through a key begins the session too now, and it is the only one
+          // of the three that puts the text on a wire. A sentence that counted
+          // the doors wrongly would be a sentence a person could check.
+          ? 'No session yet — name it on the page before; any door here begins it.'
+          : 'Any door here begins session «$named».',
       style: Zc.small.copyWith(color: Zc.ink4),
     );
   }
@@ -420,68 +428,32 @@ class _SendSheetState extends State<SendSheet> {
   /// room, directly above the text it is about; the doors page carries one line
   /// saying what the press will do, and a press with no name comes back to this
   /// field rather than refusing into a dead end.
+  ///
+  /// **064/D: the words left this file.** The owner put the same question in
+  /// the chat screen, so it is [TheSessionQuestion] now — one wording, one
+  /// answer kept on the ground, and one sentence that differs per surface,
+  /// which is the act that will begin it. The key stays on a wrapper so that
+  /// every guard written against this sheet goes on finding the same band.
   Widget _theBand() {
-    // The question. **Not a dialog**: a dialog over this sheet is a third
-    // storey whose dismissing press looks like «cancel the send», and it would
-    // cover the two buttons it is about. It is also not a gate — the doors
-    // stay live beside it. It is the question answered before it is needed.
-    // The prose is whole here. It was cut to three lines while this stood
-    // above the doors, where 202px cost a door its place; on this page the
-    // payload's own scroller gives the room back, so the question keeps the
-    // words it was approved with.
-    return Container(
+    return KeyedSubtree(
       key: SendSheet.theSessionBand,
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-      decoration: Zc.panel(fill: Zc.warmCard),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('This conversation has no session yet', style: Zc.h2),
-          const SizedBox(height: 6),
-          const Text(
-            'A session has its own key. The same name in two sessions takes two '
-            'different tokens, and inside one session it takes the same token '
-            'wherever it appears — that is how you choose what an AI can line up '
-            'and what it cannot.',
-            style: Zc.small,
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            key: SendSheet.theSessionName,
-            controller: _sessionName,
-            focusNode: _nameFocus,
-            style: Zc.body.copyWith(color: Zc.ink),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Zc.card,
-              isDense: true,
-              // **The room's hint, word for word.** Two doors, one birth, one
-              // question: a person who meets it twice meets one thing.
-              hintText: 'What is this one about?',
-              hintStyle: Zc.body.copyWith(color: Zc.ink4),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: Zc.line),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // **Every clause is true from here, which is not where it was
-          // written for.** «behind this sheet», not the room's «in front of
-          // you»: the panel stands beside the document, this sheet covers it.
-          // «on the page after this», because the two doors are no longer the
-          // next thing under this field. And no number before the act — the
-          // count a person is told is the one the core returns, after the
-          // renaming it is counting.
-          const Text(
-            'Copy Protected or Save as PDF, on the page after this, begins it. '
-            'Everything already protected on the document behind this sheet is '
-            'renamed into it — nothing has left this machine yet, so nothing '
-            'that did is affected.',
-            style: Zc.small,
-          ),
-        ],
+      child: TheSessionQuestion(
+        ground: widget.ground,
+        fieldKey: SendSheet.theSessionName,
+        focusNode: _nameFocus,
+        // **Every clause is true from here, which is not where it was written
+        // for.** «behind this sheet», not the room's «in front of you»: the
+        // panel stands beside the document, this sheet covers it. «on the page
+        // after this», because the doors are no longer the next thing under
+        // the field. And no number before the act — the count a person is told
+        // is the one the core returns, after the renaming it is counting. The
+        // third act is named too (064/A): a send through a connected key
+        // begins the session as the other two do.
+        closing:
+            'Copy Protected, Save as PDF, or a send to a connected AI — on the '
+            'page after this — begins it. Everything already protected on the '
+            'document behind this sheet is renamed into it — nothing has left '
+            'this machine yet, so nothing that did is affected.',
       ),
     );
   }
@@ -493,8 +465,8 @@ class _SendSheetState extends State<SendSheet> {
   /// why there is no Cancel in the band: closing this sheet takes nothing out,
   /// and that is what refusing means here.
   void _nothingLeft(WhatMayLeave out) {
-    final needsAName =
-        widget.ground.theSessionQuestionStands && _sessionName.text.trim().isEmpty;
+    final needsAName = widget.ground.theSessionQuestionStands &&
+        widget.ground.sessionNameWished.trim().isEmpty;
     setState(() {
       _trouble = out.refused;
       // **Back to the question, not a dead end.** The field is one page back
@@ -560,7 +532,7 @@ class _SendSheetState extends State<SendSheet> {
                               final out = await beginThenRead(
                                 widget.ground,
                                 widget.bench,
-                                name: _sessionName.text,
+                                name: widget.ground.sessionNameWished,
                               );
                               if (!mounted) return;
                               if (out.view == null) {
@@ -592,7 +564,7 @@ class _SendSheetState extends State<SendSheet> {
                               final out = await beginThenRead(
                                 widget.ground,
                                 widget.bench,
-                                name: _sessionName.text,
+                                name: widget.ground.sessionNameWished,
                               );
                               if (!mounted) return;
                               if (out.view == null) {
@@ -701,21 +673,38 @@ class _SendSheetState extends State<SendSheet> {
                                   (payload == null && !widget.bench.sendOriginal)
                               ? null
                               : () async {
-                                  // Two doors, and the mode names which. The
-                                  // document is an argument of one of them
-                                  // only.
-                                  final bad = widget.bench.sendOriginal
-                                      ? await widget.bench.askModelWithTheOriginal(
-                                          p.id,
-                                          original: widget.bench.document?.text ?? '',
-                                        )
-                                      : await widget.bench.askModelProtected(p.id);
-                                  if (!context.mounted) return;
-                                  if (bad == null) {
-                                    Navigator.of(context).pop(true);
-                                  } else {
-                                    setState(() => _trouble = bad);
+                                  // **The order is not written here either.**
+                                  // `beginThenAsk` holds it — the name, the
+                                  // birth, the refresh, and then the right one
+                                  // of the two calls, because the mode names
+                                  // which and the document is an argument of
+                                  // one of them only. This press reads the
+                                  // name, takes what it is handed, and says
+                                  // so. The owner's own run found this door
+                                  // sending with no session born at all.
+                                  final out = await beginThenAsk(
+                                    widget.ground,
+                                    widget.bench,
+                                    name: widget.ground.sessionNameWished,
+                                    providerId: p.id,
+                                  );
+                                  // The State's own `mounted`, not the
+                                  // context's: this closure uses
+                                  // `State.context`, and the analyzer is right
+                                  // that the two checks are not the same one.
+                                  if (!mounted) return;
+                                  if (out.refused != null) {
+                                    // A birth that happened is still said,
+                                    // even when the send that followed it
+                                    // failed: the session is open and the
+                                    // names on the bench are its, and a
+                                    // person who is told only «it failed»
+                                    // would not know that.
+                                    if (out.said != null) _begun = out.said;
+                                    _nothingLeft(out);
+                                    return;
                                   }
+                                  Navigator.of(context).pop(true);
                                 },
                           // **The count, here too** (046/L). This sheet held a
                           // second copy of «Answer the review first» — two
@@ -881,22 +870,20 @@ class _SendSheetState extends State<SendSheet> {
 
 /// Which model answers, and what travels to it.
 ///
-/// **The whole catalogue, grouped by provider** — not only the models a
-/// connected key can reach. A person with one provider connected used to see
-/// one provider's models and no sign that this build knows any others, which
-/// made the choice look smaller than it is; and the way to connect the rest
-/// was two doors further down, under a button that stayed disabled until the
-/// review was finished.
+/// **9 October: the catalogue left this page.** It held the whole of it,
+/// grouped by company, with an unconnected provider's models greyed and
+/// «Connect in Settings» beside each company's name — six groups and six doors,
+/// which is what the owner pointed at with his hand in the middle of his work.
+/// His ruling: the name of the model that will answer is what a work surface
+/// shows, a press on it lists **names only**, and the catalogue belongs in the
+/// AI room in the panel. [TheModelThatAnswers] is that control, on this page
+/// and in the chat, and the room is where a person goes to set something up.
 ///
-/// So an unconnected provider's models are shown greyed, with the way in beside
-/// the provider's own name rather than two doors away.
-///
-/// **8 October: the way in is a door, not a form.** The form used to open right
-/// here, on the page this sheet opens on — a person who pressed ✨AI to choose a
-/// model was one press from an endpoint, a model name and an API key. The owner:
-/// the AI settings live in the settings screen and never appear during work. So
-/// «Connect in Settings» closes the sheet and opens the panel, which 063 made
-/// able to stand over the document.
+/// What is kept here is the previous ruling's reason: the way in is a **door**,
+/// not a form. The form used to open on this page, so a person who pressed
+/// ✨AI to choose a model was one press from an endpoint and an API key; the
+/// owner put the AI settings in the panel so that they never appear during
+/// work, and 063 made the panel able to stand over the document.
 ///
 /// The second choice is the only place in this app where a person can decide
 /// to send their document as it stands, and it says so in those words:
@@ -921,16 +908,6 @@ class _ModelAndModeState extends State<_ModelAndMode> {
   @override
   Widget build(BuildContext context) {
     final bench = widget.bench;
-    // The catalogue's own order, grouped. Dart neither sorts the providers nor
-    // names them: both come from the core.
-    final order = <String>[];
-    final byProvider = <String, List<ModelDescriptor>>{};
-    for (final model in bench.models) {
-      byProvider.putIfAbsent(model.providerId, () {
-        order.add(model.providerId);
-        return <ModelDescriptor>[];
-      }).add(model);
-    }
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
@@ -940,19 +917,28 @@ class _ModelAndModeState extends State<_ModelAndMode> {
         children: [
           Text('Model', style: Zc.tiny.copyWith(color: Zc.ink4)),
           const SizedBox(height: 6),
-          _Chip(
-            label: 'As configured',
-            on: bench.chosenModel == null,
-            onTap: () => bench.chooseModel(null),
+          // **The catalogue moved; the control stayed** — 064/C, the owner's
+          // own hand on this page: six grey company groups and six «Connect in
+          // Settings» doors in the middle of his work. What belongs here is
+          // the one question this page raises — who answers if I press send —
+          // and the list of what actually can. The grouped catalogue, the
+          // greyed names and the way in are in the AI room, where setting
+          // something up is what a person came to do.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TheModelThatAnswers(
+              ground: widget.ground,
+              bench: bench,
+              // Only when pressing it would open the panel: the sheet's own
+              // rule since 063, kept by passing on what it was given.
+              onSettings: widget.onSettings == null
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      widget.onSettings!();
+                    },
+            ),
           ),
-          for (final id in order) ...[
-            const SizedBox(height: 12),
-            _provider(context, id, byProvider[id] ?? const []),
-          ],
-          if (order.isEmpty) ...[
-            const SizedBox(height: 10),
-            const Text('This build carries no catalogue.', style: Zc.small),
-          ],
           const SizedBox(height: 14),
           Text('What travels', style: Zc.tiny.copyWith(color: Zc.ink4)),
           const SizedBox(height: 6),
@@ -984,77 +970,6 @@ class _ModelAndModeState extends State<_ModelAndMode> {
       ),
     );
   }
-
-  /// One provider: its name, its models, and — when it is not connected — the
-  /// way in, beside the name rather than two doors away.
-  Widget _provider(BuildContext context, String id, List<ModelDescriptor> models) {
-    final rows = widget.ground.providers.where((p) => p.id == id).toList();
-    final row = rows.isEmpty ? null : rows.first;
-    // «Connected» is the core's word, and a model that needs no credential is
-    // reachable whether or not anything is stored — which is why this reads
-    // the catalogue's own `available` rather than deciding for itself.
-    final reachable = models.any((m) => m.available);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              row?.label ?? id,
-              style: Zc.small.copyWith(
-                color: reachable ? Zc.ready : Zc.ink3,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            // The way in, and it leads out of this sheet. Drawn only when
-            // there is somewhere for it to lead: a surface that was given no
-            // panel shows no door rather than one that does nothing.
-            if (!reachable && row != null && widget.onSettings != null) ...[
-              const SizedBox(width: 10),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  widget.onSettings!();
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: Zc.clay,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: const Text(
-                  'Connect in Settings',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final model in models)
-              _Chip(
-                label: model.displayName,
-                on: widget.bench.chosenModel == model.modelId,
-                // **The colour the owner asked for**: a model whose key is
-                // here reads as ready, and one whose key is not stays as it
-                // was — greyed, with the door to the settings beside its
-                // company's name.
-                // `available` is the core's own word for it, so the screen
-                // decides nothing.
-                ready: model.available,
-                // Greyed, not hidden: a model this build knows about is worth
-                // seeing even when the key for it is not here yet.
-                onTap: model.available ? () => widget.bench.chooseModel(model.modelId) : null,
-              ),
-          ],
-        ),
-      ],
-    );
-  }
 }
 
 class _Chip extends StatelessWidget {
@@ -1063,7 +978,6 @@ class _Chip extends StatelessWidget {
     required this.on,
     required this.onTap,
     this.warn = false,
-    this.ready = false,
   });
 
   final String label;
@@ -1074,22 +988,15 @@ class _Chip extends StatelessWidget {
   final VoidCallback? onTap;
   final bool warn;
 
-  /// **A key for this provider is in this run** (046/H, the owner: «the model
-  /// that has a key is drawn in a different colour»).
-  ///
-  /// Not the same fact as `on`, which is «this is the one I chose», and not the
-  /// same as reachable, which was being said in grey alone. Grey says «off»;
-  /// this says «ready», and the two readings are what a person needs in a list
-  /// of six companies of which two have keys.
-  final bool ready;
+  /// **046/H's `ready` left with the catalogue** (064/C). «The model that has a
+  /// key is drawn in a different colour» was the owner's word on 7 October
+  /// about a list of six companies of which two had keys; that list is in the
+  /// panel's AI room now, and the colour went with it. This chip is the mode,
+  /// where there is nothing to be out of reach.
 
   @override
   Widget build(BuildContext context) {
-    final tint = warn
-        ? Zc.amber
-        : ready
-            ? Zc.ready
-            : Zc.river;
+    final tint = warn ? Zc.amber : Zc.river;
     final reachable = onTap != null;
     return Opacity(
       opacity: reachable ? 1 : 0.45,
@@ -1099,27 +1006,14 @@ class _Chip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          // A ready chip carries its colour even before it is chosen, which is
-          // the whole point: the difference a person is looking for is «can
-          // this answer me», not «did I already press it».
-          color: on
-              ? tint.withValues(alpha: 0.12)
-              : ready
-                  ? Zc.readyWash
-                  : Colors.transparent,
-          border: Border.all(
-            color: on
-                ? tint
-                : ready
-                    ? Zc.readyEdge
-                    : Zc.line,
-          ),
+          color: on ? tint.withValues(alpha: 0.12) : Colors.transparent,
+          border: Border.all(color: on ? tint : Zc.line),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
           style: Zc.small.copyWith(
-            color: on || ready ? tint : Zc.ink3,
+            color: on ? tint : Zc.ink3,
             fontWeight: on ? FontWeight.w600 : FontWeight.w400,
           ),
         ),

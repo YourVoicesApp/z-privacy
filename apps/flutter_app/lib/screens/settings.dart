@@ -21,11 +21,14 @@
 // why there is no back arrow on it any more — there is nothing to go back to.
 // The owner, 8 October: «نجعل نافذة الإعدادات خيار في الأعلى يفتح قائمة إلى يمين
 // الشاشة وتغلق بالضغط عليها», and 480 is his number.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
+import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 
@@ -101,6 +104,33 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late SettingsRoom _room = widget.room ?? SettingsRoom.ai;
 
+  /// **The catalogue, asked for when the panel opens** — 064/C.
+  ///
+  /// It arrived with the models that moved out of the send sheet. Asked of the
+  /// core here rather than kept on the ground beside the providers, because a
+  /// second cached copy of one fact is how two screens come to say different
+  /// things — the panel reads it when it is opened, which is the only moment
+  /// it draws it.
+  List<ModelDescriptor> _catalogue = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_readTheCatalogue());
+  }
+
+  Future<void> _readTheCatalogue() async {
+    try {
+      final got = await z.models();
+      if (!mounted) return;
+      setState(() => _catalogue = got);
+    } on ApiError {
+      // A panel that cannot list the models still connects them: the room's
+      // own forms are what a person came for, and a missing list says so by
+      // being missing rather than by taking the room down.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final g = widget.ground;
@@ -133,6 +163,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               child: Row(
                 children: [
+                  // The owner's picture in the panel's head too — 072. Small,
+                  // because this strip stands over a person's document and the
+                  // door that shuts it is the thing they are reaching for.
+                  const BrandMark(size: 20),
+                  const SizedBox(width: 9),
                   const Text('Settings', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink)),
                   const Spacer(),
                   SettingsDoor(open: true, onTap: widget.onClose),
@@ -144,7 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(18, 18, 18, 36),
                 child: switch (_room) {
-                  SettingsRoom.ai => _AiRoom(ground: g),
+                  SettingsRoom.ai => _AiRoom(ground: g, catalogue: _catalogue),
                   SettingsRoom.privacy => _PrivacyRoom(ground: g),
                   SettingsRoom.language => _LanguageRoom(ground: g),
                   SettingsRoom.vault => _VaultRoom(ground: g),
@@ -222,9 +257,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 // ---------------------------------------------------------------- AI
 
 class _AiRoom extends StatelessWidget {
-  const _AiRoom({required this.ground});
+  const _AiRoom({required this.ground, this.catalogue = const []});
 
   final Ground ground;
+
+  /// **Every model this build knows** — 064/C, and this is where the whole
+  /// catalogue lives now. The owner, 9 October: the work surfaces name the
+  /// model that will answer and list the ones that can; the companies, the
+  /// greyed names and the way in belong where a person goes to set something
+  /// up.
+  final List<ModelDescriptor> catalogue;
 
   @override
   Widget build(BuildContext context) {
@@ -278,6 +320,7 @@ class _AiRoom extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
+                _theirModels(row),
                 ConnectForm(ground: ground, row: row, local: false),
               ],
             ),
@@ -299,6 +342,45 @@ class _AiRoom extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+
+  /// One company's models, by name, with the colour the owner asked for.
+  ///
+  /// **046/H, the owner on 7 October: «the model that has a key is drawn in a
+  /// different colour»** — grey was saying «out of reach» and nothing was
+  /// saying «ready», in a list of six companies of which two had keys. The
+  /// reading moved here with the catalogue it was about, and `available` is the
+  /// core's own word for it, so this screen decides nothing.
+  ///
+  /// Greyed, never hidden: a model this build can offer is worth seeing before
+  /// the key for it is given — the way in is the form directly below.
+  Widget _theirModels(ProviderFact row) {
+    final theirs = catalogue.where((m) => m.providerId == row.id).toList();
+    if (theirs.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Models', style: Zc.tiny.copyWith(color: Zc.ink4)),
+          const SizedBox(height: 5),
+          Wrap(
+            spacing: 10,
+            runSpacing: 5,
+            children: [
+              for (final m in theirs)
+                Text(
+                  m.displayName,
+                  style: Zc.small.copyWith(
+                    color: m.available ? Zc.ready : Zc.ink3,
+                    fontWeight: m.available ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -93,14 +93,22 @@ void main() {
     // session» were two buttons and one of them opened a sheet that asked a
     // language first; the page is a box to write in now, with a «+» for a file,
     // and the vault is still a press away.
-    expect(find.byType(TextField), findsOneWidget, reason: 'the home is not a box to write in');
+    // The box, by its key: 064/D put a second field on this page — the session
+    // question, while a person has no session — and the claim here is about
+    // the box a person writes in, not about how many fields the page has.
+    expect(find.byKey(HomeScreen.composer), findsOneWidget,
+        reason: 'the home is not a box to write in');
     expect(find.byTooltip('Add a document — PDF, Word or text'), findsOneWidget);
     expect(find.text('Open Z Vault'), findsOneWidget);
-    // No invented history: a session lives in memory, and Home says so once.
+    // No invented history: Home says what is kept, once, and says it in the
+    // form that is true right now. **064/E changed the sentence, not the
+    // claim:** a session keeps its conversation sealed in the vault since the
+    // core began writing turns, so «conversations are not saved» is the honest
+    // line only while no session is open — which is this journey's own state.
     expect(find.text('LOCAL CONVERSATIONS'), findsNothing);
     expect(
       find.textContaining(
-        'Conversations are not saved after you close the app',
+        'No session is open — nothing of this conversation is kept',
       ),
       findsOneWidget,
     );
@@ -1312,6 +1320,19 @@ void main() {
 
     await tester.runAsync(() async {
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      // **This journey is about the wire, not about sessions** — the same line
+      // and the same reason as `reviewJourney`'s, one door further along. It
+      // never made a vault; the core's vault state is global and an earlier
+      // test in this file leaves one unlocked, so after 064/A the send door
+      // asked it for a session name and the nameless press sent nothing. A
+      // journey that measures the bytes and the Authorization header should
+      // not depend on session state at all, and this line says so.
+      //
+      // The state it stops covering — a send **with** a session, and what the
+      // wire then carries — is measured in `the_third_exit_test`, whose fake
+      // provider keeps the request body: guard 1 proves the names on it are
+      // the newborn session's and none of the pre-birth ones.
+      await z.vaultLock();
       await ground.refresh();
       final session = await z.openSession(packId: 'de');
       await z.importText(session: session, text: _doc);

@@ -234,7 +234,10 @@ void main() {
     await _settle(tester);
     expect(find.byKey(SendSheet.theSessionBand), findsNothing,
         reason: 'the prose band followed to the doors page, where it does not fit');
-    expect(find.textContaining('either door begins it'), findsOneWidget,
+    // «any door here», since 064/A: the exits are three, the send through a
+    // key among them, and a line that counted two was a line a person could
+    // check and find wrong.
+    expect(find.textContaining('any door here begins it'), findsOneWidget,
         reason: 'the doors page says nothing about the session the press will begin');
     for (final label in ['Copy Protected', 'Save as PDF']) {
       expect(

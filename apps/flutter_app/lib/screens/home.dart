@@ -37,6 +37,8 @@ import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/the_journey.dart';
+import 'package:zprivacy/widgets/the_session_question.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -82,6 +84,10 @@ class HomeScreen extends StatefulWidget {
   /// facts have one owner; a Home standing on its own has no panel over it.
   final bool settingsOpen;
   final String version;
+
+  /// The box a person writes in. Keyed because this screen has had a second
+  /// field since 064/D — see the comment on the field itself.
+  static const composer = ValueKey<String>('home-composer');
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -221,9 +227,52 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.fromLTRB(34, 30, 34, 0),
                     child: Row(
                       children: [
-                        const ZMark(size: 36),
+                        // The owner's picture, at the lettered tile's own
+                        // size — 072, a swap and not an addition, so this
+                        // strip's width is untouched.
+                        const BrandMark(size: 36),
                         const SizedBox(width: 12),
                         const Text('Z Privacy', style: Zc.h1),
+                        // **The session, in the head of the chat too** —
+                        // 064/B. The owner asked for it beside the file's
+                        // name; a person standing in this screen has no file
+                        // and the same question, so the claim is the same one:
+                        // which direction of work am I in. This strip has the
+                        // room the workspace's bar does not.
+                        if (ground.openSessionRow != null) ...[
+                          const SizedBox(width: 12),
+                          Flexible(child: TheOpenSession(ground: ground)),
+                        ],
+                        const SizedBox(width: 8),
+                        // **Who answers, in the head of the chat** — 064/C.
+                        //
+                        // It stood in the composer's own row first, beside
+                        // «Ask the AI», which is where a chat puts it and
+                        // where it is read in the same glance as the act. It
+                        // does not fit there, and the number is the reason: a
+                        // third element in that row takes its width from the
+                        // `Wrap` holding «Open and scan» and «Ask the AI», the
+                        // buttons wrap onto a second line, the pinned band
+                        // grows, and at a 900×760 window the page's own last
+                        // line ended at **y = 804** — 44 px below the glass,
+                        // inside the band's own scroller where no rect of the
+                        // composer complains.
+                        //
+                        // So it stands beside the session's name, in the strip
+                        // that never scrolls: the two facts about this
+                        // conversation — which direction of work, and which
+                        // model is about to receive the text — read as one
+                        // line, and the composer keeps its height.
+                        if (chat != null)
+                          Flexible(
+                            child: TheModelThatAnswers(
+                              ground: ground,
+                              bench: chat,
+                              // The same rule as every other door in this app:
+                              // nothing is offered over an already-open panel.
+                              onSettings: widget.settingsOpen ? null : widget.onSettings,
+                            ),
+                          ),
                         const Spacer(),
                         // The stamp is three times the length of «z_core 0.1.0», so
                         // it is given room to shrink rather than room to overflow —
@@ -252,6 +301,54 @@ class _HomeScreenState extends State<HomeScreen> {
                       controller: _conversation,
                       padding: const EdgeInsets.fromLTRB(34, 24, 34, 14),
                       children: [
+                        // **The session question, the owner's second place**
+                        // (064/D): «in the chat screen itself when the person
+                        // has no session».
+                        //
+                        // At the end of the conversation and not in the
+                        // composer's band, for a measured reason: that band is
+                        // pinned and capped at half the window, and a third
+                        // element in it already cost the page's last line 44 px
+                        // of glass at 760 (064/C). Here it is the last thing in
+                        // the thread, directly above the writing, where a chat
+                        // puts a question it is asking — and it scrolls away
+                        // **At the head of the thread, and the place was
+                        // measured twice before it settled here.** 065's rule
+                        // is the owner's: the answer is the last thing above
+                        // the writing, and the thread jumps to its own end
+                        // whenever one arrives.
+                        //
+                        //   * at the end of the thread, below the answer, the
+                        //     jump put the answer's top at y = 65.67 against
+                        //     the thread's own 66 — a third of a pixel out of
+                        //     the band it is supposed to be in;
+                        //   * directly above the answer, at a 900×520 window
+                        //     the answer was **never built**: the jump lands on
+                        //     the extent a `ListView` has built, and 200 px of
+                        //     new prose above it left that short.
+                        //
+                        // Both readings came from `the_chat_reads_like_a_chat`,
+                        // a file this round did not touch. At the head it costs
+                        // the thread's end nothing: a fresh chat opens at the
+                        // top, which is where a person with no session is, and
+                        // it scrolls away with the page's own opening words
+                        // once there is a conversation to read.
+                        //
+                        // One wording with the sheet's, one answer on the
+                        // ground, and the closing sentence is this surface's
+                        // own: «Ask the AI» does not begin a session, it opens
+                        // the review, and the doors there are where the text
+                        // leaves.
+                        if (ground.theSessionQuestionStands) ...[
+                          const SizedBox(height: 22),
+                          TheSessionQuestion(
+                            ground: ground,
+                            closing:
+                                '«Ask the AI» below takes you to the review, and the door you '
+                                'press there begins it — the clipboard, the PDF, or a send to a '
+                                'connected AI. Nothing has left this machine yet.',
+                          ),
+                        ],
                         const Text('What stays on this device, and what leaves it.', style: Zc.h2),
                         const SizedBox(height: 10),
                         const Text(
@@ -279,6 +376,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         // views, the fourth mark, the two named copies and the
                         // clipboard confirmation are one implementation and
                         // not two.
+                        // **The journey of a send** — 064/E, the owner's
+                        // three steps, where he asked for them: the press
+                        // lands here, and what was sent, what came back and
+                        // what was pulled in stand in the thread in that
+                        // order. Above the answer panel, which is the full
+                        // reading of the answer with its two views and its two
+                        // named copies.
+                        if (chat != null && chat.stage != SendStage.none) ...[
+                          const SizedBox(height: 22),
+                          TheJourney(bench: chat, ground: ground),
+                        ],
                         if (chat != null && chat.showing != null) ...[
                           const SizedBox(height: 22),
                           AnswerPanel(bench: chat),
@@ -363,6 +471,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               TextField(
+                                // **Keyed since 064/D**, because the chat now
+                                // has a second field in it: the session
+                                // question stands at the end of the thread
+                                // while a person has no session, and it comes
+                                // first in the tree. Every guard that reached
+                                // for «the first TextField on this page» was
+                                // reaching for this one, and a new field in
+                                // the tree is a change to that reach whether
+                                // or not anything moved on the glass.
+                                key: HomeScreen.composer,
                                 controller: _text,
                                 focusNode: _focus,
                                 autofocus: true,
@@ -443,8 +561,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           // on the first screen of the product — 046/D's sweep found
                           // it in Dart after the two in the core. Under the writing
                           // now, which is where a chat keeps the line about itself.
-                          'Nothing is uploaded to be read. Conversations are not saved after you close '
-                          'the app.',
+                          //
+                          // **And it has two forms since 064/E, because the truth
+                          // has two states.** It read «Conversations are not saved
+                          // after you close the app» — which stopped being true the
+                          // moment the core began writing a turn into the open
+                          // session's file: the conversation *is* kept, sealed in the
+                          // vault, and it is there after the app closes. A screen
+                          // promising what the core does not do is the defect that
+                          // started this whole round, and it is the same defect
+                          // facing the other way. The lead's wording, both halves.
+                          ground.openSessionRow != null
+                              ? 'Nothing is uploaded to be read. This session keeps its '
+                                    'conversation, sealed in your vault on this device — delete '
+                                    'the session and its key and its file go together.'
+                              : 'Nothing is uploaded to be read. No session is open — nothing of '
+                                    'this conversation is kept.',
                           style: Zc.small.copyWith(color: Zc.ink4),
                         ),
                         ],

@@ -19,6 +19,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/shell.dart';
@@ -160,8 +161,11 @@ Future<Ground> withADocumentBehindThePanel(WidgetTester tester, String name) asy
   }
 
   // A document, scanned, with a name the general rules protect on their own.
+  // By key since 064/D — the other seat's file, fixed in the commit that moved
+  // the field, because a tree left red between two commits is a tree the lead
+  // cannot merge either half of.
   await tester.enterText(
-    find.byType(TextField).first,
+    find.byKey(HomeScreen.composer),
     'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.',
   );
   await settle(tester, rounds: 1);

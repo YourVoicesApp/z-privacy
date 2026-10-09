@@ -130,6 +130,28 @@ class Ground extends ChangeNotifier {
   ConversationRow? get openSessionRow =>
       sessions.where((s) => s.number == openSession).firstOrNull;
 
+  /// **The name a person has typed for a session that does not exist yet** —
+  /// 064/D.
+  ///
+  /// A wish, not a session: only an exit may begin one, and nothing here calls
+  /// the core. It lives on the ground because the owner put the question in two
+  /// places on 9 October — the chat screen and the review page — and «the name
+  /// is asked once» can only hold if the two surfaces share one answer. A
+  /// person who names their work in the chat finds their own word in the sheet.
+  ///
+  /// It is not cleared when a session is born: `theSessionQuestionStands` goes
+  /// false and no surface asks again, and keeping the word costs nothing and
+  /// loses nothing if the vault is locked and the question returns.
+  String sessionNameWished = '';
+
+  void wishSessionName(String name) {
+    if (name == sessionNameWished) return;
+    sessionNameWished = name;
+    // **No notify.** Every keystroke would rebuild two screens, and nothing on
+    // the glass reads this except the field the person is typing in — the
+    // sheet's own strip reads it when it builds, which is after a press.
+  }
+
   /// **Does the session question still stand?** — 064.
   ///
   /// One source for the two places that must agree: the band at an exit asks
@@ -822,7 +844,7 @@ class Workbench extends ChangeNotifier {
   Future<String?> askModelProtected(String providerId) async {
     final h = handle;
     if (h == null) return 'There is nothing to send yet.';
-    return _ask(() async {
+    return _ask(leaving: payload?.text ?? '', () async {
       final said = await z.askModel(
         handle: h,
         provider: ProviderId(id: providerId),
@@ -848,7 +870,7 @@ class Workbench extends ChangeNotifier {
       return 'Choose «The original text» first — this app does not send a '
           'document unprotected on its own.';
     }
-    return _ask(() async {
+    return _ask(leaving: original, () async {
       final said = await z.askModelDirectly(
         session: session,
         text: original,
@@ -865,22 +887,92 @@ class Workbench extends ChangeNotifier {
 
   /// What both doors share: the busy flag, the refusal, and the refresh. The
   /// difference between them is the call, and it stays the call.
-  Future<String?> _ask(Future<void> Function() door) async {
+  ///
+  /// **And the journey, said step by step** (064/E). The owner's ruling of
+  /// 9 October: the press takes the person to the chat, and there they see what
+  /// was sent, then the answer when it comes back, then the answer pulled
+  /// inside — unwrapped, shown restored, and written into the session. Those
+  /// are three real moments of one request, so the stage is published as each
+  /// one happens rather than at the end: a person watching a slow model has the
+  /// right to know which of the three they are waiting in.
+  Future<String?> _ask(Future<void> Function() door, {required String leaving}) async {
     sending = true;
+    // **What actually left**, kept before the call rather than reconstructed
+    // after it: the payload is rebuilt by the refresh below, and «the request
+    // in its safe clothing» is a claim about the text that travelled.
+    sentAsItLeft = leaving;
+    stage = SendStage.sent;
+    turn = null;
     notifyListeners();
     try {
       await door();
       trouble = null;
       sending = false;
+      stage = SendStage.answered;
+      notifyListeners();
       await refresh();
+      // **The turn, read back from the session's own file** — and this is the
+      // order the owner named: pulled inside means written, and nothing
+      // restored is shown before it is. With no session open the core writes
+      // nothing (`record` refuses with «there is no session open to write
+      // to»), so there is no third step to show and the screen says that
+      // plainly instead of pretending.
+      await readTheTurn();
       return null;
     } on ApiError catch (e) {
       sending = false;
       trouble = humanMessage(e);
+      stage = SendStage.refused;
       notifyListeners();
       // A failure of one door is a failure of that door. Nothing here tries
       // the other one, and the mode is not touched.
       return humanMessage(e);
+    }
+  }
+
+  /// Where this request has got to. `none` until one is made.
+  SendStage stage = SendStage.none;
+
+  /// The text that travelled, in the clothing it travelled in.
+  String? sentAsItLeft;
+
+  /// The written turn, as the core restores it. Null until one is read, and
+  /// null for a send that no session could keep.
+  TurnRow? turn;
+
+  /// Read the open session's last turn, restored **inside the core**.
+  ///
+  /// The restoring happens there and crosses the boundary already done, with
+  /// `unresolved` naming every token it could not resolve: a raw turn on a
+  /// screen would put `__Z_5CDD_IBAN_5B32__` in the middle of a model's
+  /// sentence, which is the exact lie the restore path exists to prevent.
+  Future<void> readTheTurn() async {
+    final open = await _openConversation();
+    if (open == null) {
+      turn = null;
+      stage = stage == SendStage.answered ? SendStage.keptNowhere : stage;
+      notifyListeners();
+      return;
+    }
+    try {
+      final rows = await z.conversationTurns(number: open, bench: session);
+      turn = rows.isEmpty ? null : rows.last;
+      if (turn != null) stage = SendStage.pulledIn;
+    } on ApiError catch (e) {
+      // A turn that cannot be read is not an answer that did not arrive: the
+      // answer is still on the screen above, and this says only that the
+      // reading failed.
+      turn = null;
+      trouble = humanMessage(e);
+    }
+    notifyListeners();
+  }
+
+  Future<int?> _openConversation() async {
+    try {
+      return await z.conversationOpen();
+    } on ApiError {
+      return null;
     }
   }
 
@@ -1241,8 +1333,31 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// **One slot, one boolean** — 070, the owner's second finding of 9 October.
+  ///
+  /// He pressed Review on a 146-page document whose badge said 8 and got the
+  /// *Names* panel's «No names to look at», with the «8 questions left» button
+  /// still under it. The cause was here and not in either counter: this method
+  /// set **both** booleans, `openReview` never cleared `reviewingNames`, and
+  /// `workspace.dart` chooses between the two panels with
+  /// `if (reviewingNames) … else if (reviewOpen) …`. So once the names panel
+  /// had been opened, Review could never show the review again: the key read
+  /// `reviewOpen == true`, called `closeReview()`, and cleared the boolean
+  /// nobody was reading.
+  ///
+  /// `panelOpen` in the workspace already counts `reviewingNames`, so setting
+  /// `reviewOpen` here was redundant **and** harmful at once.
+  ///
+  /// Two booleans for one slot have a fourth corner that means nothing, which
+  /// is the rule written over `Piece` in the core's own api.rs and obeyed
+  /// there. Four panels share this slot and four booleans describe them
+  /// (`tokensOpen` and `showing` too), so the real repair is one value that
+  /// names which panel is open — task **071**, with its own paper. Not dropped
+  /// into tonight's fix.
+  ///
+  /// Reproduced by the other seat before either of us touched it, red by
+  /// design, with the control beside it: `the_badge_and_the_door_test`.
   void openNameReview() {
-    reviewOpen = true;
     reviewingNames = true;
     notifyListeners();
     unawaited(refreshCandidates());
@@ -1258,6 +1373,10 @@ class Workbench extends ChangeNotifier {
 
   void openReview({bool? walk}) {
     reviewOpen = true;
+    // The other panel in this slot gives way, because the workspace reads it
+    // first (070). Without this line the names panel wins for ever after the
+    // first time it is opened.
+    reviewingNames = false;
     if (walk != null) walking = walk;
     // Walking starts at the first thing still waiting, not at the top of a list
     // the user has already been through.
@@ -1420,6 +1539,15 @@ String sessionBegunSaid(int renamed, {required bool hadDocument}) {
       : 'Begun, and $renamed names on this document moved into it.';
 }
 
+/// **Where a request has got to** — 064/E, the owner's three steps.
+///
+/// «What was sent appears; the answer appears when it returns; then the answer
+/// is pulled inside» — unwrapped, shown restored, and written into the session.
+/// `keptNowhere` is the honest fourth: an answer came back and no session was
+/// open to keep it, which the core refuses to write rather than inventing a
+/// file for.
+enum SendStage { none, sent, answered, pulledIn, keptNowhere, refused }
+
 /// **What an exit may take out, once the session question is settled** — 064.
 ///
 /// `view` is null when nothing may leave, and `refused` then carries the
@@ -1474,10 +1602,22 @@ class WhatMayLeave {
 /// holding the captured view would take out the pre-birth text with the new
 /// session's name stamped on it — true of the snapshot, false of the names.
 /// From the core's side nothing is wrong, and no core guard can see it.
+/// ## `thePayloadLeaves`
+///
+/// Three of the four exits take the protected payload out — the clipboard, the
+/// PDF, and a protected send through a key. Direct Mode's door takes the
+/// **document as it stands**, by a separate call that the core keeps separate.
+/// For that one the birth, the refusal and the refresh are all still the order;
+/// steps 4 and 5 are about a text it does not send, and a helper that insisted
+/// on a payload would refuse a door that works on a bench with nothing built.
+/// So the parameter says what leaves, and nothing about it is optional:
+/// `false` returns no view, and a caller that reads `view` for its text gets
+/// null rather than something almost right.
 Future<WhatMayLeave> beginThenRead(
   Ground ground,
   Workbench bench, {
   required String name,
+  bool thePayloadLeaves = true,
 }) async {
   int? renamed;
   String? said;
@@ -1498,6 +1638,11 @@ Future<WhatMayLeave> beginThenRead(
     }
     said = sessionBegunSaid(renamed, hadDocument: bench.document != null);
     await bench.refresh();
+  }
+  // The birth and the refresh have happened; what follows is about the payload,
+  // and this door does not send it.
+  if (!thePayloadLeaves) {
+    return WhatMayLeave(said: said, renamed: renamed);
   }
   var view = bench.payload;
   final open = ground.openSession;
@@ -1532,6 +1677,73 @@ Future<WhatMayLeave> beginThenRead(
     );
   }
   return WhatMayLeave(view: view, said: said, renamed: renamed);
+}
+
+/// **The third exit: the same order, and then the send** — 064/A.
+///
+/// The owner's own 9 October run found this door going straight to the model:
+/// the answer came back, no session was born, and nothing was written into a
+/// conversation. The two manual exits had the order; this one — the only exit
+/// that actually puts text on a wire — did not.
+///
+/// It is one function rather than two presses with the same four lines in them,
+/// and it is out here for the reason [beginThenRead] is: **a core call started
+/// in a widget callback does not resume under `testWidgets`**, so an order
+/// written inside `onPressed` cannot be measured, and a send is an awaited core
+/// call by its nature. Here a guard drives the whole order — the birth, the
+/// refresh and the request — and reads what came out of the socket at the other
+/// end.
+///
+/// Two things it does not do, each deliberate:
+///
+///   * it does not choose the mode. `bench.sendOriginal` was chosen by a press,
+///     and the door that carries the document is a different call in the core
+///     for exactly that reason;
+///   * it does not retry. A protected send that fails is reported as having
+///     failed — nothing here reaches for the other door, and the mode is not
+///     touched.
+///
+/// The payload it checks and the handle it sends are **one build**: both come
+/// off `Workbench.snap`, so the `refresh` inside [beginThenRead] moves them
+/// together and there is no window in which the view is fresh and the handle
+/// stale. Were they two reads, the core would still refuse the stale one — but
+/// the honest version of that sentence is that they are not two reads.
+///
+/// **Measured, so that nobody deletes the refresh on the strength of a green
+/// suite:** with all three of [beginThenRead]'s layers taken out, this door
+/// does not send pre-birth names — the core refuses the pre-birth *handle*,
+/// because a birth bumps the session's revision («This request is no longer
+/// current»). Four layers here; the clipboard has three, since its text comes
+/// off the view and there is no core call left to refuse it. The refresh is
+/// what makes the person's send happen rather than hand them a refusal to
+/// decipher.
+Future<WhatMayLeave> beginThenAsk(
+  Ground ground,
+  Workbench bench, {
+  required String name,
+  required String providerId,
+}) async {
+  final original = bench.sendOriginal;
+  final out = await beginThenRead(
+    ground,
+    bench,
+    name: name,
+    thePayloadLeaves: !original,
+  );
+  if (out.refused != null) return out;
+  final bad = original
+      ? await bench.askModelWithTheOriginal(
+          providerId,
+          // Read after the refresh, like everything else that leaves.
+          original: bench.document?.text ?? '',
+        )
+      : await bench.askModelProtected(providerId);
+  if (bad != null) {
+    // A birth that happened still happened, and its sentence is still true: the
+    // session is open, its names are on the bench, and the send is what failed.
+    return WhatMayLeave(said: out.said, renamed: out.renamed, refused: bad);
+  }
+  return out;
 }
 
 /// The columns a table carried that this build could not name a kind for.
