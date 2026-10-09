@@ -422,6 +422,54 @@ while IFS= read -r f; do
 done < <(find . -name index.html | sort)
 [ "$HREF" = 0 ] && say PASS "every set of translations names the same members on every page in it"
 
+# What a crawler is allowed to fetch.
+#
+# It allows everything and names the sitemap — and it names **nothing else**,
+# which is the part worth a guard. A path written here is published to every
+# reader of the file, so the rule is not «no secret path» but «no path but
+# the root». The owner's private preview folder is kept out of the index by a
+# header on the server instead, which tells nobody where it is.
+#
+# Measured on the live site on 9 October before this was written: /robots.txt
+# already answered 200 with 1248 bytes of Cloudflare's content-signals
+# preamble — comments only, no User-agent, no Allow, no Sitemap. The origin
+# tree has no such file, so the edge is writing it. Ours goes to the origin;
+# whether the edge keeps our Sitemap line beside its own text is a question
+# only the deploy can answer, and it is the first thing to re-measure after.
+ROBOTS=0
+r_fail() { say FAIL "$1"; FAIL=1; ROBOTS=1; }
+if [ ! -f robots.txt ]; then
+  r_fail "there is no robots.txt, so a crawler reaching the root is told nothing"
+else
+  grep -qE '^[Uu]ser-agent:[[:space:]]*\*[[:space:]]*$' robots.txt \
+    || r_fail "robots.txt speaks to no crawler: no «User-agent: *» line"
+  grep -qE '^[Aa]llow:[[:space:]]*/[[:space:]]*$' robots.txt \
+    || r_fail "robots.txt does not allow the site: no «Allow: /» line"
+  grep -qE '^[Ss]itemap:[[:space:]]*https://z-privacy\.com/sitemap\.xml[[:space:]]*$' robots.txt \
+    || r_fail "robots.txt does not name the sitemap at its absolute address"
+  [ -f sitemap.xml ] \
+    || r_fail "robots.txt sends a crawler to a sitemap that is not in this tree"
+
+  # Every path this file mentions, whatever the verb. Only «/» and the empty
+  # value (the long way of saying «nothing is disallowed») may survive.
+  NAMED=$(grep -iE '^[[:space:]]*(allow|disallow):' robots.txt \
+          | sed -E 's/^[^:]*:[[:space:]]*//; s/[[:space:]]*$//' \
+          | grep -vxE '/?' || true)
+  if [ -n "$(printf '%s' "$NAMED" | tr -d '[:space:]')" ]; then
+    r_fail "robots.txt names a path of its own, and so publishes it:"
+    printf '%s\n' "$NAMED" | sed 's/^/           /'
+  fi
+
+  # A folder nobody is meant to find is named after a fingerprint. No run of
+  # eight hex characters belongs in a file served to every crawler on earth.
+  HEXY=$(grep -nE '[0-9a-f]{8}' robots.txt || true)
+  if [ -n "$HEXY" ]; then
+    r_fail "robots.txt carries a fingerprint-shaped name, which is how a private path leaks:"
+    printf '%s\n' "$HEXY" | sed 's/^/           /'
+  fi
+fi
+[ "$ROBOTS" = 0 ] && say PASS "robots.txt allows every crawler, names the sitemap, and names no path of its own"
+
 # ---------------------------------------------------------------- the numbers
 #
 # Every number on the site, and every word it borrowed from the app, against
