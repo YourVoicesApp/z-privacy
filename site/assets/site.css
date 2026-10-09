@@ -133,6 +133,12 @@ h2 {
 }
 html[lang="ar"] h2 { font-family: var(--arab); text-transform: none; letter-spacing: 0; font-size: 12px; }
 h3 { margin: 30px 0 8px; font-size: 17px; font-weight: 600; }
+/* A paragraph that follows a heading belongs to it. `.lead` and `.honest`
+   carry a top margin of their own because they also stand alone after the
+   first screen, and under a heading that margin came to sixty-odd pixels —
+   which reads as a missing paragraph, not as air. Seen on a rendered page;
+   the markup looked right. */
+h2 + .lead, h2 + .honest, h2 + .promises { margin-top: 0; }
 .note { margin: 13px 0 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
 
 .chain { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
