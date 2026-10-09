@@ -6,8 +6,11 @@
 #
 # Nothing is fixed before this has answered. Z Privacy has never been built or
 # tested off Linux — `secure_file.rs` guards the vault entirely under
-# `#[cfg(unix)]`, and the data directory is a hard-coded `~/.local/share` path —
-# so a red run here is the report we are asking for, not a failure to hide.
+# `#[cfg(unix)]` — so a red run here is the report we are asking for, not a
+# failure to hide. (The second half of that sentence was true when it was
+# written and is not any more: the data directory stopped being a guess in Dart
+# when `z_core/src/data_dir.rs` was given the job, and it answers
+# `%LOCALAPPDATA%\ZPrivacy` here.)
 #
 # It runs on `main` as well as on this branch. That is the whole of what the
 # merge changed: a workflow that triggers on a branch which no longer receives
@@ -47,17 +50,27 @@ jobs:
       # Split from the tests on purpose: «it does not compile» and «it compiles
       # and something is wrong» are different answers, and the step that fails
       # says which one we got.
+      #
+      # Both test-only features, not one. `test_clock` arrived in October and
+      # this file still asked for `fake_provider` alone, so six tests — the
+      # auto-lock and the Safe column's reveal, `reveal_and_the_lock.rs` and
+      # `the_safe_column_reveal.rs` — did not exist in this job and it reported
+      # green without them. `gates.sh` carries that rule written down beside its
+      # own `TEST_FEATURES`: «a feature the suite forgets to ask for takes its
+      # tests with it silently». It was written for one platform and never
+      # applied to the second. G23 proves the feature cannot reach `default` or
+      # cross the bridge, so asking for it here costs the product nothing.
       - name: Compile the core
         shell: bash
-        run: cargo build -p z_core --features fake_provider
+        run: cargo build -p z_core --features fake_provider,test_clock
 
       - name: Compile the workspace
         shell: bash
-        run: cargo build --workspace --features fake_provider
+        run: cargo build --workspace --features fake_provider,test_clock
 
       - name: Rust tests
         shell: bash
-        run: cargo test --workspace --features fake_provider -- --nocapture
+        run: cargo test --workspace --features fake_provider,test_clock -- --nocapture
 
       # What build is this? The owner looked at the download page and thought
       # yesterday's installer was still live, because the screen said
@@ -96,17 +109,21 @@ jobs:
         shell: bash
         run: bash scripts/check_storage_contracts.sh
 
+      # Read, never typed. These three numbers sat in this file for a month
+      # naming `d685d7b` — 251 tests and 108 gates — while Linux had moved to
+      # more than twice that. `scripts/gates.sh` now compares the two that
+      # belong to the tree against every Linux run, so this table can only be
+      # as stale as the last time the gates were green.
       - name: What Linux says, for comparison
         if: always()
         shell: bash
         run: |
           {
-            echo "### Measured on Linux at d685d7b"
+            echo "### What Linux measured"
             echo ""
-            echo '| | |'
-            echo '|---|---|'
-            echo '| Rust tests | 251 passed, 0 failed |'
-            echo '| gates | 108 checks, 0 failed, 0 skipped |'
+            echo '```'
+            sed -n '/^  /p' docs/MEASURED_ON_LINUX.txt
+            echo '```'
             echo ""
             echo "Anything this Windows run reports differently is the port's work list."
           } >> "$GITHUB_STEP_SUMMARY"
@@ -161,6 +178,43 @@ jobs:
           test -f "$out/zprivacy.exe" || { echo "no zprivacy.exe at $out"; exit 1; }
           mkdir -p ../../staging/zprivacy-v1-windows-x86_64
           cp -a "$out/." ../../staging/zprivacy-v1-windows-x86_64/
+
+          # The licences travel with the files they are about.
+          #
+          # The Linux tarball has carried LICENSE and a `third-party/` folder
+          # since it had a script at all; this folder carried neither, and the
+          # installer below copies it wholesale — so every Windows copy ever
+          # downloaded went out with its obligations missing. The month that
+          # added «Save as PDF» added them: `pdf` is Apache-2.0 and DejaVu is
+          # embedded in every file we write, and both licences require their
+          # text to travel. Same five files, same names, from the same folder
+          # as the Linux package — `packaging/third-party/`, which is why it is
+          # no longer under `packaging/linux/`.
+          dest=../../staging/zprivacy-v1-windows-x86_64
+          cp -f ../../LICENSE "$dest/LICENSE"
+          mkdir -p "$dest/third-party"
+          for f in NOTICES.txt flutter-sdk-LICENSE.txt material-icons-LICENSE.txt \
+                   dejavu-LICENSE.txt dart-pdf-LICENSE.txt; do
+            cp -f "../../packaging/third-party/$f" "$dest/third-party/$f"
+          done
+          cp -f ../../site/third-party/flutter-engine-LICENSE.txt "$dest/third-party/"
+
+          # Generated, exactly as `scripts/package_linux.sh` does it, because
+          # NOTICES.txt names this file: a notice that points at a file nobody
+          # shipped is worse than no notice.
+          {
+            echo "The Rust crates this build links, from the tree at ${GITHUB_SHA:0:7}."
+            echo "Generated in .github/workflows/windows-core.yml with cargo tree; no new tool."
+            echo
+            (cd ../.. && cargo tree -p z_core --edges normal --prefix none 2>/dev/null \
+               | sed 's/ (\*)$//' | sort -u | grep -vE '^$')
+          } > "$dest/third-party/rust-crates.txt"
+
+          # Asked for by name, like the .exe above it. `set -e` would already
+          # have stopped a missing copy; this says which promise was broken.
+          for f in LICENSE third-party/NOTICES.txt third-party/rust-crates.txt; do
+            test -s "$dest/$f" || { echo "nothing staged at $f — the installer would ship without it"; exit 1; }
+          done
 
       - name: What is in it, and its hashes
         if: always()

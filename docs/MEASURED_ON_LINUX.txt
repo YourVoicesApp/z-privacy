@@ -1,0 +1,35 @@
+What Linux measures — the line the Windows report is compared against.
+
+  commit  b3b8d67
+  rust    567
+  dart    258
+  gates   305 checks, 0 failed, 0 skipped
+
+`commit` is where these numbers were measured, not where the tree stands now.
+
+They were three numbers typed into `.github/workflows/windows-core.yml`, and
+they named a commit from a month earlier: 251 Rust tests and 108 gates, when
+Linux had moved to 567 and 304. A table that names another commit is the same
+defect that job's own stamp step exists to catch — a stamp that names another
+commit is worse than none.
+
+So they live here, in one place, and the hand that merges writes them in the
+merge's own commit, from the closing measurement of the assembled tree. No
+script writes this file: a gate that writes in the tree leaves `git status`
+dirty after every measurement, and what is generated moves once per branch,
+inside a commit whose own gates are green.
+
+`scripts/gates.sh` reads it at the end of every run and compares `rust` and
+`dart` with what it has just measured, so a number that moved without being
+written down here turns the gates red, and the red names both numbers.
+
+`gates` is recorded and **not** compared, on purpose. The other two are
+properties of the tree; this one is a property of the machine — the owner's
+three golden documents, `clippy` and `flutter` each turn a check from a
+measurement into a skip without a line of the tree changing. The run above
+skipped nothing, which is why its three zeros are worth writing down: it was a
+machine holding all three golden documents. The 305 includes the check that
+reads this file — it went from 304 to 305 inside the very commit that wrote
+these lines, which is the whole argument for a number being written down
+somewhere a guard can see it. A gate that reds because a document
+is on another laptop teaches nothing.
