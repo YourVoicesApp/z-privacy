@@ -455,6 +455,36 @@ else
   skip "G4b clippy" "clippy not installed"
 fi
 
+# ---------------------------------------------------------------- G4c
+# **The same lint, for the platform nobody here runs.** A warning nobody can see
+# is blindness later (the lead, 9 Oct): `use std::io::{Read, Write}` left `Read`
+# unused on Windows for as long as that half existed, and no run on this machine
+# could show it — on Linux the import is used and `-D warnings` has nothing to
+# say. Compiling for the target found it in seconds, and found four more lints
+# inside the one `unsafe` file, which had never been linted at all.
+#
+# `clippy`, not `check`, and `-- -D warnings` rather than `RUSTFLAGS`: that way
+# the hardening lands on our crates and not on our dependencies, whose warnings
+# are not ours to fix and would red this gate for somebody else's commit.
+# Nothing is linked, so this costs seconds once the Windows dependencies are
+# cached — and it answers the question the Windows workflow's first job asks,
+# before anybody presses its button.
+#
+# Two preconditions, each with its own sentence: a skip that cannot say which
+# tool is missing is a skip nobody acts on.
+WIN_TARGET=x86_64-pc-windows-gnu
+if ! rustup target list --installed 2>/dev/null | grep -qx "$WIN_TARGET"; then
+  skip "G4c the Windows half compiles, warnings included" "no $WIN_TARGET (rustup target add $WIN_TARGET)"
+elif ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
+  skip "G4c the Windows half compiles, warnings included" "no cross C compiler (apt install gcc-mingw-w64-x86-64)"
+elif cargo clippy --target "$WIN_TARGET" --workspace --all-targets $TEST_FEATURES --quiet -- -D warnings >/tmp/g4c.$$ 2>&1; then
+  pass "G4c the Windows half compiles and lints clean, tests included"
+else
+  fail "G4c the Windows half does not compile or does not lint clean:"
+  grep -E '^(error|warning)' /tmp/g4c.$$ | head -8 | sed 's/^/        /'
+fi
+rm -f /tmp/g4c.$$
+
 # ---------------------------------------------------------------- G3, G6, G9, G10
 # The invariants that live as tests.
 if cargo test --workspace $TEST_FEATURES --quiet >/tmp/gt.$$ 2>&1; then

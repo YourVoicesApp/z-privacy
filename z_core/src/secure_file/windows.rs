@@ -106,7 +106,7 @@ impl Drop for Descriptor {
             // which documents LocalFree as the way to release it. It is non-null
             // here, freed exactly once because Drop runs once, and never used
             // afterwards because `self` is being destroyed.
-            unsafe { LocalFree(self.0 as *mut c_void) };
+            unsafe { LocalFree(self.0) };
         }
     }
 }
@@ -147,7 +147,7 @@ pub(crate) fn create_new_owner_only(path: &Path) -> Result<std::fs::File, std::i
     use std::os::windows::io::FromRawHandle;
 
     let descriptor = Descriptor::owner_only()?;
-    let mut attributes = SECURITY_ATTRIBUTES {
+    let attributes = SECURITY_ATTRIBUTES {
         nLength: std::mem::size_of::<SECURITY_ATTRIBUTES>() as u32,
         lpSecurityDescriptor: descriptor.0,
         bInheritHandle: 0,
@@ -165,7 +165,7 @@ pub(crate) fn create_new_owner_only(path: &Path) -> Result<std::fs::File, std::i
             wide.as_ptr(),
             GENERIC_WRITE,
             FILE_SHARE_READ,
-            &mut attributes,
+            &attributes,
             CREATE_NEW,
             FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OPEN_REPARSE_POINT,
             std::ptr::null_mut(),
@@ -181,7 +181,7 @@ pub(crate) fn create_new_owner_only(path: &Path) -> Result<std::fs::File, std::i
     // SAFETY: `handle` is a valid, open file handle this function just created
     // and has not given to anyone else; File takes ownership and will close it.
     // G15-ok: wrapping the handle just opened for ZVLT or ZCFG.
-    Ok(unsafe { std::fs::File::from_raw_handle(handle as *mut c_void) })
+    Ok(unsafe { std::fs::File::from_raw_handle(handle) })
 }
 
 /// The file's access list, back as SDDL, so a test can read what was written
@@ -279,7 +279,7 @@ pub(crate) fn read_no_reparse(path: &Path) -> Result<Option<Vec<u8>>, std::io::E
     // not shared; File owns it from here and closes it on drop, including on
     // every early return below.
     // G15-ok: wrapping the handle just opened for ZVLT or ZCFG.
-    let mut file = unsafe { std::fs::File::from_raw_handle(handle as *mut c_void) };
+    let mut file = unsafe { std::fs::File::from_raw_handle(handle) };
 
     // SAFETY: BY_HANDLE_FILE_INFORMATION is a plain struct of integers and
     // FILETIMEs; all-zero is a valid, meaningless value, and the call below
