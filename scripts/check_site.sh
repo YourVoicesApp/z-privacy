@@ -51,9 +51,24 @@ fi
 # A filled-in link is not a real link. The promise was that nothing goes public
 # pointing at something that does not exist, so the page's outward destinations
 # are asked whether they answer. No network, no verdict — and no publishing.
+#
+# Our **own** absolute addresses are left out, and the reason is worth writing
+# down. Until 9 October the only absolute href on the site was the repository
+# link, so this loop meant «outward». Then the canonical tags arrived and put
+# nine `https://z-privacy.com/…` hrefs into the heads, and the loop quietly
+# started asking the live site about pages that are not published yet — and
+# passing, because its rule for anything but GitHub is «answered at all», so a
+# 404 reads as PASS. A sentence that looks like proof and is not.
+#
+# These nine are proved where they can be: `check_sitemap.py` resolves every
+# one of them to a file in the tree that is about to be uploaded. Whether they
+# answer on the live site is the deploy's question, asked after it, not before.
 DESTS=$(grep -rhoE '(href)="https?://[^"]+"' --include='*.html' . 2>/dev/null \
         | sed -E 's/^href="//; s/"$//' \
-        | grep -vE '^https?://(www\.)?(apache\.org|w3\.org)' | sort -u)
+        | grep -vE '^https?://(www\.)?(apache\.org|w3\.org)' \
+        | grep -vE '^https://z-privacy\.com/' | sort -u)
+MINE=$(grep -rhoE 'href="https://z-privacy\.com/[^"]*"' --include='*.html' . 2>/dev/null | sort -u | wc -l)
+say PASS "$MINE of our own addresses are checked against the tree, not asked of the network"
 if ! command -v curl >/dev/null 2>&1; then
   say FAIL "curl is missing, so no destination could be checked"; FAIL=1
 else
@@ -348,6 +363,128 @@ fi
 
 [ "$FAIL" = 0 ] && say PASS "all pages present"
 
+# ------------------------------------------------- what a crawler is told
+#
+# The owner wants z-privacy.com in Google. Before a crawler reads a word of a
+# page it asks three questions — which address is this page's real one, which
+# pages exist, and what am I allowed to fetch — and this section is where each
+# answer is measured against the tree that will be uploaded.
+
+# One page, one address. The address is **derived from the path**, never read
+# from the page and compared with itself: a canonical copied from a sibling
+# and left unedited is the ordinary way this goes wrong, and a guard that
+# trusted the page's own word would pass on it.
+CANON=0
+while IFS= read -r f; do
+  rel="${f#./}"; want="https://z-privacy.com/${rel%index.html}"
+  n=$(grep -cE '<link[^>]+rel="canonical"' "$f" 2>/dev/null || true); n=${n:-0}
+  if [ "$n" != 1 ]; then
+    say FAIL "$rel carries $n canonical links, and a page has exactly one address"
+    FAIL=1; CANON=1; continue
+  fi
+  got=$(grep -oE '<link[^>]+rel="canonical"[^>]*>' "$f" \
+        | grep -oE 'href="[^"]*"' | sed -E 's/^href="//; s/"$//')
+  if [ "$got" != "$want" ]; then
+    say FAIL "$rel calls $got its own address, and its own address is $want"
+    FAIL=1; CANON=1
+  fi
+done < <(find . -name index.html | sort)
+[ "$CANON" = 0 ] && say PASS "every page names itself as canonical, at the absolute address its own path gives it"
+
+# A set of translations is a set: every page in it names the same members,
+# itself included, and a page with no translation names none.
+#
+# Found by measuring the live site on 9 October, not by reading the markup:
+# /license/ and /third-party/ exist in English only, and each told Google that
+# its German version was the German **home page** and its Arabic version the
+# Arabic home page. Google ignores an annotation the other page does not
+# return, so the lie was harmless to the ranking and still a lie in our own
+# source. The chooser at / had the mirror fault: it pointed at the three homes
+# and none of them pointed back, because what it needed was to be the
+# x-default of that set rather than a fourth language.
+#
+# The guard asks each page's set of its members, so a page cannot be the only
+# one telling the truth.
+sets_of() {
+  grep -oE '<link[^>]+rel="alternate"[^>]*>' "$1" 2>/dev/null \
+  | sed -E 's/.*hreflang="([^"]+)"[^>]*href="([^"]+)".*/\1 \2/' | sort
+}
+HREF=0
+h_fail() { say FAIL "$1"; FAIL=1; HREF=1; }
+while IFS= read -r f; do
+  rel="${f#./}"; me="/${rel%index.html}"
+  mine=$(sets_of "$f")
+  if [ -z "$mine" ]; then
+    # A page under a language folder is a translation of something, so it may
+    # not be the one page that keeps quiet about its siblings.
+    case "$rel" in
+      en/*|de/*|ar/*) h_fail "$rel is a translation and names no language version at all" ;;
+    esac
+    continue
+  fi
+  printf '%s\n' "$mine" | awk '{print $2}' | grep -qxF "$me" \
+    || h_fail "$rel lists language versions and leaves itself ($me) out of them"
+  for a in $(printf '%s\n' "$mine" | awk '{print $2}' | sort -u); do
+    tgt=".${a}index.html"
+    if [ ! -f "$tgt" ]; then
+      h_fail "$rel names $a as a language version of itself, and no page is there"
+      continue
+    fi
+    if [ "$(sets_of "$tgt")" != "$mine" ]; then
+      h_fail "$rel and $a disagree about who is in their set, so Google believes neither"
+    fi
+  done
+done < <(find . -name index.html | sort)
+[ "$HREF" = 0 ] && say PASS "every set of translations names the same members on every page in it"
+
+# What a crawler is allowed to fetch.
+#
+# It allows everything and names the sitemap — and it names **nothing else**,
+# which is the part worth a guard. A path written here is published to every
+# reader of the file, so the rule is not «no secret path» but «no path but
+# the root». The owner's private preview folder is kept out of the index by a
+# header on the server instead, which tells nobody where it is.
+#
+# Measured on the live site on 9 October before this was written: /robots.txt
+# already answered 200 with 1248 bytes of Cloudflare's content-signals
+# preamble — comments only, no User-agent, no Allow, no Sitemap. The origin
+# tree has no such file, so the edge is writing it. Ours goes to the origin;
+# whether the edge keeps our Sitemap line beside its own text is a question
+# only the deploy can answer, and it is the first thing to re-measure after.
+ROBOTS=0
+r_fail() { say FAIL "$1"; FAIL=1; ROBOTS=1; }
+if [ ! -f robots.txt ]; then
+  r_fail "there is no robots.txt, so a crawler reaching the root is told nothing"
+else
+  grep -qE '^[Uu]ser-agent:[[:space:]]*\*[[:space:]]*$' robots.txt \
+    || r_fail "robots.txt speaks to no crawler: no «User-agent: *» line"
+  grep -qE '^[Aa]llow:[[:space:]]*/[[:space:]]*$' robots.txt \
+    || r_fail "robots.txt does not allow the site: no «Allow: /» line"
+  grep -qE '^[Ss]itemap:[[:space:]]*https://z-privacy\.com/sitemap\.xml[[:space:]]*$' robots.txt \
+    || r_fail "robots.txt does not name the sitemap at its absolute address"
+  [ -f sitemap.xml ] \
+    || r_fail "robots.txt sends a crawler to a sitemap that is not in this tree"
+
+  # Every path this file mentions, whatever the verb. Only «/» and the empty
+  # value (the long way of saying «nothing is disallowed») may survive.
+  NAMED=$(grep -iE '^[[:space:]]*(allow|disallow):' robots.txt \
+          | sed -E 's/^[^:]*:[[:space:]]*//; s/[[:space:]]*$//' \
+          | grep -vxE '/?' || true)
+  if [ -n "$(printf '%s' "$NAMED" | tr -d '[:space:]')" ]; then
+    r_fail "robots.txt names a path of its own, and so publishes it:"
+    printf '%s\n' "$NAMED" | sed 's/^/           /'
+  fi
+
+  # A folder nobody is meant to find is named after a fingerprint. No run of
+  # eight hex characters belongs in a file served to every crawler on earth.
+  HEXY=$(grep -nE '[0-9a-f]{8}' robots.txt || true)
+  if [ -n "$HEXY" ]; then
+    r_fail "robots.txt carries a fingerprint-shaped name, which is how a private path leaks:"
+    printf '%s\n' "$HEXY" | sed 's/^/           /'
+  fi
+fi
+[ "$ROBOTS" = 0 ] && say PASS "robots.txt allows every crawler, names the sitemap, and names no path of its own"
+
 # ---------------------------------------------------------------- the numbers
 #
 # Every number on the site, and every word it borrowed from the app, against
@@ -360,8 +497,17 @@ if command -v python3 >/dev/null 2>&1; then
   else
     FAIL=1
   fi
+  # The list of pages handed to a crawler, walked against the pages that exist.
+  # It needs an XML parser and it reads the tree, so it keeps its own file —
+  # and the verdict still comes back here, because one command answers.
+  if python3 ../scripts/check_sitemap.py; then
+    :
+  else
+    FAIL=1
+  fi
 else
   say FAIL "no python3, so no number on this site was checked against its deed"; FAIL=1
+  say FAIL "no python3, so the list of pages was never compared with the pages"; FAIL=1
 fi
 
 echo
