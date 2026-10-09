@@ -403,9 +403,6 @@ pub(crate) fn build_payload(session: SessionId) -> ApiResult<PayloadHandle> {
             .conversations()
             .into_iter()
             .find(|(n, _, _)| *n == number)
-            // The count is **not** set here: only the builder holds the text
-            // that will leave, and it fills this in off that string. Setting it
-            // here would be a guess made before the thing it describes exists.
             .map(|(number, name, _)| crate::api::PayloadSession { number, name })
     });
     with_session(session.id, |s| {

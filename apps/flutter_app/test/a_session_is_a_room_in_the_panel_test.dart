@@ -24,6 +24,7 @@ import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -101,7 +102,12 @@ Future<Ground> inTheRoom(WidgetTester tester, String name) async {
 /// which is exactly what the button's own `onPressed` calls. What is not proven
 /// by this file is the wiring between those two, and a reader should know that
 /// rather than assume a green press.
-Future<void> begin(WidgetTester tester, Ground ground, String name) async {
+Future<void> begin(
+  WidgetTester tester,
+  Ground ground,
+  String name, {
+  SessionId? bench,
+}) async {
   await tester.enterText(find.byType(TextField).last, name);
   await settle(tester, rounds: 1);
   final button = find.widgetWithText(ZButton, 'Begin');
@@ -111,8 +117,62 @@ Future<void> begin(WidgetTester tester, Ground ground, String name) async {
     isNotNull,
     reason: 'the Begin control is dead, so a person with a name typed cannot start a session',
   );
-  await tester.runAsync(() => ground.beginSession(name));
+  // **`bench:` is passed, because the core refuses a birth that does not name
+  // an open document** — 064f. This helper did not pass it, and when the
+  // refusal landed the first thing it caught was this file: a test helper
+  // reproducing the defect it was written beside.
+  final renamed = await tester.runAsync(() => ground.beginSession(name, bench: bench));
+  expect(renamed, isNotNull, reason: 'the birth was refused: ${ground.trouble}');
   await settle(tester);
+}
+
+/// **The owner's own path**, 064f: a document with something protected on it,
+/// the panel opened over it, a session begun from the room.
+///
+/// This is the path 5e read out of the code before anybody pressed the button.
+/// The room's «Begin» had no bench to pass, so nothing was re-derived and what
+/// left afterwards wore pre-birth names while the payload claimed the session.
+/// Neither the session marker nor a provenance check could see it, because the
+/// payload really was built after the birth.
+Future<Ground> withADocumentBehindThePanel(WidgetTester tester, String name) async {
+  final ground = Ground();
+  final own = ownDir(name);
+  await tester.runAsync(() async {
+    await z.vaultLock();
+    await z.setDataDir(dir: own.path);
+    await ground.refresh();
+  });
+
+  await tester.pumpWidget(MaterialApp(home: ZShell(dataDir: own.path, ground: ground)));
+  await settle(tester);
+  await tester.tap(find.text('English'));
+  await settle(tester, rounds: 1);
+  await tester.tap(find.text('Start'));
+  await settle(tester);
+  await tester.tap(find.text('Create a vault'));
+  await settle(tester);
+  await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: 'ett lösenord för rummet'));
+  await settle(tester);
+  final back = find.text('Back');
+  if (back.evaluate().isNotEmpty) {
+    await tester.tap(back.first);
+    await settle(tester, rounds: 8);
+  }
+
+  // A document, scanned, with a name the general rules protect on their own.
+  await tester.enterText(
+    find.byType(TextField).first,
+    'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.',
+  );
+  await settle(tester, rounds: 1);
+  await tester.tap(find.text('Open and scan'));
+  await settle(tester);
+
+  await tester.tap(find.byTooltip('Settings'));
+  await settle(tester);
+  await tester.tap(find.text('Sessions'));
+  await settle(tester);
+  return ground;
 }
 
 void main() {
@@ -197,6 +257,52 @@ void main() {
     expect(ground.openSession, 1, reason: 'Enter did not move which session is open');
     // Nothing was asked: no dialog, no field to fill.
     expect(find.byType(AlertDialog), findsNothing, reason: 'entering an old session asked something');
+  });
+
+  testWidgets('a session begun over an open document renames the names on it', (tester) async {
+    await tester.binding.setSurfaceSize(wide);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = await withADocumentBehindThePanel(tester, 'over-a-doc');
+
+    // The panel knows which document is behind it. Without this the core
+    // refuses the birth, and before 064f it accepted one that renamed nothing.
+    final panel = tester.widget<SettingsScreen>(find.byType(SettingsScreen));
+    expect(
+      panel.bench,
+      isNotNull,
+      reason: 'the panel was handed no document, so a session begun here cannot rename what is '
+          'protected on it — which is the defect 064f closes',
+    );
+
+    await begin(tester, ground, 'över dokumentet', bench: panel.bench);
+
+    expect(ground.openSession, isNotNull, reason: 'no session is open after a birth');
+
+    // **The card's promise, measured where it can be.** The room's sentence is
+    // built by the widget's own callback, which a `testWidgets` press cannot
+    // reach — so the wording lives in `sessionBegunSaid` and is measured
+    // directly below. What is asserted here is the input it is given: the panel
+    // knew which document was behind it, which is the whole of 064f.
+  });
+
+  // The sentence itself, where it can be read. A birth that renamed nothing
+  // used to read exactly like one that renamed nine, because the room showed
+  // neither — that invisible 0 is what hid the 064f defect for a day.
+  test('the sentence after a birth says what the birth did', () {
+    expect(sessionBegunSaid(0, hadDocument: false), contains('No document is open'),
+        reason: 'with nothing open, «nothing needed renaming» would be the wrong reason');
+    expect(sessionBegunSaid(0, hadDocument: true), contains('needed renaming'));
+    expect(sessionBegunSaid(1, hadDocument: true), contains('one name'));
+    expect(sessionBegunSaid(9, hadDocument: true), contains('9 names'));
+    // The two zeros are different sentences, which is the whole point of the
+    // `hadDocument` argument.
+    expect(
+      sessionBegunSaid(0, hadDocument: true),
+      isNot(sessionBegunSaid(0, hadDocument: false)),
+      reason: 'a zero with a document open and a zero with none read the same, so the person '
+          'cannot tell «nothing to do» from «nothing was done»',
+    );
   });
 
   testWidgets('deleting a session states what it costs, and the name goes with it', (tester) async {

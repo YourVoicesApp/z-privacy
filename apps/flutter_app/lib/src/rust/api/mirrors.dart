@@ -214,6 +214,29 @@ sealed class ApiError with _$ApiError implements FrbException {
   const factory ApiError.payloadRefused({required String reason}) =
       ApiError_PayloadRefused;
 
+  /// **A session was begun while a document was open, and the call did not
+  /// say which document** — so nothing was created, 064f.
+  ///
+  /// Its own variant because its next move is its own: not «change what you
+  /// typed» (`InputRefused`'s promise) and not a leak audit
+  /// (`PayloadRefused`'s). The move is to begin the session from the document
+  /// — and for the caller, to pass the bench.
+  ///
+  /// **Why the core refuses instead of carrying on.** A session's key is what
+  /// names its tokens, so a birth has to re-derive the names already on the
+  /// open document. A call that does not name the document cannot, and the
+  /// result is a payload stamped with the session while its text wears
+  /// pre-birth names — measured, and invisible to every instrument we have:
+  /// the payload *is* built after the birth, so its session marker matches.
+  /// It was reachable through the settings panel's own «Begin», which had no
+  /// bench to pass, and found by a reading of the code before anyone pressed
+  /// the button.
+  ///
+  /// A birth with **no** document open is legitimate and is not refused;
+  /// `renamed: 0` is honest there, because there was nothing to rename.
+  const factory ApiError.sessionWithoutItsDocument({required String reason}) =
+      ApiError_SessionWithoutItsDocument;
+
   /// The network did not carry the question, and why. Never a response body:
   /// a provider's error page can quote the request back, so nothing that comes
   /// off the wire is allowed into this message.

@@ -110,6 +110,27 @@ pub enum ApiError {
     /// The built payload failed the core's own leak audit and was thrown away.
     /// This should never reach a user; if it does, the bug stayed inside.
     PayloadRefused { reason: String },
+    /// **A session was begun while a document was open, and the call did not
+    /// say which document** — so nothing was created, 064f.
+    ///
+    /// Its own variant because its next move is its own: not «change what you
+    /// typed» (`InputRefused`'s promise) and not a leak audit
+    /// (`PayloadRefused`'s). The move is to begin the session from the document
+    /// — and for the caller, to pass the bench.
+    ///
+    /// **Why the core refuses instead of carrying on.** A session's key is what
+    /// names its tokens, so a birth has to re-derive the names already on the
+    /// open document. A call that does not name the document cannot, and the
+    /// result is a payload stamped with the session while its text wears
+    /// pre-birth names — measured, and invisible to every instrument we have:
+    /// the payload *is* built after the birth, so its session marker matches.
+    /// It was reachable through the settings panel's own «Begin», which had no
+    /// bench to pass, and found by a reading of the code before anyone pressed
+    /// the button.
+    ///
+    /// A birth with **no** document open is legitimate and is not refused;
+    /// `renamed: 0` is honest there, because there was nothing to rename.
+    SessionWithoutItsDocument { reason: String },
     /// The network did not carry the question, and why. Never a response body:
     /// a provider's error page can quote the request back, so nothing that comes
     /// off the wire is allowed into this message.
@@ -200,6 +221,9 @@ impl fmt::Display for ApiError {
             Self::UnknownToken => write!(f, "no such token in this session"),
             Self::NothingToSend => write!(f, "there is nothing to send"),
             Self::PayloadRefused { reason } => write!(f, "this payload was refused by its own audit: {reason}"),
+            Self::SessionWithoutItsDocument { reason } => {
+                write!(f, "this session was not begun because the open document was not named: {reason}")
+            }
             Self::NetworkRefused { reason, detail } => {
                 write!(f, "the request did not go through ({reason:?}): {detail}")
             }
@@ -1121,20 +1145,28 @@ pub struct PayloadSession {
     pub name: String,
 }
 
-// **There is no «these names predate the session» state, and that is a fact
-// about the core rather than an omission here** — 064d.
+// **There is no «these names predate the session» state — and this comment was
+// wrong once, which is worth more than the claim it now makes** (064d, corrected
+// in 064f).
 //
-// A count of names not made for the open session was built, guarded, and then
-// removed: it could not rise. `ops::name_tokens_from_the_vault` runs at the head
-// of `protect` and of `scan`, so a bench that mints anything while a session is
-// open is given that session's naming first; and `begin`/`enter` re-derive every
+// A count of such names was built, guarded, and removed because it could not
+// rise. The justification written here read: «`name_tokens_from_the_vault` runs
+// at the head of `protect` and of `scan`… and `begin`/`enter` re-derive every
 // token already on the bench. Every path that could produce a straggler closes
-// one of those two ways.
+// one of those two ways.»
 //
-// So a payload either belongs to a session and wears its names, or belongs to
-// none. The screen has two sentences to write, not three, and the second state
-// is not «named for later» — it is unreachable, and `a_name_made_outside_the_
-// session_is_counted` is the record of why.
+// **The premise was narrower than the sentence.** `begin`/`enter` re-derive the
+// bench they are *given*, and the settings panel's own «Begin» had no bench to
+// give — so that path closed neither way, and the deleted counter is precisely
+// the instrument that would have been non-zero on it. Found by a reading of the
+// code, not by any test of mine, before the owner ever pressed the button.
+//
+// It is true now because 064f made it true rather than by restating it: a birth
+// that does not name the open document is **refused**
+// (`SessionWithoutItsDocument`), so there is no path left that mints under one
+// naming and leaves under another. The claim and its condition are in the same
+// place on purpose — see `a_birth_with_no_bench_still_names_the_document` and
+// `a_second_bench_is_named_into_the_open_session` for the two halves.
 
 /// One page boundary: where it is, and which page begins there.
 ///

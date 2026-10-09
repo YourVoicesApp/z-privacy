@@ -516,6 +516,20 @@ impl Core {
         self.sessions.remove(&id).is_some()
     }
 
+    /// **A bench with a document on it, if there is one** — 064f.
+    ///
+    /// Asked before a session is born: a birth has to re-derive the names
+    /// already on an open document, and a call that did not say which document
+    /// cannot. The core refuses rather than letting the screen paper over it,
+    /// so the answer to «is a document open» has to come from here, where the
+    /// benches actually are.
+    pub(crate) fn a_live_bench(&self) -> Option<u32> {
+        self.sessions
+            .values()
+            .find(|s| !s.original.is_empty())
+            .map(|s| s.id)
+    }
+
     /// One bench, read only. `get` below hands out a mutable one, which a
     /// caller that is also holding the vault cannot have.
     pub(crate) fn sessions_get(&self, id: u32) -> Option<&Session> {

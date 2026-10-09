@@ -352,6 +352,15 @@ class _ShellState extends State<ZShell> {
             width: 480,
             child: SettingsScreen(
               ground: _ground,
+              // **The document in front of the person, handed to the panel** —
+              // 064f. A session begun in the Sessions room has to re-derive the
+              // names already on that document, and the panel had no way to
+              // know which document it was: the room's «Begin» called with no
+              // bench, nothing was renamed, and the payload that left
+              // afterwards wore pre-birth names while claiming the session.
+              // The shell is the only place that holds both the panel and the
+              // bench, so it is the only place this can come from.
+              bench: _bench?.session,
               onClose: () {
                 setState(() => _settingsOpen = false);
                 _ground.refresh();

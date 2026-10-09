@@ -4086,23 +4086,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 18:
         return ApiError_PayloadRefused(reason: dco_decode_String(raw[1]));
       case 19:
+        return ApiError_SessionWithoutItsDocument(
+          reason: dco_decode_String(raw[1]),
+        );
+      case 20:
         return ApiError_NetworkRefused(
           reason: dco_decode_box_autoadd_network_refusal(raw[1]),
           detail: dco_decode_String(raw[2]),
         );
-      case 20:
+      case 21:
         return ApiError_UnsupportedKdfParameters(
           reason: dco_decode_String(raw[1]),
         );
-      case 21:
-        return ApiError_TrailingVaultData();
       case 22:
-        return ApiError_VaultAuthenticationFailed();
+        return ApiError_TrailingVaultData();
       case 23:
-        return ApiError_PayloadAlreadySent();
+        return ApiError_VaultAuthenticationFailed();
       case 24:
-        return ApiError_VaultRequired();
+        return ApiError_PayloadAlreadySent();
       case 25:
+        return ApiError_VaultRequired();
+      case 26:
         return ApiError_BetweenColumns();
       default:
         throw Exception("unreachable");
@@ -5670,21 +5674,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         var var_reason = sse_decode_String(deserializer);
         return ApiError_PayloadRefused(reason: var_reason);
       case 19:
+        var var_reason = sse_decode_String(deserializer);
+        return ApiError_SessionWithoutItsDocument(reason: var_reason);
+      case 20:
         var var_reason = sse_decode_box_autoadd_network_refusal(deserializer);
         var var_detail = sse_decode_String(deserializer);
         return ApiError_NetworkRefused(reason: var_reason, detail: var_detail);
-      case 20:
+      case 21:
         var var_reason = sse_decode_String(deserializer);
         return ApiError_UnsupportedKdfParameters(reason: var_reason);
-      case 21:
-        return ApiError_TrailingVaultData();
       case 22:
-        return ApiError_VaultAuthenticationFailed();
+        return ApiError_TrailingVaultData();
       case 23:
-        return ApiError_PayloadAlreadySent();
+        return ApiError_VaultAuthenticationFailed();
       case 24:
-        return ApiError_VaultRequired();
+        return ApiError_PayloadAlreadySent();
       case 25:
+        return ApiError_VaultRequired();
+      case 26:
         return ApiError_BetweenColumns();
       default:
         throw UnimplementedError('');
@@ -7662,23 +7669,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case ApiError_PayloadRefused(reason: final reason):
         sse_encode_i_32(18, serializer);
         sse_encode_String(reason, serializer);
-      case ApiError_NetworkRefused(reason: final reason, detail: final detail):
+      case ApiError_SessionWithoutItsDocument(reason: final reason):
         sse_encode_i_32(19, serializer);
+        sse_encode_String(reason, serializer);
+      case ApiError_NetworkRefused(reason: final reason, detail: final detail):
+        sse_encode_i_32(20, serializer);
         sse_encode_box_autoadd_network_refusal(reason, serializer);
         sse_encode_String(detail, serializer);
       case ApiError_UnsupportedKdfParameters(reason: final reason):
-        sse_encode_i_32(20, serializer);
+        sse_encode_i_32(21, serializer);
         sse_encode_String(reason, serializer);
       case ApiError_TrailingVaultData():
-        sse_encode_i_32(21, serializer);
-      case ApiError_VaultAuthenticationFailed():
         sse_encode_i_32(22, serializer);
-      case ApiError_PayloadAlreadySent():
+      case ApiError_VaultAuthenticationFailed():
         sse_encode_i_32(23, serializer);
-      case ApiError_VaultRequired():
+      case ApiError_PayloadAlreadySent():
         sse_encode_i_32(24, serializer);
-      case ApiError_BetweenColumns():
+      case ApiError_VaultRequired():
         sse_encode_i_32(25, serializer);
+      case ApiError_BetweenColumns():
+        sse_encode_i_32(26, serializer);
     }
   }
 

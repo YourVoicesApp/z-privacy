@@ -3300,6 +3300,9 @@ const _: fn() = || {
         crate::api::mirrors::ApiError::PayloadRefused { reason } => {
             let _: String = reason;
         }
+        crate::api::mirrors::ApiError::SessionWithoutItsDocument { reason } => {
+            let _: String = reason;
+        }
         crate::api::mirrors::ApiError::NetworkRefused { reason, detail } => {
             let _: crate::api::mirrors::NetworkRefusal = reason;
             let _: String = detail;
@@ -3995,6 +3998,10 @@ impl SseDecode for crate::api::mirrors::ApiError {
                 return crate::api::mirrors::ApiError::PayloadRefused { reason: var_reason };
             }
             19 => {
+                let mut var_reason = <String>::sse_decode(deserializer);
+                return crate::api::mirrors::ApiError::SessionWithoutItsDocument { reason: var_reason };
+            }
+            20 => {
                 let mut var_reason = <crate::api::mirrors::NetworkRefusal>::sse_decode(deserializer);
                 let mut var_detail = <String>::sse_decode(deserializer);
                 return crate::api::mirrors::ApiError::NetworkRefused {
@@ -4002,23 +4009,23 @@ impl SseDecode for crate::api::mirrors::ApiError {
                     detail: var_detail,
                 };
             }
-            20 => {
+            21 => {
                 let mut var_reason = <String>::sse_decode(deserializer);
                 return crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason: var_reason };
             }
-            21 => {
+            22 => {
                 return crate::api::mirrors::ApiError::TrailingVaultData;
             }
-            22 => {
+            23 => {
                 return crate::api::mirrors::ApiError::VaultAuthenticationFailed;
             }
-            23 => {
+            24 => {
                 return crate::api::mirrors::ApiError::PayloadAlreadySent;
             }
-            24 => {
+            25 => {
                 return crate::api::mirrors::ApiError::VaultRequired;
             }
-            25 => {
+            26 => {
                 return crate::api::mirrors::ApiError::BetweenColumns;
             }
             _ => {
@@ -6258,20 +6265,23 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::ApiError>
             crate::api::mirrors::ApiError::PayloadRefused { reason } => {
                 [18.into_dart(), reason.into_into_dart().into_dart()].into_dart()
             }
+            crate::api::mirrors::ApiError::SessionWithoutItsDocument { reason } => {
+                [19.into_dart(), reason.into_into_dart().into_dart()].into_dart()
+            }
             crate::api::mirrors::ApiError::NetworkRefused { reason, detail } => [
-                19.into_dart(),
+                20.into_dart(),
                 reason.into_into_dart().into_dart(),
                 detail.into_into_dart().into_dart(),
             ]
             .into_dart(),
             crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason } => {
-                [20.into_dart(), reason.into_into_dart().into_dart()].into_dart()
+                [21.into_dart(), reason.into_into_dart().into_dart()].into_dart()
             }
-            crate::api::mirrors::ApiError::TrailingVaultData => [21.into_dart()].into_dart(),
-            crate::api::mirrors::ApiError::VaultAuthenticationFailed => [22.into_dart()].into_dart(),
-            crate::api::mirrors::ApiError::PayloadAlreadySent => [23.into_dart()].into_dart(),
-            crate::api::mirrors::ApiError::VaultRequired => [24.into_dart()].into_dart(),
-            crate::api::mirrors::ApiError::BetweenColumns => [25.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::TrailingVaultData => [22.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::VaultAuthenticationFailed => [23.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::PayloadAlreadySent => [24.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::VaultRequired => [25.into_dart()].into_dart(),
+            crate::api::mirrors::ApiError::BetweenColumns => [26.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -8048,29 +8058,33 @@ impl SseEncode for crate::api::mirrors::ApiError {
                 <i32>::sse_encode(18, serializer);
                 <String>::sse_encode(reason, serializer);
             }
-            crate::api::mirrors::ApiError::NetworkRefused { reason, detail } => {
+            crate::api::mirrors::ApiError::SessionWithoutItsDocument { reason } => {
                 <i32>::sse_encode(19, serializer);
+                <String>::sse_encode(reason, serializer);
+            }
+            crate::api::mirrors::ApiError::NetworkRefused { reason, detail } => {
+                <i32>::sse_encode(20, serializer);
                 <crate::api::mirrors::NetworkRefusal>::sse_encode(reason, serializer);
                 <String>::sse_encode(detail, serializer);
             }
             crate::api::mirrors::ApiError::UnsupportedKdfParameters { reason } => {
-                <i32>::sse_encode(20, serializer);
+                <i32>::sse_encode(21, serializer);
                 <String>::sse_encode(reason, serializer);
             }
             crate::api::mirrors::ApiError::TrailingVaultData => {
-                <i32>::sse_encode(21, serializer);
-            }
-            crate::api::mirrors::ApiError::VaultAuthenticationFailed => {
                 <i32>::sse_encode(22, serializer);
             }
-            crate::api::mirrors::ApiError::PayloadAlreadySent => {
+            crate::api::mirrors::ApiError::VaultAuthenticationFailed => {
                 <i32>::sse_encode(23, serializer);
             }
-            crate::api::mirrors::ApiError::VaultRequired => {
+            crate::api::mirrors::ApiError::PayloadAlreadySent => {
                 <i32>::sse_encode(24, serializer);
             }
-            crate::api::mirrors::ApiError::BetweenColumns => {
+            crate::api::mirrors::ApiError::VaultRequired => {
                 <i32>::sse_encode(25, serializer);
+            }
+            crate::api::mirrors::ApiError::BetweenColumns => {
+                <i32>::sse_encode(26, serializer);
             }
             _ => {
                 unimplemented!("");

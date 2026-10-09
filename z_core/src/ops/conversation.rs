@@ -41,6 +41,22 @@ fn clean(name: &str) -> ApiResult<String> {
 pub(crate) fn begin(name: String, bench: Option<SessionId>) -> ApiResult<ConversationRow> {
     let name = clean(&name)?;
     with_core(|core| {
+        // **A birth with a document open must name it** — 064f. Without the
+        // bench nothing is re-derived, and the payload that leaves afterwards is
+        // stamped with this session while its text still wears pre-birth names.
+        // Refused here rather than guessed at: with several benches the core
+        // cannot know which document the person is looking at, and picking one
+        // would be a guess about the only thing that matters.
+        if bench.is_none() {
+            if let Some(live) = core.a_live_bench() {
+                return Err(ApiError::SessionWithoutItsDocument {
+                    reason: format!(
+                        "a document is open (bench {live}) and this call did not name it, so its \
+                         protected names could not be moved into the new session"
+                    ),
+                });
+            }
+        }
         let document = bench
             .and_then(|b| core.get(b.id))
             .map(|s| s.original_str().to_string())

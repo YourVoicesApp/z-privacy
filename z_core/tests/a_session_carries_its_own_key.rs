@@ -232,6 +232,57 @@ fn a_session_with_no_name_is_refused_as_input() {
     close_session(bench).ok();
 }
 
+/// **A birth with no bench leaves the document wearing its old names** — the
+/// defect 5e read out of my own room and I reproduced here before fixing it.
+///
+/// The panel's «Begin» had no bench to pass — none exists anywhere in the
+/// settings subtree — so `take_the_names` returned 0, nothing was re-derived,
+/// and the payload built afterwards was stamped with the session while its
+/// tokens still carried the pre-birth names. Neither instrument saw it: the
+/// payload *is* built after the birth, so `PayloadView.session` matches the open
+/// session. The flag answers «when was this snapshot taken»; the question here
+/// is «whose naming do its tokens carry».
+///
+/// It also falsified the sentence I had used to justify deleting the straggler
+/// counter: «every path that could produce a straggler closes one of those two
+/// ways» was true only for `bench: Some`.
+#[test]
+fn a_birth_with_no_bench_still_names_the_document() {
+    let _g = serial();
+    fresh_vault("no-bench");
+
+    let bench = bench_with(ONE);
+    let before = the_one_token(bench);
+
+
+    // **The core refuses it now**, rather than creating a session that cannot
+    // name the document in front of the person. Before 064f this returned
+    // `Ok(renamed: 0)` and the token below was byte-identical afterwards:
+    // `__Z_7573_PERSON_4B9C__` on both sides of the birth.
+    match conversation_begin("fran panelen".to_string(), None) {
+        Err(ApiError::SessionWithoutItsDocument { reason }) => assert!(
+            reason.contains("did not name it"),
+            "the refusal does not say what was missing: «{reason}»"
+        ),
+        other => panic!("a session was begun without the open document: {other:?}"),
+    }
+
+    // Nothing half-made: no session, none open, and the document untouched.
+    assert!(conversations().expect("rows").is_empty(), "the refused birth left a session behind");
+    assert_eq!(conversation_open().expect("open"), None, "the refused birth opened a session");
+    assert_eq!(before, the_one_token(bench), "the refused birth renamed something anyway");
+
+    // And named, it does the thing the room's card promises.
+    let row = conversation_begin("fran panelen".to_string(), Some(bench)).expect("begin");
+    assert!(row.renamed_tokens >= 1, "the birth named nothing with the bench passed");
+    assert_ne!(
+        before,
+        the_one_token(bench),
+        "the document kept its pre-birth names even with the bench named"
+    );
+    close_session(bench).ok();
+}
+
 // ------------------------------- 6b · the payload says whose session it is
 
 /// **A payload with no session says so, on itself** — 064d.

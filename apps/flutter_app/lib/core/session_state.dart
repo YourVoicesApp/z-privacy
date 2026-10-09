@@ -1389,6 +1389,27 @@ String importSaid(NameImport report) {
 /// Named, never dropped: a person must be able to see the difference between
 /// «imported» and «imported the names». And it says what to do about it,
 /// because a column is a word in their own file and they can change it.
+/// **What a birth did, in one sentence** — 064f.
+///
+/// Worded here and not inside the room, for the reason `importSaid` below is:
+/// a sentence built inside a widget callback cannot be read by a test, because
+/// a core call started in a callback does not resume under `testWidgets`. So the
+/// wording lives where it can be measured and the room only shows it.
+///
+/// The number is the core's own `renamedTokens`, never counted here. Zero has
+/// two honest readings and they are different sentences: with no document open
+/// there was nothing to rename, and with one there was nothing that needed it.
+String sessionBegunSaid(int renamed, {required bool hadDocument}) {
+  if (renamed == 0) {
+    return hadDocument
+        ? 'Begun. No name on this document needed renaming.'
+        : 'Begun. No document is open, so there was nothing to rename.';
+  }
+  return renamed == 1
+      ? 'Begun, and one name on this document moved into it.'
+      : 'Begun, and $renamed names on this document moved into it.';
+}
+
 String columnsNotUsedSaid(List<String> columns) {
   final which = columns.join(', ');
   return columns.length == 1

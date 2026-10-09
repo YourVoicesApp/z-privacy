@@ -74,11 +74,25 @@ class SettingsDoor extends StatelessWidget {
 }
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key, required this.ground, required this.onClose, this.room});
+  const SettingsScreen({
+    super.key,
+    required this.ground,
+    required this.onClose,
+    this.room,
+    this.bench,
+  });
 
   final Ground ground;
   final VoidCallback onClose;
   final SettingsRoom? room;
+
+  /// **The document open behind the panel, if there is one** — 064f.
+  ///
+  /// A session begun in the Sessions room must re-derive the names already on
+  /// that document, and the core refuses a birth that does not name it. Null is
+  /// a panel opened with nothing on the bench, which is legitimate: there is
+  /// nothing to rename and the core allows it.
+  final SessionId? bench;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -134,7 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   SettingsRoom.privacy => _PrivacyRoom(ground: g),
                   SettingsRoom.language => _LanguageRoom(ground: g),
                   SettingsRoom.vault => _VaultRoom(ground: g),
-                  SettingsRoom.sessions => _SessionsRoom(ground: g),
+                  SettingsRoom.sessions => _SessionsRoom(ground: g, bench: widget.bench),
                 },
               ),
             ),
@@ -567,9 +581,13 @@ class _Title extends StatelessWidget {
 /// the lead's inference from a build where only the exit could make one, and
 /// the owner's later words supersede it.
 class _SessionsRoom extends StatefulWidget {
-  const _SessionsRoom({required this.ground});
+  const _SessionsRoom({required this.ground, this.bench});
 
   final Ground ground;
+
+  /// The document open behind the panel. Passed to the birth so the names on it
+  /// move into the new session — see [SettingsScreen.bench].
+  final SessionId? bench;
 
   @override
   State<_SessionsRoom> createState() => _SessionsRoomState();
@@ -578,6 +596,15 @@ class _SessionsRoom extends StatefulWidget {
 class _SessionsRoomState extends State<_SessionsRoom> {
   final _name = TextEditingController();
   bool _busy = false;
+
+  /// **What the birth actually did**, in the core's own number — 064f.
+  ///
+  /// The card promises that what is already protected on the open document is
+  /// renamed into the new session. Before this the promise was made and the
+  /// result was invisible: a birth that renamed nothing returned 0 and the room
+  /// showed the same thing as a birth that renamed nine. A promise displayed
+  /// and not shown kept is how the panel's own «Begin» hid a defect for a day.
+  String? _said;
 
   @override
   void dispose() {
@@ -589,11 +616,19 @@ class _SessionsRoomState extends State<_SessionsRoom> {
     final name = _name.text.trim();
     if (name.isEmpty || _busy) return;
     setState(() => _busy = true);
-    final renamed = await widget.ground.beginSession(name);
+    final renamed = await widget.ground.beginSession(name, bench: widget.bench);
     if (!mounted) return;
     setState(() {
       _busy = false;
-      if (renamed != null) _name.clear();
+      if (renamed == null) {
+        // The refusal is already in `ground.trouble`, in the core's own words.
+        _said = null;
+        return;
+      }
+      _name.clear();
+      // Worded in `session_state.dart`, where a test can read it — see
+      // `sessionBegunSaid`. The room shows the sentence; it does not write it.
+      _said = sessionBegunSaid(renamed, hadDocument: widget.bench != null);
     });
   }
 
@@ -645,6 +680,12 @@ class _SessionsRoomState extends State<_SessionsRoom> {
             ],
           ),
         ),
+        if (_said != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Text(_said!, style: Zc.small.copyWith(color: Zc.clayDeep)),
+          ),
+        ],
         if (rows.isEmpty)
           _Fixed(
             title: 'No sessions yet',
