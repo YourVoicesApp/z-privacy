@@ -33,10 +33,19 @@ else
   say PASS "no third-party request: fonts and styles are served from here"
 fi
 
-if grep -rqiE '<script|onclick=|analytics|gtag|document\.cookie' --include='*.html' . 2>/dev/null; then
-  say FAIL "script, handler, analytics or cookie found"; FAIL=1
+# Code, not the word. This was a plain search for «analytics» until 9 October,
+# and then the privacy page said in three languages that there is no analytics
+# account here — an honest sentence turned the guard red. So the pattern names
+# what a counter actually looks like: a script, an event handler, a cookie, or
+# one of the vendors by their own hostnames. The first form would also have
+# gone red the day a German page said «kein Analytics-Konto».
+COUNTERS='<script|javascript:|document\.cookie|localStorage|on(click|load|error|submit|focus|change|input|mouseover|keyup|keydown)=|google-analytics|googletagmanager|gtag\(|analytics\.js|plausible\.io|matomo|fathom\.|hotjar|segment\.(io|com)|mixpanel'
+if grep -rqiE "$COUNTERS" --include='*.html' . 2>/dev/null; then
+  say FAIL "a script, a handler, a cookie or a counter is on a page:"
+  grep -rniE "$COUNTERS" --include='*.html' . | sed 's/^/           /' | head -10
+  FAIL=1
 else
-  say PASS "no JavaScript, no analytics, no cookie"
+  say PASS "no JavaScript, no handler, no cookie, no counter"
 fi
 
 # A filled-in link is not a real link. The promise was that nothing goes public
@@ -176,6 +185,86 @@ for f in index.html en/index.html de/index.html ar/index.html license/index.html
   done
 done
 [ "$JUMPS" = 0 ] && say PASS "every jump on every page lands on something"
+
+# ---------------------------------------------------------------- the privacy page
+#
+# Three pages, one per language, and the rule they are written under: **every
+# promise names the file where it can be checked.** That rule is worth nothing
+# if the file has moved, so the paths are read off the pages and asked for by
+# name. A page that points at `z_core/tests/something_renamed.rs` is a page
+# telling a visitor to go and look at nothing.
+PRIV=0
+for f in en/privacy/index.html de/privacy/index.html ar/privacy/index.html; do
+  if [ ! -f "$f" ]; then
+    say FAIL "there is no $f"; FAIL=1; PRIV=1; continue
+  fi
+  # Every path the page shows in a code span must exist in the repository.
+  for path in $(grep -oE '<code>[A-Za-z0-9_./-]+</code>' "$f" | sed -E 's|</?code>||g' | grep '/' | sort -u); do
+    [ -e "../$path" ] || { say FAIL "$f names $path, and there is no such file"; FAIL=1; PRIV=1; }
+  done
+done
+
+# And no language gets a weaker page than another: the three name the same
+# proving files. A promise dropped in translation is the oldest way for two
+# pages to disagree about one product.
+if [ "$PRIV" = 0 ]; then
+  for f in de/privacy/index.html ar/privacy/index.html; do
+    if ! diff -q \
+         <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' en/privacy/index.html | sort -u) \
+         <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' "$f" | sort -u) >/dev/null; then
+      say FAIL "$f does not name the same proving files as the English page"
+      diff <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' en/privacy/index.html | sort -u) \
+           <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' "$f" | sort -u) | sed 's/^/           /'
+      FAIL=1; PRIV=1
+    fi
+  done
+fi
+
+# Each language page must lead to its own privacy page, and the chooser's three
+# cards to the three language pages. A privacy page nobody can reach from the
+# site is a file in a repository, not a published policy.
+for page in en de ar; do
+  grep -q "href=\"/$page/privacy/\"" "$page/index.html" \
+    || { say FAIL "$page/index.html does not link its privacy page"; FAIL=1; PRIV=1; }
+done
+[ "$PRIV" = 0 ] && say PASS "three privacy pages, reachable, naming the same files — and every file is there"
+
+# ---------------------------------------------------------------- the publisher
+#
+# The same four facts, in every place that states them, with no place able to
+# drift: the company, its registration number, its registered address and the
+# address a person writes to. Wherever two places can disagree about a fact, one
+# of them is already wrong.
+#
+# The old contact was `yourvoices.app@mono-peak.com` — the platform's own
+# mailbox, reached from Z's pages in all three languages. The owner's ruling of
+# 9 October replaced it everywhere, so «everywhere» is counted rather than
+# trusted.
+LEGAL=0
+if grep -rn 'yourvoices.app@mono-peak.com' --include='*.html' . 2>/dev/null; then
+  say FAIL "the platform's mailbox is still on a Z page (above)"; FAIL=1; LEGAL=1
+fi
+for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html; do
+  [ -f "$f" ] || continue
+  # The country's name is translated on purpose — «Schweden» on the German page —
+  # so the guarded part of the address is the street, the postcode and the city,
+  # which may never drift in any language.
+  for fact in 'Faruk AB' '559473-3494' 'Hotellgatan 3, 311 31 Falkenberg' 'zprivacy@mono-peak.com'; do
+    grep -qF "$fact" "$f" || { say FAIL "$f does not state «$fact»"; FAIL=1; LEGAL=1; }
+  done
+done
+# A language's two pages carry one block, byte for byte. The block is
+# translated, so the comparison is within a language and not across the three.
+for page in en de ar; do
+  [ -f "$page/privacy/index.html" ] || continue
+  a=$(grep -oE '<div class="legal">.*</div>' "$page/index.html" | head -1)
+  b=$(grep -oE '<div class="legal">.*</div>' "$page/privacy/index.html" | head -1)
+  if [ -z "$a" ] || [ "$a" != "$b" ]; then
+    say FAIL "the publisher block differs between $page/index.html and $page/privacy/index.html"
+    FAIL=1; LEGAL=1
+  fi
+done
+[ "$LEGAL" = 0 ] && say PASS "one publisher block, four facts, the same in every place that states them"
 
 [ "$FAIL" = 0 ] && say PASS "all pages present"
 
