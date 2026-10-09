@@ -150,6 +150,12 @@ no session is open, as the net under whoever never pressed the button. The
 deliberate road and the inevitable road meet at the same vault write, so the
 promise still attaches at the boundary either way.
 
+And the button is older than this paper: 022's own title reads «M7.1: القشرة
+(Home · جلسة جديدة · Workspace)» — the owner had named that room at the shell's
+birth, and `new_session.dart` is its corpse, orphaned by 041-G and now removed.
+The panel's button is a resurrection, not an invention. (The programmer seat
+found the title; the design seat found the corpse.)
+
 ### What is kept follows where the conversation happens
 
 * **Inside the app** (a key is connected) — the conversation whole.
