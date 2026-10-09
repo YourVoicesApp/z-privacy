@@ -5,7 +5,13 @@
 //! and the small settings file. The hard rule is that an attacker may not turn a
 //! save into "write these bytes through a symlink somewhere else".
 
-use std::io::{Read, Write};
+// `Write` is used by both halves; `Read` only by the Unix one, which reads
+// through a handle opened with O_NOFOLLOW. Unsplit, it was an unused import on
+// Windows — a warning no Linux run could show, because there the import is
+// used and `-D warnings` has nothing to say. Found by compiling for the target.
+#[cfg(unix)]
+use std::io::Read;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use crate::api::{ApiError, ApiResult};
@@ -22,6 +28,21 @@ const O_NOFOLLOW: i32 = 0o400000;
 // nothing to other accounts and inherits nothing from the folder above it.
 #[cfg(windows)]
 pub(crate) mod windows;
+
+/// **The folder said no, and that is not the same as «this place cannot be used
+/// safely».** 058's refusal, in the words the Unix half already uses.
+///
+/// Unix reads the folder's mode *before* writing and can say what it is set to.
+/// Windows has no mode to read: it learns the same fact from the attempt, when
+/// `CreateFileW` comes back with ERROR_ACCESS_DENIED. One contract, one name,
+/// each platform proving it in its own terms — so the variant and the sentence
+/// are the same here, and only the way they were found differs.
+#[cfg(not(unix))]
+fn kept(label: &str) -> ApiError {
+    ApiError::StoragePermissionsKept {
+        reason: format!("{label}: the folder that holds it refused a write"),
+    }
+}
 
 fn refused(label: &str, reason: impl Into<String>) -> ApiError {
     ApiError::StorageRefused {
@@ -218,12 +239,10 @@ pub(crate) fn read_no_follow(path: &Path, label: &str) -> ApiResult<Option<Vec<u
 fn create_private_new(temp: &Path, label: &str) -> ApiResult<std::fs::File> {
     #[cfg(windows)]
     {
-        windows::create_new_owner_only(temp).map_err(|e| {
-            if e.kind() == std::io::ErrorKind::AlreadyExists {
-                refused(label, "the temporary file already exists")
-            } else {
-                refused(label, format!("the temporary file could not be created safely: {e}"))
-            }
+        windows::create_new_owner_only(temp).map_err(|e| match e.kind() {
+            std::io::ErrorKind::AlreadyExists => refused(label, "the temporary file already exists"),
+            std::io::ErrorKind::PermissionDenied => kept(label),
+            _ => refused(label, format!("the temporary file could not be created safely: {e}")),
         })
     }
     #[cfg(not(windows))]
@@ -233,7 +252,10 @@ fn create_private_new(temp: &Path, label: &str) -> ApiResult<std::fs::File> {
             .write(true)
             .create_new(true)
             .open(temp)
-            .map_err(|e| refused(label, format!("the temporary file could not be created: {e}")))
+            .map_err(|e| match e.kind() {
+                std::io::ErrorKind::PermissionDenied => kept(label),
+                _ => refused(label, format!("the temporary file could not be created: {e}")),
+            })
     }
 }
 
@@ -348,5 +370,89 @@ mod tests {
         assert_eq!(mode_of(&dir), 0o700);
         // G15-ok: cleaning a test's own folder.
         let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+#[cfg(all(test, windows))]
+mod windows_tests {
+    use super::*;
+    use std::process::Command;
+
+    fn test_dir(name: &str) -> PathBuf {
+        // G15-ok: a test's own folder, for the two files this module is allowed.
+        let dir = std::env::temp_dir().join(format!("zprivacy-perm-{name}-{}", std::process::id()));
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+        // G15-ok: making a test's own folder.
+        std::fs::create_dir_all(&dir).expect("make the folder");
+        dir
+    }
+
+    /// What Windows itself says the folder grants, as text. Compared with
+    /// itself before and after the act: the question is only whether Z changed
+    /// it, so the exact spelling does not matter as long as it is the same
+    /// spelling both times.
+    fn acl_of(dir: &Path) -> String {
+        let out = Command::new("icacls")
+            .arg(dir)
+            .output()
+            .expect("icacls is on every Windows machine");
+        String::from_utf8_lossy(&out.stdout).to_string()
+    }
+
+    fn icacls(args: &[&str]) -> std::process::Output {
+        Command::new("icacls").args(args).output().expect("icacls ran")
+    }
+
+    /// **058 on Windows — the same contract as the Unix test of the same name.**
+    ///
+    /// A folder the person has taken the write permission off is left exactly as
+    /// they set it, and the write is refused in words rather than mended and
+    /// carried out. Unix measures it with `chmod 500`; here the lever is
+    /// `icacls /deny`, and the refusal must be the same variant, because the
+    /// promise is the product's and not the platform's.
+    #[test]
+    fn a_folder_the_person_locked_is_left_exactly_as_it_was() {
+        let dir = test_dir("locked");
+        let who = std::env::var("USERNAME").expect("USERNAME names the account these tests run as");
+
+        // Every precondition is its own assertion with its own reason: a red
+        // that means «the lever did not work» must not read like «the contract
+        // is broken».
+        let denied = icacls(&[&dir.to_string_lossy(), "/deny", &format!("{who}:(WD,AD)")]);
+        assert!(
+            denied.status.success(),
+            "the lever itself failed, so nothing below was measured: {}",
+            String::from_utf8_lossy(&denied.stderr)
+        );
+        let locked = acl_of(&dir);
+
+        let refused = replace_atomically(&dir.join("vault.zv"), "zv.new", b"a vault", "vault.zv");
+        let after = acl_of(&dir);
+        let written = dir.join("vault.zv").exists();
+
+        // Put the folder back before anything can panic, or the temp folder
+        // cannot be cleaned and the next run inherits it.
+        let _ = icacls(&[&dir.to_string_lossy(), "/remove:d", &who]);
+        // G15-ok: cleaning a test's own folder.
+        let _ = std::fs::remove_dir_all(&dir);
+
+        assert_eq!(
+            after, locked,
+            "Z changed an access list the person set, which is the whole of 058"
+        );
+        match refused {
+            Err(ApiError::StoragePermissionsKept { reason }) => {
+                assert!(
+                    reason.contains("vault.zv"),
+                    "the refusal must name which file it is about: «{reason}»"
+                );
+            }
+            other => panic!("a folder the person locked gave {other:?}"),
+        }
+        assert!(
+            !written,
+            "nothing was written, and the refusal must not have lied about it"
+        );
     }
 }
