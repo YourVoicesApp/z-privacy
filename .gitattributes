@@ -1,0 +1,22 @@
+# Line endings are ours, not the platform's.
+#
+# Git for Windows converts on checkout by default, so a `.txt` or a `.csv` here
+# would arrive on the Windows runner with CRLF and be compiled into the binary
+# that way — `include_str!` embeds a file exactly as it sits on disk, and five
+# of the scanner's fixtures and all three name banks arrive that way.
+#
+# Measured before it was written, on Linux at 7dadf58, with the product's own
+# probe (`cargo run --example check_document`, five fixtures against CRLF twins
+# of themselves): protected, waiting, tokens, words and pages are identical, and
+# only the character count grows — by exactly one per line, because the `\r` is
+# carried through into the document's text. So nothing was broken. What was
+# missing is the guarantee that the Windows run compiles the same bytes Linux
+# measured, and `-text` is that guarantee: no conversion, in either direction,
+# for anything in this repository.
+#
+# Not `text eol=lf`, which is the usual advice, for one concrete reason:
+# `site/third-party/ibm-plex-OFL.txt` is committed with CRLF because that is how
+# its author wrote it. A normalisation rule would rewrite a third-party licence
+# to suit our tooling, which is not ours to do. It is the only file in the tree
+# with a CR in it, and this keeps it the way it arrived.
+* -text
