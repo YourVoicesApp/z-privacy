@@ -348,6 +348,34 @@ fi
 
 [ "$FAIL" = 0 ] && say PASS "all pages present"
 
+# ------------------------------------------------- what a crawler is told
+#
+# The owner wants z-privacy.com in Google. Before a crawler reads a word of a
+# page it asks three questions — which address is this page's real one, which
+# pages exist, and what am I allowed to fetch — and this section is where each
+# answer is measured against the tree that will be uploaded.
+
+# One page, one address. The address is **derived from the path**, never read
+# from the page and compared with itself: a canonical copied from a sibling
+# and left unedited is the ordinary way this goes wrong, and a guard that
+# trusted the page's own word would pass on it.
+CANON=0
+while IFS= read -r f; do
+  rel="${f#./}"; want="https://z-privacy.com/${rel%index.html}"
+  n=$(grep -cE '<link[^>]+rel="canonical"' "$f" 2>/dev/null || true); n=${n:-0}
+  if [ "$n" != 1 ]; then
+    say FAIL "$rel carries $n canonical links, and a page has exactly one address"
+    FAIL=1; CANON=1; continue
+  fi
+  got=$(grep -oE '<link[^>]+rel="canonical"[^>]*>' "$f" \
+        | grep -oE 'href="[^"]*"' | sed -E 's/^href="//; s/"$//')
+  if [ "$got" != "$want" ]; then
+    say FAIL "$rel calls $got its own address, and its own address is $want"
+    FAIL=1; CANON=1
+  fi
+done < <(find . -name index.html | sort)
+[ "$CANON" = 0 ] && say PASS "every page names itself as canonical, at the absolute address its own path gives it"
+
 # ---------------------------------------------------------------- the numbers
 #
 # Every number on the site, and every word it borrowed from the app, against
