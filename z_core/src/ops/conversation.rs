@@ -187,14 +187,96 @@ pub(crate) fn record(question: String, answer: String) -> ApiResult<u32> {
                 reason: "there is no session open to write to".to_string(),
             });
         };
-        let mut body = body(core, number)?.unwrap_or_default();
-        body.turns.push(crate::conversation::Turn {
-            question,
-            answer,
-            at: crate::vault::model::now_seconds(),
-        });
-        write_body(core, number, &body)?;
-        Ok(body.turns.len() as u32)
+        record_in(core, number, question, answer, Vec::new())
+    })
+}
+
+/// Add one exchange to session `number`'s file, holding the core already.
+///
+/// Separate from `record` above because **the send path cannot call `record`**:
+/// `with_core` is not re-entrant (the comment above `bump_truth` says so), and
+/// an answer arrives inside a core borrow that is already open. So the write
+/// takes a `&mut Core` and the two doors share one implementation instead of
+/// each growing its own.
+///
+/// `allowed` is the tokens the payload this turn left in was permitted to
+/// carry. It is stored with the turn because a turn read back next week has no
+/// payload record to ask, and restoring it against the whole session's store
+/// would hand back tokens G9 exists to leave alone.
+pub(crate) fn record_in(
+    core: &mut crate::session::Core,
+    number: u32,
+    question: String,
+    answer: String,
+    allowed: Vec<String>,
+) -> ApiResult<u32> {
+    let mut body = body(core, number)?.unwrap_or_default();
+    body.turns.push(crate::conversation::Turn {
+        question,
+        answer,
+        at: crate::vault::model::now_seconds(),
+        allowed,
+    });
+    write_body(core, number, &body)?;
+    Ok(body.turns.len() as u32)
+}
+
+/// **Every turn session `number` holds, restored.**
+///
+/// The number is a parameter and not «whichever session is open», so a screen
+/// showing one row's history cannot be reading another row's file, and a guard
+/// that passes a number measures the file it names.
+///
+/// **What crosses the boundary is restored text, never a stored token.** The
+/// file keeps both halves as they left — the question in the form that
+/// travelled, the answer exactly as it arrived — so what is on disk resolves
+/// to a name only through the session's own store. Putting the names back is
+/// therefore the core's work: a screen handed the stored form would print
+/// `__Z_5CDD_IBAN_5B32__` in the middle of the model's sentence, which is the
+/// lie 046/U was written to end.
+///
+/// `bench` is the workbench whose store holds the values. Without one — the
+/// room opened before any document is loaded — nothing resolves, and every
+/// token is reported in `unresolved` rather than passed off as prose. An empty
+/// store is the honest instrument here: `restore` already reports what it
+/// cannot place, so one implementation serves both cases and they cannot
+/// disagree.
+pub(crate) fn turns(number: u32, bench: Option<SessionId>) -> ApiResult<Vec<crate::api::TurnRow>> {
+    with_core(|core| {
+        let Some(body) = body(core, number)? else {
+            // No file: a session named and not yet written to. An ordinary
+            // state, and an empty list is the true answer to «what does it
+            // hold» — not an error to be shown to anybody.
+            return Ok(Vec::new());
+        };
+        // Borrowed, never moved out. An earlier draft took the store with
+        // `mem::take` and put it back at the end, which reads as a read and is
+        // not one: any `?` added between the two lines later would leave the
+        // bench without its tokens, and a person's protection would vanish
+        // because somebody added an error case to a getter.
+        let nothing = crate::tokens::TokenStore::default();
+        let store: &crate::tokens::TokenStore = match bench.and_then(|b| core.get(b.id)) {
+            Some(s) => &s.tokens,
+            None => &nothing,
+        };
+        let mut rows = Vec::new();
+        for turn in &body.turns {
+            let question = crate::tokens::restore(&turn.question, store, &turn.allowed);
+            let answer = crate::tokens::restore(&turn.answer, store, &turn.allowed);
+            let mut unresolved = question.unknown;
+            for name in answer.unknown {
+                if !unresolved.contains(&name) {
+                    unresolved.push(name);
+                }
+            }
+            rows.push(crate::api::TurnRow {
+                question: question.segments,
+                answer: answer.segments,
+                at: turn.at,
+                unresolved,
+            });
+        }
+        Ok(rows)
     })
 }
 

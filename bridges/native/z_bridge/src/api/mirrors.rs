@@ -1254,6 +1254,26 @@ pub struct _ConversationRow {
     pub renamed_tokens: u32,
 }
 
+#[frb(mirror(TurnRow))]
+pub struct _TurnRow {
+    /// What was asked, restored. Empty segments mean no question was typed —
+    /// a real state: a document may be sent with nothing asked of it, which
+    /// was 046/N's whole finding.
+    pub question: Vec<Segment>,
+    /// What came back, restored.
+    pub answer: Vec<Segment>,
+    /// Seconds since 1970.
+    pub at: u64,
+    /// **Every token this turn could not resolve, by name.**
+    ///
+    /// Said as a number and a list rather than left out: a conversation read
+    /// without the document that made it resolves nothing, and a screen that
+    /// showed the tokens as prose would be repeating the lie the owner met
+    /// after days away. One list for both halves — the turn is the unit a
+    /// person reads.
+    pub unresolved: Vec<String>,
+}
+
 #[frb(mirror(RevealState))]
 pub struct _RevealState {
     pub entity: Option<u32>,

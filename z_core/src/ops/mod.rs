@@ -780,6 +780,10 @@ pub(crate) fn ask_model_directly(
             reason: "there is nothing to send".to_string(),
         });
     }
+    // Taken before the text is moved into the request: what is recorded is the
+    // thing that was sent, from the same variable, so the record and the wire
+    // cannot be given two different documents.
+    let kept = text.clone();
     let answer = crate::gateway::send(crate::gateway::Request {
         target: crate::gateway::Target {
             provider_id: provider.id.clone(),
@@ -789,6 +793,20 @@ pub(crate) fn ask_model_directly(
         context: crate::gateway::Context { workspace, history },
         body: crate::gateway::Body::Direct(zeroize::Zeroizing::new(text)),
     })?;
+    // **Direct Mode is a conversation too** — the owner's rule is that a
+    // conversation inside the app is kept whole in its session, and this door
+    // is inside the app.
+    //
+    // Its own write rather than the shared one, because this path has no
+    // handle and stores no answer record: there is nothing to restore against.
+    // So the allowed list is empty, which is the truth and not a gap — the
+    // text left as it stands, and what is kept is exactly what left.
+    let open = with_core(|core| core.open_conversation);
+    if let Some(number) = open {
+        with_core(|core| {
+            crate::ops::conversation::record_in(core, number, kept, answer.text.clone(), Vec::new())
+        })?;
+    }
     Ok(crate::api::ModelAnswer {
         answer: None,
         text: answer.text,
@@ -2139,6 +2157,44 @@ pub(crate) fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<An
                 .map(|(n, name, _)| (n, name))
         })
     });
+    // **The turn is written here, and written first** — the owner's first
+    // finding of 9 October.
+    //
+    // Here, because here is where every answer arrives: `send` and `ask_model`
+    // both end at this function, and so does the app's own paste-back flow for
+    // an answer brought in from outside. That is both halves of the owner's
+    // division in 062 §F — what happened inside the app, and what was copied
+    // out and came back — closed at one place. Putting it in `ask_model`
+    // instead would have covered one door of three and left the next one
+    // somebody opens uncovered, which is exactly how the send door came to be
+    // a third exit nobody had wired.
+    //
+    // First, because a half-kept conversation is worse than a refused one. If
+    // the file cannot be written — the vault locked while the model was
+    // thinking is the real case — then nothing has been stored in memory
+    // either, and the error is the whole truth rather than an answer the app
+    // claims to have kept and has not. The error goes through **unchanged**:
+    // `VaultLocked` has to stay `VaultLocked`, because the screen that sees it
+    // locks, and a refusal reworded here would take that away.
+    if let Some((number, _)) = in_session.clone() {
+        let gathered = with_session(payload.session, |s| {
+            (
+                // The question in the form that left, not as it was typed: the
+                // file keeps both halves as they travelled, so nothing on disk
+                // resolves to a name except through this session's own store.
+                s.question_safe.clone(),
+                s.payloads
+                    .get(&payload.id)
+                    .map(|p| p.allowed_token_ids.clone())
+                    .unwrap_or_default(),
+            )
+        })
+        .ok_or(ApiError::InvalidSession)?;
+        let (question, allowed) = gathered;
+        with_core(|core| {
+            crate::ops::conversation::record_in(core, number, question, raw.clone(), allowed)
+        })?;
+    }
     let out = with_session(payload.session, |s| {
         let id = s.take_answer_id();
         s.answers.insert(

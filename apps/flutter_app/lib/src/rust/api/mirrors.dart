@@ -2606,6 +2606,49 @@ class TokenRow {
           sourceDetail == other.sourceDetail;
 }
 
+class TurnRow {
+  /// What was asked, restored. Empty segments mean no question was typed —
+  /// a real state: a document may be sent with nothing asked of it, which
+  /// was 046/N's whole finding.
+  final List<Segment> question;
+
+  /// What came back, restored.
+  final List<Segment> answer;
+
+  /// Seconds since 1970.
+  final BigInt at;
+
+  /// **Every token this turn could not resolve, by name.**
+  ///
+  /// Said as a number and a list rather than left out: a conversation read
+  /// without the document that made it resolves nothing, and a screen that
+  /// showed the tokens as prose would be repeating the lie the owner met
+  /// after days away. One list for both halves — the turn is the unit a
+  /// person reads.
+  final List<String> unresolved;
+
+  const TurnRow({
+    required this.question,
+    required this.answer,
+    required this.at,
+    required this.unresolved,
+  });
+
+  @override
+  int get hashCode =>
+      question.hashCode ^ answer.hashCode ^ at.hashCode ^ unresolved.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TurnRow &&
+          runtimeType == other.runtimeType &&
+          question == other.question &&
+          answer == other.answer &&
+          at == other.at &&
+          unresolved == other.unresolved;
+}
+
 @freezed
 sealed class UndoOutcome with _$UndoOutcome {
   const UndoOutcome._();
