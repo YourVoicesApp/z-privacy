@@ -1751,6 +1751,33 @@ pub struct ConversationRow {
     pub renamed_tokens: u32,
 }
 
+/// **One exchange a session holds, restored** — the owner's first finding, 9 Oct.
+///
+/// Both halves are segments and not strings, the same shape `restored_view`
+/// returns, because what comes out of a session's file has the same three
+/// states a live answer has: the model's words, a value put back, and a token
+/// nothing here can place. A screen that received plain text would have to
+/// decide for itself which was which, and it would be wrong first.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TurnRow {
+    /// What was asked, restored. Empty segments mean no question was typed —
+    /// a real state: a document may be sent with nothing asked of it, which
+    /// was 046/N's whole finding.
+    pub question: Vec<Segment>,
+    /// What came back, restored.
+    pub answer: Vec<Segment>,
+    /// Seconds since 1970.
+    pub at: u64,
+    /// **Every token this turn could not resolve, by name.**
+    ///
+    /// Said as a number and a list rather than left out: a conversation read
+    /// without the document that made it resolves nothing, and a screen that
+    /// showed the tokens as prose would be repeating the lie the owner met
+    /// after days away. One list for both halves — the turn is the unit a
+    /// person reads.
+    pub unresolved: Vec<String>,
+}
+
 /// Begin a session, with the name the person was asked for once.
 ///
 /// Called at the first exit — Copy, a PDF, a question sent to a model — when
@@ -1795,6 +1822,20 @@ pub fn conversation_forget(number: u32) -> ApiResult<String> {
 /// Write one exchange into the open session's file.
 pub fn conversation_record(question: String, answer: String) -> ApiResult<u32> {
     crate::ops::conversation::record(question, answer)
+}
+
+/// **Everything one session holds, restored** — the reader 064 shipped without.
+///
+/// `number` is the session, explicitly, and never «whichever one is open»: a
+/// room shows one row's history, and a reader that followed the open session
+/// would show the wrong file whenever those two disagreed — silently, which is
+/// the only way this project loses things.
+///
+/// `bench` is the workbench whose store holds the values. Pass the document in
+/// front of the person; pass `None` and nothing resolves, every token being
+/// named in `unresolved` instead of printed as though it were prose.
+pub fn conversation_turns(number: u32, bench: Option<SessionId>) -> ApiResult<Vec<TurnRow>> {
+    crate::ops::conversation::turns(number, bench)
 }
 
 /// Does the open session still belong to the document on this bench? — 062 §C.

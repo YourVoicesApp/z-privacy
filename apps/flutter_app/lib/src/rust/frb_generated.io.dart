@@ -237,6 +237,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TokenRow> dco_decode_list_token_row(dynamic raw);
 
   @protected
+  List<TurnRow> dco_decode_list_turn_row(dynamic raw);
+
+  @protected
   List<UserListRow> dco_decode_list_user_list_row(dynamic raw);
 
   @protected
@@ -427,6 +430,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TokenRow dco_decode_token_row(dynamic raw);
+
+  @protected
+  TurnRow dco_decode_turn_row(dynamic raw);
 
   @protected
   int dco_decode_u_32(dynamic raw);
@@ -712,6 +718,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<TokenRow> sse_decode_list_token_row(SseDeserializer deserializer);
 
   @protected
+  List<TurnRow> sse_decode_list_turn_row(SseDeserializer deserializer);
+
+  @protected
   List<UserListRow> sse_decode_list_user_list_row(SseDeserializer deserializer);
 
   @protected
@@ -916,6 +925,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TokenRow sse_decode_token_row(SseDeserializer deserializer);
+
+  @protected
+  TurnRow sse_decode_turn_row(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_32(SseDeserializer deserializer);
@@ -1268,6 +1280,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_token_row(List<TokenRow> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_turn_row(List<TurnRow> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_user_list_row(
     List<UserListRow> self,
     SseSerializer serializer,
@@ -1512,6 +1527,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_token_row(TokenRow self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_turn_row(TurnRow self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);
