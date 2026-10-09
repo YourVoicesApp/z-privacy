@@ -471,12 +471,13 @@ rm -f /tmp/gt.$$
 
 # ---------------------------------------------------------------- G22
 # The storage protection layer must be MEASURED on the platform you are on,
-# not merely written for one. Six named contracts guard the vault's own file;
-# on Windows all six are `#[cfg(unix)]` and simply do not exist, so the suite
-# there runs 245 of 251 and still says «ok». A count would drift as tests are
-# added — these are asked for by name.
+# not merely written for one. Nine named contracts: six on the vault's own file
+# and, since 058, three on the folder it sits in. On Windows every one of them
+# is `#[cfg(unix)]` and simply does not exist, so the suite there is smaller and
+# still says «ok». A count of tests would drift as tests are added — these are
+# asked for by name, and the script says how many it asked for.
 if bash scripts/check_storage_contracts.sh >/tmp/g22.$$ 2>&1; then
-  pass "G22 all six storage protection contracts are measured on this platform"
+  pass "G22 $(sed 's/\x1b\[[0-9;]*m//g' /tmp/g22.$$ | tail -1)"
 else
   fail "G22 storage protection is not fully measured here:"
   sed 's/\x1b\[[0-9;]*m//g' /tmp/g22.$$ | grep -E "^  FAIL|contracts have no test" | sed 's/^/        /'
