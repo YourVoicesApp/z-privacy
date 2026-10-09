@@ -294,6 +294,22 @@ fi
 
 [ "$FAIL" = 0 ] && say PASS "all pages present"
 
+# ---------------------------------------------------------------- the numbers
+#
+# Every number on the site, and every word it borrowed from the app, against
+# the thing it is about. It lives in its own file because it reads Cargo.lock,
+# the app's Dart and the served stylesheets, which is more than a shell script
+# should do — but the verdict belongs here, so one command still answers.
+if command -v python3 >/dev/null 2>&1; then
+  if python3 ../scripts/check_site_claims.py; then
+    :
+  else
+    FAIL=1
+  fi
+else
+  say FAIL "no python3, so no number on this site was checked against its deed"; FAIL=1
+fi
+
 echo
 [ "$FAIL" = 0 ] && echo "site ready to publish" || echo "SITE NOT READY"
 exit "$FAIL"
