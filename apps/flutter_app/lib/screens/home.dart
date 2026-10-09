@@ -37,6 +37,7 @@ import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/the_session_question.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -82,6 +83,10 @@ class HomeScreen extends StatefulWidget {
   /// facts have one owner; a Home standing on its own has no panel over it.
   final bool settingsOpen;
   final String version;
+
+  /// The box a person writes in. Keyed because this screen has had a second
+  /// field since 064/D — see the comment on the field itself.
+  static const composer = ValueKey<String>('home-composer');
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -224,14 +229,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         const ZMark(size: 36),
                         const SizedBox(width: 12),
                         const Text('Z Privacy', style: Zc.h1),
-                        const SizedBox(width: 12),
                         // **The session, in the head of the chat too** —
                         // 064/B. The owner asked for it beside the file's
                         // name; a person standing in this screen has no file
                         // and the same question, so the claim is the same one:
                         // which direction of work am I in. This strip has the
                         // room the workspace's bar does not.
-                        Flexible(child: TheOpenSession(ground: ground)),
+                        if (ground.openSessionRow != null) ...[
+                          const SizedBox(width: 12),
+                          Flexible(child: TheOpenSession(ground: ground)),
+                        ],
                         const SizedBox(width: 8),
                         // **Who answers, in the head of the chat** — 064/C.
                         //
@@ -290,6 +297,54 @@ class _HomeScreenState extends State<HomeScreen> {
                       controller: _conversation,
                       padding: const EdgeInsets.fromLTRB(34, 24, 34, 14),
                       children: [
+                        // **The session question, the owner's second place**
+                        // (064/D): «in the chat screen itself when the person
+                        // has no session».
+                        //
+                        // At the end of the conversation and not in the
+                        // composer's band, for a measured reason: that band is
+                        // pinned and capped at half the window, and a third
+                        // element in it already cost the page's last line 44 px
+                        // of glass at 760 (064/C). Here it is the last thing in
+                        // the thread, directly above the writing, where a chat
+                        // puts a question it is asking — and it scrolls away
+                        // **At the head of the thread, and the place was
+                        // measured twice before it settled here.** 065's rule
+                        // is the owner's: the answer is the last thing above
+                        // the writing, and the thread jumps to its own end
+                        // whenever one arrives.
+                        //
+                        //   * at the end of the thread, below the answer, the
+                        //     jump put the answer's top at y = 65.67 against
+                        //     the thread's own 66 — a third of a pixel out of
+                        //     the band it is supposed to be in;
+                        //   * directly above the answer, at a 900×520 window
+                        //     the answer was **never built**: the jump lands on
+                        //     the extent a `ListView` has built, and 200 px of
+                        //     new prose above it left that short.
+                        //
+                        // Both readings came from `the_chat_reads_like_a_chat`,
+                        // a file this round did not touch. At the head it costs
+                        // the thread's end nothing: a fresh chat opens at the
+                        // top, which is where a person with no session is, and
+                        // it scrolls away with the page's own opening words
+                        // once there is a conversation to read.
+                        //
+                        // One wording with the sheet's, one answer on the
+                        // ground, and the closing sentence is this surface's
+                        // own: «Ask the AI» does not begin a session, it opens
+                        // the review, and the doors there are where the text
+                        // leaves.
+                        if (ground.theSessionQuestionStands) ...[
+                          const SizedBox(height: 22),
+                          TheSessionQuestion(
+                            ground: ground,
+                            closing:
+                                '«Ask the AI» below takes you to the review, and the door you '
+                                'press there begins it — the clipboard, the PDF, or a send to a '
+                                'connected AI. Nothing has left this machine yet.',
+                          ),
+                        ],
                         const Text('What stays on this device, and what leaves it.', style: Zc.h2),
                         const SizedBox(height: 10),
                         const Text(
@@ -401,6 +456,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               TextField(
+                                // **Keyed since 064/D**, because the chat now
+                                // has a second field in it: the session
+                                // question stands at the end of the thread
+                                // while a person has no session, and it comes
+                                // first in the tree. Every guard that reached
+                                // for «the first TextField on this page» was
+                                // reaching for this one, and a new field in
+                                // the tree is a change to that reach whether
+                                // or not anything moved on the glass.
+                                key: HomeScreen.composer,
                                 controller: _text,
                                 focusNode: _focus,
                                 autofocus: true,

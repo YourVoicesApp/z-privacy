@@ -67,7 +67,7 @@ void main() {
     ));
     await settle(tester);
 
-    final box = find.byType(TextField);
+    final box = find.byKey(HomeScreen.composer);
     expect(box, findsOneWidget, reason: 'the home is not a box to write in');
     // The focus is already there: a person who opened this app to paste can paste.
     expect(
@@ -114,7 +114,7 @@ void main() {
     await settle(tester, rounds: 8);
 
     expect(find.byType(HomeScreen), findsOneWidget);
-    await tester.enterText(find.byType(TextField).first, _text);
+    await tester.enterText(find.byKey(HomeScreen.composer), _text);
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Open and scan'));
     await settle(tester, rounds: 8);

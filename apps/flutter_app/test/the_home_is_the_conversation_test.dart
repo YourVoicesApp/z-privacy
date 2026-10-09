@@ -183,7 +183,7 @@ void main() {
     // The line has to hold the question for the button to be about it.
     await tester.pumpWidget(_home(ground, chat));
     await settle(tester);
-    await tester.enterText(find.byType(TextField), _unsure);
+    await tester.enterText(find.byKey(HomeScreen.composer), _unsure);
     await settle(tester);
 
     final button = tester.widget<ZButton>(find.widgetWithText(ZButton, 'Ask the AI'));
@@ -224,7 +224,7 @@ void main() {
 
     await tester.pumpWidget(_home(ground, chat));
     await settle(tester);
-    await tester.enterText(find.byType(TextField), _unsure);
+    await tester.enterText(find.byKey(HomeScreen.composer), _unsure);
     await settle(tester);
 
     final button = tester.widget<ZButton>(find.widgetWithText(ZButton, 'Ask the AI'));

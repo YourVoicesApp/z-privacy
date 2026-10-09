@@ -93,7 +93,11 @@ void main() {
     // session» were two buttons and one of them opened a sheet that asked a
     // language first; the page is a box to write in now, with a «+» for a file,
     // and the vault is still a press away.
-    expect(find.byType(TextField), findsOneWidget, reason: 'the home is not a box to write in');
+    // The box, by its key: 064/D put a second field on this page — the session
+    // question, while a person has no session — and the claim here is about
+    // the box a person writes in, not about how many fields the page has.
+    expect(find.byKey(HomeScreen.composer), findsOneWidget,
+        reason: 'the home is not a box to write in');
     expect(find.byTooltip('Add a document — PDF, Word or text'), findsOneWidget);
     expect(find.text('Open Z Vault'), findsOneWidget);
     // No invented history: a session lives in memory, and Home says so once.

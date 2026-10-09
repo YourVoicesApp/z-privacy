@@ -109,7 +109,10 @@ Widget _home(Ground ground, Workbench? chat) => MaterialApp(
 /// The box a person writes in. One `TextField` stands on this screen, and the
 /// guards are about **where it is**, so they ask the render tree for its
 /// rectangle rather than for its existence.
-Rect _composer(WidgetTester tester) => tester.getRect(find.byType(TextField));
+// **By key since 064/D**: the chat has a second field while a person has no
+// session — the session question, at the end of the thread — so «the TextField
+// on this page» is no longer a description of anything.
+Rect _composer(WidgetTester tester) => tester.getRect(find.byKey(HomeScreen.composer));
 
 Rect _answer(WidgetTester tester) => tester.getRect(find.byType(AnswerPanel));
 

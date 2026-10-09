@@ -482,7 +482,6 @@ class _TopBar extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 9),
             // **The session, beside the document it is being worked in** —
             // 064/B, the owner's own words: more than one session means more
             // than one direction of work, and he found his first one named
@@ -490,7 +489,17 @@ class _TopBar extends StatelessWidget {
             //
             // It stands next to the file's name because the two are one
             // statement: this document, in this session.
-            Flexible(child: TheOpenSession(ground: ground, compact: true)),
+            //
+            // **One gap, either way.** The first form of this drew its own
+            // 9 px spacer unconditionally, beside a widget that draws nothing
+            // when no session is open — and 9 px against this bar's 2.8 px of
+            // margin is 6.2 px over at 900, which is exactly what
+            // `the_settings_cover_the_work_test` then read with the panel up.
+            // A spacer is an element too.
+            if (ground.openSessionRow != null) ...[
+              const SizedBox(width: 9),
+              Flexible(child: TheOpenSession(ground: ground, compact: true)),
+            ],
             // Flexible for the same reason the word «Documents» is, and
             // measured in the same breath: the back control alone brought 900
             // from 41 px over to 2.8, which is a margin of one and a half

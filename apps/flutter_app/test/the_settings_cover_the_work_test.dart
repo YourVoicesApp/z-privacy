@@ -20,6 +20,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/vault.dart';
@@ -151,7 +152,11 @@ Future<Ground> aDocumentOnTheBench(WidgetTester tester, String name) async {
     await settle(tester, rounds: 8);
   }
 
-  await tester.enterText(find.byType(TextField).first, _doc);
+  // By key since 064/D: the session question stands at the end of the chat
+  // while a person has no session and comes **first** in the tree, so this
+  // reach — «the first field on the page» — was putting the document into the
+  // session's name field and opening nothing.
+  await tester.enterText(find.byKey(HomeScreen.composer), _doc);
   await settle(tester, rounds: 1);
   await tester.tap(find.text('Open and scan'));
   await settle(tester);

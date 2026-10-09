@@ -130,6 +130,28 @@ class Ground extends ChangeNotifier {
   ConversationRow? get openSessionRow =>
       sessions.where((s) => s.number == openSession).firstOrNull;
 
+  /// **The name a person has typed for a session that does not exist yet** —
+  /// 064/D.
+  ///
+  /// A wish, not a session: only an exit may begin one, and nothing here calls
+  /// the core. It lives on the ground because the owner put the question in two
+  /// places on 9 October — the chat screen and the review page — and «the name
+  /// is asked once» can only hold if the two surfaces share one answer. A
+  /// person who names their work in the chat finds their own word in the sheet.
+  ///
+  /// It is not cleared when a session is born: `theSessionQuestionStands` goes
+  /// false and no surface asks again, and keeping the word costs nothing and
+  /// loses nothing if the vault is locked and the question returns.
+  String sessionNameWished = '';
+
+  void wishSessionName(String name) {
+    if (name == sessionNameWished) return;
+    sessionNameWished = name;
+    // **No notify.** Every keystroke would rebuild two screens, and nothing on
+    // the glass reads this except the field the person is typing in — the
+    // sheet's own strip reads it when it builds, which is after a press.
+  }
+
   /// **Does the session question still stand?** — 064.
   ///
   /// One source for the two places that must agree: the band at an exit asks

@@ -251,6 +251,30 @@ void main() {
         reason: 'the long name pushed the settings door to $d, where no press reaches it');
   });
 
+  // ------------------------------------------------------------------ guard 6
+  //
+  // **The state I changed, not the state I built for** — and this guard exists
+  // because my own 900-wide reading missed it. Guard 3 measures the bar with a
+  // session open, where the page count has stepped aside; with **no** session
+  // the chip draws nothing and the bar is as it was — except that the first
+  // form of this drew its 9 px spacer anyway, against 2.8 px of margin. 6.2 px
+  // over at 900, read by `the_settings_cover_the_work_test` with the panel up,
+  // in a file this round did not touch. A spacer is an element too.
+  testWidgets('with no session the bar is exactly as it was, at 900', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final g = await _ready(tester, 'w900none', withASession: false);
+    await tester.pumpWidget(_workspace(g));
+    await _settle(tester);
+
+    expect(find.byKey(TheOpenSession.mark), findsNothing, reason: 'something is drawn for no session');
+    // The count is the thing that only steps aside **for** the session.
+    expect(find.text('1 page'), findsOneWidget,
+        reason: 'the page count went away with no session to make room for');
+    expect(_overflows(tester), isEmpty,
+        reason: 'the bar overflows at 900 with nothing of this round on it');
+  });
+
   // ------------------------------------------------------------------ guard 4
   testWidgets('the chat’s head names it too, and the build stamp keeps its place', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 900));

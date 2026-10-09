@@ -132,8 +132,10 @@ void main() {
     // A session typed by hand, carrying something a general rule will protect
     // on its own — no vault, no pack of any language needed.
     // 041-G — the box is the home: no sheet, no question, just the text.
+    // By key since 064/D: the session question is a second field on this page
+    // whenever a vault is unlocked and no session is open.
     await tester.enterText(
-      find.byType(TextField).first,
+      find.byKey(HomeScreen.composer),
       'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.',
     );
     await settle(tester, rounds: 1);
