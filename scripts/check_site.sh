@@ -227,7 +227,19 @@ for page in en de ar; do
   grep -q "href=\"/$page/privacy/\"" "$page/index.html" \
     || { say FAIL "$page/index.html does not link its privacy page"; FAIL=1; PRIV=1; }
 done
-[ "$PRIV" = 0 ] && say PASS "three privacy pages, reachable, naming the same files — and every file is there"
+# And the same count of things said. The paths above are one way a translation
+# can lose a promise; dropping a whole line is the other, and it leaves no
+# missing file behind to notice. On 9 October one of the three named blanks
+# became a fact — the origin server's host and country — and it had to leave
+# all three pages or none.
+if [ "$PRIV" = 0 ]; then
+  n_en=$(grep -c '<li class="promise">' en/privacy/index.html)
+  for f in de/privacy/index.html ar/privacy/index.html; do
+    n=$(grep -c '<li class="promise">' "$f")
+    [ "$n" = "$n_en" ] || { say FAIL "$f says $n things where the English page says $n_en"; FAIL=1; PRIV=1; }
+  done
+fi
+[ "$PRIV" = 0 ] && say PASS "three privacy pages, reachable, saying the same things and naming the same files — and every file is there"
 
 # ---------------------------------------------------------------- the publisher
 #
