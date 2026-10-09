@@ -483,20 +483,43 @@ class _TopBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 9),
+            // **The session, beside the document it is being worked in** —
+            // 064/B, the owner's own words: more than one session means more
+            // than one direction of work, and he found his first one named
+            // only in the panel's list.
+            //
+            // It stands next to the file's name because the two are one
+            // statement: this document, in this session.
+            Flexible(child: TheOpenSession(ground: ground, compact: true)),
             // Flexible for the same reason the word «Documents» is, and
             // measured in the same breath: the back control alone brought 900
             // from 41 px over to 2.8, which is a margin of one and a half
             // pixels — a longer pack name or a second page would spend it. The
             // page count is the lowest-value text on a crowded bar and the
             // Page menu says it again whenever there is more than one.
-            Flexible(
-              child: Text(
-                doc.pages == 1 ? '1 page' : '${doc.pages} pages',
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
-                style: Zc.small.copyWith(color: Zc.ink4),
+            //
+            // **And 2.8 px is what the session's name spends** (064/B). The
+            // lead's rule, given before the line was written: if 900 cannot
+            // hold all of it, the count is the first thing sacrificed — the
+            // Page menu says it again, and nothing but the session's own name
+            // says the session.
+            //
+            // **And it cannot hold both: 6.2 px over at 900** with the count
+            // standing beside the session's name, 0 with it stepping aside —
+            // measured with a fresh tree for the reading, because an overflow
+            // is reported once per render object for its whole life. So the
+            // sacrifice has a number, and it is this one.
+            if (ground.openSessionRow == null) ...[
+              const SizedBox(width: 9),
+              Flexible(
+                child: Text(
+                  doc.pages == 1 ? '1 page' : '${doc.pages} pages',
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: Zc.small.copyWith(color: Zc.ink4),
+                ),
               ),
-            ),
+            ],
           ],
           const Spacer(),
           _ProfileFact(bench: bench, ground: ground, value: profile),

@@ -478,3 +478,208 @@ class _BubbleAct extends StatelessWidget {
     );
   }
 }
+
+/// **The open session's name, in the head of the screen** — 064/B.
+///
+/// The owner, 9 October: he made his first session, opened it, and found its
+/// name only in the panel's list while the head of the screen carried the
+/// file's name alone. His reason is why this is a fact and not a decoration:
+/// «more than one session means more than one direction of work». A person
+/// working in one has to be able to see which one, in the place they look for
+/// what they are working on.
+///
+/// Drawn **only while one is open**, and read from the ground's own row rather
+/// than from a name a screen kept: after a lock the core answers «none», and a
+/// head holding its own idea of «open» would name a session nobody can read.
+///
+/// It is a fact, not a door. The sessions room is one press away in the panel
+/// and the owner asked for the name, so nothing here opens anything — a head
+/// is not a place to put a new act.
+class TheOpenSession extends StatelessWidget {
+  const TheOpenSession({super.key, required this.ground, this.compact = false});
+
+  final Ground ground;
+
+  /// Tight, for the workspace's bar — the most crowded strip in the app, where
+  /// 2.8 px was the whole margin at 900 before this was added.
+  final bool compact;
+
+  /// Found by what it is, never by the words on it.
+  static const mark = ValueKey<String>('the-open-session');
+
+  @override
+  Widget build(BuildContext context) {
+    final row = ground.openSessionRow;
+    if (row == null) return const SizedBox.shrink();
+    return Tooltip(
+      // The number is the identity and never moves; the name is the handle a
+      // person chose. Both, because a renamed session is still that one.
+      message: 'Session ${row.number} · the names in this work are this session’s',
+      child: Container(
+        key: mark,
+        padding: compact
+            ? const EdgeInsets.fromLTRB(8, 3, 9, 3)
+            : const EdgeInsets.fromLTRB(10, 5, 11, 5),
+        decoration: Zc.panel(fill: Zc.clayWash, radius: 20),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.forum_outlined, size: compact ? 13 : 14, color: Zc.clayDeep),
+            SizedBox(width: compact ? 6 : 7),
+            // Flexible with an ellipsis: a long name gives way, it does not
+            // push its neighbours off the glass. The bar taught that on
+            // 3 October and 063 paid for it at x = 907.
+            Flexible(
+              child: Text(
+                row.name,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: compact ? 12.5 : 13,
+                  fontWeight: FontWeight.w600,
+                  color: Zc.clayDeep,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// **The model that will answer: named always, listed on a press** — 064/C.
+///
+/// The owner pointed at the send sheet with his hand on 9 October: six grey
+/// company groups and six «Connect in Settings» doors standing in the middle of
+/// his work. His ruling: the name of the model that holds the key is always
+/// visible where the work happens, a press on it opens a list of **model names
+/// only** — no groups, no grey, no Connect — and the whole catalogue lives in
+/// the AI room in the panel.
+///
+/// So this control answers one question, «who answers if I press send», and the
+/// list offers only what can actually answer. A name that cannot answer is not
+/// an option; it is a thing to set up, and setting up happens in the panel.
+///
+/// The name is the catalogue's own `displayName`, never a string written here —
+/// `model_gateway_test` holds the rule that no screen in this app carries a
+/// model's name.
+class TheModelThatAnswers extends StatelessWidget {
+  const TheModelThatAnswers({
+    super.key,
+    required this.ground,
+    required this.bench,
+    this.onSettings,
+  });
+
+  final Ground ground;
+  final Workbench bench;
+
+  /// The way to the AI room, for the state where nothing can answer yet. Null
+  /// means this surface has nowhere to send the press, and then the line is
+  /// said without a door rather than with a dead one.
+  final VoidCallback? onSettings;
+
+  static const mark = ValueKey<String>('the-model-that-answers');
+
+  /// The catalogue's own name for an id, and the id itself when this build does
+  /// not know it — a provider configured with a model the catalogue never heard
+  /// of is still the model that will answer, and saying its id is truer than
+  /// saying nothing.
+  String _nameOf(String id) {
+    for (final m in bench.models) {
+      if (m.modelId == id) return m.displayName;
+    }
+    return id;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reachable = bench.models.where((m) => m.available).toList();
+    final connected = ground.providers.where((p) => p.connected).toList();
+    final chosen = bench.chosenModel;
+    // Four states, and exactly one is ever on the glass. The third is honest
+    // rather than clever: with two keys and no choice made, each door sends to
+    // its own provider's configured model, and no single name is the answer.
+    final label = chosen != null
+        ? _nameOf(chosen)
+        : connected.length == 1
+            ? _nameOf(connected.single.model)
+            : connected.length > 1
+                ? 'As each provider is configured'
+                : 'No AI connected';
+    final face = Container(
+      padding: const EdgeInsets.fromLTRB(10, 5, 8, 5),
+      decoration: Zc.panel(fill: Zc.card, edge: Zc.line, radius: 20),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            connected.isEmpty ? Icons.cloud_off_outlined : Icons.auto_awesome_outlined,
+            size: 14,
+            color: connected.isEmpty ? Zc.ink4 : Zc.clayDeep,
+          ),
+          const SizedBox(width: 7),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: connected.isEmpty ? Zc.ink3 : Zc.ink,
+              ),
+            ),
+          ),
+          Icon(
+            Icons.arrow_drop_down,
+            size: 17,
+            color: reachable.isEmpty ? Zc.ink4 : Zc.ink3,
+          ),
+        ],
+      ),
+    );
+    if (reachable.isEmpty) {
+      // Nothing can answer: one line and one door, which is not a catalogue.
+      // The owner's complaint was six companies in the middle of his work, and
+      // a single way in is the opposite of that.
+      return Tooltip(
+        message: onSettings == null
+            ? 'No provider is connected'
+            : 'Connect an AI in Settings',
+        child: InkWell(
+          key: mark,
+          borderRadius: BorderRadius.circular(20),
+          onTap: onSettings,
+          child: face,
+        ),
+      );
+    }
+    return PopupMenuButton<String>(
+      key: mark,
+      tooltip: 'Choose which model answers',
+      onSelected: bench.chooseModel,
+      itemBuilder: (_) => [
+        for (final m in reachable)
+          PopupMenuItem<String>(
+            value: m.modelId,
+            child: Row(
+              children: [
+                Icon(
+                  m.modelId == chosen ? Icons.check : Icons.check_box_outline_blank,
+                  size: 15,
+                  color: m.modelId == chosen ? Zc.river : Colors.transparent,
+                ),
+                const SizedBox(width: 9),
+                // A name, and nothing else: no company heading, no endpoint,
+                // no «connect». The list is what can answer now.
+                Text(m.displayName, style: Zc.small.copyWith(fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+      ],
+      child: face,
+    );
+  }
+}

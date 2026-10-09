@@ -224,6 +224,44 @@ class _HomeScreenState extends State<HomeScreen> {
                         const ZMark(size: 36),
                         const SizedBox(width: 12),
                         const Text('Z Privacy', style: Zc.h1),
+                        const SizedBox(width: 12),
+                        // **The session, in the head of the chat too** —
+                        // 064/B. The owner asked for it beside the file's
+                        // name; a person standing in this screen has no file
+                        // and the same question, so the claim is the same one:
+                        // which direction of work am I in. This strip has the
+                        // room the workspace's bar does not.
+                        Flexible(child: TheOpenSession(ground: ground)),
+                        const SizedBox(width: 8),
+                        // **Who answers, in the head of the chat** — 064/C.
+                        //
+                        // It stood in the composer's own row first, beside
+                        // «Ask the AI», which is where a chat puts it and
+                        // where it is read in the same glance as the act. It
+                        // does not fit there, and the number is the reason: a
+                        // third element in that row takes its width from the
+                        // `Wrap` holding «Open and scan» and «Ask the AI», the
+                        // buttons wrap onto a second line, the pinned band
+                        // grows, and at a 900×760 window the page's own last
+                        // line ended at **y = 804** — 44 px below the glass,
+                        // inside the band's own scroller where no rect of the
+                        // composer complains.
+                        //
+                        // So it stands beside the session's name, in the strip
+                        // that never scrolls: the two facts about this
+                        // conversation — which direction of work, and which
+                        // model is about to receive the text — read as one
+                        // line, and the composer keeps its height.
+                        if (chat != null)
+                          Flexible(
+                            child: TheModelThatAnswers(
+                              ground: ground,
+                              bench: chat,
+                              // The same rule as every other door in this app:
+                              // nothing is offered over an already-open panel.
+                              onSettings: widget.settingsOpen ? null : widget.onSettings,
+                            ),
+                          ),
                         const Spacer(),
                         // The stamp is three times the length of «z_core 0.1.0», so
                         // it is given room to shrink rather than room to overflow —
