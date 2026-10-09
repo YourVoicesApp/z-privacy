@@ -4,8 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Z Privacy</title>
-<meta name="description" content="Z Privacy — protect what you send to AI.">
+<meta name="description" content="Z Privacy — use AI without moving sensitive information outside your device.">
 <meta name="referrer" content="no-referrer">
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="assets/fonts.css">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="alternate" hreflang="en" href="/en/">
@@ -13,13 +16,22 @@
 <link rel="alternate" hreflang="ar" href="/ar/">
 </head>
 <body>
-<header class="top">
-  <span class="mark"><span class="z" aria-hidden="true">Z</span><span class="wm" lang="en" dir="ltr">Z Privacy</span></span>
-</header>
+<!-- The page a stranger actually opens first, so this is the site's First Run:
+     the owner's own picture, large, the way it stands on the app's first page.
+     It carried a clay square with a Z drawn in CSS until 9 October; the picture
+     he asked for replaces it here as it replaced it in the app.
+
+     There is no top bar: a door needs no chrome, and the mark below is the
+     identity this screen is for. One picture per screen, never two. -->
 <main class="chooser">
+  <img class="hero-mark" src="assets/logo-512.png" width="96" height="96" alt="Z Privacy" decoding="async">
   <h1 lang="en">Z Privacy</h1>
-  <p class="pick-lead" lang="en" dir="ltr">Choose a language · Sprache wählen · اختر لغة</p>
-  <div class="picks"><a class="pick" href="en/" lang="en" hreflang="en"><span class="pn">English</span><span class="pd" lang="en" dir="ltr">Protect what you send to AI. Restore it on your device.</span></a><a class="pick" href="de/" lang="de" hreflang="de"><span class="pn">Deutsch</span><span class="pd" lang="de" dir="ltr">Schützen Sie, was Sie an eine KI senden. Stellen Sie es auf Ihrem Gerät wieder her.</span></a><a class="pick" href="ar/" lang="ar" hreflang="ar"><span class="pn">العربية</span><span class="pd" lang="ar" dir="rtl">احمِ ما ترسله إلى الذكاء الاصطناعي، واستعده على جهازك.</span></a></div>
+  <p class="pick-lead" lang="en" dir="ltr">Choose a language &#183; Sprache w&#228;hlen &#183; اختر لغة</p>
+  <div class="picks"><a class="pick" href="en/" lang="en" hreflang="en"><span class="pn">English</span><span class="pd" lang="en" dir="ltr">Use AI without moving sensitive information outside your device.</span></a><a class="pick" href="de/" lang="de" hreflang="de"><span class="pn">Deutsch</span><span class="pd" lang="de" dir="ltr">Nutzen Sie KI, ohne dass sensible Informationen Ihr Gerät verlassen.</span></a><a class="pick" href="ar/" lang="ar" hreflang="ar"><span class="pn">العربية</span><span class="pd" lang="ar" dir="rtl">استفد من الذكاء الاصطناعي دون أن تُخرج المعلومات الحسّاسة من جهازك.</span></a></div>
+  <!-- Where the build stands, said in all three languages on the one page that
+       belongs to none of them. The owner's words, and no version number and no
+       date beside them: a number on a page has to have a deed behind it. -->
+  <p class="beta"><span lang="en" dir="ltr">Linux build, in beta — not yet released</span><span class="sep" aria-hidden="true">&#183;</span><span lang="de" dir="ltr">Linux-Build, in der Beta — noch nicht veröffentlicht</span><span class="sep" aria-hidden="true">&#183;</span><span lang="ar" dir="rtl">نسخة لينكس، في مرحلة beta — لم تُطلَق بعد</span></p>
 </main>
 <footer><p class="colophon" lang="en">Z Privacy &#183; A Mono Peaks project by Faruk AB &#183; Apache-2.0</p></footer>
 </body>

@@ -78,11 +78,38 @@ h1 {
   font-size: clamp(40px, 7vw, 66px);
   font-weight: 600; line-height: 1.04; letter-spacing: -0.015em;
 }
-.tagline {
+/* The idea, in the owner's own words, and the sentence under it that says who
+   decides. Named for the screen they belong to: these two and the line below
+   them are the whole of the first screen, and nothing else competes with them.
+   (This rule was `.tagline` until 9 October; the class went with the sentence.) */
+.hero-idea {
   margin: 16px 0 0;
   font-size: clamp(19px, 2.6vw, 25px);
   line-height: 1.38; color: var(--ink2); max-inline-size: 760px;
 }
+.hero-word {
+  margin: 18px 0 0;
+  font-size: clamp(16px, 1.9vw, 18px); font-weight: 500;
+  line-height: 1.62; color: var(--ink); max-inline-size: 680px;
+}
+
+/* Where the build stands. A pill, because it is a state and not a promise —
+   and the dot is clay, the colour this product uses for what stays put. */
+.beta {
+  margin: clamp(22px, 3vw, 28px) 0 0;
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 7px 15px; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line);
+  font-size: 13px; color: var(--ink2);
+}
+.beta::before {
+  content: ""; flex: 0 0 auto;
+  inline-size: 7px; block-size: 7px; border-radius: 50%;
+  background: var(--clay);
+}
+
+/* The mark at the size the first page a stranger opens gives it. */
+.hero-mark { display: block; inline-size: clamp(78px, 11vw, 96px); block-size: auto; border-radius: 24px; }
 .lead { margin: clamp(30px, 4vw, 44px) 0 0; line-height: 1.68; color: var(--ink2); max-inline-size: 860px; }
 
 /* ---------------------------------------------------------------- buttons */
@@ -106,6 +133,12 @@ h2 {
 }
 html[lang="ar"] h2 { font-family: var(--arab); text-transform: none; letter-spacing: 0; font-size: 12px; }
 h3 { margin: 30px 0 8px; font-size: 17px; font-weight: 600; }
+/* A paragraph that follows a heading belongs to it. `.lead` and `.honest`
+   carry a top margin of their own because they also stand alone after the
+   first screen, and under a heading that margin came to sixty-odd pixels —
+   which reads as a missing paragraph, not as air. Seen on a rendered page;
+   the markup looked right. */
+h2 + .lead, h2 + .honest, h2 + .promises { margin-top: 0; }
 .note { margin: 13px 0 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
 
 .chain { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
@@ -147,24 +180,48 @@ html[dir="rtl"] .chain { justify-content: flex-end; }
 .vlab { display: none; }
 
 /* ---------------------------------------------------------------- promises */
+/* Every promise names the file where it can be checked, and the proof is set in
+   mono and small on its own line: it is evidence under a sentence, not prose
+   beside it. A reader who does not care never has to read a path; a reader who
+   does gets the exact file. */
+.promise { margin: 0 0 17px; }
+.proof {
+  display: block; margin-top: 5px;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.6;
+  color: var(--muted);
+}
+/* Evidence sets in mono — but IBM Plex Mono has no Arabic, so on that page the
+   sentence fell back to whatever monospace the machine had and came out spaced
+   like a telegram. The sentence takes the Arabic face; the paths inside it stay
+   in mono, which is the part that had to be monospaced anyway. */
+html[lang="ar"] .proof { font-family: var(--arab); font-size: 13px; }
+.proof code, .lead code, .honest code, .note code {
+  font-family: var(--mono); font-size: 0.92em; color: var(--ink2);
+  background: var(--card); border: 1px solid var(--line2);
+  border-radius: 5px; padding: 1px 5px;
+  /* Not `break-all`: that split `docs/THE_PROVIDERS.md` into «docs/THE_PROVIDE»
+     and «RS.md» across two lines on the Arabic page. A path is a name, and a
+     name broken across two lines is a defect this product has its own test for.
+     `anywhere` moves the whole path down first and only breaks one that cannot
+     fit on a line by itself. */
+  overflow-wrap: anywhere; word-break: normal;
+}
+/* The three honest paragraphs stand apart from each other, not as one block. */
+.honest + .honest { margin-top: 14px; }
+
 .promises { margin: 0; padding-inline-start: 20px; max-inline-size: 860px; }
 .promises li { margin: 0 0 9px; font-size: 15px; line-height: 1.55; color: var(--ink2); }
 
-/* ---------------------------------------------------------------- download */
+/* ---------------------------------------------------------------- panels */
+/* What is left of the download section's styles. The cards themselves went on
+   9 October — «الموقعُ للتعريف ... لا تنزيلَ فقط تعريفٌ بالمنتج» — and with
+   them `.dlt`, `.file`, `.shalab`, `.sha` and the rules that marked an unfilled
+   build value. A card and a `pre` are general: the licence pages use both. */
 .card {
   background: var(--white); border: 1px solid var(--line);
   border-radius: 12px; padding: clamp(20px, 3vw, 28px);
 }
 .card.soft { background: var(--card); margin-top: 22px; }
-.dlt { margin: 0; font-family: var(--disp); font-size: clamp(22px, 3vw, 27px); font-weight: 600; }
-.file { margin: 12px 0 0; font-family: var(--mono); font-size: 15px; }
-.file a { color: var(--clay); word-break: break-all; }
-.file a:hover { color: #8F4519; }
-.shalab {
-  margin: 14px 0 0; font-family: var(--sans); font-size: 11px; font-weight: 600;
-  letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted);
-}
-.sha { margin: 5px 0 0; font-family: var(--mono); font-size: 13px; line-height: 1.5; word-break: break-all; }
 pre {
   margin: 11px 0 0; font-family: var(--mono); font-size: 13.5px;
   background: var(--ground); border: 1px solid var(--line);
@@ -172,11 +229,6 @@ pre {
   overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere;
 }
 .srcline { margin: 0; font-size: 17px; }
-
-/* ---------------------------------------------------------------- the tokens */
-.tok, code:has(.tok) { }
-a[href^="{{"], a[href*="{{"] { border-style: dashed; color: var(--muted); }
-.sha:empty::before { content: "—"; }
 
 /* ---------------------------------------------------------------- footer */
 footer { margin-top: clamp(46px, 6vw, 70px); padding-bottom: 56px; }
@@ -207,8 +259,21 @@ footer { margin-top: clamp(46px, 6vw, 70px); padding-bottom: 56px; }
 .cl { color: var(--ink2); }
 
 /* ---------------------------------------------------------------- chooser */
-.chooser { text-align: center; padding-bottom: 60px; }
-.chooser h1 { margin-top: clamp(50px, 10vw, 110px); }
+.chooser { text-align: center; padding-block: clamp(44px, 8vw, 96px) 60px; }
+.chooser .hero-mark { margin-inline: auto; }
+.chooser h1 { margin-top: clamp(18px, 2.5vw, 26px); }
+/* Three languages on one line, each with its own direction. They are laid out
+   as flex items on purpose: in one bidi paragraph the browser would reorder
+   them around the Arabic, and the order of the three is not the browser's to
+   choose. */
+.chooser .beta {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 0 3px; margin: 32px 0 0; padding: 0;
+  background: none; border: 0; border-radius: 0; color: var(--muted);
+}
+.chooser .beta::before { content: none; }
+.beta .sep { color: var(--line); padding-inline: 5px; }
+.beta [lang="ar"] { font-family: var(--arab); }
 .pick-lead { margin: 14px 0 0; color: var(--muted); font-size: 15px; }
 .picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
          gap: 14px; margin-top: 38px; text-align: start; }
