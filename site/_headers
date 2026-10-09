@@ -18,14 +18,16 @@
   X-Frame-Options: DENY
   Permissions-Policy: geolocation=(), camera=(), microphone=(), interest-cohort=()
 
-  # Deliberately short, and deliberately without includeSubDomains.
+  # A full year, with includeSubDomains, since the switch at midday on
+  # 9 October 2026 — raised on the server first and recorded here after, and
+  # measured on the live site the same afternoon:
   #
-  # A long HSTS is a promise a browser will hold you to for a year: if a
-  # renewal fails or a subdomain is not ready for HTTPS, nobody can reach the
-  # site and nothing you do on the server shortens it. So it starts at five
-  # minutes and is raised once renewals have been clean for a week.
+  #     strict-transport-security: max-age=31536000; includeSubDomains
   #
-  # nginx serves `max-age=300` today. Raise it there, then here, around
-  # 8 October 2026 — and add includeSubDomains only when every subdomain,
-  # beta included, is certain to stay on HTTPS.
+  # It began at five minutes on purpose. A long HSTS is a promise a browser
+  # will hold you to for a year: if a renewal fails or a subdomain is not ready
+  # for HTTPS, nobody can reach the site and nothing done on the server
+  # shortens it. The condition for raising it was clean renewals for a week and
+  # every subdomain certain to stay on HTTPS — beta included, which is settled
+  # now that the packages have come down from it.
   Strict-Transport-Security: max-age=31536000; includeSubDomains

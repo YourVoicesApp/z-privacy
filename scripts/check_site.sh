@@ -335,6 +335,39 @@ for page in en de ar; do
 done
 [ "$LEGAL" = 0 ] && say PASS "one publisher block, four facts, the same in every place that states them"
 
+# ---------------------------------------------------------------- the colophon
+#
+# One line, repeated on every page, naming the product, the company that
+# publishes it and the licence. It was wrong in one word until 9 October: it
+# said «A Mono Peaks project» while the domain, the mark and the mailbox all
+# say **mono-peak**, singular. Nobody reads a colophon twice, which is exactly
+# why it drifts — and a name our own source spells two ways is a fact one of
+# the two places already has wrong.
+#
+# The guard is positive rather than a search for the old spelling: all nine
+# copies must be the identical string, and that string must be this one. A
+# search for «Mono Peaks» would pass the day somebody invents a third spelling.
+WANT='<p class="colophon" lang="en">Z Privacy &#183; A mono-peak project by Faruk AB &#183; Apache-2.0</p>'
+COLO=$(grep -rho '<p class="colophon"[^>]*>[^<]*</p>' --include='*.html' . 2>/dev/null | sort -u)
+NC=$(grep -rc '<p class="colophon"' --include='*.html' . 2>/dev/null | grep -vc ':1$' || true); NC=${NC:-0}
+if [ "$NC" != 0 ]; then
+  say FAIL "a page carries no colophon, or more than one:"
+  grep -rc '<p class="colophon"' --include='*.html' . | grep -v ':1$' | sed 's/^/           /'
+  FAIL=1
+elif [ "$(printf '%s\n' "$COLO" | wc -l)" != 1 ]; then
+  say FAIL "the colophon is not one string: the pages carry"
+  printf '%s\n' "$COLO" | sed 's/^/           /'
+  FAIL=1
+elif [ "$COLO" != "$WANT" ]; then
+  say FAIL "the colophon reads"
+  say "" "  $COLO"
+  say "" "and the company spells its name the way its domain does:"
+  say "" "  $WANT"
+  FAIL=1
+else
+  say PASS "one colophon, the same on every page, spelling the company as its domain does"
+fi
+
 # ---------------------------------------------------------------- no download
 #
 # The owner's ruling of 9 October: «نحذف الحزمَ القديمة جميعَها ونوقف وضعَ أي
