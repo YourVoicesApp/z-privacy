@@ -9,6 +9,7 @@
 //! first line.
 
 pub(crate) mod de;
+pub(crate) mod en;
 pub(crate) mod pack;
 pub(crate) mod people;
 pub(crate) mod sv;
@@ -32,7 +33,7 @@ use super::Candidate;
 /// or promising one that was dropped.
 ///
 pub(crate) fn installed_packs() -> Vec<pack::LanguagePack> {
-    vec![de::pack(), sv::pack()]
+    vec![de::pack(), sv::pack(), en::pack()]
 }
 
 fn pack_of(id: &str) -> Option<pack::LanguagePack> {
