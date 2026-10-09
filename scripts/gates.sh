@@ -773,6 +773,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          nothing_of_his_own_is_left protected_without_being_asked \
          remapped_font_is_read_by_its_own remapped_font_with_no_table \
          raw_bytes_survives_the_way_in plain_text_is_not_touched \
+         a_string_drawn_before_a_font_is_chosen_is_counted_not_invented \
          simple_font_with_a_table_is_read cmap_behind_a_reference \
          name_with_an_underscore \
          a_label_in_a_sentence_takes_no_ordinary_word a_run_of_zeros_is_not_a_telephone \

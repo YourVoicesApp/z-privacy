@@ -1252,6 +1252,26 @@ fn hex_literal(bytes: &[u8], at: usize) -> (String, usize) {
 /// A single-byte string. If the current font needs a map, this is not text we can
 /// read, and we say so instead of writing nonsense.
 fn decode(bytes: &[u8], font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
+    // **No font has been chosen, so these bytes are codes of a font nobody
+    // named** — the owner's third finding of 9 October.
+    //
+    // Measured in his 146-page tax book: 106 strings are drawn before any `Tf`
+    // in their stream, and reading their bytes as Latin-1 produced 550
+    // characters of which 422 were outside anything German text carries. They
+    // reached the Original column *and the Safe one*, so a run of symbols sat
+    // in front of a heading in what the model would be sent.
+    //
+    // There is no table here and no named encoding either — the two things the
+    // fallbacks below legitimately appeal to. So the rule stated over those
+    // fallbacks applies to this case as well: a code that names no character is
+    // an unreadable code, never a byte in the text nobody typed. Counted, so
+    // the readable share a person's report shows falls by exactly what was
+    // lost, and a page made mostly of these is refused by the measure that
+    // already exists.
+    if font.is_empty() {
+        out.push(Run::Unmappable(bytes.len()));
+        return String::new();
+    }
     if fonts.unmappable.contains_key(font) {
         // Two bytes to the code, so that is how many codes went unread.
         out.push(Run::Unmappable(bytes.len().div_ceil(2)));
@@ -1320,6 +1340,14 @@ fn decode(bytes: &[u8], font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String
 }
 
 fn decode_hex(digits: &str, font: &str, fonts: &Fonts, out: &mut Vec<Run>) -> String {
+    // The same as in `decode` above, and for the same reason: with no font
+    // chosen there is nothing to read these codes by. Two hex digits to a code,
+    // which is what the invention below assumed when it made characters of
+    // them — so the count is of the same codes, not of the digits.
+    if font.is_empty() {
+        out.push(Run::Unmappable(digits.len().div_ceil(2)));
+        return String::new();
+    }
     if let Some(map) = fonts.maps.get(font) {
         let mut text = String::new();
         let mut missed = 0usize;
@@ -1926,6 +1954,75 @@ mod tests {
     /// own `/ToUnicode`**. The reader refused page 1 — a cover page with fifteen
     /// remapped glyph names — and with it all 146 pages, while the answer was
     /// in the file the whole time.
+    /// **A string drawn before any font is chosen is not text** — the owner's
+    /// third finding of 9 October 2026.
+    ///
+    /// He imported a 146-page German tax book and page 4 showed a run of
+    /// Latin-1 symbols in front of a heading, in **both** columns: the original
+    /// and the one that says what would leave. Measured in that file: **106
+    /// strings are drawn before any `Tf` in their stream**, each at offset
+    /// 29–56 with the stream's first font selection at 68–95. Together they
+    /// produced **550 characters, 422 of them outside anything German text
+    /// carries, and 31 ASCII letters by coincidence of where a glyph code
+    /// falls.** Not one of them was a character anybody typed.
+    ///
+    /// With no font chosen there is no table and no named encoding to read the
+    /// bytes by, so they are codes of a font nobody named. The module's own
+    /// rule then applies, written four hundred lines above this: a code that
+    /// names no character is an unreadable code, **never a byte in the text
+    /// nobody typed**. It was being applied to a missing table and not to a
+    /// missing font.
+    ///
+    /// The codes are counted, so the loss is reported in the readable share the
+    /// person's own report shows — the one number that says whether a document
+    /// was read or merely accepted. A page that is mostly such text falls under
+    /// `MIN_READABLE_PERCENT` and is refused, which is the fail-closed path
+    /// working rather than a new behaviour.
+    #[test]
+    fn a_string_drawn_before_a_font_is_chosen_is_counted_not_invented() {
+        // The measured shape: the string first, the font selection after it.
+        let content = "BT <AABEDE> Tj /F1 12 Tf 72 700 Td (Kapitel zwei und drei) Tj ET";
+        let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        pdf.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R \
+             /Resources << /Font << /F1 100 0 R >> >> >>\nendobj\n",
+        );
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{content}\nendstream\nendobj\n",
+            content.len()
+        ));
+        pdf.push_str("100 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/Helvetica >>\nendobj\n");
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = read(&latin1(&pdf)).expect("read");
+
+        // The control: the text that *was* drawn in a font is still read, by the
+        // simple font's own encoding, exactly as before. Without this the test
+        // would pass on a reader that had stopped reading the page at all.
+        assert!(
+            out.text.contains("Kapitel zwei und drei"),
+            "the text drawn in a named font must still be read"
+        );
+        for invented in ['\u{AA}', '\u{BE}', '\u{DE}'] {
+            assert!(
+                !out.text.contains(invented),
+                "U+{:04X} was invented from a glyph code of a font nobody chose",
+                invented as u32
+            );
+        }
+        // And the loss is said out loud, not quietly dropped: three codes went
+        // unread, so the page is no longer 100% read.
+        assert!(
+            out.readable < 100,
+            "three codes went unread and the readable share still says everything was read"
+        );
+        assert!(
+            out.readable >= MIN_READABLE_PERCENT as u32,
+            "one short run of codes must not refuse a page that is otherwise text"
+        );
+    }
+
     #[test]
     fn a_remapped_font_is_read_by_its_own_table() {
         let mut pdf = String::from("%PDF-1.4\n1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
