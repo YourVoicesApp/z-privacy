@@ -190,10 +190,21 @@ html[dir="rtl"] .chain { justify-content: flex-end; }
   font-family: var(--mono); font-size: 12.5px; line-height: 1.6;
   color: var(--muted);
 }
+/* Evidence sets in mono — but IBM Plex Mono has no Arabic, so on that page the
+   sentence fell back to whatever monospace the machine had and came out spaced
+   like a telegram. The sentence takes the Arabic face; the paths inside it stay
+   in mono, which is the part that had to be monospaced anyway. */
+html[lang="ar"] .proof { font-family: var(--arab); font-size: 13px; }
 .proof code, .lead code, .honest code, .note code {
   font-family: var(--mono); font-size: 0.92em; color: var(--ink2);
   background: var(--card); border: 1px solid var(--line2);
-  border-radius: 5px; padding: 1px 5px; word-break: break-all;
+  border-radius: 5px; padding: 1px 5px;
+  /* Not `break-all`: that split `docs/THE_PROVIDERS.md` into «docs/THE_PROVIDE»
+     and «RS.md» across two lines on the Arabic page. A path is a name, and a
+     name broken across two lines is a defect this product has its own test for.
+     `anywhere` moves the whole path down first and only breaks one that cannot
+     fit on a line by itself. */
+  overflow-wrap: anywhere; word-break: normal;
 }
 /* The three honest paragraphs stand apart from each other, not as one block. */
 .honest + .honest { margin-top: 14px; }
