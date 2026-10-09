@@ -65,11 +65,81 @@ header.top {
 }
 .wm { font-size: 15px; font-weight: 600; }
 
-.langs { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
-.lang { font-size: 14px; font-weight: 500; padding: 6px 12px; border-radius: 999px; }
-.lang[lang="ar"] { font-family: var(--arab); }
-.lang.on { color: var(--ink); font-weight: 600; background: #EFEAE0; }
-.dot { color: var(--line); }
+/* ---------------------------------------------------------------- the menus */
+/* The owner's word after seeing the preview: the languages become a list that
+   drops from the top of the screen under the language's own name, and the
+   vocabulary becomes one under «hjälp» — Help, in the page's own language.
+   His system is Swedish; the word is not.
+   
+   `<details>`/`<summary>`, so they open and close with **no JavaScript**: this
+   site promises there is none, and a menu is not a reason to break a promise
+   the page makes two sections further down. `name="topmenu"` makes them
+   exclusive where the browser knows that attribute, and where it does not both
+   may stand open, which costs nothing.
+   
+   The price of having no script is that a click elsewhere does not close them;
+   a second click on the same name does. That is the whole trade, and it is
+   worth it here. */
+.menus { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.menu { position: relative; }
+.menu > summary {
+  list-style: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  min-block-size: 38px; padding: 7px 14px; border-radius: 999px;
+  font-size: 14px; font-weight: 500; color: var(--ink2);
+  border: 1px solid transparent;
+}
+.menu > summary::-webkit-details-marker { display: none; }
+.menu > summary::after {
+  content: ""; inline-size: 6px; block-size: 6px; margin-block-start: -3px;
+  /* Physical borders on purpose. Logical ones are right for layout and wrong
+     for a glyph: `border-inline-end` is the LEFT border in Arabic, so the
+     chevron that pointed down in English pointed sideways on the Arabic page.
+     A chevron meaning «this opens downwards» does not mirror. */
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+.menu > summary:hover { background: #F0ECE3; color: var(--ink); }
+.menu[open] > summary { background: #EFEAE0; color: var(--ink); font-weight: 600; }
+.menu[open] > summary::after { margin-block-start: 3px; transform: rotate(-135deg); }
+.menu > summary[lang="ar"] { font-family: var(--arab); }
+
+.menu-panel {
+  position: absolute; z-index: 20;
+  inset-inline-end: 0; inset-block-start: calc(100% + 9px);
+  min-inline-size: 196px; padding: 7px;
+  background: var(--white); border: 1px solid var(--line);
+  border-radius: 12px; box-shadow: 0 12px 34px rgba(26, 25, 23, 0.11);
+}
+.menu-item {
+  display: block; padding: 9px 12px; border-radius: 8px;
+  font-size: 15px; color: var(--ink); white-space: nowrap;
+}
+.menu-item:hover { background: var(--ground); text-decoration: none; }
+.menu-item.on { font-weight: 600; background: #EFEAE0; }
+.menu-item[lang="ar"] { font-family: var(--arab); }
+
+/* The vocabulary is a table of twenty-nine rows in three columns, not a list
+   of links, so its panel takes the width the page can spare and scrolls inside
+   itself. It may not run off the glass at any width, and the guard measures
+   that with the menu open rather than trusting this line. */
+.menu-panel.wide {
+  inline-size: min(880px, calc(100vw - 2 * var(--pad)));
+  max-block-size: min(62vh, 500px); overflow: auto;
+  padding: 16px 18px;
+}
+.menu-h {
+  margin: 0 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--muted);
+}
+html[lang="ar"] .menu-h { font-family: var(--arab); text-transform: none; letter-spacing: 0; font-size: 12px; }
+.menu-links {
+  display: flex; flex-wrap: wrap; gap: 2px;
+  margin-block-start: 15px; padding-block-start: 10px;
+  border-block-start: 1px solid var(--line2);
+}
+.menu-links .menu-item { font-size: 14px; }
 
 /* ---------------------------------------------------------------- hero */
 h1 {
