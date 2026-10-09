@@ -30,12 +30,12 @@
 // ## The boundary with the other seat
 //
 // Writing the turn — question, answer, time — into the session's file is the
-// core's half, on `fix/the-send-door-writes-the-turn`: `ingest_answer` is the
-// chokepoint every protected door ends at, `ask_model_directly` writes its own,
-// and `conversation_turns(number:, bench:)` reads them back **restored inside
-// the core**. Guard 6 pins today's truth rather than asserting the half that
-// has not landed, and says in full what it becomes — so neither seat can think
-// the other one did it.
+// core's half: `ingest_answer` is the chokepoint every protected door ends at,
+// `ask_model_directly` writes its own, and `conversation_turns(number:, bench:)`
+// reads them back **restored inside the core**. Guard 6 was written as a **pin**
+// while that half did not exist — it asserted the zero and spelt out what it
+// would become — and it went red by itself in the first full run after the
+// merge brought the write in. It asserts the turn now.
 //
 // Its premise, though, is mine and is measured today: at the moment the send
 // happens a session is open, because `record` refuses with «there is no session
@@ -341,11 +341,13 @@ void main() {
 
   // ------------------------------------------------------------------ guard 6
   //
-  // **The boundary, pinned to today's truth** — the other seat's half, named
-  // rather than asserted. See `feedback_pin_the_fault_to_prove_the_fix`: a
-  // guard that asserts the fix before the fix exists is a red line in a green
-  // suite, and a guard that says nothing lets both halves believe the other
-  // one did it.
+  // **The boundary, and the pin did its work.** This guard was written while
+  // the core's half did not exist: it asserted today's truth — a newborn
+  // session's file with **no** turn in it — and said in full what it would
+  // become. The other seat's write landed in this tree at the merge, the pinned
+  // number went red in the next full run, and nothing had to remember to come
+  // back and look. That is the whole value of pinning a fault rather than
+  // leaving a silence (`feedback_pin_the_fault_to_prove_the_fix`).
   //
   // What is **mine** and holds today: a session is open at the moment the send
   // happens. That is the premise the core's write leans on —
@@ -353,20 +355,12 @@ void main() {
   // write to», and would therefore write nothing, silently, for every send
   // from a sheet that forgot to begin one.
   //
-  // What is **his** and is not here yet (`fix/the-send-door-writes-the-turn`):
-  // `ingest_answer` writes the turn for every protected door, and
-  // `ask_model_directly` writes its own. When that lands, this guard becomes:
-  //
-  //   * `row.turns` is 1, not 0;
-  //   * `conversation_turns(number: row.number, bench: g.bench.session)` gives
-  //     one row back, **restored inside the core** — never a raw turn on a
-  //     screen, because a token in the middle of a model's sentence is the
-  //     exact lie that cost the owner his trust in the restore path;
-  //   * its `question` is '' here, and that is a real state and not a missing
-  //     one: nothing was typed into the workspace's question field;
-  //   * its `answer` carries «Verstanden.» — this fixture's own fake reply;
-  //   * `unresolved` is a number that is said out loud, not hidden.
-  test('a send with a newborn session leaves a conversation file with no turn in it — pinned', () async {
+  // What is **his**: `ingest_answer` writes the turn for every protected door
+  // and `ask_model_directly` writes its own, and `conversation_turns` reads
+  // them back **restored inside the core** — never a raw turn on a screen,
+  // because a token in the middle of a model's sentence is the exact lie that
+  // cost the owner his trust in the restore path.
+  test('a send with a newborn session writes its turn into that session\'s file', () async {
     final g = await _ready('turn');
 
     final out = await beginThenAsk(g.ground, g.bench, name: 'Merkur', providerId: 'openai');
@@ -377,10 +371,29 @@ void main() {
     // Mine, and the whole of what the other half needs from this one.
     expect(await z.conversationOpen(), row.number,
         reason: 'no session is open at the send, so the core’s write would be a silent zero');
-    // His, pinned as it stands today. **This number is expected to flip to 1.**
-    expect(row.turns, 0,
-        reason: 'turns are being written already — if the core half has landed, this guard is '
-            'the one that must change: read the turn back with conversation_turns and assert '
-            'the question, the answer and the unresolved count');
+
+    // His, now that it is here: one exchange, written into this session's own
+    // file by the core, at the choke point every protected door ends at.
+    expect(row.turns, 1, reason: 'the send wrote no turn into the session it had just begun');
+    final turns = await z.conversationTurns(number: row.number, bench: g.bench.session);
+    expect(turns, hasLength(1), reason: 'the file holds ${turns.length} turns for one send');
+    final turn = turns.single;
+
+    // **An empty question is a real state, not a missing one.** Nothing was
+    // typed into the workspace's question field here, and the owner sent a
+    // document with nothing asked of it hours before this round — which was
+    // 046/N's whole finding. «Not written» and «lost» must not be spelt the
+    // same, so this is asserted as empty rather than skipped.
+    expect(turn.question.map((s) => s.text).join(), isEmpty,
+        reason: 'a question was written into a turn where none was typed');
+    // The answer, restored by the core. The fixture's fake provider says
+    // «Verstanden.», and this payload's tokens do not appear in it — so there
+    // is nothing to restore and nothing unresolved, which is itself the honest
+    // reading of this send.
+    expect(turn.answer.map((s) => s.text).join(), contains('Verstanden'),
+        reason: 'the turn does not carry what the model said');
+    expect(turn.unresolved, isEmpty,
+        reason: 'tokens from another session appeared in an answer this one never sent');
+    expect(turn.at.toInt(), greaterThan(0), reason: 'the turn carries no time');
   });
 }
