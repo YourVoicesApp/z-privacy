@@ -1312,6 +1312,19 @@ void main() {
 
     await tester.runAsync(() async {
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      // **This journey is about the wire, not about sessions** — the same line
+      // and the same reason as `reviewJourney`'s, one door further along. It
+      // never made a vault; the core's vault state is global and an earlier
+      // test in this file leaves one unlocked, so after 064/A the send door
+      // asked it for a session name and the nameless press sent nothing. A
+      // journey that measures the bytes and the Authorization header should
+      // not depend on session state at all, and this line says so.
+      //
+      // The state it stops covering — a send **with** a session, and what the
+      // wire then carries — is measured in `the_third_exit_test`, whose fake
+      // provider keeps the request body: guard 1 proves the names on it are
+      // the newborn session's and none of the pre-birth ones.
+      await z.vaultLock();
       await ground.refresh();
       final session = await z.openSession(packId: 'de');
       await z.importText(session: session, text: _doc);

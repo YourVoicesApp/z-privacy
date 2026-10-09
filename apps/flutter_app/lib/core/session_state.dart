@@ -1474,10 +1474,22 @@ class WhatMayLeave {
 /// holding the captured view would take out the pre-birth text with the new
 /// session's name stamped on it — true of the snapshot, false of the names.
 /// From the core's side nothing is wrong, and no core guard can see it.
+/// ## `thePayloadLeaves`
+///
+/// Three of the four exits take the protected payload out — the clipboard, the
+/// PDF, and a protected send through a key. Direct Mode's door takes the
+/// **document as it stands**, by a separate call that the core keeps separate.
+/// For that one the birth, the refusal and the refresh are all still the order;
+/// steps 4 and 5 are about a text it does not send, and a helper that insisted
+/// on a payload would refuse a door that works on a bench with nothing built.
+/// So the parameter says what leaves, and nothing about it is optional:
+/// `false` returns no view, and a caller that reads `view` for its text gets
+/// null rather than something almost right.
 Future<WhatMayLeave> beginThenRead(
   Ground ground,
   Workbench bench, {
   required String name,
+  bool thePayloadLeaves = true,
 }) async {
   int? renamed;
   String? said;
@@ -1498,6 +1510,11 @@ Future<WhatMayLeave> beginThenRead(
     }
     said = sessionBegunSaid(renamed, hadDocument: bench.document != null);
     await bench.refresh();
+  }
+  // The birth and the refresh have happened; what follows is about the payload,
+  // and this door does not send it.
+  if (!thePayloadLeaves) {
+    return WhatMayLeave(said: said, renamed: renamed);
   }
   var view = bench.payload;
   final open = ground.openSession;
@@ -1532,6 +1549,73 @@ Future<WhatMayLeave> beginThenRead(
     );
   }
   return WhatMayLeave(view: view, said: said, renamed: renamed);
+}
+
+/// **The third exit: the same order, and then the send** — 064/A.
+///
+/// The owner's own 9 October run found this door going straight to the model:
+/// the answer came back, no session was born, and nothing was written into a
+/// conversation. The two manual exits had the order; this one — the only exit
+/// that actually puts text on a wire — did not.
+///
+/// It is one function rather than two presses with the same four lines in them,
+/// and it is out here for the reason [beginThenRead] is: **a core call started
+/// in a widget callback does not resume under `testWidgets`**, so an order
+/// written inside `onPressed` cannot be measured, and a send is an awaited core
+/// call by its nature. Here a guard drives the whole order — the birth, the
+/// refresh and the request — and reads what came out of the socket at the other
+/// end.
+///
+/// Two things it does not do, each deliberate:
+///
+///   * it does not choose the mode. `bench.sendOriginal` was chosen by a press,
+///     and the door that carries the document is a different call in the core
+///     for exactly that reason;
+///   * it does not retry. A protected send that fails is reported as having
+///     failed — nothing here reaches for the other door, and the mode is not
+///     touched.
+///
+/// The payload it checks and the handle it sends are **one build**: both come
+/// off `Workbench.snap`, so the `refresh` inside [beginThenRead] moves them
+/// together and there is no window in which the view is fresh and the handle
+/// stale. Were they two reads, the core would still refuse the stale one — but
+/// the honest version of that sentence is that they are not two reads.
+///
+/// **Measured, so that nobody deletes the refresh on the strength of a green
+/// suite:** with all three of [beginThenRead]'s layers taken out, this door
+/// does not send pre-birth names — the core refuses the pre-birth *handle*,
+/// because a birth bumps the session's revision («This request is no longer
+/// current»). Four layers here; the clipboard has three, since its text comes
+/// off the view and there is no core call left to refuse it. The refresh is
+/// what makes the person's send happen rather than hand them a refusal to
+/// decipher.
+Future<WhatMayLeave> beginThenAsk(
+  Ground ground,
+  Workbench bench, {
+  required String name,
+  required String providerId,
+}) async {
+  final original = bench.sendOriginal;
+  final out = await beginThenRead(
+    ground,
+    bench,
+    name: name,
+    thePayloadLeaves: !original,
+  );
+  if (out.refused != null) return out;
+  final bad = original
+      ? await bench.askModelWithTheOriginal(
+          providerId,
+          // Read after the refresh, like everything else that leaves.
+          original: bench.document?.text ?? '',
+        )
+      : await bench.askModelProtected(providerId);
+  if (bad != null) {
+    // A birth that happened still happened, and its sentence is still true: the
+    // session is open, its names are on the bench, and the send is what failed.
+    return WhatMayLeave(said: out.said, renamed: out.renamed, refused: bad);
+  }
+  return out;
 }
 
 /// The columns a table carried that this build could not name a kind for.

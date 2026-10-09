@@ -395,8 +395,13 @@ class _SendSheetState extends State<SendSheet> {
     final named = _sessionName.text.trim();
     return Text(
       named.isEmpty
-          ? 'No session yet — name it on the page before; either door begins it.'
-          : 'Either door begins session «$named».',
+          // **«Any door», because there are three** (064/A). It read «either
+          // door» while the exits were the clipboard and the PDF; the send
+          // through a key begins the session too now, and it is the only one
+          // of the three that puts the text on a wire. A sentence that counted
+          // the doors wrongly would be a sentence a person could check.
+          ? 'No session yet — name it on the page before; any door here begins it.'
+          : 'Any door here begins session «$named».',
       style: Zc.small.copyWith(color: Zc.ink4),
     );
   }
@@ -470,15 +475,21 @@ class _SendSheetState extends State<SendSheet> {
           // **Every clause is true from here, which is not where it was
           // written for.** «behind this sheet», not the room's «in front of
           // you»: the panel stands beside the document, this sheet covers it.
-          // «on the page after this», because the two doors are no longer the
+          // «on the page after this», because the doors are no longer the
           // next thing under this field. And no number before the act — the
           // count a person is told is the one the core returns, after the
           // renaming it is counting.
+          //
+          // **The third act is named here too** (064/A): a send through a
+          // connected key begins the session as the other two do, and it is
+          // the one that actually puts the text on a wire. The last clause
+          // keeps its exact promise for all three — nothing has left *yet* —
+          // because it is read before any of them is pressed.
           const Text(
-            'Copy Protected or Save as PDF, on the page after this, begins it. '
-            'Everything already protected on the document behind this sheet is '
-            'renamed into it — nothing has left this machine yet, so nothing '
-            'that did is affected.',
+            'Copy Protected, Save as PDF, or a send to a connected AI — on the '
+            'page after this — begins it. Everything already protected on the '
+            'document behind this sheet is renamed into it — nothing has left '
+            'this machine yet, so nothing that did is affected.',
             style: Zc.small,
           ),
         ],
@@ -701,21 +712,38 @@ class _SendSheetState extends State<SendSheet> {
                                   (payload == null && !widget.bench.sendOriginal)
                               ? null
                               : () async {
-                                  // Two doors, and the mode names which. The
-                                  // document is an argument of one of them
-                                  // only.
-                                  final bad = widget.bench.sendOriginal
-                                      ? await widget.bench.askModelWithTheOriginal(
-                                          p.id,
-                                          original: widget.bench.document?.text ?? '',
-                                        )
-                                      : await widget.bench.askModelProtected(p.id);
-                                  if (!context.mounted) return;
-                                  if (bad == null) {
-                                    Navigator.of(context).pop(true);
-                                  } else {
-                                    setState(() => _trouble = bad);
+                                  // **The order is not written here either.**
+                                  // `beginThenAsk` holds it — the name, the
+                                  // birth, the refresh, and then the right one
+                                  // of the two calls, because the mode names
+                                  // which and the document is an argument of
+                                  // one of them only. This press reads the
+                                  // name, takes what it is handed, and says
+                                  // so. The owner's own run found this door
+                                  // sending with no session born at all.
+                                  final out = await beginThenAsk(
+                                    widget.ground,
+                                    widget.bench,
+                                    name: _sessionName.text,
+                                    providerId: p.id,
+                                  );
+                                  // The State's own `mounted`, not the
+                                  // context's: this closure uses
+                                  // `State.context`, and the analyzer is right
+                                  // that the two checks are not the same one.
+                                  if (!mounted) return;
+                                  if (out.refused != null) {
+                                    // A birth that happened is still said,
+                                    // even when the send that followed it
+                                    // failed: the session is open and the
+                                    // names on the bench are its, and a
+                                    // person who is told only «it failed»
+                                    // would not know that.
+                                    if (out.said != null) _begun = out.said;
+                                    _nothingLeft(out);
+                                    return;
                                   }
+                                  Navigator.of(context).pop(true);
                                 },
                           // **The count, here too** (046/L). This sheet held a
                           // second copy of «Answer the review first» — two
