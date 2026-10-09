@@ -79,10 +79,15 @@ jobs:
       # So the stamp is read out of the binary this machine just built — not
       # worked out from the run's own variables — and it has to name the commit
       # being built. A stamp that names another commit is worse than none.
+      #
+      # With the same features as every step above it, for one reason: a
+      # different feature set is a different build, so this line compiled
+      # z_core a second time to print one sentence. Wall clock, not
+      # correctness — which is why it was left out of W5 and is its own commit.
       - name: The build's own stamp
         shell: bash
         run: |
-          stamp=$(cargo run -q -p z_core --example check_document | head -1)
+          stamp=$(cargo run -q -p z_core --example check_document --features fake_provider,test_clock | head -1)
           echo "$stamp"
           short="${GITHUB_SHA:0:7}"
           case "$stamp" in
