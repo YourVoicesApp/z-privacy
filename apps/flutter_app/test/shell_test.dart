@@ -1812,6 +1812,15 @@ Future<void> reviewJourney(
   final ground = Ground();
   late final Workbench bench;
   await tester.runAsync(() async {
+    // **This journey is about the sheet, not about sessions — said out loud.**
+    // It never made a vault, but the core's vault state is global and an
+    // earlier test in this file leaves one unlocked, so after 064 the sheet
+    // asked this journey for a session name and the nameless press copied
+    // nothing. One line makes the journey's own premise explicit and the file
+    // order-independent. The state it stops covering — the question standing,
+    // at 1280×720 — is measured in `the_name_at_the_exit_test`, which presses
+    // the doors with it up.
+    await z.vaultLock();
     await ground.refresh();
     final session = await z.openSession(packId: 'de');
     await z.importText(session: session, text: text);
