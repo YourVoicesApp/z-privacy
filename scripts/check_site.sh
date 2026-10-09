@@ -51,9 +51,24 @@ fi
 # A filled-in link is not a real link. The promise was that nothing goes public
 # pointing at something that does not exist, so the page's outward destinations
 # are asked whether they answer. No network, no verdict — and no publishing.
+#
+# Our **own** absolute addresses are left out, and the reason is worth writing
+# down. Until 9 October the only absolute href on the site was the repository
+# link, so this loop meant «outward». Then the canonical tags arrived and put
+# nine `https://z-privacy.com/…` hrefs into the heads, and the loop quietly
+# started asking the live site about pages that are not published yet — and
+# passing, because its rule for anything but GitHub is «answered at all», so a
+# 404 reads as PASS. A sentence that looks like proof and is not.
+#
+# These nine are proved where they can be: `check_sitemap.py` resolves every
+# one of them to a file in the tree that is about to be uploaded. Whether they
+# answer on the live site is the deploy's question, asked after it, not before.
 DESTS=$(grep -rhoE '(href)="https?://[^"]+"' --include='*.html' . 2>/dev/null \
         | sed -E 's/^href="//; s/"$//' \
-        | grep -vE '^https?://(www\.)?(apache\.org|w3\.org)' | sort -u)
+        | grep -vE '^https?://(www\.)?(apache\.org|w3\.org)' \
+        | grep -vE '^https://z-privacy\.com/' | sort -u)
+MINE=$(grep -rhoE 'href="https://z-privacy\.com/[^"]*"' --include='*.html' . 2>/dev/null | sort -u | wc -l)
+say PASS "$MINE of our own addresses are checked against the tree, not asked of the network"
 if ! command -v curl >/dev/null 2>&1; then
   say FAIL "curl is missing, so no destination could be checked"; FAIL=1
 else
