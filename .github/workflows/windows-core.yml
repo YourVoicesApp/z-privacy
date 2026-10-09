@@ -47,17 +47,27 @@ jobs:
       # Split from the tests on purpose: «it does not compile» and «it compiles
       # and something is wrong» are different answers, and the step that fails
       # says which one we got.
+      #
+      # Both test-only features, not one. `test_clock` arrived in October and
+      # this file still asked for `fake_provider` alone, so six tests — the
+      # auto-lock and the Safe column's reveal, `reveal_and_the_lock.rs` and
+      # `the_safe_column_reveal.rs` — did not exist in this job and it reported
+      # green without them. `gates.sh` carries that rule written down beside its
+      # own `TEST_FEATURES`: «a feature the suite forgets to ask for takes its
+      # tests with it silently». It was written for one platform and never
+      # applied to the second. G23 proves the feature cannot reach `default` or
+      # cross the bridge, so asking for it here costs the product nothing.
       - name: Compile the core
         shell: bash
-        run: cargo build -p z_core --features fake_provider
+        run: cargo build -p z_core --features fake_provider,test_clock
 
       - name: Compile the workspace
         shell: bash
-        run: cargo build --workspace --features fake_provider
+        run: cargo build --workspace --features fake_provider,test_clock
 
       - name: Rust tests
         shell: bash
-        run: cargo test --workspace --features fake_provider -- --nocapture
+        run: cargo test --workspace --features fake_provider,test_clock -- --nocapture
 
       # What build is this? The owner looked at the download page and thought
       # yesterday's installer was still live, because the screen said

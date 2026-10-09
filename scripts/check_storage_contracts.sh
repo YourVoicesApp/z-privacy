@@ -43,7 +43,7 @@ esac
 echo "Storage protection contracts — on $PLATFORM"
 echo
 
-LISTED=$(cargo test -p z_core --test vault_layer --features fake_provider -- --list 2>/dev/null \
+LISTED=$(cargo test -p z_core --test vault_layer --features fake_provider,test_clock -- --list 2>/dev/null \
          | sed 's/: test$//')
 if [ -z "$LISTED" ]; then
   echo "  FAIL  the vault_layer test binary did not build or list its tests."
