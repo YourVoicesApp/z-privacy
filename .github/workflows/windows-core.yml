@@ -179,6 +179,43 @@ jobs:
           mkdir -p ../../staging/zprivacy-v1-windows-x86_64
           cp -a "$out/." ../../staging/zprivacy-v1-windows-x86_64/
 
+          # The licences travel with the files they are about.
+          #
+          # The Linux tarball has carried LICENSE and a `third-party/` folder
+          # since it had a script at all; this folder carried neither, and the
+          # installer below copies it wholesale — so every Windows copy ever
+          # downloaded went out with its obligations missing. The month that
+          # added «Save as PDF» added them: `pdf` is Apache-2.0 and DejaVu is
+          # embedded in every file we write, and both licences require their
+          # text to travel. Same five files, same names, from the same folder
+          # as the Linux package — `packaging/third-party/`, which is why it is
+          # no longer under `packaging/linux/`.
+          dest=../../staging/zprivacy-v1-windows-x86_64
+          cp -f ../../LICENSE "$dest/LICENSE"
+          mkdir -p "$dest/third-party"
+          for f in NOTICES.txt flutter-sdk-LICENSE.txt material-icons-LICENSE.txt \
+                   dejavu-LICENSE.txt dart-pdf-LICENSE.txt; do
+            cp -f "../../packaging/third-party/$f" "$dest/third-party/$f"
+          done
+          cp -f ../../site/third-party/flutter-engine-LICENSE.txt "$dest/third-party/"
+
+          # Generated, exactly as `scripts/package_linux.sh` does it, because
+          # NOTICES.txt names this file: a notice that points at a file nobody
+          # shipped is worse than no notice.
+          {
+            echo "The Rust crates this build links, from the tree at ${GITHUB_SHA:0:7}."
+            echo "Generated in .github/workflows/windows-core.yml with cargo tree; no new tool."
+            echo
+            (cd ../.. && cargo tree -p z_core --edges normal --prefix none 2>/dev/null \
+               | sed 's/ (\*)$//' | sort -u | grep -vE '^$')
+          } > "$dest/third-party/rust-crates.txt"
+
+          # Asked for by name, like the .exe above it. `set -e` would already
+          # have stopped a missing copy; this says which promise was broken.
+          for f in LICENSE third-party/NOTICES.txt third-party/rust-crates.txt; do
+            test -s "$dest/$f" || { echo "nothing staged at $f — the installer would ship without it"; exit 1; }
+          done
+
       - name: What is in it, and its hashes
         if: always()
         shell: bash

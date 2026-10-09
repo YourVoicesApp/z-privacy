@@ -70,10 +70,15 @@ cp -f "$ROOT/packaging/linux/README.txt" "$STAGE/README.txt" || die "no packagin
 
 # ---------------------------------------------------------------- third party
 mkdir -p "$STAGE/third-party"
-cp -f "$ROOT/site/third-party/flutter-engine-LICENSE.txt" "$STAGE/third-party/" 2>/dev/null
+cp -f "$ROOT/site/third-party/flutter-engine-LICENSE.txt" "$STAGE/third-party/" \
+  || die "no site/third-party/flutter-engine-LICENSE.txt"
 for f in NOTICES.txt flutter-sdk-LICENSE.txt material-icons-LICENSE.txt \
          dejavu-LICENSE.txt dart-pdf-LICENSE.txt; do
-  [ -f "$ROOT/packaging/linux/third-party/$f" ] && cp -f "$ROOT/packaging/linux/third-party/$f" "$STAGE/third-party/"
+  # Named, not counted, and loud: this was `[ -f … ] && cp`, which shipped a
+  # tarball with a notice missing and said nothing. NOTICES.txt lists its
+  # neighbours by name, so a missing one is a notice pointing at nothing.
+  cp -f "$ROOT/packaging/third-party/$f" "$STAGE/third-party/" \
+    || die "no packaging/third-party/$f"
 done
 # Generated, not copied from September: the crates are whatever this tree
 # actually depends on today.
