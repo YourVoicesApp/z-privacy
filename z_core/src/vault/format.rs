@@ -66,7 +66,12 @@ pub(crate) const MODEL_VERSION: u16 = 12;
 
 // ---------------------------------------------------------------- stable codes
 
-fn kind_code(kind: Kind) -> u8 {
+/// The persistence code of a kind. `pub(crate)` since 068: the payload builder
+/// orders its per-kind tally by it, so two builds of one payload list the kinds
+/// in one order and no screen reshuffles them. A code may never be reused —
+/// that is this file's whole contract — which is also what makes it a stable
+/// sort key.
+pub(crate) fn kind_code(kind: Kind) -> u8 {
     match kind {
         Kind::Person => 1,
         Kind::Company => 2,

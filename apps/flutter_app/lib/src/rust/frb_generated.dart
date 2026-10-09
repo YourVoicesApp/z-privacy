@@ -4410,6 +4410,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  KindTally dco_decode_kind_tally(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return KindTally(
+      kind: dco_decode_kind(arr[0]),
+      count: dco_decode_u_32(arr[1]),
+    );
+  }
+
+  @protected
   KnowledgeSource dco_decode_knowledge_source(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return KnowledgeSource.values[raw as int];
@@ -4504,6 +4516,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<KindRow> dco_decode_list_kind_row(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_kind_row).toList();
+  }
+
+  @protected
+  List<KindTally> dco_decode_list_kind_tally(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_kind_tally).toList();
   }
 
   @protected
@@ -4930,14 +4948,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PayloadView dco_decode_payload_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return PayloadView(
       text: dco_decode_String(arr[0]),
       protectedCount: dco_decode_u_32(arr[1]),
       openSuggestions: dco_decode_u_32(arr[2]),
       pageEdges: dco_decode_list_page_edge(arr[3]),
-      session: dco_decode_opt_box_autoadd_payload_session(arr[4]),
+      byKind: dco_decode_list_kind_tally(arr[4]),
+      session: dco_decode_opt_box_autoadd_payload_session(arr[5]),
     );
   }
 
@@ -6043,6 +6062,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  KindTally sse_decode_kind_tally(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_kind = sse_decode_kind(deserializer);
+    var var_count = sse_decode_u_32(deserializer);
+    return KindTally(kind: var_kind, count: var_count);
+  }
+
+  @protected
   KnowledgeSource sse_decode_knowledge_source(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
@@ -6169,6 +6196,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <KindRow>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_kind_row(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<KindTally> sse_decode_list_kind_tally(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <KindTally>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_kind_tally(deserializer));
     }
     return ans_;
   }
@@ -6859,12 +6898,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_protectedCount = sse_decode_u_32(deserializer);
     var var_openSuggestions = sse_decode_u_32(deserializer);
     var var_pageEdges = sse_decode_list_page_edge(deserializer);
+    var var_byKind = sse_decode_list_kind_tally(deserializer);
     var var_session = sse_decode_opt_box_autoadd_payload_session(deserializer);
     return PayloadView(
       text: var_text,
       protectedCount: var_protectedCount,
       openSuggestions: var_openSuggestions,
       pageEdges: var_pageEdges,
+      byKind: var_byKind,
       session: var_session,
     );
   }
@@ -7980,6 +8021,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_kind_tally(KindTally self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_kind(self.kind, serializer);
+    sse_encode_u_32(self.count, serializer);
+  }
+
+  @protected
   void sse_encode_knowledge_source(
     KnowledgeSource self,
     SseSerializer serializer,
@@ -8083,6 +8131,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_kind_row(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_kind_tally(
+    List<KindTally> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_kind_tally(item, serializer);
     }
   }
 
@@ -8689,6 +8749,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_32(self.protectedCount, serializer);
     sse_encode_u_32(self.openSuggestions, serializer);
     sse_encode_list_page_edge(self.pageEdges, serializer);
+    sse_encode_list_kind_tally(self.byKind, serializer);
     sse_encode_opt_box_autoadd_payload_session(self.session, serializer);
   }
 
