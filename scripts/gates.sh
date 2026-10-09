@@ -818,7 +818,16 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          an_answer_from_a_deleted_session_refuses_and_names_it \
          a_session_survives_the_vault_being_locked \
          a_long_conversation_does_not_grow_the_vault \
-         every_token_that_leaves_belongs_to_the_session; do
+         every_token_that_leaves_belongs_to_the_session \
+         the_reader_sees_a_turn_the_old_door_wrote \
+         a_question_sent_through_the_key_is_written_into_the_session \
+         a_document_sent_with_no_question_still_leaves_a_turn \
+         the_direct_door_writes_what_it_sent_as_it_sent_it \
+         an_answer_brought_back_from_outside_is_written_too \
+         a_stored_turn_restores_only_what_its_payload_carried \
+         a_session_read_without_a_bench_names_what_it_cannot_resolve \
+         a_send_with_no_session_open_is_not_refused_today \
+         a_version_one_file_reads_with_no_allowed_list; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

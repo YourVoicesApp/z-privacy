@@ -27,11 +27,20 @@ use crate::vault::crypto::{self, Purpose, SecretKey};
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
 /// * 1 — the turns of one conversation: what was asked, what came back, when.
+/// * 2 — each turn also carries **the tokens the payload it left in allowed**.
+///   Without them a stored turn could only be restored by trusting every token
+///   the session ever minted, which is invariant G9 traded away for a field:
+///   «a real token from elsewhere in the session is left exactly as it
+///   arrived». A turn now carries its own permission and restores under the
+///   same rule the live answer does.
+///
+/// A version 1 file still reads: its turns come back with an empty allowed
+/// list, which restores nothing and says so, rather than restoring everything.
 ///
 /// This is **not** `vault::format::MODEL_VERSION` and must never be compared
 /// with it. A session file written by a newer build is refused by naming both
 /// numbers, exactly as a newer vault body is.
-pub(crate) const SESSION_FORMAT_VERSION: u16 = 1;
+pub(crate) const SESSION_FORMAT_VERSION: u16 = 2;
 
 /// The folder each session's file sits in, under the data directory.
 const FOLDER: &str = "sessions";
@@ -60,6 +69,18 @@ pub(crate) struct Turn {
     pub answer: String,
     /// Seconds since 1970 — the vault's unit, not a second one.
     pub at: u64,
+    /// **The tokens the payload this turn left in was allowed to carry** — G9.
+    ///
+    /// `restore` replaces a token only if it is in this list *and* in the
+    /// session's store, so a token the model invented and a real token from
+    /// another conversation are both left exactly as they arrived. The live
+    /// path reads that list from the payload record; a turn read back a week
+    /// later has no payload to ask, so it keeps its own.
+    ///
+    /// Empty is a real state and restores nothing: a direct send (the text
+    /// left as it stands, so there is nothing to put back) and a version 1
+    /// file (written before turns carried this) are both honestly empty.
+    pub allowed: Vec<String>,
 }
 
 /// Everything one session's file holds.
@@ -77,6 +98,10 @@ impl Body {
             put_str(&mut out, &turn.question);
             put_str(&mut out, &turn.answer);
             out.extend_from_slice(&turn.at.to_be_bytes());
+            out.extend_from_slice(&(turn.allowed.len() as u32).to_be_bytes());
+            for token in &turn.allowed {
+                put_str(&mut out, token);
+            }
         }
         out
     }
@@ -100,7 +125,18 @@ impl Body {
             let question = string(bytes, &mut at)?;
             let answer = string(bytes, &mut at)?;
             let when = u64::from_be_bytes(array::<8>(bytes, &mut at)?);
-            turns.push(Turn { question, answer, at: when });
+            // Read from the version this file declares, never from the constant
+            // above: a version 1 file has no allowed list after `at`, and
+            // reading one would take the next turn's question length as a count
+            // and refuse a file that is perfectly good.
+            let mut allowed = Vec::new();
+            if version >= 2 {
+                let how_many = u32::from_be_bytes(array::<4>(bytes, &mut at)?);
+                for _ in 0..how_many {
+                    allowed.push(string(bytes, &mut at)?);
+                }
+            }
+            turns.push(Turn { question, answer, at: when, allowed });
         }
         Ok(Self { turns })
     }
@@ -193,5 +229,61 @@ fn string(bytes: &[u8], at: &mut usize) -> ApiResult<String> {
 fn short() -> ApiError {
     ApiError::PayloadRefused {
         reason: "a session file ends in the middle of what it promised".to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// **A version 1 file still reads, and its turns are honestly empty.**
+    ///
+    /// The claim is made in a doc comment above `SESSION_FORMAT_VERSION`, so it
+    /// is measured here rather than believed: version 1 wrote no allowed list
+    /// after `at`, and a reader that looked for one would take the next turn's
+    /// question length as a count and refuse a file that is perfectly good.
+    ///
+    /// Hand-built bytes and not a round trip, because the writer cannot produce
+    /// a version 1 file any more — which is the whole reason this is the only
+    /// instrument that can say the older format is still readable.
+    #[test]
+    fn a_version_one_file_reads_with_no_allowed_list() {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&1u16.to_be_bytes());
+        bytes.extend_from_slice(&2u32.to_be_bytes());
+        for (q, a) in [("asked", "answered"), ("asked again", "")] {
+            bytes.extend_from_slice(&(q.len() as u32).to_be_bytes());
+            bytes.extend_from_slice(q.as_bytes());
+            bytes.extend_from_slice(&(a.len() as u32).to_be_bytes());
+            bytes.extend_from_slice(a.as_bytes());
+            bytes.extend_from_slice(&7u64.to_be_bytes());
+        }
+
+        let body = Body::from_bytes(&bytes).expect("a version 1 file is readable");
+        assert_eq!(body.turns.len(), 2);
+        assert_eq!(body.turns[0].question, "asked");
+        assert_eq!(body.turns[1].answer, "");
+        assert!(
+            body.turns.iter().all(|t| t.allowed.is_empty()),
+            "a version 1 turn carries no permission, so it restores nothing — \
+             which is the safe direction, not the convenient one"
+        );
+    }
+
+    /// The control for the test above: version 2 round-trips its allowed list.
+    /// If this were red, the reader would be broken and the version 1 result
+    /// would mean nothing.
+    #[test]
+    fn a_version_two_turn_keeps_the_tokens_it_was_allowed() {
+        let body = Body {
+            turns: vec![Turn {
+                question: "who is __Z_1111_PERSON_2222__".to_string(),
+                answer: "__Z_1111_PERSON_2222__ is".to_string(),
+                at: 9,
+                allowed: vec!["__Z_1111_PERSON_2222__".to_string()],
+            }],
+        };
+        let back = Body::from_bytes(&body.to_bytes()).expect("round trip");
+        assert_eq!(back, body);
     }
 }
