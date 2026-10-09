@@ -64,10 +64,10 @@ class SendSheet extends StatefulWidget {
   /// the lie.
   final VoidCallback? onSettings;
 
-  /// Where «Save as PDF» writes. Null is the product's own place,
-  /// `~/Documents/zprivacy`, and nothing in the product passes anything else —
-  /// a test gives a temporary folder so that running the tests never writes
-  /// into the person's documents.
+  /// Where «Save as PDF» writes. Null is the product's own place — the folder
+  /// the core names, which is `~/Documents/zprivacy` on Linux — and nothing in
+  /// the product passes anything else; a test gives a temporary folder so that
+  /// running the tests never writes into the person's documents.
   final String? saveFolder;
 
   /// The payload preview — the only region that accepts a wheel on the first page.

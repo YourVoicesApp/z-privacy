@@ -1,11 +1,14 @@
 What Linux measures — the line the Windows report is compared against.
 
-  commit  b3b8d67
-  rust    567
+  commit  528a03b
+  rust    568
   dart    258
-  gates   305 checks, 0 failed, 0 skipped
+  gates   306 checks, 0 failed, 0 skipped
 
-`commit` is where these numbers were measured, not where the tree stands now.
+`commit` names the last commit at which a full run was recorded here, which
+is not where the tree stands now: on a branch it is the commit *before* the one
+that moved these numbers, because a commit cannot name its own sha while it is
+being written. The hand that merges writes the merge's own measurement.
 
 They were three numbers typed into `.github/workflows/windows-core.yml`, and
 they named a commit from a month earlier: 251 Rust tests and 108 gates, when

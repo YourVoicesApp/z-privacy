@@ -2146,6 +2146,14 @@ pub fn default_data_dir() -> ApiResult<String> {
     crate::data_dir::default_data_dir().map(|p| p.to_string_lossy().to_string())
 }
 
+/// Where a protected PDF is saved when the person has not chosen a folder —
+/// decided here for the same reason as the line above it. The screen asked
+/// `HOME` for this one, which on Windows is not set for a program with a
+/// window, so the third exit refused on that platform instead of writing.
+pub fn default_documents_dir() -> ApiResult<String> {
+    crate::data_dir::default_documents_dir().map(|p| p.to_string_lossy().to_string())
+}
+
 /// Is it open? Locked means the vault layer is skipped, and the UI says so.
 pub fn vault_state() -> ApiResult<VaultState> {
     crate::ops::vault_state()

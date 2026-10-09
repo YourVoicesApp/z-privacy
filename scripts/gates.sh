@@ -852,7 +852,8 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_stored_turn_restores_only_what_its_payload_carried \
          a_session_read_without_a_bench_names_what_it_cannot_resolve \
          a_send_with_no_session_open_is_not_refused_today \
-         a_version_one_file_reads_with_no_allowed_list; do
+         a_version_one_file_reads_with_no_allowed_list \
+         the_saved_files_and_the_vault_do_not_share_a_folder; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
