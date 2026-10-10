@@ -150,3 +150,30 @@ painted inside the boundary and the product's own theme, the composer turned
 out clean and the document column turned out worse than reported. **Render it
 and look** found the fault and then nearly hid it: look at a picture a person's
 screen could actually show.
+
+## 10 Oct, afternoon — the drawing's design, measured not guessed (by the design seat, recorded by the lead)
+
+The owner chose candidate three. The arithmetic half is BUILT and green alone:
+`paintedOnce(Iterable<Rect>)` in `document_text.dart` (commit `242193a` on
+`fix/the-selection-is-painted-once`, over `5eda2ef`) — groups by row (tops
+equal within a pixel, which is what the engine emits), unions overlaps per
+row. Five guards; two breaks seen to bite; the claim that matters is the
+second one: **the union out equals the union in** — a selection that grows
+or shrinks a pixel is worse than the defect.
+
+The second half, for whichever session continues, measured already:
+1. Silence Flutter's own selection paint **in the document column only**
+   (wrap with `TextSelectionTheme`/`DefaultSelectionStyle`, transparent) —
+   the global theme stays: the chat field measured ZERO double-paint.
+2. Draw the merged rectangles **behind the text** in the same `Stack` where
+   `PageEdgePainter` already draws — the precedent exists, no new structure.
+   `_drawn` key yields the `RenderEditable`; `onSelectionChanged` already
+   fires; the colour comes FROM the theme, never rewritten (a colour written
+   twice drifts).
+3. Two warnings from the paper: draw only inside the panel's clip (048
+   measured 82,468-line documents); recompute boxes on selection change, not
+   per frame.
+4. Done, as numbers: 8,582 → 0; the LF twin stays 0; the three pins FLIP
+   (rewritten, not deleted, both halves of their history in the comment);
+   the page rule and the amber wash visible under a live selection; a
+   before/after picture in this paper at the same scale as the decision pair.
