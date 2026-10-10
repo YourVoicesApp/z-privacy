@@ -2916,6 +2916,17 @@ pub(crate) fn switch_pack(session: SessionId, pack_id: String) -> ApiResult<Resc
         });
     }
     with_session(session.id, |s| s.pack_id = pack_id.clone()).ok_or(ApiError::InvalidSession)?;
+    // **And the open session learns it too** — 075c. The header is the one
+    // place a language is changed, and this is the one call it comes through,
+    // so the record follows the bench here instead of the screen having to
+    // remember to tell the core twice. A failure to write it is not allowed to
+    // undo a rescan the person can already see: it is reported by the next
+    // read of the row, which is `None` or the old value, and never a lie about
+    // which language the document was just scanned in.
+    let open_now = with_core(|core| core.open_conversation);
+    if let Some(number) = open_now {
+        with_core(|core| core.vault.set_pack(number, &pack_id))?;
+    }
     let (_, changed_to_manual) = rescan_keeping(session, &pack_id)?;
     let revision = with_session(session.id, |s| s.revision).ok_or(ApiError::InvalidSession)?;
     Ok(RescanOutcome {

@@ -897,7 +897,11 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_send_with_no_session_open_is_not_refused_today \
          a_version_one_file_reads_with_no_allowed_list \
          the_saved_files_and_the_vault_do_not_share_a_folder \
-         each_fence_falls_when_a_value_is_planted_in_it; do
+         each_fence_falls_when_a_value_is_planted_in_it \
+         the_language_a_session_was_born_into_outlives_the_application \
+         a_session_born_with_no_document_has_never_been_asked \
+         changing_the_language_in_the_header_reaches_the_open_session \
+         a_session_from_model_twelve_has_never_been_asked_its_language; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

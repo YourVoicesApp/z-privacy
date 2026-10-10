@@ -216,6 +216,21 @@ pub(crate) struct Conversation {
     /// rather than as a lie: the first build that can open a session with no
     /// document must not find a zeroed hash and believe it.
     pub document: Option<[u8; 32]>,
+    /// **The language this conversation was born into** — 075c, model 13.
+    ///
+    /// `None` means **nobody has been asked yet**, and it is not the same as
+    /// «no language»: every row written before model 13 has never been asked,
+    /// and the screen must be able to ask once instead of assuming. The
+    /// designer's half of 075d turns on exactly that difference, which is why
+    /// this is an `Option` and not an empty string.
+    ///
+    /// **Why here and not on the bench.** `session::Session::pack_id` belongs
+    /// to one document's bench, and a bench is born again for every file a
+    /// person opens — so a language kept there dies with the file and the
+    /// question comes back. The owner's complaint was the repetition
+    /// («الإنسان لا يحب التكرار»), so the language belongs to the thing that
+    /// outlives the file: this record.
+    pub pack_id: Option<String>,
 }
 
 /// A list of names a person keeps, and whether it is in use.

@@ -300,12 +300,21 @@ class ConversationRow {
   /// row that was merely listed.
   final int renamedTokens;
 
+  /// **The language this session is in**, or `None` if nobody has been asked
+  /// yet — 075c, and the difference the screen needs: «never asked» is not
+  /// «no language». Written at the birth from the bench that named it, and
+  /// again whenever the header changes the language while this session is
+  /// open, so the question is asked once in a session's life and not once
+  /// per file.
+  final String? packId;
+
   const ConversationRow({
     required this.number,
     required this.name,
     required this.beganAt,
     required this.turns,
     required this.renamedTokens,
+    this.packId,
   });
 
   @override
@@ -314,7 +323,8 @@ class ConversationRow {
       name.hashCode ^
       beganAt.hashCode ^
       turns.hashCode ^
-      renamedTokens.hashCode;
+      renamedTokens.hashCode ^
+      packId.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -325,7 +335,8 @@ class ConversationRow {
           name == other.name &&
           beganAt == other.beganAt &&
           turns == other.turns &&
-          renamedTokens == other.renamedTokens;
+          renamedTokens == other.renamedTokens &&
+          packId == other.packId;
 }
 
 enum CredentialState {

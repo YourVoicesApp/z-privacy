@@ -3379,6 +3379,7 @@ const _: fn() = || {
         let _: u64 = ConversationRow.began_at;
         let _: u32 = ConversationRow.turns;
         let _: u32 = ConversationRow.renamed_tokens;
+        let _: Option<String> = ConversationRow.pack_id;
     }
     {
         let DocumentView = None::<crate::api::mirrors::DocumentView>.unwrap();
@@ -4119,12 +4120,14 @@ impl SseDecode for crate::api::mirrors::ConversationRow {
         let mut var_beganAt = <u64>::sse_decode(deserializer);
         let mut var_turns = <u32>::sse_decode(deserializer);
         let mut var_renamedTokens = <u32>::sse_decode(deserializer);
+        let mut var_packId = <Option<String>>::sse_decode(deserializer);
         return crate::api::mirrors::ConversationRow {
             number: var_number,
             name: var_name,
             began_at: var_beganAt,
             turns: var_turns,
             renamed_tokens: var_renamedTokens,
+            pack_id: var_packId,
         };
     }
 }
@@ -6428,6 +6431,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Conversat
             self.0.began_at.into_into_dart().into_dart(),
             self.0.turns.into_into_dart().into_dart(),
             self.0.renamed_tokens.into_into_dart().into_dart(),
+            self.0.pack_id.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -8268,6 +8272,7 @@ impl SseEncode for crate::api::mirrors::ConversationRow {
         <u64>::sse_encode(self.began_at, serializer);
         <u32>::sse_encode(self.turns, serializer);
         <u32>::sse_encode(self.renamed_tokens, serializer);
+        <Option<String>>::sse_encode(self.pack_id, serializer);
     }
 }
 
