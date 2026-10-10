@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/widgets/conversation_view.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/document_text.dart' show kindName;
@@ -492,17 +493,30 @@ class _BubbleAct extends StatelessWidget {
 /// than from a name a screen kept: after a lock the core answers «none», and a
 /// head holding its own idea of «open» would name a session nobody can read.
 ///
-/// It is a fact, not a door. The sessions room is one press away in the panel
-/// and the owner asked for the name, so nothing here opens anything — a head
-/// is not a place to put a new act.
+/// **It was a fact and not a door, and the owner changed that on 10 Oct 2026**
+/// (075b): «الضغط على اسم الجلسة» — wherever a session's name is drawn,
+/// pressing it opens what that session kept. The earlier reasoning stands as a
+/// record of why it was not one: a head is not a place to put a new act, and
+/// the sessions room was one press away in the panel. What it did not weigh is
+/// that the name is the only thing on the screen a person *wants* to press,
+/// and a name that answers nothing teaches them it is decoration.
 class TheOpenSession extends StatelessWidget {
-  const TheOpenSession({super.key, required this.ground, this.compact = false});
+  const TheOpenSession({
+    super.key,
+    required this.ground,
+    this.compact = false,
+    this.bench,
+  });
 
   final Ground ground;
 
   /// Tight, for the workspace's bar — the most crowded strip in the app, where
   /// 2.8 px was the whole margin at 900 before this was added.
   final bool compact;
+
+  /// The document in front of the person, when there is one. Passed to the
+  /// core so this session's tokens are named from its own key.
+  final SessionId? bench;
 
   /// Found by what it is, never by the words on it.
   static const mark = ValueKey<String>('the-open-session');
@@ -515,8 +529,12 @@ class TheOpenSession extends StatelessWidget {
       // The number is the identity and never moves; the name is the handle a
       // person chose. Both, because a renamed session is still that one.
       message: 'Session ${row.number} · the names in this work are this session’s',
-      child: Container(
-        key: mark,
+      child: InkWell(
+        key: ConversationView.door,
+        onTap: () => showConversation(context, row, bench: bench),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          key: mark,
         padding: compact
             ? const EdgeInsets.fromLTRB(8, 3, 9, 3)
             : const EdgeInsets.fromLTRB(10, 5, 11, 5),
@@ -542,6 +560,7 @@ class TheOpenSession extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

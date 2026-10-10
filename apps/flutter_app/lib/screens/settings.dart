@@ -30,6 +30,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/conversation_view.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 
 /// **Appended, never inserted** — 064. `_SettingsScreenState` defaults to
@@ -775,7 +776,13 @@ class _SessionsRoomState extends State<_SessionsRoom> {
                 'a name then. You never have to make one by hand first.',
           )
         else
-          for (final row in rows) _SessionRow(ground: g, row: row, open: row.number == g.openSession),
+          for (final row in rows)
+            _SessionRow(
+              ground: g,
+              row: row,
+              open: row.number == g.openSession,
+              bench: widget.bench,
+            ),
       ],
     );
   }
@@ -783,11 +790,20 @@ class _SessionsRoomState extends State<_SessionsRoom> {
 
 /// One session: number, name, when, how many exchanges — and the two acts.
 class _SessionRow extends StatelessWidget {
-  const _SessionRow({required this.ground, required this.row, required this.open});
+  const _SessionRow({
+    required this.ground,
+    required this.row,
+    required this.open,
+    this.bench,
+  });
 
   final Ground ground;
   final ConversationRow row;
   final bool open;
+
+  /// The document in front of the person, when there is one: the core names
+  /// this session's tokens from its own key, and the reading is better with it.
+  final SessionId? bench;
 
   /// The core's own seconds, drawn as a day. Nothing is computed about it that
   /// the core did not say — the number is read, not invented.
@@ -812,13 +828,24 @@ class _SessionRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  row.name,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: open ? Zc.clayDeep : Zc.ink,
+                // **075b — the name is the door.** «Selection without showing
+                // is half an answer»: this list used to select a session and
+                // leave the person standing where they were. Pressing the name
+                // opens what the session kept.
+                InkWell(
+                  key: ConversationView.door,
+                  onTap: () => showConversation(context, row, bench: bench),
+                  borderRadius: BorderRadius.circular(5),
+                  child: Text(
+                    row.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: open ? Zc.clayDeep : Zc.ink,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Zc.line,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 3),
