@@ -84,6 +84,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TaughtReach dco_decode_box_autoadd_taught_reach(dynamic raw);
 
   @protected
+  TurnVia dco_decode_box_autoadd_turn_via(dynamic raw);
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
@@ -435,6 +438,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TurnRow dco_decode_turn_row(dynamic raw);
 
   @protected
+  TurnVia dco_decode_turn_via(dynamic raw);
+
+  @protected
   int dco_decode_u_32(dynamic raw);
 
   @protected
@@ -543,6 +549,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TaughtReach sse_decode_box_autoadd_taught_reach(SseDeserializer deserializer);
+
+  @protected
+  TurnVia sse_decode_box_autoadd_turn_via(SseDeserializer deserializer);
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
@@ -930,6 +939,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TurnRow sse_decode_turn_row(SseDeserializer deserializer);
 
   @protected
+  TurnVia sse_decode_turn_via(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
@@ -1062,6 +1074,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     TaughtReach self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_box_autoadd_turn_via(TurnVia self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
@@ -1530,6 +1545,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_turn_row(TurnRow self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_turn_via(TurnVia self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

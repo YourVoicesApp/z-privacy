@@ -40,7 +40,7 @@ use crate::vault::crypto::{self, Purpose, SecretKey};
 /// This is **not** `vault::format::MODEL_VERSION` and must never be compared
 /// with it. A session file written by a newer build is refused by naming both
 /// numbers, exactly as a newer vault body is.
-pub(crate) const SESSION_FORMAT_VERSION: u16 = 2;
+pub(crate) const SESSION_FORMAT_VERSION: u16 = 3;
 
 /// The folder each session's file sits in, under the data directory.
 const FOLDER: &str = "sessions";
@@ -81,6 +81,17 @@ pub(crate) struct Turn {
     /// left as it stands, so there is nothing to put back) and a version 1
     /// file (written before turns carried this) are both honestly empty.
     pub allowed: Vec<String>,
+    /// **Which key and which model this exchange ran through** — 075c, the
+    /// owner's first pillar: «الاسم الذي رآه الإنسان، لا السر أبداً». Never the
+    /// credential, which is sealed in the vault and has no business in a
+    /// conversation's file.
+    ///
+    /// Three states and not two, which is why it is an enum: a turn older than
+    /// the question, a turn the person carried out and back by hand, and a turn
+    /// that names what answered it. An empty string could carry only two of
+    /// them, and the lead's ruling was that the file hold all three — «لا نعرف»
+    /// ليست «لم يكن هناك».
+    pub via: crate::api::TurnVia,
 }
 
 /// Everything one session's file holds.
@@ -101,6 +112,20 @@ impl Body {
             out.extend_from_slice(&(turn.allowed.len() as u32).to_be_bytes());
             for token in &turn.allowed {
                 put_str(&mut out, token);
+            }
+            // Format 3. A kind byte, and the names only when there are
+            // names: 0 is «older than the question», 1 is «the person carried
+            // it», 2 is «through this key». A reader of an old file gets 0
+            // because the byte is simply not there, which is the one mapping
+            // that needs no decision.
+            match &turn.via {
+                crate::api::TurnVia::NotRecorded => out.push(0),
+                crate::api::TurnVia::Pasted => out.push(1),
+                crate::api::TurnVia::Through { provider, model } => {
+                    out.push(2);
+                    put_str(&mut out, provider);
+                    put_str(&mut out, model);
+                }
             }
         }
         out
@@ -136,7 +161,28 @@ impl Body {
                     allowed.push(string(bytes, &mut at)?);
                 }
             }
-            turns.push(Turn { question, answer, at: when, allowed });
+            // A format-2 turn stops above: it was written before a turn
+            // could say what answered it, so it is `NotRecorded` — which is a
+            // different state from `Pasted`, and that difference is the whole
+            // reason the byte exists.
+            let via = if version >= 3 {
+                match array::<1>(bytes, &mut at)?[0] {
+                    0 => crate::api::TurnVia::NotRecorded,
+                    1 => crate::api::TurnVia::Pasted,
+                    2 => crate::api::TurnVia::Through {
+                        provider: string(bytes, &mut at)?,
+                        model: string(bytes, &mut at)?,
+                    },
+                    other => {
+                        return Err(ApiError::PayloadRefused {
+                            reason: format!("a turn says it ran through an unknown kind {other}"),
+                        })
+                    }
+                }
+            } else {
+                crate::api::TurnVia::NotRecorded
+            };
+            turns.push(Turn { question, answer, at: when, allowed, via });
         }
         Ok(Self { turns })
     }
@@ -270,20 +316,58 @@ mod tests {
         );
     }
 
-    /// The control for the test above: version 2 round-trips its allowed list.
-    /// If this were red, the reader would be broken and the version 1 result
+    /// The control for the test above: what the writer writes, the reader reads
+    /// back whole — the allowed list and, since format 3, which key answered.
+    /// If this were red the reader would be broken and the version 1 result
     /// would mean nothing.
     #[test]
-    fn a_version_two_turn_keeps_the_tokens_it_was_allowed() {
+    fn a_round_trip_keeps_everything_a_turn_carries() {
         let body = Body {
             turns: vec![Turn {
                 question: "who is __Z_1111_PERSON_2222__".to_string(),
                 answer: "__Z_1111_PERSON_2222__ is".to_string(),
                 at: 9,
                 allowed: vec!["__Z_1111_PERSON_2222__".to_string()],
+                via: crate::api::TurnVia::Through {
+                    provider: "fake".to_string(),
+                    model: "the-model-the-person-saw".to_string(),
+                },
             }],
         };
         let back = Body::from_bytes(&body.to_bytes()).expect("round trip");
         assert_eq!(back, body);
+    }
+
+    /// **A format 2 turn says «not recorded», not «whatever is configured
+    /// today»** — 075c, the owner's first pillar at the format's edge.
+    ///
+    /// Hand-built bytes again, because the writer cannot produce a format 2
+    /// file any more. The pair is the point: a turn from before the field
+    /// existed and a turn whose answer was pasted are both honestly unknown,
+    /// and a turn that names a model keeps naming it. Reading the configured
+    /// provider into an old turn would be a guess about the one thing the field
+    /// exists to state.
+    #[test]
+    fn a_format_two_turn_names_no_key_and_says_so() {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&2u16.to_be_bytes());
+        bytes.extend_from_slice(&1u32.to_be_bytes());
+        let (q, a) = ("asked", "answered");
+        bytes.extend_from_slice(&(q.len() as u32).to_be_bytes());
+        bytes.extend_from_slice(q.as_bytes());
+        bytes.extend_from_slice(&(a.len() as u32).to_be_bytes());
+        bytes.extend_from_slice(a.as_bytes());
+        bytes.extend_from_slice(&7u64.to_be_bytes());
+        bytes.extend_from_slice(&0u32.to_be_bytes()); // an empty allowed list
+
+        let body = Body::from_bytes(&bytes).expect("a format 2 file is readable");
+        let turn = body.turns.first().expect("one turn");
+        assert_eq!(turn.answer, "answered", "the older format stopped being readable");
+        assert_eq!(
+            turn.via,
+            crate::api::TurnVia::NotRecorded,
+            "a turn older than format 3 was given a state it never had — and «older \
+             than the question» is not «the person carried it»"
+        );
     }
 }

@@ -3987,6 +3987,304 @@ $RefusalCopyWith<$Res> get refusal {
 }
 
 /// @nodoc
+mixin _$TurnVia {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TurnVia);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'TurnVia()';
+}
+
+
+}
+
+/// @nodoc
+class $TurnViaCopyWith<$Res>  {
+$TurnViaCopyWith(TurnVia _, $Res Function(TurnVia) __);
+}
+
+
+/// Adds pattern-matching-related methods to [TurnVia].
+extension TurnViaPatterns on TurnVia {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( TurnVia_NotRecorded value)?  notRecorded,TResult Function( TurnVia_Pasted value)?  pasted,TResult Function( TurnVia_Through value)?  through,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case TurnVia_NotRecorded() when notRecorded != null:
+return notRecorded(_that);case TurnVia_Pasted() when pasted != null:
+return pasted(_that);case TurnVia_Through() when through != null:
+return through(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( TurnVia_NotRecorded value)  notRecorded,required TResult Function( TurnVia_Pasted value)  pasted,required TResult Function( TurnVia_Through value)  through,}){
+final _that = this;
+switch (_that) {
+case TurnVia_NotRecorded():
+return notRecorded(_that);case TurnVia_Pasted():
+return pasted(_that);case TurnVia_Through():
+return through(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( TurnVia_NotRecorded value)?  notRecorded,TResult? Function( TurnVia_Pasted value)?  pasted,TResult? Function( TurnVia_Through value)?  through,}){
+final _that = this;
+switch (_that) {
+case TurnVia_NotRecorded() when notRecorded != null:
+return notRecorded(_that);case TurnVia_Pasted() when pasted != null:
+return pasted(_that);case TurnVia_Through() when through != null:
+return through(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notRecorded,TResult Function()?  pasted,TResult Function( String provider,  String model)?  through,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case TurnVia_NotRecorded() when notRecorded != null:
+return notRecorded();case TurnVia_Pasted() when pasted != null:
+return pasted();case TurnVia_Through() when through != null:
+return through(_that.provider,_that.model);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notRecorded,required TResult Function()  pasted,required TResult Function( String provider,  String model)  through,}) {final _that = this;
+switch (_that) {
+case TurnVia_NotRecorded():
+return notRecorded();case TurnVia_Pasted():
+return pasted();case TurnVia_Through():
+return through(_that.provider,_that.model);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notRecorded,TResult? Function()?  pasted,TResult? Function( String provider,  String model)?  through,}) {final _that = this;
+switch (_that) {
+case TurnVia_NotRecorded() when notRecorded != null:
+return notRecorded();case TurnVia_Pasted() when pasted != null:
+return pasted();case TurnVia_Through() when through != null:
+return through(_that.provider,_that.model);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class TurnVia_NotRecorded extends TurnVia {
+  const TurnVia_NotRecorded(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TurnVia_NotRecorded);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'TurnVia.notRecorded()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class TurnVia_Pasted extends TurnVia {
+  const TurnVia_Pasted(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TurnVia_Pasted);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'TurnVia.pasted()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class TurnVia_Through extends TurnVia {
+  const TurnVia_Through({required this.provider, required this.model}): super._();
+  
+
+ final  String provider;
+ final  String model;
+
+/// Create a copy of TurnVia
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TurnVia_ThroughCopyWith<TurnVia_Through> get copyWith => _$TurnVia_ThroughCopyWithImpl<TurnVia_Through>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TurnVia_Through&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.model, model) || other.model == model));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,provider,model);
+
+@override
+String toString() {
+  return 'TurnVia.through(provider: $provider, model: $model)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $TurnVia_ThroughCopyWith<$Res> implements $TurnViaCopyWith<$Res> {
+  factory $TurnVia_ThroughCopyWith(TurnVia_Through value, $Res Function(TurnVia_Through) _then) = _$TurnVia_ThroughCopyWithImpl;
+@useResult
+$Res call({
+ String provider, String model
+});
+
+
+
+
+}
+/// @nodoc
+class _$TurnVia_ThroughCopyWithImpl<$Res>
+    implements $TurnVia_ThroughCopyWith<$Res> {
+  _$TurnVia_ThroughCopyWithImpl(this._self, this._then);
+
+  final TurnVia_Through _self;
+  final $Res Function(TurnVia_Through) _then;
+
+/// Create a copy of TurnVia
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? provider = null,Object? model = null,}) {
+  return _then(TurnVia_Through(
+provider: null == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
+as String,model: null == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
 mixin _$UndoOutcome {
 
 

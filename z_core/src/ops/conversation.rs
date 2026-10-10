@@ -190,14 +190,14 @@ pub(crate) fn forget(number: u32) -> ApiResult<String> {
 ///
 /// `answer` may be empty: a question copied out and not yet answered is a real
 /// state, and the person may close the app between the two halves.
-pub(crate) fn record(question: String, answer: String) -> ApiResult<u32> {
+pub(crate) fn record(question: String, answer: String, via: crate::api::TurnVia) -> ApiResult<u32> {
     with_core(|core| {
         let Some(number) = core.open_conversation else {
             return Err(ApiError::PayloadRefused {
                 reason: "there is no session open to write to".to_string(),
             });
         };
-        record_in(core, number, question, answer, Vec::new())
+        record_in(core, number, question, answer, Vec::new(), via)
     })
 }
 
@@ -213,12 +213,18 @@ pub(crate) fn record(question: String, answer: String) -> ApiResult<u32> {
 /// carry. It is stored with the turn because a turn read back next week has no
 /// payload record to ask, and restoring it against the whole session's store
 /// would hand back tokens G9 exists to leave alone.
+///
+/// `via` is what answered, and it is a parameter rather than something read
+/// from the core here: the only places that know are the doors, and a value
+/// worked out at this depth would be «whatever is configured now» about an
+/// exchange that has already happened.
 pub(crate) fn record_in(
     core: &mut crate::session::Core,
     number: u32,
     question: String,
     answer: String,
     allowed: Vec<String>,
+    via: crate::api::TurnVia,
 ) -> ApiResult<u32> {
     let mut body = body(core, number)?.unwrap_or_default();
     body.turns.push(crate::conversation::Turn {
@@ -226,6 +232,7 @@ pub(crate) fn record_in(
         answer,
         at: crate::vault::model::now_seconds(),
         allowed,
+        via,
     });
     write_body(core, number, &body)?;
     Ok(body.turns.len() as u32)
@@ -280,6 +287,7 @@ pub(crate) fn turns(number: u32, bench: Option<SessionId>) -> ApiResult<Vec<crat
                 }
             }
             rows.push(crate::api::TurnRow {
+                via: turn.via.clone(),
                 question: question.segments,
                 answer: answer.segments,
                 at: turn.at,
