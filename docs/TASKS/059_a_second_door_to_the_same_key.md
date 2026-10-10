@@ -255,3 +255,41 @@ Nothing here is built. `1e5c2a1` stays frozen through tomorrow's meeting.
 Nothing blocking. The two guards this paper owes a builder when it is picked up:
 the ZREC encoder unreachable from the isolation path (D-signed), and a recovery
 file refused inside the data directory (F).
+
+---
+
+## 10 Oct 2026 — the opening addendum (the lead, before the workshop starts)
+
+The owner's order today: the small repairs of 075 close first, then THIS is
+the next workshop («ثم ننتقل إلى النقطة الأهم وهي الاسترجاع»).
+
+**What moved in the tree since the signature, measured this morning:**
+- The envelope architecture this paper relies on is confirmed at
+  `vault/crypto.rs` — `wrapped_master` (:288), Argon2id→KEK (:316),
+  `unwrap_master` (:374), and `change_passphrase`'s rewrap (:410-417) whose
+  32-byte re-wrap is exactly the mechanism the second slot reuses.
+- `MODEL_VERSION` moved 12→13 in 075 (conversation `pack_id`). This paper's
+  change stays `FORMAT_VERSION` 2→3 in `vault/crypto.rs` — the two versions
+  are different doors; do not touch model.rs for this.
+- A «format 3» ALSO exists now in conversation files (the turn's type byte,
+  075). Three unrelated threes — say which three every time, in commits and
+  guards: *vault format 3*, *session file format 3*, *model 13*.
+
+**The split:**
+- **Programmer**: the format change, the second slot, ZREC encode/check
+  (~30 lines, zero crates), the cheap `derive` under
+  `z-privacy/vault/1/recovery`, rotation-not-migration for mode switches,
+  and the two owed guards named at signing: (1) the ZREC encoder is
+  UNREACHABLE from the isolation path — prove it, don't claim it; (2) a
+  recovery file is REFUSED inside the data directory.
+- **Design seat**: the recovery key is SHOWN ONCE at creation (print/write
+  prompt, never stored, never reshown); the recovery door at unlock beside
+  the passphrase door; the isolation choice said honestly with its price
+  («الاستردادُ قائمٌ افتراضاً — العزلةُ القصوى خيارٌ يُدفع ثمنه») — and no
+  screen, dialog or settings row may leak which choice was made.
+- **The lead**: measures that the two vault files (recovery-on,
+  isolation-on) are byte-indistinguishable in shape — same lengths, same
+  structure, no plaintext tell — with a control pair.
+
+**Ordering stands as signed: recovery first, passphrase policy second** —
+today's 8-character minimum stays honest only while forgetting is fatal.
