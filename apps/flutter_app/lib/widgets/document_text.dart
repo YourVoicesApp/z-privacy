@@ -13,6 +13,65 @@ import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
 
+/// **The rectangles a selection should be filled with — 074/W8.**
+///
+/// Flutter's own selection painter takes `getBoxesForSelection(...).toSet()`
+/// and fills **one translucent rect per box**
+/// (`rendering/editable.dart:2914`). `toSet()` removes only boxes that are
+/// *identical*, and the engine hands it a line's tail both whole and in parts
+/// whenever a zero-ink character is selected — a carriage return from a
+/// Windows document, measured on 9 October: eleven boxes where the same
+/// document written with `\n` takes five, three of them lying over each other.
+/// At alpha 0.40 paint over paint is a darker colour, so the end of every line
+/// came out as a dark block.
+///
+/// This is the whole of the fix the owner chose, after two pictures: the
+/// opaque colour was refused because the page rule dissolves under it, and
+/// leaving it was refused. Merge first, then fill.
+///
+/// **It is arithmetic about drawing and nothing else.** The union of what comes
+/// out is the union of what went in — a selection that grew or shrank by a
+/// pixel would be a worse fault than the one being fixed — and no offset, span,
+/// mark or line number is touched by any of it. 041-K is the debt this project
+/// does not pay twice.
+///
+/// Rows are kept apart: boxes belong to the same row when their tops agree
+/// within a pixel, which is how the engine reports them.
+List<Rect> paintedOnce(Iterable<Rect> boxes) {
+  final rows = <double, List<Rect>>{};
+  for (final box in boxes) {
+    final row = rows.keys.firstWhere(
+      (top) => (top - box.top).abs() < 1,
+      orElse: () => box.top,
+    );
+    (rows[row] ??= <Rect>[]).add(box);
+  }
+
+  final out = <Rect>[];
+  for (final row in rows.values) {
+    final sorted = [...row]..sort((a, b) => a.left.compareTo(b.left));
+    var held = sorted.first;
+    for (final box in sorted.skip(1)) {
+      // Touching counts as joined: two rects that meet at an edge fill the same
+      // pixels as one that spans both, so joining them costs nothing and
+      // leaves fewer draws.
+      if (box.left <= held.right + 0.01) {
+        held = Rect.fromLTRB(
+          held.left,
+          held.top < box.top ? held.top : box.top,
+          held.right > box.right ? held.right : box.right,
+          held.bottom > box.bottom ? held.bottom : box.bottom,
+        );
+      } else {
+        out.add(held);
+        held = box;
+      }
+    }
+    out.add(held);
+  }
+  return out;
+}
+
 /// What each source is called on screen, and why the mark is there.
 String sourceName(Source s) => switch (s) {
       Source.generalRule => 'Rule',
