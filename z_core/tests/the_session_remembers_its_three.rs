@@ -161,3 +161,72 @@ fn changing_the_language_in_the_header_reaches_the_open_session() {
 
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+/// **The designer's path, end to end: a session that had no language gets one
+/// from its first document, and keeps it.**
+///
+/// His half of 075d asks once, exactly when `pack_id` is `None`, and then tells
+/// the core through `switchPack` **after** the bench is open. A birth with no
+/// document is allowed, so this is not a corner: it is what happens whenever
+/// somebody starts a session before opening a file.
+#[test]
+fn the_first_document_of_a_session_born_without_one_writes_its_language() {
+    let _guard = serial();
+    let dir = fresh_vault("first-document");
+
+    let born = conversation_begin("a session before any file".to_string(), None).expect("begin");
+    assert_eq!(born.pack_id, None, "a birth with no bench must leave the question unasked");
+
+    // The screen asks once, opens the bench with the answer, and tells the core.
+    let held = Bench(open_session(None, "de".to_string()).expect("open"));
+    import_text(held.0, "Sehr geehrte Frau Anna Weber, danke für Ihren Brief.".to_string())
+        .expect("import");
+    switch_pack(held.0, "de".to_string()).expect("switch");
+
+    assert_eq!(
+        row(born.number).pack_id.as_deref(),
+        Some("de"),
+        "the first document did not write the session's language"
+    );
+
+    close_the_app_and_reopen(held.0);
+    assert_eq!(
+        row(born.number).pack_id.as_deref(),
+        Some("de"),
+        "the language the first document chose did not outlive the application"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **The call that looks redundant is the only one that writes.**
+///
+/// `Workbench.switchPack` on the Dart side returns at once when the pack has
+/// not changed, which is why the screen calls `z.switchPack` directly with the
+/// pack the bench was *just opened with*. So this core call must write the
+/// session's language even when nothing about the bench changes — and an
+/// «optimisation» here that returns early on an unchanged pack would silently
+/// stop the language ever being recorded for a session that had none. This is
+/// that invariant, pinned, so the optimisation reds instead of shipping.
+#[test]
+fn switching_to_the_language_a_bench_already_has_still_writes_it() {
+    let _guard = serial();
+    let dir = fresh_vault("same-pack");
+
+    let born = conversation_begin("a session before any file".to_string(), None).expect("begin");
+    assert_eq!(born.pack_id, None, "the fixture starts unasked");
+
+    let held = Bench(open_session(None, "sv".to_string()).expect("open"));
+    import_text(held.0, "Hej Hedvig Palmgren, tack för ditt brev.".to_string()).expect("import");
+    // The bench is already «sv». The screen says «sv» again on purpose.
+    switch_pack(held.0, "sv".to_string()).expect("switch");
+
+    assert_eq!(
+        row(born.number).pack_id.as_deref(),
+        Some("sv"),
+        "a switch to the pack the bench already had wrote nothing, so a session \
+         born without a language can never get one"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
