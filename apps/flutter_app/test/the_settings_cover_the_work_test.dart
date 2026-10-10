@@ -333,22 +333,22 @@ void main() {
 
     await aDocumentOnTheBench(tester, 'does-not-leak');
 
-    // The AI door, measured to be under the panel's 480 rather than assumed to
-    // be: the review buttons sit at x=99 and would have proved nothing, which
-    // is what the first version of this guard reported before it was pointed
-    // anywhere.
-    final ai = find.byTooltip('Choose the AI and what travels to it');
-    expect(ai, findsOneWidget, reason: 'the AI door is not on this screen');
-    final at = tester.getCenter(ai);
-    expect(at.dx, greaterThan(wide.width - panelWidth),
-        reason: 'the AI door is not under where the $panelWidth panel will stand, so a press '
-            'there would prove nothing about leaking');
+    // **A point under where the panel will stand, taken from the panel's own
+    // width.** It used to be the AI door, measured rather than assumed — and
+    // 075a moved it: the top bar's right-hand group shifted left by the width
+    // of the profile control the moment that control learned to recede, so no
+    // element of the bar lies under the panel any more. Naming a widget tied
+    // this guard to a layout and the layout moved; the panel's geometry does
+    // not. What must still be proved is that the point is over the work at
+    // all, and the control below is exactly that line, unchanged.
+    final at = Offset(wide.width - panelWidth / 2, 300);
 
     // Before: that point is the work, and a press there reaches it. Without
     // this line the assertion below could hold because the point was never
     // over anything.
     expect(pressReachesTheWork(tester, at), isTrue,
-        reason: 'a press at the AI door does not reach the work even with no panel up');
+        reason: 'the point $at is over nothing of the work even with no panel up, so the '
+            'assertion below would hold for a reason that is not the panel');
 
     await tester.tap(_door);
     await settle(tester);
@@ -365,7 +365,7 @@ void main() {
     // is the panel's own background and the place a press is most likely to
     // fall through.
     expect(pressReachesTheWork(tester, at), isFalse,
-        reason: 'a press on the panel\'s top strip reached the work behind it');
+        reason: 'a press on the panel reached the work behind it');
     final middle = tester.getCenter(find.byType(SettingsScreen));
     expect(pressReachesTheWork(tester, middle), isFalse,
         reason: 'a press in the middle of the panel reached the work behind it');

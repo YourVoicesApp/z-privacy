@@ -424,6 +424,10 @@ class _ShellState extends State<ZShell> {
     if (_vaultOpen || mustOpenTheVault) {
       return VaultScreen(
         ground: _ground,
+        // 075a: the profile door lives on the board now, and it needs the
+        // bench it would be switching. Null when the board is opened with no
+        // document open, which is a real state and the board allows for it.
+        bench: _bench,
         onClose: () async {
           final was = _ground.vault;
           setState(() => _vaultOpen = false);

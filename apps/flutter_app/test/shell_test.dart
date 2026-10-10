@@ -1146,12 +1146,23 @@ void main() {
       late final Workbench bench;
       late final SessionId session;
 
+      // **The first profile is setup since 075a**, not a step of this test.
+      // The header's profile door now waits until there is something to choose
+      // — two profiles, or a bench already inside one — so a vault with none
+      // offers no way in from this screen, by design. Every claim below is
+      // still made here: creating, renaming, switching and scoping. Only the
+      // state they start from is stated rather than clicked, and creating the
+      // *first* profile from the board is covered by
+      // `the_profile_door_waits_for_a_choice_test.dart`.
+      late final String first;
       await tester.runAsync(() async {
         await freshVaultForUiTest('profiles');
+        first = await z.createProfile(name: 'Client A', session: null);
         await ground.refresh();
         session = await z.openSession(packId: 'de');
         await z.importText(session: session, text: doc);
         bench = Workbench(session: session, profileId: null, packId: 'de');
+        await bench.switchProfile(first);
         await bench.rescan();
       });
       addTearDown(bench.dispose);
@@ -1163,30 +1174,21 @@ void main() {
       );
       await settle(tester);
 
-      await tester.tap(find.text('Everywhere').first);
+      // By the door's name and not by the word on it: the top bar reads
+      // «Client A» now that the bench is inside it, and a finder that hunts a
+      // label follows the label about.
+      await tester.tap(find.byKey(ProfileSwitcher.door));
       await settle(tester);
       expect(find.byType(ProfileSwitcher), findsOneWidget);
 
-      await tester.tap(find.text('Create profile'));
-      await settle(tester);
-      expect(find.byType(ProfileForm), findsOneWidget);
-      await tester.enterText(
-        find.descendant(
-          of: find.byType(ProfileForm),
-          matching: find.byType(TextField),
-        ),
-        'Client A',
-      );
-      await tester.pump();
-      await tester.tap(
-        find.descendant(
-          of: find.byType(ProfileForm),
-          matching: find.text('Create'),
-        ),
-      );
-      await settle(tester);
-      expect(find.text('Client A'), findsOneWidget);
-      expect(find.text('Active'), findsOneWidget);
+      /// In the dialog, not merely on the screen: since 075a the top bar names
+      /// the profile the bench is in, so an unscoped finder for a profile's
+      /// name answers twice and says nothing about this list.
+      Finder inDialog(Finder of) =>
+          find.descendant(of: find.byType(ProfileSwitcher), matching: of);
+
+      expect(inDialog(find.text('Client A')), findsOneWidget);
+      expect(inDialog(find.text('Active')), findsOneWidget);
 
       await tester.tap(find.text('Create profile'));
       await settle(tester);
@@ -1226,7 +1228,7 @@ void main() {
         ),
       );
       await settle(tester);
-      expect(find.text('Nordstern'), findsOneWidget);
+      expect(inDialog(find.text('Nordstern')), findsOneWidget);
       expect(find.text('Client A'), findsNothing);
 
       // Client B is active after it was created. Switch back to the renamed
