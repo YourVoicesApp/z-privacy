@@ -13,11 +13,13 @@
 // boolean, `show` sets its own. So two presses put two panels in one slot,
 // sharing one width and one arrow.
 //
-// **This file is a pin: it asserts what is true today, not what should be.**
-// 070's own note names the repair — «one value that names which panel is open
-// — task 071, with its own paper» — and when that lands these expectations
-// flip. Do not «fix» them by changing the numbers; rewrite them with both
-// halves of the history, the way the house does.
+// **This was a pin, and 071 flipped it.** Both halves are kept. What it
+// recorded: Review then Tokens drew two panels in one slot, measured on the
+// glass, because `openReview` cleared `reviewingNames` alone while tokens and
+// the answer were separate `if`s that no door closed. What it asserts now: the
+// slot holds one panel, and the second press **replaces** the first rather
+// than joining it — not because the drawing was taught to behave, but because
+// `OpenPanel` leaves nowhere to write «both».
 //
 // Needs the native library, so run once:  flutter build linux --debug
 @Timeout(Duration(minutes: 4))
@@ -55,7 +57,7 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('today: two panels stand in the one slot, and the screen says they do not', (
+  testWidgets('one panel stands in the slot, and the second press takes it', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1600, 1000));
@@ -110,32 +112,30 @@ void main() {
     await settle(tester);
 
     expect(
-      find.byType(ReviewPanel),
-      findsOneWidget,
-      reason: 'the review panel did not open, so the pair below is not a pair',
-    );
-    expect(
       find.byType(TokensPanel),
       findsOneWidget,
-      reason: 'the tokens panel did not open',
+      reason: 'the tokens panel did not open, so the claim below is about an '
+          'empty slot rather than about one panel replacing another',
+    );
+    expect(
+      find.byType(ReviewPanel),
+      findsNothing,
+      reason: 'the review panel is still standing beside the tokens panel — '
+          'two panels in a slot that holds one, which is what this file was '
+          'written to record and 071 to make unwritable',
+    );
+    expect(
+      bench.panel,
+      OpenPanel.tokens,
+      reason: 'the value says ${bench.panel} while the screen shows tokens, so '
+          'the drawing and the state have parted company',
     );
 
-    // **The pin.** Both are on the glass at once, in a slot whose own comment
-    // says one panel at a time. 071 makes this impossible rather than merely
-    // unlikely; when it lands, this expectation is the one that flips.
-    final both = tester.getRect(find.byType(ReviewPanel));
-    final tokens = tester.getRect(find.byType(TokensPanel));
-    expect(
-      both.overlaps(tokens),
-      isFalse,
-      reason: 'the two panels are drawn over each other rather than beside, '
-          'which is a different fault from the one this pins',
-    );
-    expect(
-      both.width + tokens.width,
-      greaterThan(both.width),
-      reason: 'two panels share the slot today — 071 is the repair, and this '
-          'line is the record that they did',
-    );
+    // And back the other way: the first door still takes the slot from the
+    // second, or «replaces» would only be true in one direction.
+    bench.openReview();
+    await settle(tester);
+    expect(find.byType(ReviewPanel), findsOneWidget);
+    expect(find.byType(TokensPanel), findsNothing);
   });
 }

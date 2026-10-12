@@ -361,6 +361,27 @@ class Ground extends ChangeNotifier {
     }
   }
 }
+/// **Which panel stands in the workspace's one slot — 071.**
+///
+/// The slot is the column right of the document, and four panels claim it. It
+/// held **four independent booleans**, and `workspace.dart` chose between them
+/// with a precedence chain while its own comment promised «one panel at a
+/// time, and the one asked for». The promise was not kept: names and review
+/// excluded each other — 070 paid for that corner in a live bug — but tokens
+/// and the answer were separate `if`s, so Review then Tokens put two panels in
+/// one slot, sharing one width and one arrow. Measured on the glass before
+/// this was written, and pinned.
+///
+/// Four booleans have fifteen corners that mean nothing. One value has none:
+/// the wrong state is not fixed here, it is **unwritable**. The same ladder
+/// this project climbed for `Piece` in the core and for `TurnVia` in a
+/// session's turns — remember it, comment it, guard it, make it
+/// unrepresentable.
+///
+/// `showing` is **not** folded in: it names *which answer*, and the chat reads
+/// it too. This names *which panel*, and nothing else.
+enum OpenPanel { none, names, review, tokens, answer }
+
 
 /// One conversation: the document, what was found in it, and what would leave.
 ///
@@ -428,10 +449,12 @@ class Workbench extends ChangeNotifier {
   /// longer true, because a screen cannot be the authority on how long a secret
   /// stays on it.
   final Map<String, String> revealed = {};
-  bool tokensOpen = false;
 
-  /// The review panel, and which finding it is pointing at.
-  bool reviewOpen = false;
+  /// **The one slot's one value — 071.** Nothing else says which panel is
+  /// open, so two cannot be.
+  OpenPanel panel = OpenPanel.none;
+
+  /// Which finding the review panel is pointing at.
   int? focused;
 
   /// Walking mode: one suggestion at a time, with its sentence around it.
@@ -705,7 +728,13 @@ class Workbench extends ChangeNotifier {
   }
 
   void openTokens(bool on) {
-    tokensOpen = on;
+    // Closing takes the slot back only if this panel is the one holding it:
+    // «close tokens» must not shut a review that tokens never displaced.
+    if (on) {
+      panel = OpenPanel.tokens;
+    } else if (panel == OpenPanel.tokens) {
+      panel = OpenPanel.none;
+    }
     notifyListeners();
   }
 
@@ -854,6 +883,7 @@ class Workbench extends ChangeNotifier {
       );
       lastUsage = said.usage;
       showing = said.answer;
+      panel = OpenPanel.answer;
     });
   }
 
@@ -993,6 +1023,7 @@ class Workbench extends ChangeNotifier {
         provider: ProviderId(id: providerId),
       );
       showing = answer;
+      panel = OpenPanel.answer;
       trouble = null;
       sending = false;
       await refresh();
@@ -1016,6 +1047,7 @@ class Workbench extends ChangeNotifier {
     try {
       final answer = await z.ingestAnswer(payload: copied, raw: raw);
       showing = answer;
+      panel = OpenPanel.answer;
       trouble = null;
       await refresh();
       return null;
@@ -1075,6 +1107,15 @@ class Workbench extends ChangeNotifier {
 
   void show(AnswerId? answer) {
     showing = answer;
+    // `panel == answer` can only mean there is one to show, because the two
+    // move together here and in the three places an answer arrives.
+    if (answer == null) {
+      if (panel == OpenPanel.answer) {
+        panel = OpenPanel.none;
+      }
+    } else {
+      panel = OpenPanel.answer;
+    }
     notifyListeners();
   }
 
@@ -1097,7 +1138,6 @@ class Workbench extends ChangeNotifier {
   /// knowledge: nothing is written, and the next document asks again.
   final Set<String> ignored = {};
 
-  bool reviewingNames = false;
 
   /// What still needs a word: the core's list, less what was ignored here.
   List<NameCandidate> get openCandidates =>
@@ -1358,7 +1398,7 @@ class Workbench extends ChangeNotifier {
   /// Reproduced by the other seat before either of us touched it, red by
   /// design, with the control beside it: `the_badge_and_the_door_test`.
   void openNameReview() {
-    reviewingNames = true;
+    panel = OpenPanel.names;
     notifyListeners();
     unawaited(refreshCandidates());
     // The person's own list is the other half of this panel, and it is asked
@@ -1367,16 +1407,17 @@ class Workbench extends ChangeNotifier {
   }
 
   void closeNameReview() {
-    reviewingNames = false;
+    if (panel == OpenPanel.names) {
+      panel = OpenPanel.none;
+    }
     notifyListeners();
   }
 
   void openReview({bool? walk}) {
-    reviewOpen = true;
-    // The other panel in this slot gives way, because the workspace reads it
-    // first (070). Without this line the names panel wins for ever after the
-    // first time it is opened.
-    reviewingNames = false;
+    // One value: taking the slot **is** the other panels giving way. 070 had
+    // to clear a second boolean by hand here, and the bug it fixed was that
+    // nobody had cleared it for a year.
+    panel = OpenPanel.review;
     if (walk != null) walking = walk;
     // Walking starts at the first thing still waiting, not at the top of a list
     // the user has already been through.
@@ -1385,7 +1426,9 @@ class Workbench extends ChangeNotifier {
   }
 
   void closeReview() {
-    reviewOpen = false;
+    if (panel == OpenPanel.review) {
+      panel = OpenPanel.none;
+    }
     notifyListeners();
   }
 
