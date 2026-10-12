@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
@@ -25,10 +26,20 @@ import 'package:zprivacy/widgets/why_sheet.dart';
 import 'package:zprivacy/core/messages.dart';
 
 class VaultScreen extends StatefulWidget {
-  const VaultScreen({super.key, required this.ground, required this.onClose});
+  const VaultScreen({
+    super.key,
+    required this.ground,
+    required this.onClose,
+    this.bench,
+  });
 
   final Ground ground;
   final VoidCallback onClose;
+
+  /// The open document's bench, when there is one. The board is where the
+  /// profile door lives now that the work surfaces have let it go, and
+  /// switching a conversation's profile is a thing done **to** a bench.
+  final Workbench? bench;
 
   @override
   State<VaultScreen> createState() => _VaultScreenState();
@@ -298,6 +309,32 @@ class _VaultScreenState extends State<VaultScreen> {
                     ],
                   ),
                 ),
+                // **The door the header let go of — 075a.** While the vault
+                // holds one profile the work surfaces carry no profile
+                // control, so this is where a person who goes looking finds
+                // the choice. A control that recedes must leave a way in, or
+                // it has not receded: it has gone, and something that could be
+                // done yesterday cannot be done today.
+                //
+                // Only with a bench: choosing a profile is a thing done **to**
+                // an open document's conversation, and the board can be opened
+                // with none.
+                if (widget.bench != null) ...[
+                  ZButton(
+                    key: ProfileSwitcher.door,
+                    label: 'Conversation profile',
+                    onPressed: () async {
+                      await showDialog<void>(
+                        context: context,
+                        builder: (_) =>
+                            ProfileSwitcher(bench: widget.bench!, ground: g),
+                      );
+                      await g.refresh();
+                      await _reload();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 ZButton(
                   label: 'New profile',
                   onPressed: () async {

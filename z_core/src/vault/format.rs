@@ -19,6 +19,9 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 13 — a session's own language (075c). `None` for every row written
+///   before it, which is «never asked» and not «no language» — the difference
+///   the screen needs in order to ask once instead of assuming.
 /// * 12 — the owner's sessions: number, handle, sealed key, when, and which
 ///   document each belongs to (064). The conversations themselves are **not**
 ///   here; each is its own sealed file with its own version — see
@@ -62,7 +65,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// | `crypto::FORMAT_VERSION` = 2 | the vault file's envelope | Argon2 params, the wrapped master key, the nonce. **Unmoved by 064:** the envelope does not change, only what the body says. |
 /// | `MODEL_VERSION` = 12 | the vault body, below | identities, values, lists, settings, credentials — and since 064 the session records. |
 /// | `conversation::SESSION_FORMAT_VERSION` = 1 | each session's own file | one conversation's turns. A different format in a different file; it must never borrow this number. |
-pub(crate) const MODEL_VERSION: u16 = 12;
+pub(crate) const MODEL_VERSION: u16 = 13;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -373,6 +376,16 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
             Some(hash) => {
                 out.push(1);
                 out.extend_from_slice(hash);
+            }
+            None => out.push(0),
+        }
+        // Model 13. A tag byte and then the id, the same shape the document
+        // hash above uses, so «never asked» is a byte on disk and not an
+        // absence somebody has to interpret.
+        match &talk.pack_id {
+            Some(id) => {
+                out.push(1);
+                put_str(&mut out, id);
             }
             None => out.push(0),
         }
@@ -692,12 +705,28 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
                     })
                 }
             };
+            // A model-12 row stops above: it was written before a session
+            // could have a language of its own, so it has never been asked.
+            let pack_id = if version >= 13 {
+                match r.array::<1>()?[0] {
+                    0 => None,
+                    1 => Some(r.string()?),
+                    other => {
+                        return Err(ApiError::PayloadRefused {
+                            reason: format!("session {number} has an unknown language marker {other}"),
+                        })
+                    }
+                }
+            } else {
+                None
+            };
             conversations.push(crate::vault::model::Conversation {
                 number,
                 name,
                 key,
                 began_at,
                 document,
+                pack_id,
             });
         }
     }
@@ -792,6 +821,32 @@ mod tests {
     /// anything — so the compatibility tests were testing arithmetic, not
     /// compatibility. An old file is written out here, field by field, as the
     /// build that made it would have written it.
+    /// **075c — «never asked» is what a model-12 session must read as.**
+    ///
+    /// A row written before a session could have a language of its own has not
+    /// chosen one and has not been asked; the screen asks exactly once, when
+    /// this is `None`. Reading it as the application's default instead would
+    /// make the owner answer the same question for ever — and reading it as
+    /// `Some("")` would be a language called nothing. The guard is the pair:
+    /// model 12 gives `None`, model 13 gives what was written.
+    #[test]
+    fn a_session_from_model_twelve_has_never_been_asked_its_language() {
+        let old = dec(&a_file_from_model(12)).expect("a model-12 vault still opens");
+        let talk = old.conversations.first().expect("the fixture writes one session");
+        assert_eq!(talk.number, 1, "the fixture's own session is not the one read back");
+        assert_eq!(
+            talk.pack_id, None,
+            "a session older than model 13 was given a language it never chose"
+        );
+
+        let now = dec(&a_file_from_model(13)).expect("a model-13 vault opens");
+        assert_eq!(
+            now.conversations.first().and_then(|c| c.pack_id.as_deref()),
+            Some("sv"),
+            "model 13 wrote a language and did not read it back"
+        );
+    }
+
     fn a_file_from_model(version: u16) -> Vec<u8> {
         let mut out = Vec::new();
         out.extend_from_slice(&version.to_be_bytes());
@@ -850,8 +905,20 @@ mod tests {
             out.extend_from_slice(&0u32.to_be_bytes()); // no value came from a list
         }
         if version >= 12 {
-            out.extend_from_slice(&1u32.to_be_bytes()); // the next session number
-            out.extend_from_slice(&0u32.to_be_bytes()); // and no sessions yet
+            out.extend_from_slice(&2u32.to_be_bytes()); // the next session number
+            out.extend_from_slice(&1u32.to_be_bytes()); // one session
+            out.extend_from_slice(&1u32.to_be_bytes()); // its number
+            put_str(&mut out, "vad säger brevet");
+            out.extend_from_slice(&1_700_000_000u64.to_be_bytes()); // when it began
+            let sealed = crypto::seal_for(&test_master(), Purpose::Session, &[9u8; 32])
+                .expect("seal the session key");
+            out.extend_from_slice(&(sealed.len() as u32).to_be_bytes());
+            out.extend_from_slice(&sealed);
+            out.push(0); // no document
+        }
+        if version >= 13 {
+            out.push(1); // and it knows its language
+            put_str(&mut out, "sv");
         }
         out
     }

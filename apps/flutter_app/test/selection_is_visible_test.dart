@@ -43,52 +43,49 @@ Future<EditableText> pumpOriginal(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('the Original column paints its selection in blue, not in nothing', (tester) async {
-    final editable = await pumpOriginal(tester);
-
+  // **Where this colour is read from moved on 12 Oct, and the claim did not.**
+  // These two used to ask the `EditableText` what colour it would paint a
+  // selection with. Since 074/W8 the columns paint their own selection —
+  // merged first, so a zero-ink character cannot have its tail filled twice —
+  // and the widget's own `selectionColor` is deliberately **transparent**
+  // inside them. Asking it now would measure the silencing, not the colour.
+  //
+  // So the question is put where the answer now lives: the theme, which is
+  // what `PaintSelectionOnce` reads and what the owner's complaint was really
+  // about — «the window's theme carries no `textSelectionTheme` at all».
+  // That the colour then reaches the glass is not taken on trust: the pixel
+  // test at the foot of this file photographs it, and the payload column is
+  // photographed the same way in `a_carriage_return_draws_nothing_test.dart`.
+  test('the app gives selecting a blue, and one a person can see', () {
+    final colour = zTheme().textSelectionTheme.selectionColor;
+    expect(colour, isNotNull, reason: 'nothing is given to paint a selection with');
     expect(
-      editable.selectionColor,
-      isNotNull,
-      reason: 'nothing was given to paint a selection with',
-    );
-    expect(
-      editable.selectionColor!.a,
+      colour!.a,
       greaterThan(0.15),
-      reason: 'a selection painted at ${editable.selectionColor!.a} alpha is a selection nobody sees',
+      reason: 'a selection painted at ${colour.a} alpha is a selection nobody sees',
     );
     expect(
-      editable.selectionColor,
+      colour.a,
+      lessThan(1.0),
+      reason: 'an opaque selection hides the page rules painted behind the '
+          'text — the owner refused exactly that on 10 Oct, with the picture '
+          'in front of him',
+    );
+    expect(
+      colour,
       Zc.river.withValues(alpha: 0.40),
       reason: 'the owner asked for blue, and the blue of this app is Zc.river',
     );
     // What was there before, for the record: a warm brown at 0.40, taken from
     // the colour scheme's seed, on warm paper.
     expect(
-      editable.selectionColor,
+      colour,
       isNot(ColorScheme.fromSeed(seedColor: Zc.clay, surface: Zc.paper).primary.withValues(alpha: 0.40)),
     );
   });
 
-  testWidgets('the Safe column is given the same blue, since it can be selected too', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: zTheme(),
-        home: const Scaffold(
-          body: SizedBox(
-            width: 700,
-            height: 400,
-            child: SafeText(text: 'Guten Tag __Z_1234_PERSON_ABCD__, Ihre Rechnung.'),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    final editable = tester.widget<EditableText>(find.byType(EditableText));
-    expect(editable.selectionColor, Zc.river.withValues(alpha: 0.40));
-  });
-
-  testWidgets('a drag really selects, and what it will paint is that same blue', (tester) async {
-    final editable = await pumpOriginal(tester);
+  testWidgets('a drag really selects, and the colour it will be painted in is the theme\'s', (tester) async {
+    await pumpOriginal(tester);
     final box = tester.renderObject<RenderBox>(find.byType(EditableText));
     final from = box.localToGlobal(const Offset(12, 8));
     final to = box.localToGlobal(const Offset(240, 8));
@@ -108,7 +105,9 @@ void main() {
       isFalse,
       reason: 'the drag selected nothing, so this test proves nothing about its colour',
     );
-    expect(editable.selectionColor, Zc.river.withValues(alpha: 0.40));
+    // The drag is this test's claim; the colour is the theme's, read above,
+    // and the pixels are read at the foot of the file.
+    expect(zTheme().textSelectionTheme.selectionColor, Zc.river.withValues(alpha: 0.40));
   });
 
   /// Configured is not painted. This one reads the pixels: it selects with the

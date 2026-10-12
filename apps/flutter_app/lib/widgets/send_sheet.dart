@@ -42,6 +42,41 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/the_session_question.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
+/// **The per-kind tally the protected PDF's footer states — 068.**
+///
+/// Read off the payload it describes, and off nothing else. The core counts it
+/// from `allowed_token_ids` in the same pass that builds the text, so the
+/// figure and the text are made together and cannot describe different things.
+///
+/// **What it replaced, and why the replacement is not a tidy-up.** This was
+/// computed here by walking the bench's *current* tokens and keeping the ones
+/// whose string could be found in the outgoing text. Two sources. A payload
+/// captured before a session was born carries tokens the bench no longer
+/// holds, so nothing matched and the footer said **no kinds at all about a
+/// fully protected document** — every name in the file hidden, and the page
+/// describing it claiming none were. A number about the payload comes from the
+/// payload.
+///
+/// **`nameOf` is the naming door, not a whole `Ground`**, and that is the
+/// shape of the dependency rather than a convenience: this needs one thing —
+/// what a kind is called — and `Ground.kinds` is a getter over state the core
+/// owns, so demanding the whole object would have made the rule unmeasurable
+/// without a vault. The product passes `Ground.nameOfKind`, which invents no
+/// name and answers «…» before the core has said what a kind is called; this
+/// prints whatever that door gives and substitutes nothing prettier.
+///
+/// Counts are **summed** into the name rather than assigned, so that if two
+/// kinds ever share a label the footer states their total instead of silently
+/// dropping one.
+Map<String, int> footerTally(PayloadView payload, String Function(Kind) nameOf) {
+  final out = <String, int>{};
+  for (final tally in payload.byKind) {
+    final name = nameOf(tally.kind);
+    out[name] = (out[name] ?? 0) + tally.count;
+  }
+  return out;
+}
+
 class SendSheet extends StatefulWidget {
   const SendSheet({
     super.key,
@@ -126,23 +161,30 @@ class _SendSheetState extends State<SendSheet> {
 
   /// Write the protected text to a file, and say where it went.
   ///
-  /// The same text Copy Protected copies, and like Copy it sends nothing. The
-  /// numbers in the footer are the core's: the places are
-  /// `PayloadView.protected_count`, and a kind is counted only for a token that
-  /// actually stands in **this** text — a footer describing the file must be
-  /// about the file.
+  /// The same text Copy Protected copies, and like Copy it sends nothing.
+  ///
+  /// **Both numbers in the footer are the core's, and each comes from the
+  /// payload it describes** — 068's Dart half. The places are
+  /// `PayloadView.protectedCount`; the per-kind tally is `PayloadView.byKind`,
+  /// counted in the core from `allowed_token_ids` in the same pass that made
+  /// the text.
+  ///
+  /// It used to be counted here, and the rule it was written for was right —
+  /// «a footer describing the file must be about the file» — but the means
+  /// crossed **two sources**: it walked the bench's *current* tokens and kept
+  /// the ones whose string it could find in the outgoing text. A payload
+  /// captured before a session was born has tokens the bench no longer holds,
+  /// so the search matched nothing and the footer counted **zero kinds over a
+  /// fully protected document** — a file whose every name was hidden,
+  /// described as hiding none. One source cannot disagree with itself; two can
+  /// only be unlikely to.
   Future<void> _savePdf(PayloadView payload) async {
     setState(() {
       _saving = true;
       _trouble = null;
       _savedTo = null;
     });
-    final byKind = <String, int>{};
-    for (final row in widget.bench.tokens) {
-      if (!payload.text.contains(row.token)) continue;
-      final name = widget.ground.nameOfKind(row.kind);
-      byKind[name] = (byKind[name] ?? 0) + 1;
-    }
+    final byKind = footerTally(payload, widget.ground.nameOfKind);
     final out = await saveProtectedPdf(
       text: payload.text,
       documentName: widget.bench.document?.name ?? '',

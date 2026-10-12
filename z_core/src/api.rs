@@ -1749,6 +1749,13 @@ pub struct ConversationRow {
     /// change, and a number a person can see beats a silent redraw. Zero for a
     /// row that was merely listed.
     pub renamed_tokens: u32,
+    /// **The language this session is in**, or `None` if nobody has been asked
+    /// yet — 075c, and the difference the screen needs: «never asked» is not
+    /// «no language». Written at the birth from the bench that named it, and
+    /// again whenever the header changes the language while this session is
+    /// open, so the question is asked once in a session's life and not once
+    /// per file.
+    pub pack_id: Option<String>,
 }
 
 /// **One exchange a session holds, restored** — the owner's first finding, 9 Oct.

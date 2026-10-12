@@ -4293,14 +4293,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ConversationRow dco_decode_conversation_row(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return ConversationRow(
       number: dco_decode_u_32(arr[0]),
       name: dco_decode_String(arr[1]),
       beganAt: dco_decode_u_64(arr[2]),
       turns: dco_decode_u_32(arr[3]),
       renamedTokens: dco_decode_u_32(arr[4]),
+      packId: dco_decode_opt_String(arr[5]),
     );
   }
 
@@ -5933,12 +5934,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_beganAt = sse_decode_u_64(deserializer);
     var var_turns = sse_decode_u_32(deserializer);
     var var_renamedTokens = sse_decode_u_32(deserializer);
+    var var_packId = sse_decode_opt_String(deserializer);
     return ConversationRow(
       number: var_number,
       name: var_name,
       beganAt: var_beganAt,
       turns: var_turns,
       renamedTokens: var_renamedTokens,
+      packId: var_packId,
     );
   }
 
@@ -7997,6 +8000,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_64(self.beganAt, serializer);
     sse_encode_u_32(self.turns, serializer);
     sse_encode_u_32(self.renamedTokens, serializer);
+    sse_encode_opt_String(self.packId, serializer);
   }
 
   @protected

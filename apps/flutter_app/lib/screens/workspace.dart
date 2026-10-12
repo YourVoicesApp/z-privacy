@@ -535,7 +535,19 @@ class _TopBar extends StatelessWidget {
             ],
           ],
           const Spacer(),
-          _ProfileFact(bench: bench, ground: ground, value: profile),
+          // **The profile door, only while there is a profile to choose.**
+          // 075a, and 067's rule applied a second time: a work surface keeps
+          // what it can act on and the catalogue lives on the board. With one
+          // profile in the vault the only choice this dialog offers is
+          // «Everywhere» or the single thing there is, which is the control the
+          // owner says he never understood because he never needed it.
+          //
+          // The second half of the condition is not symmetry: a bench already
+          // **inside** a profile must keep the control however few exist, or a
+          // person stands in a state they can neither see nor leave — and this
+          // top bar's own rule is that it names what actually ran.
+          if (ground.profiles.length > 1 || bench.profileId != null)
+            _ProfileFact(bench: bench, ground: ground, value: profile),
           // The rule set, and a way to change it. Every pack this build carries
           // comes from the core's own list — nothing here is written in Dart —
           // and the one that ran is marked. Switching is a rescan, which is why
@@ -733,6 +745,7 @@ class _ProfileFact extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 20),
       child: InkWell(
+        key: ProfileSwitcher.door,
         onTap: enabled
             ? () => showDialog<void>(
                 context: context,
@@ -774,6 +787,10 @@ class _ProfileFact extends StatelessWidget {
 
 class ProfileSwitcher extends StatefulWidget {
   const ProfileSwitcher({super.key, required this.bench, required this.ground});
+
+  /// The one door to this dialog, wherever it stands. Named so a guard can ask
+  /// «is there a way in from here» rather than hunting for a word on a screen.
+  static const door = ValueKey<String>('profile-door');
 
   final Workbench bench;
   final Ground ground;

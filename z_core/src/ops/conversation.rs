@@ -61,7 +61,14 @@ pub(crate) fn begin(name: String, bench: Option<SessionId>) -> ApiResult<Convers
             .and_then(|b| core.get(b.id))
             .map(|s| s.original_str().to_string())
             .filter(|text| !text.is_empty());
-        let number = core.vault.begin_conversation(&name, document.as_deref())?;
+        // **The language is taken at the birth, from the bench that named it.**
+        // One place in the core, rather than at «the first document», which is
+        // two doors in the screen and two chances to forget. With no bench
+        // there is nothing to take and the row stays «never asked».
+        let born_with = bench.and_then(|b| core.get(b.id)).map(|s| s.pack_id.clone());
+        let number =
+            core.vault
+                .begin_conversation(&name, document.as_deref(), born_with.as_deref())?;
         core.open_conversation = Some(number);
         let renamed = take_the_names(core, number, bench);
         // An empty file, written now rather than at the first turn, so that a
@@ -80,6 +87,7 @@ pub(crate) fn begin(name: String, bench: Option<SessionId>) -> ApiResult<Convers
                 .unwrap_or(0),
             turns: 0,
             renamed_tokens: renamed,
+            pack_id: born_with,
         })
     })
 }
@@ -110,6 +118,7 @@ pub(crate) fn enter(number: u32, bench: Option<SessionId>) -> ApiResult<Conversa
             began_at,
             turns,
             renamed_tokens: renamed,
+            pack_id: core.vault.pack_of(number),
         })
     })
 }
@@ -146,6 +155,7 @@ pub(crate) fn rows() -> ApiResult<Vec<ConversationRow>> {
                 began_at,
                 turns,
                 renamed_tokens: 0,
+                pack_id: core.vault.pack_of(number),
             });
         }
         Ok(out)

@@ -513,100 +513,137 @@ void main() {
     }
   });
 
-  // -------------------------------------------------------------------- the pin
+  // ------------------------------------------------------------ what was pinned
   //
-  // **A record of what is true today, not a wish.** Do not «fix» these by
-  // changing them to equality: they are the measurement 074/W8's screen half
-  // was closed on, and the day the behaviour changes they are what says so.
+  // **These were pins, and the fix flipped them. Both halves are kept.**
   //
-  // What they record, and the mechanism, which is Flutter's own:
-  // `RenderEditable`'s selection painter takes
-  // `getBoxesForSelection(...).toSet()` and then draws **one translucent rect
-  // per box** (`rendering/editable.dart:2914-2932`). `toSet()` removes only
-  // boxes that are *identical*; a selected carriage return makes the engine
-  // return an aggregate box for the line's tail **and** the two parts inside
-  // it, which are not identical, so the tail is filled two and three times
-  // over. At alpha 0.40 that is a visibly darker block at the end of every
-  // line — measured on the document column in the product's own theme:
-  // **8 582 pixels** of the twice-painted colour where the LF twin has none.
+  // What they recorded, 9–10 Oct: `RenderEditable`'s selection painter takes
+  // `getBoxesForSelection(...).toSet()` and draws **one translucent rect per
+  // box** (`rendering/editable.dart:2914`). `toSet()` removes only boxes that
+  // are *identical*, and a selected carriage return makes the engine hand it
+  // an aggregate box for the line's tail **and** the two parts inside it. At
+  // alpha 0.40 the tail was therefore filled two and three times and came out
+  // as a darker block at the end of every line: **8 582 pixels** of the
+  // twice-painted colour in the document column, and the same 8 582 in the
+  // payload column beside it, where the LF twin had none.
   //
-  // **Why the obvious fix was not made.** Stripping the `\r` when drawing the
-  // document column would move every offset after it: the core's spans, the
-  // marks, the gutter's line starts and the selection a person makes are all
-  // counted in the very string being drawn, and this project has already paid
-  // for one «offset that is one out» (041-K, the placeholder span). The answer
-  // belongs in the drawing of the selection and nowhere else — 074/W8's own
-  // paper carries the candidates and what each was measured at.
-  group('pinned: selected, a carriage return is painted twice', () {
+  // What changed: the owner chose, after two pictures, to **merge the boxes
+  // before they are filled** — the opaque colour was refused because the page
+  // rule dissolves under it, and leaving it was refused. `paintedOnce` does
+  // the arithmetic and `PaintSelectionOnce` draws it, in both columns.
+  //
+  // So these now assert **zero**, and the number they came from is above. The
+  // one below them that did *not* flip is the cause, and it is deliberate.
+  group('the selection is painted once', () {
+    /// The product's own two colours, derived from the theme and never
+    /// restated: one layer of the selection over the page, and two.
+    (Color once, Color twice) colours() {
+      final selection = zTheme().textSelectionTheme.selectionColor!;
+      final once = _over(selection, Zc.paper);
+      return (once, _over(selection, once));
+    }
+
+    Future<({int once, int twice, TextSelection sel})> drawSelected(
+      WidgetTester tester,
+      Widget column,
+      String text,
+      String? dumpAs,
+    ) async {
+      final (onceColour, twiceColour) = colours();
+      await tester.pumpWidget(_onPaper(column));
+      await _settle(tester);
+      final sel = await _selectAll(tester);
+      final pixels = await _pixels(tester);
+      if (dumpAs != null) await _dump(tester, dumpAs);
+      return (
+        once: _pixelsOf(pixels, onceColour),
+        twice: _pixelsOf(pixels, twiceColour),
+        sel: sel,
+      );
+    }
+
     testWidgets('the document column, on its own page, in its own colours', (
       tester,
     ) async {
-      final selectionColour = zTheme().textSelectionTheme.selectionColor!;
-      final once = _over(selectionColour, Zc.paper);
-      final twice = _over(selectionColour, once);
+      final lf = await drawSelected(
+        tester,
+        OriginalText(text: _lf, marks: const [], onLines: (_, _) {}),
+        _lf,
+        'once-column-lf',
+      );
+      final crlf = await drawSelected(
+        tester,
+        OriginalText(text: _crlf, marks: const [], onLines: (_, _) {}),
+        _crlf,
+        'once-column-crlf',
+      );
 
-      Future<({int once, int twice, TextSelection sel})> page(
-        String text,
-        String dumpAs,
-      ) async {
-        await tester.pumpWidget(
-          _onPaper(
-            OriginalText(text: text, marks: const [], onLines: (_, _) {}),
-          ),
-        );
-        await _settle(tester);
-        final sel = await _selectAll(tester);
-        final pixels = await _pixels(tester);
-        await _dump(tester, dumpAs);
-        return (
-          once: _pixelsOf(pixels, once),
-          twice: _pixelsOf(pixels, twice),
-          sel: sel,
-        );
-      }
-
-      final lf = await page(_lf, 'selected-column-lf');
-      final crlf = await page(_crlf, 'selected-column-crlf');
-
-      // Two controls first. «Nothing was painted twice» is also what an empty
-      // selection says, and what a page with no selection colour on it says.
+      // The two controls the old pin carried, unchanged: a count of nothing is
+      // what an empty selection and a page with no selection on it both report.
       expect(
         [lf.sel.end, crlf.sel.end],
         [_lf.length, _crlf.length],
         reason:
-            'Ctrl+A did not take the whole text (${lf.sel}, ${crlf.sel}), so '
-            'neither count below is about a selected document',
+            'Ctrl+A did not take the whole text (${lf.sel}, ${crlf.sel}), '
+            'so neither count below is about a selected document',
       );
       expect(
         [lf.once, crlf.once],
         everyElement(greaterThan(1000)),
         reason:
             'the selection colour is barely on the page (${lf.once} and '
-            '${crlf.once} pixels), so counting a second layer of it means '
-            'nothing',
+            '${crlf.once} pixels), so a second layer of it would be counted '
+            'against nothing',
       );
 
+      expect(
+        crlf.twice,
+        0,
+        reason:
+            'the tail is painted ${crlf.twice} pixels twice again — it was '
+            '8 582 before `paintedOnce`, and the merging has stopped working',
+      );
       expect(
         lf.twice,
         0,
         reason:
-            'the LF twin already paints ${lf.twice} pixels twice, so the extra '
-            'layer below is not the carriage return\'s and this pin names the '
-            'wrong cause',
-      );
-      expect(
-        crlf.twice,
-        greaterThan(0),
-        reason:
-            'no pixel of the CRLF page is painted twice any more — the darker '
-            'tail this records is gone, so rewrite the pin rather than '
-            'deleting it (9 Oct: 8 582 pixels against the twin\'s 0)',
+            'the LF twin has begun doubling, which it '
+            'never did even before the fix',
       );
     });
 
-    testWidgets('and the cause, in the boxes the painter is handed', (
-      tester,
-    ) async {
+    testWidgets('and the payload column beside it', (tester) async {
+      // **Not symmetry — measurement.** This column was never measured for its
+      // selection until 12 Oct, and it doubled by the same 8 582 pixels. The
+      // two columns are read side by side and that comparison *is* the
+      // product, so a fix on one of them would have been half a fix on the
+      // screen a person is actually looking at.
+      final lf = await drawSelected(tester, SafeText(text: _lf), _lf, null);
+      final crlf = await drawSelected(
+        tester,
+        SafeText(text: _crlf),
+        _crlf,
+        null,
+      );
+      expect(crlf.sel.end, _crlf.length);
+      expect([lf.once, crlf.once], everyElement(greaterThan(1000)));
+      expect(
+        crlf.twice,
+        0,
+        reason:
+            'the payload column paints ${crlf.twice} pixels twice; it was '
+            '8 582 before the fix reached this column too',
+      );
+      expect(lf.twice, 0);
+    });
+
+    testWidgets('the cause is still in the engine, and that is why the code is '
+        'there', (tester) async {
+      // **This one did not flip, on purpose.** The merging happens in our
+      // drawing; the engine still hands us the overlapping boxes it always
+      // did. The day this goes green — no overlapping pair in a selected CRLF
+      // document — is the day `paintedOnce` can be deleted, and nobody will
+      // know that unless it is asserted here.
       Future<List<Rect>> boxes(String text) async {
         await tester.pumpWidget(_fixed(_control(text)));
         await _settle(tester);
@@ -619,15 +656,13 @@ void main() {
             .toList();
       }
 
-      /// Two boxes on one row covering the same pixels — one `drawRect` over
-      /// another, which is what comes out darker.
-      int overlaps(List<Rect> boxes) {
+      int overlaps(List<Rect> rects) {
         var found = 0;
-        for (var i = 0; i < boxes.length; i++) {
-          for (var j = i + 1; j < boxes.length; j++) {
-            if ((boxes[i].top - boxes[j].top).abs() < 1 &&
-                boxes[i].right - boxes[j].left > 0.5 &&
-                boxes[j].right - boxes[i].left > 0.5) {
+        for (var i = 0; i < rects.length; i++) {
+          for (var j = i + 1; j < rects.length; j++) {
+            if ((rects[i].top - rects[j].top).abs() < 1 &&
+                rects[i].right - rects[j].left > 0.5 &&
+                rects[j].right - rects[i].left > 0.5) {
               found++;
             }
           }
@@ -637,61 +672,32 @@ void main() {
 
       final lf = await boxes(_lf);
       final crlf = await boxes(_crlf);
-      expect(
-        lf,
-        isNotEmpty,
-        reason:
-            'no selection boxes at all, so neither side of this comparison '
-            'means anything',
-      );
-      // Measured 9 Oct: five boxes against eleven, and no pair of the five
-      // overlaps while the eleven overlap three times over.
-      expect(
-        crlf.length,
-        greaterThan(lf.length),
-        reason:
-            'the CRLF document is handed ${crlf.length} selection boxes and its '
-            'twin ${lf.length} — on 9 Oct that was 11 against 5',
-      );
+      expect(lf, isNotEmpty);
       expect(
         overlaps(lf),
         0,
         reason:
-            'the LF twin already hands the painter ${overlaps(lf)} overlapping '
-            'pairs, so overlap is not what distinguishes the CRLF page',
+            'the LF twin is handed ${overlaps(lf)} overlapping pairs, so '
+            'overlap is not what distinguishes a CRLF document after all',
       );
       expect(
         overlaps(crlf),
         greaterThan(0),
         reason:
-            'no two CRLF boxes overlap any more, so the cause recorded here is '
-            'gone — rewrite the pin rather than deleting it',
-      );
-      // And how far past the last letter the selection runs: one advance.
-      final lfRight = lf.map((b) => b.right).reduce((a, b) => a > b ? a : b);
-      final crlfRight = crlf
-          .map((b) => b.right)
-          .reduce((a, b) => a > b ? a : b);
-      expect(
-        crlfRight - lfRight,
-        closeTo(8.95, 0.5),
-        reason:
-            'the selection runs ${crlfRight - lfRight} past its twin, and what '
-            'was measured on 9 Oct is one `.notdef` advance of 8.95 px at '
-            '14.5 px',
+            'the engine no longer overlaps its boxes for a selected carriage '
+            'return — `paintedOnce` and `PaintSelectionOnce` have nothing left '
+            'to do and should be removed with this test',
       );
     });
 
-    testWidgets('the chat composer is clear of it today, by one setting', (
+    testWidgets('the chat composer is still clear of it, by one setting', (
       tester,
     ) async {
-      // **Recorded because the setting is load-bearing and looks like taste.**
-      // The same CRLF document in the composer paints nothing twice at the
-      // default `BoxWidthStyle.tight`; at `.max` it paints 1 485 pixels twice.
-      // Anyone reaching for `.max` to change how a selection wraps would be
-      // spreading this defect to the one surface free of it.
-      final selectionColour = zTheme().textSelectionTheme.selectionColor!;
-      final twice = _over(selectionColour, _over(selectionColour, Zc.paper));
+      // Untouched by the fix and still recorded: the composer paints nothing
+      // twice at the default `BoxWidthStyle.tight`, and 1 485 pixels twice at
+      // `.max`. Anyone reaching for `.max` would be re-opening the defect on
+      // the one surface that never had it.
+      final (_, twice) = colours();
 
       Future<int> composer(ui.BoxWidthStyle style) async {
         final controller = TextEditingController(
@@ -732,6 +738,50 @@ void main() {
             'is out of date',
       );
     });
+  });
+
+  group('and what the selection must not hide', () {
+    // **Two guards at the altitude the decision was made at, after two that
+    // were green for the wrong reason.**
+    //
+    // The owner refused the opaque selection colour because the page rule
+    // dissolves under it. Guarding that *in pixels* was tried twice and
+    // failed twice, and both failures were found by breaking rather than by
+    // reading: the first compared a document holding a form feed with one
+    // that did not, and passed with an opaque selection because the two
+    // differ wherever the rule falls outside the selected band; the second
+    // counted «the rule's colour seen through the selection» and passed with
+    // an opaque selection too — `Zc.line` under the selection and the plain
+    // selection over the page are ten units apart, and a page is full of
+    // seams and antialiasing that land in between. **A guard that cannot tell
+    // the refused option from the chosen one is not a guard.**
+    //
+    // So the rule is asserted where it was decided — on the colour, and on
+    // the order of painting — and the picture in the paper carries the rest.
+    testWidgets('the selection colour stays translucent', (tester) async {
+      // The owner's ruling itself. An opaque selection hides whatever is
+      // painted behind the text — the page rules are, and that is the whole
+      // reason candidate two was refused after he was shown it.
+      final selection = zTheme().textSelectionTheme.selectionColor!;
+      expect(
+        selection.a,
+        lessThan(1.0),
+        reason:
+            'the selection colour is opaque (alpha ${selection.a}), so '
+            'everything painted behind the text — the page rules above all — '
+            'is hidden wherever a person selects. That is the option the '
+            'owner refused on 10 Oct, with the picture in front of him',
+      );
+    });
+
+    // **And the paint order is guarded, though not from here.** A fourth
+    // attempt lived here: count the glyphs' own ink with a selection live, on
+    // the theory that rectangles painted in front would tint it. Broken on
+    // purpose — the rectangles moved above the text — and it **did not bite**,
+    // so it was deleted rather than shipped. The same break reds both
+    // «painted once» guards above, because rectangles in front of the words
+    // are rectangles that no longer merge with what is behind them. That is
+    // where the layering is held, and it was measured, not assumed.
   });
 
   // --------------------------------------------------------------------- ruled

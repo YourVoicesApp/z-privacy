@@ -452,6 +452,34 @@ impl VaultStore {
     /// Every session: number, handle, when it began. **The key is not here**,
     /// and no accessor hands it out — the two things that need it, the naming
     /// and the file's seal, are both below.
+    /// The language one session was born into, or `None` if it has never been
+    /// asked. Read on its own rather than added to the tuple above, because
+    /// three callers want the handle and only two want this.
+    pub(crate) fn pack_of(&self, number: u32) -> Option<String> {
+        self.open
+            .as_ref()
+            .and_then(|o| o.vault.conversations.iter().find(|c| c.number == number))
+            .and_then(|c| c.pack_id.clone())
+    }
+
+    /// **Write it, once asked or once changed.** The vault is resealed by
+    /// `with_open_mut`, which is what makes this survive the power cut the
+    /// whole of 062 is about.
+    pub(crate) fn set_pack(&mut self, number: u32, pack_id: &str) -> ApiResult<()> {
+        let pack_id = pack_id.to_string();
+        self.with_open_mut(|vault| {
+            match vault.conversations.iter_mut().find(|c| c.number == number) {
+                Some(talk) => {
+                    talk.pack_id = Some(pack_id);
+                    Ok(())
+                }
+                None => Err(ApiError::PayloadRefused {
+                    reason: format!("there is no session {number}"),
+                }),
+            }
+        })
+    }
+
     pub(crate) fn conversations(&self) -> Vec<(u32, String, u64)> {
         self.open
             .as_ref()
@@ -473,7 +501,12 @@ impl VaultStore {
     /// moved and refuse instead of guessing (062 §C). Keyed rather than plain
     /// because it is only ever compared inside the session that wrote it, and a
     /// keyed hash says nothing to anybody else.
-    pub(crate) fn begin_conversation(&mut self, name: &str, document: Option<&str>) -> ApiResult<u32> {
+    pub(crate) fn begin_conversation(
+        &mut self,
+        name: &str,
+        document: Option<&str>,
+        pack_id: Option<&str>,
+    ) -> ApiResult<u32> {
         let key = crypto::random_key()?;
         let hash = match document {
             Some(text) => Some(crypto::mac(&key, b"document", text.as_bytes())?),
@@ -491,6 +524,7 @@ impl VaultStore {
                 key: bytes,
                 began_at: crate::vault::model::now_seconds(),
                 document: hash,
+                pack_id: pack_id.map(str::to_string),
             });
             Ok(number)
         })

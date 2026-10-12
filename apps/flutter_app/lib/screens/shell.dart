@@ -35,6 +35,32 @@ const _kinds = <String, DocumentKind>{
   'pdf': DocumentKind.pdf,
 };
 
+/// **Which language reads the next document, and whether anybody is asked.**
+///
+/// 075d, and the owner's reason is one sentence: *«الإنسان لا يحب التكرار»* — a
+/// person does not like repetition. The language belongs to the **conversation**
+/// and not to the document's bench: `openSession`'s own documentation says «this
+/// is a document's bench, not one of the owner's sessions», and every file
+/// opened makes a new bench, so a language kept there would die with it and the
+/// question would come back on the very next file.
+///
+/// Three states, and `null` is one of them:
+///
+///   * a conversation with a language — **inherited in silence**, no dialog;
+///   * a conversation never asked (`packId == null`: born with no document
+///     open, or born before this existed) — **asked once**, and the answer
+///     becomes the conversation's;
+///   * no conversation open at all — asked, because there is nothing to inherit
+///     and the app default is a guess nobody made.
+///
+/// Changing it later stays where it already lives, in the head of the document
+/// screen: a control, not an interruption.
+({String packId, bool ask}) languageForNextDocument(Ground ground) {
+  final known = ground.openSessionRow?.packId;
+  if (known != null) return (packId: known, ask: false);
+  return (packId: ground.config?.packId ?? 'de', ask: true);
+}
+
 class ZShell extends StatefulWidget {
   const ZShell({super.key, this.dataDir, this.ground});
 
@@ -245,8 +271,11 @@ class _ShellState extends State<ZShell> {
 
     XFile? file;
     DocumentKind? kind;
-    String packId = _ground.config?.packId ?? 'de';
     final profileId = null as String?;
+
+    // **075d — the question is asked once in a conversation's life.**
+    final next = languageForNextDocument(_ground);
+    String packId = next.packId;
 
     if (!typing) {
       file = await openFile(
@@ -264,16 +293,28 @@ class _ShellState extends State<ZShell> {
         });
         return;
       }
-      final chosen = await showDialog<String>(
-        context: context,
-        builder: (_) => ChooseLanguage(ground: _ground, fileName: file!.name),
-      );
-      if (chosen == null || !mounted) return;
-      packId = chosen;
+      if (next.ask) {
+        final chosen = await showDialog<String>(
+          context: context,
+          builder: (_) => ChooseLanguage(ground: _ground, fileName: file!.name),
+        );
+        if (chosen == null || !mounted) return;
+        packId = chosen;
+      }
     }
 
     try {
       final session = await z.openSession(profileId: profileId, packId: packId);
+      // **The first document of a conversation writes its language**, through
+      // the one door in the core that writes it. `Workbench.switchPack` cannot
+      // be that door here: it returns early when the pack has not changed, and
+      // this bench was opened with exactly this pack — so the call that looks
+      // redundant is the only one that is not. A conversation born with no
+      // document has no language until now, and `null` must stay «not asked
+      // yet» rather than quietly become the app's default.
+      if (next.ask && _ground.openSessionRow != null) {
+        await z.switchPack(session: session, packId: packId);
+      }
       final bench = Workbench(session: session, profileId: profileId, packId: packId);
       if (typing) {
         await z.importText(session: session, text: text ?? '');
@@ -424,6 +465,10 @@ class _ShellState extends State<ZShell> {
     if (_vaultOpen || mustOpenTheVault) {
       return VaultScreen(
         ground: _ground,
+        // 075a: the profile door lives on the board now, and it needs the
+        // bench it would be switching. Null when the board is opened with no
+        // document open, which is a real state and the board allows for it.
+        bench: _bench,
         onClose: () async {
           final was = _ground.vault;
           setState(() => _vaultOpen = false);
