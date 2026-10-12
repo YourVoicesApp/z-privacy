@@ -177,3 +177,30 @@ The second half, for whichever session continues, measured already:
    (rewritten, not deleted, both halves of their history in the comment);
    the page rule and the amber wash visible under a live selection; a
    before/after picture in this paper at the same scale as the decision pair.
+
+## 12 Oct — BUILT, and the scope widened by a measurement (recorded by the lead)
+
+`b5492f4` on `fix/the-selection-is-painted-once`, full dart suite 292/0 in
+the builder's tree. The numbers, as the paper demanded them:
+
+- **8,582 → 0** in the document column; the LF twin stayed 0.
+- **The third sibling was measured before the first line**: the payload
+  column — covered on the 9th by the READING claim only — doubles with the
+  SAME 8,582. Both columns wear the fix; «the column alone» would have left
+  the defect standing beside its cure on one screen.
+- The pins flipped rewritten, both halves of their history kept — and ONE
+  deliberately did not flip: the engine still hands overlapping boxes, and
+  the day it stops is the day this code is deleted; that pin is how anyone
+  will know.
+- **The owner's constraint held structurally**: the selection stays
+  translucent. The opaque colour he refused was chased with three breaks —
+  two passed it for reasons the pictures explained (the rule fell OUTSIDE /
+  UNDER the selection, not inside it), the third did not bite and was
+  DELETED rather than shipped, its record left in place.
+- `selection_is_visible_test` re-seated, not excused: three guards asked the
+  widget for a colour that is now transparent by design; the question moved
+  to the theme — where the painter reads and where the owner's original
+  complaint pointed — and the in-file pixel test that photographs the blue
+  during a drag passed untouched: the colour still reaches the glass.
+- Before/after at the decision pair's scale:
+  `~/work-now/selection-colour/w8-before-and-after.png`.
