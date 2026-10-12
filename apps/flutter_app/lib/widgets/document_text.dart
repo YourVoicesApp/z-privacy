@@ -13,6 +13,153 @@ import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
 
+/// The `RenderEditable` under a key, or null before the first layout.
+///
+/// `SelectableText` keeps it a few layers down — inside an `EditableText`,
+/// inside that widget's own viewport — and exposes no handle to it. So it is
+/// found by walking, and the walk stops at the first one. The alternative was
+/// to copy Flutter's private caret-margin constant into this file, a number
+/// that can change under us without a compile error.
+RenderEditable? editableUnder(GlobalKey key) {
+  final from = key.currentContext?.findRenderObject();
+  if (from == null) return null;
+  RenderEditable? walk(RenderObject here) {
+    if (here is RenderEditable) return here;
+    RenderEditable? found;
+    here.visitChildren((child) {
+      found ??= walk(child);
+    });
+    return found;
+  }
+
+  return walk(from);
+}
+
+/// **A selectable text whose selection is painted once — 074/W8.**
+///
+/// Flutter's own painter fills **one translucent rect per selection box**
+/// (`rendering/editable.dart:2914`) and `toSet()` drops only boxes that are
+/// *identical*; the engine hands it a line's tail both whole and in parts
+/// whenever a zero-ink character is selected, so the tail is filled two and
+/// three times and comes out darker. The owner chose merging after two
+/// pictures: the opaque colour was refused because the page rule dissolves
+/// under it, and leaving it was refused.
+///
+/// So the built-in paint is silenced **here and only here** — the chat field
+/// measured zero double-paint and the global theme is untouched — and the
+/// merged rectangles are drawn behind the text in this widget's own `Stack`.
+///
+/// **Both columns wear it.** The Original and the Safe column are the same
+/// drawing problem seen twice, and measured on 12 Oct they double by the same
+/// 8 582 pixels. A fix on one of them would have left the other wrong on the
+/// same screen, side by side, which is the comparison this file exists for.
+///
+/// Three things it does not do: it does not change the colour (the marks'
+/// washes are tuned against `Zc.river` at 0.40 — see `_wash`), it does not
+/// touch the text or any offset in it (041-K), and it does not ask for boxes
+/// on every frame — only when the selection it is given says so.
+class PaintSelectionOnce extends StatefulWidget {
+  const PaintSelectionOnce({
+    super.key,
+    required this.editable,
+    required this.repaint,
+    required this.child,
+  });
+
+  /// The drawing to read the selection and its boxes off. Read, never
+  /// remeasured: a painter of our own is not the drawing, which is the defect
+  /// `linesOf` was written against.
+  final RenderEditable? Function() editable;
+
+  /// Ticks when the selection changes. Flutter's own painter runs its
+  /// `getBoxesForSelection` inside `paint`, so this costs what it already
+  /// cost, plus a sort and a sweep.
+  final Listenable repaint;
+
+  final Widget child;
+
+  @override
+  State<PaintSelectionOnce> createState() => _PaintSelectionOnceState();
+}
+
+class _PaintSelectionOnceState extends State<PaintSelectionOnce> {
+  /// The ground the rectangles are placed against — the editable sits a few
+  /// layers inside this stack, so its own origin is asked for rather than
+  /// assumed to be zero.
+  final GlobalKey _plate = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    // **From the theme, never written again here.** A colour stated twice
+    // drifts, and this one was measured: `Zc.river` at 0.40 over the page.
+    final colour =
+        DefaultSelectionStyle.of(context).selectionColor ??
+        Theme.of(context).textSelectionTheme.selectionColor;
+    return Stack(
+      key: _plate,
+      children: [
+        Positioned.fill(
+          child: CustomPaint(
+            painter: _SelectionOnce(
+              editable: widget.editable,
+              plate: _plate,
+              colour: colour ?? const Color(0x00000000),
+              repaint: widget.repaint,
+            ),
+          ),
+        ),
+        DefaultSelectionStyle(
+          selectionColor: const Color(0x00000000),
+          child: widget.child,
+        ),
+      ],
+    );
+  }
+}
+
+class _SelectionOnce extends CustomPainter {
+  _SelectionOnce({
+    required this.editable,
+    required this.plate,
+    required this.colour,
+    required Listenable repaint,
+  }) : super(repaint: repaint);
+
+  final RenderEditable? Function() editable;
+  final GlobalKey plate;
+  final Color colour;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final drawn = editable();
+    if (drawn == null || !drawn.attached) return;
+    final selection = drawn.selection;
+    if (selection == null || !selection.isValid || selection.isCollapsed) {
+      return;
+    }
+    final ground = plate.currentContext?.findRenderObject();
+    if (ground is! RenderBox || !ground.attached) return;
+
+    final at = drawn.localToGlobal(Offset.zero, ancestor: ground);
+    final glass = Offset.zero & size;
+    final paint = Paint()..color = colour;
+    final boxes = drawn
+        .getBoxesForSelection(selection)
+        .map((box) => box.toRect());
+    for (final rect in paintedOnce(boxes)) {
+      final where = rect.shift(at);
+      // Only what is inside this canvas: 048 measured documents of 82 468
+      // lines, and a selection of all of them is mostly somewhere else.
+      if (!where.overlaps(glass)) continue;
+      canvas.drawRect(where, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SelectionOnce old) =>
+      old.colour != colour || old.editable != editable || old.plate != plate;
+}
+
 /// **The rectangles a selection should be filled with — 074/W8.**
 ///
 /// Flutter's own selection painter takes `getBoxesForSelection(...).toSet()`
@@ -233,25 +380,11 @@ class _OriginalTextState extends State<OriginalText> {
   /// begins. `null` until the first layout, which is before any press or paint.
   final GlobalKey _drawn = GlobalKey();
 
-  RenderEditable? _editable() {
-    final from = _drawn.currentContext?.findRenderObject();
-    return from == null ? null : _findEditable(from);
-  }
+  RenderEditable? _editable() => editableUnder(_drawn);
 
-  /// `SelectableText` keeps its `RenderEditable` a few layers down — inside an
-  /// `EditableText`, inside that widget's own viewport — and exposes no handle
-  /// to it. So it is found by walking, once per call, and the walk stops at the
-  /// first one. The alternative was to copy Flutter's private caret-margin
-  /// constant into this file, which is a number that can change under us
-  /// without a compile error.
-  RenderEditable? _findEditable(RenderObject from) {
-    if (from is RenderEditable) return from;
-    RenderEditable? found;
-    from.visitChildren((child) {
-      found ??= _findEditable(child);
-    });
-    return found;
-  }
+  /// Ticks when the selection moves, so the rectangles behind the text are
+  /// redrawn once and only then — 074/W8.
+  final ValueNotifier<int> _selectionChanged = ValueNotifier<int>(0);
 
   /// Where the lines were read, and at what size.
   ///
@@ -444,16 +577,26 @@ class _OriginalTextState extends State<OriginalText> {
               ),
             ),
           ),
-        SelectableText.rich(
-      key: _drawn,
-      TextSpan(children: _keptSpans(), style: Zc.document),
-      style: Zc.document,
-      onSelectionChanged: onSelection == null
-          ? null
-          : (sel, _) => onSelection(
-                sel.start < 0 ? 0 : sel.start,
-                sel.end < 0 ? 0 : sel.end,
-              ),
+        PaintSelectionOnce(
+          editable: _editable,
+          repaint: _selectionChanged,
+          child: SelectableText.rich(
+            key: _drawn,
+            TextSpan(children: _keptSpans(), style: Zc.document),
+            style: Zc.document,
+            // **Always listened to now, even when nobody above is listening**
+            // — 074/W8: the drawing of the selection is this widget's own
+            // business, and it has to hear a change to redraw it once.
+            onSelectionChanged: (sel, _) {
+              _selectionChanged.value++;
+              if (onSelection != null) {
+                onSelection(
+                  sel.start < 0 ? 0 : sel.start,
+                  sel.end < 0 ? 0 : sel.end,
+                );
+              }
+            },
+          ),
         ),
         // Where «go to this finding» scrolls to — a zero-size box placed
         // *beside* the text at the focused line, never inside it.
@@ -587,7 +730,7 @@ const double _wash = 0.55;
 
 /// The right column: what the AI will receive. Not a preview of the request —
 /// the request. The text is built in Rust and handed over as it stands.
-class SafeText extends StatelessWidget {
+class SafeText extends StatefulWidget {
   const SafeText({
     super.key,
     required this.text,
@@ -616,24 +759,47 @@ class SafeText extends StatelessWidget {
   static final _token = RegExp(r'__Z_[A-Z0-9]{4}_[A-Z]+_[A-Z0-9]{4}__');
 
   @override
+  State<SafeText> createState() => _SafeTextState();
+}
+
+class _SafeTextState extends State<SafeText> {
+  /// The same two things the Original column keeps, for the same reason: this
+  /// column doubles its selection by the same 8 582 pixels, measured 12 Oct,
+  /// and a fix on one of two columns drawn side by side is not a fix.
+  final GlobalKey _drawn = GlobalKey();
+  final ValueNotifier<int> _selectionChanged = ValueNotifier<int>(0);
+
+  @override
+  void dispose() {
+    _selectionChanged.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // The parent scrolls this text. An inner Scrollable would swallow the wheel
+    // The parent scrolls this widget.text. An inner Scrollable would swallow the wheel
     // over the whole payload and leave only a sliver of the outer sheet movable.
-    final body = SelectableText.rich(
-      TextSpan(children: _spans(), style: Zc.document),
-      style: Zc.document,
-      scrollPhysics: const NeverScrollableScrollPhysics(),
+    final body = PaintSelectionOnce(
+      editable: () => editableUnder(_drawn),
+      repaint: _selectionChanged,
+      child: SelectableText.rich(
+        key: _drawn,
+        TextSpan(children: _spans(), style: Zc.document),
+        style: Zc.document,
+        scrollPhysics: const NeverScrollableScrollPhysics(),
+        onSelectionChanged: (_, _) => _selectionChanged.value++,
+      ),
     );
-    if (edges.isEmpty) return body;
+    if (widget.edges.isEmpty) return body;
     // Painted behind the words for the reason the Original column's are: a
-    // rule or a label **inside** the text would move every offset after it by
-    // one, and the chips are drawn from offsets.
+    // rule or a label **inside** the widget.text would move every offset after it by
+    // one, and the widget.chips are drawn from offsets.
     return Stack(
       children: [
         Positioned.fill(
           key: SafeText.pageEdges,
           child: CustomPaint(
-            painter: PageEdgePainter(text: text, style: Zc.document, edges: edges),
+            painter: PageEdgePainter(text: widget.text, style: Zc.document, edges: widget.edges),
           ),
         ),
         body,
@@ -644,12 +810,12 @@ class SafeText extends StatelessWidget {
   List<InlineSpan> _spans() {
     final out = <InlineSpan>[];
     var at = 0;
-    for (final m in _token.allMatches(text)) {
-      if (m.start > at) out.add(TextSpan(text: text.substring(at, m.start)));
-      out.add(chips ? _chip(m.group(0)!) : TextSpan(text: m.group(0), style: Zc.token));
+    for (final m in SafeText._token.allMatches(widget.text)) {
+      if (m.start > at) out.add(TextSpan(text: widget.text.substring(at, m.start)));
+      out.add(widget.chips ? _chip(m.group(0)!) : TextSpan(text: m.group(0), style: Zc.token));
       at = m.end;
     }
-    if (at < text.length) out.add(TextSpan(text: text.substring(at)));
+    if (at < widget.text.length) out.add(TextSpan(text: widget.text.substring(at)));
     return out;
   }
 
@@ -666,7 +832,7 @@ class SafeText extends StatelessWidget {
   /// program rather than as a difference between the two columns.
   ///
   /// So the border is gone and the fill is a neutral that names no state: this
-  /// is a highlight over text, not a button. Nothing was added to make it
+  /// is a highlight over widget.text, not a button. Nothing was added to make it
   /// interactive — the Original column's mark stays the one way to ask «Why».
   /// The letters keep `clayDeep` and the mono face, because «Chips» and
   /// «Plain» must stay visibly the same string drawn two ways.
