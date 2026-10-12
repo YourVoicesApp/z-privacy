@@ -56,7 +56,15 @@ void main() {
   // That the colour then reaches the glass is not taken on trust: the pixel
   // test at the foot of this file photographs it, and the payload column is
   // photographed the same way in `a_carriage_return_draws_nothing_test.dart`.
-  test('the app gives selecting a blue, and one a person can see', () {
+  // **The name carries the claim's own words, and that is not decoration.**
+  // `gates.sh` keeps a roster of the screen claims that must have a test and
+  // finds each one by **grepping this directory for its phrase**. On 12 Oct
+  // this test was renamed while its claim was moved from the widget to the
+  // theme — the claim survived, the phrase did not, and a passing entry became
+  // a silent skip that nobody saw until the merge. A rename here is a change
+  // to a gate; the phrase «selection in blue, not in nothing» stays in the
+  // title for as long as the roster asks for it.
+  test('the app paints a selection in blue, not in nothing, and not opaquely', () {
     final colour = zTheme().textSelectionTheme.selectionColor;
     expect(colour, isNotNull, reason: 'nothing is given to paint a selection with');
     expect(
