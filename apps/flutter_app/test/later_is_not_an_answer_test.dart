@@ -166,7 +166,13 @@ void main() {
     // And the press hands over the key: the review opens, on that finding.
     await tester.tap(find.byKey(_goKey));
     await settle(tester);
-    expect(bench.reviewOpen, isTrue, reason: 'the review did not open');
+    // 071: one value names the open panel, so «the review is open» is asked
+    // of that value rather than of a boolean beside three others.
+    expect(
+      bench.panel,
+      OpenPanel.review,
+      reason: 'the review did not open — the slot holds ${bench.panel}',
+    );
     expect(bench.focused, bench.suggested.first.id, reason: 'it did not go to the question');
   });
 

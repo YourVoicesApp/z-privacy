@@ -229,10 +229,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                   // Nothing here touches `_Columns`, the split inside it, or
                   // `originalPanePercent` — the person's own setting keeps its
                   // meaning, applied to a narrower block.
-                  final panelOpen = bench.reviewingNames
-                      || bench.reviewOpen
-                      || bench.tokensOpen
-                      || bench.showing != null;
+                  // 071 — one value, so «is a panel open» is one question
+                  // with one answer rather than four booleans ORed together.
+                  final panelOpen = bench.panel != OpenPanel.none;
                   // **The panel's second width, reached by a press** (046/K,
                   // the owner: «الطوي والفتح لا يتم تلقائياً، يتم بالضغط على
                   // إشارة محددة»). Wider is a state the person chose and it is
@@ -280,14 +279,34 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           wide: wide,
                           onTap: () => _rememberPanelWidth(!wide),
                         ),
-                      if (bench.reviewingNames)
-                        NameReviewPanel(bench: bench, ground: widget.ground, width: panelWidth, onVault: widget.onVault)
-                      else if (bench.reviewOpen)
-                        ReviewPanel(bench: bench, width: panelWidth, onVault: widget.onVault),
-                      if (bench.tokensOpen)
-                        TokensPanel(bench: bench, width: panelWidth),
-                      if (bench.showing != null)
-                        AnswerPanel(bench: bench, width: panelWidth),
+                      // **One slot, one value, one panel — 071.** This was a
+                      // precedence chain over four booleans, and two of them
+                      // were separate `if`s: Review then Tokens drew both, in
+                      // a slot whose comment above promises one. A `switch`
+                      // over the value cannot draw two, and the analyzer makes
+                      // it name every panel there is.
+                      switch (bench.panel) {
+                        OpenPanel.none => const SizedBox.shrink(),
+                        OpenPanel.names => NameReviewPanel(
+                          bench: bench,
+                          ground: widget.ground,
+                          width: panelWidth,
+                          onVault: widget.onVault,
+                        ),
+                        OpenPanel.review => ReviewPanel(
+                          bench: bench,
+                          width: panelWidth,
+                          onVault: widget.onVault,
+                        ),
+                        OpenPanel.tokens => TokensPanel(
+                          bench: bench,
+                          width: panelWidth,
+                        ),
+                        OpenPanel.answer => AnswerPanel(
+                          bench: bench,
+                          width: panelWidth,
+                        ),
+                      },
                     ],
                   );
                 },

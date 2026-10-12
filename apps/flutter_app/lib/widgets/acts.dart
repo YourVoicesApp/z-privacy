@@ -84,7 +84,9 @@ class ActsBar extends StatelessWidget {
                 badge: bench.openSuggestions > 0 ? bench.openSuggestions : null,
                 onPressed: bench.findings.isEmpty
                     ? null
-                    : () => bench.reviewOpen ? bench.closeReview() : bench.openReview(),
+                    : () => bench.panel == OpenPanel.review
+                        ? bench.closeReview()
+                        : bench.openReview(),
                 hint: bench.findings.isEmpty ? 'The scan found nothing to review' : null,
               ),
               // Names this document uses that Z does not know. The badge is
@@ -97,7 +99,9 @@ class ActsBar extends StatelessWidget {
                 badge: bench.openCandidates.isEmpty ? null : bench.openCandidates.length,
                 onPressed: bench.busy
                     ? null
-                    : () => bench.reviewingNames ? bench.closeNameReview() : bench.openNameReview(),
+                    : () => bench.panel == OpenPanel.names
+                        ? bench.closeNameReview()
+                        : bench.openNameReview(),
                 hint: bench.openCandidates.isEmpty
                     ? 'Z knows every name this document uses'
                     : null,
@@ -106,7 +110,7 @@ class ActsBar extends StatelessWidget {
                 label: 'Tokens',
                 icon: Icons.key_outlined,
                 badge: bench.tokens.isEmpty ? null : bench.tokens.length,
-                onPressed: bench.tokens.isEmpty ? null : () => bench.openTokens(!bench.tokensOpen),
+                onPressed: bench.tokens.isEmpty ? null : () => bench.openTokens(bench.panel != OpenPanel.tokens),
                 hint: bench.tokens.isEmpty ? 'Nothing is protected yet' : null,
               ),
             ],
