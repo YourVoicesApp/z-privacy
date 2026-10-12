@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  capture:
+    image: python:3.11-slim
+    container_name: capture_server_tests_cycle
+    working_dir: /app
+    volumes:
+      - ./capture_server:/app
+    command: ["python", "app.py"]
+    ports:
+      - "8081:8081"
+    environment:
+      - FLASK_ENV=production
+
+# Note: this compose only starts the capture server. Start the three target services
+# (Z, Rizzo, Secret Guard) outside this compose and configure them to use
+# http://capture:8081/proxy as their upstream provider when running inside compose
+# or http://localhost:8081/proxy when running the capture server locally.
