@@ -5,8 +5,11 @@ screens, each door with its own address:
 
 - z-privacy.com → `zprivacy@mono-peak.com` — already standing;
 - mono-peak.com → `farukab@mono-peak.com` — standing since today;
-- **yourvoicesapp.com → `yourvoices.app@mono-peak.com` — to add.** Measured
-  10 Oct: the live root carries no mail address at all.
+- **yourvoicesapp.com → `yourvoices.app@mono-peak.com` — ALREADY STANDING,
+  measured 12 Oct**: eight occurrences on the live root, hidden from grep by
+  Cloudflare's e-mail obfuscation (`data-cfemail`, XOR) — the lead's 10 Oct
+  claim of «no address at all» was that trap biting. On a site behind
+  Cloudflare, an address absent from the SOURCE is not absent from the PAGE.
 
 And the privacy rules («قواعد الخصوصية الموجودة في git الخاصة بـ mono-peak»)
 — the Mono Peak Mail privacy policy built 8 Oct (`~/work-now/
