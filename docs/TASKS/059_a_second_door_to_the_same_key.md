@@ -293,3 +293,32 @@ the next workshop («ثم ننتقل إلى النقطة الأهم وهي ال�
 
 **Ordering stands as signed: recovery first, passphrase policy second** —
 today's 8-character minimum stays honest only while forgetting is fatal.
+
+## 12 Oct, evening — the near-final housing design (the owner's week of ideas, distilled)
+
+The decision ripened across four days of the owner's ideas — email-as-identity
+(refused: «إيميل يعني تتبعاً وحساباً»), generate-at-recovery (refused: what
+opens with no prior secret opens for the thief), question/answer (refused:
+human entropy loses to an offline file), server escrow (refused: a third
+party in the one place Z promised none) — into ONE generated key with THREE
+housings the person chooses from, each with its price SPOKEN ON SCREEN:
+
+**The enrolment screen** (once, right after the vault's first password):
+a large QR of the ZREC recovery key, shown ONCE, never stored, and beneath it:
+1. **Scan it with your phone's camera** — the key lives in YOUR phone; zero
+   infrastructure, zero numbers collected (the owner's phone instinct,
+   implemented as a screen-to-camera transfer, not SMS — no gateway, no
+   third party, no phone number ever touches us). Price spoken: photo cloud
+   sync may copy it to Google/Apple.
+2. **Send it to your e-mail** — any address, delivered through the mono-peak
+   relay (creating a mono-peak box stays an offered convenience, never a
+   condition). Price spoken: the relay sees it in transit; your inbox holds
+   it for ever.
+3. **Save to external storage, or print** — ✓ the RECOMMENDED one: no third
+   party at all. Price spoken: do not lose it.
+
+Unchanged from the signature: the vault's bytes never say which housing (or
+none) was chosen; the three-failed-attempts window says one universal
+sentence to everyone («إن كنتَ فعّلتَ الاسترجاع فمفتاحُك حيث وضعتَه»);
+recovery moment needs NO network and NO server. The owner's seal on this
+page is still open — he deliberately lets it ripen.
