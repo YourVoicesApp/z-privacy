@@ -24,9 +24,13 @@ The app did not put the original out; it **let it out**: a quiet no, and a clipb
 1. **No refusal at the exit: a session is born with a sequential name** — «الجلسة 1، الجلسة 2…» — the moment Copy Protected, Save as PDF or a send is pressed with none open. This **replaces** the earlier rule «the name is asked once, at the exit» (064).
 2. **Rename lives in the sessions list**, inside the session's rectangle, beside Delete. The core already has it: `conversation_rename(number, name)` — «the number is the identity and does not move».
 
-## The lead's addition (backstop, for any refusal left anywhere)
+## The root rule — the owner, 13 Oct: «the work always happens on a clean container»
 
-- **A copy that does not succeed clears the clipboard**, and says so in words: «Nothing was copied — the clipboard is empty.» No old content survives a failed Copy Protected.
+**The first act of every exit press is emptying the clipboard.** Copy Protected, Save as PDF, a send through a key — the press clears the clipboard *before* anything else is looked at. Only then: look at the session; then put the protected text out, or put nothing out. Whatever the outcome, no content older than the press can be pasted after it.
+
+In the owner's order, for Save as PDF: (1) empty the clipboard, (2) look at the session's name, (3) write the file if there is a session — or not, if there is none.
+
+This replaces the lead's narrower backstop («clear the clipboard when a copy fails»): clearing first needs no branch to be right, so no future refusal can forget it. The order is the guard's subject: clear-then-decide, never decide-then-clear. When nothing is put out, the sentence says so: «Nothing was copied — the clipboard is empty.»
 
 ## Guards (each pinned red against today's tree first)
 
