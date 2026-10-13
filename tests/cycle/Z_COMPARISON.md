@@ -2,16 +2,16 @@
 
 نسخة العمل `/home/monopeaks/mono-privacy-comparison-20261013-022102` · الفرع `comparison/local-cycle`.
 Z Privacy: المنتج HEAD `d882c5f` · الختم `z_core 0.1.0 · 2026-10-13 · 61fa27b`.
-تاريخ الأدلة: 2026-10-13. هذه النسخة تصحّح صف Secret Guard إلى المستودع الأصلي `luochen1990/secret-guard`، وتفصل حفظ مفتاح الجلسة عن مسار استرداد القيم بعد إعادة التشغيل.
+تاريخ الأدلة: 2026-10-13. هذه النسخة تصحّح استمرارية Z وفق قياس 13 تشرين الأول على `d882c5f` (Always/Profile تعيش؛ Once/Conversation تموت)، وتضيف محورَي **الاختيار** و**الوثائق العائدة** للمشاريع العشرة.
 
-**اختبارات Z وتجهيزاتها متوقفة عند هذا التسليم.** إعادة فتح PDF بعد الإغلاق، والجلسة الثانية، وتوسيع الأدوات، ليست جزءًا من هذه النتيجة. لم يُعدَّل التطبيق.
+**اختبارات Z وتجهيزاتها متوقفة.** لا تعديل للمنتج. الكوميتات محصورة في `tests/cycle/`. بلا دفع.
 
 الأصل، والنسخة الاحتياطية، وGitHub، ومكتبة ZPrivacy-lib: بلا كتابة. المكتبة خارج المقارنة.
 
-**وسوم الدليل:** موثقة · مؤكدة من الكود · مختبرة · غير معلومة · **غير محسوم**.
+**وسوم الدليل:** موثقة · مؤكدة من الكود · مختبرة · غير معلومة. «غير موجود» يذكر أين نُظر.
 غياب `/analyze` من دليل مشروع لا يثبت غياب وظيفته. تشغيل المشاريع العشرة ليس شرطًا للتسليم. لم يُستبدل أي اسم في القائمة الأصلية. مشروع Codeberg يُذكر كإضافة حادية عشرة، لا كبديل عن الصف العاشر.
 
-**رأي المنتج بعد هذا التصحيح:** مبدأ الاستبدال ثم الاسترداد مشترك بين عدة مشاريع في القائمة. لـ Z اتجاه منتج واضح يستحق البناء (جلسة بمفتاحها، نطاق إعادة حماية الكلمة، شات داخل التطبيق، PDF محمي، خزنة Always). إثبات قيمة Z للمستخدم لا يحتاج ادعاء اختراع هذا المبدأ، ولا حكم تفرّد بين العشرة.
+**رأي المنتج:** مبدأ الاستبدال ثم الاسترداد مشترك. Always يعيش في الخزنة وConversation يموت مع العملية: ذلك مقيس. لا مشروع في العشرة يوثّق استيراد وثيقة مصدَّرة مختلفة تحمل عنصرًا نائبًا واحدًا واسترداد قيمته من مفاتيح المنتج. ذلك مرشّح لفرق Z الأوضح، ولم يُثبت بعد كمسار منتج عند Z نفسه على PDF عائد مختلف.
 
 ---
 
@@ -31,7 +31,7 @@ Z Privacy: المنتج HEAD `d882c5f` · الختم `z_core 0.1.0 · 2026-10-13
 
 | المنتج | ماذا يُحفظ | أين يعيش | ماذا يلزم للاسترداد | متى يختفي |
 |---|---|---|---|---|
-| **Z Privacy** `d882c5f` | الخزنة تحفظ رقم الجلسة ومقبضها و**32 بايت**. ملف `sessions/N.zs` (صيغة v2) يحفظ السؤال والجواب الخام و**أسماء الرموز المسموحة** (`Turn.allowed: Vec<String>`)، لا خريطة القيم. كلمات Always تدخل جسم الخزنة عبر `learn_value`. | `sessions/*.zs` **خارج** `vault.zv` لأن جسم الخزنة يُعاد ختمه كاملًا. **TokenStore حي في ذاكرة منصة الوثيقة** (`Session.tokens: BTreeMap`)، بلا مسار تسلسل وُجد في الكود. الواجهة: «A session keeps its own key, and the keys are in the vault» و«the conversations themselves were never in it». | `restore(raw, store, allowed)` يعيد القيمة فقط إن كان الرمز في قائمة المسموح **و** في TokenStore. قائمة فارغة لا تسترد شيئًا. الاسم يُشتق MAC أحادي الاتجاه من بايتات الجلسة + النص الواضح (`Naming::tail`). المفتاح وحده لا يعكس الرمز إلى قيمة. | جلسة أخرى = نطاق آخر؛ رمز أجنبي أو مخزن فارغ = `Piece::Unresolved`. مسار الاسترداد بعد موت العملية: انظر القسم التالي؛ **غير محسوم**. |
+| **Z Privacy** `d882c5f` | الخزنة تحفظ رقم الجلسة ومقبضها و**32 بايت**. ملف `sessions/N.zs` (صيغة v2) يحفظ السؤال والجواب الخام و**أسماء الرموز المسموحة** (`Turn.allowed: Vec<String>`)، لا خريطة القيم. Always/Profile: `ValueRecord` في جسم الخزنة عبر `learn_value`. | `sessions/*.zs` **خارج** `vault.zv`. **TokenStore حي في ذاكرة منصة الوثيقة** (`session.rs:157`، يولد فارغًا في `:217`، لا يُسلسل؛ `vault/format.rs` بلا رموز). | `restore(raw, store, allowed)` يعيد القيمة إن كان الرمز في القائمة **و** في TokenStore. الاسم MAC أحادي الاتجاه. **المفتاح وحده لا يكفي** (مؤكد قياسًا وكودًا). Always يُشفى عند إعادة فتح **نفس الوثيقة** ذات النص الواضح. | Once/Conversation تموت مع إغلاق التطبيق. Always/Profile تبقى في الخزنة. بعد إعادة تشغيل باردة: كل الرموز `unresolved` حتى تُفتح الوثيقة. |
 | **rizzo-pii** تطبيق 2.0.0 / نموذج v1.5.0 | قاموس محلي `placeholder → قيمة`. | على القرص داخل العملية؛ يمكن إطفاؤه. | القاموس. `POST /pdf` يبنيه داخليًا **ولا يرسله على السلك**. | `PII_MAPPING=0` / `--no-mapping` / `include_mapping: false`: لا تُبنى خريطة، ولا تُعاد القيم الأصلية في `segments`. عندها لا يوجد مفتاح استرداد. |
 | **OpenMed** `docs/anonymization.md` | JSON `mapping` يُرجع مع `keep_mapping=True`. | عند **المستدعي**، منفصلًا. | `reidentify(text, mapping)`. التكرار يأخذ أرقامًا (`[first_name]`, `[first_name_2]`). | بلا `keep_mapping` الطريقة نفسها غير عكسية. `SurrogateVault` يخزن HMAC→بديل لا السطح الخام؛ ذلك ثبات أسماء مستعارة عبر وثائق، لا مفتاح استرداد للأصل. |
 | **Censgate Redact** `redact-core` 0.12.5 / بوابة v0.12.4 | `TokenMapping` مختوم AES-256-GCM. المخزن يرى ciphertext فقط. | `TokenMapStore` تحت `(tenant, session)`: `off` (افتراضي) أو `memory` TTL أو `vault_kv2`. | `POST /v1/restore` بـ `session_id` (أو alias `vault.context_id`) + DEK العملية (`CENSGATE_TOKEN_DEK`). على مسار الرد إن `restore_responses`. | `off`: داخل الطلب الذي أنشأ الرموز فقط، بلا `/v1/restore` لاحق. `memory`: لا يعيش إعادة التشغيل. TTL افتراضي 3600 ث. |
@@ -43,45 +43,43 @@ Z Privacy: المنتج HEAD `d882c5f` · الختم `z_core 0.1.0 · 2026-10-13
 
 ---
 
-## مسار استرداد Z بعد إعادة التشغيل
+## مسار استرداد Z بعد إعادة التشغيل — سجل مصحّح 13 تشرين الأول 2026
 
-السؤال: إذا كانت القيم في TokenStore الحي، فكيف تُعاد بعد إغلاق التطبيق؟ حفظ مفتاح الجلسة وحده لا يثبت الاسترداد.
+قياس على `z_core` `d882c5f`. مسبار هيكلي + سلوكي متفقان. **المفتاح وحده لا يكفي:** مؤكد.
+
+### الحكم
+
+| النطاق | بعد إغلاق التطبيق | الآلية | الوسم |
+|---|---|---|---|
+| **Always** و **Profile** | تعيش وتُسترد بعد إعادة التشغيل **عند إعادة فتح نفس الوثيقة** ذات النص الواضح | `learn_value` يكتب `ValueRecord` في جسم الخزنة (`ops/vault.rs`). المسح `vault_pass` يجد النص في `original_str` بثقة Auto (`scanner/mod.rs` سياسة `Policy::Always`) فيعيد `protect_range` إدخال القيمة في TokenStore. | مؤكدة من الكود · **مختبرة** (مسبار القائد) |
+| **Once** و **Conversation** | **تموت** عند إغلاق التطبيق | TokenStore ذاكرة فقط: `session.rs:157`، يولد فارغًا `:217`، بلا `Serialize`. `vault/format.rs` لا يحمل رموزًا (بحث `tokens` في الملف: صفر). ملف الجلسة يحفظ أسماء `allowed` فقط. | مؤكدة من الكود · **مختبرة** (مسبار القائد) |
+
+### أرقام المسبار (13 تشرين الأول، `d882c5f`)
+
+ثلاث حمايات → إعادة تشغيل باردة: **3 unresolved** (كلٌّ باسمه) → إعادة فتح **نفس الوثيقة**: **2 unresolved** (Always شُفي).
+
+ذلك يوافق الكود: بعد البرد المخزن فارغ فكل الرموز غير محلولة؛ إعادة فتح الأصل الواضح تعيد إدخال قيمة Always فقط.
 
 ### ما ثبت من الكود (`d882c5f`)
 
-| المادة | أين تُحفظ / كيف تُحمى | كيف تُحمَّل مجددًا | الوسم |
+| المادة | أين تُحفظ | كيف تُحمَّل مجددًا | الوسم |
 |---|---|---|---|
-| مفتاح الجلسة 32 بايت | سجل `Conversation` داخل جسم `vault.zv` المختوم (`vault/model.rs`). حذف الجلسة يدمّر هذه البايتات. | فتح الخزنة ثم `enter` / `naming_of` يشتق `Naming` (`Purpose::SessionNamespace` و`Purpose::SessionValue`). | مؤكدة من الكود |
-| أسماء الرموز المسموحة | `sessions/N.zs` صيغة v2، مختوم بمفتاح مشتق من بايتات الجلسة. الحقل `Turn.allowed: Vec<String>`. | `conversation::read` عبر `ops/conversation.rs` `body()`. | مؤكدة من الكود |
-| السؤال والجواب الخام | نفس ملف `.zs` (`Turn.question` / `Turn.answer`). الجواب كما وصل، لا النص المسترد. | نفس المسار. | مؤكدة من الكود |
-| هاش الوثيقة | `Conversation.document: Option<[u8; 32]>` MAC للنص، لا المسار ولا الجسم. | مقارنة عند `document_matches`. | مؤكدة من الكود |
-| كلمات Always / Profile | `learn_value` يكتب القيمة في كيانات جسم الخزنة. المسح يقرأ `vault.hints` ضد `original_str`. | تظهر إن وُجد النص الواضح حيًّا في الوثيقة المفتوحة. هذا **إعادة حماية الكلمة** إن ظهرت مجددًا، لا إثبات أن TokenStore يُملأ من الخزنة وحدها. | مؤكدة من الكود (الحفظ والمسح) |
-| TokenStore (القيم) | `Session.tokens: TokenStore` = `BTreeMap<String, TokenEntry>` في العملية. `Session::new` يبدأ بـ `TokenStore::default()`. لا `Serialize` على TokenStore. `tokens.insert` فقط عند الحماية من النص الحي (`ops/mod.rs` نحو 692 و1828 و1909). | `enter` يضبط `open_conversation` ويعيد تسمية ما **هو موجود أصلًا** في المخزن (`take_the_names` → `names_again_from`). `name_tokens_from_the_vault` يضبط الاشتقاق فقط، **ولا يحمّل قيمًا**. | مؤكدة من الكود |
+| مفتاح الجلسة 32 بايت | سجل `Conversation` في `vault.zv` | `enter` / `naming_of` يشتق `Naming` | مؤكدة من الكود |
+| أسماء الرموز المسموحة | `sessions/N.zs` v2، `Turn.allowed` | `conversation::read` | مؤكدة من الكود |
+| السؤال والجواب الخام | نفس `.zs` | نفس المسار | مؤكدة من الكود |
+| Always / Profile | `ValueRecord` في كيانات الخزنة (`vault/model.rs:29`) | `hints_for` → `vault_pass` ضد النص الحي → `protect_range` يملأ TokenStore | مؤكدة من الكود |
+| TokenStore | RAM على منصة الوثيقة | لا مسار تسلسل. `name_tokens_from_the_vault` يضبط الاشتقاق فقط | مؤكدة من الكود |
 
-تعليق `session.rs` نحو 476 («Forgotten on lock, like the master key, and restored by entering a session again») يخص **`open_conversation`**, لا TokenStore.
+تعليق `session.rs` نحو 476 يخص `open_conversation` لا TokenStore.
 
-`turns()` (`ops/conversation.rs` 234–289): «what is on disk resolves to a name only through the session's own store.» بلا منصة ذات مخزن مملوء: مخزن فارغ، وكل رمز في `unresolved`. ذلك هو المسار الصريح لقراءة ملف الجلسة بعد الغياب.
+`turns()` بلا منصة مملوءة: كل رمز `unresolved`. `Naming::tail` أحادي الاتجاه: المفتاح لا يعكس الرمز.
 
-`Naming::tail` (`tokens.rs` 114–133): MAC أحادي الاتجاه للقيمة تحت مفتاح الجلسة. الاسم يُعاد اشتقاقه من **المفتاح + النص الواضح**. الرمز **لا يُعكس** من المفتاح وحده. تعليق `mint` «with nothing stored» يخص **الأسماء المشتقة**, لا القيم.
+### ما ثبت من التجربة السابقة (دورة المقارنة)
 
-`restoration` / `restored_view` يستخدمان `s.tokens` الحي + `payload.allowed_token_ids`. رفض الجلسة المحذوفة لأن **المفتاح** مات، لا لأن القيم حُمّلت من القرص.
-
-### ما ثبت من التجربة
-
-- استرداد سبعة رموز في الشات كنص معروض، داخل العملية الحية، بعد لصق إجابة تحتوي الرموز: **مختبرة**.
+- استرداد سبعة رموز في الشات داخل العملية الحية: **مختبرة**.
 - تصدير PDF محمي 28 رمزًا نطاق `1F52`: **مختبرة** استخراجًا.
-- استرداد PDF بعد إغلاق النافذة المعزولة وإعادة فتحها: **لم يُرصد**. **غير معلومة** / لهذه المسألة **غير محسوم**.
 
-### غير محسوم — بلا استنتاج
-
-| السؤال | لماذا يبقى غير محسوم |
-|---|---|
-| هل تُعاد قيم نطاق Conversation بعد موت العملية؟ | لم يُوجد مسار تسلسل لـ TokenStore. `.zs` يخزن أسماءً لا قيمًا. المفتاح لا يعكس الرمز. تجربة إعادة الفتح لم تُرصد. |
-| هل يكفي إعادة استيراد **الأصل الواضح** ثم إعادة الحماية؟ | ممكن نظريًا لأن الذيل يُشتق من المفتاح + النص، لكن لم يُثبت من تجربة إعادة التشغيل، فلا يُرفع إلى واقع منتج. |
-| هل يكفي استيراد **PDF المحمي** (رموز بلا قيم) مع مفتاح الجلسة؟ | النص الحي حينها رموز لا قيم. المسح يبحث في `original_str`. لم يُثبت أن Always وحدها تملأ TokenStore دون ظهور القيمة في الوثيقة. |
-| هل تملأ قيم Always المخزن بعد إعادة التشغيل دون أن تظهر في الوثيقة الحية؟ | الحفظ في الخزنة مثبت. ربط ذلك بـ `restore()` بعد الإغلاق غير مثبت. |
-
-**لا يُقال:** «المفتاح محفوظ، إذن الاسترداد بعد إعادة التشغيل يعمل.» ذلك استنتاج ممنوع هنا.
+استيراد **PDF محمي** (رموز بلا قيم واضحة) بعد البرد: المسح يبحث عن نص Always في `original_str`. إن كان الأصل رموزًا، لا مسار في الكود يملأ TokenStore من `ValueRecord` بإعادة اشتقاق الأسماء دون ظهور القيمة. **غير موجود** في `scan` / `restore` / `enter` / `name_tokens_from_the_vault`.
 
 ---
 
@@ -89,7 +87,7 @@ Z Privacy: المنتج HEAD `d882c5f` · الختم `z_core 0.1.0 · 2026-10-13
 
 | # | المشروع والإصدار | 1. إيجاد مناطق الحماية | 2. الحماية والاسترداد | 3. النطاق | الوسم |
 |---|---|---|---|---|---|
-| — | **Z Privacy** · `d882c5f` · `z_core 0.1.0` | قواعد محلية + قوائم أسماء + تحديد يدوي للنطاق. لا نموذج NER خارجي في هذا البناء. IBAN/بريد/هاتف تلقائيًا؛ الأسماء تحتاج قرارًا. | استبدال `__Z_<ns>_<KIND>_<tail>__`. الاسترداد داخل العملية: مفتاح الجلسة + قائمة الأسماء + TokenStore الحي. القيم ليست في `.zs`. خزنة لكلمات Always. النسخ داخل الجلسات محمية لأن الجلسات خارج جسم الخزنة. استرداد قيم Conversation بعد موت العملية: **غير محسوم**. | شات: إرسال OpenAI-متوافق داخل التطبيق (**مباشر**). PDF: تصدير صفحة محمية جديدة (**مباشر**). | إيجاد/حفظ: **مؤكدة من الكود**. شات نصي وPDF المصدَّر: **مختبرة**. استرداد PDF بعد إعادة الفتح واسترداد Conversation بعد الإغلاق: **غير محسوم**. |
+| — | **Z Privacy** · `d882c5f` · `z_core 0.1.0` | قواعد محلية + قوائم أسماء + سحب/نقر على كلمة + قائمة مراجعة. IBAN/بريد/هاتف تلقائيًا؛ الأسماء تحتاج قرارًا. | استبدال `__Z_<ns>_<KIND>_<tail>__`. Always/Profile: `ValueRecord` في الخزنة وتُشفى بعد إعادة فتح نفس الوثيقة. Once/Conversation تموت مع العملية. المفتاح وحده لا يكفي. مسبار: 3 حمايات → برد: 3 unresolved → إعادة فتح الوثيقة: 2 unresolved. | شات: إرسال داخل التطبيق (**مباشر**). PDF: تصدير صفحة محمية (**مباشر**). استيراد PDF عائد مختلف يحمل عنصرًا نائبًا: **غير موجود** في مسار الاستيراد. | إيجاد/حفظ: **مؤكدة من الكود**. شات وPDF المصدَّر: **مختبرة**. الاستمرارية: **مختبرة** (مسبار 13 تشرين الأول). |
 | 1 | **OpenAI privacy-filter** · [openai/privacy-filter](https://github.com/openai/privacy-filter) · إعلان [22 Apr 2026](https://openai.com/index/introducing-openai-privacy-filter/) · أوزان [huggingface.co/openai/privacy-filter](https://huggingface.co/openai/privacy-filter) | نموذج **محلي**، 8 فئات، BIOES + Viterbi. CLI `opf`. | إخفاء/حجب للنطاقات. لا خريطة استرداد ولا خزنة جلسات في README. | محرك نص/CLI. الشات وPDF = **تكامل يدوي**. | **موثقة** · **غير مختبرة** |
 | 2 | **packyme/privacy-filter** · [packyme/privacy-filter](https://github.com/packyme/privacy-filter) · README الرئيسي 2026-10-13 | regex (بريد، هاتف، هوية، بطاقة Luhn، IP) + gitleaks/entropy. **بلا** NER للأسماء. | استبدال نوعي `[邮箱]`… **غير قابل للعكس** («no un-redaction»). | بوابة: مكتبة / `POST /redact` :8088 / gRPC :8089 (**مباشر** للنص). PDF: **غير معلوم**. | **موثقة** · **غير مختبرة** |
 | 3 | **Masquerade** · [postralai/masquerade](https://github.com/postralai/masquerade) · README 2026-10-13 | PDF→نص ثم نموذج **خارجي**: Tinfoil Llama 3.3 70B. | حجب داخل PDF. استرداد الأصل بعد الاستعلام: **غير معلوم**. | PDF عبر MCP (**مباشر** للحجب). الاستعلام: **تكامل يدوي** (رفع الملف المحجوب إلى Claude). شات داخل المنتج: لا. | **موثقة** · **غير مختبرة** |
@@ -132,7 +130,12 @@ Z Privacy صف مرجعي فوق القائمة، لا بديلًا عن أي م
 | PDF صفحة محمية محلية بلا شبكة | `apps/flutter_app/lib/protected_pdf.dart` | مؤكدة من الكود |
 | تصدير PDF رملي 28 رمزًا نطاق `1F52` | `tests/cycle/sandbox/home/Documents/zprivacy/text-protected-2026-10-13.pdf` sha256 `1776f077…` | مختبرة (استخراج) |
 | استرداد سبعة رموز في الشات كنص معروض | تجربة يدوية 2026-10-13؛ `GET /requests` بقي `[]` | مختبرة كنص معروض، ليست التقاط سلك |
-| استرداد PDF / قيم Conversation بعد إعادة فتح النافذة | لم تُرصد | **غير محسوم** |
+| Always/Profile تبقى في `ValueRecord`؛ Once/Conversation تموت مع العملية | `session.rs:157,:217` · `vault/format.rs` بلا tokens · `learn_value` | مؤكدة من الكود |
+| مسبار: 3 حمايات → برد 3 unresolved → إعادة فتح الوثيقة 2 unresolved (Always شُفي) | قياس القائد 13 تشرين الأول 2026 على `d882c5f` | مختبرة |
+| المفتاح وحده لا يكفي | `Naming::tail` + المسبار | مؤكدة من الكود · مختبرة |
+| سحب يكبّر إلى كلمات كاملة ثم يُزيل علامات الحافة `EDGE_MARKS` | `z_core/src/text.rs` `whole_words` · `session_state.dart` `select` → `wordSpan` | مؤكدة من الكود |
+| الاسم الأول والعائلة زوج واحد يُعرض لا يُحمى تلقائيًا؛ «Also the word before» عرض لا ضم قسري | `scanner/packs/people.rs` `dictionary_names` · `acts.dart` | مؤكدة من الكود |
+| `teach_name(..., family: bool)` كلمة قاموس واحدة لا حمايتان | `api.rs` `teach_name` | مؤكدة من الكود |
 
 ### 1. OpenAI privacy-filter
 
@@ -266,7 +269,7 @@ Z Privacy صف مرجعي فوق القائمة، لا بديلًا عن أي م
 
 **إيجاد (محور 1).** `scanner/mod.rs` · `general_rules.rs` · `people.rs`. تلقائي لما «لا يُعقل أن يكون غير ذلك» (IBAN+checksum، بريد، هاتف…). أسماء القاموس لا تُحمى تلقائيًا. التحديد اليدوي من الحوار. **مؤكدة من الكود.** التجربة الألمانية: حماية يدوية لمقاطع، لا إثباتًا للكشف التلقائي. **مختبرة** كنص معروض.
 
-**حماية واسترداد (محور 2).** الرمز من مفتاح الجلسة (`Naming::of_session`). ملف الجلسة يخزن **أسماء** مسموحة لا خريطة قيم. `restore()` يعيد القيمة إن وُجد الرمز في TokenStore وفي القائمة. الخزنة تحفظ مفتاح الجلسة المختوم وكلمات Always. TokenStore حي في الذاكرة. **مؤكدة من الكود.** استرداد سبعة رموز في الشات بعد لصق الإجابة، داخل العملية: **مختبرة** كنص معروض. استرداد الرموز بعد إغلاق التطبيق: **غير محسوم** (انظر القسم أعلاه). استرداد رموز PDF بعد إعادة الفتح: **غير محسوم**.
+**حماية واسترداد (محور 2).** الرمز من مفتاح الجلسة. `.zs` يخزن أسماءً لا قيمًا. TokenStore RAM. Always/Profile: `ValueRecord` في الخزنة وتُشفى عند إعادة فتح نفس الوثيقة. Once/Conversation تموت مع العملية. المفتاح وحده لا يكفي. مسبار 13 تشرين الأول: 3 → برد 3 unresolved → إعادة فتح الوثيقة 2 unresolved. **مؤكدة من الكود · مختبرة.**
 
 **نطاق (محور 3).** شات داخل التطبيق. PDF عبر `protected_pdf.dart`. الملف الرملي `text-protected-2026-10-13.pdf`، 28 قيمة، نطاق `1F52`. **مختبرة** استخراجًا.
 
@@ -278,7 +281,7 @@ Z Privacy صف مرجعي فوق القائمة، لا بديلًا عن أي م
 
 القرب تشابه في **شكل العمل** على المحاور الثلاثة، لا ترتيب جودة. بعد تصحيح هوية Secret Guard صار الصف العاشر بوابة أسرار معلنة، لا ماسح وثيقة.
 
-1. **rizzo-pii** — أقرب تشابه للمنتج ككل: إيجاد محلي → عنصر نائب → نموذج يرى الرموز → استرداد محلي، مع واجهة وثيقة وPDF محمي. الفرق الجوهري: قاموس قيم على القرص يمكن إطفاؤه، مقابل مفتاح جلسة وأسماء مسموحة عند Z. استمرارية قاموس rizzo على القرص **موثقة في الكود**؛ استمرارية قيم Conversation عند Z **غير محسومة**.
+1. **rizzo-pii** — أقرب تشابه للمنتج ككل: إيجاد محلي → عنصر نائب → نموذج يرى الرموز → استرداد محلي، مع واجهة وثيقة وPDF محمي. الفرق الجوهري: قاموس قيم على القرص يمكن إطفاؤه، مقابل مفتاح جلسة وأسماء مسموحة عند Z. Conversation عند Z تموت مع العملية (**مختبرة**). قاموس rizzo يعيش على القرص (**مؤكدة من الكود**).
 2. **Censgate Redact** — أقرب تشابه لمسار الشات + مفتاح سياق: بوابة OpenAI-متوافقة و`/v1/restore` و`TokenMapStore` تحت `session_id`. الخريطة مختومة؛ الافتراضي `off` يجعل الاسترداد داخل الطلب فقط. `memory` لا يعيش إعادة التشغيل (موثّق).
 3. **OpenMed** — أقرب تشابه لمحرك النص القابل للعكس: `keep_mapping` + `reidentify` لدى المستدعي. بلا تطبيق سطح مكتب وبلا PDF موثّق. استمرارية الخريطة عند من يحفظ ملف JSON.
 4. **Secret Guard (luochen1990)** — أقرب تشابه **لمبدأ** الاستبدال ثم الاسترداد على مسار الشات، مع استمرارية موثّقة لأن القيم في قائمة toml. الإيجاد يدوي/معلن، لا مسح وثيقة ولا PDF. يتقاطع مع Censgate/packyme أكثر مما يتقاطع مع منتج «امسح وثيقة ثم احمِ ثم أرسل».
@@ -305,13 +308,59 @@ Z Privacy صف مرجعي فوق القائمة، لا بديلًا عن أي م
 | الفرق | الدليل |
 |---|---|
 | مفتاح جلسة مقابل خريطة قيم مقابل قائمة معلنة | Z يخزن أسماءً ومفتاحًا لا القيم في `.zs`؛ القيم في RAM. rizzo يخزن القيم على القرص ويمكن إطفاء ذلك. OpenMed يسلّم JSON للمستدعي. Censgate يخزن ciphertext تحت session. Secret Guard luochen يخزن الأسرار بنص واضح في toml. |
-| استمرارية الاسترداد بعد إعادة التشغيل | rizzo: القاموس على القرص (كود). luochen: القائمة في toml (موثّق). Censgate `memory`: لا يعيش إعادة التشغيل (موثّق). Censgate `vault_kv2`: خلفية اختيارية. Z Conversation: **غير محسوم**. Z Always: القيم في الخزنة مثبتة؛ ملء TokenStore بعد الإغلاق غير مثبت. |
+| استمرارية الاسترداد بعد إعادة التشغيل | rizzo: القاموس على القرص. luochen: القائمة في toml. Censgate `memory`: لا يعيش إعادة التشغيل. Z Conversation/Once: تموت مع العملية (**مختبرة**). Z Always/Profile: تعيش في الخزنة وتُشفى عند إعادة فتح نفس الوثيقة (**مختبرة**، 3→3→2). |
 | نطاق إعادة حماية الكلمة | Z: Just here / This conversation / Remember everywhere (وأحيانًا Remember for client). لا يُستنتج منه الاسترداد. الباقي لا يصف هذا التقسيم الرباعي. |
 | الشات | Z وCensgate وSecret Guard luochen: مسار مباشر. packyme: بوابة نص. rizzo: لصق. Masquerade: رفع بعد الحجب. |
 | شكل PDF | Z: صفّ جديد + تذييل. rizzo: استبدال في content stream. BentoPDF/Masquerade: تحرير الأصل. Secret Guard/Censgate/OpenMed: غير موثّق كمنتج PDF. |
 | الكشف عن الأسماء | rizzo/OpenAI PF/OpenMed/Presidio: نموذج. packyme: بلا أسماء. BentoPDF: يدوي. Masquerade: Llama خارجي. Z: قاموس + قرار يدوي. luochen: قائمة أسرار معلنة. |
 | الباب HTTP | rizzo/Presidio/OpenMed/Censgate REST: `/analyze` أو مكافئ. packyme: `/redact`. Censgate gateway: `/v1/redact` + `/v1/restore`. Secret Guard luochen: `/{proto}/{provider}/*` على `:8787`. Z: `/v1/chat/completions` للإرسال، بلا `/analyze`. الباب ≠ الوظيفة. |
 | عمر الاسترداد داخل العملية | Z: ما دام المخزن الحي مملوءًا. rizzo: ما دام القاموس. Censgate memory: TTL 3600ث. OpenMed: ما دام ملف الخريطة عند المستدعي. luochen: ما دامت قائمة الأسرار في الإعداد. |
+
+---
+
+## أ. الاختيار — كيف يختار الشخص ما يُخفى
+
+السؤال: نقر على كلمة، سحب، قائمة/مربعات، regex، لا شيء؟ هل يُقصّ الترقيم عند الحافة؟ هل يُفصل الاسم الأول عن العائلة كقيمتين؟
+
+| # | المشروع | كيف يختار الشخص | ترقيم الحافة | اسم أول / عائلة | أين نُظر | الوسم |
+|---|---|---|---|---|---|---|
+| — | **Z Privacy** | سحب/نقر في عمود الأصل → `inspect_selection` → Protect. قائمة مراجعة (Protect / Always / Not sensitive). «Protect all matches». «Also the word before» عرض. | نعم: `whole_words` يكبّر إلى الكلمة ثم يزيل `EDGE_MARKS` (`.` `,` `;` `:` `!` `?` اقتباس أقواس…). «Müller,» → «Müller»؛ «+49 228» يبقى. | الزوج «Thomas Müller» **قيمة واحدة** تُعرض (`Confidence::Suggest`) ولا تُحمى تلقائيًا. القاموس يفرّق given/family لتعليم الكلمة (`teach_name(..., family)`)، لا لحماية منفصلة. الضم التلقائي ممنوع: «two decisions». | `text.rs` `EDGE_MARKS`/`whole_words` · `session_state.dart` `select` · `acts.dart` · `people.rs` `dictionary_names` · `api.rs` `teach_name` | مؤكدة من الكود |
+| 1 | OpenAI PF | لا نقر ولا سحب. CLI يحجب كل ما يتنبأ به النموذج. لا سياسة تسميات وقت التشغيل («does not support configuring label policies dynamically»). `--output-mode typed\|redacted`. | `--trim-whitespace` افتراضي على حدود **النطاق المتنبَّأ** (مسافة)، لا ترقيم جملة. | فئة واحدة `private_person`. لا فصل first/family في التصنيف الثمانية. | [README](https://raw.githubusercontent.com/openai/privacy-filter/main/README.md) · [opf/_cli/common.py](https://raw.githubusercontent.com/openai/privacy-filter/main/opf/_cli/common.py) `TRIM_WHITESPACE_HELP` · Model card «Static Label Policy» | موثقة |
+| 2 | packyme | لا اختيار يدوي. `f.Redact(text)` يحجب كل الطبقات. لا أعلام كيان في README. | غير مذكور. | «No person / place / organization». | README الرئيسي 2026-10-13، الطبقتان وفقرة الأسماء | موثقة. الترقيم: **غير موجود** في README/`filter.go` المذكور |
+| 3 | Masquerade | لا نقر في المنتج. المسار: أعطِ مسار PDF لـ Claude؛ الكشف عند Tinfoil؛ الحجب تلقائي. | غير مذكور. | غير مذكور كقيمتين. | README Architecture / How to use · `docs/faq.md` | موثقة. الترقيم والأسماء: **غير موجود** في README وfaq.md |
+| 4 | Presidio | اختيار **نوع كيان** عبر `entities=` / `OperatorConfig` لكل نوع. لا نقر على كلمة في المكتبة. Image Redactor للصور. | غير مذكور كقص حافة كلمة. | نوع `PERSON` واحد في العوامل الافتراضية. | [anonymizer](https://presidio.dataprivacystack.org/anonymizer/) · Analyzer `entities` في الدليل | موثقة. قص الترقيم: **غير موجود** في صفحة anonymizer 2026-10-13 |
+| 5 | BentoPDF | تحديد يدوي في المحرر: Redact Content يحذف المحتوى تحت العلامة. FAQ: الحجب دائم. محرر النص: نقر على فقرة للتحرير (أداة أخرى). | غير مذكور لـ Redact. | لا ماسح أسماء. | README جدول Edit · [bentopdf.com/edit-pdf](https://www.bentopdf.com/edit-pdf) «Is the redaction permanent?» | موثقة. الترقيم/الأسماء: **غير موجود** في README |
+| 6 | OpenMed | لا نقر. المستدعي يختار `method` وكيانات النموذج. | غير مذكور. | **نعم يفصل:** النموذج الافتراضي SuperClinical يخرج `[first_name]` و`[last_name]` لا `[NAME]`. التكرار يرقّم (`[first_name_2]`). | [docs/anonymization.md](https://raw.githubusercontent.com/maziyarpanahi/openmed/master/docs/anonymization.md) فقرة mask | موثقة |
+| 7 | rizzo-pii | قائمة/مربعات **حسب الوسم**: أيقونة 🏷️ أو `--exclude-tags` / `exclude_tags` يبقي النوع مكشوفًا. لا نقر على كلمة واحدة في النص. FULLNAME وسم واحد. | غير مذكور. | وسم `FULLNAME` («Mario Rossi») لا first/family منفصلين في TASSONOMIA_TAG. | [src/app/app.py](https://raw.githubusercontent.com/Rizzo-AI-Academy/rizzo-pii/main/src/app/app.py) `analyze(excluded=)` · [docs/TASSONOMIA_TAG.md](https://raw.githubusercontent.com/Rizzo-AI-Academy/rizzo-pii/main/docs/TASSONOMIA_TAG.md) | مؤكدة من الكود (الاستبعاد) · موثقة (التسمية) |
+| 8 | Censgate | CLI `--entities` / `--disable`؛ بوابة `{ action: allow }` على النوع. لا نقر على كلمة. | غير مذكور كقص حافة. | NER يدمج أجزاء الاسم المتجاورة قبل tokenize (ملاحظات v0.12.2)؛ سطح PERSON واحد لكل تطبيع. | README `--disable` · [v0.12.2](https://github.com/censgate/redact/releases) «adjacent same-type fragments of one word (ONNX split names) merge» | موثقة |
+| 9 | Worka PII | `AnonymizeConfig.per_entity` عامل لكل نوع. Regex مخصّص. لا UI نقر. | غير مذكور. | `Person` نوع NER اختياري واحد. | [README](https://raw.githubusercontent.com/worka-ai/pii/main/README.md) Custom Operators + Supported Entity Types | موثقة |
+| 10 | Secret Guard luochen | قائمة معلنة `[[secrets.entries]]` (يدوي في toml/WebUI). لا نقر في وثيقة. لا regex كشف في هذا الإصدار (خارطة طريق تنبيه). | غير منطبق (قيمة السر كاملة). | غير منطبق (أسرار لا أسماء). | [docs/configuration.md](https://raw.githubusercontent.com/luochen1990/secret-guard/master/docs/configuration.md) · README Roadmap | موثقة |
+
+Z هو المنتج الوحيد في العشرة الذي يوثّق **سحب كلمة في وثيقة** مع قص ترقيم الحافة وقرار منفصل لضم الاسم السابق. OpenMed الوحيد الذي يوثّق فصل first/family كعنصرين نائبين.
+
+---
+
+## ب. الوثائق العائدة — هل يعود ملف مصدَّر وتُسترد عناصره النائبة؟
+
+السؤال: هل يصدّر أي منتج وثيقة يمكن أن **تعود** إليه (مثل محامٍ يعيد PDF مختلفًا يحمل عنصرًا نائبًا واحدًا) فتسترد القيم الحقيقية؟ أم كل تصدير باتجاه واحد؟
+
+تعريف المسار المطلوب: تصدير وثيقة بعناصر نائبة → استيراد **تلك الوثيقة أو وثيقة أخرى** تحمل العنصر → استرداد القيمة من مفاتيح/خريطة **يملكها المنتج**.
+
+| # | المشروع | تصدير وثيقة؟ | هل تعود وتُسترد؟ | أين نُظر | الوسم |
+|---|---|---|---|---|---|
+| — | **Z Privacy** | نعم: Save as PDF يكتب النص المحمي (رموز `__Z_…__`) صفحة جديدة. النسخ داخل الجلسات محمية. | استرداد **إجابات الجلسة** داخل العملية: نعم. بعد برد + إعادة فتح **نفس الأصل الواضح**: Always يُشفى (مسبار 3→3→2). مسار «محامٍ يعيد PDF مختلفًا يحمل عنصرًا نائبًا»: المسح يبحث عن **النص الواضح** في `original_str`؛ الرموز لا تطابق `ValueRecord`. لا دالة تملأ TokenStore من الخزنة باشتقاق الأسماء دون ظهور القيمة. **غير موجود** في `protected_pdf.dart` (كتابة فقط) و`scan`/`restore`/`enter`. | `protected_pdf.dart` «handed to a model or to a person» · `scanner/mod.rs` `vault_pass` · مسبار 13 تشرين الأول | مؤكدة من الكود · مختبرة (البرد) |
+| 1 | OpenAI PF | نص محجوب إلى stdout/ملف. | لا خريطة استرداد في README. **غير موجود** في README وOUTPUT_SCHEMAS.md. | README How To Use · OUTPUT_SCHEMAS.md | موثقة (غياب إيجابي في الدليل) |
+| 2 | packyme | نص `Redacted`. | يعلن «irreversible (no un-redaction)». | README الطبقتان | موثقة |
+| 3 | Masquerade | PDF محجوب على القرص. | الاستعلام: رفع الملف المحجوب إلى Claude. استرداد الأصل: **غير موجود** في README وfaq.md. | README الخطوة 6 · faq.md | موثقة |
+| 4 | Presidio | نص/صورة حسب المستدعي. | `DeanonymizeEngine` decrypt AES يحتاج المفتاح **وقائمة الكيانات بمواضعها**. وثيقة أخرى بمواضع مختلفة لا تُفكّ من الملف وحده. «does not store or maintain stateful sessions». | anonymizer DeanonymizeEngine | موثقة |
+| 5 | BentoPDF | PDF محجوب. | «Applying a redaction removes the content… can't be recovered by copying or searching.» اتجاه واحد. | bentopdf.com/edit-pdf FAQ | موثقة |
+| 6 | OpenMed | نص `deidentified_text`؛ Agent يمكنه `export_format="pdf"` كصور مقنعة بلا طبقة نص (Agent docs). | `reidentify(text, mapping)` على **أي نص** إن بقيت خريطة JSON عند المستدعي. الخريطة منفصلة عن الملف. لا استيراد PDF منتج يعيد القيم من خزنة داخلية. | anonymization.md · skills/reidentifying-text · agent.openmed.life/docs/privacy | موثقة |
+| 7 | rizzo-pii | `POST /pdf`: حجب في التيار؛ القاموس **لا يسافر** مع الملف («يموت مع الطلب»). | تبويب RIPRISTINA يلصق **إجابة LLM** على القاموس المحلي. إعادة استيراد PDF المحجوب كوثيقة أصل لاسترداد القيم: **غير موجود** في docstring التدفق (ANONIMIZZA / COPIA / RIPRISTINA) ولا في تعليق `_build_anonymized_pdf`. لصق نص فيه `[FULLNAME_1]` قد يُسترد إن بقي القاموس — ذلك لصق نص لا استيراد وثيقة. | app.py docstring · `_build_anonymized_pdf` | مؤكدة من الكود |
+| 8 | Censgate | لا تصدير PDF موثّق. `/v1/redact` يعيد نصًا. | `/v1/restore` على نص فيه رموز + `session_id`. يعمل على أي نص إن عاش المخزن (`vault_kv2`). الافتراضي `off`/`memory` لا يعيش ملفًا عائدًا بعد إعادة التشغيل. لا مسار «استورد PDF». | docs/gateway/tokenization.md · README | موثقة |
+| 9 | Worka | لا تصدير وثيقة. | لا `reidentify`. أثر التدقيق في الذاكرة. **غير موجود** في README. | README Features / Audit Log | موثقة |
+| 10 | Secret Guard luochen | لا PDF. الاسترداد على **رد LLM** في الوكيل. | Mock في ردود الأدوات يعود للقيمة المعلنة. وثيقة مصدَّرة عائدة: **غير موجود** في README وconfiguration.md. | README How it works · configuration.md | موثقة |
+
+**الخلاصة على السؤال ب:** لا أحد من العشرة يوثّق مسار منتج «صدّر وثيقة → استلم وثيقة أخرى تحمل عنصرًا نائبًا واحدًا → استوردها → استرد القيمة من مفاتيح يملكها المنتج». أقرب المسارات استرداد **نص** منفصل عن الملف (rizzo لصق، OpenMed `reidentify` + JSON، Censgate `/v1/restore` + session). Z يسترد إجابات الجلسة ويشفي Always على **نفس الأصل الواضح** بعد البرد؛ PDF عائد مختلف يحمل الرمز وحده **غير موجود** في الكود. ذلك يبقى أوضح فجوة منتج مرشّحة لـ Z، لا تفرّدًا مثبتًا بعد.
 
 ---
 
@@ -331,9 +380,13 @@ Z Privacy صف مرجعي فوق القائمة، لا بديلًا عن أي م
 
 ## الخلاصة
 
-مبدأ الاستبدال ثم الاسترداد مشترك: يظهر عند Z وrizzo-pii وOpenMed وCensgate وSecret Guard الأصلي (`luochen1990/secret-guard`). لـ Z اتجاه منتج واضح — جلسة، نطاق كلمة، شات داخل التطبيق، PDF صفحة جديدة، خزنة Always — يستحق البناء. اكتمال وصف المقارنة تطلّب تصحيح هوية الصف العاشر وحسم لغة الاستمرارية: قيم TokenStore حيّة في الذاكرة، ومفتاح الجلسة المحفوظ لا يثبت الاسترداد بعد الإغلاق؛ ذلك **غير محسوم** حتى يُرصد من تجربة أو من مسار تحميل مثبت في الكود.
+مبدأ الاستبدال ثم الاسترداد مشترك. سجل الاستمرارية عند Z محسوم قياسًا على `d882c5f`: Always/Profile تعيش في `ValueRecord` وتُشفى عند إعادة فتح نفس الوثيقة؛ Once/Conversation تموت مع العملية لأن TokenStore ذاكرة فقط. المفتاح وحده لا يكفي. المسبار: 3 حمايات → برد 3 unresolved → إعادة فتح الوثيقة 2 unresolved.
 
-لا حاجة لادعاء اختراع المبدأ لإثبات قيمة Z للمستخدم. لا يُفترض التفوق ولا التفرّد بين العشرة.
+في الاختيار، Z ينفرد في هذه القائمة بسحب كلمة مع قص ترقيم الحافة وقرار صريح لضم الاسم السابق. OpenMed ينفرد بفصل first_name / last_name كعنصرين نائبين.
+
+لا مشروع في العشرة يوثّق عودة وثيقة مصدَّرة مختلفة تحمل عنصرًا نائبًا واسترداد قيمته من مفاتيح المنتج. ذلك مرشّح لأوضح فرق يمكن لـ Z أن يبنيه؛ وهو اليوم **غير موجود** في مسار استيراد PDF عند Z نفسه.
+
+لا حاجة لادعاء اختراع المبدأ. لا يُفترض التفوق ولا التفرّد بين العشرة.
 
 ---
 

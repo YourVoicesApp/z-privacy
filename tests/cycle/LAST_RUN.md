@@ -36,11 +36,13 @@ session key. Scope buttons are not used to predict restore.
 study in `Z_COMPARISON.md` (original ten projects). PDF reopen and further
 tooling are out of that delivery. Translation of the study is a later task.
 
-Rizzo and Secret Guard were not started. Secret Guard's table row is filled
-from the original-list repository **github.com/luochen1990/secret-guard**
-(`secret-guard-rs` 0.1.0, release v0.1.0 23 Sep 2026), from docs/code, not
-from a local run. Product listen is `127.0.0.1:8787`; cycle `:5007/analyze`
-remains a harness path. codeberg.org/roobai/llm-secretguard v0.3.6 is recorded
-as optional project 11, not as row 10. Z Conversation-value restore after
-process death is tagged **غير محسوم** in `Z_COMPARISON.md`. Comparison sheet:
+Rizzo and Secret Guard were not started. Secret Guard remains
+github.com/luochen1990/secret-guard. Lead measurement 13 Oct 2026 on
+`d882c5f`: Always/Profile persist in ValueRecord and heal when the same
+document is reopened; Once/Conversation die with process death (TokenStore
+RAM). Probe: 3 protections → cold restart 3 unresolved → same document
+reopened 2 unresolved. Session key alone is insufficient (confirmed).
+Selection and returning-document axes added for the original ten.
+Returning a different exported PDF with one placeholder is not found as a
+product path in any of the ten, including Z. Comparison sheet:
 `Z_COMPARISON.md`.
