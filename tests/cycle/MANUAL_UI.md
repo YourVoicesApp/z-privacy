@@ -16,13 +16,17 @@ or unlock that.
 
 Passphrase for the **sandbox vault only**: `cycle-dummy-pass-not-real`
 
-**Where the isolated window is now (2026-10-13, after the German letter):**
-language English, vault open, session title **الاختبار الأول** (`sessions/1.zs`).
-Protected PDF already at
+**Where the isolated window is now (2026-10-13, after restart):**
+language English, vault open, session title **الاختبار الأول** (`sessions/1.zs`,
+namespace `1F52`). Protected PDF already at
 `tests/cycle/sandbox/home/Documents/zprivacy/text-protected-2026-10-13.pdf`.
-Composer is empty again. Capture `/requests` is `[]` (Send to Local AI has
-not run). **Next required click is step 13.** Do not click an original
-Z Privacy window if one is also open.
+Composer is empty. Capture `/requests` is unused for this PDF reopen.
+A GTK **Open File** chooser is already standing on this isolated window.
+Current folder is the app bundle; the file
+`text-protected-2026-10-13.pdf` is in that list (same bytes as the sandbox
+PDF). **Next required click is step 16.** Do not click an original
+Z Privacy window if one is also open. Do not Cancel unless the chooser is
+the wrong app.
 
 ## Cycle 1 — import → scan → review → protect → send → restore
 
@@ -72,15 +76,17 @@ Pass only if the captured body has `__Z_…__` tokens, user-agent `z-privacy`,
 12. **Already done.** PDF:
     `…/tests/cycle/sandbox/home/Documents/zprivacy/text-protected-2026-10-13.pdf`
     Isolation held (origin `~/Documents/zprivacy` unchanged).
-13. **Do this now.** Quit **only** the isolated window titled **الاختبار الأول**
-    / Z Privacy. Do not quit any original Z Privacy. Do not lock the origin vault.
-14. After that window is gone, say so. The isolated app will be started again
-    with `bash tests/cycle/run_app_isolated.sh`.
-15. Unlock with the dummy passphrase. Stay in / open session **الاختبار الأول**
-    (file `sessions/1.zs`). Do not create a new session yet.
-16. Import that **same** sandbox PDF (paperclip → the file in step 12). Record
-    which tokens restore. Split by scope: Just here / This conversation /
-    Remember everywhere (vault). Leftover clear stays leftover; that is not a fail.
+13. **Already done.** Isolated window was closed (this copy only).
+14. **Already done.** Isolated app restarted (`run_app_isolated.sh`, pid 195385).
+15. **Already done.** Vault unlocked; session **الاختبار الأول** is the open one.
+    Dummy passphrase if a lock screen returns: `cycle-dummy-pass-not-real`.
+16. **Do this now, one click.** In the isolated **Open File** chooser, select
+    `text-protected-2026-10-13.pdf` (16.2 kB, already in the list) and press
+    **Open**. Stay in **الاختبار الأول**. Do not create a new session yet.
+    After it is open: say which tokens came back as original values, which
+    stayed as `__Z_1F52_…__`, and which banner the Review/Tokens panel shows.
+    Split by scope if the UI names one (Just here / This conversation /
+    Remember everywhere). Leftover clear stays leftover; that is not a fail.
 17. Settings → Sessions → **New session**. Name it (for example `cycle-two`).
     **Begin**. Do not copy or export keys from الاختبار الأول.
 18. Import the **same** PDF again in the new session. Record restore **by

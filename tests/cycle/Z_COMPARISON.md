@@ -130,7 +130,56 @@ Leftover **clear** in the PDF (**tested** extract). Recorded; **not** a protecti
 
 Chat seven-token restore and this 28-value PDF are **two artefacts of one session**, not one proof.
 
-PDF reopen + second session in the same vault: **not done yet**. Next UI step is in `MANUAL_UI.md`.
+---
+
+## Z — PDF reopen after isolated restart (in progress)
+
+Isolated window was closed (SIGTERM of the previous copy) and started again with `tests/cycle/run_app_isolated.sh`. Isolation held: origin vault size 742 mtime 1791828743 unchanged. New process `195385`, `HOME` = sandbox home, stamp `z_core 0.1.0 · 2026-10-13 · 61fa27b`. Vault already unlocked on restart; session **الاختبار الأول** (`sessions/1.zs`, namespace `1F52`) is “the one you are in”. **tested** (AT-SPI + `/proc`).
+
+Import of the same PDF is the remaining UI act. A GTK **Open File** chooser is standing on the isolated window. The file is visible as `text-protected-2026-10-13.pdf`. AT-SPI can click GTK chrome; **Open** has not closed the chooser from this side. Restore after reopen is therefore **not yet observed**. Do not assume Conversation tokens fail or Always tokens succeed.
+
+How restore is scored when that import happens (**confirmed-from-code**, not a predicted outcome):
+
+- `restore()` puts a token back only if it is in **this session’s TokenStore** and in that turn’s **allowed** list (`tokens.rs`). Another session’s namespace stays `Piece::Unresolved`.
+- Session file `1.zs` stores questions, raw answers, and allowed **token names**. It does not store the value map. Values live in the live bench store, and Always-learned values live in the vault (19 values in this sandbox).
+- Importing a PDF **clears** the bench’s protections then scans the extracted text (`ops/mod.rs` `import_document`). The extracted original of this file **is** the tokenised page.
+
+Per-token restore after reopen — **not observed yet**. Namespace `1F52` is this session’s. Scope of each token at mint time was not logged from the Review banner; the table records kind + occurrences only until the UI shows restore or unresolved.
+
+| Token | Kind | Occ. | Session 1 restore (own key) | Session 2 restore (no key transfer) |
+|---|---|---|---|---|
+| `__Z_1F52_PERSON_F28DE7CF__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_CCF923CA__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_CUSTOM_294A05EC__` | CUSTOM | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_9FB561CF__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_CUSTNO_43545CAF__` | CUSTNO | 2 | not observed | not observed |
+| `__Z_1F52_PERSON_5C45B1F7__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_846FE819__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_ADDR_6A08B785__` | ADDR | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_144984F1__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_IBAN_1FB36806__` | IBAN | 1 | not observed | not observed |
+| `__Z_1F52_BIC_D4ADB467__` | BIC | 1 | not observed | not observed |
+| `__Z_1F52_PHONE_49FD3F28__` | PHONE | 1 | not observed | not observed |
+| `__Z_1F52_PHONE_3E5AEABC__` | PHONE | 1 | not observed | not observed |
+| `__Z_1F52_EMAIL_C055081E__` | EMAIL | 1 | not observed | not observed |
+| `__Z_1F52_EMAIL_F203A99F__` | EMAIL | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_CFDB41D2__` | PERSON | 2 | not observed | not observed |
+| `__Z_1F52_PERSON_13502662__` | PERSON | 2 | not observed | not observed |
+| `__Z_1F52_EMPNO_759300B3__` | EMPNO | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_29E91933__` | PERSON | 2 | not observed | not observed |
+| `__Z_1F52_PERSON_65D30635__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_5FBDC692__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_8D324019__` | PERSON | 2 | not observed | not observed |
+| `__Z_1F52_CUSTOM_90C5687C__` | CUSTOM | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_1294B6B9__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_PHONE_369A10B2__` | PHONE | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_E1B5E125__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_PERSON_FE95AB35__` | PERSON | 1 | not observed | not observed |
+| `__Z_1F52_CUSTOM_453ADFE7__` | CUSTOM | 1 | not observed | not observed |
+
+Leftover clear from the PDF extract stays leftover. That is **not** a restore fail.
+
+Next UI step is in `MANUAL_UI.md`.
 
 ---
 
@@ -146,70 +195,196 @@ Alice / Alicia are **not** joined by the mock.
 
 ---
 
-## Rizzo (rizzo-pii)
+## Canonical ten-project list
 
-Identity: [Rizzo-AI-Academy/rizzo-pii](https://github.com/Rizzo-AI-Academy/rizzo-pii). Version cited: app **Rizzo PII 2.0.0** (release `v2.0.0`, 8 Aug) · model **rizzo-pii-0.3B v1.5.0**. Default HTTP `http://127.0.0.1:5005` (GitHub cycle expected `:5006/analyze`). **Not started in this sandbox. Not tested here.**
+This is the original list. **No project is replaced.** Rows that were previously LLM Guard, PasteGuard, Private Guard, PrivAiTe, or A5 are withdrawn. Absence of `/analyze` is not evidence that a product lacks its function. Projects that were not started here are scored from public docs/code only, tagged **documented** / **confirmed-from-code** / **unknown**, never **tested**.
 
-| Axis | What the public docs and README state | Tag |
+---
+
+## 1. OpenAI privacy-filter
+
+Identity: [openai/privacy-filter](https://github.com/openai/privacy-filter) · [openai.com announcement 22 Apr 2026](https://openai.com/index/introducing-openai-privacy-filter/) · weights Hugging Face `openai/privacy-filter`. Apache 2.0. 1.5B total / 50M active. **Not run here.**
+
+| Axis | Record | Tag |
 |---|---|---|
-| 1. Finding | Neural token-classifier (mmBERT / ModernBERT, 22 BIO tags) **paired with** a regex+checksum net (IBAN mod-97, CF, PIVA, Luhn). A disabled tag is still detected and left in the clear. Residual/short values warned via `X-PII-Residual` / `X-PII-Skipped`. | **documented** (README, release 2.0.0). Code in that repo not confirmed in this copy. |
-| 2. Protection / restore | Reversible placeholders `[FULLNAME_1]`, `[IBAN_1]`, `[CF_1]` + local dictionary on disk. Identical values share one placeholder. Switch `--no-mapping` / `PII_MAPPING=0` builds **no** restore map. Per-tag exclude. No Z-style Just here / This conversation / Remember everywhere. | **documented**. Restore **documented**, **not tested** here. |
-| 3. Chat + PDF | Copy anonymized text into ChatGPT/Claude/Gemini, restore locally from the answer (chat is paste, not an in-app provider send). `POST /pdf` returns a redacted PDF (content-stream replace, not a black box); metadata/XMP/annotations/form fields/bookmarks scrubbed. `POST /analyze` for text/PDF/md/txt. Preview `POST /pdf/preview`. | **documented**. **not tested** here. |
+| 1. Finding | Bidirectional token classifier, 8 categories: `account_number`, `private_address`, `private_email`, `private_person`, `private_phone`, `private_url`, `private_date`, `secret`. BIOES + constrained Viterbi. CLI `opf`. | **documented** (README + model card) |
+| 2. Protection / restore | Mask / redact spans. Official card describes detection and masking. No session vault or placeholder restore is described. | **documented** for mask/redact; restore vault **unknown** (silence is not “no”) |
+| 3. Chat + PDF | Model/CLI/library. Chat or PDF would be an integrator. Browser demo exists. | **documented** as a model; in-app chat/PDF **unknown** |
+
+**not tested**.
+
+---
+
+## 2. packyme/privacy-filter
+
+Identity: [packyme/privacy-filter](https://github.com/packyme/privacy-filter). Pure Go, no NER. HTTP `:8088/redact`, gRPC `:8089`. **Not run here.**
+
+| Axis | Record | Tag |
+|---|---|---|
+| 1. Finding | Two layers: regex PII (email, phone, national ID, Luhn card, IP) and gitleaks + entropy secrets. README states it does **not** recognise person / place / organisation names. | **documented** |
+| 2. Protection / restore | Typed irreversible placeholders (`[邮箱]`, `[电话]`, `[身份证]`, `[银行卡]`, `[IP]`, `[密钥]`). README: no un-redaction. | **documented** irreversible |
+| 3. Chat + PDF | Library / HTTP / gRPC in front of an LLM gateway. PDF **unknown**. No `/analyze` in this README; the product door is `POST /redact`. | **documented** for gateway text; PDF **unknown** |
+
+**not tested**.
+
+---
+
+## 3. Masquerade (postralai/masquerade)
+
+Identity: [postralai/masquerade](https://github.com/postralai/masquerade). MCP privacy firewall for PDFs. **Not run here.**
+
+| Axis | Record | Tag |
+|---|---|---|
+| 1. Finding | PDF → text, then Tinfoil isolated Llama 3.3 70B to identify names, emails, dates, entities. | **documented** |
+| 2. Protection / restore | Builds a redacted PDF. Preview, then the person uploads the redacted file. Restore of originals is not described. | **documented** redaction; restore **unknown** |
+| 3. Chat + PDF | Claude Desktop MCP: paste a **file path**, not the original PDF. Query is a later **manual** upload of the redacted PDF to Claude. | **documented** |
+
+**not tested**.
+
+---
+
+## 4. Presidio (mentioned links)
+
+Attempted URLs on 2026-10-13:
+
+| URL | HTTP | Final |
+|---|---|---|
+| https://github.com/microsoft/presidio | 200 | https://github.com/data-privacy-stack/presidio |
+| https://microsoft.github.io/presidio/ | 200 | same host (page text: “This page has moved” → data-privacy-stack.github.io/presidio) |
+| https://data-privacy-stack.github.io/presidio/ | 200 | https://presidio.dataprivacystack.org/ |
+| https://github.com/data-privacy-stack/presidio | 200 | itself |
+| https://microsoft.github.io/presidio/analyzer/ | 200 | same host |
+
+Hard failure (timeout/404) **did not continue** on those URLs. The old Microsoft GitHub path redirects. The old `microsoft.github.io/presidio` URL still answers 200 with a **move notice**, not the full docs. Current docs: https://presidio.dataprivacystack.org/ and repo [data-privacy-stack/presidio](https://github.com/data-privacy-stack/presidio).
+
+| Axis | Record | Tag |
+|---|---|---|
+| 1. Finding | Analyzer: NER + regex + checksum + custom recognizers; text, images, structured. | **documented** |
+| 2. Protection / restore | Anonymizer operators replace / mask / hash / encrypt. Encrypt can be reversed with the operator key. Default replace is not a Z-style session vault. | **documented** |
+| 3. Chat + PDF | SDK / HTTP / Docker / Kubernetes. Not an LLM chat app. Image-redactor covers standard images and DICOM; PDF-page redaction is that module, not a chat restore. Analyzer HTTP historically used `/analyze`; absence of that path in a **different** product is not a score against Presidio. | **documented** · **not tested** |
+
+---
+
+## 5. BentoPDF
+
+Identity: [alam00000/bentopdf](https://github.com/alam00000/bentopdf) · [bentopdf.com](https://bentopdf.com). Client-side PDF toolkit. **Not run here.**
+
+| Axis | Record | Tag |
+|---|---|---|
+| 1. Finding | No PII NER/scanner is described. Redact Content is a person-driven PDF edit. | **documented** as a toolkit; auto-finding **unknown** |
+| 2. Protection / restore | **Redact Content** permanently removes content. **Sanitize PDF** / **Remove Metadata**. No LLM placeholder restore is described. | **documented** redact/sanitize; restore vault **unknown** |
+| 3. Chat + PDF | PDF in the browser, no server upload. No in-app LLM send. | **documented** PDF; chat **unknown** |
+
+**not tested**.
+
+---
+
+## 6. OpenMed
+
+Identity: [maziyarpanahi/openmed](https://github.com/maziyarpanahi/openmed). Local clinical NER + PII de-identify. Python/Swift/Android/browser. REST `POST /analyze`, `POST /pii/extract`, `POST /pii/deidentify`. **Not run here.** `/analyze` here is clinical NER, not “the product is missing if it has no /analyze”.
+
+| Axis | Record | Tag |
+|---|---|---|
+| 1. Finding | `extract_pii` / clinical NER. HIPAA Safe Harbor-aligned categories, multilingual routes, optional OpenAI Privacy Filter family and Nemotron fine-tune. | **documented** |
+| 2. Protection / restore | `deidentify` methods mask, replace (Faker synthetic), hash, shift_dates. That replace is synthetic, not a session map back to the original. | **documented** de-identify; original-value restore **unknown** |
+| 3. Chat + PDF | REST service, MCP, batch. PDF as a first-class protected-and-restore document is **unknown** in this README (a third-party wrapper exists; it is not this project). | **documented** text/REST; PDF **unknown** |
+
+**not tested**.
+
+---
+
+## 7. rizzo-pii
+
+Identity: [Rizzo-AI-Academy/rizzo-pii](https://github.com/Rizzo-AI-Academy/rizzo-pii). App **Rizzo PII 2.0.0** · model **rizzo-pii-0.3B v1.5.0**. Default HTTP `http://127.0.0.1:5005`. GitHub cycle expected `:5006/analyze`. **Not started in this sandbox. Not tested here.**
+
+| Axis | Record | Tag |
+|---|---|---|
+| 1. Finding | Neural token-classifier (mmBERT / ModernBERT, 22 BIO tags) paired with a regex+checksum net (IBAN mod-97, CF, PIVA, Luhn). A disabled tag is still detected and left in the clear. Residuals warned via `X-PII-Residual` / `X-PII-Skipped`. | **documented** |
+| 2. Protection / restore | Reversible `[FULLNAME_1]`, `[IBAN_1]`, `[CF_1]` + local dictionary on disk. Identical values share one placeholder. `--no-mapping` / `PII_MAPPING=0` builds **no** restore map. Per-tag exclude. No Z-style Just here / This conversation / Remember everywhere. | **documented**. Restore **documented**, **not tested** |
+| 3. Chat + PDF | Copy anonymized text into ChatGPT/Claude/Gemini, restore locally (paste, not an in-app provider send). `POST /pdf` content-stream replace; metadata/XMP/annotations/forms/bookmarks scrubbed. `POST /analyze` for text/PDF/md/txt. Preview `POST /pdf/preview`. Having `/analyze` is this product’s HTTP door, not a requirement for the others. | **documented**. **not tested** |
 
 GitHub cycle `/analyze` on `:5006`: **SKIPPED** (nothing listening).
 
 ---
 
-## Secret Guard
+## 8. Censgate Redact
 
-GitHub `tests/cycle` (branch `tests/cycle`, commit `b42cf0e`) expected a compatible **`POST http://localhost:5007/analyze`** in “gateway mode”. No local checkout, no running process, no confirmed repository.
-
-`chintanshah35/secretguard` is a **CI source-code secret scanner** (`npx secretguard .`). It is a different product: it does not claim chat restore or a protected PDF. It is **not** identified as the cycle’s Secret Guard.
+Identity: [censgate/redact](https://github.com/censgate/redact). README v0.12.4-era; crates `redact-core` **0.12.5**. CLI `redact analyze`, gateway `POST /v1/redact` on `127.0.0.1:8080`, REST `POST /api/v1/analyze`. 61 compiled entity types; optional ONNX NER. **Not run here.** `/analyze` is one door (CLI/REST); the gateway door is `/v1/redact`.
 
 | Axis | Record | Tag |
 |---|---|---|
-| 1. Finding | Unknown for the cycle target | **unknown** |
-| 2. Protection / restore | Unknown | **unknown** |
-| 3. Chat + PDF | Unknown. Cycle assumed `/analyze` only | **unknown** |
+| 1. Finding | Deterministic pattern engine (NER off unless added). 61 types via `list-entities`. Secrets in CI, Postgres location scan, prompt redaction. | **documented** |
+| 2. Protection / restore | `redact anonymize --strategy mask`. Gateway redacts prompts on the way to a provider and can emit an evidence pack. A session restore vault that puts original values back into an LLM reply is **unknown** from this README (silence is not “no”). | **documented** redact/mask; chat restore **unknown** |
+| 3. Chat + PDF | OpenAI-compatible gateway for prompts. PDF **unknown**. | **documented** gateway; PDF **unknown** |
+
+**not tested**.
+
+---
+
+## 9. Worka PII
+
+Identity: [worka-ai/pii](https://github.com/worka-ai/pii). Rust library (`crates.io/crates/pii`). Regex / validator / dictionary / optional Candle NER. **Not run here.** No HTTP `/analyze` is required for a library.
+
+| Axis | Record | Tag |
+|---|---|---|
+| 1. Finding | Built-in: Email, Phone, IP, card, IBAN, SSN, tax IDs, passport, bank, crypto, MAC, UUID, VIN, IMEI, URL, domain, hostname. Person / Location / Organization when a NER engine is enabled. | **documented** |
+| 2. Protection / restore | Operators redact / mask / replace / hash. README examples keep original spans for an audit log beside the replacement. A durable session restore map is **unknown**. | **documented** operators; session restore **unknown** |
+| 3. Chat + PDF | Library for scrubbing text (including prompts). PDF **unknown**. | **documented** as a library; chat app / PDF **unknown** |
+
+**not tested**.
+
+---
+
+## 10. Secret Guard
+
+GitHub `tests/cycle` (branch `tests/cycle`, commit `b42cf0e`) expected **`POST http://localhost:5007/analyze`** in “gateway mode”. No local checkout, no process on `:5007`, no confirmed repository for that cycle target.
+
+[chintanshah35/secretguard](https://github.com/chintanshah35/secretguard) is a **CI source-code secret scanner** (`npx secretguard .`). It masks findings in output, skips PDFs as binary, and does not describe chat restore or a protected-PDF product. It is **not** identified as the cycle’s Secret Guard and is **not** used as a substitute row.
+
+| Axis | Cycle target `:5007` | CI scanner (different product, not a replacement) |
+|---|---|---|
+| 1. Finding | **unknown** | **documented**: 95 patterns, credentials + some PII (SSN, card, email, phone, public IPv4) |
+| 2. Protection / restore | **unknown** | **documented**: masked report; no restore vault |
+| 3. Chat + PDF | **unknown**. Cycle assumed `/analyze` only | **documented**: CLI/CI; PDFs skipped as binary |
 
 Probe `:5007/analyze`: **SKIPPED**. README silence is not used as “no feature”.
 
 ---
 
-## Ten-project table
-
-No canonical list of ten names exists in origin `~/mono-privacy`, the GitHub `tests/cycle` README (it names **three**: Z, Rizzo, Secret Guard), or this work copy. Rows 4–10 are public products in the **same niche** (find PII, replace or mask, optionally restore, optionally PDF/chat). This is a disclosed working set for the three axes, not a ranking and not a claim of Z’s superiority.
+## Ten-project table (original names only)
 
 | # | Project | Version / evidence date | 1. Finding | 2. Protection / restore | 3. Chat + PDF | Tag |
 |---|---|---|---|---|---|---|
-| 1 | **Z Privacy** | `d882c5f` / stamp `61fa27b` · 2026-10-13 | Rules + language pack. Auto vs Suggest vs hand span. Dictionary names never Auto. | Four engine scopes; review Protect = This conversation; Always = conversation + vault. Restore of returned tokens, whole selected span (`lautet`+email). | In-app Local AI `POST /v1/chat/completions`; Copy Protected; Save as PDF (local, no metadata). | finding **confirmed-from-code**; chat restore **tested** (UI text); PDF export **tested**; PDF reopen **not tested** |
-| 2 | **rizzo-pii** | 2.0.0 / model 0.3B v1.5.0 | NER + regex/checksum, 22+1 tags, per-tag off | Reversible `[TAG_n]` + on-disk dict; optional no-mapping | Paste-to-LLM restore tab; `POST /pdf` true redaction | **documented** · **not tested** |
-| 3 | **Secret Guard** (cycle `:5007`) | unidentified | unknown | unknown | unknown (`/analyze` assumed) | **unknown** |
-| 4 | **Microsoft Presidio** (now data-privacy-stack/presidio) | public main, 2026-10 | NER + regex + checksum + custom recognizers; text/images/structured | Anonymizer operators (replace, mask, hash, encrypt, …). Encrypt can be reversed with the key; default replace is not a session vault | SDK/HTTP, not an LLM chat app. Image redactor for PDF-like pages is a separate module | **documented** · **not tested** |
-| 5 | **OpenAI Privacy Filter** | openai/privacy-filter · Apr 2026 · 1.5B/50M | On-device token classifier, 8 categories | Mask / redact spans. Official card describes detection and masking, not a restore vault | Model only; chat/PDF would be an integrator. Browser demos exist | **documented** (openai.com + model card) · **not tested** |
-| 6 | **Protect AI LLM Guard** | protectai/llm-guard Anonymize + Deanonymize | Presidio + extra patterns | Vault of `[REDACTED_TYPE_n]`; Deanonymize restores | Library around a prompt, not a PDF product | **documented** · **not tested** |
-| 7 | **PasteGuard** (sgasser/llm-shield) | public README | Multilingual PII + secrets | Mask mode placeholders + restore; Route mode sends sensitive turns to local LLM | Browser ChatGPT/Claude/Gemini + API proxy + coding agents. PDF **unknown** (absence from README not treated as no) | **documented** · **not tested** |
-| 8 | **Private Guard** (michalirving/private-guard) | public README | 30+ regex + on-device NER + optional MLP | `[PERSON_1]` etc., restore in the response even if brackets stripped | Chrome/Edge on web chat. PDF **unknown** | **documented** · **not tested** |
-| 9 | **PrivAiTe** (crp4222/PrivAiTe) | public README | Presidio + OpenAI privacy-filter, local | Scrub then restore in the reply, including tool-call JSON | OpenAI-compatible proxy for agents. PDF **unknown** | **documented** · **not tested** |
-| 10 | **A5 PII Anonymizer** | v0.0.1 | Local ONNX NER | `NAME_1` / `PHONE_NUMBER_2`; Pro JSON mapping for re-id | Desktop files including **PDF** in/out. In-app chat **unknown** | **documented** · **not tested** |
+| 1 | **OpenAI privacy-filter** | openai/privacy-filter · Apr 2026 · 1.5B/50M | Token classifier, 8 categories | Mask / redact. Restore vault unknown | Model/CLI; chat/PDF would be an integrator | **documented** · **not tested** |
+| 2 | **packyme/privacy-filter** | public README | Regex PII + gitleaks/entropy; no NER names | Irreversible typed placeholders | Gateway `POST /redact`. PDF unknown | **documented** · **not tested** |
+| 3 | **Masquerade** | postralai/masquerade | Tinfoil Llama 3.3 70B on PDF text | Redacted PDF; restore unknown | Claude MCP; manual upload of redacted PDF | **documented** · **not tested** |
+| 4 | **Presidio** | data-privacy-stack/presidio after move from microsoft/presidio · 2026-10-13 | NER + regex + checksum + custom | replace/mask/hash/encrypt | SDK/HTTP/images. Not an LLM chat app | **documented** · **not tested**. Old Microsoft URLs redirect or show a move notice; no remaining 404 on the URLs tried |
+| 5 | **BentoPDF** | alam00000/bentopdf | Person-driven redact; auto-PII unknown | Redact Content, Sanitize/metadata | Client-side PDF toolkit; chat unknown | **documented** · **not tested** |
+| 6 | **OpenMed** | maziyarpanahi/openmed | Clinical NER + `extract_pii` | mask/replace/hash/shift_dates | REST `/analyze` and `/pii/*`; PDF unknown | **documented** · **not tested** |
+| 7 | **rizzo-pii** | 2.0.0 / model 0.3B v1.5.0 | NER + regex/checksum, 22+1 tags | Reversible `[TAG_n]` + on-disk dict | Paste-to-LLM; `POST /pdf` | **documented** · **not tested** |
+| 8 | **Censgate Redact** | censgate/redact · crates 0.12.5 | 61 types, optional ONNX NER | mask/redact gateway; chat restore unknown | Gateway `/v1/redact`, REST `/api/v1/analyze`. PDF unknown | **documented** · **not tested** |
+| 9 | **Worka PII** | worka-ai/pii | Regex/validator/dictionary + optional NER | redact/mask/replace/hash | Rust library. Chat app / PDF unknown | **documented** · **not tested** |
+| 10 | **Secret Guard** | cycle `:5007` unidentified | unknown for the cycle target | unknown | unknown | **unknown**. CI `chintanshah35/secretguard` is a different product, not a substitute |
+
+Z Privacy is the product under test, not a replacement row in this list. Its three-axis evidence is the sections above this list.
 
 Similarities that actually appear in the sources:
 
-- Z, rizzo-pii, LLM Guard, PasteGuard, Private Guard, PrivAiTe all describe **placeholder out, restore locally**.
-- Z and rizzo-pii both ship a **person-facing document UI** plus a **protected PDF**. Presidio and Privacy Filter are **engines**.
+- Z and rizzo-pii both describe **placeholder out, restore locally**, plus a **person-facing document UI** and a **protected PDF**.
+- OpenAI privacy-filter, OpenMed, and Presidio are **engines** (detect then mask/anonymize) that an integrator can put in front of chat.
+- packyme/privacy-filter and Censgate sit on the **gateway / prompt** path. Masquerade and BentoPDF sit on the **PDF file** path.
 - Z’s restore is **session-scoped tokens** (`__Z_<ns>_<KIND>_<tail>__`) with an optional **vault**. rizzo-pii’s mapping is a **local dictionary** that can be switched off. Those are different durability models.
-- Z asks the person on dictionary names; rizzo-pii and Privacy Filter **tag then replace** (with optional per-tag off in rizzo).
 - Leftover clear text is normal in Z when the person did not choose the span. rizzo-pii warns residuals. Treating leftover clear as an automatic fail would mis-score both.
 
 Differences that actually appear:
 
-- Z is a Linux desktop FFI app with a vault and four scopes. rizzo-pii is a local HTTP/Tauri app with `/analyze` + `/pdf`.
-- Z’s chat path is an in-app OpenAI-compatible send. rizzo-pii’s documented chat path is copy/paste.
-- Z PDF is a newly typeset page of the protected **text** plus a checkable footer. rizzo-pii `POST /pdf` on a PDF input claims **in-place content-stream** redaction of the original layout.
-- Secret Guard in the cycle harness is still an empty slot.
+- Z is a Linux desktop FFI app with a vault and four engine scopes. rizzo-pii is a local HTTP/Tauri app. Presidio/OpenAI privacy-filter/Worka/OpenMed are libraries or services. BentoPDF is a PDF editor. Masquerade is an MCP. Censgate is CLI+gateway. Secret Guard’s cycle identity is still empty.
+- Z’s chat path is an in-app OpenAI-compatible send. rizzo-pii’s documented chat path is copy/paste. Masquerade’s is a later manual Claude upload.
+- Z PDF is a newly typeset page of the protected **text** plus a checkable footer. rizzo-pii `POST /pdf` on a PDF input claims **in-place content-stream** redaction. BentoPDF redacts inside the original file. Masquerade writes a redacted PDF for preview.
+- Having `/analyze` (rizzo, Presidio, OpenMed, Censgate REST) or not having it (Z, BentoPDF, packyme `/redact`, Masquerade MCP) is a **door**, not proof the function exists or is missing.
 
 ---
 
 ## Out of scope
 
-No full product audit. No app-code change. No ZPrivacy-lib. No origin/backup/GitHub write. No redteam harness pointed at origin.
+No full product audit. No app-code change. No ZPrivacy-lib. No origin/backup/GitHub write. No redteam harness pointed at origin. No project in the original ten was replaced.
