@@ -37,6 +37,10 @@ study in `Z_COMPARISON.md` (original ten projects). PDF reopen and further
 tooling are out of that delivery. Translation of the study is a later task.
 
 Rizzo and Secret Guard were not started. Secret Guard's table row is filled
-from **codeberg.org/roobai/llm-secretguard v0.3.6** (docs/code), not from a
-local run. Cycle `:5007/analyze` remains a harness path. Comparison sheet:
+from the original-list repository **github.com/luochen1990/secret-guard**
+(`secret-guard-rs` 0.1.0, release v0.1.0 23 Sep 2026), from docs/code, not
+from a local run. Product listen is `127.0.0.1:8787`; cycle `:5007/analyze`
+remains a harness path. codeberg.org/roobai/llm-secretguard v0.3.6 is recorded
+as optional project 11, not as row 10. Z Conversation-value restore after
+process death is tagged **غير محسوم** in `Z_COMPARISON.md`. Comparison sheet:
 `Z_COMPARISON.md`.
