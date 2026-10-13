@@ -85,3 +85,10 @@ After the lead reviewed the Carlos film frame by frame (the hand path on `FarukA
 - One value protected everywhere in the document at once (`protect_all_matches` exists).
 - Undo by one click on the protected word.
 - Detection obeys the same edges: the film shows IBAN «SE45 5000 0000 0583 9825 7466 **on 2**» — the detector swallowed two words of the date; and the reason line called «Ltd» «a German legal form» in an English document. Two detection defects, proposed as a small separate round.
+
+## 13 Oct — the filter, ruled exactly
+
+The owner: **«تحذف فقط إذا متبوعة بمسافة أو مسبوقة بمسافة»** — a mark from the list is left out of the value **only when a space follows it or precedes it**. «Wilson, » → «Wilson»; «"Margaret» after a space → «Margaret»; «Anne-Marie», «O'Brien», «Wilson,person» → untouched, one value each.
+
+- **Lead's reading, to measure and show:** the start and end of a line count as a space (a name at a line's end followed by «.» and the line break loses the dot).
+- **Consequence to show the owner on the glass, not to decide for him:** in a CSV cell «Wilson,person» the comma touches no space, so one click takes «Wilson,person» whole. If he wants the cell's value alone, that is a new ruling, not a reading of this one.
