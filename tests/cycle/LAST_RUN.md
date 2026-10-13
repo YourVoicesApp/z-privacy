@@ -2,8 +2,9 @@
 
 ## Capture server (tools only) — PASS
 
-`bash tests/cycle/run_cycle.sh` earlier, then a live probe of the isolated
-capture on `127.0.0.1:8081` (2026-10-13 02:44).
+Live capture restarted on `127.0.0.1:8081` after the echo-all-tokens fix
+(pid 190902). Mixed probe: both tokens echoed, originals stripped to
+`<LEFT_CLEAR>`, `leftover_clear` recorded, then `POST /reset` → `[]`.
 
 - `POST /v1/chat/completions` `stream: false` → `application/json` with
   `choices[0].message.content` (the field `z_core` `content_of` reads)
@@ -13,24 +14,20 @@ capture on `127.0.0.1:8081` (2026-10-13 02:44).
 - `/analyze` on 5005/5006/5007: **SKIPPED**
 - after the probe, `POST /reset` so the UI cycle starts with `[]`
 
-Do not run `run_cycle.sh` while this capture is bound to 8081: it would
-`/prepare` and clear the log the app is about to fill.
+Default reply (after the tool fix): echo every token in the last user
+message; strip leftover clear; record `leftover_clear`. Do not run
+`run_cycle.sh` while this capture is bound to 8081: it would occupy the
+port and reset the log the app is about to fill.
 
-## Desktop app — not yet a cycle PASS
+## Desktop app — textual cycle done; PDF reopen not yet
 
-Isolated process is running (pid was 111995 at this writing):
+Isolated process (pid was 111995): stamp `z_core 0.1.0 · 2026-10-13 · 61fa27b`.
+Sandbox vault `vault.zv` 992 bytes 03:08, session `sessions/1.zs` (title
+**الاختبار الأول**), 1 identity / 19 values, 0 profiles.
+Protected PDF already under sandbox `Documents/zprivacy/`.
+`GET /requests` is `[]` — Send to Local AI has not hit 8081.
+The seven-token restore was Copy Protected / Paste AI answer, a textual result.
 
-- wrapper: `bash tests/cycle/run_app_isolated.sh`
-- bundle: rebuilt 02:39, hash `a9b9f4e3…`, stamp `z_core 0.1.0 · 2026-10-13 · 61fa27b`
-- `HOME` / `XDG_DATA_HOME` inside `tests/cycle/sandbox/`
-- sandbox has `settings.zcfg` (`first_run_completed=true`, `ui_language=en`)
-  and **no** `vault.zv`
-- AT-SPI tree is the vault form: Passphrase, Confirm passphrase, Create the vault
-- original `~/.local/share/zprivacy/vault.zv` still size 742 mtime 1791828743
-- `GET /requests` is `[]` — the app has not sent yet
+Next UI step: close **only** that isolated window (`MANUAL_UI.md` step 13).
 
-AT-SPI can *read* the Flutter tree. It cannot drive it: `set_text_contents`
-returns true but the match line never appears, extents time out, and there is
-no Wayland click/type tool. Cycle 1–2 stay on `MANUAL_UI.md`.
-
-Rizzo and Secret Guard were not started.
+Rizzo and Secret Guard were not started. Comparison sheet: `Z_COMPARISON.md`.

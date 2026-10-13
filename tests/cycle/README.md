@@ -78,10 +78,12 @@ app, do not run `run_cycle.sh` — it would reset the request log.
 UI steps for the real app (not automated): `MANUAL_UI.md`.
 
 This starts the capture server on `127.0.0.1:8081`, posts one leaky
-chat-completions body, one tokenized body, and one `stream: true` body, and checks that:
+chat-completions body, one tokenized body, one mixed (tokens + leftover
+clear) body, and one `stream: true` body, and checks that:
 
-- raw names/IBANs are logged as leaks and never copied into the reply
-- a confirmed `__Z_…__` token is the only thing substituted for `{{ph}}`
+- every `__Z_…__` token in the last user message is echoed unchanged
+- raw names/IBANs are never copied into the reply
+- leftover clear values are recorded as `leftover_clear` and are not a FAIL
 - `stream: true` is answered as `text/event-stream` (Z itself sends `stream: false`)
 
 Stdlib Python. No pip. No Docker. No real provider.

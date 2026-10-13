@@ -42,8 +42,10 @@ except FileNotFoundError:
 print(f"captured upstream posts: {len(captured)}")
 for i, rec in enumerate(captured, 1):
     leaks = rec.get("leak_detected") or {}
+    left = rec.get("leftover_clear") or []
     print(
         f"  {i}. path={rec.get('path')} placeholder={rec.get('placeholder')!r} "
-        f"ibans={len(leaks.get('ibans') or [])} names={len(leaks.get('names') or [])}"
+        f"ibans={len(leaks.get('ibans') or [])} names={len(leaks.get('names') or [])} "
+        f"leftover_clear={len(left)}"
     )
 PY

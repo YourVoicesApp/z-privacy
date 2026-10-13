@@ -28,6 +28,10 @@ SYNTHETIC_SAFE = (
     "Document: __Z_S1_PERSON_AAA1__ (also seen as __Z_S1_PERSON_AAA1__) met with "
     "__Z_S1_PERSON_BBB2__ in another place. Account: __Z_S1_IBAN_CCC3__"
 )
+SYNTHETIC_MIXED = (
+    "Document: Alice Jensen met __Z_S1_PERSON_AAA1__ in another place with "
+    "Alicia Jensen. Account: IT60X0542811101000000123456 token __Z_S1_IBAN_CCC3__"
+)
 SECRETS = ("Alice Jensen", "Alicia Jensen", "IT60X0542811101000000123456")
 
 
@@ -139,16 +143,7 @@ def main() -> int:
     failures: list[str] = []
     try:
         wait_health(CAPTURE)
-        http_json(
-            "POST",
-            CAPTURE + "/prepare",
-            {
-                "responses": [
-                    {"status": 200, "body": {"content": "RESTORE_OK: {{ph}}"}},
-                    {"status": 200, "body": {"content": "RESTORE_OK: {{ph}}"}},
-                ]
-            },
-        )
+        # Default policy is the UI path. Do not /prepare one-token replies.
 
         # Case 1: a leaky body, as if the product had failed to protect.
         st, leaky_body = chat(CAPTURE, SYNTHETIC_RAW)
@@ -168,15 +163,31 @@ def main() -> int:
         write("safe.status", str(st))
         if st != 200:
             failures.append(f"safe request status {st}")
-        if "__Z_S1_PERSON_AAA1__" not in safe_text:
-            failures.append(f"safe reply did not carry the confirmed token: {safe_text!r}")
+        for tok in ("__Z_S1_PERSON_AAA1__", "__Z_S1_PERSON_BBB2__", "__Z_S1_IBAN_CCC3__"):
+            if tok not in safe_text:
+                failures.append(f"safe reply missing token {tok}: {safe_text!r}")
         for secret in SECRETS:
             if secret in safe_text:
                 failures.append(f"capture put a raw secret into a tokenized reply: {secret}")
 
+        # Case 3: tokens plus leftover clear. Echo every token; never echo originals.
+        # Leftover clear is recorded, not a capture FAIL.
+        st, mixed_body = chat(CAPTURE, SYNTHETIC_MIXED)
+        mixed_text = content_of(mixed_body)
+        write("mixed.response.json", mixed_body)
+        write("mixed.status", str(st))
+        if st != 200:
+            failures.append(f"mixed request status {st}")
+        for tok in ("__Z_S1_PERSON_AAA1__", "__Z_S1_IBAN_CCC3__"):
+            if tok not in mixed_text:
+                failures.append(f"mixed reply missing token {tok}: {mixed_text!r}")
+        for secret in SECRETS:
+            if secret in mixed_text:
+                failures.append(f"mixed reply echoed original value: {secret}")
+
         # Z currently sends stream:false. Prove the mock still answers stream:true
         # with SSE chunks, not a JSON body the streaming client could not parse.
-        st, sse_raw, sse_type = chat(CAPTURE, SYNTHETIC_SAFE, stream=True)
+        st, sse_raw, sse_type = chat(CAPTURE, SYNTHETIC_MIXED, stream=True)
         write("stream.response.txt", sse_raw)
         write("stream.status", str(st))
         if st != 200:
@@ -185,8 +196,9 @@ def main() -> int:
             failures.append(f"stream Content-Type was {sse_type!r}")
         if "data: " not in sse_raw or "[DONE]" not in sse_raw:
             failures.append("stream body was not SSE")
-        if "__Z_S1_PERSON_AAA1__" not in sse_raw:
-            failures.append("stream reply did not carry the confirmed token")
+        for tok in ("__Z_S1_PERSON_AAA1__", "__Z_S1_IBAN_CCC3__"):
+            if tok not in sse_raw:
+                failures.append(f"stream reply missing token {tok}")
         for secret in SECRETS:
             if secret in sse_raw:
                 failures.append(f"stream reply contained a raw secret: {secret}")
@@ -199,8 +211,8 @@ def main() -> int:
         _, captured = http_json("GET", CAPTURE + "/requests")
         write("captured_requests.json", captured)
 
-        if not isinstance(captured, list) or len(captured) < 3:
-            failures.append(f"expected three captured upstream posts, got {captured!r}")
+        if not isinstance(captured, list) or len(captured) < 4:
+            failures.append(f"expected four captured upstream posts, got {captured!r}")
         else:
             leak_flags = captured[0].get("leak_detected") or {}
             if not leak_flags.get("ibans") or not leak_flags.get("names"):
@@ -210,8 +222,14 @@ def main() -> int:
                 failures.append("tokenized capture still listed the raw IBAN as a leak")
             if captured[1].get("placeholder") != "__Z_S1_PERSON_AAA1__":
                 failures.append(f"token not extracted: {captured[1].get('placeholder')}")
-            if captured[2].get("stream") is not True:
-                failures.append("third capture was not marked stream=true")
+            mixed_left = captured[2].get("leftover_clear") or []
+            if "Alice Jensen" not in mixed_left:
+                failures.append(f"mixed leftover_clear missed Alice Jensen: {mixed_left}")
+            mixed_tokens = captured[2].get("placeholders") or []
+            if "__Z_S1_PERSON_AAA1__" not in mixed_tokens or "__Z_S1_IBAN_CCC3__" not in mixed_tokens:
+                failures.append(f"mixed placeholders incomplete: {mixed_tokens}")
+            if captured[3].get("stream") is not True:
+                failures.append("fourth capture was not marked stream=true")
 
         summary = {
             "capture": "PASS" if not failures else "FAIL",
@@ -225,6 +243,8 @@ def main() -> int:
                 "Z Privacy is a Flutter desktop app talking to z_core over FFI.",
                 "Its provider wire is OpenAI-compatible POST /v1/chat/completions.",
                 "Tokens look like __Z_<namespace>_<KIND>_<tail>__, not [FULLNAME_1].",
+                "Default mock echoes every token in the last user message.",
+                "Leftover clear values are recorded, never echoed, never a mock FAIL.",
                 "Driving Import → Protect → Connect → Send in the UI is manual.",
             ],
         }

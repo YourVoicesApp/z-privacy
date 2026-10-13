@@ -5,9 +5,11 @@ Speaks the wire Z Privacy actually uses: POST /v1/chat/completions
 (OpenAI-compatible JSON). There is no /analyze here, because this app
 does not expose one.
 
-Safety: replies never reuse raw names or IBANs found in the request.
-Only confirmed Z tokens of the form __Z_<ns>_<KIND>_<tail>__ are
-substituted into {{ph}}.
+Safety: replies never reuse raw names, emails, or IBANs found in the
+request. Default replies echo every __Z_<ns>_<KIND>_<tail>__ token in the
+last user message, even when leftover clear values remain. Those leftovers
+are recorded on the request as leftover_clear and stripped from the reply.
+Only confirmed Z tokens are substituted into {{ph}}.
 """
 from __future__ import annotations
 
@@ -27,6 +29,8 @@ IBAN_RE = re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{10,30}\b")
 TOKEN_RE = re.compile(r"__Z_[A-Za-z0-9]+_[A-Z]+_[0-9A-Fa-f]+__")
 # Two capitalised words, but not a token fragment.
 NAME_RE = re.compile(r"\b([A-Z][a-z]+ [A-Z][a-z]+)\b")
+EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b")
+LEFT_CLEAR = "<LEFT_CLEAR>"
 
 lock = threading.Lock()
 REQUESTS: list[dict[str, Any]] = []
@@ -46,6 +50,34 @@ def extract_token(text: str) -> str | None:
 
 def extract_tokens(text: str) -> list[str]:
     return TOKEN_RE.findall(text)
+
+
+def leftover_clear_values(text: str, leaks: dict[str, list[str]]) -> list[str]:
+    """Clear values still in the request. Recorded separately; not a mock FAIL."""
+    found: list[str] = []
+    for group in (leaks.get("names") or [], leaks.get("ibans") or [], EMAIL_RE.findall(text)):
+        for item in group:
+            if item and item not in found:
+                found.append(item)
+    return found
+
+
+def redact_originals(text: str, originals: list[str]) -> str:
+    out = text
+    for orig in sorted({o for o in originals if o}, key=len, reverse=True):
+        out = out.replace(orig, LEFT_CLEAR)
+    return out
+
+
+def default_reply_content(asked: str, token: str | None, leftovers: list[str]) -> str:
+    """Echo every actual __Z_…__ token in the last user message, unchanged.
+
+    Leftover clear values stay recorded on the request and are stripped from
+    the reply. They are not treated as a protection failure here.
+    """
+    if asked:
+        return f"RESTORE_OK: {redact_originals(asked, leftovers)}"
+    return f"RESTORE_OK: {token or '<UNKNOWN_TOKEN>'}"
 
 
 def user_content(payload: Any) -> str:
@@ -218,12 +250,14 @@ class Handler(BaseHTTPRequestHandler):
         tokens = extract_tokens(raw)
         asked = user_content(payload)
         stream = wants_stream(payload)
+        leftovers = leftover_clear_values(asked or raw, leaks)
         rec = {
             "method": "POST",
             "path": path,
             "headers": {k: v for k, v in self.headers.items()},
             "body": payload,
             "leak_detected": leaks,
+            "leftover_clear": leftovers,
             "placeholder": token,
             "placeholders": tokens,
             "stream": stream,
@@ -237,14 +271,9 @@ class Handler(BaseHTTPRequestHandler):
             prepared = RESPONSES.popleft() if RESPONSES else None
 
         if prepared is None:
-            # Never echo raw secrets. If the body is already tokenised, repeat
-            # it so a restore in Z can put the real values back locally.
-            if leaks.get("ibans") or leaks.get("names"):
-                content = f"RESTORE_OK: {token or '<UNKNOWN_TOKEN>'}"
-            elif asked:
-                content = f"RESTORE_OK: {asked}"
-            else:
-                content = f"RESTORE_OK: {token or '<UNKNOWN_TOKEN>'}"
+            # Return every token in the last user message, even if names or
+            # IBANs remain in the clear. Never copy those original values.
+            content = default_reply_content(asked, token, leftovers)
             self._reply(content, model, stream)
             return
 
