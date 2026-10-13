@@ -36,4 +36,7 @@ session key. Scope buttons are not used to predict restore.
 study in `Z_COMPARISON.md` (original ten projects). PDF reopen and further
 tooling are out of that delivery. Translation of the study is a later task.
 
-Rizzo and Secret Guard were not started. Comparison sheet: `Z_COMPARISON.md`.
+Rizzo and Secret Guard were not started. Secret Guard's table row is filled
+from **codeberg.org/roobai/llm-secretguard v0.3.6** (docs/code), not from a
+local run. Cycle `:5007/analyze` remains a harness path. Comparison sheet:
+`Z_COMPARISON.md`.
