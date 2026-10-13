@@ -27,6 +27,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
@@ -465,17 +466,24 @@ class _LanguageRoom extends StatelessWidget {
           'only rules allowed. The interface itself is English.',
         ),
         _Card(
-          title: 'Privacy pack',
-          what: 'Which habits the scanner knows: salutations, company forms, the way a customer '
-              'number is written. This is the one with teeth.',
+          title: 'App language',
+          what: 'The language a session is read with when it has none of its own — and which '
+              'habits the scanner knows in it: salutations, company forms, the way a customer '
+              'number is written. A session created with a language of its own keeps that one; '
+              'this is what every other text is read with.',
           child: Wrap(
             spacing: 8,
             children: [
-              for (final p in ground.packs)
+              for (final p in ground.packs.where((p) => offeredLanguages.contains(p.id)))
                 _Pick(
                   label: p.label,
                   on: c.packId == p.id,
-                  onTap: () => ground.saveConfig(_with(c, packId: p.id)),
+                  // **One value, not two** — 080. The first-run screen wrote
+                  // `packId` *and* `language` from one choice; this card wrote
+                  // `packId` alone, so the two could disagree and the product
+                  // would be reading documents in one language while naming
+                  // another. The same choice writes both, here as there.
+                  onTap: () => ground.saveConfig(_with(c, packId: p.id, language: p.id)),
                 ),
             ],
           ),
@@ -695,11 +703,38 @@ class _SessionsRoomState extends State<_SessionsRoom> {
     super.dispose();
   }
 
+  /// **The language this session will be read in** — 080, the owner's first of
+  /// two ways. Null until the first build, then the application's own language,
+  /// which is what «preselected» means: a person who wants that one presses
+  /// nothing.
+  String? _packId;
+
+  /// **Create one, with a name and a language** — 080.
+  ///
+  /// The order is the whole of it, and each step is a different door:
+  ///
+  ///   1. the birth, which takes its language from the bench if there is one —
+  ///      so a session created with a document open starts as that document
+  ///      was read;
+  ///   2. `conversationSetPack`, by the session's **number**, because the
+  ///      choice has to hold whether or not a document is open and
+  ///      `switch_pack` needs a bench. This is the core door 080 added;
+  ///   3. `switchPack` on the bench, only when there is one, so the document in
+  ///      front of the person is re-read in the language of the session it has
+  ///      just joined. Without it the row would say «German» over a document
+  ///      scanned in English — true of the session, false of what is on screen.
   Future<void> _begin() async {
     final name = _name.text.trim();
     if (name.isEmpty || _busy) return;
+    final chosen = _packId ?? appLanguage(widget.ground);
     setState(() => _busy = true);
     final renamed = await widget.ground.beginSession(name, bench: widget.bench);
+    if (renamed != null) {
+      final number = widget.ground.openSession;
+      if (number != null) await widget.ground.setSessionPack(number, chosen);
+      final bench = widget.bench;
+      if (bench != null && mounted) await z.switchPack(session: bench, packId: chosen);
+    }
     if (!mounted) return;
     setState(() {
       _busy = false;
@@ -744,9 +779,19 @@ class _SessionsRoomState extends State<_SessionsRoom> {
           what: 'It becomes the session you are working in straight away. Anything already '
               'protected on the document in front of you is renamed into it — nothing has been '
               'sent yet, so nothing that left is affected.',
-          child: Row(
+          // **A `Wrap`, because this row broke.** The two language picks put it
+          // 66 pixels over the panel's width, measured — a `Row` with an
+          // `Expanded` field looked safe and was not, because the fixed
+          // children are what overflow. Beside the name while there is room,
+          // under it when there is not, and never off the edge: the house's own
+          // lesson about a row with no give, which this round paid for twice.
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Expanded(
+              SizedBox(
+                width: 210,
                 child: TextField(
                   controller: _name,
                   onSubmitted: (_) => _begin(),
@@ -758,7 +803,16 @@ class _SessionsRoomState extends State<_SessionsRoom> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              // **The language, beside the name** — 080: a session's language is
+              // chosen where the session is created, and the application's is
+              // already on. Two for now, from the one list that decides what is
+              // offered anywhere.
+              for (final p in g.packs.where((p) => offeredLanguages.contains(p.id)))
+                _Pick(
+                  label: p.label,
+                  on: (_packId ?? appLanguage(g)) == p.id,
+                  onTap: () => setState(() => _packId = p.id),
+                ),
               ZButton(label: 'Begin', onPressed: _busy ? null : _begin),
             ],
           ),

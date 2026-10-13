@@ -39,7 +39,6 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/core.dart' show coreVersion;
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
-import 'package:zprivacy/widgets/the_session_question.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
 /// **The per-kind tally the protected PDF's footer states — 068.**
@@ -111,15 +110,6 @@ class SendSheet extends StatefulWidget {
   /// Cancel / Back / Continue. Never inside the preview scroller.
   static const footerKey = ValueKey<String>('send-sheet-footer');
 
-  /// The session question, directly above the two exits.
-  ///
-  /// Keyed because what a guard asserts about it is **presence or absence**:
-  /// the strip has three states and they are told apart by which one is there.
-  static const theSessionBand = ValueKey<String>('send-sheet-session-band');
-
-  /// The one field the band carries.
-  static const theSessionName = ValueKey<String>('send-sheet-session-name');
-
   @override
   State<SendSheet> createState() => _SendSheetState();
 }
@@ -133,18 +123,9 @@ class _SendSheetState extends State<SendSheet> {
     // The catalogue, at the moment it is needed: a chooser that opens empty is
     // a chooser nobody can use.
     unawaited(widget.bench.refreshModels());
-    // **The document's name, offered and not imposed.** A pre-filled field
-    // still asks; an empty one in front of the only button that matters is a
-    // stall. It stays the person's to replace — and since 064/D the offer is
-    // only made when the person has not already answered somewhere else: a
-    // word typed in the chat is their own and outranks a file's name.
-    if (widget.ground.sessionNameWished.trim().isEmpty) {
-      widget.ground.wishSessionName(widget.bench.document?.name ?? '');
-    }
   }
 
   final _pasted = TextEditingController();
-  final _nameFocus = FocusNode();
   final _previewScroll = ScrollController();
 
   /// What the birth said, once one has happened at this sheet — the core's own
@@ -266,7 +247,6 @@ class _SendSheetState extends State<SendSheet> {
   @override
   void dispose() {
     _pasted.dispose();
-    _nameFocus.dispose();
     _previewScroll.dispose();
     super.dispose();
   }
@@ -367,17 +347,6 @@ class _SendSheetState extends State<SendSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // **The session question first, and only while it stands.** The
-          // comment this replaces said provider and model come first, because
-          // a person opens this sheet to decide who answers. That holds for
-          // every other visit: this question is asked once, it gates both
-          // exits, and measured below `_ModelAndMode` it began at y 888 on a
-          // 1000-tall window — a question nobody would see without scrolling.
-          // Who answers can also be changed in the panel; this cannot.
-          if (widget.ground.theSessionQuestionStands) ...[
-            _theBand(),
-            const SizedBox(height: 16),
-          ],
           _ModelAndMode(bench: widget.bench, ground: widget.ground, onSettings: widget.onSettings),
           const SizedBox(height: 16),
           if (open > 0) ...[
@@ -437,7 +406,7 @@ class _SendSheetState extends State<SendSheet> {
         style: Zc.small.copyWith(color: Zc.ink4),
       );
     }
-    if (!widget.ground.theSessionQuestionStands) {
+    if (!widget.ground.aSessionWouldBeBorn) {
       // No session, and none that could be born — the keys are in the vault
       // and it is shut. Not a fault and not a warning: a true sentence about
       // this text, and the only thing in this state that would go unsaid.
@@ -446,78 +415,25 @@ class _SendSheetState extends State<SendSheet> {
         style: Zc.small.copyWith(color: Zc.ink4),
       );
     }
-    final named = widget.ground.sessionNameWished.trim();
+    // **«Any door», because there are three** (064/A). It read «either door»
+    // while the exits were the clipboard and the PDF; the send through a key
+    // begins the session too now, and it is the only one of the three that puts
+    // the text on a wire. A sentence that counted the doors wrongly would be a
+    // sentence a person could check — and since 081 it names no name, because
+    // there is none to name until the door is pressed.
     return Text(
-      named.isEmpty
-          // **«Any door», because there are three** (064/A). It read «either
-          // door» while the exits were the clipboard and the PDF; the send
-          // through a key begins the session too now, and it is the only one
-          // of the three that puts the text on a wire. A sentence that counted
-          // the doors wrongly would be a sentence a person could check.
-          ? 'No session yet — name it on the page before; any door here begins it.'
-          : 'Any door here begins session «$named».',
+      'No session yet — any door here begins one.',
       style: Zc.small.copyWith(color: Zc.ink4),
-    );
-  }
-
-  /// **The question, in prose, on the page before the doors** — and the
-  /// placement is a measurement, not a preference.
-  ///
-  /// It was drawn directly above the two exits, which is where the act is. It
-  /// does not fit there. The sheet is capped at 820px tall, so on **every**
-  /// window from 900px up the doors page has the same room — and with no
-  /// provider connected there is **124px** between the last door and the
-  /// bottom of its scroller, measured at 1100×950, against this band's 202px.
-  /// A band there pushed «Open Settings» under the scroll, and since 067 exiled
-  /// the key form from this sheet that door is the only place a key can be
-  /// given: a question about naming would have cost a person their only way to
-  /// connect a model. (At 1280×720 with nothing connected that door is already
-  /// under the scroll **without** anything of mine — a fault that predates this
-  /// work and is reported, not quietly absorbed.)
-  ///
-  /// So the prose is asked here, where the payload's own scroller yields the
-  /// room, directly above the text it is about; the doors page carries one line
-  /// saying what the press will do, and a press with no name comes back to this
-  /// field rather than refusing into a dead end.
-  ///
-  /// **064/D: the words left this file.** The owner put the same question in
-  /// the chat screen, so it is [TheSessionQuestion] now — one wording, one
-  /// answer kept on the ground, and one sentence that differs per surface,
-  /// which is the act that will begin it. The key stays on a wrapper so that
-  /// every guard written against this sheet goes on finding the same band.
-  Widget _theBand() {
-    return KeyedSubtree(
-      key: SendSheet.theSessionBand,
-      child: TheSessionQuestion(
-        ground: widget.ground,
-        fieldKey: SendSheet.theSessionName,
-        focusNode: _nameFocus,
-        // **Every clause is true from here, which is not where it was written
-        // for.** «behind this sheet», not the room's «in front of you»: the
-        // panel stands beside the document, this sheet covers it. «on the page
-        // after this», because the doors are no longer the next thing under
-        // the field. And no number before the act — the count a person is told
-        // is the one the core returns, after the renaming it is counting. The
-        // third act is named too (064/A): a send through a connected key
-        // begins the session as the other two do.
-        closing:
-            'Copy Protected, Save as PDF, or a send to a connected AI — on the '
-            'page after this — begins it. Everything already protected on the '
-            'document behind this sheet is renamed into it — nothing has left '
-            'this machine yet, so nothing that did is affected.',
-      ),
     );
   }
 
   /// A press that took nothing out of the machine, and why, where it happened.
   ///
-  /// The field takes focus while the question is the thing in the way, so the
-  /// next keystroke lands where it is needed. **Refusal is leaving**, which is
-  /// why there is no Cancel in the band: closing this sheet takes nothing out,
-  /// and that is what refusing means here.
+  /// **Refusal is leaving**: closing this sheet takes nothing out, and that is
+  /// what refusing means here. Until 081 this also walked the person back to
+  /// the name field a page earlier — there is no field to walk back to now, and
+  /// no press is refused for want of a word.
   void _nothingLeft(WhatMayLeave out) {
-    final needsAName = widget.ground.theSessionQuestionStands &&
-        widget.ground.sessionNameWished.trim().isEmpty;
     setState(() {
       // **And the clipboard is empty** — 081. `beginThenRead` empties it as its
       // first act, so a refusal can state this instead of hoping for it. The
@@ -526,14 +442,7 @@ class _SendSheetState extends State<SendSheet> {
       // أنه نفس النسخ القديم», which was the owner's own first reading of it.
       _trouble = '${out.refused ?? 'Nothing left the machine.'}\n'
           'Nothing was copied — the clipboard is empty.';
-      // **Back to the question, not a dead end.** The field is one page back
-      // because the prose does not fit above the doors, so the press that
-      // cannot proceed takes the person to the field instead of telling them
-      // to go looking for it. Nothing left the machine — which is what
-      // refusing means here, and why there is no Cancel in the band.
-      if (needsAName) _page = _SheetPage.review;
     });
-    if (needsAName) _nameFocus.requestFocus();
   }
 
   Widget _aiDoors(
@@ -589,7 +498,6 @@ class _SendSheetState extends State<SendSheet> {
                               final out = await beginThenRead(
                                 widget.ground,
                                 widget.bench,
-                                name: widget.ground.sessionNameWished,
                               );
                               if (!mounted) return;
                               if (out.view == null) {
@@ -621,7 +529,6 @@ class _SendSheetState extends State<SendSheet> {
                               final out = await beginThenRead(
                                 widget.ground,
                                 widget.bench,
-                                name: widget.ground.sessionNameWished,
                               );
                               if (!mounted) return;
                               if (out.view == null) {
@@ -742,7 +649,6 @@ class _SendSheetState extends State<SendSheet> {
                                   final out = await beginThenAsk(
                                     widget.ground,
                                     widget.bench,
-                                    name: widget.ground.sessionNameWished,
                                     providerId: p.id,
                                   );
                                   // The State's own `mounted`, not the

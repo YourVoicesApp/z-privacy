@@ -13,6 +13,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/name_review.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -164,12 +165,28 @@ void main() {
 
     await tester.tap(find.byTooltip('Read this document with another rule set'));
     await settle(tester);
-    // Every pack this build carries, named by the core and not by Dart.
-    for (final p in packs) {
+    // **Named by the core and not by Dart, and offered by one list** — 080.
+    //
+    // This menu writes the open session's language through `switch_pack`
+    // (075d), so it is a third door to the same value as the room's choice and
+    // the app-language card: it may not offer what those two do not. The owner
+    // began with two. So every *offered* pack is named here, by the core's own
+    // label — and a pack the core carries but 080 does not offer is not, which
+    // is the half that makes the first half a measurement.
+    final offered = packs.where((p) => offeredLanguages.contains(p.id)).toList();
+    final kept = packs.where((p) => !offeredLanguages.contains(p.id)).toList();
+    expect(offered.length, greaterThan(1), reason: 'fewer than two languages are offered');
+    expect(kept, isNotEmpty,
+        reason: 'the core carries only what is offered, so «not offered» cannot be seen');
+    for (final p in offered) {
       expect(find.text(p.label), findsWidgets, reason: '«${p.label}» is missing from the list');
     }
+    for (final p in kept) {
+      expect(find.text(p.label), findsNothing,
+          reason: '«${p.label}» is in the core and not offered, and the menu offers it anyway');
+    }
 
-    final other = packs.firstWhere((p) => p.id != bench.packId);
+    final other = offered.firstWhere((p) => p.id != bench.packId);
     await tester.tap(find.text(other.label).last);
     await settle(tester, rounds: 8);
     expect(bench.packId, other.id, reason: 'choosing a rule set did not switch to it');

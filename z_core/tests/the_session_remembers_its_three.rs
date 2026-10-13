@@ -805,3 +805,109 @@ fn only_what_the_vault_kept_comes_back_when_the_document_opens_again() {
 
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+// -------------------------------------------------------- the language, by number
+//
+// 080 · «ما ينطبق على الوثائق ينطبق على الشات» — one rule for both doors, and
+// two ways only to a session's language: chosen when the session is created, or
+// the application's.
+//
+// **The owner's field run, 13 Oct 2026:** a German PDF dragged in gave 7
+// findings; the same text pasted into the chat gave 0. The chat door read the
+// application's pack and never asked the session, so a German conversation was
+// read with an English eye and only the general rules were left.
+//
+// The first of his two ways needs a door this core did not have. `switch_pack`
+// takes a **bench**: it switches that bench's language and writes it into
+// whichever session is open. A session can be created with nothing open — and
+// the owner's rule has no condition on it — so the choice had nowhere to be
+// written. `conversation_set_pack` writes it by the number that is the
+// session's identity, touching no bench and rescanning nothing.
+
+/// A German line of our own rather than a fixture: the salutation and the
+/// labelled customer number are what a German pack knows and an English one
+/// does not, which is the whole of what is being measured.
+const GERMAN: &str = "Sehr geehrte Frau Anna Weber, Ihre Kundennummer 4711 ist notiert.";
+
+/// How much one pack finds in that line.
+fn found_with(pack: &str) -> u32 {
+    let bench = Bench(open_session(None, pack.to_string()).expect("open"));
+    import_text(bench.0, GERMAN.to_string()).expect("import");
+    let report = scan(bench.0).expect("scan");
+    report.auto + report.suggested
+}
+
+/// **A session's language can be written with nothing open, and it is the
+/// language its documents are then read with** — 080.
+#[test]
+fn a_language_written_with_no_document_open_is_the_one_the_document_is_read_with() {
+    let _guard = serial();
+    let dir = fresh_vault("by-number");
+
+    let born = conversation_begin("a session before any file".to_string(), None).expect("begin");
+    assert_eq!(born.pack_id, None, "a birth with no bench invented a language");
+
+    conversation_set_pack(born.number, "de".to_string()).expect("write the language");
+    assert_eq!(
+        row(born.number).pack_id.as_deref(),
+        Some("de"),
+        "the language was written by number and the session does not carry it"
+    );
+
+    // It is in the vault, not in memory: the write resealed the file.
+    vault_lock().expect("lock");
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
+    assert_eq!(
+        row(born.number).pack_id.as_deref(),
+        Some("de"),
+        "the language written by number did not outlive the application"
+    );
+
+    // **And the measurement that makes the write matter**, which is the owner's
+    // own finding in the core's terms: the same words, two languages, two
+    // different numbers of findings. Without this the assertions above would
+    // hold for a value nothing reads.
+    let german = found_with("de");
+    let english = found_with("en");
+    assert!(
+        german > english,
+        "the same German line gives {german} findings in German and {english} in English, \
+         so the session's language decides nothing and 080 is measuring a label"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **A language this build has never heard of is refused by its name.**
+///
+/// Not folded into the application's language: a door that quietly does the
+/// opposite of what it was asked is how a screen offering two languages while
+/// the core knows four becomes a silent third source.
+#[test]
+fn a_language_this_build_does_not_know_is_refused_by_name() {
+    let _guard = serial();
+    let dir = fresh_vault("unknown-pack");
+
+    let born = conversation_begin("a session".to_string(), None).expect("begin");
+    let refused = conversation_set_pack(born.number, "xq".to_string());
+    match refused {
+        Err(ApiError::NotFound { reason }) => assert!(
+            reason.contains("xq"),
+            "the refusal does not name the language that was asked for: {reason}"
+        ),
+        other => panic!("an unknown language was accepted or refused wrongly: {other:?}"),
+    }
+    assert_eq!(
+        row(born.number).pack_id, None,
+        "a refused language was written anyway"
+    );
+
+    // 041-Q, in the same breath: a language with **no dictionary of its own**
+    // is still a language — the general rules, the vault and the person's own
+    // list do the work — so the refusal above is about a code this build has
+    // never heard of, and nothing else.
+    conversation_set_pack(born.number, "sv".to_string()).expect("a pack with no rules of its own");
+    assert_eq!(row(born.number).pack_id.as_deref(), Some("sv"));
+
+    let _ = std::fs::remove_dir_all(&dir);
+}

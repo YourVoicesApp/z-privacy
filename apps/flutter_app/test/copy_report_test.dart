@@ -93,8 +93,13 @@ void main() {
     await tester.tap(find.byType(CopyReportButton));
     await settle(tester);
 
-    expect(copied, hasLength(1), reason: 'the press copied nothing');
-    final text = copied.single;
+    // **Emptied first, then written** — 081. The old reading was «one write»,
+    // and the `await` used to sit inside the `setData` call, so a `reportText()`
+    // that threw wrote nothing and left the clipboard holding whatever was
+    // there before: the owner's leak, in another seat.
+    expect(copied, hasLength(2), reason: 'the press copied ${copied.length} times');
+    expect(copied.first, '', reason: 'the press did not empty the clipboard first');
+    final text = copied.last;
 
     // What the core says, word for word — not one figure worked out in Dart.
     late final String fromCore;

@@ -326,6 +326,22 @@ pub(crate) fn document_matches(bench: SessionId) -> ApiResult<Option<bool>> {
     })
 }
 
+/// **The session's language, written by number** — 080, and the whole of it is
+/// the refusal and one write.
+///
+/// `known` rather than `has_rules`: 041-Q settled that a language with no
+/// dictionary of its own is still a language — the general rules, the vault and
+/// the person's own list do the work — so what is refused here is a code this
+/// build has never heard of, and nothing else.
+pub(crate) fn set_pack(number: u32, pack_id: String) -> ApiResult<()> {
+    if !crate::scanner::languages::known(&pack_id) {
+        return Err(ApiError::NotFound {
+            reason: format!("«{pack_id}» is not a language this build knows"),
+        });
+    }
+    with_core(|core| core.vault.set_pack(number, &pack_id))
+}
+
 // ------------------------------------------------------------------ the inside
 
 /// Give one bench the open session's names, and say how many moved.

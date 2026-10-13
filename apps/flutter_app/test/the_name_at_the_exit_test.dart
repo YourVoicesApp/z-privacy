@@ -218,73 +218,6 @@ void main() {
     await RustLib.init();
   });
 
-  // ------------------------------------------------------------------ guard 1
-  testWidgets('the question stands on the page before the doors, and gates neither',
-      (tester) async {
-    await tester.binding.setSurfaceSize(_wide);
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    // **On the review page, not above the doors** — and that is a measured
-    // placement, not a preference: the prose band is 202px and the doors page
-    // has 124px of room with nothing connected, where it cost «Open Settings»
-    // its place under the scroll. See `_theBand`'s own comment, and guard 8.
-    final g = await _atTheDoors(tester, 'band', toTheDoors: false);
-
-    expect(g.ground.vault, VaultState.unlocked, reason: 'the fixture has no vault');
-    expect(g.ground.openSession, isNull, reason: 'the fixture already opened a session');
-
-    // The sentence, scoped to the sheet — not `find.text` loose in the tree.
-    expect(
-      find.descendant(
-        of: find.byType(SendSheet),
-        matching: find.textContaining('has no session yet'),
-      ),
-      findsOneWidget,
-      reason: 'the sheet does not say that these names belong to no session',
-    );
-    // The room's hint, word for word: two doors, one birth, one question.
-    expect(find.textContaining('What is this one about?'), findsOneWidget,
-        reason: 'the field does not ask the room’s question');
-    expect(find.textContaining('behind this sheet'), findsOneWidget,
-        reason: 'the sentence is not true from where it is read');
-
-    // **In the tree is not on the glass.** A rect with a size, inside the
-    // sheet's own box, inside the view.
-    final band = find.byKey(SendSheet.theSessionBand);
-    expect(band, findsOneWidget, reason: 'no band at all');
-    final r = tester.getRect(band);
-    final sheet = tester.getRect(find.byType(SendSheet));
-    expect(r.width, greaterThan(100), reason: 'the band has no width');
-    expect(r.height, greaterThan(40), reason: 'the band has no height');
-    expect(r.left >= sheet.left - 0.5 && r.right <= sheet.right + 0.5, isTrue,
-        reason: 'the band is $r, outside the sheet $sheet');
-    expect(r.top >= sheet.top - 0.5 && r.bottom <= sheet.bottom + 0.5, isTrue,
-        reason: 'the band is $r, outside the sheet $sheet');
-    expect(r.right <= _wide.width && r.bottom <= _wide.height, isTrue,
-        reason: 'the band is $r, off a ${_wide.width}×${_wide.height} view');
-
-    // ---------------------------------------------------------------- guard 2
-    // Onward to the doors: the question does not follow in prose, it follows
-    // as one line that says what the press will do — and **both doors are live
-    // in the same pump.** The question asks; it does not gate. Break: make it
-    // a gate and watch this go red.
-    await tester.tap(find.text('Continue'));
-    await _settle(tester);
-    expect(find.byKey(SendSheet.theSessionBand), findsNothing,
-        reason: 'the prose band followed to the doors page, where it does not fit');
-    // «any door here», since 064/A: the exits are three, the send through a
-    // key among them, and a line that counted two was a line a person could
-    // check and find wrong.
-    expect(find.textContaining('any door here begins it'), findsOneWidget,
-        reason: 'the doors page says nothing about the session the press will begin');
-    for (final label in ['Copy Protected', 'Save as PDF']) {
-      expect(
-        tester.widget<ZButton>(find.widgetWithText(ZButton, label)).onPressed,
-        isNotNull,
-        reason: '«$label» is dead while the question stands, so the band is a gate',
-      );
-    }
-  });
-
   // ------------------------------------------------------------------ guard 3
   testWidgets('a session open: no question, and the line says whose names these are',
       (tester) async {
@@ -300,8 +233,6 @@ void main() {
     await tester.runAsync(() => g.bench.refresh());
     await _settle(tester);
 
-    expect(find.byKey(SendSheet.theSessionBand), findsNothing,
-        reason: 'the question is asked again although a session is open');
     expect(
       find.descendant(
         of: find.byType(SendSheet),
@@ -311,8 +242,11 @@ void main() {
       reason: 'the sheet does not name the session whose names are about to leave',
     );
     // This is the guard that proves the two states are **distinguishable**,
-    // which is the whole reason the small line exists.
-    expect(find.textContaining('has no session yet'), findsNothing);
+    // which is the whole reason the small line exists. The band's own «this
+    // conversation has no session yet» went with the field in 081; what is
+    // left is the sheet's one line, and it must not say both things.
+    expect(find.textContaining('No session yet'), findsNothing,
+        reason: 'the sheet says a session is open and that there is none');
   });
 
   // ------------------------------------------------------------------ guard 4
@@ -350,17 +284,17 @@ void main() {
     final probe = _ClipboardProbe(tester)..install();
     probe.text = _letter;
     final g = await _atTheDoors(tester, 'nameless', toTheDoors: false);
-    expect(find.byKey(SendSheet.theSessionBand), findsOneWidget,
+    expect(g.ground.aSessionWouldBeBorn, isTrue,
         reason: 'the fixture already has a session, so nothing here is a birth');
 
     // Read before the act: the birth renames every token on the bench, and the
     // text that leaves must wear the new names and none of these.
     final beforeTheBirth = g.bench.tokens.first.token;
 
-    // Whitespace, not emptiness: a field holding three spaces is the same
-    // «nobody named this» as an empty one, and the core cleans before it judges.
+    // **Nothing is typed, because there is nowhere to type it** — 081: the
+    // owner had the field deleted. The exit takes no name at all.
     final out = await tester.runAsync(
-      () => beginThenRead(g.ground, g.bench, name: '   '),
+      () => beginThenRead(g.ground, g.bench),
     );
     await _settle(tester);
 
@@ -391,11 +325,10 @@ void main() {
     expect(out.view!.session?.number, born,
         reason: 'the payload belongs to another session than the one just born');
 
-    // The question is answered by the act, so it is no longer asked.
-    expect(find.byKey(SendSheet.theSessionBand), findsNothing,
-        reason: 'the band still asks for a session that now exists');
     expect(find.textContaining('Give it a name first'), findsNothing,
         reason: 'the refusal the owner met is still on the glass');
+    expect(find.textContaining('name it on the page before'), findsNothing,
+        reason: 'the sheet still points at a field that does not exist');
 
     // **The control: the press itself still copies.** With the session now
     // open no core call is awaited, so a real tap resumes — and the clipboard
@@ -443,7 +376,7 @@ void main() {
     // The birth through the ground, for the reason guard 4 gives; then the
     // press itself, which from here awaits no core call and resumes.
     final out = await tester.runAsync(
-      () => beginThenRead(g.ground, g.bench, name: ''),
+      () => beginThenRead(g.ground, g.bench),
     );
     expect(out!.refused, isNull, reason: 'the nameless exit was refused: ${out.refused}');
     await tester.runAsync(() => g.bench.refresh());
@@ -530,15 +463,18 @@ void main() {
     expect(before.text.contains(beforeToken), isTrue, reason: 'the fixture protects nothing');
 
     final out = await tester.runAsync(
-      () => beginThenRead(g.ground, g.bench, name: 'VAT questions'),
+      () => beginThenRead(g.ground, g.bench),
     );
     expect(out, isNotNull, reason: 'runAsync could not run the order at all');
     expect(out!.view, isNotNull, reason: 'nothing may leave: ${out.refused}');
 
     final view = out.view!;
-    // Provenance: the text that would leave says which session it belongs to.
-    expect(view.session?.name, 'VAT questions',
-        reason: 'the text that would leave belongs to no session');
+    // Provenance: the text that would leave says which session it belongs to —
+    // and since 081 that session is named by its own number, because the exit
+    // has no name to give it and asks for none.
+    expect(view.session, isNotNull, reason: 'the text that would leave belongs to no session');
+    expect(view.session!.name, nameForSession(view.session!.number),
+        reason: 'the session the text belongs to is not named by its own number');
     // And what actually leaves: not one pre-birth name among it. This is the
     // property the core holds from its own end; here it is held of the string
     // the exit would put on the clipboard.
@@ -561,7 +497,7 @@ void main() {
     expect(g.bench.tokens, isEmpty,
         reason: 'the fixture protects something, so this is not the zero case');
 
-    final out = await beginThenRead(g.ground, g.bench, name: 'nothing in it');
+    final out = await beginThenRead(g.ground, g.bench);
     expect(out.view, isNotNull, reason: 'nothing may leave: ${out.refused}');
     expect(out.renamed, 0);
     expect(out.said, contains('needed renaming'),
@@ -582,15 +518,13 @@ void main() {
   // «Direct API» 34px under the fold. The three doors' titles are asserted,
   // not the buttons, because a title is the door's own anchor and a scrolled
   // door is a door a person has to look for.
-  testWidgets('the question standing leaves every door on the glass at 1280×720',
+  testWidgets('with no session yet, every door is on the glass at 1280×720',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final g = await _atTheDoors(tester, 'small');
-    expect(g.ground.theSessionQuestionStands, isTrue,
-        reason: 'the question does not stand, so this measures nothing');
-    expect(find.byKey(SendSheet.theSessionBand), findsNothing,
-        reason: 'the prose band is on the doors page again — the 202px that cost a door');
+    expect(g.ground.aSessionWouldBeBorn, isTrue,
+        reason: 'a session is already open, so this is not the state being measured');
 
     final view = tester.binding.renderViews.first.size;
     for (final label in ['Manual AI', 'Paste AI answer', 'Direct API']) {
@@ -600,7 +534,7 @@ void main() {
       expect(
         r.top >= -1 && r.bottom <= view.height + 1 && r.height > 8,
         isTrue,
-        reason: '«$label» at $r is off a $view window while the question stands',
+        reason: '«$label» at $r is off a $view window with no session open',
       );
     }
     expect(g.ground.openSession, isNull);
@@ -621,7 +555,7 @@ void main() {
   // absorbed: at **1280×720 with nothing connected that door is already under
   // the scroll with nothing of mine on the page** — switched off entirely and
   // the press still missed. That fault predates 064.
-  testWidgets('with the question standing, the settings door still answers',
+  testWidgets('with no session yet, the settings door still answers',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 950));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -640,8 +574,8 @@ void main() {
     await _settle(tester);
     await tester.tap(find.text('Continue'));
     await _settle(tester);
-    expect(made.ground.theSessionQuestionStands, isTrue,
-        reason: 'the question does not stand, so this measures nothing');
+    expect(made.ground.aSessionWouldBeBorn, isTrue,
+        reason: 'a session is already open, so this is not the state being measured');
 
     final door = find.widgetWithText(ZButton, 'Open Settings');
     expect(door, findsWidgets, reason: 'no way to reach the one place a key is given');
@@ -659,10 +593,8 @@ void main() {
     final g = await _atTheDoors(tester, 'novault', withAVault: false);
 
     expect(g.ground.vault, isNot(VaultState.unlocked));
-    // A question that cannot be answered is not asked: the keys are in the
-    // vault, so no session could be born for this press to belong to.
-    expect(find.byKey(SendSheet.theSessionBand), findsNothing,
-        reason: 'the sheet asks for a session the shut vault cannot make');
+    expect(g.ground.aSessionWouldBeBorn, isFalse,
+        reason: 'the shut vault could still make a session, so this measures nothing');
     expect(find.textContaining('made for this document alone'), findsOneWidget,
         reason: 'nothing says these names belong to no session');
 

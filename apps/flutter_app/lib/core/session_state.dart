@@ -10,7 +10,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:zprivacy/core/the_clipboard.dart';
 
 // Prefixed on purpose: every line below that says `z.` is a call into Rust, and
 // the prefix makes that visible when reading the file rather than guessing.
@@ -131,28 +131,6 @@ class Ground extends ChangeNotifier {
   ConversationRow? get openSessionRow =>
       sessions.where((s) => s.number == openSession).firstOrNull;
 
-  /// **The name a person has typed for a session that does not exist yet** —
-  /// 064/D.
-  ///
-  /// A wish, not a session: only an exit may begin one, and nothing here calls
-  /// the core. It lives on the ground because the owner put the question in two
-  /// places on 9 October — the chat screen and the review page — and «the name
-  /// is asked once» can only hold if the two surfaces share one answer. A
-  /// person who names their work in the chat finds their own word in the sheet.
-  ///
-  /// It is not cleared when a session is born: `theSessionQuestionStands` goes
-  /// false and no surface asks again, and keeping the word costs nothing and
-  /// loses nothing if the vault is locked and the question returns.
-  String sessionNameWished = '';
-
-  void wishSessionName(String name) {
-    if (name == sessionNameWished) return;
-    sessionNameWished = name;
-    // **No notify.** Every keystroke would rebuild two screens, and nothing on
-    // the glass reads this except the field the person is typing in — the
-    // sheet's own strip reads it when it builds, which is after a press.
-  }
-
   /// **Does the session question still stand?** — 064.
   ///
   /// One source for the two places that must agree: the band at an exit asks
@@ -161,12 +139,35 @@ class Ground extends ChangeNotifier {
   /// disagree about whether a person was ever asked.
   ///
   /// The vault is in it because the keys are. With it shut there is no session
-  /// to open and none that could be born, so a band asking for a name would
-  /// promise something the core would refuse. Protection itself never needed
-  /// the vault — which is why the exits stay live in that state, and say
-  /// instead that these names belong to no session.
-  bool get theSessionQuestionStands =>
+  /// to open and none that could be born. Protection itself never needed the
+  /// vault — which is why the exits stay live in that state, and say instead
+  /// that these names belong to no session.
+  ///
+  /// **It was `theSessionQuestionStands` until 081.** There is no question any
+  /// more: the owner had the field deleted — «نريد أن نحذف أي إضافات بلا
+  /// معنى… أبسط من البساطة ذاتها» — and a press that needs a session gets one
+  /// called «Session N». What the predicate answers is what it always
+  /// computed, so it says that now.
+  bool get aSessionWouldBeBorn =>
       vault == VaultState.unlocked && openSession == null;
+
+  /// **Write a session's language, by its number** — 080.
+  ///
+  /// The core's own door, added for the one case `switchPack` cannot serve: a
+  /// session created with no document open. It touches no bench and rescans
+  /// nothing, so a caller with a document in front of the person switches that
+  /// bench as well, and the two writes say the same thing.
+  Future<bool> setSessionPack(int number, String packId) async {
+    try {
+      await z.conversationSetPack(number: number, packId: packId);
+      await refresh();
+      return true;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+      return false;
+    }
+  }
 
   /// **Begin one.** The name is asked where the press happened — in the panel
   /// for a deliberate clean break, at the exit for a person who never pressed
@@ -1594,6 +1595,33 @@ String importSaid(NameImport report) {
   return '$said\n${columnsNotUsedSaid(report.columnsNotUsed)}';
 }
 
+/// **The application's own language** — 080, and the only place the config's
+/// pack is read.
+///
+/// The owner's two ways to a session's language are «chosen when the session is
+/// created» and «the application's», and there is no third. This is the second
+/// of them, and it is a function rather than a field read in four places
+/// because the four places were the defect: the chat door read the config
+/// itself and never asked the session, so a German conversation was read with
+/// an English eye — 7 findings from a file, 0 from the same text pasted.
+///
+/// The fallback of the fallback is German, which is where this product started
+/// and the only honest guess when a config has not been read yet.
+String appLanguage(Ground ground) => ground.config?.packId ?? 'de';
+
+/// **Which language reads the next text, whatever door it came through** — 080.
+///
+/// One function, and both doors call it: the chat and a file are not two
+/// worlds. «ما ينطبق على الوثائق ينطبق على الشات».
+///
+/// Nobody is asked anything. Until 080 the file door asked «which language is
+/// this document?» whenever the session had none, which was 075d's rule — and
+/// the owner replaced it: a session's language is chosen when the session is
+/// created, or it is the application's. A question at the file door is a third
+/// source, and a third source is how two doors come to disagree.
+String packForTheNextText(Ground ground) =>
+    ground.openSessionRow?.packId ?? appLanguage(ground);
+
 /// The provisional name a nameless birth is begun with, before the core's
 /// number is known. One word, and never left behind as a lie: the rename that
 /// follows it turns it into [nameForSession].
@@ -1667,10 +1695,12 @@ class WhatMayLeave {
 /// owner's rule puts the session's birth inside it: the name is asked once,
 /// where the text leaves. The order is the whole of the correctness:
 ///
-///   0. **the clipboard is emptied** — before the name, the session or the
-///      payload is so much as looked at (081, the owner's root rule);
-///   1. no name typed → **a session is born called «Session N»**, by the core's
-///      own number (081); nothing is refused for want of a word;
+///   0. **the clipboard is emptied** — before the session or the payload is so
+///      much as looked at (081, the owner's root rule);
+///   1. no session open → **one is born, called «Session N»** by the core's own
+///      number (081). Nothing is asked and nothing is refused: the exit has no
+///      name to take, because the owner had the field deleted and left naming
+///      to the rename control in the sessions list;
 ///   2. `beginSession(name, bench:)` — **with the bench**, which the core now
 ///      refuses to do without (064f): a birth that names no document renames
 ///      nothing, and the text would then leave wearing pre-birth names while
@@ -1729,21 +1759,19 @@ class WhatMayLeave {
 Future<WhatMayLeave> beginThenRead(
   Ground ground,
   Workbench bench, {
-  required String name,
   bool thePayloadLeaves = true,
 }) async {
-  // Step 0. Nothing above this line, ever.
-  await Clipboard.setData(const ClipboardData(text: ''));
+  // Step 0. Nothing above this line, ever — and the rule itself lives in
+  // `the_clipboard.dart`, where its five seats can read one copy of it.
+  await emptyTheClipboardFirst();
   int? renamed;
   String? said;
-  if (ground.theSessionQuestionStands) {
-    // **Step 1 is no longer a refusal** — 081, the owner's first ruling. An
-    // empty field is not a question still open; it is a person who wants their
-    // text out and does not care what the drawer is called. They get «Session
-    // N» and can rename it in the sessions list, where the owner put rename.
-    renamed = name.trim().isEmpty
-        ? await ground.beginSessionItNames(bench: bench.session)
-        : await ground.beginSession(name, bench: bench.session);
+  if (ground.aSessionWouldBeBorn) {
+    // **Step 1 is not a refusal, and not a question** — 081. A person pressing
+    // an exit wants their text out and is not asking to be interviewed about
+    // what the drawer is called. They get «Session N», and the sessions list
+    // is where they give it their own word if they ever want to.
+    renamed = await ground.beginSessionItNames(bench: bench.session);
     if (renamed == null) {
       return WhatMayLeave(
         refused: ground.trouble ??
@@ -1834,16 +1862,10 @@ Future<WhatMayLeave> beginThenRead(
 Future<WhatMayLeave> beginThenAsk(
   Ground ground,
   Workbench bench, {
-  required String name,
   required String providerId,
 }) async {
   final original = bench.sendOriginal;
-  final out = await beginThenRead(
-    ground,
-    bench,
-    name: name,
-    thePayloadLeaves: !original,
-  );
+  final out = await beginThenRead(ground, bench, thePayloadLeaves: !original);
   if (out.refused != null) return out;
   final bad = original
       ? await bench.askModelWithTheOriginal(

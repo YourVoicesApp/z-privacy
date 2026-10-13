@@ -21,6 +21,8 @@ import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/widgets/language_list.dart';
+import 'package:zprivacy/core/the_clipboard.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
@@ -576,7 +578,7 @@ class _TopBar extends StatelessWidget {
             enabled: !bench.busy && ground.packs.isNotEmpty,
             onSelected: (id) => bench.switchPack(id),
             itemBuilder: (_) => [
-              for (final p in ground.packs)
+              for (final p in ground.packs.where((p) => offeredLanguages.contains(p.id)))
                 PopupMenuItem<String>(
                   value: p.id,
                   child: Row(
@@ -591,17 +593,23 @@ class _TopBar extends StatelessWidget {
                     ],
                   ),
                 ),
-              // A line, and under it every other language. The owner, 6
-              // October: the list shows both, and the line is what tells them
-              // apart — and since 041-Q both halves can be chosen, because a
-              // language with no dictionary still has the general rules, the
-              // vault, and the person's own list. The list is the core's.
+              // A line, and under it every other language **that is
+              // offered**. The owner, 6 October: the list shows both, and the
+              // line is what tells them apart — and since 041-Q both halves can
+              // be chosen, because a language with no dictionary still has the
+              // general rules, the vault, and the person's own list. The list is
+              // the core's, filtered by what 080 offers: this menu writes the
+              // open session's language through `switch_pack`, so it is a third
+              // door to the same value and may not offer what the other two do
+              // not. Nothing is deleted — the packs are in the core, and the
+              // day a third is offered one list changes.
               const PopupMenuDivider(),
               PopupMenuItem<String>(
                 enabled: false,
                 child: Text('General rules only', style: Zc.tiny),
               ),
-              for (final other in ground.languages.where((l) => !l.hasRules))
+              for (final other in ground.languages
+                  .where((l) => !l.hasRules && offeredLanguages.contains(l.id)))
                 PopupMenuItem<String>(
                   value: other.id,
                   child: Row(
@@ -728,7 +736,13 @@ class _TopBar extends StatelessWidget {
             CopyReportButton(
               compact: true,
               onCopy: () async {
-                await Clipboard.setData(ClipboardData(text: await bench.reportText()));
+                // The emptying first, and the report read into a name of its
+                // own: with the `await` inside the call, a `reportText()` that
+                // threw wrote nothing and left the clipboard holding whatever
+                // was there — the same shape as the owner's 12 October leak.
+                await emptyTheClipboardFirst();
+                final report = await bench.reportText();
+                await Clipboard.setData(ClipboardData(text: report));
               },
             ),
           ],

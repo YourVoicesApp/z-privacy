@@ -74,6 +74,83 @@ else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
 fi
 
+# ---------------------------------------------------------------- G27
+# **One rule decides which language reads a text** — 080.
+#
+# The owner, 13 Oct 2026, from his own run: a German PDF dragged in gave 7
+# findings; the same text pasted into the chat gave 0. The two doors read the
+# same words with two different languages — the file door asked the session,
+# the chat door read `config.packId` and never looked at a session at all. One
+# rule written at one door and never applied to its sibling, which is this
+# project's most expensive trap.
+#
+# So: the app's language is read in exactly one function, every other surface
+# asks that function, and both doors take the language of the next text from
+# one place. A second reader of the config's pack is how this defect was built.
+G27_READS=$(grep -Rn "config?\.packId\|config!\.packId" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+            | grep -v '/src/rust/' | grep -vE ':[0-9]+: *//' || true)
+G27_N=$(printf '%s\n' "$G27_READS" | grep -c . || true)
+if [ "$G27_N" = "1" ] && printf '%s' "$G27_READS" | grep -q 'core/session_state.dart'; then
+  pass "G27 the app's language is read in one place, and it is the ground's own function"
+else
+  fail "G27 the config's pack is read in $G27_N place(s), expected one in core/session_state.dart:"
+  printf '%s\n' "$G27_READS" | sed 's/^/        /'
+fi
+
+# And both doors ask one function for the language of the next text.
+G27_DOORS=$(grep -n 'packForTheNextText' "$FLUTTER_LIB/screens/shell.dart" 2>/dev/null || true)
+if [ "$(printf '%s\n' "$G27_DOORS" | grep -c .)" -ge 2 ]; then
+  pass "G27 the chat door and the file door take their language from one function"
+else
+  fail "G27 only $(printf '%s\n' "$G27_DOORS" | grep -c .) door(s) in shell.dart ask packForTheNextText — the other one decides for itself"
+fi
+
+# ---------------------------------------------------------------- G26
+# **Every press that writes the clipboard empties it first** — 081.
+#
+# The owner's root rule: «العمل دائماً يحدث على حافظة نظيفة». His 12 October
+# leak was not something the app wrote, it was what the app *left*: a refusal
+# at the exit wrote nothing, erased nothing, and the German letter he had
+# copied minutes earlier was still there to be pasted into a model.
+#
+# «Clear it when the copy fails» is a branch, and a branch is a thing every
+# refusal written from now on has to remember. So the emptying is one function,
+# and this gate refuses any surface that writes the clipboard without calling
+# it — the shape that let one door be fixed and four be forgotten.
+CLIP_HOME=apps/flutter_app/lib/core/the_clipboard.dart
+if [ ! -f "$CLIP_HOME" ]; then
+  fail "G26 $CLIP_HOME is gone — the rule has no home, so it has no single copy"
+else
+  # One emptying in the whole interface, and it is in that file.
+  EMPTYINGS=$(grep -Rn "ClipboardData(text: '')" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null               | grep -v '/src/rust/' || true)
+  if [ "$(printf '%s\n' "$EMPTYINGS" | grep -c "^$CLIP_HOME:")" = "1" ] \
+     && [ "$(printf '%s\n' "$EMPTYINGS" | grep -c .)" = "1" ]; then
+    pass "G26 the clipboard is emptied in one place, and it is the rule's own file"
+  else
+    fail "G26 the emptying is written in more than one place, or not in $CLIP_HOME:"
+    printf '%s\n' "$EMPTYINGS" | sed 's/^/        /'
+  fi
+
+  # And every surface that writes it calls that one function.
+  WRITERS=$(grep -Rl 'Clipboard.setData' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+            | grep -v '/src/rust/' | grep -v "^$CLIP_HOME$" | sort || true)
+  CLIP_BAD=""
+  for f in $WRITERS; do
+    # Either the surface empties it itself, or its write is reached through
+    # `beginThenRead`, whose step 0 is the emptying and nothing above it. The
+    # send sheet is the second kind: the order of an exit lives in the helper
+    # all three exits share, where a guard can drive it, and the press is one
+    # line that takes what it is handed.
+    grep -qE 'emptyTheClipboardFirst|beginThenRead' "$f" || CLIP_BAD="$CLIP_BAD $f"
+  done
+  if [ -z "$CLIP_BAD" ]; then
+    pass "G26 every surface that writes the clipboard empties it first ($(printf '%s' "$WRITERS" | grep -c .) seat(s))"
+  else
+    fail "G26 a surface writes the clipboard without emptying it first:"
+    for f in $CLIP_BAD; do printf '        %s\n' "$f"; done
+  fi
+fi
+
 # ---------------------------------------------------------------- G25
 # A sentence a person reads is one line of prose, not a wrapped literal.
 #
@@ -960,7 +1037,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          text_the_person_typed_says_there_was_no_file \
          the_report_still_names_no_file_though_the_session_knows_it \
          a_reopened_session_names_every_value_it_cannot_bring_back \
-         only_what_the_vault_kept_comes_back_when_the_document_opens_again; do
+         only_what_the_vault_kept_comes_back_when_the_document_opens_again \
+         a_language_written_with_no_document_open_is_the_one_the_document_is_read_with \
+         a_language_this_build_does_not_know_is_refused_by_name; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
