@@ -77,6 +77,14 @@ TurnRow _turn() => TurnRow(
   ],
   at: BigInt.from(1760000100),
   unresolved: const ['__Z_7K2M_PERSON_9QX4__'],
+  // A turn kept before a turn could say what answered it, or what it was
+  // about. These four tests are about what the screen *shows* of a restored
+  // turn, and it must show it whether or not the file knew — so the fixture
+  // states the one truthful thing about itself and nothing more. Both fields
+  // arrived one commit apart, and the second was written here in the same act
+  // as the first rather than waiting for the compiler to ask twice.
+  via: const TurnVia.notRecorded(),
+  document: const TurnDocument.notRecorded(),
 );
 
 Future<void> _pumpView(WidgetTester tester, Widget view) async {

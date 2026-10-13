@@ -2617,7 +2617,31 @@ class TokenRow {
           sourceDetail == other.sourceDetail;
 }
 
+@freezed
+sealed class TurnDocument with _$TurnDocument {
+  const TurnDocument._();
+
+  /// **Older than the question.** Written before session format 4.
+  const factory TurnDocument.notRecorded() = TurnDocument_NotRecorded;
+
+  /// **There was no file.** The person typed the text into the application,
+  /// so there is nothing to name — which is an answer and not an absence.
+  const factory TurnDocument.typed() = TurnDocument_Typed;
+
+  /// The file this exchange was about, by the name the person opened.
+  const factory TurnDocument.named({required String name}) = TurnDocument_Named;
+}
+
 class TurnRow {
+  /// **Which key answered this exchange** — the owner's first pillar, and it
+  /// is an enum rather than two nullable strings because the question has
+  /// **three** truthful answers and a nullable pair can only tell two.
+  final TurnVia via;
+
+  /// **What went to the chat**: the file this exchange was about, or that the
+  /// person typed it, or that the turn is older than the question.
+  final TurnDocument document;
+
   /// What was asked, restored. Empty segments mean no question was typed —
   /// a real state: a document may be sent with nothing asked of it, which
   /// was 046/N's whole finding.
@@ -2639,6 +2663,8 @@ class TurnRow {
   final List<String> unresolved;
 
   const TurnRow({
+    required this.via,
+    required this.document,
     required this.question,
     required this.answer,
     required this.at,
@@ -2647,17 +2673,45 @@ class TurnRow {
 
   @override
   int get hashCode =>
-      question.hashCode ^ answer.hashCode ^ at.hashCode ^ unresolved.hashCode;
+      via.hashCode ^
+      document.hashCode ^
+      question.hashCode ^
+      answer.hashCode ^
+      at.hashCode ^
+      unresolved.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is TurnRow &&
           runtimeType == other.runtimeType &&
+          via == other.via &&
+          document == other.document &&
           question == other.question &&
           answer == other.answer &&
           at == other.at &&
           unresolved == other.unresolved;
+}
+
+@freezed
+sealed class TurnVia with _$TurnVia {
+  const TurnVia._();
+
+  /// **Older than the question.** Written before session format 3, when a
+  /// turn could not say what answered it. Not «no key» — unknown.
+  const factory TurnVia.notRecorded() = TurnVia_NotRecorded;
+
+  /// **The person carried it.** The safe text went out of the application and
+  /// the answer came back by hand, so no key of ours answered this and none
+  /// is guessed at: the provider configured today did not do this.
+  const factory TurnVia.pasted() = TurnVia_Pasted;
+
+  /// **Through a key of ours**, named as the screen names it, with the model
+  /// that actually answered — resolved by the gateway, not the one requested.
+  const factory TurnVia.through({
+    required String provider,
+    required String model,
+  }) = TurnVia_Through;
 }
 
 @freezed

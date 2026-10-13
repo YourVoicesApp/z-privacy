@@ -112,7 +112,13 @@ fn the_reader_sees_a_turn_the_old_door_wrote() {
         "a session nobody has written to holds no turns, and that is not an error"
     );
 
-    conversation_record("asked".to_string(), "answered".to_string()).expect("record");
+    conversation_record(
+        "asked".to_string(),
+        "answered".to_string(),
+        TurnVia::Pasted,
+        TurnDocument::Typed,
+    )
+    .expect("record");
     let turns = conversation_turns(row.number, Some(b)).expect("turns");
     assert_eq!(turns.len(), 1, "the reader did not see a turn the writer wrote");
     assert_eq!(read(&turns[0].question), "asked");

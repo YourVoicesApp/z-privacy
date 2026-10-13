@@ -169,6 +169,8 @@ abstract class RustLibApi extends BaseApi {
   Future<int> zCoreApiConversationRecord({
     required String question,
     required String answer,
+    required TurnVia via,
+    required TurnDocument document,
   });
 
   Future<void> zCoreApiConversationRename({
@@ -1106,6 +1108,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<int> zCoreApiConversationRecord({
     required String question,
     required String answer,
+    required TurnVia via,
+    required TurnDocument document,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -1113,6 +1117,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(question, serializer);
           sse_encode_String(answer, serializer);
+          sse_encode_box_autoadd_turn_via(via, serializer);
+          sse_encode_box_autoadd_turn_document(document, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -1125,7 +1131,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_api_error,
         ),
         constMeta: kZCoreApiConversationRecordConstMeta,
-        argValues: [question, answer],
+        argValues: [question, answer, via, document],
         apiImpl: this,
       ),
     );
@@ -1133,7 +1139,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kZCoreApiConversationRecordConstMeta => const TaskConstMeta(
     debugName: "conversation_record",
-    argNames: ["question", "answer"],
+    argNames: ["question", "answer", "via", "document"],
   );
 
   @override
@@ -4284,6 +4290,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TurnDocument dco_decode_box_autoadd_turn_document(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_turn_document(raw);
+  }
+
+  @protected
+  TurnVia dco_decode_box_autoadd_turn_via(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_turn_via(raw);
+  }
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -5515,17 +5533,52 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TurnDocument dco_decode_turn_document(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return TurnDocument_NotRecorded();
+      case 1:
+        return TurnDocument_Typed();
+      case 2:
+        return TurnDocument_Named(name: dco_decode_String(raw[1]));
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
+  @protected
   TurnRow dco_decode_turn_row(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
     return TurnRow(
-      question: dco_decode_list_segment(arr[0]),
-      answer: dco_decode_list_segment(arr[1]),
-      at: dco_decode_u_64(arr[2]),
-      unresolved: dco_decode_list_String(arr[3]),
+      via: dco_decode_turn_via(arr[0]),
+      document: dco_decode_turn_document(arr[1]),
+      question: dco_decode_list_segment(arr[2]),
+      answer: dco_decode_list_segment(arr[3]),
+      at: dco_decode_u_64(arr[4]),
+      unresolved: dco_decode_list_String(arr[5]),
     );
+  }
+
+  @protected
+  TurnVia dco_decode_turn_via(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    switch (raw[0]) {
+      case 0:
+        return TurnVia_NotRecorded();
+      case 1:
+        return TurnVia_Pasted();
+      case 2:
+        return TurnVia_Through(
+          provider: dco_decode_String(raw[1]),
+          model: dco_decode_String(raw[2]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
   }
 
   @protected
@@ -5918,6 +5971,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_taught_reach(deserializer));
+  }
+
+  @protected
+  TurnDocument sse_decode_box_autoadd_turn_document(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_turn_document(deserializer));
+  }
+
+  @protected
+  TurnVia sse_decode_box_autoadd_turn_via(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_turn_via(deserializer));
   }
 
   @protected
@@ -7533,18 +7600,59 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TurnDocument sse_decode_turn_document(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        return TurnDocument_NotRecorded();
+      case 1:
+        return TurnDocument_Typed();
+      case 2:
+        var var_name = sse_decode_String(deserializer);
+        return TurnDocument_Named(name: var_name);
+      default:
+        throw UnimplementedError('');
+    }
+  }
+
+  @protected
   TurnRow sse_decode_turn_row(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_via = sse_decode_turn_via(deserializer);
+    var var_document = sse_decode_turn_document(deserializer);
     var var_question = sse_decode_list_segment(deserializer);
     var var_answer = sse_decode_list_segment(deserializer);
     var var_at = sse_decode_u_64(deserializer);
     var var_unresolved = sse_decode_list_String(deserializer);
     return TurnRow(
+      via: var_via,
+      document: var_document,
       question: var_question,
       answer: var_answer,
       at: var_at,
       unresolved: var_unresolved,
     );
+  }
+
+  @protected
+  TurnVia sse_decode_turn_via(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var tag_ = sse_decode_i_32(deserializer);
+    switch (tag_) {
+      case 0:
+        return TurnVia_NotRecorded();
+      case 1:
+        return TurnVia_Pasted();
+      case 2:
+        var var_provider = sse_decode_String(deserializer);
+        var var_model = sse_decode_String(deserializer);
+        return TurnVia_Through(provider: var_provider, model: var_model);
+      default:
+        throw UnimplementedError('');
+    }
   }
 
   @protected
@@ -7981,6 +8089,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_taught_reach(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_turn_document(
+    TurnDocument self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_turn_document(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_turn_via(TurnVia self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_turn_via(self, serializer);
   }
 
   @protected
@@ -9268,12 +9391,43 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_turn_document(TurnDocument self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case TurnDocument_NotRecorded():
+        sse_encode_i_32(0, serializer);
+      case TurnDocument_Typed():
+        sse_encode_i_32(1, serializer);
+      case TurnDocument_Named(name: final name):
+        sse_encode_i_32(2, serializer);
+        sse_encode_String(name, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_turn_row(TurnRow self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_turn_via(self.via, serializer);
+    sse_encode_turn_document(self.document, serializer);
     sse_encode_list_segment(self.question, serializer);
     sse_encode_list_segment(self.answer, serializer);
     sse_encode_u_64(self.at, serializer);
     sse_encode_list_String(self.unresolved, serializer);
+  }
+
+  @protected
+  void sse_encode_turn_via(TurnVia self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    switch (self) {
+      case TurnVia_NotRecorded():
+        sse_encode_i_32(0, serializer);
+      case TurnVia_Pasted():
+        sse_encode_i_32(1, serializer);
+      case TurnVia_Through(provider: final provider, model: final model):
+        sse_encode_i_32(2, serializer);
+        sse_encode_String(provider, serializer);
+        sse_encode_String(model, serializer);
+    }
   }
 
   @protected

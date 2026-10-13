@@ -531,7 +531,59 @@ rm -f /tmp/g22.$$
 # The claim "no panic crosses the boundary" is only proven from the other side:
 # call the whole contract from Dart and see typed errors come back.
 LIB=apps/flutter_app/build/linux/x64/debug/bundle/lib
-if [ -f "$LIB/libz_bridge.so" ] && command -v flutter >/dev/null 2>&1; then
+
+# ---------------------------------------------------------------- G7-lib
+# The Dart half never tests this tree. It tests the library sitting in
+# `build/`, and the two part company in silence: `libz_bridge.so` is an
+# artefact that no checkout, rebase or applied patch touches, so a tree whose
+# sources moved keeps answering through yesterday's binary.
+#
+# 13 Oct that cost 35 minutes of false red. The library had been built from the
+# branch where `conversation_record` takes four arguments, over a tree where it
+# takes two. Seven tests went red — each only after a five-minute Dart timeout
+# — and the one line that named the cause («left: 18, right: 26», the SSE
+# decoder counting the caller's bytes against the library's) sat twenty lines
+# deep inside a test failure. Nothing here compared the two dates, so the only
+# guard was a rule written down for humans, and that rule had already failed at
+# three seats.
+#
+# The red direction is the cheap one. A stale library can equally answer GREEN
+# for a tree that is broken, and then the suite signs a number belonging to no
+# commit. So the library is not an environment detail, it is an input to the
+# measurement: if anything under z_core/src or z_bridge/src is newer than the
+# .so, the Dart half is not measured at all and this says so by name, rather
+# than letting 297 tests speak for a tree that does not exist.
+#
+# `find -newer` compares the timestamps themselves — no clock arithmetic, no
+# date parsing, no second-guessing. A source rewritten with identical bytes (a
+# `git checkout` of an unchanged file) reds this too, and that is the direction
+# to err in: a rebuild costs two minutes, a measurement of the wrong tree cost
+# a day the last time it happened.
+if [ -f "$LIB/libz_bridge.so" ]; then
+  SOURCE_NEWER_THAN_LIB=$(find z_core/src bridges/native/z_bridge/src -type f \
+                            -newer "$LIB/libz_bridge.so" -printf '%p\n' 2>/dev/null |
+                          sort | head -3)
+else
+  SOURCE_NEWER_THAN_LIB=""
+fi
+if [ ! -f "$LIB/libz_bridge.so" ] || ! command -v flutter >/dev/null 2>&1; then
+  skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
+  # Empty, never zero: «the Dart suite did not run here» and «the Dart suite
+  # found nothing» must not be spelled the same.
+  DART_PASSED=""
+elif [ -n "$SOURCE_NEWER_THAN_LIB" ]; then
+  fail "G7-lib the library the Dart half speaks through was NOT built from this tree: $LIB/libz_bridge.so is dated $(date -r "$LIB/libz_bridge.so" '+%d %b %H:%M') and the source beside it is newer — run: cd apps/flutter_app && flutter build linux --debug"
+  printf '%s\n' "$SOURCE_NEWER_THAN_LIB" | while read -r f; do
+    printf '        newer: %s  %s\n' "$(date -r "$f" '+%d %b %H:%M')" "$f"
+  done
+  # Refusing by name, not passing by silence: the suite is not run, because its
+  # verdict would belong to another tree.
+  skip "G7-dart contract callable from Dart" "the library does not belong to this tree, so its answer would not be about this tree"
+  # The same emptiness, for the same reason as above: this run measured no Dart
+  # number and must not be read as having measured one.
+  DART_PASSED=""
+else
+  pass "G7-lib the library the Dart half speaks through was built from this tree"
   if (cd apps/flutter_app && LD_LIBRARY_PATH="$PWD/build/linux/x64/debug/bundle/lib" flutter test --concurrency=1 --reporter compact >/tmp/gd.$$ 2>&1); then
     pass "G7-dart the whole contract answers from Dart without a panic"
   else
@@ -540,11 +592,6 @@ if [ -f "$LIB/libz_bridge.so" ] && command -v flutter >/dev/null 2>&1; then
   # The compact reporter's own running total, last word it says.
   DART_PASSED=$(grep -oE '\+[0-9]+' /tmp/gd.$$ | tail -1 | tr -d '+')
   rm -f /tmp/gd.$$
-else
-  skip "G7-dart contract callable from Dart" "run: cd apps/flutter_app && flutter build linux --debug"
-  # Empty, never zero: «the Dart suite did not run here» and «the Dart suite
-  # found nothing» must not be spelled the same.
-  DART_PASSED=""
 fi
 
 # ------------------------------------------------- the mark
@@ -901,7 +948,19 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_language_a_session_was_born_into_outlives_the_application \
          a_session_born_with_no_document_has_never_been_asked \
          changing_the_language_in_the_header_reaches_the_open_session \
-         a_session_from_model_twelve_has_never_been_asked_its_language; do
+         a_session_from_model_twelve_has_never_been_asked_its_language \
+         the_first_document_of_a_session_born_without_one_writes_its_language \
+         switching_to_the_language_a_bench_already_has_still_writes_it \
+         a_format_two_turn_names_no_key_and_says_so \
+         a_turn_remembers_which_key_and_model_answered_it \
+         an_answer_the_person_carried_says_the_person_carried_it \
+         a_session_holding_both_kinds_of_turn_keeps_them_apart \
+         a_format_three_turn_was_about_a_file_it_cannot_name \
+         a_turn_remembers_which_file_it_was_about \
+         text_the_person_typed_says_there_was_no_file \
+         the_report_still_names_no_file_though_the_session_knows_it \
+         a_reopened_session_names_every_value_it_cannot_bring_back \
+         only_what_the_vault_kept_comes_back_when_the_document_opens_again; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
