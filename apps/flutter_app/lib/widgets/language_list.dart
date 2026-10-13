@@ -23,83 +23,24 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 
-/// The sheet shown after a file is chosen and before it is read.
+/// **The languages offered on the glass** — 080, the owner: «نبدأ بلغتين».
 ///
-/// One button, because there is one question: which rules read this document.
-/// It is temporary and says so in the code rather than on screen — 043 gives
-/// the pack a vote of its own, and this step goes when it lands.
-class ChooseLanguage extends StatefulWidget {
-  const ChooseLanguage({super.key, required this.ground, required this.fileName});
+/// Two, for now, and the word «offered» is exact: the Swedish and Arabic packs
+/// are in the core, untouched and measured, and nothing is deleted. What this
+/// list decides is what a person is **shown** when they choose the language of
+/// a session — in the room where a session is created, in Settings where the
+/// application's own language is set, and in the head of an open document,
+/// which writes the open session's language through the same core door.
+///
+/// One list, three readers, because three copies of «de, en» are three chances
+/// to disagree the day a third pack is offered.
+const offeredLanguages = <String>['de', 'en'];
 
-  final Ground ground;
-
-  /// What the person picked, so the sheet can name it. Shown, never read.
-  final String fileName;
-
-  @override
-  State<ChooseLanguage> createState() => _ChooseLanguageState();
-}
-
-class _ChooseLanguageState extends State<ChooseLanguage> {
-  String? _packId;
-
-  @override
-  void initState() {
-    super.initState();
-    // What they chose last time, which is what the settings hold.
-    _packId = widget.ground.config?.packId ??
-        (widget.ground.packs.isNotEmpty ? widget.ground.packs.first.id : null);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Zc.paper,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 440),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 20, 22, 18),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Which language is this document?', style: Zc.h2),
-              const SizedBox(height: 4),
-              Text(
-                widget.fileName,
-                style: Zc.small.copyWith(color: Zc.ink3),
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 14),
-              LanguageChoices(
-                ground: widget.ground,
-                chosen: _packId,
-                onChoose: (id) => setState(() => _packId = id),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  ZButton(
-                    label: 'Cancel',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  const Spacer(),
-                  ZButton(
-                    label: 'Open',
-                    filled: true,
-                    onPressed: _packId == null
-                        ? null
-                        : () => Navigator.of(context).pop(_packId),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+/// The sheet after a file was chosen is **gone** — 080. It asked «which
+/// language is this document?», which the owner replaced with two sources and
+/// no third: a session's language is chosen when the session is created, or it
+/// is the application's. A question at the file door was the third, and a class
+/// nobody calls is a surface that still has to be read by whoever comes next.
 
 /// The list itself: the languages with rules, a line, and all the rest.
 class LanguageChoices extends StatelessWidget {

@@ -42,6 +42,32 @@ Future<List<ConversationRow>> conversations() =>
 Future<void> conversationRename({required int number, required String name}) =>
     RustLib.instance.api.zCoreApiConversationRename(number: number, name: name);
 
+/// **Write a session's language, by its number, with no document open** — 080.
+///
+/// The owner's rule: a text is read with its session's language, and a session
+/// that has none takes the application's. There is no third source. The first
+/// of those two ways is a choice made *when the session is created*, and a
+/// session can be created with nothing open — so the one door that existed
+/// could not serve it: `switch_pack` takes a **bench**, switches that bench's
+/// language and writes it into whichever session is open. With no document
+/// there is no bench, and the choice had nowhere to be written.
+///
+/// So this writes it where it belongs, addressed by the number that is the
+/// session's identity. It touches no bench, rescans nothing, and reads no
+/// document: a session's language is a fact about the session.
+///
+/// An unknown language is refused **by its name**, because a silent fallback to
+/// the application's language would be this door quietly doing the opposite of
+/// what it was asked — and a screen offering two languages while the core knows
+/// four is exactly the state in which somebody passes a third.
+Future<void> conversationSetPack({
+  required int number,
+  required String packId,
+}) => RustLib.instance.api.zCoreApiConversationSetPack(
+  number: number,
+  packId: packId,
+);
+
 /// **Delete a session: its key and its file, together.**
 ///
 /// Returns the name, so the screen can say what went. Nothing protected in this
@@ -53,9 +79,10 @@ Future<String> conversationForget({required int number}) =>
 
 /// Write one exchange into the open session's file.
 ///
-/// `via` is the caller's statement about what answered, because only the caller
-/// knows: this door hands the core an exchange that has already happened, with
-/// no send of ours behind it. Nothing in the product calls it today, and a
+/// `via` and `document` are the caller's statements about what answered and what
+/// the exchange was about, because only the caller knows: this door hands the
+/// core an exchange that has already happened, with no send of ours behind it
+/// and no bench of ours under it. Nothing in the product calls it today, and a
 /// future caller says what it means rather than inheriting a guess made here.
 Future<int> conversationRecord({
   required String question,

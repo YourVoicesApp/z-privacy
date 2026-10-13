@@ -75,8 +75,9 @@ void main() {
       isTrue,
       reason: 'the box does not have the focus',
     );
-    // And nothing asks a language before a word is written.
-    expect(find.byType(ChooseLanguage), findsNothing);
+    // And nothing asks a language, before a word is written or after — 080
+    // took the question out of the file door altogether, so there is no class
+    // left to look for: the sentence is the thing that must not appear.
     expect(find.text('Which language is this document?'), findsNothing);
     // The file is a «+», as a chat offers one.
     expect(find.byTooltip('Add a document — PDF, Word or text'), findsOneWidget);
@@ -121,7 +122,7 @@ void main() {
 
     expect(find.byType(WorkspaceScreen), findsOneWidget, reason: 'the text did not open a session');
     // No question was asked on the way.
-    expect(find.byType(ChooseLanguage), findsNothing);
+    expect(find.text('Which language is this document?'), findsNothing);
   });
 
   testWidgets('the language list has a line, and every language under it can be chosen', (tester) async {

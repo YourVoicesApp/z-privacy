@@ -16,7 +16,6 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/the_clipboard.dart';
 import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/home.dart';
-import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -35,32 +34,6 @@ const _kinds = <String, DocumentKind>{
   'docx': DocumentKind.docx,
   'pdf': DocumentKind.pdf,
 };
-
-/// **Which language reads the next document, and whether anybody is asked.**
-///
-/// 075d, and the owner's reason is one sentence: *«الإنسان لا يحب التكرار»* — a
-/// person does not like repetition. The language belongs to the **conversation**
-/// and not to the document's bench: `openSession`'s own documentation says «this
-/// is a document's bench, not one of the owner's sessions», and every file
-/// opened makes a new bench, so a language kept there would die with it and the
-/// question would come back on the very next file.
-///
-/// Three states, and `null` is one of them:
-///
-///   * a conversation with a language — **inherited in silence**, no dialog;
-///   * a conversation never asked (`packId == null`: born with no document
-///     open, or born before this existed) — **asked once**, and the answer
-///     becomes the conversation's;
-///   * no conversation open at all — asked, because there is nothing to inherit
-///     and the app default is a guess nobody made.
-///
-/// Changing it later stays where it already lives, in the head of the document
-/// screen: a control, not an interruption.
-({String packId, bool ask}) languageForNextDocument(Ground ground) {
-  final known = ground.openSessionRow?.packId;
-  if (known != null) return (packId: known, ask: false);
-  return (packId: ground.config?.packId ?? 'de', ask: true);
-}
 
 class ZShell extends StatefulWidget {
   const ZShell({super.key, this.dataDir, this.ground});
@@ -217,14 +190,16 @@ class _ShellState extends State<ZShell> {
       setState(() => _vaultOpen = true);
       return;
     }
-    final packId = _ground.config?.packId ?? 'de';
+    // **One rule, both doors** — 080. This read `config.packId` and never
+    // looked at the session at all, which is the whole of the owner's finding:
+    // a German conversation read with an English eye.
+    final packId = packForTheNextText(_ground);
     try {
       var chat = _chat;
       if (chat == null || chat.packId != packId) {
-        // The pack is the one the settings hold, as the typed path has always
-        // done: a person who writes a sentence is not asking to be
-        // interviewed. A changed setting opens a new conversation rather than
-        // scanning tomorrow's question with yesterday's language.
+        // The language the session holds, or the application's — and a change
+        // of either opens a new bench rather than scanning tomorrow's question
+        // with yesterday's language.
         final session = await z.openSession(profileId: null, packId: packId);
         chat?.dispose();
         chat = Workbench(session: session, profileId: null, packId: packId);
@@ -274,9 +249,11 @@ class _ShellState extends State<ZShell> {
     DocumentKind? kind;
     final profileId = null as String?;
 
-    // **075d — the question is asked once in a conversation's life.**
-    final next = languageForNextDocument(_ground);
-    String packId = next.packId;
+    // **080 — the language is not asked here, and not asked anywhere.** The
+    // session's own language, or the application's. The owner replaced 075d's
+    // «asked once in a conversation's life» with two sources and no third: a
+    // question at this door was the third.
+    final packId = packForTheNextText(_ground);
 
     if (!typing) {
       file = await openFile(
@@ -294,28 +271,14 @@ class _ShellState extends State<ZShell> {
         });
         return;
       }
-      if (next.ask) {
-        final chosen = await showDialog<String>(
-          context: context,
-          builder: (_) => ChooseLanguage(ground: _ground, fileName: file!.name),
-        );
-        if (chosen == null || !mounted) return;
-        packId = chosen;
-      }
     }
 
     try {
       final session = await z.openSession(profileId: profileId, packId: packId);
-      // **The first document of a conversation writes its language**, through
-      // the one door in the core that writes it. `Workbench.switchPack` cannot
-      // be that door here: it returns early when the pack has not changed, and
-      // this bench was opened with exactly this pack — so the call that looks
-      // redundant is the only one that is not. A conversation born with no
-      // document has no language until now, and `null` must stay «not asked
-      // yet» rather than quietly become the app's default.
-      if (next.ask && _ground.openSessionRow != null) {
-        await z.switchPack(session: session, packId: packId);
-      }
+      // **Nothing is written here any more** — 080. A document does not give a
+      // session its language: the session was given one when it was created,
+      // or it takes the application's, and `null` stays «never chosen» rather
+      // than being filled in by whichever file happened to be opened first.
       final bench = Workbench(session: session, profileId: profileId, packId: packId);
       if (typing) {
         await z.importText(session: session, text: text ?? '');

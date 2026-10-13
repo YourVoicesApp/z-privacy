@@ -151,6 +151,24 @@ class Ground extends ChangeNotifier {
   bool get aSessionWouldBeBorn =>
       vault == VaultState.unlocked && openSession == null;
 
+  /// **Write a session's language, by its number** — 080.
+  ///
+  /// The core's own door, added for the one case `switchPack` cannot serve: a
+  /// session created with no document open. It touches no bench and rescans
+  /// nothing, so a caller with a document in front of the person switches that
+  /// bench as well, and the two writes say the same thing.
+  Future<bool> setSessionPack(int number, String packId) async {
+    try {
+      await z.conversationSetPack(number: number, packId: packId);
+      await refresh();
+      return true;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// **Begin one.** The name is asked where the press happened — in the panel
   /// for a deliberate clean break, at the exit for a person who never pressed
   /// the button. Both paths land here, and the core does the rest: 32 bytes in
@@ -1576,6 +1594,33 @@ String importSaid(NameImport report) {
   if (report.columnsNotUsed.isEmpty) return said;
   return '$said\n${columnsNotUsedSaid(report.columnsNotUsed)}';
 }
+
+/// **The application's own language** — 080, and the only place the config's
+/// pack is read.
+///
+/// The owner's two ways to a session's language are «chosen when the session is
+/// created» and «the application's», and there is no third. This is the second
+/// of them, and it is a function rather than a field read in four places
+/// because the four places were the defect: the chat door read the config
+/// itself and never asked the session, so a German conversation was read with
+/// an English eye — 7 findings from a file, 0 from the same text pasted.
+///
+/// The fallback of the fallback is German, which is where this product started
+/// and the only honest guess when a config has not been read yet.
+String appLanguage(Ground ground) => ground.config?.packId ?? 'de';
+
+/// **Which language reads the next text, whatever door it came through** — 080.
+///
+/// One function, and both doors call it: the chat and a file are not two
+/// worlds. «ما ينطبق على الوثائق ينطبق على الشات».
+///
+/// Nobody is asked anything. Until 080 the file door asked «which language is
+/// this document?» whenever the session had none, which was 075d's rule — and
+/// the owner replaced it: a session's language is chosen when the session is
+/// created, or it is the application's. A question at the file door is a third
+/// source, and a third source is how two doors come to disagree.
+String packForTheNextText(Ground ground) =>
+    ground.openSessionRow?.packId ?? appLanguage(ground);
 
 /// The provisional name a nameless birth is begun with, before the core's
 /// number is known. One word, and never left behind as a lie: the rename that

@@ -629,7 +629,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (ground.packs.isEmpty) {
       return const Tally(value: '—', what: 'No privacy pack installed');
     }
-    final id = ground.config?.packId;
+    // The application's own language, through the one function that reads it
+    // (080) — this tally names the app's pack, not the open session's.
+    final id = appLanguage(ground);
     final chosen = ground.packs.firstWhere(
       (p) => p.id == id,
       orElse: () => ground.packs.first,

@@ -74,6 +74,37 @@ else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
 fi
 
+# ---------------------------------------------------------------- G27
+# **One rule decides which language reads a text** — 080.
+#
+# The owner, 13 Oct 2026, from his own run: a German PDF dragged in gave 7
+# findings; the same text pasted into the chat gave 0. The two doors read the
+# same words with two different languages — the file door asked the session,
+# the chat door read `config.packId` and never looked at a session at all. One
+# rule written at one door and never applied to its sibling, which is this
+# project's most expensive trap.
+#
+# So: the app's language is read in exactly one function, every other surface
+# asks that function, and both doors take the language of the next text from
+# one place. A second reader of the config's pack is how this defect was built.
+G27_READS=$(grep -Rn "config?\.packId\|config!\.packId" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+            | grep -v '/src/rust/' | grep -vE ':[0-9]+: *//' || true)
+G27_N=$(printf '%s\n' "$G27_READS" | grep -c . || true)
+if [ "$G27_N" = "1" ] && printf '%s' "$G27_READS" | grep -q 'core/session_state.dart'; then
+  pass "G27 the app's language is read in one place, and it is the ground's own function"
+else
+  fail "G27 the config's pack is read in $G27_N place(s), expected one in core/session_state.dart:"
+  printf '%s\n' "$G27_READS" | sed 's/^/        /'
+fi
+
+# And both doors ask one function for the language of the next text.
+G27_DOORS=$(grep -n 'packForTheNextText' "$FLUTTER_LIB/screens/shell.dart" 2>/dev/null || true)
+if [ "$(printf '%s\n' "$G27_DOORS" | grep -c .)" -ge 2 ]; then
+  pass "G27 the chat door and the file door take their language from one function"
+else
+  fail "G27 only $(printf '%s\n' "$G27_DOORS" | grep -c .) door(s) in shell.dart ask packForTheNextText — the other one decides for itself"
+fi
+
 # ---------------------------------------------------------------- G26
 # **Every press that writes the clipboard empties it first** — 081.
 #
@@ -1006,7 +1037,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          text_the_person_typed_says_there_was_no_file \
          the_report_still_names_no_file_though_the_session_knows_it \
          a_reopened_session_names_every_value_it_cannot_bring_back \
-         only_what_the_vault_kept_comes_back_when_the_document_opens_again; do
+         only_what_the_vault_kept_comes_back_when_the_document_opens_again \
+         a_language_written_with_no_document_open_is_the_one_the_document_is_read_with \
+         a_language_this_build_does_not_know_is_refused_by_name; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
