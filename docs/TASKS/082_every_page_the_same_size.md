@@ -23,3 +23,11 @@ A page is not drawn as a page. The reader leaves a form feed between pages; both
 ## Seat and order
 
 Design seat (sheets, tints) with the Dart seat for alignment; the core already says where pages fall. Order: after 076 selection, unless the owner places it earlier. The table measurement can run any time — it changes nothing.
+
+## 13 Oct night — the size, ruled
+
+The owner: **every sheet is 15 cm wide and 20 cm tall, for every page, whatever the number of lines it holds.** One line or forty, the sheet is the same.
+
+- The proportion is fixed (3 : 4); on screen the sheet is drawn at the column's width with that proportion, so «cm» means the shape, and on an exported page it means the size.
+- **Measure before building:** the longest page in the corpus and in a real table PDF — does its text fit a 15×20 sheet at the document font? If a page's text does not fit, the measurement is shown to the owner before anything is decided; text is never clipped (protection may not change how a document reads, and neither may the frame).
+- The owner also kept both column switches («In step / Apart» and «Chips / Plain»): «simple choices that really leave a mark» stay.
