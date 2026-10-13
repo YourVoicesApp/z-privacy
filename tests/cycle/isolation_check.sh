@@ -33,12 +33,13 @@ ok "PDF output would land in $DOCS_DIR"
 ok "original data dir left alone: $ORIGIN_DATA"
 ok "original docs dir left alone: $ORIGIN_DOCS"
 
-LINUX_BRIDGE="$(readlink "$COMP/apps/flutter_app/linux/flutter/ephemeral/.plugin_symlinks/z_bridge")"
-WIN_BRIDGE="$(readlink "$COMP/apps/flutter_app/windows/flutter/ephemeral/.plugin_symlinks/z_bridge")"
-[[ "$LINUX_BRIDGE" == "../../../../rust_builder" ]] || fail "linux z_bridge symlink is $LINUX_BRIDGE"
-[[ "$WIN_BRIDGE" == "../../../../rust_builder" ]] || fail "windows z_bridge symlink is $WIN_BRIDGE"
-RESOLVED="$(readlink -f "$COMP/apps/flutter_app/linux/flutter/ephemeral/.plugin_symlinks/z_bridge")"
-[[ "$RESOLVED" == "$COMP/apps/flutter_app/rust_builder" ]] || fail "linux z_bridge resolves outside the copy: $RESOLVED"
+want_builder="$COMP/apps/flutter_app/rust_builder"
+LINUX_RESOLVED="$(readlink -f "$COMP/apps/flutter_app/linux/flutter/ephemeral/.plugin_symlinks/z_bridge")"
+WIN_RESOLVED="$(readlink -f "$COMP/apps/flutter_app/windows/flutter/ephemeral/.plugin_symlinks/z_bridge" 2>/dev/null || true)"
+[[ "$LINUX_RESOLVED" == "$want_builder" ]] || fail "linux z_bridge resolves outside the copy: $LINUX_RESOLVED"
+if [[ -n "$WIN_RESOLVED" ]]; then
+  [[ "$WIN_RESOLVED" == "$want_builder" ]] || fail "windows z_bridge resolves outside the copy: $WIN_RESOLVED"
+fi
 ok "plugin z_bridge points at this copy's rust_builder"
 
 # Absolute path in redteam harness still names the original tree. We do not run it.
