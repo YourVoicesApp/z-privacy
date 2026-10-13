@@ -104,10 +104,14 @@ export/import.
    - pass if it contains tokens and the user-agent is `z-privacy`
 8. Restore locally; the sandbox UI should show the invented names again.
 9. Session persistence: lock/quit/reopen **this** isolated process; open the
-   same sandbox session. Do not touch `~/.local/share/zprivacy`.
-10. Wrong-session: create a second vault/session in the sandbox and open the
-    first session's protected PDF without its mapping. Expect no restore of
-    the first session's values.
+   same sandbox session. Restore with **that session’s key**. Do not touch
+   `~/.local/share/zprivacy`.
+10. Second session in the **same** vault, no key transfer, same protected PDF.
+    Record restore with the **new** session’s key. A foreign token, leftover
+    clear, and a vault **re-apply** of a leftover clear word are different
+    events. Do not score restore from a word-scope button (Protect / Always /
+    Just here). The copy a session keeps is the **protected** form, because
+    session files live outside the vault.
 
 Alias-joining (Alice / Alicia as one person, two people both named Alice
 Jensen) is also UI-only.

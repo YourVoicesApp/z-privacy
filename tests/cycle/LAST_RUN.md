@@ -19,15 +19,21 @@ message; strip leftover clear; record `leftover_clear`. Do not run
 `run_cycle.sh` while this capture is bound to 8081: it would occupy the
 port and reset the log the app is about to fill.
 
-## Desktop app — textual cycle done; PDF reopen not yet
+## Desktop app — textual cycle done; PDF reopen waiting on Open
 
-Isolated process (pid was 111995): stamp `z_core 0.1.0 · 2026-10-13 · 61fa27b`.
+Isolated process pid **195385**: stamp `z_core 0.1.0 · 2026-10-13 · 61fa27b`.
 Sandbox vault `vault.zv` 992 bytes 03:08, session `sessions/1.zs` (title
-**الاختبار الأول**), 1 identity / 19 values, 0 profiles.
-Protected PDF already under sandbox `Documents/zprivacy/`.
+**الاختبار الأول**, namespace `1F52`), 1 identity / 19 values, 0 profiles.
+Protected PDF already under sandbox `Documents/zprivacy/` (outside save).
 `GET /requests` is `[]` — Send to Local AI has not hit 8081.
 The seven-token restore was Copy Protected / Paste AI answer, a textual result.
 
-Next UI step: close **only** that isolated window (`MANUAL_UI.md` step 13).
+Word-protection scope, document save location, and session restore key are
+recorded as three facts. Restore after PDF reopen is scored with the matching
+session key. Scope buttons are not used to predict restore.
+
+Next UI step: `MANUAL_UI.md` step 16 — in the isolated **Open File** chooser,
+click **bundle** on the path bar (it is in `flutter_assets`), select
+`text-protected-2026-10-13.pdf`, press **Open**, stay in الاختبار الأول.
 
 Rizzo and Secret Guard were not started. Comparison sheet: `Z_COMPARISON.md`.

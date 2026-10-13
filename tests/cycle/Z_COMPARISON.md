@@ -10,20 +10,31 @@ Axes (the only ones scored):
 2. Kind of protection and restore
 3. Chat and PDF
 
+Inside axis 2, three facts stay separate. A button that names one does not
+answer the others.
+
+| Fact | What it is | What it is not |
+|---|---|---|
+| **Word-protection scope** | Where protection is **re-applied** when that **word** appears again, according to the person's choice. | Not where the document is saved. Not which key restores a token. |
+| **Document save location** | Inside the app (session file) or outside it (exported PDF), owner's choice. Copies kept **in sessions** are the **protected** copies, because session files live **outside the vault**. | Not a Protect / Always / Just here choice. |
+| **Session restore key** | The **matching session's** encryption restores protected segments (`__Z_<ns>_…__`). Record per token with that session's key. | Not predicted from a scope button. |
+
 Evidence tags: **tested** · **confirmed-from-code** · **documented** · **unknown**.
 Absence from a README is not proof a feature does not exist.
 
 ---
 
-## Z Privacy — button names vs the three comparison scopes
+## Z — the three facts, from this build
 
-The engine has **four** scopes (`z_core/src/api.rs`). The comparison asked for **three** user-facing behaviours. Mapping from this build, without changing app code:
+### 1. Word-protection scope (the word)
 
-| Comparison axis | Engine `Scope` | Button / label the person actually sees | What the press does in this build |
+The engine has **four** scopes (`z_core/src/api.rs`). The comparison asked for **three** user-facing behaviours. Mapping from this build, without changing app code. These buttons say **where the word is protected again**. They do not say where the document is saved, and they do not say whether a later restore will succeed.
+
+| Comparison behaviour (the word) | Engine `Scope` | Button / label the person actually sees | Where the word is protected again |
 |---|---|---|---|
-| 1. Current-document protection | `Once` | Hand dialog **Just here** — “This one place. The same words elsewhere are left alone.” Token tag **Just here**. | Protects that span only. Session-local. **confirmed-from-code** `protect_dialog.dart`, `tokens.dart` |
-| 2. Permanent protection for documents | `Always` | Hand dialog **Remember everywhere** — “Kept in the vault for every client, and found by itself from now on.” Token tag **Remembered everywhere**. Review-row / bubble **Always**. | Vault `learn_value`. Later documents (any client) can find it. **confirmed-from-code** `ops/mod.rs` |
-| 3. Protection everywhere including chat | `Conversation` plus vault-Always | Hand dialog **This conversation** — “Every appearance here, under one token. Gone when this conversation is.” Token tag **This conversation**. Review-row / bubble **Protect**. | Session key covers this document **and** this session’s chat send/restore. Always-learned values also apply to later chat. **confirmed-from-code** |
+| Current document | `Once` | Hand dialog **Just here** — “This one place. The same words elsewhere are left alone.” Token tag **Just here**. | This one place. **confirmed-from-code** `protect_dialog.dart`, `tokens.dart` |
+| Permanent for later documents | `Always` | Hand dialog **Remember everywhere** — “Kept in the vault for every client, and found by itself from now on.” Token tag **Remembered everywhere**. Review-row / bubble **Always**. | Vault `learn_value`. Later documents (any client) can find that word again. **confirmed-from-code** `ops/mod.rs` |
+| This conversation, including its chat | `Conversation` | Hand dialog **This conversation** — “Every appearance here, under one token. Gone when this conversation is.” Token tag **This conversation**. Review-row / bubble **Protect**. | Every appearance in this conversation. **confirmed-from-code** |
 
 Fourth engine scope, not one of the three comparison axes:
 
@@ -31,12 +42,39 @@ Fourth engine scope, not one of the three comparison axes:
 |---|---|---|---|
 | Remember for one client | `Profile` | **Remember for &lt;client&gt;** | Disabled: 0 profiles. AT-SPI: “0 profiles”. **tested** (UI state) + **confirmed-from-code** |
 
-Naming mismatch (fact, not a defect score):
+Naming mismatch (fact, not a defect score), still about **the word**:
 
 - Review **Protect** writes `Scope::Conversation` (“This conversation”), not “Just here”.
-- Review **Always** also writes `Scope::Conversation` on the session **and** `learn_value` into the vault before the session lock (`ops/mod.rs` ~2682–2752). The token tag on that session row stays “This conversation”; the vault copy is what later documents/chats can find.
+- Review **Always** also writes `Scope::Conversation` on the session **and** `learn_value` into the vault before the session lock (`ops/mod.rs` ~2682–2752). The token tag on that session row stays “This conversation”; the vault copy is what later documents can find **as a word**.
 - Hand-protect is the path that can choose **Just here** / **This conversation** / **Remember for** / **Remember everywhere**.
 - Auto-protect of `Confidence::Auto` (IBAN checksum, phone, email, salutation/title, …) writes `Scope::Conversation`, not vault-Always (`ops/mod.rs` ~2446–2462).
+
+### 2. Document save location (the document)
+
+The owner chooses **inside the app** or **outside it**. Product decision: the copy a session keeps is the **protected** copy, not the clear original, because the session file lives **outside the vault**.
+
+| Place | Path in this sandbox | What is kept | Tag |
+|---|---|---|---|
+| Vault body | `xdg-data/zprivacy/vault.zv` | Session **number, handle, sealed 32-byte key**, document **hash** for matching. Not the conversation text. | **confirmed-from-code** `vault/model.rs` Conversation; `conversation.rs` header |
+| Session file (inside the app, outside the vault) | `xdg-data/zprivacy/sessions/1.zs` | Turns: question **in the form that travelled** (tokens), answer as it arrived, allowed **token names**. Sealed under the session key. Values are not in this file. | **confirmed-from-code** `conversation.rs` (`FOLDER = "sessions"`, format v2); `ops/conversation.rs` `turns()` |
+| Exported PDF (outside the app) | sandbox `Documents/zprivacy/text-protected-2026-10-13.pdf` | Newly typeset **protected** page + footer. Owner's file on disk. | **tested** extract + **confirmed-from-code** `protected_pdf.dart`, `data_dir.rs` |
+
+Why the session is not inside `vault.zv`: that body is re-sealed whole on every change; a conversation inside it would rewrite every byte the person owns on every save (`conversation.rs`, `vault/model.rs`). Settings panel when the vault is shut: “the conversations themselves were never in it.” **confirmed-from-code** `settings.dart`.
+
+A live bench still holds the **original** text in memory (`session.rs` `original_str`). That is the working copy, not the saved session file.
+
+### 3. Session restore key
+
+Restore of `__Z_<ns>_<KIND>_<tail>__` is a **key / namespace** question.
+
+- `restore()` puts a token back only if it is in **this session’s TokenStore** and in that turn’s **allowed** list (`tokens.rs`). Another session’s namespace stays `Piece::Unresolved`.
+- The session key is the 32 bytes the vault keeps for that row. Namespace `1F52` is derived from **الاختبار الأول**’s key (`tokens.rs` `Naming::of_session`).
+- After restart the live TokenStore is empty until a document is on the bench. Import **clears** protections then scans (`ops/mod.rs` `import_document`). Scan can **re-apply a word** the vault already knows (word-protection scope). That is a new protection, not restore of an old `1F52` token.
+- Do not assume Conversation tokens fail reopen. Do not assume Always tokens succeed reopen. Record what the matching key did.
+
+---
+
+## Z Privacy — finding classes (axis 1)
 
 Finding classes the scanner actually uses (**confirmed-from-code** `scanner/mod.rs`, `general_rules.rs`, `people.rs`):
 
@@ -134,17 +172,21 @@ Chat seven-token restore and this 28-value PDF are **two artefacts of one sessio
 
 ## Z — PDF reopen after isolated restart (in progress)
 
+This is a **document-save + session-key** test. It is not a word-scope test. Protect / Always / Just here are not used to predict the cells below.
+
 Isolated window was closed (SIGTERM of the previous copy) and started again with `tests/cycle/run_app_isolated.sh`. Isolation held: origin vault size 742 mtime 1791828743 unchanged. New process `195385`, `HOME` = sandbox home, stamp `z_core 0.1.0 · 2026-10-13 · 61fa27b`. Vault already unlocked on restart; session **الاختبار الأول** (`sessions/1.zs`, namespace `1F52`) is “the one you are in”. **tested** (AT-SPI + `/proc`).
 
-Import of the same PDF is the remaining UI act. A GTK **Open File** chooser is standing on the isolated window. The file is visible as `text-protected-2026-10-13.pdf`. AT-SPI can click GTK chrome; **Open** has not closed the chooser from this side. Restore after reopen is therefore **not yet observed**. Do not assume Conversation tokens fail or Always tokens succeed.
+The file on disk is the **outside** protected copy. Import of that same PDF is the remaining UI act. A GTK **Open File** chooser is standing; the path bar is in **flutter_assets**. The PDF sits in the **bundle** folder of this copy (same bytes as the sandbox Documents file). AT-SPI can click GTK chrome; **Open** has not completed import from this side. Restore after reopen is therefore **not yet observed**.
 
 How restore is scored when that import happens (**confirmed-from-code**, not a predicted outcome):
 
+- Score **with the matching session’s key**. Session 1 column = `1.zs` / namespace `1F52`. Session 2 column = a new session in the same vault, no key transfer.
 - `restore()` puts a token back only if it is in **this session’s TokenStore** and in that turn’s **allowed** list (`tokens.rs`). Another session’s namespace stays `Piece::Unresolved`.
-- Session file `1.zs` stores questions, raw answers, and allowed **token names**. It does not store the value map. Values live in the live bench store, and Always-learned values live in the vault (19 values in this sandbox).
+- Session file `1.zs` stores questions, raw answers, and allowed **token names**. It does not store the value map. Values live in the live bench store. The vault holds 19 Always-learned **words**.
 - Importing a PDF **clears** the bench’s protections then scans the extracted text (`ops/mod.rs` `import_document`). The extracted original of this file **is** the tokenised page.
+- If leftover **clear** words are scanned and the vault re-protects them, that is **word-scope re-apply**, recorded aside from this table. It is not restore of a `1F52` token.
 
-Per-token restore after reopen — **not observed yet**. Namespace `1F52` is this session’s. Scope of each token at mint time was not logged from the Review banner; the table records kind + occurrences only until the UI shows restore or unresolved.
+Per-token restore after reopen — **not observed yet**. The table is keyed by token name, not by Just here / This conversation / Remember everywhere.
 
 | Token | Kind | Occ. | Session 1 restore (own key) | Session 2 restore (no key transfer) |
 |---|---|---|---|---|
@@ -373,7 +415,7 @@ Similarities that actually appear in the sources:
 - Z and rizzo-pii both describe **placeholder out, restore locally**, plus a **person-facing document UI** and a **protected PDF**.
 - OpenAI privacy-filter, OpenMed, and Presidio are **engines** (detect then mask/anonymize) that an integrator can put in front of chat.
 - packyme/privacy-filter and Censgate sit on the **gateway / prompt** path. Masquerade and BentoPDF sit on the **PDF file** path.
-- Z’s restore is **session-scoped tokens** (`__Z_<ns>_<KIND>_<tail>__`) with an optional **vault**. rizzo-pii’s mapping is a **local dictionary** that can be switched off. Those are different durability models.
+- Z’s **restore key** is the matching session (`__Z_<ns>_<KIND>_<tail>__`). Z’s **word-protection scope** is a separate choice (Just here / This conversation / Remember everywhere) and lives partly in the vault. rizzo-pii’s mapping is a **local dictionary** that can be switched off. Those are different durability models. Z’s session-stored copy is the **protected** form because `sessions/*.zs` sit beside `vault.zv`, not inside it.
 - Leftover clear text is normal in Z when the person did not choose the span. rizzo-pii warns residuals. Treating leftover clear as an automatic fail would mis-score both.
 
 Differences that actually appear:
