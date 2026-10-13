@@ -17,6 +17,8 @@
 
 The app did not put the original out; it **let it out**: a quiet no, and a clipboard left holding the last thing. A guard green for the wrong reason — it measures what the app wrote, not what the person will paste.
 
+**Sealed by the owner, 13 Oct, and the principle he added:** «المستخدم لا يدرك أنه نفس النسخ القديم — هو يعتبره فشلاً في التطبيق، وخاصةً إذا كان النص الداخل يشبه الخارج.» **What the person pastes after pressing our button is ours.** A press on Copy Protected answers for the clipboard that follows it, whatever was there before.
+
 ## The owner's rulings (13 Oct)
 
 1. **No refusal at the exit: a session is born with a sequential name** — «الجلسة 1، الجلسة 2…» — the moment Copy Protected, Save as PDF or a send is pressed with none open. This **replaces** the earlier rule «the name is asked once, at the exit» (064).
