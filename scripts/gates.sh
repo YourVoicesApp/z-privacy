@@ -1056,7 +1056,10 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_reopened_session_names_every_value_it_cannot_bring_back \
          only_what_the_vault_kept_comes_back_when_the_document_opens_again \
          a_language_written_with_no_document_open_is_the_one_the_document_is_read_with \
-         a_language_this_build_does_not_know_is_refused_by_name; do
+         a_language_this_build_does_not_know_is_refused_by_name \
+         an_answer_from_another_session_names_every_token_and_restores_none \
+         a_handle_or_an_answer_of_another_session_is_refused \
+         a_token_this_payload_did_not_allow_stays_unknown_in_its_own_session; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
