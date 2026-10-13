@@ -374,8 +374,14 @@ class PdfSaved {
 Future<PdfSaved> saveProtectedPdf({
   required String text,
   required PdfStamp stamp,
-  /// The document's own name, for the file name only — never inside the file.
-  required String documentName,
+  /// **The session's name, for the file name only — never inside the file.**
+  ///
+  /// It was the *document's* name until 081, which is a name the person chose
+  /// for their own file leaving this machine in the one direction nobody looks
+  /// at: a folder listing, a backup, a sync. The session's name is ours — and
+  /// a session nobody named is «Session N», which says everything a file name
+  /// needs to and nothing about anybody.
+  required String sessionName,
   /// Null means the product's own place. A test gives a temporary folder, so a
   /// test run never writes into the person's documents.
   String? folder,
@@ -389,7 +395,7 @@ Future<PdfSaved> saveProtectedPdf({
     );
   }
   final day = _day(now ?? DateTime.now());
-  final stem = '${_fileStem(documentName)}-protected-$day';
+  final stem = '${_fileStem(sessionName)}-protected-$day';
 
   try {
     final dir = Directory(into);
@@ -423,9 +429,9 @@ String _day(DateTime d) =>
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
-/// A file name out of a document's name. Typed text has no name, and a name
-/// from a file may hold a slash or a dot — neither may decide where this is
-/// written.
+/// A file name out of the session's name. A session with no name of its own
+/// reaches here empty — and a name a person typed may hold a slash or a dot,
+/// so neither it nor an empty one may decide where this is written.
 String _fileStem(String name) {
   var stem = name.trim();
   final dot = stem.lastIndexOf('.');

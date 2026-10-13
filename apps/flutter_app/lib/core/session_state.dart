@@ -188,6 +188,38 @@ class Ground extends ChangeNotifier {
     }
   }
 
+  /// **A session nobody named, named by its own number** — 081, the owner's
+  /// first ruling: «لا رفض عند المخرج».
+  ///
+  /// 064 asked for a name where the text leaves, and refused the press that did
+  /// not answer. The owner met that refusal from the other side: a person who
+  /// wanted their protected text out had never come for a question, did not
+  /// read the small line that replaced their copy, and pasted what was already
+  /// on the clipboard. A door that must not refuse cannot ask.
+  ///
+  /// The number cannot be known before the birth — it is the core's, and the
+  /// core assigns it — so the birth happens first and the name follows it
+  /// through `conversation_rename`, which exists for exactly this reason: «the
+  /// number is the identity and does not move». Nothing here predicts it from
+  /// the list, which would be a guess that is wrong the first time two hands
+  /// begin a session at once.
+  ///
+  /// A rename that fails leaves «$_aSessionCalled», which is less than was
+  /// wanted and still true — and the session is open, which is what the press
+  /// needed.
+  Future<int?> beginSessionItNames({SessionId? bench}) async {
+    try {
+      final row = await z.conversationBegin(name: _aSessionCalled, bench: bench);
+      await z.conversationRename(number: row.number, name: nameForSession(row.number));
+      await refresh();
+      return row.renamedTokens;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+      return null;
+    }
+  }
+
   /// **Enter an existing one.** Asks nothing — the owner's rule.
   Future<int?> enterSession(int number, {SessionId? bench}) async {
     try {
@@ -1562,6 +1594,19 @@ String importSaid(NameImport report) {
   return '$said\n${columnsNotUsedSaid(report.columnsNotUsed)}';
 }
 
+/// The provisional name a nameless birth is begun with, before the core's
+/// number is known. One word, and never left behind as a lie: the rename that
+/// follows it turns it into [nameForSession].
+const _aSessionCalled = 'Session';
+
+/// **The name a session nobody named carries** — «الجلسة 1، الجلسة 2…», 081.
+///
+/// One function, because three places read it: the birth that sets it, the
+/// line in the sheet that must not say «Session 3 «Session 3»», and the guard
+/// that measures it. A fourth copy of this string is a fourth chance to spell
+/// it differently.
+String nameForSession(int number) => '$_aSessionCalled $number';
+
 /// **What a birth did, in one sentence** — 064f.
 ///
 /// Worded here and not inside the room, for the reason `importSaid` below is:
@@ -1624,7 +1669,8 @@ class WhatMayLeave {
 ///
 ///   0. **the clipboard is emptied** — before the name, the session or the
 ///      payload is so much as looked at (081, the owner's root rule);
-///   1. no name typed → nothing leaves, and the sentence says what to do;
+///   1. no name typed → **a session is born called «Session N»**, by the core's
+///      own number (081); nothing is refused for want of a word;
 ///   2. `beginSession(name, bench:)` — **with the bench**, which the core now
 ///      refuses to do without (064f): a birth that names no document renames
 ///      nothing, and the text would then leave wearing pre-birth names while
@@ -1691,14 +1737,13 @@ Future<WhatMayLeave> beginThenRead(
   int? renamed;
   String? said;
   if (ground.theSessionQuestionStands) {
-    if (name.trim().isEmpty) {
-      // Not a refusal by the core — the core is never asked. A name nobody has
-      // typed is a question still open, and the next move is one word.
-      return const WhatMayLeave(
-        refused: 'Give it a name first — one word is enough.',
-      );
-    }
-    renamed = await ground.beginSession(name, bench: bench.session);
+    // **Step 1 is no longer a refusal** — 081, the owner's first ruling. An
+    // empty field is not a question still open; it is a person who wants their
+    // text out and does not care what the drawer is called. They get «Session
+    // N» and can rename it in the sessions list, where the owner put rename.
+    renamed = name.trim().isEmpty
+        ? await ground.beginSessionItNames(bench: bench.session)
+        : await ground.beginSession(name, bench: bench.session);
     if (renamed == null) {
       return WhatMayLeave(
         refused: ground.trouble ??

@@ -187,7 +187,11 @@ class _SendSheetState extends State<SendSheet> {
     final byKind = footerTally(payload, widget.ground.nameOfKind);
     final out = await saveProtectedPdf(
       text: payload.text,
-      documentName: widget.bench.document?.name ?? '',
+      // **The payload's own session, not the app's** — the same rule
+      // `_whoseNames` follows: the claim is about this text, so it is taken
+      // from this text. And never `bench.document.name`, which is the person's
+      // own file name (081).
+      sessionName: payload.session?.name ?? '',
       folder: widget.saveFolder,
       stamp: PdfStamp(
         build: coreVersion(),
@@ -423,8 +427,13 @@ class _SendSheetState extends State<SendSheet> {
   Widget _whoseNames(PayloadView? payload) {
     final whose = payload?.session;
     if (whose != null) {
+      // A session nobody named is already «Session N», and «Session 3 «Session
+      // 3»» is the app reading its own placeholder back to the person (081).
+      final named = whose.name == nameForSession(whose.number)
+          ? 'Session ${whose.number}'
+          : 'Session ${whose.number} «${whose.name}»';
       return Text(
-        'Session ${whose.number} «${whose.name}» · these names are this session’s',
+        '$named · these names are this session’s',
         style: Zc.small.copyWith(color: Zc.ink4),
       );
     }

@@ -772,8 +772,9 @@ class _SessionsRoomState extends State<_SessionsRoom> {
         if (rows.isEmpty)
           _Fixed(
             title: 'No sessions yet',
-            what: 'One is born the first time you copy safe text or ask for a PDF, and it asks for '
-                'a name then. You never have to make one by hand first.',
+            what: 'One is born the first time you copy safe text or ask for a PDF — it is not '
+                'refused for want of a name, it takes its own number for one, and you can '
+                'rename it here. You never have to make one by hand first.',
           )
         else
           for (final row in rows)
@@ -866,6 +867,18 @@ class _SessionRow extends StatelessWidget {
                 child: const Text('Enter', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
               ),
             ),
+          // **Rename lives here** — the owner's second ruling, 081: a session
+          // born of a press is called «Session N», and this is where a person
+          // gives it their own word. Beside Delete, inside the session's own
+          // rectangle, because the thing being named is this row.
+          Tooltip(
+            message: 'Rename this session',
+            child: IconButton(
+              icon: const Icon(Icons.drive_file_rename_outline, size: 17),
+              color: Zc.ink3,
+              onPressed: () => _rename(context),
+            ),
+          ),
           Tooltip(
             message: 'Delete this session',
             child: IconButton(
@@ -881,6 +894,78 @@ class _SessionRow extends StatelessWidget {
 
   static String _exchanges(int turns) =>
       turns == 1 ? '1 exchange' : '$turns exchanges';
+
+  /// **A new word for this session, and nothing else about it moves** — 081.
+  ///
+  /// «الرقم هو الهوية ولا يتحرك»: the core's `conversation_rename` changes the
+  /// name and touches neither the number, nor the key, nor the file. So this
+  /// asks for one word and says that much, rather than warning about a change
+  /// that does not happen.
+  Future<void> _rename(BuildContext context) async {
+    // **No controller.** A `TextEditingController` made here has nowhere to be
+    // disposed — this row is stateless — and disposing it when `showDialog`
+    // returns disposes it while the route is still animating out: «A
+    // TextEditingController was used after being disposed», measured, with a
+    // RenderFlex overflow of 99105 pixels behind it as the layout came apart.
+    // One `onChanged` and a local word need no lifecycle at all.
+    var word = '';
+    final said = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Zc.paper,
+        title: Text('Rename session ${row.number}?', style: Zc.h2),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                key: const ValueKey<String>('rename-this-session'),
+                autofocus: true,
+                onChanged: (typed) => word = typed,
+                style: Zc.body.copyWith(color: Zc.ink),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Zc.card,
+                  isDense: true,
+                  // The room's one question, word for word, wherever it is asked.
+                  hintText: 'What is this one about?',
+                  hintStyle: Zc.body.copyWith(color: Zc.ink4),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Zc.line),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'The number stays ${row.number} — it is what this session is, and nothing '
+                'that was protected in it changes. Only the word on the row does.',
+                style: Zc.small,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Keep the name'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(word),
+            child: const Text('Rename it'),
+          ),
+        ],
+      ),
+    );
+    // Nothing typed is «keep it», not «call it nothing»: the core refuses an
+    // empty name, and a refusal here would be this product asking a question
+    // it already had an answer to.
+    final wanted = said?.trim() ?? '';
+    if (wanted.isEmpty || wanted == row.name) return;
+    await ground.renameSession(row.number, wanted);
+  }
 
   /// **The warning is a statement, not a caution** — because 064 made it true.
   ///
