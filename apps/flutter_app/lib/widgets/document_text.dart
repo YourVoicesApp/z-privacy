@@ -219,6 +219,63 @@ List<Rect> paintedOnce(Iterable<Rect> boxes) {
   return out;
 }
 
+/// **The word a single click takes — 076, the owner's rule.**
+///
+/// «الضغط على الاسم بالماوس من داخل النص يحدده فقط الاسم» — one left click
+/// selects the word under the pointer, and he stated the boundary himself on
+/// 13 October: a word **begins right after a space and ends right before the
+/// next space**, and the space is never part of it. The start and the end of a
+/// line count as a space.
+///
+/// Then the edges are tidied of the marks a sentence leaves around a word, so
+/// that what is **highlighted** is what will be **protected** — his words: «a
+/// one-click selection on `Wilson,` shows `Wilson` selected and the comma
+/// apart». The marks are the core's own list (`z_core/src/text.rs:103`), and
+/// the law lives there: `whole_words` is what actually trims the span at
+/// protection time, and this is the glass showing it in advance. The two are
+/// pinned to **one** set of cases — the owner's sealed ones — in
+/// `the_marks_a_hand_selection_leaves_behind` (Rust) and in
+/// `a_click_takes_one_word_test` (here), so a drift on either side reddens.
+///
+/// Returns null where there is no word to take: on a space, or in an empty
+/// document.
+TextRange? wordAt(String text, int at) {
+  if (text.isEmpty) return null;
+  final i = at.clamp(0, text.length);
+  bool isSpace(int k) => k < 0 || k >= text.length || text[k] == ' ' || text[k] == '\n';
+  // A click past the end of a word, or on the space itself, takes nothing: the
+  // person pointed between two words and inventing one would protect a value
+  // they never saw.
+  // A click on the space itself takes nothing. The owner's rule is about
+  // words; inventing one from a press that pointed at no word would be the
+  // screen deciding for the person, and the press costs nothing to repeat.
+  if (isSpace(i)) return null;
+
+  var start = i;
+  while (start > 0 && !isSpace(start - 1)) {
+    start--;
+  }
+  var end = i;
+  while (end < text.length && !isSpace(end)) {
+    end++;
+  }
+
+  // The same marks the core drops from a value's edges, so the highlight and
+  // the value cannot differ. Interior marks are untouched: the filter trims, it
+  // does not split — «Anne-Marie», «O'Brien» and a CSV cell stay whole.
+  const edgeMarks = <String>{
+    '.', ',', ';', ':', '!', '?', '…', '"', "'", '«', '»', '(', ')', '[', ']',
+    '{', '}', '„', '“', '”', '‘', '’', '—', '–', '،', '؛', '؟',
+  };
+  while (start < end && edgeMarks.contains(text[start])) {
+    start++;
+  }
+  while (end > start && edgeMarks.contains(text[end - 1])) {
+    end--;
+  }
+  return start < end ? TextRange(start: start, end: end) : null;
+}
+
 /// What each source is called on screen, and why the mark is there.
 String sourceName(Source s) => switch (s) {
       Source.generalRule => 'Rule',
@@ -382,6 +439,26 @@ class _OriginalTextState extends State<OriginalText> {
 
   RenderEditable? _editable() => editableUnder(_drawn);
 
+  /// The state that **owns** the selection, found by the same walk as the
+  /// render object above and for the same reason: `SelectableText` keeps its
+  /// `EditableText` a few layers down and hands out no handle to it. The
+  /// render object can be read; only the state can be told.
+  EditableTextState? _editableState() {
+    EditableTextState? found;
+    void walk(Element element) {
+      if (found != null) return;
+      if (element is StatefulElement && element.state is EditableTextState) {
+        found = element.state as EditableTextState;
+        return;
+      }
+      element.visitChildren(walk);
+    }
+
+    final context = _drawn.currentContext;
+    if (context is Element) context.visitChildren(walk);
+    return found;
+  }
+
   /// Ticks when the selection moves, so the rectangles behind the text are
   /// redrawn once and only then — 074/W8.
   final ValueNotifier<int> _selectionChanged = ValueNotifier<int>(0);
@@ -466,6 +543,36 @@ class _OriginalTextState extends State<OriginalText> {
       }
       return;
     }
+
+    // **076 — and here a press used to do nothing at all.** On ordinary text
+    // it now takes the word under the pointer, which is the owner's «ضغطة
+    // السلام»: the selection stops being work, and the Protect button that was
+    // always there acts on it unchanged. Nothing above this line moved — a
+    // press on a mark still asks «why», a press on a suggestion still offers
+    // the choice, and a press inside held lines is still the column act.
+    final word = wordAt(text, offset);
+    if (word == null) return;
+    final state = _editableState();
+    if (state == null) return;
+    // Told, not drawn: the selection belongs to the editable, and setting it
+    // here is what makes the highlight, the clipboard and `onSelectionChanged`
+    // agree. A rectangle painted by this widget would have been a fourth
+    // opinion about what is selected.
+    // **After the arena, not during it.** This listener is outside the gesture
+    // arena by design (see `_slop`), which is what lets it see the press at
+    // all — but `SelectableText`'s own tap recognizer resolves afterwards and
+    // collapses the selection to the point. Measured: setting it here directly
+    // left an empty selection on the glass. So the word is taken once the
+    // frame the press belongs to is done, and nothing can overwrite it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      state.userUpdateTextEditingValue(
+        state.textEditingValue.copyWith(
+          selection: TextSelection(baseOffset: word.start, extentOffset: word.end),
+        ),
+        SelectionChangedCause.tap,
+      );
+    });
   }
 
   List<InlineSpan> _keptSpans() {
