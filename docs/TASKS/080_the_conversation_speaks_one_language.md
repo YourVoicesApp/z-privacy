@@ -28,6 +28,8 @@ Read with an English eye, only the general rules remain. The owner's German book
 4. **A chat or a document whose session has no chosen language takes the app's language.**
 5. **Two languages for now: German and English.**
 
+**Sealed by the owner, 13 Oct, after reading the paper:** «موافق على لغة الشاشة الأولى، وهكذا هناك طريقان لاختيار لغة الجلسة: إما إنشاء جلسة جديدة بلغة محددة وهي لغة الجلسة، أو لغة التطبيق.» — two ways only, and the first-run choice *is* the app's language.
+
 ## The rule, one sentence
 
 A text — typed, pasted or read from a file — is scanned with **its session's language**; a session that has none takes **the app's language**; there is no third source.
