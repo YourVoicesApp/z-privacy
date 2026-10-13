@@ -510,7 +510,13 @@ class _SendSheetState extends State<SendSheet> {
     final needsAName = widget.ground.theSessionQuestionStands &&
         widget.ground.sessionNameWished.trim().isEmpty;
     setState(() {
-      _trouble = out.refused;
+      // **And the clipboard is empty** — 081. `beginThenRead` empties it as its
+      // first act, so a refusal can state this instead of hoping for it. The
+      // person is told because a paste that gives back nothing reads as a
+      // broken application unless somebody said so first — «المستخدم لا يدرك
+      // أنه نفس النسخ القديم», which was the owner's own first reading of it.
+      _trouble = '${out.refused ?? 'Nothing left the machine.'}\n'
+          'Nothing was copied — the clipboard is empty.';
       // **Back to the question, not a dead end.** The field is one page back
       // because the prose does not fit above the doors, so the press that
       // cannot proceed takes the person to the field instead of telling them

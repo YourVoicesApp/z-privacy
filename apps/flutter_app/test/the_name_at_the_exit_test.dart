@@ -55,6 +55,11 @@ const _letter = 'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freit
 const _other = 'Zahlung an IBAN DE44500105175407324931, Freitag bestätigt.';
 const _nothingToProtect = 'Hej, allt är bra idag.';
 
+/// The one value the general rules take out of [_letter]. Named so that a
+/// guard can look for it **in what a person would paste**, which is the only
+/// place the owner's 12 October leak was ever visible.
+const _theValue = 'DE02120300000000202051';
+
 Future<void> _settle(WidgetTester tester, {int rounds = 6}) async {
   for (var i = 0; i < rounds; i++) {
     await tester.pump();
@@ -81,13 +86,24 @@ Directory _ownDir(String name) {
 /// so it is named here as a debt instead.
 ///
 /// `text` starts at a sentinel so that a **false read** — a probe that answers
-/// something nobody wrote — is visible as itself.
+/// something nobody wrote — is visible as itself. A guard about what a person
+/// would *paste* sets it to the thing they would really have had there.
+///
+/// **[wrote] keeps the order, not only the count** — 081. The owner's rule is
+/// «empty the clipboard, then decide», and an order is a sequence: a count can
+/// say «two writes happened» while the copy came first and the emptying wiped
+/// it, which is the one failure that would look like success in every other
+/// instrument here.
 class _ClipboardProbe {
   _ClipboardProbe(this.tester);
 
   final WidgetTester tester;
   String? text = 'SENTINEL';
-  int writes = 0;
+
+  /// Every write, in the order it was made.
+  final List<String?> wrote = <String?>[];
+
+  int get writes => wrote.length;
 
   void install() {
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -95,9 +111,9 @@ class _ClipboardProbe {
       (call) async {
         switch (call.method) {
           case 'Clipboard.setData':
-            writes += 1;
             final args = Map<String, dynamic>.from(call.arguments as Map);
             text = args['text'] as String?;
+            wrote.add(text);
             return null;
           case 'Clipboard.getData':
             if (text == null) return null;
@@ -279,11 +295,25 @@ void main() {
   });
 
   // ------------------------------------------------------------------ guard 4
-  testWidgets('a nameless press takes nothing out — and the same press, named, does',
+  //
+  // **081 · what the person pastes after our button is ours.** This guard used
+  // to assert `probe.text == 'SENTINEL'` — that the app *wrote* nothing — and
+  // it was green through the owner's 12 October leak, because the app did not
+  // write the original out: it left it lying there. The clipboard started at a
+  // sentinel nobody would ever have on it, so the one state that matters —
+  // «the last thing the person copied is still there» — was not in the
+  // fixture at all. A guard green for the wrong reason.
+  //
+  // So the clipboard starts holding the document's **own original text**, which
+  // is exactly how it happened: the German letter was copied minutes earlier
+  // for the same day's chat-language experiment (080). The subject is no longer
+  // what the app wrote; it is what a paste would read.
+  testWidgets('a nameless press leaves nothing older than itself to paste',
       (tester) async {
     await tester.binding.setSurfaceSize(_wide);
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final probe = _ClipboardProbe(tester)..install();
+    probe.text = _letter;
     final g = await _atTheDoors(tester, 'nameless', toTheDoors: false);
 
     // Whitespace, not emptiness: a name that is only spaces is the same
@@ -296,11 +326,21 @@ void main() {
     await tester.tap(find.text('Copy Protected'));
     await _settle(tester);
 
-    expect(probe.writes, 0, reason: 'a nameless press copied');
-    expect(probe.text, 'SENTINEL', reason: 'something was written to the clipboard');
+    // **The leak itself, in the only terms it was ever visible in.**
+    expect(probe.text, isNot(contains(_theValue)),
+        reason: 'a press that took nothing out left the original text where a paste '
+            'would read it — the value walks out through a door that said no');
+    expect(probe.text, '',
+        reason: 'the press did not empty the clipboard first, so whatever was there '
+            'before it is still there after it');
+    expect(probe.wrote, [''],
+        reason: 'the press that took nothing out wrote ${probe.wrote.length} times; '
+            'the emptying is the only write a refusal makes');
     expect(g.out.listSync(), isEmpty, reason: 'a nameless press wrote a file');
     expect(find.textContaining('Give it a name first'), findsOneWidget,
         reason: 'nothing was copied and nothing said why');
+    expect(find.textContaining('the clipboard is empty'), findsOneWidget,
+        reason: 'the person is not told that there is nothing to paste either');
     expect(g.ground.openSession, isNull, reason: 'a nameless press began a session');
 
     // **And it put the person at the field**, one page back, with the cursor
@@ -324,8 +364,37 @@ void main() {
     await tester.tap(find.text('Copy Protected'));
     await _settle(tester);
 
-    expect(probe.writes, 1, reason: 'the named press did not copy');
     expect(probe.text, g.bench.payload!.text, reason: 'the clipboard is not the payload');
+    expect(probe.text, isNot(contains(_theValue)),
+        reason: 'the text that left carries the value the scan protected');
+  });
+
+  // ----------------------------------------------------------------- guard 4b
+  //
+  // **The second exit, driven the same way.** One door fixed and one forgotten
+  // is the shape 081 is about: the rule belongs to the press, so each press is
+  // asked. Save as PDF writes a file rather than the clipboard, and the
+  // clipboard must still be empty after it — the owner's order is «empty the
+  // clipboard, look at the session, then write the file or do not».
+  testWidgets('the PDF door empties the clipboard first too, refusal or not',
+      (tester) async {
+    await tester.binding.setSurfaceSize(_wide);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final probe = _ClipboardProbe(tester)..install();
+    probe.text = _letter;
+    final g = await _atTheDoors(tester, 'pdf-nameless', toTheDoors: false);
+
+    await tester.enterText(find.byKey(SendSheet.theSessionName), '   ');
+    await _settle(tester, rounds: 1);
+    await tester.tap(find.text('Continue'));
+    await _settle(tester);
+    await tester.tap(find.text('Save as PDF'));
+    await _settle(tester);
+
+    expect(probe.text, isNot(contains(_theValue)),
+        reason: 'the PDF door refused and left the original text to be pasted');
+    expect(probe.text, '', reason: 'the PDF door did not empty the clipboard first');
+    expect(g.out.listSync(), isEmpty, reason: 'a nameless press wrote a file');
   });
 
   // ------------------------------------------------------------------ guard 5
@@ -366,7 +435,10 @@ void main() {
     await tester.tap(find.text('Copy Protected'));
     await _settle(tester);
 
-    expect(probe.writes, 1, reason: 'the press did not copy');
+    // **The order, as a sequence and not a count** — empty first, then copy.
+    expect(probe.wrote, ['', held],
+        reason: 'the press did not empty the clipboard and then copy what the bench '
+            'holds now, in that order; it wrote ${probe.wrote}');
     expect(probe.text, held, reason: 'the clipboard carries the captured text, not the bench’s');
     expect(probe.text!.contains(beforeToken), isFalse,
         reason: 'a token from before the change left this machine');
@@ -523,7 +595,9 @@ void main() {
     // And the door still works, because protection never needed the vault.
     await tester.tap(find.text('Copy Protected'));
     await _settle(tester);
-    expect(probe.writes, 1, reason: 'a shut vault stopped a copy that sends nothing');
+    expect(probe.wrote, ['', g.bench.payload!.text],
+        reason: 'a shut vault stopped a copy that sends nothing, or the emptying that '
+            'comes before it: ${probe.wrote}');
     expect(probe.text, g.bench.payload!.text);
   });
 }

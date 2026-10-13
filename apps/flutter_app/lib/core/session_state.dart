@@ -10,6 +10,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 // Prefixed on purpose: every line below that says `z.` is a call into Rust, and
 // the prefix makes that visible when reading the file rather than guessing.
@@ -1621,6 +1622,8 @@ class WhatMayLeave {
 /// owner's rule puts the session's birth inside it: the name is asked once,
 /// where the text leaves. The order is the whole of the correctness:
 ///
+///   0. **the clipboard is emptied** — before the name, the session or the
+///      payload is so much as looked at (081, the owner's root rule);
 ///   1. no name typed → nothing leaves, and the sentence says what to do;
 ///   2. `beginSession(name, bench:)` — **with the bench**, which the core now
 ///      refuses to do without (064f): a birth that names no document renames
@@ -1656,12 +1659,35 @@ class WhatMayLeave {
 /// So the parameter says what leaves, and nothing about it is optional:
 /// `false` returns no view, and a caller that reads `view` for its text gets
 /// null rather than something almost right.
+///
+/// ## Step 0, and why it is step 0 — 081
+///
+/// **The owner, 13 Oct: «the work always happens on a clean container».** The
+/// first act of every exit press is emptying the clipboard — before the name,
+/// before the session, before the payload. Not «clear it when a copy fails»,
+/// which is a branch somebody has to remember in every refusal written from
+/// now on: clear first and no branch below can forget it, because there is
+/// nothing left to forget.
+///
+/// It is here, and not in the two presses, for the reason the rest of the
+/// order is here: out here a guard drives it, and a press that only says what
+/// it means has nothing left in it to get wrong.
+///
+/// What this closes is not something the app wrote. It is what it **left**: a
+/// refusal wrote nothing and erased nothing, so whatever the person had copied
+/// before — on 12 Oct, the same letter in the clear — was still there to be
+/// pasted into a model. The guard that stood over this counted the app's
+/// writes and read a sentinel nobody would ever have on their clipboard, so it
+/// was green through the whole of it. What a person pastes after pressing our
+/// button is ours.
 Future<WhatMayLeave> beginThenRead(
   Ground ground,
   Workbench bench, {
   required String name,
   bool thePayloadLeaves = true,
 }) async {
+  // Step 0. Nothing above this line, ever.
+  await Clipboard.setData(const ClipboardData(text: ''));
   int? renamed;
   String? said;
   if (ground.theSessionQuestionStands) {
