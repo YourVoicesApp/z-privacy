@@ -251,9 +251,19 @@ fn the_fake_provider() {
     .expect("the echo provider");
 }
 
-/// A bench with one protected name, ready to send: the open suggestions are
-/// answered because the send door refuses while one stands, which is its own
-/// guard and not this file's business.
+/// **A bench with a document on it, ready to send.**
+///
+/// Not «with one protected name», which is what this said until 075e measured
+/// it: importing does not scan. `import_text` sets `ScanOrigin::NotScanned` and
+/// clears what the last document found, and a screen asks for the scan itself —
+/// so this list is empty, nothing here is protected, and the loop below answers
+/// nothing. The four guards that use it are about what a turn *says*, which
+/// does not depend on a protection standing; the guards that need one standing
+/// scan and protect by hand, with the scope named.
+///
+/// The loop stays all the same: the day a pack does find something in this
+/// line, an unanswered suggestion would refuse the send, and these guards would
+/// go red for a reason that has nothing to do with what they claim.
 fn ready_to_send(bench: SessionId) {
     import_text(bench, "Hej Hedvig Palmgren, tack för ditt brev om kontot.".to_string())
         .expect("import");
@@ -517,6 +527,281 @@ fn the_report_still_names_no_file_though_the_session_knows_it() {
         "the file name reached the report, which is the one place it may never go"
     );
     assert!(report.contains("file        .txt"), "the report stopped naming the extension");
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+// ---------------------------------------------------------------- honest naming
+//
+// 075e · «جلسةٌ أُعيد فتحُها تُظهرُ أدوارَها، وتُسمّي ما لا تستطيعُ إرجاعَه،
+// ويُشفى منها ما حفظته الخزنةُ وحدَه.»
+//
+// The pillars above are about what a session *keeps*. These two are about what
+// it owes for what it cannot keep: to say so **by the name the person saw**,
+// rather than show the stored form as though it were prose — the lie 046/U was
+// written to end — and rather than drop it, which takes a word out of a
+// sentence and tells nobody.
+//
+// **The numbers below are a measurement of the three reaches these two tests
+// choose, and not a constant about the product.** Three values are protected,
+// as «always», «this conversation» and «here only», and exactly one of the
+// three is written anywhere outside the session's own sealed file. Protect a
+// fourth with `Scope::Profile` and both numbers move — and they should.
+//
+// Measured 13 Oct 2026, in one process, in this order:
+//
+//   read through the bench that made it     0 named of 3
+//   read with no bench at all               3 named of 3
+//   read through a new bench on the file     2 named of 3
+//
+// The one that heals is the one the vault was told to keep, and it heals
+// without being asked a second time: `scan` applies a vault value by itself —
+// `auto`, `Source::Vault` — so a person does not answer the same question
+// about the same name once per file. The two that do not heal are not a defect
+// of the reader: the values were never written down, by the person's own
+// choice, and the reader says their names rather than inventing them.
+//
+// **`Scope::Conversation` is measured here, not decided here.** Its name
+// promises the conversation's life and it dies with the process. Whether that
+// promise is to be kept in the vault is the owner's word and not this file's;
+// the number is pinned so that the day it changes, this guard says so first.
+
+const THREE: &str = "Hej Hedvig Palmgren, tack för ditt brev om kontot. \
+                     Ingmar Sjöberg skrev under och Åsa Bergkvist bevittnade.";
+
+/// `Scope::Always` — the one value written into the vault.
+const KEPT: &str = "Hedvig Palmgren";
+/// `Scope::Conversation` — every appearance here, and nothing written down.
+const THIS_CONVERSATION: &str = "Ingmar Sjöberg";
+/// `Scope::Once` — this one place.
+const HERE_ONLY: &str = "Åsa Bergkvist";
+
+const FILE: &str = "Brev_Lindqvist.txt";
+
+fn span_of(doc: &str, needle: &str) -> Span {
+    let byte = doc.find(needle).expect("the fixture does not contain its own needle");
+    let start: usize = doc[..byte].chars().map(char::len_utf16).sum();
+    Span {
+        start: start as u32,
+        end: (start + needle.chars().map(char::len_utf16).sum::<usize>()) as u32,
+    }
+}
+
+fn read(segments: &[Segment]) -> String {
+    segments.iter().map(|s| s.text.as_str()).collect()
+}
+
+fn whole_turn(turn: &TurnRow) -> String {
+    format!("{} {}", read(&turn.question), read(&turn.answer))
+}
+
+/// **One document, three reaches, one exchange** — the fixture both guards read
+/// against, so that a difference between them is about the reading and never
+/// about the writing. Returns the session's number.
+///
+/// The scopes are chosen by hand rather than through `answer_finding`, because
+/// the scope is the thing being measured: the review list offers «protect» and
+/// «always» only, so `Once` and `Conversation` would be unreachable from there.
+fn three_reaches(bench: SessionId) -> u32 {
+    import_document(bench, FILE.to_string(), THREE.as_bytes().to_vec(), DocumentKind::Txt)
+        .expect("import");
+    // Importing does not scan — it sets `NotScanned` and clears what the last
+    // document found — so the scan is asked for here, as a screen asks for it.
+    let report = scan(bench).expect("scan");
+    assert_eq!(
+        report.suggested, 0,
+        "the scanner now suggests {} names in this line, and an unanswered \
+         suggestion is a different document from the one these numbers were \
+         measured on: answer them here before reading the counts below",
+        report.suggested
+    );
+    for (needle, scope) in [
+        (KEPT, Scope::Always),
+        (THIS_CONVERSATION, Scope::Conversation),
+        (HERE_ONLY, Scope::Once),
+    ] {
+        protect(bench, span_of(THREE, needle), scope, Kind::Person).expect("protect");
+    }
+    let born = conversation_begin("vad säger brevet".to_string(), Some(bench)).expect("begin");
+    let handle = build_payload(bench).expect("payload");
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+        .expect("the echo answers");
+    born.number
+}
+
+/// **A reopened session shows its turn, and names every value it cannot bring
+/// back** — by the token the person saw, with the token still standing where
+/// the value stood.
+///
+/// Read with no document, nothing can resolve: the store that held the values
+/// died with the bench. The two wrong answers are to print the stored form as
+/// though the model had written it, and to quietly drop it. Both leave a person
+/// reading a sentence that is not the one that was sent.
+#[test]
+fn a_reopened_session_names_every_value_it_cannot_bring_back() {
+    let _guard = serial();
+    let dir = fresh_vault("named-back");
+    the_fake_provider();
+
+    let held = Bench(open_session(None, "sv".to_string()).expect("open"));
+    let number = three_reaches(held.0);
+
+    // **The control, taken before anything closes**: through the bench that
+    // made these names, all three resolve. Without it, the cold read below
+    // would prove only that something, somewhere, went wrong.
+    let warm = conversation_turns(number, Some(held.0)).expect("turns");
+    let warm_turn = warm.first().expect("the session kept no turn at all");
+    assert!(
+        warm_turn.unresolved.is_empty(),
+        "the control is void: the bench that minted these names cannot read them \
+         back, so a cold read naming them proves nothing"
+    );
+    for value in [KEPT, THIS_CONVERSATION, HERE_ONLY] {
+        let whole = whole_turn(warm_turn);
+        assert!(whole.contains(value), "the control is void: «{value}» never reached the turn");
+    }
+
+    close_the_app_and_reopen(held.0);
+
+    let cold = conversation_turns(number, None).expect("turns");
+    let turn = cold.first().expect("the session kept no turn at all");
+
+    // It shows the turn: what answered it, which file it was about, and when.
+    assert_eq!(
+        turn.via,
+        TurnVia::Through { provider: "fake".to_string(), model: MODEL.to_string() },
+        "a reopened session cannot say what answered its own turn"
+    );
+    assert_eq!(
+        turn.document,
+        TurnDocument::Named { name: FILE.to_string() },
+        "a reopened session cannot say which file its own turn was about"
+    );
+    assert!(turn.at > 0, "a restored turn carries no time at all");
+
+    // And it names what it cannot bring back — all three, not two.
+    assert_eq!(
+        turn.unresolved.len(),
+        3,
+        "read with no document, this turn must name all three protected values; \
+         it named {:?}",
+        turn.unresolved
+    );
+    // Named, and still standing: a token the reader could not resolve stays
+    // where the value stood, marked as itself, so the screen shows a gap it can
+    // explain instead of a sentence with a word missing.
+    let pieces: Vec<&Segment> = turn
+        .question
+        .iter()
+        .chain(turn.answer.iter())
+        .filter(|s| s.piece == Piece::Unresolved)
+        .collect();
+    for name in &turn.unresolved {
+        assert!(
+            name.starts_with("__Z_") && name.ends_with("__"),
+            "«{name}» is not the name the person saw on the glass"
+        );
+        assert!(
+            pieces.iter().any(|s| s.text.contains(name.as_str())),
+            "«{name}» is in the list of what could not be brought back, and nowhere \
+             in the turn: it was dropped out of the sentence and only counted"
+        );
+    }
+    // The values themselves are nowhere. This is the whole reason the list is a
+    // list of names and not of values.
+    let text = whole_turn(turn);
+    for value in [KEPT, THIS_CONVERSATION, HERE_ONLY] {
+        assert!(
+            !text.contains(value),
+            "a session read without its document gave «{value}» back as prose"
+        );
+    }
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **Only what the vault kept comes back when the document is opened again** —
+/// one of three, and the other two are still named.
+///
+/// This is the whole promise of «always» measured end to end, and the whole
+/// limit of the other two stated in the same breath: restoration is possible
+/// for what the person chose to keep, and impossible for what they chose not
+/// to. Nothing here asks the person a second time — `scan` applies a vault
+/// value by itself, and entering the session renames the bench's token to the
+/// name the session's own file holds.
+#[test]
+fn only_what_the_vault_kept_comes_back_when_the_document_opens_again() {
+    let _guard = serial();
+    let dir = fresh_vault("healed");
+    the_fake_provider();
+
+    let held = Bench(open_session(None, "sv".to_string()).expect("open"));
+    let number = three_reaches(held.0);
+
+    // **The control: the vault holds exactly one of the three.** Without it,
+    // «only what the vault kept» would be a sentence about nothing.
+    let in_the_vault: u32 = entities(None).expect("entities").iter().map(|e| e.values).sum();
+    assert_eq!(
+        in_the_vault, 1,
+        "the vault holds {in_the_vault} values, not the one «always» was told to \
+         keep, so this test is not measuring what it says"
+    );
+
+    close_the_app_and_reopen(held.0);
+
+    // The same file, opened again on a new bench — which is what a person does
+    // the next morning.
+    let again = Bench(open_session(None, "sv".to_string()).expect("open again"));
+    import_document(again.0, FILE.to_string(), THREE.as_bytes().to_vec(), DocumentKind::Txt)
+        .expect("import again");
+    let report = scan(again.0).expect("scan");
+    assert_eq!(
+        report.auto, 1,
+        "the scan put back {} values by itself; «always» promises exactly the one \
+         it was taught, found without being asked again",
+        report.auto
+    );
+    assert!(
+        report
+            .by_layer
+            .iter()
+            .any(|l| l.source == Source::Vault && l.count == 1),
+        "the one value that came back was not credited to the vault, so it came \
+         back for some other reason and the promise is still unmeasured"
+    );
+
+    // Entering the session gives this bench the session's own names.
+    let entered = conversation_enter(number, Some(again.0)).expect("enter");
+    assert_eq!(
+        entered.renamed_tokens, 1,
+        "entering renamed {} tokens; the bench's name for a value is derived \
+         fresh and must be moved onto the session's name, or the turn cannot \
+         resolve it however well the vault remembered it",
+        entered.renamed_tokens
+    );
+
+    let turns = conversation_turns(number, Some(again.0)).expect("turns");
+    let turn = turns.first().expect("the session kept no turn at all");
+    let text = whole_turn(turn);
+    assert!(
+        text.contains(KEPT),
+        "the value the vault was told to keep did not come back, though the scan \
+         put it back on the bench and the session renamed it"
+    );
+    assert_eq!(
+        turn.unresolved.len(),
+        2,
+        "two of the three were never written down and must still be named; this \
+         turn names {:?}",
+        turn.unresolved
+    );
+    for value in [THIS_CONVERSATION, HERE_ONLY] {
+        assert!(
+            !text.contains(value),
+            "«{value}» came back although nothing kept it — a value restored by \
+             guess is worse than a name"
+        );
+    }
 
     let _ = std::fs::remove_dir_all(&dir);
 }
