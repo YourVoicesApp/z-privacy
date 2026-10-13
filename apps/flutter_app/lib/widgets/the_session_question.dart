@@ -99,6 +99,17 @@ class _TheSessionQuestionState extends State<TheSessionQuestion> {
               ),
             ),
           ),
+          const SizedBox(height: 6),
+          // **The field is not a wall** — 081. A press with this empty begins
+          // a session all the same, called «Session» and its number, and the
+          // owner put rename in the sessions list for the day it matters. Said
+          // here, in the one widget both seats share, so neither can promise
+          // something different from the other.
+          Text(
+            'Leave it empty and it takes a number for a name — you can rename it '
+            'later in Settings, beside Delete.',
+            style: Zc.small.copyWith(color: Zc.ink4),
+          ),
           const SizedBox(height: 8),
           Text(widget.closing, style: Zc.small),
         ],

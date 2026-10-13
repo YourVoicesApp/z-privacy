@@ -309,6 +309,83 @@ void main() {
     );
   });
 
+  // **081 · rename lives in the sessions list** — the owner's second ruling.
+  //
+  // It is here because a session born of a press is called «Session N», and a
+  // person who wants their own word for it has to be able to give it one
+  // without the application asking at the exit. «الرقم هو الهوية ولا يتحرك»:
+  // what moves is the word on the row, and nothing else.
+  testWidgets('renaming a session changes the word and not the number', (tester) async {
+    await tester.binding.setSurfaceSize(wide);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = await inTheRoom(tester, 'rename');
+
+    await begin(tester, ground, 'Session 1');
+    expect(ground.sessions.length, 1, reason: 'nothing to rename, so nothing below is measured');
+    final before = ground.sessions.single;
+    expect(before.name, 'Session 1',
+        reason: 'the fixture is not a session carrying its own number as a name');
+
+    await tester.tap(find.byTooltip('Rename this session'));
+    await settle(tester);
+
+    // It asks for one word, and states what does **not** change — because a
+    // person renaming the drawer their protected work is in needs the edge of
+    // the act as much as the middle.
+    expect(find.textContaining('Rename session 1?'), findsOneWidget);
+    expect(find.textContaining('The number stays 1'), findsOneWidget,
+        reason: 'the dialog does not say that the number is the identity');
+    expect(find.textContaining('nothing that was protected in it changes'), findsOneWidget,
+        reason: 'the dialog lets a person fear the rename touches their work');
+
+    // **Keeping the name keeps it** — the control that gives the rename below
+    // its meaning. A pure UI press: nothing of the core is awaited here.
+    await tester.tap(find.text('Keep the name'));
+    await settle(tester);
+    expect(find.byType(AlertDialog), findsNothing, reason: '«Keep the name» left the dialog open');
+    expect(ground.sessions.single.name, 'Session 1',
+        reason: '«Keep the name» renamed it anyway');
+
+    // The act itself, through the ground: a core call started in a widget
+    // callback does not complete under `testWidgets`, whether awaited or not —
+    // this file's own «entering» guard measured that and says so. The control
+    // is the live press above; the act is driven where it can finish.
+    await tester.tap(find.byTooltip('Rename this session'));
+    await settle(tester);
+    await tester.enterText(find.byKey(const ValueKey<String>('rename-this-session')), 'oktoberlönerna');
+    await settle(tester, rounds: 1);
+    final doIt = find.widgetWithText(TextButton, 'Rename it');
+    expect(tester.widget<TextButton>(doIt).onPressed, isNotNull,
+        reason: 'the Rename control is dead, so a session cannot be given a word');
+    await tester.tap(find.text('Keep the name'));
+    await settle(tester);
+    await tester.runAsync(() => ground.renameSession(before.number, 'oktoberlönerna'));
+    await settle(tester);
+
+    final after = ground.sessions.single;
+    expect(after.name, 'oktoberlönerna', reason: 'the session kept its old word');
+    expect(after.number, before.number,
+        reason: 'the number moved with the name, so the identity of the session moved');
+    expect(after.turns, before.turns, reason: 'the rename touched what the session holds');
+    expect(after.beganAt, before.beganAt, reason: 'the rename moved when the session began');
+    // Read back from the core, not from the screen that asked for it.
+    final rows = await tester.runAsync(() => z.conversations());
+    expect(rows!.single.name, 'oktoberlönerna',
+        reason: 'the word changed on the glass and not in the vault');
+    expect(rows.single.number, before.number, reason: 'the vault moved the number');
+
+    // And the row on the glass carries it.
+    expect(
+      find.descendant(
+        of: find.byType(SettingsScreen),
+        matching: find.widgetWithText(Row, 'oktoberlönerna'),
+      ),
+      findsWidgets,
+      reason: 'the list still shows the old word',
+    );
+  });
+
   testWidgets('deleting a session states what it costs, and the name goes with it', (tester) async {
     await tester.binding.setSurfaceSize(wide);
     addTearDown(() => tester.binding.setSurfaceSize(null));

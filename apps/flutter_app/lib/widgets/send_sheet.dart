@@ -187,7 +187,11 @@ class _SendSheetState extends State<SendSheet> {
     final byKind = footerTally(payload, widget.ground.nameOfKind);
     final out = await saveProtectedPdf(
       text: payload.text,
-      documentName: widget.bench.document?.name ?? '',
+      // **The payload's own session, not the app's** — the same rule
+      // `_whoseNames` follows: the claim is about this text, so it is taken
+      // from this text. And never `bench.document.name`, which is the person's
+      // own file name (081).
+      sessionName: payload.session?.name ?? '',
       folder: widget.saveFolder,
       stamp: PdfStamp(
         build: coreVersion(),
@@ -423,8 +427,13 @@ class _SendSheetState extends State<SendSheet> {
   Widget _whoseNames(PayloadView? payload) {
     final whose = payload?.session;
     if (whose != null) {
+      // A session nobody named is already «Session N», and «Session 3 «Session
+      // 3»» is the app reading its own placeholder back to the person (081).
+      final named = whose.name == nameForSession(whose.number)
+          ? 'Session ${whose.number}'
+          : 'Session ${whose.number} «${whose.name}»';
       return Text(
-        'Session ${whose.number} «${whose.name}» · these names are this session’s',
+        '$named · these names are this session’s',
         style: Zc.small.copyWith(color: Zc.ink4),
       );
     }
@@ -510,7 +519,13 @@ class _SendSheetState extends State<SendSheet> {
     final needsAName = widget.ground.theSessionQuestionStands &&
         widget.ground.sessionNameWished.trim().isEmpty;
     setState(() {
-      _trouble = out.refused;
+      // **And the clipboard is empty** — 081. `beginThenRead` empties it as its
+      // first act, so a refusal can state this instead of hoping for it. The
+      // person is told because a paste that gives back nothing reads as a
+      // broken application unless somebody said so first — «المستخدم لا يدرك
+      // أنه نفس النسخ القديم», which was the owner's own first reading of it.
+      _trouble = '${out.refused ?? 'Nothing left the machine.'}\n'
+          'Nothing was copied — the clipboard is empty.';
       // **Back to the question, not a dead end.** The field is one page back
       // because the prose does not fit above the doors, so the press that
       // cannot proceed takes the person to the field instead of telling them

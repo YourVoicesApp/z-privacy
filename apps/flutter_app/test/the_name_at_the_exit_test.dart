@@ -34,7 +34,9 @@
 @Timeout(Duration(minutes: 5))
 library;
 
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,6 +56,11 @@ const _wide = Size(1200, 1000);
 const _letter = 'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.';
 const _other = 'Zahlung an IBAN DE44500105175407324931, Freitag bestätigt.';
 const _nothingToProtect = 'Hej, allt är bra idag.';
+
+/// The one value the general rules take out of [_letter]. Named so that a
+/// guard can look for it **in what a person would paste**, which is the only
+/// place the owner's 12 October leak was ever visible.
+const _theValue = 'DE02120300000000202051';
 
 Future<void> _settle(WidgetTester tester, {int rounds = 6}) async {
   for (var i = 0; i < rounds; i++) {
@@ -81,13 +88,24 @@ Directory _ownDir(String name) {
 /// so it is named here as a debt instead.
 ///
 /// `text` starts at a sentinel so that a **false read** — a probe that answers
-/// something nobody wrote — is visible as itself.
+/// something nobody wrote — is visible as itself. A guard about what a person
+/// would *paste* sets it to the thing they would really have had there.
+///
+/// **[wrote] keeps the order, not only the count** — 081. The owner's rule is
+/// «empty the clipboard, then decide», and an order is a sequence: a count can
+/// say «two writes happened» while the copy came first and the emptying wiped
+/// it, which is the one failure that would look like success in every other
+/// instrument here.
 class _ClipboardProbe {
   _ClipboardProbe(this.tester);
 
   final WidgetTester tester;
   String? text = 'SENTINEL';
-  int writes = 0;
+
+  /// Every write, in the order it was made.
+  final List<String?> wrote = <String?>[];
+
+  int get writes => wrote.length;
 
   void install() {
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -95,9 +113,9 @@ class _ClipboardProbe {
       (call) async {
         switch (call.method) {
           case 'Clipboard.setData':
-            writes += 1;
             final args = Map<String, dynamic>.from(call.arguments as Map);
             text = args['text'] as String?;
+            wrote.add(text);
             return null;
           case 'Clipboard.getData':
             if (text == null) return null;
@@ -120,6 +138,7 @@ Future<({Workbench bench, Ground ground})> _benchOnly(
   String name, {
   bool withAVault = true,
   String text = _letter,
+  String documentName = '',
 }) async {
   final own = _ownDir(name);
   final ground = Ground();
@@ -130,7 +149,19 @@ Future<({Workbench bench, Ground ground})> _benchOnly(
   }
   final session = await z.openSession(profileId: null, packId: 'de');
   final bench = Workbench(session: session, profileId: null, packId: 'de');
-  await z.importText(session: session, text: text);
+  if (documentName.isEmpty) {
+    await z.importText(session: session, text: text);
+  } else {
+    // **A file with a name on it** — the only fixture in which «the saved file
+    // is named after the session, not the document» can be told from «there
+    // was no document name anyway». Typed text has none.
+    await z.importDocument(
+      session: session,
+      name: documentName,
+      bytes: Uint8List.fromList(utf8.encode(text)),
+      kind: DocumentKind.txt,
+    );
+  }
   await bench.rescan();
   await ground.refresh();
   return (bench: bench, ground: ground);
@@ -147,10 +178,16 @@ Future<({Workbench bench, Ground ground, Directory out})> _atTheDoors(
   bool withAVault = true,
   String text = _letter,
   bool toTheDoors = true,
+  String documentName = '',
 }) async {
   late final ({Workbench bench, Ground ground}) made;
   await tester.runAsync(() async {
-    made = await _benchOnly(name, withAVault: withAVault, text: text);
+    made = await _benchOnly(
+      name,
+      withAVault: withAVault,
+      text: text,
+      documentName: documentName,
+    );
   });
   final out = _ownDir('$name-pdf')..createSync(recursive: true);
   await tester.pumpWidget(MaterialApp(
@@ -279,53 +316,159 @@ void main() {
   });
 
   // ------------------------------------------------------------------ guard 4
-  testWidgets('a nameless press takes nothing out — and the same press, named, does',
+  //
+  // **081 · what the person pastes after our button is ours.** This guard used
+  // to assert `probe.text == 'SENTINEL'` — that the app *wrote* nothing — and
+  // it was green through the owner's 12 October leak, because the app did not
+  // write the original out: it left it lying there. The clipboard started at a
+  // sentinel nobody would ever have on it, so the one state that matters —
+  // «the last thing the person copied is still there» — was not in the
+  // fixture at all. A guard green for the wrong reason.
+  //
+  // So the clipboard starts holding the document's **own original text**, which
+  // is exactly how it happened: the German letter was copied minutes earlier
+  // for the same day's chat-language experiment (080). The subject is no longer
+  // what the app wrote; it is what a paste would read.
+  //
+  // **And the refusal itself is gone** — the owner's first ruling, 13 Oct: a
+  // press that needs a session gets one, called «Session N» by the core's own
+  // number. 064's «the name is asked once, at the exit» asked a question a
+  // person who only wanted their text out never came for, and answered a wrong
+  // answer with a small line they did not see. The field stays for anyone who
+  // does want to name it; an empty one is no longer a wall.
+  //
+  // **Driven through the ground, not by a tap** — for the reason at the top of
+  // this file: the birth awaits the core, and a widget callback that awaits
+  // the core does not resume under `testWidgets`. The old refusal needed no
+  // core call, which is why a tap could measure it; a door that no longer
+  // refuses cannot be measured that way, and pretending otherwise would be a
+  // guard that proves the test harness.
+  testWidgets('a nameless exit births «Session N» instead of refusing',
       (tester) async {
     await tester.binding.setSurfaceSize(_wide);
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final probe = _ClipboardProbe(tester)..install();
+    probe.text = _letter;
     final g = await _atTheDoors(tester, 'nameless', toTheDoors: false);
+    expect(find.byKey(SendSheet.theSessionBand), findsOneWidget,
+        reason: 'the fixture already has a session, so nothing here is a birth');
 
-    // Whitespace, not emptiness: a name that is only spaces is the same
-    // question still unanswered, and the core cleans before it judges.
-    expect(find.byKey(SendSheet.theSessionBand), findsOneWidget);
-    await tester.enterText(find.byKey(SendSheet.theSessionName), '   ');
-    await _settle(tester, rounds: 1);
+    // Read before the act: the birth renames every token on the bench, and the
+    // text that leaves must wear the new names and none of these.
+    final beforeTheBirth = g.bench.tokens.first.token;
+
+    // Whitespace, not emptiness: a field holding three spaces is the same
+    // «nobody named this» as an empty one, and the core cleans before it judges.
+    final out = await tester.runAsync(
+      () => beginThenRead(g.ground, g.bench, name: '   '),
+    );
+    await _settle(tester);
+
+    // **A session exists, and the core named it.**
+    expect(out!.refused, isNull,
+        reason: 'a nameless exit was refused: ${out.refused}');
+    final born = g.ground.openSession;
+    expect(born, isNotNull,
+        reason: 'nothing was born and nothing was refused either: ${g.ground.trouble}');
+    expect(g.ground.openSessionRow?.name, 'Session $born',
+        reason: 'a session nobody named must carry its own number as its name, so '
+            'the sessions list is a list of things and not of blanks');
+    expect(out.said, isNotNull, reason: 'the birth said nothing about itself');
+
+    // **And nothing older than the press survived it** — the leak itself, in
+    // the only terms it was ever visible in.
+    expect(probe.wrote, [''],
+        reason: 'the exit must empty the clipboard first, whatever it then decides; '
+            'it wrote ${probe.wrote}');
+
+    // **What may leave wears this session's names.**
+    expect(out.view, isNotNull, reason: 'the birth happened and nothing may leave');
+    expect(out.view!.text, isNot(contains(_theValue)),
+        reason: 'the text that may leave carries the value the scan protected');
+    expect(out.view!.text, isNot(contains(beforeTheBirth)),
+        reason: 'the text that may leave wears a name minted before the session '
+            'existed, so the session it claims is not the one that named it');
+    expect(out.view!.session?.number, born,
+        reason: 'the payload belongs to another session than the one just born');
+
+    // The question is answered by the act, so it is no longer asked.
+    expect(find.byKey(SendSheet.theSessionBand), findsNothing,
+        reason: 'the band still asks for a session that now exists');
+    expect(find.textContaining('Give it a name first'), findsNothing,
+        reason: 'the refusal the owner met is still on the glass');
+
+    // **The control: the press itself still copies.** With the session now
+    // open no core call is awaited, so a real tap resumes — and the clipboard
+    // is emptied again before it is written.
     await tester.tap(find.text('Continue'));
     await _settle(tester);
     await tester.tap(find.text('Copy Protected'));
     await _settle(tester);
+    expect(probe.wrote, ['', '', g.bench.payload!.text],
+        reason: 'the press did not empty the clipboard and then copy: ${probe.wrote}');
+    expect(probe.text, isNot(contains(_theValue)),
+        reason: 'the text a person would now paste carries the value the scan '
+            'protected — the original walks out through the door');
+  });
 
-    expect(probe.writes, 0, reason: 'a nameless press copied');
-    expect(probe.text, 'SENTINEL', reason: 'something was written to the clipboard');
-    expect(g.out.listSync(), isEmpty, reason: 'a nameless press wrote a file');
-    expect(find.textContaining('Give it a name first'), findsOneWidget,
-        reason: 'nothing was copied and nothing said why');
-    expect(g.ground.openSession, isNull, reason: 'a nameless press began a session');
-
-    // **And it put the person at the field**, one page back, with the cursor
-    // in it — not in a dead end telling them to go looking for it.
-    expect(find.byKey(SendSheet.theSessionBand), findsOneWidget,
-        reason: 'the refusal left the person away from the question it is about');
-    final field = tester.widget<TextField>(find.byKey(SendSheet.theSessionName));
-    expect(field.focusNode?.hasFocus, isTrue,
-        reason: 'the field did not take the cursor, so the next keystroke goes nowhere');
-
-    // **The control, in the same test.** The zero above is only worth quoting
-    // beside this one: the same press, with a session, writes the payload.
-    final renamed = await tester.runAsync(
-      () => g.ground.beginSession('VAT questions', bench: g.bench.session),
+  // ----------------------------------------------------------------- guard 4b
+  //
+  // **The second exit, driven the same way.** One door fixed and one forgotten
+  // is the shape 081 is about: the rule belongs to the press, so each press is
+  // asked. Save as PDF writes a file rather than the clipboard, and the
+  // clipboard must be empty after it all the same — the owner's order is
+  // «empty the clipboard, look at the session, then write the file or do not».
+  //
+  // **And the file's own name is measured here**, because it was found on the
+  // way: the saved file was called after the *document* — `Brief_Weber-…` — so
+  // a name a person had in a file name left this machine in the clear, in the
+  // one direction nobody thinks to look, a folder listing. The session's name
+  // is ours to choose; theirs is theirs.
+  testWidgets('the PDF door empties the clipboard, births one, and names the file after it',
+      (tester) async {
+    await tester.binding.setSurfaceSize(_wide);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final probe = _ClipboardProbe(tester)..install();
+    probe.text = _letter;
+    final g = await _atTheDoors(
+      tester,
+      'pdf-nameless',
+      toTheDoors: false,
+      documentName: 'Brief_Weber.txt',
     );
-    expect(renamed, isNotNull, reason: 'the birth was refused: ${g.ground.trouble}');
+    expect(g.bench.document?.name, 'Brief_Weber.txt',
+        reason: 'the fixture has no document name, so «named after the session» '
+            'could not be told from «there was no other name»');
+
+    // The birth through the ground, for the reason guard 4 gives; then the
+    // press itself, which from here awaits no core call and resumes.
+    final out = await tester.runAsync(
+      () => beginThenRead(g.ground, g.bench, name: ''),
+    );
+    expect(out!.refused, isNull, reason: 'the nameless exit was refused: ${out.refused}');
     await tester.runAsync(() => g.bench.refresh());
     await _settle(tester);
     await tester.tap(find.text('Continue'));
     await _settle(tester);
-    await tester.tap(find.text('Copy Protected'));
-    await _settle(tester);
+    await tester.tap(find.text('Save as PDF'));
+    await _settle(tester, rounds: 16);
 
-    expect(probe.writes, 1, reason: 'the named press did not copy');
-    expect(probe.text, g.bench.payload!.text, reason: 'the clipboard is not the payload');
+    final born = g.ground.openSession;
+    expect(born, isNotNull,
+        reason: 'the PDF door refused for want of a name: ${g.ground.trouble}');
+    expect(probe.wrote.every((w) => w == ''), isTrue,
+        reason: 'the PDF door writes a file and no clipboard content, so every write '
+            'it made must be an emptying: ${probe.wrote}');
+    expect(probe.wrote, isNotEmpty, reason: 'nothing emptied the clipboard at all');
+
+    final saved = g.out.listSync().whereType<File>().toList();
+    expect(saved, hasLength(1), reason: 'the press did not write one file');
+    final named = saved.first.uri.pathSegments.last;
+    expect(named, contains('Session $born'),
+        reason: '«$named» is not named after the session that owns it');
+    expect(named, isNot(contains('Brief_Weber')),
+        reason: '«$named» carries the person’s own file name out of the machine, '
+            'where a folder listing reads it');
   });
 
   // ------------------------------------------------------------------ guard 5
@@ -366,7 +509,10 @@ void main() {
     await tester.tap(find.text('Copy Protected'));
     await _settle(tester);
 
-    expect(probe.writes, 1, reason: 'the press did not copy');
+    // **The order, as a sequence and not a count** — empty first, then copy.
+    expect(probe.wrote, ['', held],
+        reason: 'the press did not empty the clipboard and then copy what the bench '
+            'holds now, in that order; it wrote ${probe.wrote}');
     expect(probe.text, held, reason: 'the clipboard carries the captured text, not the bench’s');
     expect(probe.text!.contains(beforeToken), isFalse,
         reason: 'a token from before the change left this machine');
@@ -523,7 +669,9 @@ void main() {
     // And the door still works, because protection never needed the vault.
     await tester.tap(find.text('Copy Protected'));
     await _settle(tester);
-    expect(probe.writes, 1, reason: 'a shut vault stopped a copy that sends nothing');
+    expect(probe.wrote, ['', g.bench.payload!.text],
+        reason: 'a shut vault stopped a copy that sends nothing, or the emptying that '
+            'comes before it: ${probe.wrote}');
     expect(probe.text, g.bench.payload!.text);
   });
 }

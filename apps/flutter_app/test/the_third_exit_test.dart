@@ -61,10 +61,12 @@
 //     taken from the view and no core call is left to refuse it. What the
 //     refresh buys here is the person's send actually happening instead of a
 //     refusal they would have to work out for themselves;
-//   * **the empty-name check removed**: guard 3 stays **green**, because the
-//     core refuses an empty session name as input (064e). What goes red is
-//     guard 5 — the house sentence «Give it a name first» and the trip back to
-//     the field are what the Dart check is for;
+//   * **the birth-by-number removed** (081): guard 5 goes red. There is no
+//     empty-name check left to remove — the owner took the refusal out on 13
+//     Oct — and what stands in its place is `beginSessionItNames`, which is
+//     what guard 5 now measures. The core still refuses an empty name as input
+//     (064e), which is why the Dart side names it «Session» and renames it to
+//     «Session N» rather than sending nothing;
 //   * **the door dead while the question stands**: guard 5, for the gate it
 //     would make;
 //   * **a birth at every press, open session or not**: guard 2 — a send inside
@@ -257,23 +259,37 @@ void main() {
   });
 
   // ------------------------------------------------------------------ guard 3
-  test('a nameless send takes nothing out, and the zero has a one beside it', () async {
+  //
+  // **081.** This asserted the refusal, and a zero with a one beside it to
+  // prove the socket was real. The owner took the refusal out on 13 Oct, so
+  // what is left to measure is the pair it becomes: a press with nothing typed
+  // is named by the core's number, a press with a word is named by the word,
+  // and **both travel**. Two fixtures rather than one, because the first press
+  // now opens a session and a second press inside it begins nothing — which is
+  // guard 2's property and would make this one measure the wrong thing.
+  test('a nameless send is named by its number, and a named one by the word', () async {
     final g = await _ready('noname');
 
     final out = await beginThenAsk(g.ground, g.bench, name: '   ', providerId: 'openai');
 
-    expect(out.refused, isNotNull, reason: 'a nameless send was allowed');
-    expect(out.refused, contains('name'), reason: 'the refusal does not say what is missing');
-    expect(g.bodies, isEmpty, reason: 'a nameless send reached the model');
-    expect(await z.conversations(), isEmpty, reason: 'a nameless send began a session anyway');
+    expect(out.refused, isNull, reason: 'a nameless send was refused: ${out.refused}');
+    final rows = await z.conversations();
+    expect(rows, hasLength(1), reason: 'a nameless send began no session');
+    expect(rows.single.name, 'Session ${rows.single.number}',
+        reason: 'a session nobody named carries «${rows.single.name}» instead of its '
+            'own number, so the sessions list is a list of blanks');
+    expect(g.bodies, hasLength(1), reason: 'the nameless send reached no model');
+    expect(g.bodies.single.contains(_iban), isFalse, reason: 'the real IBAN left the machine');
 
-    // **The one beside the zero.** The same fixture, the same socket, one word
-    // typed — and it travels. Without this, the empty `bodies` above could be
-    // an instrument that never sees anything.
-    final second = await beginThenAsk(g.ground, g.bench, name: 'Saturn', providerId: 'openai');
-    expect(second.refused, isNull, reason: 'the named send was refused too: ${second.refused}');
-    expect(g.bodies, hasLength(1),
-        reason: 'nothing reaches this server at all, so the zero above measures nothing');
+    // **The one beside it**: the person's own word, kept as it was typed.
+    final second = await _ready('noname-but-named');
+    final named = await beginThenAsk(second.ground, second.bench, name: 'Saturn', providerId: 'openai');
+    expect(named.refused, isNull, reason: 'the named send was refused: ${named.refused}');
+    final namedRows = await z.conversations();
+    expect(namedRows, hasLength(1), reason: 'the named send began no session');
+    expect(namedRows.single.name, 'Saturn',
+        reason: 'the word the person typed was replaced by a number');
+    expect(second.bodies, hasLength(1), reason: 'the named send reached no model');
   });
 
   // ------------------------------------------------------------------ guard 4
@@ -302,7 +318,19 @@ void main() {
   });
 
   // ------------------------------------------------------------------ guard 5
-  testWidgets('the door is live while the question stands, and a nameless press sends nothing',
+  //
+  // **081 · the nameless press is no longer refused.** It asserted «nothing was
+  // sent» and «Give it a name first», which was 064's rule; the owner replaced
+  // it on 13 Oct, from the other side of it: a person who wants their text out
+  // never came for the question, and a small line where their copy should have
+  // been is a failure of the application to them. A session is born instead,
+  // called «Session N» by the core's own number.
+  //
+  // The press is driven through `beginThenAsk` for the reason this whole file
+  // exists: a send is an awaited core call, and a widget callback that awaits
+  // the core does not resume under `testWidgets`. The tap below measures what a
+  // tap can — that the door is live while the question stands.
+  testWidgets('the door is live while the question stands, and a nameless press begins one',
       (tester) async {
     await tester.binding.setSurfaceSize(_wide);
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -328,15 +356,32 @@ void main() {
     expect(tester.widget<ZButton>(anySend).onPressed, isNotNull,
         reason: 'the send door is dead while the question stands, so the question is a gate');
 
-    await tester.tap(anySend);
+    // **The press, with nothing in the field.** The provider is the one
+    // `_ready` connected, and the door above is the same act.
+    final preBirth = g.bench.tokens.map((t) => t.token).toList();
+    expect(preBirth, isNotEmpty, reason: 'nothing is protected, so a birth renames nothing');
+    final out = await tester.runAsync(
+      () => beginThenAsk(g.ground, g.bench, name: '', providerId: 'openai'),
+    );
     await _settle(tester);
 
-    // Nothing left, and the person is standing where the missing word goes.
-    expect(g.bodies, isEmpty, reason: 'a nameless press sent the text to the model');
-    expect(find.byKey(SendSheet.theSessionBand), findsOneWidget,
-        reason: 'the refused press left the person on the doors page, away from the field');
-    expect(find.textContaining('Give it a name first'), findsOneWidget,
-        reason: 'the refusal does not say what is missing, where it is missing');
+    expect(out!.refused, isNull, reason: 'a nameless press was refused: ${out.refused}');
+    final born = g.ground.openSession;
+    expect(born, isNotNull,
+        reason: 'the press neither began a session nor refused: ${g.ground.trouble}');
+    expect(g.ground.openSessionRow?.name, 'Session $born',
+        reason: 'a session nobody named must carry its own number as its name');
+    expect(find.textContaining('Give it a name first'), findsNothing,
+        reason: 'the refusal the owner met is still on the glass');
+
+    // And the send happened, wearing the names of the session just born.
+    expect(g.bodies, hasLength(1), reason: 'the model was never contacted');
+    final sent = g.bodies.single;
+    expect(sent.contains(_iban), isFalse, reason: 'the real IBAN left the machine');
+    for (final t in preBirth) {
+      expect(sent.contains(t), isFalse,
+          reason: 'the pre-birth name «$t» left the machine after the session was born');
+    }
   });
 
   // ------------------------------------------------------------------ guard 6
