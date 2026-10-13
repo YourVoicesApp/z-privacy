@@ -661,14 +661,31 @@ elif [ -n "$SOURCE_NEWER_THAN_LIB" ]; then
   DART_PASSED=""
 else
   pass "G7-lib the library the Dart half speaks through was built from this tree"
-  if (cd apps/flutter_app && LD_LIBRARY_PATH="$PWD/build/linux/x64/debug/bundle/lib" flutter test --concurrency=1 --reporter compact >/tmp/gd.$$ 2>&1); then
+  # **A red that says what failed.** The compact reporter rewrites one line, so
+  # a log of it keeps only that line's last state: on 13 Oct seven failures came
+  # back as one test's name and a RenderFlex dump from a file that had not
+  # failed at all, and finding the seven took a second full run of the suite by
+  # hand. `--file-reporter` writes every event beside it, and the log is kept
+  # rather than deleted, because the evidence of a red is worth more than a
+  # tidy /tmp.
+  DART_LOG=/tmp/gd.$$
+  DART_JSON=/tmp/gd-$$.json
+  if (cd apps/flutter_app && LD_LIBRARY_PATH="$PWD/build/linux/x64/debug/bundle/lib" flutter test --concurrency=1 --reporter compact --file-reporter="json:$DART_JSON" >"$DART_LOG" 2>&1); then
     pass "G7-dart the whole contract answers from Dart without a panic"
+    DART_GREEN=1
   else
-    fail "G7-dart flutter test:"; tail -20 /tmp/gd.$$ | sed 's/^/        /'
+    fail "G7-dart flutter test:"
+    if [ -f scripts/dart_failures.py ] && [ -f "$DART_JSON" ]; then
+      python3 scripts/dart_failures.py "$DART_JSON" | sed 's/^/        /'
+    fi
+    tail -20 "$DART_LOG" | sed 's/^/        /'
+    printf '        the whole log: %s · every event: %s\n' "$DART_LOG" "$DART_JSON"
+    DART_GREEN=
   fi
-  # The compact reporter's own running total, last word it says.
-  DART_PASSED=$(grep -oE '\+[0-9]+' /tmp/gd.$$ | tail -1 | tr -d '+')
-  rm -f /tmp/gd.$$
+  # The compact reporter's own running total, last word it says — read before
+  # anything is removed, because it is read out of the log itself.
+  DART_PASSED=$(grep -oE '\+[0-9]+' "$DART_LOG" 2>/dev/null | tail -1 | tr -d '+')
+  if [ -n "$DART_GREEN" ]; then rm -f "$DART_LOG" "$DART_JSON"; fi
 fi
 
 # ------------------------------------------------- the mark
