@@ -63,3 +63,23 @@ screen reusing the answer path's pieces (`Piece` law as-is). The lead
 measures, merges, and holds the Divergence Ledger — this circle touches
 scanner/restore, so every landed commit here gets a ledger entry for the
 library's V1-G0.
+
+## 13 Oct evening — the answer page: «Z-pdf : Zprivacy-svara» (the owner's design, sealed)
+
+**Why:** a lawyer who writes by hand or retypes may not carry the tokens over whole. The returned document needs one thing that always finds its way back.
+
+**The page.** Every z-pdf export ends with one extra page:
+- **top:** «Z-pdf : Zprivacy-svara», written **before** protection;
+- **middle:** a circle drawn in a faint line — the answer goes here («الإجابة هنا»);
+- **bottom:** the stamp «conversion request» (طلب التحويل);
+- the rest blank.
+
+**The word is protected like any other word.** «Zprivacy-svara» is protected with **the same session key** as the document, so the page carries an ordinary token of that session (`__Z_<ns>_…__`). The owner, verbatim: «لا أقصد أنها تحصل على المفتاح، أقصد أنها تحصل رمزاً ثابتاً يمكن العودة إليه». Consequences, all from rules already sealed:
+- **No key on paper.** The token decodes nothing without the owner's vault — exactly like every other token on the page.
+- **No new marker grammar.** It is a token; `is_token` (046/U) finds it; one token suffices to find the session (079's translation law).
+- **It is also the proof of origin.** Restored to exactly «Zprivacy-svara» → the document is from this session; a token-shaped string that does not restore to it is foreign and is named, not trusted.
+- **It is fixed per session**: the same session's exports all carry the same answer-page token; the value is known in advance, so the import door can look for it first.
+
+**Guards.** Export → the last page's first line, read back through a real PDF reader (not a byte search), is the session's token for «Zprivacy-svara»; restore of that token alone opens the right session; a returned PDF whose other tokens are all mangled still finds its session through this one; a foreign session's answer-page token is refused by name.
+
+**Noted, not required now:** a page printed, written on by hand and scanned comes back as an image with no text layer — the token cannot be read. The same token as a small **QR** beside the line would survive that path (reading QR from an image is a new capability, offline). Handwritten answers in the circle are for the owner's eyes; reading handwriting is a later stage.
