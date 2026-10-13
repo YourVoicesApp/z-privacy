@@ -579,10 +579,11 @@ fn wire__z_core__api__conversation_record_impl(
             let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_question = <String>::sse_decode(&mut deserializer);
             let api_answer = <String>::sse_decode(&mut deserializer);
+            let api_via = <crate::api::mirrors::TurnVia>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
-                    let output_ok = z_core::api::conversation_record(api_question, api_answer)?;
+                    let output_ok = z_core::api::conversation_record(api_question, api_answer, api_via)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -3862,10 +3863,19 @@ const _: fn() = || {
     }
     {
         let TurnRow = None::<crate::api::mirrors::TurnRow>.unwrap();
+        let _: crate::api::mirrors::TurnVia = TurnRow.via;
         let _: Vec<crate::api::mirrors::Segment> = TurnRow.question;
         let _: Vec<crate::api::mirrors::Segment> = TurnRow.answer;
         let _: u64 = TurnRow.at;
         let _: Vec<String> = TurnRow.unresolved;
+    }
+    match None::<crate::api::mirrors::TurnVia>.unwrap() {
+        crate::api::mirrors::TurnVia::NotRecorded => {}
+        crate::api::mirrors::TurnVia::Pasted => {}
+        crate::api::mirrors::TurnVia::Through { provider, model } => {
+            let _: String = provider;
+            let _: String = model;
+        }
     }
     match None::<crate::api::mirrors::UndoOutcome>.unwrap() {
         crate::api::mirrors::UndoOutcome::NothingToUndo => {}
@@ -5934,16 +5944,44 @@ impl SseDecode for crate::api::mirrors::TokenRow {
 impl SseDecode for crate::api::mirrors::TurnRow {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_via = <crate::api::mirrors::TurnVia>::sse_decode(deserializer);
         let mut var_question = <Vec<crate::api::mirrors::Segment>>::sse_decode(deserializer);
         let mut var_answer = <Vec<crate::api::mirrors::Segment>>::sse_decode(deserializer);
         let mut var_at = <u64>::sse_decode(deserializer);
         let mut var_unresolved = <Vec<String>>::sse_decode(deserializer);
         return crate::api::mirrors::TurnRow {
+            via: var_via,
             question: var_question,
             answer: var_answer,
             at: var_at,
             unresolved: var_unresolved,
         };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::TurnVia {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut tag_ = <i32>::sse_decode(deserializer);
+        match tag_ {
+            0 => {
+                return crate::api::mirrors::TurnVia::NotRecorded;
+            }
+            1 => {
+                return crate::api::mirrors::TurnVia::Pasted;
+            }
+            2 => {
+                let mut var_provider = <String>::sse_decode(deserializer);
+                let mut var_model = <String>::sse_decode(deserializer);
+                return crate::api::mirrors::TurnVia::Through {
+                    provider: var_provider,
+                    model: var_model,
+                };
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 
@@ -7887,6 +7925,7 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::TokenRow>
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::TurnRow> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
+            self.0.via.into_into_dart().into_dart(),
             self.0.question.into_into_dart().into_dart(),
             self.0.answer.into_into_dart().into_dart(),
             self.0.at.into_into_dart().into_dart(),
@@ -7898,6 +7937,30 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::TurnRow> 
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::TurnRow> {}
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::TurnRow>> for crate::api::mirrors::TurnRow {
     fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::TurnRow> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::TurnVia> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            crate::api::mirrors::TurnVia::NotRecorded => [0.into_dart()].into_dart(),
+            crate::api::mirrors::TurnVia::Pasted => [1.into_dart()].into_dart(),
+            crate::api::mirrors::TurnVia::Through { provider, model } => [
+                2.into_dart(),
+                provider.into_into_dart().into_dart(),
+                model.into_into_dart().into_dart(),
+            ]
+            .into_dart(),
+            _ => {
+                unimplemented!("");
+            }
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::TurnVia> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::TurnVia>> for crate::api::mirrors::TurnVia {
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::TurnVia> {
         self.into()
     }
 }
@@ -9690,10 +9753,33 @@ impl SseEncode for crate::api::mirrors::TokenRow {
 impl SseEncode for crate::api::mirrors::TurnRow {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::mirrors::TurnVia>::sse_encode(self.via, serializer);
         <Vec<crate::api::mirrors::Segment>>::sse_encode(self.question, serializer);
         <Vec<crate::api::mirrors::Segment>>::sse_encode(self.answer, serializer);
         <u64>::sse_encode(self.at, serializer);
         <Vec<String>>::sse_encode(self.unresolved, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::TurnVia {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        match self {
+            crate::api::mirrors::TurnVia::NotRecorded => {
+                <i32>::sse_encode(0, serializer);
+            }
+            crate::api::mirrors::TurnVia::Pasted => {
+                <i32>::sse_encode(1, serializer);
+            }
+            crate::api::mirrors::TurnVia::Through { provider, model } => {
+                <i32>::sse_encode(2, serializer);
+                <String>::sse_encode(provider, serializer);
+                <String>::sse_encode(model, serializer);
+            }
+            _ => {
+                unimplemented!("");
+            }
+        }
     }
 }
 

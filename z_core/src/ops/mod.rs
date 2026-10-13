@@ -457,7 +457,16 @@ pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<Ans
 
     // The raw answer stays here. What the UI gets is an id; what it can then ask
     // for is the restored view, or the model's own words, both from this store.
-    ingest_answer(handle, raw.text)
+    ingest_answer(
+        handle,
+        raw.text,
+        // This door does not go through the gateway, so there is nothing to
+        // resolve: the login's model is the model that answered.
+        crate::api::TurnVia::Through {
+            provider: provider.id.clone(),
+            model: login.model.clone(),
+        },
+    )
 }
 
 /// The protected door: a handle, a model, and what the workspace has to say.
@@ -510,7 +519,14 @@ pub(crate) fn ask_model(
     })?;
     // The answer is kept where every answer is kept, so the restored view and
     // the model's own words are both reachable by id.
-    let id = ingest_answer(handle, answer.text.clone())?;
+    let id = ingest_answer(
+        handle,
+        answer.text.clone(),
+        crate::api::TurnVia::Through {
+            provider: answer.usage.provider_id.clone(),
+            model: answer.usage.model_id.clone(),
+        },
+    )?;
     Ok(crate::api::ModelAnswer {
         answer: Some(id),
         text: answer.text,
@@ -804,7 +820,19 @@ pub(crate) fn ask_model_directly(
     let open = with_core(|core| core.open_conversation);
     if let Some(number) = open {
         with_core(|core| {
-            crate::ops::conversation::record_in(core, number, kept, answer.text.clone(), Vec::new())
+            crate::ops::conversation::record_in(
+                core,
+                number,
+                kept,
+                answer.text.clone(),
+                Vec::new(),
+                // What answered, as the gateway resolved it — not what was
+                // asked for. It computes this for the usage ledger already.
+                crate::api::TurnVia::Through {
+                    provider: answer.usage.provider_id.clone(),
+                    model: answer.usage.model_id.clone(),
+                },
+            )
         })?;
     }
     Ok(crate::api::ModelAnswer {
@@ -2144,7 +2172,11 @@ pub(crate) fn hide(session: SessionId, token: String) -> ApiResult<()> {
 
 // ---------------------------------------------------------------- answer
 
-pub(crate) fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<AnswerId> {
+pub(crate) fn ingest_answer(
+    payload: PayloadHandle,
+    raw: String,
+    via: crate::api::TurnVia,
+) -> ApiResult<AnswerId> {
     with_payload_record(payload, |_| ())?;
     // Read before the answer is stored, so the answer carries the session it was
     // actually taken in rather than whichever one is open when it is next read.
@@ -2192,7 +2224,7 @@ pub(crate) fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<An
         .ok_or(ApiError::InvalidSession)?;
         let (question, allowed) = gathered;
         with_core(|core| {
-            crate::ops::conversation::record_in(core, number, question, raw.clone(), allowed)
+            crate::ops::conversation::record_in(core, number, question, raw.clone(), allowed, via)
         })?;
     }
     let out = with_session(payload.session, |s| {
@@ -3015,7 +3047,8 @@ mod tests {
         let shown = reveal(s, token).expect("reveal");
         assert!(!format!("{shown:?}").contains("Nordstern"), "{shown:?}");
 
-        let answer = ingest_answer(handle, "ok".to_string()).expect("ingest");
+        let answer =
+            ingest_answer(handle, "ok".to_string(), crate::api::TurnVia::Pasted).expect("ingest");
         let segments = restored_view(s, answer).expect("restored");
         assert!(!format!("{segments:?}").contains("ok"), "{segments:?}");
     }

@@ -281,7 +281,8 @@ void main() {
       'conversationBegin': () => conversationBegin(name: 'ett samtal', bench: null),
       'conversationEnter': () => conversationEnter(number: 9999, bench: null),
       'conversationRename': () => conversationRename(number: 9999, name: 'nytt namn'),
-      'conversationRecord': () => conversationRecord(question: 'fråga', answer: 'svar'),
+      'conversationRecord': () => conversationRecord(
+          question: 'fråga', answer: 'svar', via: const TurnVia.pasted()),
       'conversationTurns': () => conversationTurns(number: 9999, bench: null),
       'conversationForget': () => conversationForget(number: 9999),
       'conversationDocumentMatches': () => conversationDocumentMatches(bench: const SessionId(id: 9999)),

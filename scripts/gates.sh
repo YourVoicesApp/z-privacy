@@ -950,7 +950,11 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          changing_the_language_in_the_header_reaches_the_open_session \
          a_session_from_model_twelve_has_never_been_asked_its_language \
          the_first_document_of_a_session_born_without_one_writes_its_language \
-         switching_to_the_language_a_bench_already_has_still_writes_it; do
+         switching_to_the_language_a_bench_already_has_still_writes_it \
+         a_format_two_turn_names_no_key_and_says_so \
+         a_turn_remembers_which_key_and_model_answered_it \
+         an_answer_the_person_carried_says_the_person_carried_it \
+         a_session_holding_both_kinds_of_turn_keeps_them_apart; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

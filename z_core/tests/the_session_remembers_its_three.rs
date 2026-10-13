@@ -20,7 +20,7 @@
 // was never there — which is why `pack_id` below is an `Option` and never an
 // empty string. `None` is «nobody has been asked yet»; `Some("")` would be a
 // language called nothing.
-#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing)]
 
 use std::sync::{Mutex, MutexGuard, OnceLock};
 
@@ -226,6 +226,161 @@ fn switching_to_the_language_a_bench_already_has_still_writes_it() {
         Some("sv"),
         "a switch to the pack the bench already had wrote nothing, so a session \
          born without a language can never get one"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+// ---------------------------------------------------------------- pillar one
+//
+// «المفتاح: هوية المفتاح والموديل الذي جرت به المحادثة — الاسم الذي رآه
+// الإنسان، لا السر أبداً.» Measured as missing before it was written: a
+// provider's credential and model are global to the provider, so nothing said
+// which key or model a given exchange ran through, and switching the model left
+// every past conversation claiming nothing at all.
+
+const MODEL: &str = "the-model-the-person-saw";
+
+fn the_fake_provider() {
+    connect_provider(
+        ProviderId { id: "fake".to_string() },
+        "k".to_string(),
+        None,
+        Some(MODEL.to_string()),
+    )
+    .expect("the echo provider");
+}
+
+/// A bench with one protected name, ready to send: the open suggestions are
+/// answered because the send door refuses while one stands, which is its own
+/// guard and not this file's business.
+fn ready_to_send(bench: SessionId) {
+    import_text(bench, "Hej Hedvig Palmgren, tack för ditt brev om kontot.".to_string())
+        .expect("import");
+    let findings = list_findings(bench).expect("findings");
+    for (i, f) in findings.iter().enumerate() {
+        let answer = if i == 0 { FindingAnswer::Protect } else { FindingAnswer::Skip };
+        answer_finding(bench, f.id, answer).expect("answer");
+    }
+}
+
+/// **Pillar one: a turn remembers which key and which model answered it, and
+/// keeps remembering after the application closes.**
+///
+/// The model is asked for as `None` on purpose — the gateway then resolves the
+/// provider's own model, and what must be recorded is **what answered**, not
+/// what was requested. A record of the request would say nothing at all here.
+#[test]
+fn a_turn_remembers_which_key_and_model_answered_it() {
+    let _guard = serial();
+    let dir = fresh_vault("via");
+    the_fake_provider();
+
+    let held = Bench(open_session(None, "sv".to_string()).expect("open"));
+    ready_to_send(held.0);
+    let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
+    let handle = build_payload(held.0).expect("payload");
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+        .expect("the echo answers");
+
+    close_the_app_and_reopen(held.0);
+
+    let turns = conversation_turns(born.number, None).expect("turns");
+    let turn = turns.first().expect("the session kept no turn at all");
+    assert_eq!(
+        turn.via,
+        TurnVia::Through { provider: "fake".to_string(), model: MODEL.to_string() },
+        "the turn does not say what answered it, though the gateway resolved a model"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **And an answer the person carried says exactly that** — not «no key», and
+/// not «unknown».
+///
+/// This is the state the lead ruled a byte for: a turn the person took out of
+/// the application and brought back by hand is a *known* fact about that turn,
+/// and folding it into «we do not know» would report it as though it were a
+/// turn older than the question. The control is the connected provider: with
+/// none configured, «no key» would be an accident rather than a measurement.
+#[test]
+fn an_answer_the_person_carried_says_the_person_carried_it() {
+    let _guard = serial();
+    let dir = fresh_vault("pasted");
+    the_fake_provider();
+
+    let held = Bench(open_session(None, "sv".to_string()).expect("open"));
+    ready_to_send(held.0);
+    let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
+    let handle = build_payload(held.0).expect("payload");
+    ingest_answer(handle, "brought back from a browser".to_string()).expect("paste");
+
+    assert!(
+        providers()
+            .expect("providers")
+            .iter()
+            .any(|p| p.id == "fake" && p.connected),
+        "the control is void: no provider is connected, so «no key» proves nothing"
+    );
+
+    close_the_app_and_reopen(held.0);
+
+    let turns = conversation_turns(born.number, None).expect("turns");
+    let turn = turns.first().expect("the session kept no turn at all");
+    assert_eq!(
+        turn.via,
+        TurnVia::Pasted,
+        "an answer the person carried by hand was recorded as something else"
+    );
+    assert_ne!(
+        turn.via,
+        TurnVia::NotRecorded,
+        "«the person carried it» collapsed into «we do not know», which is the \
+         distinction the kind byte exists for"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **Both kinds in one file, told apart after a restart.**
+///
+/// The three states are only worth a byte if they survive together: a session
+/// where one answer came through a key and the next was carried in by hand must
+/// read back as two different things, in the order they happened. This is the
+/// guard that would have caught a writer that stamped every turn with whatever
+/// answered the last one.
+#[test]
+fn a_session_holding_both_kinds_of_turn_keeps_them_apart() {
+    let _guard = serial();
+    let dir = fresh_vault("both");
+    the_fake_provider();
+
+    let held = Bench(open_session(None, "sv".to_string()).expect("open"));
+    ready_to_send(held.0);
+    let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
+
+    // One through a key of ours…
+    let first = build_payload(held.0).expect("payload");
+    ask_model(first, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+        .expect("the echo answers");
+    // …and one the person carried back.
+    let second = build_payload(held.0).expect("payload again");
+    ingest_answer(second, "brought back from a browser".to_string()).expect("paste");
+
+    close_the_app_and_reopen(held.0);
+
+    let turns = conversation_turns(born.number, None).expect("turns");
+    assert_eq!(turns.len(), 2, "the session did not keep both exchanges");
+    assert_eq!(
+        turns[0].via,
+        TurnVia::Through { provider: "fake".to_string(), model: MODEL.to_string() },
+        "the first exchange lost what answered it"
+    );
+    assert_eq!(
+        turns[1].via,
+        TurnVia::Pasted,
+        "the second exchange was stamped with what answered the first"
     );
 
     let _ = std::fs::remove_dir_all(&dir);

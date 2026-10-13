@@ -1758,6 +1758,29 @@ pub struct ConversationRow {
     pub pack_id: Option<String>,
 }
 
+/// **Which key and model a turn ran through** — 075c.
+///
+/// «عبر أي مفتاح جرى هذا الدور» has three truthful answers, and an empty string
+/// could only carry two of them. Written as an enum so they are exclusive by
+/// construction and the screen cannot fold one into another: a turn older than
+/// the question is not a turn the person carried by hand, and neither is a turn
+/// that names a model.
+///
+/// Never the credential. The name the person saw, and nothing else.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TurnVia {
+    /// **Older than the question.** Written before session format 3, when a
+    /// turn could not say what answered it. Not «no key» — unknown.
+    NotRecorded,
+    /// **The person carried it.** The safe text went out of the application and
+    /// the answer came back by hand, so no key of ours answered this and none
+    /// is guessed at: the provider configured today did not do this.
+    Pasted,
+    /// **Through a key of ours**, named as the screen names it, with the model
+    /// that actually answered — resolved by the gateway, not the one requested.
+    Through { provider: String, model: String },
+}
+
 /// **One exchange a session holds, restored** — the owner's first finding, 9 Oct.
 ///
 /// Both halves are segments and not strings, the same shape `restored_view`
@@ -1767,6 +1790,10 @@ pub struct ConversationRow {
 /// decide for itself which was which, and it would be wrong first.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TurnRow {
+    /// **Which key answered this exchange** — the owner's first pillar, and it
+    /// is an enum rather than two nullable strings because the question has
+    /// **three** truthful answers and a nullable pair can only tell two.
+    pub via: TurnVia,
     /// What was asked, restored. Empty segments mean no question was typed —
     /// a real state: a document may be sent with nothing asked of it, which
     /// was 046/N's whole finding.
@@ -1827,8 +1854,13 @@ pub fn conversation_forget(number: u32) -> ApiResult<String> {
 }
 
 /// Write one exchange into the open session's file.
-pub fn conversation_record(question: String, answer: String) -> ApiResult<u32> {
-    crate::ops::conversation::record(question, answer)
+///
+/// `via` is the caller's statement about what answered, because only the caller
+/// knows: this door hands the core an exchange that has already happened, with
+/// no send of ours behind it. Nothing in the product calls it today, and a
+/// future caller says what it means rather than inheriting a guess made here.
+pub fn conversation_record(question: String, answer: String, via: TurnVia) -> ApiResult<u32> {
+    crate::ops::conversation::record(question, answer, via)
 }
 
 /// **Everything one session holds, restored** — the reader 064 shipped without.
@@ -2123,8 +2155,14 @@ pub fn protect_cell_in_lines(session: SessionId, span: Span, from: u32, to: u32,
 
 /// Incoming only: hand the core an answer as it arrived, tied to the payload the
 /// model saw. There is no restore-from-arbitrary-session-text path.
+///
+/// **This is the pasted door, and it says so** — 075c. A person who took the
+/// safe text to a browser and brought the answer back ran it through nothing of
+/// ours, so the turn records `Pasted`: not the provider configured here, and
+/// not «unknown» either, because this one thing *is* known. The send doors pass
+/// what answered.
 pub fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<AnswerId> {
-    crate::ops::ingest_answer(payload, raw)
+    crate::ops::ingest_answer(payload, raw, TurnVia::Pasted)
 }
 
 // ---------------------------------------------------------------- answer
