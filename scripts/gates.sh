@@ -948,7 +948,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_language_a_session_was_born_into_outlives_the_application \
          a_session_born_with_no_document_has_never_been_asked \
          changing_the_language_in_the_header_reaches_the_open_session \
-         a_session_from_model_twelve_has_never_been_asked_its_language; do
+         a_session_from_model_twelve_has_never_been_asked_its_language \
+         the_first_document_of_a_session_born_without_one_writes_its_language \
+         switching_to_the_language_a_bench_already_has_still_writes_it; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
