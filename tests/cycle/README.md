@@ -68,8 +68,12 @@ bash tests/cycle/run_cycle.sh
 bash tests/cycle/check_results.sh
 ```
 
-The found release bundle is **not HEAD**. See `BUNDLE_IDENTITY.md`. Rebuild
-in this copy before attributing a UI cycle to `d882c5f`.
+The **found** 20:07 bundle was not HEAD. This copy was rebuilt at 02:39.
+See `BUNDLE_IDENTITY.md`. Attribute a UI cycle to product `d882c5f` /
+stamp `61fa27b`, never to the origin 20:07 binary.
+
+While `capture_server/app.py` is bound to `127.0.0.1:8081` for the isolated
+app, do not run `run_cycle.sh` — it would reset the request log.
 
 UI steps for the real app (not automated): `MANUAL_UI.md`.
 

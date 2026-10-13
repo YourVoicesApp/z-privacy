@@ -16,9 +16,14 @@ or unlock that.
 
 Passphrase for the **sandbox vault only**: `cycle-dummy-pass-not-real`
 
+**Where the isolated window is now (2026-10-13):** language is already English
+and first-run is marked complete. AT-SPI shows **Z Vault** / **There is no
+vault yet** / passphrase fields / **Create the vault**. Start at step 2.
+Do not click an original Z Privacy window if one is also open.
+
 ## Cycle 1 — import → scan → review → protect → send → restore
 
-1. First run: press **English**, then **Start**, then **Create a vault**.
+1. First run (already done in this sandbox): **English**, then **Start**, then **Create a vault**.
 2. Passphrase / Confirm passphrase: the dummy above. **Create the vault**.
 3. Home composer (`Write or paste your text here…`): paste the whole of
    `tests/cycle/fixtures/synthetic.txt`.
