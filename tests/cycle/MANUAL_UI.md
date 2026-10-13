@@ -31,19 +31,18 @@ another.
    document. Record restore with **that session’s own key**. A scope button
    does not predict restore.
 
-**Where the isolated window is now (2026-10-13):**
-language English, vault open, Settings → **Sessions** is on screen, session
-title **الاختبار الأول** (`sessions/1.zs`, namespace `1F52`, “the one you are
-in”). Composer is empty. Protected PDF already at
-`tests/cycle/sandbox/home/Documents/zprivacy/text-protected-2026-10-13.pdf`.
-Capture `/requests` is unused for this PDF reopen.
-A GTK **Open File** chooser is standing on this isolated window. Path bar is
-inside **flutter_assets** (list shows `assets` / `fonts` / `shaders`). The
-PDF is in the **bundle** folder of this copy, same bytes as the sandbox
-file. **Next required click is step 16.** Do not click an original Z Privacy
-window if one is also open. Do not Cancel unless the chooser is the wrong
-app. Do not use Nautilus “Documents” (that is origin `~/Documents`). Do not
-press Create / Rename on the chooser overlay.
+**Where the isolated window is now (2026-10-13, after the copy closed and was
+started again):**
+pid **232013**, stamp `z_core 0.1.0 · 2026-10-13 · 61fa27b`, HOME = sandbox.
+The vault screen is **Locked**. Session file `sessions/1.zs` (title
+**الاختبار الأول**, namespace `1F52`) is still the only session. Composer was
+empty when the previous window closed; the PDF was **not** imported then.
+Protected PDF already at
+`tests/cycle/sandbox/home/Documents/zprivacy/text-protected-2026-10-13.pdf`
+and also as the same bytes in the bundle folder. Capture `/requests` unused
+for this reopen. Origin vault unchanged. **Next required act is step 15**
+(Unlock), then 16 (Open the PDF). Do not click an original Z Privacy window
+if one is also open. Do not use Nautilus “Documents”.
 
 ## Cycle 1 — import → scan → review → protect → send → restore
 
@@ -96,13 +95,15 @@ Pass only if the captured body has `__Z_…__` tokens, user-agent `z-privacy`,
     `…/tests/cycle/sandbox/home/Documents/zprivacy/text-protected-2026-10-13.pdf`
     Isolation held (origin `~/Documents/zprivacy` unchanged).
 13. **Already done.** Isolated window was closed (this copy only).
-14. **Already done.** Isolated app restarted (`run_app_isolated.sh`, pid 195385).
-15. **Already done.** Vault unlocked; session **الاختبار الأول** is the open one.
-    Dummy passphrase if a lock screen returns: `cycle-dummy-pass-not-real`.
-16. **Do this now, path then Open.** Isolated window only. In the **Open File**
-    chooser, click the **bundle** segment on the path bar (it currently sits in
-    `flutter_assets`). Select `text-protected-2026-10-13.pdf` (16.2 kB) and
-    press **Open**. Stay in **الاختبار الأول**. Do not Begin a new session yet.
+14. **Already done.** Isolated app was started again after the previous window
+    closed (`run_app_isolated.sh`, pid **232013**). Isolation held.
+15. **Do this now.** Isolated window only: vault is **Locked**. Passphrase
+    `cycle-dummy-pass-not-real` → **Unlock**. After unlock, session
+    **الاختبار الأول** should be the one you are in. If the list asks you to
+    enter it, open that row. Do not Begin a new session yet.
+16. Paperclip / **Open File**. If the path bar is not already on **bundle**,
+    click **bundle**. Select `text-protected-2026-10-13.pdf` (16.2 kB) and
+    press **Open**. Stay in **الاختبار الأول**.
 
     After it is open, write three separate records:
 

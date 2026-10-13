@@ -32,8 +32,8 @@ Word-protection scope, document save location, and session restore key are
 recorded as three facts. Restore after PDF reopen is scored with the matching
 session key. Scope buttons are not used to predict restore.
 
-Next UI step: `MANUAL_UI.md` step 16 — in the isolated **Open File** chooser,
-click **bundle** on the path bar (it is in `flutter_assets`), select
-`text-protected-2026-10-13.pdf`, press **Open**, stay in الاختبار الأول.
+**Z test expansion stopped (2026-10-13).** The deliverable is the three-axis
+study in `Z_COMPARISON.md` (original ten projects). PDF reopen and further
+tooling are out of that delivery. Translation of the study is a later task.
 
 Rizzo and Secret Guard were not started. Comparison sheet: `Z_COMPARISON.md`.
