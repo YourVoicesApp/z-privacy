@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/core/the_clipboard.dart';
 import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/widgets/language_list.dart';
@@ -528,7 +529,12 @@ class _ShellState extends State<ZShell> {
                       _trouble!,
                       onCopyReport: _troubleReport == null
                           ? null
-                          : () => Clipboard.setData(ClipboardData(text: _troubleReport!)),
+                          : () async {
+                              await emptyTheClipboardFirst();
+                              await Clipboard.setData(
+                                ClipboardData(text: _troubleReport!),
+                              );
+                            },
                     ),
                   ),
                 ),

@@ -9,6 +9,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:zprivacy/core/the_clipboard.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -157,7 +158,10 @@ class _TokenRow extends StatelessWidget {
                 icon: const Icon(Icons.copy_all_outlined, size: 15),
                 color: Zc.ink4,
                 visualDensity: VisualDensity.compact,
-                onPressed: () => Clipboard.setData(ClipboardData(text: row.token)),
+                onPressed: () async {
+                  await emptyTheClipboardFirst();
+                  await Clipboard.setData(ClipboardData(text: row.token));
+                },
               ),
             ],
           ),

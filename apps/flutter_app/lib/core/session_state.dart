@@ -10,7 +10,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:zprivacy/core/the_clipboard.dart';
 
 // Prefixed on purpose: every line below that says `z.` is a call into Rust, and
 // the prefix makes that visible when reading the file rather than guessing.
@@ -1732,8 +1732,9 @@ Future<WhatMayLeave> beginThenRead(
   required String name,
   bool thePayloadLeaves = true,
 }) async {
-  // Step 0. Nothing above this line, ever.
-  await Clipboard.setData(const ClipboardData(text: ''));
+  // Step 0. Nothing above this line, ever — and the rule itself lives in
+  // `the_clipboard.dart`, where its five seats can read one copy of it.
+  await emptyTheClipboardFirst();
   int? renamed;
   String? said;
   if (ground.theSessionQuestionStands) {

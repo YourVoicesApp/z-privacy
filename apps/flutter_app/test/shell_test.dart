@@ -1062,12 +1062,18 @@ void main() {
       find.textContaining('Other applications may be able to read'),
       findsOneWidget,
     );
+    // **081, the lead's ruling of 13 October: this is an exit press.** The
+    // emptying happens before the question is even asked, so the real values
+    // are still not on the clipboard — and whatever the person had copied
+    // before is not there either, which is what the old `'SENTINEL'` reading
+    // allowed and the owner's leak walked through.
     expect(
-      clip.writes,
-      0,
-      reason: 'the clipboard is not written before confirmation',
+      clip.wrote,
+      [''],
+      reason: 'the press must empty the clipboard before it asks, and write '
+          'nothing else until the person confirms: it wrote ${clip.wrote}',
     );
-    expect(clip.text, 'SENTINEL');
+    expect(clip.text, '', reason: 'the restored values reached the clipboard unasked');
 
     await tester.tap(
       find.descendant(
@@ -1077,8 +1083,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.byType(AlertDialog), findsNothing);
-    expect(clip.writes, 0);
-    expect(clip.text, 'SENTINEL');
+    // **A cancelled confirmation leaves the clipboard empty, not old.** The
+    // press answered for the clipboard that follows it, whatever the person
+    // then chose — so nothing of the real values, and nothing from before.
+    expect(clip.wrote, [''], reason: 'Cancel wrote something: ${clip.wrote}');
+    expect(clip.text, '', reason: 'Cancel left the clipboard holding something');
     expect(
       find.text('Restored text copied to the system clipboard.'),
       findsNothing,
@@ -1094,7 +1103,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(clip.writes, 1);
+    // Two presses so far, each with its own emptying, and one write of the
+    // restored text after the person said so.
+    expect(clip.wrote, ['', '', restored],
+        reason: 'the confirmed press did not empty and then copy: ${clip.wrote}');
     expect(clip.text, restored);
     expect(
       find.text('Restored text copied to the system clipboard.'),
@@ -1106,7 +1118,11 @@ void main() {
     await tester.tap(inPanel(find.text('Copy Restored')));
     await tester.pumpAndSettle();
     expect(find.text('Copy restored text?'), findsOneWidget);
-    expect(clip.writes, 1);
+    // And the third press emptied it again before asking — so the values the
+    // person copied a moment ago are **gone** while the question stands.
+    expect(clip.wrote, ['', '', restored, ''],
+        reason: 'the press that asks again did not empty first: ${clip.wrote}');
+    expect(clip.text, '', reason: 'the restored text survived the next press');
     await tester.tap(
       find.descendant(
         of: find.byType(AlertDialog),
@@ -1114,8 +1130,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(clip.writes, 1);
-    expect(clip.text, restored);
+    expect(clip.wrote, ['', '', restored, ''],
+        reason: 'Cancel wrote something: ${clip.wrote}');
+    expect(clip.text, '',
+        reason: 'a cancelled press left the old restored text to be pasted — '
+            'which is the owner’s own leak, in the panel instead of the exit');
 
     await tester.tap(find.text('As the model wrote it'));
     await settle(tester);
@@ -1696,12 +1715,23 @@ Future<void> freshVaultForUiTest(String name) async {
 
 /// Captures clipboard writes. Widget tests have no system clipboard; this is
 /// how we prove Copy Restored does not write until the person confirms.
+///
+/// **[wrote] keeps the order** — 081. The rule is «empty the clipboard, then
+/// decide», and an order is a sequence: a count cannot tell «emptied, then
+/// copied» from «copied, then emptied», and the second is the one failure that
+/// would pass every other instrument here. The same instrument stands in
+/// `the_name_at_the_exit_test.dart`; three copies of it in this suite want a
+/// `test/support/`, named here as the debt it already was.
 class _ClipboardProbe {
   _ClipboardProbe(this.tester);
 
   final WidgetTester tester;
   String? text = 'SENTINEL';
-  int writes = 0;
+
+  /// Every write, in the order it was made.
+  final List<String?> wrote = <String?>[];
+
+  int get writes => wrote.length;
 
   void install() {
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -1709,9 +1739,9 @@ class _ClipboardProbe {
       (call) async {
         switch (call.method) {
           case 'Clipboard.setData':
-            writes += 1;
             final args = Map<String, dynamic>.from(call.arguments as Map);
             text = args['text'] as String?;
+            wrote.add(text);
             return null;
           case 'Clipboard.getData':
             if (text == null) return null;

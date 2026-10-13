@@ -21,6 +21,7 @@ import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/core/the_clipboard.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
@@ -728,7 +729,13 @@ class _TopBar extends StatelessWidget {
             CopyReportButton(
               compact: true,
               onCopy: () async {
-                await Clipboard.setData(ClipboardData(text: await bench.reportText()));
+                // The emptying first, and the report read into a name of its
+                // own: with the `await` inside the call, a `reportText()` that
+                // threw wrote nothing and left the clipboard holding whatever
+                // was there — the same shape as the owner's 12 October leak.
+                await emptyTheClipboardFirst();
+                final report = await bench.reportText();
+                await Clipboard.setData(ClipboardData(text: report));
               },
             ),
           ],

@@ -18,6 +18,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:zprivacy/core/the_clipboard.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -463,6 +464,13 @@ class _AnswerPanelState extends State<AnswerPanel> {
   /// so writing it is named and confirmed every time — not a tutorial, a
   /// secret leaving the app.
   Future<void> _copyRestored(String text) async {
+    // **Before the question, not after the answer** — the lead's ruling of 13
+    // October: this is an exit press like the other three, so a person who
+    // cancels is left with an empty clipboard rather than with whatever they
+    // had copied before. The confirmation decides what goes out, never what
+    // stays behind.
+    await emptyTheClipboardFirst();
+    if (!mounted) return;
     final sure = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -492,6 +500,7 @@ class _AnswerPanelState extends State<AnswerPanel> {
   }
 
   Future<void> _copyProtected(String text) async {
+    await emptyTheClipboardFirst();
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     setState(() => _copyNote = null);
