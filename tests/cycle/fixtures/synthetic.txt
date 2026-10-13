@@ -1,0 +1,8 @@
+Document: Alice Jensen (also seen as Alicia Jensen) met with Alice Jensen in another place.
+Account: IT60X0542811101000000123456
+Email: alice.jensen@example.test
+Phone: +46 70 000 00 00
+
+These values are invented for the comparison cycle. They are not a real client.
+The two spellings of the first person are one identity if the product joins aliases.
+The second "Alice Jensen" is a different person with the same visible name.

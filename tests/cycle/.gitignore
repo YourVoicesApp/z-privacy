@@ -1,0 +1,6 @@
+# Local cycle artefacts — never commit captured bodies or sandbox vaults.
+output/
+sandbox/
+__pycache__/
+*.pyc
+.venv/
