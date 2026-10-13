@@ -433,7 +433,8 @@ fn a_long_conversation_does_not_grow_the_vault() {
 
     let long = "x".repeat(4096);
     for _ in 0..24 {
-        conversation_record(long.clone(), long.clone(), TurnVia::Pasted).expect("record");
+        conversation_record(long.clone(), long.clone(), TurnVia::Pasted, TurnDocument::Typed)
+            .expect("record");
     }
 
     let after = std::fs::metadata(&vault_file).expect("vault still on disk").len();

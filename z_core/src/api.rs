@@ -1781,6 +1781,28 @@ pub enum TurnVia {
     Through { provider: String, model: String },
 }
 
+/// **What this exchange was about** — 075c, the owner's second pillar: «الجلسة
+/// تحفظ الملفات التي ذهبت والإجابات».
+///
+/// Three states for the same reason `TurnVia` has three: an absence here has
+/// more than one cause, and a nullable name could only tell two of them apart.
+///
+/// **Where it lives and where it does not.** The name is in the session's own
+/// sealed file, so deleting the session destroys it with the key — the lead's
+/// ruling. It is for the glass only: it is **never** written into a report or a
+/// log, which is not a promise but a measured one, because the report's grammar
+/// admits nothing in its `file` line except a bare extension.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TurnDocument {
+    /// **Older than the question.** Written before session format 4.
+    NotRecorded,
+    /// **There was no file.** The person typed the text into the application,
+    /// so there is nothing to name — which is an answer and not an absence.
+    Typed,
+    /// The file this exchange was about, by the name the person opened.
+    Named { name: String },
+}
+
 /// **One exchange a session holds, restored** — the owner's first finding, 9 Oct.
 ///
 /// Both halves are segments and not strings, the same shape `restored_view`
@@ -1794,6 +1816,9 @@ pub struct TurnRow {
     /// is an enum rather than two nullable strings because the question has
     /// **three** truthful answers and a nullable pair can only tell two.
     pub via: TurnVia,
+    /// **What went to the chat**: the file this exchange was about, or that the
+    /// person typed it, or that the turn is older than the question.
+    pub document: TurnDocument,
     /// What was asked, restored. Empty segments mean no question was typed —
     /// a real state: a document may be sent with nothing asked of it, which
     /// was 046/N's whole finding.
@@ -1855,12 +1880,13 @@ pub fn conversation_forget(number: u32) -> ApiResult<String> {
 
 /// Write one exchange into the open session's file.
 ///
-/// `via` is the caller's statement about what answered, because only the caller
-/// knows: this door hands the core an exchange that has already happened, with
-/// no send of ours behind it. Nothing in the product calls it today, and a
+/// `via` and `document` are the caller's statements about what answered and what
+/// the exchange was about, because only the caller knows: this door hands the
+/// core an exchange that has already happened, with no send of ours behind it
+/// and no bench of ours under it. Nothing in the product calls it today, and a
 /// future caller says what it means rather than inheriting a guess made here.
-pub fn conversation_record(question: String, answer: String, via: TurnVia) -> ApiResult<u32> {
-    crate::ops::conversation::record(question, answer, via)
+pub fn conversation_record(question: String, answer: String, via: TurnVia, document: TurnDocument) -> ApiResult<u32> {
+    crate::ops::conversation::record(question, answer, via, document)
 }
 
 /// **Everything one session holds, restored** — the reader 064 shipped without.

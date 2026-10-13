@@ -818,6 +818,10 @@ pub(crate) fn ask_model_directly(
     // So the allowed list is empty, which is the truth and not a gap — the
     // text left as it stands, and what is kept is exactly what left.
     let open = with_core(|core| core.open_conversation);
+    // Asked before the core is taken, like `open` above: naming the file asks
+    // the session for it, and a lock inside a lock is how a send stops
+    // answering for ever rather than answering wrongly.
+    let document = document_of(session.id);
     if let Some(number) = open {
         with_core(|core| {
             crate::ops::conversation::record_in(
@@ -832,6 +836,7 @@ pub(crate) fn ask_model_directly(
                     provider: answer.usage.provider_id.clone(),
                     model: answer.usage.model_id.clone(),
                 },
+                document,
             )
         })?;
     }
@@ -2172,6 +2177,23 @@ pub(crate) fn hide(session: SessionId, token: String) -> ApiResult<()> {
 
 // ---------------------------------------------------------------- answer
 
+/// **What the bench is holding, in the three states a turn records.**
+///
+/// `doc_name` is empty for text the person typed — `import_text` sets no name
+/// because there is no file — and that is «Typed», not «we do not know». The
+/// third state belongs to turns written before the field existed, so no live
+/// path here can produce it.
+fn document_of(session: u32) -> crate::api::TurnDocument {
+    match with_session(session, |s| s.doc_name.clone()) {
+        Some(name) if !name.trim().is_empty() => crate::api::TurnDocument::Named { name },
+        Some(_) => crate::api::TurnDocument::Typed,
+        // No bench at all: a caller that lost its session has a bigger problem
+        // than a name, and inventing one here would be the guess this whole
+        // field exists to refuse.
+        None => crate::api::TurnDocument::NotRecorded,
+    }
+}
+
 pub(crate) fn ingest_answer(
     payload: PayloadHandle,
     raw: String,
@@ -2223,8 +2245,17 @@ pub(crate) fn ingest_answer(
         })
         .ok_or(ApiError::InvalidSession)?;
         let (question, allowed) = gathered;
+        let document = document_of(payload.session);
         with_core(|core| {
-            crate::ops::conversation::record_in(core, number, question, raw.clone(), allowed, via)
+            crate::ops::conversation::record_in(
+                core,
+                number,
+                question,
+                raw.clone(),
+                allowed,
+                via,
+                document,
+            )
         })?;
     }
     let out = with_session(payload.session, |s| {

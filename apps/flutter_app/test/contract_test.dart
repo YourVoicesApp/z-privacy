@@ -282,7 +282,10 @@ void main() {
       'conversationEnter': () => conversationEnter(number: 9999, bench: null),
       'conversationRename': () => conversationRename(number: 9999, name: 'nytt namn'),
       'conversationRecord': () => conversationRecord(
-          question: 'fråga', answer: 'svar', via: const TurnVia.pasted()),
+          question: 'fråga',
+          answer: 'svar',
+          via: const TurnVia.pasted(),
+          document: const TurnDocument.typed()),
       'conversationTurns': () => conversationTurns(number: 9999, bench: null),
       'conversationForget': () => conversationForget(number: 9999),
       'conversationDocumentMatches': () => conversationDocumentMatches(bench: const SessionId(id: 9999)),

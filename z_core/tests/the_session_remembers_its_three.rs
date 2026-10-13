@@ -385,3 +385,138 @@ fn a_session_holding_both_kinds_of_turn_keeps_them_apart() {
 
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+// ---------------------------------------------------------------- pillar two
+//
+// «الجلسة تحفظ الملفات التي ذهبت والإجابات.» The turns were already kept. What
+// was missing was which file an exchange was about: the vault's record holds a
+// *hash*, which answers «is this the same file?» and not «which file was it?»,
+// and the only name available after a restart came from the live bench — that
+// is, from whatever is open now, which is a different question again.
+//
+// The lead's three bounds, and each is measured rather than promised: the name
+// lives in the session's own sealed file (so deleting the session destroys it
+// with the key), it is for the glass only, and it never reaches a report or a
+// log. The last one has two guards already standing: `gates.sh` refuses any
+// print in `z_core/src` at all, and the report's grammar admits nothing in its
+// `file` line but a bare extension.
+
+/// **Pillar two: the name of the file an exchange was about survives.**
+#[test]
+fn a_turn_remembers_which_file_it_was_about() {
+    let _guard = serial();
+    let dir = fresh_vault("named");
+    the_fake_provider();
+
+    let held = Bench(open_session(None, "sv".to_string()).expect("open"));
+    import_document(
+        held.0,
+        "Brev_Lindqvist.txt".to_string(),
+        b"Hej Hedvig Palmgren, tack for ditt brev om kontot.".to_vec(),
+        DocumentKind::Txt,
+    )
+    .expect("import");
+    for (i, f) in list_findings(held.0).expect("findings").iter().enumerate() {
+        let answer = if i == 0 { FindingAnswer::Protect } else { FindingAnswer::Skip };
+        answer_finding(held.0, f.id, answer).expect("answer");
+    }
+    let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
+    let handle = build_payload(held.0).expect("payload");
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+        .expect("the echo answers");
+
+    close_the_app_and_reopen(held.0);
+
+    let turns = conversation_turns(born.number, None).expect("turns");
+    let turn = turns.first().expect("the session kept no turn at all");
+    assert_eq!(
+        turn.document,
+        TurnDocument::Named { name: "Brev_Lindqvist.txt".to_string() },
+        "the session cannot say which file this exchange was about"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **And text the person typed says so** — «Typed», not «we do not know».
+///
+/// `import_text` sets no name because there is no file, and the honest answer
+/// to «which file was this about» is «none, you typed it». Folding that into
+/// «not recorded» would report it as though the turn were older than the
+/// question.
+#[test]
+fn text_the_person_typed_says_there_was_no_file() {
+    let _guard = serial();
+    let dir = fresh_vault("typed");
+    the_fake_provider();
+
+    let held = Bench(open_session(None, "sv".to_string()).expect("open"));
+    ready_to_send(held.0); // import_text: typed, with no file name
+    let born = conversation_begin("vad säger texten".to_string(), Some(held.0)).expect("begin");
+    let handle = build_payload(held.0).expect("payload");
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+        .expect("the echo answers");
+
+    close_the_app_and_reopen(held.0);
+
+    let turns = conversation_turns(born.number, None).expect("turns");
+    let turn = turns.first().expect("the session kept no turn at all");
+    assert_eq!(turn.document, TurnDocument::Typed, "typed text was given a file it never had");
+    assert_ne!(
+        turn.document,
+        TurnDocument::NotRecorded,
+        "«you typed this» collapsed into «we do not know»"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **The lead's bound, measured across two doors: the session knows the name
+/// and the report still does not.**
+///
+/// The name is for the glass. A report is the thing a person pastes into an
+/// e-mail to us, so a file name in it would leave the machine — which is why
+/// the report's `file` line carries an extension and nothing else. One session
+/// holding the name and one report refusing to show it, in the same test,
+/// because each alone proves only half of it.
+#[test]
+fn the_report_still_names_no_file_though_the_session_knows_it() {
+    let _guard = serial();
+    let dir = fresh_vault("report");
+    the_fake_provider();
+
+    let held = Bench(open_session(None, "sv".to_string()).expect("open"));
+    import_document(
+        held.0,
+        "Brev_Lindqvist.txt".to_string(),
+        b"Hej Hedvig Palmgren, tack for ditt brev om kontot.".to_vec(),
+        DocumentKind::Txt,
+    )
+    .expect("import");
+    for (i, f) in list_findings(held.0).expect("findings").iter().enumerate() {
+        let answer = if i == 0 { FindingAnswer::Protect } else { FindingAnswer::Skip };
+        answer_finding(held.0, f.id, answer).expect("answer");
+    }
+    let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
+    let handle = build_payload(held.0).expect("payload");
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+        .expect("the echo answers");
+
+    // The session holds it…
+    let turns = conversation_turns(born.number, Some(held.0)).expect("turns");
+    assert_eq!(
+        turns.first().map(|t| t.document.clone()),
+        Some(TurnDocument::Named { name: "Brev_Lindqvist.txt".to_string() }),
+        "the control is void: the session does not hold the name, so the report \
+         proves nothing by lacking it"
+    );
+    // …and the report does not.
+    let report = import_report(ReportSubject::Imported { session: held.0 }).expect("report");
+    assert!(
+        !report.contains("Brev_Lindqvist"),
+        "the file name reached the report, which is the one place it may never go"
+    );
+    assert!(report.contains("file        .txt"), "the report stopped naming the extension");
+
+    let _ = std::fs::remove_dir_all(&dir);
+}

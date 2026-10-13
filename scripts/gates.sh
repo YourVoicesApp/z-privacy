@@ -954,7 +954,11 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_format_two_turn_names_no_key_and_says_so \
          a_turn_remembers_which_key_and_model_answered_it \
          an_answer_the_person_carried_says_the_person_carried_it \
-         a_session_holding_both_kinds_of_turn_keeps_them_apart; do
+         a_session_holding_both_kinds_of_turn_keeps_them_apart \
+         a_format_three_turn_was_about_a_file_it_cannot_name \
+         a_turn_remembers_which_file_it_was_about \
+         text_the_person_typed_says_there_was_no_file \
+         the_report_still_names_no_file_though_the_session_knows_it; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

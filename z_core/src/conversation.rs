@@ -34,13 +34,30 @@ use crate::vault::crypto::{self, Purpose, SecretKey};
 ///   arrived». A turn now carries its own permission and restores under the
 ///   same rule the live answer does.
 ///
+/// * 3 — each turn says **what answered it**: through a key of ours and which
+///   model, or that the person carried the answer in by hand, or that the turn
+///   is older than the question. Three states and not two, because an empty
+///   name could not tell «you pasted this» from «we do not know» (075c).
+/// * 4 — and **what it was about**: a file by name, or that the person typed
+///   the text, or not recorded. The same three-state shape, for the same
+///   reason, and the name lives here rather than in the vault's record because
+///   the record keeps a hash — «is this the same file?» and not «which file?».
+///
+/// 3 and 4 landed within the hour, which is worth saying so that nobody reads a
+/// gap into it: the second was a separate ruling of the owner's second pillar,
+/// taken while the first was still being written. A version number costs a byte
+/// and a `match` arm; collapsing two decisions into one bump to look tidier
+/// would have cost the distinction one of them exists to keep.
+///
 /// A version 1 file still reads: its turns come back with an empty allowed
 /// list, which restores nothing and says so, rather than restoring everything.
+/// A version 2 turn reads as «not recorded» for both of the fields above, and a
+/// version 3 turn for the second — never as «there was none».
 ///
 /// This is **not** `vault::format::MODEL_VERSION` and must never be compared
 /// with it. A session file written by a newer build is refused by naming both
 /// numbers, exactly as a newer vault body is.
-pub(crate) const SESSION_FORMAT_VERSION: u16 = 3;
+pub(crate) const SESSION_FORMAT_VERSION: u16 = 4;
 
 /// The folder each session's file sits in, under the data directory.
 const FOLDER: &str = "sessions";
@@ -92,6 +109,16 @@ pub(crate) struct Turn {
     /// them, and the lead's ruling was that the file hold all three — «لا نعرف»
     /// ليست «لم يكن هناك».
     pub via: crate::api::TurnVia,
+    /// **What this exchange was about** — format 4, the owner's second pillar.
+    /// A file by name, or that the person typed the text, or not recorded. Three
+    /// states for the same reason as `via`: an absence has more than one cause.
+    ///
+    /// It arrives from the bench the payload was built on, and it lives here
+    /// rather than in the vault's record because the record keeps a *hash* — an
+    /// answer to «is this the same file?» and not to «which file was it?» — and
+    /// because the vault body is resealed whole on every change while a session
+    /// file is not (062 §A).
+    pub document: crate::api::TurnDocument,
 }
 
 /// Everything one session's file holds.
@@ -125,6 +152,16 @@ impl Body {
                     out.push(2);
                     put_str(&mut out, provider);
                     put_str(&mut out, model);
+                }
+            }
+            // Format 4, the same shape: a kind byte, and a name only when there
+            // is one.
+            match &turn.document {
+                crate::api::TurnDocument::NotRecorded => out.push(0),
+                crate::api::TurnDocument::Typed => out.push(1),
+                crate::api::TurnDocument::Named { name } => {
+                    out.push(2);
+                    put_str(&mut out, name);
                 }
             }
         }
@@ -182,7 +219,24 @@ impl Body {
             } else {
                 crate::api::TurnVia::NotRecorded
             };
-            turns.push(Turn { question, answer, at: when, allowed, via });
+            // A format-3 turn stops above, exactly as a format-2 one stops
+            // before `via`: it is `NotRecorded`, which is not «the person typed
+            // it» — the distinction formats 3 and 4 both exist to keep.
+            let document = if version >= 4 {
+                match array::<1>(bytes, &mut at)?[0] {
+                    0 => crate::api::TurnDocument::NotRecorded,
+                    1 => crate::api::TurnDocument::Typed,
+                    2 => crate::api::TurnDocument::Named { name: string(bytes, &mut at)? },
+                    other => {
+                        return Err(ApiError::PayloadRefused {
+                            reason: format!("a turn says its document is an unknown kind {other}"),
+                        })
+                    }
+                }
+            } else {
+                crate::api::TurnDocument::NotRecorded
+            };
+            turns.push(Turn { question, answer, at: when, allowed, via, document });
         }
         Ok(Self { turns })
     }
@@ -332,10 +386,54 @@ mod tests {
                     provider: "fake".to_string(),
                     model: "the-model-the-person-saw".to_string(),
                 },
+                document: crate::api::TurnDocument::Named { name: "Brev.txt".to_string() },
             }],
         };
         let back = Body::from_bytes(&body.to_bytes()).expect("round trip");
         assert_eq!(back, body);
+    }
+
+    /// **A format 3 turn knows what answered it and not what it was about.**
+    ///
+    /// The pair with the test below: each format bump leaves the older files
+    /// readable, and each older file is honest about the field it never had.
+    /// Hand-built, because the writer can only produce format 4 now — and the
+    /// `via` assertion is the control: if that came back wrong the document
+    /// result would mean nothing, because the reader would simply be lost in
+    /// the bytes.
+    #[test]
+    fn a_format_three_turn_was_about_a_file_it_cannot_name() {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&3u16.to_be_bytes());
+        bytes.extend_from_slice(&1u32.to_be_bytes());
+        let (q, a) = ("asked", "answered");
+        bytes.extend_from_slice(&(q.len() as u32).to_be_bytes());
+        bytes.extend_from_slice(q.as_bytes());
+        bytes.extend_from_slice(&(a.len() as u32).to_be_bytes());
+        bytes.extend_from_slice(a.as_bytes());
+        bytes.extend_from_slice(&7u64.to_be_bytes());
+        bytes.extend_from_slice(&0u32.to_be_bytes()); // an empty allowed list
+        bytes.push(2); // it ran through a key…
+        let (p, m) = ("fake", "a-model");
+        bytes.extend_from_slice(&(p.len() as u32).to_be_bytes());
+        bytes.extend_from_slice(p.as_bytes());
+        bytes.extend_from_slice(&(m.len() as u32).to_be_bytes());
+        bytes.extend_from_slice(m.as_bytes());
+        // …and then the file simply ends: format 3 had no document byte.
+
+        let body = Body::from_bytes(&bytes).expect("a format 3 file is readable");
+        let turn = body.turns.first().expect("one turn");
+        assert_eq!(
+            turn.via,
+            crate::api::TurnVia::Through { provider: p.to_string(), model: m.to_string() },
+            "the control failed: a format 3 turn's own field did not read back, so \
+             nothing below is measuring what it claims"
+        );
+        assert_eq!(
+            turn.document,
+            crate::api::TurnDocument::NotRecorded,
+            "a turn older than format 4 was told which file it was about"
+        );
     }
 
     /// **A format 2 turn says «not recorded», not «whatever is configured
@@ -368,6 +466,11 @@ mod tests {
             crate::api::TurnVia::NotRecorded,
             "a turn older than format 3 was given a state it never had — and «older \
              than the question» is not «the person carried it»"
+        );
+        assert_eq!(
+            turn.document,
+            crate::api::TurnDocument::NotRecorded,
+            "nor was it about a file it could name"
         );
     }
 }

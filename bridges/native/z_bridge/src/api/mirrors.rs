@@ -1275,12 +1275,26 @@ pub enum _TurnVia {
     Through { provider: String, model: String },
 }
 
+#[frb(mirror(TurnDocument))]
+pub enum _TurnDocument {
+    /// **Older than the question.** Written before session format 4.
+    NotRecorded,
+    /// **There was no file.** The person typed the text into the application,
+    /// so there is nothing to name — which is an answer and not an absence.
+    Typed,
+    /// The file this exchange was about, by the name the person opened.
+    Named { name: String },
+}
+
 #[frb(mirror(TurnRow))]
 pub struct _TurnRow {
     /// **Which key answered this exchange** — the owner's first pillar, and it
     /// is an enum rather than two nullable strings because the question has
     /// **three** truthful answers and a nullable pair can only tell two.
     pub via: TurnVia,
+    /// **What went to the chat**: the file this exchange was about, or that the
+    /// person typed it, or that the turn is older than the question.
+    pub document: TurnDocument,
     /// What was asked, restored. Empty segments mean no question was typed —
     /// a real state: a document may be sent with nothing asked of it, which
     /// was 046/N's whole finding.

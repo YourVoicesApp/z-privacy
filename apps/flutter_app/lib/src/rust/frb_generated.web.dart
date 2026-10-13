@@ -86,6 +86,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TaughtReach dco_decode_box_autoadd_taught_reach(dynamic raw);
 
   @protected
+  TurnDocument dco_decode_box_autoadd_turn_document(dynamic raw);
+
+  @protected
   TurnVia dco_decode_box_autoadd_turn_via(dynamic raw);
 
   @protected
@@ -437,6 +440,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TokenRow dco_decode_token_row(dynamic raw);
 
   @protected
+  TurnDocument dco_decode_turn_document(dynamic raw);
+
+  @protected
   TurnRow dco_decode_turn_row(dynamic raw);
 
   @protected
@@ -551,6 +557,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TaughtReach sse_decode_box_autoadd_taught_reach(SseDeserializer deserializer);
+
+  @protected
+  TurnDocument sse_decode_box_autoadd_turn_document(
+    SseDeserializer deserializer,
+  );
 
   @protected
   TurnVia sse_decode_box_autoadd_turn_via(SseDeserializer deserializer);
@@ -938,6 +949,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TokenRow sse_decode_token_row(SseDeserializer deserializer);
 
   @protected
+  TurnDocument sse_decode_turn_document(SseDeserializer deserializer);
+
+  @protected
   TurnRow sse_decode_turn_row(SseDeserializer deserializer);
 
   @protected
@@ -1074,6 +1088,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_taught_reach(
     TaughtReach self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_turn_document(
+    TurnDocument self,
     SseSerializer serializer,
   );
 
@@ -1544,6 +1564,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_token_row(TokenRow self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_turn_document(TurnDocument self, SseSerializer serializer);
 
   @protected
   void sse_encode_turn_row(TurnRow self, SseSerializer serializer);
