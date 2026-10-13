@@ -71,7 +71,7 @@ library's V1-G0.
 **The page.** Every z-pdf export ends with one extra page:
 - **top:** «Z-pdf : Zprivacy-svara», written **before** protection;
 - **middle:** a circle drawn in a faint line — the answer goes here («الإجابة هنا»);
-- **bottom:** the stamp «conversion request» (طلب التحويل);
+- **bottom:** **the same footer every other page of this export carries** — the stamp of this one request (طلب التحويل), not a separate design. The owner: «في الأسفل نفس الترويسة التي تخرج من جميع الأوراق الأخرى في نفس الطلب». One export, one stamp, on every page including this one — so the answer page is visibly a page of *that* request;
 - the rest blank.
 
 **The word is protected like any other word.** «Zprivacy-svara» is protected with **the same session key** as the document, so the page carries an ordinary token of that session (`__Z_<ns>_…__`). The owner, verbatim: «لا أقصد أنها تحصل على المفتاح، أقصد أنها تحصل رمزاً ثابتاً يمكن العودة إليه». Consequences, all from rules already sealed:
