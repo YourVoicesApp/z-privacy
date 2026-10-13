@@ -198,7 +198,7 @@ void main() {
         reason: 'the payload does not carry the bench’s own tokens');
     expect(await z.conversationOpen(), isNull, reason: 'the fixture already opened a session');
 
-    final out = await beginThenAsk(g.ground, g.bench, name: 'Mars', providerId: 'openai');
+    final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
 
     expect(out.refused, isNull, reason: 'the send was refused: ${out.refused}');
     // The birth, read from the core rather than from the screen that asked for it.
@@ -241,13 +241,13 @@ void main() {
     final renamed = await g.ground.beginSession('Jupiter', bench: g.bench.session);
     expect(renamed, isNotNull, reason: 'the fixture could not begin a session: ${g.ground.trouble}');
     await g.bench.refresh();
-    expect(g.ground.theSessionQuestionStands, isFalse,
+    expect(g.ground.aSessionWouldBeBorn, isFalse,
         reason: 'the question still stands inside an open session');
 
     // **No name, and that is correct here**: the question is asked once, and
     // this session answered it. A door that asked again would be asking a
     // question the owner's rule says is settled.
-    final out = await beginThenAsk(g.ground, g.bench, name: '', providerId: 'openai');
+    final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
 
     expect(out.refused, isNull, reason: 'a send inside an open session was refused: ${out.refused}');
     expect(out.said, isNull, reason: 'the press was told a birth happened when none did');
@@ -260,17 +260,22 @@ void main() {
 
   // ------------------------------------------------------------------ guard 3
   //
-  // **081.** This asserted the refusal, and a zero with a one beside it to
-  // prove the socket was real. The owner took the refusal out on 13 Oct, so
-  // what is left to measure is the pair it becomes: a press with nothing typed
-  // is named by the core's number, a press with a word is named by the word,
-  // and **both travel**. Two fixtures rather than one, because the first press
-  // now opens a session and a second press inside it begins nothing — which is
-  // guard 2's property and would make this one measure the wrong thing.
-  test('a nameless send is named by its number, and a named one by the word', () async {
+  // **081, twice over.** This asserted the refusal, and a zero with a one
+  // beside it to prove the socket was real. The owner took the refusal out on
+  // 13 Oct — a send with no session begins one — and then had the name field
+  // deleted from the exit altogether: a session is named by its number here,
+  // and by a person's own word **only** from the rename control in the
+  // sessions list.
+  //
+  // So the pair is now «born at the door» against «named in the room»: the
+  // first takes its number, the second keeps the word it was given, and the
+  // send through it renames nothing. Two fixtures, because a second press
+  // inside an open session begins nothing at all — guard 2's property, which
+  // would make this one measure the wrong thing.
+  test('a send names a session by its number, and never renames one that has a word', () async {
     final g = await _ready('noname');
 
-    final out = await beginThenAsk(g.ground, g.bench, name: '   ', providerId: 'openai');
+    final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
 
     expect(out.refused, isNull, reason: 'a nameless send was refused: ${out.refused}');
     final rows = await z.conversations();
@@ -281,15 +286,20 @@ void main() {
     expect(g.bodies, hasLength(1), reason: 'the nameless send reached no model');
     expect(g.bodies.single.contains(_iban), isFalse, reason: 'the real IBAN left the machine');
 
-    // **The one beside it**: the person's own word, kept as it was typed.
-    final second = await _ready('noname-but-named');
-    final named = await beginThenAsk(second.ground, second.bench, name: 'Saturn', providerId: 'openai');
-    expect(named.refused, isNull, reason: 'the named send was refused: ${named.refused}');
+    // **The one beside it**: a session the room named, which the door must
+    // leave alone — the word is the person's, and nothing at an exit may
+    // replace it with a number.
+    final second = await _ready('named-in-the-room');
+    final begun = await second.ground.beginSession('Saturn', bench: second.bench.session);
+    expect(begun, isNotNull, reason: 'the room could not begin one: ${second.ground.trouble}');
+    await second.bench.refresh();
+    final named = await beginThenAsk(second.ground, second.bench, providerId: 'openai');
+    expect(named.refused, isNull, reason: 'the send was refused: ${named.refused}');
     final namedRows = await z.conversations();
-    expect(namedRows, hasLength(1), reason: 'the named send began no session');
+    expect(namedRows, hasLength(1), reason: 'the send began a second session');
     expect(namedRows.single.name, 'Saturn',
-        reason: 'the word the person typed was replaced by a number');
-    expect(second.bodies, hasLength(1), reason: 'the named send reached no model');
+        reason: 'the word the person gave in the room was replaced by a number');
+    expect(second.bodies, hasLength(1), reason: 'the send reached no model');
   });
 
   // ------------------------------------------------------------------ guard 4
@@ -299,7 +309,7 @@ void main() {
     // only way into it, here as on the glass.
     g.bench.chooseOriginal(true);
 
-    final out = await beginThenAsk(g.ground, g.bench, name: 'Neptun', providerId: 'openai');
+    final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
 
     expect(out.refused, isNull, reason: 'the direct door was refused: ${out.refused}');
     expect(await z.conversations(), hasLength(1),
@@ -361,7 +371,7 @@ void main() {
     final preBirth = g.bench.tokens.map((t) => t.token).toList();
     expect(preBirth, isNotEmpty, reason: 'nothing is protected, so a birth renames nothing');
     final out = await tester.runAsync(
-      () => beginThenAsk(g.ground, g.bench, name: '', providerId: 'openai'),
+      () => beginThenAsk(g.ground, g.bench, providerId: 'openai'),
     );
     await _settle(tester);
 
@@ -408,7 +418,7 @@ void main() {
   test('a send with a newborn session writes its turn into that session\'s file', () async {
     final g = await _ready('turn');
 
-    final out = await beginThenAsk(g.ground, g.bench, name: 'Merkur', providerId: 'openai');
+    final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
 
     expect(out.refused, isNull, reason: 'the send was refused: ${out.refused}');
     expect(g.bodies, hasLength(1), reason: 'nothing was sent, so there is no turn to look for');

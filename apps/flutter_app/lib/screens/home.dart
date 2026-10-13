@@ -38,7 +38,6 @@ import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/the_journey.dart';
-import 'package:zprivacy/widgets/the_session_question.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -334,21 +333,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         // it scrolls away with the page's own opening words
                         // once there is a conversation to read.
                         //
-                        // One wording with the sheet's, one answer on the
-                        // ground, and the closing sentence is this surface's
-                        // own: «Ask the AI» does not begin a session, it opens
-                        // the review, and the doors there are where the text
-                        // leaves.
-                        if (ground.theSessionQuestionStands) ...[
-                          const SizedBox(height: 22),
-                          TheSessionQuestion(
-                            ground: ground,
-                            closing:
-                                '«Ask the AI» below takes you to the review, and the door you '
-                                'press there begins it — the clipboard, the PDF, or a send to a '
-                                'connected AI. Nothing has left this machine yet.',
-                          ),
-                        ],
                         const Text('What stays on this device, and what leaves it.', style: Zc.h2),
                         const SizedBox(height: 10),
                         const Text(

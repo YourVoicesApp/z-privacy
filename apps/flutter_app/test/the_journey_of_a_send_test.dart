@@ -159,7 +159,7 @@ void main() {
     g.bench.addListener(watch);
     addTearDown(() => g.bench.removeListener(watch));
 
-    final out = await beginThenAsk(g.ground, g.bench, name: '', providerId: 'openai');
+    final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
     expect(out.refused, isNull, reason: 'the send was refused: ${out.refused}');
 
     expect(
@@ -196,7 +196,7 @@ void main() {
     await tester.runAsync(() async {
       g = await _ready('glass');
       _reply = _answerCarrying(g.bench.payload!);
-      final out = await beginThenAsk(g.ground, g.bench, name: '', providerId: 'openai');
+      final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
       expect(out.refused, isNull, reason: 'the send was refused: ${out.refused}');
     });
 
@@ -261,7 +261,7 @@ void main() {
       // no session can be born — which is the honest fourth state.
       g = await _ready('nokeep', withASession: false, withAVault: false);
       _reply = _answerCarrying(g.bench.payload!);
-      final out = await beginThenAsk(g.ground, g.bench, name: '', providerId: 'openai');
+      final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
       expect(out.refused, isNull, reason: 'the send was refused: ${out.refused}');
     });
 
