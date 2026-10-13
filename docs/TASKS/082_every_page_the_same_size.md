@@ -31,3 +31,14 @@ The owner: **every sheet is 15 cm wide and 20 cm tall, for every page, whatever 
 - The proportion is fixed (3 : 4); on screen the sheet is drawn at the column's width with that proportion, so «cm» means the shape, and on an exported page it means the size.
 - **Measure before building:** the longest page in the corpus and in a real table PDF — does its text fit a 15×20 sheet at the document font? If a page's text does not fit, the measurement is shown to the owner before anything is decided; text is never clipped (protection may not change how a document reads, and neither may the frame).
 - The owner also kept both column switches («In step / Apart» and «Chips / Plain»): «simple choices that really leave a mark» stay.
+
+## 13 Oct night — the Z sheet, sealed by the owner («نعتمد الأرقام والأسلوب الحالي»)
+
+1. **The Z sheet is 15 cm wide × 20 cm tall.** Every page Z shows or makes is one Z sheet.
+2. **Bringing a page onto a Z sheet scales it** by the ratio between the source page's size and the Z sheet — the source is shrunk to fit, not reflowed into another font.
+3. **A document Z generates from the chat** (a text sent to protection) is laid out on Z sheets: **15 text lines per sheet, with 3 empty lines at the top and 2 empty lines at the bottom** — 20 rows on a 20 cm sheet, one row per centimetre.
+4. **The PDFs Z exports use the same Z sheet and the same margins.**
+5. **Why the empty rows** (the owner): the person must have room to add **their own letterhead at the top and their own stamp at the bottom** — Z's paper is meant to be carried into real offices.
+6. Unchanged from above: alternating white between sheets; text never clipped; the protection request is the measure (chat without protection, and chat about an already-protected document, get no sheets).
+
+**The lead's reading, to show the owner on the glass before it is called done:** the 3 top and 2 bottom rows are blank on *every* sheet of a generated document and an export; on a scaled source page they are added around the scaled content. The answer page of 079 follows the same sheet: its «Z-pdf : Zprivacy-svara» line sits in the first text row, the export's footer in the bottom margin.
