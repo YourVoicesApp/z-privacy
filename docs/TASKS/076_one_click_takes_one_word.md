@@ -60,3 +60,28 @@ the vault holds the word as its own value, the same word elsewhere takes the
 same token, search finds it, pull-back resolves it. Measured on the film's
 own CSV (five clicks on five names), guards on the boundary function and on
 the click path, and the blob pin flipped into the story.
+
+## 13 Oct — the owner's rules for selection (sealed, his words carried)
+
+After the lead reviewed the Carlos film frame by frame (the hand path on `FarukAB_team_EN.csv`: 0 auto, five names, each a drag → the «Protect this» dialog with 13 kind chips and «How far» → Protect), the owner set the rules. **They replace design point 1 above** (the ICU word boundary): the boundary is the owner's, stated plainly.
+
+1. **One left click selects one word.** The word begins right after a space and ends right before the next space. **The space is never part of a one-click selection.** Left button, not right.
+2. **Two clicks take a word, the space, and the next word** — one value of two words (a first and a family name in one act).
+3. **Press and hold follows the mouse** — the drag, under its old law (a hand selection may not cross a line break).
+4. **The punctuation filter.** At protection time the marks `. ، - ' " : ; ,` standing at the **edges** of the selection are left **outside** the value: «Wilson,» protects «Wilson» and the comma stays in the text, in the clear, where it was. The person never trims a selection by hand. A one-click selection on «Wilson,» shows «Wilson» selected and the comma apart.
+   - **Lead's reading, to confirm with the owner:** edges only — a mark *inside* a word stays in it («Anne-Marie», «O'Brien», «Al-Harbi» stay one value). The filter trims; it does not split.
+   - The filter is **one function in the core**, used by every door that protects a span (click, double-click, drag) — a rule written in place is not applied to its second case.
+
+## Guards
+
+- One click on «Margaret» in «Margaret Wilson,person» → exactly «Margaret»; on «Wilson,person» → «Wilson,person» is one space-delimited word, filtered at its edges only — measured and shown to the owner before it is called done (a CSV cell is the case where comma is *inside* the space-word; the owner's rule as written takes the whole space-word).
+- Two clicks on «Margaret» → «Margaret Wilson,person» → filter → the value the owner expects: to be shown to him on the glass.
+- Every mark in the list, at the start and the end, in de/en/sv/ar text: kept out of the value, present in the text.
+- Arabic «،» measured in an RTL line.
+
+## Proposals still open (the lead's, not yet ruled)
+
+- Protect in one press, kind guessed (else Person), scope «here»; the big dialog only behind «More».
+- One value protected everywhere in the document at once (`protect_all_matches` exists).
+- Undo by one click on the protected word.
+- Detection obeys the same edges: the film shows IBAN «SE45 5000 0000 0583 9825 7466 **on 2**» — the detector swallowed two words of the date; and the reason line called «Ltd» «a German legal form» in an English document. Two detection defects, proposed as a small separate round.
