@@ -190,6 +190,23 @@ And the rule that makes it ours: **a document written inside Z carries its token
 | 3 | **the till** | the sale is born as data — no photo, no device |
 | 4 | **the editor** | the document is written inside Z, carries its tokens, and cannot break them |
 
+## The independent attacker — the owner's idea for the security review (14 Oct)
+
+**The owner:** «أريدها أن تكون عفوية ومفاجئة، وعند نقطة محددة من البناء. أولاً نراجع الشاشات والعمل؛ عندما نقول إن التطبيق الآن جاهز للعمل، سنقوم بإنشاء واجهة خارجية مستقلة، ونضع بداخلها نموذجاً لا على التعيين، ونجعل هذه الواجهة مقيّم برامج: النموذج الداخلي لديه جميع أوامر الهجوم ليقوم بعدد من الهجمات، ثم يضع تقرير الهجوم على حسابه هو في git… هذه فكرة تطبيق ممتاز.»
+
+**When:** at the boundary of station 1 — once the screens and the work are reviewed and the app is called ready. Not announced to the builders: a review they cannot prepare for measures the build as it is.
+
+**Why it answers what an AI review alone cannot.** Two objections the lead raised the same day, both met:
+- an AI that helped build and an AI that reviews share blind spots → **a model chosen at random, not ours and not of our family**;
+- a partner asks for a name that answers for the verdict → **the report published on the attacker's own git account**, dated, and beyond our power to edit or hide.
+
+**Three walls it must be built with**, because a model holding attack commands is a dangerous tool:
+1. **A closed cage.** It attacks our app alone, in an isolated environment, on **invented data** — never the owner's vault, never anything outside the cage.
+2. **Published after the fix.** A real finding published at once hands attackers a map. The report is written at once and dated; it is published when the hole is shut.
+3. **Measured like a builder's report.** Every hole it claims is reproduced on our own tree before it is believed.
+
+**And it is an application of its own** — every company that builds software needs someone to attack it honestly and publish what they found. Recorded as an idea on the map, not a fifth stage: Doha shows one product, Z.
+
 ## Not on this road
 
 - **`.peak`, the closed document** (087) — **not needed**, by the owner's word of 14 Oct: «لا نحتاج موضوع ملفات .peak». The paper stays as the record of the dialogue; nothing of it is built.
