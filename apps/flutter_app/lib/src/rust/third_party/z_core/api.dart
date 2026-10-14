@@ -324,6 +324,10 @@ Future<PayloadHandle> buildPayload({required SessionId session}) =>
 Future<PayloadView> payloadView({required PayloadHandle handle}) =>
     RustLib.instance.api.zCoreApiPayloadView(handle: handle);
 
+/// The text that may leave this machine, or the reason it may not.
+Future<PayloadView> payloadToTakeOut({required SessionId session}) =>
+    RustLib.instance.api.zCoreApiPayloadToTakeOut(session: session);
+
 /// Send a built payload. Takes a handle: there is no signature here that could
 /// accept the original text, by design.
 Future<AnswerId> send({

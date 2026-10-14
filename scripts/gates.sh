@@ -105,6 +105,64 @@ else
   fail "G27 only $(printf '%s\n' "$G27_DOORS" | grep -c .) door(s) in shell.dart ask packForTheNextText — the other one decides for itself"
 fi
 
+# ---------------------------------------------------------------- G28
+# **The three exits share one law** — 083a, closing contract C3.
+#
+# The law was written at one exit out of three. A send through a key refused
+# with `OpenSuggestions` (G12); Copy Protected and Save as PDF asked the core
+# nothing, took the Safe column's text and put the waiting word on the
+# clipboard or in a PDF exactly as the person had written it. One rule written
+# in place and never applied to its siblings — the same shape as 080's two
+# language doors, and this house's most expensive trap.
+#
+# So: the refusal is built in exactly one function in the core, every door that
+# takes text out calls that function, and no Dart surface asks the exit door for
+# itself. Each half of this gate is the shape of the defect it refuses.
+LAW=z_core/src/ops/mod.rs
+MADE=$(grep -n 'return Err(ApiError::OpenSuggestions' "$LAW" 2>/dev/null || true)
+if [ "$(printf '%s\n' "$MADE" | grep -c .)" = "1" ] \
+   && [ "$(grep -c 'fn no_word_waits' "$LAW" 2>/dev/null || echo 0)" = "1" ]; then
+  pass "G28 the refusal «a word is waiting» is built in one function in the core"
+else
+  fail "G28 the refusal is built in more than one place, or no_word_waits is gone:"
+  printf '%s\n' "$MADE" | sed 's/^/        /'
+fi
+
+# And every door that takes text out of the machine asks it. The body of each
+# one is read, not the file: a call in a neighbouring function would otherwise
+# answer for a door that does not check at all.
+G28_BAD=""
+for door in payload_to_take_out send ask_model; do
+  BODY=$(awk -v d="$door" '
+    $0 ~ "^pub\\(crate\\) fn " d "\\(" {inside=1}
+    inside && /^}/ {print; inside=0; next}
+    inside {print}
+  ' "$LAW")
+  if [ -z "$BODY" ]; then
+    G28_BAD="$G28_BAD $door(missing)"
+  elif ! printf '%s\n' "$BODY" | grep -q 'no_word_waits('; then
+    G28_BAD="$G28_BAD $door"
+  fi
+done
+if [ -z "$G28_BAD" ]; then
+  pass "G28 all three exits ask the one law: payload_to_take_out, send, ask_model"
+else
+  fail "G28 an exit does not ask no_word_waits():$G28_BAD"
+fi
+
+# And nothing on the glass asks the exit door for itself. The order's one
+# helper asks it, out where a guard can drive it, and each press is a line that
+# takes what it is handed — the shape 081 left behind and 083a keeps.
+G28_DART=$(grep -Rn 'payloadToTakeOut' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' || true)
+G28_DART_N=$(printf '%s\n' "$G28_DART" | grep -c . || true)
+if [ "$G28_DART_N" = "1" ] && printf '%s' "$G28_DART" | grep -q 'core/session_state.dart'; then
+  pass "G28 one surface asks the core what may leave, and it is the order's own helper"
+else
+  fail "G28 the exit door is asked in $G28_DART_N place(s), expected one in core/session_state.dart:"
+  printf '%s\n' "$G28_DART" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G26
 # **Every press that writes the clipboard empties it first** — 081.
 #
@@ -1059,7 +1117,12 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_language_this_build_does_not_know_is_refused_by_name \
          an_answer_from_another_session_names_every_token_and_restores_none \
          a_handle_or_an_answer_of_another_session_is_refused \
-         a_token_this_payload_did_not_allow_stays_unknown_in_its_own_session; do
+         a_token_this_payload_did_not_allow_stays_unknown_in_its_own_session \
+         no_text_leaves_while_a_word_waits \
+         every_door_that_takes_text_out_refuses_with_the_same_number \
+         the_refusal_carries_the_number_of_words_waiting \
+         the_word_answered_the_exit_opens \
+         the_column_the_person_reads_while_answering_still_builds; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -1131,7 +1194,11 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "a wrapped row still presses the cell" \
          "carries the column act, so no press is wasted" \
          "another conversation says so, by name, above the answer" \
-         "own answer restores with nothing said"; do
+         "own answer restores with nothing said" \
+         "puts nothing out while a word waits" \
+         "the exits are pressable while a word waits" \
+         "the first waiting word in reading order" \
+         "closes the sheet and says it where the word is"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

@@ -1459,6 +1459,29 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// **The exit's guide** — 083 rule 12, and the other half of the law 083a
+  /// put in the core.
+  ///
+  /// The refusal is not a wall: a press that cannot take the text out opens the
+  /// review on the word it is waiting for, so the person's next act is one
+  /// press away instead of a sentence they have to work out. It takes the slot
+  /// the one way it is taken, through [openReview], and sets the focus first
+  /// because that method only fills an empty one.
+  /// Returns **false when there was no word to go to** — an empty document, a
+  /// refusal of another kind — which is how a press learns whether the person
+  /// has somewhere to land without reading the error itself (G20).
+  bool openTheReviewAtTheFirstWaitingWord({String? said}) {
+    final first = theFirstWaitingWord(findings);
+    if (first == null) return false;
+    focused = first.id;
+    // **The sentence is said where the word is** — the lead's ruling of 14 Oct
+    // on rule 12. The sheet gets out of the way, so the news cannot stay behind
+    // it: this is the line the workspace draws above the columns.
+    if (said != null) trouble = said;
+    openReview(walk: true);
+    return true;
+  }
+
   void closeReview() {
     if (panel == OpenPanel.review) {
       panel = OpenPanel.none;
@@ -1671,7 +1694,13 @@ enum SendStage { none, sent, answered, pulledIn, keptNowhere, refused }
 /// sentence the person reads at the press: a press that does nothing and says
 /// nothing is the one shape of refusal this project does not allow.
 class WhatMayLeave {
-  const WhatMayLeave({this.view, this.said, this.refused, this.renamed});
+  const WhatMayLeave({
+    this.view,
+    this.said,
+    this.refused,
+    this.renamed,
+    this.landedOnTheWaitingWord = false,
+  });
 
   /// The payload whose text may leave — **read after the birth**, never the one
   /// a `build` captured before it.
@@ -1684,9 +1713,33 @@ class WhatMayLeave {
   /// Why nothing may leave.
   final String? refused;
 
+  /// **The person has somewhere to land** — 083 rule 12, the lead's ruling of
+  /// 14 Oct. True when the refusal opened the review on a word still waiting,
+  /// which is the one case where the sheet standing in front of it would be the
+  /// wall the rule removes. A press reads this instead of the error, because no
+  /// surface interprets an `ApiError` by itself (G20).
+  final bool landedOnTheWaitingWord;
+
   /// How many tokens the core renamed into the new session. Null when no birth
   /// happened; **0 is a real answer** and has its own sentence.
   final int? renamed;
+}
+
+/// **The word a review opens on: the first one still waiting, in reading
+/// order** — 083, rules 4 and 12.
+///
+/// Not `suggested.first`. The core hands findings back in the order its layers
+/// found them (`ops::list_findings` walks the session's own list), which is the
+/// scan's order and not the eye's. In today's documents the two agree, and that
+/// is exactly the shape that lets a wrong one stand for a year — so the order
+/// is taken from the span, which is what «first» means to the person reading.
+Finding? theFirstWaitingWord(List<Finding> findings) {
+  Finding? first;
+  for (final f in findings) {
+    if (f.state != MarkState.suggested) continue;
+    if (first == null || f.span.start < first.span.start) first = f;
+  }
+  return first;
 }
 
 /// **The order an exit must follow — the one helper both exits use** (064).
@@ -1697,17 +1750,24 @@ class WhatMayLeave {
 ///
 ///   0. **the clipboard is emptied** — before the session or the payload is so
 ///      much as looked at (081, the owner's root rule);
-///   1. no session open → **one is born, called «Session N»** by the core's own
+///   1. **the core is asked whether anything may leave** — 083a. One law for
+///      all three exits, in one function in the core, and no word of it is
+///      written here: `payload_to_take_out` refuses while a word waits for the
+///      person's answer. Asked **before** the birth, so a press that takes
+///      nothing out leaves nothing behind it; the refusal opens the review on
+///      the first waiting word rather than standing in the person's way;
+///   2. no session open → **one is born, called «Session N»** by the core's own
 ///      number (081). Nothing is asked and nothing is refused: the exit has no
 ///      name to take, because the owner had the field deleted and left naming
 ///      to the rename control in the sessions list;
-///   2. `beginSession(name, bench:)` — **with the bench**, which the core now
+///   3. `beginSession(name, bench:)` — **with the bench**, which the core now
 ///      refuses to do without (064f): a birth that names no document renames
 ///      nothing, and the text would then leave wearing pre-birth names while
-///      the payload claimed the new session;
-///   3. a refusal → nothing leaves, and `ground.trouble` is what it says;
-///   4. **refresh the bench** — every name on it has just changed;
-///   5. read the payload **again**, from the bench, and hand that one out.
+///      the payload claimed the new session. A refusal → nothing leaves, and
+///      `ground.trouble` is what it says;
+///   4. **refresh the bench** — every name on it has just changed — and ask the
+///      core **again** for the text: what is handed out is read after the
+///      birth, never before it.
 ///
 /// ## Why this is not written inside the widget
 ///
@@ -1717,20 +1777,22 @@ class WhatMayLeave {
 /// room. Out here a guard drives it directly, and the press above it becomes
 /// one line with nothing left in it to get wrong.
 ///
-/// ## Step 5 is the step that is easy to lose
+/// ## The last step is the one that is easy to lose
 ///
 /// The sheet captures its payload when it builds, and the birth happens after
 /// that: **nothing rebuilds between the act and the clipboard.** A closure
 /// holding the captured view would take out the pre-birth text with the new
 /// session's name stamped on it — true of the snapshot, false of the names.
-/// From the core's side nothing is wrong, and no core guard can see it.
+/// From the core's side nothing is wrong, and no core guard can see it. That is
+/// why the text is asked for a second time, after the birth, and why both asks
+/// go to the core: a text read off the bench is a text nobody was asked about.
 /// ## `thePayloadLeaves`
 ///
 /// Three of the four exits take the protected payload out — the clipboard, the
 /// PDF, and a protected send through a key. Direct Mode's door takes the
 /// **document as it stands**, by a separate call that the core keeps separate.
 /// For that one the birth, the refusal and the refresh are all still the order;
-/// steps 4 and 5 are about a text it does not send, and a helper that insisted
+/// steps 1 and 4 are about a text it does not send, and a helper that insisted
 /// on a payload would refuse a door that works on a bench with nothing built.
 /// So the parameter says what leaves, and nothing about it is optional:
 /// `false` returns no view, and a caller that reads `view` for its text gets
@@ -1764,10 +1826,24 @@ Future<WhatMayLeave> beginThenRead(
   // Step 0. Nothing above this line, ever — and the rule itself lives in
   // `the_clipboard.dart`, where its five seats can read one copy of it.
   await emptyTheClipboardFirst();
+  // Step 1. **The core decides whether anything may leave at all** — 083a.
+  // Asked before the birth so that a press which takes nothing out leaves
+  // nothing behind it either: no session, no rename, only an empty clipboard
+  // and the review open on the word that is waiting.
+  ({PayloadView? view, String? refused, bool lit})? got;
+  if (thePayloadLeaves) {
+    got = await _whatMayLeave(bench);
+    if (got.refused != null) {
+      return WhatMayLeave(
+        refused: got.refused,
+        landedOnTheWaitingWord: got.lit,
+      );
+    }
+  }
   int? renamed;
   String? said;
   if (ground.aSessionWouldBeBorn) {
-    // **Step 1 is not a refusal, and not a question** — 081. A person pressing
+    // **Step 2 is not a refusal, and not a question** — 081. A person pressing
     // an exit wants their text out and is not asking to be interviewed about
     // what the drawer is called. They get «Session N», and the sessions list
     // is where they give it their own word if they ever want to.
@@ -1786,23 +1862,28 @@ Future<WhatMayLeave> beginThenRead(
   if (!thePayloadLeaves) {
     return WhatMayLeave(said: said, renamed: renamed);
   }
-  var view = bench.payload;
+  // Step 4. **The text, from the core, and read again when a birth moved the
+  // names.** It used to be read off the bench — `bench.payload` is the
+  // workspace snapshot's own payload, the text drawn in the Safe column — and
+  // reading it there asked the core nothing, which is how a word still waiting
+  // for an answer went out on the clipboard and into the PDF while the send
+  // refused. One law, one door, three exits (083a, contract C3).
+  //
+  // Asked twice only when there was a birth: that is the one event between the
+  // first ask and here, and it renames every token in the text.
+  if (renamed != null) {
+    got = await _whatMayLeave(bench);
+    if (got.refused != null) {
+      return WhatMayLeave(
+        said: said,
+        renamed: renamed,
+        refused: got.refused,
+        landedOnTheWaitingWord: got.lit,
+      );
+    }
+  }
+  final view = got!.view!;
   final open = ground.openSession;
-  if (open != null && view?.session?.number != open) {
-    // **Look again before refusing.** A view that does not belong to the open
-    // session is our own staleness and not the person's mistake, so the first
-    // answer is to re-read: a dead «no» at the moment of pressing Copy would
-    // be the wrong product for a fault of ours.
-    await bench.refresh();
-    view = bench.payload;
-  }
-  if (view == null) {
-    return WhatMayLeave(
-      said: said,
-      renamed: renamed,
-      refused: 'There is nothing to take out yet.',
-    );
-  }
   // **What this check holds, and what it does not.** `PayloadView.session` is
   // stamped when the payload is built, from whichever session was open then —
   // so it answers «was this snapshot taken inside the session», not «were its
@@ -1819,6 +1900,42 @@ Future<WhatMayLeave> beginThenRead(
     );
   }
   return WhatMayLeave(view: view, said: said, renamed: renamed);
+}
+
+/// The text the core lets out, or the sentence that says why it does not — and,
+/// when a word is waiting, the review opened on it.
+///
+/// One helper rather than two call sites, because the refusal does two things
+/// and both of them must happen at every exit: it says the number of words
+/// waiting, and it opens the review on the first of them (083, rule 12). The
+/// law itself is in the core, in one function, and nothing here re-reads a
+/// count to decide anything.
+Future<({PayloadView? view, String? refused, bool lit})> _whatMayLeave(
+  Workbench bench,
+) async {
+  try {
+    return (
+      view: await z.payloadToTakeOut(session: bench.session),
+      refused: null,
+      lit: false,
+    );
+  } on ApiError catch (e) {
+    // **No word of the error is read here** — G20 and `messages_test`'s own
+    // guard: no widget interprets an `ApiError` by itself, and this helper is
+    // not an exception to a rule that exists because one error came to say
+    // three different things on three screens.
+    //
+    // Nothing needs reading. Opening the review on the first waiting word is
+    // the right act whenever there **is** one, and when there is none — an
+    // empty document, a refusal of another kind — the method does nothing,
+    // because `theFirstWaitingWord` has nothing to hand it. The law stays in
+    // the core; what is decided here is only where the person's eye goes.
+    final said = humanMessage(e);
+    final lit = bench.openTheReviewAtTheFirstWaitingWord(
+      said: andTheClipboardIsEmpty(said),
+    );
+    return (view: null, refused: said, lit: lit);
+  }
 }
 
 /// **The third exit: the same order, and then the send** — 064/A.

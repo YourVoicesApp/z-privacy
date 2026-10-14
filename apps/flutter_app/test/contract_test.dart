@@ -225,6 +225,7 @@ void main() {
       'listTokens': () => listTokens(session: session),
       'buildPayload': () => buildPayload(session: session),
       'payloadView': () => payloadView(handle: handle),
+      'payloadToTakeOut': () => payloadToTakeOut(session: session),
       'send': () => send(handle: handle, provider: provider),
       'ingestAnswer': () => ingestAnswer(payload: handle, raw: 'x'),
       'restoredView': () => restoredView(session: session, answer: answer),
@@ -368,7 +369,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 112, reason: 'the contract has 112 functions');
+    expect(calls.length, 113, reason: 'the contract has 113 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();
@@ -424,6 +425,16 @@ void main() {
       expect(e.count, 1);
     }
 
+    // C3 from Dart — 083a. The same law at the door the two manual exits ask:
+    // the Safe column above still has its text (the person is reading it while
+    // they answer), and the text may not be taken out of the machine.
+    try {
+      await payloadToTakeOut(session: session);
+      fail('the exit handed out the text while a word waited');
+    } on ApiError_OpenSuggestions catch (e) {
+      expect(e.count, 1);
+    }
+
     // Answer it, and the door opens as far as the provider.
     final open = findings.firstWhere((f) => f.state == MarkState.suggested);
     await answerFinding(
@@ -442,6 +453,11 @@ void main() {
       expect(e.reason, isA<NetworkRefusal_NotConnected>());
       expect(e.detail, contains('openai'));
     }
+
+    // And the manual exits' door opens with it: one answer, three exits.
+    final mayLeave = await payloadToTakeOut(session: session);
+    expect(mayLeave.openSuggestions, 0);
+    expect(mayLeave.text, isNot(contains('Nordstern')));
     await closeSession(session: session);
   });
 

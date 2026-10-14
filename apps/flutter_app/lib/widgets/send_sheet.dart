@@ -36,6 +36,7 @@ import 'package:flutter/services.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/protected_pdf.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/core/the_clipboard.dart' show andTheClipboardIsEmpty;
 import 'package:zprivacy/src/rust/api/core.dart' show coreVersion;
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
@@ -433,6 +434,9 @@ class _SendSheetState extends State<SendSheet> {
   /// what refusing means here. Until 081 this also walked the person back to
   /// the name field a page earlier — there is no field to walk back to now, and
   /// no press is refused for want of a word.
+  /// The sheet stays and says it — for the refusals a person cannot act on from
+  /// anywhere else. The one that **can** be acted on, a word still waiting,
+  /// closes this sheet instead: see [_outOfTheWay].
   void _nothingLeft(WhatMayLeave out) {
     setState(() {
       // **And the clipboard is empty** — 081. `beginThenRead` empties it as its
@@ -440,9 +444,28 @@ class _SendSheetState extends State<SendSheet> {
       // person is told because a paste that gives back nothing reads as a
       // broken application unless somebody said so first — «المستخدم لا يدرك
       // أنه نفس النسخ القديم», which was the owner's own first reading of it.
-      _trouble = '${out.refused ?? 'Nothing left the machine.'}\n'
-          'Nothing was copied — the clipboard is empty.';
+      _trouble = andTheClipboardIsEmpty(
+        out.refused ?? 'Nothing left the machine.',
+      );
     });
+  }
+
+  /// **A sheet in front of the lit word is a wall** — the lead's ruling of 14
+  /// Oct on 083 rule 12.
+  ///
+  /// The press took nothing out and the review is already open on the first
+  /// word still waiting, with the sentence on the workspace's own line. So this
+  /// sheet gets out of the way and the person lands on the word, one press from
+  /// answering it — rather than reading a refusal in front of the thing it is
+  /// about.
+  ///
+  /// `false`, because nothing left: the Workspace moves a person off their
+  /// document only when something did (`showDialog<bool>` at
+  /// `workspace.dart:715`).
+  bool _outOfTheWay(WhatMayLeave out) {
+    if (!out.landedOnTheWaitingWord) return false;
+    Navigator.of(context).pop(false);
+    return true;
   }
 
   Widget _aiDoors(
@@ -501,7 +524,7 @@ class _SendSheetState extends State<SendSheet> {
                               );
                               if (!mounted) return;
                               if (out.view == null) {
-                                _nothingLeft(out);
+                                if (!_outOfTheWay(out)) _nothingLeft(out);
                                 return;
                               }
                               await Clipboard.setData(
@@ -532,7 +555,7 @@ class _SendSheetState extends State<SendSheet> {
                               );
                               if (!mounted) return;
                               if (out.view == null) {
-                                _nothingLeft(out);
+                                if (!_outOfTheWay(out)) _nothingLeft(out);
                                 return;
                               }
                               if (out.said != null) {
@@ -631,8 +654,22 @@ class _SendSheetState extends State<SendSheet> {
                               : 'Send to ${p.onThisComputer ? "Local AI" : "Direct API"}',
                           filled: true,
                           icon: Icons.send_outlined,
+                          // **A guide, not a wall** — 083 rule 12. The count
+                          // no longer kills the press: the law is one function
+                          // in the core, every exit asks it, and the refusal
+                          // opens the review on the first waiting word. A dead
+                          // button can guide nobody, and a button that decides
+                          // for itself is the second copy of a law this round
+                          // exists to remove.
+                          //
+                          // **Direct Mode keeps its wall**, and that is not an
+                          // oversight: its door sends the document *as it
+                          // stands*, `ask_model_directly` asks no law, and a
+                          // press there while a word waits would put the clear
+                          // text on the wire. Whether that door gets the law or
+                          // the mode gets its own sentence is 083b's to rule.
                           onPressed:
-                              open > 0 ||
+                              (widget.bench.sendOriginal && open > 0) ||
                                   widget.bench.sending ||
                                   (payload == null && !widget.bench.sendOriginal)
                               ? null
@@ -664,23 +701,28 @@ class _SendSheetState extends State<SendSheet> {
                                     // person who is told only «it failed»
                                     // would not know that.
                                     if (out.said != null) _begun = out.said;
-                                    _nothingLeft(out);
+                                    if (!_outOfTheWay(out)) _nothingLeft(out);
                                     return;
                                   }
                                   Navigator.of(context).pop(true);
                                 },
-                          // **The count, here too** (046/L). This sheet held a
-                          // second copy of «Answer the review first» — two
-                          // places wording one promise, and the weaker
-                          // wording. The workspace's own line now names the
-                          // number and offers the way through; this one at
-                          // least names the number, because a person reading
-                          // it has already left that line behind.
-                          hint: open == 1
-                              ? '1 question left — answer it first'
-                              : open > 1
-                                  ? '$open questions left — answer them first'
-                                  : null,
+                          // **A hint belongs where a wall is** — 083a, and
+                          // 046/L's own rule finally applied to this line.
+                          //
+                          // It explained a dead button: the count killed every
+                          // send, and the sheet said «answer them first». The
+                          // protected press is a guide now (rule 12) — it says
+                          // the one sentence `messages.dart` holds and opens
+                          // the review on the word — so a second wording
+                          // beside it would be two places wording one state,
+                          // which is the defect this line was the weaker half
+                          // of. What is left is the one button that is still a
+                          // wall, and it names itself.
+                          hint: !widget.bench.sendOriginal || open == 0
+                              ? null
+                              : open == 1
+                                  ? 'Direct Mode would send the document as it stands — one word still waits'
+                                  : 'Direct Mode would send the document as it stands — $open words still wait',
                         ),
                     ],
                   ),

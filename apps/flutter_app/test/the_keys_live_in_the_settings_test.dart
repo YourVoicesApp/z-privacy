@@ -511,9 +511,13 @@ void main() {
     bench.dispose();
   });
 
-  // h · **An anchor, not a guard.** Green before this change and after it. The
-  // task's scope line: the sheet keeps its three doors and the review before
-  // send, and nothing touches what it sends or when it refuses to.
+  // h · **An anchor, not a guard.** Green before 067's change and after it: the
+  // sheet keeps its three doors and the review before send, and 067 touched
+  // neither what it sends nor when it refuses to.
+  //
+  // 083a moved its last line — see the comment there. The anchor still says
+  // «the three doors stand»; what «still refuses the send» means is now the
+  // core's answer to the press rather than a button that cannot be pressed.
   testWidgets('h — ANCHOR: the three doors stand, and an open suggestion still refuses the send', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 950));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -539,10 +543,24 @@ void main() {
 
     final send = find.widgetWithText(ZButton, 'Send to Direct API');
     expect(send, findsWidgets, reason: 'a connected provider offers no send button');
+    // **083a, the owner's ruling of 14 Oct: the promise moved, it did not go.**
+    //
+    // This asserted the *mechanism* — a dead button — and the mechanism is what
+    // the owner replaced: «the refusal is a guide, not a wall» (083, rule 12).
+    // The press happens now, the core refuses it (one law in one function,
+    // asked by all three exits — G28), and the refusal opens the review on the
+    // first word still waiting. A dead button could guide nobody.
+    //
+    // So this asserts the door is reachable, and the promise itself — that
+    // nothing leaves while a word waits — is measured where text actually
+    // leaves: `the_exits_share_one_law_test.dart`, at the clipboard, at the
+    // folder and at the socket, with `nothing_leaves_while_a_word_waits.rs`
+    // holding the core's end.
     expect(
       tester.widget<ZButton>(send.first).onPressed,
-      isNull,
-      reason: 'a question with an unanswered suggestion could be sent — the one promise this product makes',
+      isNotNull,
+      reason: 'the send is dead while a word waits, so the refusal that opens '
+          'the review on that word can never be reached (083 rule 12)',
     );
 
     bench.dispose();

@@ -54,9 +54,15 @@ String humanMessage(Object error) {
       'This vault file has extra data after its end and was not opened.',
     ApiError_ProviderUnavailable() =>
       'That AI provider is not available in this build.',
+    // 083a. **Short, and true of every door that raises it.** All three exits
+    // ask one law in the core now, and this is the sentence they all carry, so
+    // it says the two things a person needs at that moment: how many of their
+    // own words are waiting, and that nothing went out. The review opens on
+    // the first of those words at the same time, which is the rest of the
+    // answer (083, rule 12).
     ApiError_OpenSuggestions(:final count) => count == 1
-        ? 'One suggestion is still waiting for your word.'
-        : '$count suggestions are still waiting for your word.',
+        ? 'One word waits for your answer — nothing left Z.'
+        : '$count words wait for your answer — nothing left Z.',
     // The core split `ImportRefused` on 30 September, so this no longer has to
     // word one sentence for three unrelated stories. Each of these is a
     // different next move for the person: change what you entered · name
