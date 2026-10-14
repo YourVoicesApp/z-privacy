@@ -130,16 +130,34 @@ fn the_capitalised_word_before_is_offered_and_never_taken() {
     let _ = close_session(session);
 }
 
-/// The marks a **value** is made of stay. A telephone number begins with `+`,
-/// and a rule that tidies edges must know the difference between a mark around
-/// a word and a mark inside a value.
+/// **Ruling 3 at the glass, and the 6 October guarantee that survives it.**
+///
+/// This guard used to say the opposite, and it was right at the time: the marks
+/// a **value** is made of stay, a telephone number begins with `+`, and the
+/// edge rule must know a mark around a word from a mark inside a value. On
+/// 14 Oct 2026 the owner ruled that **every mark on the keyboard** is an edge
+/// mark (paper 085, ruling 3), and the word rule has no notion of kind — so the
+/// span the glass offers for `+46 8 123 456` is now `46 8 123 456`.
+///
+/// **And the token still covers the plus.** Measured, not assumed: the drawn
+/// span meets the Phone finding the scanner already made, and protection takes
+/// whole items, so the payload reads `Telefon: __Z_…` with nothing standing in
+/// front of it. The defect the owner reported on 6 October — a character left
+/// outside its token — does not come back for a value the scanner has found.
+/// What it costs is a highlight one character shorter than what is protected,
+/// and ruling 2 of the same paper is where that is answered: **numbers are not
+/// words**, and their rules come by kind at the door that knows the kind.
 #[test]
-fn the_marks_a_value_is_made_of_are_kept() {
+fn the_plus_leaves_the_offered_span_and_the_token_still_covers_it() {
     let session = a_document();
     let phone = span_of(DOC, "+46 8 123 456");
 
     let view = inspect_selection(session, phone).expect("view");
-    assert_eq!(text_of(session, view.word_span), "+46 8 123 456", "the plus was tidied away");
+    assert_eq!(
+        text_of(session, view.word_span),
+        "46 8 123 456",
+        "ruling 3 takes a mark at an edge, and the + is at one"
+    );
 
     protect(session, phone, Scope::Once, Kind::Phone).expect("protect");
     let safe = payload_view(build_payload(session).expect("payload")).expect("view").text;
@@ -147,6 +165,50 @@ fn the_marks_a_value_is_made_of_are_kept() {
         !safe.contains("+__Z_"),
         "the plus was left standing in front of the token: {:?}",
         safe.lines().nth(3).unwrap_or_default()
+    );
+    let _ = close_session(session);
+}
+
+/// **The debt ruling 3 opens, measured and pinned: a mark a value *starts*
+/// with is left in the clear when the scanner never found that value.**
+///
+/// Three hand selections in one line, and the three answers are not the same:
+///
+///  * `(Delta)` — the brackets are the sentence's. Dropping them is the whole
+///    purpose of the ruling, and the payload reads `(__Z_…_COMPANY_…__)`, which
+///    is how the document should read.
+///  * `~Gamma` — the same, and nobody will miss the tilde.
+///  * `#4711` — **not the same.** The hash is part of the reference, and the
+///    payload reads `#__Z_…_CUSTNO_…__`: the 6 October shape, for a value the
+///    scanner did not find and so had no whole item to snap to.
+///
+/// The answer is not a second edge list — that is the «one fact, two sources»
+/// defect this project has paid for twice. It is ruling 2: a number is not a
+/// word, and `protect` already knows the kind. **When that rule lands, the last
+/// assertion here reddens** — change it to `!contains("#__Z_")` and delete this
+/// note. Until then the product does this, and it is written down.
+#[test]
+fn a_mark_a_value_starts_with_is_left_in_the_clear_for_now() {
+    let session = open_session(None, "sv".to_string()).expect("open");
+    import_text(session, "Ref #4711 och ~Gamma och (Delta) i akten.\n".to_string()).expect("import");
+    scan(session).expect("scan");
+
+    for (drawn, kind) in [
+        ("#4711", Kind::CustomerNo),
+        ("~Gamma", Kind::Person),
+        ("(Delta)", Kind::Company),
+    ] {
+        let span = span_of("Ref #4711 och ~Gamma och (Delta) i akten.\n", drawn);
+        protect(session, span, Scope::Once, kind).expect("protect");
+    }
+    let safe = payload_view(build_payload(session).expect("payload")).expect("view").text;
+
+    assert!(safe.contains("(__Z_"), "the bracket belongs to the sentence: {safe:?}");
+    assert!(safe.contains("~__Z_"), "the tilde belongs to the sentence: {safe:?}");
+    assert!(
+        safe.contains("#__Z_"),
+        "the debt: the hash is part of the reference and stands outside its \
+         token until numbers get their own rule: {safe:?}"
     );
     let _ = close_session(session);
 }

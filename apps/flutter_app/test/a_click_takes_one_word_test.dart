@@ -47,7 +47,55 @@ void main() {
       expect(taken('Anne-Marie Berg', 'Anne-Marie'), 'Anne-Marie');
       expect(taken("O'Brien and Sons", "O'Brien"), "O'Brien");
       expect(taken('Margaret Wilson,person', 'Wilson,person'), 'Wilson,person');
-      expect(taken('tel +49 228 oder', '+49'), '+49');
+      // The plus is at an edge, so 085's ruling 3 takes it. Named on its own
+      // below, with what it costs.
+      expect(taken('tel +49 228 oder', '+49'), '49');
+    });
+
+    test('every mark the keyboard has leaves an edge — 085, ruling 3', () {
+      // The owner, 14 Oct: «وبالنسبة للرموز لا أقصد فقط هذه الرموز… بل جميع
+      // الرموز الموجودة في الكيبورد». The core answers it as a complement —
+      // not a letter, not a digit, not a space, and not a mark belonging to the
+      // letter before it — and these are the same cases as the core's own
+      // `every_mark_the_keyboard_has_leaves_an_edge`.
+      const marks = <String>[
+        '!', '?', '(', ')', '[', ']', '{', '}', '<', '>', '@', '#', r'$', '%',
+        '&', '*', '+', '=', '/', '\\', '|', '~', '^', '_', '§', '´', '¨',
+        '…', '«', '»', '„', '“', '”', '’', '—', '–', '،', '؛', '؟', '.', ',',
+        ';', ':', "'", '"',
+      ];
+      for (final mark in marks) {
+        expect(
+          taken('Herr Mueller$mark bitte', 'Mueller$mark'),
+          'Mueller',
+          reason: 'trailing «$mark»',
+        );
+        expect(
+          taken('Herr ${mark}Mueller bitte', '${mark}Mueller'),
+          'Mueller',
+          reason: 'leading «$mark»',
+        );
+      }
+    });
+
+    test('a diacritic is part of the word, not a mark around it', () {
+      // The guard that forbids the cheap reading of ruling 3. «Anything that is
+      // not a letter or a digit» would strip the Arabic harakat off a name, and
+      // Z's Arabic is a whole script family.
+      expect(taken('اتصل ويلسونَ غدا', 'ويلسونَ'), 'ويلسونَ');
+      expect(taken('Herr Jose\u{301} bitte', 'Jose\u{301}'), 'Jose\u{301}');
+    });
+
+    test('what the widened set costs, measured: a value that starts with a mark', () {
+      // Pinned, not hidden. A reference number and a phone number begin with a
+      // mark that belongs to the **value**, and the word rule has no notion of
+      // kind. 085's ruling 2 — numbers are not words — is where that is
+      // answered, by kind, in the core. Until then the glass shows this.
+      expect(taken('ref #4711 bitte', '#4711'), '4711');
+      expect(taken('tel +46 8 123 oder', '+46'), '46');
+      // Interior, and so untouched: an address stays one value.
+      expect(taken('mail anas@mono-peak.com heute', 'anas@mono-peak.com'),
+          'anas@mono-peak.com');
     });
 
     test('a click on a space takes nothing, and so does an empty document', () {
