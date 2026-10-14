@@ -31,10 +31,21 @@ API_FILES_FIRST=z_core/src/api.rs
 CLIENT=ureq
 NET_DIR=providers
 # The echo provider only exists in a build made for the tests.
-# Both are test-only features. `test_clock` is listed here and not only in the
-# manifest because a feature the suite forgets to ask for takes its tests with
-# it silently — the same shrink G22 exists to refuse. G23 checks this line.
-TEST_FEATURES="--features fake_provider,test_clock" 
+# All three are test-only features, and none is in `default`. They are listed
+# here and not only in the manifest because a feature the suite forgets to ask
+# for takes its tests with it silently — the same shrink G22 exists to refuse.
+# G23 checks this line for the clock.
+#
+# `measuring` joined on 14 Oct, by the lead's ruling, and it buys two things a
+# feature-gated instrument otherwise loses: the guard that proves the door
+# forwards the product's own word search is **run**, and `--all-targets` lints
+# `examples/what_arrives.rs` at all — without the feature cargo skips that
+# target and does not compile that test, so both went quietly missing. «A guard that is
+# not run is not a guard, and an instrument nobody checks goes on printing
+# numbers after it has stopped being right» — and those numbers are what the
+# owner will judge Arabic by. The cost is building the instrument on every gate
+# run, which is the cheaper half of the trade.
+TEST_FEATURES="--features fake_provider,test_clock,measuring" 
 
 echo "Z Privacy gates"
 echo
