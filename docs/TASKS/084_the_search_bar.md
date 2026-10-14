@@ -81,6 +81,23 @@ A word the person coloured before the document entered Z (Word highlight; PDF Hi
 - **Measure first:** the reader today drops colour entirely (no `highlight`, `shd` or annotation handling in `z_core/src/documents`). Two real files from the owner (a Word file with highlighted names, a PDF highlighted with the Highlight tool) → what each reader can see, before anything is built.
 - Out of reach, said plainly: a printed page marked with a pen and photographed. Z does not read images.
 
+## The comparison, returned (14 Oct, `docs/reference/Z_SEARCH.md`)
+
+None of the ten projects has a find bar tied to protection. The standard people know is Acrobat's «Find text to redact»: type, see a list with checkboxes, uncheck a place, apply.
+
+The lead's reading of what to take and what to leave:
+
+| what others do | in 084? | why |
+|---|---|---|
+| count, light all, walk the places (Word, Acrobat) | **yes** | the result line and Next 1/12 |
+| exclude one place (Acrobat checkboxes) | **yes, already** | «un-protect here» |
+| regex / wildcards / patterns (Acrobat, Word) | **no** | finding patterns is Z's own work, the packs; simpler than simplicity |
+| case and part-of-word switches (Word) | **no** | the completion supplies the whole word |
+| Replace All (Word, BentoPDF) | **no** | Z never changes how the document reads |
+| search across a folder (Acrobat) | **no** | one document, one session |
+| query history (Microsoft Search) | **no, forbidden** | rule 47; ZCFG already forbids it (`config.rs:16-18`) |
+| mask part of a number (Acrobat) | **to the numbers paper** | tonight |
+
 ## Waits on
 
 - **The comparison study** (sent 14 Oct): how ten projects plus Acrobat's «Find text to redact» and Word's search match, count, light, navigate, act, and store. It may add to the shape, not to the rulings.
