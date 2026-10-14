@@ -47,6 +47,49 @@ The cause is visible in the table above: these fonts map one glyph to several le
 
 **The owner's own text fixtures carry the same defect**, having been made from this book: `~/Documents/kalila-wa-dimna-10-pages.txt` reads «وبني الحرب» for «وبين الحرب» and «ا ُملؤذي» for «المؤذي». They are evidence of the defect, not a clean baseline, and a new baseline must be made after the reader is fixed.
 
+## The owner's rule for the reading base (14 Oct) — shape against place, and the defect is shown, never repaired in silence
+
+He gave the method and then the law.
+
+**The method (the owner):** «الكلمة محصورة بين مسافتين. الحرف بعد المسافة الأولى يأخذ قائمة الأحرف عند بدء الكلام، والأحرف قبل المسافة الثانية تأخذ قائمة شكل الحرف في آخر الكلام، وما تبقّى يُقاس بقائمة شكل الحرف في وسط الكلام.»
+
+So a letter's **place in the space-bounded word** says which shape it must wear, and the shape it actually arrived in can be checked against it. No letter knowledge, no language — only the space and the four shape lists. Measured on the owner's book, 193,127 shape characters:
+
+| | number | share |
+|---|---|---|
+| the shape agrees with its place | 184,744 | **95%** |
+| the shape disagrees | 8,383 | 4% |
+
+One amendment the lead had to add to reach that 95%: the letters that **do not join to the next one** — `ا أ إ آ د ذ ر ز و ؤ ة ى` — start the letter after them afresh, as if at a word's beginning. That is a list of shapes, not of language, so it stays inside the owner's principle.
+
+**What the rule is for.** It is not a cure; it is a **detector**, which is better: a shape that disagrees with its place says *the order is broken here, and at this letter*. Z does not guess — it reads the evidence in the text.
+
+| | number |
+|---|---|
+| words of 2+ letters in the book | 63,358 |
+| **words where a shape disagrees with its place** | **7,369 places, 4,149 distinct words** |
+| of those, words holding a ligature shape | 3,915 |
+| distinct words one swap repairs, with exactly **one** candidate | 600 |
+| with 2 candidates | 55 · with 3: 1 |
+| with **no** candidate the swap rule can explain (mostly the ligatures) | 3,493 |
+
+**The law (the owner, 14 Oct):** «الكلمات الخطأ عند الطيّ تظهر بعلامة مميزة بلون أحمر مثلاً، والضغط على الكلمة يخرج الاحتمالات الصحيحة. هكذا يظهر النص كما قرأه القارئ، لا كما يريد المستخدم أن يقرأه.»
+
+1. **A word whose shapes disagree with their places is marked** where it stands, in the text.
+2. **Pressing the marked word shows the correct possibilities** — the candidates the evidence allows: the one-swap repair, and the ligature's two letters in their proper order.
+3. **Nothing is repaired in silence.** The text is shown **as the reader read it**, never as the person wishes it read. A repair is the person's answer, exactly as a protection is.
+4. A word with no candidate stays marked and untouched: Z says «here the order is broken» without inventing a word.
+
+**Why this is the right shape:** it is the suggestion model of 083 applied to reading — evidence, a question, the person's word — and it keeps the repair inside *settings*, since every candidate comes from shapes alone and no dictionary. A language pack is still not needed.
+
+**It also answers the eye, not only the search.** The owner: Z's reader hands over text the person *can read* — the shapes draw correctly and the line runs right to left, so 95% of the book reads properly and nothing on the glass announces the defect. The document **reads right and protects wrong**: «الكتاب» stands 0 times before the fold and 173 after. And the 7,369 broken places look like misspellings to an Arabic reader too — «املجرم» for «المجرم» — so an unmarked, unrepaired Arabic document makes Z itself look broken.
+
+**A number the lead over-read, corrected:** `check_document` reports the book «97% readable». That measures glyphs turning into characters, not characters standing in the right order. It reassured me and it should not have.
+
+**Two questions for the owner, still open:**
+- **The colour.** Red already means «protected» in the search box (084 rule 8). Two meanings for one colour. The lead's suggestion: the marked word keeps red but as a **line under it**, never a wash, so «red wash = protected» and «red line = the order here is broken» stay apart.
+- **Does a marked word stop a text leaving?** The lead's reading: **no.** 083a stops an unanswered *privacy* suggestion; a reading repair is not one, and a book with 7,369 of them would be a wall, not a guide. The count is shown and the person may act. (But a marked word may hide a name Z cannot find, so the count belongs beside the exit, said plainly.)
+
 ## What the core knows already
 
 - The word's edges have an Arabic half: `ARABIC_CLITICS` (`و ب ل ف ك`) and the presentation-form range `U+FE70–FEFF` are named at `text.rs:295`, `:319`.
