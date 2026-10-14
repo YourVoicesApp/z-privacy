@@ -228,6 +228,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ProviderRow> dco_decode_list_provider_row(dynamic raw);
 
   @protected
+  List<ReturnedFrom> dco_decode_list_returned_from(dynamic raw);
+
+  @protected
   List<RevealedToken> dco_decode_list_revealed_token(dynamic raw);
 
   @protected
@@ -385,6 +388,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RescanOutcome dco_decode_rescan_outcome(dynamic raw);
+
+  @protected
+  ReturnedDocument dco_decode_returned_document(dynamic raw);
+
+  @protected
+  ReturnedFrom dco_decode_returned_from(dynamic raw);
 
   @protected
   RevealState dco_decode_reveal_state(dynamic raw);
@@ -724,6 +733,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ProviderRow> sse_decode_list_provider_row(SseDeserializer deserializer);
 
   @protected
+  List<ReturnedFrom> sse_decode_list_returned_from(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<RevealedToken> sse_decode_list_revealed_token(
     SseDeserializer deserializer,
   );
@@ -901,6 +915,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RescanOutcome sse_decode_rescan_outcome(SseDeserializer deserializer);
+
+  @protected
+  ReturnedDocument sse_decode_returned_document(SseDeserializer deserializer);
+
+  @protected
+  ReturnedFrom sse_decode_returned_from(SseDeserializer deserializer);
 
   @protected
   RevealState sse_decode_reveal_state(SseDeserializer deserializer);
@@ -1306,6 +1326,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_returned_from(
+    List<ReturnedFrom> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_revealed_token(
     List<RevealedToken> self,
     SseSerializer serializer,
@@ -1526,6 +1552,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_rescan_outcome(RescanOutcome self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_returned_document(
+    ReturnedDocument self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_returned_from(ReturnedFrom self, SseSerializer serializer);
 
   @protected
   void sse_encode_reveal_state(RevealState self, SseSerializer serializer);

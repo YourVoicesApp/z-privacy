@@ -617,6 +617,18 @@ impl Core {
         self.sessions.get_mut(&id)
     }
 
+    /// **Every bench, read only** — 079, the import side.
+    ///
+    /// A document that comes back carries the tokens of the conversation it
+    /// left, and a bench of that conversation still in memory is the one place
+    /// a token nobody taught the vault resolves. Which bench that is cannot be
+    /// asked by id: the door is handed a text and not a session, and one
+    /// conversation may hold several benches. It is asked by namespace, which
+    /// is derived from the conversation's key and sits inside every token.
+    pub(crate) fn benches(&self) -> impl Iterator<Item = &Session> {
+        self.sessions.values()
+    }
+
     /// Borrow one session and the vault together: the scan needs both, and they
     /// live behind the same lock.
     pub(crate) fn session_and_vault(

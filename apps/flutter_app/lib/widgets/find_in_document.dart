@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/completing.dart';
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/protecting.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -403,6 +404,17 @@ class _FindInDocumentState extends State<FindInDocument> {
       'That belongs to $entity and keeps its token $token.',
     ProtectOutcome_Snapped(:final spans) =>
       'It would cut into ${spans.length} protected ${spans.length == 1 ? "item" : "items"}, so nothing changed.',
+    // **079 rule 5, and the one case this file owes the variant.** A place that
+    // is already a token of ours — a document that has come back — is not
+    // protected again, and the sentence is the one `messages.dart` holds, so
+    // this bar and the acts bar say one thing about one state (046/L).
+    //
+    // A guide and not a wall: the press is offered, it says this, and nothing
+    // is minted. The workspace's own selection knows before the press
+    // (`SelectionView.on_a_token`); this surface has no such state of its own
+    // yet, and whether it should is a question about this bar rather than
+    // about the law.
+    ProtectOutcome_StandsOnAToken() => theTokenIsAlreadyOurs,
   };
 }
 

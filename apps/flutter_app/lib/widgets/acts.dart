@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/going_to_a_word.dart';
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/protecting.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -69,7 +70,17 @@ class ActsBar extends StatelessWidget {
               // one space in front of it. Offered, never taken: «Björn
               // Sandström» is two decisions and the second one is the
               // person's.
-              if (v != null && v.alsoBefore != null && state != ProtectState.known)
+              //
+              // **Not over a token either** — 079 rule 5, and the second case
+              // of the rule beside it: the press widens the selection and
+              // protects it, so over `Herr __Z_…_PERSON_…__` it would reach
+              // across the token and the door would refuse it. A button that
+              // cannot work should not be drawn, which is the whole reason
+              // `on_a_token` is a state and not an error.
+              if (v != null &&
+                  v.alsoBefore != null &&
+                  state != ProtectState.known &&
+                  state != ProtectState.alreadyOurs)
                 ZButton(
                   label: 'Also the word before',
                   icon: Icons.chevron_left,
@@ -170,6 +181,19 @@ class ActsBar extends StatelessWidget {
           filled: true,
           hint: 'Already protected — see below',
         ),
+      // ALREADY OURS — **079 rule 5**. The selection is standing on a token
+      // this program put there, in a document that has come back. A press would
+      // mint a second token over the first and the answer would come back
+      // unreadable, so there is no press: the sentence is the one the core's
+      // outcome carries, worded in one place (`theTokenIsAlreadyOurs`).
+      //
+      // No Undo beside it either — there is nothing of this document to undo —
+      // which is why it is not `known`.
+      ProtectState.alreadyOurs => const ZButton(
+          label: 'Protect',
+          filled: true,
+          hint: theTokenIsAlreadyOurs,
+        ),
       // SNAPS — it will act, but on whole items, and it says so first.
       ProtectState.snaps => ZButton(
           label: 'Protect whole items',
@@ -209,6 +233,11 @@ class ActsBar extends StatelessWidget {
       ProtectOutcome_Snapped(:final spans) =>
         'The selection cut into protected text, so nothing changed. It would snap to '
             '${spans.length} whole ${spans.length == 1 ? "item" : "items"}.',
+      // 079 rule 5. Reachable from here only if the button's state and the
+      // core's answer ever disagree, which is exactly why the law is at the
+      // door as well as on the button — and the wording is the same one, from
+      // the one place it is written.
+      ProtectOutcome_StandsOnAToken() => theTokenIsAlreadyOurs,
     });
   }
 

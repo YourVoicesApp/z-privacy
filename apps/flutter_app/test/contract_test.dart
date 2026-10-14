@@ -226,6 +226,7 @@ void main() {
       'buildPayload': () => buildPayload(session: session),
       'payloadView': () => payloadView(handle: handle),
       'payloadToTakeOut': () => payloadToTakeOut(session: session),
+      'returningDocument': () => returningDocument(session: session),
       'send': () => send(handle: handle, provider: provider),
       'ingestAnswer': () => ingestAnswer(payload: handle, raw: 'x'),
       'restoredView': () => restoredView(session: session, answer: answer),
@@ -377,7 +378,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 115, reason: 'the contract has 115 functions');
+    expect(calls.length, 116, reason: 'the contract has 116 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

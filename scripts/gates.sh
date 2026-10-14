@@ -168,14 +168,34 @@ fi
 # The law is one line in the scanner, after every layer and before they settle,
 # because it is about the text and not about any one rule. The shape test is
 # `is_token`, in `tokens.rs`, and there is one of it.
+#
+# **Three seats on 14 Oct, each named, and a fourth is a red.** 079's import
+# side gave the same question two more askers, and they are different acts over
+# one fact rather than one act written three times:
+#
+#   * `scanner/mod.rs` — a token is not a candidate (item 5);
+#   * `ops/mod.rs` — a **hand** may not protect one, in the one function the
+#     three protect doors ask, and the one that stops the press being offered;
+#   * `returning.rs` — where the tokens of a returning document stand, which is
+#     the whole of reading one back.
+#
+# Named rather than counted so that a fourth asker has to say which of these it
+# is — the loosening this gate exists to make visible.
 SCANNER=z_core/src/scanner/mod.rs
 TOKENS=z_core/src/tokens.rs
+G31_SEATS="scanner/mod.rs ops/mod.rs returning.rs"
 G31_CALLS=$(grep -Rn 'token_spans(' z_core/src --include='*.rs' | grep -v 'fn token_spans' || true)
 G31_N=$(printf '%s\n' "$G31_CALLS" | grep -c . || true)
-if [ "$G31_N" = "1" ] && printf '%s' "$G31_CALLS" | grep -q 'scanner/mod.rs'; then
-  pass "G31 the scanner asks once where the tokens stand, and nothing else asks"
+G31_BAD=""
+for seat in $G31_SEATS; do
+  HOW_MANY=$(printf '%s\n' "$G31_CALLS" | grep -c "$seat:" || true)
+  [ "$HOW_MANY" = "1" ] || G31_BAD="$G31_BAD $seat($HOW_MANY)"
+done
+if [ "$G31_N" = "3" ] && [ -z "$G31_BAD" ]; then
+  pass "G31 where the tokens stand is asked in three named places, once each"
 else
-  fail "G31 the token law is asked in $G31_N place(s), expected one in scanner/mod.rs:"
+  fail "G31 the token law is asked in $G31_N place(s), expected one each in$( \
+       for seat in $G31_SEATS; do printf ' %s' "$seat"; done)$G31_BAD:"
   printf '%s\n' "$G31_CALLS" | sed 's/^/        /'
 fi
 
@@ -184,6 +204,88 @@ if [ "$(grep -c 'fn is_token' "$TOKENS" 2>/dev/null || echo 0)" = "1" ] \
   pass "G31 the shape of a token is written in one place: tokens.rs"
 else
   fail "G31 the token shape test is written more than once, or it is gone"
+fi
+
+# ---------------------------------------------------------------- G32
+# **A document that comes back is read, at every door, and a hand may not
+# protect what Z put there** — 079, the import side.
+#
+# Two halves of one law, and each has the shape this house has paid to learn:
+#
+#   * the **three** doors a hand can protect through ask one function before
+#     anything else, and before `remember_in_vault`, which writes a value into
+#     the vault — a law placed any later would have taught the vault a token of
+#     ours (083a's three exits, the same enumeration by class);
+#   * the glass asks «has this come back» in exactly one place, the bench's own
+#     read of the scan a document arrived with, so that the four doors a
+#     document can arrive by cannot each remember separately (item 3).
+DOORS=z_core/src/ops/mod.rs
+G32_BAD=""
+for door in protect protect_all_matches protect_cell_in_lines; do
+  BODY=$(awk -v d="$door" '
+    $0 ~ "^pub\\(crate\\) fn " d "\\(" {inside=1}
+    inside && /^}/ {print; inside=0; next}
+    inside {print}
+  ' "$DOORS")
+  if [ -z "$BODY" ]; then
+    G32_BAD="$G32_BAD $door(missing)"
+  elif ! printf '%s\n' "$BODY" | grep -q 'a_token_already_stands_there('; then
+    G32_BAD="$G32_BAD $door"
+  fi
+done
+if [ -z "$G32_BAD" ]; then
+  pass "G32 all three protect doors ask whether a token stands there first"
+else
+  fail "G32 a hand can protect a token through:$G32_BAD"
+fi
+
+# The law is one function, and the vault is taught nothing before it is asked.
+if [ "$(grep -c 'fn a_token_already_stands_there' "$DOORS" 2>/dev/null || echo 0)" = "1" ]; then
+  pass "G32 the law a hand meets is written in one function"
+else
+  fail "G32 the token law is written more than once in $DOORS, or it is gone"
+fi
+G32_ORDER=""
+for door in protect protect_all_matches; do
+  BODY=$(awk -v d="$door" '
+    $0 ~ "^pub\\(crate\\) fn " d "\\(" {inside=1}
+    inside && /^}/ {print; inside=0; next}
+    inside {print}
+  ' "$DOORS")
+  ASK=$(printf '%s\n' "$BODY" | grep -n 'a_token_already_stands_there(' | head -1 | cut -d: -f1)
+  LEARN=$(printf '%s\n' "$BODY" | grep -n 'remember_in_vault(' | head -1 | cut -d: -f1)
+  if [ -z "$ASK" ] || [ -z "$LEARN" ] || [ "$ASK" -gt "$LEARN" ]; then
+    G32_ORDER="$G32_ORDER $door"
+  fi
+done
+if [ -z "$G32_ORDER" ]; then
+  pass "G32 the token is asked about before the vault is taught the value"
+else
+  fail "G32 the vault is taught before the token law is asked, in:$G32_ORDER"
+fi
+
+# And one surface asks whether a document has come back.
+G32_DART=$(grep -Rn 'z\.returningDocument(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' || true)
+G32_DART_N=$(printf '%s\n' "$G32_DART" | grep -c . || true)
+if [ "$G32_DART_N" = "1" ] && printf '%s' "$G32_DART" | grep -q 'core/session_state.dart'; then
+  pass "G32 one surface asks whether a document came back, and it is the bench"
+else
+  fail "G32 the returning-document door is asked in $G32_DART_N place(s), expected one in core/session_state.dart:"
+  printf '%s\n' "$G32_DART" | sed 's/^/        /'
+fi
+
+# The sentence for that state is written once: one state, one wording (046/L).
+# Comments may quote it — the doc comment above it explains the wording, and a
+# gate that could not read that would be a gate against explaining.
+G32_SAID=$(grep -Rn "already protected — Z put it there" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' | grep -vE ':[0-9]+:[[:space:]]*//' || true)
+G32_SAID_N=$(printf '%s\n' "$G32_SAID" | grep -c . || true)
+if [ "$G32_SAID_N" = "1" ] && printf '%s' "$G32_SAID" | grep -q 'core/messages.dart'; then
+  pass "G32 «this is already protected — Z put it there» is worded in one place"
+else
+  fail "G32 that sentence is written in $G32_SAID_N place(s), expected one in core/messages.dart:"
+  printf '%s\n' "$G32_SAID" | sed 's/^/        /'
 fi
 
 # ---------------------------------------------------------------- G29
@@ -1279,7 +1381,15 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_word_file_coming_back_keeps_its_tokens \
          a_pdf_coming_back_keeps_its_tokens \
          a_rescan_does_not_find_a_token_either \
-         a_hand_drawn_over_a_token_still_takes_it_and_that_is_079s_door; do
+         a_hand_over_a_token_is_told_it_is_already_protected \
+         the_same_conversation_reads_every_name_back \
+         a_taught_value_comes_back_after_the_bench_is_gone \
+         with_nothing_taught_the_page_still_names_the_conversation \
+         with_the_vault_shut_nothing_is_named_and_nothing_is_called_unknown \
+         a_document_from_another_machine_says_so \
+         two_namespaces_are_two_conversations \
+         the_door_only_reads \
+         an_ordinary_document_is_not_one; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

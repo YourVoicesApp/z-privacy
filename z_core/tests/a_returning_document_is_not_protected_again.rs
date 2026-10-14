@@ -157,32 +157,72 @@ fn a_rescan_does_not_find_a_token_either() {
 }
 
 #[test]
-fn a_hand_drawn_over_a_token_still_takes_it_and_that_is_079s_door() {
-    // **Pinned, deliberately, because the fix is a later item** (the owner's
-    // rule). A selection drawn over a token is `Applied` today: a second token
-    // is minted and the first one disappears from the text, so what comes back
-    // from the model restores to a token rather than to a value.
+fn a_hand_over_a_token_is_told_it_is_already_protected() {
+    // **This guard was pinned to the defect for one round and is now the
+    // law.** Until 079's import side it read «a hand drawn over a token still
+    // takes it, and that is 079's door»: `protect` came back `Applied`, a
+    // second token was minted over the first, and the first vanished from the
+    // text — so what left no longer carried the identifier the other
+    // conversation can resolve, and the answer restored to a token instead of
+    // to a value. The guard went red the moment the door was built, with the
+    // sentence that said what to write here, which is what a pin is for.
     //
-    // It is not this round's to fix: refusing it needs a word on the glass
-    // («this is already protected text — Z put it there»), and that word
-    // belongs to 079's returning-document door, which the lead has assigned as
-    // the next round. The day it is built, this guard goes red and says so.
+    // The outcome is an outcome and not an `ApiError`: every call site matches
+    // this enum exhaustively, so nobody can swallow it, and nothing failed —
+    // the text really is protected already.
     let s = open_session(None, "de".to_string()).expect("open");
     import_text(s, RETURNED.to_string()).expect("import");
     let token = "__Z_7f3a_PHONE_2b55__";
+    let span = span_of(token);
+
+    // The press is not offered in the first place: the selection says so.
+    let view = inspect_selection(s, span).expect("inspect");
+    assert!(view.on_a_token, "the selection does not know it is standing on a token");
+    assert_eq!(view.protected_as, None, "a token in a document is not a protection of it");
+
+    // And the door refuses by name at all three places a hand can protect
+    // through — `protect`, `protect_all_matches`, and the column press.
+    match protect(s, span, Scope::Conversation, Kind::Phone).expect("protect") {
+        ProtectOutcome::StandsOnAToken { token: standing } => assert_eq!(standing, token),
+        other => panic!("a hand over a token was taken: {other:?}"),
+    }
+    match protect_all_matches(s, span, Scope::Conversation, Kind::Phone).expect("all") {
+        ProtectOutcome::StandsOnAToken { token: standing } => assert_eq!(standing, token),
+        other => panic!("every place of a token was taken: {other:?}"),
+    }
+    // The line the token stands on, as a column of one cell: «Telefon:» and the
+    // token are two runs, and the press is inside the second.
+    let line = RETURNED.lines().position(|l| l.starts_with("Telefon:")).expect("the line");
+    match protect_cell_in_lines(
+        s,
+        span,
+        line as u32,
+        line as u32,
+        Scope::Conversation,
+        Kind::Phone,
+    )
+    .expect("column")
+    {
+        ProtectOutcome::StandsOnAToken { token: standing } => assert_eq!(standing, token),
+        other => panic!("a column of tokens was taken: {other:?}"),
+    }
+
+    // Nothing moved: no second token, and the text still carries the first.
+    let (_, _, payload) = what_arrived(s);
+    assert!(payload.contains(token), "the token was replaced by a token");
+    assert_eq!(
+        list_tokens(s).expect("tokens").len(),
+        0,
+        "a token was minted over a token"
+    );
+    close_session(s).expect("close");
+}
+
+/// The span of one token in `RETURNED`, in the units a `Span` counts.
+fn span_of(token: &str) -> Span {
     let at = RETURNED.find(token).expect("the token");
     let start: usize = RETURNED[..at].chars().map(char::len_utf16).sum();
-    let span = Span { start: start as u32, end: (start + token.chars().count()) as u32 };
-    match protect(s, span, Scope::Conversation, Kind::Phone).expect("protect") {
-        ProtectOutcome::Applied { token: minted, .. } => {
-            assert_ne!(minted, token, "it minted a token over a token");
-        }
-        other => panic!(
-            "a hand over a token no longer mints one — 079's door is built, so this guard \
-             must now assert the refusal: {other:?}"
-        ),
-    }
-    close_session(s).expect("close");
+    Span { start: start as u32, end: (start + token.chars().count()) as u32 }
 }
 
 // ------------------------------------------------------- the file builders

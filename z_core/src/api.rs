@@ -418,6 +418,19 @@ pub struct SelectionView {
     /// «Sandström». An offer the bubble makes and a person answers; the core
     /// never takes it unasked.
     pub also_before: Option<Span>,
+    /// **This stretch is a token this program put there** — 079 rule 5.
+    ///
+    /// Not «already protected»: there is no protection of *this* document over
+    /// it, because the token arrived as text in a document that came back. So
+    /// `protected_as` is `None`, every field above says «ordinary words», and
+    /// without this one the glass would offer Protect over a name of ours and
+    /// mint a second token over the first.
+    ///
+    /// The fact is here so that **no press is offered at all** — a button that
+    /// cannot work should not be drawn, which is this house's rule from 083a —
+    /// and [`ProtectOutcome::StandsOnAToken`] is the same law at the door, for
+    /// the caller that asks anyway.
+    pub on_a_token: bool,
 }
 
 /// What the app has been told to do by itself.
@@ -1425,6 +1438,27 @@ pub enum ProtectOutcome {
     BelongsToEntity { entity: String, token: String },
     /// The selection cut a protected item; these whole items were taken instead.
     Snapped { spans: Vec<Span> },
+    /// **The selection stands on a token this program put there** — 079 rule 5.
+    ///
+    /// A document that has come back carries the tokens of the conversation it
+    /// left. A hand drawn over one of them used to be `Applied`: a second token
+    /// was minted **over** the first, the first disappeared from the text, and
+    /// what left no longer carried the identifier the other conversation can
+    /// resolve — so the answer came back resolving to a token instead of to a
+    /// value. Measured on 14 October and pinned red for a round
+    /// (`a_returning_document_is_not_protected_again`).
+    ///
+    /// **An outcome and not an [`ApiError`]**, by the lead's ruling: every call
+    /// site matches this enum exhaustively, so an outcome cannot be swallowed,
+    /// and a refusal that nobody worded is the defect this project has paid for
+    /// most often. It is also not a failure — the text is already protected,
+    /// which is the thing the person wanted — so the sentence the glass says is
+    /// «This is already protected — Z put it there.»
+    ///
+    /// The scanner's half of the same law is one line in `scanner::scan`, and
+    /// `SelectionView::on_a_token` is the half that means the press is never
+    /// offered in the first place.
+    StandsOnAToken { token: String },
 }
 
 /// What one step back did.
@@ -1793,6 +1827,100 @@ impl fmt::Debug for AnswerSnapshot {
             .field("as_written", &format_args!("[REDACTED {} bytes]", self.as_written.len()))
             .finish()
     }
+}
+
+// ------------------------------------------------------- a document that came back
+
+/// **A returning document, as this machine can read it** — 079, the import
+/// side.
+///
+/// A z-pdf leaves with this conversation's tokens standing where the values
+/// stood. What comes back carries them, and this is what the core says about
+/// it: the text with the values put back where it could, the names of the ones
+/// that stay tokens, which conversations answered, and which namespaces belong
+/// to no conversation here.
+///
+/// **It is a reading and nothing else.** No turn is written, the vault is
+/// untouched and nothing is protected by asking — the lead's ruling of
+/// 14 October: if a later round offers «open this conversation to bring back
+/// the rest», it is a button, not a side effect.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReturnedDocument {
+    /// The document in pieces: the words as they arrived, the values put back,
+    /// and the tokens that stayed tokens. The same three states a restored
+    /// answer has, for the same reason (see [`Piece`]).
+    pub restored: Vec<Segment>,
+    /// **How many token places stood in the text** — every one of them, the
+    /// answer page's included.
+    ///
+    /// `0` is «this is not a returning document», and it is one fact rather
+    /// than a screen comparing two lists to work the same thing out. Places and
+    /// not names, which is why it is not the sum of the two numbers below.
+    pub tokens: u32,
+    /// **The vault, as it stood when this was read** — and the first thing the
+    /// sentence on the glass must ask.
+    ///
+    /// With no vault open, no conversation can be named: the namespace is
+    /// derived from a key this machine cannot reach. So `conversations` is
+    /// empty and every namespace lands in `unknown_namespaces` — which would
+    /// read as «this vault does not hold that conversation» when the truth is
+    /// «it is shut». Carried here for the same reason `ScanReport::vault` is
+    /// carried: a screen may not work out the cause of an absence.
+    pub vault: VaultState,
+    /// **How many distinct names of the person's own values stood in it.**
+    ///
+    /// `names == brought_back + unresolved.len()`, always: a name either came
+    /// back or is reported, and a guard asserts the identity so nothing can
+    /// fall between the two. An IBAN standing in two places is **one** name,
+    /// because «one name did not come back» is a sentence a person can act on
+    /// and «two places» is a fact about our own text.
+    ///
+    /// The answer page's own token is counted in neither this nor the two
+    /// below, even though it is brought back: the numbers are about the
+    /// person's names and the page's word is ours. It is reported as
+    /// `answer_page` on the conversation instead — the same rule, and the same
+    /// reason, as the count an exit says aloud (`Session::rename_all`).
+    pub names: u32,
+    /// How many of those names were brought back.
+    pub brought_back: u32,
+    /// **Every token that stays a token, by name and never by value.**
+    ///
+    /// Named as well as marked in the pieces so that the sentence on the glass
+    /// and the marks in the text are one fact — exactly as
+    /// `AnswerSnapshot::unknown_tokens` is.
+    pub unresolved: Vec<String>,
+    /// Which conversations this document's tokens belong to, by number.
+    pub conversations: Vec<ReturnedFrom>,
+    /// **Every namespace no conversation of this vault names.**
+    ///
+    /// Said by name rather than passed over, and it is not an error: a document
+    /// from another machine, or from a conversation since forgotten, is a true
+    /// thing for a person to be told. Four hex digits, which is a handle and
+    /// not a secret — the same four that stand in the tokens on the page.
+    ///
+    /// **Empty whenever `vault` is not `Unlocked`**, and that is the field's
+    /// meaning rather than an omission: «matches nothing» needs something to
+    /// match against, and with no vault open there is no conversation to
+    /// compare a namespace with. A screen is then told why by `vault`, instead
+    /// of being handed a false fact to word.
+    pub unknown_namespaces: Vec<String>,
+}
+
+/// One conversation a returning document came from — 079.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReturnedFrom {
+    pub number: u32,
+    pub name: String,
+    pub brought_back: u32,
+    pub unresolved: u32,
+    /// **The answer page's own token stood in this document.**
+    ///
+    /// The fastest proof of origin: the word the page protects is known in
+    /// advance, so its name derives under a conversation's key with nothing
+    /// stored. The lead's ruling is that it is the fastest proof and **not the
+    /// only key** — every other token of this conversation resolves whether or
+    /// not the page came back with them.
+    pub answer_page: bool,
 }
 
 // ---------------------------------------------------------------- session
@@ -2328,6 +2456,40 @@ pub fn ingest_answer(payload: PayloadHandle, raw: String) -> ApiResult<AnswerId>
 /// The answer with your own words back in place. The default view.
 pub fn restored_view(session: SessionId, answer: AnswerId) -> ApiResult<Vec<Segment>> {
     crate::ops::restored_view(session, answer)
+}
+
+/// **The document on this bench, read back into values** — 079, the import
+/// side, and the other half of the export side's answer page.
+///
+/// The question it answers is «has this document come back to us, and what of
+/// it can this machine still read». A z-pdf leaves carrying the conversation's
+/// tokens and a last page whose top line is the session's own token for
+/// «Zprivacy-svara». When the answer is imported — as a PDF, a .docx, a text
+/// file or a pasted page, all four of which arrive through the two import doors
+/// — the tokens are still standing in it, and this reads them back.
+///
+/// **It is asked about the document, not given one.** The text is the bench's
+/// own, so no copy of it crosses the bridge to come back again, and the answer
+/// is about exactly the document the person is looking at.
+///
+/// **Grouped by every namespace, and each group resolved against its own
+/// conversation.** A token says which conversation minted it; a document that
+/// came back from Monday's conversation while Friday's is open is the ordinary
+/// case. A namespace no conversation of this vault names is reported by name.
+///
+/// What can be brought back: the answer page's own word (known in advance, so
+/// it derives under any key — the fastest proof of origin), every value the
+/// vault holds, and the tokens of a bench of that conversation still in memory.
+/// What cannot: a name the scanner protected in a conversation since closed
+/// that the vault was never taught. That is the cost the owner is weighing as
+/// this is written, and the door's job is to say it — `unresolved` names every
+/// one of them.
+///
+/// **Nothing is written.** No turn, no vault, no protection, and the revision
+/// does not move: this is a reading, and a reading that changed the thing it
+/// read would be the kind of side effect the lead ruled out by name.
+pub fn returning_document(session: SessionId) -> ApiResult<ReturnedDocument> {
+    crate::ops::returning_document(session)
 }
 
 /// The answer exactly as it arrived, tokens and all.

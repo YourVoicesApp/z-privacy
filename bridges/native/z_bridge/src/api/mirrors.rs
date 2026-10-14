@@ -310,6 +310,19 @@ pub struct _SelectionView {
     /// «Sandström». An offer the bubble makes and a person answers; the core
     /// never takes it unasked.
     pub also_before: Option<Span>,
+    /// **This stretch is a token this program put there** — 079 rule 5.
+    ///
+    /// Not «already protected»: there is no protection of *this* document over
+    /// it, because the token arrived as text in a document that came back. So
+    /// `protected_as` is `None`, every field above says «ordinary words», and
+    /// without this one the glass would offer Protect over a name of ours and
+    /// mint a second token over the first.
+    ///
+    /// The fact is here so that **no press is offered at all** — a button that
+    /// cannot work should not be drawn, which is this house's rule from 083a —
+    /// and [`ProtectOutcome::StandsOnAToken`] is the same law at the door, for
+    /// the caller that asks anyway.
+    pub on_a_token: bool,
 }
 
 #[frb(mirror(Settings))]
@@ -1106,6 +1119,27 @@ pub enum _ProtectOutcome {
     BelongsToEntity { entity: String, token: String },
     /// The selection cut a protected item; these whole items were taken instead.
     Snapped { spans: Vec<Span> },
+    /// **The selection stands on a token this program put there** — 079 rule 5.
+    ///
+    /// A document that has come back carries the tokens of the conversation it
+    /// left. A hand drawn over one of them used to be `Applied`: a second token
+    /// was minted **over** the first, the first disappeared from the text, and
+    /// what left no longer carried the identifier the other conversation can
+    /// resolve — so the answer came back resolving to a token instead of to a
+    /// value. Measured on 14 October and pinned red for a round
+    /// (`a_returning_document_is_not_protected_again`).
+    ///
+    /// **An outcome and not an [`ApiError`]**, by the lead's ruling: every call
+    /// site matches this enum exhaustively, so an outcome cannot be swallowed,
+    /// and a refusal that nobody worded is the defect this project has paid for
+    /// most often. It is also not a failure — the text is already protected,
+    /// which is the thing the person wanted — so the sentence the glass says is
+    /// «This is already protected — Z put it there.»
+    ///
+    /// The scanner's half of the same law is one line in `scanner::scan`, and
+    /// `SelectionView::on_a_token` is the half that means the press is never
+    /// offered in the first place.
+    StandsOnAToken { token: String },
 }
 
 #[frb(mirror(UndoOutcome))]
@@ -1291,6 +1325,84 @@ pub struct _AnswerSnapshot {
     /// Named here as well as marked in the pieces so that the count in the
     /// sentence and the marks in the text are **one** fact.
     pub unknown_tokens: Vec<String>,
+}
+
+#[frb(mirror(ReturnedDocument))]
+pub struct _ReturnedDocument {
+    /// The document in pieces: the words as they arrived, the values put back,
+    /// and the tokens that stayed tokens. The same three states a restored
+    /// answer has, for the same reason (see [`Piece`]).
+    pub restored: Vec<Segment>,
+    /// **How many token places stood in the text** — every one of them, the
+    /// answer page's included.
+    ///
+    /// `0` is «this is not a returning document», and it is one fact rather
+    /// than a screen comparing two lists to work the same thing out. Places and
+    /// not names, which is why it is not the sum of the two numbers below.
+    pub tokens: u32,
+    /// **The vault, as it stood when this was read** — and the first thing the
+    /// sentence on the glass must ask.
+    ///
+    /// With no vault open, no conversation can be named: the namespace is
+    /// derived from a key this machine cannot reach. So `conversations` is
+    /// empty and every namespace lands in `unknown_namespaces` — which would
+    /// read as «this vault does not hold that conversation» when the truth is
+    /// «it is shut». Carried here for the same reason `ScanReport::vault` is
+    /// carried: a screen may not work out the cause of an absence.
+    pub vault: VaultState,
+    /// **How many distinct names of the person's own values stood in it.**
+    ///
+    /// `names == brought_back + unresolved.len()`, always: a name either came
+    /// back or is reported, and a guard asserts the identity so nothing can
+    /// fall between the two. An IBAN standing in two places is **one** name,
+    /// because «one name did not come back» is a sentence a person can act on
+    /// and «two places» is a fact about our own text.
+    ///
+    /// The answer page's own token is counted in neither this nor the two
+    /// below, even though it is brought back: the numbers are about the
+    /// person's names and the page's word is ours. It is reported as
+    /// `answer_page` on the conversation instead — the same rule, and the same
+    /// reason, as the count an exit says aloud (`Session::rename_all`).
+    pub names: u32,
+    /// How many of those names were brought back.
+    pub brought_back: u32,
+    /// **Every token that stays a token, by name and never by value.**
+    ///
+    /// Named as well as marked in the pieces so that the sentence on the glass
+    /// and the marks in the text are one fact — exactly as
+    /// `AnswerSnapshot::unknown_tokens` is.
+    pub unresolved: Vec<String>,
+    /// Which conversations this document's tokens belong to, by number.
+    pub conversations: Vec<ReturnedFrom>,
+    /// **Every namespace no conversation of this vault names.**
+    ///
+    /// Said by name rather than passed over, and it is not an error: a document
+    /// from another machine, or from a conversation since forgotten, is a true
+    /// thing for a person to be told. Four hex digits, which is a handle and
+    /// not a secret — the same four that stand in the tokens on the page.
+    ///
+    /// **Empty whenever `vault` is not `Unlocked`**, and that is the field's
+    /// meaning rather than an omission: «matches nothing» needs something to
+    /// match against, and with no vault open there is no conversation to
+    /// compare a namespace with. A screen is then told why by `vault`, instead
+    /// of being handed a false fact to word.
+    pub unknown_namespaces: Vec<String>,
+}
+
+#[frb(mirror(ReturnedFrom))]
+pub struct _ReturnedFrom {
+    pub number: u32,
+    pub name: String,
+    pub brought_back: u32,
+    pub unresolved: u32,
+    /// **The answer page's own token stood in this document.**
+    ///
+    /// The fastest proof of origin: the word the page protects is known in
+    /// advance, so its name derives under a conversation's key with nothing
+    /// stored. The lead's ruling is that it is the fastest proof and **not the
+    /// only key** — every other token of this conversation resolves whether or
+    /// not the page came back with them.
+    pub answer_page: bool,
 }
 
 #[frb(mirror(ConversationRow))]

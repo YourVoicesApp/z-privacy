@@ -31,10 +31,20 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 /// to X and keeps its token Y» — which the acts bar prints where the press
 /// happened. A state whose name promises a question nobody asks is a state that
 /// lies, so it is one fewer.
-enum ProtectState { disabled, ready, known, snaps }
+///
+/// **`alreadyOurs` is 079's state** — the selection is standing on a token this
+/// program put there, in a document that has come back. It is not `known`:
+/// `known` means this document has a protection over that stretch and offers
+/// Undo, and there is none — the token arrived as text. So the press is not
+/// offered at all, and the line beside it says why.
+enum ProtectState { disabled, ready, known, snaps, alreadyOurs }
 
 ProtectState protectStateOf(SelectionView? v) {
   if (v == null || v.empty) return ProtectState.disabled;
+  // **Before `known`, and before everything else**: the core answers this on
+  // the span Protect would really take, and a press over it would mint a second
+  // token over the first (079 rule 5).
+  if (v.onAToken) return ProtectState.alreadyOurs;
   if (v.protectedAs != null) return ProtectState.known;
   if (v.snapsTo.isNotEmpty) return ProtectState.snaps;
   return ProtectState.ready;

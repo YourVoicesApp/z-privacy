@@ -134,6 +134,102 @@ String humanMessage(Object error) {
   };
 }
 
+/// **«This is already protected — Z put it there.»** — 079 rule 5, the lead's
+/// own wording.
+///
+/// One sentence in one place, because two presses can reach it: the Protect
+/// button over a selection, and the column press. They word every other outcome
+/// differently on purpose — «protected one cell» is not «protected» — but this
+/// one state has one wording, which is 046/L's rule and the defect the send
+/// sheet's hint was the weaker half of.
+///
+/// It is not a failure and does not read like one: the text really is
+/// protected, by this program, in the conversation it came from. What a person
+/// must not be told is «protected» again, because a second token would then be
+/// standing over the first and the answer would come back unreadable.
+const String theTokenIsAlreadyOurs = 'This is already protected — Z put it there.';
+
+/// **What a document that came back carries, in one sentence** — 079, the
+/// import side.
+///
+/// `null` when there is no token in it at all, which is every ordinary
+/// document: a strip that said «0 names came back» over a letter somebody has
+/// just opened would be noise where nothing happened.
+///
+/// The sentence about the names that stay tokens is the owner's cost said out
+/// loud, in the lead's words: this conversation's own names live in the
+/// conversation, so a document answered after it closed comes back with those
+/// names still wearing them. The number is the core's, counted by **name** and
+/// not by place, and nothing here counts anything.
+String? whatCameBack(ReturnedDocument seen) {
+  if (seen.tokens == 0) return null;
+  // **What the vault changes, and what it does not.** A shut vault cannot name
+  // a conversation — the namespace is derived from a key this machine cannot
+  // reach — so «a conversation this vault does not hold» would name the wrong
+  // cause, and so would «kept only while it is open». What it does **not**
+  // change is a bench of that conversation still in memory: its own store
+  // holds this run's names, and those come back with the vault shut. So the
+  // state decides the wording of an absence and never the count of what came
+  // back.
+  final shut = seen.vault != VaultState.unlocked;
+  final said = <String>[];
+  if (seen.broughtBack > 0) {
+    // Named by the conversations that actually brought something back, not by
+    // every one in the document: «2 names came back from «A» and «B»» when B
+    // brought back none would be a sentence with a false half.
+    final named = seen.conversations
+        .where((c) => c.broughtBack > 0)
+        .map((c) => '«${c.name}»')
+        .join(' and ');
+    if (named.isEmpty) {
+      said.add(seen.broughtBack == 1
+          ? 'One name came back.'
+          : '${seen.broughtBack} names came back.');
+    } else {
+      said.add(seen.broughtBack == 1
+          ? 'One name came back from $named.'
+          : '${seen.broughtBack} names came back from $named.');
+    }
+  } else if (seen.conversations.isNotEmpty) {
+    final named = seen.conversations.map((c) => '«${c.name}»').join(' and ');
+    said.add('This document came back from $named.');
+  }
+  if (seen.unresolved.isNotEmpty) {
+    final n = seen.unresolved.length;
+    if (shut) {
+      // The act that would answer it, in the words this file already uses for
+      // a vault that may be locked **or** absent («Unlock or create your
+      // vault…»): a person with no vault cannot unlock one.
+      said.add(n == 1
+          ? 'One name is still a token: unlock or create your vault and Z can '
+              'look for it.'
+          : '$n names are still tokens: unlock or create your vault and Z can '
+              'look for them.');
+    } else {
+      // The lead's sentence, 14 October, kept word for word.
+      said.add(n == 1
+          ? 'One name stays as a token: this conversation\'s own names are kept '
+              'only while it is open.'
+          : '$n names stay as tokens: this conversation\'s own names are kept '
+              'only while it is open.');
+    }
+  }
+  // The core leaves this empty when there was no vault to hold a conversation,
+  // so nothing here asks about the vault a second time: «matches nothing»
+  // needs something to match against, and that judgement is the core's.
+  if (seen.unknownNamespaces.isNotEmpty) {
+    final which = seen.unknownNamespaces.join(', ');
+    // «It also» only after something else has been said: a document whose every
+    // name belongs elsewhere gets a sentence that stands on its own, because a
+    // line beginning «It also» with nothing before it names nothing.
+    final also = said.isEmpty ? 'This document carries' : 'It also carries';
+    said.add(seen.unknownNamespaces.length == 1
+        ? '$also names from a conversation this vault does not hold ($which).'
+        : '$also names from conversations this vault does not hold ($which).');
+  }
+  return said.isEmpty ? null : said.join(' ');
+}
+
 /// A fact from the core, made into something a person reads: a capital at the
 /// front and a full stop at the end. The core writes facts, not phrasing, and
 /// this is the seam where the two meet.
