@@ -36,7 +36,7 @@ Measured outside the product, on the file itself, so that nothing here depends o
 
 So three quarters of the book's letters arrive as shapes, not letters, and the fold turns every one of them back. The word «الكتاب» is found **0 times** in the text as it arrives and **173 times** after the fold; «السلام» 0 → 8; «الملك» 0 → 3.
 
-**The fold is necessary and not sufficient — and this is the owner's «reversed base».** Some words are never found however folded, because the letters inside them arrive in the wrong order:
+**The fold is necessary and not sufficient — and this is the owner's «reversed base».** *(Measured with `pdftotext`. The paragraphs that follow were later shown to describe poppler, not Z's reader — see the instrument's table below.)* Some words are never found however folded, because the letters inside them arrive in the wrong order:
 
 - «المجرم» → `املجرم` (the `ل` and the `م` swapped): **0** occurrences even after the fold.
 - The swapped spelling `امل` stands **1,640** times; the correct `الم` stands **33**.
@@ -46,6 +46,43 @@ So three quarters of the book's letters arrive as shapes, not letters, and the f
 The cause is visible in the table above: these fonts map one glyph to several letters, and a glyph that covers two letters hands them over in the order the eye sees them, right to left, not the order the language reads them. **A ligature is where the writing base reverses**, and nothing above the reader can repair it: a word that arrives with two letters swapped is a word no rule and no hand can find.
 
 **The owner's own text fixtures carry the same defect**, having been made from this book: `~/Documents/kalila-wa-dimna-10-pages.txt` reads «وبني الحرب» for «وبين الحرب» and «ا ُملؤذي» for «المؤذي». They are evidence of the defect, not a clean baseline, and a new baseline must be made after the reader is fixed.
+
+## Measured through Z's own reader, 14 Oct — two of the three defects were never ours, and the real one is the spaces
+
+The instrument (`cargo run -p z_core --example what_arrives`, built by the second programmer on `probe/what-the-reader-hands-over`, measured by the merging hand) read the same 221 pages through the ordinary import path, changed nothing, ran no scan and left the three files in `~/.local/share/zprivacy` at their old timestamps.
+
+| | as read | NFC | NFKC |
+|---|---|---|---|
+| characters | 333,636 | 333,636 | 354,197 |
+| words | 38,567 | 38,567 | 38,567 |
+| **spaces** | **438** | **438** | 5,214 |
+| lines | 38,328 | 38,328 | 38,328 |
+| **lines with no space at all** | **38,110** | 38,110 | 33,339 |
+| lines over 30 characters with no space | 2,284 | 2,284 | 2,451 |
+| longest run with no space | 117 | 117 | 124 |
+| readable | 97% | 97% | 97% |
+| presentation forms (`FB50–FDFF` + `FE70–FEFF`) | **205,434** | 205,434 | **0** |
+| ordinary Arabic letters | 63,528 | 63,528 | 275,176 |
+| harakat | 11,791 | 11,791 | 21,325 |
+| **bidi controls** | **0** | 0 | 0 |
+| «الكتاب» as whole words | 0 | 0 | **5** |
+| «الكتاب» anywhere in the text | 0 | 0 | **173** |
+| «دمنة» as whole words | 0 | 0 | 8 |
+| «دمنة» anywhere | 0 | 0 | 207 |
+
+**What this corrects in the lead's own measurement above.** Everything I measured with `pdftotext` described poppler, not Z:
+
+- **Our reader does not swap letters.** The instrument tried every adjacent swap in every named word, as a whole word and as a substring: the only hit in the whole book is «مدنة», once, by coincidence. The 323 swapped words, «المجرم» → «املجرم», are poppler's artifact. **The second defect of the fold section above is not ours.**
+- **Our reader hands over zero bidi controls**, against poppler's 34,186, in all eleven code points. Not ours either.
+- Presentation forms are real and bigger than I measured: **205,434**, and NFKC takes every one of them to zero.
+
+**The defect that is ours, and that no paper had named: the words arrive stuck to their neighbours.** 333,636 characters and **438 spaces**. 38,110 of 38,328 lines hold no space at all, and the longest unbroken run is 117 characters. So after folding, «الكتاب» stands as a whole word in **5 places** while the string is there 173 times. The product never searches any other way: a taught name, a vault value and «protect all matches» all go through `text::occurrences`, which requires the word to stand alone (`z_core/src/text.rs:389`). **Folding the shapes and repairing the order buy almost nothing by themselves.**
+
+This is exactly where the owner's own rule lands: «الكلمة محصورة بين مسافتين». Our reader hands over no boundaries for that rule to stand on. The reading base is first a **word-boundary** problem, and only then a shape problem.
+
+**And a cost of the fold itself, which decides how it must be applied:** a blind NFKC over the whole text **adds 4,776 spaces** (438 → 5,214) and 9,534 harakat, because the isolated harakat forms decompose into space + mark. So NFKC applied to everything cuts words in half. The fold has to be narrowed to the letters it is meant for, never run over the whole document — which is why the older 038-C step said «the character in the two blocks becomes its NFKC form».
+
+**The old §4.3 number, placed.** `docs/THE_NUMBERS.md` §4.3 recorded «180 after NFKC and reversing the string»; that is a string count, the ancestor of the 173 above, not a count of places the product can act on. The 461 the old paper hoped for is not bought by folding and ordering alone.
 
 ## The owner's rule for the reading base (14 Oct) — shape against place, and the defect is shown, never repaired in silence
 
