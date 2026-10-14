@@ -1238,7 +1238,10 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_word_file_arrives_scanned a_pdf_arrives_scanned \
          a_second_document_in_the_same_session_arrives_scanned_too \
          a_value_the_vault_knows_comes_back_protected_and_is_never_asked_about \
-         an_empty_import_is_not_a_refusal; do
+         an_empty_import_is_not_a_refusal \
+         a_pdf_whose_headers_stand_on_their_own_lines_is_read \
+         the_object_keyword_is_never_found_inside_endobj \
+         a_page_tree_packed_in_an_object_stream_is_read_whatever_its_spacing; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
