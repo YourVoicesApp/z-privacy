@@ -92,6 +92,38 @@ That is a large new capability Z does not have — **reading images on the devic
 - **Are amounts private?** The model needs the numbers to do accounting, so they cannot all become tokens — yet a small firm's turnover is itself a secret. This is the first question the system will ask of Z, and it is not answered yet.
 - **Does any of it stand in Doha?** An early form of «AI does the books, Z guards them» is a far stronger stand than a free privacy app alone — and far larger to build.
 
+## The third stage — the till, payment from the phone
+
+**The owner, 14 Oct 2026:** «نظام كاسا، نظام دفع من الموبايل، بحيث يصبح الدفع لا يحتاج إلى جهاز خاص. وسيلة العمل المطروحة للقياس هي Softpay.»
+
+**Why it is the most exciting of the three: it closes the circle.** The heart of the second stage is reading photographed invoices on the device. But a sale invoice the business issues itself, through a till that is ours, **is born as data, not as a photo**: no photograph and no reading — the sale enters the books directly. Photographs remain only for what is bought from others.
+
+> **The sale at the till → the books → the model, with Z guarding the boundary between them.**
+
+The whole of a business's money, from the sale to the ledger, in its owner's hand — **no special device to rent, and no firm between him and his money.** That is the owner's own motive: the middleman removed.
+
+**Softpay is the measure:** it makes a merchant's phone a card terminal — the card is tapped on the phone, with no other device. It is the line we measure against.
+
+**The hard part is the law again, and it is harder than the books.** Said so the owner can weigh its size, not to stop it; every line here is **checked before anything is built**:
+
+| | what it asks |
+|---|---|
+| **Sweden** | a certified cash register with a **control unit** registered with Skatteverket |
+| **Germany** | KassenSichV and a technical security unit, the **TSE** |
+| **cards** | **PCI DSS** for card data, and a licence to accept payment — **this we do not build ourselves** |
+
+**The last line is why Softpay is the right measure.** Accepting cards needs a certification no round can build. The likelier road is to **connect to a certified provider** such as Softpay, and to build the till and the books around it — never to accept the card ourselves.
+
+**Where Z stands:** a card number never reaches the model — that is the card law's rule before it is ours. A customer's name on a receipt passes through Z before it reaches the books or the model.
+
+**The three stages become one platform:**
+
+| | stage | what it carries |
+|---|---|---|
+| 1 | **Z** | trust, for free |
+| 2 | **the books** | the model keeps the accounts, Z guards them |
+| 3 | **the till** | the sale is born as data — no photo, no device |
+
 ## Not on this road
 
 - **Arabic** — the reading base is a measured defect with its paper (086) and the packs come last; both wait. Doha is Arabic-speaking, which argues for them, but an application nobody can install reaches nobody in any language.
