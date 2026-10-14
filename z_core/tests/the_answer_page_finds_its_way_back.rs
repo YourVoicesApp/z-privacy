@@ -261,7 +261,15 @@ fn a_birth_renames_the_answer_page_with_the_rest() {
     let held = a_bench(LINE, VALUE);
 
     let (_, before) = taken_out(held.0);
-    conversation_begin("born at the exit".to_string(), Some(held.0)).expect("begin");
+    let row = conversation_begin("born at the exit".to_string(), Some(held.0)).expect("begin");
+    // **The count the person reads is the document's names.** «N names became
+    // this session's» is said at the exit, and the answer page's token is not
+    // a name anybody chose to protect — it moves, and it is not counted.
+    assert_eq!(
+        row.renamed_tokens, 1,
+        "the birth says it renamed {} names; the document has one",
+        row.renamed_tokens
+    );
     let (view, after) = taken_out(held.0);
     let document = tokens_in(&view.text);
     assert_eq!(document.len(), 1);

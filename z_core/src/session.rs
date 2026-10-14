@@ -285,13 +285,23 @@ impl Session {
         // The answer page's token is a sixth place, and it moves with the rest:
         // a page minted before the birth would otherwise print a name the
         // session's key never made.
-        if let Some(new) = self.answer_page.as_deref().and_then(|t| moved.get(t)) {
-            self.answer_page = Some((*new).to_string());
-        }
+        //
+        // **It moves and it is not counted.** The number returned is the one
+        // the exit says aloud — «N names became this session's» — and the page's
+        // token is no name the person chose to protect. Counted, it put one name
+        // too many in that sentence the first time an exit minted it before the
+        // birth, which is the order every exit follows (`the_name_at_the_exit`).
+        let page_moved = match self.answer_page.as_deref().and_then(|t| moved.get(t)) {
+            Some(new) => {
+                self.answer_page = Some((*new).to_string());
+                1
+            }
+            None => 0,
+        };
 
         self.payloads.clear();
         self.bump();
-        pairs.len()
+        pairs.len().saturating_sub(page_moved)
     }
 
     /// **The token the answer page of a z-pdf prints, minted once** — 079.
