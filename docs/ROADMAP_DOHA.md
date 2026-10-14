@@ -123,6 +123,19 @@ The whole of a business's money, from the sale to the ledger, in its owner's han
 - **Not known, and not assumed:** the sources name the app on Google Play — Android. Nothing found says it runs on an iPhone.
 - The FAQ carries a 2024 date; the current steps are confirmed with Softpay before any build.
 
+**We become the seller (the owner, 14 Oct):** «ولكننا نحن سنكون المطوّرين، فيمكننا استخدامه مباشرة، ثم نصبح نحن من يبيع المنتج.» Softpay already sells through sales partners — so **we are the partner**, and no middleman is needed. The answer to «call them, or sign up online?» becomes exact:
+
+| step | how |
+|---|---|
+| **we build** | online, on the developer site — **no call** |
+| **we become sellers** | **a call is needed** — a partnership is a commercial agreement, not a sign-up button |
+
+**The one piece being developers does not make us: the acquirer** — the party the card money flows into. A merchant who buys our till needs a contract with an acquirer to receive his money, and Softpay connects to about fifteen. **We hold nobody's money**, which is as it should be: whoever holds other people's money comes under the central bank's supervision.
+
+> The merchant buys our till → the till carries Softpay → the money goes to his acquirer → the sale is written into our books → Z guards the boundary.
+
+It agrees with the owner's motive: **we do not become a bank, and we do not stand between a merchant and his money.** We sell him the tool; the money reaches his own account directly.
+
 **The real showcase is Doha** (the owner).
 
 **Where Z stands:** a card number never reaches the model — that is the card law's rule before it is ours. A customer's name on a receipt passes through Z before it reaches the books or the model.
