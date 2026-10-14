@@ -154,6 +154,38 @@ else
   fail "G30 a pack does not name its own language:$G30_PACKS"
 fi
 
+# ---------------------------------------------------------------- G31
+# **A token is not a candidate** — 079 rule 5, and the question the lead asked
+# the hour after the import began scanning: can the scanner protect text that
+# is already a token?
+#
+# It could. Measured on a German answer carrying five tokens: the `E-Mail:`
+# label protected one outright and minted a second token over it — so what left
+# the machine no longer carried the identifier the other session can resolve,
+# and restoring would have handed back a token instead of an address — and a
+# person was asked, about a token, whether it is a person.
+#
+# The law is one line in the scanner, after every layer and before they settle,
+# because it is about the text and not about any one rule. The shape test is
+# `is_token`, in `tokens.rs`, and there is one of it.
+SCANNER=z_core/src/scanner/mod.rs
+TOKENS=z_core/src/tokens.rs
+G31_CALLS=$(grep -Rn 'token_spans(' z_core/src --include='*.rs' | grep -v 'fn token_spans' || true)
+G31_N=$(printf '%s\n' "$G31_CALLS" | grep -c . || true)
+if [ "$G31_N" = "1" ] && printf '%s' "$G31_CALLS" | grep -q 'scanner/mod.rs'; then
+  pass "G31 the scanner asks once where the tokens stand, and nothing else asks"
+else
+  fail "G31 the token law is asked in $G31_N place(s), expected one in scanner/mod.rs:"
+  printf '%s\n' "$G31_CALLS" | sed 's/^/        /'
+fi
+
+if [ "$(grep -c 'fn is_token' "$TOKENS" 2>/dev/null || echo 0)" = "1" ] \
+   && [ "$(grep -c 'fn token_spans' "$TOKENS" 2>/dev/null || echo 0)" = "1" ]; then
+  pass "G31 the shape of a token is written in one place: tokens.rs"
+else
+  fail "G31 the token shape test is written more than once, or it is gone"
+fi
+
 # ---------------------------------------------------------------- G29
 # **A document arrives scanned, through every door it can arrive by** — the
 # detection round of 14 October, item 3.
@@ -1241,7 +1273,13 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          an_empty_import_is_not_a_refusal \
          a_pdf_whose_headers_stand_on_their_own_lines_is_read \
          the_object_keyword_is_never_found_inside_endobj \
-         a_page_tree_packed_in_an_object_stream_is_read_whatever_its_spacing; do
+         a_page_tree_packed_in_an_object_stream_is_read_whatever_its_spacing \
+         a_document_typed_or_pasted_back_keeps_its_tokens \
+         a_text_file_coming_back_keeps_its_tokens \
+         a_word_file_coming_back_keeps_its_tokens \
+         a_pdf_coming_back_keeps_its_tokens \
+         a_rescan_does_not_find_a_token_either \
+         a_hand_drawn_over_a_token_still_takes_it_and_that_is_079s_door; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
