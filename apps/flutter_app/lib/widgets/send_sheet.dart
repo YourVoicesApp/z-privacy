@@ -631,8 +631,22 @@ class _SendSheetState extends State<SendSheet> {
                               : 'Send to ${p.onThisComputer ? "Local AI" : "Direct API"}',
                           filled: true,
                           icon: Icons.send_outlined,
+                          // **A guide, not a wall** — 083 rule 12. The count
+                          // no longer kills the press: the law is one function
+                          // in the core, every exit asks it, and the refusal
+                          // opens the review on the first waiting word. A dead
+                          // button can guide nobody, and a button that decides
+                          // for itself is the second copy of a law this round
+                          // exists to remove.
+                          //
+                          // **Direct Mode keeps its wall**, and that is not an
+                          // oversight: its door sends the document *as it
+                          // stands*, `ask_model_directly` asks no law, and a
+                          // press there while a word waits would put the clear
+                          // text on the wire. Whether that door gets the law or
+                          // the mode gets its own sentence is 083b's to rule.
                           onPressed:
-                              open > 0 ||
+                              (widget.bench.sendOriginal && open > 0) ||
                                   widget.bench.sending ||
                                   (payload == null && !widget.bench.sendOriginal)
                               ? null
@@ -669,18 +683,23 @@ class _SendSheetState extends State<SendSheet> {
                                   }
                                   Navigator.of(context).pop(true);
                                 },
-                          // **The count, here too** (046/L). This sheet held a
-                          // second copy of «Answer the review first» — two
-                          // places wording one promise, and the weaker
-                          // wording. The workspace's own line now names the
-                          // number and offers the way through; this one at
-                          // least names the number, because a person reading
-                          // it has already left that line behind.
-                          hint: open == 1
-                              ? '1 question left — answer it first'
-                              : open > 1
-                                  ? '$open questions left — answer them first'
-                                  : null,
+                          // **A hint belongs where a wall is** — 083a, and
+                          // 046/L's own rule finally applied to this line.
+                          //
+                          // It explained a dead button: the count killed every
+                          // send, and the sheet said «answer them first». The
+                          // protected press is a guide now (rule 12) — it says
+                          // the one sentence `messages.dart` holds and opens
+                          // the review on the word — so a second wording
+                          // beside it would be two places wording one state,
+                          // which is the defect this line was the weaker half
+                          // of. What is left is the one button that is still a
+                          // wall, and it names itself.
+                          hint: !widget.bench.sendOriginal || open == 0
+                              ? null
+                              : open == 1
+                                  ? 'Direct Mode would send the document as it stands — one word still waits'
+                                  : 'Direct Mode would send the document as it stands — $open words still wait',
                         ),
                     ],
                   ),

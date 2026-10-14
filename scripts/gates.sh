@@ -150,6 +150,19 @@ else
   fail "G28 an exit does not ask no_word_waits():$G28_BAD"
 fi
 
+# And nothing on the glass asks the exit door for itself. The order's one
+# helper asks it, out where a guard can drive it, and each press is a line that
+# takes what it is handed — the shape 081 left behind and 083a keeps.
+G28_DART=$(grep -Rn 'payloadToTakeOut' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' || true)
+G28_DART_N=$(printf '%s\n' "$G28_DART" | grep -c . || true)
+if [ "$G28_DART_N" = "1" ] && printf '%s' "$G28_DART" | grep -q 'core/session_state.dart'; then
+  pass "G28 one surface asks the core what may leave, and it is the order's own helper"
+else
+  fail "G28 the exit door is asked in $G28_DART_N place(s), expected one in core/session_state.dart:"
+  printf '%s\n' "$G28_DART" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G26
 # **Every press that writes the clipboard empties it first** — 081.
 #
@@ -1104,7 +1117,12 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_language_this_build_does_not_know_is_refused_by_name \
          an_answer_from_another_session_names_every_token_and_restores_none \
          a_handle_or_an_answer_of_another_session_is_refused \
-         a_token_this_payload_did_not_allow_stays_unknown_in_its_own_session; do
+         a_token_this_payload_did_not_allow_stays_unknown_in_its_own_session \
+         no_text_leaves_while_a_word_waits \
+         every_door_that_takes_text_out_refuses_with_the_same_number \
+         the_refusal_carries_the_number_of_words_waiting \
+         the_word_answered_the_exit_opens \
+         the_column_the_person_reads_while_answering_still_builds; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -1176,7 +1194,10 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "a wrapped row still presses the cell" \
          "carries the column act, so no press is wasted" \
          "another conversation says so, by name, above the answer" \
-         "own answer restores with nothing said"; do
+         "own answer restores with nothing said" \
+         "puts nothing out while a word waits" \
+         "the exits are pressable while a word waits" \
+         "the first waiting word in reading order"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else
