@@ -10,11 +10,27 @@ Not a work plan: no tasks, no owners, no dates. Where we are going, in what orde
 
 So the road carries one number: **how many people took it.** Today: none.
 
-**The goal of Doha, in the owner's words (14 Oct):** «هذه الأمور أربع خطوات إلى قطر. الهدف من قطر إنشاء شركات مع شركات ناشئة.» — **partnerships, and companies formed with startups.** The four stages below are the road; Doha is where the partners are found.
+**The goal of Doha, settled by the owner (14 Oct):**
 
-**The lead's reading:** that goal is also the answer to the road's size. Four products are not built by one founder's hand; in Doha are the people who build *with* him. What we carry to the table is **the library**, because it is the one thing a partner can build on.
+> «كارلوس قال إنه لا يمكننا عرض أكثر من منتج. ما نريده هو إيجاد طريقة لجعل Z قلباً لمشاريع خارج نطاق Faruk AB. ما أريده هو عرض الإمكانيات، وربما شركات أخرى تعمل على أمور أخرى ترى Z حلاً لمشكلاتها وتراكم الأكواد. نذهب ألفا أو بيتا، فإن حققنا شراكة واحدة نكون قد عدنا ومعنا المال المطلوب.»
 
-**Said plainly, once:** in Doha the four stages will not all be finished. What stands there is **Z working** and **the first shape of the rest** — enough for a partner to see what they would build on. A partner does not buy a finished product; he shares in what is going to be built.
+| | |
+|---|---|
+| **the constraint** | one product only (Carlos) — **Z, alone** |
+| **the aim** | Z as **the heart of projects outside Faruk AB**: companies working on other things see Z as the answer to their problems |
+| **what is shown** | **the capabilities** |
+| **success** | **one partnership** — and with it, the money that paid for the trip comes home |
+| **tier** | ALPHA or BETA |
+
+**This settles a tension the road map carried.** The four stages below are **our** road, but in Doha **they are not shown as products**. What the libraries have built is shown as **proof of what Z can do**:
+- **the accounting node** (V1-H) — Z inside a business system; it is also the seed the books will grow from;
+- **the exchange round** (V1-I) — Z between two businesses, the answer written inside Z.
+
+A partner sees **what can be built on Z**, not a second product — which is exactly what someone looking for an answer to their own problem needs to see.
+
+**So what goes on the table is the library**, because it is the thing a partner puts inside their product. That makes the library rounds weightier on this road than they were: every round sealed is one more proof on the table.
+
+**On the tier:** ALPHA is for companies that have raised under a million dollars, which is where we stand today; BETA is usually asked of those with more growth. ALPHA is the likelier; the owner decides as the road shows what changes.
 
 ## What is actually for sale
 
