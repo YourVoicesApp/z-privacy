@@ -46,3 +46,7 @@ Selection and returning-document axes added for the original ten.
 Returning a different exported PDF with one placeholder is not found as a
 product path in any of the ten, including Z. Comparison sheet:
 `Z_COMPARISON.md`.
+
+**2026-10-14 — in-document search bar round.** One file:
+`tests/cycle/Z_SEARCH.md`. Original ten plus Acrobat Find text to redact
+and Word Find. Isolated tests remain stopped. No push.
