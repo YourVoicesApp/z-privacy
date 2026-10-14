@@ -55,6 +55,10 @@ import 'package:zprivacy/widgets/send_sheet.dart';
 /// something of the right length without pretending to be a real digest.
 final _zeroes = '0' * 64;
 
+/// The answer page's token for a file built here by hand. Every export ends
+/// with that page (079); its own guards are in `the_answer_page_test.dart`.
+const _answer = '__Z_0000_CUSTOM_00000000__';
+
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
 /// A German letter whose findings are every one of them automatic. No `GmbH`
@@ -150,6 +154,7 @@ void main() {
   // fails, the promise below proves nothing at all.
   test('the control: an original written in the clear is found by our own reader', () async {
     final bytes = await buildProtectedPdf(
+      answerToken: _answer,
       text: 'Sehr geehrter Herr Markus Weber,\nIBAN: DE89370400440532013000\n',
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -169,6 +174,7 @@ void main() {
     // be insufficient rather than taken on trust. The text is glyph indices;
     // removing the Flate layer does not make it letters.
     final bytes = await buildProtectedPdf(
+      answerToken: _answer,
       text: 'Sehr geehrter Herr Markus Weber,\n',
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -267,6 +273,7 @@ void main() {
         'der lang genug ist, um eine Zeile zu füllen und die Seite zu füllen.\n';
     final digest = sha256OfText(line * 120);
     final bytes = await buildProtectedPdf(
+      answerToken: _answer,
       text: line * 120,
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -393,6 +400,7 @@ void main() {
 
   test('an Arabic paragraph is shaped and laid out right to left', () async {
     final bytes = await buildProtectedPdf(
+      answerToken: _answer,
       text: arabicLine,
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -411,6 +419,7 @@ void main() {
 
   test('a Latin run inside an Arabic line is not reversed', () async {
     final bytes = await buildProtectedPdf(
+      answerToken: _answer,
       text: arabicLine,
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -433,6 +442,7 @@ void main() {
 
   test('a Latin-only page is untouched by the Arabic work', () async {
     final bytes = await buildProtectedPdf(
+      answerToken: _answer,
       text: 'Sehr geehrter Herr __Z_0001_PERSON_0002__,\n$germanLine\nRäksmörgås å ä ö.',
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -454,6 +464,7 @@ void main() {
     // The real shape of a client's document: a German line, an Arabic line and
     // a German line again. One setting for the file gets one of them wrong.
     final bytes = await buildProtectedPdf(
+      answerToken: _answer,
       text: '$germanLine\n$arabicLine\nMit freundlichen Grüßen',
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -536,6 +547,7 @@ void main() {
         'المنصرمة وقد تمت مراجعتها بالكامل من قبل الفريق المختص.\n';
     final digest = sha256OfText(line * 120);
     final bytes = await buildProtectedPdf(
+      answerToken: _answer,
       text: line * 120,
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',

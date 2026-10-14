@@ -19,8 +19,9 @@
 //
 // ## What goes in it, and what does not
 //
-// The body is the protected text, nothing added. One footer line, and only
-// facts a reader can check for themselves:
+// The body is the protected text, nothing added. After it, one page more — the
+// answer page (079, below). One footer line on every page, the answer page
+// included, and only facts a reader can check for themselves:
 //
 //   * the build stamp — `z_core 0.1.0 · date · sha`, the same line the window
 //     shows, so a file can be traced to the build that made it;
@@ -32,6 +33,33 @@
 // No logo, no serial number, no seal. A footer stating a fingerprint is
 // evidence; a footer stating a brand is decoration, and decoration that looks
 // like proof is the one kind this product may not ship.
+//
+// **One mark beside it, and it is a claim about what the page is, not about
+// who made it** — 079, the owner, 13 Oct: a hard line between a pdf and a
+// z-pdf, so that the protected copy is never mistaken by its own owner for an
+// ordinary file. `z-pdf · protected copy`, in the footer's own size and grey,
+// in front of the stamp. It is the person's half of the mark; the app's half is
+// the token on the answer page, because detection must never rest on a name
+// anybody can type.
+//
+// ## The answer page — 079
+//
+// The owner's design, sealed on the evening of 13 Oct. A lawyer who writes by
+// hand or retypes may not carry the tokens over whole, so the returned
+// document needs one thing that always finds its way back:
+//
+//   * **top:** `Z-pdf : ` and the token of «Zprivacy-svara» — the word
+//     protected with **the same session key as the document**, so the page
+//     carries an ordinary token of that session and never the key. The core
+//     mints it and hands this file the token; the word itself never crosses
+//     the bridge, so there is nothing here that could print it in the clear;
+//   * **middle:** a circle in a faint line, where the answer is written. No
+//     label: a label would have to be Arabic to say what the owner said
+//     («الإجابة هنا»), and a word printed here unshaped would be the one
+//     visible flaw on the page;
+//   * **bottom:** **the same footer every other page of this export carries**
+//     — the one widget, called once more, not a second design;
+//   * the rest blank.
 //
 // And **no document metadata at all** — no `/Info` dictionary, so no title, no
 // author, no creation timestamp. This file exists to be handed to a model or to
@@ -263,6 +291,20 @@ class PdfStamp {
       'sha256 of the protected text $sha256';
 }
 
+/// The mark every page of an export carries beside its stamp — 079. Small and
+/// plain, and a statement about the page: this is the protected copy.
+const zPdfMark = 'z-pdf · protected copy';
+
+/// The footer of one export: the mark, then the stamp of this one request.
+///
+/// **One function for every page, the answer page included**, so «the same
+/// footer» is not two widgets that happen to agree today. The owner: «في الأسفل
+/// نفس الترويسة التي تخرج من جميع الأوراق الأخرى في نفس الطلب».
+pw.Widget _footer(PdfStamp stamp, pw.TextStyle style) => pw.Padding(
+      padding: const pw.EdgeInsets.only(top: 10),
+      child: pw.Text('$zPdfMark · ${stamp.line}', style: style),
+    );
+
 /// Read once per process. The font is 759,720 bytes and the bytes do not change.
 ByteData? _font;
 
@@ -277,10 +319,14 @@ Future<pw.Font> _embeddedFont() async {
 
 /// The PDF's bytes. Separate from writing them so a test can read the file back
 /// without a disk in the way, and so `compress: false` is reachable.
-
+///
+/// [answerToken] is the core's token for the answer page's word, and it is
+/// **required**: an export without its answer page is not a z-pdf, and a
+/// parameter that could be left out is a page somebody will one day leave out.
 Future<Uint8List> buildProtectedPdf({
   required String text,
   required PdfStamp stamp,
+  required String answerToken,
   bool compress = true,
 }) async {
   final font = await _embeddedFont();
@@ -292,15 +338,13 @@ Future<Uint8List> buildProtectedPdf({
   // `lineSpacing` because the footer line is longer than the page and wraps:
   // without it the digest sat against the row above it and read as a smear.
   final footer = pw.TextStyle(font: font, fontSize: 6.4, lineSpacing: 1.8, color: PdfColors.grey700);
+  const margin = pw.EdgeInsets.fromLTRB(44, 44, 44, 52);
 
   doc.addPage(
     pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.fromLTRB(44, 44, 44, 52),
-      footer: (_) => pw.Padding(
-        padding: const pw.EdgeInsets.only(top: 10),
-        child: pw.Text(stamp.line, style: footer),
-      ),
+      margin: margin,
+      footer: (_) => _footer(stamp, footer),
       build: (_) => [
         // One Text per run of paragraphs that share a direction, each flowing
         // across pages. `TextOverflow.span` is what makes a Text a spanning
@@ -354,6 +398,44 @@ Future<Uint8List> buildProtectedPdf({
       ],
     ),
   );
+
+  // **The answer page** — 079. A page of its own, never a continuation of the
+  // body: the reader reads it on its own, and a returned document is searched
+  // for its first line.
+  //
+  // The top line is one Text and nothing else beside it, left to right: the
+  // token is Latin and ours, and the line is the same in every language the
+  // document was written in. The token stays whole because a Text breaks only
+  // at whitespace and this line fits the width many times over.
+  //
+  // The circle is a drawn border and carries no text. Its grey is lighter
+  // than the footer's, so the eye reads it as space to write in and not as
+  // part of what is printed.
+  doc.addPage(
+    pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      margin: margin,
+      build: (_) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Text('Z-pdf : $answerToken', style: body, textDirection: pw.TextDirection.ltr),
+          pw.Expanded(
+            child: pw.Center(
+              child: pw.Container(
+                width: 300,
+                height: 300,
+                decoration: pw.BoxDecoration(
+                  shape: pw.BoxShape.circle,
+                  border: pw.Border.all(color: PdfColors.grey400, width: 0.8),
+                ),
+              ),
+            ),
+          ),
+          _footer(stamp, footer),
+        ],
+      ),
+    ),
+  );
   return Uint8List.fromList(await doc.save());
 }
 
@@ -374,6 +456,8 @@ class PdfSaved {
 Future<PdfSaved> saveProtectedPdf({
   required String text,
   required PdfStamp stamp,
+  /// The answer page's token, as the core minted it — see [buildProtectedPdf].
+  required String answerToken,
   /// **The session's name, for the file name only — never inside the file.**
   ///
   /// It was the *document's* name until 081, which is a name the person chose
@@ -409,7 +493,7 @@ Future<PdfSaved> saveProtectedPdf({
         return PdfSaved.trouble('There are already 200 files called $stem in $into.');
       }
     }
-    final bytes = await buildProtectedPdf(text: text, stamp: stamp);
+    final bytes = await buildProtectedPdf(text: text, stamp: stamp, answerToken: answerToken);
     await File(path).writeAsBytes(bytes, flush: true);
     return PdfSaved.at(path);
   } on FileSystemException catch (e) {
