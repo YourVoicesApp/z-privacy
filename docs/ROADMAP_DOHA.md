@@ -47,6 +47,29 @@ The app earns nothing and measures nothing, by design. A buyer is not buying its
 
 The round now in the officer's hands is the exchange between two owners — Z travelling with the work from one person to another. Its shape changed on 14 Oct, when the owner ruled that **the answer to a Z document is written inside Z** (087).
 
+## After the first publication in Germany — the accounting system
+
+**The owner, 14 Oct 2026:** «بعد نشر التطبيق بنسخته الأولى في ألمانيا سنقوم بإنشاء نظام محاسبة حقيقي جدّي، من رتبة Fortnox على الأقل… وهنا النقطة التي سوف تقلب المعادلة: باستخدام Z حارساً، والأعمال جميعها داخل التطبيق يقوم بها الذكاء الصناعي. كل خيار هو نص داخلي يقرأه الذكاء الصناعي.»
+
+**Why it turns the equation over.** Accounting is the field that needs AI most and trusts it least. A company's books are its most dangerous data: customers' names, account numbers, salaries, personal numbers, invoices. That is why nobody hands their books to a model today. **Z is what makes it possible** — an accounting system run by AI cannot exist without it. That is the wall no competitor walks through.
+
+**We have built its seed already.** V1-H, the accounting node in `YourVoicesApp/z-ledger-node` (`9bf1e76`, sealed): invented data, Z guarding the boundary to the model, and a second node that holds the first one's tokens and cannot reveal them, 6 of 6. The owner's idea is the grown form of what that round proved small.
+
+**The one principle that must govern it is Z's own.** The model **proposes** an entry; the ledger's laws **verify** it; the person **approves**. Accounting does not accept an entry that is plausible and wrong — but double entry carries its own judge: debit equals credit, the account exists, the VAT rule holds. The model writes; the ledger's law decides; exactly as Z suggests a word and the person decides it.
+
+**The hard part is the law, not the model:**
+- **Sweden, Bokföringslagen:** a verification cannot be erased once recorded, records are kept for seven years, every change leaves a trace; SIE files; reporting to Skatteverket.
+- **Germany, GoBD:** the same conditions — immutability, traceability, retention — and the DATEV export.
+
+**And a link the owner did not set out to make:** the law demands records that **accept no change**. That is the `.peak` idea of the same day (087) — a closed document, refused when altered. The two ideas meet here.
+
+**What it does to «what is for sale».** Z stays free and is the trust and the reach; the accounting system is the thing that is paid for, and Z inside it is the reason it can exist at all.
+
+**Open for the owner:**
+- **Which country's books first?** Fortnox is Swedish, the company is Swedish, the owner knows the Swedish system and the Swedish pack exists; Germany is where Z publishes first. The lead would start where the company stands.
+- **Are amounts private?** The model needs the numbers to do accounting, so they cannot all become tokens — yet a small firm's turnover is itself a secret. This is the first question the system will ask of Z, and it is not answered yet.
+- **Does any of it stand in Doha?** An early form of «AI does the books, Z guards them» is a far stronger stand than a free privacy app alone — and far larger to build.
+
 ## Not on this road
 
 - **Arabic** — the reading base is a measured defect with its paper (086) and the packs come last; both wait. Doha is Arabic-speaking, which argues for them, but an application nobody can install reaches nobody in any language.
