@@ -218,7 +218,13 @@ And the rule that makes it ours: **a document written inside Z carries its token
 
 **What Z would need — named, not built:** a **code pack** that knows secrets (keys, passwords, connection strings, private keys) — Z today knows names and numbers in prose, not secrets in code; a **new kind word** such as `SECRET`, a contract change like `CARD`; and protection of **values, never structure** — function and variable names stay, so the code under attack is not broken.
 
-**It is also a proof of the Doha goal itself:** Z as the heart of a project that is neither accounting nor law, solving a problem for a company that works on other things. Recorded as an idea on the map, not a fifth stage: Doha shows one product, Z.
+**It is also a proof of the Doha goal itself:** Z as the heart of a project that is neither accounting nor law, solving a problem for a company that works on other things.
+
+**Promoted by the owner the same day — a LIBRARY, prepared for Doha:** «هذه مكتبة نبدأ بتجهيزها للدوحة. هذا من أفضل وأثمن ما يمكن أن نقدّمه لمجتمع المطوّرين.» Not the company first: **Z for code**, a library that protects a codebase's secrets before the code reaches any model and restores them when the answer returns. Every developer pastes code into an AI assistant today, and the code carries its secrets.
+
+**Not alone in the field, said plainly** (from `docs/reference/Z_COMPARISON.md`): gitleaks and its kind *detect* secrets to remove them, and give nothing back; packyme hides and never restores; Secret Guard restores, but only secrets declared by hand in advance. **What is ours:** secrets *found*, a token that *returns*, the kind as *evidence* (a `SECRET` token is itself the finding), session isolation, and a written contract the library answers to.
+
+**It enters by the owner's library mechanism:** the library officer lays out the round, Codex builds it, the lead attacks it and pushes it. The lead's conditions for it: protect values never structure; `SECRET` is a contract change, sealed in a new version with both sides measured; any open-source ruleset (gitleaks' rules, for one) has its licence read before a line is used; English only, by the owner's ruling. **Order:** after the exchange round (V1-I) is sealed — Codex is in the middle of it, with unsealed work in the library tree.
 
 ## Not on this road
 
