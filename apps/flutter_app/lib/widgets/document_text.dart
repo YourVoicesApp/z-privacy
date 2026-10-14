@@ -243,11 +243,11 @@ bool _isBoundary(String text, int k) =>
 /// Then the edges are tidied of the marks a sentence leaves around a word, so
 /// that what is **highlighted** is what will be **protected** — his words: «a
 /// one-click selection on `Wilson,` shows `Wilson` selected and the comma
-/// apart». The marks are the core's own list (`z_core/src/text.rs:103`), and
-/// the law lives there: `whole_words` is what actually trims the span at
-/// protection time, and this is the glass showing it in advance. The two are
-/// pinned to **one** set of cases — the owner's sealed ones — in
-/// `the_marks_a_hand_selection_leaves_behind` (Rust) and in
+/// apart». Which marks those are is answered by `_isEdgeMark` below — **every
+/// mark the keyboard has**, since paper 085's ruling 3 — and the law lives in
+/// the core: `whole_words` is what actually trims the span at protection time,
+/// and this is the glass showing it in advance. The two are pinned to **one**
+/// set of cases in `the_marks_a_hand_selection_leaves_behind` (Rust) and in
 /// `a_click_takes_one_word_test` (here), so a drift on either side reddens.
 ///
 /// Returns null where there is no word to take: on a space, or in an empty
@@ -272,17 +272,44 @@ TextRange? wordAt(String text, int at) {
   // The same marks the core drops from a value's edges, so the highlight and
   // the value cannot differ. Interior marks are untouched: the filter trims, it
   // does not split — «Anne-Marie», «O'Brien» and a CSV cell stay whole.
-  const edgeMarks = <String>{
-    '.', ',', ';', ':', '!', '?', '…', '"', "'", '«', '»', '(', ')', '[', ']',
-    '{', '}', '„', '“', '”', '‘', '’', '—', '–', '،', '؛', '؟',
-  };
-  while (start < end && edgeMarks.contains(text[start])) {
+  while (start < end && _isEdgeMark(text, start)) {
     start++;
   }
-  while (end > start && edgeMarks.contains(text[end - 1])) {
+  while (end > start && _isEdgeMark(text, end - 1)) {
     end--;
   }
   return start < end ? TextRange(start: start, end: end) : null;
+}
+
+/// **What belongs to a word**: a letter, a digit, or a mark that belongs to the
+/// letter in front of it. Everything else is a mark the sentence put *around*
+/// the word, and at an edge it leaves.
+final _partOfAWord = RegExp(r'[\p{L}\p{Nd}\p{M}]', unicode: true);
+
+/// **Every mark the keyboard has** — paper 085, ruling 3, the owner on 14 Oct
+/// 2026: «وبالنسبة للرموز لا أقصد فقط هذه الرموز… بل جميع الرموز الموجودة في
+/// الكيبورد».
+///
+/// This replaced a written-out list of twenty-seven marks, and it is written as
+/// a complement because that is the only form that can mean «every mark»
+/// without a list to keep. **The law itself is the core's** `is_edge_mark`
+/// (`z_core/src/text.rs`), which is what actually trims a span at protection
+/// time; this is the glass showing the same answer before the press, and the
+/// two are held to one list of cases — `every_mark_the_keyboard_has_leaves_an_edge`
+/// there and here.
+///
+/// The combining-mark clause is not decoration: «anything that is not a letter
+/// or a digit» would strip the Arabic harakat off the end of a name, and Z's
+/// Arabic is a whole script family.
+///
+/// A surrogate half is left alone. Dart indexes UTF-16, so half of a character
+/// outside the basic plane cannot be asked what it is; keeping it is the safe
+/// side, because the core decides the value and a glass that shows a little
+/// more never protects a little less.
+bool _isEdgeMark(String text, int i) {
+  final unit = text.codeUnitAt(i);
+  if (unit >= 0xD800 && unit <= 0xDFFF) return false;
+  return !_partOfAWord.hasMatch(text[i]);
 }
 
 /// **The value two clicks take — 076, the owner's rule.**

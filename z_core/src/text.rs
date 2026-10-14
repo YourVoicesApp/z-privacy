@@ -2,6 +2,7 @@
 //! counts bytes. Every crossing goes through here, and a span that would cut a
 //! character is refused rather than trimmed.
 
+use unicode_normalization::char::is_combining_mark;
 use unicode_normalization::UnicodeNormalization;
 
 use crate::api::{ApiError, ApiResult, Span};
@@ -93,17 +94,36 @@ pub(crate) fn bytes_to_span(s: &str, start: usize, end: usize) -> ApiResult<Span
     })
 }
 
-/// The marks a selection drops from its own edges.
+/// The marks a selection drops from its own edges — **every mark the keyboard
+/// has** (paper 085, ruling 3, the owner on 14 Oct 2026).
 ///
-/// Not «every punctuation character»: `+` opens a telephone number, `@` holds
-/// an address together, `/` and `#` carry a reference number, and a selection
-/// that includes one meant to. These are the marks a sentence puts **around** a
-/// word — the ones a person's drag catches by accident at the end of a line or
-/// the start of a quote — and each one here was written down on purpose.
-const EDGE_MARKS: &[char] = &[
-    '.', ',', ';', ':', '!', '?', '…', '"', '\'', '«', '»', '(', ')', '[', ']', '{', '}', '„', '“',
-    '”', '‘', '’', '—', '–', '،', '؛', '؟',
-];
+/// > «وبالنسبة للرموز لا أقصد فقط هذه الرموز… بل جميع الرموز الموجودة في
+/// > الكيبورد.»
+///
+/// This replaces a written-out list of twenty-seven. That list was defended on
+/// purpose — «`+` opens a telephone number, `@` holds an address together, `/`
+/// and `#` carry a reference number» — and the owner overruled it: a mark is a
+/// mark. The defence was not wrong about numbers, it was wrong about *where*
+/// they are answered; ruling 2 of the same paper says **numbers are not words**
+/// and gives them their own rules in their own paper, by kind, instead of by an
+/// exception hidden in an edge list. What a `+` costs today is measured in
+/// `a_plus_in_front_of_a_number_leaves_the_value_now`.
+///
+/// So the law is written as a complement, which is the only form that can mean
+/// «every mark» without a list to keep:
+///
+///  * a **letter or a digit** is a word's own, anywhere in the world;
+///  * a **combining mark** belongs to the letter in front of it — this is the
+///    clause that keeps the Arabic harakat inside a name, and it is the whole
+///    reason this is not the one-liner `!c.is_alphanumeric()`;
+///  * **whitespace** is not a mark, and the callers handle it themselves;
+///  * everything else is a mark, and at an edge it leaves.
+///
+/// `unicode-normalization` is already in the tree for NFC, so «what Unicode
+/// calls a combining mark» costs no new crate.
+fn is_edge_mark(c: char) -> bool {
+    !c.is_alphanumeric() && !c.is_whitespace() && !is_combining_mark(c)
+}
 
 /// Is this character part of a word?
 ///
@@ -244,7 +264,7 @@ pub(crate) fn whole_words(s: &str, start: usize, end: usize) -> (usize, usize) {
 
     // 2. Inward, over the marks a sentence leaves at an edge — and over the
     //    space a drag picks up past the end of a word.
-    let tidy = |c: char| EDGE_MARKS.contains(&c) || c.is_whitespace();
+    let tidy = |c: char| is_edge_mark(c) || c.is_whitespace();
     while let Some(c) = s.get(start..end).and_then(|t| t.chars().next()) {
         if !tidy(c) {
             break;
@@ -795,24 +815,80 @@ mod the_marks_a_hand_selection_leaves_behind {
         }
     }
 
-    /// **Pinned, not fixed: the hyphen is in the owner's list and not in the
-    /// core's.** His sealed rule names `. , - \' " : ; ,`; `EDGE_MARKS` above
-    /// holds the em and en dashes and **not** the plain hyphen, so a dash left
-    /// at an edge with a space beyond it stays in the value today where his
-    /// wording would drop it. Measured 13 Oct, not changed: the lead holds the
-    /// trim rule steady until the owner rules, and a mark added to that list
-    /// changes what every drag in the product takes. This records what is true
-    /// now so the day it changes is visible.
+    /// **The hyphen's pin is closed by the owner, not by us.**
     ///
-    /// The case the two rules already agree on is below it: a hyphen **inside**
-    /// a word is part of the word, and the filter trims — it does not split.
+    /// 076 recorded a divergence: his sealed list named the plain hyphen and
+    /// the core's list held only the em and en dashes, so `Mueller-` kept its
+    /// dash. Paper 085's ruling 3 — «every mark on the keyboard» — answers it
+    /// and this guard now asserts the answer rather than the divergence.
     #[test]
-    fn today_a_hyphen_at_an_edge_stays_in_the_value() {
-        assert_eq!(value("Herr Mueller- bitte", "Mueller-"), "Mueller-");
-        assert_eq!(value("Herr -Mueller bitte", "-Mueller"), "-Mueller");
-        assert_eq!(value("call Mueller-\nNext", "Mueller-"), "Mueller-");
-        // Agreed by both rules, and the reason the list is not simply widened.
+    fn a_hyphen_at_an_edge_leaves_the_value() {
+        assert_eq!(value("Herr Mueller- bitte", "Mueller-"), "Mueller");
+        assert_eq!(value("Herr -Mueller bitte", "-Mueller"), "Mueller");
+        assert_eq!(value("call Mueller-\nNext", "Mueller-"), "Mueller");
+        // And inside a word it is still part of it, which is the whole point of
+        // «only when a space touches it».
         assert_eq!(value("Anne-Marie Berg", "Anne-Marie"), "Anne-Marie");
+    }
+
+    /// **Ruling 3, 085: every mark the keyboard has.**
+    ///
+    /// The owner, 14 Oct: «وبالنسبة للرموز لا أقصد فقط هذه الرموز… بل جميع
+    /// الرموز الموجودة في الكيبورد». The lead's reading is everything Unicode
+    /// calls punctuation or a symbol, and the law is written as its complement:
+    /// a mark is whatever is **not** a letter, a digit, a space, or a mark that
+    /// belongs to the letter before it.
+    #[test]
+    fn every_mark_the_keyboard_has_leaves_an_edge() {
+        for mark in [
+            '!', '?', '(', ')', '[', ']', '{', '}', '<', '>', '@', '#', '$', '%', '&', '*', '+',
+            '=', '/', '\\', '|', '~', '^', '_', '\u{A7}', '\u{B4}', '\u{A8}', '\u{2026}',
+            '\u{AB}', '\u{BB}', '\u{201E}', '\u{201C}', '\u{201D}', '\u{2019}', '\u{2014}',
+            '\u{2013}', '\u{60C}', '\u{61B}', '\u{61F}',
+        ] {
+            let text = format!("Herr Mueller{mark} bitte");
+            let drawn = format!("Mueller{mark}");
+            assert_eq!(value(&text, &drawn), "Mueller", "trailing {mark:?}");
+
+            let text = format!("Herr {mark}Mueller bitte");
+            let drawn = format!("{mark}Mueller");
+            assert_eq!(value(&text, &drawn), "Mueller", "leading {mark:?}");
+        }
+    }
+
+    /// **A diacritic is not a mark around a word; it is part of the letter.**
+    ///
+    /// This is the guard that forbids the cheap reading of ruling 3. «Every
+    /// mark on the keyboard» written as «anything that is not a letter or a
+    /// digit» would strip the Arabic harakat from the end of a name — and Z's
+    /// Arabic is a whole script family. A combining mark is excluded by name,
+    /// and `unicode-normalization` is already in the tree for NFC, so the
+    /// answer costs no new crate.
+    #[test]
+    fn a_diacritic_belongs_to_the_word_and_is_not_an_edge_mark() {
+        // «ويلسونَ» — the fatha at the end of the name stays in the value.
+        let text = "\u{627}\u{62A}\u{635}\u{644} \u{648}\u{64A}\u{644}\u{633}\u{648}\u{646}\u{64E} \u{63A}\u{62F}\u{627}";
+        let drawn = "\u{648}\u{64A}\u{644}\u{633}\u{648}\u{646}\u{64E}";
+        assert_eq!(value(text, drawn), drawn);
+        // A Latin letter written as letter + combining acute keeps its accent.
+        assert_eq!(value("Herr Jose\u{301} bitte", "Jose\u{301}"), "Jose\u{301}");
+    }
+
+    /// **Measured, and the owner may want it back: a leading `+` leaves too.**
+    ///
+    /// The old list was written with a reason — «`+` opens a telephone number,
+    /// `@` holds an address together, `/` and `#` carry a reference number» —
+    /// and ruling 3 overrules it for a hand selection. So `+49 228` drawn by
+    /// hand now yields `49 228`. Paper 085's ruling 2 is what makes this
+    /// bearable: **numbers are not words** and get their own rules in their own
+    /// paper, where the `+` can be given back to them by kind rather than by
+    /// accident of the edge list. Until then this records what the glass does.
+    #[test]
+    fn a_plus_in_front_of_a_number_leaves_the_value_now() {
+        assert_eq!(value("tel +49 228 oder", "+49 228"), "49 228");
+        assert_eq!(value("ref #4711 bitte", "#4711"), "4711");
+        // Interior, and therefore untouched: an address is still one value.
+        assert_eq!(value("mail anas@mono-peak.com heute", "anas@mono-peak.com"), "anas@mono-peak.com");
     }
 
     #[test]
@@ -833,7 +909,10 @@ mod the_marks_a_hand_selection_leaves_behind {
         assert_eq!(value("Anne-Marie Berg", "Anne-Marie"), "Anne-Marie");
         assert_eq!(value("O\'Brien and Sons", "O\'Brien"), "O\'Brien");
         assert_eq!(value("Margaret Wilson,person", "Wilson,person"), "Wilson,person");
-        assert_eq!(value("tel +49 228 oder", "+49 228"), "+49 228");
+        // The `+` is at an edge, so ruling 3 takes it; the space inside the
+        // number is not a mark and the digits stay whole. Named on its own in
+        // `a_plus_in_front_of_a_number_leaves_the_value_now`.
+        assert_eq!(value("tel +49 228 oder", "+49 228"), "49 228");
     }
 
     #[test]
