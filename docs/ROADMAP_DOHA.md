@@ -43,7 +43,9 @@ The app earns nothing and measures nothing, by design. A buyer is not buying its
 *What the stand shows:* an application people are already taking, and the library that puts Z inside somebody else's product.
 *The decision is the owner's:* the full number against what the counter says.
 
-**Beside the road, in the libraries:** the exchange between two owners — Z travelling with the work from one person to another. Its shape changed on 14 Oct, when the owner ruled that **the answer to a Z document is written inside Z** (087).
+**Beside the road, in the libraries — the same mechanism, unchanged.** The owner, 14 Oct: while the app is finished on Linux and Windows, the libraries go on being built **by the library officer's plan and exactly the present mechanism**: he lays out a round, it is built, the lead attacks it, the lead pushes it, and then the next round. Round after round, in parallel with the stations above.
+
+The round now in the officer's hands is the exchange between two owners — Z travelling with the work from one person to another. Its shape changed on 14 Oct, when the owner ruled that **the answer to a Z document is written inside Z** (087).
 
 ## Not on this road
 
