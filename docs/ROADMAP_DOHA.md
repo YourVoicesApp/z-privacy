@@ -65,7 +65,27 @@ The round now in the officer's hands is the exchange between two owners — Z tr
 
 **What it does to «what is for sale».** Z stays free and is the trust and the reach; the accounting system is the thing that is paid for, and Z inside it is the reason it can exist at all.
 
+**Its shape — the Gate and the Repository (the owner, 14 Oct):** «نجعل التطبيق جزأين: البوابة والمستودع. البوابة هي القسم الذي تدخل فيه البيانات وكل شيء. المستودع هو موطن سيد الذكاء الصناعي، ويعمل بطريقة المفتاح. بحيث تصبح المحاسبة من نوع: أرسل الصور، احصل على البيانات.»
+
+| | what it is | what crosses it |
+|---|---|---|
+| **The Gate** | where everything enters: photos, invoices, statements | **on the owner's own device** |
+| **The Repository** | the home of the model, working by the key | **only protected text reaches it** |
+
+The Gate is Z's boundary itself: behind it, originals that never leave; in front of it, tokens.
+
+**The collision, said plainly.** Z today **refuses images by decision**: a page with no text layer is a photograph, we do not guess what is in it, **and we do not send it anywhere to be read** (`z_core/src/api.rs`, `Refusal`). A photographed receipt carries a name, a card number, an address; sent to a model to be read, all of it leaves in the clear.
+
+**The way through does not break that decision, it fulfils it:** the Gate **reads the photo on the device itself**, turns it into text there, Z protects the text, and only then does the protected text go to the Repository. The decision was «we do not send it anywhere to be read»; reading on the device sends nothing.
+
+> **«Send the photos, get the data»** becomes: the photo enters the Gate, is read on your machine, is protected, **and nothing leaves the Gate but protected text.**
+
+That is a large new capability Z does not have — **reading images on the device** — and it is the heart of the Gate.
+
+**The owner's motive, in the product's own words:** the business owner holds the books and their key in his own hand, with no firm standing between him and his money.
+
 **Open for the owner:**
+- **«Works by the key» — which key?** The model's key, which the owner brings for his own model, as Z's send works today; or the session's key, so the Repository holds tokens and only the key's holder restores names; or both.
 - **Which country's books first?** Fortnox is Swedish, the company is Swedish, the owner knows the Swedish system and the Swedish pack exists; Germany is where Z publishes first. The lead would start where the company stands.
 - **Are amounts private?** The model needs the numbers to do accounting, so they cannot all become tokens — yet a small firm's turnover is itself a secret. This is the first question the system will ask of Z, and it is not answered yet.
 - **Does any of it stand in Doha?** An early form of «AI does the books, Z guards them» is a far stronger stand than a free privacy app alone — and far larger to build.
