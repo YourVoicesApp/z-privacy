@@ -54,25 +54,17 @@ The lead's reading:
 
 Guard: «Lin» in a document holding Lindqvist ×12 and Lindberg ×2 → faint *Lindqvist*; Tab → the bar reads «Lindqvist»; Enter → the 12-place result line. «Li» → nothing faint. «Lin» shows *Lindqvist*, then «d» → faint *Lindberg* (Lindqvist refused); then «b» → nothing more fits that was not shown, so the faint text is gone and the bar reads «Lindb».
 
-## Colours in the text (owner, 14 Oct)
+## Colours in the search box, not in the text (owner, 14 Oct)
 
-«الكلمات المشفرة في النص التي اكتشفها التطبيق تظهر بلون أحمر مائي شفاف، والكلمات غير المشفرة تظهر بلون أزرق مائي شفاف.»
+«الكلمات المشفرة… تظهر بلون أحمر مائي شفاف، والكلمات غير المشفرة تظهر بلون أزرق مائي شفاف» — and then, the owner's correction to the lead's reading: **«الكلمة الحمراء في مستطيل البحث، وفي النص الكلمة تبقى كما هي. لا نغيّر في إعدادات النص.»**
 
-8. **A protected word: a transparent watery red wash.**
-9. **A word the app found that is not protected (waiting for an answer): a transparent watery blue wash.**
-10. Plain words that the app did not find carry no wash.
-
-Today (`apps/flutter_app/lib/widgets/document_text.dart:685-709`):
-- protected words wear a clay wash, and words the vault knew wear a river wash (`sourceTint`, `:230`);
-- waiting words wear an amber wash.
-
-The two new colours replace all three.
-
-The lead's reading:
-- **A word protected by hand is red too.** Red means protected, whoever protected it.
-- **The vault's own colour goes,** because in 083 the vault no longer «knows who this is».
-- **The search bar's blue and the waiting blue are one family on purpose.** Both say «this still needs you».
-- Both washes are drawn in both columns, at the same place, once (`~/محرر النصوص.md` rule 10).
+8. **The colours belong to the search box.** In the result, a protected word is shown on a transparent watery red; a word the app found and that is not protected yet is shown on a transparent watery blue.
+9. **The document's own marks are unchanged.** The washes and lines it draws today stay exactly as they are (`apps/flutter_app/lib/widgets/document_text.dart:665-722`):
+   - wavy amber: suggested;
+   - dashed clay: protected by a layer;
+   - solid clay: protected by hand;
+   - the river wash: the vault.
+   084 changes nothing in how the text is drawn.
 
 ## Beside it: highlighted words become suggestions (owner, 14 Oct)
 
