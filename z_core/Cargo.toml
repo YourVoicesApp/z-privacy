@@ -80,6 +80,21 @@ fake_provider = []
 # weaken the auto-lock promise. Nothing in the product calls it, it is never in
 # `default`, and it does not cross the bridge. Gate G23 checks all three.
 test_clock = []
+# The word search an instrument borrows, for measuring only — paper 086. The
+# lead's ruling of 14 Oct: a door that exists only to measure does not stand in
+# the product's surface, and a longer command line costs nothing. So
+# `measuring::whole_word_places` is compiled only when this is asked for, and
+# `examples/what_arrives.rs` names it in `required-features`: without it the
+# instrument is not built at all, and the product has no such module.
+measuring = []
+
+# The instrument of paper 086, and the only target in this package that asks
+# for a feature. `cargo run -p z_core --example what_arrives --features
+# measuring -- <file>`; without the feature cargo refuses by name instead of
+# building a half of it.
+[[example]]
+name = "what_arrives"
+required-features = ["measuring"]
 
 [lints]
 workspace = true

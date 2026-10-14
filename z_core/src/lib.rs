@@ -82,9 +82,15 @@ pub mod testing {
 /// So an instrument borrows the function rather than keeping a second copy of
 /// the rule, which is the defect this project has already paid for twice. It is
 /// pure: a string the caller already owns goes in, byte ranges come out. No
-/// session is read, no vault is opened, nothing is changed — and the bridge
-/// does not carry it, because the bridge carries `api` and nothing else.
-/// `examples/what_arrives.rs` is its only caller.
+/// session is read, no vault is opened, nothing is changed.
+///
+/// **And it is not in the product.** Compiled only under `measuring`, which is
+/// never a default feature and which nothing but `examples/what_arrives.rs`
+/// asks for — that example names it in `required-features`, so without the
+/// feature the instrument is not built and this module does not exist. The
+/// lead's ruling of 14 Oct, and the right one: a door that exists only to
+/// measure should not stand in the surface the product ships.
+#[cfg(feature = "measuring")]
 pub mod measuring {
     /// Every **whole-word** place `needle` stands in `haystack`, as byte ranges
     /// into `haystack` itself.
@@ -163,6 +169,12 @@ mod tests {
     /// of. A measurement built on any of those three would be reported as the
     /// product's number. So this is the guard that reddens if the door is ever
     /// reimplemented instead of forwarded.
+    ///
+    /// It stands under the same feature as the door, which is the price of the
+    /// door not being in the product: the gate's own `cargo test` does not run
+    /// it, and the seal runs the suite a second time with `--features
+    /// measuring` so that it is watched rather than assumed.
+    #[cfg(feature = "measuring")]
     #[test]
     fn the_word_search_an_instrument_asks_is_the_products_own() {
         let places = |haystack: &str, needle: &str| measuring::whole_word_places(haystack, needle).len();

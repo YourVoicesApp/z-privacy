@@ -1,6 +1,11 @@
 //! **What does Z's reader hand over?** The instrument for paper 086.
 //!
-//!     cargo run -p z_core --example what_arrives -- <file> [--lang ar] [--out <path>] [--find «الكتاب,السلام,المجرم»]
+//!     cargo run -p z_core --example what_arrives --features measuring -- <file> [--lang ar] [--out <path>] [--find «الكتاب,السلام,المجرم»]
+//!
+//! The feature is not decoration: the one door this instrument needs in the
+//! library — `measuring::whole_word_places` — stands behind it, so that a door
+//! which exists only to measure is not part of what the product ships. Without
+//! `--features measuring` cargo refuses this target by name.
 //!
 //! 038-C measured the first two faults of the Arabic reading base on the
 //! owner's own book — 205 434 presentation-form characters, handed over in
