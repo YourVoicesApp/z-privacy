@@ -19,6 +19,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:zprivacy/core/going_to_a_word.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
@@ -112,8 +113,106 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   Finding? _choosing;
   Offset _choosingAt = Offset.zero;
 
+  /// **Whose bubble it is**, and it decides one thing: whether a press anywhere
+  /// else closes it.
+  ///
+  /// A bubble a person opened by pressing a word is dismissed by pressing
+  /// beside it — the owner's «disappears when it is pressed», which cuts both
+  /// ways. A bubble the **walk** put at a word is not that: it is the review's
+  /// own form in the text, and the full-screen catcher would swallow the very
+  /// press that walks on. Measured, not reasoned: with one barrier for both,
+  /// «Next 1/4» closed the bubble and the walk stood still — and so did
+  /// «Protect all» and «Skip all», because the barrier is over the panel too.
+  bool _choosingFromTheWalk = false;
+
   void _closeBubble() {
     if (_choosing != null) setState(() => _choosing = null);
+  }
+
+  /// The word as the findings have it now, or null when it no longer waits.
+  static Finding? _stillWaiting(Workbench bench, Finding? word) {
+    if (word == null) return null;
+    final now = bench.findings.where(
+      (f) => f.id == word.id && f.state == MarkState.suggested,
+    );
+    return now.isEmpty ? null : now.first;
+  }
+
+  /// **The review, lived in the text** — 083 rulings 4, 5 and 14.
+  ///
+  /// One press: go to a word that is waiting, light it, and draw its own two
+  /// buttons beside it. The first press lands on the first waiting word in
+  /// reading order — the same word the exits' guide lands on (083a), through
+  /// the same [theFirstWaitingWord] — and every press after that leaves the lit
+  /// word for later and goes to the one after it.
+  ///
+  /// The list opens with it, and that is the second form rather than a second
+  /// act: `openReview(walk: true)` both takes the panel's slot and turns on the
+  /// state's own step-to-the-next-one, which is what makes an **answer** move
+  /// the walk without a press (ruling 5).
+  Future<void> _walk() async {
+    final bench = widget.bench;
+    final lit = bench.focusedFinding;
+    final walking = bench.walking && lit != null && lit.state == MarkState.suggested;
+    final go = walking
+        ? theWaitingWordAfter(bench.findings, lit)
+        : theFirstWaitingWord(bench.findings);
+    if (go == null) {
+      // Nothing waits: the button that called this is already gone, and a
+      // press that arrived with the last answer must not leave a bubble on a
+      // word that has been settled.
+      _closeBubble();
+      return;
+    }
+    bench.openReview(walk: true);
+    await _goTo(go);
+  }
+
+  /// Go to one word and put its buttons where it landed. The movement is the
+  /// one function's; what is left here is the bubble, which belongs to this
+  /// screen because it is drawn over both columns and over the panel.
+  Future<void> _goTo(Finding word) async {
+    final at = await goToTheWord(widget.bench, word, anchor: _focusKey);
+    if (!mounted) return;
+    setState(() {
+      // **No place on the glass, no buttons.** A word in a column that is not
+      // drawn — nothing open, a frame that has not run — would otherwise put
+      // its two buttons in the corner of the window, beside nothing.
+      _choosing = at == null ? null : word;
+      _choosingAt = at ?? Offset.zero;
+      _choosingFromTheWalk = true;
+    });
+  }
+
+  /// **Answering moves the walk on by itself** — ruling 5.
+  ///
+  /// The next word is taken **here**, by reading order, after the answer has
+  /// landed: `Workbench.answer` steps the focus on by itself too, but it reads
+  /// the core's own order — the order its layers found things in — and the
+  /// walk's order is the eye's. That file is the other seat's, so the walk
+  /// asks for the word it wants rather than taking the one it is given, and
+  /// `the_review_in_two_forms_test.dart` holds it to reading order. When
+  /// `session_state.dart` is next open, that step becomes
+  /// [theWaitingWordAfter] and this line becomes a no-op.
+  Future<void> _answer(Finding word, FindingAnswer choice) async {
+    final bench = widget.bench;
+    // **Only the walk walks on.** A person who pressed a word in the text
+    // answered *that* word: the bubble goes and they are left where they were
+    // reading, which is what they asked for. Moving them to another word
+    // because they answered this one would be the app deciding where to look
+    // next, and that is the Review press's own job.
+    final walking = _choosingFromTheWalk;
+    _closeBubble();
+    await bench.answer(word.id, choice);
+    if (!mounted || !walking) return;
+    final next = theWaitingWordAfter(bench.findings, word);
+    if (next == null) {
+      // The last answer: nothing is lit, nothing is waiting, and the exits are
+      // open. Ruling 10, which is also why the Next button is gone by now.
+      bench.focusOn(null);
+      return;
+    }
+    await _goTo(next);
   }
 
   /// Go to a page by pointing the column's own anchor at it.
@@ -129,7 +228,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       setState(() => _said = 'Page $page has nothing the scanner marked.');
       return;
     }
-    widget.bench.focusOn(onIt.first.id);
+    // The same one function the walk uses (ruling 14). A page is a word to
+    // arrive at, and the only thing that differs is which word.
+    unawaited(goToTheWord(widget.bench, onIt.first, anchor: _focusKey));
   }
 
   /// «Page 17» has to be a place you arrive at, not a label. When the review
@@ -255,6 +356,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           focusKey: _focusKey,
                           onSettings: _toSettings,
                           onSay: (line) => setState(() => _said = line),
+                          onWalk: () => unawaited(_walk()),
                           onChoose: (mark, at) {
                             // The finding behind the mark, by the place it
                             // stands: a mark carries no id, and the span is
@@ -266,6 +368,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                             setState(() {
                               _choosing = found.first;
                               _choosingAt = at;
+                              _choosingFromTheWalk = false;
                             });
                           },
                           ),
@@ -298,7 +401,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                         OpenPanel.review => ReviewPanel(
                           bench: bench,
                           width: panelWidth,
-                          onVault: widget.onVault,
                         ),
                         OpenPanel.tokens => TokensPanel(
                           bench: bench,
@@ -319,20 +421,27 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         // The choice at the word. Over everything, because it belongs to the
         // word and not to a column; and nothing else on this screen moves while
         // it is open.
-        if (_choosing != null) ...[
-          Positioned.fill(
-            // A press anywhere else closes it and does nothing — the owner's
-            // «disappears when it is pressed» cuts both ways.
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: _closeBubble,
+        // **The buttons belong to a word that is still waiting.** Read from the
+        // findings rather than kept beside them: «Protect all» in the list, or
+        // an answer given at another place of the same word, takes the question
+        // away — and a bubble left over it would offer an answer to a word that
+        // has one. Measured: after «Protect all» the walk's bubble stood on a
+        // settled word with nothing waiting anywhere.
+        if (_stillWaiting(bench, _choosing) != null) ...[
+          if (!_choosingFromTheWalk)
+            Positioned.fill(
+              // A press anywhere else closes it and does nothing — the owner's
+              // «disappears when it is pressed» cuts both ways. Only for a
+              // bubble a press opened; see `_choosingFromTheWalk`.
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _closeBubble,
+              ),
             ),
-          ),
           ChoiceBubble(
-            bench: bench,
-            finding: _choosing!,
+            finding: _stillWaiting(bench, _choosing)!,
             at: _choosingAt,
-            onVault: widget.onVault,
+            onAnswer: (choice) => unawaited(_answer(_choosing!, choice)),
             onDone: _closeBubble,
           ),
         ],
@@ -1178,6 +1287,7 @@ class _Columns extends StatefulWidget {
     required this.onSay,
     required this.focusKey,
     required this.onChoose,
+    required this.onWalk,
     this.onSettings,
   });
 
@@ -1187,6 +1297,10 @@ class _Columns extends StatefulWidget {
   final void Function(String) onSay;
   final GlobalKey focusKey;
   final void Function(Mark mark, Offset at) onChoose;
+
+  /// Review, and then Next — the walk, which is the screen's because it moves
+  /// both columns and draws the word's buttons over them.
+  final VoidCallback onWalk;
 
   /// Handed down to the Safe column's footer, which opens the send sheet —
   /// and the sheet carries the only door to where a provider's key is given.
@@ -1396,7 +1510,12 @@ class _ColumnsState extends State<_Columns> {
                           // reason one of them is about to be worth pressing.
                           if (bench.lines != null) _LineBand(bench: bench),
                           if (widget.said != null) _Said(widget.said!),
-                          ActsBar(bench: bench, ground: ground, onSay: widget.onSay),
+                          ActsBar(
+                            bench: bench,
+                            ground: ground,
+                            onSay: widget.onSay,
+                            onWalk: widget.onWalk,
+                          ),
                           // **What should the model do with this?** (046/N.)
                           //
                           // Under the document, where the person is reading

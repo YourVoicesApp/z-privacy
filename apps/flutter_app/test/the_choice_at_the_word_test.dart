@@ -80,7 +80,7 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('a press on a waiting word offers the four answers, where the word is', (tester) async {
+  testWidgets('a press on a waiting word offers the two answers, where the word is', (tester) async {
     final (bench, ground) = await _open(tester);
     await _pump(tester, bench, ground);
     expect(bench.suggested, isNotEmpty, reason: 'nothing is waiting, so this proves nothing');
@@ -89,11 +89,18 @@ void main() {
     await settle(tester);
 
     expect(find.byType(ChoiceBubble), findsOneWidget, reason: 'the word opened nothing');
-    for (final act in ['Protect', 'Not sensitive', 'Skip']) {
+    // **Two, since the owner's ruling of 14 Oct** (083, rulings 7 and 8). It
+    // was four: Protect · Always · Not sensitive · Skip.
+    for (final act in ['Protect', 'Leave it']) {
       expect(find.text(act), findsWidgets, reason: '«$act» is not in the bubble');
     }
-    // «Always» carries its state, as it has since 041-B.
-    expect(find.text('Always · needs a vault'), findsOneWidget);
+    for (final gone in ['Always', 'Always · needs a vault', 'Not sensitive', 'Skip']) {
+      expect(
+        find.descendant(of: find.byType(ChoiceBubble), matching: find.text(gone)),
+        findsNothing,
+        reason: '«$gone» is deleted, not hidden',
+      );
+    }
     // And the side panel is not what a word opens.
     expect(find.byType(ReviewPanel), findsNothing, reason: 'the word opened the review list');
 

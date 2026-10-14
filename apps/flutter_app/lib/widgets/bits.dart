@@ -1,5 +1,4 @@
 // Small pieces used on more than one screen. Nothing here holds state.
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -328,38 +327,51 @@ class _CopyReportButtonState extends State<CopyReportButton> {
 /// It stays inside the window: near the bottom it flips above the word, and it
 /// is clamped to both edges. A bubble half off the screen is a bubble that
 /// cannot be answered.
+/// **The word's own two buttons** — 083, rulings 4, 7 and 8.
+///
+/// The owner, 6 October: «the suggested names must appear on the text itself,
+/// not as a separate list, and the choices a small message that disappears when
+/// it is pressed». On 14 October he said how many choices: **two.** «Protect»
+/// and «Leave it», and nothing else — «Always», «Not sensitive in profile» and
+/// «Not sensitive everywhere» are deleted, not hidden, and «Later» is no longer
+/// a button at all but the **Next** that walks past this word (ruling 5).
+///
+/// It answers nothing itself. The press is reported upward, because the walk
+/// has to know when a word has been answered: answering moves on by itself, and
+/// a widget that calls `bench.answer` and forgets cannot say when to move. One
+/// act, one owner — the workspace's walk.
 class ChoiceBubble extends StatelessWidget {
   const ChoiceBubble({
     super.key,
-    required this.bench,
     required this.finding,
     required this.at,
-    required this.onVault,
+    required this.onAnswer,
     required this.onDone,
   });
 
-  final Workbench bench;
   final Finding finding;
 
-  /// Where the press happened, in the window's own coordinates.
+  /// Where the word is, in the window's own coordinates: where a press landed,
+  /// or where the walk found the word on the glass.
   final Offset at;
 
-  /// Where «Always» sends a person who has no vault — the same door the review
-  /// panel's button opens, and the same sentence on it.
-  final VoidCallback onVault;
+  /// «Protect» and «Leave it», reported rather than performed.
+  final void Function(FindingAnswer) onAnswer;
+
+  /// Close it and answer nothing — a press beside the bubble, or Escape.
   final VoidCallback onDone;
+
+  static const protectKey = ValueKey<String>('word-protect');
+  static const leaveKey = ValueKey<String>('word-leave');
 
   static const double _width = 320;
 
   @override
   Widget build(BuildContext context) {
     final window = MediaQuery.sizeOf(context);
-    final vault = bench.snap?.vault ?? VaultState.absent;
-    final vaultOpen = vault == VaultState.unlocked;
-    final needs = vault == VaultState.locked ? 'Always · unlock the vault' : 'Always · needs a vault';
     // Guessed tall enough to decide which way to open, and never used as a
     // size: the bubble is as tall as its own content.
-    const guess = 190.0;
+    const guess = 150.0;
     final below = at.dy + 14;
     final flip = below + guess > window.height;
     final left = (at.dx - _width / 2).clamp(12.0, (window.width - _width - 12).clamp(12.0, double.infinity));
@@ -402,38 +414,20 @@ class ChoiceBubble extends StatelessWidget {
                 runSpacing: 6,
                 children: [
                   _BubbleAct(
+                    key: protectKey,
                     label: 'Protect',
                     primary: true,
-                    onPressed: () {
-                      unawaited(bench.answer(finding.id, FindingAnswer.protect));
-                      onDone();
-                    },
+                    onPressed: () => onAnswer(FindingAnswer.protect),
                   ),
+                  // **«Leave it», and it is an answer.** The count falls, the
+                  // word stays as it is written, and every other place of the
+                  // same word is answered with it — the core's own
+                  // `dismissed`, which is why one «Leave it» on twelve
+                  // «Lindqvist» is one stop and not twelve (ruling 7).
                   _BubbleAct(
-                    label: vaultOpen ? 'Always' : needs,
-                    onPressed: () {
-                      if (vaultOpen) {
-                        unawaited(bench.answer(finding.id, FindingAnswer.always));
-                        onDone();
-                      } else {
-                        onDone();
-                        onVault();
-                      }
-                    },
-                  ),
-                  _BubbleAct(
-                    label: 'Not sensitive',
-                    onPressed: () {
-                      unawaited(bench.answer(finding.id, FindingAnswer.notSensitive));
-                      onDone();
-                    },
-                  ),
-                  _BubbleAct(
-                    label: 'Skip',
-                    onPressed: () {
-                      unawaited(bench.answer(finding.id, FindingAnswer.skip));
-                      onDone();
-                    },
+                    key: leaveKey,
+                    label: 'Leave it',
+                    onPressed: () => onAnswer(FindingAnswer.notSensitive),
                   ),
                 ],
               ),
@@ -446,7 +440,7 @@ class ChoiceBubble extends StatelessWidget {
 }
 
 class _BubbleAct extends StatelessWidget {
-  const _BubbleAct({required this.label, required this.onPressed, this.primary = false});
+  const _BubbleAct({super.key, required this.label, required this.onPressed, this.primary = false});
 
   final String label;
   final VoidCallback onPressed;

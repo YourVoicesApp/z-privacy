@@ -26,6 +26,9 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _de1 = '../../z_core/tests/fixtures/Brief_Weber.txt';
 
+/// The review row's own «Protect», by the key the panel gives it.
+const _rowProtectKey = ValueKey<String>('review-protect');
+
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
@@ -72,13 +75,24 @@ void main() {
     bench.dispose();
   });
 
-  testWidgets('«Always» carries what it needs, and the way to it', (tester) async {
+  /// **The other half of 041-B, after the owner deleted the button it was
+  /// about** — 083, ruling 8 (14 Oct).
+  ///
+  /// «Always» said what it needed — «Always · needs a vault» — and opened the
+  /// vault screen rather than refusing into a sentence at the other end of the
+  /// window. That repair was right and the button is gone: «Always» wrote
+  /// knowledge that outlived the conversation, and 083's model has none («no
+  /// name memory across sessions»).
+  ///
+  /// What is left to hold is better than the old claim: **the review needs no
+  /// vault at all.** Both of its answers work with no vault on the machine, and
+  /// nothing in it asks for one.
+  testWidgets('the review asks for no vault, and both answers work without one', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
     final ground = Ground();
     late final Workbench bench;
     var vault = 0;
     await tester.runAsync(() async {
-      // No vault at all: this is the state the owner was in.
       await z.vaultLock();
       final dir = Directory('${Directory.systemTemp.path}/zprivacy-always-$pid');
       if (dir.existsSync()) dir.deleteSync(recursive: true);
@@ -90,6 +104,8 @@ void main() {
       await bench.rescan();
     });
     expect(ground.vault, VaultState.absent, reason: 'this case is the one without a vault');
+    final before = bench.openSuggestions;
+    expect(before, greaterThan(0), reason: 'nothing waits, so no answer can be measured');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -100,21 +116,27 @@ void main() {
     await tester.tap(find.text('Review'));
     await settle(tester);
 
-    // The button says what it needs — on itself, where the press happens.
-    expect(find.text('Always'), findsNothing, reason: 'the button still promises what it cannot do');
-    final needs = find.text('Always · needs a vault');
-    expect(needs, findsWidgets, reason: '«Always» does not say what it needs');
-    // And one sentence says what Always even is.
+    for (final gone in [
+      'Always',
+      'Always · needs a vault',
+      'Always · unlock the vault',
+      'Not sensitive in profile',
+      'Not sensitive everywhere',
+    ]) {
+      expect(find.text(gone), findsNothing, reason: '«$gone» is deleted, not hidden');
+    }
     expect(
       find.textContaining('protect this value in every document from now on'),
-      findsWidgets,
-      reason: 'nothing explains what Always means',
+      findsNothing,
+      reason: 'the sentence about a deleted button is still on the screen',
     );
 
-    await tester.tap(needs.first);
-    await settle(tester);
-    expect(vault, 1, reason: 'the button did not open the vault screen');
-    expect(bench.trouble, isNull, reason: 'it refused instead of offering the way in');
+    // And the answer a person gives now needs nothing of the vault.
+    await tester.tap(find.byKey(_rowProtectKey).first);
+    await settle(tester, rounds: 12);
+    expect(bench.openSuggestions, lessThan(before), reason: 'the answer did not land');
+    expect(bench.trouble, isNull, reason: 'it refused: ${bench.trouble}');
+    expect(vault, 0, reason: 'the review sent a person to the vault screen');
 
     bench.dispose();
   });

@@ -1,15 +1,24 @@
-// Review — the gate before Send.
+// Review, **in the list** — the second of its two forms (083, ruling 6).
 //
-// Three groups, because the boards insist the difference is visible: what the
-// app protected **automatically**, what it **suggests** and is still waiting on,
-// and what **you** protected by hand. A list that mixed them would hide the one
-// question that matters: which of these did I decide?
+// The owner, 14 Oct: the review is lived **in the text** — the word lit where
+// it stands, with its two buttons beside it and Next carrying the count — and
+// the list is what answers «what is left?». So this panel holds **only what
+// waits**, with «Protect all» and «Skip all» at its foot. The three groups it
+// used to draw are gone with the question they answered: what the app protected
+// by itself and what a person decided are **seen in the text**, which is where
+// they are, and a list that repeats them buries the one group that still needs a
+// press.
+//
+// The one-at-a-time form that used to live here (`_Walk`, and the icon that
+// switched to it) is gone for the same reason: it is now the walk in the text,
+// and two walks would be two laws about which word is next.
 //
 // Every row carries the rule that flagged it and where it sits. «Page 17» is the
-// core's own `Place`, kept through protection — the review list can still jump
-// there after everything has been replaced.
+// core's own `Place`, kept through protection — the row can still jump there
+// after everything has been replaced.
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/going_to_a_word.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -17,14 +26,9 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 
 class ReviewPanel extends StatelessWidget {
-  const ReviewPanel({super.key, required this.bench, required this.width, required this.onVault});
+  const ReviewPanel({super.key, required this.bench, required this.width});
 
   final Workbench bench;
-
-  /// Where «Always» sends a person who has no vault yet. The answer row needs
-  /// it, so the panel carries it: a button that cannot do what it says must at
-  /// least open the door that would let it.
-  final VoidCallback onVault;
 
   /// Set by the Workspace from the window's width: two columns must stay
   /// readable, and a panel that squeezes them off the screen is worse than a
@@ -33,7 +37,7 @@ class ReviewPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final open = bench.suggested;
+    final open = theWaitingWordsInReadingOrder(bench.findings);
 
     return Container(
       width: width,
@@ -45,13 +49,17 @@ class ReviewPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(open.length),
-          if (open.length > 1) _AllOfThem(bench: bench, open: open),
           Container(height: 1, color: Zc.lineSoft),
-          Expanded(
-            child: bench.walking && open.isNotEmpty
-                ? _Walk(bench: bench, onVault: onVault)
-                : _List(bench: bench, onVault: onVault),
-          ),
+          Expanded(child: _List(bench: bench, open: open)),
+          // **At its foot, and fixed there.** The paper says «at its foot»; a
+          // row inside the scroller would be at the foot of forty words, which
+          // is three flicks away from the person who wanted all of them in one
+          // press. Two words waiting need no «all»: their own buttons are right
+          // there.
+          if (open.length > 1) ...[
+            Container(height: 1, color: Zc.lineSoft),
+            _AllOfThem(bench: bench, open: open),
+          ],
         ],
       ),
     );
@@ -82,18 +90,6 @@ class ReviewPanel extends StatelessWidget {
               ],
             ),
           ),
-          if (open > 0)
-            IconButton(
-              tooltip: bench.walking
-                  ? 'Show the whole list'
-                  : 'Walk them one at a time',
-              icon: Icon(
-                bench.walking ? Icons.list : Icons.directions_walk,
-                size: 18,
-              ),
-              color: Zc.ink3,
-              onPressed: () => bench.openReview(walk: !bench.walking),
-            ),
           IconButton(
             tooltip: 'Close',
             icon: const Icon(Icons.close, size: 18),
@@ -106,24 +102,25 @@ class ReviewPanel extends StatelessWidget {
   }
 }
 
-/// The whole list, in its three groups.
+/// **Only what waits**, in reading order — ruling 6.
 class _List extends StatelessWidget {
-  const _List({required this.bench, required this.onVault});
+  const _List({required this.bench, required this.open});
 
   final Workbench bench;
-  final VoidCallback onVault;
+  final List<Finding> open;
 
   @override
   Widget build(BuildContext context) {
-    final suggested = bench.suggested;
-    final automatic = bench.automatic;
-    final byHand = bench.byHand;
-
-    if (bench.findings.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(20),
+    if (open.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
         child: Text(
-          'The scan found nothing in this document.',
+          bench.findings.isEmpty
+              ? 'The scan found nothing in this document.'
+              // Not «the list is empty»: what the app protected and what you
+              // decided are in the text, and this is where to look for them.
+              : 'Nothing is waiting. What is protected is in the text, marked '
+                    'where it stands.',
           style: Zc.small,
         ),
       );
@@ -131,79 +128,18 @@ class _List extends StatelessWidget {
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 24),
-      children: [
-        if (suggested.isNotEmpty) ...[
-          _GroupTitle('Waiting for your word', suggested.length, Zc.amber),
-          for (final f in suggested)
-            _Row(bench: bench, finding: f, answerable: true, onVault: onVault),
-          const SizedBox(height: 16),
-        ],
-        if (automatic.isNotEmpty) ...[
-          _GroupTitle('Protected automatically', automatic.length, Zc.clay),
-          for (final f in automatic)
-            _Row(bench: bench, finding: f, answerable: false, onVault: onVault),
-          const SizedBox(height: 16),
-        ],
-        if (byHand.isNotEmpty) ...[
-          _GroupTitle('Decided by you', byHand.length, Zc.ink3),
-          for (final f in byHand)
-            _Row(bench: bench, finding: f, answerable: false, onVault: onVault),
-        ],
-      ],
+      children: [for (final f in open) _Row(bench: bench, finding: f)],
     );
   }
 }
 
-class _GroupTitle extends StatelessWidget {
-  const _GroupTitle(this.title, this.count, this.tint);
-
-  final String title;
-  final int count;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 4),
-      child: Row(
-        children: [
-          Eyebrow(title, color: tint),
-          const SizedBox(width: 7),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-            decoration: BoxDecoration(
-              color: tint.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Text(
-              '$count',
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: tint,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One finding: what it is, why it was flagged, where it sits, and — when it is
-/// still open — the three answers.
+/// One waiting word: what it is, why it was flagged, where it sits, and its two
+/// answers.
 class _Row extends StatelessWidget {
-  const _Row({
-    required this.bench,
-    required this.finding,
-    required this.answerable,
-    required this.onVault,
-  });
+  const _Row({required this.bench, required this.finding});
 
   final Workbench bench;
   final Finding finding;
-  final bool answerable;
-  final VoidCallback onVault;
 
   @override
   Widget build(BuildContext context) {
@@ -278,10 +214,8 @@ class _Row extends StatelessWidget {
                   ),
               ],
             ),
-            if (answerable) ...[
-              const SizedBox(height: 10),
-              _Answers(bench: bench, finding: finding, onVault: onVault),
-            ],
+            const SizedBox(height: 10),
+            _Answers(bench: bench, finding: finding),
           ],
         ),
       ),
@@ -324,12 +258,14 @@ class _Tag extends StatelessWidget {
 /// **The asymmetry is the design and not an oversight**, so it is written here
 /// where someone would otherwise tidy it into symmetry:
 ///
-///   * **Protect them all** is one press and asks nothing. Over-protecting is
+///   * **«Protect all»** is one press and asks nothing. Over-protecting is
 ///     never a leak; the worst case is a token where a person wanted a word,
 ///     and that is undone in one press on the row itself.
-///   * **Leave them all in the clear** asks once, with the number in the
-///     sentence. One press may not expose eighteen people, and a confirmation
-///     that does not say how many is not a confirmation.
+///   * **«Skip all»** asks once, with the number in the sentence — the owner
+///     kept this confirmation by name on 14 Oct (ruling 9): it is **the one
+///     door that uncovers words in a batch.** One press may not expose eighteen
+///     people, and a confirmation that does not say how many is not a
+///     confirmation.
 ///
 /// If the two were built the same way, the cheap direction would be as
 /// expensive as the dangerous one — or, far worse, the dangerous one would
@@ -348,7 +284,7 @@ class _AllOfThem extends StatelessWidget {
       context: context,
       builder: (inner) => AlertDialog(
         backgroundColor: Zc.paper,
-        title: const Text('Leave them in the clear?', style: Zc.h2),
+        title: Text('Leave ${open.length} words in the clear?', style: Zc.h2),
         content: Text(
           'All ${open.length} of them will be sent exactly as they are written. '
           'Z will not replace any of them, in this document or in the request '
@@ -388,11 +324,16 @@ class _AllOfThem extends StatelessWidget {
         children: [
           ZButton(
             key: protectKey,
-            label: 'Protect all ${open.length}',
+            label: 'Protect all',
             icon: Icons.shield_outlined,
+            badge: open.length,
             onPressed: bench.busy
                 ? null
                 : () async {
+                    // By id and not by index: one answer settles every place
+                    // of the same word (ruling 7), so the list shortens under
+                    // this loop and an id that is already answered is a
+                    // no-change in the core rather than an error.
                     for (final f in open) {
                       await bench.answer(f.id, FindingAnswer.protect);
                     }
@@ -400,7 +341,8 @@ class _AllOfThem extends StatelessWidget {
           ),
           ZButton(
             key: leaveKey,
-            label: 'Leave all ${open.length} in the clear',
+            label: 'Skip all',
+            badge: open.length,
             onPressed: bench.busy ? null : () => _leaveThemAll(context),
           ),
         ],
@@ -409,40 +351,40 @@ class _AllOfThem extends StatelessWidget {
   }
 }
 
-/// The answers — **and «Later», which is not one of them** (046/L).
+/// **Two answers, and the walk is where «later» went** — rulings 5, 7 and 8.
 ///
-/// **The owner, 7 October:** «لأنه الآن في حال كانت ريفو تحتوي على أي خيار، لا
-/// يمكن الانتقال إلى الخطوات التالية.» One open item and he could not go on.
+/// What was here on 13 October: Protect · Always · Not sensitive · Not
+/// sensitive in profile · Not sensitive everywhere, and «Later» on a line of
+/// its own. The owner, 14 Oct: two buttons, no more. The three that are gone
+/// are **deleted and not hidden** — «Always» and the two «remember this»
+/// scopes wrote knowledge that outlived the conversation, and 083's model has
+/// no such thing: «No name memory across sessions».
 ///
-/// Measured: `answer_finding` on `Skip` carries the core's own comment —
-/// «Skipping is not deciding: it stays open and stays counted» — and only
-/// Protect, Always and «Not sensitive» open the door. And `Skip` sat **in this
-/// same row**, the same size and the same shape as the two answers. So it
-/// reads as a decision, the count does not fall when it is pressed, and the
-/// conclusion a reasonable person draws is «the review is blocking me» rather
-/// than «that button meant later».
-///
-/// It is not the gate that was wrong. The gate stays shut while a question is
-/// open, and that is the one sentence this product rests on. What was wrong is
-/// that one of the buttons lied about which kind of thing it was. So: its own
-/// word, its own line, and no border — a dismissal of the card, not an answer
-/// to the question.
+/// **046/L's finding survives the deletion of its own button.** «Later» sat in
+/// this row, the same size and shape as the two answers, so it read as a
+/// decision while the count did not fall — and the conclusion a reasonable
+/// person drew was «the review is blocking me». The answer then was to give it
+/// its own line and its own shape. The answer now is better: **leaving a word
+/// for later is the Next button**, which is not in this row at all and not even
+/// in this panel. A thing that is not an answer may not be drawn as one, and
+/// the surest way is for it not to be drawn here.
 ///
 /// There is still no button that sends anyway. That one was deleted from the
 /// product.
 class _Answers extends StatelessWidget {
-  const _Answers({required this.bench, required this.finding, required this.onVault});
+  const _Answers({required this.bench, required this.finding});
 
   /// Named so a test presses the thing a person presses.
-  static const laterKey = ValueKey<String>('review-later');
+  static const protectKey = ValueKey<String>('review-protect');
+  static const leaveKey = ValueKey<String>('review-leave');
 
   final Workbench bench;
   final Finding finding;
-  final VoidCallback onVault;
 
   @override
   Widget build(BuildContext context) {
     Widget one(
+      Key key,
       String label,
       FindingAnswer a,
       Color tint, {
@@ -451,6 +393,7 @@ class _Answers extends StatelessWidget {
       color: filled ? tint : Colors.transparent,
       borderRadius: BorderRadius.circular(7),
       child: InkWell(
+        key: key,
         onTap: () => bench.answer(finding.id, a),
         borderRadius: BorderRadius.circular(7),
         child: Container(
@@ -471,247 +414,12 @@ class _Answers extends StatelessWidget {
       ),
     );
 
-    Widget remember(String label, Scope scope) => Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(7),
-      child: InkWell(
-        onTap: () => bench.teachException(finding.id, scope),
-        borderRadius: BorderRadius.circular(7),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(7),
-            border: Border.all(color: Zc.line),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Zc.ink3,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // «Always» writes to the vault, so without an open vault the core refuses
-    // it — correctly, and into `bench.trouble`, which the Workspace draws once
-    // at the **top of the window**, under the band. The owner pressed this
-    // button in the right-hand panel and saw nothing happen, because the
-    // sentence was four hundred pixels away and above the fold.
-    //
-    // So the button carries its own state: it says what it needs, and the
-    // press opens the door that would satisfy it. Nothing is refused that was
-    // not asked for.
-    // Three states, two sentences, because «there is no vault» and «the vault
-    // is locked» ask different things of a person — the same distinction the
-    // core's two refusals have always made.
-    final vault = bench.snap?.vault ?? VaultState.absent;
-    final vaultOpen = vault == VaultState.unlocked;
-    final needs = vault == VaultState.locked ? 'Always · unlock the vault' : 'Always · needs a vault';
-    Widget always() => Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(7),
-      child: InkWell(
-        onTap: vaultOpen ? () => bench.answer(finding.id, FindingAnswer.always) : onVault,
-        borderRadius: BorderRadius.circular(7),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(7),
-            border: Border.all(color: vaultOpen ? Zc.line : Zc.lineSoft),
-          ),
-          child: Text(
-            vaultOpen ? 'Always' : needs,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: vaultOpen ? Zc.river : Zc.ink4,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
       children: [
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            one('Protect', FindingAnswer.protect, Zc.clay, filled: true),
-            always(),
-            one('Not sensitive', FindingAnswer.notSensitive, Zc.ink3),
-            if (bench.profileId != null)
-              remember('Not sensitive in profile', Scope.profile),
-            remember('Not sensitive everywhere', Scope.always),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // **«Later», on its own line and in its own shape** (046/L). Not in the
-        // Wrap above: a thing that is not an answer may not be drawn as one.
-        Align(
-          alignment: Alignment.centerLeft,
-          child: InkWell(
-            key: laterKey,
-            onTap: () => bench.answer(finding.id, FindingAnswer.skip),
-            borderRadius: BorderRadius.circular(6),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: Text(
-                // P2-5: the act's own name carries what happens. «Skip» said
-                // nothing about the count; this says the whole of it.
-                'Later — stays open',
-                style: Zc.small.copyWith(
-                  color: Zc.ink4,
-                  decoration: TextDecoration.underline,
-                  decorationColor: Zc.ink4,
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        // What «Always» is, in one sentence, beside the button rather than in
-        // a document nobody opens.
-        Text(
-          vaultOpen
-              ? 'Always: protect this value in every document from now on.'
-              : vault == VaultState.locked
-              ? 'Always: protect this value in every document from now on — it is kept in '
-                    'the vault, which is locked.'
-              : 'Always: protect this value in every document from now on — it is kept in '
-                    'the vault, so it needs one.',
-          style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
-        ),
-      ],
-    );
-  }
-}
-
-/// WALKING — one at a time, with the sentence it lives in, because a word out of
-/// its sentence is not enough to decide about.
-class _Walk extends StatelessWidget {
-  const _Walk({required this.bench, required this.onVault});
-
-  final Workbench bench;
-  final VoidCallback onVault;
-
-  @override
-  Widget build(BuildContext context) {
-    final open = bench.suggested;
-    final current = bench.focusedFinding ?? open.first;
-    final at = open.indexWhere((f) => f.id == current.id);
-    final doc = bench.document;
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-      children: [
-        Row(
-          children: [
-            Text(
-              '${at < 0 ? 1 : at + 1} of ${open.length}',
-              style: Zc.small.copyWith(color: Zc.ink4),
-            ),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(Icons.chevron_left, size: 20),
-              color: Zc.ink3,
-              onPressed: at > 0 ? () => bench.focusOn(open[at - 1].id) : null,
-            ),
-            IconButton(
-              icon: const Icon(Icons.chevron_right, size: 20),
-              color: Zc.ink3,
-              onPressed: at >= 0 && at < open.length - 1
-                  ? () => bench.focusOn(open[at + 1].id)
-                  : null,
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        if (doc != null)
-          Container(
-            padding: const EdgeInsets.all(13),
-            decoration: Zc.panel(fill: Zc.paper, edge: Zc.lineSoft, radius: 10),
-            child: Text.rich(
-              _sentence(doc.text, current.span),
-              style: Zc.document.copyWith(fontSize: 13.5),
-            ),
-          ),
-        const SizedBox(height: 12),
-        Text(current.reason, style: Zc.small),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            _Tag(kindName(current.kind), Zc.ink4),
-            const SizedBox(width: 6),
-            _Tag(
-              'found by ${sourceName(current.source).toLowerCase()}',
-              sourceTint(current.source),
-            ),
-            if (current.place != null) ...[
-              const SizedBox(width: 6),
-              _Tag(
-                'Page ${current.place!.page} · ¶${current.place!.paragraph}',
-                Zc.ink4,
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 14),
-        _Answers(bench: bench, finding: current, onVault: onVault),
-        const SizedBox(height: 10),
-        Text(
-          '«Later» is not an answer: the value stays in the clear, it is still '
-          'counted, and sending stays shut until you say yes or no to it.',
-          style: Zc.tiny.copyWith(letterSpacing: 0),
-        ),
-      ],
-    );
-  }
-
-  /// The sentence around a finding, with the finding itself standing out. Cut on
-  /// sentence marks and line ends; if no boundary is near, a window of characters.
-  TextSpan _sentence(String text, Span span) {
-    const reach = 180;
-    var from = span.start;
-    while (from > 0 &&
-        span.start - from < reach &&
-        !'.!?\n'.contains(text[from - 1])) {
-      from--;
-    }
-    var to = span.end;
-    while (to < text.length &&
-        to - span.end < reach &&
-        !'.!?\n'.contains(text[to])) {
-      to++;
-    }
-    if (to < text.length && to - span.end < reach) to++;
-
-    return TextSpan(
-      children: [
-        if (from > 0)
-          const TextSpan(
-            text: '… ',
-            style: TextStyle(color: Zc.ink4),
-          ),
-        TextSpan(text: text.substring(from, span.start)),
-        TextSpan(
-          text: text.substring(span.start, span.end),
-          style: const TextStyle(
-            backgroundColor: Zc.amberWash,
-            color: Zc.amber,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        TextSpan(text: text.substring(span.end, to)),
-        if (to < text.length)
-          const TextSpan(
-            text: ' …',
-            style: TextStyle(color: Zc.ink4),
-          ),
+        one(protectKey, 'Protect', FindingAnswer.protect, Zc.clay, filled: true),
+        one(leaveKey, 'Leave it', FindingAnswer.notSensitive, Zc.ink3),
       ],
     );
   }
