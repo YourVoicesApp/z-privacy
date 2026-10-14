@@ -46,10 +46,11 @@ The owner's reading is right: the finding engine is there.
 The lead's reading:
 - **Completions come only from the words of the document open now.** They never come from the vault, from other sessions, or from earlier searches. Nothing new is stored, and nothing from elsewhere is shown.
 - **The one shown is the word that appears most often with that beginning** (case-blind); a tie goes to the earlier one in reading order.
-- If more than one word fits, a second Tab before Enter shows the next one. If no word fits, nothing faint appears, and Enter searches what was typed.
+- **Typing on means the shown word is refused (owner, 14 Oct):** «الاستمرار في كتابة الأحرف يعني أن الخيار الأول مرفوض والبحث عن خيار ثاني. في حال عدم وجود خيار ثاني تختفي الإضافات وتستمر الكتابة.» Each new letter drops every word already shown and offers the next one that fits what is typed now. If none is left, the faint text disappears and the typing goes on. Enter then searches what was typed. This replaces the lead's «second Tab». Tab only takes; it never cycles.
+- Harmless by design: someone who types «Lindq» after *Lindqvist* was shown loses the completion, but typing the name out and pressing Enter finds the same 12 places.
 - «Third character» counts letters as the eye sees them, so Arabic «لين» counts three.
 
-Guard: «Lin» in a document holding Lindqvist ×12 and Lindberg ×2 → faint *Lindqvist*; Tab → the bar reads «Lindqvist»; Enter → the 12-place result line. «Li» → nothing faint.
+Guard: «Lin» in a document holding Lindqvist ×12 and Lindberg ×2 → faint *Lindqvist*; Tab → the bar reads «Lindqvist»; Enter → the 12-place result line. «Li» → nothing faint. «Lin» shows *Lindqvist*, then «d» → faint *Lindberg* (Lindqvist refused); then «b» → nothing more fits that was not shown, so the faint text is gone and the bar reads «Lindb».
 
 ## Beside it: highlighted words become suggestions (owner, 14 Oct)
 
