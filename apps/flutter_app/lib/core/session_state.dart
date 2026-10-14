@@ -1467,11 +1467,19 @@ class Workbench extends ChangeNotifier {
   /// press away instead of a sentence they have to work out. It takes the slot
   /// the one way it is taken, through [openReview], and sets the focus first
   /// because that method only fills an empty one.
-  void openTheReviewAtTheFirstWaitingWord() {
+  /// Returns **false when there was no word to go to** — an empty document, a
+  /// refusal of another kind — which is how a press learns whether the person
+  /// has somewhere to land without reading the error itself (G20).
+  bool openTheReviewAtTheFirstWaitingWord({String? said}) {
     final first = theFirstWaitingWord(findings);
-    if (first == null) return;
+    if (first == null) return false;
     focused = first.id;
+    // **The sentence is said where the word is** — the lead's ruling of 14 Oct
+    // on rule 12. The sheet gets out of the way, so the news cannot stay behind
+    // it: this is the line the workspace draws above the columns.
+    if (said != null) trouble = said;
     openReview(walk: true);
+    return true;
   }
 
   void closeReview() {
@@ -1686,7 +1694,13 @@ enum SendStage { none, sent, answered, pulledIn, keptNowhere, refused }
 /// sentence the person reads at the press: a press that does nothing and says
 /// nothing is the one shape of refusal this project does not allow.
 class WhatMayLeave {
-  const WhatMayLeave({this.view, this.said, this.refused, this.renamed});
+  const WhatMayLeave({
+    this.view,
+    this.said,
+    this.refused,
+    this.renamed,
+    this.landedOnTheWaitingWord = false,
+  });
 
   /// The payload whose text may leave — **read after the birth**, never the one
   /// a `build` captured before it.
@@ -1698,6 +1712,13 @@ class WhatMayLeave {
 
   /// Why nothing may leave.
   final String? refused;
+
+  /// **The person has somewhere to land** — 083 rule 12, the lead's ruling of
+  /// 14 Oct. True when the refusal opened the review on a word still waiting,
+  /// which is the one case where the sheet standing in front of it would be the
+  /// wall the rule removes. A press reads this instead of the error, because no
+  /// surface interprets an `ApiError` by itself (G20).
+  final bool landedOnTheWaitingWord;
 
   /// How many tokens the core renamed into the new session. Null when no birth
   /// happened; **0 is a real answer** and has its own sentence.
@@ -1809,10 +1830,15 @@ Future<WhatMayLeave> beginThenRead(
   // Asked before the birth so that a press which takes nothing out leaves
   // nothing behind it either: no session, no rename, only an empty clipboard
   // and the review open on the word that is waiting.
-  ({PayloadView? view, String? refused})? got;
+  ({PayloadView? view, String? refused, bool lit})? got;
   if (thePayloadLeaves) {
     got = await _whatMayLeave(bench);
-    if (got.refused != null) return WhatMayLeave(refused: got.refused);
+    if (got.refused != null) {
+      return WhatMayLeave(
+        refused: got.refused,
+        landedOnTheWaitingWord: got.lit,
+      );
+    }
   }
   int? renamed;
   String? said;
@@ -1848,7 +1874,12 @@ Future<WhatMayLeave> beginThenRead(
   if (renamed != null) {
     got = await _whatMayLeave(bench);
     if (got.refused != null) {
-      return WhatMayLeave(said: said, renamed: renamed, refused: got.refused);
+      return WhatMayLeave(
+        said: said,
+        renamed: renamed,
+        refused: got.refused,
+        landedOnTheWaitingWord: got.lit,
+      );
     }
   }
   final view = got!.view!;
@@ -1879,9 +1910,15 @@ Future<WhatMayLeave> beginThenRead(
 /// waiting, and it opens the review on the first of them (083, rule 12). The
 /// law itself is in the core, in one function, and nothing here re-reads a
 /// count to decide anything.
-Future<({PayloadView? view, String? refused})> _whatMayLeave(Workbench bench) async {
+Future<({PayloadView? view, String? refused, bool lit})> _whatMayLeave(
+  Workbench bench,
+) async {
   try {
-    return (view: await z.payloadToTakeOut(session: bench.session), refused: null);
+    return (
+      view: await z.payloadToTakeOut(session: bench.session),
+      refused: null,
+      lit: false,
+    );
   } on ApiError catch (e) {
     // **No word of the error is read here** — G20 and `messages_test`'s own
     // guard: no widget interprets an `ApiError` by itself, and this helper is
@@ -1893,8 +1930,11 @@ Future<({PayloadView? view, String? refused})> _whatMayLeave(Workbench bench) as
     // empty document, a refusal of another kind — the method does nothing,
     // because `theFirstWaitingWord` has nothing to hand it. The law stays in
     // the core; what is decided here is only where the person's eye goes.
-    bench.openTheReviewAtTheFirstWaitingWord();
-    return (view: null, refused: humanMessage(e));
+    final said = humanMessage(e);
+    final lit = bench.openTheReviewAtTheFirstWaitingWord(
+      said: andTheClipboardIsEmpty(said),
+    );
+    return (view: null, refused: said, lit: lit);
   }
 }
 

@@ -32,3 +32,15 @@ import 'package:flutter/services.dart';
 /// the clipboard that follows it, whatever the person then chooses.
 Future<void> emptyTheClipboardFirst() =>
     Clipboard.setData(const ClipboardData(text: ''));
+
+/// The news a refused exit leaves behind: the refusal's own sentence, and the
+/// one thing about the clipboard a person cannot find out any other way.
+///
+/// It lives here because it is a sentence **about this rule**: the press emptied
+/// the clipboard and then took nothing out, so a paste gives back nothing — and
+/// «a paste that gives back nothing reads as a broken application unless
+/// somebody said so first» (the owner's own first reading of his 12 October
+/// leak). Two surfaces say it now — the sheet, and the workspace the sheet gets
+/// out of the way for (083 rule 12) — so it is worded once.
+String andTheClipboardIsEmpty(String refusal) =>
+    '$refusal\nNothing was copied — the clipboard is empty.';

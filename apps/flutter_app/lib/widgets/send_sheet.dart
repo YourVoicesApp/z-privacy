@@ -36,6 +36,7 @@ import 'package:flutter/services.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/protected_pdf.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/core/the_clipboard.dart' show andTheClipboardIsEmpty;
 import 'package:zprivacy/src/rust/api/core.dart' show coreVersion;
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
@@ -433,6 +434,9 @@ class _SendSheetState extends State<SendSheet> {
   /// what refusing means here. Until 081 this also walked the person back to
   /// the name field a page earlier — there is no field to walk back to now, and
   /// no press is refused for want of a word.
+  /// The sheet stays and says it — for the refusals a person cannot act on from
+  /// anywhere else. The one that **can** be acted on, a word still waiting,
+  /// closes this sheet instead: see [_outOfTheWay].
   void _nothingLeft(WhatMayLeave out) {
     setState(() {
       // **And the clipboard is empty** — 081. `beginThenRead` empties it as its
@@ -440,9 +444,28 @@ class _SendSheetState extends State<SendSheet> {
       // person is told because a paste that gives back nothing reads as a
       // broken application unless somebody said so first — «المستخدم لا يدرك
       // أنه نفس النسخ القديم», which was the owner's own first reading of it.
-      _trouble = '${out.refused ?? 'Nothing left the machine.'}\n'
-          'Nothing was copied — the clipboard is empty.';
+      _trouble = andTheClipboardIsEmpty(
+        out.refused ?? 'Nothing left the machine.',
+      );
     });
+  }
+
+  /// **A sheet in front of the lit word is a wall** — the lead's ruling of 14
+  /// Oct on 083 rule 12.
+  ///
+  /// The press took nothing out and the review is already open on the first
+  /// word still waiting, with the sentence on the workspace's own line. So this
+  /// sheet gets out of the way and the person lands on the word, one press from
+  /// answering it — rather than reading a refusal in front of the thing it is
+  /// about.
+  ///
+  /// `false`, because nothing left: the Workspace moves a person off their
+  /// document only when something did (`showDialog<bool>` at
+  /// `workspace.dart:715`).
+  bool _outOfTheWay(WhatMayLeave out) {
+    if (!out.landedOnTheWaitingWord) return false;
+    Navigator.of(context).pop(false);
+    return true;
   }
 
   Widget _aiDoors(
@@ -501,7 +524,7 @@ class _SendSheetState extends State<SendSheet> {
                               );
                               if (!mounted) return;
                               if (out.view == null) {
-                                _nothingLeft(out);
+                                if (!_outOfTheWay(out)) _nothingLeft(out);
                                 return;
                               }
                               await Clipboard.setData(
@@ -532,7 +555,7 @@ class _SendSheetState extends State<SendSheet> {
                               );
                               if (!mounted) return;
                               if (out.view == null) {
-                                _nothingLeft(out);
+                                if (!_outOfTheWay(out)) _nothingLeft(out);
                                 return;
                               }
                               if (out.said != null) {
@@ -678,7 +701,7 @@ class _SendSheetState extends State<SendSheet> {
                                     // person who is told only «it failed»
                                     // would not know that.
                                     if (out.said != null) _begun = out.said;
-                                    _nothingLeft(out);
+                                    if (!_outOfTheWay(out)) _nothingLeft(out);
                                     return;
                                   }
                                   Navigator.of(context).pop(true);

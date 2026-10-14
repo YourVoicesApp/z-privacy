@@ -1197,7 +1197,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "own answer restores with nothing said" \
          "puts nothing out while a word waits" \
          "the exits are pressable while a word waits" \
-         "the first waiting word in reading order"; do
+         "the first waiting word in reading order" \
+         "closes the sheet and says it where the word is"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

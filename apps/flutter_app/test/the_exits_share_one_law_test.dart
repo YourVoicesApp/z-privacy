@@ -234,6 +234,66 @@ void main() {
         reason: 'a refused exit began a session the person never got anything out of');
   });
 
+  // ----------------------------------------------------------------- guard 1b
+  //
+  // **The sheet gets out of the way** — the lead's ruling of 14 Oct on rule 12:
+  // «a sheet standing in front of the lit word is a wall». So the press takes
+  // nothing out, the sheet closes, the sentence is said on the workspace's own
+  // line, and the person lands on the word.
+  //
+  // A real press, and it resumes: the core call inside it completes in
+  // `_settle`'s `runAsync` windows, which is also how `the_name_at_the_exit`'s
+  // two presses are measured.
+  testWidgets('the refused press closes the sheet and says it where the word is',
+      (tester) async {
+    await tester.binding.setSurfaceSize(_wide);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final probe = _ClipboardProbe(tester)..install();
+    probe.text = _letter;
+    late final ({Workbench bench, Ground ground, List<String> bodies, Directory out}) g;
+    await tester.runAsync(() async {
+      g = await _waiting('sheet');
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => ZButton(
+            label: 'Open it',
+            onPressed: () => showDialog<bool>(
+              context: context,
+              builder: (_) => SendSheet(
+                bench: g.bench,
+                ground: g.ground,
+                saveFolder: g.out.path,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('Open it'));
+    await _settle(tester);
+    await tester.tap(find.text('Continue'));
+    await _settle(tester);
+    expect(find.byType(SendSheet), findsOneWidget, reason: 'the sheet never opened');
+
+    await tester.tap(find.text('Copy Protected'));
+    await _settle(tester, rounds: 16);
+
+    expect(find.byType(SendSheet), findsNothing,
+        reason: 'the sheet stands in front of the word it is telling the person about');
+    expect(probe.text, '', reason: 'the press left something on the clipboard');
+    expect(probe.text, isNot(contains(_company)));
+    expect(
+      g.bench.trouble,
+      'One word waits for your answer — nothing left Z.\n'
+      'Nothing was copied — the clipboard is empty.',
+      reason: 'the news is not where the person landed: ${g.bench.trouble}',
+    );
+    expect(g.bench.panel, OpenPanel.review);
+    expect(g.bench.focused, g.bench.suggested.single.id);
+  });
+
   // ------------------------------------------------------------------ guard 2
   //
   // **The glass does not carry its own copy of the law.** The presses stay
