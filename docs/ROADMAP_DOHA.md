@@ -205,7 +205,20 @@ And the rule that makes it ours: **a document written inside Z carries its token
 2. **Published after the fix.** A real finding published at once hands attackers a map. The report is written at once and dated; it is published when the hole is shut.
 3. **Measured like a builder's report.** Every hole it claims is reproduced on our own tree before it is believed.
 
-**And it is an application of its own** — every company that builds software needs someone to attack it honestly and publish what they found. Recorded as an idea on the map, not a fifth stage: Doha shows one product, Z.
+**And it is an application of its own — the owner's shape of it (14 Oct):** «نحن شركة تقديم تقرير عن الأكواد: ما هي العيوب المحتملة وغير المحتملة، والأغراض الأمنية. الخطوة الأولى: نحن نحدد النقاط التي نراجع كودها أو نهاجمها، فنحن لا نقوم بمراجعة ما يريده طالب المراجعة. الخطوة التالية: صندوق يوضع فيه الكود الذي سوف تتم مهاجمته، ثم Z، ثم الهجوم.»
+
+1. **We choose what is attacked**, not the client — so nobody can ask for what he knows is sound to be checked and hide what he fears. That is what makes the report independent.
+2. **A box** the code is put into — and **the box is the consent boundary**: whoever puts code in it permits it to be attacked inside our box. A live system is attacked only with written permission.
+3. **Then Z.**
+4. **Then the attack.**
+
+**Step 3 is the heart of it, and it is why only Z makes this possible.** No company sends its code to an outside model, because code carries **secrets** — service keys, passwords, internal hostnames, real customers' data in test fixtures. It is the same wall that stops an accountant sending his books. Z lifts it: the secrets are protected, the model attacks code with no secret in it, and the report comes back and is restored locally.
+
+**And the protection becomes evidence:** a token carries its kind, so a key written into the code reaches the model as `__Z_…_SECRET_…__` — and «a secret is written in the code here» is itself a finding for the report, made without the model ever seeing the secret.
+
+**What Z would need — named, not built:** a **code pack** that knows secrets (keys, passwords, connection strings, private keys) — Z today knows names and numbers in prose, not secrets in code; a **new kind word** such as `SECRET`, a contract change like `CARD`; and protection of **values, never structure** — function and variable names stay, so the code under attack is not broken.
+
+**It is also a proof of the Doha goal itself:** Z as the heart of a project that is neither accounting nor law, solving a problem for a company that works on other things. Recorded as an idea on the map, not a fifth stage: Doha shows one product, Z.
 
 ## Not on this road
 
