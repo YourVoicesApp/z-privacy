@@ -1266,14 +1266,11 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             let profile = core.get(session.id).and_then(|s| s.profile_id.clone());
             core.vault.hints(profile.as_deref())
         };
-        let vault_exceptions = {
-            let profile = core.get(session.id).and_then(|s| s.profile_id.clone());
-            core.vault.exceptions(profile.as_deref())
-        };
-        let vault_names = {
-            let profile = core.get(session.id).and_then(|s| s.profile_id.clone());
-            core.vault.taught_names(profile.as_deref())
-        };
+        // The exceptions and the taught names are not read here any more: they
+        // were the scanner's, and the scanner is no longer run over a
+        // selection. The hints below still are — they answer «which identity
+        // claims this value», which is a fact the vault holds and not a guess
+        // about what the value is.
         let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
         let selected = s
@@ -1332,19 +1329,35 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             }
         }
 
-        // The pack's guess, from the pack — never from the screen. In order:
+        // **The kind of what the scanner found on exactly this stretch, and
+        // nothing else** — 083, ruling 1, and the lead's ruling of 14 Oct on
+        // the question the paper left open.
         //
-        // 1. a finding or a protection that covers *exactly* this stretch. This
-        //    is the best answer because it came from a scan of the whole
-        //    document, and the German pack's rules are contextual: «Thomas
-        //    Müller» is a name because «Herr» stood before it, and that word is
-        //    outside the selection.
-        // 2. the scanner run over the selected text alone — which catches an
-        //    IBAN or an e-mail in text no scan has looked at.
-        // 3. a mark that merely overlaps, as a last resort.
+        // With the protection dialog deleted there is no one left to ask, so
+        // this answer travels inside the token and the model reads it. It comes
+        // from the scan of the **whole document**, which is the only reading
+        // with the context in it: «Thomas Müller» is a name because «Herr»
+        // stood in front of it, and that word is outside the selection.
         //
-        // Anything else is `Custom`, and the user picks. A wrong guess is worse
-        // than no guess: the kind travels inside the token, and the model reads it.
+        // **What was here until today, and why all three are gone:** the
+        // scanner run over the selected text alone, then the kind of a mark
+        // that merely *overlapped*, then `looks_like_a_person` — a shape test
+        // on the words themselves. Each of them is a second classifier, and
+        // the lead's words are «never a guess from a second classifier».
+        //
+        // **What that costs, measured on the five parity fixtures and written
+        // where the cost is paid:** a value taken **whole** keeps its kind
+        // exactly — 0 of 95 became `Custom` — and a click **inside** a
+        // two-word value loses it, all 58 of them, which 076 answers with a
+        // second click on the pair. Across every word of all five, the named
+        // share falls from 37% to 2%. And the one case that is a real loss:
+        // **a name the scanner missed, selected by hand, is now `Custom` and
+        // not `Person`** — the very case hand selection exists for. The lead
+        // chose it anyway, because in German every noun is capitalised and a
+        // heuristic that guesses «person» from a word's shape will mislead the
+        // model more often than «we do not know» ever will. An honest unknown
+        // over a confident guess, and if the owner overrules it, it comes back
+        // as a ruling and not as a heuristic.
         let exact_kind = s
             .protections
             .iter()
@@ -1356,24 +1369,6 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
                     .find(|f| f.start == start && f.end == end)
                     .map(|f| f.kind)
             });
-        let guessed = exact_kind.or_else(|| {
-            scanner::scan(&selected, std::slice::from_ref(&s.pack_id), &[], &vault_hints, &vault_exceptions, &vault_names)
-                .into_iter()
-                .find(|c| c.start == 0 && c.end == selected.len())
-                .map(|c| c.kind)
-        });
-
-        let from_mark = s
-            .protections
-            .iter()
-            .find(|p| p.start < end && start < p.end)
-            .map(|p| p.kind)
-            .or_else(|| {
-                s.findings
-                    .iter()
-                    .find(|f| f.start < end && start < f.end)
-                    .map(|f| f.kind)
-            });
 
         let entities: Vec<String> = vault_hints
             .iter()
@@ -1383,7 +1378,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
 
         Ok(SelectionView {
             empty: false,
-            kind: guessed.or(from_mark).or_else(|| looks_like_a_person(&selected)).unwrap_or(Kind::Custom),
+            kind: exact_kind.unwrap_or(Kind::Custom),
             matches: text::occurrences(s.original_str(), &selected).len() as u32,
             protected_as: exact.map(|p| p.token.clone()),
             protected_by: exact.map(|p| p.source),
@@ -1394,39 +1389,6 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             also_before,
         })
     })
-}
-
-/// One or two capitalised words, and nothing else in them.
-///
-/// 041-P, from the owner's live run: his hand-made protections went out as
-/// `CUSTOM`, and a model reads `PERSON`. The dialog has to offer *something*
-/// first, and when a person draws a line round «Björn Sandström» the honest
-/// default is a person — not because the app knows, but because this is the
-/// commonest thing a hand selects in a letter, and the dialog is where it is
-/// confirmed or changed before anything happens.
-///
-/// It is the **last** guess, after the pack, the finding under the selection
-/// and the mark that overlaps it. Each of those knows more than this does.
-/// Three words or more is prose, a lower-case word is a word, and anything
-/// carrying a digit or a mark is not a name — all of those stay `Custom`.
-fn looks_like_a_person(selected: &str) -> Option<Kind> {
-    let words: Vec<&str> = selected.split_whitespace().collect();
-    if words.is_empty() || words.len() > 2 {
-        return None;
-    }
-    for word in &words {
-        let mut chars = word.chars();
-        match chars.next() {
-            Some(first) if first.is_uppercase() => {}
-            _ => return None,
-        }
-        // A hyphen inside a name is a name — «Al-Hassan», «Marie-Luise» — and
-        // everything else that is not a letter says this is not one.
-        if !chars.all(|c| c.is_alphabetic() || c == '-' || c == '\'') {
-            return None;
-        }
-    }
-    Some(Kind::Person)
 }
 
 /// Why is this protected?
@@ -1564,6 +1526,9 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
                 }
             }),
             aliases: known.map(|k| k.aliases).unwrap_or_default(),
+            // What «in this conversation» would uncover, counted where the
+            // places are.
+            places: s.protections.iter().filter(|q| q.token == p.token).count() as u32,
         })
     })
     .ok_or(ApiError::InvalidSession)?
@@ -2076,6 +2041,44 @@ pub(crate) fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome
         // And the finding goes with it, so the review list does not keep a row
         // for something that is no longer protected.
         s.findings.retain(|f| !(f.start == hit.start && f.end == hit.end));
+        s.bump();
+        Ok(UndoOutcome::Undone {
+            token: hit.token,
+            places,
+            created_entity: None,
+        })
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+/// **Every place that carries this token, in this conversation** — 083,
+/// ruling 3. See `api::unprotect_every_place` for why the token and not the
+/// text is the unit.
+pub(crate) fn unprotect_every_place(session: SessionId, span: Span) -> ApiResult<UndoOutcome> {
+    with_session(session.id, |s| {
+        let (start, end) = text::span_to_bytes(s.original_str(), span)?;
+        let Some(hit) = s.protections.iter().find(|p| p.start < end && start < p.end).cloned() else {
+            return Ok(UndoOutcome::NothingToUndo);
+        };
+        // The ranges first, because the findings are matched by range and the
+        // protections are about to be gone.
+        let ranges: Vec<(usize, usize)> = s
+            .protections
+            .iter()
+            .filter(|p| p.token == hit.token)
+            .map(|p| (p.start, p.end))
+            .collect();
+        let before = s.protections.len();
+        s.protections.retain(|p| p.token != hit.token);
+        let places = before.saturating_sub(s.protections.len()) as u32;
+
+        // Nothing points at the token any more, by construction — so it stops
+        // being a token of this conversation, exactly as the one-place act
+        // does when it takes the last one.
+        s.tokens.remove(&hit.token);
+        // And the findings go with them: a review row for something that is no
+        // longer protected is a row about nothing.
+        s.findings.retain(|f| !ranges.iter().any(|(a, b)| f.start == *a && f.end == *b));
         s.bump();
         Ok(UndoOutcome::Undone {
             token: hit.token,

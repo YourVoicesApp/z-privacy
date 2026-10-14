@@ -499,6 +499,16 @@ class Explanation {
   /// other value in this app.
   final List<String> aliases;
 
+  /// **How many places in this conversation carry this token** — this one
+  /// included, so it is never 0.
+  ///
+  /// 083 ruling 3 gives un-protection two choices, and one of them uncovers
+  /// every place at once. This project's own law about that asymmetry is
+  /// written over «Protect all» and «Skip all»: the direction that uncovers
+  /// says how many, in the act's own name. So the count comes from here,
+  /// where the places are, and the button is never left to guess it.
+  final int places;
+
   /// The reach of the taught value, when one was taught — so the «Forget»
   /// button can carry its own scope in its name instead of leaving a person
   /// to assemble the meaning from a line of small print. `None` when nothing
@@ -517,6 +527,7 @@ class Explanation {
     this.entity,
     this.valueId,
     required this.aliases,
+    required this.places,
     this.taughtReach,
   });
 
@@ -533,6 +544,7 @@ class Explanation {
       entity.hashCode ^
       valueId.hashCode ^
       aliases.hashCode ^
+      places.hashCode ^
       taughtReach.hashCode;
 
   @override
@@ -551,6 +563,7 @@ class Explanation {
           entity == other.entity &&
           valueId == other.valueId &&
           aliases == other.aliases &&
+          places == other.places &&
           taughtReach == other.taughtReach;
 }
 

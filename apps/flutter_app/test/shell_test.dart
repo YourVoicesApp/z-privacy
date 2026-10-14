@@ -23,7 +23,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
-import 'package:zprivacy/widgets/protect_dialog.dart';
+import 'package:zprivacy/core/protecting.dart';
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/widgets/connect_form.dart';

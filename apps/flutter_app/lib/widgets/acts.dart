@@ -7,12 +7,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/going_to_a_word.dart';
+import 'package:zprivacy/core/protecting.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
-import 'package:zprivacy/widgets/protect_dialog.dart';
 
 class ActsBar extends StatelessWidget {
   const ActsBar({
@@ -76,13 +76,6 @@ class ActsBar extends StatelessWidget {
                   onPressed: bench.busy ? null : () => unawaited(bench.alsoTakeTheWordBefore()),
                   hint: 'Takes the capitalised word in front of the selection too',
                 ),
-              if (state == ProtectState.ready || state == ProtectState.asks)
-                if ((v?.matches ?? 0) > 1)
-                  ZButton(
-                    label: 'Protect all matches',
-                    badge: v!.matches,
-                    onPressed: () => _open(context, all: true),
-                  ),
               ZButton(
                 label: 'Undo protection',
                 icon: Icons.undo,
@@ -182,53 +175,35 @@ class ActsBar extends StatelessWidget {
           label: 'Protect whole items',
           filled: true,
           badge: v!.snapsTo.length,
-          onPressed: () => _open(context, all: false),
+          onPressed: () => _press(context),
         ),
-      // ASKS and READY both open the dialog; the dialog itself carries the
-      // vault's question when there is one.
-      _ => ZButton(label: 'Protect', filled: true, onPressed: () => _open(context, all: false)),
+      // READY — **one press, and it is protected** (083, ruling 1). No dialog
+      // opens; the badge says how many places this one press settles, which is
+      // what «Protect all matches» used to be a second button for.
+      _ => ZButton(
+          label: 'Protect',
+          filled: true,
+          badge: (v?.matches ?? 0) > 1 ? v!.matches : null,
+          onPressed: () => _press(context),
+        ),
     };
   }
 
-  Future<void> _open(BuildContext context, {required bool all}) async {
-    final v = bench.selected;
-    final span = bench.selection;
-    final doc = bench.document;
-    if (v == null || span == null || doc == null) return;
-
-    final wish = await showDialog<ProtectWish>(
-      context: context,
-      builder: (_) => ProtectDialog(
-        view: v,
-        selectedText: doc.text.substring(span.start, span.end),
-        vault: ground.vault,
-        inAProfile: bench.profileId != null,
-        profileName: bench.profileId == null
-            ? 'this client'
-            : ground.profiles
-                .firstWhere(
-                  (p) => p.id == bench.profileId,
-                  orElse: () => ProfileRow(id: bench.profileId!, name: 'this client', languages: const []),
-                )
-                .name,
-      ),
-    );
-    if (wish == null) return;
-
-    final outcome = await bench.protectSelection(
-      scope: wish.scope,
-      kind: wish.kind,
-      // The scope decides the breadth now; «protect all matches» is the button
-      // that picks «this conversation» for you.
-      allMatches: all,
-    );
+  /// **The press** — 083, ruling 1. What was a dialog is now one act, and what
+  /// it did is said where the press happened.
+  Future<void> _press(BuildContext context) async {
+    final outcome = await protectTheSelection(bench);
     if (outcome == null) return;
+    if (!context.mounted) return;
     onSay(switch (outcome) {
       ProtectOutcome_Applied(:final token, :final places) => places == 1
           ? 'Protected as $token.'
           : 'Protected as $token, in $places places.',
       ProtectOutcome_AlreadyProtected(:final token, :final source) =>
         'Already protected as $token, by ${sourceName(source).toLowerCase()}.',
+      // The vault's question, answered by the core **after** the act instead of
+      // by a dialog before it: the value belongs to an identity and keeps the
+      // token that identity already has.
       ProtectOutcome_BelongsToEntity(:final entity, :final token) =>
         'That belongs to $entity and keeps its token $token.',
       ProtectOutcome_Snapped(:final spans) =>
