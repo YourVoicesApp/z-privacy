@@ -915,6 +915,24 @@ pub struct _PayloadView {
     /// session it belonged to is a fact about that snapshot, not about the
     /// moment somebody looks at it later.
     pub session: Option<PayloadSession>,
+    /// **The token the answer page of a z-pdf prints** — 079.
+    ///
+    /// The owner, 13 Oct: every z-pdf ends with a page whose top line is
+    /// «Z-pdf : Zprivacy-svara», and the word is **protected with the same key
+    /// as the document** — «لا أقصد أنها تحصل على المفتاح، أقصد أنها تحصل رمزاً
+    /// ثابتاً يمكن العودة إليه». So what crosses this boundary is the token and
+    /// never the word: the screen that draws the page prints a name of this
+    /// session, and has no value to print instead.
+    ///
+    /// Minted by the door the exits ask, `payload_to_take_out`, after the law
+    /// that nothing leaves while a word waits — so a refused exit mints nothing
+    /// and prints no page. Allowed by every payload this bench builds from then
+    /// on, so an answer that carries it back restores it. `None` from a payload
+    /// built before any exit, which has no page to print.
+    ///
+    /// Not counted in `by_kind`: the footer states what stands in the text, and
+    /// this token stands on a page of its own.
+    pub answer_page_token: Option<String>,
 }
 
 #[frb(mirror(KindTally))]

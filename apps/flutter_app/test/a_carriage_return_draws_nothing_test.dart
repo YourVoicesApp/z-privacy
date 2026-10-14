@@ -792,6 +792,10 @@ void main() {
   // for tomorrow — the day either changes, this reddens by itself instead of the
   // closure resting on our memory of a measurement.
   group('the PDF a CRLF document writes is the PDF its LF twin writes', () {
+    // Every export ends with its answer page (079), so every one of these
+    // carries the same token for it: the two files compared differ only in
+    // what is being compared.
+    const answer = '__Z_0000_CUSTOM_00000000__';
     PdfStamp stamp() => PdfStamp(
       build: 'z_core 0.0.0 · 0000-00-00 · W8',
       places: 0,
@@ -808,11 +812,13 @@ void main() {
         final once = await buildProtectedPdf(
           text: _lf,
           stamp: stamp(),
+        answerToken: answer,
           compress: false,
         );
         final twice = await buildProtectedPdf(
           text: _lf,
           stamp: stamp(),
+        answerToken: answer,
           compress: false,
         );
         expect(
@@ -841,11 +847,13 @@ void main() {
         final lf = await buildProtectedPdf(
           text: _lf,
           stamp: stamp(),
+        answerToken: answer,
           compress: false,
         );
         final crlf = await buildProtectedPdf(
           text: _crlf,
           stamp: stamp(),
+        answerToken: answer,
           compress: false,
         );
         expect(
@@ -870,8 +878,8 @@ void main() {
     );
 
     test('and at the setting the product actually writes with', () async {
-      final lf = await buildProtectedPdf(text: _lf, stamp: stamp());
-      final crlf = await buildProtectedPdf(text: _crlf, stamp: stamp());
+      final lf = await buildProtectedPdf(text: _lf, stamp: stamp(), answerToken: answer);
+      final crlf = await buildProtectedPdf(text: _crlf, stamp: stamp(), answerToken: answer);
       expect(
         _withoutTheDocumentId(crlf),
         _withoutTheDocumentId(lf),
@@ -885,11 +893,13 @@ void main() {
       final plain = await buildProtectedPdf(
         text: _lf,
         stamp: stamp(),
+        answerToken: answer,
         compress: false,
       );
       final changed = await buildProtectedPdf(
         text: _lf.replaceFirst('Hedvig', 'Hedvigg'),
         stamp: stamp(),
+        answerToken: answer,
         compress: false,
       );
       expect(

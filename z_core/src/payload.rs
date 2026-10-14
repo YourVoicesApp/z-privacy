@@ -44,6 +44,9 @@ pub(crate) struct SafePayload {
     /// in the same breath as the text was assembled. See `api::PayloadView`'s
     /// own comment for why the figure may not be worked out anywhere else.
     by_kind: Vec<crate::api::KindTally>,
+    /// **The answer page's token, when this bench has printed one** — 079.
+    /// Allowed beside the text's own tokens and never part of the text.
+    answer_page: Option<String>,
     send_state: PayloadSendState,
 }
 
@@ -222,6 +225,22 @@ impl SafePayload {
             .map(|(kind, count)| crate::api::KindTally { kind, count })
             .collect();
 
+        // **The answer page's token is allowed, and counted nowhere** — 079.
+        //
+        // After the tally on purpose: `by_kind` states what stands in the text,
+        // and this token stands on a page of its own. Allowed, because an
+        // answer that carries it back — a returned page, a model that echoes
+        // it — must restore it like any other name of this session; and allowed
+        // by every payload from the moment it exists, because the one the
+        // person's answer is tied to was usually built before the exit minted
+        // it (`Session::answer_page_token` says the other half).
+        let answer_page = session.answer_page.clone();
+        if let Some(token) = &answer_page {
+            if !allowed_token_ids.iter().any(|t| t == token) {
+                allowed_token_ids.push(token.clone());
+            }
+        }
+
         Self {
             id,
             session: session.id,
@@ -238,6 +257,7 @@ impl SafePayload {
             page_edges,
             conversation,
             by_kind,
+            answer_page,
             send_state: PayloadSendState::Ready,
         }
     }
@@ -259,6 +279,7 @@ impl SafePayload {
             page_edges: self.page_edges.clone(),
             by_kind: self.by_kind.clone(),
             session: self.conversation.clone(),
+            answer_page_token: self.answer_page.clone(),
         }
     }
 

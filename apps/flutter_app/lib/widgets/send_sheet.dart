@@ -167,8 +167,21 @@ class _SendSheetState extends State<SendSheet> {
       _savedTo = null;
     });
     final byKind = footerTally(payload, widget.ground.nameOfKind);
+    // **The answer page's token is the core's, from this same view** — 079.
+    // The door the exit asked mints it after the law, so a view that carries
+    // none did not come through that door, and a z-pdf without its answer page
+    // is not one: nothing is written rather than half of it.
+    final answerToken = payload.answerPageToken;
+    if (answerToken == null) {
+      setState(() {
+        _saving = false;
+        _trouble = 'Z Privacy could not build the PDF — its answer page had no token. Nothing was written.';
+      });
+      return;
+    }
     final out = await saveProtectedPdf(
       text: payload.text,
+      answerToken: answerToken,
       // **The payload's own session, not the app's** — the same rule
       // `_whoseNames` follows: the claim is about this text, so it is taken
       // from this text. And never `bench.document.name`, which is the person's
@@ -583,7 +596,7 @@ class _SendSheetState extends State<SendSheet> {
                   Text(
                     'Saved to ${_savedTo!}\n'
                     'The protected text, with the build stamp, the counts and a sha256 of '
-                    'that text in the footer. Nothing was sent.',
+                    'that text in the footer, and a last page for the answer. Nothing was sent.',
                     style: Zc.small.copyWith(color: Zc.ink2),
                   ),
                 ],
