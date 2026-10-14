@@ -5,7 +5,10 @@
 // Spans arrive in UTF-16 code units, which is exactly how Dart counts a string,
 // so a span can be used to slice directly. The core refuses a span that falls
 // inside a character, so a slice here can never cut one in half.
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
@@ -219,6 +222,108 @@ List<Rect> paintedOnce(Iterable<Rect> boxes) {
   return out;
 }
 
+/// **What counts as a space** — and the one place that answers it.
+///
+/// The owner's rule is written against spaces: a word begins right after one
+/// and ends right before the next. «The start and the end of a line count as a
+/// space» is his reading too, so a line break is a boundary and so is the edge
+/// of the document. Both the single click and the pair ask here, because two
+/// readings of «space» would be two rules.
+bool _isBoundary(String text, int k) =>
+    k < 0 || k >= text.length || text[k] == ' ' || text[k] == '\n';
+
+/// **The word a single click takes — 076, the owner's rule.**
+///
+/// «الضغط على الاسم بالماوس من داخل النص يحدده فقط الاسم» — one left click
+/// selects the word under the pointer, and he stated the boundary himself on
+/// 13 October: a word **begins right after a space and ends right before the
+/// next space**, and the space is never part of it. The start and the end of a
+/// line count as a space.
+///
+/// Then the edges are tidied of the marks a sentence leaves around a word, so
+/// that what is **highlighted** is what will be **protected** — his words: «a
+/// one-click selection on `Wilson,` shows `Wilson` selected and the comma
+/// apart». The marks are the core's own list (`z_core/src/text.rs:103`), and
+/// the law lives there: `whole_words` is what actually trims the span at
+/// protection time, and this is the glass showing it in advance. The two are
+/// pinned to **one** set of cases — the owner's sealed ones — in
+/// `the_marks_a_hand_selection_leaves_behind` (Rust) and in
+/// `a_click_takes_one_word_test` (here), so a drift on either side reddens.
+///
+/// Returns null where there is no word to take: on a space, or in an empty
+/// document.
+TextRange? wordAt(String text, int at) {
+  if (text.isEmpty) return null;
+  final i = at.clamp(0, text.length);
+  // A click on the space itself takes nothing. The owner's rule is about
+  // words; inventing one from a press that pointed at no word would be the
+  // screen deciding for the person, and the press costs nothing to repeat.
+  if (_isBoundary(text, i)) return null;
+
+  var start = i;
+  while (start > 0 && !_isBoundary(text, start - 1)) {
+    start--;
+  }
+  var end = i;
+  while (end < text.length && !_isBoundary(text, end)) {
+    end++;
+  }
+
+  // The same marks the core drops from a value's edges, so the highlight and
+  // the value cannot differ. Interior marks are untouched: the filter trims, it
+  // does not split — «Anne-Marie», «O'Brien» and a CSV cell stay whole.
+  const edgeMarks = <String>{
+    '.', ',', ';', ':', '!', '?', '…', '"', "'", '«', '»', '(', ')', '[', ']',
+    '{', '}', '„', '“', '”', '‘', '’', '—', '–', '،', '؛', '؟',
+  };
+  while (start < end && edgeMarks.contains(text[start])) {
+    start++;
+  }
+  while (end > start && edgeMarks.contains(text[end - 1])) {
+    end--;
+  }
+  return start < end ? TextRange(start: start, end: end) : null;
+}
+
+/// **The value two clicks take — 076, the owner's rule.**
+///
+/// «الضغطتان تأخذان كلمة ومسافة والكلمة التالية، قيمةً واحدة» — the word under
+/// the pointer, the space after it, and the word after that, as **one** value.
+///
+/// It is one **span**, so it reads exactly as the document reads between its
+/// two ends: only the ends are tidied, by `wordAt` on each side. A mark that
+/// falls between the two words — `Mueller, bitte` — stays inside the value,
+/// because taking it out would mean two spans and a value that reads
+/// differently from the text it came out of, and that is the one thing
+/// protection may never do.
+///
+/// Where there is no second word to take, the value is the first word alone,
+/// and the cases where that happens are each a decision:
+///  * **a line break after the first word** — a hand selection may not cross
+///    one, and the pair is a hand selection;
+///  * **two spaces** — the rule says *a* space, and taking less costs the
+///    person one more click while taking more protects what they never saw;
+///  * **a dash or a bracket where the next word should be** — a mark is not a
+///    word, and a value may not end on one;
+///  * **the end of the document.**
+TextRange? wordPairAt(String text, int at) {
+  final first = wordAt(text, at);
+  if (first == null) return null;
+
+  // The space is looked for from the **untidied** end of the first word: the
+  // comma in `Mueller, bitte` is not part of the value but it is certainly
+  // part of the text, and the space is on the far side of it.
+  var i = at.clamp(0, text.length);
+  while (i < text.length && !_isBoundary(text, i)) {
+    i++;
+  }
+  if (i >= text.length || text[i] != ' ') return first;
+
+  final second = wordAt(text, i + 1);
+  if (second == null) return first;
+  return TextRange(start: first.start, end: second.end);
+}
+
 /// What each source is called on screen, and why the mark is there.
 String sourceName(Source s) => switch (s) {
       Source.generalRule => 'Rule',
@@ -335,6 +440,29 @@ class _OriginalTextState extends State<OriginalText> {
   /// Where a press went down, so the press can be told from a drag.
   Offset? _downAt;
 
+  /// **The word the first of two clicks took, while a second may still come**
+  /// — 076, item 3, and `null` as soon as the chance has passed.
+  ///
+  /// The count is kept here rather than taken from the text, and the reason
+  /// was measured on 13 October. `SelectableText` does report a selection with
+  /// `SelectionChangedCause.doubleTap` on the second press down — in a bare
+  /// `SelectableText` the probe read `DOWN · SEL 0..8 doubleTap · UP`. But
+  /// inside this widget it never arrived, and the cause is worth keeping: the
+  /// **first** click has already selected that very word, so Flutter's own
+  /// `selectWord` changes nothing, and `EditableText` reports nothing when the
+  /// selection is unchanged. The signal is silent exactly when we have already
+  /// done the right thing — a guard built on it would have been green on a
+  /// document where the clicks were never counted at all.
+  ///
+  /// A clock of our own was measured and rejected too: a test's pointer events
+  /// all carry `timeStamp` zero, and the frame clock stands still whenever no
+  /// frame is drawn. A `Timer` is neither — it is what Flutter's own
+  /// recognizers use, it runs on real time in the product and on the test's
+  /// clock under `pump`, and `kDoubleTapTimeout` is the platform's number, not
+  /// one of ours.
+  TextRange? _firstClick;
+  Timer? _secondChance;
+
   /// How far a pointer may slip between down and up and still be a press.
   ///
   /// Measured, 6 October, on the owner's «the bubble does not come out»: the
@@ -382,6 +510,26 @@ class _OriginalTextState extends State<OriginalText> {
 
   RenderEditable? _editable() => editableUnder(_drawn);
 
+  /// The state that **owns** the selection, found by the same walk as the
+  /// render object above and for the same reason: `SelectableText` keeps its
+  /// `EditableText` a few layers down and hands out no handle to it. The
+  /// render object can be read; only the state can be told.
+  EditableTextState? _editableState() {
+    EditableTextState? found;
+    void walk(Element element) {
+      if (found != null) return;
+      if (element is StatefulElement && element.state is EditableTextState) {
+        found = element.state as EditableTextState;
+        return;
+      }
+      element.visitChildren(walk);
+    }
+
+    final context = _drawn.currentContext;
+    if (context is Element) context.visitChildren(walk);
+    return found;
+  }
+
   /// Ticks when the selection moves, so the rectangles behind the text are
   /// redrawn once and only then — 074/W8.
   final ValueNotifier<int> _selectionChanged = ValueNotifier<int>(0);
@@ -421,6 +569,14 @@ class _OriginalTextState extends State<OriginalText> {
   void _pressEnded(PointerUpEvent event) {
     final down = _downAt;
     _downAt = null;
+    // Read and cleared before any way out of this method, so a first click can
+    // never outlive the moment a second could have joined it — including when
+    // the press turns out to be a drag, or to land on a mark, or inside held
+    // lines, each of which is a different act and ends the pair.
+    final first = _firstClick;
+    _firstClick = null;
+    _secondChance?.cancel();
+    _secondChance = null;
     if (down == null || (event.position - down).distance > _slop) return;
 
     // **Asked of the text that is drawn, not of a painter built here.**
@@ -466,6 +622,74 @@ class _OriginalTextState extends State<OriginalText> {
       }
       return;
     }
+
+    // **076 — and here a press used to do nothing at all.** On ordinary text
+    // it now takes the word under the pointer, which is the owner's «ضغطة
+    // السلام»: the selection stops being work, and the Protect button that was
+    // always there acts on it unchanged. Nothing above this line moved — a
+    // press on a mark still asks «why», a press on a suggestion still offers
+    // the choice, and a press inside held lines is still the column act.
+    // **One click one word, two clicks one value of two** — the owner's two
+    // rules of 13 October.
+    //
+    // The second click is the one that lands on **the word the first one
+    // took**, which is a truer test than a radius in pixels: two quick clicks
+    // on two different words are two single clicks, and nothing has to agree
+    // on how far a hand may slip. A third click arms nothing, so it is a first
+    // click again and takes one word — the owner has ruled on one click and on
+    // two, and this is what three does.
+    final one = wordAt(text, offset);
+    if (one == null) return;
+    final pair = first != null && first.start == one.start && first.end == one.end;
+    final word = pair ? wordPairAt(text, offset) : one;
+    if (word == null) return;
+    if (!pair) {
+      _firstClick = one;
+      _secondChance = Timer(kDoubleTapTimeout, () {
+        _firstClick = null;
+        _secondChance = null;
+      });
+    }
+    final state = _editableState();
+    if (state == null) return;
+    // Told, not drawn: the selection belongs to the editable, and setting it
+    // here is what makes the highlight, the clipboard and `onSelectionChanged`
+    // agree. A rectangle painted by this widget would have been a fourth
+    // opinion about what is selected.
+    // **After the arena, not during it.** This listener is outside the gesture
+    // arena by design (see `_slop`), which is what lets it see the press at
+    // all — but `SelectableText`'s own tap recognizer resolves afterwards and
+    // collapses the selection to the point. Measured: setting it here directly
+    // left an empty selection on the glass. So the word is taken once the
+    // frame the press belongs to is done, and nothing can overwrite it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      state.userUpdateTextEditingValue(
+        state.textEditingValue.copyWith(
+          selection: TextSelection(baseOffset: word.start, extentOffset: word.end),
+        ),
+        SelectionChangedCause.tap,
+      );
+    });
+    // **And the frame is asked for, not hoped for.** A post-frame callback runs
+    // at the end of the *next* frame and schedules none itself. Measured,
+    // 13 October: at this line on a first click `hasScheduledFrame` was
+    // **false** — the word appeared only because Flutter's own tap handler ran
+    // a moment later, moved the caret, and that scheduled the frame. A
+    // selection the person asked for may not wait on a repaint somebody else
+    // happens to want.
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  @override
+  void dispose() {
+    // The chance of a second click does not outlive the screen it was given
+    // on; a pending timer in a disposed tree is an error a test reports and a
+    // product leaks. The notifier is disposed here for the first time too —
+    // `_SafeTextState` has always done it, this state never did.
+    _secondChance?.cancel();
+    _selectionChanged.dispose();
+    super.dispose();
   }
 
   List<InlineSpan> _keptSpans() {

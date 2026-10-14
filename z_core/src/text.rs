@@ -759,3 +759,86 @@ mod tests {
         assert_eq!(one_line_of("AB\n\u{c}CD\n", 0, 6), Some((0, 2)));
     }
 }
+
+#[cfg(test)]
+mod the_marks_a_hand_selection_leaves_behind {
+    //! **076 — the edges of a value a hand drew.**
+    //!
+    //! The owner sealed the rule on 13 Oct: the marks `. , - \' " : ; ,` are
+    //! left **outside** the value when a space touches them, and the start and
+    //! end of a line count as a space (the lead's reading, measured here). The
+    //! person never trims a selection by hand.
+    //!
+    //! These are guards on the rule that already exists — `whole_words` — and
+    //! not a second rule: two functions for one law is the «one fact, two
+    //! sources» defect this project has paid for twice. Each case here was
+    //! measured against the function before it was written down.
+    use super::whole_words;
+
+    /// What the value is after the selection the person drew is tidied.
+    fn value<'a>(text: &'a str, drawn: &str) -> &'a str {
+        let start = text.find(drawn).expect("the sample must contain its selection");
+        let (a, b) = whole_words(text, start, start + drawn.len());
+        &text[a..b]
+    }
+
+    #[test]
+    fn a_mark_the_sentence_left_at_an_edge_stays_out_of_the_value() {
+        for mark in ['.', '\u{060C}', '\'', '"', ':', ';', ','] {
+            let text = format!("Herr Mueller{mark} bitte");
+            let drawn = format!("Mueller{mark}");
+            assert_eq!(value(&text, &drawn), "Mueller", "trailing {mark:?}");
+
+            let text = format!("Herr {mark}Mueller bitte");
+            let drawn = format!("{mark}Mueller");
+            assert_eq!(value(&text, &drawn), "Mueller", "leading {mark:?}");
+        }
+    }
+
+    /// **Pinned, not fixed: the hyphen is in the owner's list and not in the
+    /// core's.** His sealed rule names `. , - \' " : ; ,`; `EDGE_MARKS` above
+    /// holds the em and en dashes and **not** the plain hyphen, so a dash left
+    /// at an edge with a space beyond it stays in the value today where his
+    /// wording would drop it. Measured 13 Oct, not changed: the lead holds the
+    /// trim rule steady until the owner rules, and a mark added to that list
+    /// changes what every drag in the product takes. This records what is true
+    /// now so the day it changes is visible.
+    ///
+    /// The case the two rules already agree on is below it: a hyphen **inside**
+    /// a word is part of the word, and the filter trims — it does not split.
+    #[test]
+    fn today_a_hyphen_at_an_edge_stays_in_the_value() {
+        assert_eq!(value("Herr Mueller- bitte", "Mueller-"), "Mueller-");
+        assert_eq!(value("Herr -Mueller bitte", "-Mueller"), "-Mueller");
+        assert_eq!(value("call Mueller-\nNext", "Mueller-"), "Mueller-");
+        // Agreed by both rules, and the reason the list is not simply widened.
+        assert_eq!(value("Anne-Marie Berg", "Anne-Marie"), "Anne-Marie");
+    }
+
+    #[test]
+    fn the_start_and_the_end_of_a_line_count_as_a_space() {
+        assert_eq!(value("call Margaret.\nNext line", "Margaret."), "Margaret");
+        assert_eq!(value("Margaret, called\nlater", "Margaret,"), "Margaret");
+    }
+
+    #[test]
+    fn an_arabic_comma_at_the_end_of_a_right_to_left_line() {
+        assert_eq!(value("\u{645}\u{627}\u{631}\u{63A}\u{631}\u{64A}\u{62A} \u{648}\u{64A}\u{644}\u{633}\u{648}\u{646}\u{60C} \u{634}\u{62E}\u{635}",
+                         "\u{648}\u{64A}\u{644}\u{633}\u{648}\u{646}\u{60C}"),
+                   "\u{648}\u{64A}\u{644}\u{633}\u{648}\u{646}");
+    }
+
+    #[test]
+    fn a_mark_a_value_is_made_of_is_not_an_edge_mark() {
+        assert_eq!(value("Anne-Marie Berg", "Anne-Marie"), "Anne-Marie");
+        assert_eq!(value("O\'Brien and Sons", "O\'Brien"), "O\'Brien");
+        assert_eq!(value("Margaret Wilson,person", "Wilson,person"), "Wilson,person");
+        assert_eq!(value("tel +49 228 oder", "+49 228"), "+49 228");
+    }
+
+    #[test]
+    fn one_click_on_a_name_in_a_cell_takes_the_name() {
+        assert_eq!(value("Margaret Wilson,person", "Margaret"), "Margaret");
+        assert_eq!(value("Margaret Wilson,person", "Wilson"), "Wilson");
+    }
+}
