@@ -87,6 +87,26 @@ pub(crate) fn scan(
     all.extend(rules::scan_with(text, &label_rules, &sets::honorifics_for(active)));
     all.extend(vault_pass(text, hints));
     all.retain(|candidate| !excepted(text, candidate, exceptions));
+    // **A token is not a candidate** — 079 rule 5, and a must-fix the moment an
+    // import began scanning (14 October, item 3).
+    //
+    // A document that comes back carries the tokens of the session it left.
+    // Three layers here would read one: a label whose value is one word
+    // («E-Mail: __Z_…__»), a label that wants a name («Ansprechpartner:
+    // __Z_…__» — a token starts with a capital), and the vault, if a token ever
+    // stood in it. Measured before this line existed: the e-mail label
+    // protected the token outright and minted a second one over it, so the text
+    // that left no longer carried the identifier the other session can resolve
+    // — restoring would hand back a token instead of an address — and the
+    // person was asked, about a token, whether it is a person.
+    //
+    // One place, after every layer and before they settle, because the law is
+    // about the text rather than about any one rule: whatever a layer thinks it
+    // has found, a stretch that is already a token is not it.
+    let tokens = crate::tokens::token_spans(text);
+    if !tokens.is_empty() {
+        all.retain(|c| !tokens.iter().any(|(start, end)| c.start < *end && *start < c.end));
+    }
     settle(all)
 }
 

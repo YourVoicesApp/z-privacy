@@ -527,7 +527,42 @@ pub(crate) fn restore(raw: &str, store: &TokenStore, allowed: &[String]) -> Rest
 /// It also has to keep accepting four for ever: an answer written before item
 /// 2 carries four-character tails, and that answer is exactly the one a person
 /// pastes days later.
-fn is_token(candidate: &str) -> bool {
+/// **Where the tokens stand in a text.**
+///
+/// A document that comes back carries the tokens of the session it left, and
+/// the scanner may not stand a finding on one of them (079, rule 5: a
+/// returning document is never re-protected, and no token is tokenized over).
+///
+/// Measured on 14 October, after an import began scanning: a German answer
+/// carrying five tokens came back with two findings standing on tokens — the
+/// `E-Mail:` label protected `__Z_7f3a_EMAIL_…__` outright and minted a second
+/// token over it, so the payload no longer carried the identifier the other
+/// session could resolve, and restoring would have handed back a token instead
+/// of an address. The other was a question put to a person about a token.
+///
+/// The walk is `restore`'s own walk, and the shape test is the same
+/// [`is_token`], so «a candidate that merely looks like a token is text» holds
+/// here too.
+pub(crate) fn token_spans(text: &str) -> Vec<(usize, usize)> {
+    const OPEN: &str = "__Z_";
+    const CLOSE: &str = "__";
+    let mut out = Vec::new();
+    let mut cursor = 0usize;
+    while let Some(rest) = text.get(cursor..) {
+        let Some(at) = rest.find(OPEN) else { break };
+        let start = cursor + at;
+        let after_open = start + OPEN.len();
+        let Some(found) = text.get(after_open..).and_then(|tail| tail.find(CLOSE)) else { break };
+        let end = after_open + found + CLOSE.len();
+        if text.get(start..end).is_some_and(is_token) {
+            out.push((start, end));
+        }
+        cursor = end.max(after_open);
+    }
+    out
+}
+
+pub(crate) fn is_token(candidate: &str) -> bool {
     let Some(middle) = candidate.strip_prefix("__Z_").and_then(|m| m.strip_suffix("__")) else {
         return false;
     };
