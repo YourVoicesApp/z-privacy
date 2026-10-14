@@ -105,6 +105,51 @@ else
   fail "G27 only $(printf '%s\n' "$G27_DOORS" | grep -c .) door(s) in shell.dart ask packForTheNextText — the other one decides for itself"
 fi
 
+# ---------------------------------------------------------------- G28
+# **The three exits share one law** — 083a, closing contract C3.
+#
+# The law was written at one exit out of three. A send through a key refused
+# with `OpenSuggestions` (G12); Copy Protected and Save as PDF asked the core
+# nothing, took the Safe column's text and put the waiting word on the
+# clipboard or in a PDF exactly as the person had written it. One rule written
+# in place and never applied to its siblings — the same shape as 080's two
+# language doors, and this house's most expensive trap.
+#
+# So: the refusal is built in exactly one function in the core, every door that
+# takes text out calls that function, and no Dart surface asks the exit door for
+# itself. Each half of this gate is the shape of the defect it refuses.
+LAW=z_core/src/ops/mod.rs
+MADE=$(grep -n 'return Err(ApiError::OpenSuggestions' "$LAW" 2>/dev/null || true)
+if [ "$(printf '%s\n' "$MADE" | grep -c .)" = "1" ] \
+   && [ "$(grep -c 'fn no_word_waits' "$LAW" 2>/dev/null || echo 0)" = "1" ]; then
+  pass "G28 the refusal «a word is waiting» is built in one function in the core"
+else
+  fail "G28 the refusal is built in more than one place, or no_word_waits is gone:"
+  printf '%s\n' "$MADE" | sed 's/^/        /'
+fi
+
+# And every door that takes text out of the machine asks it. The body of each
+# one is read, not the file: a call in a neighbouring function would otherwise
+# answer for a door that does not check at all.
+G28_BAD=""
+for door in payload_to_take_out send ask_model; do
+  BODY=$(awk -v d="$door" '
+    $0 ~ "^pub\\(crate\\) fn " d "\\(" {inside=1}
+    inside && /^}/ {print; inside=0; next}
+    inside {print}
+  ' "$LAW")
+  if [ -z "$BODY" ]; then
+    G28_BAD="$G28_BAD $door(missing)"
+  elif ! printf '%s\n' "$BODY" | grep -q 'no_word_waits('; then
+    G28_BAD="$G28_BAD $door"
+  fi
+done
+if [ -z "$G28_BAD" ]; then
+  pass "G28 all three exits ask the one law: payload_to_take_out, send, ask_model"
+else
+  fail "G28 an exit does not ask no_word_waits():$G28_BAD"
+fi
+
 # ---------------------------------------------------------------- G26
 # **Every press that writes the clipboard empties it first** — 081.
 #

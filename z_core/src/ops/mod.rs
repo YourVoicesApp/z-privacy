@@ -426,19 +426,53 @@ pub(crate) fn payload_view(handle: PayloadHandle) -> ApiResult<PayloadView> {
     with_payload(handle, |p| p.view())
 }
 
+/// **Nothing leaves while a word waits** — contract C3, invariant G12.
+///
+/// The owner, 14 Oct 2026: «a paragraph is not left until its words' fate is
+/// decided». The review is how that is lived; this function is how it is
+/// guaranteed, and it is **one** function because the law used to be written at
+/// one exit out of three.
+///
+/// A send through a key refused (G12). Copy Protected and Save as PDF asked the
+/// core nothing at all: they took the Safe column's text and put it on the
+/// clipboard or in a file with the waiting word standing in it as the person
+/// wrote it. Two green halves, one leaking product — which is why no exit may
+/// carry its own copy of this check, in Rust or in Dart.
+///
+/// There is no «leave anyway». The person answers Protect or Leave it and the
+/// count reaches zero; that is the whole reason no such switch exists here.
+fn no_word_waits(session: u32) -> ApiResult<()> {
+    let open = with_session(session, |s| s.open_suggestions()).ok_or(ApiError::InvalidSession)?;
+    if open > 0 {
+        return Err(ApiError::OpenSuggestions { count: open });
+    }
+    Ok(())
+}
+
+/// **The text that may leave this machine** — the one door the manual exits ask.
+///
+/// Copy Protected and Save as PDF end here, so the law above reaches them
+/// without either press holding a copy of it. It is deliberately **not**
+/// `build_payload`: that one is the instrument the workspace snapshot draws the
+/// Safe column with on every read, and a refusal there would blank the column
+/// the person reads *while* they answer — 083 rule 4 moves both columns to the
+/// waiting word, and 084 washes that word in both of them.
+///
+/// So `build_payload` goes on telling the truth, including how many words are
+/// waiting, and this door decides who may take the text away.
+pub(crate) fn payload_to_take_out(session: SessionId) -> ApiResult<PayloadView> {
+    no_word_waits(session.id)?;
+    payload_view(build_payload(session)?)
+}
+
 pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<AnswerId> {
     // The freshness check happens before anything else: a stale request must not
     // even reach a provider, let alone be posted.
     let _fresh = with_payload(handle, |p| p.id)?;
 
-    // Invariant G12: open suggestions stop a send, whatever the payload was built
-    // for. There is no «Send anyway» — the user answers Protect or Not Sensitive,
-    // and the count reaches zero. That is the whole reason the switch does not
-    // exist in the code.
-    let open = with_session(handle.session, |s| s.open_suggestions()).ok_or(ApiError::InvalidSession)?;
-    if open > 0 {
-        return Err(ApiError::OpenSuggestions { count: open });
-    }
+    // Invariant G12, and the same law the two manual exits now obey: whatever
+    // the payload was built for, it does not go while a word waits.
+    no_word_waits(handle.session)?;
     // Everything above held the core's lock briefly and let it go. From here the
     // wire is open, and no lock is held while a provider takes its time.
     let login = login_for(&provider.id)?;
@@ -478,13 +512,10 @@ pub(crate) fn ask_model(
     history: Vec<String>,
 ) -> ApiResult<crate::api::ModelAnswer> {
     // Everything `send` checks, it checks here too, and for the same reasons:
-    // a stale payload must not reach a provider, and an open suggestion stops
+    // a stale payload must not reach a provider, and a word still waiting stops
     // a send with no «anyway» anywhere in the code (G12).
     let _fresh = with_payload(handle, |p| p.id)?;
-    let open = with_session(handle.session, |s| s.open_suggestions()).ok_or(ApiError::InvalidSession)?;
-    if open > 0 {
-        return Err(ApiError::OpenSuggestions { count: open });
-    }
+    no_word_waits(handle.session)?;
     // **A question is text, and text is scanned** (046/N).
     //
     // The owner, 7 October: «ليس لدينا شات — شات مع نموذج… لا يوجد خيار مثلاً

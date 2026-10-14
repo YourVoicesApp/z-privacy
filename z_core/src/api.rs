@@ -2115,6 +2115,11 @@ pub fn payload_view(handle: PayloadHandle) -> ApiResult<PayloadView> {
     crate::ops::payload_view(handle)
 }
 
+/// The text that may leave this machine, or the reason it may not.
+pub fn payload_to_take_out(session: SessionId) -> ApiResult<PayloadView> {
+    crate::ops::payload_to_take_out(session)
+}
+
 /// Send a built payload. Takes a handle: there is no signature here that could
 /// accept the original text, by design.
 pub fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<AnswerId> {
