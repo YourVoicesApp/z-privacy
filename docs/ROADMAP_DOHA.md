@@ -24,16 +24,58 @@ So: **the app earns the users, and the users prove the library.** The pitch in D
 
 **And counting them without touching them.** Z keeps nothing and sends nothing, so we cannot count people — and we will not start. What we can count honestly is **downloads from our own server**, which belongs to us and touches nobody. That is the number we quote, labelled as what it is: downloads, not active users. Anything stronger would be a claim we cannot hold, and the whole product is a promise about not holding things.
 
-## The fifteen weeks
+## The steps, as the owner gave them — recorded, not scheduled
 
-| weeks | what | the test it passes |
-|---|---|---|
-| **1–3** · to 4 Nov | **Windows installable** by a person who has never seen a terminal, from z-privacy.com · the download counted on our server · 083b the review and 084 the search on the glass | the owner installs it on a Windows machine that is not his, and protects a document |
-| **4–7** · to 2 Dec | **the first hundred.** The German tester first, then the people the owner can reach by name: lawyers, accountants, doctors, the Swedish circle · the demo film on the site · the 079 z-pdf answer page | 100 downloads on our own counter, and three people who used it twice |
-| **8–11** · to 30 Dec | **the thousand** — the number the owner named · V1-I in the libraries, so the pitch has «between two businesses» and not only «inside one» | the counter, and the first person who asks for the library |
-| **12–15** · January | the deck with the real numbers, a two-minute film, a five-minute path on the stand · travel | a rehearsal in front of the owner |
+**No dates.** The owner, 14 Oct: «لست في مرحلة عمل ولا نحتاج تواريخ». A step is finished when its boundary is passed, and the boundary is a thing that can be seen, not a day on a calendar.
 
-**The decision gate is mid-December.** If the counter reads hundreds rather than thousands, Doha is a marketing expense and not a showcase of traction, and that is the moment to decide with the full number in hand: $1,197 plus flight plus hotel.
+### Step 1 · Finish the app, in German, English and Swedish, and publish it
+The owner's words: «إنهاء التطبيق تماماً باللغة الألمانية والإنجليزية والسويدية ونشره». Arabic is not in this step, by his own ruling that languages come last.
+
+What «finished» holds, from the papers already written:
+
+| | paper |
+|---|---|
+| the review in two forms, and selection protects with no dialog | 083b, 083c |
+| un-protection: here, or in this conversation | 083d |
+| the search bar, with its completion | 084 |
+| the answer page of the z-pdf | 079 |
+| the page system and the Z sheet | 082 |
+| the vault as word blocks, sessions instead of profiles | 083e, after its own measurement |
+| the three detection defects: the IBAN rule swallowing the next word, «Ltd» called German, import that does not scan | the ledger |
+| the screens' options that have no reason, deleted | the owner's screenshots |
+
+**Boundary:** the owner runs the whole round himself and finds nothing that stops him.
+
+### Step 2 · A first Windows version, for the friend in Germany
+Decided and made by the owner's own hand («نحن نقرر نسخة ويندوز ونصنعها»). It carries what is sealed, and no more.
+
+**What is true and must be said with it:** the gate does not run the Dart half on Windows, so the glass is not measured there. This version goes to **one friend who is trying it**, not to people.
+
+**Boundary:** installed on a Windows machine that is not the lead's, it opens, it reads a German letter, it protects, and a paste after Copy Protected carries no name. Not sent before that is seen.
+
+### Step 3 · Publish, and count honestly
+A download page, in German, with a Windows button and a Linux one, and a counter **on our own server**.
+
+Z keeps nothing and sends nothing, so we cannot count people and will not start. What is counted is **downloads**, and that is what is quoted — never «users», which would be a claim the product itself forbids us.
+
+**Boundary:** the owner downloads it from the site the way a stranger would, on a machine that is not his, and it works.
+
+### Step 4 · The measuring campaign
+Google search ads, **Germany only**, **$100–200 at most** (the owner). German privacy and legal keywords are among the dearest, so that money buys roughly 70–180 clicks, and perhaps 15–35 downloads.
+
+So it is not a campaign; it is **a measurement**, and it comes out with one number: **what one download costs.** That number is the one an investor asks for, and the one that says whether a thousand is a road or a wish.
+
+**Requires:** step 3 finished, or the money goes to a page with nothing to download. Germany also requires an **Impressum** by law — and ours is already on the German page: Faruk AB, 559473-3494, Hotellgatan 3, 311 31 Falkenberg. The German privacy page is there too.
+
+**Boundary:** the cost of one download, written down.
+
+### Step 5 · Doha
+What the stand shows: the app that people are already downloading, and the library that puts Z inside somebody else's product.
+
+**Boundary — the owner's, not the lead's:** the full number, $1,197 plus flight and hotel, against what the counter says.
+
+### In parallel, in the libraries
+V1-I, the exchange between two owners. Its shape changed on 14 Oct by the owner's ruling that **the answer to a Z document is written inside Z**, which made most of the lead's conditions on it properties instead of conditions (087).
 
 ## What is cut from this road, and why
 
