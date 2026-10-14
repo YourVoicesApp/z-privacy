@@ -114,6 +114,17 @@ The whole of a business's money, from the sale to the ledger, in its owner's han
 
 **The last line is why Softpay is the right measure.** Accepting cards needs a certification no round can build. The likelier road is to **connect to a certified provider** such as Softpay, and to build the till and the books around it — never to accept the card ourselves.
 
+**The owner is the first tester, and the law comes from the trial (14 Oct):** «بما أني أنا المجرّب الأول لهذه الأمور، أسجّلها: أذهب إلى دائرة الضرائب وأسجّلها، وأخرج الشروط ونضعها، وهي ستكون جزءاً من نظام المحاسبة أصلاً.» The conditions are not read from a table the lead wrote; they come back from Skatteverket in the owner's own hand, as the requirements of the accounting system.
+
+**Softpay, measured on 14 Oct — two hats, two answers:**
+- **As the company that builds the till (us): online, no call.** Softpay has a developer path in three steps — sign up on the developer site, a sandbox integration, then going live with a merchant; the site holds the guides, the API documents and code examples, with support during the sandbox. [support.softpay.io](https://support.softpay.io/en/articles/531039-how-do-i-get-started-integrating-a-pos-system)
+- **As the merchant who takes the money (Faruk AB): a third party is needed.** A merchant buys Softpay licences through one of its sales partners, and needs an **acquirer** to receive the money; Softpay is acquirer-agnostic, about 15 acquirer connections across more than 30 countries. Without a partner or an acquirer, the contact is hello@softpay.io. [softpay.io/faq](https://softpay.io/faq/)
+- **The integration decides the till's shape.** Of the four ways in, the quickest — deep linking — is one-way: after the payment the Softpay app does not tell the POS the outcome. **Our till must know the payment succeeded to write the sale into the books**, so the road is AppSwitch or CloudSwitch, which return the result. [softpay.io](https://softpay.io/getting-started-with-softpay-easy-integration/)
+- **Not known, and not assumed:** the sources name the app on Google Play — Android. Nothing found says it runs on an iPhone.
+- The FAQ carries a 2024 date; the current steps are confirmed with Softpay before any build.
+
+**The real showcase is Doha** (the owner).
+
 **Where Z stands:** a card number never reaches the model — that is the card law's rule before it is ours. A customer's name on a receipt passes through Z before it reaches the books or the model.
 
 **The three stages become one platform:**
