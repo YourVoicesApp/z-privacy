@@ -10,6 +10,12 @@ Not a work plan: no tasks, no owners, no dates. Where we are going, in what orde
 
 So the road carries one number: **how many people took it.** Today: none.
 
+**The goal of Doha, in the owner's words (14 Oct):** «هذه الأمور أربع خطوات إلى قطر. الهدف من قطر إنشاء شركات مع شركات ناشئة.» — **partnerships, and companies formed with startups.** The four stages below are the road; Doha is where the partners are found.
+
+**The lead's reading:** that goal is also the answer to the road's size. Four products are not built by one founder's hand; in Doha are the people who build *with* him. What we carry to the table is **the library**, because it is the one thing a partner can build on.
+
+**Said plainly, once:** in Doha the four stages will not all be finished. What stands there is **Z working** and **the first shape of the rest** — enough for a partner to see what they would build on. A partner does not buy a finished product; he shares in what is going to be built.
+
 ## What is actually for sale
 
 The app earns nothing and measures nothing, by design. A buyer is not buying its revenue.
@@ -147,6 +153,26 @@ It agrees with the owner's motive: **we do not become a bank, and we do not stan
 | 1 | **Z** | trust, for free |
 | 2 | **the books** | the model keeps the accounts, Z guards them |
 | 3 | **the till** | the sale is born as data — no photo, no device |
+
+## The fourth stage — the text editor, a suite of works like Word
+
+**The owner, 14 Oct 2026:** «الخطوة الرابعة: محرر النصوص، أو ما أسمّيه — سوف نجد له اسماً — مجموعة من الأعمال مثل ورد.» The name is still to be found.
+
+**It does not start from nothing. Three of its parts exist:**
+- **its laws:** `~/محرر النصوص.md`, 48 rules so far. On 13 Oct the owner said: «إذا جمعنا هذه النقاط جميعاً يمكننا إنشاء نظام نصوص مكتوبة خاص بنا مثل وورد»;
+- **its page:** the Z sheet, 15 × 20 cm, with room for the letterhead and the stamp (082);
+- **its file:** `.peak`, the closed document (087).
+
+And the rule that makes it ours: **a document written inside Z carries its tokens and cannot break them** — the owner's ruling that the answer to a Z document is written inside Z (087) is this stage's first law.
+
+## The four stages — one platform
+
+| | stage | what it carries |
+|---|---|---|
+| 1 | **Z** | trust, for free |
+| 2 | **the books** | the model keeps the accounts, Z guards them |
+| 3 | **the till** | the sale is born as data — no photo, no device |
+| 4 | **the editor** | the document is written inside Z, carries its tokens, and cannot break them |
 
 ## Not on this road
 
