@@ -84,7 +84,9 @@ That is a large new capability Z does not have — **reading images on the devic
 
 **The owner's motive, in the product's own words:** the business owner holds the books and their key in his own hand, with no firm standing between him and his money.
 
-**Open for the owner:**
+**The owner's own workflow today, the model it replaces (14 Oct):** he keeps his books in Fortnox and photographs every invoice on his phone with the app that serves that accounting system. So the Gate has a phone in it. «لا ندخل بالتفاصيل الآن» — the details wait.
+
+**Open for the owner — parked, not now:**
 - **«Works by the key» — which key?** The model's key, which the owner brings for his own model, as Z's send works today; or the session's key, so the Repository holds tokens and only the key's holder restores names; or both.
 - **Which country's books first?** Fortnox is Swedish, the company is Swedish, the owner knows the Swedish system and the Swedish pack exists; Germany is where Z publishes first. The lead would start where the company stands.
 - **Are amounts private?** The model needs the numbers to do accounting, so they cannot all become tokens — yet a small firm's turnover is itself a secret. This is the first question the system will ask of Z, and it is not answered yet.
