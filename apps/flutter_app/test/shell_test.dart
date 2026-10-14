@@ -159,13 +159,22 @@ void main() {
       final session = await z.openSession(packId: 'de');
       await z.importText(session: session, text: _doc);
       bench = Workbench(session: session, profileId: null, packId: 'de');
-      await bench.rescan();
+      // What the shell does at both doors: the core scanned as it read (14
+      // October, item 3), and the bench reads what arrived. A `rescan()` here
+      // would be a second scan of the same text, and the band would then
+      // truthfully say «manual rescan» — which is the next guard down.
+      await bench.readTheScanThatArrivedWithIt();
     });
 
     expect(
       bench.snap,
       isNotNull,
       reason: 'the workspace is drawn from a snapshot',
+    );
+    expect(
+      bench.report,
+      isNull,
+      reason: 'nothing on the glass asked for a scan, and the band must not need one',
     );
     expect(
       (bench.snap!.autoProtected + bench.snap!.openSuggestions),

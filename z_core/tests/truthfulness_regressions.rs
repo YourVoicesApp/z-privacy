@@ -198,7 +198,9 @@ fn lie_rescan_is_named_a_rescan() {
     let _g = serial();
     fresh_dir("rescan");
     let s = session_with_doc();
-    scan(s).expect("import scan");
+    // The import ran the scan this line used to run by hand (14 October, item
+    // 3). The lie this guard is named for is the other one: a rescan reported
+    // as a scan on import.
     assert_eq!(workspace_snapshot(s).unwrap().scan_origin, ScanOrigin::OnImport);
     scan(s).expect("rescan");
     assert_eq!(workspace_snapshot(s).unwrap().scan_origin, ScanOrigin::Rescan);

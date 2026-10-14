@@ -164,6 +164,7 @@ pub(crate) fn pack() -> LanguagePack {
         locale: "en-GB",
         id: "en",
         label: "English",
+        in_english: "English",
         version: "1",
         salutations: SALUTATIONS,
         titles: TITLES,

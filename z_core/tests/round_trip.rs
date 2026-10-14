@@ -4,11 +4,20 @@
 //
 // If this passes and no code can send the original through the contract, the
 // product's core is proven before anything is built around it.
+//
+// **«With no scanner» is kept by the document, not by the door** — 14 October,
+// item 3 of the detection round. An import scans now, because a person who
+// opens a document and sees nothing happen has met a broken product; so this
+// file's letters say nothing the pack *protects*. «Herr» stood in front of the
+// name here and the salutation rule protected it on the way in, which left
+// every hand protection below with nothing to do. What the pack still does is
+// **offer** the pair — a suggestion is a question, not a protection, and
+// answering it by hand is exactly what these guards drive.
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing)]
 
 use z_core::api::*;
 
-const DOC: &str = "Herr Thomas Müller arbeitet bei Nordstern GmbH.";
+const DOC: &str = "Thomas Müller arbeitet bei Nordstern GmbH.";
 
 fn span_of(doc: &str, needle: &str) -> Span {
     let byte = doc.find(needle).expect("needle is in the document");
@@ -47,7 +56,7 @@ fn round_trip_original_to_safe_to_answer_to_restored() {
     // 1. What leaves the device.
     let handle = build_payload(s).expect("build");
     let safe = payload_view(handle).expect("view").text;
-    assert_eq!(safe, format!("Herr {person} arbeitet bei {company}."));
+    assert_eq!(safe, format!("{person} arbeitet bei {company}."));
     assert!(!safe.contains("Thomas Müller") && !safe.contains("Nordstern GmbH"));
 
     // 2. What a provider answers, in its own words, using the tokens it was given.
@@ -133,13 +142,18 @@ fn round_trip_does_not_cross_sessions() {
 fn round_trip_restores_every_spelling_to_its_own_value() {
     // The alias goes out as the same token; coming back, the entry's primary
     // spelling is what the reader sees. One entity, one name in the answer.
-    let doc = "Thomas Müller kommt. Herr Müller unterschreibt.";
+    // «Herr Müller» was the second spelling here until the import began
+    // scanning: the salutation protects the name after it, so that spelling
+    // arrived protected and there was no alias left for a hand to add. An
+    // initial is the same shape — one entity, two spellings, one token — and
+    // nothing in the pack claims it.
+    let doc = "Thomas Müller kommt. T. Müller unterschreibt.";
     let s = open_session(None, "de".to_string()).expect("open");
     import_text(s, doc.to_string()).expect("import");
     let token = token_of(
         protect(s, span_of(doc, "Thomas Müller"), Scope::Conversation, Kind::Person).expect("protect"),
     );
-    add_alias(s, token.clone(), "Herr Müller".to_string()).expect("alias");
+    add_alias(s, token.clone(), "T. Müller".to_string()).expect("alias");
 
     let handle = build_payload(s).expect("build");
     let safe = payload_view(handle).expect("view").text;

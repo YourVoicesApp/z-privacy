@@ -116,6 +116,95 @@ else
   fail "G27 only $(printf '%s\n' "$G27_DOORS" | grep -c .) door(s) in shell.dart ask packForTheNextText — the other one decides for itself"
 fi
 
+# ---------------------------------------------------------------- G30
+# **The shared half of a pack names no language of its own** — the detection
+# round of 14 October, item 2.
+#
+# `packs/people.rs` holds the rules every language is read with, and its own
+# first line says that not one word in it is German, Swedish or English. Three
+# of its reasons had «German» typed into them, so a Swedish letter was told
+# that «AB» is a German legal form and that its people stand in the German name
+# dictionary — and an English one that «Ltd» is German. The word now comes from
+# the pack (`in_english`), like every other word these rules use.
+#
+# Comments may name a language: they explain where a rule came from, and a
+# measurement in a comment that cannot name German would be a comment that
+# cannot be read. What may not name one is the code — a reason a person reads.
+SHARED=z_core/src/scanner/packs/people.rs
+G30_BAD=$(grep -nE '(German|Swedish|English)' "$SHARED" 2>/dev/null \
+          | grep -vE '^[0-9]+:[[:space:]]*(//|/\*|\*)' || true)
+if [ -z "$G30_BAD" ]; then
+  pass "G30 the shared pack rules name no language in their code — the pack does"
+else
+  fail "G30 a language is named in the shared rules themselves:"
+  printf '%s\n' "$G30_BAD" | sed 's/^/        /'
+fi
+
+# And every pack carries that word, or the reasons would say «» about a
+# document somebody is reading right now.
+G30_PACKS=""
+for pack in de sv en; do
+  if ! grep -q 'in_english:' "z_core/src/scanner/packs/$pack.rs" 2>/dev/null; then
+    G30_PACKS="$G30_PACKS $pack"
+  fi
+done
+if [ -z "$G30_PACKS" ]; then
+  pass "G30 every pack says what its language is called in English"
+else
+  fail "G30 a pack does not name its own language:$G30_PACKS"
+fi
+
+# ---------------------------------------------------------------- G29
+# **A document arrives scanned, through every door it can arrive by** — the
+# detection round of 14 October, item 3.
+#
+# `import_text` and `import_document` installed the text and returned, leaving
+# the scan to whoever called next. Two Dart doors remembered and nothing made
+# them: `list_findings` right after an import was empty, a value the vault
+# already knows was not put back, and a person opening a document met a press
+# that did nothing. One law written at one door out of several — 083a's shape,
+# and 080's.
+#
+# So the scan is at the door, in one function both doors call; and the glass
+# asks for a scan in exactly one place, which is the rescan.
+DOORS=z_core/src/ops/mod.rs
+if [ "$(grep -c 'fn the_scan_that_arrives_with_the_document' "$DOORS" 2>/dev/null || echo 0)" = "1" ]; then
+  pass "G29 the scan a document arrives with is built in one function"
+else
+  fail "G29 the import scan is written in more than one place, or it is gone"
+fi
+
+G29_BAD=""
+for door in import_text import_document; do
+  BODY=$(awk -v d="$door" '
+    $0 ~ "^pub\\(crate\\) fn " d "\\(" {inside=1}
+    inside && /^}/ {print; inside=0; next}
+    inside {print}
+  ' "$DOORS")
+  if [ -z "$BODY" ]; then
+    G29_BAD="$G29_BAD $door(missing)"
+  elif ! printf '%s\n' "$BODY" | grep -q 'the_scan_that_arrives_with_the_document('; then
+    G29_BAD="$G29_BAD $door"
+  fi
+done
+if [ -z "$G29_BAD" ]; then
+  pass "G29 both import doors scan what they have just read: import_text, import_document"
+else
+  fail "G29 an import door hands back a document it has not scanned:$G29_BAD"
+fi
+
+# And nothing on the glass scans a document it has just imported: the one Dart
+# caller of the scan door is the bench's own rescan.
+G29_DART=$(grep -Rn 'z\.scan(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' || true)
+G29_DART_N=$(printf '%s\n' "$G29_DART" | grep -c . || true)
+if [ "$G29_DART_N" = "1" ] && printf '%s' "$G29_DART" | grep -q 'core/session_state.dart'; then
+  pass "G29 one surface asks for a scan, and it is the bench's rescan"
+else
+  fail "G29 the scan door is asked in $G29_DART_N place(s), expected one in core/session_state.dart:"
+  printf '%s\n' "$G29_DART" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G28
 # **The three exits share one law** — 083a, closing contract C3.
 #
@@ -1133,7 +1222,26 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          every_door_that_takes_text_out_refuses_with_the_same_number \
          the_refusal_carries_the_number_of_words_waiting \
          the_word_answered_the_exit_opens \
-         the_column_the_person_reads_while_answering_still_builds; do
+         the_column_the_person_reads_while_answering_still_builds \
+         an_iban_is_the_number_and_not_the_words_after_it \
+         a_bank_value_carries_no_word_of_prose \
+         an_iban_in_a_footer_line_stops_before_the_next_label \
+         the_bic_in_a_footer_line_is_read_as_a_bic \
+         the_rest_of_the_letter_did_not_move \
+         a_swedish_letter_is_never_told_its_words_are_german \
+         a_company_form_belongs_to_the_language_that_lists_it \
+         a_salutation_belongs_to_the_language_that_lists_it \
+         the_name_dictionary_counts_the_names_it_actually_holds \
+         no_reason_names_a_language_the_document_is_not_read_with \
+         ltd_is_called_an_english_legal_form \
+         text_typed_in_arrives_scanned a_text_file_arrives_scanned \
+         a_word_file_arrives_scanned a_pdf_arrives_scanned \
+         a_second_document_in_the_same_session_arrives_scanned_too \
+         a_value_the_vault_knows_comes_back_protected_and_is_never_asked_about \
+         an_empty_import_is_not_a_refusal \
+         a_pdf_whose_headers_stand_on_their_own_lines_is_read \
+         the_object_keyword_is_never_found_inside_endobj \
+         a_page_tree_packed_in_an_object_stream_is_read_whatever_its_spacing; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

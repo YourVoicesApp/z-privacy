@@ -52,6 +52,10 @@ pub(crate) enum Validator {
     /// One word with no spaces: an address, a tax id.
     Word,
     /// Letters and digits in groups: an IBAN, a BIC.
+    ///
+    /// A **group**, not a word — see [`is_a_group`]. This asked only whether
+    /// the next word was letters and digits, and «zu», «bei», «on» are letters:
+    /// so the account number ran on into the sentence after it.
     Grouped,
     /// A person's name: consecutive capitalised words, with any honorific the
     /// set lists skipped so it stays in the clear — a model still needs «Herr»
@@ -332,9 +336,24 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             // Without a colon the value must carry a digit: an identifier, a
             // number, a date. A plain word never qualifies, in any language
             // whose nouns are capitalised.
-            let shaped = words
-                .get(value_start)
-                .is_some_and(|w| !w.newline_before && bare(w.text).chars().any(|c| c.is_ascii_digit()));
+            //
+            // **Or be written the way a bank code is written** — eight
+            // characters or more, in capitals, no lowercase letter anywhere.
+            // A BIC carries no digit at all («COBADEFFXXX»), and a footer line
+            // writes it without a colon, so the digit alone left the one field
+            // in that line unprotected the moment the IBAN stopped swallowing
+            // it. No German, English or Swedish word is written like that.
+            let shaped = words.get(value_start).is_some_and(|w| {
+                if w.newline_before {
+                    return false;
+                }
+                let n = bare(w.text);
+                n.chars().any(|c| c.is_ascii_digit())
+                    || (rule.validator == Validator::Grouped
+                        && n.chars().count() >= 8
+                        && is_a_group(n)
+                        && !n.chars().any(|c| c.is_ascii_lowercase()))
+            });
             if !shaped {
                 continue;
             }
@@ -343,6 +362,23 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             // The field ends at a line break, or where another label begins —
             // this is what stops «IBAN:» from eating the «BIC:» line under it.
             if next.newline_before || is_label(next.text, rules) {
+                break;
+            }
+            // **And a bank value ends where the next bank label stands, colon
+            // or no colon** (the detection round of 14 October, item 1).
+            //
+            // A German footer writes both fields on one line and punctuates
+            // neither: «Bankverbindung: Commerzbank AG, IBAN DE.. … .., BIC
+            // COBADEFFXXX». The boundary above knew a label only by its colon,
+            // so the account number took the comma, the word «BIC» and the BIC
+            // itself — 17 characters past the end of the number, measured on
+            // `Mahnung_Keller`.
+            //
+            // Only for a grouped value, and only once it has one group: a
+            // label standing where a value is expected is another rule's
+            // business, and a name or a number is a run this engine already
+            // ends at a comma or at a word of the wrong shape.
+            if rule.validator == Validator::Grouped && j > value_start && is_label_word(next.text, rules) {
                 break;
             }
             // **And a number ends at a column boundary** (046/M). Only for the
@@ -359,7 +395,7 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             let fits = match rule.validator {
                 Validator::Number => is_numberish(n) || (j == value_start && n.starts_with('+') && n.len() > 1),
                 Validator::Word | Validator::Any => j == value_start && !n.is_empty(),
-                Validator::Grouped => !n.is_empty() && n.chars().all(|c| c.is_ascii_alphanumeric()),
+                Validator::Grouped => is_a_group(n),
                 Validator::Name | Validator::NamePair => starts_upper(n) && j - value_start < 4,
             };
             if fits && j - value_start < 8 {
@@ -587,6 +623,25 @@ fn cells(line: &str) -> Vec<(usize, &str)> {
     out
 }
 
+/// One group of a value written in groups: an IBAN's `DE89`, a BIC's
+/// `COBADEFFXXX`.
+///
+/// **A group is not a word of prose**, and that is the whole of it. Letters and
+/// digits, as before — and then one of the two things that make a group a
+/// group: it carries a digit, or it carries no lowercase letter. «zu», «bei»,
+/// «der», «on» are letters and digits by the old test, and each of them went
+/// into an account token in front of the lead on a real letter.
+///
+/// Both halves are needed and each one is paid for: a value may be written in
+/// lowercase by the person who typed it (`de89 3704 …`), and a bank code
+/// carries no digit at all (`COBADEFFXXX`, which every fixture in this tree
+/// writes after «BIC:»).
+fn is_a_group(word: &str) -> bool {
+    !word.is_empty()
+        && word.chars().all(|c| c.is_ascii_alphanumeric())
+        && (word.chars().any(|c| c.is_ascii_digit()) || !word.chars().any(|c| c.is_ascii_lowercase()))
+}
+
 fn starts_upper(value: &str) -> bool {
     value.chars().next().is_some_and(|c| c.is_uppercase())
 }
@@ -596,6 +651,19 @@ fn starts_upper(value: &str) -> bool {
 fn is_label(word: &str, rules: &[LabelRule]) -> bool {
     let Some(stripped) = word.strip_suffix(':') else { return false };
     let lowered = crate::text::nfc(stripped).to_lowercase();
+    rules.iter().any(|r| r.label == lowered)
+}
+
+/// The same question with the colon forgiven: is this word one of the labels,
+/// however it is punctuated?
+///
+/// Used by one boundary only — the end of a grouped value — because a word that
+/// names a field is not part of the field before it. Kept apart from
+/// [`is_label`] on purpose: a label without a colon is still **not** a form
+/// (that is the measurement behind `wrote_colon`), and only a run that is
+/// already reading groups may use it to stop.
+fn is_label_word(word: &str, rules: &[LabelRule]) -> bool {
+    let lowered = crate::text::nfc(bare(word)).to_lowercase();
     rules.iter().any(|r| r.label == lowered)
 }
 

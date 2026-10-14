@@ -139,27 +139,33 @@ fn an_older_payload_counts_what_stood_in_itself() {
 
     let s = open_session(None, "sv".to_string()).expect("open");
     import_text(s, DOC.to_string()).expect("import");
+    // **The account is protected before any hand touches this letter** — 14
+    // October, item 3: an import scans, and an IBAN's own checksum proves
+    // itself. So the second protection below is the other person, and the
+    // comparison is the same comparison: a tally from one moment and a text
+    // from another.
     protect_text(s, DOC, "Hedvig Palmgren", Kind::Person);
     let before = payload_view(build_payload(s).expect("build")).expect("view");
     assert_eq!(count_of(&before, Kind::Person), 1);
-    assert_eq!(count_of(&before, Kind::Iban), 0);
+    assert_eq!(count_of(&before, Kind::Iban), 1, "the scan found the account on the way in");
 
     // A second protection, and a second payload.
-    protect_text(s, DOC, "GB29 NWBK 6016 1331 9268 19", Kind::Iban);
+    protect_text(s, DOC, "Tomas Lindqvist", Kind::Person);
     let after = payload_view(build_payload(s).expect("build")).expect("view");
-    assert_eq!(count_of(&after, Kind::Iban), 1, "the new account is not counted: {:?}", after.by_kind);
+    assert_eq!(count_of(&after, Kind::Person), 2, "the second name is not counted: {:?}", after.by_kind);
 
     // The older view still describes itself, and its text really lacks the
-    // account's token — so a footer built from it would be true of its own file.
+    // second name's token — so a footer built from it would be true of its own
+    // file.
     assert_eq!(
-        count_of(&before, Kind::Iban),
-        0,
+        count_of(&before, Kind::Person),
+        1,
         "an older payload's tally changed under it, so the figure is not about that payload"
     );
     assert!(
-        before.text.contains("GB29 NWBK 6016 1331 9268 19"),
-        "the fixture's older payload should still carry the account in the clear, or the \
-         comparison above is not about a figure at all"
+        before.text.contains("Tomas Lindqvist"),
+        "the fixture's older payload should still carry the second name in the clear, or \
+         the comparison above is not about a figure at all"
     );
     close_session(s).ok();
 }

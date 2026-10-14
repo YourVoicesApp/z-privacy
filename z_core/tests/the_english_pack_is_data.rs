@@ -133,6 +133,35 @@ fn an_english_company_ends_in_its_legal_form() {
     );
 }
 
+/// **And the sentence that says so says «English»** — the detection round of
+/// 14 October, item 2.
+///
+/// «Ltd» is not a German legal form. The reason was written in
+/// `packs/people.rs`, the half of a pack that is shared by every language, with
+/// the word «German» typed into it — so this letter, and every Swedish one,
+/// was told that its company ends in a German form. The language now comes
+/// from the pack, like every other word these rules use.
+#[test]
+fn ltd_is_called_an_english_legal_form() {
+    let session = open_session(None, "en".to_string()).expect("open");
+    import_text(session, LETTER.to_string()).expect("import");
+    scan(session).expect("scan");
+    let said: Vec<String> = list_findings(session)
+        .expect("findings")
+        .into_iter()
+        .filter(|f| f.kind == Kind::Company)
+        .map(|f| f.reason)
+        .collect();
+    assert!(
+        said.iter().any(|r| r.contains("«Ltd»") && r.contains("legal form in English")),
+        "the reason does not say «Ltd» is a legal form in English: {said:?}"
+    );
+    assert!(
+        !said.iter().any(|r| r.contains("German")),
+        "an English letter is told its company form is German: {said:?}"
+    );
+}
+
 // ------------------------------------------------------- 3 · the control
 
 /// **A document with no person in it offers nobody.**

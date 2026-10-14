@@ -8,13 +8,20 @@
 
 use z_core::api::*;
 
-const DOC: &str = "Herr Thomas Müller arbeitet bei Nordstern GmbH. Herr Müller leitet das Projekt.";
+// **Nothing here is protected before a hand protects it** — 14 October, item
+// 3. An import scans now, and this letter said «Herr Thomas Müller … Herr
+// Müller»: the salutation rule protected both on the way in, so `protect`
+// answered `AlreadyProtected`, the revision did not move, and three of the
+// cases below were green while they measured nothing. The pack still **offers**
+// the pair and the company — a suggestion is a question, and a hand answering
+// one is exactly the act this file walks.
+const DOC: &str = "Thomas Müller arbeitet bei Nordstern GmbH. T. Müller leitet das Projekt.";
 
 /// "Thomas Müller" in UTF-16 units, as Flutter would report the selection:
-/// five units of "Herr ", then thirteen for the name (the ü is one unit but two
-/// bytes — which is the whole reason the contract counts units).
+/// thirteen units from the start (the ü is one unit but two bytes — which is
+/// the whole reason the contract counts units).
 fn person_span() -> Span {
-    Span { start: 5, end: 18 }
+    Span { start: 0, end: 13 }
 }
 
 /// The id of the first suggestion still waiting for an answer.
@@ -118,7 +125,7 @@ fn stale_payload_after_every_mutating_call() {
             },
             |s| {
                 let token = list_tokens(s).expect("tokens").first().expect("one token").token.clone();
-                let places = add_alias(s, token, "Herr Müller".to_string()).expect("alias");
+                let places = add_alias(s, token, "T. Müller".to_string()).expect("alias");
                 assert_eq!(places, 1, "the second spelling stands in one place");
                 Did::Changed
             },
@@ -268,7 +275,19 @@ fn nothing_to_build_is_said_plainly() {
 fn a_fresh_handle_reaches_the_provider_check() {
     // Proof of order: freshness is decided before the network is even considered,
     // so a stale request never gets as far as a provider.
-    let (_s, handle) = fresh_session_with_payload();
+    let (s, _) = fresh_session_with_payload();
+    // Two laws stand in front of that order now, and both of them are right:
+    // nothing leaves while a word waits (083a), and a document arrives with its
+    // words already waiting (item 3). So they are answered first, and the
+    // handle is built after the answers — otherwise this guard measures
+    // `OpenSuggestions` or `StalePayload` and never reaches what it is named
+    // for.
+    for f in list_findings(s).expect("findings") {
+        if f.state == MarkState::Suggested {
+            answer_finding(s, f.id, FindingAnswer::NotSensitive).expect("answer");
+        }
+    }
+    let handle = build_payload(s).expect("build");
     match send(handle, ProviderId { id: "openai".to_string() }) {
         Err(ApiError::NetworkRefused {
             reason: NetworkRefusal::NotConnected,

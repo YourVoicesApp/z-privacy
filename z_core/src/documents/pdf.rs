@@ -264,10 +264,9 @@ fn objects(bytes: &[u8], budget: &Budget) -> ApiResult<Objects> {
     let mut seen = 0usize;
 
     while at < bytes.len() {
-        let Some(offset) = find(bytes, at, b" obj") else { break };
-        let obj_at = at + offset;
+        let Some(obj_at) = next_obj(bytes, at) else { break };
         let number = number_before(bytes, obj_at);
-        let body_start = obj_at + 4;
+        let body_start = obj_at + 3;
         let Some(end_offset) = find(bytes, body_start, b"endobj") else { break };
         let body_end = body_start + end_offset;
 
@@ -303,11 +302,109 @@ fn objects(bytes: &[u8], budget: &Budget) -> ApiResult<Objects> {
 }
 
 /// The dictionary and the stream of one object body.
+/// A dictionary's text with its white-space made not to matter.
+///
+/// The second half of the same fault as `next_obj`, and the one that decides
+/// whether a Google file is actually *read* rather than merely scanned: this
+/// file asks its questions of a dictionary as text — `dict.contains("/Type/Page")`,
+/// `reference(dict, "/Pages")` — and Google writes `<<\n/Type\n/Page\n…`. Four
+/// places had already met it and answered it by hand, each accepting exactly
+/// two spellings: «/Type/Catalog» or «/Type /Catalog». One space, never two,
+/// and never a line feed.
+///
+/// So the white-space is normalised once, where the dictionary is split out,
+/// and the rule is the specification's own: a delimiter ends a token by itself,
+/// so white-space **beside** a delimiter carries no meaning and goes; and
+/// white-space between two ordinary characters becomes one space, because
+/// `1 0 R` must not become `10R`.
+///
+/// What is copied through untouched is a string — `(…)` with its escapes, and
+/// `<…>` hex — because the space inside «(Hans Meyer)» is the document's own.
+fn tidy_dict(raw: &str) -> String {
+    const DELIMITERS: &[char] = &['(', ')', '<', '>', '[', ']', '{', '}', '/', '%'];
+    let chars: Vec<char> = raw.chars().collect();
+    let mut out = String::with_capacity(raw.len());
+    let mut depth = 0usize;
+    let mut hex = false;
+    let mut i = 0usize;
+    while let Some(ch) = chars.get(i).copied() {
+        if depth > 0 {
+            // Inside a literal string: copy it, escapes and all.
+            out.push(ch);
+            if ch == '\\' {
+                if let Some(next) = chars.get(i + 1).copied() {
+                    out.push(next);
+                    i += 2;
+                    continue;
+                }
+            } else if ch == '(' {
+                depth += 1;
+            } else if ch == ')' {
+                depth -= 1;
+            }
+            i += 1;
+            continue;
+        }
+        if hex {
+            out.push(ch);
+            if ch == '>' {
+                hex = false;
+            }
+            i += 1;
+            continue;
+        }
+        match ch {
+            '(' => {
+                depth = 1;
+                out.push(ch);
+                i += 1;
+            }
+            // `<<` opens a dictionary and goes through as the pair it is; a
+            // **lone** `<` opens a hex string. Reading the second `<` of a pair
+            // as a lone one was this function's own first bug: everything after
+            // it was copied verbatim as if it were a string, so not one
+            // dictionary in a Google file was tidied at all.
+            '<' if chars.get(i + 1).copied() == Some('<') => {
+                out.push('<');
+                out.push('<');
+                i += 2;
+            }
+            '<' => {
+                hex = true;
+                out.push(ch);
+                i += 1;
+            }
+            c if c.is_whitespace() || c == '\0' => {
+                let mut j = i;
+                while chars
+                    .get(j)
+                    .is_some_and(|c| c.is_whitespace() || *c == '\0')
+                {
+                    j += 1;
+                }
+                let before = out.chars().last();
+                let after = chars.get(j).copied();
+                let beside_a_delimiter = before.is_some_and(|b| DELIMITERS.contains(&b))
+                    || after.is_none_or(|a| DELIMITERS.contains(&a));
+                if !beside_a_delimiter && before.is_some() {
+                    out.push(' ');
+                }
+                i = j;
+            }
+            _ => {
+                out.push(ch);
+                i += 1;
+            }
+        }
+    }
+    out
+}
+
 fn split_body(bytes: &[u8], start: usize, end: usize) -> ObjBody {
     let body = bytes.get(start..end).unwrap_or_default();
     match find(body, 0, b"stream") {
         Some(at) => {
-            let dict = String::from_utf8_lossy(body.get(..at).unwrap_or_default()).to_string();
+            let dict = tidy_dict(&String::from_utf8_lossy(body.get(..at).unwrap_or_default()));
             let after = at + 6;
             // Skip the end-of-line that must follow the keyword.
             let data_at = match body.get(after..after + 2) {
@@ -326,7 +423,7 @@ fn split_body(bytes: &[u8], start: usize, end: usize) -> ObjBody {
             }
         }
         None => ObjBody {
-            dict: String::from_utf8_lossy(body).to_string(),
+            dict: tidy_dict(&String::from_utf8_lossy(body)),
             stream: None,
         },
     }
@@ -381,8 +478,17 @@ fn unpack_object_stream(holder: &ObjBody, out: &mut Objects) {
             .unwrap_or(plain.len());
         if let Some(body) = plain.get(start..end.min(plain.len())) {
             // Objects inside an object stream never hold streams themselves.
+            //
+            // **Tidied like every other dictionary** (14 October, item 4). The
+            // four hand-written «either spelling» tests this file used to carry
+            // covered these objects too, and leaving them raw while the
+            // top-level ones were normalised cost seven Swedish e-documents on
+            // this machine: their page tree is packed in an object stream and
+            // written «/Type /Page», so `is_page` stopped recognising it and
+            // files that had read for weeks were refused as «lists no pages».
+            // One normalisation, every dictionary, wherever it was found.
             out.entry(*number).or_insert_with(|| ObjBody {
-                dict: String::from_utf8_lossy(body).to_string(),
+                dict: tidy_dict(&String::from_utf8_lossy(body)),
                 stream: None,
             });
         }
@@ -419,7 +525,66 @@ fn find(haystack: &[u8], from: usize, needle: &[u8]) -> Option<usize> {
     hay.windows(needle.len()).position(|window| window == needle)
 }
 
-/// The object number written just before ` obj`.
+/// **The six bytes the specification calls white-space** (§7.2).
+///
+/// Rust's `is_ascii_whitespace` is five of them; it leaves out NUL, which the
+/// specification lists beside space, tab, line feed, form feed and carriage
+/// return. A generator that separates two tokens with a NUL is writing a legal
+/// file, and this reader's job is to read what people are given, not what we
+/// would have written.
+fn is_pdf_space(byte: u8) -> bool {
+    matches!(byte, b'\0' | b'\t' | b'\n' | b'\x0c' | b'\r' | b' ')
+}
+
+/// The next `obj` keyword at or after `from` — as a **token**, not as a string.
+///
+/// `find(bytes, at, b" obj")` stood here, and it refused one of the most common
+/// PDF sources in the world. Google Docs and Google Slides write every token of
+/// an object header on its own line:
+///
+/// ```text
+/// 3
+/// 0
+/// obj
+/// <<
+/// ```
+///
+/// The byte before `obj` is a line feed, so the search for *space-o-b-j* found
+/// nothing in the whole file and the import refused it as «no objects could be
+/// read out of this PDF». Measured by the lead on two real files — a Web Summit
+/// programme and its Qatar twin, 9.5 MB of ordinary slides: **0 objects found,
+/// 467 there.** The same files also mix line endings, 28,595 lone carriage
+/// returns among 65,810 line feeds, which is legal and which a search for one
+/// particular byte cannot survive.
+///
+/// Three conditions, and each one earns its place:
+///
+/// * **white-space before**, because that is what separates two tokens — and
+///   because a name written `/obj` is not an object header;
+/// * **not the tail of `endobj`**, checked for itself rather than left to the
+///   condition above, because the day someone widens that condition this guard
+///   must still hold;
+/// * **white-space or a delimiter after**, so `objects` and `/objective` are
+///   words and not keywords.
+fn next_obj(bytes: &[u8], from: usize) -> Option<usize> {
+    let mut at = from;
+    while let Some(offset) = find(bytes, at, b"obj") {
+        let keyword = at + offset;
+        let before = keyword.checked_sub(1).and_then(|i| bytes.get(i)).copied();
+        let after = bytes.get(keyword + 3).copied();
+        let ends_a_word = keyword >= 3 && bytes.get(keyword - 3..keyword) == Some(b"end".as_slice());
+        if !ends_a_word
+            && before.is_some_and(is_pdf_space)
+            && after.is_none_or(|b| is_pdf_space(b) || is_delimiter(b))
+        {
+            return Some(keyword);
+        }
+        at = keyword + 3;
+    }
+    None
+}
+
+/// The object number written just before the `obj` keyword.
 fn number_before(bytes: &[u8], obj_at: usize) -> Option<u32> {
     let head = bytes.get(..obj_at)?;
     // « 12 0 » — step back over the generation, then take the number.
@@ -457,7 +622,9 @@ fn encrypted(bytes: &[u8], objects: &Objects) -> bool {
     find(bytes, 0, b"/Encrypt").is_some()
         || objects
             .values()
-            .any(|o| o.dict.contains("/Filter/Standard") || o.dict.contains("/Filter /Standard"))
+            // One spelling, because `tidy_dict` has already made the other
+            // ones the same one.
+            .any(|o| o.dict.contains("/Filter/Standard"))
 }
 
 /// The pages, in reading order, by walking the page tree from the catalogue.
@@ -465,7 +632,7 @@ fn page_order(objects: &Objects) -> Vec<u32> {
     let mut order = Vec::new();
     let root = objects
         .iter()
-        .find(|(_, o)| o.dict.contains("/Type/Catalog") || o.dict.contains("/Type /Catalog"))
+        .find(|(_, o)| o.dict.contains("/Type/Catalog"))
         .and_then(|(_, o)| reference(&o.dict, "/Pages"));
 
     if let Some(pages_ref) = root {
@@ -484,8 +651,10 @@ fn page_order(objects: &Objects) -> Vec<u32> {
 }
 
 fn is_page(dict: &str) -> bool {
-    let has_type = dict.contains("/Type/Page") || dict.contains("/Type /Page");
-    let is_tree = dict.contains("/Type/Pages") || dict.contains("/Type /Pages");
+    // Both spellings stood here, and a third — a line feed — was what Google
+    // wrote. `tidy_dict` makes them one (14 October, item 4).
+    let has_type = dict.contains("/Type/Page");
+    let is_tree = dict.contains("/Type/Pages");
     has_type && !is_tree
 }
 
@@ -626,8 +795,10 @@ fn is_operator(bytes: &[u8], at: usize, name: &[u8]) -> bool {
     let after = bytes.get(at + name.len());
     // An operand may end in `)` or `]` with no space before the operator —
     // `[(a)4(b)]TJ` is how every generator writes it.
-    before.is_none_or(|b| b.is_ascii_whitespace() || matches!(b, b')' | b']' | b'>'))
-        && after.is_none_or(|b| b.is_ascii_whitespace() || is_delimiter(*b))
+    // The same six bytes here as at the object header: a content stream that
+    // separates an operand from its operator with a NUL is a legal file too.
+    before.is_none_or(|b| is_pdf_space(*b) || matches!(b, b')' | b']' | b'>'))
+        && after.is_none_or(|b| is_pdf_space(*b) || is_delimiter(*b))
 }
 
 /// The numbers written in front of an operator: `-3.979 -2.888 Td` has two.
@@ -637,7 +808,7 @@ fn operands_before(bytes: &[u8], operator: usize, want: usize) -> Vec<f64> {
     let mut out: Vec<f64> = Vec::new();
     let mut at = operator;
     while out.len() < want {
-        while at > 0 && bytes.get(at - 1).is_some_and(u8::is_ascii_whitespace) {
+        while at > 0 && bytes.get(at - 1).copied().is_some_and(is_pdf_space) {
             at -= 1;
         }
         let end = at;
@@ -682,7 +853,7 @@ fn separate(current: &mut String, down: bool) {
 fn drawn(content: &[u8], name: &str) -> bool {
     let wanted = format!("/{name}");
     let mut previous: &[u8] = b"";
-    for token in content.split(|b| b.is_ascii_whitespace()).filter(|t| !t.is_empty()) {
+    for token in content.split(|b| is_pdf_space(*b)).filter(|t| !t.is_empty()) {
         if token == b"Do" && previous == wanted.as_bytes() {
             return true;
         }
@@ -1101,12 +1272,12 @@ fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
                     .get(at + 1..)
                     .unwrap_or_default()
                     .iter()
-                    .take_while(|b| !b.is_ascii_whitespace() && !is_delimiter(**b))
+                    .take_while(|b| !is_pdf_space(**b) && !is_delimiter(**b))
                     .map(|b| char::from(*b))
                     .collect();
                 let after = bytes.get(at + 1 + name.len()..).unwrap_or_default();
                 let mut words = after
-                    .split(|b| b.is_ascii_whitespace())
+                    .split(|b| is_pdf_space(*b))
                     .filter(|w| !w.is_empty());
                 let size = words.next().unwrap_or_default();
                 if size.first().is_some_and(u8::is_ascii_digit) && words.next() == Some(b"Tf".as_slice()) {
@@ -1430,6 +1601,116 @@ mod tests {
         out.push_str("100 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/Helvetica >>\nendobj\n");
         out.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
         latin1(&out)
+    }
+
+    /// **The shape Google writes**: every token of an object header on its own
+    /// line, and the line endings mixed.
+    ///
+    /// Written by hand rather than taken from a file, because the file this
+    /// came from is 9.5 MB of somebody else's slides and because the shape is
+    /// the whole of it: `3\n0\nobj` instead of `3 0 obj`, a lone carriage
+    /// return where the last object ended, and a NUL between two tokens — all
+    /// three legal, and none of them a space.
+    pub(crate) fn pdf_written_the_way_google_writes_one(line: &str) -> Vec<u8> {
+        let stream = latin1(&format!("BT\n/F1\n12\nTf\n72\n700\nTd\n({line})\nTj\nET"));
+        let mut out = String::from("%PDF-1.4\n");
+        // Headers broken across lines, the way a Google export writes them.
+        out.push_str("1\n0\nobj\n<<\n/Type\n/Catalog\n/Pages\n2\n0\nR\n>>\nendobj\r");
+        out.push_str("2\n0\nobj\n<<\n/Type\n/Pages\n/Count\n1\n/Kids[3\n0\nR]\n>>\nendobj\r\n");
+        out.push_str(
+            "3\n0\nobj\n<<\n/Type\n/Page\n/Parent\n2\n0\nR\n/Contents\n4\n0\nR\n\
+             /Resources\n<<\n/Font\n<<\n/F1\n100\n0\nR\n>>\n>>\n>>\nendobj\r",
+        );
+        out.push_str(&format!("4\n0\nobj\n<<\n/Length\n{}\n>>\nstream\n", stream.len()));
+        out.push_str(&stream.iter().map(|b| char::from(*b)).collect::<String>());
+        out.push_str("\nendstream\nendobj\r");
+        // A NUL between the two numbers of the last header: white-space by the
+        // specification, and the one of the six that `is_ascii_whitespace` does
+        // not know.
+        out.push_str("100\n0\x00obj\n<<\n/Type\n/Font\n/Subtype\n/Type1\n/BaseFont\n/Helvetica\n>>\nendobj\r");
+        out.push_str("trailer\n<<\n/Root\n1\n0\nR\n>>\n%%EOF\n");
+        latin1(&out)
+    }
+
+    /// **A PDF written by Google is read** — the detection round of 14 October,
+    /// item 4.
+    ///
+    /// Measured by the lead on two real files, a Web Summit programme and its
+    /// Qatar twin: refused as `MalformedDocument`, «no objects could be read out
+    /// of this PDF», while a white-space-aware scan of the same bytes finds 467
+    /// objects. One of the most common PDF sources in the world, and the first
+    /// file a tester is likely to paste.
+    #[test]
+    fn a_pdf_whose_headers_stand_on_their_own_lines_is_read() {
+        let bytes = pdf_written_the_way_google_writes_one("Rechnung 2026-10518");
+        let out = extract(&bytes, &Budget::new()).expect("a legal PDF must be read");
+        assert!(
+            out.text.contains("Rechnung 2026-10518"),
+            "the page's own line did not arrive: {:?}",
+            out.text
+        );
+        assert_eq!(out.pages, 1, "one page, and it says so");
+    }
+
+    /// And the keyword is a keyword, not three letters: `endobj` is not an
+    /// object header, whatever stands in front of it.
+    #[test]
+    fn the_object_keyword_is_never_found_inside_endobj() {
+        let bytes = b"%PDF-1.4\n1 0 obj\n<< /Type/Catalog >>\nendobj\n";
+        let first = next_obj(bytes, 0).expect("the real header was not found");
+        assert_eq!(&bytes[first..first + 3], b"obj", "that is not the keyword");
+        // Past the header there is only `endobj` left, and it is not one.
+        assert_eq!(
+            next_obj(bytes, first + 3),
+            None,
+            "«endobj» was read as an object header"
+        );
+    }
+
+    /// **And a dictionary packed inside an object stream is tidied too** — the
+    /// regression this round caught on itself, 14 October.
+    ///
+    /// Four places in this file used to accept «either spelling» by hand —
+    /// `/Type/Page` or `/Type /Page` — and `tidy_dict` replaced all four with
+    /// one normalisation. It was applied where objects are split out of the
+    /// file and **not** where they are unpacked out of an object stream, which
+    /// is where a modern writer puts the page tree. Measured on this machine:
+    /// seven Swedish e-documents that had read for weeks were refused as «this
+    /// PDF lists no pages» — the page objects were there, written with a space,
+    /// and nothing recognised them any more.
+    ///
+    /// So the page tree here is packed, written with spaces, and the text is on
+    /// the far side of it.
+    #[test]
+    fn a_page_tree_packed_in_an_object_stream_is_read_whatever_its_spacing() {
+        let tree = "<< /Type /Pages /Count 1 /Kids[3 0 R] >>";
+        let page = "<< /Type /Page /Parent 2 0 R /Contents 4 0 R \
+                    /Resources << /Font << /F1 100 0 R >> >> >>";
+        let header = format!("2 0 3 {} ", tree.len());
+        let packed = format!("{header}{tree}{page}");
+        let content = "BT /F1 12 Tf 72 700 Td (Mahnung 2026-10518) Tj ET";
+
+        let mut pdf = String::from("%PDF-1.5\n");
+        pdf.push_str("1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        pdf.push_str(&format!(
+            "4 0 obj\n<< /Length {} >>\nstream\n{content}\nendstream\nendobj\n",
+            content.len()
+        ));
+        pdf.push_str("100 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/Helvetica >>\nendobj\n");
+        pdf.push_str(&format!(
+            "5 0 obj\n<< /Type/ObjStm /N 2 /First {} /Length {} >>\nstream\n{packed}\nendstream\nendobj\n",
+            header.len(),
+            packed.len()
+        ));
+        pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
+
+        let out = extract(&latin1(&pdf), &Budget::new()).expect("the page tree is in the stream");
+        assert_eq!(out.pages, 1, "the packed page was not counted");
+        assert!(
+            out.text.contains("Mahnung 2026-10518"),
+            "the page's line did not arrive: {:?}",
+            out.text
+        );
     }
 
     /// A scan: pages that hold an image and no text at all.

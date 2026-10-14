@@ -65,7 +65,7 @@ pub(crate) fn import_text(session: SessionId, text_in: String) -> ApiResult<Docu
             &crate::documents::Budget::new(),
         )?)
     };
-    let view = with_session(session.id, |s| {
+    with_session(session.id, |s| {
         match read {
             Some(extracted) => {
                 s.original = crate::secret::Secret::new(extracted.text);
@@ -86,11 +86,45 @@ pub(crate) fn import_text(session: SessionId, text_in: String) -> ApiResult<Docu
         s.findings.clear();
         s.scan_origin = crate::api::ScanOrigin::NotScanned;
         s.bump();
-        view_of(s)
     })
     .ok_or(ApiError::InvalidSession)?;
     crate::session::bump_truth();
-    view
+    the_scan_that_arrives_with_the_document(session)?;
+    // Read **after** the scan: a view carries the marks, and a view with none
+    // on it was the answer this door used to give about a document it had just
+    // read.
+    with_session(session.id, view_of).ok_or(ApiError::InvalidSession)?
+}
+
+/// **The scan a document arrives with** — the detection round of 14 October,
+/// item 3.
+///
+/// Both import doors installed the text, cleared the findings, wrote
+/// `ScanOrigin::NotScanned` and returned. Nothing was wrong with any of that
+/// except what it left to whoever called next: `list_findings` came back empty,
+/// `workspace_snapshot` carried no mark, and a value the vault already knows —
+/// a `Policy::Always` value, put back by the scan as `auto` and never asked
+/// about — simply was not there. A person who opens a document and sees nothing
+/// happen has met a broken product on their first press.
+///
+/// Two Dart doors remembered to scan and nothing made them, which is the shape
+/// of trap this house has paid for before: one rule written at one door out of
+/// several (083a's three exits, 080's two language doors). And a test that
+/// imports and then answers findings answers nothing — that is how
+/// `the_session_remembers_its_three` claimed «a bench with one protected name»
+/// for four guards and had none.
+///
+/// So the scan is at the door. `scan` stays public, because a rescan is a real
+/// act of its own: the Rescan button, a pack changed, a name taught.
+///
+/// **`NothingToSend` is not a refusal here.** An empty document is nothing to
+/// scan rather than something that failed, and the composer imports an empty
+/// string when a conversation opens with no text at all.
+fn the_scan_that_arrives_with_the_document(session: SessionId) -> ApiResult<()> {
+    match scan(session) {
+        Ok(_) | Err(ApiError::NothingToSend) => Ok(()),
+        Err(other) => Err(other),
+    }
 }
 
 /// Read a file, here, from memory. Nothing is written to disk on the way (G15).
@@ -103,7 +137,7 @@ pub(crate) fn import_document(
     let extracted = crate::documents::extract(&bytes, kind)?;
     // The file's bytes are dropped here, at the end of this call. They were never
     // written anywhere, and the text lives only inside the session's Secret.
-    let view = with_session(session.id, |s| {
+    with_session(session.id, |s| {
         s.original = crate::secret::Secret::new(extracted.text);
         s.places = extracted.places;
         s.pages = extracted.pages;
@@ -115,11 +149,14 @@ pub(crate) fn import_document(
         s.findings.clear();
         s.scan_origin = crate::api::ScanOrigin::NotScanned;
         s.bump();
-        view_of(s)
     })
     .ok_or(ApiError::InvalidSession)?;
     crate::session::bump_truth();
-    view
+    // The same law at this door as at the other one, and the same line of code
+    // asking it: a .docx and a .pdf are read by a different reader and arrive
+    // at the same session (item 3).
+    the_scan_that_arrives_with_the_document(session)?;
+    with_session(session.id, view_of).ok_or(ApiError::InvalidSession)?
 }
 
 /// Gather the names this document uses that no dictionary knows.
