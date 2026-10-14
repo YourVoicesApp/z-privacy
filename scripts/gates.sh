@@ -1133,7 +1133,12 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          every_door_that_takes_text_out_refuses_with_the_same_number \
          the_refusal_carries_the_number_of_words_waiting \
          the_word_answered_the_exit_opens \
-         the_column_the_person_reads_while_answering_still_builds; do
+         the_column_the_person_reads_while_answering_still_builds \
+         an_iban_is_the_number_and_not_the_words_after_it \
+         a_bank_value_carries_no_word_of_prose \
+         an_iban_in_a_footer_line_stops_before_the_next_label \
+         the_bic_in_a_footer_line_is_read_as_a_bic \
+         the_rest_of_the_letter_did_not_move; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
