@@ -35,6 +35,22 @@ The owner's reading is right: the finding engine is there.
 - **What is typed is never stored**: no search history. A list of searched names would be a list of names in plain text.
 - Un-protection here / in this conversation is the same act as 083d, so 084 lands after 083d, or carries 083d inside it.
 
+## Completion while typing (owner, 14 Oct)
+
+«تبدأ الاقتراحات اعتباراً من الحرف الثالث… بخط شفاف أسفل الكلمة… ثم تاب ثم إنتر.»
+
+5. **From the third character typed**, a completion appears **in faint text under the typed word**: «Lin» → *Lindqvist*.
+6. **Tab** takes the completion into the bar; **Enter** searches the whole word.
+7. This is how the whole-word search meets a half-typed name: the search stays whole-word and case-blind, and the completion supplies the whole word.
+
+The lead's reading:
+- **Completions come only from the words of the document open now.** They never come from the vault, from other sessions, or from earlier searches. Nothing new is stored, and nothing from elsewhere is shown.
+- **The one shown is the word that appears most often with that beginning** (case-blind); a tie goes to the earlier one in reading order.
+- If more than one word fits, a second Tab before Enter shows the next one. If no word fits, nothing faint appears, and Enter searches what was typed.
+- «Third character» counts letters as the eye sees them, so Arabic «لين» counts three.
+
+Guard: «Lin» in a document holding Lindqvist ×12 and Lindberg ×2 → faint *Lindqvist*; Tab → the bar reads «Lindqvist»; Enter → the 12-place result line. «Li» → nothing faint.
+
 ## Beside it: highlighted words become suggestions (owner, 14 Oct)
 
 A word the person coloured before the document entered Z (Word highlight; PDF Highlight annotation) arrives as a **suggestion**, never as protected outright: the colour may not be the session owner's, and people highlight for other reasons. It is an option that exists, not the main road.
