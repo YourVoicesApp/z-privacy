@@ -44,7 +44,7 @@ The app earns nothing and measures nothing, by design. A buyer is not buying its
 
 ## The stations
 
-**1 · The app is finished, in German, English and Swedish.** Arabic is not here, by the owner's ruling that languages come last.
+**1 · The app is finished, in four languages: German, English, Swedish and Arabic.** The owner, 14 Oct: «بنينا القسم الأكبر من العربية، نأخذ اللغات الأربعة» — which overrides the same morning's «languages come last» for this version.
 *Why first:* everything after it is spending on something unfinished.
 *Arrived when:* the owner runs the whole round himself and finds nothing that stops him.
 
@@ -192,7 +192,6 @@ And the rule that makes it ours: **a document written inside Z carries its token
 
 ## Not on this road
 
-- **Arabic** — the reading base is a measured defect with its paper (086) and the packs come last; both wait. Doha is Arabic-speaking, which argues for them, but an application nobody can install reaches nobody in any language.
 - **`.peak`, the closed document** (087) — **not needed**, by the owner's word of 14 Oct: «لا نحتاج موضوع ملفات .peak». The paper stays as the record of the dialogue; nothing of it is built.
 - **More document formats.** Three readers cover the office: a PDF arrives, Word is written, text is pasted.
 - **Everything in the libraries except the exchange round.**
