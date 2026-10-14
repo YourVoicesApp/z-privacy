@@ -462,6 +462,21 @@ fn no_word_waits(session: u32) -> ApiResult<()> {
 /// waiting, and this door decides who may take the text away.
 pub(crate) fn payload_to_take_out(session: SessionId) -> ApiResult<PayloadView> {
     no_word_waits(session.id)?;
+    // **The answer page's token, minted after the law and never before it** —
+    // 079. A refused exit prints no page, so it mints nothing either. Minted
+    // here, at the one door both manual exits ask, rather than in the PDF's
+    // own press: the word is protected with the session's key, the key is in
+    // the core, and the screen is handed the token and never the word.
+    //
+    // Named from the vault first, as every other mint is, so a bench whose
+    // session is open prints that session's name for the word.
+    name_tokens_from_the_vault(session.id);
+    with_session(session.id, |s| {
+        if !s.original.is_empty() {
+            s.answer_page_token();
+        }
+    })
+    .ok_or(ApiError::InvalidSession)?;
     payload_view(build_payload(session)?)
 }
 

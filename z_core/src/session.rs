@@ -191,6 +191,9 @@ pub(crate) struct Session {
     pub question: Secret,
     pub question_safe: String,
     pub question_tokens: Vec<String>,
+    /// **The token the answer page of a z-pdf prints** — 079. `None` until an
+    /// exit mints it; see [`Session::answer_page_token`].
+    pub answer_page: Option<String>,
 }
 
 impl Session {
@@ -228,6 +231,7 @@ impl Session {
             question: Secret::new(String::new()),
             question_safe: String::new(),
             question_tokens: Vec::new(),
+            answer_page: None,
         }
     }
 
@@ -278,10 +282,73 @@ impl Session {
         for (old, new) in &pairs {
             self.question_safe = self.question_safe.replace(old, new);
         }
+        // The answer page's token is a sixth place, and it moves with the rest:
+        // a page minted before the birth would otherwise print a name the
+        // session's key never made.
+        if let Some(new) = self.answer_page.as_deref().and_then(|t| moved.get(t)) {
+            self.answer_page = Some((*new).to_string());
+        }
 
         self.payloads.clear();
         self.bump();
         pairs.len()
+    }
+
+    /// **The token the answer page of a z-pdf prints, minted once** — 079.
+    ///
+    /// The owner, 13 Oct: «Zprivacy-svara» is protected **like any other
+    /// word**, with the same session key as the document. So it is minted by
+    /// this bench's own mint, into this bench's own store, and nothing about it
+    /// is special after that: with a session open its name is derived from the
+    /// session's key — `__Z_<ns>_CUSTOM_<tail>__`, where neither the namespace
+    /// nor the tail has the document in its input (`Naming::of_session`) — and
+    /// a birth renames it with every other token.
+    ///
+    /// **A kind of its own, `Custom`, and never a token borrowed from the
+    /// document.** A document that happened to protect the same spelling as a
+    /// person would otherwise lend the page *its* token, and the page would
+    /// stop being the same in every export of the session.
+    ///
+    /// Every payload already built is taught it here, and every payload built
+    /// after allows it by itself (`SafePayload::build`). The first half is not
+    /// tidiness: the payload a pasted answer is tied to is the bench's last
+    /// snapshot, built before the exit was pressed — without this, the token
+    /// the page printed would come back unknown in the session that printed it.
+    ///
+    /// The revision does not move. What would leave as the document's text is
+    /// unchanged, so no handle goes stale and no send is refused for it.
+    pub(crate) fn answer_page_token(&mut self) -> String {
+        let word = crate::tokens::ANSWER_PAGE_WORD;
+        let kept = self
+            .answer_page
+            .clone()
+            .filter(|t| self.tokens.get(t).is_some_and(|e| e.kind == Kind::Custom && e.matches(word)));
+        let token = match kept {
+            Some(token) => token,
+            None => {
+                let token = self.mint.mint(Kind::Custom, word, &self.tokens);
+                self.tokens.insert(
+                    token.clone(),
+                    crate::tokens::TokenEntry {
+                        value: Secret::new(word.to_string()),
+                        aliases: Vec::new(),
+                        kind: Kind::Custom,
+                        scope: Scope::Conversation,
+                        source: Source::GeneralRule,
+                        decided: false,
+                        source_detail: "the answer page of a z-pdf".to_string(),
+                    },
+                );
+                self.answer_page = Some(token.clone());
+                token
+            }
+        };
+        for payload in self.payloads.values_mut() {
+            if !payload.allowed_token_ids.iter().any(|t| t == &token) {
+                payload.allowed_token_ids.push(token.clone());
+            }
+        }
+        token
     }
 
     /// Something changed that affects the safe text: every handle built before

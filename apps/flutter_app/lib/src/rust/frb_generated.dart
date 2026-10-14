@@ -5113,8 +5113,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   PayloadView dco_decode_payload_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return PayloadView(
       text: dco_decode_String(arr[0]),
       protectedCount: dco_decode_u_32(arr[1]),
@@ -5122,6 +5122,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       pageEdges: dco_decode_list_page_edge(arr[3]),
       byKind: dco_decode_list_kind_tally(arr[4]),
       session: dco_decode_opt_box_autoadd_payload_session(arr[5]),
+      answerPageToken: dco_decode_opt_String(arr[6]),
     );
   }
 
@@ -7142,6 +7143,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_pageEdges = sse_decode_list_page_edge(deserializer);
     var var_byKind = sse_decode_list_kind_tally(deserializer);
     var var_session = sse_decode_opt_box_autoadd_payload_session(deserializer);
+    var var_answerPageToken = sse_decode_opt_String(deserializer);
     return PayloadView(
       text: var_text,
       protectedCount: var_protectedCount,
@@ -7149,6 +7151,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       pageEdges: var_pageEdges,
       byKind: var_byKind,
       session: var_session,
+      answerPageToken: var_answerPageToken,
     );
   }
 
@@ -9074,6 +9077,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_page_edge(self.pageEdges, serializer);
     sse_encode_list_kind_tally(self.byKind, serializer);
     sse_encode_opt_box_autoadd_payload_session(self.session, serializer);
+    sse_encode_opt_String(self.answerPageToken, serializer);
   }
 
   @protected

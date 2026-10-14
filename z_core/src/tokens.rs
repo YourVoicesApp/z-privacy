@@ -18,6 +18,14 @@ use crate::api::{Kind, Piece, Scope, Segment, Source, TokenRow};
 use crate::secret::Secret;
 use crate::text::nfc;
 
+/// **The word the answer page of a z-pdf protects** — 079, the owner's own.
+///
+/// «Z-pdf : Zprivacy-svara» is the page's top line, and this half of it is
+/// protected with the session's key like any other word, so the page carries a
+/// token of the session and never the key. Known in advance on purpose: a
+/// returned document can be searched for this one name first.
+pub(crate) const ANSWER_PAGE_WORD: &str = "Zprivacy-svara";
+
 /// Four uppercase hex digits drawn from the operating system.
 ///
 /// The owner's ruling: since linking tokens across sessions is the threat, there

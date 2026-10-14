@@ -5358,6 +5358,7 @@ impl SseDecode for crate::api::mirrors::PayloadView {
         let mut var_pageEdges = <Vec<crate::api::mirrors::PageEdge>>::sse_decode(deserializer);
         let mut var_byKind = <Vec<crate::api::mirrors::KindTally>>::sse_decode(deserializer);
         let mut var_session = <Option<crate::api::mirrors::PayloadSession>>::sse_decode(deserializer);
+        let mut var_answerPageToken = <Option<String>>::sse_decode(deserializer);
         return crate::api::mirrors::PayloadView {
             text: var_text,
             protected_count: var_protectedCount,
@@ -5365,6 +5366,7 @@ impl SseDecode for crate::api::mirrors::PayloadView {
             page_edges: var_pageEdges,
             by_kind: var_byKind,
             session: var_session,
+            answer_page_token: var_answerPageToken,
         };
     }
 }
@@ -9383,6 +9385,7 @@ impl SseEncode for crate::api::mirrors::PayloadView {
         <Vec<crate::api::mirrors::PageEdge>>::sse_encode(self.page_edges, serializer);
         <Vec<crate::api::mirrors::KindTally>>::sse_encode(self.by_kind, serializer);
         <Option<crate::api::mirrors::PayloadSession>>::sse_encode(self.session, serializer);
+        <Option<String>>::sse_encode(self.answer_page_token, serializer);
     }
 }
 
