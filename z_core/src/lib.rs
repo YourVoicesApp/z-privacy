@@ -67,6 +67,32 @@ pub mod testing {
     }
 }
 
+/// The third door of that kind, and the narrowest: **the word search an
+/// instrument asks**, so that a measurement is the product's number and not a
+/// script's.
+///
+/// Paper 086 measures what the reader hands over for Arabic, and the whole
+/// worth of such a measurement is that it counts places the way the product
+/// counts them: case-blind, across a hyphen the page put inside a word, and
+/// with the attached clitics Arabic writes in front of a name — `دمنة` inside
+/// `ولدمنة` is a place and inside `مدمنة` is not. A `contains` written beside
+/// the product answers a different question and looks like an answer to this
+/// one.
+///
+/// So an instrument borrows the function rather than keeping a second copy of
+/// the rule, which is the defect this project has already paid for twice. It is
+/// pure: a string the caller already owns goes in, byte ranges come out. No
+/// session is read, no vault is opened, nothing is changed — and the bridge
+/// does not carry it, because the bridge carries `api` and nothing else.
+/// `examples/what_arrives.rs` is its only caller.
+pub mod measuring {
+    /// Every **whole-word** place `needle` stands in `haystack`, as byte ranges
+    /// into `haystack` itself.
+    pub fn whole_word_places(haystack: &str, needle: &str) -> Vec<(usize, usize)> {
+        crate::text::occurrences(haystack, needle)
+    }
+}
+
 /// The build that is running, shown by the UI so it can be named on sight.
 ///
 /// `z_core 0.1.0 · 2026-10-04 · fb9cfb8` — the version, the day it was built,
@@ -127,5 +153,28 @@ mod tests {
         } else {
             assert_eq!(commit, "unknown", "no checkout, so nothing may be claimed: «{commit}»");
         }
+    }
+
+    /// **The door is the product's search, not a search that looks like it.**
+    ///
+    /// Three cases, and a `contains` written inside an instrument answers all
+    /// three wrongly: it would find a word inside a longer one, miss the same
+    /// name shouted, and refuse a name Arabic has written a particle in front
+    /// of. A measurement built on any of those three would be reported as the
+    /// product's number. So this is the guard that reddens if the door is ever
+    /// reimplemented instead of forwarded.
+    #[test]
+    fn the_word_search_an_instrument_asks_is_the_products_own() {
+        let places = |haystack: &str, needle: &str| measuring::whole_word_places(haystack, needle).len();
+
+        // A substring of a longer word is not a place: `contains` says 2.
+        assert_eq!(places("Sandström och Sand i akten", "Sand"), 1);
+        // The same name shouted — 041-R, the owner's own file.
+        assert_eq!(places("TEXT: CRISTINA LEIFLAND", "Leifland"), 1);
+        // And the rule no instrument of ours would carry: the clitics Arabic
+        // writes in front of a name, which is the whole reason paper 086's
+        // numbers have to come from here.
+        assert_eq!(places("كليلة ودمنة", "دمنة"), 1);
+        assert_eq!(places("مدمنة", "دمنة"), 0);
     }
 }
