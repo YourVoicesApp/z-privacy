@@ -148,6 +148,20 @@ h1 {
   font-size: clamp(40px, 7vw, 66px);
   font-weight: 600; line-height: 1.04; letter-spacing: -0.015em;
 }
+/* Z's slogan, the owner's sentence of 14 October 2026 — «شعارنا دائماً». It names
+   the problem before anything else is said, so the first screen reads in three
+   steps: the cost (this line), the answer (.hero-idea), who decides (.hero-word). */
+.hero-slogan {
+  margin: 14px 0 0;
+  font-family: var(--disp);
+  font-size: clamp(20px, 2.8vw, 27px);
+  font-weight: 600; line-height: 1.32;
+  color: var(--ink); max-inline-size: 760px;
+  /* Balanced lines, so a narrow screen never leaves «it.» alone on the last one. */
+  text-wrap: balance;
+}
+/* On the chooser everything stands on one centre line; the box must too. */
+.chooser .hero-slogan { margin-inline: auto; }
 /* The idea, in the owner's own words, and the sentence under it that says who
    decides. Named for the screen they belong to: these two and the line below
    them are the whole of the first screen, and nothing else competes with them.
