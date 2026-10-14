@@ -47,10 +47,32 @@ The lead's reading:
 - **Completions come only from the words of the document open now.** They never come from the vault, from other sessions, or from earlier searches. Nothing new is stored, and nothing from elsewhere is shown.
 - **The one shown is the word that appears most often with that beginning** (case-blind); a tie goes to the earlier one in reading order.
 - **Typing on means the shown word is refused (owner, 14 Oct):** «الاستمرار في كتابة الأحرف يعني أن الخيار الأول مرفوض والبحث عن خيار ثاني. في حال عدم وجود خيار ثاني تختفي الإضافات وتستمر الكتابة.» Each new letter drops every word already shown and offers the next one that fits what is typed now. If none is left, the faint text disappears and the typing goes on. Enter then searches what was typed. This replaces the lead's «second Tab». Tab only takes; it never cycles.
+- **A refused word does not come back (owner, 14 Oct):** «استمرار الكتابة يعني أن الخيار الأول لا يستمر في الظهور، يختفي، لا نعود إليه.» This is deliberately unlike a web search box that holds on to its guess while the letters still agree. When the completion vanishes, the app has understood that the shown word was refused, or not noticed. The person then either types on or **erases back to the third letter**, which is simpler than typing on.
+- The lead's reading of the erase: erasing back offers the next word that fits and has **not** been refused; a refused word stays refused until the bar is emptied, and an empty bar starts fresh.
 - Harmless by design: someone who types «Lindq» after *Lindqvist* was shown loses the completion, but typing the name out and pressing Enter finds the same 12 places.
 - «Third character» counts letters as the eye sees them, so Arabic «لين» counts three.
 
 Guard: «Lin» in a document holding Lindqvist ×12 and Lindberg ×2 → faint *Lindqvist*; Tab → the bar reads «Lindqvist»; Enter → the 12-place result line. «Li» → nothing faint. «Lin» shows *Lindqvist*, then «d» → faint *Lindberg* (Lindqvist refused); then «b» → nothing more fits that was not shown, so the faint text is gone and the bar reads «Lindb».
+
+## Colours in the text (owner, 14 Oct)
+
+«الكلمات المشفرة في النص التي اكتشفها التطبيق تظهر بلون أحمر مائي شفاف، والكلمات غير المشفرة تظهر بلون أزرق مائي شفاف.»
+
+8. **A protected word: a transparent watery red wash.**
+9. **A word the app found that is not protected (waiting for an answer): a transparent watery blue wash.**
+10. Plain words that the app did not find carry no wash.
+
+Today (`apps/flutter_app/lib/widgets/document_text.dart:685-709`):
+- protected words wear a clay wash, and words the vault knew wear a river wash (`sourceTint`, `:230`);
+- waiting words wear an amber wash.
+
+The two new colours replace all three.
+
+The lead's reading:
+- **A word protected by hand is red too.** Red means protected, whoever protected it.
+- **The vault's own colour goes,** because in 083 the vault no longer «knows who this is».
+- **The search bar's blue and the waiting blue are one family on purpose.** Both say «this still needs you».
+- Both washes are drawn in both columns, at the same place, once (`~/محرر النصوص.md` rule 10).
 
 ## Beside it: highlighted words become suggestions (owner, 14 Oct)
 
