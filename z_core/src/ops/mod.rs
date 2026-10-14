@@ -15,7 +15,7 @@ use std::collections::BTreeMap;
 
 use crate::api::{
     ApiError, ApiResult, AnswerId, DocumentKind, Finding, FindingAnswer, LayerCount, Segment, DocumentView, Kind,
-    Explanation, Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId,
+    Explanation, FoundPlace, FoundState, Mark, MarkState, PackRow, PayloadHandle, PayloadView, ProtectOutcome, ProviderId,
     LineSelection, NameCandidate, ProviderRow, QuestionView, ReportSubject, RevealedToken,
     RevealedValue,
     SelectionView, RescanOutcome, Revision, ScanReport, Scope, SessionId, Source, Span, SwitchOutcome,
@@ -1260,6 +1260,57 @@ pub(crate) fn with_payload_record<R>(handle: PayloadHandle, f: impl FnOnce(&Safe
 /// Everything the Protect button needs to choose among its five states, decided
 /// here rather than in a widget: the same code that would do the protecting
 /// answers what it *would* do.
+/// **The search bar's one reading** — 084. See `api::find_in_document`.
+///
+/// A place's state is the state of what **covers** it: a protection, a finding
+/// nobody has answered, or nothing. Measured before this was written, on a
+/// document holding «Anna Lindqvist» protected, «Lindqvist AB» waiting and
+/// «Lindqvist» alone three times — `inspect_selection` could not tell the
+/// third from the second, because its `snaps_to` is built from protections
+/// alone. This is that reading, and the only one the bar has.
+pub(crate) fn find_in_document(session: SessionId, word: String) -> ApiResult<Vec<FoundPlace>> {
+    with_session(session.id, |s| {
+        let wanted = word.trim();
+        if wanted.is_empty() {
+            return Ok(Vec::new());
+        }
+        let whole = s.original_str();
+        let mut out = Vec::new();
+        // The product's own search, in reading order.
+        for (start, end) in text::occurrences(whole, wanted) {
+            // What covers this place — the protection first, because a place
+            // can be inside a finding **and** inside the protection that
+            // answered it, and «protected» is the state a person acts on.
+            let protection = s.protections.iter().find(|p| p.start <= start && end <= p.end);
+            let finding = s
+                .findings
+                .iter()
+                .find(|f| f.state == MarkState::Suggested && f.start <= start && end <= f.end);
+            let (state, token, covered, kind) = match (protection, finding) {
+                (Some(p), _) => (
+                    FoundState::Protected,
+                    Some(p.token.clone()),
+                    Some((p.start, p.end)),
+                    p.kind,
+                ),
+                (None, Some(f)) => (FoundState::Waiting, None, Some((f.start, f.end)), f.kind),
+                (None, None) => (FoundState::Clear, None, None, Kind::Custom),
+            };
+            out.push(FoundPlace {
+                span: text::bytes_to_span(whole, start, end)?,
+                state,
+                token,
+                covered_by: covered
+                    .map(|(a, b)| text::bytes_to_span(whole, a, b))
+                    .transpose()?,
+                kind,
+            });
+        }
+        Ok(out)
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
 pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<SelectionView> {
     with_core(|core| {
         let vault_hints = {

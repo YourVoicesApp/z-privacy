@@ -713,6 +713,65 @@ class ForgetPlan {
           stillKnownBy == other.stillKnownBy;
 }
 
+class FoundPlace {
+  /// The place itself — the whole-word occurrence of what was typed.
+  final Span span;
+  final FoundState state;
+
+  /// The token, when a protection covers this place.
+  final String? token;
+
+  /// What covers it, when something does: the protection's or the finding's
+  /// own span, **which may be wider than what was typed**. 084's ruling (c)
+  /// turns on this — the bar's «Protect» takes the places in the clear with
+  /// the word the person typed and does **not** answer a suggestion wider
+  /// than it; it says there is one instead, and the review is where that is
+  /// answered.
+  final Span? coveredBy;
+
+  /// The kind of what covers it. `Custom` when nothing does.
+  final Kind kind;
+
+  const FoundPlace({
+    required this.span,
+    required this.state,
+    this.token,
+    this.coveredBy,
+    required this.kind,
+  });
+
+  @override
+  int get hashCode =>
+      span.hashCode ^
+      state.hashCode ^
+      token.hashCode ^
+      coveredBy.hashCode ^
+      kind.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is FoundPlace &&
+          runtimeType == other.runtimeType &&
+          span == other.span &&
+          state == other.state &&
+          token == other.token &&
+          coveredBy == other.coveredBy &&
+          kind == other.kind;
+}
+
+enum FoundState {
+  /// A protection covers it. The bar draws these on a watery red.
+  protected,
+
+  /// A finding covers it and nobody has answered it yet. Watery blue.
+  waiting,
+
+  /// Nothing covers it. No wash: «in the clear» is the absence of both
+  /// colours, and the document's own marks are not touched either way.
+  clear,
+}
+
 class HomeSnapshot {
   final int stateRevision;
   final VaultState vault;

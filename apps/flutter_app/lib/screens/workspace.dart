@@ -29,6 +29,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'package:zprivacy/widgets/find_in_document.dart';
 import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
@@ -88,9 +89,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// flashed in a toast: a user should be able to look back at what happened.
   String? _said;
 
-  /// The anchor the Original column drops in at the focused finding.
+  /// The anchor the Original column drops in at the word we are looking at.
   final _focusKey = GlobalKey();
   int? _wasFocused;
+
+  /// **Where the window is looking** — the one slot the wash and the anchor
+  /// read, and the reason 084's bar can go to a word that no finding covers.
+  ///
+  /// It follows the bench's focused finding whenever that changes (see
+  /// `_jumpIfMoved`), so the review's list, the exits' guide and the walk all
+  /// keep lighting what they always lit; and the search bar sets it directly
+  /// for a place in the clear, which has no finding to focus.
+  Span? _lookingAt;
 
   /// Remember the panel's width, which is a state only a press may change.
   ///
@@ -169,11 +179,36 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     await _goTo(go);
   }
 
+  /// **Go to a span** — 084's fourth act, and the same movement as the walk's.
+  ///
+  /// No bubble: the bar's result line is where that place's acts are, and a
+  /// word in the clear has no question to answer at it. What this does is light
+  /// the span and bring both columns to it.
+  Future<void> _goToSpan(Span where) async {
+    setState(() {
+      _lookingAt = where;
+      // The walk's bubble belongs to the walk; a search took us elsewhere.
+      _choosing = null;
+    });
+    await goToTheWord(widget.bench, where, anchor: _focusKey);
+  }
+
   /// Go to one word and put its buttons where it landed. The movement is the
   /// one function's; what is left here is the bubble, which belongs to this
   /// screen because it is drawn over both columns and over the panel.
   Future<void> _goTo(Finding word) async {
-    final at = await goToTheWord(widget.bench, word, anchor: _focusKey);
+    setState(() {
+      _lookingAt = word.span;
+      // Seen, so `_jumpIfMoved` does not move it a second time: this method
+      // owns this movement and measures where it landed.
+      _wasFocused = word.id;
+    });
+    final at = await goToTheWord(
+      widget.bench,
+      word.span,
+      anchor: _focusKey,
+      finding: word.id,
+    );
     if (!mounted) return;
     setState(() {
       // **No place on the glass, no buttons.** A word in a column that is not
@@ -231,7 +266,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     }
     // The same one function the walk uses (ruling 14). A page is a word to
     // arrive at, and the only thing that differs is which word.
-    unawaited(goToTheWord(widget.bench, onIt.first, anchor: _focusKey));
+    unawaited(_goTo(onIt.first));
   }
 
   /// «Page 17» has to be a place you arrive at, not a label. When the review
@@ -241,17 +276,25 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final now = widget.bench.focused;
     if (now == _wasFocused) return;
     _wasFocused = now;
-    if (now == null) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final target = _focusKey.currentContext;
-      if (target == null) return;
-      Scrollable.ensureVisible(
-        target,
-        alignment: 0.3,
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-      );
-    });
+    // The focus moved, so what we are looking at moved with it — set here and
+    // not in the setter of a second slot, because this is the one place that
+    // notices the change, however it was made.
+    final span = widget.bench.focusedFinding?.span;
+    _lookingAt = span;
+    if (now == null || span == null) return;
+    // **One movement, one owner** — 083, ruling 14, and a defect measured when
+    // 084's bar shortened this column: this used to do its own
+    // `ensureVisible`, so a focus change moved the word **twice** — once
+    // through the one function, which measures where the word landed so the
+    // walk can put the word's two buttons beside it, and once here,
+    // afterwards, which moved the word out from under them. The bubble was
+    // then drawn at y=1028 in a window 1000 tall, and the press that should
+    // have answered a suggestion landed on nothing.
+    //
+    // So this path goes through the same function as every other, and `_goTo`
+    // — which moves the focus itself — marks the change as seen before it
+    // calls, so there is never a second movement for one word.
+    unawaited(goToTheWord(widget.bench, span, anchor: _focusKey));
   }
 
   /// The way to the settings, handed on **only while the panel is shut**.
@@ -358,6 +401,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           onSettings: _toSettings,
                           onSay: (line) => setState(() => _said = line),
                           onWalk: () => unawaited(_walk()),
+                          onGoToSpan: _goToSpan,
+                          lookingAt: _lookingAt,
                           onChoose: (mark, at) {
                             // The finding behind the mark, by the place it
                             // stands: a mark carries no id, and the span is
@@ -1309,6 +1354,8 @@ class _Columns extends StatefulWidget {
     required this.focusKey,
     required this.onChoose,
     required this.onWalk,
+    required this.onGoToSpan,
+    required this.lookingAt,
     this.onSettings,
   });
 
@@ -1322,6 +1369,15 @@ class _Columns extends StatefulWidget {
   /// Review, and then Next — the walk, which is the screen's because it moves
   /// both columns and draws the word's buttons over them.
   final VoidCallback onWalk;
+
+  /// Going to a span — the search bar's fourth act, through the same one
+  /// function the walk uses (083, ruling 14).
+  final Future<void> Function(Span where) onGoToSpan;
+
+  /// **Where the window is looking**, so the Original column can wash it and
+  /// drop its anchor there. Null means «nowhere in particular», and then the
+  /// focused finding is what is lit, exactly as before 084.
+  final Span? lookingAt;
 
   /// Handed down to the Safe column's footer, which opens the send sheet —
   /// and the sheet carries the only door to where a provider's key is given.
@@ -1521,6 +1577,17 @@ class _ColumnsState extends State<_Columns> {
                 // reads and scrolls: the complaint it answers was «I work on
                 // the first screen and do not find my work on the second».
                 trailing: safeOpen ? _StepLock(inStep: _stepping, onTap: _toggleStep) : null,
+                // **The search bar** — 084. On the column a person reads,
+                // because that is the text it searches: «the bar searches the
+                // original column», so a protected name is still found by its
+                // name and its token is shown beside it.
+                banner: doc == null
+                    ? null
+                    : FindInDocument(
+                        bench: bench,
+                        onGoTo: widget.onGoToSpan,
+                        onSay: widget.onSay,
+                      ),
                 footer: doc == null
                     ? null
                     : Column(
@@ -1554,7 +1621,10 @@ class _ColumnsState extends State<_Columns> {
                         builder: (inner) => OriginalText(
                           text: doc.text,
                           marks: doc.marks,
-                          focus: bench.focusedFinding?.span,
+                          // **One slot for «where we are looking»**: it
+                          // follows the focused finding, and the search bar can
+                          // put a span in it that no finding covers.
+                          focus: widget.lookingAt ?? bench.focusedFinding?.span,
                           focusKey: widget.focusKey,
                           onSelection: (start, end) => bench.select(
                             end > start ? Span(start: start, end: end) : null,
@@ -2422,12 +2492,18 @@ class _Side extends StatelessWidget {
     this.controller,
     this.trailing,
     this.footer,
+    this.banner,
   });
 
   final String eyebrow;
   final String rule;
   final Color tint;
   final Widget child;
+
+  /// **In plain sight, above the text and outside the scroller** — 084's bar
+  /// (ruling 1). It stays where the eye goes first while the document scrolls
+  /// under it, which is the whole of «not hidden behind a key or a menu».
+  final Widget? banner;
 
   /// Given from outside so the two columns can be kept in step (041-L).
   final ScrollController? controller;
@@ -2460,6 +2536,7 @@ class _Side extends StatelessWidget {
           ),
         ),
         Container(height: 1, color: Zc.lineSoft),
+        ?banner,
         Expanded(
           child: SingleChildScrollView(
             controller: controller,

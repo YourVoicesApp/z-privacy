@@ -126,6 +126,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ForgetPlan dco_decode_forget_plan(dynamic raw);
 
   @protected
+  FoundPlace dco_decode_found_place(dynamic raw);
+
+  @protected
+  FoundState dco_decode_found_state(dynamic raw);
+
+  @protected
   HomeSnapshot dco_decode_home_snapshot(dynamic raw);
 
   @protected
@@ -169,6 +175,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Finding> dco_decode_list_finding(dynamic raw);
+
+  @protected
+  List<FoundPlace> dco_decode_list_found_place(dynamic raw);
 
   @protected
   List<KindRow> dco_decode_list_kind_row(dynamic raw);
@@ -601,6 +610,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ForgetPlan sse_decode_forget_plan(SseDeserializer deserializer);
 
   @protected
+  FoundPlace sse_decode_found_place(SseDeserializer deserializer);
+
+  @protected
+  FoundState sse_decode_found_state(SseDeserializer deserializer);
+
+  @protected
   HomeSnapshot sse_decode_home_snapshot(SseDeserializer deserializer);
 
   @protected
@@ -646,6 +661,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Finding> sse_decode_list_finding(SseDeserializer deserializer);
+
+  @protected
+  List<FoundPlace> sse_decode_list_found_place(SseDeserializer deserializer);
 
   @protected
   List<KindRow> sse_decode_list_kind_row(SseDeserializer deserializer);
@@ -1141,6 +1159,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_forget_plan(ForgetPlan self, SseSerializer serializer);
 
   @protected
+  void sse_encode_found_place(FoundPlace self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_found_state(FoundState self, SseSerializer serializer);
+
+  @protected
   void sse_encode_home_snapshot(HomeSnapshot self, SseSerializer serializer);
 
   @protected
@@ -1193,6 +1217,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_finding(List<Finding> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_found_place(
+    List<FoundPlace> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_kind_row(List<KindRow> self, SseSerializer serializer);

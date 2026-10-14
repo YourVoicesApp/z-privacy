@@ -87,15 +87,27 @@ Finding? theWaitingWordAfter(List<Finding> findings, Finding? lit) {
 /// move the other column with this one» and 046/K's rule is that the app
 /// changes such a state by no act of its own. If the owner wants a word to
 /// override that, it is one line here and a sentence in the paper.
+/// **084's second caller, and the reason this takes a span.** The review walks
+/// *findings*; the search bar walks **places of a typed word**, which may have
+/// no finding at all — a word in the clear is still a place to go to. So the
+/// word to go to is a `Span`, and `finding` is given only when the thing being
+/// gone to is one: then the bench's focus slot lights it, which is what the
+/// review's list and the exits' guide already read.
+///
+/// When there is no finding, the lighting is the screen's own «where we are
+/// looking» slot (`workspace.dart`), which the wash reads. One movement, two
+/// ways of lighting, because the bench has a slot for a finding and none for a
+/// span — and the slot it does have is in the other seat's file.
 Future<Offset?> goToTheWord(
   Workbench bench,
-  Finding word, {
+  Span where, {
   required GlobalKey anchor,
+  int? finding,
 }) async {
-  // The lighting is the focus, and the focus is the bench's one slot for it:
-  // this does not keep a second «where we are looking», which would be the two
-  // sources of one fact that 070 cost a day.
-  if (bench.focused != word.id) bench.focusOn(word.id);
+  if (finding != null && bench.focused != finding) bench.focusOn(finding);
+  // Named so the span cannot be read as unused: the caller has already put it
+  // in the slot the wash reads, and this function's work is the movement.
+  assert(where.end >= where.start);
 
   // **A frame, asked for and then waited on.** `addPostFrameCallback` schedules
   // no frame of its own, so without the second line the callback can sit
