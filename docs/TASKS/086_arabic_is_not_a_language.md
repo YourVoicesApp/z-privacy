@@ -21,6 +21,32 @@ A pack is knowledge. A base is **settings**: it governs reading, writing, select
 
 So the defect is not that Z lacks Arabic knowledge. **It is that an Arabic document arrives in a shape nothing can be found in** — presentation forms, and the line's order reversed. Every rule we sealed today (076 edges, 083 protection, 084 search) rests on a word's place in the text; on an Arabic PDF today those places are wrong before any rule runs.
 
+## Measured on the owner's own book, 14 Oct (`~/Downloads/كليلة ودمنة_26761_Foulabook.com_.pdf`, 1.5 MB, 234 pages)
+
+Measured outside the product, on the file itself, so that nothing here depends on Z being right. Every font in it is a CID TrueType with `Identity-H` encoding, which is why the glyphs must be read through a `ToUnicode` map at all.
+
+| what arrives | number |
+|---|---|
+| characters extracted | 395,091 |
+| **presentation forms** (`U+FB50–FDFF`, `U+FE70–FEFF`) | **198,995** |
+| ordinary Arabic letters | 63,630 |
+| **bidi control characters** embedded in the text (`U+202A/B/C`) | **34,186** |
+| presentation forms after an NFKC fold | **0** |
+| ordinary Arabic letters after the fold | 268,394 |
+
+So three quarters of the book's letters arrive as shapes, not letters, and the fold turns every one of them back. The word «الكتاب» is found **0 times** in the text as it arrives and **173 times** after the fold; «السلام» 0 → 8; «الملك» 0 → 3.
+
+**The fold is necessary and not sufficient — and this is the owner's «reversed base».** Some words are never found however folded, because the letters inside them arrive in the wrong order:
+
+- «المجرم» → `املجرم` (the `ل` and the `م` swapped): **0** occurrences even after the fold.
+- The swapped spelling `امل` stands **1,640** times; the correct `الم` stands **33**.
+- **323 distinct words** in the book are a single swap away from a spelling the same book writes more often.
+- The reversed pairs are led by `لم` `عب` `مل` `أر` `ال` `هي` `لا` `ين`.
+
+The cause is visible in the table above: these fonts map one glyph to several letters, and a glyph that covers two letters hands them over in the order the eye sees them, right to left, not the order the language reads them. **A ligature is where the writing base reverses**, and nothing above the reader can repair it: a word that arrives with two letters swapped is a word no rule and no hand can find.
+
+**The owner's own text fixtures carry the same defect**, having been made from this book: `~/Documents/kalila-wa-dimna-10-pages.txt` reads «وبني الحرب» for «وبين الحرب» and «ا ُملؤذي» for «المؤذي». They are evidence of the defect, not a clean baseline, and a new baseline must be made after the reader is fixed.
+
 ## What the core knows already
 
 - The word's edges have an Arabic half: `ARABIC_CLITICS` (`و ب ل ف ك`) and the presentation-form range `U+FE70–FEFF` are named at `text.rs:295`, `:319`.
@@ -40,7 +66,7 @@ So the defect is not that Z lacks Arabic knowledge. **It is that an Arabic docum
 
 ## Order
 
-1. **The measurement**, before any code: the owner's own Arabic PDF and the book through the reader — what arrives, in what order, in which characters, per page. Shown as screenshots, both columns. Plus one Arabic file written by hand (a chat text) as the control, since a typed line has no presentation forms.
+1. **The measurement.** Half done above, on the file. What remains: the same book **through Z's own reader**, to see which of the three defects the reader already absorbs, and one Arabic file typed by hand as the control, since a typed line has no presentation forms and no ligature glyphs.
 2. **Reading** (the core, `documents/`): fold and order, with the reader's fail-closed behaviour untouched. The old task name `fix/arabic-arrives-as-it-is-read` (039) belongs here.
 3. **Writing and the round trip.**
 4. **The glass:** the base as a session setting, the lit word, the columns, «the word before».
