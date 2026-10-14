@@ -90,6 +90,18 @@ The lead's reading of what to take and what to leave:
 | query history (Microsoft Search) | **no, forbidden** | rule 47; ZCFG already forbids it (`config.rs:16-18`) |
 | mask part of a number (Acrobat) | **to the numbers paper** | tonight |
 
+## Measured by the builder before building, 14 Oct — the shape corrected
+
+**(a) Each place's state is not derivable today.** «Lindqvist» in a document holding «Anna Lindqvist» and «Lindqvist AB» stands in 5 whole-word places — the count exists (`matches`). But after «Anna Lindqvist» is protected by hand, every place reports `protected_as: None`, and `snaps_to` is built from protections alone: a place inside a *suggestion* cannot be told from a place in the clear. So «9 protected · 2 suggested · 1 in the clear» needs **one core function that returns, per place, what covers it**: a protection → protected (and its token); a finding → suggested; nothing → in the clear. The count, the washes and the four acts all read from that one source.
+
+**(b) A place's state is the state of what COVERS it, not the state of the word.** Everything the glass protects today is `Scope.conversation`; `Scope.once` is asked from nowhere. So a single word is never «9 of 12» because of a scope. The mixture comes from **containing values**: «Lindqvist» inside the protected «Anna Lindqvist» is protected, inside the suggested «Lindqvist AB» is suggested, and alone is in the clear. This corrects the lead's reading above, which treated the state as the word's.
+
+**(c) What «Protect» in the bar does with a place inside a wider suggestion — ruled by the lead, 14 Oct.** The lead's reading above said «Protect takes every place not yet protected… which answers those suggestions». Measured, a suggestion can be **wider than the word typed**: the person typed «Lindqvist»; the suggestion is «Lindqvist AB», a company. Answering it protects what he did not type. So:
+- **«Protect» protects the places in the clear, with the word the person typed, and does not answer a wider suggestion.**
+- The result line says so: «2 places inside words still waiting: Lindqvist AB».
+- Why: selection is the person's will (085), and that was not his will; a wide answer is not undone in one press; and **nothing leaks by leaving it** — a suggestion that still waits holds every exit shut under 083a's law, so the part inside it cannot leave in the clear. The review is where it is answered.
+- A place inside a wider **protection** needs nothing: it is already protected.
+
 ## Waits on
 
 - **The comparison study** (sent 14 Oct): how ten projects plus Acrobat's «Find text to redact» and Word's search match, count, light, navigate, act, and store. It may add to the shape, not to the rulings.
