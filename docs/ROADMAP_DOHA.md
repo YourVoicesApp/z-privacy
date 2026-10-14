@@ -177,7 +177,7 @@ It agrees with the owner's motive: **we do not become a bank, and we do not stan
 **It does not start from nothing. Three of its parts exist:**
 - **its laws:** `~/محرر النصوص.md`, 48 rules so far. On 13 Oct the owner said: «إذا جمعنا هذه النقاط جميعاً يمكننا إنشاء نظام نصوص مكتوبة خاص بنا مثل وورد»;
 - **its page:** the Z sheet, 15 × 20 cm, with room for the letterhead and the stamp (082);
-- **its file:** `.peak`, the closed document (087).
+- ~~its file: `.peak`~~ — not needed (the owner, 14 Oct).
 
 And the rule that makes it ours: **a document written inside Z carries its tokens and cannot break them** — the owner's ruling that the answer to a Z document is written inside Z (087) is this stage's first law.
 
@@ -193,7 +193,7 @@ And the rule that makes it ours: **a document written inside Z carries its token
 ## Not on this road
 
 - **Arabic** — the reading base is a measured defect with its paper (086) and the packs come last; both wait. Doha is Arabic-speaking, which argues for them, but an application nobody can install reaches nobody in any language.
-- **`.peak`, the closed document** (087) — parked by the owner. It is the engine of spread once documents are travelling, not before.
+- **`.peak`, the closed document** (087) — **not needed**, by the owner's word of 14 Oct: «لا نحتاج موضوع ملفات .peak». The paper stays as the record of the dialogue; nothing of it is built.
 - **More document formats.** Three readers cover the office: a PDF arrives, Word is written, text is pasted.
 - **Everything in the libraries except the exchange round.**
 

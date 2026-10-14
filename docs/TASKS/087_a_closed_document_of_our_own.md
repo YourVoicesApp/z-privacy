@@ -1,5 +1,7 @@
 # 087 · A closed document of our own — `.peak`
 
+> **NOT NEEDED — the owner, 14 Oct 2026: «لا نحتاج موضوع ملفات .peak».** Kept as the record of the dialogue, which he asked to be recorded. Nothing here is built. The one ruling that outlives it is in the road map and in 083's spirit: **the answer to a Z document is written inside Z.**
+
 **Opened by the owner, 14 Oct 2026.** «الوثائق التي نصدرها من Z تكون بلاحقة مثل `.peak` مثلاً، وتكون وثائق مغلقة لا تقبل أي تعديل.»
 
 ## What it is for — three jobs, not one
