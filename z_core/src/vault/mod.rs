@@ -421,6 +421,37 @@ impl VaultStore {
         }
     }
 
+    /// **Every spelling this vault holds, for a comparison and nothing else** —
+    /// 079, the import side.
+    ///
+    /// No profile and no policy filter, and that is the whole reason it is not
+    /// `hints`: bringing back what a person already protected is not
+    /// detection. `hints` answers «what may the scanner recognise in this
+    /// profile», where a `Manual` value is deliberately silent and a switched
+    /// off list says nothing — and a token that was minted from a `Manual`
+    /// value by a hand selection must still come back, or the person's own act
+    /// would be the one thing the door could not read.
+    ///
+    /// **What it cannot become.** The only caller derives each spelling's name
+    /// under one conversation's key and compares it with a token already in the
+    /// text, so nothing here is searched for in a document and nothing is
+    /// learned: a match says «this token stood for a value you hold», which is
+    /// what the token already said. The values never leave the crate.
+    ///
+    /// Empty while the vault is locked, like every other accessor here — by
+    /// having nothing to say rather than by a flag somebody must remember.
+    pub(crate) fn every_spelling(&mut self) -> Vec<String> {
+        self.tick();
+        let Some(open) = self.open.as_ref() else { return Vec::new() };
+        let mut out = Vec::new();
+        for entity in &open.vault.entities {
+            for value in &entity.values {
+                out.extend(value.spellings().into_iter().filter(|s| !s.is_empty()));
+            }
+        }
+        out
+    }
+
     /// The rule sets switched on for one profile. Empty when the vault is
     /// locked or the profile is unknown — and the caller then falls back to the
     /// session's own pack rather than scanning with nothing.

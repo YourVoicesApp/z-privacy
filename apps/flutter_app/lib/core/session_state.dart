@@ -447,6 +447,20 @@ class Workbench extends ChangeNotifier {
   /// import, which is why nothing on the glass may ask it whether a scan has
   /// happened (item 3, 14 October).
   ScanReport? report;
+
+  /// **What the core says about a document that came back** — 079, the import
+  /// side.
+  ///
+  /// `null` until a document has been read; `tokens == 0` for every ordinary
+  /// one, which is how the strip knows to draw nothing. Read once, where the
+  /// scan that arrived with the document is read, so every door a document can
+  /// arrive by — a file, a paste, the composer — asks it exactly once and no
+  /// screen has to remember to (the shape item 3 paid for).
+  ///
+  /// Nothing here counts anything in it: the numbers and the names are the
+  /// core's, and `whatCameBack` in `messages.dart` is the one place they become
+  /// a sentence.
+  ReturnedDocument? returned;
   String? trouble;
   bool busy = false;
 
@@ -617,6 +631,26 @@ class Workbench extends ChangeNotifier {
     // The names that still need a word are part of what a scan produced, so the
     // badge knows before anybody opens the panel.
     await refreshCandidates();
+    // **And whether this document has come back to us** — 079, the import
+    // side. Asked here and nowhere else, for the reason item 3 exists: four
+    // doors read a document, and a question one of them remembers to ask is a
+    // question three of them forget. A reading only — the core writes nothing
+    // and the revision does not move — so it cannot disturb the scan above.
+    await readWhetherItCameBack();
+  }
+
+  /// **Has this document come back, and what of it can we still read?** — 079.
+  ///
+  /// The core answers; this keeps the answer and tells the listeners. A refusal
+  /// is not news a person needs here — the document is on the bench either way
+  /// — so it clears the answer rather than putting a sentence over the screen.
+  Future<void> readWhetherItCameBack() async {
+    try {
+      returned = await z.returningDocument(session: session);
+    } on ApiError catch (_) {
+      returned = null;
+    }
+    notifyListeners();
   }
 
   /// A scan is not a screen (the behaviour board). A document arrives scanned
@@ -641,6 +675,14 @@ class Workbench extends ChangeNotifier {
     // The names that still need a word are part of what a scan produced, so the
     // badge knows before anybody opens the panel.
     await refreshCandidates();
+    // **And the returning document is asked again** — 079. The second case of
+    // the rule the first one is written at: a rescan is what happens after the
+    // vault is opened («Last scan: after the vault opened»), and with the vault
+    // open the door can name the conversation and bring back the values it was
+    // taught, where a moment ago it could name nothing at all. A line that said
+    // «open your vault to read them back» after the vault was opened would be
+    // the band's own 14 October defect in a new place.
+    await readWhetherItCameBack();
   }
 
   void showChips(bool on) {
@@ -1600,6 +1642,41 @@ class Workbench extends ChangeNotifier {
     } on ApiError catch (e) {
       trouble = humanMessage(e);
       notifyListeners();
+      return null;
+    }
+  }
+
+  /// **In this conversation** — every place that carries this token.
+  ///
+  /// The other reach the owner allows (083, ruling 3), beside [unprotect]
+  /// above, which is «here». It was written in `core/un_protecting.dart` on
+  /// 14 October because this file was another seat's that day and the two acts
+  /// had to be readable side by side; the lead promised it would be absorbed in
+  /// one line once that round was sealed, and this is that line. Both names
+  /// stay where 084's search bar can call them.
+  ///
+  /// **The token, not the text**, by the lead's ruling: a person un-protects
+  /// what they can see, and what they can see is a token; and the token's
+  /// allowed set is what keeps the outgoing text honest (C4), so acting by text
+  /// could leave a token in the payload that nothing explains.
+  ///
+  /// **The refusal survives the refresh**, which is the 30 September finding:
+  /// `refresh()` sets `trouble` to null when it succeeds, so the news is put
+  /// there after it. A refusal that never reaches a person is the same thing as
+  /// no refusal.
+  Future<UndoOutcome?> unprotectEveryPlace(Span span) async {
+    try {
+      final outcome = await z.unprotectEveryPlace(session: session, span: span);
+      await refresh();
+      if (selection != null) await select(selection);
+      return outcome;
+    } on ApiError catch (e) {
+      await refresh();
+      trouble = humanMessage(e);
+      // The focus is set to what it already is: a public act that notifies and
+      // touches nothing else, where `select` would clear the very sentence the
+      // line above exists to keep.
+      focusOn(focused);
       return null;
     }
   }

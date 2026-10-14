@@ -159,6 +159,53 @@ pub(crate) fn import_document(
     with_session(session.id, view_of).ok_or(ApiError::InvalidSession)?
 }
 
+/// **Has this document come back, and what of it can we still read?** — 079,
+/// the import side.
+///
+/// The seam is one function in `returning`, and the whole of what crosses it is
+/// a text in and a reading out: no token store, no map from a token to a value,
+/// no key. See that module for how a token finds its conversation and what the
+/// three sources are; `api::returning_document` says what the door promises.
+///
+/// **A reading.** Nothing is written here — not a turn, not the vault, not a
+/// protection — and `bump_truth` is deliberately not called: a question that
+/// moved the displayed truth would redraw the screen that asked it.
+pub(crate) fn returning_document(session: SessionId) -> ApiResult<crate::api::ReturnedDocument> {
+    // Named from the vault first, as every door that reads tokens does: a bench
+    // whose mint still carries a random namespace would not be recognised as
+    // its own conversation's, and this is the one door where that matters more
+    // than anywhere else.
+    name_tokens_from_the_vault(session.id);
+    with_core(|core| {
+        let text = core
+            .sessions_get(session.id)
+            .ok_or(ApiError::InvalidSession)?
+            .original_str()
+            .to_string();
+        let read = crate::returning::returning_document(core, &text);
+        Ok(crate::api::ReturnedDocument {
+            restored: read.restored,
+            tokens: read.tokens,
+            vault: read.vault,
+            names: read.names,
+            brought_back: read.brought_back,
+            unresolved: read.unresolved,
+            conversations: read
+                .conversations
+                .into_iter()
+                .map(|c| crate::api::ReturnedFrom {
+                    number: c.number,
+                    name: c.name,
+                    brought_back: c.brought_back,
+                    unresolved: c.unresolved,
+                    answer_page: c.answer_page,
+                })
+                .collect(),
+            unknown_namespaces: read.unknown_namespaces,
+        })
+    })
+}
+
 /// Gather the names this document uses that no dictionary knows.
 ///
 /// One row per name, not one per occurrence: a person reviewing a 734-page file
@@ -1344,6 +1391,8 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
                 snaps_to: Vec::new(),
                 word_span: span,
                 also_before: None,
+                // Nothing but space: there is no token under it either.
+                on_a_token: false,
             });
         }
 
@@ -1438,6 +1487,12 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             snaps_to,
             word_span,
             also_before,
+            // **079 rule 5, as the glass must see it.** Asked over `word_span`
+            // and not over the drawn span, because `word_span` is what Protect
+            // would really take (041-K) — a drag that stops one character short
+            // of a token's closing `__` would otherwise be offered a press that
+            // the door then refuses, which is a button that lies.
+            on_a_token: the_token_standing_in(s.original_str(), word_start, word_end).is_some(),
         })
     })
 }
@@ -1647,8 +1702,61 @@ pub(crate) fn as_whole_words(session: SessionId, span: Span) -> ApiResult<Span> 
     .ok_or(ApiError::InvalidSession)?
 }
 
+/// **A token is not a value, and a hand may not protect one** — 079 rule 5.
+///
+/// The scanner's half of this law is one line in `scanner::scan`: a candidate
+/// standing on a token is dropped after every layer and before they settle. A
+/// hand is the other half, and it was still open the day that line landed —
+/// pinned red, deliberately, because refusing it needed a word on the glass and
+/// the word belonged to this round.
+///
+/// What it was: a selection drawn over `__Z_7f3a_PHONE_2b55__` came back
+/// `Applied`. A second token was minted **over** the first, the first vanished
+/// from the text, and what left the machine no longer carried the identifier
+/// the other conversation can resolve — so its answer restored to a token
+/// instead of to a value, silently, which is the shape of lie 046/U exists to
+/// end.
+///
+/// **One function, asked by each of the three doors a hand can protect
+/// through**, and asked *before* `remember_in_vault`: `Scope::Always` writes
+/// the value into the vault before anything is protected, so a law placed any
+/// later would have taught the vault a token of ours. Enumerated by class, the
+/// way 083a's three exits were — `protect`, `protect_all_matches`,
+/// `protect_cell_in_lines` — and G32 reads each door's own body for the call,
+/// and reads that it comes before `remember_in_vault` in it.
+///
+/// Returns the token standing there, which is a name and never a value.
+fn a_token_already_stands_there(session: SessionId, span: Span) -> ApiResult<Option<String>> {
+    with_session(session.id, |s| {
+        let text = s.original_str();
+        let (start, end) = text::span_to_bytes(text, span)?;
+        Ok(the_token_standing_in(text, start, end))
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+/// The overlap itself, over bytes — **the one place in this file that asks
+/// where the tokens stand.**
+///
+/// Two callers, and they are two different questions about one fact: the door
+/// above refuses an act, and `inspect_selection` stops the act being offered.
+/// Asking `tokens::token_spans` twice here would be the same shape as the
+/// scanner asking it per layer — one law, read in one place, so the two answers
+/// cannot drift. It takes the text rather than a session because the selection
+/// already holds the core's lock, which is not reentrant.
+fn the_token_standing_in(text: &str, start: usize, end: usize) -> Option<String> {
+    crate::tokens::token_spans(text)
+        .into_iter()
+        .find(|(from, to)| start < *to && *from < end)
+        .and_then(|(from, to)| text.get(from..to).map(str::to_string))
+}
+
 pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
     let span = as_whole_words(session, span)?;
+    // 079 rule 5, before the vault is taught anything.
+    if let Some(token) = a_token_already_stands_there(session, span)? {
+        return Ok(ProtectOutcome::StandsOnAToken { token });
+    }
     // The scope decides the breadth. Until task 034 it was only a label — the
     // breadth came from which function was called — so «this conversation»
     // could protect one place and «always» could reach nothing at all.
@@ -1703,6 +1811,10 @@ fn remember_in_vault(session: SessionId, span: Span, scope: Scope, kind: Kind) -
 
 pub(crate) fn protect_all_matches(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
     let span = as_whole_words(session, span)?;
+    // The same law at this door, and the same line asking it (079 rule 5).
+    if let Some(token) = a_token_already_stands_there(session, span)? {
+        return Ok(ProtectOutcome::StandsOnAToken { token });
+    }
     if matches!(scope, Scope::Always | Scope::Profile) {
         require_open_vault()?;
     }
@@ -1884,8 +1996,21 @@ pub(crate) fn protect_cell_in_lines(
     .ok_or(ApiError::InvalidSession)?;
 
     let mut places = 0u32;
+    let mut on_a_token = 0u32;
     let mut token = String::new();
     for one in wanted {
+        // 079 rule 5, **per cell and not per act**: one cell of a column that
+        // holds a token stops that cell, exactly as a cell that is already
+        // protected does — «both are honest outcomes for one line and neither
+        // stops the rest». A column of nothing but tokens is the act that has
+        // done nothing, and it says so below rather than claiming 0 places.
+        if let Some(standing) = a_token_already_stands_there(session, one)? {
+            on_a_token = on_a_token.saturating_add(1);
+            if token.is_empty() {
+                token = standing;
+            }
+            continue;
+        }
         remember_in_vault(session, one, scope, kind)?;
         match protect_inner(session, one, scope, kind, false)? {
             ProtectOutcome::Applied { token: t, .. } => {
@@ -1899,10 +2024,23 @@ pub(crate) fn protect_cell_in_lines(
             ProtectOutcome::AlreadyProtected { token: t, .. } if token.is_empty() => {
                 token = t;
             }
+            // **And this arm cannot swallow 079's outcome**, which is the one
+            // thing a reader should check here: `protect_inner` never returns
+            // `StandsOnAToken` — the law is asked above, per cell, before this
+            // call — so the token case is counted in `on_a_token` and answered
+            // after the loop. An explicit arm here would be unreachable code
+            // claiming to handle something, which is its own lie.
             _ => {}
         }
     }
     crate::session::bump_truth();
+    // **Nothing was protected and a token is why**, which is a different thing
+    // from «every cell was already protected» and gets the sentence that says
+    // so. The outcome is matched exhaustively by both presses that can reach
+    // here, which is the reason it is an outcome and not an error.
+    if places == 0 && on_a_token > 0 {
+        return Ok(ProtectOutcome::StandsOnAToken { token });
+    }
     Ok(ProtectOutcome::Applied { token, places })
 }
 

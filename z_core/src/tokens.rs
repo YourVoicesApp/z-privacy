@@ -121,6 +121,14 @@ impl Naming {
         Ok(Self { key, namespace })
     }
 
+    /// **The handle this session's names carry.** Four hex of a derived key,
+    /// and the one part of a token that says which conversation minted it — so
+    /// a document coming back is grouped by this and resolved against the
+    /// conversation it names (079, the import side).
+    pub(crate) fn namespace(&self) -> &str {
+        &self.namespace
+    }
+
     /// The tail for one value: eight hex digits, not four.
     ///
     /// Four would be 65 536 names, and fifty values in one document collide
@@ -130,7 +138,7 @@ impl Naming {
     /// next time. Eight is 4.3 billion: fifty values collide about once in a
     /// million documents, and that one falls back to a random name, where item
     /// 1 reports it rather than restoring the wrong thing.
-    fn tail(&self, value: &str) -> Option<String> {
+    pub(crate) fn tail(&self, value: &str) -> Option<String> {
         let value = nfc(value);
         let mut message: Vec<u8> = Vec::new();
         message.extend_from_slice(&(value.len() as u64).to_be_bytes());
@@ -167,8 +175,13 @@ impl TokenMint {
         }
     }
 
-    /// Only the tests read this; the namespace's job is to sit inside the tokens.
-    #[cfg(test)]
+    /// **Which conversation's names this bench writes.**
+    ///
+    /// Read by the returning-document door (079): a bench naming from a
+    /// session's key carries that session's namespace, so a bench still in
+    /// memory is the one place a token of its own conversation resolves
+    /// without the vault having been taught the value. It was `#[cfg(test)]`
+    /// until then, with «only the tests read this» written above it.
     pub(crate) fn namespace(&self) -> &str {
         &self.namespace
     }
@@ -563,21 +576,34 @@ pub(crate) fn token_spans(text: &str) -> Vec<(usize, usize)> {
 }
 
 pub(crate) fn is_token(candidate: &str) -> bool {
-    let Some(middle) = candidate.strip_prefix("__Z_").and_then(|m| m.strip_suffix("__")) else {
-        return false;
-    };
+    parts_of(candidate).is_some()
+}
+
+/// **The three parts of a token: whose, what, which** — namespace, kind, tail.
+///
+/// The shape test above and the returning-document door both read a token, and
+/// they read the same bytes for different reasons: one asks «is this ours at
+/// all», the other «which conversation minted it, and for which value». Two
+/// readers of one shape would be two shapes the day somebody widens either, so
+/// there is one function and `is_token` is «it parsed».
+///
+/// Returns nothing for anything that is not a token, which is what makes it
+/// the shape test as well as the reader.
+pub(crate) fn parts_of(candidate: &str) -> Option<(&str, &str, &str)> {
+    let middle = candidate.strip_prefix("__Z_").and_then(|m| m.strip_suffix("__"))?;
     let mut parts = middle.split('_');
     let (Some(namespace), Some(kind), Some(tail), None) =
         (parts.next(), parts.next(), parts.next(), parts.next())
     else {
-        return false;
+        return None;
     };
-    namespace.len() == 4
+    let shaped = namespace.len() == 4
         && namespace.bytes().all(|b| b.is_ascii_alphanumeric())
         && !kind.is_empty()
         && kind.bytes().all(|b| b.is_ascii_uppercase() || b.is_ascii_digit())
         && (4..=8).contains(&tail.len())
-        && tail.bytes().all(|b| b.is_ascii_alphanumeric())
+        && tail.bytes().all(|b| b.is_ascii_alphanumeric());
+    shaped.then_some((namespace, kind, tail))
 }
 
 #[cfg(test)]

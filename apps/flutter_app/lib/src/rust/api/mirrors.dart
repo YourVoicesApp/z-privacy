@@ -1800,6 +1800,29 @@ sealed class ProtectOutcome with _$ProtectOutcome {
   /// The selection cut a protected item; these whole items were taken instead.
   const factory ProtectOutcome.snapped({required List<Span> spans}) =
       ProtectOutcome_Snapped;
+
+  /// **The selection stands on a token this program put there** — 079 rule 5.
+  ///
+  /// A document that has come back carries the tokens of the conversation it
+  /// left. A hand drawn over one of them used to be `Applied`: a second token
+  /// was minted **over** the first, the first disappeared from the text, and
+  /// what left no longer carried the identifier the other conversation can
+  /// resolve — so the answer came back resolving to a token instead of to a
+  /// value. Measured on 14 October and pinned red for a round
+  /// (`a_returning_document_is_not_protected_again`).
+  ///
+  /// **An outcome and not an [`ApiError`]**, by the lead's ruling: every call
+  /// site matches this enum exhaustively, so an outcome cannot be swallowed,
+  /// and a refusal that nobody worded is the defect this project has paid for
+  /// most often. It is also not a failure — the text is already protected,
+  /// which is the thing the person wanted — so the sentence the glass says is
+  /// «This is already protected — Z put it there.»
+  ///
+  /// The scanner's half of the same law is one line in `scanner::scan`, and
+  /// `SelectionView::on_a_token` is the half that means the press is never
+  /// offered in the first place.
+  const factory ProtectOutcome.standsOnAToken({required String token}) =
+      ProtectOutcome_StandsOnAToken;
 }
 
 class ProviderFact {
@@ -2082,6 +2105,153 @@ class RescanOutcome {
           revision == other.revision;
 }
 
+class ReturnedDocument {
+  /// The document in pieces: the words as they arrived, the values put back,
+  /// and the tokens that stayed tokens. The same three states a restored
+  /// answer has, for the same reason (see [`Piece`]).
+  final List<Segment> restored;
+
+  /// **How many token places stood in the text** — every one of them, the
+  /// answer page's included.
+  ///
+  /// `0` is «this is not a returning document», and it is one fact rather
+  /// than a screen comparing two lists to work the same thing out. Places and
+  /// not names, which is why it is not the sum of the two numbers below.
+  final int tokens;
+
+  /// **The vault, as it stood when this was read** — and the first thing the
+  /// sentence on the glass must ask.
+  ///
+  /// With no vault open, no conversation can be named: the namespace is
+  /// derived from a key this machine cannot reach. So `conversations` is
+  /// empty and every namespace lands in `unknown_namespaces` — which would
+  /// read as «this vault does not hold that conversation» when the truth is
+  /// «it is shut». Carried here for the same reason `ScanReport::vault` is
+  /// carried: a screen may not work out the cause of an absence.
+  final VaultState vault;
+
+  /// **How many distinct names of the person's own values stood in it.**
+  ///
+  /// `names == brought_back + unresolved.len()`, always: a name either came
+  /// back or is reported, and a guard asserts the identity so nothing can
+  /// fall between the two. An IBAN standing in two places is **one** name,
+  /// because «one name did not come back» is a sentence a person can act on
+  /// and «two places» is a fact about our own text.
+  ///
+  /// The answer page's own token is counted in neither this nor the two
+  /// below, even though it is brought back: the numbers are about the
+  /// person's names and the page's word is ours. It is reported as
+  /// `answer_page` on the conversation instead — the same rule, and the same
+  /// reason, as the count an exit says aloud (`Session::rename_all`).
+  final int names;
+
+  /// How many of those names were brought back.
+  final int broughtBack;
+
+  /// **Every token that stays a token, by name and never by value.**
+  ///
+  /// Named as well as marked in the pieces so that the sentence on the glass
+  /// and the marks in the text are one fact — exactly as
+  /// `AnswerSnapshot::unknown_tokens` is.
+  final List<String> unresolved;
+
+  /// Which conversations this document's tokens belong to, by number.
+  final List<ReturnedFrom> conversations;
+
+  /// **Every namespace no conversation of this vault names.**
+  ///
+  /// Said by name rather than passed over, and it is not an error: a document
+  /// from another machine, or from a conversation since forgotten, is a true
+  /// thing for a person to be told. Four hex digits, which is a handle and
+  /// not a secret — the same four that stand in the tokens on the page.
+  ///
+  /// **Empty whenever `vault` is not `Unlocked`**, and that is the field's
+  /// meaning rather than an omission: «matches nothing» needs something to
+  /// match against, and with no vault open there is no conversation to
+  /// compare a namespace with. A screen is then told why by `vault`, instead
+  /// of being handed a false fact to word.
+  final List<String> unknownNamespaces;
+
+  const ReturnedDocument({
+    required this.restored,
+    required this.tokens,
+    required this.vault,
+    required this.names,
+    required this.broughtBack,
+    required this.unresolved,
+    required this.conversations,
+    required this.unknownNamespaces,
+  });
+
+  @override
+  int get hashCode =>
+      restored.hashCode ^
+      tokens.hashCode ^
+      vault.hashCode ^
+      names.hashCode ^
+      broughtBack.hashCode ^
+      unresolved.hashCode ^
+      conversations.hashCode ^
+      unknownNamespaces.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReturnedDocument &&
+          runtimeType == other.runtimeType &&
+          restored == other.restored &&
+          tokens == other.tokens &&
+          vault == other.vault &&
+          names == other.names &&
+          broughtBack == other.broughtBack &&
+          unresolved == other.unresolved &&
+          conversations == other.conversations &&
+          unknownNamespaces == other.unknownNamespaces;
+}
+
+class ReturnedFrom {
+  final int number;
+  final String name;
+  final int broughtBack;
+  final int unresolved;
+
+  /// **The answer page's own token stood in this document.**
+  ///
+  /// The fastest proof of origin: the word the page protects is known in
+  /// advance, so its name derives under a conversation's key with nothing
+  /// stored. The lead's ruling is that it is the fastest proof and **not the
+  /// only key** — every other token of this conversation resolves whether or
+  /// not the page came back with them.
+  final bool answerPage;
+
+  const ReturnedFrom({
+    required this.number,
+    required this.name,
+    required this.broughtBack,
+    required this.unresolved,
+    required this.answerPage,
+  });
+
+  @override
+  int get hashCode =>
+      number.hashCode ^
+      name.hashCode ^
+      broughtBack.hashCode ^
+      unresolved.hashCode ^
+      answerPage.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReturnedFrom &&
+          runtimeType == other.runtimeType &&
+          number == other.number &&
+          name == other.name &&
+          broughtBack == other.broughtBack &&
+          unresolved == other.unresolved &&
+          answerPage == other.answerPage;
+}
+
 class RevealState {
   final int? entity;
   final int? valueId;
@@ -2311,6 +2481,20 @@ class SelectionView {
   /// never takes it unasked.
   final Span? alsoBefore;
 
+  /// **This stretch is a token this program put there** — 079 rule 5.
+  ///
+  /// Not «already protected»: there is no protection of *this* document over
+  /// it, because the token arrived as text in a document that came back. So
+  /// `protected_as` is `None`, every field above says «ordinary words», and
+  /// without this one the glass would offer Protect over a name of ours and
+  /// mint a second token over the first.
+  ///
+  /// The fact is here so that **no press is offered at all** — a button that
+  /// cannot work should not be drawn, which is this house's rule from 083a —
+  /// and [`ProtectOutcome::StandsOnAToken`] is the same law at the door, for
+  /// the caller that asks anyway.
+  final bool onAToken;
+
   const SelectionView({
     required this.empty,
     required this.kind,
@@ -2322,6 +2506,7 @@ class SelectionView {
     required this.snapsTo,
     required this.wordSpan,
     this.alsoBefore,
+    required this.onAToken,
   });
 
   @override
@@ -2335,7 +2520,8 @@ class SelectionView {
       entities.hashCode ^
       snapsTo.hashCode ^
       wordSpan.hashCode ^
-      alsoBefore.hashCode;
+      alsoBefore.hashCode ^
+      onAToken.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -2351,7 +2537,8 @@ class SelectionView {
           entities == other.entities &&
           snapsTo == other.snapsTo &&
           wordSpan == other.wordSpan &&
-          alsoBefore == other.alsoBefore;
+          alsoBefore == other.alsoBefore &&
+          onAToken == other.onAToken;
 }
 
 class SessionId {

@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/going_to_a_word.dart';
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/un_protecting.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -350,6 +351,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               settingsOpen: widget.settingsOpen,
             ),
             _Band(bench: bench, onVault: widget.onVault),
+            // **A document that came back says so, in its own line** — 079,
+            // the import side. Under the band and not in it: that row already
+            // holds the two longest sentences on this screen and overflowed by
+            // 15 pixels the first time a third child was drawn in it
+            // (14 October, item 3). This one is about the document rather than
+            // about the scan, and it is drawn only when there is a token in it.
+            _CameBack(bench: bench),
             if (bench.trouble != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
@@ -1196,6 +1204,145 @@ class _Fact extends StatelessWidget {
 
 /// «Scanned on import — 7 protected automatically · 2 need your word · 428 normal».
 /// Every one of those numbers is `ScanReport`, straight from the core.
+/// **What a returning document carries** — 079, the import side.
+///
+/// Nothing at all for an ordinary document: `tokens == 0` is the core's own
+/// answer to «is this a returning document», so this widget asks one number and
+/// draws nothing rather than a line that says zero.
+///
+/// The sentence is `whatCameBack` in `messages.dart`, which is the one place
+/// the app turns the core's numbers into language — and the names that stay
+/// tokens are the owner's cost said out loud, in the lead's words.
+class _CameBack extends StatelessWidget {
+  const _CameBack({required this.bench});
+
+  final Workbench bench;
+
+  @override
+  Widget build(BuildContext context) {
+    final seen = bench.returned;
+    if (seen == null) return const SizedBox.shrink();
+    final said = whatCameBack(seen);
+    if (said == null) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+      decoration: const BoxDecoration(
+        color: Zc.riverWash,
+        border: Border(bottom: BorderSide(color: Zc.clayEdge)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.undo, size: 15, color: Zc.river),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              said,
+              style: const TextStyle(fontSize: 13, color: Zc.river),
+            ),
+          ),
+          // **A press, not a side effect** — the lead's own rule for this door.
+          // The reading exists either way; opening it is a person's act, and
+          // nothing is protected, written or learned by looking.
+          //
+          // Offered only when there is something to read back: with nothing
+          // brought back the strip has already said everything there is.
+          if (seen.broughtBack > 0) ...[
+            const SizedBox(width: 12),
+            ZButton(
+              label: 'Read it back',
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (_) => _TheReading(seen: seen),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// **The document with its names back in it** — 079, the import side.
+///
+/// The core's reading, drawn in the three styles a restored answer is drawn in
+/// (`the_journey.dart`, `answer.dart`): the words as they arrived, the values
+/// put back, and the tokens that stayed tokens in amber. The screen decides
+/// none of it — `Piece` is the core's own field, and no text here is searched
+/// for `__Z_`.
+///
+/// A reading and not an edit: there is nothing to press but «Close». What is on
+/// the bench is still the document that arrived, which is the one text the
+/// exits may take out.
+class _TheReading extends StatelessWidget {
+  const _TheReading({required this.seen});
+
+  final ReturnedDocument seen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Zc.paper,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 620),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Read back', style: Zc.h2),
+              const SizedBox(height: 6),
+              Text(whatCameBack(seen) ?? '', style: Zc.small),
+              const SizedBox(height: 14),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(13),
+                    decoration: Zc.panel(fill: Zc.paper, radius: 8),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          for (final piece in seen.restored)
+                            TextSpan(
+                              text: piece.text,
+                              style: switch (piece.piece) {
+                                Piece.restored => Zc.document.copyWith(
+                                  fontSize: 13,
+                                  color: Zc.clayDeep,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                Piece.unresolved =>
+                                  Zc.document.copyWith(fontSize: 13, color: Zc.amber),
+                                _ => Zc.document.copyWith(fontSize: 13),
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ZButton(
+                    label: 'Close',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _Band extends StatelessWidget {
   const _Band({required this.bench, required this.onVault});
 
@@ -1762,6 +1909,10 @@ class _ColumnsState extends State<_Columns> {
       ProtectOutcome_Snapped(:final spans) =>
         'That cell cuts into protected text, so nothing changed. It would snap to '
             '${spans.length} whole ${spans.length == 1 ? "item" : "items"}.',
+      // 079 rule 5, for a column of tokens: the core refuses per cell and says
+      // this only when **no** cell was protected, so «one cell of this column
+      // was a token» is still «protected N cells».
+      ProtectOutcome_StandsOnAToken() => theTokenIsAlreadyOurs,
     });
   }
 

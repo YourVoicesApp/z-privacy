@@ -2357,14 +2357,15 @@ extension ProtectOutcomePatterns on ProtectOutcome {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ProtectOutcome_Applied value)?  applied,TResult Function( ProtectOutcome_AlreadyProtected value)?  alreadyProtected,TResult Function( ProtectOutcome_BelongsToEntity value)?  belongsToEntity,TResult Function( ProtectOutcome_Snapped value)?  snapped,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ProtectOutcome_Applied value)?  applied,TResult Function( ProtectOutcome_AlreadyProtected value)?  alreadyProtected,TResult Function( ProtectOutcome_BelongsToEntity value)?  belongsToEntity,TResult Function( ProtectOutcome_Snapped value)?  snapped,TResult Function( ProtectOutcome_StandsOnAToken value)?  standsOnAToken,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ProtectOutcome_Applied() when applied != null:
 return applied(_that);case ProtectOutcome_AlreadyProtected() when alreadyProtected != null:
 return alreadyProtected(_that);case ProtectOutcome_BelongsToEntity() when belongsToEntity != null:
 return belongsToEntity(_that);case ProtectOutcome_Snapped() when snapped != null:
-return snapped(_that);case _:
+return snapped(_that);case ProtectOutcome_StandsOnAToken() when standsOnAToken != null:
+return standsOnAToken(_that);case _:
   return orElse();
 
 }
@@ -2382,14 +2383,15 @@ return snapped(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ProtectOutcome_Applied value)  applied,required TResult Function( ProtectOutcome_AlreadyProtected value)  alreadyProtected,required TResult Function( ProtectOutcome_BelongsToEntity value)  belongsToEntity,required TResult Function( ProtectOutcome_Snapped value)  snapped,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ProtectOutcome_Applied value)  applied,required TResult Function( ProtectOutcome_AlreadyProtected value)  alreadyProtected,required TResult Function( ProtectOutcome_BelongsToEntity value)  belongsToEntity,required TResult Function( ProtectOutcome_Snapped value)  snapped,required TResult Function( ProtectOutcome_StandsOnAToken value)  standsOnAToken,}){
 final _that = this;
 switch (_that) {
 case ProtectOutcome_Applied():
 return applied(_that);case ProtectOutcome_AlreadyProtected():
 return alreadyProtected(_that);case ProtectOutcome_BelongsToEntity():
 return belongsToEntity(_that);case ProtectOutcome_Snapped():
-return snapped(_that);}
+return snapped(_that);case ProtectOutcome_StandsOnAToken():
+return standsOnAToken(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -2403,14 +2405,15 @@ return snapped(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ProtectOutcome_Applied value)?  applied,TResult? Function( ProtectOutcome_AlreadyProtected value)?  alreadyProtected,TResult? Function( ProtectOutcome_BelongsToEntity value)?  belongsToEntity,TResult? Function( ProtectOutcome_Snapped value)?  snapped,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ProtectOutcome_Applied value)?  applied,TResult? Function( ProtectOutcome_AlreadyProtected value)?  alreadyProtected,TResult? Function( ProtectOutcome_BelongsToEntity value)?  belongsToEntity,TResult? Function( ProtectOutcome_Snapped value)?  snapped,TResult? Function( ProtectOutcome_StandsOnAToken value)?  standsOnAToken,}){
 final _that = this;
 switch (_that) {
 case ProtectOutcome_Applied() when applied != null:
 return applied(_that);case ProtectOutcome_AlreadyProtected() when alreadyProtected != null:
 return alreadyProtected(_that);case ProtectOutcome_BelongsToEntity() when belongsToEntity != null:
 return belongsToEntity(_that);case ProtectOutcome_Snapped() when snapped != null:
-return snapped(_that);case _:
+return snapped(_that);case ProtectOutcome_StandsOnAToken() when standsOnAToken != null:
+return standsOnAToken(_that);case _:
   return null;
 
 }
@@ -2427,13 +2430,14 @@ return snapped(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String token,  int places)?  applied,TResult Function( String token,  Source source,  String sourceDetail)?  alreadyProtected,TResult Function( String entity,  String token)?  belongsToEntity,TResult Function( List<Span> spans)?  snapped,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String token,  int places)?  applied,TResult Function( String token,  Source source,  String sourceDetail)?  alreadyProtected,TResult Function( String entity,  String token)?  belongsToEntity,TResult Function( List<Span> spans)?  snapped,TResult Function( String token)?  standsOnAToken,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ProtectOutcome_Applied() when applied != null:
 return applied(_that.token,_that.places);case ProtectOutcome_AlreadyProtected() when alreadyProtected != null:
 return alreadyProtected(_that.token,_that.source,_that.sourceDetail);case ProtectOutcome_BelongsToEntity() when belongsToEntity != null:
 return belongsToEntity(_that.entity,_that.token);case ProtectOutcome_Snapped() when snapped != null:
-return snapped(_that.spans);case _:
+return snapped(_that.spans);case ProtectOutcome_StandsOnAToken() when standsOnAToken != null:
+return standsOnAToken(_that.token);case _:
   return orElse();
 
 }
@@ -2451,13 +2455,14 @@ return snapped(_that.spans);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String token,  int places)  applied,required TResult Function( String token,  Source source,  String sourceDetail)  alreadyProtected,required TResult Function( String entity,  String token)  belongsToEntity,required TResult Function( List<Span> spans)  snapped,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String token,  int places)  applied,required TResult Function( String token,  Source source,  String sourceDetail)  alreadyProtected,required TResult Function( String entity,  String token)  belongsToEntity,required TResult Function( List<Span> spans)  snapped,required TResult Function( String token)  standsOnAToken,}) {final _that = this;
 switch (_that) {
 case ProtectOutcome_Applied():
 return applied(_that.token,_that.places);case ProtectOutcome_AlreadyProtected():
 return alreadyProtected(_that.token,_that.source,_that.sourceDetail);case ProtectOutcome_BelongsToEntity():
 return belongsToEntity(_that.entity,_that.token);case ProtectOutcome_Snapped():
-return snapped(_that.spans);}
+return snapped(_that.spans);case ProtectOutcome_StandsOnAToken():
+return standsOnAToken(_that.token);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -2471,13 +2476,14 @@ return snapped(_that.spans);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String token,  int places)?  applied,TResult? Function( String token,  Source source,  String sourceDetail)?  alreadyProtected,TResult? Function( String entity,  String token)?  belongsToEntity,TResult? Function( List<Span> spans)?  snapped,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String token,  int places)?  applied,TResult? Function( String token,  Source source,  String sourceDetail)?  alreadyProtected,TResult? Function( String entity,  String token)?  belongsToEntity,TResult? Function( List<Span> spans)?  snapped,TResult? Function( String token)?  standsOnAToken,}) {final _that = this;
 switch (_that) {
 case ProtectOutcome_Applied() when applied != null:
 return applied(_that.token,_that.places);case ProtectOutcome_AlreadyProtected() when alreadyProtected != null:
 return alreadyProtected(_that.token,_that.source,_that.sourceDetail);case ProtectOutcome_BelongsToEntity() when belongsToEntity != null:
 return belongsToEntity(_that.entity,_that.token);case ProtectOutcome_Snapped() when snapped != null:
-return snapped(_that.spans);case _:
+return snapped(_that.spans);case ProtectOutcome_StandsOnAToken() when standsOnAToken != null:
+return standsOnAToken(_that.token);case _:
   return null;
 
 }
@@ -2757,6 +2763,72 @@ class _$ProtectOutcome_SnappedCopyWithImpl<$Res>
   return _then(ProtectOutcome_Snapped(
 spans: null == spans ? _self._spans : spans // ignore: cast_nullable_to_non_nullable
 as List<Span>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ProtectOutcome_StandsOnAToken extends ProtectOutcome {
+  const ProtectOutcome_StandsOnAToken({required this.token}): super._();
+  
+
+ final  String token;
+
+/// Create a copy of ProtectOutcome
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ProtectOutcome_StandsOnATokenCopyWith<ProtectOutcome_StandsOnAToken> get copyWith => _$ProtectOutcome_StandsOnATokenCopyWithImpl<ProtectOutcome_StandsOnAToken>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProtectOutcome_StandsOnAToken&&(identical(other.token, token) || other.token == token));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,token);
+
+@override
+String toString() {
+  return 'ProtectOutcome.standsOnAToken(token: $token)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ProtectOutcome_StandsOnATokenCopyWith<$Res> implements $ProtectOutcomeCopyWith<$Res> {
+  factory $ProtectOutcome_StandsOnATokenCopyWith(ProtectOutcome_StandsOnAToken value, $Res Function(ProtectOutcome_StandsOnAToken) _then) = _$ProtectOutcome_StandsOnATokenCopyWithImpl;
+@useResult
+$Res call({
+ String token
+});
+
+
+
+
+}
+/// @nodoc
+class _$ProtectOutcome_StandsOnATokenCopyWithImpl<$Res>
+    implements $ProtectOutcome_StandsOnATokenCopyWith<$Res> {
+  _$ProtectOutcome_StandsOnATokenCopyWithImpl(this._self, this._then);
+
+  final ProtectOutcome_StandsOnAToken _self;
+  final $Res Function(ProtectOutcome_StandsOnAToken) _then;
+
+/// Create a copy of ProtectOutcome
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? token = null,}) {
+  return _then(ProtectOutcome_StandsOnAToken(
+token: null == token ? _self.token : token // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
