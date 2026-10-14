@@ -3664,6 +3664,7 @@ const _: fn() = || {
         let _: Vec<crate::api::mirrors::PageEdge> = PayloadView.page_edges;
         let _: Vec<crate::api::mirrors::KindTally> = PayloadView.by_kind;
         let _: Option<crate::api::mirrors::PayloadSession> = PayloadView.session;
+        let _: Option<String> = PayloadView.answer_page_token;
     }
     {
         let Place = None::<crate::api::mirrors::Place>.unwrap();
@@ -7272,6 +7273,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::PayloadVi
             self.0.page_edges.into_into_dart().into_dart(),
             self.0.by_kind.into_into_dart().into_dart(),
             self.0.session.into_into_dart().into_dart(),
+            self.0.answer_page_token.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
