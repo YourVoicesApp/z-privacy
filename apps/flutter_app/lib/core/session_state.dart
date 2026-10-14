@@ -437,6 +437,15 @@ class Workbench extends ChangeNotifier {
   String packId;
 
   WorkspaceSnapshot? snap;
+
+  /// What the last **re**scan reported, and nothing is drawn from it.
+  ///
+  /// Every number the band shows comes from [snap], which carries them all —
+  /// the counts, the vault's state, which scan it was. This holds the one thing
+  /// the snapshot has not got, the per-layer counts, for the day a screen shows
+  /// them. It is `null` for a document that has only ever been scanned on
+  /// import, which is why nothing on the glass may ask it whether a scan has
+  /// happened (item 3, 14 October).
   ScanReport? report;
   String? trouble;
   bool busy = false;
@@ -589,8 +598,30 @@ class Workbench extends ChangeNotifier {
   Future<String> reportText() =>
       z.importReport(subject: ReportSubject.imported(session: session));
 
-  /// A scan is not a screen (the behaviour board): it runs on import, and this is
-  /// the same call the Rescan button makes later.
+  /// **The scan a document arrived with** — 14 October, item 3.
+  ///
+  /// The core scans as it reads, at every door a document can arrive by, so
+  /// this reads what is already on the session instead of asking for a second
+  /// scan. There is nothing for the glass to do but look.
+  ///
+  /// Calling [rescan] here — which is what both doors did until the law moved
+  /// into the core — scans the same text twice, which on the owner's 734-page
+  /// file is the whole of that work for nothing; and the second scan is
+  /// truthfully reported as a `Rescan`, so the first thing a person read about
+  /// a document they had just opened was that somebody had rescanned it.
+  Future<void> readTheScanThatArrivedWithIt() async {
+    // Any scan clears the note, and this one is «the scan that came with the
+    // document» — no earlier note belongs to it.
+    scanNote = null;
+    await _refreshKeeping(null);
+    // The names that still need a word are part of what a scan produced, so the
+    // badge knows before anybody opens the panel.
+    await refreshCandidates();
+  }
+
+  /// A scan is not a screen (the behaviour board). A document arrives scanned
+  /// (item 3); this is the **re**scan — the button, a pack changed, a name
+  /// taught.
   Future<void> rescan() async {
     busy = true;
     // Any other scan clears the note: «after the vault opened» is about the

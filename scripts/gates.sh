@@ -154,6 +154,57 @@ else
   fail "G30 a pack does not name its own language:$G30_PACKS"
 fi
 
+# ---------------------------------------------------------------- G29
+# **A document arrives scanned, through every door it can arrive by** — the
+# detection round of 14 October, item 3.
+#
+# `import_text` and `import_document` installed the text and returned, leaving
+# the scan to whoever called next. Two Dart doors remembered and nothing made
+# them: `list_findings` right after an import was empty, a value the vault
+# already knows was not put back, and a person opening a document met a press
+# that did nothing. One law written at one door out of several — 083a's shape,
+# and 080's.
+#
+# So the scan is at the door, in one function both doors call; and the glass
+# asks for a scan in exactly one place, which is the rescan.
+DOORS=z_core/src/ops/mod.rs
+if [ "$(grep -c 'fn the_scan_that_arrives_with_the_document' "$DOORS" 2>/dev/null || echo 0)" = "1" ]; then
+  pass "G29 the scan a document arrives with is built in one function"
+else
+  fail "G29 the import scan is written in more than one place, or it is gone"
+fi
+
+G29_BAD=""
+for door in import_text import_document; do
+  BODY=$(awk -v d="$door" '
+    $0 ~ "^pub\\(crate\\) fn " d "\\(" {inside=1}
+    inside && /^}/ {print; inside=0; next}
+    inside {print}
+  ' "$DOORS")
+  if [ -z "$BODY" ]; then
+    G29_BAD="$G29_BAD $door(missing)"
+  elif ! printf '%s\n' "$BODY" | grep -q 'the_scan_that_arrives_with_the_document('; then
+    G29_BAD="$G29_BAD $door"
+  fi
+done
+if [ -z "$G29_BAD" ]; then
+  pass "G29 both import doors scan what they have just read: import_text, import_document"
+else
+  fail "G29 an import door hands back a document it has not scanned:$G29_BAD"
+fi
+
+# And nothing on the glass scans a document it has just imported: the one Dart
+# caller of the scan door is the bench's own rescan.
+G29_DART=$(grep -Rn 'z\.scan(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' || true)
+G29_DART_N=$(printf '%s\n' "$G29_DART" | grep -c . || true)
+if [ "$G29_DART_N" = "1" ] && printf '%s' "$G29_DART" | grep -q 'core/session_state.dart'; then
+  pass "G29 one surface asks for a scan, and it is the bench's rescan"
+else
+  fail "G29 the scan door is asked in $G29_DART_N place(s), expected one in core/session_state.dart:"
+  printf '%s\n' "$G29_DART" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G28
 # **The three exits share one law** — 083a, closing contract C3.
 #
@@ -1182,7 +1233,12 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_salutation_belongs_to_the_language_that_lists_it \
          the_name_dictionary_counts_the_names_it_actually_holds \
          no_reason_names_a_language_the_document_is_not_read_with \
-         ltd_is_called_an_english_legal_form; do
+         ltd_is_called_an_english_legal_form \
+         text_typed_in_arrives_scanned a_text_file_arrives_scanned \
+         a_word_file_arrives_scanned a_pdf_arrives_scanned \
+         a_second_document_in_the_same_session_arrives_scanned_too \
+         a_value_the_vault_knows_comes_back_protected_and_is_never_asked_about \
+         an_empty_import_is_not_a_refusal; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

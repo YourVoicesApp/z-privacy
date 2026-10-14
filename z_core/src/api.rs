@@ -1957,12 +1957,21 @@ pub fn session_revision(session: SessionId) -> ApiResult<Revision> {
 // ---------------------------------------------------------------- document
 
 /// Bring in typed text. No file, no pages: one paragraph per blank line.
+///
+/// **The document arrives scanned** (item 3 of the detection round, 14
+/// October): the view this returns already carries its marks, and
+/// [`list_findings`] already has its questions. Empty text is nothing to scan
+/// and is not an error.
 pub fn import_text(session: SessionId, text: String) -> ApiResult<DocumentView> {
     crate::ops::import_text(session, text)
 }
 
 /// Bring in a file. Read here, from memory, with the limits of G15 — and refused
 /// by name when it cannot be read honestly.
+///
+/// **Scanned on the way in**, like typed text and for the same reason: the
+/// product's first press is opening a document, and it may not be the press
+/// that does nothing.
 pub fn import_document(session: SessionId, name: String, bytes: Vec<u8>, kind: DocumentKind) -> ApiResult<DocumentView> {
     crate::ops::import_document(session, name, bytes, kind)
 }
@@ -1992,7 +2001,11 @@ pub fn document_view(session: SessionId) -> ApiResult<DocumentView> {
     crate::ops::document_view(session)
 }
 
-/// Run the detection layers over the whole document. M3.
+/// Run the detection layers over the whole document again. M3.
+///
+/// An import runs them once by itself. This door is the **re**scan: the button,
+/// a pack changed, a name taught — the acts after which the same text means
+/// something new. It never takes a protection back.
 pub fn scan(session: SessionId) -> ApiResult<ScanReport> {
     crate::ops::scan(session)
 }

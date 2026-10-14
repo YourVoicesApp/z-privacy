@@ -195,26 +195,48 @@ fn a_hand_protection_drawn_two_characters_too_far_replaces_only_the_value() {
     let at = PAYROLL.find(value).expect("the organisation number");
     let start = PAYROLL.get(..at).unwrap_or_default().encode_utf16().count() as u32;
     let drawn = Span { start, end: start + value.encode_utf16().count() as u32 + 2 };
-    protect(session, drawn, Scope::Once, Kind::Custom).expect("protect");
+    let token = match protect(session, drawn, Scope::Once, Kind::Custom).expect("protect") {
+        ProtectOutcome::Applied { token, .. } => token,
+        other => panic!("the organisation number was not protected by hand: {other:?}"),
+    };
 
     let payload = payload_view(build_payload(session).expect("build")).expect("payload").text;
-    let token = payload
-        .split_whitespace()
-        .find(|word| word.starts_with("__Z_"))
-        .expect("a token in the payload")
-        .to_string();
-    let expected = format!(
-        "{}{token}{}",
-        PAYROLL.get(..at).unwrap_or_default(),
-        PAYROLL.get(at + value.len()..).unwrap_or_default()
+    // **Held to the document on either side of the value, not to the whole
+    // file.** The comparison here was the whole document with this one stretch
+    // replaced, and it could be, because an import protected nothing: since 14
+    // October it scans (item 3), and the e-mail address three lines down is
+    // protected by its own rule before any hand touches the file. What this
+    // guard is about is unchanged, and it is still character for character:
+    // the token stands exactly where the value stood, and the two characters
+    // the selection overshot — the line break and the «A» of the next line —
+    // are still standing after it. The defect it was written for ate both.
+    let head = PAYROLL.get(..at).unwrap_or_default();
+    let tail = PAYROLL.get(at + value.len()..).unwrap_or_default();
+    assert!(
+        payload.starts_with(&format!("{head}{token}")),
+        "the token does not stand where the value stood: {payload}"
     );
-
-    assert_eq!(
-        payload, expected,
-        "the text that leaves is not the text that arrived with its value replaced: the \
-         selection overshot by two characters and the act followed it onto the next line",
+    let overshot: String = tail.chars().take(2).collect();
+    let rest = payload.get(head.len() + token.len()..).unwrap_or_default();
+    assert!(
+        rest.starts_with(&overshot),
+        "the act followed the selection past the value and took the two characters it \
+         overshot with it: {payload}"
     );
+    assert!(!payload.contains(value), "the value itself did not leave: {payload}");
     // And the file's own property holds on this case too, now that there is
     // nothing for the two sides to be wrong about together.
     assert_eq!(payload, expected_payload(session), "the core against the core");
+    // Said out loud: this file now carries two protections, and the one above
+    // is the one drawn by hand.
+    assert_eq!(
+        document_view(session)
+            .expect("view")
+            .marks
+            .iter()
+            .filter(|m| m.state == MarkState::Protected)
+            .count(),
+        2,
+        "the hand protection and the e-mail its own rule found"
+    );
 }

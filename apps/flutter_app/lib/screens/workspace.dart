@@ -1053,8 +1053,16 @@ class _Band extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final r = bench.report;
-    final locked = (r?.vault ?? VaultState.absent) != VaultState.unlocked;
+    // **Every line of this band comes from the snapshot** — 14 October, item 3.
+    //
+    // It read `bench.report`, which is what a *scan call* returned, and a
+    // document that was scanned on the way in has never made one: the band
+    // would have said «Not scanned yet» over a document whose every name was
+    // already protected. The snapshot carries all of it — which scan it was,
+    // the counts, and the vault's own state.
+    final scanned = bench.scanOrigin != ScanOrigin.notScanned;
+    final vault = bench.snap?.vault ?? VaultState.absent;
+    final locked = vault != VaultState.unlocked;
 
     return Container(
       width: double.infinity,
@@ -1079,7 +1087,7 @@ class _Band extends StatelessWidget {
               'Scanning…',
               style: TextStyle(fontSize: 13, color: Zc.clayDeep),
             ),
-          ] else if (r == null) ...[
+          ] else if (!scanned) ...[
             const Text(
               'Not scanned yet',
               style: TextStyle(fontSize: 13, color: Zc.clayDeep),
@@ -1112,15 +1120,27 @@ class _Band extends StatelessWidget {
               ),
             ),
           ],
-          const Spacer(),
+          // **No `Spacer` here** (14 October, item 3). A spacer is a third
+          // flexible child, and it took a third of the band's free width for
+          // emptiness — so the warning's share was 174 pixels, the act inside
+          // it needs more than that on its own, and the band overflowed by 15
+          // pixels in a 1000-pixel window. Measured by `paste_test`, which
+          // draws this band with no vault: the warning was invisible until
+          // then, because it was drawn only when a *scan call* had returned.
+          //
+          // The counts take one share and the warning two, which keeps the
+          // warning against the right edge without a child whose only job is
+          // to be wide.
+          const SizedBox(width: 12),
           // Said out loud, because a locked vault means the app cannot recognise
           // your own people. The core puts the state in the report for this line.
           //
           // Flexible, not a bare Text: this band is the one place where two long
           // sentences meet, and a narrow window must shorten a warning rather
           // than overflow it off the screen where nobody reads it.
-          if (locked && r != null)
+          if (locked && scanned)
             Flexible(
+              flex: 2,
               child: Padding(
                 padding: const EdgeInsets.only(left: 14),
                 child: InkWell(
@@ -1133,7 +1153,7 @@ class _Band extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            r.vault == VaultState.locked
+                            vault == VaultState.locked
                                 ? 'Vault locked — rules and pack ran, the vault layer did not'
                                 : 'No vault — nothing is recognised by name',
                             style: Zc.small.copyWith(
@@ -1150,7 +1170,7 @@ class _Band extends StatelessWidget {
                         // one this is — the same distinction the core's two
                         // refusals make.
                         Text(
-                          r.vault == VaultState.locked ? 'Unlock' : 'Create a vault',
+                          vault == VaultState.locked ? 'Unlock' : 'Create a vault',
                           style: Zc.small.copyWith(
                             color: Zc.clayDeep,
                             fontWeight: FontWeight.w700,

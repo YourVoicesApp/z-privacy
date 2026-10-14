@@ -85,6 +85,13 @@ fn no_leak_in_any_payload() {
                     assert!(places >= 1, "{}: {secret} was not protected anywhere", case.name);
                     tokens.push(token);
                 }
+                // **A layer got there first.** Since 14 October an import
+                // scans (item 3), so a salutation, a label or an IBAN's own
+                // checksum may have protected one of these secrets before this
+                // loop reached it. That is the product working, and the token
+                // is the same token — the search below is what this file is
+                // about, and it is the search that must find nothing.
+                ProtectOutcome::AlreadyProtected { token, .. } => tokens.push(token),
                 // Already covered by a longer value protected before it — the
                 // nesting case. Nothing is leaking; there is simply no place left.
                 ProtectOutcome::Snapped { .. } => {}

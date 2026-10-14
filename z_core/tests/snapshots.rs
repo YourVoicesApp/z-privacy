@@ -151,7 +151,10 @@ fn workspace_counts_come_from_findings() {
     let _guard = serial();
     fresh_dir("ws-counts");
     let s = session_with_doc();
-    scan(s).expect("scan");
+    // **The import is the scan that says «on import»** — 14 October, item 3.
+    // A `scan` stood here because an import used to scan nothing; the
+    // snapshot is read straight off the import now, and a hand-made scan here
+    // would truthfully report a rescan.
     let snap = workspace_snapshot(s).expect("snap");
     let auto = snap.findings.iter().filter(|f| f.state == MarkState::Protected && !f.decided).count() as u32;
     let user = snap.findings.iter().filter(|f| f.state == MarkState::Protected && f.decided).count() as u32;
@@ -206,9 +209,11 @@ fn a_second_scan_is_a_rescan() {
     let _guard = serial();
     fresh_dir("rescan");
     let s = session_with_doc();
-    scan(s).expect("first");
+    // The first scan is the one the import ran (item 3). Every scan after it
+    // is a rescan, whoever asked for it — the button, a pack changed, a name
+    // taught.
     assert_eq!(workspace_snapshot(s).expect("one").scan_origin, ScanOrigin::OnImport);
-    scan(s).expect("second");
+    scan(s).expect("the second");
     assert_eq!(workspace_snapshot(s).expect("two").scan_origin, ScanOrigin::Rescan);
     close_session(s).expect("close");
 }

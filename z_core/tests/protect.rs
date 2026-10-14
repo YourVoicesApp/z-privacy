@@ -24,6 +24,17 @@ fn session_with_doc() -> SessionId {
     s
 }
 
+/// How many stretches of this document are **protected** — the questions still
+/// waiting are marks as well, and they are not what an act did.
+fn protections_in(s: SessionId) -> usize {
+    document_view(s)
+        .expect("view")
+        .marks
+        .iter()
+        .filter(|m| m.state == MarkState::Protected)
+        .count()
+}
+
 fn payload_text(s: SessionId) -> String {
     let h = build_payload(s).expect("build");
     payload_view(h).expect("view").text
@@ -180,7 +191,11 @@ fn undo_takes_back_the_whole_act() {
     let s = session_with_doc();
     protect_all_matches(s, span_of(DOC, "Thomas Müller"), Scope::Conversation, Kind::Person)
         .expect("all matches");
-    assert_eq!(document_view(s).expect("view").marks.len(), 2);
+    // **Protections, not marks.** A view carries the open questions as marks
+    // too, and since 14 October the document arrives with its questions already
+    // on it (item 3) — this letter offers its company without being asked.
+    // Undo is about the act, so the act is what is counted.
+    assert_eq!(protections_in(s), 2);
 
     match undo_last_protection(s).expect("undo") {
         UndoOutcome::Undone { places, created_entity, .. } => {
@@ -189,7 +204,7 @@ fn undo_takes_back_the_whole_act() {
         }
         other => panic!("expected Undone, got {other:?}"),
     }
-    assert!(document_view(s).expect("view").marks.is_empty());
+    assert_eq!(protections_in(s), 0, "the act came out whole");
     assert!(list_tokens(s).expect("tokens").is_empty(), "the panel drops it too");
     assert!(payload_text(s).contains("Thomas Müller"), "the name is back in the clear");
 }
@@ -197,7 +212,12 @@ fn undo_takes_back_the_whole_act() {
 #[test]
 fn an_alias_protects_the_other_spelling_under_the_same_token() {
     let s = open_session(None, "de".to_string()).expect("open");
-    let doc = "Thomas Müller kommt. Herr Müller unterschreibt.";
+    // «Herr Müller» was the second spelling here until an import began
+    // scanning (14 October, item 3): the salutation rule protects the name
+    // after it, so that spelling arrived protected and this guard measured an
+    // alias that had nothing left to cover. An initial is the same shape and
+    // the pack claims none of it.
+    let doc = "Thomas Müller kommt. T. Müller unterschreibt.";
     import_text(s, doc.to_string()).expect("import");
 
     let token = match protect(s, span_of(doc, "Thomas Müller"), Scope::Conversation, Kind::Person)
@@ -206,7 +226,7 @@ fn an_alias_protects_the_other_spelling_under_the_same_token() {
         ProtectOutcome::Applied { token, .. } => token,
         other => panic!("{other:?}"),
     };
-    let places = add_alias(s, token.clone(), "Herr Müller".to_string()).expect("alias");
+    let places = add_alias(s, token.clone(), "T. Müller".to_string()).expect("alias");
     assert_eq!(places, 1);
 
     let text = payload_text(s);
@@ -302,8 +322,12 @@ fn inspect_ready_offers_the_packs_own_guess_and_a_count() {
 #[test]
 fn inspect_known_names_the_token_and_who_gave_it() {
     let s = open_session(None, "de".to_string()).expect("open");
-    import_text(s, "Herr Thomas Müller ruft an.".to_string()).expect("import");
-    let span = Span { start: 5, end: 18 };
+    // No salutation: this guard is about a protection **a hand** made, and
+    // behind «Herr» the pack had already made it on the way in — `protected_by`
+    // then says `LanguagePack`, truthfully, and the guard was measuring the
+    // wrong layer (14 October, item 3).
+    import_text(s, "Thomas Müller ruft an.".to_string()).expect("import");
+    let span = Span { start: 0, end: 13 };
     protect(s, span, Scope::Conversation, Kind::Person).expect("protect");
 
     let view = inspect_selection(s, span).expect("inspect");

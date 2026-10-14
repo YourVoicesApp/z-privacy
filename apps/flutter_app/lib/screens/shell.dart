@@ -205,7 +205,8 @@ class _ShellState extends State<ZShell> {
         chat = Workbench(session: session, profileId: null, packId: packId);
       }
       await z.importText(session: chat.session, text: text);
-      await chat.rescan();
+      // The core scanned it as it read it (item 3); this reads what arrived.
+      await chat.readTheScanThatArrivedWithIt();
       if (!mounted) return;
       setState(() {
         _chat = chat;
@@ -234,7 +235,9 @@ class _ShellState extends State<ZShell> {
   /// step is temporary: 043 gives the pack a vote of its own.
   ///
   /// In both paths the scan runs the moment the text is in: nobody has to press
-  /// anything to be protected.
+  /// anything to be protected. **And not because this method remembers to ask**
+  /// — the import doors scan in the core since 14 October (item 3), so a door
+  /// that forgot would still be a door that protects.
   Future<void> _begin({required bool typing, String? text}) async {
     // 041-N, the owner: «you cannot begin without an open vault». Not a
     // warning and not a line in a band — the door opens instead of the work.
@@ -290,8 +293,10 @@ class _ShellState extends State<ZShell> {
           kind: kind!,
         );
       }
-      // On import, at once, with no dialog.
-      await bench.rescan();
+      // On import, at once, with no dialog — and by the core's own hand since
+      // 14 October: the scan is part of reading the document, at both doors
+      // and in whatever order a caller happens to do things.
+      await bench.readTheScanThatArrivedWithIt();
       _bench?.dispose();
       setState(() {
         _bench = bench;
