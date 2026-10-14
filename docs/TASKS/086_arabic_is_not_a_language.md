@@ -86,6 +86,12 @@ One amendment the lead had to add to reach that 95%: the letters that **do not j
 
 **A number the lead over-read, corrected:** `check_document` reports the book «97% readable». That measures glyphs turning into characters, not characters standing in the right order. It reassured me and it should not have.
 
+**One press answers every word with the same problem (the owner, 14 Oct):** «ضغطة على كلمة واحدة تكفي لتصبح جميع الكلمات التي لها نفس المشكلة». The answer teaches the **repair**, not the word — the defect is systematic, so one press clears every place the same shape or the same swap broke. Behind all the marked places stand only **146 distinct problems**, led by a handful of shapes.
+
+**The lead's detector over-counts, and the 7,369 must not be quoted again until the instrument measures it.** Grouping the marked places by their cause showed the largest groups are not order defects at all: `U+FC60`, `U+FC61`, `U+FC62` (2,520 + 590 + 360 places) are **shadda-with-vowel** shapes, which fold correctly and were never broken — the detector flags them only because a mark has no place-shape to agree with. Another **2,715** places are unexplained by either the swap rule or a ligature. So the real count of wrongly ordered letters is well under half of 7,369, and the honest number has to come from `what_arrives` reading the fonts through the product's own reader, not from a script over `pdftotext`.
+
+**STOPPED by the owner, 14 Oct:** «لا يمكنني الحكم الآن، أحتاج إلى تجربة بنفسي… اقتراح التوقف عن العربية.» Nothing of the base is built until he has tried it with his own hands. The one instrument in flight (`what_arrives`, ed, branch `probe/what-the-reader-hands-over`) continues, because it is what he will try it *with*: it reports numbers and changes no behaviour.
+
 **Two questions for the owner, still open:**
 - **The colour.** Red already means «protected» in the search box (084 rule 8). Two meanings for one colour. The lead's suggestion: the marked word keeps red but as a **line under it**, never a wash, so «red wash = protected» and «red line = the order here is broken» stay apart.
 - **Does a marked word stop a text leaving?** The lead's reading: **no.** 083a stops an unanswered *privacy* suggestion; a reading repair is not one, and a book with 7,369 of them would be a wall, not a guide. The count is shown and the person may act. (But a marked word may hide a name Z cannot find, so the count belongs beside the exit, said plainly.)
