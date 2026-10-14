@@ -1041,6 +1041,47 @@ pub enum FindingAnswer {
 
 // ---------------------------------------------------------------- views
 
+/// **What a searched word is in one place** — 084, the owner's search bar.
+///
+/// A place's state is the state of **what covers it**, and not of the word: the
+/// same «Lindqvist» can stand inside a protected «Anna Lindqvist», inside a
+/// still-waiting «Lindqvist AB», and alone in the clear, all in one document.
+/// Measured before the bar was built, which is why this answers «what covers
+/// this place» rather than «is this word protected».
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FoundPlace {
+    /// The place itself — the whole-word occurrence of what was typed.
+    pub span: Span,
+    pub state: FoundState,
+    /// The token, when a protection covers this place.
+    pub token: Option<String>,
+    /// What covers it, when something does: the protection's or the finding's
+    /// own span, **which may be wider than what was typed**. 084's ruling (c)
+    /// turns on this — the bar's «Protect» takes the places in the clear with
+    /// the word the person typed and does **not** answer a suggestion wider
+    /// than it; it says there is one instead, and the review is where that is
+    /// answered.
+    pub covered_by: Option<Span>,
+    /// The kind of what covers it. `Custom` when nothing does.
+    pub kind: Kind,
+}
+
+/// The three states a searched place can be in.
+///
+/// [`MarkState`] has only two, because a mark is something the app **found** —
+/// and «in the clear» is the absence of a mark, which a searched place can be
+/// and a mark cannot.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FoundState {
+    /// A protection covers it. The bar draws these on a watery red.
+    Protected,
+    /// A finding covers it and nobody has answered it yet. Watery blue.
+    Waiting,
+    /// Nothing covers it. No wash: «in the clear» is the absence of both
+    /// colours, and the document's own marks are not touched either way.
+    Clear,
+}
+
 /// One marked stretch of the document, for drawing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Mark {
@@ -2026,6 +2067,30 @@ pub fn import_report(subject: ReportSubject) -> ApiResult<String> {
 /// The original text with its marks, for the left-hand column.
 pub fn document_view(session: SessionId) -> ApiResult<DocumentView> {
     crate::ops::document_view(session)
+}
+
+/// **Every whole-word place of a typed word, with what covers each** — 084.
+///
+/// The one function the search bar reads: the count, the washes and all four
+/// acts come from this list, so the bar cannot come to disagree with itself.
+///
+/// The search is the **product's own** — `text::occurrences`, the same
+/// function the scanner, the vault and «every place of this value» use. So it
+/// is whole-word and case-blind, it reads across a hyphen the page put inside a
+/// word, and it knows the clitics Arabic writes in front of a name. A search
+/// for part of a word finds nothing, which is what the completion is for. Its
+/// one named gap is that function's own: `ß` is not folded, so «Weiß» does not
+/// find «WEISS».
+///
+/// The places come back **in reading order**. A blank word is nothing to
+/// search for and comes back as an empty list rather than as a refusal: the
+/// bar may ask on every Enter.
+///
+/// **Nothing is stored.** This reads the open document and answers; the word
+/// that was typed is not kept here, in the session, or in `settings.zcfg`,
+/// where a search history is impossible by construction (G18a).
+pub fn find_in_document(session: SessionId, word: String) -> ApiResult<Vec<FoundPlace>> {
+    crate::ops::find_in_document(session, word)
 }
 
 /// Run the detection layers over the whole document again. M3.

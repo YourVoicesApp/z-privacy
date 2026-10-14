@@ -17,8 +17,10 @@
 // the protecting. A widget that works out for itself whether something is
 // already protected will eventually disagree with the core, and the user will
 // be the one who finds out.
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
+import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 /// The states of the Protect button, named as the behaviour board names them.
 ///
@@ -72,4 +74,55 @@ Future<ProtectOutcome?> protectTheSelection(Workbench bench) {
     // core spreads it across the conversation itself.
     allMatches: false,
   );
+}
+
+/// **Protect the places the bar found in the clear** — 084's first act, and a
+/// function because the bar is not the only thing that will ask.
+///
+/// **One `Scope.once` per place, and that is the whole of ruling (c)** —
+/// measured, after the guard caught the other reading: a single
+/// `Scope.conversation` protect on one clear place comes back
+/// `Applied { places: 4 }` and protects **every** place of the word, including
+/// the ones standing inside «Anna Lindqvist» and «Lindqvist AB» that nobody
+/// has answered yet. That is more than the person typed, and it leaves «Anna»
+/// and «AB» beside a token with their own suggestions still waiting.
+///
+/// Place by place instead: the two clear ones become
+/// `[Waiting, Protected, Waiting, Protected]`, the waiting ones are untouched,
+/// and — measured, not hoped — **both places carry the same token**, because a
+/// token is named from (client, document, value) and not from the act. So one
+/// press is still one decision with one token in the payload.
+///
+/// **Why this is narrower than a hand selection** (083c, which takes every
+/// place with `Scope.conversation`): a selection is the word the person drew,
+/// and the owner's law is that a selection is their will. The bar's act is
+/// about *the places it found*, among them places inside words they did not
+/// type — and the lead ruled on 14 Oct that those are left to the review, which
+/// is also what keeps the exits shut until they are answered.
+///
+/// The kind of each place comes from the core's one answer for that span.
+Future<ProtectOutcome?> protectThePlacesInTheClear(Workbench bench, List<Span> clear) async {
+  if (clear.isEmpty) return null;
+  ProtectOutcome? last;
+  try {
+    for (final where in clear) {
+      final view = await z.inspectSelection(session: bench.session, span: where);
+      last = await z.protect(
+        session: bench.session,
+        span: where,
+        scope: Scope.once,
+        kind: view.kind,
+      );
+    }
+    await bench.refresh();
+    final still = bench.selection;
+    if (still != null) await bench.select(still);
+    return last;
+  } on ApiError catch (e) {
+    // The refusal after the refresh, for the reason `un_protecting.dart` gives.
+    await bench.refresh();
+    bench.trouble = humanMessage(e);
+    bench.focusOn(bench.focused);
+    return null;
+  }
 }

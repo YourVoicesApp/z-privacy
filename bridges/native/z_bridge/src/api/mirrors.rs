@@ -815,6 +815,35 @@ pub enum _FindingAnswer {
     Skip,
 }
 
+#[frb(mirror(FoundPlace))]
+pub struct _FoundPlace {
+    /// The place itself — the whole-word occurrence of what was typed.
+    pub span: Span,
+    pub state: FoundState,
+    /// The token, when a protection covers this place.
+    pub token: Option<String>,
+    /// What covers it, when something does: the protection's or the finding's
+    /// own span, **which may be wider than what was typed**. 084's ruling (c)
+    /// turns on this — the bar's «Protect» takes the places in the clear with
+    /// the word the person typed and does **not** answer a suggestion wider
+    /// than it; it says there is one instead, and the review is where that is
+    /// answered.
+    pub covered_by: Option<Span>,
+    /// The kind of what covers it. `Custom` when nothing does.
+    pub kind: Kind,
+}
+
+#[frb(mirror(FoundState))]
+pub enum _FoundState {
+    /// A protection covers it. The bar draws these on a watery red.
+    Protected,
+    /// A finding covers it and nobody has answered it yet. Watery blue.
+    Waiting,
+    /// Nothing covers it. No wash: «in the clear» is the absence of both
+    /// colours, and the document's own marks are not touched either way.
+    Clear,
+}
+
 #[frb(mirror(Mark))]
 pub struct _Mark {
     pub span: Span,
