@@ -24,6 +24,15 @@ import 'package:zprivacy/widgets/document_text.dart';
 
 import 'drawn_document.dart';
 
+/// What **one** click on `word` would take — here too, because the white-space
+/// ruling of 14 Oct is one rule for both presses and a file that measured only
+/// the pair would leave half of it unguarded.
+String? taken(String text, String word) {
+  final at = text.indexOf(word);
+  final r = wordAt(text, at + word.length ~/ 2);
+  return r == null ? null : text.substring(r.start, r.end);
+}
+
 /// What two clicks on `word` would take out of `text`.
 String? pair(String text, String word) {
   final at = text.indexOf(word);
@@ -55,14 +64,38 @@ void main() {
       expect(pair('call Margaret\nWilson today', 'Margaret'), 'Margaret');
       expect(pair('Margaret Wilson\nnext line', 'Wilson'), 'Wilson');
       expect(pair('اتصل ويلسون\nغداً', 'ويلسون'), 'ويلسون');
+      // **A Windows line, measured rather than assumed:** the reader hands the
+      // document over as it is, so the break arrives as `\r\n` — and the pair
+      // must stop at it the same way. Before the white-space ruling the glass
+      // knew only `\n`, so the `\r` read as a letter and «Margaret\r» was the
+      // word.
+      expect(pair('call Margaret\r\nWilson today', 'Margaret'), 'Margaret');
+      expect(pair('call Margaret\rWilson today', 'Margaret'), 'Margaret');
+      expect(taken('call Margaret\r\nWilson today', 'Margaret'), 'Margaret');
+      // The white-space before a break is still white-space, and the break is
+      // still what stops the pair.
+      expect(pair('call Margaret  \n  Wilson today', 'Margaret'), 'Margaret');
+    });
+
+    test('a run of white-space is one boundary, of any length and any kind', () {
+      // **The owner, 14 Oct**, reversing the first reading of this file:
+      // «لا يجب أن يتوقف المترجم إذا كان هناك أكثر من مسافة، هو يجد الحرف الذي
+      // بعد المسافة». The pair is one span, so the run stays **inside** the
+      // value and it reads exactly as the document reads.
+      expect(pair('Anne  Marie', 'Anne'), 'Anne  Marie');
+      expect(pair('Anne   Marie ist da', 'Anne'), 'Anne   Marie');
+      expect(pair('Anne\tMarie', 'Anne'), 'Anne\tMarie');
+      expect(pair('Anne\u{a0}Marie', 'Anne'), 'Anne\u{a0}Marie');
+      expect(pair('Anne \t\u{a0} Marie', 'Anne'), 'Anne \t\u{a0} Marie');
+      expect(pair('Anne\u{3000}Marie', 'Anne'), 'Anne\u{3000}Marie');
+      // And one click still takes one word through the same run.
+      expect(taken('Anne  Marie', 'Marie'), 'Marie');
+      expect(taken('Anne\tMarie', 'Anne'), 'Anne');
     });
 
     test('and where there is no next word, one word is the whole value', () {
       expect(pair('Herr Mueller', 'Mueller'), 'Mueller', reason: 'the end of the document');
       expect(pair('Herr Mueller ', 'Mueller'), 'Mueller', reason: 'a trailing space');
-      expect(pair('Herr  Mueller', 'Herr'), 'Herr',
-          reason: 'the rule says one space; two is not one, and taking less is '
-              'the half a second it costs to click again');
       expect(pair('Herr — Mueller', 'Herr'), 'Herr',
           reason: 'a dash is not a word, and the value may not end on a mark');
     });

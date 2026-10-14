@@ -85,7 +85,20 @@ void main() {
 
   // --------------------------------------------------------------- 1 · the rule
 
-  testWidgets('«Later» does not lower the count, and the card says so', (tester) async {
+  /// **046/L's finding outlived its own button** — 083, ruling 5 (14 Oct).
+  ///
+  /// What this file found on 7 October was not «Skip» and not «Later»: it was
+  /// that **a thing which is not an answer may not be drawn as one.** The first
+  /// repair gave it its own word and its own line, inside the card. The owner's
+  /// ruling went further and took it out of the card altogether: leaving a word
+  /// for later is the **Next** button, which is not an answer, is not drawn
+  /// among them, and is not even in the same half of the window.
+  ///
+  /// So the shape this test used to measure is gone, and what is left to hold
+  /// is the deletion — «Later» and «Skip» are not in the review at all. That
+  /// Next keeps the count where it is lives in
+  /// `the_review_in_two_forms_test.dart`, with the rest of the walk.
+  testWidgets('«Later» and «Skip» are gone from the review, not moved inside it', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1500, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final (_, bench) = await _open(tester, 'later');
@@ -96,52 +109,14 @@ void main() {
     bench.openReview(walk: true);
     await settle(tester);
 
-    // **Its own word, and the whole of what it does is in it.** «Skip» named
-    // neither the count nor the consequence.
-    expect(find.text('Later — stays open'), findsOneWidget,
-        reason: 'the act does not say that it decides nothing');
-    expect(find.text('Skip'), findsNothing,
-        reason: '«Skip» is still drawn, and it reads as a decision');
-
-    await tester.tap(find.byKey(_laterKey));
-    await settle(tester, rounds: 12);
-
-    expect(bench.openSuggestions, before,
-        reason: 'pressing «Later» changed the count — then it was an answer after all');
-    // And the sentence beside it says the three things it costs.
-    expect(find.textContaining('is not an answer'), findsWidgets);
-    expect(find.textContaining('still counted'), findsWidgets);
-    expect(find.textContaining('stays shut'), findsWidgets);
-  });
-
-  testWidgets('«Later» is not drawn as one of the answers', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1500, 1000));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final (_, bench) = await _open(tester, 'shape');
-    bench.openReview(walk: true);
-    await settle(tester);
-
-    // The two answers are bordered chips in one row; «Later» is a word on its
-    // own line. The measurable difference: the answers sit inside a `Material`
-    // of their own and «Later» does not — so it cannot be mistaken for one by
-    // a person reading the row left to right.
-    final answer = find.ancestor(
-      of: find.text('Protect'),
-      matching: find.byType(Material),
-    );
-    final later = find.ancestor(
-      of: find.text('Later — stays open'),
-      matching: find.byType(Material),
-    );
-    expect(answer, findsWidgets);
-    // Both are inside *some* Material (the Scaffold's), so the test is about
-    // the row: «Later» is not a sibling of «Protect» in the answers' Wrap.
-    expect(
-      find.descendant(of: find.byType(Wrap), matching: find.text('Later — stays open')),
-      findsNothing,
-      reason: '«Later» is back inside the answers, where it reads as one',
-    );
-    expect(later, findsWidgets);
+    for (final gone in ['Later — stays open', 'Later', 'Skip']) {
+      expect(find.text(gone), findsNothing, reason: '«$gone» is still drawn in the review');
+    }
+    expect(find.byKey(_laterKey), findsNothing);
+    // And the two that are left are the two the owner named.
+    expect(find.text('Protect'), findsWidgets);
+    expect(find.text('Leave it'), findsWidgets);
+    expect(bench.openSuggestions, before, reason: 'drawing the panel answered something');
   });
 
   // ---------------------------------------------------------------- 2 · the key
@@ -214,9 +189,15 @@ void main() {
 
     bench.openReview();
     await settle(tester);
-    expect(find.text('Protect all $count'), findsOneWidget,
-        reason: 'the act does not say how many it takes (P2-5)');
-    expect(find.text('Leave all $count in the clear'), findsOneWidget);
+    // 083 ruling 6 names the two acts: «Protect all» and «Skip all». The
+    // number is on the badge beside each and in the confirmation's own
+    // sentence, which is where P2-5 needs it — a count inside a label that
+    // also has to fit a narrow panel was the thing that made «Leave all 3 in
+    // the clear» as long as the panel is wide.
+    expect(find.text('Protect all'), findsOneWidget);
+    expect(find.text('Skip all'), findsOneWidget);
+    expect(find.text('Protect all $count'), findsNothing,
+        reason: 'the old name is still drawn');
 
     // **Protect them all: one press, no question.** Over-protecting is never a
     // leak, so asking would be a toll on the safe direction.
@@ -242,7 +223,7 @@ void main() {
 
     // **The dangerous direction asks, and the number is in the question.** A
     // confirmation that does not say how many is not a confirmation.
-    expect(find.text('Leave them in the clear?'), findsOneWidget,
+    expect(find.text('Leave $count words in the clear?'), findsOneWidget,
         reason: 'one press was about to leave $count values in the clear with no question');
     expect(find.textContaining('All $count of them'), findsOneWidget);
     expect(bench.openSuggestions, count, reason: 'it acted before the answer');

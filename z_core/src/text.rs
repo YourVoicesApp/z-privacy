@@ -180,14 +180,22 @@ fn cuts_a_word(s: &str, at: usize) -> bool {
 /// `None` when the selection stays on one line, which is almost every selection.
 fn one_line_of(s: &str, start: usize, end: usize) -> Option<(usize, usize)> {
     let drawn = s.get(start..end)?;
-    if !drawn.contains('\n') {
+    // **A line ends at `\n` or at `\r`** — the second case of one rule, found
+    // while the owner's white-space ruling of 14 Oct was being built. The
+    // readers hand a document over as it is, so a Windows file keeps its
+    // `\r\n`: before this, the `\r` was whitespace and nothing else, and a
+    // selection drawn across a lone carriage return — a classic Mac line, and
+    // what a `\r\n` looks like to anything reading one character at a time —
+    // was not recognised as crossing a line at all. A `\r\n` gives an empty
+    // piece between the two, which the skip below already drops.
+    if !drawn.contains(['\n', '\r']) {
         return None;
     }
     let mut best: Option<(usize, usize, usize)> = None;
     let mut at = start;
-    for piece in drawn.split('\n') {
+    for piece in drawn.split(['\n', '\r']) {
         let (from, to) = (at, at + piece.len());
-        at = to + '\n'.len_utf8();
+        at = to + 1;
         if piece.trim().is_empty() {
             continue;
         }
@@ -534,7 +542,19 @@ fn line_break_hyphen(haystack: &str, at: usize) -> Option<usize> {
     for (offset, c) in chars {
         match c {
             '\n' | '\r' => seen_break = true,
-            ' ' | '\t' => {}
+            // **Any white-space between the hyphen and the break**, not the two
+            // kinds that happened to be written here — the owner's rule of
+            // 14 Oct, in the third place this file decides what a space is. A
+            // PDF that writes a no-break space or a thin space before the line
+            // end is ordinary, and before this it made the hyphen «belong to
+            // the text» and left the name broken in half.
+            // **Any white-space between the hyphen and the break**, not the two
+            // kinds that happened to be written here — the owner's rule of
+            // 14 Oct, in the third place this file decides what a space is. A
+            // PDF that writes a no-break space or a thin space before the line
+            // end is ordinary, and before this it made the hyphen «belong to
+            // the text» and left the name broken in half.
+            _ if c.is_whitespace() => {}
             _ if seen_break => {
                 // The first real character of the next line decides.
                 return c.is_lowercase().then_some(offset);
@@ -777,6 +797,79 @@ mod tests {
         // place this value appears», because the matcher reads an exact value
         // across any run of whitespace. So this rule has no exception.
         assert_eq!(one_line_of("AB\n\u{c}CD\n", 0, 6), Some((0, 2)));
+    }
+
+    /// **A carriage return ends a line too** — the second case of the owner's
+    /// white-space ruling of 14 Oct, in the one place the core decides what a
+    /// line is.
+    ///
+    /// The readers hand a document over as it is, measured: a Windows file
+    /// keeps its `\r\n`. Before this, `\r` was whitespace like any other and a
+    /// lone one was not a line at all — so a drag across it took both sides.
+    #[test]
+    fn a_carriage_return_ends_a_line_as_a_newline_does() {
+        // Windows: the `\r\n` leaves an empty piece between the two lines, and
+        // the answer is the same as for `\n` alone.
+        assert_eq!(one_line_of("AB\r\nCDE\r\n", 0, 7), Some((4, 7)));
+        // And a lone carriage return, which is what the old rule could not see.
+        assert_eq!(one_line_of("AB\rCDE\r", 0, 6), Some((3, 6)));
+        // One line is still not this function's business, `\r` or no `\r`.
+        assert_eq!(one_line_of("AB\r\nCDE\r\n", 4, 7), None);
+    }
+
+    /// **The third place, and the same rule**: any white-space may stand
+    /// between a hyphen and the line break it was written for.
+    ///
+    /// `line_break_hyphen` knew `' '` and `'\t'`. A PDF that puts a no-break
+    /// space or a thin space there is ordinary, and the old reading called the
+    /// hyphen the text's own — so «Yn-\u{a0}\nnerman» stayed two halves and the
+    /// name was never found.
+    #[test]
+    fn any_white_space_may_stand_between_a_hyphen_and_the_break() {
+        for gap in ["", " ", "\t", "\u{a0}", " \u{2009}", "\u{3000}"] {
+            let s = format!("Yn-{gap}\nnerman");
+            let at = s.find('-').expect("the hyphen");
+            assert!(
+                line_break_hyphen(&s, at).is_some(),
+                "«{gap:?}» between the hyphen and the break"
+            );
+            assert_eq!(
+                occurrences(&s, "Ynnerman").len(),
+                1,
+                "«{gap:?}»: the name broken by the page was not found whole"
+            );
+        }
+        // And what is not white-space still means the hyphen is the text's own.
+        let s = "Anna-Lena\nkommt";
+        assert_eq!(occurrences(s, "AnnaLena").len(), 0);
+    }
+
+    /// **Every kind of white-space is one boundary, and a run of it is one** —
+    /// the owner, 14 Oct. The core already read it that way through
+    /// `char::is_whitespace`; this is the guard that says so, beside the glass's
+    /// own (`a_click_takes_one_word_test.dart`), because the two must agree
+    /// about what a space is or 085's defect comes back with a different list.
+    #[test]
+    fn a_run_of_any_white_space_is_one_boundary() {
+        for gap in ["  ", "\t", "\u{a0}", " \t ", "\u{2000}", "\u{3000}", "   \u{a0}\t"] {
+            let s = format!("Herr{gap}Mueller");
+            let end = s.len();
+            // A drag that takes the whole of it keeps the whole of it: the run
+            // is inside the span, not at an edge.
+            assert_eq!(whole_words(&s, 0, end), (0, end), "«{gap:?}» inside");
+            // A drag that overshoots into the run is tidied back to the word,
+            // whatever the run is made of.
+            let four = "Herr".len();
+            assert_eq!(
+                whole_words(&s, 0, four + gap.len()),
+                (0, four),
+                "«{gap:?}» at an edge"
+            );
+        }
+        // And the one that is not a space to Unicode: the byte-order mark is a
+        // **mark**, so it is trimmed as one rather than being a boundary.
+        assert!(is_edge_mark('\u{feff}'));
+        assert!(!is_edge_mark('\u{a0}'));
     }
 }
 

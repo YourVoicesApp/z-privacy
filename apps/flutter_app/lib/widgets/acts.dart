@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/going_to_a_word.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -14,10 +15,22 @@ import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/protect_dialog.dart';
 
 class ActsBar extends StatelessWidget {
-  const ActsBar({super.key, required this.bench, required this.ground, required this.onSay});
+  const ActsBar({
+    super.key,
+    required this.bench,
+    required this.ground,
+    required this.onSay,
+    required this.onWalk,
+  });
 
   final Workbench bench;
   final Ground ground;
+
+  /// **Review, and then Next** — 083 rulings 4 and 5. The press belongs to the
+  /// Workspace, because going to a word moves its columns and draws the word's
+  /// own two buttons beside it; this bar only says what the button is called
+  /// and when it is there at all.
+  final VoidCallback onWalk;
 
   /// How the screen reports what the core just did. Every act says its result
   /// out loud — «protected in 4 places», «it snapped to two whole items» —
@@ -29,6 +42,13 @@ class ActsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final v = bench.selected;
     final state = protectStateOf(v);
+    // The walk, read rather than kept: the lit word is the bench's one focus
+    // slot, and where it stands among the waiting ones is the count the button
+    // wears. Both come from the one function (083 ruling 14), so the button and
+    // the walk cannot disagree about which word is next.
+    final waiting = theWaitingWordsInReadingOrder(bench.findings);
+    final at = theWalkIsAt(waiting, bench.focusedFinding);
+    final walking = bench.walking && at >= 0;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 11, 18, 12),
@@ -74,21 +94,28 @@ class ActsBar extends StatelessWidget {
                 icon: Icons.refresh,
                 onPressed: bench.busy ? null : () => _rescan(context),
               ),
-              // The badge is how many are open. With none open the badge is
-              // **gone, not zero** — the boards are explicit about that, because
-              // a zero still looks like something is waiting.
-              ZButton(
-                label: 'Review',
-                icon: Icons.fact_check_outlined,
-                tint: bench.openSuggestions > 0 ? Zc.amber : null,
-                badge: bench.openSuggestions > 0 ? bench.openSuggestions : null,
-                onPressed: bench.findings.isEmpty
-                    ? null
-                    : () => bench.panel == OpenPanel.review
-                        ? bench.closeReview()
-                        : bench.openReview(),
-                hint: bench.findings.isEmpty ? 'The scan found nothing to review' : null,
-              ),
+              // **Review becomes Next, and carries the count** — 083 rulings
+              // 4, 5 and 10.
+              //
+              // One button for one act: go to the word that is waiting. The
+              // first press is «Review» and lands on the first one in reading
+              // order; after that it is «Next 3/7» — where the walk is, out of
+              // how many are left — and each press leaves the lit word for
+              // later and goes to the one after it. Answering needs no press
+              // here at all: it moves on by itself.
+              //
+              // **With nothing waiting the button is gone, not disabled**
+              // (ruling 10): the exits are open, and the badge was never
+              // allowed to read zero for the same reason — a control that says
+              // nothing is waiting still looks like something is.
+              if (waiting.isNotEmpty)
+                ZButton(
+                  label: walking ? 'Next ${at + 1}/${waiting.length}' : 'Review',
+                  icon: walking ? Icons.east : Icons.fact_check_outlined,
+                  tint: Zc.amber,
+                  badge: walking ? null : waiting.length,
+                  onPressed: bench.busy ? null : onWalk,
+                ),
               // Names this document uses that Z does not know. The badge is
               // how many decisions are waiting — and with none waiting it is
               // gone, not zero, like the one beside it.

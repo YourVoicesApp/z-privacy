@@ -229,8 +229,42 @@ List<Rect> paintedOnce(Iterable<Rect> boxes) {
 /// space» is his reading too, so a line break is a boundary and so is the edge
 /// of the document. Both the single click and the pair ask here, because two
 /// readings of «space» would be two rules.
+/// **Every kind of white-space is a boundary, and a run of it is one** — the
+/// owner, 14 Oct: «لا يجب أن يتوقف المترجم إذا كان هناك أكثر من مسافة، هو يجد
+/// الحرف الذي بعد المسافة».
+///
+/// Written out rather than `\s`, because the list that matters is the core's —
+/// Rust's `char::is_whitespace`, which is the Unicode White_Space property —
+/// and Dart's `\s` is the JavaScript list, which differs at both ends: it has
+/// `U+FEFF`, which Unicode does **not** call a space (so the core calls it a
+/// mark and trims it at an edge), and it lacks `U+0085` NEL, which Unicode
+/// does. A glass whose idea of a space differed from the core's at one code
+/// point would be 085's defect with a different list.
+///
+/// Measured, which is why the tab and the carriage return are in it rather
+/// than assumed out: the reader hands a document over as it is — `Herr\tMueller`
+/// keeps its tab and a Windows line keeps its `\r` — and before this, a glass
+/// that knew only `' '` and `'\n'` read both as letters and took
+/// «Herr\tMueller» for one word.
+final _whitespace = RegExp(
+  r'[\t-\r \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]',
+);
+
 bool _isBoundary(String text, int k) =>
-    k < 0 || k >= text.length || text[k] == ' ' || text[k] == '\n';
+    k < 0 || k >= text.length || _whitespace.hasMatch(text[k]);
+
+/// The break a hand selection may not cross.
+///
+/// `\n` is the core's own line rule (`one_line_of` in `text.rs`), and `\r` is
+/// the other half of a Windows break — the reader keeps it, so a glass that
+/// knew only `\n` would stop one character late on every CRLF line.
+///
+/// `U+2028` and `U+2029` are **not** here, and that is deliberate: the core
+/// does not treat them as line breaks either, so both sides take a pair across
+/// one. The day the core's line rule learns them, this is the line that learns
+/// them with it.
+bool _isLineEnd(String text, int k) =>
+    k >= 0 && k < text.length && (text[k] == '\n' || text[k] == '\r');
 
 /// **The word a single click takes — 076, the owner's rule.**
 ///
@@ -306,6 +340,15 @@ final _partOfAWord = RegExp(r'[\p{L}\p{Nd}\p{M}]', unicode: true);
 /// outside the basic plane cannot be asked what it is; keeping it is the safe
 /// side, because the core decides the value and a glass that shows a little
 /// more never protects a little less.
+///
+/// **One difference from the core's `is_edge_mark`, named because it is
+/// reachable only by accident:** there a space is explicitly *not* a mark (the
+/// clause is `!c.is_whitespace()`), and `whole_words` adds white-space to what
+/// it trims; here white-space falls outside `_partOfAWord` and so counts as a
+/// mark. The two trim the same set, and since the white-space ruling of 14 Oct
+/// no white-space can be inside a word span at all — the loops below never see
+/// one. It was reachable before that ruling: a tab was not a boundary, so
+/// «Herr\tMueller» was one word with a mark in the middle of it.
 bool _isEdgeMark(String text, int i) {
   final unit = text.codeUnitAt(i);
   if (unit >= 0xD800 && unit <= 0xDFFF) return false;
@@ -328,8 +371,12 @@ bool _isEdgeMark(String text, int i) {
 /// and the cases where that happens are each a decision:
 ///  * **a line break after the first word** — a hand selection may not cross
 ///    one, and the pair is a hand selection;
-///  * **two spaces** — the rule says *a* space, and taking less costs the
-///    person one more click while taking more protects what they never saw;
+///  * ~~**two spaces**~~ — **reversed by the owner on 14 Oct**, and the first
+///    reading of this was a builder's call: «لا يجب أن يتوقف المترجم إذا كان
+///    هناك أكثر من مسافة، هو يجد الحرف الذي بعد المسافة». A run of white-space
+///    is **one** boundary, of any length and any kind, so two clicks on
+///    `Anne  Marie` take the pair — and the value reads exactly as the document
+///    reads, both spaces inside it, because it is one span;
 ///  * **a dash or a bracket where the next word should be** — a mark is not a
 ///    word, and a value may not end on one;
 ///  * **the end of the document.**
@@ -344,9 +391,20 @@ TextRange? wordPairAt(String text, int at) {
   while (i < text.length && !_isBoundary(text, i)) {
     i++;
   }
-  if (i >= text.length || text[i] != ' ') return first;
 
-  final second = wordAt(text, i + 1);
+  // **The run, not the space.** Any length and any kind of white-space is one
+  // boundary; a line end inside it stops the pair, because a selection may not
+  // cross one and that part of the rule the owner left standing.
+  var j = i;
+  while (j < text.length && _isBoundary(text, j)) {
+    if (_isLineEnd(text, j)) return first;
+    j++;
+  }
+  // Nothing was skipped, so what stands there is not white-space at all: a
+  // mark where the next word should be, or the end of the document.
+  if (j == i) return first;
+
+  final second = wordAt(text, j);
   if (second == null) return first;
   return TextRange(start: first.start, end: second.end);
 }

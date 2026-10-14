@@ -224,8 +224,13 @@ void _p22() {
       isEmpty,
       reason: 'a button on the workspace promises a send: $buttonWords',
     );
-    // And it is distinct from the suggestions «Review» in the left column.
-    expect(find.text('Review'), findsOneWidget);
+    // And it is distinct from the suggestions «Review» in the left column —
+    // which, in this document, is **not drawn at all**: the e-mail is proven
+    // and protected without asking, nothing waits, and 083's ruling 10 takes
+    // that button away rather than greying it. So the exact word «Review»
+    // belongs to no control here, and P2-2's distinction is measured by its
+    // absence.
+    expect(find.text('Review'), findsNothing);
 
     await tester.tap(find.text('Review what will leave'));
     await settle(tester);

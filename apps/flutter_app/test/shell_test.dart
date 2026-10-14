@@ -447,7 +447,7 @@ void main() {
   );
 
   testWidgets(
-    'Review shows three groups, says where each sits, and Skip decides nothing',
+    'Review shows only what waits, says where each sits, and the core\'s Skip decides nothing',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(1600, 1000));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -496,12 +496,22 @@ void main() {
         reason: 'and sure about something else',
       );
 
-      // The two groups are named apart, because the difference is the whole point.
-      expect(find.text('WAITING FOR YOUR WORD'), findsOneWidget);
-      expect(find.text('PROTECTED AUTOMATICALLY'), findsOneWidget);
+      // **The groups are gone, and with them the question they answered**
+      // (083, ruling 6, 14 Oct). The list holds what waits; what the app
+      // protected by itself and what a person decided are seen in the text,
+      // where they are. So the two titles are not drawn, and neither is the
+      // row of a value nobody has to answer.
+      expect(find.text('WAITING FOR YOUR WORD'), findsNothing);
+      expect(find.text('PROTECTED AUTOMATICALLY'), findsNothing);
+      final auto = bench.automatic.first;
+      expect(
+        find.text(bench.document!.text.substring(auto.span.start, auto.span.end)),
+        findsNothing,
+        reason: 'a value the app took by itself is in the list, where nothing waits for it',
+      );
 
-      // Every finding says where it sits, and the place is the core's own.
-      final placed = bench.findings.where((f) => f.place != null).toList();
+      // Every waiting word says where it sits, and the place is the core's own.
+      final placed = bench.suggested.where((f) => f.place != null).toList();
       expect(
         placed,
         isNotEmpty,
@@ -516,11 +526,15 @@ void main() {
       }
       // And the paragraphs really differ, so the numbers mean something.
       expect(
-        placed.map((f) => f.place!.paragraph).toSet().length,
+        bench.findings.where((f) => f.place != null).map((f) => f.place!.paragraph).toSet().length,
         greaterThan(1),
       );
 
-      // SKIP decides nothing: still open, still counted, Send still shut.
+      // **SKIP decides nothing** — and no button says it any more: leaving a
+      // word for later is the Next press, which answers nothing at all
+      // (ruling 5). What is measured here is the core's own `Skip`, which 083
+      // does not touch: it stays open, stays counted, and the door stays shut.
+      // The day the core loses it, this is where that is noticed.
       final first = bench.suggested.first;
       final openBefore = bench.openSuggestions;
       await tester.runAsync(

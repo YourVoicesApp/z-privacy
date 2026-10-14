@@ -98,6 +98,52 @@ void main() {
           'anas@mono-peak.com');
     });
 
+    test('every kind of white-space is a boundary, and a run of it is one', () {
+      // **The owner, 14 Oct:** «لا يجب أن يتوقف المترجم إذا كان هناك أكثر من
+      // مسافة، هو يجد الحرف الذي بعد المسافة». One click needs the boundary to
+      // be a boundary whatever it is made of — and the reader hands a document
+      // over as it is, so a tab stays a tab and a Windows line keeps its `\r`.
+      //
+      // The same list the core keeps (`char::is_whitespace`, Unicode
+      // White_Space), so the two sides cannot disagree about what a space is.
+      for (final gap in [
+        ' ',
+        '  ',
+        '\t',
+        '\u{0b}',
+        '\u{0c}',
+        '\r',
+        '\u{85}',
+        '\u{a0}',
+        '\u{1680}',
+        '\u{2000}',
+        '\u{200a}',
+        '\u{2028}',
+        '\u{2029}',
+        '\u{202f}',
+        '\u{205f}',
+        '\u{3000}',
+        ' \t\u{a0} ',
+      ]) {
+        expect(
+          taken('Herr${gap}Mueller bitte', 'Mueller'),
+          'Mueller',
+          reason: 'the gap ${gap.codeUnits} is not a boundary, so the word grew',
+        );
+        expect(
+          wordAt('Herr${gap}Mueller', 4),
+          isNull,
+          reason: 'a click on the gap ${gap.codeUnits} took something',
+        );
+      }
+      // And the one Unicode does **not** call a space: a byte-order mark is a
+      // mark, trimmed at an edge like any other — which is also what the core
+      // does with it.
+      expect(taken('Herr \u{feff}Mueller bitte', 'Mueller'), 'Mueller');
+      expect(taken('Herr\u{feff}Mueller bitte', 'Herr\u{feff}Mueller'), 'Herr\u{feff}Mueller',
+          reason: 'a mark inside a word stays: the filter trims, it does not split');
+    });
+
     test('a click on a space takes nothing, and so does an empty document', () {
       expect(wordAt('Herr Mueller', 4), isNull, reason: 'the space between two words');
       expect(wordAt('Herr Mueller', 5), isNotNull, reason: 'the first letter of a word is a word');
