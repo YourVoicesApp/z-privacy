@@ -45,6 +45,7 @@ pub(crate) fn pack() -> LanguagePack {
         locale: "de-DE",
         id: PACK,
         label: "Deutsch",
+        in_english: "German",
         version: "1",
         salutations: SALUTATIONS,
         titles: TITLES,

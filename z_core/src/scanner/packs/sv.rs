@@ -145,6 +145,7 @@ pub(crate) fn pack() -> LanguagePack {
         locale: "sv-SE",
         id: "sv",
         label: "Svenska",
+        in_english: "Swedish",
         version: "1",
         salutations: SALUTATIONS,
         titles: TITLES,

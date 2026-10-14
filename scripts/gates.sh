@@ -116,6 +116,44 @@ else
   fail "G27 only $(printf '%s\n' "$G27_DOORS" | grep -c .) door(s) in shell.dart ask packForTheNextText — the other one decides for itself"
 fi
 
+# ---------------------------------------------------------------- G30
+# **The shared half of a pack names no language of its own** — the detection
+# round of 14 October, item 2.
+#
+# `packs/people.rs` holds the rules every language is read with, and its own
+# first line says that not one word in it is German, Swedish or English. Three
+# of its reasons had «German» typed into them, so a Swedish letter was told
+# that «AB» is a German legal form and that its people stand in the German name
+# dictionary — and an English one that «Ltd» is German. The word now comes from
+# the pack (`in_english`), like every other word these rules use.
+#
+# Comments may name a language: they explain where a rule came from, and a
+# measurement in a comment that cannot name German would be a comment that
+# cannot be read. What may not name one is the code — a reason a person reads.
+SHARED=z_core/src/scanner/packs/people.rs
+G30_BAD=$(grep -nE '(German|Swedish|English)' "$SHARED" 2>/dev/null \
+          | grep -vE '^[0-9]+:[[:space:]]*(//|/\*|\*)' || true)
+if [ -z "$G30_BAD" ]; then
+  pass "G30 the shared pack rules name no language in their code — the pack does"
+else
+  fail "G30 a language is named in the shared rules themselves:"
+  printf '%s\n' "$G30_BAD" | sed 's/^/        /'
+fi
+
+# And every pack carries that word, or the reasons would say «» about a
+# document somebody is reading right now.
+G30_PACKS=""
+for pack in de sv en; do
+  if ! grep -q 'in_english:' "z_core/src/scanner/packs/$pack.rs" 2>/dev/null; then
+    G30_PACKS="$G30_PACKS $pack"
+  fi
+done
+if [ -z "$G30_PACKS" ]; then
+  pass "G30 every pack says what its language is called in English"
+else
+  fail "G30 a pack does not name its own language:$G30_PACKS"
+fi
+
 # ---------------------------------------------------------------- G28
 # **The three exits share one law** — 083a, closing contract C3.
 #
@@ -1138,7 +1176,13 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_bank_value_carries_no_word_of_prose \
          an_iban_in_a_footer_line_stops_before_the_next_label \
          the_bic_in_a_footer_line_is_read_as_a_bic \
-         the_rest_of_the_letter_did_not_move; do
+         the_rest_of_the_letter_did_not_move \
+         a_swedish_letter_is_never_told_its_words_are_german \
+         a_company_form_belongs_to_the_language_that_lists_it \
+         a_salutation_belongs_to_the_language_that_lists_it \
+         the_name_dictionary_counts_the_names_it_actually_holds \
+         no_reason_names_a_language_the_document_is_not_read_with \
+         ltd_is_called_an_english_legal_form; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

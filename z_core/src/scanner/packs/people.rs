@@ -1,7 +1,8 @@
 //! The rules about people — the same rules for every language.
 //!
 //! The shared half of a language pack. Not one word in this file is German,
-//! Swedish or English: every word these rules look for comes out of the
+//! Swedish or English — neither the words these rules look for nor the words
+//! they write: every word they look for comes out of the
 //! [`LanguagePack`] they are handed, which is what makes the second language
 //! data and a third one a decision about data.
 //!
@@ -395,8 +396,12 @@ fn salutations(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>
         let Some(start_word) = words.get(first) else { continue };
         let Some(end_word) = words.get(last) else { continue };
         let reason = match title {
-            Some(t) => format!("a name after «{w} {t}» — a German salutation names the person who follows it"),
-            None => format!("a name after «{w}» — a German salutation names the person who follows it"),
+            // The language is the pack's, never this file's (item 2 of the
+            // detection round). «in German a salutation …» rather than «a
+            // German salutation …» so that no pack needs an article of its
+            // own: «an English», «a Swedish».
+            Some(t) => format!("a name after «{w} {t}» — in {} a salutation names the person who follows it", pack.in_english),
+            None => format!("a name after «{w}» — in {} a salutation names the person who follows it", pack.in_english),
         };
         out.push(candidate(
             pack,
@@ -629,8 +634,16 @@ fn dictionary_names(
             // Never Auto. This is the whole of item B of the owner's paper.
             Confidence::Suggest,
             "name-dictionary",
+            // **The numbers are read from the dictionary, not typed here.**
+            // This said «the 300 given names and the ten surnames in the German
+            // name dictionary» for every pack — including German, whose own
+            // list had grown to 5,712 and 3,246 in the meantime. A sentence
+            // that counts something has to ask it.
             format!(
-                "«{given}» is one of the 300 given names and «{family}» one of the ten surnames in the German name dictionary — two names in a row, offered for your word"
+                "«{given}» is one of the {} given names and «{family}» one of the {} surnames in the {} name dictionary — two names in a row, offered for your word",
+                names.counts().0,
+                names.counts().1,
+                pack.in_english
             ),
         ));
         i += 2;
@@ -718,7 +731,10 @@ fn companies(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>) 
             Kind::Company,
             Confidence::Suggest,
             "company-form",
-            format!("a name ending in «{w}», which is a German legal form — probably this client's company"),
+            format!(
+                "a name ending in «{w}», which is a legal form in {} — probably this client's company",
+                pack.in_english
+            ),
         ));
     }
 }

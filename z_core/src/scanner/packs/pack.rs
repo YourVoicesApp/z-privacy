@@ -141,6 +141,20 @@ pub(crate) struct LanguagePack {
     /// The pack's own version, so a vault or a report can say which knowledge
     /// produced a finding.
     pub version: &'static str,
+    /// The language's name **in English**, for the reasons the rules write.
+    ///
+    /// The shared rules in `people.rs` say things like «a legal form in
+    /// German». That word was typed into the file itself — in a file whose own
+    /// first line is that not one word in it is German, Swedish or English —
+    /// and a Swedish letter was told that «AB» is a German legal form (the
+    /// detection round of 14 October, item 2).
+    ///
+    /// Not [`label`](Self::label): that is what the pack calls itself, in its
+    /// own language, and «a legal form in Svenska» would be a second kind of
+    /// wrong. A reason is an English sentence — the core is English only and
+    /// the host translates what it shows — so the word a reason needs is the
+    /// English one.
+    pub in_english: &'static str,
 
     /// Words that introduce a person: «Herr», «Frau», «Fru».
     pub salutations: &'static [&'static str],
