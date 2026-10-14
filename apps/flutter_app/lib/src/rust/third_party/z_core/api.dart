@@ -636,6 +636,29 @@ Future<Explanation> explain({required SessionId session, required Span span}) =>
     RustLib.instance.api.zCoreApiExplain(session: session, span: span);
 
 /// What forgetting this value would take away. Nothing is changed.
+/// **Un-protect every place this token stands in, in this conversation** —
+/// 083, ruling 3, the second of its two choices.
+///
+/// The first is [`unprotect`], which uncovers the one place a person is looking
+/// at. There is **no «everywhere»**: the owner struck it out, and a
+/// conversation is as far as un-protection reaches.
+///
+/// **It acts on the token, not on the text** — the lead's ruling of 14 Oct.
+/// The person un-protects what they can see, and what they can see is a token;
+/// and the token's allowed set is what keeps the payload honest (C4), so
+/// anything else would leave a token in the outgoing text that nothing
+/// explains. Inside one conversation a value and a token are one to one today,
+/// so the owner's «every appearance of it in this conversation» is met exactly.
+/// If aliases ever split the two, the token is still the right unit — and that
+/// day it goes back to the owner as a ruling rather than being decided here.
+Future<UndoOutcome> unprotectEveryPlace({
+  required SessionId session,
+  required Span span,
+}) => RustLib.instance.api.zCoreApiUnprotectEveryPlace(
+  session: session,
+  span: span,
+);
+
 Future<ForgetPlan> forgetPlan({
   required int entity,
   required int valueId,

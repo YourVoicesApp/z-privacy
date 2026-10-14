@@ -310,6 +310,15 @@ pub struct Explanation {
     /// Other spellings of the same value. Shown behind one tap, like every
     /// other value in this app.
     pub aliases: Vec<String>,
+    /// **How many places in this conversation carry this token** — this one
+    /// included, so it is never 0.
+    ///
+    /// 083 ruling 3 gives un-protection two choices, and one of them uncovers
+    /// every place at once. This project's own law about that asymmetry is
+    /// written over «Protect all» and «Skip all»: the direction that uncovers
+    /// says how many, in the act's own name. So the count comes from here,
+    /// where the places are, and the button is never left to guess it.
+    pub places: u32,
     /// The reach of the taught value, when one was taught — so the «Forget»
     /// button can carry its own scope in its name instead of leaving a person
     /// to assemble the meaning from a line of small print. `None` when nothing
@@ -2364,6 +2373,25 @@ pub fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> {
 }
 
 /// What forgetting this value would take away. Nothing is changed.
+/// **Un-protect every place this token stands in, in this conversation** —
+/// 083, ruling 3, the second of its two choices.
+///
+/// The first is [`unprotect`], which uncovers the one place a person is looking
+/// at. There is **no «everywhere»**: the owner struck it out, and a
+/// conversation is as far as un-protection reaches.
+///
+/// **It acts on the token, not on the text** — the lead's ruling of 14 Oct.
+/// The person un-protects what they can see, and what they can see is a token;
+/// and the token's allowed set is what keeps the payload honest (C4), so
+/// anything else would leave a token in the outgoing text that nothing
+/// explains. Inside one conversation a value and a token are one to one today,
+/// so the owner's «every appearance of it in this conversation» is met exactly.
+/// If aliases ever split the two, the token is still the right unit — and that
+/// day it goes back to the owner as a ruling rather than being decided here.
+pub fn unprotect_every_place(session: SessionId, span: Span) -> ApiResult<UndoOutcome> {
+    crate::ops::unprotect_every_place(session, span)
+}
+
 pub fn forget_plan(entity: u32, value_id: u32, everywhere: bool) -> ApiResult<ForgetPlan> {
     crate::ops::forget_plan(entity, value_id, everywhere)
 }

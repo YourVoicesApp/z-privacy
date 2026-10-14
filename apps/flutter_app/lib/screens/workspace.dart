@@ -21,6 +21,7 @@ import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/going_to_a_word.dart';
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/un_protecting.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/core/the_clipboard.dart';
@@ -1823,7 +1824,10 @@ Future<void> _ask(
       word: doc.text.substring(mark.span.start, mark.span.end),
       span: mark.span,
       onChanged: bench.rescan,
-      onUnprotect: (span) async => bench.unprotect(span),
+      // The two choices the owner allows, each through the one function 084
+      // will call as well (083, ruling 3).
+      onUnprotect: (span) async => unprotectHere(bench, span),
+      onUnprotectEveryPlace: (span) async => unprotectInThisConversation(bench, span),
       column: column,
     ),
   );

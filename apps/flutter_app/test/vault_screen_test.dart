@@ -429,6 +429,7 @@ void main() {
         span: const Span(start: 7, end: 32),
         onChanged: () async {},
         onUnprotect: (_) async {},
+        onUnprotectEveryPlace: (_) async {},
       ),
     ));
     await settle(tester, rounds: 1);
@@ -563,6 +564,7 @@ void main() {
         span: const Span(start: 7, end: 32),
         onChanged: () async {},
         onUnprotect: (_) async {},
+        onUnprotectEveryPlace: (_) async {},
       ),
     ));
     await settle(tester, rounds: 1);

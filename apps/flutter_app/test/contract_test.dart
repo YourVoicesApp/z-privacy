@@ -270,6 +270,11 @@ void main() {
       'kinds': () => kinds(),
       'explain': () => explain(session: session, span: span),
       'unprotect': () => unprotect(session: session, span: span),
+      // 083d · the second of un-protection's two choices. Called on a span that
+      // holds nothing protected, like its neighbour above: what G7 defends is
+      // that an answer comes back and never a panic.
+      'unprotectEveryPlace': () =>
+          unprotectEveryPlace(session: session, span: span),
       'forgetPlan': () => forgetPlan(entity: 1, valueId: 1, everywhere: false),
       'forgetValue': () =>
           forgetValue(entity: 1, valueId: 1, everywhere: false),
@@ -369,7 +374,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 113, reason: 'the contract has 113 functions');
+    expect(calls.length, 114, reason: 'the contract has 114 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

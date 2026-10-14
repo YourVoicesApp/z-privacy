@@ -26,6 +26,15 @@ import 'package:zprivacy/core/messages.dart';
 /// only place the scope is written, because then the decision is being made
 /// from the smallest line on the card.
 const kRemoveHere = 'Remove protection here';
+
+/// **The second of the two choices un-protection has** — 083, ruling 3. Its
+/// name carries the number, because it is the direction that **uncovers**, and
+/// this project's law about that asymmetry is written over «Protect all» and
+/// «Skip all»: the dangerous direction says how many. Drawn only when the token
+/// stands in more than one place — with one place it would be a second name for
+/// «here», and two names for one act is a defect this app has already paid for.
+String removeInThisConversation(int places) =>
+    'Remove it in this conversation ($places places)';
 const kForgetThisProfile = 'Forget from this profile';
 const kForgetEverywhere = 'Forget everywhere';
 
@@ -63,6 +72,7 @@ class WhySheet extends StatefulWidget {
     required this.span,
     required this.onChanged,
     required this.onUnprotect,
+    required this.onUnprotectEveryPlace,
     this.column,
   });
 
@@ -73,6 +83,11 @@ class WhySheet extends StatefulWidget {
   /// Removing the protection here — a different act from forgetting, offered
   /// under its own name.
   final Future<void> Function(Span span) onUnprotect;
+
+  /// And the second choice: every place that carries this token, in this
+  /// conversation (083, ruling 3). Two acts, two callbacks, so the sheet cannot
+  /// quietly do the broad one when it was asked for the narrow one.
+  final Future<void> Function(Span span) onUnprotectEveryPlace;
 
   /// Called when something was forgotten, so the document can be scanned again
   /// with the knowledge gone.
@@ -250,6 +265,14 @@ class _WhySheetState extends State<WhySheet> {
                       if (context.mounted) Navigator.of(context).pop();
                     },
                   ),
+                  if (why.places > 1)
+                    ZButton(
+                      label: removeInThisConversation(why.places),
+                      onPressed: () async {
+                        await widget.onUnprotectEveryPlace(widget.span);
+                        if (context.mounted) Navigator.of(context).pop();
+                      },
+                    ),
                   // Named from the reach the core reports for the taught value,
                   // so «this profile» is never on a button over knowledge that
                   // belongs to every profile.
@@ -272,9 +295,14 @@ class _WhySheetState extends State<WhySheet> {
               // each explanation is the **same string** as the button's, so a
               // rename cannot leave the two disagreeing.
               _Note(kRemoveHere, const [
-                'Changes this document only.',
+                'Uncovers this one place. Every other place keeps its protection, and its token.',
                 'The value stays in your privacy rules and may be protected again later.',
               ]),
+              if (why.places > 1)
+                _Note(removeInThisConversation(why.places), const [
+                  'Uncovers every place this token stands in, in this conversation.',
+                  'There is no «everywhere»: un-protection reaches no further than one conversation.',
+                ]),
               if (scopedForget != null)
                 _Note(scopedForget, const [
                   'Removes what Z Privacy learned for this profile.',

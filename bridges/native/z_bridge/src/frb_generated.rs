@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1254176057;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1158959322;
 
 // Section: executor
 
@@ -3021,6 +3021,35 @@ fn wire__z_core__api__unprotect_impl(
         },
     )
 }
+fn wire__z_core__api__unprotect_every_place_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "unprotect_every_place",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_session = <crate::api::mirrors::SessionId>::sse_decode(&mut deserializer);
+            let api_span = <crate::api::mirrors::Span>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::unprotect_every_place(api_session, api_span)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__z_core__api__user_list_plan_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -3478,6 +3507,7 @@ const _: fn() = || {
         let _: Option<u32> = Explanation.entity;
         let _: Option<u32> = Explanation.value_id;
         let _: Vec<String> = Explanation.aliases;
+        let _: u32 = Explanation.places;
         let _: Option<crate::api::mirrors::TaughtReach> = Explanation.taught_reach;
     }
     {
@@ -4319,6 +4349,7 @@ impl SseDecode for crate::api::mirrors::Explanation {
         let mut var_entity = <Option<u32>>::sse_decode(deserializer);
         let mut var_valueId = <Option<u32>>::sse_decode(deserializer);
         let mut var_aliases = <Vec<String>>::sse_decode(deserializer);
+        let mut var_places = <u32>::sse_decode(deserializer);
         let mut var_taughtReach = <Option<crate::api::mirrors::TaughtReach>>::sse_decode(deserializer);
         return crate::api::mirrors::Explanation {
             headline: var_headline,
@@ -4332,6 +4363,7 @@ impl SseDecode for crate::api::mirrors::Explanation {
             entity: var_entity,
             value_id: var_valueId,
             aliases: var_aliases,
+            places: var_places,
             taught_reach: var_taughtReach,
         };
     }
@@ -6406,18 +6438,19 @@ fn pde_ffi_dispatcher_primary_impl(
         101 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
         102 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
         103 => wire__z_core__api__unprotect_impl(port, ptr, rust_vec_len, data_len),
-        104 => wire__z_core__api__user_list_plan_impl(port, ptr, rust_vec_len, data_len),
-        105 => wire__z_core__api__user_lists_impl(port, ptr, rust_vec_len, data_len),
-        106 => wire__z_core__api__user_names_impl(port, ptr, rust_vec_len, data_len),
-        107 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        108 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        109 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
-        110 => wire__z_core__api__vault_snapshot_impl(port, ptr, rust_vec_len, data_len),
-        111 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
-        112 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        113 => wire__z_core__api__window_focus_lost_impl(port, ptr, rust_vec_len, data_len),
-        114 => wire__z_core__api__window_hidden_impl(port, ptr, rust_vec_len, data_len),
-        115 => wire__z_core__api__workspace_snapshot_impl(port, ptr, rust_vec_len, data_len),
+        104 => wire__z_core__api__unprotect_every_place_impl(port, ptr, rust_vec_len, data_len),
+        105 => wire__z_core__api__user_list_plan_impl(port, ptr, rust_vec_len, data_len),
+        106 => wire__z_core__api__user_lists_impl(port, ptr, rust_vec_len, data_len),
+        107 => wire__z_core__api__user_names_impl(port, ptr, rust_vec_len, data_len),
+        108 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        109 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        110 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
+        111 => wire__z_core__api__vault_snapshot_impl(port, ptr, rust_vec_len, data_len),
+        112 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
+        113 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        114 => wire__z_core__api__window_focus_lost_impl(port, ptr, rust_vec_len, data_len),
+        115 => wire__z_core__api__window_hidden_impl(port, ptr, rust_vec_len, data_len),
+        116 => wire__z_core__api__workspace_snapshot_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -6710,6 +6743,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Explanati
             self.0.entity.into_into_dart().into_dart(),
             self.0.value_id.into_into_dart().into_dart(),
             self.0.aliases.into_into_dart().into_dart(),
+            self.0.places.into_into_dart().into_dart(),
             self.0.taught_reach.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -8556,6 +8590,7 @@ impl SseEncode for crate::api::mirrors::Explanation {
         <Option<u32>>::sse_encode(self.entity, serializer);
         <Option<u32>>::sse_encode(self.value_id, serializer);
         <Vec<String>>::sse_encode(self.aliases, serializer);
+        <u32>::sse_encode(self.places, serializer);
         <Option<crate::api::mirrors::TaughtReach>>::sse_encode(self.taught_reach, serializer);
     }
 }

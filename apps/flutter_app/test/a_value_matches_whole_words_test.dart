@@ -1,10 +1,16 @@
-// 041-P on the screen: the dialog a person opens by hand starts on the kind
-// the model understands.
+// 041-P on the screen, after 083c deleted the dialog it was written about:
+// **a hand selection carries the kind the scanner found on exactly that
+// stretch, and nothing else.**
 //
-// The owner's hand-made protections went out as `CUSTOM`, and a model reads
-// `PERSON`. The core now offers a person for one or two capitalised words —
-// its last guess of all, after the pack and the findings — and this is the
-// dialog showing it.
+// The owner's hand-made protections went out as `CUSTOM` and a model reads
+// `PERSON`, so the core learned to offer a person for one or two capitalised
+// words — a guess, and the last of four. On 14 Oct the lead ruled that guess
+// out: the kind is the scanner's own finding on that exact span, or `CUSTOM`.
+// Measured here, on this file's own document: «Björn Sandström» is still
+// `PERSON`, because the Swedish pack found it whole — so 041-P's promise is
+// kept by the finding rather than by the shape of the words — and «Sandström»
+// **alone** is now `CUSTOM`, which is the cost, and which 076's second click
+// answers by taking the pair.
 //
 // Needs the native library, so run once:  flutter build linux --debug
 @Timeout(Duration(minutes: 3))
@@ -20,7 +26,6 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/bits.dart';
-import 'package:zprivacy/widgets/protect_dialog.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _doc = 'Protokoll 2026\nBjörn Sandström ringde klockan 14 om fakturan 55123.\n';
@@ -40,7 +45,7 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('a name selected by hand opens the dialog on Person, and a number does not',
+  testWidgets('a name selected by hand is protected at once, as the kind the scanner found',
       (tester) async {
     final ground = Ground();
     late final Workbench bench;
@@ -73,13 +78,24 @@ void main() {
     await tester.tap(find.widgetWithText(ZButton, 'Protect'));
     await settle(tester, rounds: 3);
 
-    expect(find.byType(ProtectDialog), findsOneWidget, reason: 'Protect opened no dialog');
-    final dialog = tester.widget<ProtectDialog>(find.byType(ProtectDialog));
-    expect(dialog.view.kind, Kind.person,
-        reason: 'the dialog opens on ${dialog.view.kind}, and a model reads PERSON');
+    // **No dialog, and it is already done** — 083, ruling 1.
+    expect(find.text('Cancel'), findsNothing, reason: 'a dialog stood in the way');
+    expect(bench.tokens, isNotEmpty, reason: 'the press protected nothing');
+    expect(
+      bench.tokens.first.token,
+      contains('_PERSON_'),
+      reason: 'the token is ${bench.tokens.first.token}, and a model reads the kind inside it',
+    );
+    expect(bench.tokens.first.kind, Kind.person);
 
-    await tester.tap(find.text('Cancel'));
+    // **The cost of the ruling, on this very document.** A click on the surname
+    // alone is not what the scanner found — the finding covers both words — so
+    // the kind is honestly unknown. Two clicks take the pair, which is the
+    // finding, which is `PERSON`.
+    await tester.runAsync(() => bench.select(spanOf('Sandström')));
     await settle(tester, rounds: 2);
+    expect(bench.selected!.kind, Kind.custom,
+        reason: 'a part of a name was given the whole name\'s kind — a guess the lead ruled out');
 
     // And an invoice number is not a person: the app has no opinion, and says so.
     await tester.runAsync(() => bench.select(spanOf('55123')));

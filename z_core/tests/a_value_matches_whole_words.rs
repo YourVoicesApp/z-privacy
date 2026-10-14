@@ -151,10 +151,22 @@ fn a_script_without_spaces_keeps_matching_inside_the_line() {
     );
 }
 
-/// One or two capitalised words are offered as a person — the last guess of
-/// all, after the pack and the findings, and only a default in a dialog.
+/// **A hand-drawn selection carries the kind the scanner found on exactly that
+/// stretch, or none at all** — the lead's ruling of 14 Oct (083c).
+///
+/// What this test said until today: «one or two capitalised words are offered
+/// as a person — the last guess of all». The line below that used to assert
+/// `Person` for **«Protokoll»**, the first word of the document's own title,
+/// and that is the whole argument against the guess: a heuristic on the shape
+/// of a word called a form's heading a human being, and the kind travels
+/// inside the token where a model reads it. In German it would be worse —
+/// every noun is capitalised there.
+///
+/// So the guess is gone, and what the pack found stays: «Björn Sandström» is a
+/// person because the Swedish pack made a finding over exactly those two
+/// words, which is a reading of the whole document and not of the selection.
 #[test]
-fn the_hand_drawn_selection_is_offered_as_a_person() {
+fn the_hand_drawn_selection_carries_the_kind_the_scanner_found() {
     let _guard = serial();
     fresh("kind");
     let session = open_session(None, "sv".to_string()).expect("open");
@@ -171,19 +183,28 @@ fn the_hand_drawn_selection_is_offered_as_a_person() {
         }
     };
 
-    // Two capitalised words: a person, so the dialog opens on the kind the
-    // model understands instead of on «Custom».
+    // The pack found these two words as a person, so that is what a hand
+    // selection over exactly them carries. 041-P's promise, kept by the
+    // finding rather than by the shape of the letters.
     assert_eq!(
         inspect_selection(session, span("Björn Sandström")).expect("view").kind,
         Kind::Person,
-        "a hand-drawn name is still offered as Custom"
+        "the finding's own kind did not reach the selection"
     );
-    // One capitalised word is the same case.
+    // **The title word, which the old guess called a person.**
     assert_eq!(
         inspect_selection(session, span("Protokoll")).expect("view").kind,
-        Kind::Person
+        Kind::Custom,
+        "a capitalised word is being read as a human being again"
     );
-    // And what is not a name stays what it was: a number, a lower-case word,
+    // And the cost of the ruling, in the same document: half of a name the
+    // scanner found whole is honestly unknown. Two clicks take the pair, and
+    // the pair is the finding.
+    assert_eq!(
+        inspect_selection(session, span("Sandström")).expect("view").kind,
+        Kind::Custom
+    );
+    // What is not a name stays what it was: a number, a lower-case word,
     // and a stretch of prose are all still Custom.
     for not_a_name in ["55123", "ringde", "om fakturan 55123"] {
         assert_eq!(
