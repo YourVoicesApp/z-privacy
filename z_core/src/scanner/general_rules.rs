@@ -175,6 +175,31 @@ fn iban_checksum_ok(compact: &str) -> bool {
 
 // ---------------------------------------------------------------- e-mail
 
+/// **Is this whole word an e-mail address?** — a local part, an `@`, and a
+/// domain with a real ending.
+///
+/// Written out as a predicate (15 October) because a second layer needed the
+/// same answer and was not asking it: the labels «E-Mail:», «Mail:», «E-post:»
+/// called the next word an address **whatever it was**, at `Auto`, so
+/// `E-Mail: LKF` protected «LKF» as an e-mail on the owner's 734-page
+/// catalogue. The comment over `Validator::NamePair` had already said the rule
+/// in so many words — «a label this strong has to be paid for with a shape this
+/// strict» — and the e-mail labels had never paid it. One question, one answer,
+/// asked by the arithmetic rule below and by `Validator::Mail`.
+pub(crate) fn is_an_email(word: &str) -> bool {
+    let Some((local, domain)) = word.split_once('@') else { return false };
+    let local_ok = !local.is_empty()
+        && local
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'%' | b'+' | b'-'));
+    let domain_ok = !domain.is_empty()
+        && domain.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-'));
+    let ending = domain
+        .rsplit_once('.')
+        .is_some_and(|(_, tld)| tld.len() >= 2 && tld.chars().all(|c| c.is_ascii_alphabetic()));
+    local_ok && domain_ok && ending
+}
+
 /// An address: something, an `@`, a domain with a dot and a real ending.
 fn emails(text: &str, out: &mut Vec<Candidate>) {
     let bytes = text.as_bytes();
@@ -205,11 +230,8 @@ fn emails(text: &str, out: &mut Vec<Candidate>) {
         if start == at || end <= at + 1 {
             continue;
         }
-        let domain = text.get(at + 1..end).unwrap_or_default();
-        let tld_ok = domain
-            .rsplit_once('.')
-            .is_some_and(|(_, tld)| tld.len() >= 2 && tld.chars().all(|c| c.is_ascii_alphabetic()));
-        if tld_ok {
+        // The same question the labels ask, so the two cannot drift apart.
+        if text.get(start..end).is_some_and(is_an_email) {
             out.push(candidate(
                 start,
                 end,
