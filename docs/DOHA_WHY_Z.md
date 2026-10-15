@@ -102,3 +102,8 @@ proposals, and none is chosen yet.
 So proposal 1 is redrawn in sun and sand: a yellow band, a sand ground, warm
 brown ink, and amber for the tokens. Proposal 2 stays on record for its
 picture and its four steps, not for its palette.
+
+**And proposal 2 has a home:** «الصورة الداكنة يمكن استعمالها لصنع إعلانات
+غوغل عند النشر في ألمانيا». The dark look suits a Western audience. It is kept
+for the German launch ads, and its corrections still apply there: no drawn DPC
+document, our slogan instead of the generated tagline, and a URL.
