@@ -48,7 +48,12 @@ fn the_book_of_tax_terms_is_left_alone() {
     // reading German prose as a form again, this is what notices.
     assert_eq!(
         (report.auto, report.suggested),
-        (2, 4),
+        // **(3, 3) since «a line is a y»** (15 October), from (2, 4): the
+        // publisher's own «Telefon:» and its number were in two text objects
+        // on one line, so the label never reached its value and the number was
+        // only suggested by arithmetic. Nothing new was found — the same six
+        // values, one of them proven instead of asked about.
+        (3, 3),
         "the scanner found things in a public book that are nobody's: {report:?}"
     );
 
@@ -71,9 +76,13 @@ fn the_book_of_tax_terms_is_left_alone() {
         shape,
         [
             "Protected Email ×1",
-            "Protected Phone ×1",
+            // **Two proven phones, not one** (15 October): the publisher's
+            // «Telefon:» and its number stood in two text objects on one line,
+            // so the label never reached its value and arithmetic only
+            // suggested the number. The same six values, one of them proven
+            // instead of asked about.
+            "Protected Phone ×2",
             "Suggested Address ×3",
-            "Suggested Phone ×1"
         ],
         "the book holds a different shape of thing than it did"
     );

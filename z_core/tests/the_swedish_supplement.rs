@@ -54,7 +54,9 @@ fn the_credits_are_protected_and_the_captions_are_not() {
     assert_eq!(view.pages, 10);
     assert_eq!(
         view.text.chars().count(),
-        50_095,
+        // 50_125 since «a line is a y» (15 October): 30 characters more, where
+        // the reader was cutting a line at a text-object boundary.
+        50_125,
         "the reader gives a different text than the one these numbers were measured on"
     );
 

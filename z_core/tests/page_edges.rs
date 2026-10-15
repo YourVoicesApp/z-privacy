@@ -300,15 +300,22 @@ fn the_payload_is_what_it_was_before_the_edges_were_reported() {
     scan(s).expect("scan");
 
     let payload = payload_of(s);
-    // 1_618_792 since 085 ruling 1 (15 October): a name the app read for
-    // itself is one token per word, so this catalogue's people carry one more
-    // token each and the text that leaves is 328 bytes longer.
-    assert_eq!(payload.text.len(), 1_618_792, "the outgoing text changed length");
+    // 1_644_848 since «a line is a y» (15 October): the reader gathered one run
+    // per `BT … ET` block and a layout engine writes one text object per word,
+    // so a Word export's lines were being cut wherever it chose to start a new
+    // block. 26,056 bytes more text leaves, and `pdftotext` reads the same file
+    // with the same lines — which is the control for the claim.
+    //
+    // (1_618_792 was 085 ruling 1's number, which moved it from 1_618_464: a
+    // name the app read for itself is one token per word.)
+    assert_eq!(payload.text.len(), 1_644_848, "the outgoing text changed length");
     assert_eq!(
         format!("{:016x}", fnv1a(&mask_tokens(&payload.text))),
-        // And the content with every token masked to one marker: it moved
-        // with the length, because a second marker now stands where one did.
-        "6d356ee615a839af",
+        // And the content with every token masked to one marker: it moved with
+        // the length. `pdftotext` reads this file with the same lines, which is
+        // the control for the claim that the text is more right and not merely
+        // different.
+        "347f14da29451279",
         "the outgoing text changed content"
     );
     assert_eq!(payload.text.matches('\u{c}').count(), 0);
