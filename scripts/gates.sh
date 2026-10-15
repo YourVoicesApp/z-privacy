@@ -330,6 +330,137 @@ else
   pass "G33 a protect outcome becomes a sentence in core/messages.dart and nowhere else"
 fi
 
+# ---------------------------------------------------------------- G35
+# **A block is never deleted, and every word that takes a token becomes one** —
+# 089 rules 1, 2, 7 and 8, the owner's rule of 15 October 2026.
+#
+#   «كل كلمة يأخذ رمزاً… هي بلوك غير قابل للحذف من خزنة المستخدم… يمكن أن تُعفى
+#   من العمل ولكن لا تختفي.»
+#
+# Two halves, and each is a thing source can be read for rather than hoped
+# about: **nothing removes a block**, and **every door that gives a word a
+# token writes it down**. The second is the one this house keeps paying for —
+# 083a's three exits, 080's two language doors, the two import doors of item 3 —
+# so it is asked the way G34 asks about installing a document: by enumerating
+# the callers of the functions that mint, not by naming the doors we remember.
+VAULT=z_core/src/vault
+DOORS=z_core/src/ops/mod.rs
+BLOCKS=blocks_from_this_bench
+
+# **Nothing deletes a block.** Every way a `Vec` loses an element, named — and
+# the whole of `z_core/src` asked, not only the vault, because a block deleted
+# from `ops` would be a block deleted.
+G35_GONE=$(grep -RnE '\.blocks\s*\.\s*(remove|retain|clear|pop|drain|truncate|swap_remove|dedup|split_off)|\.blocks\s*=' \
+             z_core/src --include='*.rs' 2>/dev/null || true)
+if [ -z "$G35_GONE" ]; then
+  pass "G35 nothing in the core removes a block: it can be exempted from work, never deleted"
+else
+  fail "G35 a block is deleted, and the owner's rule is that a block never disappears:"
+  printf '%s\n' "$G35_GONE" | sed 's/^/        /'
+fi
+
+# And the one writer. A second function reaching into the table is not wrong by
+# itself — it is unmeasured, which for this rule is the same thing.
+G35_WRITERS=$(awk '
+  /^    pub\(crate\) fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /\.blocks\.push\(|\.exempt_in\.push\(/ { print here }
+' "$VAULT/model.rs" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ "$G35_WRITERS" = "exempt_block_in remember_block" ]; then
+  pass "G35 the block table is written by remember_block and exempt_block_in, and by nothing else"
+else
+  fail "G35 the block table is written by: $G35_WRITERS — expected «exempt_block_in remember_block»"
+fi
+
+# **Every door that gives a word a token writes the block.** The three
+# functions that mint into a bench's store are read for their callers, and each
+# caller must drain. Two of them are named exceptions and say why: the settle
+# (`rescan_with`) and the cell loop run inside the session lock and cannot
+# reach the vault from there, so their own callers drain instead — which the
+# list below is what proves.
+G35_CALLERS=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /protect_inner\(|protect_range\(|protect_lines\(/ { if (here != "") print here }
+' "$DOORS" | sort -u | grep -vE '^(protect_inner|protect_range|protect_lines)$' | tr '\n' ' ' | sed 's/ $//')
+# `scan` is not in this list and must not be: it reaches the settle through
+# `rescan_with`, and the line below is what measures that it drains.
+G35_WANT="answer_finding ask_model protect protect_all_matches protect_cell_in_lines rescan_with set_question"
+if [ "$G35_CALLERS" = "$G35_WANT" ]; then
+  pass "G35 the minting functions are called from seven doors, and the list is the measured one"
+else
+  fail "G35 a word can be given a token from: $G35_CALLERS — expected «$G35_WANT», so a door appeared that nobody measures"
+fi
+
+G35_DRY=""
+for door in answer_finding ask_model protect protect_all_matches protect_cell_in_lines scan set_question; do
+  if ! awk -v want="$door" '
+    $0 ~ "^(pub\\(crate\\) )?fn " want "\\(" { inside = 1 }
+    inside && /blocks_from_this_bench\(/ { found = 1 }
+    inside && /^}/ { inside = 0 }
+    END { exit(found ? 0 : 1) }
+  ' "$DOORS"; then
+    G35_DRY="$G35_DRY $door"
+  fi
+done
+if [ -z "$G35_DRY" ]; then
+  pass "G35 every door that gives a word a token writes its block ($BLOCKS)"
+else
+  fail "G35 these doors give a word a token and write no block:$G35_DRY"
+fi
+
+# `rescan_with` is the settle, and it is the one caller that does not drain: it
+# holds the session and cannot reach the vault. Its own callers must, and this
+# is the line that says which they are.
+G35_SETTLERS=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /rescan_with\(/ { if (here != "" && here != "rescan_with") print here }
+' "$DOORS" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ "$G35_SETTLERS" = "rescan_keeping scan" ] \
+   && grep -q "blocks_from_this_bench" "$DOORS" \
+   && awk '/^fn rescan_keeping\(/ { inside = 1 } inside && /blocks_from_this_bench\(/ { found = 1 } inside && /^}/ { inside = 0 } END { exit(found ? 0 : 1) }' "$DOORS"; then
+  pass "G35 the settle is reached by scan and rescan_keeping, and both write the blocks"
+else
+  fail "G35 the settle is reached from «$G35_SETTLERS» and one of them does not write the blocks"
+fi
+
+# **The answer page's own word is ours, and never a block.** It is minted by the
+# bench like any other word because the owner asked for it to be protected like
+# any other — so the one place that lists the words a bench named has to drop
+# it by name, beside the store, where no caller can forget.
+if grep -A 12 'fn words_it_named' z_core/src/tokens.rs 2>/dev/null | grep -q 'ANSWER_PAGE_WORD'; then
+  pass "G35 the answer page's own word is dropped where the words a bench named are listed"
+else
+  fail "G35 nothing stops «Zprivacy-svara» becoming a block, which would protect our own word in every document for ever"
+fi
+
+# **The sentence goes** — 089 rule 7. «Kept only while it is open» and «nothing
+# is kept» were the trade the owner withdrew, and a sentence deleted from the
+# screen that stayed in a second screen is the «0 tries left» shape. The
+# comments that tell the history are left alone: what is read here is what a
+# person can be shown.
+G35_SAID=$(grep -RnE "kept only while it is open|Nothing is kept behind" \
+             "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -vE ':\s*(//|///|\*)' || true)
+if [ -z "$G35_SAID" ]; then
+  pass "G35 no screen says a protection is kept only while a conversation is open"
+else
+  fail "G35 the withdrawn sentence is still on the glass:"
+  printf '%s\n' "$G35_SAID" | sed 's/^/        /'
+fi
+
+# **The three format numbers say what they are** — 089 rule 8, the ed's note.
+# The table in `format.rs` is the one place a person goes to read which number
+# governs what, and it named model 12 while the constant said 13 and session
+# format 1 while the constant said 4. A table nobody has to update is a table
+# that drifts.
+G35_MODEL=$(grep -oE 'MODEL_VERSION: u16 = [0-9]+' "$VAULT/format.rs" | grep -oE '[0-9]+$')
+G35_SESSION=$(grep -oE 'SESSION_FORMAT_VERSION: u16 = [0-9]+' z_core/src/conversation.rs | grep -oE '[0-9]+$')
+if grep -q "\`MODEL_VERSION\` = $G35_MODEL |" "$VAULT/format.rs" \
+   && grep -q "SESSION_FORMAT_VERSION\` = $G35_SESSION |" "$VAULT/format.rs"; then
+  pass "G35 the fence table names the numbers the constants hold: model $G35_MODEL, session $G35_SESSION"
+else
+  fail "G35 the fence table in format.rs disagrees with the constants (model $G35_MODEL, session format $G35_SESSION)"
+fi
+
 # ---------------------------------------------------------------- G34
 # **The door back has no seat** — 079 rule 3, built as 089 rule 5.
 #
@@ -1461,7 +1592,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          text_the_person_typed_says_there_was_no_file \
          the_report_still_names_no_file_though_the_session_knows_it \
          a_reopened_session_names_every_value_it_cannot_bring_back \
-         only_what_the_vault_kept_comes_back_when_the_document_opens_again \
+         every_protected_word_comes_back_when_the_document_opens_again \
          a_language_written_with_no_document_open_is_the_one_the_document_is_read_with \
          a_language_this_build_does_not_know_is_refused_by_name \
          an_answer_from_another_session_names_every_token_and_restores_none \
@@ -1498,8 +1629,8 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_rescan_does_not_find_a_token_either \
          a_hand_over_a_token_is_told_it_is_already_protected \
          the_same_conversation_reads_every_name_back \
-         a_taught_value_comes_back_after_the_bench_is_gone \
-         with_nothing_taught_the_page_still_names_the_conversation \
+         every_protected_name_comes_back_after_the_bench_is_gone \
+         the_answer_page_proves_the_origin_on_its_own \
          with_the_vault_shut_nothing_is_named_and_nothing_is_called_unknown \
          a_document_from_another_machine_says_so \
          two_namespaces_are_two_conversations \
@@ -1510,7 +1641,18 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_door_back_reads_a_pdf_and_a_text_file_the_same_way \
          the_door_back_leaves_the_bench_and_the_vault_untouched \
          a_locked_vault_leaves_the_door_back_standing \
-         a_file_the_door_back_cannot_read_is_refused_by_name; do
+         a_file_the_door_back_cannot_read_is_refused_by_name \
+         every_name_comes_back_after_a_restart \
+         nothing_deletes_a_block \
+         leave_it_makes_no_block \
+         a_block_is_protected_in_another_conversation \
+         an_exemption_belongs_to_one_conversation \
+         the_blocks_are_counted_and_never_valued \
+         the_door_back_makes_no_block \
+         one_press_exempts_every_block_the_selection_spans \
+         here_uncovers_every_place_the_selection_spans \
+         a_block_of_two_words_stays_one_token_elsewhere \
+         a_block_keeps_its_tokens_and_its_exemptions; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

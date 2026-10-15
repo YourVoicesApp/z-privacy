@@ -159,6 +159,14 @@ pub(crate) struct UserLabelRule {
 ///
 /// In the vault, encrypted, because the surname of a person's client is as much
 /// theirs as the client's address.
+/// **What claims a block's word, where the scanner expects an identity.**
+///
+/// A block belongs to the person and to no identity, and this string is what
+/// `scanner::vault_pass` groups by: one claimant for every block, so two blocks
+/// are never read as two identities disagreeing. It reaches the glass only in
+/// the count of claimants, which is 1.
+pub(crate) const BLOCK_HANDLE: &str = "a word you protected";
+
 /// The list a name goes into when nothing says otherwise: the pack the
 /// settings hold. A list **is a language** — the owner, 6 October: «the
 /// language list is what establishes the word lists inside the vault: if you
@@ -288,6 +296,66 @@ impl UserLabelRule {
     }
 }
 
+/// **One word the person protected, kept for ever** — 089 rule 1, and the
+/// owner's own words of 15 October 2026: «كل كلمة يأخذ رمزاً… هي بلوك غير قابل
+/// للحذف من خزنة المستخدم… والبلوك قيمة ثابتة لا تمسح، يمكن أن تُعفى من العمل
+/// ولكن لا تختفي».
+///
+/// **Why the vault and not the conversation's file.** The first draft of 089
+/// put these in `conversation::Body`, where un-protecting deleted them and
+/// forgetting a conversation took them with it. The owner reversed both: a
+/// block outlives the conversation that made it, so it lives in the one place
+/// that outlives every conversation.
+///
+/// **Why the tokens are kept and not derived.** A token is
+/// `__Z_<namespace>_<KIND>_<tail>__`, where both halves come from the
+/// conversation's own 32 bytes (`Naming::of_session`) — so a value could be
+/// derived back into its name for as long as that key exists. Forgetting a
+/// conversation **destroys** that key (`Conversation::key`), and the owner's
+/// rule is that forgetting a conversation does not touch its blocks. A
+/// derivation is therefore not enough: what is kept here is the name the word
+/// was given, and the door back is a lookup that needs no key at all.
+///
+/// **One block per word, and the kind is the last one it was given.** The same
+/// word protected as a person in one document and as a company in another is
+/// one word and one block, carrying both tokens; the read-back compares the
+/// tail, which is a MAC over the value alone, so the kind in the middle of a
+/// name is never asked about on the way back (`returning::with_tail`).
+#[derive(Debug, Clone)]
+pub(crate) struct Block {
+    pub id: u32,
+    /// What it was last protected as. It decides nothing on the way back; it
+    /// decides the kind in the token's name when this word is protected again.
+    pub kind: Kind,
+    pub value: Secret,
+    /// **Every token this word has been given**, in the order they were given.
+    /// One per conversation that protected it, plus any random name a bench
+    /// minted before its conversation was born and never renamed.
+    pub tokens: Vec<String>,
+    /// **The conversations this block is exempt from working in** — «In this
+    /// conversation», the second of the two un-protect options (rule 6). An
+    /// exemption is a state of a block and never the absence of one, so this
+    /// list is the whole of what «un-protect» writes down.
+    pub exempt_in: Vec<u32>,
+    pub made_at: u64,
+}
+
+impl Block {
+    /// Is this the word, in any Unicode composition?
+    pub(crate) fn is(&self, text: &str) -> bool {
+        nfc(self.value.expose()) == nfc(text)
+    }
+
+    /// Does this block work in that conversation? `None` is a bench with no
+    /// conversation open, where nothing has been exempted.
+    pub(crate) fn works_in(&self, conversation: Option<u32>) -> bool {
+        match conversation {
+            Some(number) => !self.exempt_in.contains(&number),
+            None => true,
+        }
+    }
+}
+
 /// Everything the vault holds, once it is open.
 #[derive(Debug, Clone, Default)]
 pub(crate) struct Vault {
@@ -324,6 +392,12 @@ pub(crate) struct Vault {
     /// The next session number, and it only ever goes up. A deleted number is
     /// never handed out again: see [`Conversation::number`].
     pub next_conversation: u32,
+    /// **Every word that has ever taken a token** — 089 rule 1. See [`Block`].
+    ///
+    /// Nothing in this crate removes from this list. That is rule 2, and it is
+    /// measured by G35 reading this file for a deletion rather than trusted.
+    pub blocks: Vec<Block>,
+    pub next_block: u32,
 }
 
 /// The settings, as they are kept. `session_only` is not here: whether these
@@ -404,7 +478,70 @@ impl Vault {
             // 1, not 0, for the same reason a revision starts at 1: zero must
             // never be mistakable for a session that exists.
             next_conversation: 1,
+            blocks: Vec::new(),
+            next_block: 1,
         }
+    }
+
+    /// **Make a block for this word, or add this token to the one it has** —
+    /// the only writer, and it never removes anything.
+    ///
+    /// Returns whether the vault changed, so the caller writes the file once
+    /// for an act instead of once per word.
+    pub(crate) fn remember_block(&mut self, kind: Kind, value: &str, token: &str) -> bool {
+        if value.trim().is_empty() || token.is_empty() {
+            return false;
+        }
+        if let Some(block) = self.blocks.iter_mut().find(|b| b.is(value)) {
+            // The kind moves with the latest act on the word; the tokens only
+            // ever grow. Both are «changed», because both are written down.
+            let known = block.tokens.iter().any(|t| t == token);
+            if known && block.kind == kind {
+                return false;
+            }
+            if !known {
+                block.tokens.push(token.to_string());
+            }
+            block.kind = kind;
+            return true;
+        }
+        let id = self.next_block;
+        self.next_block = self.next_block.saturating_add(1);
+        self.blocks.push(Block {
+            id,
+            kind,
+            value: Secret::new(value.to_string()),
+            tokens: vec![token.to_string()],
+            exempt_in: Vec::new(),
+            made_at: now_seconds(),
+        });
+        true
+    }
+
+    /// **Exempt this word's block from working in one conversation** — «In this
+    /// conversation» (rule 6). It deletes nothing.
+    ///
+    /// `false` when there is no block for the word, which is the ordinary case
+    /// for a document protected before this round: there is nothing to exempt,
+    /// and the protection has already been taken off the bench by the caller.
+    pub(crate) fn exempt_block_in(&mut self, value: &str, conversation: u32) -> bool {
+        let Some(block) = self.blocks.iter_mut().find(|b| b.is(value)) else {
+            return false;
+        };
+        if block.exempt_in.contains(&conversation) {
+            return false;
+        }
+        block.exempt_in.push(conversation);
+        true
+    }
+
+    /// The word one token stands for, from the blocks alone — **no key, no
+    /// conversation, no bench** (rule 4).
+    pub(crate) fn block_value_for(&self, token: &str) -> Option<String> {
+        self.blocks
+            .iter()
+            .find(|b| b.tokens.iter().any(|t| t == token))
+            .map(|b| b.value.expose().to_string())
     }
 
     /// The next session number. It only goes up, and a deleted one is spent.
@@ -449,7 +586,11 @@ impl Vault {
     /// An entity with no profile belongs everywhere; one with a profile is loaded
     /// only while that profile is active. `Manual` values are left out entirely:
     /// they exist so their aliases and token stay stable, not to be found.
-    pub(crate) fn hints_for(&self, active_profile: Option<&str>) -> Vec<VaultHint> {
+    pub(crate) fn hints_for(
+        &self,
+        active_profile: Option<&str>,
+        in_conversation: Option<u32>,
+    ) -> Vec<VaultHint> {
         let mut out = Vec::new();
         for entity in &self.entities {
             let in_scope = match (&entity.profile_id, active_profile) {
@@ -486,6 +627,40 @@ impl Vault {
                     });
                 }
             }
+        }
+        // **The blocks, after the values** — 089 rule 3: a block's word takes a
+        // token wherever the app reads it, in any conversation, a year later.
+        //
+        // **Only where no value already speaks for the spelling.** Two hints
+        // for one spelling are read as two identities claiming it
+        // (`scanner::vault_pass`), and the owner's third rule is that the app
+        // never chooses silently — so a word both taught and blocked would stop
+        // being protected and start being *asked about*. The curated value is
+        // the better fact about the word and it goes first; the block answers
+        // for every word no effective value names, which is what a hand
+        // selection and a `Manual` value both are.
+        let already: std::collections::BTreeSet<String> =
+            out.iter().map(|h| nfc(&h.text)).collect();
+        for block in &self.blocks {
+            let word = block.value.expose();
+            if word.trim().is_empty() || already.contains(&nfc(word)) {
+                continue;
+            }
+            // Exempted «in this conversation»: it is not found here, and it is
+            // still a block. Rule 6.
+            if !block.works_in(in_conversation) {
+                continue;
+            }
+            out.push(VaultHint {
+                text: word.to_string(),
+                kind: block.kind,
+                // A block is never a suggestion: the person already answered
+                // about this very word. `Always` is what that reads as in the
+                // one layer that protects from the vault.
+                policy: Policy::Always,
+                entity_id: 0,
+                entity_handle: BLOCK_HANDLE.to_string(),
+            });
         }
         // Longest first, so «Nordstern Consulting GmbH» wins over «Nordstern».
         out.sort_by_key(|h| std::cmp::Reverse(h.text.len()));
@@ -594,12 +769,12 @@ mod tests {
         other.id = 18;
         v.entities.push(other);
 
-        let hints = v.hints_for(Some("p-nordstern"));
+        let hints = v.hints_for(Some("p-nordstern"), None);
         assert_eq!(hints.len(), 1);
         assert_eq!(hints[0].text, "Nordstern Consulting GmbH");
 
         // No profile active: only the entities that belong everywhere.
-        assert!(v.hints_for(None).is_empty());
+        assert!(v.hints_for(None, None).is_empty());
     }
 
     #[test]
@@ -613,7 +788,7 @@ mod tests {
                 (Kind::Iban, "DE89 3704 0044 0532 0130 00", Policy::Always),
             ],
         ));
-        let hints = v.hints_for(None);
+        let hints = v.hints_for(None, None);
         assert_eq!(hints.len(), 1, "a Manual value is kept, not hunted: {hints:?}");
         assert_eq!(hints[0].kind, Kind::Iban);
     }
@@ -628,7 +803,7 @@ mod tests {
         }
         v.entities.push(e);
 
-        let hints = v.hints_for(None);
+        let hints = v.hints_for(None, None);
         assert_eq!(hints.len(), 3);
         assert_eq!(hints[0].text, "Nordstern Consulting GmbH", "longest first");
         assert!(hints.iter().all(|h| h.entity_handle == "CLIENT #17"));

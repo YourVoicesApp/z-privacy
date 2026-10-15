@@ -31,7 +31,7 @@
 //!
 //! ## What can be brought back, and what cannot
 //!
-//! Three sources, and they are the whole of it:
+//! Four sources, and they are the whole of it:
 //!
 //!   1. **The answer page's own word.** Known in advance (`ANSWER_PAGE_WORD`),
 //!      so its name derives under any conversation's key with nothing stored.
@@ -47,11 +47,24 @@
 //!   3. **A bench of that conversation still in memory.** Its store holds this
 //!      run's own tokens, including the ones nobody taught the vault and the
 //!      random names a bench mints before a session exists.
+//!   4. **A block** — 089 rule 4, and the one that needed no key. Every word
+//!      that has ever taken a token is a block in `vault.zv` carrying the
+//!      token it was given, so this is a **lookup**: no conversation key, no
+//!      derivation, no bench. It answers after a restart, from any
+//!      conversation, and after the conversation that minted the token has
+//!      been forgotten and its 32 bytes destroyed — which is exactly what a
+//!      derivation could not do, and the reason the token is written down
+//!      instead of worked out again.
 //!
-//! What is left is the cost the owner is weighing as this is written, and the
-//! door's job is to **say** it rather than to hide it: a name the scanner
+//! What is left after all four is a token **no block knows**: one made on
+//! another machine, or one made before this round, when a protection was kept
+//! only as long as its bench. The door's job is to say which (rule 4), and that
+//! is what the counts and `unknown_namespaces` are for.
+//!
+//! Until 15 October 2026 the third source was the last, and «a name the scanner
 //! protected, in a conversation now closed, that the vault was never taught,
-//! does not come back. The sentence on the glass is the owner's own.
+//! does not come back» was written here as the cost the owner was weighing. He
+//! weighed it and rejected it: «أعتقد أنني كنت واضحاً أن الحماية ستكون دائمة».
 //!
 //! ## What the door may not do
 //!
@@ -239,9 +252,10 @@ pub(crate) fn returning_document(core: &mut Core, text: &str) -> Returned {
 
 /// One namespace: whose it is, and what of it this machine can read.
 ///
-/// The three sources are asked in the order that resolves the most, and they
+/// The four sources are asked in the order that resolves the most, and they
 /// cannot disagree about a value: the store's own name for a value is the name
-/// derived from it, which is the whole of `TokenMint::rename_all`.
+/// derived from it, which is the whole of `TokenMint::rename_all`, and a block
+/// holds the name it was given by that same derivation.
 fn resolve(core: &mut Core, namespace: &str, wanted: &[String]) -> Group {
     let mut values: BTreeMap<String, String> = BTreeMap::new();
     let mut answer_page = None;
@@ -289,6 +303,21 @@ fn resolve(core: &mut Core, namespace: &str, wanted: &[String]) -> Group {
             }
         }
         break;
+    }
+
+    // 4. **The blocks** — 089 rule 4. Outside the loop above and after it, for
+    //    two reasons that are one: a block needs no conversation, so it answers
+    //    for a namespace this vault can no longer name at all (a conversation
+    //    since forgotten, its key destroyed); and `or_insert` leaves the three
+    //    sources above untouched, so a live bench stays the authority on its
+    //    own run's names.
+    for token in wanted {
+        if values.contains_key(token) {
+            continue;
+        }
+        if let Some(value) = core.vault.block_value_for(token) {
+            values.insert(token.clone(), value);
+        }
     }
 
     Group { conversation, values, answer_page }

@@ -3009,9 +3009,19 @@ sealed class UndoOutcome with _$UndoOutcome {
 
   const factory UndoOutcome.nothingToUndo() = UndoOutcome_NothingToUndo;
 
+  /// **Every token the act uncovered**, in the order they stand, and never
+  /// the first of them standing for the rest.
+  ///
+  /// One act can hold several: since 085 ruling 1 «Stefan Keller» is two
+  /// protections and two tokens, and `protect_cell_in_lines` takes one cell
+  /// per held line under one act id. This field was a single `token` until
+  /// 15 October, which made one sentence — «Took back T» — about two things
+  /// it was true of one of: the shape this house calls «a loop that reports
+  /// its last answer».
+  ///
   /// `created_entity` is set when that act had also added a vault identity.
   const factory UndoOutcome.undone({
-    required String token,
+    required List<String> tokens,
     required int places,
     String? createdEntity,
   }) = UndoOutcome_Undone;
@@ -3151,6 +3161,17 @@ class VaultSnapshot {
   final List<TaughtValueRow> taughtValues;
   final bool canForget;
 
+  /// **How many words this vault keeps as blocks** — 089 rule 1, counted and
+  /// never named.
+  ///
+  /// A block is one word the person protected, kept for ever, and the screen
+  /// shows the count because the owner's complaint was that the app could not
+  /// tell him what it had kept: «التطبيق ما زال لا يستطيع معرفة منتجه». The
+  /// values are not in this snapshot and no door hands them out — the one
+  /// place a block's word is read is the door back, where the token in the
+  /// person's own document asked for it.
+  final int blockCount;
+
   const VaultSnapshot({
     required this.stateRevision,
     required this.vault,
@@ -3159,6 +3180,7 @@ class VaultSnapshot {
     required this.profiles,
     required this.taughtValues,
     required this.canForget,
+    required this.blockCount,
   });
 
   @override
@@ -3169,7 +3191,8 @@ class VaultSnapshot {
       valueCount.hashCode ^
       profiles.hashCode ^
       taughtValues.hashCode ^
-      canForget.hashCode;
+      canForget.hashCode ^
+      blockCount.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -3182,7 +3205,8 @@ class VaultSnapshot {
           valueCount == other.valueCount &&
           profiles == other.profiles &&
           taughtValues == other.taughtValues &&
-          canForget == other.canForget;
+          canForget == other.canForget &&
+          blockCount == other.blockCount;
 }
 
 enum VaultState {

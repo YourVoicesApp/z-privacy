@@ -673,6 +673,11 @@ pub(crate) fn ask_model(
     // the scanner, and the first time the two disagreed the quieter one would
     // win.
     let safe = protect_lines(handle.session, workspace)?;
+    // 089 rule 1. A name a person typed into their question took a token and
+    // left the machine wearing it, so it is a block like any other — and the
+    // answer that comes back carrying that token is read by the blocks after
+    // this bench is gone, which is the whole complaint the rule answers.
+    with_core(|core| blocks_from_this_bench(core, handle.session));
     allow_tokens(handle, &safe.tokens)?;
     let workspace = safe.text;
     let answer = crate::gateway::send(crate::gateway::Request {
@@ -715,6 +720,7 @@ pub(crate) fn ask_model(
 /// screen that worked either of them out for itself would be a second scanner.
 pub(crate) fn set_question(session: SessionId, text: String) -> ApiResult<QuestionView> {
     let safe = protect_lines(session.id, vec![text.clone()])?;
+    with_core(|core| blocks_from_this_bench(core, session.id));
     let question_safe = safe.text.first().cloned().unwrap_or_default();
     let tokens = safe.tokens.clone();
     with_session(session.id, |s| {
@@ -782,13 +788,15 @@ fn protect_lines(session: u32, lines: Vec<String>) -> ApiResult<ProtectedLines> 
         return Ok(ProtectedLines { text: lines, marks, tokens: Vec::new() });
     }
     let (sets, taught, hints, exceptions, names) = with_core(|core| {
+        // Read before the two borrows below, which take the core whole.
+        let open_now = core.open_conversation;
         let (s, vault) = core.session_and_vault(session).ok_or(ApiError::InvalidSession)?;
         let sets = active_sets(s, vault);
         let profile = s.profile_id.clone();
         Ok((
             sets,
             vault.label_rules(profile.as_deref()),
-            vault.hints(profile.as_deref()),
+            vault.hints(profile.as_deref(), open_now),
             vault.exceptions(profile.as_deref()),
             vault.taught_names(profile.as_deref()),
         ))
@@ -1399,7 +1407,8 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
     with_core(|core| {
         let vault_hints = {
             let profile = core.get(session.id).and_then(|s| s.profile_id.clone());
-            core.vault.hints(profile.as_deref())
+            let open_now = core.open_conversation;
+            core.vault.hints(profile.as_deref(), open_now)
         };
         // The exceptions and the taught names are not read here any more: they
         // were the scanner's, and the scanner is no longer run over a
@@ -1659,9 +1668,19 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
         // «A German privacy rule» whatever fired, which was true only while
         // German was the only set there was — the «0 tries left» shape exactly.
         let set_label = set_label_of(&p.source_detail);
+        // **A block is not a taught value, and the card may not say it is** —
+        // 089 rule 1. A block is a word the person protected somewhere once;
+        // nobody taught it, there is no identity behind it, and «You taught Z
+        // Privacy this value» over it would be the card calling itself a
+        // liar the way 046's «CLIENT #01» line did. The detail carries the
+        // claimant the vault layer wrote, so the card reads the fact instead
+        // of guessing from the source.
+        let from_a_block = p.source == Source::Vault
+            && p.source_detail == format!("vault:{}", crate::vault::model::BLOCK_HANDLE);
         let headline = match (p.source, p.decided) {
             _ if taught_rule => "You taught Z Privacy this rule".to_string(),
             (Source::Hand, _) => "You protected this by hand".to_string(),
+            _ if from_a_block => "You protected this word before, and Z Privacy kept it".to_string(),
             (Source::Vault, _) => "You taught Z Privacy this value".to_string(),
             (Source::LanguagePack, true) => format!("{set_label} found it, and you agreed"),
             (Source::LanguagePack, false) => set_label,
@@ -1734,7 +1753,14 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
             // they taught the word. «Z Privacy, on its own» under a headline
             // that says «You taught Z Privacy this rule» is one card calling
             // itself a liar.
-            decided: p.decided || taught_rule,
+            //
+            // **And a block is the same argument** (089 rule 1): the person
+            // protected that word once, in some conversation, and this
+            // document is where the decision arrived. The protection itself
+            // stays `decided: false`, because that flag is what a **rescan**
+            // reads and a rescan's rules are not changed by this round; what
+            // changes is the one place a person is told whose decision it was.
+            decided: p.decided || taught_rule || from_a_block,
             token: p.token.clone(),
             learned_at: known.as_ref().map(|k| k.learned_at).unwrap_or(0),
             entity: known.as_ref().map(|k| k.entity),
@@ -1884,6 +1910,9 @@ pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) 
     remember_in_vault(session, span, scope, kind)?;
     let every_place = !matches!(scope, Scope::Once);
     let outcome = protect_inner(session, span, scope, kind, every_place)?;
+    // 089 rule 1, before the displayed truth moves: the count on the vault
+    // screen is one of the facts that just changed.
+    with_core(|core| blocks_from_this_bench(core, session.id));
     crate::session::bump_truth();
     Ok(outcome)
 }
@@ -1938,6 +1967,7 @@ pub(crate) fn protect_all_matches(session: SessionId, span: Span, scope: Scope, 
     }
     remember_in_vault(session, span, scope, kind)?;
     let outcome = protect_inner(session, span, scope, kind, true)?;
+    with_core(|core| blocks_from_this_bench(core, session.id));
     crate::session::bump_truth();
     Ok(outcome)
 }
@@ -2151,6 +2181,7 @@ pub(crate) fn protect_cell_in_lines(
             _ => {}
         }
     }
+    with_core(|core| blocks_from_this_bench(core, session.id));
     crate::session::bump_truth();
     // **Nothing was protected and a token is why**, which is a different thing
     // from «every cell was already protected» and gets the sentence that says
@@ -2325,32 +2356,60 @@ fn protect_range(
     Some(token)
 }
 
-/// Remove one protection, here, by a person's word.
+/// **Here** — the protection off every place this selection covers, and
+/// nothing else.
 ///
 /// The one thing that takes a protection back. A rescan does not; forgetting a
 /// value does not. Those change what the app *knows*; this changes what is
 /// *protected in this document*, and the two are kept apart on purpose.
+///
+/// **Every item the selection spans, not the first one it touches** — the
+/// lead's ruling of 15 October, closing a seam between 085 and 089. Since 085
+/// ruling 1 «Stefan Keller» is two protections, one per word, and this door
+/// took the first and left the second: a press that did half of what it said.
+/// A selection is the person's will (085), and `inspect_selection` already
+/// tells the glass that the selection spans two protected items — so the act
+/// follows the selection. One mark is one item, so a click is unchanged.
 pub(crate) fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome> {
     with_session(session.id, |s| {
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
-        let Some(hit) = s.protections.iter().find(|p| p.start < end && start < p.end).cloned() else {
+        let touched: Vec<(usize, usize, String)> = s
+            .protections
+            .iter()
+            .filter(|p| p.start < end && start < p.end)
+            .map(|p| (p.start, p.end, p.token.clone()))
+            .collect();
+        if touched.is_empty() {
             return Ok(UndoOutcome::NothingToUndo);
-        };
+        }
+        let covers = |a: usize, b: usize| touched.iter().any(|(x, y, _)| a == *x && b == *y);
         let before = s.protections.len();
-        s.protections.retain(|p| !(p.start == hit.start && p.end == hit.end));
+        s.protections.retain(|p| !covers(p.start, p.end));
         let places = before.saturating_sub(s.protections.len()) as u32;
 
+        // **Named, and all of them** — the outcome carries every token this act
+        // uncovered rather than the first, which is the shape
+        // `a_loop_that_reports_its_last_answer` is named for: one sentence
+        // about two acts, true of one of them.
+        let mut tokens: Vec<String> = Vec::new();
+        for (_, _, token) in &touched {
+            if !tokens.iter().any(|t| t == token) {
+                tokens.push(token.clone());
+            }
+        }
         // A token nothing points at any more is not kept: it would sit in the
         // panel standing for nothing.
-        if !s.protections.iter().any(|p| p.token == hit.token) {
-            s.tokens.remove(&hit.token);
+        for token in &tokens {
+            if !s.protections.iter().any(|p| &p.token == token) {
+                s.tokens.remove(token);
+            }
         }
-        // And the finding goes with it, so the review list does not keep a row
+        // And the findings go with them, so the review list does not keep a row
         // for something that is no longer protected.
-        s.findings.retain(|f| !(f.start == hit.start && f.end == hit.end));
+        s.findings.retain(|f| !covers(f.start, f.end));
         s.bump();
         Ok(UndoOutcome::Undone {
-            token: hit.token,
+            tokens,
             places,
             created_entity: None,
         })
@@ -2358,42 +2417,95 @@ pub(crate) fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome
     .ok_or(ApiError::InvalidSession)?
 }
 
-/// **Every place that carries this token, in this conversation** — 083,
+/// **Every place that carries these tokens, in this conversation** — 083,
 /// ruling 3. See `api::unprotect_every_place` for why the token and not the
 /// text is the unit.
+///
+/// **Every token the selection spans**, by the same ruling of 15 October that
+/// `unprotect` above carries: one press over «Stefan Keller» reaches both of
+/// the blocks that two words made, exempts both, and deletes neither.
+///
+/// **And the block is exempted here, not deleted** — 089 rules 2 and 6. «In
+/// this conversation» is one of the two un-protect options the owner kept, and
+/// what it writes down is an exemption on the word's block: the block stands,
+/// the word still comes back through the door, and it simply stops being found
+/// in this one conversation. A word with no block — every document protected
+/// before 15 October 2026 — has nothing to exempt and that is not an error.
 pub(crate) fn unprotect_every_place(session: SessionId, span: Span) -> ApiResult<UndoOutcome> {
-    with_session(session.id, |s| {
+    // The word is read before the protection is taken off, because afterwards
+    // nothing on the bench says which word it was. Read under the session lock
+    // and the vault written after it: the core's mutex is not re-entrant.
+    let words = with_session(session.id, |s| {
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
-        let Some(hit) = s.protections.iter().find(|p| p.start < end && start < p.end).cloned() else {
+        let mut out: Vec<String> = Vec::new();
+        for p in s.protections.iter().filter(|p| p.start < end && start < p.end) {
+            if let Some(word) = s.original_str().get(p.start..p.end) {
+                if !out.iter().any(|w| w == word) {
+                    out.push(word.to_string());
+                }
+            }
+        }
+        Ok(out)
+    })
+    .ok_or(ApiError::InvalidSession)??;
+    let outcome = with_session(session.id, |s| {
+        let (start, end) = text::span_to_bytes(s.original_str(), span)?;
+        let mut tokens: Vec<String> = Vec::new();
+        for p in s.protections.iter().filter(|p| p.start < end && start < p.end) {
+            if !tokens.iter().any(|t| t == &p.token) {
+                tokens.push(p.token.clone());
+            }
+        }
+        if tokens.is_empty() {
             return Ok(UndoOutcome::NothingToUndo);
-        };
+        }
         // The ranges first, because the findings are matched by range and the
         // protections are about to be gone.
         let ranges: Vec<(usize, usize)> = s
             .protections
             .iter()
-            .filter(|p| p.token == hit.token)
+            .filter(|p| tokens.iter().any(|t| t == &p.token))
             .map(|p| (p.start, p.end))
             .collect();
         let before = s.protections.len();
-        s.protections.retain(|p| p.token != hit.token);
+        s.protections.retain(|p| !tokens.iter().any(|t| t == &p.token));
         let places = before.saturating_sub(s.protections.len()) as u32;
 
-        // Nothing points at the token any more, by construction — so it stops
-        // being a token of this conversation, exactly as the one-place act
+        // Nothing points at those tokens any more, by construction — so they
+        // stop being tokens of this conversation, exactly as the one-place act
         // does when it takes the last one.
-        s.tokens.remove(&hit.token);
+        for token in &tokens {
+            s.tokens.remove(token);
+        }
         // And the findings go with them: a review row for something that is no
         // longer protected is a row about nothing.
         s.findings.retain(|f| !ranges.iter().any(|(a, b)| f.start == *a && f.end == *b));
         s.bump();
         Ok(UndoOutcome::Undone {
-            token: hit.token,
+            tokens,
             places,
             created_entity: None,
         })
     })
-    .ok_or(ApiError::InvalidSession)?
+    .ok_or(ApiError::InvalidSession)?;
+    // Only for a press that actually took a protection off: an exemption
+    // written for a press that undid nothing would silence a word in a
+    // conversation on the strength of a miss. **Every word the press reached**,
+    // for the same reason the act reaches every one of them.
+    if matches!(outcome, Ok(UndoOutcome::Undone { .. })) {
+        with_core(|core| {
+            let Some(number) = core.open_conversation else {
+                // No conversation open: there is nothing for «in this
+                // conversation» to name, and nothing is written. The
+                // protection is still off.
+                return;
+            };
+            for word in &words {
+                core.vault.exempt_block(word, number);
+            }
+        });
+    }
+    outcome
 }
 
 pub(crate) fn undo_last_protection(session: SessionId) -> ApiResult<UndoOutcome> {
@@ -2402,24 +2514,30 @@ pub(crate) fn undo_last_protection(session: SessionId) -> ApiResult<UndoOutcome>
             Some(act) => act,
             None => return Ok(UndoOutcome::NothingToUndo),
         };
-        let token = s
-            .protections
-            .iter()
-            .find(|p| p.act == last_act)
-            .map(|p| p.token.clone())
-            .unwrap_or_default();
+        // **Every token of that act, not the first.** One act can hold several:
+        // `protect_cell_in_lines` takes one cell in each held line under one
+        // act id, and each cell is its own value and its own token. This said
+        // «Took back T» about all of them until 15 October.
+        let mut tokens: Vec<String> = Vec::new();
+        for p in s.protections.iter().filter(|p| p.act == last_act) {
+            if !tokens.iter().any(|t| t == &p.token) {
+                tokens.push(p.token.clone());
+            }
+        }
         let before = s.protections.len();
         s.protections.retain(|p| p.act != last_act);
         let places = before.saturating_sub(s.protections.len()) as u32;
 
-        // If that token is no longer anywhere, it stops being a token of this
+        // A token that is no longer anywhere stops being a token of this
         // conversation — the panel must not keep showing it.
-        if !s.protections.iter().any(|p| p.token == token) {
-            s.tokens.remove(&token);
+        for token in &tokens {
+            if !s.protections.iter().any(|p| &p.token == token) {
+                s.tokens.remove(token);
+            }
         }
         s.bump();
         Ok(UndoOutcome::Undone {
-            token,
+            tokens,
             places,
             // M4: set when the act had also created a vault identity.
             created_entity: None,
@@ -2811,12 +2929,57 @@ fn name_tokens_from_the_vault(session: u32) {
     });
 }
 
+/// **Every word this bench has given a token becomes a block in the vault** —
+/// 089 rule 1, and the owner's own rule of 15 October: «كل كلمة يأخذ رمزاً… هي
+/// بلوك غير قابل للحذف من خزنة المستخدم».
+///
+/// **The bench's own token store is the list, and there is no second one.** A
+/// word takes a token in exactly one way — `TokenMint::mint`, into
+/// `TokenStore::insert` — and the store is what that writes into, keyed by the
+/// token the word carries **now**: a session's birth renames every key with it
+/// (`Session::names_again_from`), so a ledger of my own would be a seventh
+/// place holding a token as a string and a seventh chance of drift. Keying the
+/// blocks off the store also settles rule 5 by construction: «Leave it» inserts
+/// nothing, so a word left in the clear makes no block, and there is no second
+/// rule anywhere that has to remember that.
+///
+/// **What is left out, and why.**
+///
+///   * **The answer page's own word** (`ANSWER_PAGE_WORD`). It is minted by
+///     this bench like any other because the owner asked for it to be protected
+///     like any other, and it is ours: a block of it would protect the word
+///     «Zprivacy-svara» in every document a person ever opens, for ever.
+///     `TokenStore::words_it_named` drops it, beside the store, so no caller
+///     can forget.
+///   * **A bench that does not yet name from the vault's key.** Before a
+///     conversation is born the names are random, they are about to be renamed,
+///     and there is no conversation for them to belong to. Nothing is lost by
+///     waiting: the birth drains the bench itself
+///     (`ops::conversation::take_the_names`).
+///
+/// **One pass, one file write, per act** — a scan that protects eleven names
+/// reseals `vault.zv` once. Returns a count and never a value.
+///
+/// **And a write that fails heals itself**, which is the other gain of having
+/// no ledger: if the vault refuses the write (another copy changed the file
+/// under us, `ensure_disk_unchanged`), the words are still in the bench's
+/// store, so the next act writes them. A queue of its own would have had to be
+/// replayed by somebody.
+pub(crate) fn blocks_from_this_bench(core: &mut crate::session::Core, session: u32) -> u32 {
+    let words = match core.get(session) {
+        Some(s) if s.mint.names_from_the_vault() => s.tokens.words_it_named(),
+        _ => return 0,
+    };
+    core.vault.remember_blocks(&words)
+}
+
 pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
     // Before the scan, because the scan protects what the vault already knows
     // and those tokens must carry the derived name like every other.
     name_tokens_from_the_vault(session.id);
     let report = with_core(|core| {
         let vault_state = core.vault.state();
+        let open_now = core.open_conversation;
         let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;
         if s.original.is_empty() {
             return Err(ApiError::NothingToSend);
@@ -2825,7 +2988,7 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         // Empty while the vault is locked: the layer is skipped by having nothing
         // to say, not by a flag someone could forget to check.
         let profile = s.profile_id.clone();
-        let hints = vault.hints(profile.as_deref());
+        let hints = vault.hints(profile.as_deref(), open_now);
         let exceptions = vault.exceptions(profile.as_deref());
         let taught = vault.label_rules(profile.as_deref());
         let names = vault.taught_names(profile.as_deref());
@@ -2833,6 +2996,7 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         mark_scanned(s);
         Ok(report_of(s, vault_state))
     })?;
+    with_core(|core| blocks_from_this_bench(core, session.id));
     crate::session::bump_truth();
     Ok(report)
 }
@@ -3270,6 +3434,7 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
         }
     })
     .ok_or(ApiError::InvalidSession)?;
+    with_core(|core| blocks_from_this_bench(core, session.id));
     crate::session::bump_truth();
     report
 }
@@ -3366,10 +3531,11 @@ pub(crate) fn packs() -> ApiResult<Vec<PackRow>> {
 /// yours (manual) instead of disappearing.
 fn rescan_keeping(session: SessionId, _pack: &str) -> ApiResult<(u32, u32)> {
     with_core(|core| {
+        let open_now = core.open_conversation;
         let (s, vault) = core.session_and_vault(session.id).ok_or(ApiError::InvalidSession)?;
         let profile = s.profile_id.clone();
         let sets = active_sets(s, vault);
-        let hints = vault.hints(profile.as_deref());
+        let hints = vault.hints(profile.as_deref(), open_now);
         let exceptions = vault.exceptions(profile.as_deref());
         let taught = vault.label_rules(profile.as_deref());
         let kept_tokens = s.tokens_in_use().len() as u32;
@@ -3377,6 +3543,10 @@ fn rescan_keeping(session: SessionId, _pack: &str) -> ApiResult<(u32, u32)> {
         // look again, and take nothing back.
         let names = vault.taught_names(profile.as_deref());
         let orphaned = rescan_with(s, &sets, &taught, &hints, &exceptions, &names);
+        // 089 rule 1, for both switches at once: this is the one call a changed
+        // pack and a changed profile both come through, and a rescan protects
+        // what the new layers claim.
+        blocks_from_this_bench(core, session.id);
         Ok((kept_tokens, orphaned))
     })
 }

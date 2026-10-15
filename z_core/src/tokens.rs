@@ -405,6 +405,33 @@ impl TokenStore {
             .collect()
     }
 
+    /// **Every word this store has named, with the token it carries now** —
+    /// the list 089's blocks are made from (`ops::blocks_from_this_bench`).
+    ///
+    /// This store *is* the list of words a conversation has given a token to:
+    /// one entry is written for each (`insert`, from `TokenMint::mint`), and a
+    /// birth moves the keys with `rekey` rather than making new entries. So
+    /// there is no second ledger, and no second chance for one to drift.
+    ///
+    /// **The answer page's own word is dropped here, beside the store**, where
+    /// no caller can forget it. It is minted by this bench like any other
+    /// because the owner asked for it to be protected like any other — and it
+    /// is **ours**: a block of it would protect the word «Zprivacy-svara» in
+    /// every document a person ever opens, for ever. The one line that knows
+    /// this word is `ANSWER_PAGE_WORD`, a few lines above, and this is the only
+    /// other place that reads it on the export side.
+    ///
+    /// The aliases are not listed: a spelling arrives on an entry from a vault
+    /// value, which already protects its own aliases through `hints`, and a
+    /// word a hand selected has none.
+    pub(crate) fn words_it_named(&self) -> Vec<(Kind, String, String)> {
+        self.entries
+            .iter()
+            .filter(|(_, e)| e.value.expose() != ANSWER_PAGE_WORD)
+            .map(|(token, e)| (e.kind, e.value.expose().to_string(), token.clone()))
+            .collect()
+    }
+
     /// Every value and alias held here — what a payload must never contain.
     /// Used by the no-leak tests, and by nothing else.
     pub(crate) fn all_secrets(&self) -> Vec<String> {

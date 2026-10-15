@@ -156,9 +156,21 @@ class _VaultScreenState extends State<VaultScreen> {
             ),
           ),
           const SizedBox(width: 10),
+          // **And the blocks, counted** — 089 rule 1. The owner's complaint
+          // that opened the round was that the app could not tell him what it
+          // had kept («التطبيق ما زال لا يستطيع معرفة منتجه»), and this is the
+          // one line in the app that says how much it keeps. A count and never
+          // a word: the identities and the values below are rows a person
+          // taught on purpose and reviews by name, and a block is a word they
+          // already protected — the only door that reads one back is the
+          // document that asks for it by its own token.
           Text(switch (g.vaultSnap?.vault ?? g.vault) {
-            VaultState.unlocked =>
-              '${plural(g.vaultSnap?.identityCount ?? g.entityCount, "identity", "identities")} · ${plural(g.vaultSnap?.valueCount ?? g.valueCount, "value")}',
+            VaultState.unlocked => [
+              plural(g.vaultSnap?.identityCount ?? g.entityCount, 'identity', 'identities'),
+              plural(g.vaultSnap?.valueCount ?? g.valueCount, 'value'),
+              if ((g.vaultSnap?.blockCount ?? 0) > 0)
+                plural(g.vaultSnap!.blockCount, 'protected word'),
+            ].join(' · '),
             VaultState.locked => 'Locked',
             VaultState.absent => 'Not created on this device',
           }, style: Zc.small.copyWith(color: Zc.ink4)),

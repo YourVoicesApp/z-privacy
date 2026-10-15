@@ -108,6 +108,9 @@ pub(crate) fn vault_snapshot() -> ApiResult<VaultSnapshot> {
         profiles,
         can_forget: value_count > 0,
         taught_values,
+        // 0 while the vault is shut, like every other count here: the blocks
+        // are inside it.
+        block_count: with_core(|core| core.vault.block_count()),
     })
 }
 

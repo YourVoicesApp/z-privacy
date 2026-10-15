@@ -212,10 +212,15 @@ void main() {
     // One sentence saying why, and one way on. 041-E offered the vault with a
     // «Later» beside it; 041-N took the «Later» out, because what Z learns
     // while a person works is kept in the vault and nowhere else.
+    //
+    // **And since 089 the sentence leads with what the owner's rule keeps**:
+    // every word you protect, not only «the values you protect for good».
+    // Looked for by the words a person reads, so a rewording that quietly
+    // narrows the promise again is a red here.
     expect(
-      find.textContaining('What you teach Z'),
+      find.textContaining('Every word you protect lives here'),
       findsOneWidget,
-      reason: 'the page asks for a vault without saying what it is for',
+      reason: 'the page asks for a vault without saying what it keeps',
     );
     expect(find.text('Create a vault'), findsOneWidget);
     expect(find.text('Later'), findsNothing, reason: 'there is still a way past the vault');

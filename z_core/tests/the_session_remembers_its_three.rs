@@ -733,17 +733,22 @@ fn a_reopened_session_names_every_value_it_cannot_bring_back() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
-/// **Only what the vault kept comes back when the document is opened again** —
-/// one of three, and the other two are still named.
+/// **All three come back when the document is opened again** — 089 rule 1, and
+/// this guard is where the owner's rule changes the most.
 ///
-/// This is the whole promise of «always» measured end to end, and the whole
-/// limit of the other two stated in the same breath: restoration is possible
-/// for what the person chose to keep, and impossible for what they chose not
-/// to. Nothing here asks the person a second time — `scan` applies a vault
-/// value by itself, and entering the session renames the bench's token to the
-/// name the session's own file holds.
+/// It read «only what the vault kept comes back… restoration is impossible for
+/// what they chose not to keep» until 15 October 2026, and that was the trade
+/// the owner withdrew: «أعتقد أنني كنت واضحاً أن الحماية ستكون دائمة». Every
+/// one of the three reaches gave its word a token, so every one of them is a
+/// **block** in the vault, and the next morning's scan puts all three back
+/// without asking.
+///
+/// **What the three scopes still decide** is what the vault *screen* holds: one
+/// taught value under an identity, which is «always», and that control is
+/// measured below exactly as it was. A block is not a taught value — nobody
+/// taught it, and no identity owns it.
 #[test]
-fn only_what_the_vault_kept_comes_back_when_the_document_opens_again() {
+fn every_protected_word_comes_back_when_the_document_opens_again() {
     let _guard = serial();
     let dir = fresh_vault("healed");
     the_fake_provider();
@@ -769,53 +774,45 @@ fn only_what_the_vault_kept_comes_back_when_the_document_opens_again() {
         .expect("import again");
     let report = scan(again.0).expect("scan");
     assert_eq!(
-        report.auto, 1,
-        "the scan put back {} values by itself; «always» promises exactly the one \
-         it was taught, found without being asked again",
+        report.auto, 3,
+        "the scan put back {} of the three words this document protected; every \
+         one of them took a token, so every one of them is a block",
         report.auto
     );
     assert!(
         report
             .by_layer
             .iter()
-            .any(|l| l.source == Source::Vault && l.count == 1),
-        "the one value that came back was not credited to the vault, so it came \
+            .any(|l| l.source == Source::Vault && l.count == 3),
+        "the words that came back were not credited to the vault, so they came \
          back for some other reason and the promise is still unmeasured"
     );
 
     // Entering the session gives this bench the session's own names.
     let entered = conversation_enter(number, Some(again.0)).expect("enter");
     assert_eq!(
-        entered.renamed_tokens, 1,
-        "entering renamed {} tokens; the bench's name for a value is derived \
-         fresh and must be moved onto the session's name, or the turn cannot \
-         resolve it however well the vault remembered it",
+        entered.renamed_tokens, 3,
+        "entering renamed {} tokens; a bench's name for a value is derived fresh \
+         and must be moved onto the session's name, or the turn cannot resolve \
+         it however well the vault remembered it",
         entered.renamed_tokens
     );
 
     let turns = conversation_turns(number, Some(again.0)).expect("turns");
     let turn = turns.first().expect("the session kept no turn at all");
     let text = whole_turn(turn);
-    assert!(
-        text.contains(KEPT),
-        "the value the vault was told to keep did not come back, though the scan \
-         put it back on the bench and the session renamed it"
-    );
-    assert_eq!(
-        turn.unresolved.len(),
-        2,
-        "two of the three were never written down and must still be named; this \
-         turn names {:?}",
-        turn.unresolved
-    );
-    for value in [THIS_CONVERSATION, HERE_ONLY] {
+    for value in [KEPT, THIS_CONVERSATION, HERE_ONLY] {
         assert!(
-            !text.contains(value),
-            "«{value}» came back although nothing kept it — a value restored by \
-             guess is worse than a name"
+            text.contains(value),
+            "«{value}» did not come back, though the scan put it back on the \
+             bench from its block and the session renamed it"
         );
     }
-
+    assert!(
+        turn.unresolved.is_empty(),
+        "a name was still said to be unresolvable: {:?}",
+        turn.unresolved
+    );
     let _ = std::fs::remove_dir_all(&dir);
 }
 
