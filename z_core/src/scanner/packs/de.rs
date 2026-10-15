@@ -338,9 +338,21 @@ mod tests {
         // German reply, and it hides nothing on its own. What changed on
         // 3 October is the confidence, not the span: the salutation is the
         // proof, so the name after it is protected rather than asked about.
+        //
+        // **Two candidates since 15 October, and one finding.** The pair rule
+        // used to stand down when a salutation stood in front of it — a guess
+        // about what another rule would do, which cost the owner «Markus» in
+        // an address block the salutation rule then refused to reach. Both
+        // layers now say what they see, and `settle` keeps the proven one and
+        // writes «de:name-dictionary agreed as well» on it. This test asks the
+        // **pack** and therefore sees candidates; what a document gets is
+        // measured in `a_salutation_alone_on_its_line_names_the_next`.
         assert_eq!(
             found("Frau Anna Weber übernimmt."),
-            vec![(Kind::Person, Confidence::Auto, "Anna Weber".to_string())]
+            vec![
+                (Kind::Person, Confidence::Auto, "Anna Weber".to_string()),
+                (Kind::Person, Confidence::Suggest, "Anna Weber".to_string())
+            ]
         );
         assert_eq!(
             found("Herr Dr. Schneider ruft an."),
