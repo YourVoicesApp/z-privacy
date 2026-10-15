@@ -102,3 +102,28 @@ runner. Apple's certificate cap then fills with dead certificates. So for Z:
 - [pub.dev `dmg` — Flutter macOS notarisation with an API key](https://pub.dev/packages/dmg)
 - [ITNext — Flutter macOS distribution outside the App Store](https://itnext.io/complete-guide-to-flutter-macos-distribution-outside-the-app-store-e382c6d7db47)
 - [KeepCoding — notarisation in practice (May 2026)](https://keepcoding.io/blog-frr/notarizacion-macos-guia-linter/)
+
+## The owner's ruling on Apple (15 October)
+
+«نستأجر مستودعاً من أمازون ونقوم بالعمل على ما يحتاجه آبل وتجربته، وربما نجهّز
+قائمة عمل لكلٍّ من التطبيق والمنصّة لإعدادات آبل، ولكن نؤجّلها لمرحلة ما بعد
+الانتهاء الكامل من ويندوز ولينكس».
+
+- **Apple is DEFERRED** until Windows and Linux are completely finished.
+- **The place to work and test is a rented Mac at Amazon (EC2 Mac).** It answers
+  «nobody owns a Mac».
+- When the time comes, there is one work list for the **app** and one for the
+  **platform**.
+
+**EC2 Mac, measured on 15 October (check again before renting):**
+- It is a **Dedicated Host** with a **24-hour minimum**, because of Apple's
+  licence.
+- Billing is per second after that. The host is billed while it is allocated,
+  even when the instance is stopped, so **release the host** when done.
+- A third-party page (June 2026) gives the price as **about $1.23 an hour** for
+  mac-m4, which is about $30 for the first day. This is not verified on AWS's
+  own page, and availability in Stockholm (eu-north-1) is not confirmed.
+- Sources: [AWS EC2 Mac FAQ](https://aws.amazon.com/ec2/instance-types/mac/faqs/) ·
+  [AWS docs — EC2 Mac instances](https://docs.aws.amazon.com/en_eu/AWSEC2/latest/UserGuide/ec2-mac-instances.html) ·
+  [re:Post — billed while stopped](https://repost.aws/questions/QURgjEEC8GTeKiGfJ8b46rkA/billing-and-cost-mac-m2-istance) ·
+  [Green Mini comparison](https://www.greenmini.nl/compare/aws-ec2-mac-alternative/)
