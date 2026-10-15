@@ -104,6 +104,37 @@ void main() {
     // and this line is why it did not stay wrong.
     expect(find.text('2 identities · 1 value'), findsOneWidget);
 
+    // ---------------------------------------------------------- the blocks
+    // **089 rule 1 on the glass**, and the line above is its control: with no
+    // word protected the bar says nothing about blocks, because a third number
+    // that is always 0 is noise. One hand selection in one conversation, and
+    // the bar says what this vault keeps — which is the owner's own complaint
+    // of 15 October answered: «التطبيق ما زال لا يستطيع معرفة منتجه».
+    //
+    // A conversation is begun because a block records the token its
+    // conversation gave the word, and before the birth there is no such token
+    // (`ops::blocks_from_this_bench`).
+    await tester.runAsync(() async {
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: 'Rechnung für Herrn Keller.');
+      await z.protect(
+        session: session,
+        span: const Span(start: 19, end: 25),
+        scope: Scope.conversation,
+        kind: Kind.person,
+      );
+      await z.conversationBegin(name: 'die Rechnung', bench: session);
+      await z.closeSession(session: session);
+      await ground.refresh();
+      await ground.readVault();
+    });
+    await settle(tester);
+
+    expect(ground.vaultSnap?.blockCount, 1,
+        reason: 'a hand-protected word did not become a block the screen can count');
+    expect(find.text('2 identities · 1 value · 1 protected word'), findsOneWidget,
+        reason: 'the bar does not say what this vault keeps');
+
     // ---------------------------------------------------------- searched
     // The search runs inside Rust, over real values, and finds one by a value
     // that no label mentions.

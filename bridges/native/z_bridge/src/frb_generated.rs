@@ -4094,11 +4094,11 @@ const _: fn() = || {
     match None::<crate::api::mirrors::UndoOutcome>.unwrap() {
         crate::api::mirrors::UndoOutcome::NothingToUndo => {}
         crate::api::mirrors::UndoOutcome::Undone {
-            token,
+            tokens,
             places,
             created_entity,
         } => {
-            let _: String = token;
+            let _: Vec<String> = tokens;
             let _: u32 = places;
             let _: Option<String> = created_entity;
         }
@@ -4137,6 +4137,7 @@ const _: fn() = || {
         let _: Vec<crate::api::mirrors::ProfileRow> = VaultSnapshot.profiles;
         let _: Vec<crate::api::mirrors::TaughtValueRow> = VaultSnapshot.taught_values;
         let _: bool = VaultSnapshot.can_forget;
+        let _: u32 = VaultSnapshot.block_count;
     }
     match None::<crate::api::mirrors::VaultUnlockOutcome>.unwrap() {
         crate::api::mirrors::VaultUnlockOutcome::Unlocked { identities, values } => {
@@ -6360,11 +6361,11 @@ impl SseDecode for crate::api::mirrors::UndoOutcome {
                 return crate::api::mirrors::UndoOutcome::NothingToUndo;
             }
             1 => {
-                let mut var_token = <String>::sse_decode(deserializer);
+                let mut var_tokens = <Vec<String>>::sse_decode(deserializer);
                 let mut var_places = <u32>::sse_decode(deserializer);
                 let mut var_createdEntity = <Option<String>>::sse_decode(deserializer);
                 return crate::api::mirrors::UndoOutcome::Undone {
-                    token: var_token,
+                    tokens: var_tokens,
                     places: var_places,
                     created_entity: var_createdEntity,
                 };
@@ -6461,6 +6462,7 @@ impl SseDecode for crate::api::mirrors::VaultSnapshot {
         let mut var_profiles = <Vec<crate::api::mirrors::ProfileRow>>::sse_decode(deserializer);
         let mut var_taughtValues = <Vec<crate::api::mirrors::TaughtValueRow>>::sse_decode(deserializer);
         let mut var_canForget = <bool>::sse_decode(deserializer);
+        let mut var_blockCount = <u32>::sse_decode(deserializer);
         return crate::api::mirrors::VaultSnapshot {
             state_revision: var_stateRevision,
             vault: var_vault,
@@ -6469,6 +6471,7 @@ impl SseDecode for crate::api::mirrors::VaultSnapshot {
             profiles: var_profiles,
             taught_values: var_taughtValues,
             can_forget: var_canForget,
+            block_count: var_blockCount,
         };
     }
 }
@@ -8436,12 +8439,12 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::UndoOutco
         match self.0 {
             crate::api::mirrors::UndoOutcome::NothingToUndo => [0.into_dart()].into_dart(),
             crate::api::mirrors::UndoOutcome::Undone {
-                token,
+                tokens,
                 places,
                 created_entity,
             } => [
                 1.into_dart(),
-                token.into_into_dart().into_dart(),
+                tokens.into_into_dart().into_dart(),
                 places.into_into_dart().into_dart(),
                 created_entity.into_into_dart().into_dart(),
             ]
@@ -8553,6 +8556,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::VaultSnap
             self.0.profiles.into_into_dart().into_dart(),
             self.0.taught_values.into_into_dart().into_dart(),
             self.0.can_forget.into_into_dart().into_dart(),
+            self.0.block_count.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -10380,12 +10384,12 @@ impl SseEncode for crate::api::mirrors::UndoOutcome {
                 <i32>::sse_encode(0, serializer);
             }
             crate::api::mirrors::UndoOutcome::Undone {
-                token,
+                tokens,
                 places,
                 created_entity,
             } => {
                 <i32>::sse_encode(1, serializer);
-                <String>::sse_encode(token, serializer);
+                <Vec<String>>::sse_encode(tokens, serializer);
                 <u32>::sse_encode(places, serializer);
                 <Option<String>>::sse_encode(created_entity, serializer);
             }
@@ -10463,6 +10467,7 @@ impl SseEncode for crate::api::mirrors::VaultSnapshot {
         <Vec<crate::api::mirrors::ProfileRow>>::sse_encode(self.profiles, serializer);
         <Vec<crate::api::mirrors::TaughtValueRow>>::sse_encode(self.taught_values, serializer);
         <bool>::sse_encode(self.can_forget, serializer);
+        <u32>::sse_encode(self.block_count, serializer);
     }
 }
 

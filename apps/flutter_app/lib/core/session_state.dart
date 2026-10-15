@@ -1699,7 +1699,11 @@ class Workbench extends ChangeNotifier {
   @override
   void dispose() {
     _gone = true;
-    // A closed session takes its tokens with it. Nothing is kept behind.
+    // A closed bench takes its tokens with it — and since 089 **the words are
+    // kept**: every one of them is a block in the vault, so what dies here is
+    // this run's index and not the person's protection. The sentence that used
+    // to stand here said «nothing is kept behind», which was the trade the
+    // owner withdrew on 15 October.
     z.closeSession(session: session).catchError((_) {});
     super.dispose();
   }

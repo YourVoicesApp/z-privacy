@@ -4760,11 +4760,11 @@ return undone(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  nothingToUndo,TResult Function( String token,  int places,  String? createdEntity)?  undone,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  nothingToUndo,TResult Function( List<String> tokens,  int places,  String? createdEntity)?  undone,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case UndoOutcome_NothingToUndo() when nothingToUndo != null:
 return nothingToUndo();case UndoOutcome_Undone() when undone != null:
-return undone(_that.token,_that.places,_that.createdEntity);case _:
+return undone(_that.tokens,_that.places,_that.createdEntity);case _:
   return orElse();
 
 }
@@ -4782,11 +4782,11 @@ return undone(_that.token,_that.places,_that.createdEntity);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  nothingToUndo,required TResult Function( String token,  int places,  String? createdEntity)  undone,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  nothingToUndo,required TResult Function( List<String> tokens,  int places,  String? createdEntity)  undone,}) {final _that = this;
 switch (_that) {
 case UndoOutcome_NothingToUndo():
 return nothingToUndo();case UndoOutcome_Undone():
-return undone(_that.token,_that.places,_that.createdEntity);}
+return undone(_that.tokens,_that.places,_that.createdEntity);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -4800,11 +4800,11 @@ return undone(_that.token,_that.places,_that.createdEntity);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  nothingToUndo,TResult? Function( String token,  int places,  String? createdEntity)?  undone,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  nothingToUndo,TResult? Function( List<String> tokens,  int places,  String? createdEntity)?  undone,}) {final _that = this;
 switch (_that) {
 case UndoOutcome_NothingToUndo() when nothingToUndo != null:
 return nothingToUndo();case UndoOutcome_Undone() when undone != null:
-return undone(_that.token,_that.places,_that.createdEntity);case _:
+return undone(_that.tokens,_that.places,_that.createdEntity);case _:
   return null;
 
 }
@@ -4848,10 +4848,16 @@ String toString() {
 
 
 class UndoOutcome_Undone extends UndoOutcome {
-  const UndoOutcome_Undone({required this.token, required this.places, this.createdEntity}): super._();
+  const UndoOutcome_Undone({required final  List<String> tokens, required this.places, this.createdEntity}): _tokens = tokens,super._();
   
 
- final  String token;
+ final  List<String> _tokens;
+ List<String> get tokens {
+  if (_tokens is EqualUnmodifiableListView) return _tokens;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_tokens);
+}
+
  final  int places;
  final  String? createdEntity;
 
@@ -4865,16 +4871,16 @@ $UndoOutcome_UndoneCopyWith<UndoOutcome_Undone> get copyWith => _$UndoOutcome_Un
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UndoOutcome_Undone&&(identical(other.token, token) || other.token == token)&&(identical(other.places, places) || other.places == places)&&(identical(other.createdEntity, createdEntity) || other.createdEntity == createdEntity));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UndoOutcome_Undone&&const DeepCollectionEquality().equals(other._tokens, _tokens)&&(identical(other.places, places) || other.places == places)&&(identical(other.createdEntity, createdEntity) || other.createdEntity == createdEntity));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,token,places,createdEntity);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_tokens),places,createdEntity);
 
 @override
 String toString() {
-  return 'UndoOutcome.undone(token: $token, places: $places, createdEntity: $createdEntity)';
+  return 'UndoOutcome.undone(tokens: $tokens, places: $places, createdEntity: $createdEntity)';
 }
 
 
@@ -4885,7 +4891,7 @@ abstract mixin class $UndoOutcome_UndoneCopyWith<$Res> implements $UndoOutcomeCo
   factory $UndoOutcome_UndoneCopyWith(UndoOutcome_Undone value, $Res Function(UndoOutcome_Undone) _then) = _$UndoOutcome_UndoneCopyWithImpl;
 @useResult
 $Res call({
- String token, int places, String? createdEntity
+ List<String> tokens, int places, String? createdEntity
 });
 
 
@@ -4902,10 +4908,10 @@ class _$UndoOutcome_UndoneCopyWithImpl<$Res>
 
 /// Create a copy of UndoOutcome
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? token = null,Object? places = null,Object? createdEntity = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? tokens = null,Object? places = null,Object? createdEntity = freezed,}) {
   return _then(UndoOutcome_Undone(
-token: null == token ? _self.token : token // ignore: cast_nullable_to_non_nullable
-as String,places: null == places ? _self.places : places // ignore: cast_nullable_to_non_nullable
+tokens: null == tokens ? _self._tokens : tokens // ignore: cast_nullable_to_non_nullable
+as List<String>,places: null == places ? _self.places : places // ignore: cast_nullable_to_non_nullable
 as int,createdEntity: freezed == createdEntity ? _self.createdEntity : createdEntity // ignore: cast_nullable_to_non_nullable
 as String?,
   ));

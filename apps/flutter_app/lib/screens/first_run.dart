@@ -91,10 +91,18 @@ class FirstRunScreen extends StatefulWidget {
 
   /// The second step's sentence, in one place: what the vault is for, said
   /// before it is offered. Not a warning and not a sales line — the reason.
+  ///
+  /// **«Every word you protect» since 089**, and that is the owner's own rule
+  /// rather than a promise widened for effect: every word that takes a token
+  /// becomes a block in this file and is never deleted, so the sentence that
+  /// says what the vault is for has to say that first. It said «the values you
+  /// protect for good», which named only the «always» reach and left the
+  /// person to find out that the rest was kept too.
   static const vaultWhy =
-      'What you teach Z lives here: the names you add, the values you protect '
-      'for good, and the keys to any AI you connect. It stays on this computer, '
-      'and nothing is written anywhere else.';
+      'Every word you protect lives here, for as long as you keep this vault: '
+      'the names you add, the values you teach, and the keys to any AI you '
+      'connect. It stays on this computer, and nothing is written anywhere '
+      'else.';
 
   final Ground ground;
   /// `wantsVault` is always true since 041-N — the vault is the way in, not an

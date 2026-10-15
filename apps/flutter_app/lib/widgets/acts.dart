@@ -231,11 +231,16 @@ class ActsBar extends StatelessWidget {
     if (outcome == null) return;
     onSay(switch (outcome) {
       UndoOutcome_NothingToUndo() => 'There was nothing to undo.',
-      UndoOutcome_Undone(:final token, :final places, :final createdEntity) => createdEntity == null
+      // **Every token the act uncovered, named** — since 15 October the core
+      // hands back the list rather than the first of them: one act can hold
+      // several (a column takes one cell per held line, and «Stefan Keller» is
+      // two words and two tokens), and «Took back T» about two of them was one
+      // sentence true of one.
+      UndoOutcome_Undone(:final tokens, :final places, :final createdEntity) => createdEntity == null
           ? (places == 1
-              ? 'Took back $token.'
-              : 'Took back $token, in all $places places — it went in as one act, so it came out as one.')
-          : 'Took back $token. The identity $createdEntity is still in the vault.',
+              ? 'Took back ${tokens.join(" and ")}.'
+              : 'Took back ${tokens.join(" and ")}, in all $places places — it went in as one act, so it came out as one.')
+          : 'Took back ${tokens.join(" and ")}. The identity $createdEntity is still in the vault.',
     });
   }
 

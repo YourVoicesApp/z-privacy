@@ -245,11 +245,15 @@ String _whatWasPressed(ProtectAct act) => switch (act) {
 /// document: a strip that said «0 names came back» over a letter somebody has
 /// just opened would be noise where nothing happened.
 ///
-/// The sentence about the names that stay tokens is the owner's cost said out
-/// loud, in the lead's words: this conversation's own names live in the
-/// conversation, so a document answered after it closed comes back with those
-/// names still wearing them. The number is the core's, counted by **name** and
-/// not by place, and nothing here counts anything.
+/// **A name that stays a token now has one of two causes, and both are said.**
+/// Since 089 every word that took a token is a block in the vault, so a name
+/// that did not come back was either protected before this build kept blocks,
+/// or it was never this machine's at all. The sentence that stood here until
+/// 15 October — «this conversation's own names are kept only while it is open»
+/// — was the owner's cost said out loud, and he withdrew it.
+///
+/// The numbers are the core's, counted by **name** and not by place, and
+/// nothing here counts anything.
 String? whatCameBack(ReturnedDocument seen) {
   if (seen.tokens == 0) return null;
   // **What the vault changes, and what it does not.** A shut vault cannot name
@@ -295,12 +299,22 @@ String? whatCameBack(ReturnedDocument seen) {
           : '$n names are still tokens: unlock or create your vault and Z can '
               'look for them.');
     } else {
-      // The lead's sentence, 14 October, kept word for word.
-      said.add(n == 1
-          ? 'One name stays as a token: this conversation\'s own names are kept '
-              'only while it is open.'
-          : '$n names stay as tokens: this conversation\'s own names are kept '
-              'only while it is open.');
+      // **Which cause, from the core's own split** — 089 rule 4 asks for the
+      // reason and the core already holds it. The conversations it could name
+      // account for their own unresolved names; what is left over belongs to a
+      // namespace this vault does not hold, and the clause below says that one
+      // with the handle it has. So this clause speaks only for the names whose
+      // conversation **is** here: a block would have brought them back, and
+      // the reason there is none is that they were protected before this build
+      // began keeping them.
+      final here = seen.conversations.fold<int>(0, (sum, c) => sum + c.unresolved);
+      if (here > 0) {
+        said.add(here == 1
+            ? 'One name stays as a token: it was protected before Z Privacy '
+                'began keeping every protected word.'
+            : '$here names stay as tokens: they were protected before Z '
+                'Privacy began keeping every protected word.');
+      }
     }
   }
   // The core leaves this empty when there was no vault to hold a conversation,
@@ -312,9 +326,26 @@ String? whatCameBack(ReturnedDocument seen) {
     // name belongs elsewhere gets a sentence that stands on its own, because a
     // line beginning «It also» with nothing before it names nothing.
     final also = said.isEmpty ? 'This document carries' : 'It also carries';
-    said.add(seen.unknownNamespaces.length == 1
-        ? '$also names from a conversation this vault does not hold ($which).'
-        : '$also names from conversations this vault does not hold ($which).');
+    // **And how many stayed tokens**, because since 089 this clause is the only
+    // one that speaks for these names: every other token in the document came
+    // back from a block, so «3 names stay as tokens» above is about the ones
+    // this vault could have held and these are the ones it never could.
+    //
+    // **Zero is a real case and gets no number.** A conversation that was
+    // forgotten takes its key with it, so its namespace is one this vault
+    // cannot name — and its words still come back, because a block keeps the
+    // token it was given and needs no key. «It also carries 0 names from a
+    // conversation this vault does not hold» would be a sentence counting
+    // nothing; what is true there is only where they are from.
+    final elsewhere = seen.unresolved.length -
+        seen.conversations.fold<int>(0, (sum, c) => sum + c.unresolved);
+    final many = elsewhere == 1 ? '1 name' : '$elsewhere names';
+    final whose = seen.unknownNamespaces.length == 1
+        ? 'a conversation this vault does not hold'
+        : 'conversations this vault does not hold';
+    said.add(elsewhere > 0
+        ? '$also $many from $whose ($which).'
+        : '$also names from $whose ($which).');
   }
   return said.isEmpty ? null : said.join(' ');
 }

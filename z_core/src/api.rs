@@ -1473,8 +1473,18 @@ pub enum ProtectOutcome {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UndoOutcome {
     NothingToUndo,
+    /// **Every token the act uncovered**, in the order they stand, and never
+    /// the first of them standing for the rest.
+    ///
+    /// One act can hold several: since 085 ruling 1 «Stefan Keller» is two
+    /// protections and two tokens, and `protect_cell_in_lines` takes one cell
+    /// per held line under one act id. This field was a single `token` until
+    /// 15 October, which made one sentence — «Took back T» — about two things
+    /// it was true of one of: the shape this house calls «a loop that reports
+    /// its last answer».
+    ///
     /// `created_entity` is set when that act had also added a vault identity.
-    Undone { token: String, places: u32, created_entity: Option<String> },
+    Undone { tokens: Vec<String>, places: u32, created_entity: Option<String> },
 }
 
 /// Switching a profile keeps tokens already given.
@@ -1629,6 +1639,16 @@ pub struct VaultSnapshot {
     pub profiles: Vec<ProfileRow>,
     pub taught_values: Vec<TaughtValueRow>,
     pub can_forget: bool,
+    /// **How many words this vault keeps as blocks** — 089 rule 1, counted and
+    /// never named.
+    ///
+    /// A block is one word the person protected, kept for ever, and the screen
+    /// shows the count because the owner's complaint was that the app could not
+    /// tell him what it had kept: «التطبيق ما زال لا يستطيع معرفة منتجه». The
+    /// values are not in this snapshot and no door hands them out — the one
+    /// place a block's word is read is the door back, where the token in the
+    /// person's own document asked for it.
+    pub block_count: u32,
 }
 
 /// Which durable layer a privacy-rules row came from.

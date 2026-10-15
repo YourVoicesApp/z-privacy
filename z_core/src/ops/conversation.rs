@@ -354,10 +354,21 @@ fn take_the_names(
         return 0;
     };
     let Some(bench) = bench else { return 0 };
-    match core.get(bench.id) {
+    let moved = match core.get(bench.id) {
         Some(s) => s.names_again_from(naming) as u32,
         None => 0,
-    }
+    };
+    // **And the blocks are written here, at the birth** — 089 rule 1.
+    //
+    // This is the first instant at which a word's token is the conversation's
+    // own: everything protected before it wore a random name and has just been
+    // renamed. `blocks_from_this_bench` writes nothing for a bench that does
+    // not name from the vault's key, so a word protected before this moment
+    // has waited for it rather than been lost — which is why the owner's
+    // letter, protected whole before the session was born, is a vault full of
+    // blocks one line later.
+    crate::ops::blocks_from_this_bench(core, bench.id);
+    moved
 }
 
 fn write_body(

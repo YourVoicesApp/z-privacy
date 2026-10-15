@@ -13,13 +13,16 @@
 //
 //   * **the same bench** — the conversation whose store minted the names is
 //     still in memory, so every one of them comes back;
-//   * **another bench of the same conversation, with the vault taught** — the
-//     value the person taught comes back after the bench that protected it is
-//     gone, which is the promise a returning bank letter rests on;
-//   * **another bench, with the vault taught nothing** — nothing comes back,
-//     every name is said out loud, and the answer page still proves where the
-//     document came from. This is the cost the owner is weighing as this is
-//     written, and the number in it is measured rather than argued;
+//   * **another bench of the same conversation, with the vault taught
+//     nothing** — every name still comes back, because every word that took a
+//     token is a block in the vault and a block is never deleted (089, the
+//     owner's rule of 15 October). The two guards below were the other way
+//     round until that rule landed: they asserted that a name nobody taught
+//     came back from nowhere, which was the trade the owner rejected —
+//     «أعتقد أنني كنت واضحاً أن الحماية ستكون دائمة»;
+//   * **the answer page still proves where the document came from**, which is
+//     the one thing that needs no block and no bench: its word is known in
+//     advance;
 //   * **another machine's namespace** — named by its four hex digits, because a
 //     document from a conversation this vault does not hold is a true thing to
 //     be told and not an error;
@@ -210,15 +213,20 @@ fn the_same_conversation_reads_every_name_back() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
-/// **The bench that protected it is gone, and the vault was taught the value:
-/// it comes back.**
+/// **The bench that protected it is gone, and nothing was ever taught: every
+/// name comes back.**
 ///
-/// This is the promise a returning bank letter rests on, and the one the owner
-/// is weighing: «identifiers are never stored» would take exactly this away.
-/// Measured both halves in one run — the taught value comes back, the names
-/// nobody taught do not, and the door says which is which.
+/// 089 rule 1, the owner's own: «كل كلمة يأخذ رمزاً… هي بلوك غير قابل للحذف من
+/// خزنة المستخدم». Every word this letter protected — by the pack, by a
+/// confirmed suggestion, by a hand — is a block in `vault.zv`, so the door back
+/// is a lookup and not a search. **Nothing is taught here**: this used to teach
+/// two values and assert that the other twelve names came back from nowhere,
+/// and that assertion was the trade of 083e/079 which the owner withdrew.
+///
+/// The two taught values stay in the run as the control: a word the vault holds
+/// as a value *and* as a block comes back once, by either road.
 #[test]
-fn a_taught_value_comes_back_after_the_bench_is_gone() {
+fn every_protected_name_comes_back_after_the_bench_is_gone() {
     let _guard = serial();
     let dir = fresh_vault("taught");
 
@@ -258,8 +266,9 @@ fn a_taught_value_comes_back_after_the_bench_is_gone() {
     assert!(seen.conversations[0].answer_page, "the page did not prove the origin");
     assert_eq!(seen.conversations[0].number, number);
     assert_eq!(
-        seen.brought_back, 2,
-        "the two taught values did not both come back: {} of {}",
+        seen.brought_back,
+        names.len() as u32,
+        "{} of {} names came back after the bench was gone",
         seen.brought_back,
         names.len()
     );
@@ -268,53 +277,50 @@ fn a_taught_value_comes_back_after_the_bench_is_gone() {
         seen.brought_back + seen.unresolved.len() as u32,
         "a name fell between «came back» and «did not»"
     );
-    assert_eq!(
-        seen.unresolved.len(),
-        names.len() - 2,
-        "what the vault was never taught was brought back from nowhere"
+    assert!(
+        seen.unresolved.is_empty(),
+        "a word that took a token did not become a block: {:?}",
+        seen.unresolved
     );
     let text = read(&seen.restored);
     assert!(text.contains("Stefan Keller"), "the taught name did not come back");
     assert!(text.contains("DE89 3704 0044 0532 0130 00"), "the taught IBAN did not come back");
     assert!(
-        !text.contains("Beate Hoffmann"),
-        "a name nobody taught came back, so something is stored that should not be"
+        text.contains("Beate Hoffmann"),
+        "a name nobody taught the vault did not come back, so its block was never made"
     );
-    // Every token that stayed a token is marked where it stands, and named once.
-    // The pieces and the numbers are one fact: every name that stayed a token
-    // is marked where it stands, and the marks are more than the names because
-    // two of those names stand twice.
+    assert!(!text.contains("__Z_"), "a token is still standing in the reading");
+    // The pieces and the numbers are one fact, and now they say the same thing
+    // from the other side: not one piece of this reading is a token left
+    // standing, and the restored pieces are more than the names because two of
+    // those names stand twice.
     let standing: Vec<String> = seen
         .restored
         .iter()
         .filter(|s| s.piece == Piece::Unresolved)
         .map(|s| s.text.clone())
         .collect();
-    let mut distinct = standing.clone();
-    distinct.sort();
-    distinct.dedup();
-    assert_eq!(
-        distinct.len(),
-        names.len() - 2,
-        "the pieces and the names disagree about what is still a token"
-    );
+    assert!(standing.is_empty(), "a token was left standing in the pieces: {standing:?}");
+    let restored = seen.restored.iter().filter(|s| s.piece == Piece::Restored).count();
     assert!(
-        standing.len() >= distinct.len(),
-        "a token standing twice was marked once"
+        restored > names.len(),
+        "{restored} pieces came back for {} names, so a place was missed",
+        names.len()
     );
 
     drop(next);
     let _ = std::fs::remove_dir_all(&dir);
 }
 
-/// **Nothing taught, the bench gone: nothing comes back, and the door says
-/// every name.**
+/// **The answer page proves the origin on its own** — with nothing taught and
+/// the bench gone, the page's word is read from no block at all.
 ///
-/// The answer page still proves the origin, which is the whole reason the owner
-/// asked for it: a person is told which conversation this belongs to even when
-/// not one of its names can be read.
+/// Its word is known in advance (`ANSWER_PAGE_WORD`), so one derivation under
+/// each conversation's key names the origin. That is why this guard keeps its
+/// own run now that the blocks bring the names back: the page must still speak
+/// where nothing else could, and it is **not counted** among the names.
 #[test]
-fn with_nothing_taught_the_page_still_names_the_conversation() {
+fn the_answer_page_proves_the_origin_on_its_own() {
     let _guard = serial();
     let dir = fresh_vault("untaught");
     let (held, _, _) = a_letter_that_has_left();
@@ -332,19 +338,22 @@ fn with_nothing_taught_the_page_still_names_the_conversation() {
     import_text(next.0, back).expect("import");
     let seen = returning_document(next.0).expect("read it back");
 
-    assert_eq!(seen.brought_back, 0, "a name came back that nothing holds");
     assert_eq!(
-        seen.unresolved.len(),
-        names.len(),
-        "the door did not name every token it could not bring back"
+        seen.brought_back,
+        names.len() as u32,
+        "the blocks did not bring back every name: {:?}",
+        seen.unresolved
     );
     assert_eq!(seen.names, names.len() as u32);
     assert_eq!(seen.conversations.len(), 1, "{:?}", seen.conversations);
     assert!(
         seen.conversations[0].answer_page,
-        "with nothing taught, the page is the only proof there is — and it did not speak"
+        "the page is the proof of origin that needs nothing stored — and it did not speak"
     );
-    assert_eq!(seen.conversations[0].unresolved, names.len() as u32);
+    assert_eq!(seen.conversations[0].unresolved, 0);
+    // The page's own word is read and **not counted**: the names in that number
+    // are the person's, and this one is ours.
+    assert_eq!(seen.conversations[0].brought_back, names.len() as u32);
     assert!(seen.unknown_namespaces.is_empty(), "its own namespace was called unknown");
     // The page's own word is still read, because it is ours and known in
     // advance: the person sees «Z-pdf : Zprivacy-svara» and not a token.
@@ -429,14 +438,22 @@ fn two_namespaces_are_two_conversations() {
     let shut = seen.conversations.iter().find(|c| c.name == "die erste").expect("the first");
     assert_eq!(open.brought_back, our_names.len() as u32, "the open conversation read nothing");
     assert_eq!(open.unresolved, 0);
-    assert_eq!(shut.brought_back, 0, "the closed conversation's names came back from nowhere");
-    assert_eq!(shut.unresolved, their_names.len() as u32);
+    // **The closed conversation reads too, and from its blocks.** It did until
+    // today only while its bench was in memory; now the words it protected are
+    // blocks, and a block belongs to the person rather than to a bench.
+    assert_eq!(
+        shut.brought_back, their_names.len() as u32,
+        "the closed conversation's names did not come back: {} of {}",
+        shut.brought_back,
+        their_names.len()
+    );
+    assert_eq!(shut.unresolved, 0);
     assert!(!open.answer_page && !shut.answer_page, "no page was in this document");
     let text = read(&seen.restored);
     assert!(text.contains("Beate Hoffmann"), "the open conversation's own name did not come back");
-    for name in &their_names {
-        assert!(text.contains(name.as_str()), "a closed conversation's token was dropped");
-    }
+    assert!(text.contains("Stefan Keller"), "the closed conversation's name did not come back");
+    assert!(text.contains("8841-2270"), "the closed conversation's identifier did not come back");
+    assert!(!text.contains("__Z_"), "a token is still standing in the reading");
 
     drop(second);
     let _ = std::fs::remove_dir_all(&dir);
@@ -544,16 +561,23 @@ fn with_the_vault_shut_nothing_is_named_and_nothing_is_called_unknown() {
         shut.unknown_namespaces
     );
 
-    // And the moment the vault opens, the same text names its conversation —
-    // which is the control: «nothing was named» above is the lock and not a
-    // dead door.
+    // And the moment the vault opens, the same text names its conversation and
+    // reads every name back — which is the control twice over: «nothing was
+    // named» above is the lock and not a dead door, and the blocks that answer
+    // here are the ones the lock was keeping from us. 089: a locked vault is a
+    // standing door, and the sentence on the glass says to unlock it.
     vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
     let open = returning_document(next.0).expect("read it again");
     assert_eq!(open.vault, VaultState::Unlocked);
     assert_eq!(open.conversations.len(), 1, "{:?}", open.conversations);
     assert_eq!(open.conversations[0].name, "die Mahnung");
     assert!(open.conversations[0].answer_page, "the page did not prove the origin");
-    assert_eq!(open.brought_back, 0, "a value came back that nothing holds");
+    assert_eq!(
+        open.brought_back,
+        names.len() as u32,
+        "the unlocked vault did not read its own blocks back: {:?}",
+        open.unresolved
+    );
 
     drop(next);
     let _ = std::fs::remove_dir_all(&dir);

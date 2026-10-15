@@ -5905,7 +5905,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         return UndoOutcome_NothingToUndo();
       case 1:
         return UndoOutcome_Undone(
-          token: dco_decode_String(raw[1]),
+          tokens: dco_decode_list_String(raw[1]),
           places: dco_decode_u_32(raw[2]),
           createdEntity: dco_decode_opt_String(raw[3]),
         );
@@ -5976,8 +5976,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   VaultSnapshot dco_decode_vault_snapshot(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return VaultSnapshot(
       stateRevision: dco_decode_u_32(arr[0]),
       vault: dco_decode_vault_state(arr[1]),
@@ -5986,6 +5986,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       profiles: dco_decode_list_profile_row(arr[4]),
       taughtValues: dco_decode_list_taught_value_row(arr[5]),
       canForget: dco_decode_bool(arr[6]),
+      blockCount: dco_decode_u_32(arr[7]),
     );
   }
 
@@ -8079,11 +8080,11 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 0:
         return UndoOutcome_NothingToUndo();
       case 1:
-        var var_token = sse_decode_String(deserializer);
+        var var_tokens = sse_decode_list_String(deserializer);
         var var_places = sse_decode_u_32(deserializer);
         var var_createdEntity = sse_decode_opt_String(deserializer);
         return UndoOutcome_Undone(
-          token: var_token,
+          tokens: var_tokens,
           places: var_places,
           createdEntity: var_createdEntity,
         );
@@ -8167,6 +8168,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_profiles = sse_decode_list_profile_row(deserializer);
     var var_taughtValues = sse_decode_list_taught_value_row(deserializer);
     var var_canForget = sse_decode_bool(deserializer);
+    var var_blockCount = sse_decode_u_32(deserializer);
     return VaultSnapshot(
       stateRevision: var_stateRevision,
       vault: var_vault,
@@ -8175,6 +8177,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       profiles: var_profiles,
       taughtValues: var_taughtValues,
       canForget: var_canForget,
+      blockCount: var_blockCount,
     );
   }
 
@@ -9924,12 +9927,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case UndoOutcome_NothingToUndo():
         sse_encode_i_32(0, serializer);
       case UndoOutcome_Undone(
-        token: final token,
+        tokens: final tokens,
         places: final places,
         createdEntity: final createdEntity,
       ):
         sse_encode_i_32(1, serializer);
-        sse_encode_String(token, serializer);
+        sse_encode_list_String(tokens, serializer);
         sse_encode_u_32(places, serializer);
         sse_encode_opt_String(createdEntity, serializer);
     }
@@ -9987,6 +9990,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_profile_row(self.profiles, serializer);
     sse_encode_list_taught_value_row(self.taughtValues, serializer);
     sse_encode_bool(self.canForget, serializer);
+    sse_encode_u_32(self.blockCount, serializer);
   }
 
   @protected

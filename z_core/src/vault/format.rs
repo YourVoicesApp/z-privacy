@@ -19,6 +19,11 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 14 — **the blocks**: every word that has ever taken a token, with the
+///   tokens it was given and the conversations it is exempt from (089 rule 1).
+///   A vault from before it opens with none, which is every vault written
+///   before 15 October 2026 — and the words those vaults protected are named
+///   on the way back as «made before Z kept its blocks» rather than guessed at.
 /// * 13 — a session's own language (075c). `None` for every row written
 ///   before it, which is «never asked» and not «no language» — the difference
 ///   the screen needs in order to ask once instead of assuming.
@@ -63,9 +68,16 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// | number | where | what it governs |
 /// |---|---|---|
 /// | `crypto::FORMAT_VERSION` = 2 | the vault file's envelope | Argon2 params, the wrapped master key, the nonce. **Unmoved by 064:** the envelope does not change, only what the body says. |
-/// | `MODEL_VERSION` = 12 | the vault body, below | identities, values, lists, settings, credentials — and since 064 the session records. |
-/// | `conversation::SESSION_FORMAT_VERSION` = 1 | each session's own file | one conversation's turns. A different format in a different file; it must never borrow this number. |
-pub(crate) const MODEL_VERSION: u16 = 13;
+/// | `MODEL_VERSION` = 14 | the vault body, below | identities, values, lists, settings, credentials, the session records (064) — and the blocks (089). |
+/// | `conversation::SESSION_FORMAT_VERSION` = 4 | each session's own file | one conversation's turns. A different format in a different file; it must never borrow this number. |
+///
+/// **This table said 12 and 1 while the constants said 13 and 4** — 089 rule 8,
+/// the ed's note. Two of the three numbers it exists to fence were wrong in the
+/// one place a person goes to read them, which is the «0 tries left» shape: a
+/// table nobody has to update is a table that drifts. G35 now reads both
+/// against their constants, so the next number that moves cannot leave this
+/// row behind.
+pub(crate) const MODEL_VERSION: u16 = 14;
 
 // ---------------------------------------------------------------- stable codes
 
@@ -388,6 +400,32 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
                 put_str(&mut out, id);
             }
             None => out.push(0),
+        }
+    }
+
+    // Model 14 — **the blocks** (089 rule 1). Its own section at the end, like
+    // every section before it.
+    //
+    // The value is written as the entity values above are written: plain inside
+    // a body that is already encrypted, and sealed again by `reseal_body`
+    // before a byte reaches the disk. A session's **key** is sealed a second
+    // time under `Purpose::Session` because a key derives every name of a
+    // conversation; a block's value derives nothing, so a second sealing would
+    // be a ceremony without a threat behind it.
+    out.extend_from_slice(&vault.next_block.to_be_bytes());
+    out.extend_from_slice(&(vault.blocks.len() as u32).to_be_bytes());
+    for block in &vault.blocks {
+        out.extend_from_slice(&block.id.to_be_bytes());
+        out.push(kind_code(block.kind));
+        put_str(&mut out, block.value.expose());
+        out.extend_from_slice(&block.made_at.to_be_bytes());
+        out.extend_from_slice(&(block.tokens.len() as u32).to_be_bytes());
+        for token in &block.tokens {
+            put_str(&mut out, token);
+        }
+        out.extend_from_slice(&(block.exempt_in.len() as u32).to_be_bytes());
+        for number in &block.exempt_in {
+            out.extend_from_slice(&number.to_be_bytes());
         }
     }
     Ok(out)
@@ -731,6 +769,41 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         }
     }
 
+    // Model 14 — the blocks. A vault from before 089 stops above and opens
+    // with none; nothing is inferred for it, because a word protected before
+    // the blocks existed has no token written down anywhere and saying
+    // otherwise would be a guess printed as a fact.
+    let mut next_block = 1;
+    let mut blocks = Vec::new();
+    if version >= 14 {
+        next_block = u32::from_be_bytes(r.array::<4>()?);
+        let count = u32::from_be_bytes(r.array::<4>()?);
+        for _ in 0..count {
+            let id = u32::from_be_bytes(r.array::<4>()?);
+            let kind = kind_of(r.array::<1>()?[0])?;
+            let value = Secret::new(r.string()?);
+            let made_at = u64::from_be_bytes(r.array::<8>()?);
+            let how_many = u32::from_be_bytes(r.array::<4>()?);
+            let mut tokens = Vec::new();
+            for _ in 0..how_many {
+                tokens.push(r.string()?);
+            }
+            let exempted = u32::from_be_bytes(r.array::<4>()?);
+            let mut exempt_in = Vec::new();
+            for _ in 0..exempted {
+                exempt_in.push(u32::from_be_bytes(r.array::<4>()?));
+            }
+            blocks.push(crate::vault::model::Block {
+                id,
+                kind,
+                value,
+                tokens,
+                exempt_in,
+                made_at,
+            });
+        }
+    }
+
     Ok(Vault {
         entities,
         profiles,
@@ -747,6 +820,8 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
         provider_logins,
         conversations,
         next_conversation,
+        blocks,
+        next_block,
     })
 }
 
@@ -919,6 +994,18 @@ mod tests {
         if version >= 13 {
             out.push(1); // and it knows its language
             put_str(&mut out, "sv");
+        }
+        if version >= 14 {
+            out.extend_from_slice(&2u32.to_be_bytes()); // the next block id
+            out.extend_from_slice(&1u32.to_be_bytes()); // one block
+            out.extend_from_slice(&1u32.to_be_bytes()); // its id
+            out.push(kind_code(Kind::Person));
+            put_str(&mut out, "Markus Feldmann");
+            out.extend_from_slice(&1_760_000_000u64.to_be_bytes()); // made on
+            out.extend_from_slice(&1u32.to_be_bytes()); // one token
+            put_str(&mut out, "__Z_F610_PERSON_343AD503__");
+            out.extend_from_slice(&1u32.to_be_bytes()); // exempt in one
+            out.extend_from_slice(&7u32.to_be_bytes()); // conversation 7
         }
         out
     }
@@ -1126,7 +1213,61 @@ mod tests {
             // The date is known only from model 4 — and «unknown» is 0, never
             // today's date guessed in.
             assert_eq!(v.entities[0].values[0].learned_at, 0);
+            // The blocks are known only from model 14, and a vault from before
+            // it opens with none rather than with one invented.
+            assert_eq!(
+                v.blocks.len(),
+                usize::from(version >= 14),
+                "model {version} read the wrong number of blocks"
+            );
         }
+    }
+
+    /// **A block survives the file, whole** — 089 rule 1, on disk.
+    ///
+    /// The tokens and the exemptions are the two things a block is *for*: the
+    /// first is the whole of the door back, and the second is the only thing
+    /// «un-protect in this conversation» writes down. A round trip that kept
+    /// the word and dropped either of them would read as a working vault.
+    #[test]
+    fn a_block_keeps_its_tokens_and_its_exemptions() {
+        let mut before = sample();
+        assert!(before.remember_block(Kind::Person, "Markus Feldmann", "__Z_F610_PERSON_343AD503__"));
+        assert!(before.remember_block(Kind::Iban, "DE89 3704 0044 0532 0130 00", "__Z_F610_IBAN_874FECB2__"));
+        // The same word, named again in another conversation: one block, two
+        // tokens, and the kind is the last act on the word.
+        assert!(before.remember_block(Kind::Custom, "Markus Feldmann", "__Z_A001_CUSTOM_41AC03BD__"));
+        assert!(!before.remember_block(Kind::Custom, "Markus Feldmann", "__Z_A001_CUSTOM_41AC03BD__"),
+            "the same token was written twice");
+        assert!(before.exempt_block_in("Markus Feldmann", 7));
+
+        let after = dec(&enc(&before)).expect("decode");
+        assert_eq!(after.blocks.len(), 2);
+        assert_eq!(after.next_block, before.next_block);
+        let one = after.blocks.iter().find(|b| b.is("Markus Feldmann")).expect("the block");
+        assert_eq!(one.kind, Kind::Custom, "the kind did not survive");
+        assert_eq!(
+            one.tokens,
+            vec![
+                "__Z_F610_PERSON_343AD503__".to_string(),
+                "__Z_A001_CUSTOM_41AC03BD__".to_string()
+            ],
+            "a token the word was given did not survive"
+        );
+        assert_eq!(one.exempt_in, vec![7], "the exemption did not survive");
+        assert!(one.made_at > 0, "a block was written with no date");
+        // And the lookup the door back is: a token, with no key and no
+        // conversation, naming its word.
+        assert_eq!(
+            after.block_value_for("__Z_A001_CUSTOM_41AC03BD__").as_deref(),
+            Some("Markus Feldmann")
+        );
+        assert_eq!(after.block_value_for("__Z_F610_PERSON_000000__"), None);
+        // An exempted block is still a block, and it still answers on the way
+        // back: an exemption is about work, not about memory.
+        assert!(!one.works_in(Some(7)));
+        assert!(one.works_in(Some(8)));
+        assert!(one.works_in(None));
     }
 
     #[test]

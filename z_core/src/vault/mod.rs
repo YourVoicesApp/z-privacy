@@ -14,7 +14,7 @@ pub(crate) mod model;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
-use crate::api::{ApiError, ApiResult, VaultState};
+use crate::api::{ApiError, ApiResult, Kind, VaultState};
 use crate::vault::crypto::{SealedVault, SecretKey};
 use crate::vault::model::{UserException, Vault, VaultHint};
 
@@ -385,10 +385,19 @@ impl VaultStore {
 
     /// What the scanner may recognise: this profile's values, and nothing while
     /// the vault is locked.
-    pub(crate) fn hints(&mut self, active_profile: Option<&str>) -> Vec<VaultHint> {
+    /// The conversation is asked for because a block can be **exempt** from
+    /// working in one of them («In this conversation», 089 rule 6), and the
+    /// exemption is a fact about the block rather than about the document: a
+    /// screen that filtered it afterwards would be the same rule written in a
+    /// second place.
+    pub(crate) fn hints(
+        &mut self,
+        active_profile: Option<&str>,
+        in_conversation: Option<u32>,
+    ) -> Vec<VaultHint> {
         self.tick();
         match self.open.as_ref() {
-            Some(open) => open.vault.hints_for(active_profile),
+            Some(open) => open.vault.hints_for(active_profile, in_conversation),
             // Locked: the layer is skipped entirely, by having nothing to say.
             None => Vec::new(),
         }
@@ -450,6 +459,83 @@ impl VaultStore {
             }
         }
         out
+    }
+
+    /// **Write down every word this act gave a token to** — 089 rules 1 and 2.
+    ///
+    /// One pass and **one file write** for a whole act: a document whose scan
+    /// protects eleven names reseals `vault.zv` once, not eleven times, which
+    /// is the ceiling 062 §A asked about. Nothing happens while the vault is
+    /// shut — there is nowhere for a block to live — and nothing happens when
+    /// no word is new, so the common case costs a comparison and no bytes.
+    ///
+    /// It takes `(kind, value, token)` and never a bench, because the bench is
+    /// the caller's: `ops` reads the one place that knows which words this
+    /// conversation has named and hands the list in.
+    pub(crate) fn remember_blocks(&mut self, words: &[(Kind, String, String)]) -> u32 {
+        if words.is_empty() || self.state() != VaultState::Unlocked {
+            return 0;
+        }
+        // Asked before the write, so that a vault which has nothing to learn is
+        // not resealed and rewritten for the asking.
+        let wanted = self.with_open(|vault| {
+            words
+                .iter()
+                .filter(|(kind, value, token)| match vault.blocks.iter().find(|b| b.is(value)) {
+                    Some(block) => block.kind != *kind || !block.tokens.iter().any(|t| t == token),
+                    None => !value.trim().is_empty() && !token.is_empty(),
+                })
+                .count()
+        });
+        if matches!(wanted, Ok(0) | Err(_)) {
+            return 0;
+        }
+        let made = self.with_open_mut(|vault| {
+            let mut made = 0u32;
+            for (kind, value, token) in words {
+                if vault.remember_block(*kind, value, token) {
+                    made = made.saturating_add(1);
+                }
+            }
+            Ok(made)
+        });
+        made.unwrap_or(0)
+    }
+
+    /// **Exempt a word's block from one conversation** — «In this
+    /// conversation». It deletes nothing, and a word with no block is not an
+    /// error: documents protected before 089 have none.
+    pub(crate) fn exempt_block(&mut self, value: &str, conversation: u32) -> bool {
+        if self.state() != VaultState::Unlocked {
+            return false;
+        }
+        let holds = self
+            .with_open(|vault| vault.blocks.iter().any(|b| b.is(value) && !b.exempt_in.contains(&conversation)))
+            .unwrap_or(false);
+        if !holds {
+            return false;
+        }
+        self.with_open_mut(|vault| Ok(vault.exempt_block_in(value, conversation)))
+            .unwrap_or(false)
+    }
+
+    /// **The word one token stands for, from the blocks** — 089 rule 4, the
+    /// door back's fourth source.
+    ///
+    /// No key and no conversation: the token was written down when it was
+    /// given, so this answers after a restart, from any conversation, and after
+    /// the conversation that minted it has been forgotten and its key
+    /// destroyed. `None` while the vault is shut, like every accessor here.
+    pub(crate) fn block_value_for(&mut self, token: &str) -> Option<String> {
+        self.tick();
+        self.open.as_ref()?.vault.block_value_for(token)
+    }
+
+    /// **How many blocks, never which** — the count the vault screen shows and
+    /// the one number a report may carry. 0 while the vault is shut.
+    pub(crate) fn block_count(&mut self) -> u32 {
+        self.tick();
+        self.open.as_ref().map(|o| o.vault.blocks.len() as u32).unwrap_or(0)
     }
 
     /// The rule sets switched on for one profile. Empty when the vault is
@@ -704,7 +790,7 @@ mod tests {
         // Invariant of M4, rule one: locked means the layer does not exist.
         let mut store = VaultStore::default();
         assert_eq!(store.state(), VaultState::Absent);
-        assert!(store.hints(None).is_empty());
+        assert!(store.hints(None, None).is_empty());
         assert!(matches!(store.with_open(|_| ()), Err(ApiError::VaultLocked)));
     }
 
@@ -730,7 +816,7 @@ mod tests {
         // Lock, and the layer goes silent.
         store.lock();
         assert_eq!(store.state(), VaultState::Locked);
-        assert!(store.hints(None).is_empty(), "a locked vault recognises nobody");
+        assert!(store.hints(None, None).is_empty(), "a locked vault recognises nobody");
 
         // A fresh store, as if the app had been restarted.
         let mut again = VaultStore::default();
@@ -743,7 +829,7 @@ mod tests {
         let (entities, values) = again.unlock(pass).expect("unlock");
         assert_eq!((entities, values), (1, 1));
 
-        let hints = again.hints(None);
+        let hints = again.hints(None, None);
         assert_eq!(hints.len(), 2, "the value and its alias");
         assert_eq!(hints[0].entity_handle, "CLIENT #17");
 

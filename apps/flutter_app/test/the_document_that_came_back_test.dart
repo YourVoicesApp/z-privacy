@@ -6,8 +6,11 @@
 // person sees:
 //
 //   * **the line under the band**, which says whose names these are, how many
-//     came back, and — in the lead's own words — that this conversation's names
-//     are kept only while it is open;
+//     came back, and — since 089 — why any name that is still a token could not
+//     be read: it came from a conversation this vault does not hold, or it was
+//     protected before this build began keeping every protected word. The
+//     sentence that stood here until 15 October said «this conversation's own
+//     names are kept only while it is open», and the owner withdrew it;
 //   * **no Protect press over a token**, because one would mint a second token
 //     over the first and the answer would come back unreadable.
 //
@@ -113,7 +116,7 @@ void main() {
     return bench;
   }
 
-  testWidgets('a document that came back says so, and names what stays a token', (tester) async {
+  testWidgets('a document that came back says so, and says where its names are from', (tester) async {
     final bench = await ready(tester, _back);
 
     // The core answered at the import door, through the one call the bench
@@ -125,19 +128,23 @@ void main() {
     expect(bench.returned!.unresolved.length, 3);
     expect(bench.returned!.unknownNamespaces, ['7f3a']);
 
-    // **The lead's sentence, on the glass.** Looked for as the person reads it,
-    // in the strip's own words, so that a change to the wording is a red here
-    // and not a silent rewording of the owner's cost.
-    final said = find.textContaining('3 names stay as tokens');
-    expect(said, findsOneWidget, reason: 'the line that says what stays a token is not drawn');
+    // **The sentence, on the glass**, read as the person reads it so that a
+    // change to the wording is a red here and not a silent rewording.
+    //
+    // This document's names are from a namespace no conversation of this vault
+    // holds — another machine — so that is the cause the line names, with the
+    // count and the handle. It does **not** say «protected before Z Privacy
+    // began keeping every protected word», because that cause belongs to the
+    // names whose conversation is here and these have none (089 rule 4).
+    final said = find.textContaining('3 names from a conversation this vault does not hold');
+    expect(said, findsOneWidget, reason: 'the line that says where these names are from is not drawn');
     final line = tester.widget<Text>(said.first).data!;
+    expect(line, contains('7f3a'), reason: 'the line does not name the namespace: $line');
     expect(
       line,
-      contains("this conversation's own names are kept only while it is open"),
-      reason: 'the sentence lost the half that says why: $line',
+      isNot(contains('kept only while')),
+      reason: 'the withdrawn sentence is still on the glass: $line',
     );
-    // And it says where this came from, by the only handle there is.
-    expect(line, contains('7f3a'));
     // One place words it: the strip draws what `messages.dart` says.
     expect(line, whatCameBack(bench.returned!));
   });
@@ -332,11 +339,34 @@ void main() {
     expect(bench.returned!.conversations.first.answerPage, isTrue,
         reason: 'the answer page is the only proof left once the bench is gone, and it was silent');
     expect(find.textContaining('came back from «die zweite Mahnung»'), findsOneWidget);
-    // The name itself does not come back: nobody taught the vault that value,
-    // and the line says so in the owner's own cost.
-    expect(bench.returned!.broughtBack, 0);
-    expect(find.textContaining('stay as tokens'), findsOneWidget,
-        reason: "the owner's cost is not said once the vault can name it");
+    // **And the name comes back** — 089 rules 1 and 4, on the glass, in the
+    // owner's own case: nothing was ever taught to this vault, the bench that
+    // minted the token is disposed of, the vault was locked and opened again,
+    // and the word is still read because it is a block. This expectation was
+    // `0` until 15 October, with «the line says so in the owner's own cost»
+    // written over it.
+    // **Two**, and the number is the measurement: «Stefan Keller» after a
+    // salutation is one token per word since 085 ruling 1, so the letter left
+    // with two names and two blocks were made. The press in this test asked
+    // for the pair as one selection and met what the scan had already
+    // protected — which is why the count is the document's, not the press's.
+    expect(bench.returned!.broughtBack, 2,
+        reason: 'the hand-protected name did not come back from its blocks');
+    expect(find.textContaining('stay as tokens'), findsNothing,
+        reason: 'a name was said to stay a token when the block brought it back');
+
+    // And the reading opens — the press that was not offered while the vault
+    // was shut, a few lines above, because then there was nothing to read.
+    expect(find.widgetWithText(ZButton, 'Read it back'), findsOneWidget,
+        reason: 'the reading was not offered once the blocks could answer');
+    await tester.tap(find.widgetWithText(ZButton, 'Read it back'));
+    await settle(tester, rounds: 4);
+    final shown = tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
+        .join('\n');
+    expect(shown, contains('Stefan Keller'), reason: 'the block did not reach the glass');
+    expect(shown.contains('__Z_'), isFalse, reason: 'a token is still standing in the reading');
   });
 
   testWidgets('the door that refuses it words it the same way', (tester) async {
