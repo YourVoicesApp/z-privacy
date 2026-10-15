@@ -112,13 +112,21 @@ fn read(segments: &[Segment]) -> String {
 fn a_bench(text: &str, value: &str) -> Bench {
     let held = Bench(open_session(None, "sv".to_string()).expect("open"));
     import_text(held.0, text.to_string()).expect("import");
-    let report = scan(held.0).expect("scan");
+    scan(held.0).expect("scan");
+    protect(held.0, span_of(text, value), Scope::Once, Kind::Person).expect("protect");
+    // **Asked after the hand, not before it** — the greeting rule of
+    // 15 October offers this line's name, one word each, because «Hej Hedvig
+    // Palmgren» is the shape that rule exists for. The hand's one act covers
+    // both words, and one rescan brings the findings into line with what is
+    // protected: nothing waiting, so the exit opens, which is all this helper
+    // promises.
+    let report = scan(held.0).expect("rescan");
     assert_eq!(
         report.suggested, 0,
-        "the scanner suggests {} words in this line, so the fixture is not the one written here",
+        "the scanner suggests {} words this fixture does not answer, so it is not the \
+         one written here",
         report.suggested
     );
-    protect(held.0, span_of(text, value), Scope::Once, Kind::Person).expect("protect");
     held
 }
 

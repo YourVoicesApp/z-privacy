@@ -74,6 +74,21 @@ fn a_company_form_belongs_to_the_language_that_lists_it() {
     );
 }
 
+/// **And a greeting belongs to it too, which is the half this guard could not
+/// show until today.**
+///
+/// It used to assert the **absence** of the word «salutation» from every
+/// Swedish reason, and said why in prose: the letter opens with «Hej», and
+/// `packs/sv.rs` listed «Herr», «Fru», «Fröken» and no greeting, so its first
+/// name was offered by the dictionary rule and protected by nothing. Reported
+/// as a finding of its own on 14 October.
+///
+/// That absence is exactly the shape `a_guard_green_for_the_wrong_reason`
+/// names: when the greeting list arrived on 15 October, the Swedish letter
+/// gained a reason reading «in Swedish a greeting …», which holds no «salutation»
+/// either — so the old assertion would have stayed green while measuring
+/// nothing. Both lists are asked by name now, and each is asked to name its own
+/// language.
 #[test]
 fn a_salutation_belongs_to_the_language_that_lists_it() {
     let german = reasons("de", GERMAN);
@@ -81,18 +96,23 @@ fn a_salutation_belongs_to_the_language_that_lists_it() {
         german.iter().any(|r| r.contains("in German a salutation")),
         "the German salutation rule no longer names its own language: {german:?}"
     );
-    // The Swedish letter cannot show the other half of this, and that is worth
-    // writing down rather than leaving as a gap in a roster: it opens with
-    // «Hej», and `packs/sv.rs` lists «Herr», «Fru», «Fröken» and no greeting —
-    // so its first name is *offered* by the dictionary rule and protected by
-    // nothing. Reported as a finding of its own on 14 October. What this guard
-    // can say about Swedish, it says in the two guards above: no reason in that
-    // letter names a language other than Swedish.
+    // The Swedish letter's own opening, by the second list — «in Swedish a
+    // greeting», and never «in German» and never «a salutation».
     let swedish = reasons("sv", SWEDISH);
     assert!(
+        swedish.iter().any(|r| r.contains("in Swedish a greeting")),
+        "the Swedish greeting rule no longer names its own language: {swedish:?}"
+    );
+    assert!(
         !swedish.iter().any(|r| r.contains("salutation")),
-        "a Swedish salutation now fires, so this guard must assert «in Swedish a \
-         salutation» rather than its absence: {swedish:?}"
+        "a greeting is being called a salutation, or a Swedish salutation now \
+         fires and this guard must assert «in Swedish a salutation» too: {swedish:?}"
+    );
+    // And the German letter, the other way round: it opens formally, so no
+    // reason in it may call that a greeting.
+    assert!(
+        !german.iter().any(|r| r.contains("a greeting")),
+        "a German salutation is being called a greeting: {german:?}"
     );
 }
 

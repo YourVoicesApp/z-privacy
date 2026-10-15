@@ -25,6 +25,31 @@ pub(crate) const CSV: &str =
 /// signature and the given-and-surname pair do most of the work.
 const SALUTATIONS: &[&str] = &["Herr", "Fru", "Fröken", "Hr", "Fr"];
 
+/// How a Swedish letter actually opens, and the reason this list exists.
+///
+/// Measured on the owner's two Swedish letters and on `Brev_Lindqvist.txt`:
+/// every one of them begins «Hej», and not one of them begins with a word from
+/// the list above. A greeting is read by the same shape as a salutation and
+/// proves nothing — «Hej alla», «Hej och tack» — so it offers and never
+/// protects.
+///
+/// **What it buys and what it only re-offers, measured** (15 October): on the
+/// owner's first Swedish letter it adds «Anna», whom nothing found before; on
+/// `Brev_Lindqvist.txt` it adds **nothing** — «Katarina Lindqvist» is already
+/// offered by the pair rule, two known names in a row — and a rule that only
+/// re-offers is worth knowing about too. On the one-line shapes: `Hej Yusuf
+/// Demir,` and `Hej Birgitta,` found nothing at all before it.
+///
+/// The controls, measured: «Hej alla,» finds nothing, «Hej och tack för
+/// brevet.» finds nothing, and «Hej!» on its own line finds nothing — the first
+/// two by the word's own case, the third because only a **salutation** crosses
+/// a line break.
+///
+/// «Hejsan» and «Hallå» are the siblings and are **not** here: they appear in
+/// none of the three letters, so there is nothing to measure them on, and a word
+/// in this list that no document of ours has shown is a guess dressed as data.
+const GREETINGS: &[&str] = &["Hej"];
+
 /// Swedish titles, as they stand before a name.
 const TITLES: &[&str] = &["Dr.", "Dr", "Prof.", "Prof", "Docent", "Civ.ing.", "Ing.", "Adv.", "Leg."];
 
@@ -148,6 +173,7 @@ pub(crate) fn pack() -> LanguagePack {
         in_english: "Swedish",
         version: "1",
         salutations: SALUTATIONS,
+        greetings: GREETINGS,
         titles: TITLES,
         title_parts: TITLE_PARTS,
         degrees: DEGREES,

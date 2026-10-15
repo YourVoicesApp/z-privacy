@@ -267,10 +267,15 @@ fn the_fake_provider() {
 fn ready_to_send(bench: SessionId) {
     import_text(bench, "Hej Hedvig Palmgren, tack för ditt brev om kontot.".to_string())
         .expect("import");
-    let findings = list_findings(bench).expect("findings");
-    for (i, f) in findings.iter().enumerate() {
-        let answer = if i == 0 { FindingAnswer::Protect } else { FindingAnswer::Skip };
-        answer_finding(bench, f.id, answer).expect("answer");
+    // **Every one of them answered**, which is what this helper's name
+    // promises: nothing waiting, so the exit opens. It said «the first one
+    // Protect and the rest Skip» until 15 October, and that was only ever true
+    // because this line held exactly **one** finding — the greeting rule now
+    // offers «Hedvig» and «Palmgren» one word each, and a skipped word is an
+    // open question that holds the door shut. A branch that has never run is a
+    // branch nobody measured.
+    for f in list_findings(bench).expect("findings") {
+        answer_finding(bench, f.id, FindingAnswer::Protect).expect("answer");
     }
 }
 
@@ -426,9 +431,10 @@ fn a_turn_remembers_which_file_it_was_about() {
         DocumentKind::Txt,
     )
     .expect("import");
-    for (i, f) in list_findings(held.0).expect("findings").iter().enumerate() {
-        let answer = if i == 0 { FindingAnswer::Protect } else { FindingAnswer::Skip };
-        answer_finding(held.0, f.id, answer).expect("answer");
+    // Every one of them, for the reason written at `ready_to_send`: this line
+    // holds two findings since 15 October, and a skipped word holds the door.
+    for f in list_findings(held.0).expect("findings") {
+        answer_finding(held.0, f.id, FindingAnswer::Protect).expect("answer");
     }
     let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
     let handle = build_payload(held.0).expect("payload");
@@ -503,9 +509,10 @@ fn the_report_still_names_no_file_though_the_session_knows_it() {
         DocumentKind::Txt,
     )
     .expect("import");
-    for (i, f) in list_findings(held.0).expect("findings").iter().enumerate() {
-        let answer = if i == 0 { FindingAnswer::Protect } else { FindingAnswer::Skip };
-        answer_finding(held.0, f.id, answer).expect("answer");
+    // Every one of them, for the reason written at `ready_to_send`: this line
+    // holds two findings since 15 October, and a skipped word holds the door.
+    for f in list_findings(held.0).expect("findings") {
+        answer_finding(held.0, f.id, FindingAnswer::Protect).expect("answer");
     }
     let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
     let handle = build_payload(held.0).expect("payload");
@@ -607,14 +614,7 @@ fn three_reaches(bench: SessionId) -> u32 {
         .expect("import");
     // Importing does not scan — it sets `NotScanned` and clears what the last
     // document found — so the scan is asked for here, as a screen asks for it.
-    let report = scan(bench).expect("scan");
-    assert_eq!(
-        report.suggested, 0,
-        "the scanner now suggests {} names in this line, and an unanswered \
-         suggestion is a different document from the one these numbers were \
-         measured on: answer them here before reading the counts below",
-        report.suggested
-    );
+    scan(bench).expect("scan");
     for (needle, scope) in [
         (KEPT, Scope::Always),
         (THIS_CONVERSATION, Scope::Conversation),
@@ -622,6 +622,19 @@ fn three_reaches(bench: SessionId) -> u32 {
     ] {
         protect(bench, span_of(THREE, needle), scope, Kind::Person).expect("protect");
     }
+    // **Asked after the three acts, not before them** — this line opens «Hej»,
+    // which the greeting rule of 15 October reads, and it offers each of the
+    // three names word by word. All three are protected by hand just above, so
+    // one rescan brings the findings into line with what is protected and the
+    // document is the one these numbers were measured on.
+    let report = scan(bench).expect("rescan");
+    assert_eq!(
+        report.suggested, 0,
+        "the scanner suggests {} names these three acts do not answer, and an \
+         unanswered suggestion is a different document from the one these \
+         numbers were measured on",
+        report.suggested
+    );
     let born = conversation_begin("vad säger brevet".to_string(), Some(bench)).expect("begin");
     let handle = build_payload(bench).expect("payload");
     ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())

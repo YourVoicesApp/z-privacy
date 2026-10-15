@@ -324,6 +324,15 @@ fn name_shaped(word: &str, pack: &LanguagePack) -> bool {
         && n.chars().all(|c| c.is_alphabetic() || c == '-' || c == '\'' || c == '\u{2019}')
         && !pack.stop_words.contains(&n)
         && !pack.degrees.contains(&n)
+        // **A salutation is never part of a name**, which is the whole reason
+        // the word is in that list and not in a name bank. Measured the moment
+        // the greeting list arrived beside it (15 October): «Hej Herr Lars
+        // Andersson,» offered **«Herr»** as a person, because the greeting's
+        // walk reached three name-shaped words and nothing had told it that
+        // one of them was a form word. Said here, once, so every rule that
+        // asks what a name looks like gets the same answer — the walk, the
+        // pair, the reversed pair and the role.
+        && !pack.salutations.iter().any(|t| t.eq_ignore_ascii_case(n))
 }
 
 /// Step over a chain of titles: «Dr.», «Prim. Dr.», «Univ.-Prof. Dr. med.».
@@ -387,11 +396,37 @@ fn name_from(
     last.map(|last| (first, last))
 }
 
-/// «Herr Thomas Müller» → the name, not the salutation.
+/// «Herr Thomas Müller» → the name, not the salutation. And «Hej Katarina» →
+/// the name, **offered**.
+///
+/// **One rule, two lists** — the lead's approved shape of 14 October. A
+/// salutation and a greeting are read by the same shape: a word from a list,
+/// then up to three name-shaped words, a title chain stepped over on the way.
+/// Writing that walk twice is the fault this house pays for most often, and the
+/// two readings differ in exactly two places: the confidence each carries, and
+/// the clause of the reason that says which list it came from.
+///
+/// **Why the confidences differ.** A salutation is proof — nothing but a person
+/// follows «Frau» — and that is the owner's ruling of 3 October. A greeting is
+/// not: «Hej alla», «Hej och tack», «Hallo zusammen» are a greeting followed by
+/// no name at all, and the control for this rule is that «Hej alla,» finds
+/// nothing. It finds nothing by the **word's own case**, not by a list of
+/// exceptions, because `name_shaped` asks for a capital. So a greeting is
+/// `Suggest` and the sentence says why: *a greeting is often followed by a
+/// name, which is not the same as naming one.*
+///
+/// Measured on the Swedish letter: it adds **no finding there** — «Katarina
+/// Lindqvist» is already offered by the pair rule, two known names in a row —
+/// and that is worth reporting rather than hiding, because a rule that only
+/// re-offers is a thing to know about. What it buys is the letter nobody's
+/// dictionary covers: `Hej Yusuf Demir,` and `Hej Birgitta,` found nothing at
+/// all before it.
 fn salutations(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>) {
     for (i, word) in words.iter().enumerate() {
         let w = bare_keep_dot(word.text);
-        if !pack.salutations.iter().any(|s| s.eq_ignore_ascii_case(w)) {
+        let proof = pack.salutations.iter().any(|s| s.eq_ignore_ascii_case(w));
+        let greeting = !proof && pack.greetings.iter().any(|s| s.eq_ignore_ascii_case(w));
+        if !proof && !greeting {
             continue;
         }
         // An article in front of it was tried here first — «bei der Frau
@@ -426,25 +461,53 @@ fn salutations(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>
         // One break, crossed once. `title_chain` already crosses its own, so
         // the permission is spent on whichever of the two stands first after
         // the salutation and never twice.
-        let over_a_break = alone_on_its_line && j == i + 1;
+        //
+        // **And only a salutation crosses it**, which is the ruling's own word
+        // and was measured the moment the greeting list arrived beside it: a
+        // letter opening «Hej!» on its own line, then a blank line, then
+        // «Tack för ditt brev» offered **«Tack»** as a person. A salutation
+        // alone on its line is an address block; a greeting alone on its line
+        // is a letter's first line, and what follows it is a sentence. The
+        // control is in `a_greeting_offers_the_name_after_it`.
+        let over_a_break = proof && alone_on_its_line && j == i + 1;
         let Some((first, last)) = name_from(words, j, pack, over_a_break) else { continue };
         let Some(start_word) = words.get(first) else { continue };
         let Some(end_word) = words.get(last) else { continue };
-        let reason = match title {
-            // The language is the pack's, never this file's (item 2 of the
-            // detection round). «in German a salutation …» rather than «a
-            // German salutation …» so that no pack needs an article of its
-            // own: «an English», «a Swedish».
-            Some(t) => format!("a name after «{w} {t}» — in {} a salutation names the person who follows it", pack.in_english),
-            None => format!("a name after «{w}» — in {} a salutation names the person who follows it", pack.in_english),
+        // The language is the pack's, never this file's (item 2 of the detection
+        // round). «in German a salutation …» rather than «a German salutation
+        // …» so that no pack needs an article of its own: «an English», «a
+        // Swedish».
+        let said = match title {
+            Some(t) => format!("«{w} {t}»"),
+            None => format!("«{w}»"),
+        };
+        let (confidence, rule, reason) = if proof {
+            (
+                Confidence::Auto,
+                "salutation",
+                format!(
+                    "a name after {said} — in {} a salutation names the person who follows it",
+                    pack.in_english
+                ),
+            )
+        } else {
+            (
+                Confidence::Suggest,
+                "greeting",
+                format!(
+                    "a name after {said} — in {} a greeting is often followed by a name, which is \
+                     not the same as naming one — offered for your word",
+                    pack.in_english
+                ),
+            )
         };
         out.push(candidate(
             pack,
             start_word.start,
             trimmed_end(end_word),
             Kind::Person,
-            Confidence::Auto,
-            "salutation",
+            confidence,
+            rule,
             reason,
         ));
     }

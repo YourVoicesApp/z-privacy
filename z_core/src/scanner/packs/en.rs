@@ -36,6 +36,20 @@ pub(crate) const CSV: &str =
 /// found at all.
 const SALUTATIONS: &[&str] = &["Mr", "Mrs", "Ms", "Miss", "Mx", "Mr.", "Mrs.", "Ms.", "Dame"];
 
+/// The greetings an English letter opens with when it does not open «Dear».
+///
+/// **Measured on the owner's two English letters: not one count moves** — both
+/// open «Dear», which `SALUTATIONS` answers with proof. And measured on the
+/// shape this list is for, which is where it earns its place: `Hi Rachel
+/// Thornton,` found **nothing at all** before it and offers both words now.
+/// English is the pack with the smallest name bank — 149 given names and 150
+/// surnames — so it is the language where the pair rule covers least and a
+/// form word carries most.
+///
+/// The controls, measured: «Hello everyone,» finds nothing and «Hi!» on its own
+/// line finds nothing.
+const GREETINGS: &[&str] = &["Hi", "Hello"];
+
 /// English titles, as they stand before a name.
 const TITLES: &[&str] = &["Dr", "Dr.", "Prof", "Prof.", "Rev", "Rev.", "Hon", "Hon.", "Sir", "Lord", "Lady"];
 
@@ -167,6 +181,7 @@ pub(crate) fn pack() -> LanguagePack {
         in_english: "English",
         version: "1",
         salutations: SALUTATIONS,
+        greetings: GREETINGS,
         titles: TITLES,
         title_parts: TITLE_PARTS,
         degrees: DEGREES,
