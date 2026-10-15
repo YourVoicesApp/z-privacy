@@ -138,6 +138,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_i_32(dynamic raw);
 
   @protected
+  KeptRow dco_decode_kept_row(dynamic raw);
+
+  @protected
   Kind dco_decode_kind(dynamic raw);
 
   @protected
@@ -178,6 +181,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<FoundPlace> dco_decode_list_found_place(dynamic raw);
+
+  @protected
+  List<KeptRow> dco_decode_list_kept_row(dynamic raw);
 
   @protected
   List<KindRow> dco_decode_list_kind_row(dynamic raw);
@@ -631,6 +637,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
+  KeptRow sse_decode_kept_row(SseDeserializer deserializer);
+
+  @protected
   Kind sse_decode_kind(SseDeserializer deserializer);
 
   @protected
@@ -673,6 +682,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<FoundPlace> sse_decode_list_found_place(SseDeserializer deserializer);
+
+  @protected
+  List<KeptRow> sse_decode_list_kept_row(SseDeserializer deserializer);
 
   @protected
   List<KindRow> sse_decode_list_kind_row(SseDeserializer deserializer);
@@ -1191,6 +1203,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
+  void sse_encode_kept_row(KeptRow self, SseSerializer serializer);
+
+  @protected
   void sse_encode_kind(Kind self, SseSerializer serializer);
 
   @protected
@@ -1243,6 +1258,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     List<FoundPlace> self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_list_kept_row(List<KeptRow> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_kind_row(List<KindRow> self, SseSerializer serializer);

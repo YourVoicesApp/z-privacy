@@ -78,6 +78,14 @@ class SettingsDoor extends StatelessWidget {
   }
 }
 
+/// What a press on a saved document asks the shell to do — 089 rule 9.
+///
+/// `(number, which, chat)`: the conversation, the document's own number inside
+/// its sequence, and which sequence. The panel cannot open a document itself —
+/// only the shell holds the bench — so the press travels, exactly as «+» and
+/// «z-pdf» do.
+typedef OpenKept = void Function(int number, int which, bool chat);
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     super.key,
@@ -85,10 +93,15 @@ class SettingsScreen extends StatefulWidget {
     required this.onClose,
     this.room,
     this.bench,
+    this.onOpenKept,
   });
 
   final Ground ground;
   final VoidCallback onClose;
+  /// **A press on a saved document** — 089 rule 9. Null in a panel built with
+  /// no shell behind it (a test of the room itself), and the rows then say so
+  /// rather than offering a press that does nothing.
+  final OpenKept? onOpenKept;
   final SettingsRoom? room;
 
   /// **The document open behind the panel, if there is one** — 064f.
@@ -185,7 +198,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   SettingsRoom.privacy => _PrivacyRoom(ground: g),
                   SettingsRoom.language => _LanguageRoom(ground: g),
                   SettingsRoom.vault => _VaultRoom(ground: g),
-                  SettingsRoom.sessions => _SessionsRoom(ground: g, bench: widget.bench),
+                  SettingsRoom.sessions => _SessionsRoom(
+                    ground: g,
+                    bench: widget.bench,
+                    onOpenKept: widget.onOpenKept,
+                  ),
                 },
               ),
             ),
@@ -672,9 +689,10 @@ class _Title extends StatelessWidget {
 /// the lead's inference from a build where only the exit could make one, and
 /// the owner's later words supersede it.
 class _SessionsRoom extends StatefulWidget {
-  const _SessionsRoom({required this.ground, this.bench});
+  const _SessionsRoom({required this.ground, this.bench, this.onOpenKept});
 
   final Ground ground;
+  final OpenKept? onOpenKept;
 
   /// The document open behind the panel. Passed to the birth so the names on it
   /// move into the new session — see [SettingsScreen.bench].
@@ -837,6 +855,7 @@ class _SessionsRoomState extends State<_SessionsRoom> {
               row: row,
               open: row.number == g.openSession,
               bench: widget.bench,
+              onOpenKept: widget.onOpenKept,
             ),
       ],
     );
@@ -850,11 +869,13 @@ class _SessionRow extends StatelessWidget {
     required this.row,
     required this.open,
     this.bench,
+    this.onOpenKept,
   });
 
   final Ground ground;
   final ConversationRow row;
   final bool open;
+  final OpenKept? onOpenKept;
 
   /// The document in front of the person, when there is one: the core names
   /// this session's tokens from its own key, and the reading is better with it.
@@ -910,6 +931,18 @@ class _SessionRow extends StatelessWidget {
                       : '$_when · ${_exchanges(row.turns)}',
                   style: Zc.tiny.copyWith(color: Zc.ink4),
                 ),
+                // **089 rule 9 — what this session is holding in its preview.**
+                // Under the session's own name, as the owner asked, and each
+                // one a press that opens it as it was left. Nothing is drawn
+                // when a session holds none, which is the ordinary state: a
+                // document that left by a door is not kept.
+                for (final doc in ground.kept[row.number] ?? const <KeptRow>[])
+                  _KeptDocument(
+                    ground: ground,
+                    session: row.number,
+                    doc: doc,
+                    onOpen: onOpenKept,
+                  ),
               ],
             ),
           ),
@@ -1075,6 +1108,123 @@ class _SessionRow extends StatelessWidget {
       ),
     );
     if (gone == true) await ground.forgetSession(row.number);
+  }
+}
+
+/// **One document a session is holding in its preview** — 089 rule 9.
+///
+/// The handle is the core's («doc3», «chat1») and so is the count of protected
+/// places: nothing here is worked out on the glass. A press opens it in the
+/// preview as it was left; «Rename» changes the name and never the number.
+///
+/// Why it is a row under the session and not a room of its own: the owner's
+/// words — «تُدرج المستندات المحفوظة تحت اسم المحادثة في قائمة المحادثات، كما
+/// تُدرج المحادثات اليوم».
+class _KeptDocument extends StatelessWidget {
+  const _KeptDocument({
+    required this.ground,
+    required this.session,
+    required this.doc,
+    this.onOpen,
+  });
+
+  /// The key a test presses, one per document, so a press lands on the row it
+  /// names rather than on whichever one happens to be first.
+  static Key keyFor(int session, String handle) => Key('kept-$session-$handle');
+
+  final Ground ground;
+  final int session;
+  final KeptRow doc;
+  final OpenKept? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final press = onOpen;
+    final what = doc.protected == 1 ? '1 protected place' : '${doc.protected} protected places';
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          const Icon(Icons.description_outlined, size: 14, color: Zc.ink4),
+          const SizedBox(width: 7),
+          Expanded(
+            child: InkWell(
+              key: keyFor(session, doc.handle),
+              borderRadius: BorderRadius.circular(5),
+              // A press that cannot open anything is not drawn as a press —
+              // 083a's rule about a button that cannot work.
+              onTap: press == null ? null : () => press(session, doc.number, doc.chat),
+              child: Text(
+                doc.name.isEmpty ? '${doc.handle} · $what' : '${doc.handle} · ${doc.name} · $what',
+                overflow: TextOverflow.ellipsis,
+                style: Zc.tiny.copyWith(
+                  color: Zc.river,
+                  decoration: press == null ? null : TextDecoration.underline,
+                  decorationColor: Zc.line,
+                ),
+              ),
+            ),
+          ),
+          Tooltip(
+            message: 'Rename this document',
+            child: IconButton(
+              icon: const Icon(Icons.drive_file_rename_outline, size: 14),
+              color: Zc.ink4,
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+              padding: EdgeInsets.zero,
+              onPressed: () => _rename(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// **A new name, and the number does not move.** The same shape as a
+  /// session's own rename, and no controller for the same measured reason.
+  Future<void> _rename(BuildContext context) async {
+    var word = '';
+    final said = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Zc.paper,
+        title: Text('Rename ${doc.handle}?', style: Zc.h2),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'The name is what you read in this list. ${doc.handle} stays what it is: '
+                'a number is spent once and never given to another document.',
+                style: Zc.small.copyWith(color: Zc.ink2),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                autofocus: true,
+                onChanged: (value) => word = value,
+                onSubmitted: (value) => Navigator.of(context).pop(value),
+                decoration: const InputDecoration(hintText: 'A name for this document'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Keep the name'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(word),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+    if (said == null || said.trim().isEmpty) return;
+    await ground.renameKept(session, doc.number, doc.chat, said);
   }
 }
 

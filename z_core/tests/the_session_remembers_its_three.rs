@@ -642,16 +642,110 @@ fn three_reaches(bench: SessionId) -> u32 {
     born.number
 }
 
-/// **A reopened session shows its turn, and names every value it cannot bring
-/// back** — by the token the person saw, with the token still standing where
-/// the value stood.
+/// **A token the payload never allowed stays a token, however well the vault
+/// knows it** — G9, measured against the blocks rather than argued.
 ///
-/// Read with no document, nothing can resolve: the store that held the values
-/// died with the bench. The two wrong answers are to print the stored form as
-/// though the model had written it, and to quietly drop it. Both leave a person
-/// reading a sentence that is not the one that was sent.
+/// The lead's ruling of 15 October widened **where a value is looked up** and
+/// nothing else: «a token not in `allowed` stays a token even if a block knows
+/// it. The model invented it, or it is another conversation's: both stay
+/// foreign, as today.»
+///
+/// **The foreign token here is a real one of that kind**, not a string made up
+/// to fail: the first conversation protects a name and takes its letter out,
+/// so its token is a block in this very vault. The second conversation then
+/// works on a document that **carries that token as text** — which is the
+/// ordinary case of a document coming back (079 rule 5: a token in a document
+/// is never protected, so it is not in this payload's allowed list) — and its
+/// answer echoes both. One of the two is this turn's own and comes back; the
+/// other is the first conversation's and stays exactly as the model wrote it.
 #[test]
-fn a_reopened_session_names_every_value_it_cannot_bring_back() {
+fn a_token_the_payload_never_allowed_stays_a_token() {
+    let _guard = serial();
+    let dir = fresh_vault("foreign");
+    the_fake_provider();
+
+    // ---- the first conversation: a name protected, and a token made
+    let first = Bench(open_session(None, "sv".to_string()).expect("open"));
+    import_text(first.0, THREE.to_string()).expect("import");
+    for f in list_findings(first.0).expect("findings") {
+        answer_finding(first.0, f.id, FindingAnswer::Protect).ok();
+    }
+    conversation_begin("det första".to_string(), Some(first.0)).expect("begin");
+    let theirs = payload_to_take_out(first.0).expect("take out").text;
+    let foreign = theirs
+        .split_whitespace()
+        .find(|w| w.contains("__Z_"))
+        .map(|w| w.trim_matches(|c: char| !c.is_alphanumeric() && c != '_').to_string())
+        .expect("the first conversation protected nothing, so there is no foreign token");
+    assert!(
+        vault_snapshot().expect("snapshot").block_count > 0,
+        "the first conversation made no block, so «a block knows it» is not being measured"
+    );
+    drop(first);
+
+    // ---- the second: its own name, and the first's token standing as text
+    let second = Bench(open_session(None, "sv".to_string()).expect("open"));
+    import_text(
+        second.0,
+        format!("Hej Hedvig Palmgren, det gäller {foreign} i ditt brev."),
+    )
+    .expect("import");
+    for f in list_findings(second.0).expect("findings") {
+        answer_finding(second.0, f.id, FindingAnswer::Protect).ok();
+    }
+    conversation_begin("det andra".to_string(), Some(second.0)).expect("begin");
+    let number = conversation_open().expect("open").expect("one is open");
+    let mine = payload_to_take_out(second.0).expect("take out");
+    assert!(
+        mine.text.contains(&foreign),
+        "the foreign token did not travel with the document, so this guard measures nothing"
+    );
+    let handle = build_payload(second.0).expect("payload");
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+        .expect("the echo answers");
+
+    // ---- read cold: no bench at all
+    close_the_app_and_reopen(second.0);
+    let turns = conversation_turns(number, None).expect("turns");
+    let turn = turns.first().expect("the session kept no turn");
+    let text = whole_turn(turn);
+
+    // This turn's own name came back — from its block, with no bench. That is
+    // the control: a guard where nothing resolves would pass the line below
+    // for the wrong reason.
+    assert!(
+        text.contains("Hedvig") || text.contains("Palmgren"),
+        "this turn's own protected name did not come back, so nothing is being measured"
+    );
+    // And the foreign one is still a token, named and standing.
+    assert!(
+        turn.unresolved.iter().any(|t| t == &foreign),
+        "«{foreign}» was not named as a token this turn could not bring back: {:?}",
+        turn.unresolved
+    );
+    assert!(
+        text.contains(&foreign),
+        "the foreign token was dropped out of the sentence instead of left standing"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **A reopened session reads its own history back, with no document and no
+/// bench** — the lead's ruling of 15 October: `restore(store ∪ blocks,
+/// allowed)`.
+///
+/// Read with no document, the store that held the values died with the bench —
+/// and every word it held is a **block** in the vault (089 rule 1), so the
+/// lookup answers where the store cannot. **The allowed list is untouched**:
+/// the blocks widen where a value is looked up, never what a turn is permitted
+/// to carry (G9), and the second half of this guard is that law measured on a
+/// real token of the other kind rather than assumed.
+///
+/// Until 15 October this guard asserted that nothing came back at all and that
+/// all three were named. That was true of a build that kept nothing.
+#[test]
+fn a_reopened_session_reads_its_own_history_back() {
     let _guard = serial();
     let dir = fresh_vault("named-back");
     the_fake_provider();
@@ -692,43 +786,35 @@ fn a_reopened_session_names_every_value_it_cannot_bring_back() {
     );
     assert!(turn.at > 0, "a restored turn carries no time at all");
 
-    // And it names what it cannot bring back — all three, not two.
-    assert_eq!(
-        turn.unresolved.len(),
-        3,
-        "read with no document, this turn must name all three protected values; \
-         it named {:?}",
+    // **Nothing is left unnamed, because nothing is left unread.** All three
+    // words this conversation protected are blocks, and all three were in the
+    // payload's allowed list, so the cold read resolves every one of them.
+    assert!(
+        turn.unresolved.is_empty(),
+        "read with no document, this turn still named {:?} — the blocks did not reach it",
         turn.unresolved
     );
-    // Named, and still standing: a token the reader could not resolve stays
-    // where the value stood, marked as itself, so the screen shows a gap it can
-    // explain instead of a sentence with a word missing.
     let pieces: Vec<&Segment> = turn
         .question
         .iter()
         .chain(turn.answer.iter())
         .filter(|s| s.piece == Piece::Unresolved)
         .collect();
-    for name in &turn.unresolved {
-        assert!(
-            name.starts_with("__Z_") && name.ends_with("__"),
-            "«{name}» is not the name the person saw on the glass"
-        );
-        assert!(
-            pieces.iter().any(|s| s.text.contains(name.as_str())),
-            "«{name}» is in the list of what could not be brought back, and nowhere \
-             in the turn: it was dropped out of the sentence and only counted"
-        );
-    }
-    // The values themselves are nowhere. This is the whole reason the list is a
-    // list of names and not of values.
+    assert!(
+        pieces.is_empty(),
+        "a token was left standing in a turn that resolved everything: {:?}",
+        pieces.iter().map(|s| s.text.as_str()).collect::<Vec<_>>()
+    );
+    // And the values are there — the same three the warm control read, read a
+    // second time from the vault with no bench in the world.
     let text = whole_turn(turn);
     for value in [KEPT, THIS_CONVERSATION, HERE_ONLY] {
         assert!(
-            !text.contains(value),
-            "a session read without its document gave «{value}» back as prose"
+            text.contains(value),
+            "«{value}» did not come back from its block in a cold read"
         );
     }
+    assert!(!text.contains("__Z_"), "a token is still standing in the reading");
 
     let _ = std::fs::remove_dir_all(&dir);
 }

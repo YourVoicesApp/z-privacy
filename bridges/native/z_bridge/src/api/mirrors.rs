@@ -539,6 +539,26 @@ pub enum _ScanOrigin {
     Rescan,
 }
 
+#[frb(mirror(KeptRow))]
+pub struct _KeptRow {
+    /// The identity, inside its own sequence. Never reused, not after it leaves.
+    pub number: u32,
+    /// A text written or pasted into the preview, rather than a file pulled
+    /// from the computer. The two have their own sequences.
+    pub chat: bool,
+    /// «doc3» · «chat1» — what this document is called in the list.
+    pub handle: String,
+    /// The file's own name, when it came from a file. Empty for a chat, and
+    /// whatever the person renamed it to after that.
+    pub name: String,
+    /// Seconds since 1970, when it was put in the preview.
+    pub at: u64,
+    /// **How many places are protected on it** — a count, never a value. It is
+    /// here because a person choosing between two saved documents is choosing
+    /// between two states of work.
+    pub protected: u32,
+}
+
 #[frb(mirror(AnswerId))]
 pub struct _AnswerId {
     pub id: u32,

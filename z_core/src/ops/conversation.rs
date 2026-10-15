@@ -70,11 +70,18 @@ pub(crate) fn begin(name: String, bench: Option<SessionId>) -> ApiResult<Convers
             core.vault
                 .begin_conversation(&name, document.as_deref(), born_with.as_deref())?;
         core.open_conversation = Some(number);
-        let renamed = take_the_names(core, number, bench);
         // An empty file, written now rather than at the first turn, so that a
         // session which exists in the vault also exists on disk: a record with
         // no file would be a session whose deletion has nothing to destroy.
+        //
+        // **Before the names are taken, and the order is now load-bearing**
+        // (089 rule 9): taking the names also keeps the document in the
+        // preview, which writes this very file. Written afterwards, as it was
+        // until 15 October, this empty body overwrote the document that had
+        // just been saved — measured, as «the document that waited for a
+        // session was lost».
         write_body(core, number, &crate::conversation::Body::default())?;
+        let renamed = take_the_names(core, number, bench);
         Ok(ConversationRow {
             number,
             name,
@@ -279,14 +286,25 @@ pub(crate) fn turns(number: u32, bench: Option<SessionId>) -> ApiResult<Vec<crat
         // bench without its tokens, and a person's protection would vanish
         // because somebody added an error case to a getter.
         let nothing = crate::tokens::TokenStore::default();
-        let store: &crate::tokens::TokenStore = match bench.and_then(|b| core.get(b.id)) {
+        // **Read, both of them** — the bench immutably so that the vault can be
+        // held beside it. `core.get` takes the core mutably and would have made
+        // these two borrows a conflict; nothing here writes, so nothing here
+        // needs a mutable borrow.
+        let store: &crate::tokens::TokenStore = match bench.and_then(|b| core.sessions_get(b.id)) {
             Some(s) => &s.tokens,
             None => &nothing,
         };
+        // **And the blocks behind it** — the lead's ruling of 15 October. A
+        // turn read a week later has no bench to ask, and every word it
+        // carries is a block (089 rule 1). The question is built here, where
+        // the vault is in hand, and only a question crosses into `tokens`.
+        let vault = &core.vault;
+        let ask = |token: &str| vault.block_value_for(token);
+        let values = crate::tokens::Values::and_blocks(store, &ask);
         let mut rows = Vec::new();
         for turn in &body.turns {
-            let question = crate::tokens::restore(&turn.question, store, &turn.allowed);
-            let answer = crate::tokens::restore(&turn.answer, store, &turn.allowed);
+            let question = crate::tokens::restore(&turn.question, &values, &turn.allowed);
+            let answer = crate::tokens::restore(&turn.answer, &values, &turn.allowed);
             let mut unresolved = question.unknown;
             for name in answer.unknown {
                 if !unresolved.contains(&name) {
@@ -342,6 +360,200 @@ pub(crate) fn set_pack(number: u32, pack_id: String) -> ApiResult<()> {
     with_core(|core| core.vault.set_pack(number, &pack_id))
 }
 
+// ------------------------------------------------- the documents in the preview
+
+/// **Keep what is in the preview** — 089 rule 9, the owner's rule of 15 October:
+/// «عنصرنا هو البلوك لا المستند».
+///
+/// Documents are not saved — their owner has them on his own disk, unencrypted
+/// — with **one exception**: the document in the preview that has not left it,
+/// with the decisions made on it, so that a power cut finds it as it was left.
+/// It is sealed under the conversation's key, in the conversation's own file,
+/// exactly as the questions are.
+///
+/// **Called after the scan, at both import doors.** The marks the scan made are
+/// decisions too: a copy saved before the scan would re-open as a document
+/// nobody had looked at.
+///
+/// **Nothing happens without a conversation**, because the number is a number
+/// *in* a conversation and there is nowhere else to write it. The birth asks
+/// again (`take_the_names`), so a document opened before the session existed is
+/// kept the moment it does rather than lost — the same shape the blocks follow.
+///
+/// **`doc` or `chat` is read, not guessed:** `import_document` puts the file's
+/// name on the bench and `import_text` leaves it empty, so an empty name is a
+/// text that was written or pasted into the preview and a name is a file pulled
+/// from the computer. Two sequences, as the owner wrote them.
+pub(crate) fn keep_the_preview(core: &mut crate::session::Core, bench: u32) -> ApiResult<()> {
+    let Some(number) = core.open_conversation else { return Ok(()) };
+    let Some(s) = core.sessions_get(bench) else { return Ok(()) };
+    if s.original_str().is_empty() {
+        return Ok(());
+    }
+    // **Written again on every act, not once when the document arrived.** «A
+    // power cut finds it as it was left» is a promise about the *decisions*,
+    // and a copy written once would hold the state the document had before the
+    // person did anything to it. So this is called wherever a decision is
+    // written down — the same places the blocks are written
+    // (`ops::the_decisions_are_written`) — and it replaces the copy's marks
+    // rather than making a second document: the number this bench already
+    // holds is the one it keeps.
+    let already = s.kept;
+    let chat = already.map(|k| k.chat).unwrap_or_else(|| s.doc_name.is_empty());
+    let kept_now = crate::conversation::Kept {
+        // Filled in below, once the body says what the next number is.
+        number: 0,
+        chat,
+        name: s.doc_name.clone(),
+        text: s.original_str().to_string(),
+        kind: s.doc_kind,
+        pages: s.pages,
+        bytes: s.doc_bytes,
+        readable: s.readable,
+        marks: s
+            .protections
+            .iter()
+            .map(|p| crate::conversation::KeptMark {
+                start: p.start.min(u32::MAX as usize) as u32,
+                end: p.end.min(u32::MAX as usize) as u32,
+                token: p.token.clone(),
+                kind: p.kind,
+                scope: p.scope,
+                source: p.source,
+                detail: p.source_detail.clone(),
+                decided: p.decided,
+                orphaned: p.orphaned,
+            })
+            .collect(),
+        dismissed: s.dismissed.iter().map(|d| d.value.expose().to_string()).collect(),
+        at: crate::vault::model::now_seconds(),
+    };
+    let mut body = body(core, number)?.unwrap_or_default();
+    let given = match already {
+        Some(handle) => handle.number,
+        None => body.take_number(chat),
+    };
+    let fresh = crate::conversation::Kept { number: given, ..kept_now };
+    match body.kept.iter_mut().find(|k| k.number == given && k.chat == chat) {
+        // The same document, as it stands now. `at` is kept from the first
+        // save: it is when this document came into the preview, and a list
+        // ordered by it must not reshuffle itself every time a word is
+        // protected.
+        Some(kept) => {
+            let at = kept.at;
+            *kept = crate::conversation::Kept { at, ..fresh };
+        }
+        None => body.kept.push(fresh),
+    }
+    write_body(core, number, &body)?;
+    if let Some(s) = core.get(bench) {
+        s.kept = Some(crate::session::KeptHandle { number: given, chat });
+    }
+    Ok(())
+}
+
+/// **It left by a door: the copy is deleted and the number is retired** — rule 9.
+///
+/// Send, copy, pull, PDF: four presses on the glass, and in the core the three
+/// doors that take text out of the machine (G28's own census —
+/// `payload_to_take_out`, `send`, `ask_model`). Its **blocks stay in the
+/// vault**: what leaves the conversation is the copy of the document, never
+/// what the person protected.
+///
+/// The number is retired by never being handed out again: `Body::take_number`
+/// only goes up, so `doc1` is spent for ever and a stale reference to it cannot
+/// land on another document.
+///
+/// Infallible on purpose. The text has already left the machine by the time
+/// this runs, and a refusal here would say «it did not leave» about something
+/// that did. A failed write leaves the copy in the file, where the next exit or
+/// the next read finds it — never a lie about where the text is.
+pub(crate) fn the_preview_has_left(core: &mut crate::session::Core, bench: u32) {
+    let Some(number) = core.open_conversation else { return };
+    let Some(handle) = core.sessions_get(bench).and_then(|s| s.kept) else { return };
+    if let Ok(Some(mut body)) = body(core, number) {
+        let before = body.kept.len();
+        body.kept.retain(|k| !(k.number == handle.number && k.chat == handle.chat));
+        if body.kept.len() != before {
+            let _ = write_body(core, number, &body);
+        }
+    }
+    if let Some(s) = core.get(bench) {
+        s.kept = None;
+    }
+}
+
+/// **The documents one conversation is holding**, newest first.
+///
+/// A count and a handle and a name — never the text, which is what the
+/// preview is for. The rows are the core's: a screen that worked out «doc3»
+/// for itself would be a second place that knows how a number becomes a name.
+pub(crate) fn kept_documents(number: u32) -> ApiResult<Vec<crate::api::KeptRow>> {
+    with_core(|core| {
+        let Some(body) = body(core, number)? else { return Ok(Vec::new()) };
+        let mut rows: Vec<crate::api::KeptRow> = body
+            .kept
+            .iter()
+            .map(|k| crate::api::KeptRow {
+                number: k.number,
+                chat: k.chat,
+                handle: crate::conversation::Body::handle_of(k),
+                name: k.name.clone(),
+                at: k.at,
+                protected: k.marks.len().min(u32::MAX as usize) as u32,
+            })
+            .collect();
+        rows.sort_by(|a, b| b.at.cmp(&a.at).then(b.number.cmp(&a.number)));
+        Ok(rows)
+    })
+}
+
+/// **Rename one** — the name changes and the number never does (rule 9).
+pub(crate) fn rename_kept(number: u32, which: u32, chat: bool, name: String) -> ApiResult<()> {
+    let name = clean(&name)?;
+    with_core(|core| {
+        let Some(mut body) = body(core, number)? else {
+            return Err(ApiError::NotFound {
+                reason: format!("session {number} holds no documents"),
+            });
+        };
+        let Some(kept) = body.kept.iter_mut().find(|k| k.number == which && k.chat == chat) else {
+            return Err(ApiError::NotFound {
+                reason: format!("this session is not holding {}{which}", if chat { "chat" } else { "doc" }),
+            });
+        };
+        kept.name = name;
+        write_body(core, number, &body)
+    })
+}
+
+/// **Open one in the preview, as it was left** — rule 9.
+///
+/// The text goes back on the bench with every decision that was on it, and
+/// **nothing is scanned**: a rescan would ask again about the words the person
+/// answered, which is the whole of what «as it was left» rules out. The token
+/// store is rebuilt from the marks and the text — the value of a mark is the
+/// text under it, so there is one copy of every value and no second place for
+/// them to disagree.
+pub(crate) fn open_kept(number: u32, which: u32, chat: bool, bench: SessionId) -> ApiResult<()> {
+    with_core(|core| {
+        let Some(body) = body(core, number)? else {
+            return Err(ApiError::NotFound {
+                reason: format!("session {number} holds no documents"),
+            });
+        };
+        let Some(kept) = body.kept.iter().find(|k| k.number == which && k.chat == chat).cloned() else {
+            return Err(ApiError::NotFound {
+                reason: format!("this session is not holding {}{which}", if chat { "chat" } else { "doc" }),
+            });
+        };
+        let Some(s) = core.get(bench.id) else { return Err(ApiError::InvalidSession) };
+        s.put_back_the_preview(&kept);
+        s.kept = Some(crate::session::KeptHandle { number: which, chat });
+        Ok(())
+    })
+}
+
 // ------------------------------------------------------------------ the inside
 
 /// Give one bench the open session's names, and say how many moved.
@@ -367,7 +579,15 @@ fn take_the_names(
     // has waited for it rather than been lost — which is why the owner's
     // letter, protected whole before the session was born, is a vault full of
     // blocks one line later.
-    crate::ops::blocks_from_this_bench(core, bench.id);
+    // **The blocks and the preview's copy, in the one call that writes both** —
+    // 089 rules 1–2 and rule 9. This is the instant a conversation exists: a
+    // document opened before it had no conversation to be numbered in, and a
+    // word protected before it wore a name that has just been re-derived.
+    //
+    // A document that is leaving as the session is born spends a number and
+    // loses it again at the exit a line later, which is the rule as the owner
+    // wrote it: a number is spent for ever, and what left is not kept.
+    crate::ops::the_decisions_are_written(core, bench.id);
     moved
 }
 

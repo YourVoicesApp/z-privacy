@@ -330,6 +330,157 @@ else
   pass "G33 a protect outcome becomes a sentence in core/messages.dart and nowhere else"
 fi
 
+# ---------------------------------------------------------------- G36
+# **The saved document, and the census of the doors it leaves by** — 089 rule 9,
+# the owner's rule of 15 October: «عنصرنا هو البلوك لا المستند».
+#
+# Documents are not saved, with one exception: the one in the preview that has
+# not left it, kept with its decisions so a power cut finds it as it was left.
+# **Leaving by a door takes it out.** That is a law at every door text leaves
+# by, which is this house's most expensive shape — so the doors are
+# **enumerated from what they do**, not from a list somebody keeps: every
+# function that reaches a provider or hands the protected text to its caller.
+#
+# The census found a fourth door the first three were written without: Direct
+# Mode (`ask_model_directly`), where the person sends the text as it stands.
+DOORS=z_core/src/ops/mod.rs
+KEPT=z_core/src/ops/conversation.rs
+
+G36_OUT=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /crate::gateway::send\(|crate::providers::ask\(|payload_view\(build_payload\(/ { if (here != "") print here }
+' "$DOORS" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ "$G36_OUT" = "ask_model ask_model_directly payload_to_take_out send" ]; then
+  pass "G36 four doors take text out of this machine, and the list is the measured one"
+else
+  fail "G36 the doors that take text out are: $G36_OUT — expected «ask_model ask_model_directly payload_to_take_out send», so a door appeared that nobody measures"
+fi
+
+G36_STAYS=""
+for door in ask_model ask_model_directly payload_to_take_out send; do
+  if ! awk -v want="$door" '
+    $0 ~ "^(pub\\(crate\\) )?fn " want "\\(" { inside = 1 }
+    inside && /the_preview_has_left\(/ { found = 1 }
+    inside && /^}/ { inside = 0 }
+    END { exit(found ? 0 : 1) }
+  ' "$DOORS"; then
+    G36_STAYS="$G36_STAYS $door"
+  fi
+done
+if [ -z "$G36_STAYS" ]; then
+  pass "G36 every door that takes text out takes the preview's copy with it"
+else
+  fail "G36 these doors take text out and leave the saved copy behind:$G36_STAYS"
+fi
+
+# **And every door a document arrives by keeps it.** Asked the way G34 asks
+# about the scan: by reading which functions install a document's text, so a
+# third installer could not appear without this line moving.
+G36_IN=$(awk '
+  /^pub\(crate\) fn [a-z_]+\(/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /\.original = / { print here }
+' "$DOORS" | sort -u | tr '\n' ' ' | sed 's/ $//')
+G36_DRY=""
+for door in $G36_IN; do
+  if ! awk -v want="$door" '
+    $0 ~ "^pub\\(crate\\) fn " want "\\(" { inside = 1 }
+    inside && /keep_the_preview\(/ { found = 1 }
+    inside && /^}/ { inside = 0 }
+    END { exit(found ? 0 : 1) }
+  ' "$DOORS"; then
+    G36_DRY="$G36_DRY $door"
+  fi
+done
+if [ "$G36_IN" = "import_document import_text" ] && [ -z "$G36_DRY" ]; then
+  pass "G36 both doors a document arrives by keep it in the preview"
+else
+  fail "G36 a document arrives by «$G36_IN» and these keep nothing:$G36_DRY"
+fi
+
+# **One function takes a saved document away, and it is the one the doors
+# call.** A second path that could remove a person's preview would be a
+# deletion nobody measures — the same rule the blocks have (G35), for the same
+# reason: what the app keeps for a person is not removed by accident.
+# Outside the file that owns them, nothing may touch the list at all; inside
+# it, the one function below is read by name. Two halves, because «who owns
+# this» and «who else reaches in» are two questions.
+G36_GONE=$(grep -RnE '\.kept\s*\.\s*(retain|remove|clear|pop|drain|truncate|swap_remove)|\.kept\s*=\s*Vec::new' \
+             z_core/src --include='*.rs' 2>/dev/null | grep -v "^$KEPT:" || true)
+G36_OWNER=$(awk '
+  /^pub\(crate\) fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /body\.kept\.retain\(/ { print here }
+' "$KEPT" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ -z "$G36_GONE" ] && [ "$G36_OWNER" = "the_preview_has_left" ]; then
+  pass "G36 a saved document is taken away in one place, by the doors it left by"
+else
+  fail "G36 something else removes a saved document: «$G36_OWNER»"
+  printf '%s\n' "$G36_GONE" | sed 's/^/        /'
+fi
+
+# **The session file's own version moved, and the table says so.** The third of
+# the three numbers, and the one rule 9 spends: a saved document is in the
+# conversation's file, not in the vault's body.
+G36_FMT=$(grep -oE 'SESSION_FORMAT_VERSION: u16 = [0-9]+' z_core/src/conversation.rs | grep -oE '[0-9]+$')
+if [ "$G36_FMT" = "5" ] && grep -q "SESSION_FORMAT_VERSION\` = 5 |" z_core/src/vault/format.rs; then
+  pass "G36 the session file is at format 5, and the fence table names it"
+else
+  fail "G36 the session format is $G36_FMT and the fence table in vault/format.rs does not say so"
+fi
+
+# **And the copy follows the decisions.** «A power cut finds it as it was left»
+# is a promise about what the person *did*, so the copy is written again at
+# every act that writes a block — one call, read here by name, rather than a
+# copy written once when the document arrived and never again.
+if awk '
+  /^pub\(crate\) fn the_decisions_are_written\(/ { inside = 1 }
+  inside && /blocks_from_this_bench\(/ { blocks = 1 }
+  inside && /keep_the_preview\(/ { preview = 1 }
+  inside && /^}/ { inside = 0 }
+  END { exit(blocks && preview ? 0 : 1) }
+' "$DOORS"; then
+  pass "G36 one call writes both the blocks and the preview's copy, so a door cannot write half"
+else
+  fail "G36 the blocks and the saved document are written by two different calls, which is one chance per door to forget one"
+fi
+
+# **And every act that changes what is protected writes it down.** Enumerated
+# from what the functions do — the ones that add or take away a protection —
+# rather than from a list of names: «Here» was remembered by nobody until this
+# line was written, and it was a measured red (the copy held four marks where
+# the bench held three).
+G36_ACTS=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /\.protections\.push\(|\.protections\.retain\(/ { if (here != "") print here }
+' "$DOORS" | sort -u | grep -vE '^(protect_inner|protect_range)$' | tr '\n' ' ' | sed 's/ $//')
+G36_HALF=""
+for act in $G36_ACTS; do
+  if ! awk -v want="$act" '
+    $0 ~ "^(pub\\(crate\\) )?fn " want "\\(" { inside = 1 }
+    inside && /the_decisions_are_written\(/ { found = 1 }
+    inside && /^}/ { inside = 0 }
+    END { exit(found ? 0 : 1) }
+  ' "$DOORS"; then
+    G36_HALF="$G36_HALF $act"
+  fi
+done
+if [ "$G36_ACTS" = "add_alias undo_last_protection unprotect unprotect_every_place" ] && [ -z "$G36_HALF" ]; then
+  pass "G36 every act that adds or takes away a protection writes the copy and the blocks"
+else
+  fail "G36 acts that change what is protected: «$G36_ACTS» — and these write nothing down:$G36_HALF"
+fi
+
+# One surface opens a saved document, as one surface opens the door back (G34):
+# the shell, which is the only place that holds a bench.
+G36_DART=$(grep -Rn 'z\.openKeptDocument(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' || true)
+G36_DART_N=$(printf '%s\n' "$G36_DART" | grep -c . || true)
+if [ "$G36_DART_N" = "1" ] && printf '%s' "$G36_DART" | grep -q 'screens/shell.dart'; then
+  pass "G36 one surface opens a saved document, and it is the shell"
+else
+  fail "G36 a saved document is opened in $G36_DART_N place(s), expected one in screens/shell.dart:"
+  printf '%s\n' "$G36_DART" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G35
 # **A block is never deleted, and every word that takes a token becomes one** —
 # 089 rules 1, 2, 7 and 8, the owner's rule of 15 October 2026.
@@ -345,7 +496,10 @@ fi
 # the callers of the functions that mint, not by naming the doors we remember.
 VAULT=z_core/src/vault
 DOORS=z_core/src/ops/mod.rs
-BLOCKS=blocks_from_this_bench
+# **One name at the doors since 089 rule 9**: the blocks and the preview's copy
+# are written in one call, because they are one moment and two calls at each
+# door is one chance per door to write half of what happened.
+BLOCKS=the_decisions_are_written
 
 # **Nothing deletes a block.** Every way a `Vec` loses an element, named — and
 # the whole of `z_core/src` asked, not only the vault, because a block deleted
@@ -394,7 +548,7 @@ G35_DRY=""
 for door in answer_finding ask_model protect protect_all_matches protect_cell_in_lines scan set_question; do
   if ! awk -v want="$door" '
     $0 ~ "^(pub\\(crate\\) )?fn " want "\\(" { inside = 1 }
-    inside && /blocks_from_this_bench\(/ { found = 1 }
+    inside && /the_decisions_are_written\(/ { found = 1 }
     inside && /^}/ { inside = 0 }
     END { exit(found ? 0 : 1) }
   ' "$DOORS"; then
@@ -415,8 +569,8 @@ G35_SETTLERS=$(awk '
   /rescan_with\(/ { if (here != "" && here != "rescan_with") print here }
 ' "$DOORS" | sort -u | tr '\n' ' ' | sed 's/ $//')
 if [ "$G35_SETTLERS" = "rescan_keeping scan" ] \
-   && grep -q "blocks_from_this_bench" "$DOORS" \
-   && awk '/^fn rescan_keeping\(/ { inside = 1 } inside && /blocks_from_this_bench\(/ { found = 1 } inside && /^}/ { inside = 0 } END { exit(found ? 0 : 1) }' "$DOORS"; then
+   && grep -q "the_decisions_are_written" "$DOORS" \
+   && awk '/^fn rescan_keeping\(/ { inside = 1 } inside && /the_decisions_are_written\(/ { found = 1 } inside && /^}/ { inside = 0 } END { exit(found ? 0 : 1) }' "$DOORS"; then
   pass "G35 the settle is reached by scan and rescan_keeping, and both write the blocks"
 else
   fail "G35 the settle is reached from «$G35_SETTLERS» and one of them does not write the blocks"
@@ -430,6 +584,23 @@ if grep -A 12 'fn words_it_named' z_core/src/tokens.rs 2>/dev/null | grep -q 'AN
   pass "G35 the answer page's own word is dropped where the words a bench named are listed"
 else
   fail "G35 nothing stops «Zprivacy-svara» becoming a block, which would protect our own word in every document for ever"
+fi
+
+# **The blocks widen the lookup, never the allowed list** — the lead's ruling of
+# 15 October, in the one line that could ever break it. `restore` asks the
+# allowed list by itself and only then looks a value up, so a wider lookup
+# cannot widen what a turn may carry (G9). Read as an order, the way G32 reads
+# the law before `remember_in_vault`: a build where the value came first and
+# the list was checked after would pass every behaviour guard that happened not
+# to carry a foreign token.
+G35_GATE=$(awk '
+  /let allowed_here = / { seen = NR }
+  /values\.value_for\(/ { if (seen && NR > seen) print "ordered" }
+' z_core/src/tokens.rs | head -1)
+if [ "$G35_GATE" = "ordered" ]; then
+  pass "G35 the allowed list is read before a value is looked up, so the blocks cannot widen it"
+else
+  fail "G35 restore looks a value up without reading the allowed list first (G9), or the line moved"
 fi
 
 # **The sentence goes** — 089 rule 7. «Kept only while it is open» and «nothing
@@ -1572,7 +1743,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_direct_door_writes_what_it_sent_as_it_sent_it \
          an_answer_brought_back_from_outside_is_written_too \
          a_stored_turn_restores_only_what_its_payload_carried \
-         a_session_read_without_a_bench_names_what_it_cannot_resolve \
+         a_session_read_without_a_bench_reads_itself_back \
          a_send_with_no_session_open_is_not_refused_today \
          a_version_one_file_reads_with_no_allowed_list \
          the_saved_files_and_the_vault_do_not_share_a_folder \
@@ -1591,7 +1762,8 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_turn_remembers_which_file_it_was_about \
          text_the_person_typed_says_there_was_no_file \
          the_report_still_names_no_file_though_the_session_knows_it \
-         a_reopened_session_names_every_value_it_cannot_bring_back \
+         a_reopened_session_reads_its_own_history_back \
+         a_token_the_payload_never_allowed_stays_a_token \
          every_protected_word_comes_back_when_the_document_opens_again \
          a_language_written_with_no_document_open_is_the_one_the_document_is_read_with \
          a_language_this_build_does_not_know_is_refused_by_name \
@@ -1652,6 +1824,19 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          one_press_exempts_every_block_the_selection_spans \
          here_uncovers_every_place_the_selection_spans \
          a_block_of_two_words_stays_one_token_elsewhere \
+         the_preview_survives_a_restart_with_its_decisions \
+         the_copy_follows_every_decision \
+         a_second_document_takes_the_next_number \
+         going_back_keeps_it \
+         the_manual_door_takes_it_out \
+         the_send_door_takes_it_out \
+         the_model_door_takes_it_out \
+         the_direct_door_takes_it_out \
+         rename_changes_the_name_and_not_the_number \
+         a_document_opened_before_the_session_is_kept_at_the_birth \
+         an_older_session_holds_none \
+         a_saved_document_keeps_its_decisions \
+         a_format_four_file_holds_no_saved_document \
          a_block_keeps_its_tokens_and_its_exemptions; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"

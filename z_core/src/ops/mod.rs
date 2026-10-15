@@ -90,6 +90,10 @@ pub(crate) fn import_text(session: SessionId, text_in: String) -> ApiResult<Docu
     .ok_or(ApiError::InvalidSession)?;
     crate::session::bump_truth();
     the_scan_that_arrives_with_the_document(session)?;
+    // 089 rule 9, after the scan: the marks it just made are decisions too, and
+    // a copy saved before them would re-open as a document nobody had looked
+    // at. `import_text` leaves the name empty, so this one is a `chatN`.
+    with_core(|core| conversation::keep_the_preview(core, session.id))?;
     // Read **after** the scan: a view carries the marks, and a view with none
     // on it was the answer this door used to give about a document it had just
     // read.
@@ -156,6 +160,9 @@ pub(crate) fn import_document(
     // asking it: a .docx and a .pdf are read by a different reader and arrive
     // at the same session (item 3).
     the_scan_that_arrives_with_the_document(session)?;
+    // 089 rule 9, the same line at this door too — and this one carries the
+    // file's name, so it is a `docN`.
+    with_core(|core| conversation::keep_the_preview(core, session.id))?;
     with_session(session.id, view_of).ok_or(ApiError::InvalidSession)?
 }
 
@@ -598,7 +605,15 @@ pub(crate) fn payload_to_take_out(session: SessionId) -> ApiResult<PayloadView> 
         }
     })
     .ok_or(ApiError::InvalidSession)?;
-    payload_view(build_payload(session)?)
+    let out = payload_view(build_payload(session)?);
+    // **089 rule 9: it has left.** Copy, pull and the PDF all come through this
+    // door, and the copy in the conversation's file goes with the text — after
+    // the view is built, because a refusal above takes nothing out and must
+    // therefore take nothing away. The blocks stay in the vault.
+    if out.is_ok() {
+        with_core(|core| conversation::the_preview_has_left(core, session.id));
+    }
+    out
 }
 
 pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<AnswerId> {
@@ -627,7 +642,7 @@ pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<Ans
 
     // The raw answer stays here. What the UI gets is an id; what it can then ask
     // for is the restored view, or the model's own words, both from this store.
-    ingest_answer(
+    let out = ingest_answer(
         handle,
         raw.text,
         // This door does not go through the gateway, so there is nothing to
@@ -636,7 +651,10 @@ pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<Ans
             provider: provider.id.clone(),
             model: login.model.clone(),
         },
-    )
+    );
+    // 089 rule 9: the text has left this machine, so the preview's copy goes.
+    with_core(|core| conversation::the_preview_has_left(core, handle.session));
+    out
 }
 
 /// The protected door: a handle, a model, and what the workspace has to say.
@@ -677,7 +695,7 @@ pub(crate) fn ask_model(
     // left the machine wearing it, so it is a block like any other — and the
     // answer that comes back carrying that token is read by the blocks after
     // this bench is gone, which is the whole complaint the rule answers.
-    with_core(|core| blocks_from_this_bench(core, handle.session));
+    with_core(|core| the_decisions_are_written(core, handle.session));
     allow_tokens(handle, &safe.tokens)?;
     let workspace = safe.text;
     let answer = crate::gateway::send(crate::gateway::Request {
@@ -699,6 +717,9 @@ pub(crate) fn ask_model(
             model: answer.usage.model_id.clone(),
         },
     )?;
+    // 089 rule 9: the document left through the gateway, so the preview's copy
+    // goes with it. The blocks it made stay in the vault.
+    with_core(|core| conversation::the_preview_has_left(core, handle.session));
     Ok(crate::api::ModelAnswer {
         answer: Some(id),
         text: answer.text,
@@ -720,7 +741,7 @@ pub(crate) fn ask_model(
 /// screen that worked either of them out for itself would be a second scanner.
 pub(crate) fn set_question(session: SessionId, text: String) -> ApiResult<QuestionView> {
     let safe = protect_lines(session.id, vec![text.clone()])?;
-    with_core(|core| blocks_from_this_bench(core, session.id));
+    with_core(|core| the_decisions_are_written(core, session.id));
     let question_safe = safe.text.first().cloned().unwrap_or_default();
     let tokens = safe.tokens.clone();
     with_session(session.id, |s| {
@@ -1015,6 +1036,14 @@ pub(crate) fn ask_model_directly(
             )
         })?;
     }
+    // **089 rule 9: the document left by a door, and this is the fourth one.**
+    //
+    // Found by the census the lead asked for rather than by memory: the three
+    // doors that take *protected* text out are the ones G28 enumerates, and
+    // this one takes the text **as it stands**, by the person's own deliberate
+    // choice. It is still a door the document leaves by, so the preview's copy
+    // goes with it — and its blocks stay in the vault like every other door's.
+    with_core(|core| conversation::the_preview_has_left(core, session.id));
     Ok(crate::api::ModelAnswer {
         answer: None,
         text: answer.text,
@@ -1912,7 +1941,7 @@ pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) 
     let outcome = protect_inner(session, span, scope, kind, every_place)?;
     // 089 rule 1, before the displayed truth moves: the count on the vault
     // screen is one of the facts that just changed.
-    with_core(|core| blocks_from_this_bench(core, session.id));
+    with_core(|core| the_decisions_are_written(core, session.id));
     crate::session::bump_truth();
     Ok(outcome)
 }
@@ -1967,7 +1996,7 @@ pub(crate) fn protect_all_matches(session: SessionId, span: Span, scope: Scope, 
     }
     remember_in_vault(session, span, scope, kind)?;
     let outcome = protect_inner(session, span, scope, kind, true)?;
-    with_core(|core| blocks_from_this_bench(core, session.id));
+    with_core(|core| the_decisions_are_written(core, session.id));
     crate::session::bump_truth();
     Ok(outcome)
 }
@@ -2181,7 +2210,7 @@ pub(crate) fn protect_cell_in_lines(
             _ => {}
         }
     }
-    with_core(|core| blocks_from_this_bench(core, session.id));
+    with_core(|core| the_decisions_are_written(core, session.id));
     crate::session::bump_truth();
     // **Nothing was protected and a token is why**, which is a different thing
     // from «every cell was already protected» and gets the sentence that says
@@ -2371,7 +2400,7 @@ fn protect_range(
 /// tells the glass that the selection spans two protected items — so the act
 /// follows the selection. One mark is one item, so a click is unchanged.
 pub(crate) fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome> {
-    with_session(session.id, |s| {
+    let outcome = with_session(session.id, |s| {
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
         let touched: Vec<(usize, usize, String)> = s
             .protections
@@ -2414,7 +2443,13 @@ pub(crate) fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome
             created_entity: None,
         })
     })
-    .ok_or(ApiError::InvalidSession)?
+    .ok_or(ApiError::InvalidSession)?;
+    // **089 rule 9, and rule 6's other half**: «Here» uncovers one place, and
+    // it is remembered with the saved document. The blocks do not move — a
+    // block is never deleted — and the copy in the preview now has one fewer
+    // mark, which is what the person did.
+    with_core(|core| the_decisions_are_written(core, session.id));
+    outcome
 }
 
 /// **Every place that carries these tokens, in this conversation** — 083,
@@ -2505,6 +2540,8 @@ pub(crate) fn unprotect_every_place(session: SessionId, span: Span) -> ApiResult
             }
         });
     }
+    // And the copy in the preview, which now holds fewer marks (rule 9).
+    with_core(|core| the_decisions_are_written(core, session.id));
     outcome
 }
 
@@ -2544,12 +2581,13 @@ pub(crate) fn undo_last_protection(session: SessionId) -> ApiResult<UndoOutcome>
         })
     })
     .ok_or(ApiError::InvalidSession)?;
+    with_core(|core| the_decisions_are_written(core, session.id));
     crate::session::bump_truth();
     outcome
 }
 
 pub(crate) fn add_alias(session: SessionId, token: String, alias: String) -> ApiResult<u32> {
-    with_session(session.id, |s| {
+    let applied = with_session(session.id, |s| {
         if !s.tokens.add_alias(&token, alias.clone()) {
             return Err(ApiError::UnknownToken);
         }
@@ -2586,7 +2624,11 @@ pub(crate) fn add_alias(session: SessionId, token: String, alias: String) -> Api
         }
         Ok(applied)
     })
-    .ok_or(ApiError::InvalidSession)?
+    .ok_or(ApiError::InvalidSession)?;
+    // A spelling taught is places protected, so it is a decision like any
+    // other (rule 9) — and the word is a block like any other (rule 1).
+    with_core(|core| the_decisions_are_written(core, session.id));
+    applied
 }
 
 // ---------------------------------------------------------------- tokens
@@ -2827,14 +2869,21 @@ pub(crate) fn restoration(session: SessionId, answer: AnswerId) -> ApiResult<cra
             ),
         });
     }
-    with_session(session.id, |s| match s.answers.get(&answer.id) {
-        Some(answer) => {
-            let payload = s.payloads.get(&answer.payload).ok_or(ApiError::InvalidHandle)?;
-            Ok(restore(&answer.raw, &s.tokens, &payload.allowed_token_ids))
-        }
-        None => Err(ApiError::UnknownToken),
+    // **The bench's store, and the blocks behind it** — the same ruling the
+    // cold read of a turn follows (`ops::conversation::turns`): an answer taken
+    // in a conversation whose bench is gone resolves from the vault's blocks,
+    // and a token the payload did not allow stays a token however well they
+    // know it. `with_core` rather than `with_session` because the vault has to
+    // be in hand beside the store, and both are read, never written.
+    with_core(|core| {
+        let s = core.sessions_get(session.id).ok_or(ApiError::InvalidSession)?;
+        let kept = s.answers.get(&answer.id).ok_or(ApiError::UnknownToken)?;
+        let payload = s.payloads.get(&kept.payload).ok_or(ApiError::InvalidHandle)?;
+        let vault = &core.vault;
+        let ask = |token: &str| vault.block_value_for(token);
+        let values = crate::tokens::Values::and_blocks(&s.tokens, &ask);
+        Ok(restore(&kept.raw, &values, &payload.allowed_token_ids))
     })
-    .ok_or(ApiError::InvalidSession)?
 }
 
 pub(crate) fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String> {
@@ -2973,6 +3022,27 @@ pub(crate) fn blocks_from_this_bench(core: &mut crate::session::Core, session: u
     core.vault.remember_blocks(&words)
 }
 
+/// **What just happened is written down** — 089 rules 1–2 and rule 9, in one
+/// call because they are one moment.
+///
+/// A person protected a word, or confirmed a suggestion, or a scan put a value
+/// back. Two things are then true and both have to be on disk: the word is a
+/// **block** in the vault, for ever; and the document in the preview now has
+/// one more decision on it, so a power cut must find it with that decision.
+///
+/// **One function rather than two calls at seven doors.** The list of doors
+/// that can make a decision is the same list for both facts, and two calls at
+/// each is one chance per door to write half of what happened. G35 reads this
+/// name in every door's body, and G36 reads that this is where both are
+/// written.
+pub(crate) fn the_decisions_are_written(core: &mut crate::session::Core, session: u32) {
+    blocks_from_this_bench(core, session);
+    // The copy is replaced, never added to: the bench holds the number of the
+    // document it is working on. A failure to write it leaves the copy as it
+    // was — older, never wrong — and the next act writes it again.
+    let _ = conversation::keep_the_preview(core, session);
+}
+
 pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
     // Before the scan, because the scan protects what the vault already knows
     // and those tokens must carry the derived name like every other.
@@ -2996,7 +3066,7 @@ pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
         mark_scanned(s);
         Ok(report_of(s, vault_state))
     })?;
-    with_core(|core| blocks_from_this_bench(core, session.id));
+    with_core(|core| the_decisions_are_written(core, session.id));
     crate::session::bump_truth();
     Ok(report)
 }
@@ -3434,7 +3504,7 @@ pub(crate) fn answer_finding(session: SessionId, finding: u32, answer: FindingAn
         }
     })
     .ok_or(ApiError::InvalidSession)?;
-    with_core(|core| blocks_from_this_bench(core, session.id));
+    with_core(|core| the_decisions_are_written(core, session.id));
     crate::session::bump_truth();
     report
 }
@@ -3546,7 +3616,7 @@ fn rescan_keeping(session: SessionId, _pack: &str) -> ApiResult<(u32, u32)> {
         // 089 rule 1, for both switches at once: this is the one call a changed
         // pack and a changed profile both come through, and a rescan protects
         // what the new layers claim.
-        blocks_from_this_bench(core, session.id);
+        the_decisions_are_written(core, session.id);
         Ok((kept_tokens, orphaned))
     })
 }

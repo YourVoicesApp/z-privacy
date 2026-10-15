@@ -313,14 +313,18 @@ fn a_stored_turn_restores_only_what_its_payload_carried() {
     );
 }
 
-/// **Read without the document that made it, a conversation resolves nothing —
-/// and says so.**
+/// **Read without the document that made it, a conversation reads itself back
+/// from the blocks** — the lead's ruling of 15 October: `restore(store ∪
+/// blocks, allowed)`.
 ///
-/// The Sessions room may be opened with no document loaded. The honest answer
-/// there is every token by name in `unresolved`, never the stored form printed
-/// as though it were prose.
+/// The Sessions room may be opened with no document loaded. Until 15 October
+/// the honest answer there was every token by name in `unresolved`, because
+/// nothing was kept; now every word that took a token is a block in the vault,
+/// so the room reads the exchange and not a row of names. What is still
+/// unresolved is what the allowed list refuses, which is measured in
+/// `a_token_the_payload_never_allowed_stays_a_token` and in the guard above.
 #[test]
-fn a_session_read_without_a_bench_names_what_it_cannot_resolve() {
+fn a_session_read_without_a_bench_reads_itself_back() {
     let _g = serial();
     fresh_vault("no-bench");
     let b = bench();
@@ -331,12 +335,13 @@ fn a_session_read_without_a_bench_names_what_it_cannot_resolve() {
     let turns = conversation_turns(row.number, None).expect("turns");
     assert_eq!(turns.len(), 1, "the turn is in the file either way");
     assert!(
-        !turns[0].unresolved.is_empty(),
-        "with no store nothing can be put back, and that is said rather than hidden"
+        turns[0].unresolved.is_empty(),
+        "read with no bench, the blocks did not answer: {:?}",
+        turns[0].unresolved
     );
     assert!(
-        !read(&turns[0].answer).contains(NAME),
-        "no name may appear without the store that holds it"
+        read(&turns[0].answer).contains(NAME),
+        "the name did not come back from its block, with no bench in the world"
     );
 }
 
