@@ -79,6 +79,7 @@ void main() {
           ground: ground,
           version: 'z_core 0.1.0',
           onImport: () {},
+          onReadBack: () {},
           onType: (_) {},
           onAsk: (_) async {},
           onVault: () {},

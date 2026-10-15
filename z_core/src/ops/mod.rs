@@ -182,28 +182,65 @@ pub(crate) fn returning_document(session: SessionId) -> ApiResult<crate::api::Re
             .ok_or(ApiError::InvalidSession)?
             .original_str()
             .to_string();
-        let read = crate::returning::returning_document(core, &text);
-        Ok(crate::api::ReturnedDocument {
-            restored: read.restored,
-            tokens: read.tokens,
-            vault: read.vault,
-            names: read.names,
-            brought_back: read.brought_back,
-            unresolved: read.unresolved,
-            conversations: read
-                .conversations
-                .into_iter()
-                .map(|c| crate::api::ReturnedFrom {
-                    number: c.number,
-                    name: c.name,
-                    brought_back: c.brought_back,
-                    unresolved: c.unresolved,
-                    answer_page: c.answer_page,
-                })
-                .collect(),
-            unknown_namespaces: read.unknown_namespaces,
-        })
+        Ok(as_a_reading(crate::returning::returning_document(core, &text)))
     })
+}
+
+/// **z-pdf, the door back: a file read into its own names, with no bench** —
+/// 079 rule 3, built as 089 rule 5, and the owner's own words of 15 October:
+/// «خيار يدعى z-pdf يقوم بعكس العملية، يبحث عن الكود ليحوله إلى اسم».
+///
+/// **It takes no session, and that is the whole of «never scanned, never
+/// protected»** (079 rule 5, *forbidden, absolutely*). A flag on an import
+/// door would have made the law something a caller remembers at a door that
+/// protects by law — item 3's own shape, read backwards. With no session there
+/// is no bench: nothing to install a document on, nothing for a protection to
+/// land on, and nothing to scan. G34 reads the signature, not the promise.
+///
+/// The bytes are read by the same readers every other door uses — a .pdf, a
+/// .docx, a text file — and refused by name when they cannot be read honestly,
+/// which is why the file's own name is not a parameter: the refusal names the
+/// cause, and the screen that holds the file names the file.
+///
+/// `name_tokens_from_the_vault` is **not** called, and cannot be: it names one
+/// bench's mint, and there is no bench here. A bench of the conversation that
+/// is still in memory is read through `core.benches()` exactly as the other
+/// door reads it, and a bench that never joined a conversation carries a
+/// random namespace no token of a z-pdf can match anyway.
+pub(crate) fn read_a_document_that_came_back(bytes: Vec<u8>, kind: DocumentKind) -> ApiResult<crate::api::ReturnedDocument> {
+    let extracted = crate::documents::extract(&bytes, kind)?;
+    // The file's bytes are dropped at the end of this call, and the text with
+    // them: nothing is written anywhere (G15), and no session holds either.
+    Ok(with_core(|core| {
+        as_a_reading(crate::returning::returning_document(core, &extracted.text))
+    }))
+}
+
+/// One reading, worded once — the two doors that read a returning document
+/// hand back the same shape, so they cannot come to differ in what they report
+/// about it. The seam itself is `returning::returning_document`; this is only
+/// the crate's own answer put into the contract's words.
+fn as_a_reading(read: crate::returning::Returned) -> crate::api::ReturnedDocument {
+    crate::api::ReturnedDocument {
+        restored: read.restored,
+        tokens: read.tokens,
+        vault: read.vault,
+        names: read.names,
+        brought_back: read.brought_back,
+        unresolved: read.unresolved,
+        conversations: read
+            .conversations
+            .into_iter()
+            .map(|c| crate::api::ReturnedFrom {
+                number: c.number,
+                name: c.name,
+                brought_back: c.brought_back,
+                unresolved: c.unresolved,
+                answer_page: c.answer_page,
+            })
+            .collect(),
+        unknown_namespaces: read.unknown_namespaces,
+    }
 }
 
 /// Gather the names this document uses that no dictionary knows.

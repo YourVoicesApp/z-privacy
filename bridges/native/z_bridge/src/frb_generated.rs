@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -917667279;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1541665242;
 
 // Section: executor
 
@@ -2211,6 +2211,35 @@ fn wire__z_core__api__question_impl(
             move |context| {
                 transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
                     let output_ok = z_core::api::question(api_session)?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__z_core__api__read_a_document_that_came_back_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "read_a_document_that_came_back",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_)
+            };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_bytes = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_kind = <crate::api::mirrors::DocumentKind>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, crate::api::mirrors::ApiError>((move || {
+                    let output_ok = z_core::api::read_a_document_that_came_back(api_bytes, api_kind)?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -6604,49 +6633,50 @@ fn pde_ffi_dispatcher_primary_impl(
         73 => wire__z_core__api__provider_snapshot_impl(port, ptr, rust_vec_len, data_len),
         74 => wire__z_core__api__providers_impl(port, ptr, rust_vec_len, data_len),
         75 => wire__z_core__api__question_impl(port, ptr, rust_vec_len, data_len),
-        76 => wire__z_core__api__remove_value_alias_impl(port, ptr, rust_vec_len, data_len),
-        77 => wire__z_core__api__rename_entity_impl(port, ptr, rust_vec_len, data_len),
-        78 => wire__z_core__api__rename_profile_impl(port, ptr, rust_vec_len, data_len),
-        79 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
-        80 => wire__z_core__api__returning_document_impl(port, ptr, rust_vec_len, data_len),
-        81 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
-        82 => wire__z_core__api__reveal_state_impl(port, ptr, rust_vec_len, data_len),
-        83 => wire__z_core__api__reveal_value_impl(port, ptr, rust_vec_len, data_len),
-        84 => wire__z_core__api__revealed_tokens_impl(port, ptr, rust_vec_len, data_len),
-        85 => wire__z_core__api__rule_sets_impl(port, ptr, rust_vec_len, data_len),
-        86 => wire__z_core__api__save_settings_impl(port, ptr, rust_vec_len, data_len),
-        87 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
-        88 => wire__z_core__api__search_vault_impl(port, ptr, rust_vec_len, data_len),
-        89 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
-        90 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
-        91 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
-        92 => wire__z_core__api__set_profile_languages_impl(port, ptr, rust_vec_len, data_len),
-        93 => wire__z_core__api__set_question_impl(port, ptr, rust_vec_len, data_len),
-        94 => wire__z_core__api__set_user_list_enabled_impl(port, ptr, rust_vec_len, data_len),
-        95 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
-        96 => wire__z_core__api__settings_impl(port, ptr, rust_vec_len, data_len),
-        97 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
-        98 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
-        99 => wire__z_core__api__taught_names_impl(port, ptr, rust_vec_len, data_len),
-        100 => wire__z_core__api__teach_exception_impl(port, ptr, rust_vec_len, data_len),
-        101 => wire__z_core__api__teach_label_rule_impl(port, ptr, rust_vec_len, data_len),
-        102 => wire__z_core__api__teach_name_impl(port, ptr, rust_vec_len, data_len),
-        103 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
-        104 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
-        105 => wire__z_core__api__unprotect_impl(port, ptr, rust_vec_len, data_len),
-        106 => wire__z_core__api__unprotect_every_place_impl(port, ptr, rust_vec_len, data_len),
-        107 => wire__z_core__api__user_list_plan_impl(port, ptr, rust_vec_len, data_len),
-        108 => wire__z_core__api__user_lists_impl(port, ptr, rust_vec_len, data_len),
-        109 => wire__z_core__api__user_names_impl(port, ptr, rust_vec_len, data_len),
-        110 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        111 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        112 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
-        113 => wire__z_core__api__vault_snapshot_impl(port, ptr, rust_vec_len, data_len),
-        114 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
-        115 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
-        116 => wire__z_core__api__window_focus_lost_impl(port, ptr, rust_vec_len, data_len),
-        117 => wire__z_core__api__window_hidden_impl(port, ptr, rust_vec_len, data_len),
-        118 => wire__z_core__api__workspace_snapshot_impl(port, ptr, rust_vec_len, data_len),
+        76 => wire__z_core__api__read_a_document_that_came_back_impl(port, ptr, rust_vec_len, data_len),
+        77 => wire__z_core__api__remove_value_alias_impl(port, ptr, rust_vec_len, data_len),
+        78 => wire__z_core__api__rename_entity_impl(port, ptr, rust_vec_len, data_len),
+        79 => wire__z_core__api__rename_profile_impl(port, ptr, rust_vec_len, data_len),
+        80 => wire__z_core__api__restored_view_impl(port, ptr, rust_vec_len, data_len),
+        81 => wire__z_core__api__returning_document_impl(port, ptr, rust_vec_len, data_len),
+        82 => wire__z_core__api__reveal_impl(port, ptr, rust_vec_len, data_len),
+        83 => wire__z_core__api__reveal_state_impl(port, ptr, rust_vec_len, data_len),
+        84 => wire__z_core__api__reveal_value_impl(port, ptr, rust_vec_len, data_len),
+        85 => wire__z_core__api__revealed_tokens_impl(port, ptr, rust_vec_len, data_len),
+        86 => wire__z_core__api__rule_sets_impl(port, ptr, rust_vec_len, data_len),
+        87 => wire__z_core__api__save_settings_impl(port, ptr, rust_vec_len, data_len),
+        88 => wire__z_core__api__scan_impl(port, ptr, rust_vec_len, data_len),
+        89 => wire__z_core__api__search_vault_impl(port, ptr, rust_vec_len, data_len),
+        90 => wire__z_core__api__send_impl(port, ptr, rust_vec_len, data_len),
+        91 => wire__z_core__api__session_revision_impl(port, ptr, rust_vec_len, data_len),
+        92 => wire__z_core__api__set_data_dir_impl(port, ptr, rust_vec_len, data_len),
+        93 => wire__z_core__api__set_profile_languages_impl(port, ptr, rust_vec_len, data_len),
+        94 => wire__z_core__api__set_question_impl(port, ptr, rust_vec_len, data_len),
+        95 => wire__z_core__api__set_user_list_enabled_impl(port, ptr, rust_vec_len, data_len),
+        96 => wire__z_core__api__set_value_impl(port, ptr, rust_vec_len, data_len),
+        97 => wire__z_core__api__settings_impl(port, ptr, rust_vec_len, data_len),
+        98 => wire__z_core__api__switch_pack_impl(port, ptr, rust_vec_len, data_len),
+        99 => wire__z_core__api__switch_profile_impl(port, ptr, rust_vec_len, data_len),
+        100 => wire__z_core__api__taught_names_impl(port, ptr, rust_vec_len, data_len),
+        101 => wire__z_core__api__teach_exception_impl(port, ptr, rust_vec_len, data_len),
+        102 => wire__z_core__api__teach_label_rule_impl(port, ptr, rust_vec_len, data_len),
+        103 => wire__z_core__api__teach_name_impl(port, ptr, rust_vec_len, data_len),
+        104 => wire__z_core__api__test_provider_impl(port, ptr, rust_vec_len, data_len),
+        105 => wire__z_core__api__undo_last_protection_impl(port, ptr, rust_vec_len, data_len),
+        106 => wire__z_core__api__unprotect_impl(port, ptr, rust_vec_len, data_len),
+        107 => wire__z_core__api__unprotect_every_place_impl(port, ptr, rust_vec_len, data_len),
+        108 => wire__z_core__api__user_list_plan_impl(port, ptr, rust_vec_len, data_len),
+        109 => wire__z_core__api__user_lists_impl(port, ptr, rust_vec_len, data_len),
+        110 => wire__z_core__api__user_names_impl(port, ptr, rust_vec_len, data_len),
+        111 => wire__z_core__api__vault_change_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        112 => wire__z_core__api__vault_create_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        113 => wire__z_core__api__vault_lock_impl(port, ptr, rust_vec_len, data_len),
+        114 => wire__z_core__api__vault_snapshot_impl(port, ptr, rust_vec_len, data_len),
+        115 => wire__z_core__api__vault_state_impl(port, ptr, rust_vec_len, data_len),
+        116 => wire__z_core__api__vault_unlock_with_passphrase_impl(port, ptr, rust_vec_len, data_len),
+        117 => wire__z_core__api__window_focus_lost_impl(port, ptr, rust_vec_len, data_len),
+        118 => wire__z_core__api__window_hidden_impl(port, ptr, rust_vec_len, data_len),
+        119 => wire__z_core__api__workspace_snapshot_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }

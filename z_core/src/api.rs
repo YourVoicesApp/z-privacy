@@ -2492,6 +2492,34 @@ pub fn returning_document(session: SessionId) -> ApiResult<ReturnedDocument> {
     crate::ops::returning_document(session)
 }
 
+/// **z-pdf, the explicit door back** — 079 rule 3, decided on 13 October and
+/// asked for again by the owner on 15 October: «نحن قررنا إضافة خيار يدعى
+/// z-pdf يقوم بعكس العملية… نفس هذا الزر نحتاجه الآن».
+///
+/// A file in, the reading out. The same answer [`returning_document`] gives
+/// about the document on a bench — the same three sources, the same counts,
+/// the same `Piece` law — for a file that is **not** on a bench and never
+/// becomes one.
+///
+/// **The mode is restore, and it is restore by construction.** There is no
+/// `session` here to protect anything on, so «never re-protected and never
+/// re-scanned as fresh content» (079 rule 5) is not a branch this door takes
+/// but a sentence it cannot say. That is the one shape that survives the next
+/// person who adds a door: a flag would have to be remembered, and this cannot
+/// be forgotten. Gate G34 reads this signature for exactly that reason.
+///
+/// **A locked vault is a standing door** (079 rule 8): the reading comes back
+/// with `vault` saying so, every token still counted and named, and nothing
+/// brought back — because the namespace is derived from a key this machine
+/// cannot reach while it is shut.
+///
+/// The file's name is not asked for: the reading is about what is written in
+/// the file, a refusal names its own cause, and the screen that chose the file
+/// is the one place that knows what it was called.
+pub fn read_a_document_that_came_back(bytes: Vec<u8>, kind: DocumentKind) -> ApiResult<ReturnedDocument> {
+    crate::ops::read_a_document_that_came_back(bytes, kind)
+}
+
 /// The answer exactly as it arrived, tokens and all.
 pub fn ai_view(session: SessionId, answer: AnswerId) -> ApiResult<String> {
     crate::ops::ai_view(session, answer)
