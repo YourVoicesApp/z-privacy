@@ -227,6 +227,12 @@ void main() {
       'payloadView': () => payloadView(handle: handle),
       'payloadToTakeOut': () => payloadToTakeOut(session: session),
       'returningDocument': () => returningDocument(session: session),
+      // The door back takes no session: a file in, the reading out. G34 reads
+      // that signature, and this walks it.
+      'readADocumentThatCameBack': () => readADocumentThatCameBack(
+        bytes: Uint8List.fromList('Herr __Z_7f3a_PERSON_9b21__'.codeUnits),
+        kind: DocumentKind.txt,
+      ),
       'send': () => send(handle: handle, provider: provider),
       'ingestAnswer': () => ingestAnswer(payload: handle, raw: 'x'),
       'restoredView': () => restoredView(session: session, answer: answer),
@@ -378,7 +384,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 116, reason: 'the contract has 116 functions');
+    expect(calls.length, 117, reason: 'the contract has 117 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

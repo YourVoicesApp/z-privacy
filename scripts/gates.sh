@@ -330,6 +330,79 @@ else
   pass "G33 a protect outcome becomes a sentence in core/messages.dart and nowhere else"
 fi
 
+# ---------------------------------------------------------------- G34
+# **The door back has no seat** — 079 rule 3, built as 089 rule 5.
+#
+# «The mode is RESTORE, never protection» (079 rule 3), and «a returning
+# document is never re-protected and never re-scanned as fresh content»
+# (rule 5, *forbidden, absolutely*). A flag on an import door would make that a
+# thing somebody has to remember at a door that already protects by law — the
+# shape item 3 of 14 October was built to end, read the other way round.
+#
+# So the door takes **no session**: there is no bench for a protection to land
+# on, no `s.original` to install, and nothing to scan. The law is a state the
+# code cannot express rather than a branch that has to be taken, which is the
+# climb `make_the_wrong_state_unrepresentable` names — and this gate reads the
+# signature, the body and the one surface that asks.
+DOORS=z_core/src/ops/mod.rs
+BACK=read_a_document_that_came_back
+# The signature, in the contract: a door with a seat in it would be a door that
+# can protect, whatever its body says today.
+G34_SIG=$(grep -n "^pub fn $BACK(" "$API_FILES_FIRST" 2>/dev/null || true)
+if [ "$(printf '%s\n' "$G34_SIG" | grep -c .)" != "1" ]; then
+  fail "G34 the contract declares the door back $(printf '%s\n' "$G34_SIG" | grep -c .) time(s), expected one"
+elif printf '%s' "$G34_SIG" | grep -q 'SessionId'; then
+  fail "G34 the door back takes a session, so a returning document can be protected on one:"
+  printf '%s\n' "$G34_SIG" | sed 's/^/        /'
+else
+  pass "G34 the door back takes no session: there is no bench to protect on"
+fi
+
+# And its body: it reads the file and hands back the reading. Not one call that
+# scans, protects or installs a document — each of those is named, because
+# «it does not do that today» is not a measurement.
+G34_BODY=$(awk -v d="$BACK" '
+  $0 ~ "^pub\\(crate\\) fn " d "\\(" {inside=1}
+  inside && /^}/ {print; inside=0; next}
+  inside {print}
+' "$DOORS")
+G34_DID=$(printf '%s\n' "$G34_BODY" \
+          | grep -nE '(^|[^a-z_])(scan|the_scan_that_arrives_with_the_document|protect|protect_inner|protect_range|import_text|import_document)\(' || true)
+if [ -z "$G34_BODY" ]; then
+  fail "G34 the door back is not built in $DOORS"
+elif [ -n "$G34_DID" ]; then
+  fail "G34 the door back scans or protects what came back:"
+  printf '%s\n' "$G34_DID" | sed 's/^/        /'
+else
+  pass "G34 the door back only reads: it neither scans nor protects"
+fi
+
+# **Every way a document gets onto a bench scans it.** G29 asks the two import
+# doors by name; this asks the question the other way round, so that a third
+# door could not install a document without anybody checking it — the
+# enumeration `a_control_that_fails_to_bite_is_a_finding` asks for.
+G34_INSTALLERS=$(awk '
+  /^pub\(crate\) fn [a-z_]+\(/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /\.original = / { print here }
+' "$DOORS" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ "$G34_INSTALLERS" = "import_document import_text" ]; then
+  pass "G34 a document is installed on a bench by the two import doors only, and both scan (G29)"
+else
+  fail "G34 a document's text is installed on a bench by: $G34_INSTALLERS — G29 checks import_text and import_document, so anything else is a door nobody measures"
+fi
+
+# One surface asks it, as one surface asks whether a document came back (G32):
+# the «z-pdf» entry in the + menu, and no second door of its own.
+G34_DART=$(grep -Rn 'z\.readADocumentThatCameBack(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' || true)
+G34_DART_N=$(printf '%s\n' "$G34_DART" | grep -c . || true)
+if [ "$G34_DART_N" = "1" ] && printf '%s' "$G34_DART" | grep -q 'screens/shell.dart'; then
+  pass "G34 one surface opens the door back, and it is the shell's «z-pdf» entry"
+else
+  fail "G34 the door back is opened in $G34_DART_N place(s), expected one in screens/shell.dart:"
+  printf '%s\n' "$G34_DART" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G29
 # **A document arrives scanned, through every door it can arrive by** — the
 # detection round of 14 October, item 3.
@@ -1431,7 +1504,13 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_document_from_another_machine_says_so \
          two_namespaces_are_two_conversations \
          the_door_only_reads \
-         an_ordinary_document_is_not_one; do
+         an_ordinary_document_is_not_one \
+         the_door_back_reads_a_file_with_no_bench_of_its_own \
+         the_door_back_brings_a_taught_value_back_after_the_bench_is_gone \
+         the_door_back_reads_a_pdf_and_a_text_file_the_same_way \
+         the_door_back_leaves_the_bench_and_the_vault_untouched \
+         a_locked_vault_leaves_the_door_back_standing \
+         a_file_the_door_back_cannot_read_is_refused_by_name; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

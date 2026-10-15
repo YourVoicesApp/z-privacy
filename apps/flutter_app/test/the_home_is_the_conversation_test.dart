@@ -94,6 +94,7 @@ Widget _home(Ground ground, Workbench? chat, {void Function(String)? onType}) =>
         version: 'z_core 0.1.0',
         chat: chat,
         onImport: () {},
+        onReadBack: () {},
         onType: onType ?? (_) {},
         onAsk: (_) async {},
         onVault: () {},

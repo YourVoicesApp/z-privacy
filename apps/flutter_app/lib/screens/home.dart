@@ -40,11 +40,19 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/the_journey.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 
+/// Which of the two things a file can be at the **+** — 089 rule 5.
+///
+/// Named rather than a `bool`: «one to work on» and «one coming back» are two
+/// acts with two laws, and a flag at this door would be read as a flag at the
+/// core's (the door back takes no session at all, which is G34).
+enum _WhichFile { toWorkOn, comingBack }
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.ground,
     required this.onImport,
+    required this.onReadBack,
     required this.onType,
     required this.onVault,
     required this.onSettings,
@@ -65,9 +73,17 @@ class HomeScreen extends StatefulWidget {
   /// because it depends on what the scan found.
   final Future<void> Function(String text) onAsk;
 
-  /// The **+**: choose a file. The language is asked afterwards, because by
-  /// then there is a document to ask about.
+  /// The **+**, first entry: choose a file to work on. The language is asked
+  /// afterwards, because by then there is a document to ask about.
   final VoidCallback onImport;
+
+  /// The **+**, second entry — **«z-pdf»**, the explicit door back (079 rule 3,
+  /// built as 089 rule 5, and the owner's own words of 15 October). It is the
+  /// reverse act and not a second way in: the file is read into its own names
+  /// and never scanned, never protected, never put on a bench. Which is why it
+  /// stands beside «Add a document» rather than inside it — one press of the
+  /// menu says which of the two a person means.
+  final VoidCallback onReadBack;
 
   /// What was typed or pasted, opened with the pack the settings already hold.
   /// No question before it: a person who writes a sentence is not asking to be
@@ -482,14 +498,42 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  // The file, as a chat offers one.
-                                  Tooltip(
-                                    message: 'Add a document — PDF, Word or text',
-                                    child: IconButton(
-                                      icon: const Icon(Icons.add, size: 20),
-                                      color: Zc.clay,
-                                      onPressed: widget.onImport,
-                                    ),
+                                  // The file, as a chat offers one — and
+                                  // since 089 the two things a file can be:
+                                  // one to work on, or one that is coming
+                                  // back. The tooltip still names the first,
+                                  // because both entries add a document and
+                                  // the menu itself says which is which.
+                                  PopupMenuButton<_WhichFile>(
+                                    icon: const Icon(Icons.add, size: 20, color: Zc.clay),
+                                    position: PopupMenuPosition.under,
+                                    // The button's own tooltip rather than a
+                                    // `Tooltip` around it: two of them would
+                                    // put two messages on one press, and the
+                                    // one a person reads would be whichever
+                                    // won.
+                                    tooltip: 'Add a document — PDF, Word or text',
+                                    onSelected: (which) {
+                                      switch (which) {
+                                        case _WhichFile.toWorkOn:
+                                          widget.onImport();
+                                        case _WhichFile.comingBack:
+                                          widget.onReadBack();
+                                      }
+                                    },
+                                    itemBuilder: (_) => const [
+                                      PopupMenuItem(
+                                        value: _WhichFile.toWorkOn,
+                                        child: Text('Add a document', style: Zc.body),
+                                      ),
+                                      PopupMenuItem(
+                                        value: _WhichFile.comingBack,
+                                        child: Text(
+                                          'z-pdf — read a protected document back',
+                                          style: Zc.body,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(width: 4),
                                   Text(

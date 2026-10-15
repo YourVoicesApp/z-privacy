@@ -23,6 +23,7 @@ import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/the_way_back.dart';
 import 'package:zprivacy/core/messages.dart';
 
 /// The three kinds a build reads today. Kept here because the core decides what
@@ -259,21 +260,10 @@ class _ShellState extends State<ZShell> {
     final packId = packForTheNextText(_ground);
 
     if (!typing) {
-      file = await openFile(
-        acceptedTypeGroups: const [
-          XTypeGroup(label: 'Documents', extensions: ['pdf', 'docx', 'txt', 'md', 'csv']),
-        ],
-      );
-      if (file == null || !mounted) return;
-      kind = _kinds[file.name.split('.').last.toLowerCase()];
-      if (kind == null) {
-        setState(() {
-          _trouble = 'This build reads PDF, Word and text files. «${file!.name}» is none of those.';
-          // Nothing was read, so the core has nothing to report about it.
-          _troubleReport = null;
-        });
-        return;
-      }
+      final chosen = await _aFileToRead();
+      if (chosen == null) return;
+      file = chosen.file;
+      kind = chosen.kind;
     }
 
     try {
@@ -331,6 +321,86 @@ class _ShellState extends State<ZShell> {
     } on ApiError {
       // A report about a refusal must never become a second refusal.
       return null;
+    }
+  }
+
+  /// **One file chooser for both doors that take a file** — the one to work on
+  /// and the one coming back (089 rule 5).
+  ///
+  /// Written out of `_begin` rather than beside it: the list of extensions and
+  /// the sentence for a file this build cannot read are one fact each, and the
+  /// second door would have been the second place to keep them — the trap
+  /// 083a's three exits and 080's two language doors both cost this house.
+  ///
+  /// `null` means «nothing to read»: the person closed the chooser, the widget
+  /// is gone, or the file is of a kind no reader here has — and in that last
+  /// case the sentence is already on the screen when this returns.
+  Future<({XFile file, DocumentKind kind})?> _aFileToRead() async {
+    final file = await openFile(
+      acceptedTypeGroups: const [
+        XTypeGroup(label: 'Documents', extensions: ['pdf', 'docx', 'txt', 'md', 'csv']),
+      ],
+    );
+    if (file == null || !mounted) return null;
+    final kind = _kinds[file.name.split('.').last.toLowerCase()];
+    if (kind == null) {
+      setState(() {
+        _trouble = 'This build reads PDF, Word and text files. «${file.name}» is none of those.';
+        // Nothing was read, so the core has nothing to report about it.
+        _troubleReport = null;
+      });
+      return null;
+    }
+    return (file: file, kind: kind);
+  }
+
+  /// **«z-pdf» — the door back** (079 rule 3, built as 089 rule 5).
+  ///
+  /// The owner, 15 October: «خيار يدعى z-pdf يقوم بعكس العملية، يبحث عن الكود
+  /// ليحوله إلى اسم». So it is the reverse act and not a second way in: the
+  /// file is read into its own names and shown, and **no bench is opened for
+  /// it at all**. The core's door takes no session, which is what makes «never
+  /// scanned, never protected» a thing this screen cannot get wrong (G34).
+  ///
+  /// The vault gate is the same one `_begin` and `_askFromHome` hold, and here
+  /// it is also 079 rule 8: a locked vault is a standing door, because the key
+  /// to a z-pdf's meaning lives in one place. The door opens instead of a
+  /// sentence about why nothing came back.
+  ///
+  /// One press opens the reading. There is no "Read it back" to press after
+  /// it, which is the difference between this door and the banner's: a person
+  /// who chose «z-pdf» has already said what they want.
+  Future<void> _readBack() async {
+    if (_ground.vault != VaultState.unlocked) {
+      setState(() => _vaultOpen = true);
+      return;
+    }
+    final chosen = await _aFileToRead();
+    if (chosen == null) return;
+    try {
+      final seen = await z.readADocumentThatCameBack(
+        bytes: await chosen.file.readAsBytes(),
+        kind: chosen.kind,
+      );
+      if (!mounted) return;
+      setState(() {
+        _trouble = null;
+        _troubleReport = null;
+      });
+      await showDialog<void>(
+        context: context,
+        builder: (_) => TheReading(seen: seen),
+      );
+    } on ApiError catch (e) {
+      // A file that cannot be read is news here exactly as it is at the other
+      // door, and it is the same report: the name, the size, the refusal's own
+      // word, and nothing of what is in the file.
+      final report = await _reportOfRefusal(e, chosen.file);
+      if (!mounted) return;
+      setState(() {
+        _trouble = humanMessage(e);
+        _troubleReport = report;
+      });
     }
   }
 
@@ -472,6 +542,7 @@ class _ShellState extends State<ZShell> {
           version: coreVersion(),
           chat: _chat,
           onImport: () => _begin(typing: false),
+          onReadBack: () => unawaited(_readBack()),
           onType: (text) => _begin(typing: true, text: text),
           onAsk: _askFromHome,
           onVault: () => setState(() => _vaultOpen = true),

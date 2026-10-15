@@ -116,6 +116,7 @@ Widget _home(({Ground ground, Workbench bench}) g) => MaterialApp(
     version: 'z_core 0.1.0',
     chat: g.bench,
     onImport: () {},
+    onReadBack: () {},
     onType: (_) {},
     onAsk: (_) async {},
     onVault: () {},

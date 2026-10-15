@@ -37,6 +37,7 @@ import 'package:zprivacy/widgets/line_gutter.dart';
 import 'package:zprivacy/widgets/name_review.dart';
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
+import 'package:zprivacy/widgets/the_way_back.dart';
 import 'package:zprivacy/widgets/tokens.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
@@ -1254,90 +1255,11 @@ class _CameBack extends StatelessWidget {
               label: 'Read it back',
               onPressed: () => showDialog<void>(
                 context: context,
-                builder: (_) => _TheReading(seen: seen),
+                builder: (_) => TheReading(seen: seen),
               ),
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// **The document with its names back in it** — 079, the import side.
-///
-/// The core's reading, drawn in the three styles a restored answer is drawn in
-/// (`the_journey.dart`, `answer.dart`): the words as they arrived, the values
-/// put back, and the tokens that stayed tokens in amber. The screen decides
-/// none of it — `Piece` is the core's own field, and no text here is searched
-/// for `__Z_`.
-///
-/// A reading and not an edit: there is nothing to press but «Close». What is on
-/// the bench is still the document that arrived, which is the one text the
-/// exits may take out.
-class _TheReading extends StatelessWidget {
-  const _TheReading({required this.seen});
-
-  final ReturnedDocument seen;
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Zc.paper,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 620),
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Read back', style: Zc.h2),
-              const SizedBox(height: 6),
-              Text(whatCameBack(seen) ?? '', style: Zc.small),
-              const SizedBox(height: 14),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(13),
-                    decoration: Zc.panel(fill: Zc.paper, radius: 8),
-                    child: Text.rich(
-                      TextSpan(
-                        children: [
-                          for (final piece in seen.restored)
-                            TextSpan(
-                              text: piece.text,
-                              style: switch (piece.piece) {
-                                Piece.restored => Zc.document.copyWith(
-                                  fontSize: 13,
-                                  color: Zc.clayDeep,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                Piece.unresolved =>
-                                  Zc.document.copyWith(fontSize: 13, color: Zc.amber),
-                                _ => Zc.document.copyWith(fontSize: 13),
-                              },
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ZButton(
-                    label: 'Close',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
