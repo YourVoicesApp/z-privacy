@@ -1896,24 +1896,13 @@ class _ColumnsState extends State<_Columns> {
       if (trouble != null) widget.onSay(trouble);
       return;
     }
-    widget.onSay(switch (outcome) {
-      ProtectOutcome_Applied(:final token, :final places) => switch (places) {
-        0 => 'Every cell in that column was already protected.',
-        1 => 'Protected one cell, as $token.',
-        _ => 'Protected $places cells down that column, the first as $token.',
-      },
-      ProtectOutcome_AlreadyProtected(:final token, :final source) =>
-        'Already protected as $token, by ${sourceName(source).toLowerCase()}.',
-      ProtectOutcome_BelongsToEntity(:final entity, :final token) =>
-        'That belongs to $entity and keeps its token $token.',
-      ProtectOutcome_Snapped(:final spans) =>
-        'That cell cuts into protected text, so nothing changed. It would snap to '
-            '${spans.length} whole ${spans.length == 1 ? "item" : "items"}.',
-      // 079 rule 5, for a column of tokens: the core refuses per cell and says
-      // this only when **no** cell was protected, so «one cell of this column
-      // was a token» is still «protected N cells».
-      ProtectOutcome_StandsOnAToken() => theTokenIsAlreadyOurs,
-    });
+    // **A column is told about cells**, which is the one difference the fold of
+    // 15 October kept: `ProtectAct.aCell` is why «protected one cell» is not
+    // «protected», and why `places: 0` reads «every cell in that column was
+    // already protected» here and nowhere else. 079 rule 5 included: the core
+    // refuses per cell and answers this only when **no** cell was protected,
+    // so «one cell of this column was a token» is still «protected N cells».
+    widget.onSay(protectSaid(outcome, ProtectAct.aCell));
   }
 
   /// Where the handle was left, kept for the next time this document is open.

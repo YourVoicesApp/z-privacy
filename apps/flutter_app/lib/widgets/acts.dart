@@ -13,7 +13,6 @@ import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
-import 'package:zprivacy/widgets/document_text.dart';
 
 class ActsBar extends StatelessWidget {
   const ActsBar({
@@ -219,26 +218,12 @@ class ActsBar extends StatelessWidget {
     final outcome = await protectTheSelection(bench);
     if (outcome == null) return;
     if (!context.mounted) return;
-    onSay(switch (outcome) {
-      ProtectOutcome_Applied(:final token, :final places) => places == 1
-          ? 'Protected as $token.'
-          : 'Protected as $token, in $places places.',
-      ProtectOutcome_AlreadyProtected(:final token, :final source) =>
-        'Already protected as $token, by ${sourceName(source).toLowerCase()}.',
-      // The vault's question, answered by the core **after** the act instead of
-      // by a dialog before it: the value belongs to an identity and keeps the
-      // token that identity already has.
-      ProtectOutcome_BelongsToEntity(:final entity, :final token) =>
-        'That belongs to $entity and keeps its token $token.',
-      ProtectOutcome_Snapped(:final spans) =>
-        'The selection cut into protected text, so nothing changed. It would snap to '
-            '${spans.length} whole ${spans.length == 1 ? "item" : "items"}.',
-      // 079 rule 5. Reachable from here only if the button's state and the
-      // core's answer ever disagree, which is exactly why the law is at the
-      // door as well as on the button — and the wording is the same one, from
-      // the one place it is written.
-      ProtectOutcome_StandsOnAToken() => theTokenIsAlreadyOurs,
-    });
+    // **What it did, in the one place that words it** — the fold of 15 Oct, and
+    // G33. Every outcome this press can meet is answered in `protectSaid`,
+    // including 079 rule 5, which is reachable from here only if the button's
+    // state and the core's answer ever disagree — which is exactly why the law
+    // is at the door as well as on the button.
+    onSay(protectSaid(outcome, ProtectAct.aSelection));
   }
 
   Future<void> _undo(BuildContext context) async {

@@ -348,7 +348,9 @@ class _FindInDocumentState extends State<FindInDocument> {
                                       if (p.state == FoundState.clear) p.span,
                                   ],
                                 );
-                                if (outcome != null) widget.onSay(_saidOf(outcome));
+                                if (outcome != null) {
+                                  widget.onSay(protectSaid(outcome, ProtectAct.aPlaceTheBarFound));
+                                }
                               })),
                     ),
                   if (here != null && here.state == FoundState.protected) ...[
@@ -395,27 +397,6 @@ class _FindInDocumentState extends State<FindInDocument> {
     return doc.text.substring(start, end);
   }
 
-  String _saidOf(ProtectOutcome outcome) => switch (outcome) {
-    ProtectOutcome_Applied(:final token, :final places) => places == 1
-        ? 'Protected as $token.'
-        : 'Protected as $token, in $places places.',
-    ProtectOutcome_AlreadyProtected(:final token) => 'Already protected as $token.',
-    ProtectOutcome_BelongsToEntity(:final entity, :final token) =>
-      'That belongs to $entity and keeps its token $token.',
-    ProtectOutcome_Snapped(:final spans) =>
-      'It would cut into ${spans.length} protected ${spans.length == 1 ? "item" : "items"}, so nothing changed.',
-    // **079 rule 5, and the one case this file owes the variant.** A place that
-    // is already a token of ours — a document that has come back — is not
-    // protected again, and the sentence is the one `messages.dart` holds, so
-    // this bar and the acts bar say one thing about one state (046/L).
-    //
-    // A guide and not a wall: the press is offered, it says this, and nothing
-    // is minted. The workspace's own selection knows before the press
-    // (`SelectionView.on_a_token`); this surface has no such state of its own
-    // yet, and whether it should is a question about this bar rather than
-    // about the law.
-    ProtectOutcome_StandsOnAToken() => theTokenIsAlreadyOurs,
-  };
 }
 
 /// One count, on its own wash. The colour belongs to the box.

@@ -40,6 +40,27 @@ final _doc = [
   'Telefon: 070 123 45 67',
 ].join('\n');
 
+/// **A document that has come back** — 079, and the fixture e2's two findings
+/// of 15 October need. A token of ours stands in the text with no protection
+/// over it, because it arrived *as text*.
+///
+/// The word searched for is `person`, and it stands in two places: once as a
+/// plain word in the clear, and once **inside** the token — `_` is not
+/// alphanumeric, so `occurrences` reads `PERSON` between two of them as a word
+/// standing alone, and the token place is therefore one of the places the bar
+/// offers to protect. Measured, not assumed: the bar's own count says «2 in
+/// the clear» below before anything is pressed.
+///
+/// The plain one is first on purpose. The loop kept the **last** place's
+/// outcome, so with the token place last the press said «this is already
+/// protected» about a press that had just protected something.
+const _ourToken = '__Z_9F3A_PERSON_K7QX__';
+final _cameBack = [
+  'Vi har en person i listan.',
+  for (var i = 1; i <= 6; i++) 'Rad $i i protokollet utan namn.',
+  'Avtalet gick till $_ourToken i mars.',
+].join('\n');
+
 Future<void> settle(WidgetTester tester, {int rounds = 5}) async {
   for (var i = 0; i < rounds; i++) {
     await tester.pump();
@@ -54,6 +75,23 @@ ScrollController _railOf(WidgetTester tester, Key pane) {
   );
   return view.controller!;
 }
+
+/// Every sentence on the glass that begins with a word, read off the `Text`
+/// widgets themselves. The said line is a private widget, and asking for the
+/// string by `find.text` was the guard that went green because the string it
+/// wanted was somewhere else on the screen (083c). This reads what is written
+/// and prints all of it when it is wrong.
+List<String> _saidStartingWith(WidgetTester tester, String word) => tester
+    .widgetList<Text>(find.byType(Text))
+    .map((t) => t.data ?? '')
+    .where((line) => line.startsWith(word))
+    .toList();
+
+List<String> _everyLine(WidgetTester tester) => tester
+    .widgetList<Text>(find.byType(Text))
+    .map((t) => t.data ?? '')
+    .where((line) => line.isNotEmpty)
+    .toList();
 
 String? _theGoButton(WidgetTester tester) {
   final labels = tester
@@ -81,7 +119,7 @@ void main() {
     if (dir.existsSync()) dir.deleteSync(recursive: true);
   });
 
-  Future<Workbench> ready(WidgetTester tester) async {
+  Future<Workbench> ready(WidgetTester tester, {String? text}) async {
     tester.view.physicalSize = const Size(1700, 1100);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -90,7 +128,7 @@ void main() {
     await tester.runAsync(() async {
       await ground.refresh();
       final session = await z.openSession(packId: 'sv');
-      await z.importText(session: session, text: _doc);
+      await z.importText(session: session, text: text ?? _doc);
       bench = Workbench(session: session, profileId: null, packId: 'sv');
       await bench.rescan();
     });
@@ -234,6 +272,63 @@ void main() {
     expect(find.text('2 protected'), findsNothing, reason: 'the token kept a place');
     expect(find.text('2 in the clear'), findsOneWidget);
     expect(bench.payload!.text.split('Lindqvist').length - 1, greaterThan(1));
+  });
+
+  /// **One press, one sentence, and the sentence counts every place** — e2's
+  /// second finding of 15 October, pinned red before it was fixed: the loop
+  /// kept only the **last** place's outcome, so two places protected under one
+  /// token came back `Applied { places: 1 }` and the bar said «Protected as
+  /// Z_…» about two of them. The count the bar shows was right all along,
+  /// which is why nothing noticed: the lie was in the sentence.
+  testWidgets('one press over two places in the clear says both of them', (tester) async {
+    await ready(tester);
+    await searchFor(tester, 'Lindqvist');
+    expect(find.text('2 in the clear'), findsOneWidget, reason: 'the fixture moved');
+
+    await tester.tap(find.byKey(FindInDocument.protectKey));
+    await settle(tester, rounds: 14);
+
+    final said = _saidStartingWith(tester, 'Protected');
+    expect(said, hasLength(1), reason: 'the press said this, on one glass: ${_everyLine(tester)}');
+    expect(
+      said.first,
+      contains('in 2 places'),
+      reason: 'two places were protected and the press said «${said.first}»',
+    );
+  });
+
+  /// **A place that is already a token of ours is not protected again, and does
+  /// not swallow the press** — 079 rule 5 at the bar, e2's first finding.
+  ///
+  /// The core refuses a hand over a token at the door, before the vault is
+  /// taught anything (G32), so nothing was ever minted here — and that is
+  /// exactly why this was invisible: the refusal arrived as the **last**
+  /// outcome of the loop and became the whole press's sentence, over a press
+  /// that had just protected a real place. The word «person» stands in two
+  /// places of this document, one of them inside the token.
+  testWidgets('a token of ours among the places protects the others and keeps itself', (tester) async {
+    final bench = await ready(tester, text: _cameBack);
+    await searchFor(tester, 'person');
+    expect(find.text('2 in the clear'), findsOneWidget,
+        reason: 'the token place is not among the places offered: ${_everyLine(tester)}');
+    final before = bench.tokens.length;
+
+    await tester.tap(find.byKey(FindInDocument.protectKey));
+    await settle(tester, rounds: 14);
+
+    // The plain place is protected, under one new token…
+    expect(bench.tokens.length, before + 1, reason: 'the press minted ${bench.tokens.length - before} tokens');
+    expect(find.text('1 protected'), findsOneWidget, reason: 'the clear place was not protected');
+    // …the token that arrived stands exactly as it arrived, in the text that
+    // would leave the machine…
+    expect(bench.payload!.text, contains(_ourToken), reason: 'a second token was minted over the first');
+    expect(bench.payload!.text.split(_ourToken).length - 1, 1, reason: 'the token is in the payload twice');
+    // …and the sentence is about what happened, not about the last place the
+    // loop looked at.
+    final said = _saidStartingWith(tester, 'Protected');
+    expect(said, hasLength(1), reason: 'the press said this, on one glass: ${_everyLine(tester)}');
+    expect(_saidStartingWith(tester, 'This is already protected'), isEmpty,
+        reason: 'a press that protected a place said it had protected nothing');
   });
 
   /// **Nothing typed is ever stored** — ruling «what is typed is never stored»,
