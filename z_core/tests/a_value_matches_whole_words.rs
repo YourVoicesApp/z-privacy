@@ -197,12 +197,16 @@ fn the_hand_drawn_selection_carries_the_kind_the_scanner_found() {
         Kind::Custom,
         "a capitalised word is being read as a human being again"
     );
-    // And the cost of the ruling, in the same document: half of a name the
-    // scanner found whole is honestly unknown. Two clicks take the pair, and
-    // the pair is the finding.
+    // **And the cost of the ruling is paid back by 085 ruling 1** (15 October).
+    // It used to read: «half of a name the scanner found whole is honestly
+    // unknown», and a click on «Sandström» answered `Custom`. A name the app
+    // read for itself is now one finding per word, so half of a name **is** a
+    // name, and the scan's own answer reaches a single click on it. Nothing
+    // here guesses: the finding is still the pack's, over exactly this word.
     assert_eq!(
         inspect_selection(session, span("Sandström")).expect("view").kind,
-        Kind::Custom
+        Kind::Person,
+        "one word of a name is a finding of its own now, and carries its kind"
     );
     // What is not a name stays what it was: a number, a lower-case word,
     // and a stretch of prose are all still Custom.

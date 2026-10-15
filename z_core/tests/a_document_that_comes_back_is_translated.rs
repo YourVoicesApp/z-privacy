@@ -165,9 +165,12 @@ fn the_same_conversation_reads_every_name_back() {
     let safe = taken.text.clone();
     let page = taken.answer_page_token.clone().expect("a page token after the birth");
     let names = tokens_in(&safe);
-    // Thirteen marks, eleven names: the IBAN and the invoice number each stand
-    // twice, and one value is one token.
-    assert_eq!(names.len(), 11, "the letter left with {} names, not 11", names.len());
+    // Sixteen marks, fourteen names: the IBAN and the invoice number each stand
+    // twice, and one value is one token. **Three more than when this was first
+    // measured**, because 085 ruling 1 landed on the rules the next day: each
+    // of the letter's three people is a given name and a surname, and a token
+    // never covers more than one word.
+    assert_eq!(names.len(), 14, "the letter left with {} names, not 14", names.len());
 
     // The answer arrives on this same bench — a pasted page, which is the one
     // door that does not open a new one.
@@ -175,8 +178,8 @@ fn the_same_conversation_reads_every_name_back() {
     import_text(held.0, back.clone()).expect("the answer is imported");
     let seen = returning_document(held.0).expect("read it back");
 
-    // Places, with the page's own: the letter's thirteen marks and the page.
-    assert_eq!(seen.tokens, 14, "the returning document holds {} places", seen.tokens);
+    // Places, with the page's own: the letter's sixteen marks and the page.
+    assert_eq!(seen.tokens, 17, "the returning document holds {} places", seen.tokens);
     assert_eq!(seen.names, names.len() as u32, "it holds {} names", seen.names);
     assert_eq!(seen.brought_back, names.len() as u32, "not every name came back");
     assert_eq!(
@@ -525,8 +528,8 @@ fn with_the_vault_shut_nothing_is_named_and_nothing_is_called_unknown() {
     import_text(next.0, back.clone()).expect("import");
     let shut = returning_document(next.0).expect("read it back");
     assert_ne!(shut.vault, VaultState::Unlocked, "the vault did not lock");
-    assert_eq!(shut.tokens, 14, "the places are a property of the text, and were not counted");
-    // **Twelve names, not eleven** — and the extra one is the answer page's own
+    assert_eq!(shut.tokens, 17, "the places are a property of the text, and were not counted");
+    // **Fifteen names, not fourteen** — and the extra one is the answer page's own
     // token. It is told from the others by deriving the word it protects under
     // the conversation's key, which is exactly what a shut vault cannot do, so
     // with no vault open it is a token like any other. Measured rather than

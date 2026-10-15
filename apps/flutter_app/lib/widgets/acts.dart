@@ -277,7 +277,9 @@ class _Known extends StatelessWidget {
                 children: [
                   const TextSpan(text: 'Already protected as '),
                   TextSpan(
-                    text: view.protectedAs,
+                    // The tokens as they stand in the text — one per word of
+                    // what the app read for itself (085 ruling 1).
+                    text: view.protectedAs.join(' '),
                     style: const TextStyle(fontFamily: Zc.mono, fontWeight: FontWeight.w600),
                   ),
                   if (source != null)

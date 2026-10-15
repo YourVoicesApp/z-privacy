@@ -19,7 +19,11 @@ fn a_page_edge_is_whitespace_to_the_scanner() {
     let session = open_session(None, "de".to_string()).expect("open");
     import_text(session, doc.to_string()).expect("import");
     let report = scan(session).expect("scan");
-    assert_eq!(report.auto, 3, "the three pages did not all read: {report:?}");
+    // Five, not three: the two names are two words each since 085 ruling 1
+    // (15 October), and the IBAN is one value whatever its spaces. The number
+    // this test is about is that **all three pages read**, which is what the
+    // names below say.
+    assert_eq!(report.auto, 5, "the three pages did not all read: {report:?}");
 
     let units: Vec<u16> = doc.encode_utf16().collect();
     let found: Vec<String> = list_findings(session)
@@ -29,7 +33,7 @@ fn a_page_edge_is_whitespace_to_the_scanner() {
             String::from_utf16_lossy(units.get(f.span.start as usize..f.span.end as usize).unwrap_or_default())
         })
         .collect();
-    for who in ["Thomas Müller", "Sophie Schneider"] {
+    for who in ["Thomas", "Müller", "Sophie", "Schneider"] {
         assert!(found.iter().any(|t| t == who), "«{who}» was lost at a page edge: {found:?}");
     }
     // And no finding carries the edge itself.

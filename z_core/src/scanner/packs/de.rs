@@ -48,6 +48,7 @@ pub(crate) fn pack() -> LanguagePack {
         in_english: "German",
         version: "1",
         salutations: SALUTATIONS,
+        greetings: GREETINGS,
         titles: TITLES,
         title_parts: TITLE_PARTS,
         degrees: DEGREES,
@@ -93,6 +94,24 @@ const CONJUNCTIONS: &[&str] = &["&", "und"];
 
 /// Salutations and titles: what follows one of these is probably a person.
 const SALUTATIONS: &[&str] = &["Herr", "Herrn", "Frau", "Fr.", "Hr."];
+
+/// The greeting a German letter opens with when it does not open formally.
+///
+/// **Measured on all seven German documents in the tree and the owner's two
+/// German letters: not one count moves.** Every one of them opens «Sehr
+/// geehrte(r)» with a salutation, which is proof already, so this list costs
+/// nothing there — and on the shape it is for, «Hallo Markus Feldmann», the
+/// name dictionary already offers the pair, so what this buys in German is a
+/// second layer agreeing rather than a finding nobody had.
+///
+/// «Guten Tag» is **not** here, and for a reason that is not laziness: it is
+/// two words, and this rule reads one word from a list. A two-word opener is
+/// its own shape and would need its own measurement.
+///
+/// The controls, measured: «Hallo zusammen,» finds nothing, and «Hallo!» on its
+/// own line finds nothing — the first by the word's own case, the second
+/// because only a **salutation** crosses a line break.
+const GREETINGS: &[&str] = &["Hallo"];
 
 /// Titles that introduce a person, German and Austrian, as they are written.
 ///
@@ -338,9 +357,21 @@ mod tests {
         // German reply, and it hides nothing on its own. What changed on
         // 3 October is the confidence, not the span: the salutation is the
         // proof, so the name after it is protected rather than asked about.
+        //
+        // **Two candidates since 15 October, and one finding.** The pair rule
+        // used to stand down when a salutation stood in front of it — a guess
+        // about what another rule would do, which cost the owner «Markus» in
+        // an address block the salutation rule then refused to reach. Both
+        // layers now say what they see, and `settle` keeps the proven one and
+        // writes «de:name-dictionary agreed as well» on it. This test asks the
+        // **pack** and therefore sees candidates; what a document gets is
+        // measured in `a_salutation_alone_on_its_line_names_the_next`.
         assert_eq!(
             found("Frau Anna Weber übernimmt."),
-            vec![(Kind::Person, Confidence::Auto, "Anna Weber".to_string())]
+            vec![
+                (Kind::Person, Confidence::Auto, "Anna Weber".to_string()),
+                (Kind::Person, Confidence::Suggest, "Anna Weber".to_string())
+            ]
         );
         assert_eq!(
             found("Herr Dr. Schneider ruft an."),

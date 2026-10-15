@@ -82,7 +82,7 @@ fn a_job_title_after_a_comma_is_not_part_of_the_name() {
     let s = scanned(DOC, "en");
     assert_eq!(
         people(s, DOC),
-        vec!["Eleanor Whitfield".to_string()],
+        vec!["Eleanor".to_string(), "Whitfield".to_string()],
         "the name did not end at the comma"
     );
     close_session(s).ok();
@@ -103,7 +103,10 @@ fn the_job_title_still_reaches_the_model() {
         "the job title was swallowed by the token: {out:?}"
     );
     assert!(!out.contains("Whitfield"), "the name leaked: {out:?}");
-    assert_eq!(out.matches("__Z_").count(), 1, "the name left as more than one token: {out:?}");
+    // **Two tokens, one per word** (085 ruling 1, 15 October), and the title
+    // beside them is the third word and is still readable. What this test is
+    // about is where the name stops, and it stops in the same place.
+    assert_eq!(out.matches("__Z_").count(), 2, "the name left as the wrong number of tokens: {out:?}");
     close_session(s).ok();
 }
 
@@ -116,7 +119,7 @@ fn a_name_still_ends_at_the_end_of_its_line() {
     fresh_vault("line");
     const DOC: &str = "Contact person: Eleanor Whitfield\nFinance Director of the group\n";
     let s = scanned(DOC, "en");
-    assert_eq!(people(s, DOC), vec!["Eleanor Whitfield".to_string()]);
+    assert_eq!(people(s, DOC), vec!["Eleanor".to_string(), "Whitfield".to_string()]);
     close_session(s).ok();
 }
 
@@ -128,7 +131,11 @@ fn the_comma_ends_the_name_whatever_its_length() {
     fresh_vault("three");
     const DOC: &str = "Contact: Mary Anne Whitfield, Partner\n";
     let s = scanned(DOC, "en");
-    assert_eq!(people(s, DOC), vec!["Mary Anne Whitfield".to_string()]);
+    // Three words, three findings — and `people` reads them back sorted.
+    assert_eq!(
+        people(s, DOC),
+        vec!["Anne".to_string(), "Mary".to_string(), "Whitfield".to_string()]
+    );
     close_session(s).ok();
 }
 
@@ -170,6 +177,17 @@ fn a_lowercase_particle_still_ends_the_name_and_that_is_a_known_gap() {
 /// The day one does, the answer is to let `reversed_pairs` read behind a label
 /// so the dictionary can tell a given name from a role, and then this test
 /// becomes «Müller».
+///
+/// **085 ruling 1 has changed the shape of the cost, not the cost** (15
+/// October). The label's span is the same; a token no longer covers more than
+/// one word of it, so what used to be a job title hidden **inside** a person's
+/// token is now a token of its own over the word «Geschäftsführer». The same
+/// three words leave the device and the same three come back, and the fix is
+/// still the one named above: the label path cannot tell a given name from a
+/// role because it cannot reach a name dictionary, and giving it one is
+/// plumbing for its own round. Pinned here as the wrong answer, on purpose
+/// (`feedback_pin_the_fault_to_prove_the_fix`), so the day it is fixed this
+/// test reddens and says so.
 #[test]
 fn a_one_word_name_before_a_comma_keeps_what_follows() {
     let _g = serial();
@@ -178,7 +196,7 @@ fn a_one_word_name_before_a_comma_keeps_what_follows() {
     let s = scanned(DOC, "de");
     assert_eq!(
         people(s, DOC),
-        vec!["Müller, Geschäftsführer".to_string()],
+        vec!["Geschäftsführer".to_string(), "Müller".to_string()],
         "the one-word case has changed — read the note above before accepting it"
     );
     close_session(s).ok();
@@ -209,7 +227,7 @@ fn the_role_rule_takes_the_two_words_the_comma_ends() {
     let found = people(s, DOC);
     assert_eq!(
         found,
-        vec!["Thomas Müller".to_string()],
+        vec!["Müller".to_string(), "Thomas".to_string()],
         "the role rule is reading the wrong two words"
     );
     assert!(
@@ -235,9 +253,19 @@ fn the_german_reversed_pair_is_untouched() {
     const DOC: &str = "Ansprechpartner: Müller, Thomas\nTelefon: 030 1234\n";
     let s = scanned(DOC, "de");
     let found = people(s, DOC);
+    // Both names, and the comma between them belongs to neither (085 ruling 1,
+    // 15 October). «Reads across the comma» is measured by both words being
+    // found, which is what the rule is for: the fault it guards against is
+    // «Thomas» left in the clear beside a protected «Müller».
+    for who in ["Müller", "Thomas"] {
+        assert!(
+            found.iter().any(|p| p == who),
+            "the reversed pair stopped reading across its comma: {found:?}"
+        );
+    }
     assert!(
-        found.iter().any(|p| p == "Müller, Thomas"),
-        "the reversed pair stopped reading across its comma: {found:?}"
+        !found.iter().any(|p| p.contains(',')),
+        "a comma is inside a name: {found:?}"
     );
     close_session(s).ok();
 }
@@ -254,10 +282,12 @@ fn the_swedish_role_after_a_comma_is_untouched() {
     const DOC: &str = "Anna Nilsson, programchef\nberättar om satsningen.\n";
     let s = scanned(DOC, "sv");
     let found = people(s, DOC);
-    assert!(
-        found.iter().any(|p| p == "Anna Nilsson"),
-        "the Swedish role rule lost its pair: {found:?}"
-    );
+    for who in ["Anna", "Nilsson"] {
+        assert!(
+            found.iter().any(|p| p == who),
+            "the Swedish role rule lost its pair: {found:?}"
+        );
+    }
     close_session(s).ok();
 }
 
@@ -271,10 +301,12 @@ fn the_german_label_path_stops_at_the_comma_too() {
     const DOC: &str = "Ansprechpartner: Thomas Müller, Geschäftsführer\n";
     let s = scanned(DOC, "de");
     let found = people(s, DOC);
-    assert!(
-        found.iter().any(|p| p == "Thomas Müller"),
-        "the German label did not stop at the comma: {found:?}"
-    );
+    for who in ["Thomas", "Müller"] {
+        assert!(
+            found.iter().any(|p| p == who),
+            "the German label did not stop at the comma: {found:?}"
+        );
+    }
     assert!(
         !found.iter().any(|p| p.contains("Geschäftsführer")),
         "a German job title is inside the name: {found:?}"

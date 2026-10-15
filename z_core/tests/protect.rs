@@ -312,9 +312,13 @@ fn inspect_ready_offers_the_packs_own_guess_and_a_count() {
     // this one and the screen is told by whom rather than being asked. The
     // count stays 2: the other place carries the same token, because
     // `Scope::Conversation` means every place in the document.
-    assert!(
-        view.protected_as.is_some(),
-        "a name after «Herr» is protected on sight now, and the view must say so"
+    // **Two tokens, one per word** (085 ruling 1, 15 October), and the view
+    // says so rather than saying «not protected» about a value entirely ours.
+    assert_eq!(
+        view.protected_as.len(),
+        2,
+        "a name after «Herr» is protected on sight now, and the view must say so: {:?}",
+        view.protected_as
     );
     assert!(view.snaps_to.is_empty());
 }
@@ -331,7 +335,10 @@ fn inspect_known_names_the_token_and_who_gave_it() {
     protect(s, span, Scope::Conversation, Kind::Person).expect("protect");
 
     let view = inspect_selection(s, span).expect("inspect");
-    let token = view.protected_as.expect("it is protected, and says as what");
+    // One token, because a **hand** selection is the person's will and stays
+    // one value however many words it holds — 085's own correction.
+    assert_eq!(view.protected_as.len(), 1, "{:?}", view.protected_as);
+    let token = view.protected_as.first().expect("it is protected, and says as what");
     assert!(token.contains("_PERSON_"), "{token}");
     assert_eq!(view.protected_by, Some(Source::Hand));
     assert!(!view.protected_detail.is_empty(), "and by whom");
@@ -346,9 +353,12 @@ fn inspect_snaps_hands_back_the_whole_items_it_would_take() {
 
     // Half of the protected name, plus a word after it.
     let view = inspect_selection(s, Span { start: 12, end: 23 }).expect("inspect");
-    assert!(view.protected_as.is_none(), "this is not the protected item itself");
+    assert!(view.protected_as.is_empty(), "this is not the protected item itself");
+    // **One word, since 085 ruling 1** (15 October): the import scanned, the
+    // salutation protected «Thomas» and «Müller» as two tokens, and half of the
+    // second word plus the word after it snaps to the whole of that word.
     assert_eq!(view.snaps_to.len(), 1, "it would snap to the whole name");
-    assert_eq!(view.snaps_to[0], Span { start: 5, end: 18 });
+    assert_eq!(view.snaps_to[0], Span { start: 12, end: 18 });
 
     // And protect agrees with what inspect promised — the two must not drift.
     match protect(s, Span { start: 12, end: 23 }, Scope::Once, Kind::Person).expect("protect") {

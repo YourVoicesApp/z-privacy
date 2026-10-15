@@ -289,9 +289,17 @@ pub struct _SelectionView {
     /// not. 1 means «all matches» is the same act as «protect», and the button
     /// hides its count.
     pub matches: u32,
-    /// The token, when this exact stretch is already protected. Then the only
-    /// act offered is Undo.
-    pub protected_as: Option<String>,
+    /// **The tokens standing in this selection**, in reading order, and empty
+    /// when the selection is not already ours. Then the only act offered is
+    /// Undo.
+    ///
+    /// A list and not one token, since 085 ruling 1 (15 October): a name the
+    /// app read for itself is one token per word, so a hand drawn over «Katrin
+    /// Sommer» is two of them. One field and not a second one beside it — two
+    /// fields that can disagree about the same fact is the fault this house
+    /// pays for most, and empty / one / several is the whole of what a screen
+    /// needs to know.
+    pub protected_as: Vec<String>,
     pub protected_by: Option<Source>,
     /// «Z Vault · CLIENT #17», «de:salutation», «selected by you» — the why.
     pub protected_detail: String,
@@ -314,7 +322,7 @@ pub struct _SelectionView {
     ///
     /// Not «already protected»: there is no protection of *this* document over
     /// it, because the token arrived as text in a document that came back. So
-    /// `protected_as` is `None`, every field above says «ordinary words», and
+    /// `protected_as` is empty, every field above says «ordinary words», and
     /// without this one the glass would offer Protect over a name of ours and
     /// mint a second token over the first.
     ///

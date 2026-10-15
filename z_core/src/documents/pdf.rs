@@ -267,8 +267,13 @@ fn objects(bytes: &[u8], budget: &Budget) -> ApiResult<Objects> {
         let Some(obj_at) = next_obj(bytes, at) else { break };
         let number = number_before(bytes, obj_at);
         let body_start = obj_at + 3;
-        let Some(end_offset) = find(bytes, body_start, b"endobj") else { break };
-        let body_end = body_start + end_offset;
+        // **`endobj` as a token** (15 October). A byte search found it inside a
+        // stream whose compressed bytes happen to spell it, and inside a name
+        // like `/endobjects` — and a false `endobj` cuts an object's body short,
+        // which loses whatever stood after it and is worse than refusing the
+        // file. `endobj` is the tail of nothing longer, so the list is empty
+        // and the other two conditions do the work.
+        let Some(body_end) = next_keyword(bytes, body_start, b"endobj", &[], true) else { break };
 
         if let Some(number) = number {
             out.insert(number, split_body(bytes, body_start, body_end));
@@ -402,7 +407,15 @@ fn tidy_dict(raw: &str) -> String {
 
 fn split_body(bytes: &[u8], start: usize, end: usize) -> ObjBody {
     let body = bytes.get(start..end).unwrap_or_default();
-    match find(body, 0, b"stream") {
+    // **`stream` as a token, and never the tail of `endstream`** (15 October).
+    // This was `find(body, 0, b"stream")`, and the sibling it could not tell
+    // itself from is three bytes away in every object that has a stream: an
+    // object whose dictionary is damaged, or one that writes `endstream` with
+    // no `stream` of its own, had its dictionary read as «everything before the
+    // word endstream» and its data read from inside its own closing keyword. A
+    // name like `/Stream` or `/streamline` in a dictionary did the same thing
+    // with no damage needed at all.
+    match next_keyword(body, 0, b"stream", &[b"endstream"], true) {
         Some(at) => {
             let dict = tidy_dict(&String::from_utf8_lossy(body.get(..at).unwrap_or_default()));
             let after = at + 6;
@@ -413,9 +426,12 @@ fn split_body(bytes: &[u8], start: usize, end: usize) -> ObjBody {
                 Some([b'\r', _]) => after + 1,
                 _ => after,
             };
-            let data_end = find(body, data_at, b"endstream")
-                .map(|offset| data_at + offset)
-                .unwrap_or(body.len());
+            // And its closing keyword by the same law: a stream's own bytes are
+            // arbitrary, so «the letters endstream somewhere in them» is not
+            // where it ends — the keyword stands on white-space, as the
+            // specification says it does (§7.3.8.1).
+            let data_end =
+                next_keyword(body, data_at, b"endstream", &[], true).unwrap_or(body.len());
             let raw = body.get(data_at..data_end).unwrap_or_default();
             ObjBody {
                 dict,
@@ -566,20 +582,72 @@ fn is_pdf_space(byte: u8) -> bool {
 ///   must still hold;
 /// * **white-space or a delimiter after**, so `objects` and `/objective` are
 ///   words and not keywords.
+///
+/// **And the same three conditions hold for its three siblings**, which is what
+/// `next_keyword` below exists for: `endobj`, `stream` and `endstream` were
+/// plain byte searches until 15 October, and a plain byte search for a keyword
+/// is the fault this very comment was written about. `obj` asks the question
+/// through that function now, so there is one law and one place for it.
 fn next_obj(bytes: &[u8], from: usize) -> Option<usize> {
+    next_keyword(bytes, from, b"obj", &[b"endobj"], false)
+}
+
+/// **A keyword is a token, not a string** — one law, four keywords.
+///
+/// `obj` learnt this on 9 October, on two real files where a byte search for
+/// *space-o-b-j* found 0 objects of 467. Its three siblings did not, and they
+/// are the ones that decide where an object **ends** and where its stream
+/// begins and ends — so a false hit in any of them truncates a body or hands
+/// back the wrong bytes, which is worse than refusing the file.
+///
+/// Three conditions, the same three:
+///
+/// * **a token boundary before**, because that is what separates two tokens.
+///   White-space always; and for the three words that end a body or bracket a
+///   stream, a **delimiter** as well — `>>stream`, with nothing at all between
+///   the dictionary's close and the keyword, is how a real PDF is written, and
+///   §7.2.2 separates tokens by white-space *or* a delimiter. Never `/`, which
+///   opens a name: `/streamline` is a key and not a keyword.
+///
+///   **Measured, and the reason this clause is written out rather than
+///   inherited:** with white-space alone required, both of the owner's golden
+///   PDFs stopped reading — 734 pages and 146 pages, every one of them refused
+///   as «all pages are images with no text layer», because not one object's
+///   `stream` keyword has a space in front of it. `obj` keeps the narrow
+///   reading on purpose and its own comment says why: a name written `/obj` is
+///   not an object header, and every header in a legal file writes `N G obj`.
+/// * **not the tail of a longer keyword**, checked for itself rather than left
+///   to the condition above, because the day someone widens that condition this
+///   guard must still hold. `obj` is the tail of `endobj`; `stream` is the tail
+///   of `endstream`, and that one is not a hypothetical: every object with a
+///   stream carries both words, three bytes apart.
+/// * **white-space or a delimiter after**, so `objects`, `/objective` and
+///   `streamline` are words and not keywords. The end of the file counts, since
+///   a keyword can be the last thing in it.
+fn next_keyword(
+    bytes: &[u8],
+    from: usize,
+    word: &[u8],
+    never_the_tail_of: &[&[u8]],
+    a_delimiter_may_stand_before: bool,
+) -> Option<usize> {
     let mut at = from;
-    while let Some(offset) = find(bytes, at, b"obj") {
+    while let Some(offset) = find(bytes, at, word) {
         let keyword = at + offset;
+        let stop = keyword + word.len();
         let before = keyword.checked_sub(1).and_then(|i| bytes.get(i)).copied();
-        let after = bytes.get(keyword + 3).copied();
-        let ends_a_word = keyword >= 3 && bytes.get(keyword - 3..keyword) == Some(b"end".as_slice());
-        if !ends_a_word
-            && before.is_some_and(is_pdf_space)
-            && after.is_none_or(|b| is_pdf_space(b) || is_delimiter(b))
-        {
+        let after = bytes.get(stop).copied();
+        let a_tail = never_the_tail_of.iter().any(|longer| {
+            stop >= longer.len() && bytes.get(stop - longer.len()..stop) == Some(*longer)
+        });
+        let opens = before.is_some_and(|b| {
+            is_pdf_space(b)
+                || (a_delimiter_may_stand_before && b != b'/' && is_delimiter(b))
+        });
+        if !a_tail && opens && after.is_none_or(|b| is_pdf_space(b) || is_delimiter(b)) {
             return Some(keyword);
         }
-        at = keyword + 3;
+        at = stop;
     }
     None
 }
@@ -1665,6 +1733,71 @@ mod tests {
             None,
             "«endobj» was read as an object header"
         );
+    }
+
+    /// **And its three siblings are tokens too** (15 October).
+    ///
+    /// `obj` learnt this on 9 October and the three words that decide where an
+    /// object **ends** and where its stream begins and ends did not — which is
+    /// the trap `a_rule_written_in_place_is_not_applied_to_its_second_case` is
+    /// named for, three times over in one file. A false `endobj` cuts a body
+    /// short and loses whatever stood after it; a false `stream` reads a
+    /// dictionary as «everything before this word» and the data from inside the
+    /// object's own closing keyword.
+    #[test]
+    fn the_three_sibling_keywords_are_tokens_too() {
+        // `endobj` — not inside a name, not glued to a word.
+        let glued = b"%PDF-1.4\n1 0 obj\n<< /Dest /endobjects >>\nendobj\n";
+        let real = next_keyword(glued, 0, b"endobj", &[], true).expect("the real keyword");
+        assert_eq!(
+            &glued[real - 1..real],
+            b"\n",
+            "a name spelled «/endobjects» was read as the end of the object"
+        );
+        assert!(
+            next_keyword(glued, real + 6, b"endobj", &[], true).is_none(),
+            "a second «endobj» was found where there is one"
+        );
+
+        // `stream` — and the sibling it cannot tell itself from by bytes alone
+        // stands three bytes away in every object that has one.
+        let both = b"7 0 obj\n<< /Length 5 /Filter /streamline >>\nstream\nhello\nendstream\nendobj\n";
+        let at = next_keyword(both, 0, b"stream", &[b"endstream"], true).expect("the real keyword");
+        assert_eq!(
+            &both[at..at + 7],
+            b"stream\n",
+            "«/streamline» or the tail of «endstream» was read as the stream keyword"
+        );
+        let close = next_keyword(both, at + 6, b"endstream", &[], true).expect("the closing keyword");
+        assert!(close > at, "the closing keyword was found before the opening one");
+
+        // And the tail clause is checked for itself, not left to the condition
+        // beside it: with white-space before it ignored, `endstream` still must
+        // not answer as `stream`.
+        let only_the_end = b"9 0 obj\n<< >>\n endstream\nendobj\n";
+        assert!(
+            next_keyword(only_the_end, 0, b"stream", &[b"endstream"], true).is_none(),
+            "the tail of «endstream» answered as the stream keyword"
+        );
+    }
+
+    /// **And what that buys on a whole document**: a page whose own text holds
+    /// the letters of a keyword.
+    ///
+    /// A content stream's bytes are arbitrary — a line of a German contract can
+    /// say «Lesen Sie endobj nicht» and a compressed stream can spell anything
+    /// at all. Before this, the first of those cut the object's body in two and
+    /// took the rest of the page with it.
+    #[test]
+    fn a_page_whose_text_spells_a_keyword_is_still_read_whole() {
+        let bytes = pdf_with_pages(&["Der Vertrag endobjekt wurde geprueft und endstreamt."]);
+        let out = extract(&bytes, &Budget::new()).expect("a legal PDF must be read");
+        assert!(
+            out.text.contains("wurde geprueft und endstreamt."),
+            "the page was cut at a word that spells a keyword: {:?}",
+            out.text
+        );
+        assert_eq!(out.pages, 1);
     }
 
     /// **And a dictionary packed inside an object stream is tidied too** — the

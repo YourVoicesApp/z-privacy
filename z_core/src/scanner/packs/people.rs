@@ -324,6 +324,15 @@ fn name_shaped(word: &str, pack: &LanguagePack) -> bool {
         && n.chars().all(|c| c.is_alphabetic() || c == '-' || c == '\'' || c == '\u{2019}')
         && !pack.stop_words.contains(&n)
         && !pack.degrees.contains(&n)
+        // **A salutation is never part of a name**, which is the whole reason
+        // the word is in that list and not in a name bank. Measured the moment
+        // the greeting list arrived beside it (15 October): «Hej Herr Lars
+        // Andersson,» offered **«Herr»** as a person, because the greeting's
+        // walk reached three name-shaped words and nothing had told it that
+        // one of them was a form word. Said here, once, so every rule that
+        // asks what a name looks like gets the same answer — the walk, the
+        // pair, the reversed pair and the role.
+        && !pack.salutations.iter().any(|t| t.eq_ignore_ascii_case(n))
 }
 
 /// Step over a chain of titles: «Dr.», «Prim. Dr.», «Univ.-Prof. Dr. med.».
@@ -349,13 +358,26 @@ fn title_chain(words: &[Word<'_>], from: usize, pack: &LanguagePack) -> Option<(
 }
 
 /// The name that follows: up to three words, each shaped like one.
-fn name_from(words: &[Word<'_>], first: usize, pack: &LanguagePack) -> Option<(usize, usize)> {
+///
+/// `over_a_break` lets the **first** word stand on the next line, and nothing
+/// else about the walk changes: a name still ends at the end of its own line.
+/// It is the whole of «a salutation standing alone on its line names the next
+/// line» (the lead's ruling of 15 October, after the owner's letter), and it is
+/// a parameter rather than a second function because the two readings differ by
+/// one clause and a copy of this walk would drift from it.
+fn name_from(
+    words: &[Word<'_>],
+    first: usize,
+    pack: &LanguagePack,
+    over_a_break: bool,
+) -> Option<(usize, usize)> {
     let mut j = first;
     let mut last = None;
     while let Some(next) = words.get(j) {
         // A bracket opens something that is not the name: «Ludwig Neuner
         // (Klinikum Freistadt, OÖG)» is one person and one hospital.
-        if next.newline_before || is_label(next.text) || next.text.starts_with(['(', '[', '{', '«', '"']) {
+        let a_break = next.newline_before && !(j == first && over_a_break);
+        if a_break || is_label(next.text) || next.text.starts_with(['(', '[', '{', '«', '"']) {
             break;
         }
         let n = bare(next.text);
@@ -374,11 +396,37 @@ fn name_from(words: &[Word<'_>], first: usize, pack: &LanguagePack) -> Option<(u
     last.map(|last| (first, last))
 }
 
-/// «Herr Thomas Müller» → the name, not the salutation.
+/// «Herr Thomas Müller» → the name, not the salutation. And «Hej Katarina» →
+/// the name, **offered**.
+///
+/// **One rule, two lists** — the lead's approved shape of 14 October. A
+/// salutation and a greeting are read by the same shape: a word from a list,
+/// then up to three name-shaped words, a title chain stepped over on the way.
+/// Writing that walk twice is the fault this house pays for most often, and the
+/// two readings differ in exactly two places: the confidence each carries, and
+/// the clause of the reason that says which list it came from.
+///
+/// **Why the confidences differ.** A salutation is proof — nothing but a person
+/// follows «Frau» — and that is the owner's ruling of 3 October. A greeting is
+/// not: «Hej alla», «Hej och tack», «Hallo zusammen» are a greeting followed by
+/// no name at all, and the control for this rule is that «Hej alla,» finds
+/// nothing. It finds nothing by the **word's own case**, not by a list of
+/// exceptions, because `name_shaped` asks for a capital. So a greeting is
+/// `Suggest` and the sentence says why: *a greeting is often followed by a
+/// name, which is not the same as naming one.*
+///
+/// Measured on the Swedish letter: it adds **no finding there** — «Katarina
+/// Lindqvist» is already offered by the pair rule, two known names in a row —
+/// and that is worth reporting rather than hiding, because a rule that only
+/// re-offers is a thing to know about. What it buys is the letter nobody's
+/// dictionary covers: `Hej Yusuf Demir,` and `Hej Birgitta,` found nothing at
+/// all before it.
 fn salutations(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>) {
     for (i, word) in words.iter().enumerate() {
         let w = bare_keep_dot(word.text);
-        if !pack.salutations.iter().any(|s| s.eq_ignore_ascii_case(w)) {
+        let proof = pack.salutations.iter().any(|s| s.eq_ignore_ascii_case(w));
+        let greeting = !proof && pack.greetings.iter().any(|s| s.eq_ignore_ascii_case(w));
+        if !proof && !greeting {
             continue;
         }
         // An article in front of it was tried here first — «bei der Frau
@@ -387,29 +435,79 @@ fn salutations(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>
         // pronoun, not an article, and the rule lost a real person. The shape
         // of what **follows** does the work instead, and does it in every one
         // of the four cases measured.
+        // **A salutation standing alone on its line names the next line** —
+        // the lead's ruling of 15 October, from the owner's own letter:
+        //
+        // ```text
+        // Herrn
+        // Markus Feldmann
+        // Gartenstraße 17
+        // 04155 Leipzig
+        // ```
+        //
+        // The most ordinary shape a German letter has, and «Markus» was caught
+        // by nothing at all. Narrow on purpose, in the ruling's own words: a
+        // salutation that merely **ends** a line («An Herrn⏎Markus Feldmann»,
+        // «Sehr geehrter Herr⏎Feldmann») is not this rule, and the pair rule
+        // still offers the name there. `a_salutation_alone_on_its_line_names_the_next`
+        // holds that line as a number.
+        let alone_on_its_line = (i == 0 || word.newline_before)
+            && words.get(i + 1).is_none_or(|next| next.newline_before);
         // Step over a title: «Herr Dr. Schneider», «Frau Mag. Spitzwieser».
         let (j, title) = match title_chain(words, i + 1, pack) {
             Some((at, said)) => (at, Some(said)),
             None => (i + 1, None),
         };
-        let Some((first, last)) = name_from(words, j, pack) else { continue };
+        // One break, crossed once. `title_chain` already crosses its own, so
+        // the permission is spent on whichever of the two stands first after
+        // the salutation and never twice.
+        //
+        // **And only a salutation crosses it**, which is the ruling's own word
+        // and was measured the moment the greeting list arrived beside it: a
+        // letter opening «Hej!» on its own line, then a blank line, then
+        // «Tack för ditt brev» offered **«Tack»** as a person. A salutation
+        // alone on its line is an address block; a greeting alone on its line
+        // is a letter's first line, and what follows it is a sentence. The
+        // control is in `a_greeting_offers_the_name_after_it`.
+        let over_a_break = proof && alone_on_its_line && j == i + 1;
+        let Some((first, last)) = name_from(words, j, pack, over_a_break) else { continue };
         let Some(start_word) = words.get(first) else { continue };
         let Some(end_word) = words.get(last) else { continue };
-        let reason = match title {
-            // The language is the pack's, never this file's (item 2 of the
-            // detection round). «in German a salutation …» rather than «a
-            // German salutation …» so that no pack needs an article of its
-            // own: «an English», «a Swedish».
-            Some(t) => format!("a name after «{w} {t}» — in {} a salutation names the person who follows it", pack.in_english),
-            None => format!("a name after «{w}» — in {} a salutation names the person who follows it", pack.in_english),
+        // The language is the pack's, never this file's (item 2 of the detection
+        // round). «in German a salutation …» rather than «a German salutation
+        // …» so that no pack needs an article of its own: «an English», «a
+        // Swedish».
+        let said = match title {
+            Some(t) => format!("«{w} {t}»"),
+            None => format!("«{w}»"),
+        };
+        let (confidence, rule, reason) = if proof {
+            (
+                Confidence::Auto,
+                "salutation",
+                format!(
+                    "a name after {said} — in {} a salutation names the person who follows it",
+                    pack.in_english
+                ),
+            )
+        } else {
+            (
+                Confidence::Suggest,
+                "greeting",
+                format!(
+                    "a name after {said} — in {} a greeting is often followed by a name, which is \
+                     not the same as naming one — offered for your word",
+                    pack.in_english
+                ),
+            )
         };
         out.push(candidate(
             pack,
             start_word.start,
             trimmed_end(end_word),
             Kind::Person,
-            Confidence::Auto,
-            "salutation",
+            confidence,
+            rule,
             reason,
         ));
     }
@@ -441,7 +539,7 @@ fn titled_names(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate
             i += 1;
             continue;
         }
-        if let Some((first, last)) = name_from(words, after, pack) {
+        if let Some((first, last)) = name_from(words, after, pack, false) {
             if let (Some(start_word), Some(end_word)) = (words.get(first), words.get(last)) {
                 out.push(candidate(
                     pack,
@@ -614,18 +712,30 @@ fn dictionary_names(
             i += 1;
             continue;
         }
-        // Another rule's ground: a salutation or a title in front of this pair
-        // protects it outright, and two findings on one name is one too many.
-        let claimed = i.checked_sub(1).and_then(|k| words.get(k)).is_some_and(|prev| {
-            let n = bare_keep_dot(prev.text);
-            pack.salutations.iter().any(|t| t.eq_ignore_ascii_case(n))
-                || pack.titles.iter().any(|t| t.eq_ignore_ascii_case(n))
-                || pack.title_parts.iter().any(|t| t.eq_ignore_ascii_case(n))
-        });
-        if claimed {
-            i += 2;
-            continue;
-        }
+        // **This rule does not yield to another on a guess.**
+        //
+        // A salutation or a title in front of the pair used to send this rule
+        // away — «another rule owns this name and has already protected it» —
+        // and the owner's letter of 15 October is what that cost: in
+        //
+        // ```text
+        // Herrn
+        // Markus Feldmann
+        // ```
+        //
+        // the word before the pair is a salutation, so this rule stood down,
+        // and the salutation rule then stopped at the line edge and never took
+        // it. Two rules, each right on its own, and the name fell into the seam
+        // between them. The line edge is fixed above; this is the lead's other
+        // half of it — «the seam must be impossible, not fixed once».
+        //
+        // There is nothing left to yield about, because `settle` already knows
+        // what a guess here could only hope: it keeps the proven finding, folds
+        // this offer into it, and writes «de:name-dictionary agreed as well» —
+        // which is an answer a person deciding is owed and which the guess
+        // threw away. Measured across the five fixtures and the owner's six
+        // letters: not one count moves, and **26** reasons across the thirteen
+        // documents gain the second layer's name.
         out.push(candidate(
             pack,
             first.start,
@@ -847,22 +957,15 @@ fn reversed_pairs(
             i += 1;
             continue;
         }
-        // A label or a salutation in front owns this name already.
-        let claimed = i.checked_sub(1).and_then(|k| words.get(k)).is_some_and(|prev| {
-            let n = bare_keep_dot(prev.text);
-            let bare_label = n.trim_end_matches(':');
-            pack.salutations.iter().any(|t| t.eq_ignore_ascii_case(n))
-                || pack.titles.iter().any(|t| t.eq_ignore_ascii_case(n))
-                || pack.title_parts.iter().any(|t| t.eq_ignore_ascii_case(n))
-                || prev.text.ends_with(':')
-                || crate::scanner::sets::all()
-                    .iter()
-                    .any(|set| set.rules.iter().any(|rule| rule.label.eq_ignore_ascii_case(bare_label)))
-        });
-        if claimed {
-            i += 2;
-            continue;
-        }
+        // **And this rule does not yield on a guess either**, for the reason
+        // written at the same place in `dictionary_names`: it listed the rules
+        // it believed would take the name — a salutation, a title, a label of
+        // any set — and a guess about what another rule will do can only be
+        // right about rules it can see. `settle` is where two layers on one
+        // value are answered, and it answers by keeping the proven one and
+        // naming the other. Measured on the five fixtures and the owner's six
+        // letters: not one count moves, and the payroll ledger gains two more
+        // reasons that say the second layer agreed.
         // Both halves known is a stronger line than one, and the reason says
         // which — a person deciding is owed the difference.
         let both = names.family(family)

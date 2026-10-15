@@ -102,8 +102,10 @@ fn a_name_in_the_question_reads_as_a_token_in_that_column() {
         "the question's own view shows the name in the clear: {:?}",
         view.text
     );
-    assert_eq!(view.marks.len(), 1, "the field has nothing to draw: {:?}", view.marks);
-    assert_eq!(view.marks[0].kind, Kind::Person);
+    // Two marks, one per word of her name (085 ruling 1, 15 October) — the
+    // field has something to draw, and it draws it over both words.
+    assert_eq!(view.marks.len(), 2, "the field has nothing to draw: {:?}", view.marks);
+    assert!(view.marks.iter().all(|m| m.kind == Kind::Person), "{:?}", view.marks);
 
     let after = leaving(s);
     assert!(!after.contains("Hedvig Palmgren"), "{after:?}");

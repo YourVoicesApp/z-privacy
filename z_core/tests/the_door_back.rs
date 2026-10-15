@@ -144,7 +144,13 @@ fn the_door_back_reads_a_file_with_no_bench_of_its_own() {
     let dir = fresh_vault("afile");
     let (held, number, safe, page) = a_letter_that_has_left("die Mahnung");
     let names = tokens_in(&safe);
-    assert_eq!(names.len(), 11, "the letter left with {} names, not 11", names.len());
+    // **Fourteen, not eleven, since 085 ruling 1** (15 October): each of this
+    // letter's three people is a given name and a surname, and a token never
+    // covers more than one word of what the app read for itself. The same
+    // number moved in `a_document_that_comes_back_is_translated`, which is the
+    // door this one is the control for — the two rounds met here, and the gate
+    // is what said so.
+    assert_eq!(names.len(), 14, "the letter left with {} names, not 14", names.len());
     let back = what_came_back(&safe, &page);
 
     let seen = read_a_document_that_came_back(back.as_bytes().to_vec(), DocumentKind::Txt)

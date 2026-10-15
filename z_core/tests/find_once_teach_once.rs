@@ -120,10 +120,15 @@ fn a_candidate_protects_nothing_until_it_is_taught() {
     // «Thomas Kowalski» is a known given name followed by a known family name
     // now, so the dictionary rule offers it — at Suggest, never Auto, which is
     // the whole of item B of the owner's paper.
-    assert!(
-        marked.iter().any(|(state, text)| *state == MarkState::Suggested && text == "Thomas Kowalski"),
-        "both halves are in the bank and nothing offered the pair: {marked:?}"
-    );
+    // One finding per word since 085 ruling 1 (15 October): the pair is still
+    // the evidence, and **both** halves have to be offered for it to have been
+    // read as a pair.
+    for half in ["Thomas", "Kowalski"] {
+        assert!(
+            marked.iter().any(|(state, text)| *state == MarkState::Suggested && text == half),
+            "both halves are in the bank and nothing offered the pair: {marked:?}"
+        );
+    }
     // The scan is the scan it was: discovery is a separate layer and adds no
     // findings of its own.
     assert_eq!(

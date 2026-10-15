@@ -222,9 +222,12 @@ void main() {
     expect(bench.returned!.conversations.first.name, 'die Mahnung');
     expect(bench.returned!.conversations.first.answerPage, isTrue,
         reason: 'the answer page did not prove where this document came from');
-    expect(bench.returned!.broughtBack, 1);
+    // **Two names, since 085 ruling 1** (15 October): the import scans, so the
+    // salutation had already protected «Stefan» and «Keller» as a token each
+    // before the hand reached them, and both come back.
+    expect(bench.returned!.broughtBack, 2);
     expect(bench.returned!.unresolved, isEmpty);
-    expect(find.textContaining('One name came back from «die Mahnung»'), findsOneWidget);
+    expect(find.textContaining('2 names came back from «die Mahnung»'), findsOneWidget);
     // Nothing about names staying tokens, because none did.
     expect(find.textContaining('stay as tokens'), findsNothing);
 
@@ -332,7 +335,7 @@ void main() {
     // The name itself does not come back: nobody taught the vault that value,
     // and the line says so in the owner's own cost.
     expect(bench.returned!.broughtBack, 0);
-    expect(find.textContaining('stays as a token'), findsOneWidget,
+    expect(find.textContaining('stay as tokens'), findsOneWidget,
         reason: "the owner's cost is not said once the vault can name it");
   });
 

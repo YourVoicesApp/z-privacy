@@ -29,7 +29,10 @@ fn golden_counts_do_not_move() {
     let (_s, report) = scanned_session();
     assert_eq!(
         (report.auto, report.suggested, report.normal),
-        (9, 1, 426),
+        // Eleven, not nine, since 085 ruling 1 (15 October): the contract's two
+        // people are a given name and a surname each, and a token never covers
+        // more than one word of what the app read for itself.
+        (11, 1, 426),
         "the golden fixture's counts moved: {report:?}"
     );
 }
@@ -38,7 +41,7 @@ fn golden_counts_do_not_move() {
 fn golden_every_finding_says_what_and_why() {
     let (s, _) = scanned_session();
     let findings = list_findings(s).expect("findings");
-    assert_eq!(findings.len(), 10, "nine protected and one waiting");
+    assert_eq!(findings.len(), 12, "eleven protected and one waiting");
 
     for f in &findings {
         assert!(f.span.end > f.span.start, "a finding must point somewhere");
@@ -76,6 +79,9 @@ fn golden_auto_is_only_what_can_be_proven() {
             Kind::CustomerNo,
             Kind::Email,
             Kind::Iban,
+            // Two people, four words (085 ruling 1, 15 October).
+            Kind::Person,
+            Kind::Person,
             Kind::Person,
             Kind::Person,
             Kind::Phone,
@@ -144,7 +150,7 @@ fn golden_a_rescan_keeps_what_you_did_by_hand() {
     protect(s, span, Scope::Conversation, Kind::Custom).expect("protect by hand");
 
     let again = scan(s).expect("rescan");
-    assert_eq!((again.auto, again.suggested), (9, 1), "the layers found the same");
+    assert_eq!((again.auto, again.suggested), (11, 1), "the layers found the same");
 
     let text = payload_view(build_payload(s).expect("build")).expect("view").text;
     assert!(
@@ -174,7 +180,7 @@ fn golden_answering_the_two_clears_the_way_to_send() {
         .collect();
     let after = answer_finding(s, open[0], FindingAnswer::Protect).expect("protect it");
     assert_eq!(after.suggested, 0);
-    assert_eq!(after.auto, 10, "the confirmed one joined the protected set");
+    assert_eq!(after.auto, 12, "the confirmed one joined the protected set");
 
     // A payload built after the answers may go as far as the provider door, where
     // it stops for want of a credential and for no other reason.
@@ -190,9 +196,28 @@ fn golden_answering_the_two_clears_the_way_to_send() {
 
 #[test]
 fn golden_by_layer_says_who_caught_what() {
-    let (_s, report) = scanned_session();
+    let (s, report) = scanned_session();
     let total: u32 = report.by_layer.iter().map(|l| l.count).sum();
-    assert_eq!(total, report.auto, "every protected item belongs to a layer");
+    // **`by_layer` counts places and `auto` counts findings**, and the two are
+    // not the same number — stated here rather than left as a coincidence of
+    // this fixture, which is what it was until 085 ruling 1 (15 October) made
+    // the people of this contract one word each. `Scope::Conversation` means
+    // every place of a value, including the places no rule pointed at, which
+    // is the owner's own reason for it: his name is written three times and
+    // only the signature carries the proof. So the layers account for every
+    // **place** that is protected, which is what this test is for.
+    let places = document_view(s)
+        .expect("view")
+        .marks
+        .iter()
+        .filter(|m| m.state == MarkState::Protected)
+        .count() as u32;
+    assert_eq!(total, places, "every protected place belongs to a layer");
+    assert!(
+        total >= report.auto,
+        "a layer counted fewer places than there are findings: {:?}",
+        report.by_layer
+    );
     assert!(
         report.by_layer.iter().any(|l| l.source == Source::GeneralRule),
         "arithmetic caught some: {:?}",

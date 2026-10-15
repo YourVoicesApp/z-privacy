@@ -107,16 +107,24 @@ fn read(segments: &[Segment]) -> String {
 fn a_session(name: &str, text: &str) -> (Bench, u32, Vec<String>) {
     let held = Bench(open_session(None, "sv".to_string()).expect("open"));
     import_text(held.0, text.to_string()).expect("import");
-    let report = scan(held.0).expect("scan");
-    assert_eq!(
-        report.suggested, 0,
-        "the scanner now suggests {} names in this line, so the count of protections below \
-         is no longer the count of things put here by hand",
-        report.suggested
-    );
+    scan(held.0).expect("scan");
     if text.contains(VALUE) {
         protect(held.0, span_of(text, VALUE), Scope::Once, Kind::Person).expect("protect");
     }
+    // **Asked after the hand, not before it** — the greeting rule of
+    // 15 October offers this line's name, one word each, because «Hej Hedvig
+    // Palmgren» is the shape that rule exists for. The hand's one act covers
+    // both words (a selection is one value however many words it holds), and
+    // one rescan is what brings the findings' state into line with what is
+    // protected. What this helper needs is unchanged: nothing waiting, so the
+    // counts below are the things put here by hand.
+    let report = scan(held.0).expect("rescan");
+    assert_eq!(
+        report.suggested, 0,
+        "the scanner suggests {} names this fixture does not answer, so the count of \
+         protections below is no longer the count of things put here by hand",
+        report.suggested
+    );
     let row = conversation_begin(name.to_string(), Some(held.0)).expect("begin");
     let handle = build_payload(held.0).expect("payload");
     let view = payload_view(handle).expect("view");

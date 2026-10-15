@@ -1,10 +1,28 @@
-// German Name Dictionary V1 — the owner's experiment, item by item.
+// The German name dictionary — the owner's experiment, item by item.
 //
-// 310 names: 300 given names from Berlin 2023 and the ten commonest surnames in
-// Germany. The question he asked is not «does a dictionary help» but a narrower
-// and better one: **did these 300 names improve Person detection without
+// **What this build holds, counted rather than remembered** (15 October): 5,712
+// given names and 3,246 surnames, 8,958 in all. The given names are tier 1 of a
+// bank built from four cities' newborn registers, 2012 to 2025 — Berlin, Bonn,
+// Dortmund and Köln — where tier 1 means a name three or four of the four
+// cities gave a child; the 3,774 given names of tier 2, used by two cities, are
+// in the same file and this build does not load them. The surnames are
+// Wikidata's, each with at least ten bearers. The sibling packs are their own
+// measurement and far smaller: Swedish 150 and 150, English 149 and 150, both
+// from Wikidata.
+//
+// This header said «310 names: 300 given names from Berlin 2023 and the ten
+// commonest surnames in Germany» until today, and had said it for every day the
+// bank grew under it. It is the fault `a_sentence_that_names_must_ask_what_it_names`
+// is named for, and the reason the rule's own sentence reads its two numbers out
+// of `Dictionary::counts()` at the moment it writes them. A header cannot do
+// that, so it says the date it was counted.
+//
+// **The owner's question is unchanged, and it is the narrow one:** not «does a
+// dictionary help» but **did these names improve Person detection without
 // raising false positives?** If yes, widen the source; if no, do not assume a
-// bigger dictionary would have been better.
+// bigger dictionary would have been better. Every widening since has been
+// answered that way — a tier that cost one false protection anywhere did not
+// ship, whatever it would have gained (`de_names::LOADED_TIERS`).
 //
 // So the dictionary is a signal and never a verdict, in his own four tiers:
 //
@@ -13,9 +31,14 @@
 //   Thomas               a match, and no certainty
 //   Müller               a possible surname, not always enough
 //
+// His second tier is two words, and since 085 ruling 1 (15 October) what it
+// offers is **one finding per word** — two offers, not one about a pair. The
+// evidence is still the pair: both halves must be known for either to be
+// offered at all, which is what keeps «Thomas» alone in his third tier.
+//
 // Item E of the paper asks for nine tests. Two of them live beside the loader
 // in `packs/de_names.rs` (it loads; German letters survive), the suite and the
-// gates are the seventh, and the rest are here.
+// gates are the seventh, and the ten below are the rest.
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::indexing_slicing)]
 
 use z_core::api::*;
@@ -48,10 +71,20 @@ fn people(doc: &str) -> Vec<(MarkState, String)> {
 /// E3 — a salutation and a name is the strongest case there is, and the
 /// dictionary must not touch it: it was protected outright before V1 existed,
 /// and it is protected outright now, once and not twice.
+///
+/// **Two tokens since 085 ruling 1** (15 October), one per word, and «once and
+/// not twice» is still what is measured: each word appears once, not once from
+/// the salutation and again from the dictionary.
 #[test]
 fn a_salutation_and_a_name_is_protected_outright_and_only_once() {
     let found = people("Sehr geehrter Herr Thomas Müller, vielen Dank.");
-    assert_eq!(found, vec![(MarkState::Protected, "Thomas Müller".to_string())]);
+    assert_eq!(
+        found,
+        vec![
+            (MarkState::Protected, "Thomas".to_string()),
+            (MarkState::Protected, "Müller".to_string())
+        ]
+    );
 }
 
 /// E4 — two names in a row, with nothing in front of them. This is the case
@@ -62,7 +95,10 @@ fn a_given_name_and_a_surname_in_a_row_are_offered() {
     let found = people("Thomas Müller hat den Vertrag am 3. März unterschrieben.");
     assert_eq!(
         found,
-        vec![(MarkState::Suggested, "Thomas Müller".to_string())],
+        vec![
+            (MarkState::Suggested, "Thomas".to_string()),
+            (MarkState::Suggested, "Müller".to_string())
+        ],
         "two names in a row are offered for a word, never protected by the list alone"
     );
     // And the reason says which list said so, because a person asked to decide
@@ -96,12 +132,18 @@ fn a_single_name_on_its_own_is_never_a_person() {
 fn the_rules_that_were_there_before_still_hold() {
     assert_eq!(
         people("Ansprechpartner: Frau Anna Weber"),
-        vec![(MarkState::Protected, "Anna Weber".to_string())],
+        vec![
+            (MarkState::Protected, "Anna".to_string()),
+            (MarkState::Protected, "Weber".to_string())
+        ],
         "the salutation rule"
     );
     assert_eq!(
         people("Prim. Dr. Ludwig Neuner (Klinikum Freistadt)"),
-        vec![(MarkState::Protected, "Ludwig Neuner".to_string())],
+        vec![
+            (MarkState::Protected, "Ludwig".to_string()),
+            (MarkState::Protected, "Neuner".to_string())
+        ],
         "the title rule"
     );
     assert!(
@@ -262,15 +304,17 @@ fn a_function_word_does_not_open_a_name() {
 /// Germany, which is not the same list and not this source.
 #[test]
 fn the_surnames_of_a_real_letter_are_in_the_list_now() {
-    for (doc, who) in [
-        ("Katharina Lindemann hat den Vertrag geprüft.", "Katharina Lindemann"),
-
-        ("Jonas Petersen schickt die Unterlagen.", "Jonas Petersen"),
-        ("Sophie Brandt bereitet den Vertrag vor.", "Sophie Brandt"),
+    for (doc, given, family) in [
+        ("Katharina Lindemann hat den Vertrag geprüft.", "Katharina", "Lindemann"),
+        ("Jonas Petersen schickt die Unterlagen.", "Jonas", "Petersen"),
+        ("Sophie Brandt bereitet den Vertrag vor.", "Sophie", "Brandt"),
     ] {
         assert_eq!(
             people(doc),
-            vec![(MarkState::Suggested, who.to_string())],
+            vec![
+                (MarkState::Suggested, given.to_string()),
+                (MarkState::Suggested, family.to_string())
+            ],
             "«{doc}»"
         );
     }

@@ -158,6 +158,21 @@ pub(crate) struct LanguagePack {
 
     /// Words that introduce a person: «Herr», «Frau», «Fru».
     pub salutations: &'static [&'static str],
+    /// Words that **greet** a person: «Hej», «Hallo», «Hi».
+    ///
+    /// A second list beside the first and not a second rule: one walk reads
+    /// both, and the only difference is the confidence each carries and the
+    /// clause that says which. A salutation is proof — nothing but a person
+    /// follows «Frau» — while a greeting is read by the same shape and proves
+    /// nothing: «Hej alla», «Hej och tack», «Hallo zusammen». So a greeting
+    /// **offers** the name after it and never protects it, and the owner's own
+    /// letters are why it exists at all: a Swedish letter opens with «Hej» and
+    /// its first name was carried by the name dictionary or by nothing.
+    ///
+    /// Empty is a decision and not an omission. A word goes in here when it has
+    /// been measured on that language's goldens, and the one that is **not**
+    /// here is as much a measurement as the one that is.
+    pub greetings: &'static [&'static str],
     /// Titles that stand before a name and are not part of it.
     pub titles: &'static [&'static str],
     /// Parts of a Latin title that never stand alone: «med.», «rer.».

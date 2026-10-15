@@ -86,6 +86,20 @@ pub(crate) fn scan(
     label_rules.extend(taught.iter().cloned());
     all.extend(rules::scan_with(text, &label_rules, &sets::honorifics_for(active)));
     all.extend(vault_pass(text, hints));
+    // **A name is one word** — 085 ruling 1, over what the app read for itself.
+    //
+    // Asked here and not in any rule, for the reason the token law below is
+    // asked here: the law is about the text. Five rules can hand back a span of
+    // several names — a salutation, a title, a signature, the dictionary pair,
+    // the reversed pair — and the trap this house pays for most often is a rule
+    // written in place and not applied to its second case. It was paid twice
+    // already on this very law, in the owner's letter of 15 October: the
+    // salutation rule gave «Katrin Sommer» one token at the top of the page and
+    // the signature rule gave it one token again at the bottom.
+    //
+    // Before the exceptions, so that what a person refuses is what a person was
+    // shown.
+    all = each_name_one_word(text, all);
     all.retain(|candidate| !excepted(text, candidate, exceptions));
     // **A token is not a candidate** — 079 rule 5, and a must-fix the moment an
     // import began scanning (14 October, item 3).
@@ -108,6 +122,47 @@ pub(crate) fn scan(
         all.retain(|c| !tokens.iter().any(|(start, end)| c.start < *end && *start < c.end));
     }
     settle(all)
+}
+
+/// One name, one word — and one token, because a finding is what is protected.
+///
+/// **The limit is the whole of the rest of this function.** The owner corrected
+/// the lead on the day he ruled it: «النقرتان تصنعان كوداً واحداً بأمر من
+/// المستخدم… التحديد له قوانينه لأنه مرتبط بإرادة المستخدم». A value the person
+/// settled is one value however many words it has. The vault is the only layer
+/// here whose values come from the person — every row of it was put there by a
+/// hand, a list they imported or a table they taught — so the vault's own
+/// findings are handed back untouched, and 038-I's «Anna-Lena Bergström» stays
+/// one token across a line break it was printed with.
+///
+/// And it is a law about **names**. A company's legal form is part of its name;
+/// an address over two lines is paper 088's open question and waits for the
+/// owner; a number may span spaces by ruling 2 of this same paper, which gives
+/// numbers their own rules by kind. So the kind is asked, and nothing but
+/// `Person` is touched.
+///
+/// Everything else about the candidate is carried over word for word — the
+/// reason above all, because splitting a span may not cost a person the «why»
+/// they are owed when they answer about it.
+fn each_name_one_word(text: &str, all: Vec<Candidate>) -> Vec<Candidate> {
+    let mut out: Vec<Candidate> = Vec::with_capacity(all.len());
+    for candidate in all {
+        if candidate.kind != Kind::Person || candidate.source == Source::Vault {
+            out.push(candidate);
+            continue;
+        }
+        let words = crate::text::words_in(text, candidate.start, candidate.end);
+        // One word, or nothing a word could be made of: left exactly as it came,
+        // so a rule that already obeys the law is not rewritten by it.
+        if words.len() < 2 {
+            out.push(candidate);
+            continue;
+        }
+        for (start, end) in words {
+            out.push(Candidate { start, end, ..candidate.clone() });
+        }
+    }
+    out
 }
 
 fn excepted(text: &str, candidate: &Candidate, exceptions: &[UserException]) -> bool {

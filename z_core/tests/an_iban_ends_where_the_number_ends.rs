@@ -135,10 +135,12 @@ fn the_rest_of_the_letter_did_not_move() {
     let report = scan(s).expect("scan again, for the numbers");
     // The anchor for this fixture, written down the day it was frozen: the two
     // bank values are protected, and the words the IBAN used to swallow are
-    // ordinary words again.
+    // ordinary words again. Eleven and not eight since 085 ruling 1
+    // (15 October): the letter's three people are a given name and a surname
+    // each, and a token never covers more than one word.
     assert_eq!(
         (report.auto, report.suggested, report.normal),
-        (8, 5, 86),
+        (11, 5, 86),
         "the letter's counts moved: {report:?}"
     );
 }

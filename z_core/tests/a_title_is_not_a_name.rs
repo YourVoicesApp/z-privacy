@@ -66,8 +66,8 @@ fn frau_as_an_ordinary_noun_names_nobody() {
     assert!(people("Beschwerden der Frau sind häufig.").is_empty());
     assert!(people("Die Gesundheit der Frau und des Mannes.").is_empty());
     // And the salutation still works where it is one.
-    assert_eq!(people("Sehr geehrte Frau Anna Weber,"), vec!["Anna Weber"]);
-    assert_eq!(people("Herr Thomas Müller hat unterschrieben."), vec!["Thomas Müller"]);
+    assert_eq!(people("Sehr geehrte Frau Anna Weber,"), vec!["Anna", "Weber"]);
+    assert_eq!(people("Herr Thomas Müller hat unterschrieben."), vec!["Thomas", "Müller"]);
 }
 
 /// Refusing a salutation that follows an article was the first fix tried for
@@ -77,7 +77,7 @@ fn frau_as_an_ordinary_noun_names_nobody() {
 fn a_word_like_den_in_front_of_a_salutation_takes_nothing_away() {
     assert_eq!(
         people("…, den Herr Tobias Reinhardt am 3. März 2025 unterzeichnet hat."),
-        vec!["Tobias Reinhardt"]
+        vec!["Tobias", "Reinhardt"]
     );
 }
 
@@ -85,7 +85,7 @@ fn a_word_like_den_in_front_of_a_salutation_takes_nothing_away() {
 fn an_austrian_title_is_stepped_over_and_the_name_is_taken() {
     assert_eq!(
         people("besonderer Dank gilt Frau Mag. Gudrun Spitzwieser für die Mitarbeit"),
-        vec!["Gudrun Spitzwieser"],
+        vec!["Gudrun", "Spitzwieser"],
         "the token landed on «Mag» in the owner's document"
     );
 }
@@ -93,11 +93,11 @@ fn an_austrian_title_is_stepped_over_and_the_name_is_taken() {
 #[test]
 fn a_title_at_the_start_of_a_name_protects_the_name() {
     // The team page, as it is written there.
-    assert_eq!(people("Dr. Andreas Egger"), vec!["Andreas Egger"]);
-    assert_eq!(people("Prim. Dr. Ludwig Neuner (Klinikum Freistadt, OÖG)"), vec!["Ludwig Neuner"]);
-    assert_eq!(people("Ing. Mag. Alexander Wölfl"), vec!["Alexander Wölfl"]);
-    assert_eq!(people("DI Bernhard Pesec (dothealth)"), vec!["Bernhard Pesec"]);
-    assert_eq!(people("Univ.-Prof. Dr. med. Barbara Maier"), vec!["Barbara Maier"]);
+    assert_eq!(people("Dr. Andreas Egger"), vec!["Andreas", "Egger"]);
+    assert_eq!(people("Prim. Dr. Ludwig Neuner (Klinikum Freistadt, OÖG)"), vec!["Ludwig", "Neuner"]);
+    assert_eq!(people("Ing. Mag. Alexander Wölfl"), vec!["Alexander", "Wölfl"]);
+    assert_eq!(people("DI Bernhard Pesec (dothealth)"), vec!["Bernhard", "Pesec"]);
+    assert_eq!(people("Univ.-Prof. Dr. med. Barbara Maier"), vec!["Barbara", "Maier"]);
 }
 
 #[test]
@@ -110,6 +110,6 @@ fn a_title_with_no_name_after_it_is_nothing() {
 
 #[test]
 fn a_degree_after_the_name_is_left_where_it_stands() {
-    assert_eq!(people("Dr. Hannes Schnabl MSc"), vec!["Hannes Schnabl"]);
-    assert_eq!(people("Mag. Petra Paretta, MBA"), vec!["Petra Paretta"]);
+    assert_eq!(people("Dr. Hannes Schnabl MSc"), vec!["Hannes", "Schnabl"]);
+    assert_eq!(people("Mag. Petra Paretta, MBA"), vec!["Petra", "Paretta"]);
 }

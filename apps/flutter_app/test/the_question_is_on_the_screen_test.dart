@@ -108,7 +108,9 @@ void main() {
         reason: 'the request minted a second token for one person');
 
     // And the screen says what the core did, with the core's own number.
-    expect(find.textContaining('one value replaced'), findsOneWidget);
+    // Two values since 085 ruling 1 (15 October): the name he typed is a given
+    // name and a surname, and each is a token of its own.
+    expect(find.textContaining('2 values replaced'), findsOneWidget);
   });
 
   /// **The sentence a later tidy-up removes as redundant** (046/N).

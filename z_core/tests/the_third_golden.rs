@@ -52,7 +52,12 @@ fn the_team_page_is_protected_and_the_code_tables_are_not() {
     let report = scan(session).expect("scan");
     assert_eq!(
         (report.auto, report.suggested),
-        (18, 2),
+        // **(31, 3) since 085 ruling 1** (15 October), from (18, 2): the team
+        // page's people are one finding per word now. The third question is
+        // the company whose name begins with a person's surname — it keeps its
+        // own question instead of being settled by that person's decision,
+        // which is the lead's reach ruling of the same day.
+        (31, 3),
         "the people on the team page, the company and the person offered for a word: {report:?}"
     );
     // 038-H moved the second number, and upwards: «Gregor Keller» is on the
@@ -86,12 +91,15 @@ fn the_team_page_is_protected_and_the_code_tables_are_not() {
         shape.iter().map(|(k, n)| format!("{k} ×{n}")).collect::<Vec<_>>(),
         [
             "Protected Email ×1",
-            "Protected Person ×16",
+            // 29 since 085 ruling 1 (15 October), from 16 — the same people,
+            // one finding per word. And one Person more offered, because the
+            // company named after a person keeps its own question now.
+            "Protected Person ×29",
             "Protected Phone ×1",
             "Suggested Company ×1",
             // 038-H: «Gregor Keller», offered and not protected — a dictionary
             // hit is a signal, never a verdict, on 734 pages as anywhere else.
-            "Suggested Person ×1",
+            "Suggested Person ×2",
         ],
         "the shape of what it found has changed"
     );
@@ -101,7 +109,11 @@ fn the_team_page_is_protected_and_the_code_tables_are_not() {
     // and a document a person cannot send is a document they cannot use.
     let handle = build_payload(session).expect("the payload builds");
     let safe = payload_view(handle).expect("view").text;
-    assert_eq!(safe.matches("__Z_").count(), 20, "one token per place, and no more");
+    // 35 since 085 ruling 1 (15 October), from 20: one token per **word** of
+    // what the app read for itself, and «one token per place, and no more» is
+    // still what is measured — the audit that refused this payload when 28,853
+    // single letters were protected is still what stands behind it.
+    assert_eq!(safe.matches("__Z_").count(), 35, "one token per place, and no more");
     for name in ["Gudrun Spitzwieser", "Ludwig Neuner", "Florian Röthlin", "Gerhard Renner"] {
         assert!(!safe.contains(name), "«{name}» is still in the clear");
     }

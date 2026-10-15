@@ -72,11 +72,13 @@ fn a_person_answers_twice_and_a_whole_document_is_understood() {
     );
     // «Thomas Kowalski» is offered by the bank itself — one decision fewer,
     // which is this phase's whole measure.
-    assert!(
-        people(session).iter().any(|(state, text)| *state == MarkState::Suggested && text == "Thomas Kowalski"),
-        "the pair the bank knows was not offered: {:?}",
-        people(session)
-    );
+    for half in ["Thomas", "Kowalski"] {
+        assert!(
+            people(session).iter().any(|(state, text)| *state == MarkState::Suggested && text == half),
+            "the pair the bank knows was not offered: {:?}",
+            people(session)
+        );
+    }
 
     // One answer. This is all a person does — and the one name that still
     // needs it is the cost 038-H measured: three of the four city registers
@@ -95,7 +97,7 @@ fn a_person_answers_twice_and_a_whole_document_is_understood() {
     // And the rescan sees every place, including the lines nobody read.
     let after = scan(session).expect("rescan");
     let marked = people(session);
-    for expected in ["Thomas Kowalski", "Sophie Yilmaz"] {
+    for expected in ["Thomas", "Kowalski", "Sophie", "Yilmaz"] {
         assert!(
             marked.iter().any(|(_, text)| text == expected),
             "«{expected}» is still unseen after it was taught: {marked:?}"
@@ -146,13 +148,15 @@ fn a_person_answers_twice_and_a_whole_document_is_understood() {
     scan(session).expect("scan");
     let marked = people(session);
     assert!(
-        marked.iter().all(|(_, text)| text != "Sophie Yilmaz"),
+        marked.iter().all(|(_, text)| text != "Yilmaz"),
         "a locked vault still answered with what it was taught: {marked:?}"
     );
-    assert!(
-        marked.iter().any(|(_, text)| text == "Thomas Kowalski"),
-        "the shipped bank went quiet when the vault did: {marked:?}"
-    );
+    for half in ["Thomas", "Kowalski"] {
+        assert!(
+            marked.iter().any(|(_, text)| text == half),
+            "the shipped bank went quiet when the vault did: {marked:?}"
+        );
+    }
 
     let _ = std::fs::remove_dir_all(&dir);
 }

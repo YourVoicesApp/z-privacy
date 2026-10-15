@@ -84,11 +84,24 @@ fn read(segments: &[Segment]) -> String {
 /// space. Splitting on spaces made two guards below fail with «the payload
 /// carries a token» — red, but for a reason that was mine and not the
 /// product's, which is a red that proves nothing.
-fn first_token(text: &str) -> String {
-    let start = text.find("__Z_").expect("the payload carries a token");
-    let after = start + "__Z_".len();
-    let end = after + text[after..].find("__").expect("a token closes") + "__".len();
-    text[start..end].to_string()
+/// Every token in a payload, in order.
+///
+/// This was `first_token`, and one token was enough until 085 ruling 1
+/// (15 October): the name this file uses is a given name and a surname, so it
+/// leaves as **two** tokens now, and an answer carrying only the first restores
+/// only the first word. The old function is gone rather than kept beside this
+/// one — two ways to ask the same question is how two answers start to differ.
+fn our_tokens(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut rest = text;
+    while let Some(start) = rest.find("__Z_") {
+        let after = start + "__Z_".len();
+        let Some(close) = rest[after..].find("__") else { break };
+        let end = after + close + "__".len();
+        out.push(rest[start..end].to_string());
+        rest = &rest[end..];
+    }
+    out
 }
 
 // ------------------------------------------------- 0 · the instrument itself
@@ -243,9 +256,13 @@ fn an_answer_brought_back_from_outside_is_written_too() {
     let row = conversation_begin("copied out".to_string(), Some(b)).expect("begin");
     set_question(b, format!("Who prepared this? {NAME}")).expect("question");
     let h = build_payload(b).expect("payload");
-    let token = first_token(&payload_view(h).expect("view").text);
+    // The name stands in the question and in the document, so each of its two
+    // tokens is in the payload twice; the two distinct ones are what an answer
+    // carries back.
+    let ours = our_tokens(&payload_view(h).expect("view").text);
+    assert!(ours.len() >= 2, "the name left as one token per word: {ours:?}");
 
-    ingest_answer(h, format!("{token} prepared it.")).expect("ingest");
+    ingest_answer(h, format!("{} {} prepared it.", ours[0], ours[1])).expect("ingest");
 
     let turns = conversation_turns(row.number, Some(b)).expect("turns");
     assert_eq!(turns.len(), 1, "an answer came back from outside and nothing was written");
@@ -271,10 +288,11 @@ fn a_stored_turn_restores_only_what_its_payload_carried() {
     let b = bench();
     let row = conversation_begin("not ours".to_string(), Some(b)).expect("begin");
     let h = build_payload(b).expect("payload");
-    let ours = first_token(&payload_view(h).expect("view").text);
+    let ours = our_tokens(&payload_view(h).expect("view").text);
+    assert!(ours.len() >= 2, "the name left as one token per word: {ours:?}");
     const STRANGER: &str = "__Z_5CDD_IBAN_5B32__";
 
-    ingest_answer(h, format!("{ours} and {STRANGER} both.")).expect("ingest");
+    ingest_answer(h, format!("{} {} and {STRANGER} both.", ours[0], ours[1])).expect("ingest");
 
     let turns = conversation_turns(row.number, Some(b)).expect("turns");
     assert_eq!(turns.len(), 1);
