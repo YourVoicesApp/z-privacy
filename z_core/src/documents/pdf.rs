@@ -898,23 +898,35 @@ fn operands_before(bytes: &[u8], operator: usize, want: usize) -> Vec<f64> {
     out
 }
 
-/// The pen moved, so the words it divides are divided. A move down a line
-/// separates them with a line, a move along one with a space — and writing
-/// nothing in its place is what joined two lines into a single word.
-fn separate(current: &mut String, down: bool) {
-    if current.is_empty() {
+/// The pen moved along the line, so the words it divides are divided by a
+/// space — and writing nothing in its place is what joined two lines into a
+/// single word. Measured on the owner's tax book: 585 moves along a line.
+///
+/// A move **down** is not here any more: a line that ends is a line, and
+/// [`finish_line`] is what ends it (15 October). Writing `'\n'` into the
+/// buffer instead made a run that held several lines, which is why a run could
+/// never mean «paragraph 4 of page 17» the way its own comment claimed.
+fn space_along_the_line(current: &mut String) {
+    if current.is_empty() || current.ends_with(['\n', ' ']) {
         return;
     }
-    if down {
-        while current.ends_with(' ') {
-            current.pop();
-        }
-        if !current.ends_with('\n') {
-            current.push('\n');
-        }
-    } else if !current.ends_with(['\n', ' ']) {
-        current.push(' ');
+    current.push(' ');
+}
+
+/// **The line is finished: what was gathered becomes one run.**
+///
+/// A run is a **line** — 15 October, from the owner's «the app does not know
+/// its own product». It used to be a `BT … ET` block, «which is usually one
+/// line», and that was never true of a layout engine's output: the `pdf`
+/// package writes one text object **per word**, each positioning absolutely,
+/// so our own z-pdf read back with 195 of 195 lines holding one word. A text
+/// object is a grouping with no typographic meaning at all. A line is a **y**.
+fn finish_line(out: &mut Vec<Run>, current: &mut String) {
+    let line = current.trim();
+    if !line.is_empty() {
+        out.push(Run::Text(line.to_string()));
     }
+    current.clear();
 }
 
 /// Is this name actually drawn — `/Fm1 Do` — rather than merely listed?
@@ -1296,8 +1308,17 @@ enum Run {
 /// Pull the text-showing operators out of a content stream.
 ///
 /// `(literal) Tj`, `[(a) -20 (b)] TJ`, `(line) '` and `(line) "` — the four ways a
-/// PDF says «draw these characters». Each `BT … ET` block is one paragraph, which
-/// is usually one line: that is what makes «page 17, paragraph 4» meaningful.
+/// PDF says «draw these characters».
+///
+/// **One run is one line, and a line is a `y`** (15 October). Each `BT … ET`
+/// block was one run — «one paragraph, which is usually one line» — and a
+/// layout engine writes one text object per **word**: our own z-pdf read back
+/// with 195 of 195 lines holding a single word, and the owner found it before
+/// we did. Text is gathered **across** `BT`/`ET` now and a line closes when the
+/// vertical position changes, which is the rule this walk already applied to
+/// `Tm` and now applies to all three movers. That is also what finally makes
+/// «page 17, paragraph 4» mean something: a run no longer holds newlines of its
+/// own.
 fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
     let mut out = Vec::new();
     let mut current = String::new();
@@ -1307,24 +1328,26 @@ fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
     // Where the string being read now begins inside `current`: `'` and `"`
     // draw their string **on the next line**, and by then it is already read.
     let mut string_at: Option<usize> = None;
-    // The vertical offset the line matrix was last set to, so that a second
-    // `Tm` in one block can be told from the first.
+    // Where the text matrix stands now, vertically, and where the text of the
+    // line being gathered sits. `BT` resets the matrix to identity, so a `Td`
+    // straight after one is **not** a line move: it is this line's own
+    // position, and that is the whole of what read a z-pdf one word to a line.
+    let mut pen_y: f64 = 0.0;
     let mut line_y: Option<f64> = None;
 
     while at < bytes.len() {
         match bytes.get(at) {
+            // `BT` resets the text matrix to identity (§9.4.1), which is the
+            // only thing it means here. It does **not** end a line, and what
+            // was gathered stays gathered.
             Some(b'B') if bytes.get(at..at + 2) == Some(b"BT".as_slice()) => {
                 in_text_object = true;
-                current.clear();
                 string_at = None;
-                line_y = None;
+                pen_y = 0.0;
                 at += 2;
             }
+            // And `ET` ends the grouping and nothing else.
             Some(b'E') if bytes.get(at..at + 2) == Some(b"ET".as_slice()) => {
-                if !current.trim().is_empty() {
-                    out.push(Run::Text(current.trim().to_string()));
-                }
-                current.clear();
                 in_text_object = false;
                 at += 2;
             }
@@ -1359,23 +1382,26 @@ fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
             // one of them joined an address to the word under it.
             Some(b'T') if is_operator(bytes, at, b"Td") || is_operator(bytes, at, b"TD") => {
                 let moved = operands_before(bytes, at, 2);
-                let down = moved.get(1).copied().unwrap_or(0.0);
-                separate(&mut current, down.abs() > f64::EPSILON);
+                pen_y += moved.get(1).copied().unwrap_or(0.0);
+                moved_to(&mut out, &mut current, &mut line_y, pen_y);
                 at += 2;
             }
+            // `T*` moves to the next line by the leading, which this walk does
+            // not track — but it says «the next line» in so many words, so the
+            // line ends here whatever the number would have been.
             Some(b'T') if is_operator(bytes, at, b"T*") => {
-                separate(&mut current, true);
+                finish_line(&mut out, &mut current);
+                line_y = None;
                 at += 2;
             }
             // `Tm` replaces the whole text matrix, so it can begin a new line
             // too. Measured: 26 blocks in that book set it more than once, and
             // what makes it a line is the vertical offset changing.
             Some(b'T') if is_operator(bytes, at, b"Tm") => {
-                let y = operands_before(bytes, at, 6).get(5).copied();
-                if let (Some(now), Some(was)) = (y, line_y) {
-                    separate(&mut current, (now - was).abs() > f64::EPSILON);
+                if let Some(y) = operands_before(bytes, at, 6).get(5).copied() {
+                    pen_y = y;
+                    moved_to(&mut out, &mut current, &mut line_y, pen_y);
                 }
-                line_y = y.or(line_y);
                 at += 2;
             }
             // `'` and `"` show their string **on** the next line, and the
@@ -1384,8 +1410,9 @@ fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
                 if let Some(start) = string_at.filter(|start| *start > 0) {
                     let mut head = current.get(..start).unwrap_or_default().to_string();
                     let tail = current.get(start..).unwrap_or_default().to_string();
-                    separate(&mut head, true);
-                    current = head + &tail;
+                    finish_line(&mut out, &mut head);
+                    current = tail;
+                    string_at = Some(0);
                 }
                 at += 1;
             }
@@ -1408,10 +1435,23 @@ fn text_runs(bytes: &[u8], fonts: &Fonts) -> Vec<Run> {
             _ => at += 1,
         }
     }
-    if !current.trim().is_empty() {
-        out.push(Run::Text(current.trim().to_string()));
-    }
+    finish_line(&mut out, &mut current);
     out
+}
+
+/// The pen was positioned, so the line either continues or it ends.
+///
+/// One rule for all three movers (15 October): a **line is a `y`**. The same
+/// vertical position is the same line and the words are divided by a space; a
+/// different one ends the line. Nothing is assumed about which operator said
+/// so, which is what kept `Tm` right and `Td` wrong for a month.
+fn moved_to(out: &mut Vec<Run>, current: &mut String, line_y: &mut Option<f64>, pen_y: f64) {
+    match *line_y {
+        Some(was) if (pen_y - was).abs() > f64::EPSILON => finish_line(out, current),
+        Some(_) => space_along_the_line(current),
+        None => {}
+    }
+    *line_y = Some(pen_y);
 }
 
 /// `(a string with \( escapes \))`
@@ -1733,6 +1773,68 @@ mod tests {
             None,
             "«endobj» was read as an object header"
         );
+    }
+
+    /// **A PDF that puts every word in its own text object** — which is how
+    /// the `pdf` package writes one, and therefore how **our own z-pdf** is
+    /// written.
+    ///
+    /// One `BT /F1 s Tf x y Td (word) Tj ET` per word, each positioning
+    /// absolutely, every word of a line sharing that line's `y`. Legal, and the
+    /// most ordinary output of a layout engine: it positions each word because
+    /// it has already measured where the word goes.
+    pub(crate) fn pdf_one_text_object_per_word(lines: &[&str]) -> Vec<u8> {
+        let mut content = String::new();
+        for (row, line) in lines.iter().enumerate() {
+            let y = 700.0 - (row as f64) * 14.0;
+            let mut x = 44.0;
+            for word in line.split(' ') {
+                content.push_str(&format!(
+                    "BT /F1 10 Tf 0 Tc {x:.5} {y:.5} Td ({word}) Tj ET "
+                ));
+                x += (word.chars().count() as f64 + 1.0) * 5.0;
+            }
+        }
+        let mut out = String::from("%PDF-1.4\n");
+        out.push_str("1 0 obj\n<< /Type/Catalog /Pages 2 0 R >>\nendobj\n");
+        out.push_str("2 0 obj\n<< /Type/Pages /Count 1 /Kids[3 0 R] >>\nendobj\n");
+        out.push_str(
+            "3 0 obj\n<< /Type/Page /Parent 2 0 R /Contents 4 0 R /Resources << /Font << /F1 100 0 R >> >> >>\nendobj\n",
+        );
+        out.push_str(&format!("4 0 obj\n<< /Length {} >>\nstream\n", content.len()));
+        out.push_str(&content);
+        out.push_str("\nendstream\nendobj\n");
+        out.push_str("100 0 obj\n<< /Type/Font /Subtype/Type1 /BaseFont/Helvetica >>\nendobj\n");
+        out.push_str("trailer\n<< /Root 1 0 R >>\n");
+        out.into_bytes()
+    }
+
+    /// **A z-pdf must read back with the lines it was written with** — the
+    /// owner's «the app does not know its own product», 15 October.
+    ///
+    /// Measured on his three saved z-pdfs: **195 of 195**, **146 of 146** and
+    /// **300 of 300** lines held exactly one word, where `pdftotext` reads the
+    /// same three files as 31, 23 and 61 lines.
+    ///
+    /// **The cause is the reader, and the writer is innocent.** Each
+    /// `BT … ET` was treated as one paragraph — «which is usually one line»,
+    /// said the comment, and it was never true of a layout engine's output. A
+    /// text object is a *grouping* with no typographic meaning at all; a line
+    /// is a **y**. So the reader now gathers across `BT`/`ET` and closes a line
+    /// when the vertical position changes, which is the rule it already
+    /// applied to `Tm` and now applies to all three movers.
+    #[test]
+    fn a_pdf_that_positions_every_word_separately_reads_back_its_lines() {
+        let written = [
+            "Sehr geehrter Herr Stefan Keller,",
+            "trotz unserer Zahlungserinnerung vom 28. September 2026",
+            "ist der Betrag nicht eingegangen.",
+        ];
+        let bytes = pdf_one_text_object_per_word(&written);
+        let out = extract(&bytes, &Budget::new()).expect("a legal PDF must be read");
+        let read: Vec<&str> =
+            out.text.lines().map(str::trim).filter(|l| !l.is_empty()).collect();
+        assert_eq!(read, written, "the reader gave every word a line of its own");
     }
 
     /// **And its three siblings are tokens too** (15 October).

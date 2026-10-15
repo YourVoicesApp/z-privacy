@@ -69,6 +69,16 @@ pub(crate) enum Validator {
     /// `Name` would have taken it, because `Name` asks only for a capital. A
     /// label this strong has to be paid for with a shape this strict.
     NamePair,
+    /// **An e-mail address**, asked by the one function that answers it
+    /// (`general_rules::is_an_email`).
+    ///
+    /// 15 October, and the same argument `NamePair` makes above: a label at
+    /// `Auto` names a **kind**, and a kind with a shape has to be paid for with
+    /// that shape. «E-Mail:», «Mail:» and «E-post:» took the next word whatever
+    /// it was, so `E-Mail: LKF - Hotline@…` — a line the owner's catalogue
+    /// writes with the hyphen as its own text object — protected «LKF» as an
+    /// e-mail address, at Auto, with no question asked.
+    Mail,
     /// Whatever follows, as one word. Used by rules a person teaches, who
     /// should not have to describe a shape to be understood.
     Any,
@@ -395,6 +405,7 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             let fits = match rule.validator {
                 Validator::Number => is_numberish(n) || (j == value_start && n.starts_with('+') && n.len() > 1),
                 Validator::Word | Validator::Any => j == value_start && !n.is_empty(),
+                Validator::Mail => j == value_start && crate::scanner::general_rules::is_an_email(n),
                 Validator::Grouped => is_a_group(n),
                 Validator::Name | Validator::NamePair => starts_upper(n) && j - value_start < 4,
             };
@@ -541,6 +552,9 @@ fn table_columns(text: &str, rules: &[LabelRule]) -> Vec<Candidate> {
                     let fits = match rule.validator {
                         Validator::Number => is_numberish(value),
                         Validator::Word | Validator::Any => !value.is_empty(),
+                        // A column headed «E-Mail» holds addresses, and the
+                        // one answer to «is this one» is asked here too.
+                        Validator::Mail => crate::scanner::general_rules::is_an_email(value),
                         Validator::Grouped => value.chars().all(|c| c.is_ascii_alphanumeric() || c == ' '),
                         Validator::Name => starts_upper(value),
                         // In a table a cell is one value, so the pair has to be
@@ -840,5 +854,39 @@ mod tests {
             hits[0].reason
         );
         assert_eq!(hits[0].source_detail, "you:u1");
+    }
+
+    /// **A label at `Auto` must be paid for with the shape it names.**
+    ///
+    /// The three e-mail labels took the next word whatever it was, so on the
+    /// owner's 734-page catalogue the line
+    ///
+    /// ```text
+    /// straße 2, 1030 Wien, E-Mail: LKF-Hotline@gesundheitsministerium.gv.at
+    /// ```
+    ///
+    /// — written by Word with the hyphens as text objects of their own, so the
+    /// reader sees «E - Mail: LKF - Hotline@…» — protected **«LKF»** as an
+    /// e-mail address, at Auto, without asking. Reachable before 15 October
+    /// too; it took «a line is a y» to put the label and its value on one line
+    /// for the label to reach the wrong word at all.
+    ///
+    /// `Validator::NamePair`'s own comment had already said the rule: «a label
+    /// this strong has to be paid for with a shape this strict».
+    #[test]
+    fn an_email_label_will_not_call_a_word_an_address() {
+        let found = scan_with(
+            "E - Mail: LKF - Hotline@gesundheitsministerium.gv.at",
+            &sets::rules_for(&["de".to_string()]),
+            &[],
+        );
+        let said: Vec<(Kind, &str)> = found
+            .iter()
+            .map(|c| (c.kind, "E - Mail: LKF - Hotline@gesundheitsministerium.gv.at".get(c.start..c.end).unwrap_or_default()))
+            .collect();
+        assert!(
+            !said.iter().any(|(_, text)| *text == "LKF"),
+            "«LKF» was called an e-mail address: {said:?}"
+        );
     }
 }

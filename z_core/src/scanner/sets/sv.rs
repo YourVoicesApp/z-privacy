@@ -16,8 +16,8 @@ use super::RuleSet;
 const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
     ("sv-01", "telefon", Kind::Phone, Validator::Number, Confidence::Auto),
     ("sv-02", "mobil", Kind::Phone, Validator::Number, Confidence::Auto),
-    ("sv-03", "e-post", Kind::Email, Validator::Any, Confidence::Auto),
-    ("sv-04", "epost", Kind::Email, Validator::Any, Confidence::Auto),
+    ("sv-03", "e-post", Kind::Email, Validator::Mail, Confidence::Auto),
+    ("sv-04", "epost", Kind::Email, Validator::Mail, Confidence::Auto),
     // A Swedish personal number is a national identifier with a check digit.
     // The row says what it is; the arithmetic, if we ever add it, is a
     // `Validator` in Rust and never a row — the rule this folder opens with.
