@@ -461,7 +461,59 @@ pub(crate) struct Restoration {
     pub unknown: Vec<String>,
 }
 
-pub(crate) fn restore(raw: &str, store: &TokenStore, allowed: &[String]) -> Restoration {
+/// **Where a name may be looked up** — the lead's ruling of 15 October 2026:
+/// `restore(store ∪ blocks, allowed)`.
+///
+/// A bench's store holds this run's own names and dies with the bench. Since
+/// 089 every word that ever took a token is a **block** in the vault, so a
+/// turn read next week can be read at all — and the whole of what changes is
+/// *where a value is looked up*. **The allowed list is untouched** (G9): a
+/// token the payload did not allow stays a token however well the vault knows
+/// it, because the model may have invented it or it may be another
+/// conversation's, and both are foreign here.
+///
+/// **One question, and no table crosses the boundary.** This holds a borrow of
+/// the store and a function to ask, never a token→value map of its own: the
+/// map would be exactly the thing `returning`'s own seam refuses to let out of
+/// the crate («what crosses the boundary is restored text, never a stored
+/// token»), and a copy of it in a struct is that map with another name. The
+/// caller builds the question where the vault is in hand.
+pub(crate) struct Values<'a> {
+    store: &'a TokenStore,
+    blocks: &'a dyn Fn(&str) -> Option<String>,
+}
+
+impl<'a> Values<'a> {
+    /// The store, and the blocks behind it.
+    ///
+    /// **There is no «store only» constructor**, and that is deliberate: every
+    /// caller holds the core, so every caller can ask the vault, and a second
+    /// constructor would be a way to look a name up without the blocks by
+    /// forgetting rather than by deciding. A caller that truly has no vault
+    /// passes a question that answers `None`.
+    pub(crate) fn and_blocks(
+        store: &'a TokenStore,
+        blocks: &'a dyn Fn(&str) -> Option<String>,
+    ) -> Self {
+        Self { store, blocks }
+    }
+
+    /// The value this token stands for, from the store first.
+    ///
+    /// The store goes first because it is the authority on its own run: a
+    /// bench still in memory knows the names it minted, including the ones
+    /// minted before its conversation existed. They cannot disagree about a
+    /// value — a block records the name the store gave the word — so the order
+    /// decides nothing but the work.
+    fn value_for(&self, token: &str) -> Option<String> {
+        if let Some(entry) = self.store.get(token) {
+            return Some(entry.value.expose().to_string());
+        }
+        (self.blocks)(token)
+    }
+}
+
+pub(crate) fn restore(raw: &str, values: &Values<'_>, allowed: &[String]) -> Restoration {
     const OPEN: &str = "__Z_";
     const CLOSE: &str = "__";
 
@@ -492,16 +544,17 @@ pub(crate) fn restore(raw: &str, store: &TokenStore, allowed: &[String]) -> Rest
             }
         };
         let candidate = raw.get(start..end).unwrap_or_default();
+        // **The allowed list first, and it decides by itself.** Asked before
+        // anything is looked up, so widening the lookup cannot widen what a
+        // turn may carry: that is the whole of the ruling that let the blocks
+        // in here.
         let allowed_here = allowed.iter().any(|t| t == candidate);
-        match allowed_here.then(|| store.get(candidate)).flatten() {
-            Some(entry) => {
+        match allowed_here.then(|| values.value_for(candidate)).flatten() {
+            Some(value) => {
                 if !plain.is_empty() {
                     out.push(Segment { text: std::mem::take(&mut plain), piece: Piece::Words });
                 }
-                out.push(Segment {
-                    text: entry.value.expose().to_string(),
-                    piece: Piece::Restored,
-                });
+                out.push(Segment { text: value, piece: Piece::Restored });
             }
             // **Not ours — and that is now said out loud** (046/U).
             //

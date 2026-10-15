@@ -69,7 +69,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// |---|---|---|
 /// | `crypto::FORMAT_VERSION` = 2 | the vault file's envelope | Argon2 params, the wrapped master key, the nonce. **Unmoved by 064:** the envelope does not change, only what the body says. |
 /// | `MODEL_VERSION` = 14 | the vault body, below | identities, values, lists, settings, credentials, the session records (064) — and the blocks (089). |
-/// | `conversation::SESSION_FORMAT_VERSION` = 4 | each session's own file | one conversation's turns. A different format in a different file; it must never borrow this number. |
+/// | `conversation::SESSION_FORMAT_VERSION` = 5 | each session's own file | one conversation's turns, and since 089 rule 9 the documents its preview holds. A different format in a different file; it must never borrow this number. |
 ///
 /// **This table said 12 and 1 while the constants said 13 and 4** — 089 rule 8,
 /// the ed's note. Two of the three numbers it exists to fence were wrong in the
@@ -114,7 +114,7 @@ pub(crate) fn kind_code(kind: Kind) -> u8 {
     }
 }
 
-fn kind_of(code: u8) -> ApiResult<Kind> {
+pub(crate) fn kind_of(code: u8) -> ApiResult<Kind> {
     Ok(match code {
         1 => Kind::Person,
         2 => Kind::Company,

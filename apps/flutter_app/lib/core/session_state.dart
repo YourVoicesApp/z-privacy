@@ -122,6 +122,14 @@ class Ground extends ChangeNotifier {
   /// is shut, because the keys are in it.
   List<ConversationRow> sessions = const [];
 
+  /// **What each session is holding in its preview**, by session number — 089
+  /// rule 9. Empty for a session holding nothing, which is the ordinary state:
+  /// a document that left by a door is not kept.
+  ///
+  /// Read with the sessions and from the same door, so the list and the rows
+  /// under it are one answer rather than two that can disagree.
+  Map<int, List<KeptRow>> kept = const {};
+
   /// Which session is open, by number. `None` until the first one is begun or
   /// entered — and `None` again after a lock, because the core forgets the
   /// number with the key rather than leaving one no key opens.
@@ -274,9 +282,17 @@ class Ground extends ChangeNotifier {
       if (home?.vault == VaultState.unlocked) {
         sessions = await z.conversations();
         openSession = await z.conversationOpen();
+        // 089 rule 9. One call per session, which is one sealed file read per
+        // session: the same cost the row's own «N exchanges» already pays.
+        final held = <int, List<KeptRow>>{};
+        for (final row in sessions) {
+          held[row.number] = await z.keptDocuments(number: row.number);
+        }
+        kept = held;
       } else {
         sessions = const [];
         openSession = null;
+        kept = const {};
       }
       rememberKinds(kinds);
       trouble = null;
@@ -284,6 +300,19 @@ class Ground extends ChangeNotifier {
       trouble = humanMessage(e);
     }
     notifyListeners();
+  }
+
+  /// **Rename one saved document** — 089 rule 9. The name changes and the
+  /// number never does, which is the same division a session's own rename
+  /// keeps. Returns the core's refusal, or null when it went through.
+  Future<String?> renameKept(int number, int which, bool chat, String name) async {
+    try {
+      await z.renameKeptDocument(number: number, which: which, chat: chat, name: name);
+      await refresh();
+      return null;
+    } on ApiError catch (e) {
+      return humanMessage(e);
+    }
   }
 
   /// Change one thing about the settings and write them back.

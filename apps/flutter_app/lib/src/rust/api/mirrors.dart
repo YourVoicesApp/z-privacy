@@ -823,6 +823,60 @@ class HomeSnapshot {
           kinds == other.kinds;
 }
 
+class KeptRow {
+  /// The identity, inside its own sequence. Never reused, not after it leaves.
+  final int number;
+
+  /// A text written or pasted into the preview, rather than a file pulled
+  /// from the computer. The two have their own sequences.
+  final bool chat;
+
+  /// «doc3» · «chat1» — what this document is called in the list.
+  final String handle;
+
+  /// The file's own name, when it came from a file. Empty for a chat, and
+  /// whatever the person renamed it to after that.
+  final String name;
+
+  /// Seconds since 1970, when it was put in the preview.
+  final BigInt at;
+
+  /// **How many places are protected on it** — a count, never a value. It is
+  /// here because a person choosing between two saved documents is choosing
+  /// between two states of work.
+  final int protected;
+
+  const KeptRow({
+    required this.number,
+    required this.chat,
+    required this.handle,
+    required this.name,
+    required this.at,
+    required this.protected,
+  });
+
+  @override
+  int get hashCode =>
+      number.hashCode ^
+      chat.hashCode ^
+      handle.hashCode ^
+      name.hashCode ^
+      at.hashCode ^
+      protected.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is KeptRow &&
+          runtimeType == other.runtimeType &&
+          number == other.number &&
+          chat == other.chat &&
+          handle == other.handle &&
+          name == other.name &&
+          at == other.at &&
+          protected == other.protected;
+}
+
 enum Kind {
   person,
   company,

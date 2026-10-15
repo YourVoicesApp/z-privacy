@@ -526,8 +526,14 @@ impl VaultStore {
     /// given, so this answers after a restart, from any conversation, and after
     /// the conversation that minted it has been forgotten and its key
     /// destroyed. `None` while the vault is shut, like every accessor here.
-    pub(crate) fn block_value_for(&mut self, token: &str) -> Option<String> {
-        self.tick();
+    ///
+    /// **The idle clock is not renewed here.** This is asked inside a reading
+    /// — a returning document, a turn being restored — and «asking is not
+    /// using» is the rule `revealed_now` already follows: the act that renewed
+    /// the clock is the one the person made, not the per-token lookup
+    /// underneath it. Taking `&self` is also what lets a caller hold a bench's
+    /// store and this at the same time (`tokens::Values`).
+    pub(crate) fn block_value_for(&self, token: &str) -> Option<String> {
         self.open.as_ref()?.vault.block_value_for(token)
     }
 

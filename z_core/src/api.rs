@@ -706,6 +706,32 @@ pub enum ScanOrigin {
     Rescan,
 }
 
+/// **One document a conversation is holding in its preview** — 089 rule 9.
+///
+/// A row and never the text: the text is what the preview is for, and a list
+/// that carried it would be the document in two places. The handle is the
+/// core's own («doc3», «chat1») so that no screen works out how a number
+/// becomes a name.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KeptRow {
+    /// The identity, inside its own sequence. Never reused, not after it leaves.
+    pub number: u32,
+    /// A text written or pasted into the preview, rather than a file pulled
+    /// from the computer. The two have their own sequences.
+    pub chat: bool,
+    /// «doc3» · «chat1» — what this document is called in the list.
+    pub handle: String,
+    /// The file's own name, when it came from a file. Empty for a chat, and
+    /// whatever the person renamed it to after that.
+    pub name: String,
+    /// Seconds since 1970, when it was put in the preview.
+    pub at: u64,
+    /// **How many places are protected on it** — a count, never a value. It is
+    /// here because a person choosing between two saved documents is choosing
+    /// between two states of work.
+    pub protected: u32,
+}
+
 /// One answer that came back from a provider.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AnswerId {
@@ -2090,6 +2116,30 @@ pub fn conversations() -> ApiResult<Vec<ConversationRow>> {
 /// Change a session's handle. The number is the identity and does not move.
 pub fn conversation_rename(number: u32, name: String) -> ApiResult<()> {
     crate::ops::conversation::rename(number, name)
+}
+
+/// **The documents one session is holding in its preview** — 089 rule 9.
+///
+/// Newest first, a row each, and never the text. Empty is the ordinary answer:
+/// a document that left by a door is not kept, which is the rule rather than a
+/// loss, and a session written before this round holds none.
+pub fn kept_documents(number: u32) -> ApiResult<Vec<KeptRow>> {
+    crate::ops::conversation::kept_documents(number)
+}
+
+/// **Rename one of them.** The name changes; the number never does.
+pub fn rename_kept_document(number: u32, which: u32, chat: bool, name: String) -> ApiResult<()> {
+    crate::ops::conversation::rename_kept(number, which, chat, name)
+}
+
+/// **Open one in the preview, as it was left** — 089 rule 9.
+///
+/// The text goes back on the bench with every decision that was on it, and
+/// **nothing is scanned**: a rescan would ask again about the words this
+/// document already answered for. The caller reads the document back with
+/// `document_view` afterwards, exactly as it does after an import.
+pub fn open_kept_document(number: u32, which: u32, chat: bool, bench: SessionId) -> ApiResult<()> {
+    crate::ops::conversation::open_kept(number, which, chat, bench)
 }
 
 /// **Write a session's language, by its number, with no document open** — 080.

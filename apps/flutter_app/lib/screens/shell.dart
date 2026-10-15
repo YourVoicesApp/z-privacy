@@ -305,6 +305,50 @@ class _ShellState extends State<ZShell> {
     }
   }
 
+  /// **Open a saved document in the preview, as it was left** — 089 rule 9.
+  ///
+  /// The same shape as `_begin` and `_readBack`, and the same vault gate at the
+  /// front of it (041-N): a bench of its own, the core puts the document back
+  /// on it with every decision that was on it, and **nothing is scanned** —
+  /// the marks are the ones the person left, not a new scan's.
+  ///
+  /// The session is entered first when it is not the open one. A document
+  /// belongs to the conversation that saved it, and opening it from another
+  /// conversation would put its names in a room that cannot read them.
+  Future<void> _openKept(int number, int which, bool chat) async {
+    if (_ground.vault != VaultState.unlocked) {
+      setState(() => _vaultOpen = true);
+      return;
+    }
+    final packId = packForTheNextText(_ground);
+    try {
+      if (_ground.openSession != number) await _ground.enterSession(number);
+      final session = await z.openSession(profileId: null, packId: packId);
+      final bench = Workbench(session: session, profileId: null, packId: packId);
+      await z.openKeptDocument(number: number, which: which, chat: chat, bench: session);
+      // **The same reading as an import, and it is the same act**: this reads
+      // what the core already holds and asks for no scan of its own (item 3
+      // moved the scan into the core, and a restored document carries the
+      // marks it was put away with). One function rather than a second name
+      // for one act — only its name speaks of an import, and what it does is
+      // «look at what is on the bench».
+      await bench.readTheScanThatArrivedWithIt();
+      _bench?.dispose();
+      setState(() {
+        _bench = bench;
+        _settingsOpen = false;
+        _trouble = null;
+        _troubleReport = null;
+      });
+    } on ApiError catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _trouble = humanMessage(e);
+        _troubleReport = null;
+      });
+    }
+  }
+
   /// Ask the core what it would say about a file it refused. The screen works
   /// out none of it: the name and the size go in, the sentence comes back.
   Future<String?> _reportOfRefusal(ApiError error, XFile? file) async {
@@ -441,6 +485,12 @@ class _ShellState extends State<ZShell> {
               // The shell is the only place that holds both the panel and the
               // bench, so it is the only place this can come from.
               bench: _bench?.session,
+              // **089 rule 9: a saved document opens in the preview.** The
+              // panel lists what each session is holding; only the shell can
+              // put a document in front of the person, so the press comes
+              // here, exactly as the «+» and «z-pdf» presses do.
+              onOpenKept: (number, which, chat) =>
+                  unawaited(_openKept(number, which, chat)),
               onClose: () {
                 setState(() => _settingsOpen = false);
                 _ground.refresh();

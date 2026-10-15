@@ -87,6 +87,16 @@ pub(crate) struct Dismissed {
     pub value: crate::secret::Secret,
 }
 
+/// **The saved document a bench is holding** — 089 rule 9.
+///
+/// The number *and* whether it is a chat, because a `docN` and a `chatN` may
+/// share a number: two sequences, as the owner wrote them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct KeptHandle {
+    pub number: u32,
+    pub chat: bool,
+}
+
 /// One answer, tied to the exact payload that produced it.
 #[derive(Clone)]
 pub(crate) struct AnswerRecord {
@@ -149,6 +159,16 @@ pub(crate) struct Session {
     pub findings: Vec<FindingRecord>,
     /// Values the user called not sensitive here. Survives a rescan.
     pub dismissed: Vec<Dismissed>,
+    /// **Which saved document this bench is holding** — 089 rule 9.
+    ///
+    /// `Some(n)` is the `docN`/`chatN` of the copy in the conversation's own
+    /// file, which this bench must delete when its text leaves by a door.
+    /// `None` is a bench with nothing saved behind it: no conversation was
+    /// open when the document arrived, or it has already left.
+    ///
+    /// It is the **number** and not a copy of anything: the copy lives in the
+    /// file, and two copies of a document is the shape that lets them differ.
+    pub kept: Option<KeptHandle>,
     /// Ordinary words left over at the last scan. Counted, never hard-coded.
     pub normal_words: u32,
     /// The id of the next finding.
@@ -215,6 +235,7 @@ impl Session {
             protections: Vec::new(),
             findings: Vec::new(),
             dismissed: Vec::new(),
+            kept: None,
             normal_words: 0,
             next_finding: 1,
             tokens: TokenStore::default(),
@@ -233,6 +254,85 @@ impl Session {
             question_tokens: Vec::new(),
             answer_page: None,
         }
+    }
+
+    /// **Put a saved document back on this bench, as it was left** — 089 rule 9.
+    ///
+    /// The text, the marks, and the «Leave it»s. Three things are rebuilt here
+    /// rather than stored twice:
+    ///
+    ///   * **the values** — each one is the text under its own mark, so the
+    ///     file keeps one copy of every value and a mark cannot come to
+    ///     disagree with the word it points at;
+    ///   * **the token store** — built from those pairs, so the Safe column and
+    ///     every reveal answer as they did before the app closed;
+    ///   * **the act ids** — one act for the whole restoration, because a step
+    ///     back from here is not an undo of something the person just did.
+    ///
+    /// **Nothing is scanned and no finding is made.** The review list is built
+    /// by a scan, and a scan would ask again about the words this document
+    /// already answered for. What a person sees is what they left: the marks,
+    /// and the Rescan button if they want more.
+    pub(crate) fn put_back_the_preview(&mut self, kept: &crate::conversation::Kept) {
+        self.original = Secret::new(kept.text.clone());
+        // **No places**, and the reason is written where they are not kept: a
+        // place is a fact about the file the reader opened, and a restored
+        // document that claimed page numbers it had not measured would be
+        // inventing them. The marks carry their own offsets into the text.
+        self.places = Vec::new();
+        self.doc_name = kept.name.clone();
+        self.doc_kind = kept.kind;
+        self.pages = kept.pages;
+        self.doc_bytes = kept.bytes;
+        self.readable = kept.readable;
+        self.protections.clear();
+        self.findings.clear();
+        self.tokens = TokenStore::default();
+        self.dismissed = kept
+            .dismissed
+            .iter()
+            .map(|value| Dismissed { value: Secret::new(value.clone()) })
+            .collect();
+        let act = self.take_act_id();
+        for mark in &kept.marks {
+            let (start, end) = (mark.start as usize, mark.end as usize);
+            let Some(value) = kept.text.get(start..end) else { continue };
+            if self.tokens.get(&mark.token).is_none() {
+                self.tokens.insert(
+                    mark.token.clone(),
+                    crate::tokens::TokenEntry {
+                        value: Secret::new(value.to_string()),
+                        aliases: Vec::new(),
+                        kind: mark.kind,
+                        scope: mark.scope,
+                        source: mark.source,
+                        decided: mark.decided,
+                        source_detail: mark.detail.clone(),
+                    },
+                );
+            }
+            self.protections.push(Protection {
+                start,
+                end,
+                token: mark.token.clone(),
+                act,
+                kind: mark.kind,
+                scope: mark.scope,
+                source: mark.source,
+                source_detail: mark.detail.clone(),
+                decided: mark.decided,
+                orphaned: mark.orphaned,
+            });
+        }
+        self.protections.sort_by_key(|p| p.start);
+        // **Scanned, and the band must say so**: the marks on this document
+        // were made by the scan that came with it and by hand, before it was
+        // put away, so «not scanned yet» over a document full of marks would be
+        // the band contradicting the column beside it. `OnImport` is the truth
+        // about where they came from — the scan this document arrived with.
+        self.scan_origin = crate::api::ScanOrigin::OnImport;
+        self.payloads.clear();
+        self.bump();
     }
 
     /// **Name every token again, from the session's key** — 064's re-derivation
