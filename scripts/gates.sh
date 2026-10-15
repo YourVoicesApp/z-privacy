@@ -288,6 +288,48 @@ else
   printf '%s\n' "$G32_SAID" | sed 's/^/        /'
 fi
 
+# ---------------------------------------------------------------- G33
+# **One outcome, one sentence, one place** — the fold of 15 October.
+#
+# `ProtectOutcome` was worded by hand at every press that could reach it: the
+# acts bar over a selection, the column press in the workspace, and 084's
+# search bar. Three exhaustive switches over one enum, and they had already
+# drifted — the bar said «Already protected as T.» where the other two named
+# who by, and wrote `Snapped` a third way. The same family as 046/L and as
+# G32's own last check: a state said in two voices is a product that disagrees
+# with itself, and the day a sixth variant lands, three files have to be found.
+#
+# So the enum is read in two files and no others, and the gate names both with
+# the reason it is allowed:
+#
+#   * `core/messages.dart` — the only file that turns an outcome into **words**,
+#     which is this file's whole job (the owner's rule of 29 September);
+#   * `core/protecting.dart` — the only file that folds **many** places' answers
+#     into the one answer a press gets, the way `protect_cell_in_lines` already
+#     does in the core for a column. It says nothing: no sentence is written
+#     there, and the switch it holds counts places.
+#
+# A screen that matches the enum again is a sentence about to drift, whatever
+# it says, so the gate reads the arms and not the words. Comment lines are
+# allowed to name a variant: a doc comment that explains which outcome a press
+# can meet is the opposite of the defect.
+G33_READERS=$(grep -Rn 'ProtectOutcome_' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+              | grep -v '/src/rust/' | grep -vE ':[0-9]+:[[:space:]]*(//|///|\*)' || true)
+G33_FILES=$(printf '%s\n' "$G33_READERS" | grep -v '^$' | cut -d: -f1 | sort -u)
+G33_STRAY=$(printf '%s\n' "$G33_FILES" | grep -v '^$' \
+            | grep -vE "^$FLUTTER_LIB/core/(messages|protecting)\.dart$" || true)
+G33_STRAY_N=$(printf '%s\n' "$G33_STRAY" | grep -c . || true)
+# Two causes, and each says which one it is: a screen that words an outcome
+# again, or a mapper that has stopped wording them at all.
+if [ "$G33_STRAY_N" != "0" ]; then
+  fail "G33 $G33_STRAY_N file(s) read a protect outcome outside core/messages.dart and core/protecting.dart:"
+  printf '%s\n' "$G33_STRAY" | sed 's/^/        /'
+elif ! printf '%s\n' "$G33_FILES" | grep -q "^$FLUTTER_LIB/core/messages.dart$"; then
+  fail "G33 core/messages.dart matches no ProtectOutcome variant: the fold is gone, or it has stopped being exhaustive"
+else
+  pass "G33 a protect outcome becomes a sentence in core/messages.dart and nowhere else"
+fi
+
 # ---------------------------------------------------------------- G29
 # **A document arrives scanned, through every door it can arrive by** — the
 # detection round of 14 October, item 3.

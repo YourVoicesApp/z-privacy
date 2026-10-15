@@ -409,14 +409,6 @@ TextRange? wordPairAt(String text, int at) {
   return TextRange(start: first.start, end: second.end);
 }
 
-/// What each source is called on screen, and why the mark is there.
-String sourceName(Source s) => switch (s) {
-      Source.generalRule => 'Rule',
-      Source.languagePack => 'Pack',
-      Source.vault => 'Vault',
-      Source.hand => 'You',
-    };
-
 /// The colour a source is drawn in. The vault gets its own, because «the app
 /// knows who this is» is a different fact from «this looks like an IBAN».
 Color sourceTint(Source s) => switch (s) {

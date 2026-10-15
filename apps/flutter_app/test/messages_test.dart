@@ -256,4 +256,98 @@ void main() {
     }
     expect(offenders, isEmpty, reason: 'these read an ApiError outside the mapper');
   });
+
+  /// **One outcome, one sentence** — the fold of 15 October, and the table
+  /// `protectSaid` is written against.
+  ///
+  /// Every sentence is spelled out here rather than asked of the product: a
+  /// table that reads its expectation from the function it is testing is green
+  /// whatever the function says, which is the shape this round has already
+  /// paid for twice. Break an arm and exactly one line of this fails.
+  test('every protect outcome has one sentence, and only a column is told about cells', () {
+    const token = '__Z_17A9_CUSTOM_0F63__';
+    const here = Span(start: 10, end: 19);
+    final said = <(ProtectOutcome, ProtectAct), String>{
+      // Applied — the one arm whose **shape** the press changes.
+      (const ProtectOutcome.applied(token: token, places: 1), ProtectAct.aSelection):
+          'Protected as $token.',
+      (const ProtectOutcome.applied(token: token, places: 1), ProtectAct.aPlaceTheBarFound):
+          'Protected as $token.',
+      (const ProtectOutcome.applied(token: token, places: 1), ProtectAct.aCell):
+          'Protected one cell, as $token.',
+      (const ProtectOutcome.applied(token: token, places: 3), ProtectAct.aSelection):
+          'Protected as $token, in 3 places.',
+      (const ProtectOutcome.applied(token: token, places: 3), ProtectAct.aPlaceTheBarFound):
+          'Protected as $token, in 3 places.',
+      (const ProtectOutcome.applied(token: token, places: 3), ProtectAct.aCell):
+          'Protected 3 cells down that column, the first as $token.',
+      // A column that was already protected top to bottom. Only a column can
+      // answer «0 places»: a selection and the bar's fold answer with the
+      // outcome the core gave instead, which is why there is no row for them.
+      (const ProtectOutcome.applied(token: token, places: 0), ProtectAct.aCell):
+          'Every cell in that column was already protected.',
+      // Already protected — **and by whom**, at every press. The bar left that
+      // half out until today, and a person told «already protected» without
+      // being told by what has to go and look.
+      (
+        const ProtectOutcome.alreadyProtected(token: token, source: Source.hand, sourceDetail: 'selected by you'),
+        ProtectAct.aPlaceTheBarFound,
+      ): 'Already protected as $token, by you.',
+      (
+        const ProtectOutcome.alreadyProtected(token: token, source: Source.vault, sourceDetail: 'Z Vault · CLIENT #17'),
+        ProtectAct.aSelection,
+      ): 'Already protected as $token, by vault.',
+      // The vault's question, answered by the core after the act.
+      (const ProtectOutcome.belongsToEntity(entity: 'Lindqvist AB', token: token), ProtectAct.aCell):
+          'That belongs to Lindqvist AB and keeps its token $token.',
+      // Snapped — one wording, and the press supplies the subject.
+      (const ProtectOutcome.snapped(spans: [here]), ProtectAct.aSelection):
+          'The selection cuts into protected text, so nothing changed. It would snap to 1 whole item.',
+      (const ProtectOutcome.snapped(spans: [here]), ProtectAct.aCell):
+          'That cell cuts into protected text, so nothing changed. It would snap to 1 whole item.',
+      (const ProtectOutcome.snapped(spans: [here, here]), ProtectAct.aPlaceTheBarFound):
+          'That place cuts into protected text, so nothing changed. It would snap to 2 whole items.',
+      // 079 rule 5 — one state, one wording, whichever press reached it.
+      (const ProtectOutcome.standsOnAToken(token: token), ProtectAct.aSelection):
+          theTokenIsAlreadyOurs,
+      (const ProtectOutcome.standsOnAToken(token: token), ProtectAct.aCell):
+          theTokenIsAlreadyOurs,
+      (const ProtectOutcome.standsOnAToken(token: token), ProtectAct.aPlaceTheBarFound):
+          theTokenIsAlreadyOurs,
+    };
+    for (final row in said.entries) {
+      expect(
+        protectSaid(row.key.$1, row.key.$2),
+        row.value,
+        reason: 'the sentence for ${row.key.$1.runtimeType} at ${row.key.$2.name} has changed',
+      );
+    }
+
+    // And **every** variant has a sentence at **every** press: a sixth variant
+    // stops the build in `protectSaid` itself, and a press added to the enum
+    // cannot reach an empty line.
+    final everyOutcome = <ProtectOutcome>[
+      const ProtectOutcome.applied(token: token, places: 2),
+      const ProtectOutcome.alreadyProtected(token: token, source: Source.languagePack, sourceDetail: 'sv:name'),
+      const ProtectOutcome.belongsToEntity(entity: 'Anna', token: token),
+      const ProtectOutcome.snapped(spans: [here]),
+      const ProtectOutcome.standsOnAToken(token: token),
+    ];
+    for (final outcome in everyOutcome) {
+      for (final act in ProtectAct.values) {
+        final line = protectSaid(outcome, act);
+        expect(line, isNotEmpty);
+        expect(line.endsWith('.'), isTrue, reason: 'not a sentence: $line');
+        expect(line.contains('ProtectOutcome'), isFalse, reason: 'the enum reached a person: $line');
+      }
+    }
+  });
+
+  test('a source is named in one place, and it is the mapper', () {
+    // `sourceName` moved out of `widgets/document_text.dart` the day the
+    // outcome sentences were folded: a sentence that names who protected
+    // something cannot be written in `core` while the words it needs live in a
+    // widget. Four sources, four words, one file (G33's neighbour).
+    expect(Source.values.map(sourceName).toList(), ['Rule', 'Pack', 'Vault', 'You']);
+  });
 }

@@ -149,6 +149,95 @@ String humanMessage(Object error) {
 /// standing over the first and the answer would come back unreadable.
 const String theTokenIsAlreadyOurs = 'This is already protected — Z put it there.';
 
+/// **What each source is called on screen**, and why the mark is there.
+///
+/// It moved here from `widgets/document_text.dart` the day the outcome
+/// sentences were folded: a sentence that names who protected something cannot
+/// be written in this file while the name it uses lives in a widget, and `core`
+/// may not reach into `widgets`. The chips on the token list and on the acts
+/// card read the same four words, which is the point.
+String sourceName(Source s) => switch (s) {
+  Source.generalRule => 'Rule',
+  Source.languagePack => 'Pack',
+  Source.vault => 'Vault',
+  Source.hand => 'You',
+};
+
+/// **What one press was made on** — the only thing that changes the sentence an
+/// outcome gets, and so the only argument beside the outcome itself.
+///
+/// A column is not a selection: «Protected 3 cells down that column, the first
+/// as T» is not «Protected as T, in 3 places», and a person who pressed on a
+/// column is owed a sentence about cells. That difference is a difference of
+/// **shape** and it is named here; everything else is one wording for one
+/// state, which is 046/L.
+enum ProtectAct {
+  /// A hand selection in the document, and the Protect button beside it.
+  aSelection,
+
+  /// One cell, and the column under it — the press that counts cells.
+  aCell,
+
+  /// A place 084's search bar found, pressed from the bar.
+  aPlaceTheBarFound,
+}
+
+/// **The sentence for what protecting did** — one function, every press.
+///
+/// Until 15 October each press worded every outcome where the press happened:
+/// `widgets/acts.dart` for a selection, `screens/workspace.dart` for a column,
+/// `widgets/find_in_document.dart` for the bar. Three exhaustive switches over
+/// one enum, and they had already drifted — the bar said «Already protected as
+/// T.» where the other two named who by, and wrote `Snapped` in a third
+/// wording of its own. The same defect family as 046/L and as the one sentence
+/// G32 keeps in one place: a state said in two voices is a product that
+/// disagrees with itself, and a sixth variant would have had to be found in
+/// three files.
+///
+/// The switch stays **exhaustive**, so a sixth variant still stops the build —
+/// in one place instead of three, which is the whole of the fold. G33 is the
+/// half that keeps it one place.
+String protectSaid(ProtectOutcome outcome, ProtectAct act) => switch (outcome) {
+  // **The one arm whose shape the act changes.** A column that was already
+  // protected top to bottom comes back `places: 0`, which is «every cell was
+  // already protected» and not «protected in 0 places» — the core's own
+  // wording decision, kept word for word from the press that held it.
+  ProtectOutcome_Applied(:final token, :final places) => switch (act) {
+    ProtectAct.aCell => switch (places) {
+      0 => 'Every cell in that column was already protected.',
+      1 => 'Protected one cell, as $token.',
+      _ => 'Protected $places cells down that column, the first as $token.',
+    },
+    _ => places == 1
+        ? 'Protected as $token.'
+        : 'Protected as $token, in $places places.',
+  },
+  // **Who by, at every press.** The bar left this half out; a person told
+  // «already protected» and not told whether that was their own hand or the
+  // vault has to go and look.
+  ProtectOutcome_AlreadyProtected(:final token, :final source) =>
+    'Already protected as $token, by ${sourceName(source).toLowerCase()}.',
+  ProtectOutcome_BelongsToEntity(:final entity, :final token) =>
+    'That belongs to $entity and keeps its token $token.',
+  // One wording, and the act supplies the subject. Nothing changed, and what
+  // the act *would* take is said in the same breath so that a second press on
+  // «Protect whole items» is a decision and not a surprise.
+  ProtectOutcome_Snapped(:final spans) =>
+    '${_whatWasPressed(act)} cuts into protected text, so nothing changed. '
+        'It would snap to ${spans.length} whole '
+        '${spans.length == 1 ? "item" : "items"}.',
+  // 079 rule 5. One state, one wording, whichever press reached it.
+  ProtectOutcome_StandsOnAToken() => theTokenIsAlreadyOurs,
+};
+
+/// What the press was on, as a sentence's subject. Three words, and the reason
+/// they are not three sentences is above.
+String _whatWasPressed(ProtectAct act) => switch (act) {
+  ProtectAct.aSelection => 'The selection',
+  ProtectAct.aCell => 'That cell',
+  ProtectAct.aPlaceTheBarFound => 'That place',
+};
+
 /// **What a document that came back carries, in one sentence** — 079, the
 /// import side.
 ///

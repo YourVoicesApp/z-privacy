@@ -111,23 +111,80 @@ Future<ProtectOutcome?> protectTheSelection(Workbench bench) {
 /// is also what keeps the exits shut until they are answered.
 ///
 /// The kind of each place comes from the core's one answer for that span.
+///
+/// **One press, one answer, and the answer counts every place** — e2's two
+/// findings of 15 October, and the second of them was a sentence that lied:
+/// the loop kept only the *last* place's outcome, so two places protected
+/// under one token came back `Applied { places: 1 }` and the bar said
+/// «Protected as T.» about two. A place that refused — snapped, or a value the
+/// vault knows under an identity — was swallowed outright whenever a later
+/// place succeeded.
+///
+/// So the fold is the one the core already does for a column
+/// (`ops::protect_cell_in_lines`), place by place instead of cell by cell, and
+/// it is written here because `core` is where the acts live and because no
+/// sentence is written in this file: the number and the token go to
+/// `protectSaid`, which is the only place that words them (G33).
+///
+/// **A place that is already a token of ours is not pressed on at all** —
+/// 079 rule 5, e2's first finding. The core refuses it at the door either way
+/// (`a_token_already_stands_there`, before the vault is taught anything, which
+/// is G32), so this changes nothing about what is minted; what it changes is
+/// that the app stops asking for an act it has already been told it may not
+/// have, and that those places are counted apart from the ones that refused
+/// for some other reason. A search whose word is a token of ours finds nothing
+/// but tokens — every place of one search is the same text — so «nothing was
+/// protected, and a token is why» is the whole answer when it happens.
 Future<ProtectOutcome?> protectThePlacesInTheClear(Workbench bench, List<Span> clear) async {
   if (clear.isEmpty) return null;
-  ProtectOutcome? last;
+  var places = 0;
+  var tokensOfOurs = 0;
+  var token = '';
+  var standing = '';
+  ProtectOutcome? refused;
   try {
     for (final where in clear) {
       final view = await z.inspectSelection(session: bench.session, span: where);
-      last = await z.protect(
+      if (view.onAToken) {
+        tokensOfOurs += 1;
+        // The token standing there, read from the document and never minted:
+        // the field means «which token», and this place *is* one.
+        if (standing.isEmpty) standing = _theTextAt(bench, where);
+        continue;
+      }
+      final outcome = await z.protect(
         session: bench.session,
         span: where,
         scope: Scope.once,
         kind: view.kind,
       );
+      switch (outcome) {
+        // The token of the first place that was really protected — every place
+        // of one search carries the same one, because a token is named from
+        // (client, document, value) and not from the act (measured, 084).
+        case ProtectOutcome_Applied(token: final t):
+          places += 1;
+          if (token.isEmpty) token = t;
+        // Already protected, snapped, or a value an identity owns: honest
+        // answers for one place, and none of them stops the rest. Kept so the
+        // press can say one of them when **nothing** was protected, instead of
+        // saying «protected in 0 places».
+        //
+        // **A wildcard on purpose, and the only one in the round.** This file
+        // asks one question — was this place protected — so a sixth variant
+        // belongs here among «something else» and is carried out whole to the
+        // one switch that must name it. That switch is exhaustive, so the
+        // build still stops: in `protectSaid`, where the sentence is.
+        default:
+          refused ??= outcome;
+      }
     }
     await bench.refresh();
     final still = bench.selection;
     if (still != null) await bench.select(still);
-    return last;
+    if (places > 0) return ProtectOutcome.applied(token: token, places: places);
+    if (tokensOfOurs > 0) return ProtectOutcome.standsOnAToken(token: standing);
+    return refused;
   } on ApiError catch (e) {
     // The refusal after the refresh, for the reason `un_protecting.dart` gives.
     await bench.refresh();
@@ -135,4 +192,15 @@ Future<ProtectOutcome?> protectThePlacesInTheClear(Workbench bench, List<Span> c
     bench.focusOn(bench.focused);
     return null;
   }
+}
+
+/// What stands at a place, for the one field that asks «which token». Clamped
+/// the way the bar's own reader is: a document can change under a span that was
+/// measured a moment ago, and a crash is not an answer.
+String _theTextAt(Workbench bench, Span where) {
+  final doc = bench.document;
+  if (doc == null) return '';
+  final end = where.end.clamp(0, doc.text.length);
+  final start = where.start.clamp(0, end);
+  return doc.text.substring(start, end);
 }
