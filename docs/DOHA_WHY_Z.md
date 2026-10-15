@@ -94,3 +94,11 @@ proposals, and none is chosen yet.
    - proposal 2, corrected, as the roll-up or screen at the stand;
    - an A5 handout in proposal 2's dark style, carrying proposal 1's full
      chain.
+
+**The owner's word, 15 October:**
+- «الألوان الداكنة بيئة غربية ليست شرق الوسطية… الأصفر هو سيد الألوان». Dark is out for Doha.
+- «صورتك أقرب لما أريد». Proposal 1 is the nearest to what he wants.
+
+So proposal 1 is redrawn in sun and sand: a yellow band, a sand ground, warm
+brown ink, and amber for the tokens. Proposal 2 stays on record for its
+picture and its four steps, not for its palette.
