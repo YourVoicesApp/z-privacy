@@ -51,9 +51,18 @@ Rule 5 (the «z-pdf» entry) is **built and merged** (`9f264b4`). What remains i
 5. **«Leave it» is not stored.** A word left in the clear makes no block (the company name).
 6. **The un-protect options stay as they are today: «Here» and «In this conversation»** (rule 12 in `~/محرر النصوص.md`).
    - «In this conversation» exempts the block from work in that conversation and is remembered with the block. It does not delete it.
-   - «Here» uncovers one place. Its memory belongs to the saved document, which is not in this round (see below).
+   - «Here» uncovers one place, and it is remembered with the saved document (rule 9).
 7. **The sentence goes.** «This conversation's own names are kept only while it is open» is deleted, and so is any copy of «nothing is kept» on the glass. Find every one; do not stop at the first.
 8. **`vault/format.rs` names session format 1; it is 4.** Correct the table in the same round (ed's note).
+9. **The saved document** (owner, 15 Oct late evening, `~/محرر النصوص.md` rule 54). «Our element is the block, not the document.»
+   - **Blocks and every change on them are saved the moment they happen.** Documents are not saved: their owner has them, unencrypted, on his own disk.
+   - **The one exception: what is in the preview screen and has not left it.** Entering the preview gives it a number in the conversation and saves it with its decisions (the «Here»s, the «Leave it»s), sealed under the conversation's key like the questions today. A power cut finds it as it was left.
+     - A file pulled from the computer is `doc1`, `doc2`…; a text written with the AI and moved to the preview is `chat1`, `chat2`….
+     - A conversation holds more than one.
+   - **Leaving by a door (send, copy, pull, PDF) takes it out of the conversation:** its saved copy is deleted, and its number is retired and never used again. Its blocks stay in the vault.
+   - **Going back from the preview does not take it out.** No bubble and no question (the owner removed both: «عمل إضافي لا يفيد بأي شيء»).
+   - **The saved documents are listed under the conversation's name in the conversations list**, as conversations are listed today, each with «Rename». A press opens it in the preview as it was left.
+   - Why, in the owner's words: another document may complete the first, and the person needs to see them together to decide what to edit and what to leave.
 
 ## Acceptance — the owner's own files
 
@@ -75,6 +84,7 @@ Rule 5 (the «z-pdf» entry) is **built and merged** (`9f264b4`). What remains i
 - **«In this conversation» exempts in that conversation only:** a new conversation protects the same word.
 - **Across conversations:** a block made in one conversation is protected on import in another.
 - **A returning document through «z-pdf»** is not scanned and not protected (G34 stands). The number of tokens is the same before and after.
+- **The saved document (rule 9):** a document in the preview survives a restart with every decision; a second document in the same conversation gets the next number; leaving by each of the four doors deletes its copy and retires its number (a new document never takes `doc1` again); going back keeps it; «Rename» changes the name and not the number; `chatN` for a chat text moved to the preview.
 - **The measurement for the report:** the blocks, **by count, never by value**, before and after, and the size of `vault.zv` before and after.
 
 ## Seat and base
@@ -85,5 +95,4 @@ Rule 5 (the «z-pdf» entry) is **built and merged** (`9f264b4`). What remains i
 
 ## Not in this round
 
-- **The saved document and its save point** (`~/محرر النصوص.md` rule 54). Today a conversation keeps exchanges, never the document, its text or its decisions. The owner asked where the save point is, and the lead proposed: every decision saved the moment it is made, the document part of the conversation from the moment it is opened. Waiting for the owner. «Here» is remembered only once this is decided.
 - «Review before send»: delete it, or show both texts (the owner's answer is pending).
