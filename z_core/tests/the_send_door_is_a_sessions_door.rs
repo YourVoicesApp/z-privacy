@@ -86,9 +86,11 @@ fn read(segments: &[Segment]) -> String {
 /// product's, which is a red that proves nothing.
 /// Every token in a payload, in order.
 ///
-/// `first_token` was enough until 085 ruling 1 (15 October): the name this file
-/// uses is a given name and a surname, so it leaves as **two** tokens now, and
-/// an answer that carries only the first one restores only the first word.
+/// This was `first_token`, and one token was enough until 085 ruling 1
+/// (15 October): the name this file uses is a given name and a surname, so it
+/// leaves as **two** tokens now, and an answer carrying only the first restores
+/// only the first word. The old function is gone rather than kept beside this
+/// one — two ways to ask the same question is how two answers start to differ.
 fn our_tokens(text: &str) -> Vec<String> {
     let mut out = Vec::new();
     let mut rest = text;
@@ -100,13 +102,6 @@ fn our_tokens(text: &str) -> Vec<String> {
         rest = &rest[end..];
     }
     out
-}
-
-fn first_token(text: &str) -> String {
-    let start = text.find("__Z_").expect("the payload carries a token");
-    let after = start + "__Z_".len();
-    let end = after + text[after..].find("__").expect("a token closes") + "__".len();
-    text[start..end].to_string()
 }
 
 // ------------------------------------------------- 0 · the instrument itself
