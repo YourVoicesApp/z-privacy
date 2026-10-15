@@ -1,7 +1,7 @@
 What Linux measures — the line the Windows report is compared against.
 
-  commit  9f264b4
-  rust    696
+  commit  96462a2
+  rust    700
   dart    361
   gates   404 checks, 0 failed, 0 skipped
 
