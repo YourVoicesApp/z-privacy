@@ -178,7 +178,10 @@ fn a_hand_over_a_token_is_told_it_is_already_protected() {
     // The press is not offered in the first place: the selection says so.
     let view = inspect_selection(s, span).expect("inspect");
     assert!(view.on_a_token, "the selection does not know it is standing on a token");
-    assert_eq!(view.protected_as, None, "a token in a document is not a protection of it");
+    assert!(
+        view.protected_as.is_empty(),
+        "a token in a document is not a protection of it"
+    );
 
     // And the door refuses by name at all three places a hand can protect
     // through — `protect`, `protect_all_matches`, and the column press.

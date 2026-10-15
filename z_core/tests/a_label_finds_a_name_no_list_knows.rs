@@ -95,6 +95,11 @@ fn leaves_in_the_clear(session: SessionId) -> String {
 // ---------------------------------------------------------------- 1 · the leak
 
 /// **The acceptance: five names no list knows, each protected by its label.**
+///
+/// **Word by word since 085 ruling 1** (15 October): a token never covers more
+/// than one word of what the app read for itself, so each of the five is two
+/// findings and two tokens. What this test is about is unchanged — none of
+/// these ten words is in any list of ours, and the label is what names them.
 #[test]
 fn a_label_protects_a_name_no_dictionary_of_ours_holds() {
     let _g = serial();
@@ -102,11 +107,11 @@ fn a_label_protects_a_name_no_dictionary_of_ours_holds() {
     let s = scanned(SHEET, "sv");
     let protected = people(s, SHEET, MarkState::Protected);
     for who in [
-        "Anas Alhaddad",     // Verkställande direktör:
-        "Mohammed Barakat",  // Sammanställd av:
-        "Fatima Zahra",      // Attesterad av:
-        "Youssef Mansour",   // Godkänd av:
-        "Layla Haddad",      // Handläggare:
+        "Anas", "Alhaddad",     // Verkställande direktör:
+        "Mohammed", "Barakat",  // Sammanställd av:
+        "Fatima", "Zahra",      // Attesterad av:
+        "Youssef", "Mansour",   // Godkänd av:
+        "Layla", "Haddad",      // Handläggare:
     ] {
         assert!(
             protected.iter().any(|p| p == who),
@@ -165,9 +170,11 @@ fn the_offered_name_holds_the_door_shut() {
     let _g = serial();
     fresh_vault("door");
     let s = scanned(SHEET, "sv");
+    // One name, and since 085 ruling 1 that is two words waiting rather than
+    // one span — the sheet still has exactly one person unanswered.
     assert_eq!(
         people(s, SHEET, MarkState::Suggested),
-        vec!["Omar Chahine".to_string()],
+        vec!["Chahine".to_string(), "Omar".to_string()],
         "exactly one name on this sheet should be waiting for an answer"
     );
     // And it is in the payload, which is what makes the door matter: the
@@ -232,9 +239,13 @@ fn a_contact_person_is_offered_whole_and_not_decided() {
     fresh_vault("contact");
     const DOC: &str = "Kontaktperson: Omar Chahine\n";
     let s = scanned(DOC, "sv");
+    // Whole, and that is the point: **both** words are offered. 085 ruling 1
+    // makes them two findings, and the fault this test was written for — half
+    // a name offered and the surname left in the clear — is what would show as
+    // one of the two going missing.
     assert_eq!(
         people(s, DOC, MarkState::Suggested),
-        vec!["Omar Chahine".to_string()],
+        vec!["Chahine".to_string(), "Omar".to_string()],
         "the contact person is not offered whole"
     );
     assert!(

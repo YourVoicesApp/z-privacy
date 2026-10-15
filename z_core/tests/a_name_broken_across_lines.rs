@@ -160,6 +160,15 @@ fn a_value_without_a_hyphen_is_not_found_across_a_real_one() {
 /// Nothing is taught here: this is the pack's own pair rule, which is what has
 /// to carry the names that are in nobody's list. It used to refuse the pair for
 /// the line break alone.
+///
+/// **What 085 ruling 1 changed, and what it did not** (15 October). The rule's
+/// evidence is unchanged — the pair is still read across the wrapped line, and
+/// that is what both words being offered means. The **span** is no longer one:
+/// a name the app read for itself is one finding per word, so the break between
+/// them stays in the clear instead of travelling inside a token. The defect
+/// this file exists for is one half offered and the other left behind, and
+/// that is what the two assertions below measure. The three taught values above
+/// are untouched, because a value the person settled is their will.
 #[test]
 fn the_pair_rule_reads_across_a_wrapped_line() {
     let _g = serial();
@@ -167,10 +176,12 @@ fn the_pair_rule_reads_across_a_wrapped_line() {
     const DOC: &str = "Der Vorgang wurde von Thomas\nMüller geprüft und freigegeben.\n";
     let s = scanned(DOC, "de");
     let offered = marks(s, DOC, MarkState::Suggested);
-    assert!(
-        offered.iter().any(|o| o == "Thomas\nMüller"),
-        "the pair was not offered across the line break: {offered:?}"
-    );
+    for half in ["Thomas", "Müller"] {
+        assert!(
+            offered.iter().any(|o| o == half),
+            "«{half}» was not offered, so the pair was not read across the line break: {offered:?}"
+        );
+    }
     close_session(s).ok();
 }
 

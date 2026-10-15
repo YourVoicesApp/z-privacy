@@ -216,7 +216,9 @@ fn a_ledger_writes_its_people_backwards_and_they_are_still_people() {
         004713        Haddad, Amira         23.07.1991\n\
         004714        Demir, Yusuf          09.05.1985\n";
     let people: Vec<(MarkState, String)> = kinds_of(page, Kind::Person);
-    for who in ["Reinhardt, Tobias", "Haddad, Amira", "Demir, Yusuf"] {
+    // One finding per word since 085 ruling 1 (15 October); the comma is part
+    // of the **form** this rule reads and of neither name.
+    for who in ["Reinhardt", "Tobias", "Haddad", "Amira", "Demir", "Yusuf"] {
         assert!(
             people.iter().any(|(_, text)| text == who),
             "«{who}» is not a person here: {people:?}"
@@ -245,8 +247,8 @@ fn a_comma_is_not_a_person() {
 #[test]
 fn the_labelled_reversed_pair_is_still_auto() {
     let got = kinds_of("Name: Lindemann, Katharina\n", Kind::Person);
-    assert_eq!(got.len(), 1, "the labelled form stopped working: {got:?}");
-    assert_eq!(got[0].0, MarkState::Protected);
+    assert_eq!(got.len(), 2, "the labelled form stopped working: {got:?}");
+    assert!(got.iter().all(|(state, _)| *state == MarkState::Protected), "{got:?}");
 }
 
 // ------------------------------------------------------- a column of values

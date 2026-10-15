@@ -61,7 +61,12 @@ fn the_credits_are_protected_and_the_captions_are_not() {
     let report = scan(s).expect("scan");
     assert_eq!(
         (report.auto, report.suggested),
-        (13, 27),
+        // **(27, 51) since 085 ruling 1** (15 October), from (13, 27): a name
+        // the app read for itself is one finding per word, and this supplement
+        // is a magazine full of credits and bylines. What 038-B/2 measured is
+        // unchanged in substance — the credits are protected and the captions
+        // are not — and it is the same people, counted by word.
+        (27, 51),
         "038-B/2 measured 13 and 27 here, from 3 and 28: {report:?}"
     );
 
@@ -82,10 +87,12 @@ fn the_credits_are_protected_and_the_captions_are_not() {
         .collect();
     // `MarkState` is not ordered, so sort by what a person reads.
     people.sort_by(|a, b| a.1.cmp(&b.1));
-    assert_eq!(people.len(), 36, "27 people were found before 038-B/2, 36 after");
+    // 74 since 085 ruling 1 (15 October), from 36: the same people, one
+    // finding per word of each name.
+    assert_eq!(people.len(), 74, "27 people were found before 038-B/2, 36 after, 74 by word");
 
     // The three the owner's own reading found in the clear.
-    for who in ["Gonzalo Irigoyen", "Anja Callius"] {
+    for who in ["Gonzalo", "Irigoyen", "Anja", "Callius"] {
         assert!(
             people.iter().any(|(state, text)| *state == MarkState::Protected && text == who),
             "«{who}» is credited beside a picture and is not protected"
@@ -99,10 +106,20 @@ fn the_credits_are_protected_and_the_captions_are_not() {
     );
 
     // And the rule that pays for Auto: no caption became a person.
+    //
+    // **Said by shape and not by word count since 085 ruling 1** (15 October).
+    // Until then every Person here was two words, and «two words or more» was
+    // the cheapest way to say «a rule saw evidence and not one capitalised
+    // word». Now every one of them is one word by law, so the count says
+    // nothing and the shape has to say it instead: a name is at least two
+    // letters, and it carries no digit and no bracket. That is the clause the
+    // owner's ICD-10 catalogue bought — 28,853 chapter letters protected as
+    // people — and it is the one this file was really leaning on.
     for (_, text) in &people {
         assert!(
-            text.split_whitespace().count() >= 2 || text.contains('\n'),
-            "a single word was taken as a person: {text:?}"
+            text.chars().count() >= 2
+                && !text.chars().any(|c| c.is_ascii_digit() || c == '(' || c == ')'),
+            "a single letter or a code was taken as a person: {text:?}"
         );
     }
     close_session(s).ok();

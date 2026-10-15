@@ -422,7 +422,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(outcome, isA<ProtectOutcome_Applied>());
       expect(protectStateOf(bench.selected), ProtectState.known);
-      expect(bench.selected!.protectedAs, isNotNull);
+      expect(bench.selected!.protectedAs, isNotEmpty);
       expect(bench.selected!.protectedBy, Source.hand);
       expect(find.textContaining('Already protected as'), findsOneWidget);
 
@@ -437,9 +437,14 @@ void main() {
       });
       await tester.pumpAndSettle();
       expect(protectStateOf(bench.selected), ProtectState.snaps);
-      expect(bench.selected!.snapsTo, hasLength(1));
+      // **Two, since 085 ruling 1** (15 October): the drag cuts into both
+      // words of the name, and each of them is a protected item of its own, so
+      // the core names both of the whole items it would take.
+      expect(bench.selected!.snapsTo, hasLength(2));
+      // And the bar's own sentence for two, which was already written and had
+      // no caller until the law made a name two items.
       expect(
-        find.textContaining('cuts into something already protected'),
+        find.textContaining('spans 2 protected items'),
         findsOneWidget,
       );
 
@@ -617,9 +622,17 @@ void main() {
     await tester.runAsync(() async => bench.reveal(token));
     await tester.pumpAndSettle();
 
+    // **The value of the token that was revealed**, read from the bench rather
+    // than written down here: since 085 ruling 1 (15 October) the name in this
+    // document is one token per word, so a reveal of one of them shows one
+    // word. Which word is not what this test is about — that the panel shows
+    // what was revealed, and stops showing it, is.
+    final shown = bench.revealed[token]!;
+    expect(['Thomas', 'Müller'], contains(shown));
+
     Finder inPanel(Finder what) =>
         find.descendant(of: find.byType(TokensPanel), matching: what);
-    expect(inPanel(find.text('Thomas Müller')), findsOneWidget);
+    expect(inPanel(find.text(shown)), findsOneWidget);
 
     // The conversation is closed underneath the screen. Nothing is told to
     // hide; the next question simply cannot be answered.
@@ -630,11 +643,11 @@ void main() {
         () => Future<void>.delayed(const Duration(milliseconds: 60)),
       );
       await tester.pump();
-      if (inPanel(find.text('Thomas Müller')).evaluate().isEmpty) break;
+      if (inPanel(find.text(shown)).evaluate().isEmpty) break;
     }
 
     expect(
-      inPanel(find.text('Thomas Müller')),
+      inPanel(find.text(shown)),
       findsNothing,
       reason: 'the value stayed on screen when the core could not be asked',
     );
@@ -684,10 +697,11 @@ void main() {
     await tester.runAsync(() async => bench.reveal(token));
     await tester.pumpAndSettle();
 
+    final shown = bench.revealed[token]!;
     Finder inPanel(Finder what) =>
         find.descendant(of: find.byType(TokensPanel), matching: what);
     expect(
-      inPanel(find.text('Thomas Müller')),
+      inPanel(find.text(shown)),
       findsOneWidget,
       reason: 'the reveal did not reach the panel',
     );
@@ -701,11 +715,11 @@ void main() {
         () => Future<void>.delayed(const Duration(milliseconds: 60)),
       );
       await tester.pump();
-      if (inPanel(find.text('Thomas Müller')).evaluate().isEmpty) break;
+      if (inPanel(find.text(shown)).evaluate().isEmpty) break;
     }
 
     expect(
-      inPanel(find.text('Thomas Müller')),
+      inPanel(find.text(shown)),
       findsNothing,
       reason: 'the value stayed in the panel after the vault was locked',
     );
@@ -771,9 +785,11 @@ void main() {
     await tester.runAsync(() async => bench.reveal(token));
     await tester.pumpAndSettle();
 
-    // It is on screen now — locally, for a moment.
-    expect(bench.revealed[token], 'Thomas Müller');
-    expect(inPanel(find.text('Thomas Müller')), findsOneWidget);
+    // It is on screen now — locally, for a moment. One word, because the name
+    // is one token per word since 085 ruling 1 (15 October).
+    final shown = bench.revealed[token]!;
+    expect(['Thomas', 'Müller'], contains(shown));
+    expect(inPanel(find.text(shown)), findsOneWidget);
 
     // And this is the invariant: what leaves has not moved a character, and the
     // session's revision has not turned — so no handle has gone stale either.
@@ -796,7 +812,7 @@ void main() {
     await tester.runAsync(() async => bench.hideToken(token));
     await tester.pumpAndSettle();
     expect(bench.revealed[token], isNull);
-    expect(inPanel(find.text('Thomas Müller')), findsNothing);
+    expect(inPanel(find.text(shown)), findsNothing);
 
     bench.dispose();
   });

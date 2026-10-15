@@ -300,10 +300,15 @@ fn the_payload_is_what_it_was_before_the_edges_were_reported() {
     scan(s).expect("scan");
 
     let payload = payload_of(s);
-    assert_eq!(payload.text.len(), 1_618_464, "the outgoing text changed length");
+    // 1_618_792 since 085 ruling 1 (15 October): a name the app read for
+    // itself is one token per word, so this catalogue's people carry one more
+    // token each and the text that leaves is 328 bytes longer.
+    assert_eq!(payload.text.len(), 1_618_792, "the outgoing text changed length");
     assert_eq!(
         format!("{:016x}", fnv1a(&mask_tokens(&payload.text))),
-        "fdc1d4c0179450cf",
+        // And the content with every token masked to one marker: it moved
+        // with the length, because a second marker now stands where one did.
+        "6d356ee615a839af",
         "the outgoing text changed content"
     );
     assert_eq!(payload.text.matches('\u{c}').count(), 0);

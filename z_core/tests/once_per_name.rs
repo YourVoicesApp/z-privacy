@@ -10,6 +10,22 @@
 // Contract and «Lindenstraße 8, 86150 Augsburg» as an Address. Eight presses to
 // clear the review; six once a decision carries.
 //
+// **Re-measured on 15 October, after 085 ruling 1** — a token never covers more
+// than one word of what the app read for itself: 37 findings, and the review is
+// **the same 8 places and 6 presses**. The law doubled the people and changed
+// not one number here, and that is the measurement worth keeping: the law
+// shortens a review only where the same **word** stands in two names, and DE-1
+// shares no word between its people.
+//
+// It very nearly shortened it for the wrong reason. With the law and nothing
+// else, two of the eight went away — «Lindemann & Partner GmbH» and «Weber
+// Elektrotechnik GmbH», both named after a person in this letter, whose
+// surname's own decision reached into them and settled a company's question
+// without the person's word. The lead's ruling of the same day put that right:
+// a decision about a word reaches every place where that word **stands alone**
+// and never a place lying inside a finding of another kind
+// (`a_name_is_one_word.rs::a_surname_inside_a_company_name_keeps_the_companys_own_question`).
+//
 // The people of DE-1 are not in that list at all: all seven are protected
 // automatically, which is why the repeats here are a contract number and an
 // address rather than a name. The rule is the same — same text, same kind.

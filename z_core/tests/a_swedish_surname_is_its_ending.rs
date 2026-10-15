@@ -36,13 +36,20 @@ fn people(doc: &str, pack: &str) -> Vec<(MarkState, String)> {
 /// surname needs to be in no list at all.
 #[test]
 fn a_given_name_and_an_ending_make_a_pair() {
-    for who in ["Peter Holgersson", "Eva Ragnarsson", "Johan Marklund", "Göran Ekeberg"] {
-        let doc = format!("Vi träffade {who} i tisdags.");
+    // **Both words, since 085 ruling 1** (15 October): the pair is still the
+    // evidence — a known given name and an ending — and what it hands back is
+    // one finding per word.
+    for (given, family) in
+        [("Peter", "Holgersson"), ("Eva", "Ragnarsson"), ("Johan", "Marklund"), ("Göran", "Ekeberg")]
+    {
+        let doc = format!("Vi träffade {given} {family} i tisdags.");
         let found = people(&doc, "sv");
-        assert!(
-            found.iter().any(|(_, text)| text == who),
-            "«{who}» is not a person: {found:?}"
-        );
+        for who in [given, family] {
+            assert!(
+                found.iter().any(|(_, text)| text == who),
+                "«{who}» is not a person: {found:?}"
+            );
+        }
         for (state, text) in &found {
             assert_eq!(*state, MarkState::Suggested, "«{text}» was protected by an ending");
         }
@@ -55,7 +62,9 @@ fn the_reversed_pair_reads_the_ending_as_well() {
     let page = "Holgersson, Peter     070-123 45 67\n\
         Ragnarsson, Eva       08-123 45 99\n";
     let found = people(page, "sv");
-    for who in ["Holgersson, Peter", "Ragnarsson, Eva"] {
+    // The comma is part of the **form** the rule reads and of neither word, so
+    // the two names come back as two findings and the comma stays in the clear.
+    for who in ["Holgersson", "Peter", "Ragnarsson", "Eva"] {
         assert!(found.iter().any(|(_, text)| text == who), "«{who}» is not a person: {found:?}");
     }
 }

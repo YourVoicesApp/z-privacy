@@ -236,6 +236,52 @@ fn one_line_of(s: &str, start: usize, end: usize) -> Option<(usize, usize)> {
 ///    and never of the ones a value is made of. So «Müller,» becomes «Müller»
 ///    and «+49 228» stays exactly as it was drawn.
 ///
+/// **The words inside one stretch**, each tidied of the marks around it.
+///
+/// The other half of `whole_words`, and written from the same two clauses so
+/// that the answers cannot drift apart: whitespace separates words, and at an
+/// edge a mark leaves. What this adds is only the question — `whole_words` asks
+/// «which word is this?» about a place a person pointed at, and this asks
+/// «which words are these?» about a stretch a rule handed back.
+///
+/// Byte offsets into `s`, in order, and a run that is nothing but marks is not
+/// a word and is not returned — so «Lindemann, Katharina» is two words and the
+/// comma between them belongs to neither.
+pub(crate) fn words_in(s: &str, start: usize, end: usize) -> Vec<(usize, usize)> {
+    let (start, end) = (start.min(s.len()), end.min(s.len()));
+    let Some(slice) = s.get(start..end) else { return Vec::new() };
+    let mut runs: Vec<(usize, usize)> = Vec::new();
+    let mut run: Option<(usize, usize)> = None;
+    for (at, c) in slice.char_indices() {
+        if c.is_whitespace() {
+            runs.extend(run.take());
+            continue;
+        }
+        match &mut run {
+            Some((_, stop)) => *stop = at + c.len_utf8(),
+            None => run = Some((at, at + c.len_utf8())),
+        }
+    }
+    runs.extend(run.take());
+    runs.into_iter()
+        .filter_map(|(mut from, mut to)| {
+            while let Some(c) = slice.get(from..to).and_then(|t| t.chars().next()) {
+                if !is_edge_mark(c) {
+                    break;
+                }
+                from += c.len_utf8();
+            }
+            while let Some(c) = slice.get(from..to).and_then(|t| t.chars().next_back()) {
+                if !is_edge_mark(c) {
+                    break;
+                }
+                to -= c.len_utf8();
+            }
+            (from < to).then_some((start + from, start + to))
+        })
+        .collect()
+}
+
 /// Returns byte offsets into `s`, and never returns an empty range: a selection
 /// of nothing but marks is handed back untouched for the caller to refuse.
 pub(crate) fn whole_words(s: &str, start: usize, end: usize) -> (usize, usize) {

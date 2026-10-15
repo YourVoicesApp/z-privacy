@@ -39,6 +39,10 @@ fn people(pack: &str, doc: &str) -> Vec<String> {
         .collect()
 }
 
+/// **One word per name since 085 ruling 1** (15 October): a name the app read
+/// for itself is one finding per word, so every pair below is two. Which words
+/// are found, and by which rule, is what this file measures and is unchanged.
+///
 /// A Swedish letter, read by the Swedish pack. Not one line of German took part.
 #[test]
 fn a_swedish_letter_is_read_by_a_pack_that_is_only_data() {
@@ -46,12 +50,12 @@ fn a_swedish_letter_is_read_by_a_pack_that_is_only_data() {
     // pair; «Med vänliga hälsningar» is the closing before a signature.
     assert_eq!(
         people("sv", "Hej, jag skriver till Herr Lars Andersson om avtalet."),
-        vec!["Lars Andersson".to_string()],
+        vec!["Lars".to_string(), "Andersson".to_string()],
         "the shared salutation rule, reading Swedish words"
     );
     assert_eq!(
         people("sv", "Avtalet undertecknades av Anna Nilsson i Stockholm."),
-        vec!["Anna Nilsson".to_string()],
+        vec!["Anna".to_string(), "Nilsson".to_string()],
         "the shared pair rule, reading the Swedish name lists"
     );
     // And what a list of 150 does not reach is a candidate, which is the
@@ -65,7 +69,7 @@ fn a_swedish_letter_is_read_by_a_pack_that_is_only_data() {
     // SV-16 as a name to look at.
     assert_eq!(
         people("sv", "Avtalet undertecknades av Anna Lindberg i Stockholm."),
-        vec!["Anna Lindberg".to_string()],
+        vec!["Anna".to_string(), "Lindberg".to_string()],
         "«-berg» is how a Swedish surname ends, and the pair rule reads it"
     );
     assert!(
@@ -74,7 +78,7 @@ fn a_swedish_letter_is_read_by_a_pack_that_is_only_data() {
     );
     assert_eq!(
         people("sv", "Med vänliga hälsningar\nErik Johansson"),
-        vec!["Erik Johansson".to_string()],
+        vec!["Erik".to_string(), "Johansson".to_string()],
         "the shared signature rule, reading the Swedish closings"
     );
 }
@@ -111,10 +115,10 @@ fn swedish_labels_are_rows_like_every_other_language() {
 fn german_reads_exactly_what_it_read_before() {
     assert_eq!(
         people("de", "Sehr geehrter Herr Thomas Müller, vielen Dank."),
-        vec!["Thomas Müller".to_string()]
+        vec!["Thomas".to_string(), "Müller".to_string()]
     );
-    assert_eq!(people("de", "Prim. Dr. Ludwig Neuner (Klinikum Freistadt)"), vec!["Ludwig Neuner".to_string()]);
-    assert_eq!(people("de", "Thomas Müller hat den Vertrag unterschrieben."), vec!["Thomas Müller".to_string()]);
+    assert_eq!(people("de", "Prim. Dr. Ludwig Neuner (Klinikum Freistadt)"), vec!["Ludwig".to_string(), "Neuner".to_string()]);
+    assert_eq!(people("de", "Thomas Müller hat den Vertrag unterschrieben."), vec!["Thomas".to_string(), "Müller".to_string()]);
     assert!(people("de", "Beschwerden der Frau (N95.1)").is_empty());
     assert!(people("de", "An Müller GmbH, Lindenstraße 8").is_empty());
     // And German's own three rules, which no other pack carries.
@@ -154,10 +158,10 @@ fn what_each_pack_needs_beyond_the_shared_rules_is_declared() {
 #[test]
 fn the_pack_is_what_was_asked_for_and_not_what_the_machine_is() {
     // Two packs, one after the other, in one process.
-    assert_eq!(people("de", "Sehr geehrte Frau Anna Weber,"), vec!["Anna Weber".to_string()]);
+    assert_eq!(people("de", "Sehr geehrte Frau Anna Weber,"), vec!["Anna".to_string(), "Weber".to_string()]);
     assert_eq!(
         people("sv", "Hej Herr Lars Andersson,"),
-        vec!["Lars Andersson".to_string()]
+        vec!["Lars".to_string(), "Andersson".to_string()]
     );
     // And a pack this build has never heard of scans with less knowledge
     // rather than failing — the rule the label sets already followed.

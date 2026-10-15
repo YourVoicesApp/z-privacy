@@ -261,7 +261,10 @@ void main() {
     // of this test compared 2 protected against 2 marks and failed for a
     // reason that had nothing to do with the decision.
     final marks = bench.document!.marks;
-    expect(marks.length, 2, reason: 'the phone is still marked: $marks');
+    // Three since 085 ruling 1 (15 October): this fixture's name is a given
+    // name and a surname, so what the app read for itself is two marks and
+    // not one.
+    expect(marks.length, 3, reason: 'the phone is still marked: $marks');
     expect(
       marks.every((m) => m.state == MarkState.protected),
       isTrue,

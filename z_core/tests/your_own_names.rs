@@ -191,18 +191,22 @@ fn a_list_that_is_off_is_not_a_list_that_was_forgotten() {
             .collect()
     };
     let both = people(doc);
-    assert!(both.iter().any(|t| t == "Sophie Okonkwo"), "{both:?}");
-    assert!(both.iter().any(|t| t == "Thomas Lindqvist"), "{both:?}");
+    // One finding per word since 085 ruling 1 (15 October); what this measures
+    // is that the person's own list is what reaches the pair rule, and that is
+    // the surname of each.
+    for who in ["Sophie", "Okonkwo", "Thomas", "Lindqvist"] {
+        assert!(both.iter().any(|t| t == who), "«{who}»: {both:?}");
+    }
 
     // Off: the names are still here, and the scanner is not told about them.
     set_user_list_enabled("ar".to_string(), false).expect("off");
     let after = people(doc);
     assert!(
-        !after.iter().any(|t| t == "Sophie Okonkwo"),
+        !after.iter().any(|t| t == "Okonkwo"),
         "a list that is off still protected its name: {after:?}"
     );
     assert!(
-        after.iter().any(|t| t == "Thomas Lindqvist"),
+        after.iter().any(|t| t == "Lindqvist"),
         "turning one list off took another list's name with it: {after:?}"
     );
     assert_eq!(
@@ -213,7 +217,7 @@ fn a_list_that_is_off_is_not_a_list_that_was_forgotten() {
 
     // And on again, with nothing taught twice.
     set_user_list_enabled("ar".to_string(), true).expect("on");
-    assert!(people(doc).iter().any(|t| t == "Sophie Okonkwo"), "the switch does not come back");
+    assert!(people(doc).iter().any(|t| t == "Okonkwo"), "the switch does not come back");
 }
 
 /// Imported into a language's list, and forgotten — with the cost said first,

@@ -111,7 +111,9 @@ fn english_is_installed_and_carries_its_names() {
 #[test]
 fn the_films_english_letter_is_read_by_a_pack_of_english_words() {
     let found = people("en", LETTER);
-    for name in ["Whitfield", "Hale", "Rowan Pellbrook"] {
+    // «Rowan Pellbrook» is two words and therefore two findings (085 ruling 1,
+    // 15 October) — which is why both are named here rather than the pair.
+    for name in ["Whitfield", "Hale", "Rowan", "Pellbrook"] {
         assert!(
             found.iter().any(|f| f == name),
             "«{name}» is what the English forms in this letter point at, and the pack found {found:?}"
@@ -185,7 +187,7 @@ fn a_document_with_no_names_offers_nobody() {
 fn an_english_surname_that_ends_in_son_is_offered() {
     assert_eq!(
         people("en", "The contract was signed by John Harrowson in Leeds."),
-        vec!["John Harrowson".to_string()],
+        vec!["John".to_string(), "Harrowson".to_string()],
         "«Harrowson» is in no list and ends like an English surname"
     );
     // And the trap that ending carries, which Swedish does not have: English
@@ -205,10 +207,10 @@ fn an_english_surname_that_ends_in_son_is_offered() {
 fn the_other_two_packs_did_not_move() {
     assert_eq!(
         people("de", "Ich schreibe an Herrn Thomas Müller wegen des Vertrages."),
-        vec!["Thomas Müller".to_string()],
+        vec!["Thomas".to_string(), "Müller".to_string()],
     );
     assert_eq!(
         people("sv", "Avtalet undertecknades av Anna Nilsson i Stockholm."),
-        vec!["Anna Nilsson".to_string()],
+        vec!["Anna".to_string(), "Nilsson".to_string()],
     );
 }

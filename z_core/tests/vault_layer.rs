@@ -286,8 +286,8 @@ fn switching_a_profile_keeps_the_tokens_already_given() {
     // Switch to a profile that knows nothing: what was protected stays protected.
     let outcome = switch_profile(s, Some(p2.clone())).expect("switch");
     assert_eq!(
-        outcome.kept_tokens, 3,
-        "the company the vault knew and the two names the salutations proved"
+        outcome.kept_tokens, 5,
+        "the company the vault knew and the two names, one token a word, the salutations proved"
     );
     let after = list_tokens(s).expect("tokens");
     assert!(
@@ -331,7 +331,11 @@ fn the_golden_document_with_an_open_vault_asks_nothing() {
     assert_eq!(report.vault, VaultState::Unlocked);
     assert_eq!(
         (report.auto, report.suggested),
-        (10, 0),
+        // Eleven since 085 ruling 1 (15 October): the contract's two people are
+        // a given name and a surname each. The value the **vault** was taught,
+        // «Thomas Müller», is exempt and stays one — which is why this number
+        // rose by one and not by two.
+        (11, 0),
         "nine by arithmetic, label and salutation, one more because the vault knows it: {report:?}"
     );
 

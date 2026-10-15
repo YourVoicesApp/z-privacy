@@ -5687,7 +5687,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       empty: dco_decode_bool(arr[0]),
       kind: dco_decode_kind(arr[1]),
       matches: dco_decode_u_32(arr[2]),
-      protectedAs: dco_decode_opt_String(arr[3]),
+      protectedAs: dco_decode_list_String(arr[3]),
       protectedBy: dco_decode_opt_box_autoadd_source(arr[4]),
       protectedDetail: dco_decode_String(arr[5]),
       entities: dco_decode_list_String(arr[6]),
@@ -7819,7 +7819,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_empty = sse_decode_bool(deserializer);
     var var_kind = sse_decode_kind(deserializer);
     var var_matches = sse_decode_u_32(deserializer);
-    var var_protectedAs = sse_decode_opt_String(deserializer);
+    var var_protectedAs = sse_decode_list_String(deserializer);
     var var_protectedBy = sse_decode_opt_box_autoadd_source(deserializer);
     var var_protectedDetail = sse_decode_String(deserializer);
     var var_entities = sse_decode_list_String(deserializer);
@@ -9743,7 +9743,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.empty, serializer);
     sse_encode_kind(self.kind, serializer);
     sse_encode_u_32(self.matches, serializer);
-    sse_encode_opt_String(self.protectedAs, serializer);
+    sse_encode_list_String(self.protectedAs, serializer);
     sse_encode_opt_box_autoadd_source(self.protectedBy, serializer);
     sse_encode_String(self.protectedDetail, serializer);
     sse_encode_list_String(self.entities, serializer);

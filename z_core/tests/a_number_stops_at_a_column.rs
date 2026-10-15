@@ -156,6 +156,11 @@ fn a_tab_is_a_column_boundary() {
 /// **A name may be laid out in columns and is not a number**, so the rule is
 /// only for the two validators that read a run of digits across spaces. A
 /// table of people with two spaces inside a name must keep the name whole.
+///
+/// «Whole» is measured as **both words found** since 085 ruling 1 (15 October):
+/// a name the app read for itself is one finding per word, and the column gap
+/// between them is whitespace that belongs to neither. The fault this guards
+/// against is the column rule cutting the run short and losing the second word.
 #[test]
 fn a_name_is_not_cut_by_a_column_gap() {
     let _g = serial();
@@ -164,7 +169,7 @@ fn a_name_is_not_cut_by_a_column_gap() {
     let s = scanned(DOC, "en");
     assert_eq!(
         of_kind(s, DOC, Kind::Person),
-        vec!["Eleanor  Whitfield".to_string()],
+        vec!["Eleanor".to_string(), "Whitfield".to_string()],
         "the column rule reached a name"
     );
     close_session(s).ok();

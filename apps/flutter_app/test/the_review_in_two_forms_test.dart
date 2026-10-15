@@ -33,12 +33,16 @@ const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _originalPane = ValueKey<String>('workspace-original-pane');
 const _safePane = ValueKey<String>('workspace-safe-pane');
 
-/// **Measured, not invented** (`cargo run -p z_core --example` probe, 14 Oct):
-/// the German pack leaves **four** words waiting here and protects two by
-/// itself — «2026-114» twice (one value, two places), «Anna Weber», «55-900»,
-/// and the customer number and the IBAN taken without asking. Three distinct
-/// answers, one of them covering two places, is the smallest document that can
-/// hold every ruling of 083b at once.
+/// **Measured, not invented** (`cargo run -p z_core --example` probe, 14 Oct;
+/// re-measured 15 Oct): the German pack leaves **five** words waiting here and
+/// protects two by itself — «2026-114» twice (one value, two places), «Anna»,
+/// «Weber», «55-900», and the customer number and the IBAN taken without
+/// asking. Four distinct answers, one of them covering two places, is the
+/// smallest document that can hold every ruling of 083b at once.
+///
+/// It was four until 085 ruling 1 (15 October): «Ansprechpartner: Anna Weber»
+/// is a name the app read for itself, and a token never covers more than one
+/// word of that, so the label's one offer became two.
 ///
 /// The thirty lines in front of them are not padding: the first waiting word
 /// has to be **off the screen** before «both columns land on it» can mean
@@ -122,7 +126,12 @@ void main() {
       ),
     );
     await settle(tester);
-    expect(bench.openSuggestions, 4, reason: 'the document the guards were measured on changed');
+    // **Five since 085 ruling 1** (15 October), from four: «Ansprechpartner:
+    // Anna Weber» is a name the app read for itself, so it is one finding per
+    // word and the review has one more place to answer. Which is the law's
+    // own price, and the law's own gain is that one answer about «Weber»
+    // settles every «Weber» in the conversation.
+    expect(bench.openSuggestions, 5, reason: 'the document the guards were measured on changed');
     return bench;
   }
 
@@ -199,7 +208,7 @@ void main() {
     // The word's own two buttons, where the word is.
     expect(find.byKey(ChoiceBubble.protectKey), findsOneWidget);
     expect(find.byKey(ChoiceBubble.leaveKey), findsOneWidget);
-    expect(_theWalkButton(tester), 'Next 1/4', reason: 'Review did not become Next with the count');
+    expect(_theWalkButton(tester), 'Next 1/5', reason: 'Review did not become Next with the count');
   });
 
   testWidgets('Next leaves the word for later: the walk moves, the count does not', (tester) async {
@@ -208,15 +217,15 @@ void main() {
     await settle(tester);
     final waiting = theWaitingWordsInReadingOrder(bench.findings);
 
-    await tester.tap(find.text('Next 1/4'));
+    await tester.tap(find.text('Next 1/5'));
     await settle(tester);
 
     expect(bench.focused, waiting[1].id);
-    expect(_wordOf(bench, waiting[1]), 'Anna Weber');
-    expect(_theWalkButton(tester), 'Next 2/4');
+    expect(_wordOf(bench, waiting[1]), 'Anna');
+    expect(_theWalkButton(tester), 'Next 2/5');
     expect(
       bench.openSuggestions,
-      4,
+      5,
       reason: 'Next answered something — then it was not «leave it for later» at all',
     );
   });
@@ -226,7 +235,7 @@ void main() {
     await tester.tap(find.text('Review'));
     await settle(tester);
     final waiting = theWaitingWordsInReadingOrder(bench.findings);
-    expect(_wordOf(bench, waiting[1]), 'Anna Weber');
+    expect(_wordOf(bench, waiting[1]), 'Anna');
 
     await tester.tap(find.byKey(ChoiceBubble.protectKey));
     await settle(tester);
@@ -234,9 +243,9 @@ void main() {
     // **One answer, every place** (ruling 7): «2026-114» stood twice, and both
     // places are settled — so the walk's next word is the one after it in
     // reading order and the count has fallen by two.
-    expect(bench.openSuggestions, 2);
+    expect(bench.openSuggestions, 3);
     expect(bench.focused, waiting[1].id, reason: 'the walk did not step on by itself');
-    expect(_theWalkButton(tester), 'Next 1/2');
+    expect(_theWalkButton(tester), 'Next 1/3');
     expect(find.byKey(ChoiceBubble.protectKey), findsOneWidget,
         reason: 'the next word must arrive with its own buttons beside it');
   });
@@ -271,7 +280,8 @@ void main() {
 
     // What waits is in it…
     expect(find.text('55-900'), findsWidgets);
-    expect(find.text('Anna Weber'), findsWidgets);
+    expect(find.text('Anna'), findsWidgets);
+    expect(find.text('Weber'), findsWidgets);
     // …and what the app took by itself is not. It is in the text, marked where
     // it stands — ruling 6.
     expect(find.text('44812'), findsNothing);
@@ -293,7 +303,7 @@ void main() {
     );
     expect(
       list.childrenDelegate.estimatedChildCount,
-      4,
+      5,
       reason: 'the list holds rows for words nobody has to answer',
     );
   });
@@ -311,16 +321,16 @@ void main() {
 
     await tester.tap(find.text('Skip all'));
     await settle(tester);
-    expect(find.text('Leave 4 words in the clear?'), findsOneWidget,
+    expect(find.text('Leave 5 words in the clear?'), findsOneWidget,
         reason: 'the one door that uncovers words in a batch asked nothing — ruling 9');
 
     await tester.tap(find.text('Cancel'));
     await settle(tester);
-    expect(bench.openSuggestions, 4, reason: 'Cancel changed something');
+    expect(bench.openSuggestions, 5, reason: 'Cancel changed something');
 
     await tester.tap(find.text('Skip all'));
     await settle(tester);
-    await tester.tap(find.text('Yes — leave all 4 in the clear'));
+    await tester.tap(find.text('Yes — leave all 5 in the clear'));
     // **Four answers, one after the other, each through the bridge.** Measured:
     // with the four pumps every other guard uses, three had landed and the
     // fourth had not — a red that says «Skip all left one word waiting» about a
@@ -360,7 +370,7 @@ void main() {
       isNotNull,
       reason: 'the refusal was wiped by the refresh that follows every answer',
     );
-    expect(bench.openSuggestions, 4, reason: 'a refused answer changed something');
+    expect(bench.openSuggestions, 5, reason: 'a refused answer changed something');
   });
 
   testWidgets('with nothing waiting the button is gone, and the list says where to look', (tester) async {

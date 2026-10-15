@@ -48,10 +48,20 @@ fn people(doc: &str) -> Vec<(MarkState, String)> {
 /// E3 — a salutation and a name is the strongest case there is, and the
 /// dictionary must not touch it: it was protected outright before V1 existed,
 /// and it is protected outright now, once and not twice.
+///
+/// **Two tokens since 085 ruling 1** (15 October), one per word, and «once and
+/// not twice» is still what is measured: each word appears once, not once from
+/// the salutation and again from the dictionary.
 #[test]
 fn a_salutation_and_a_name_is_protected_outright_and_only_once() {
     let found = people("Sehr geehrter Herr Thomas Müller, vielen Dank.");
-    assert_eq!(found, vec![(MarkState::Protected, "Thomas Müller".to_string())]);
+    assert_eq!(
+        found,
+        vec![
+            (MarkState::Protected, "Thomas".to_string()),
+            (MarkState::Protected, "Müller".to_string())
+        ]
+    );
 }
 
 /// E4 — two names in a row, with nothing in front of them. This is the case
@@ -62,7 +72,10 @@ fn a_given_name_and_a_surname_in_a_row_are_offered() {
     let found = people("Thomas Müller hat den Vertrag am 3. März unterschrieben.");
     assert_eq!(
         found,
-        vec![(MarkState::Suggested, "Thomas Müller".to_string())],
+        vec![
+            (MarkState::Suggested, "Thomas".to_string()),
+            (MarkState::Suggested, "Müller".to_string())
+        ],
         "two names in a row are offered for a word, never protected by the list alone"
     );
     // And the reason says which list said so, because a person asked to decide
@@ -96,12 +109,18 @@ fn a_single_name_on_its_own_is_never_a_person() {
 fn the_rules_that_were_there_before_still_hold() {
     assert_eq!(
         people("Ansprechpartner: Frau Anna Weber"),
-        vec![(MarkState::Protected, "Anna Weber".to_string())],
+        vec![
+            (MarkState::Protected, "Anna".to_string()),
+            (MarkState::Protected, "Weber".to_string())
+        ],
         "the salutation rule"
     );
     assert_eq!(
         people("Prim. Dr. Ludwig Neuner (Klinikum Freistadt)"),
-        vec![(MarkState::Protected, "Ludwig Neuner".to_string())],
+        vec![
+            (MarkState::Protected, "Ludwig".to_string()),
+            (MarkState::Protected, "Neuner".to_string())
+        ],
         "the title rule"
     );
     assert!(
@@ -262,15 +281,17 @@ fn a_function_word_does_not_open_a_name() {
 /// Germany, which is not the same list and not this source.
 #[test]
 fn the_surnames_of_a_real_letter_are_in_the_list_now() {
-    for (doc, who) in [
-        ("Katharina Lindemann hat den Vertrag geprüft.", "Katharina Lindemann"),
-
-        ("Jonas Petersen schickt die Unterlagen.", "Jonas Petersen"),
-        ("Sophie Brandt bereitet den Vertrag vor.", "Sophie Brandt"),
+    for (doc, given, family) in [
+        ("Katharina Lindemann hat den Vertrag geprüft.", "Katharina", "Lindemann"),
+        ("Jonas Petersen schickt die Unterlagen.", "Jonas", "Petersen"),
+        ("Sophie Brandt bereitet den Vertrag vor.", "Sophie", "Brandt"),
     ] {
         assert_eq!(
             people(doc),
-            vec![(MarkState::Suggested, who.to_string())],
+            vec![
+                (MarkState::Suggested, given.to_string()),
+                (MarkState::Suggested, family.to_string())
+            ],
             "«{doc}»"
         );
     }

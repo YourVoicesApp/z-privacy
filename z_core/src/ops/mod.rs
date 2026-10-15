@@ -1421,7 +1421,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
                 empty: true,
                 kind: Kind::Custom,
                 matches: 0,
-                protected_as: None,
+                protected_as: Vec::new(),
                 protected_by: None,
                 protected_detail: String::new(),
                 entities: Vec::new(),
@@ -1446,21 +1446,32 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             .map(|(b, e)| text::bytes_to_span(s.original_str(), b, e))
             .transpose()?;
 
-        // What it touches. Exactly one, exactly covering it, is «already
+        // What it touches. **Protections that tile the selection** are «already
         // protected»; anything else that overlaps means Protect would snap.
-        let touched: Vec<Protection> = s
+        //
+        // One exactly covering it was the whole of this until 085 ruling 1
+        // (15 October). A name the app read for itself is now one token per
+        // word, so a hand drawn over «Katrin Sommer» covers two protections
+        // and matched neither — and the glass was told «not protected» about a
+        // value entirely ours. The lead's ruling of the same day: the view
+        // answers at the same finer grain, and it **lists** the tokens rather
+        // than growing a sixth state on the button.
+        let mut touched: Vec<Protection> = s
             .protections
             .iter()
             .filter(|p| p.start < end && start < p.end)
             .cloned()
             .collect();
-        let exact = touched
-            .iter()
-            .find(|p| p.start == start && p.end == end)
-            .filter(|_| touched.len() == 1);
+        touched.sort_by_key(|p| p.start);
+        let ours = they_tile(
+            s.original_str(),
+            touched.iter().map(|p| (p.start, p.end)).collect(),
+            start,
+            end,
+        );
 
         let mut snaps_to = Vec::new();
-        if exact.is_none() {
+        if !ours {
             for p in &touched {
                 snaps_to.push(text::bytes_to_span(s.original_str(), p.start, p.end)?);
             }
@@ -1495,17 +1506,32 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
         // model more often than «we do not know» ever will. An honest unknown
         // over a confident guess, and if the owner overrules it, it comes back
         // as a ruling and not as a heuristic.
-        let exact_kind = s
-            .protections
-            .iter()
-            .find(|p| p.start == start && p.end == end)
-            .map(|p| p.kind)
-            .or_else(|| {
-                s.findings
-                    .iter()
-                    .find(|f| f.start == start && f.end == end)
-                    .map(|f| f.kind)
-            });
+        //
+        // **And «exactly this stretch» is now one word or several** (085
+        // ruling 1, 15 October). Since the scanner gives one finding per word
+        // of a name, a selection drawn over «Katrin Sommer» covers two of them
+        // and matched none of them exactly — so the kind the pack had found
+        // went missing at the very moment a person took the whole value. The
+        // answer is read at the finer grain instead of guessed at: the
+        // findings that touch the selection must all lie **inside** it, agree
+        // on their kind, and leave nothing in it but whitespace uncovered.
+        // That is still the scan's own answer and still no second classifier —
+        // a click *inside* a word is unchanged, because the finding there
+        // reaches past the selection.
+        let whole = s.original_str();
+        let covering = |items: Vec<(usize, usize, Kind)>| -> Option<Kind> {
+            let mut here: Vec<(usize, usize, Kind)> =
+                items.into_iter().filter(|(from, to, _)| *from < end && start < *to).collect();
+            here.sort_by_key(|(from, _, _)| *from);
+            let kind = here.first().map(|(_, _, kind)| *kind)?;
+            if here.iter().any(|(_, _, other)| *other != kind) {
+                return None;
+            }
+            they_tile(whole, here.iter().map(|(from, to, _)| (*from, *to)).collect(), start, end)
+                .then_some(kind)
+        };
+        let exact_kind = covering(s.protections.iter().map(|p| (p.start, p.end, p.kind)).collect())
+            .or_else(|| covering(s.findings.iter().map(|f| (f.start, f.end, f.kind)).collect()));
 
         let entities: Vec<String> = vault_hints
             .iter()
@@ -1517,9 +1543,18 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             empty: false,
             kind: exact_kind.unwrap_or(Kind::Custom),
             matches: text::occurrences(s.original_str(), &selected).len() as u32,
-            protected_as: exact.map(|p| p.token.clone()),
-            protected_by: exact.map(|p| p.source),
-            protected_detail: exact.map(|p| p.source_detail.clone()).unwrap_or_default(),
+            // Every token standing in this selection, in reading order, and
+            // empty when the selection is not ours. One token for one word, so
+            // a two-word name says both — `acts.dart` prints them as they
+            // stand in the text.
+            protected_as: if ours { touched.iter().map(|p| p.token.clone()).collect() } else { Vec::new() },
+            // Who and why, when they agree. Two words of one name are found by
+            // one rule, so this is the ordinary case; two values of different
+            // provenance under one drag is not something to answer in one
+            // line, and «we do not know» is the honest reading of it.
+            protected_by: first_if_all_agree(&touched, ours, |p| p.source),
+            protected_detail: first_if_all_agree(&touched, ours, |p| p.source_detail.clone())
+                .unwrap_or_default(),
             entities,
             snaps_to,
             word_span,
@@ -1532,6 +1567,52 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             on_a_token: the_token_standing_in(s.original_str(), word_start, word_end).is_some(),
         })
     })
+}
+
+/// **Do these spans cover this stretch, leaving nothing in it but whitespace?**
+///
+/// The question `inspect_selection` has to ask twice since 085 ruling 1
+/// (15 October) — once of the protections, to say «this is already ours», and
+/// once of the findings, to say what kind the scanner called it. A name the app
+/// read for itself is one span per word, so «exactly this stretch» is no longer
+/// one span and is not a guess either: the spans must all lie **inside** the
+/// stretch, and what is left between and around them must be whitespace.
+///
+/// Both clauses matter. A span reaching outside means the person clicked
+/// **inside** a value, which is not that value — the line the lead drew on
+/// 14 October and nothing here moves it. A non-space word left over means the
+/// selection holds something nobody named: «Katrin Sommer» is two spans and a
+/// space, «Katrin Sommer unter» is two spans and a word.
+fn they_tile(whole: &str, mut spans: Vec<(usize, usize)>, start: usize, end: usize) -> bool {
+    spans.retain(|(from, to)| *from < end && start < *to);
+    if spans.is_empty() {
+        return false;
+    }
+    if spans.iter().any(|(from, to)| *from < start || end < *to) {
+        return false;
+    }
+    spans.sort_by_key(|(from, _)| *from);
+    let mut at = start;
+    for (from, to) in &spans {
+        if whole.get(at..*from).is_some_and(|gap| !gap.trim().is_empty()) {
+            return false;
+        }
+        at = (*to).max(at);
+    }
+    !whole.get(at..end).is_some_and(|tail| !tail.trim().is_empty())
+}
+
+/// One answer for several protections, or none when they do not give the same.
+fn first_if_all_agree<T: PartialEq>(
+    touched: &[Protection],
+    ours: bool,
+    read: impl Fn(&Protection) -> T,
+) -> Option<T> {
+    if !ours {
+        return None;
+    }
+    let first = touched.first().map(&read)?;
+    touched.iter().all(|p| read(p) == first).then_some(first)
 }
 
 /// Why is this protected?
@@ -2831,6 +2912,36 @@ fn rescan_with(
                     if let Some(selected) = selected {
                         for (from, to) in text::occurrences(s.original_str(), &selected) {
                             if s.protections.iter().any(|p| p.start < to && from < p.end) {
+                                continue;
+                            }
+                            // **One answer may never answer another kind's
+                            // question** — the lead's ruling of 15 October,
+                            // and C3's spirit: nothing is settled without the
+                            // person's word.
+                            //
+                            // A decision about a word reaches every place
+                            // where that word **stands alone**, and never a
+                            // place lying inside a finding of another kind.
+                            // 085 ruling 1 made this ordinary: «Katharina
+                            // Lindemann» is the client of DE-1 and «Lindemann
+                            // & Partner GmbH» is her employer, so her
+                            // surname's own token was taking the company's
+                            // first word — with `_PERSON_` inside it — and the
+                            // company line stopped waiting for the answer it
+                            // was waiting for. Now it keeps its question, and
+                            // the person's answer decides it whole.
+                            //
+                            // Asked of the **settled** candidates and not of
+                            // `s.findings`, which is still being built in this
+                            // very loop: settle leaves no two candidates
+                            // overlapping, so a candidate's own place can
+                            // never be refused by this, and where the other
+                            // kind is itself `Auto` it protects its whole span
+                            // and settle has already decided as it always did.
+                            if candidates
+                                .iter()
+                                .any(|other| other.kind != c.kind && other.start < to && from < other.end)
+                            {
                                 continue;
                             }
                             let got = protect_range(

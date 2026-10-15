@@ -100,7 +100,9 @@ fn a_photo_credit_is_a_person_without_being_asked() {
     fresh_vault("credit");
     let s = scanned(COLUMN, "sv");
     let protected = people(s, COLUMN, MarkState::Protected);
-    for who in ["Gonzalo Irigoyen", "Anja Callius"] {
+    // One finding per word since 085 ruling 1 (15 October) — the credit is
+    // still proof, and it still protects without asking.
+    for who in ["Gonzalo", "Irigoyen", "Anja", "Callius"] {
         assert!(
             protected.iter().any(|p| p == who),
             "«{who}» was credited and left in the clear: {protected:?}"
@@ -143,20 +145,26 @@ fn a_role_beside_a_name_is_offered_not_decided() {
     fresh_vault("role");
     let s = scanned(COLUMN, "sv");
     let offered = people(s, COLUMN, MarkState::Suggested);
-    assert!(
-        offered.iter().any(|p| p == "Cicek Cavdar"),
-        "«Projektledare är Cicek Cavdar» was not offered: {offered:?}"
-    );
-    assert!(
-        offered.iter().any(|p| p == "Anna Nilsson"),
-        "«Anna Nilsson, programchef» was not offered: {offered:?}"
-    );
+    for who in ["Cicek", "Cavdar"] {
+        assert!(
+            offered.iter().any(|p| p == who),
+            "«Projektledare är Cicek Cavdar» was not offered: {offered:?}"
+        );
+    }
+    for who in ["Anna", "Nilsson"] {
+        assert!(
+            offered.iter().any(|p| p == who),
+            "«Anna Nilsson, programchef» was not offered: {offered:?}"
+        );
+    }
     // Never protected on a role alone.
     let protected = people(s, COLUMN, MarkState::Protected);
-    assert!(
-        !protected.iter().any(|p| p == "Cicek Cavdar"),
-        "a role decided for the person: {protected:?}"
-    );
+    for who in ["Cicek", "Cavdar"] {
+        assert!(
+            !protected.iter().any(|p| p == who),
+            "a role decided for the person: {protected:?}"
+        );
+    }
     close_session(s).ok();
 }
 
@@ -179,11 +187,16 @@ fn the_column_shows_what_the_page_did_to_the_names() {
     let protected = people(s, COLUMN, MarkState::Protected);
     let offered = people(s, COLUMN, MarkState::Suggested);
 
-    // (a) A pair the page wrapped, with no hyphen between the halves.
-    assert!(
-        offered.iter().any(|p| p == "Anna\nNilsson"),
-        "the wrapped pair was not read across the line: {offered:?}"
-    );
+    // (a) A pair the page wrapped, with no hyphen between the halves. Both
+    //     words are offered and the break between them stays in the clear —
+    //     085 ruling 1 (15 October); reading across the line is what makes the
+    //     **second** word a finding at all.
+    for half in ["Anna", "Nilsson"] {
+        assert!(
+            offered.iter().any(|p| p == half),
+            "the wrapped pair was not read across the line: {offered:?}"
+        );
+    }
 
     // (b) A taught value the page broke at a hyphen — one mark, both halves.
     assert!(
@@ -236,10 +249,12 @@ fn discovery_is_still_blind_to_a_break() {
     }
     // And the control: the same pair **unbroken** two paragraphs above is found,
     // so what is missing here is the break and nothing else.
-    assert!(
-        offered.iter().any(|p| p == "Anna\nNilsson"),
-        "the unbroken pair is missing too, so this test proves nothing: {offered:?}"
-    );
+    for half in ["Anna", "Nilsson"] {
+        assert!(
+            offered.iter().any(|p| p == half),
+            "the unbroken pair is missing too, so this test proves nothing: {offered:?}"
+        );
+    }
     close_session(s).ok();
 }
 

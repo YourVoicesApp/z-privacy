@@ -26,6 +26,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/core/protecting.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _doc = 'Protokoll 2026\nBjörn Sandström ringde klockan 14 om fakturan 55123.\n';
@@ -88,19 +89,70 @@ void main() {
     );
     expect(bench.tokens.first.kind, Kind.person);
 
-    // **The cost of the ruling, on this very document.** A click on the surname
-    // alone is not what the scanner found — the finding covers both words — so
-    // the kind is honestly unknown. Two clicks take the pair, which is the
-    // finding, which is `PERSON`.
+    // **And the cost of that ruling is paid back by 085 ruling 1** (15 October).
+    // It read: «a click on the surname alone is not what the scanner found —
+    // the finding covers both words — so the kind is honestly unknown». A name
+    // the app read for itself is one finding per word now, so the surname **is**
+    // a finding and carries its kind. Nothing guesses: it is still the pack's
+    // own answer over exactly this word.
     await tester.runAsync(() => bench.select(spanOf('Sandström')));
     await settle(tester, rounds: 2);
-    expect(bench.selected!.kind, Kind.custom,
-        reason: 'a part of a name was given the whole name\'s kind — a guess the lead ruled out');
+    expect(bench.selected!.kind, Kind.person,
+        reason: 'one word of a name is a finding of its own now, and carries its kind');
 
     // And an invoice number is not a person: the app has no opinion, and says so.
     await tester.runAsync(() => bench.select(spanOf('55123')));
     await settle(tester, rounds: 2);
     expect(bench.selected!.kind, Kind.custom, reason: 'a number was offered as a person');
+
+    bench.dispose();
+  });
+
+  /// **A drag over the whole of a name that is already ours says so** — the
+  /// lead's ruling of 15 October, on the glass.
+  ///
+  /// The scanner gives one token per word, so the whole name is two of them and
+  /// matched no single protection: the bar said «Protect» over a value entirely
+  /// ours. The view now answers at the same finer grain and **lists** the
+  /// tokens, which is a field and not a sixth button state — and the bar prints
+  /// them as they stand in the text.
+  testWidgets('a drag over a whole name already ours is told so, and both tokens are named',
+      (tester) async {
+    final ground = Ground();
+    late final Workbench bench;
+    await tester.runAsync(() async {
+      final dir = Directory('${Directory.systemTemp.path}/zp-both-tokens');
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      await z.setDataDir(dir: dir.path);
+      await ground.refresh();
+      final session = await z.openSession(packId: 'de');
+      await z.importText(session: session, text: 'Sehr geehrter Herr Stefan Keller, danke.\n');
+      bench = Workbench(session: session, profileId: null, packId: 'de');
+      await bench.rescan();
+    });
+
+    await tester.binding.setSurfaceSize(const Size(1500, 1000));
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+    ));
+    await settle(tester);
+
+    const doc = 'Sehr geehrter Herr Stefan Keller, danke.\n';
+    final at = doc.indexOf('Stefan Keller');
+    await tester.runAsync(
+      () => bench.select(Span(start: at, end: at + 'Stefan Keller'.length)),
+    );
+    await settle(tester, rounds: 2);
+
+    expect(bench.selected!.protectedAs, hasLength(2),
+        reason: 'a name the pack protected is one token per word, and both are ours');
+    expect(protectStateOf(bench.selected), ProtectState.known,
+        reason: 'the button offered a press over a value already ours');
+    expect(find.textContaining('Already protected as'), findsOneWidget);
+    for (final token in bench.selected!.protectedAs) {
+      expect(find.textContaining(token), findsOneWidget,
+          reason: 'the bar did not name «$token»');
+    }
 
     bench.dispose();
   });

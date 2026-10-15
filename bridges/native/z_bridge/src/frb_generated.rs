@@ -3989,7 +3989,7 @@ const _: fn() = || {
         let _: bool = SelectionView.empty;
         let _: crate::api::mirrors::Kind = SelectionView.kind;
         let _: u32 = SelectionView.matches;
-        let _: Option<String> = SelectionView.protected_as;
+        let _: Vec<String> = SelectionView.protected_as;
         let _: Option<crate::api::mirrors::Source> = SelectionView.protected_by;
         let _: String = SelectionView.protected_detail;
         let _: Vec<String> = SelectionView.entities;
@@ -6060,7 +6060,7 @@ impl SseDecode for crate::api::mirrors::SelectionView {
         let mut var_empty = <bool>::sse_decode(deserializer);
         let mut var_kind = <crate::api::mirrors::Kind>::sse_decode(deserializer);
         let mut var_matches = <u32>::sse_decode(deserializer);
-        let mut var_protectedAs = <Option<String>>::sse_decode(deserializer);
+        let mut var_protectedAs = <Vec<String>>::sse_decode(deserializer);
         let mut var_protectedBy = <Option<crate::api::mirrors::Source>>::sse_decode(deserializer);
         let mut var_protectedDetail = <String>::sse_decode(deserializer);
         let mut var_entities = <Vec<String>>::sse_decode(deserializer);
@@ -10158,7 +10158,7 @@ impl SseEncode for crate::api::mirrors::SelectionView {
         <bool>::sse_encode(self.empty, serializer);
         <crate::api::mirrors::Kind>::sse_encode(self.kind, serializer);
         <u32>::sse_encode(self.matches, serializer);
-        <Option<String>>::sse_encode(self.protected_as, serializer);
+        <Vec<String>>::sse_encode(self.protected_as, serializer);
         <Option<crate::api::mirrors::Source>>::sse_encode(self.protected_by, serializer);
         <String>::sse_encode(self.protected_detail, serializer);
         <Vec<String>>::sse_encode(self.entities, serializer);

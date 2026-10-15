@@ -45,7 +45,10 @@ ProtectState protectStateOf(SelectionView? v) {
   // the span Protect would really take, and a press over it would mint a second
   // token over the first (079 rule 5).
   if (v.onAToken) return ProtectState.alreadyOurs;
-  if (v.protectedAs != null) return ProtectState.known;
+  // **A list and not one token** since 085 ruling 1 (15 October): a name the
+  // app read for itself is one token per word, so a selection over the whole of
+  // «Katrin Sommer» is two of them and is no less already ours for that.
+  if (v.protectedAs.isNotEmpty) return ProtectState.known;
   if (v.snapsTo.isNotEmpty) return ProtectState.snaps;
   return ProtectState.ready;
 }
