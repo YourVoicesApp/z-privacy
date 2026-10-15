@@ -18,11 +18,19 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::OnceLock;
 
-/// The bank as shipped: tiers 1 and 2, 12,732 names, built by
-/// `scripts/build_de_names.py` from four cities' newborn registers and
-/// Wikidata. Tier 3 — a name one single city ever used — is written beside it
-/// and compiled into nothing: 60,548 rows nobody reads would be 14 MB of
-/// download in every copy of the product.
+/// The bank as **written**: 12,740 rows, built by `scripts/build_de_names.py`
+/// from four cities' newborn registers and Wikidata — 5,712 given names at tier
+/// 1, 3,774 more at tier 2, and 3,246 surnames. Tier 3 — a name one single city
+/// ever used — is written beside it and compiled into nothing: 60,548 rows
+/// nobody reads would be 14 MB of download in every copy of the product.
+///
+/// **What this build believes is narrower, and `LOADED_TIERS` below is the
+/// only thing that says so: tier 1 alone, 8,958 names.** This comment said
+/// «tiers 1 and 2, 12,732 names» while that list held `[1]`, which is the same
+/// fault as the stale header in `tests/the_name_dictionary.rs` and was found in
+/// the same act (15 October). A sentence that counts something has to ask it,
+/// and the rule's own reason does ask — `Dictionary::counts()`, at the moment
+/// it writes the number a person reads.
 pub(crate) const CSV: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/de_names_v2.csv"));
 
 /// Which tiers this build actually believes.
