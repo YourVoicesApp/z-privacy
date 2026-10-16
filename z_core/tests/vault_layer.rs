@@ -47,6 +47,29 @@ fn identity(label: &str, profile: Option<&str>, kind: Kind, value: &str, aliases
 
 const DOC: &str = "Kunde: Nordstern Consulting GmbH\nAnsprechpartner: Herr Thomas Müller\nFrau Anna Weber vertritt ihn.";
 
+/// **What a block names itself** — the stand-in the core puts where an identity
+/// would be, because nobody taught a block and there is no identity behind it.
+/// It is how these tests tell rule 58 from the law it amends: a block crosses
+/// every profile, a **taught value** still names the identity it came from and
+/// still crosses nothing.
+const A_BLOCK: &str = "a word you protected";
+
+/// Every identity a vault-sourced finding names, with the blocks left out.
+/// Empty means: the vault layer spoke, and nothing it said came from knowledge
+/// taught about a client.
+fn identities_claiming(s: SessionId) -> Vec<String> {
+    let mut named: Vec<String> = list_findings(s)
+        .expect("findings")
+        .into_iter()
+        .filter(|f| f.source == Source::Vault)
+        .flat_map(|f| f.entities)
+        .filter(|who| who != A_BLOCK)
+        .collect();
+    named.sort();
+    named.dedup();
+    named
+}
+
 fn scanned(profile: Option<&str>) -> (SessionId, ScanReport) {
     let s = open_session(profile.map(str::to_string), "de".to_string()).expect("open");
     import_text(s, DOC.to_string()).expect("import");
@@ -159,24 +182,26 @@ fn rule_two_only_what_the_vault_actually_holds_becomes_automatic() {
 }
 
 #[test]
-/// **PARKED 16 October, waiting on the owner — does a block cross a client
-/// profile?** This guard holds one of the two rules in the collision and
-/// cannot pass while the other one stands.
+/// **Rule two still stands, and it is about knowledge** — amended 16 October
+/// by the owner's rule 58, which answered the question this guard was parked
+/// on: «البلوك يعبر من ملف عميل إلى ملف عميل… فالبلوك في خزنة المستخدم لا في
+/// ملف العميل».
 ///
-/// Rule two (079, measured here) says a value taught in one profile is not
-/// loaded in another, so Z never tells client B that it knows client A's
-/// people. 089 rule 1 (15 October) says every word that took a token is a
-/// block in **the user's vault** and is put back wherever it stands —
-/// and a block carries no profile. Rule 55 (16 October) gave every
-/// document in the preview a session, which is what a block is written
-/// from, so the two rules now meet on every reading.
+/// A **taught value** of one client is not loaded for another: that is rule
+/// two (079) and nothing in this round touches it. A **block** — a word the
+/// person has already protected somewhere — crosses every profile, because it
+/// lives in their vault and not in a client's file. The two are not in
+/// contradiction and a reader must not take them for one: this guard measures
+/// the first, and `always_and_profile_actually_reach_the_vault` measures the
+/// second.
 ///
-/// Measured: a value protected while working for one client came back
-/// protected in another client's document. The question is with the owner;
-/// nothing is built either way until he answers, and this `ignore` is how
-/// the tree says so out loud instead of a guard quietly asserting the
-/// behaviour nobody chose.
-#[ignore = "waits on the owner: does a block cross a client profile? (16 Oct)"]
+/// **Why this file needed re-reading at all.** The taught company is scoped to
+/// another profile and stays unloaded; what appeared beside it was «Thomas»,
+/// «Müller», «Anna», «Weber» — words the German pack protected on the import's
+/// own scan (an import scans, since 14 October), which made them blocks, which
+/// the explicit scan below then found. So the guard's old line — «the vault
+/// claimed nothing at all» — was measuring the blocks of this very reading and
+/// not the profile law. The law is asked about by name now.
 fn rule_two_a_value_in_another_profile_is_not_loaded() {
     let _guard = serial();
     fresh_vault("rule-two-profile");
@@ -187,7 +212,15 @@ fn rule_two_a_value_in_another_profile_is_not_loaded() {
     let (s, _) = scanned(None);
     let (_, open) = states(s);
     let claimed = from_vault(s);
-    assert!(claimed.is_empty(), "the vault loaded another profile's value: {claimed:?}");
+    assert!(
+        !claimed.contains(&"Nordstern Consulting GmbH".to_string()),
+        "the vault loaded another profile's taught value: {claimed:?}"
+    );
+    assert!(
+        identities_claiming(s).is_empty(),
+        "a client's own knowledge went hunting outside that client: {:?}",
+        identities_claiming(s)
+    );
     assert!(open.contains(&"Nordstern Consulting GmbH".to_string()), "still only a guess");
 
     // With that profile active, the same value is recognised.
@@ -289,7 +322,6 @@ fn a_manual_value_is_kept_but_never_hunted() {
     // where an identity would be, because nobody taught it and there is no
     // identity behind it. A taught value that went hunting names the identity
     // it came from, and that is the thing this policy forbids.
-    const A_BLOCK: &str = "a word you protected";
     assert!(
         !findings
             .iter()
@@ -1217,24 +1249,19 @@ fn a_wrong_passphrase_reports_nothing_it_does_not_know() {
 }
 
 #[test]
-/// **PARKED 16 October, waiting on the owner — does a block cross a client
-/// profile?** This guard holds one of the two rules in the collision and
-/// cannot pass while the other one stands.
+/// **«Always» and «Profile» reach the vault — and a block reaches every
+/// profile** (rule 58, the owner, 16 October).
 ///
-/// Rule two (079, measured here) says a value taught in one profile is not
-/// loaded in another, so Z never tells client B that it knows client A's
-/// people. 089 rule 1 (15 October) says every word that took a token is a
-/// block in **the user's vault** and is put back wherever it stands —
-/// and a block carries no profile. Rule 55 (16 October) gave every
-/// document in the preview a session, which is what a block is written
-/// from, so the two rules now meet on every reading.
+/// The last section of this guard used to end «one client's value became a
+/// rule about another», and the owner has now ruled that for a **block** it
+/// is no rule about a client at all: the word is in his vault, he protected
+/// it, and it comes back wherever he reads it. What he scoped to one client is
+/// the **knowledge** — the identity, its label, its other spellings — and that
+/// still does not cross: the finding in the other client's document names no
+/// identity, only [`A_BLOCK`].
 ///
-/// Measured: a value protected while working for one client came back
-/// protected in another client's document. The question is with the owner;
-/// nothing is built either way until he answers, and this `ignore` is how
-/// the tree says so out loud instead of a guard quietly asserting the
-/// behaviour nobody chose.
-#[ignore = "waits on the owner: does a block cross a client profile? (16 Oct)"]
+/// Measured before the flip: `by_layer` reported `Vault count 1` in the other
+/// profile, with `entities: ["a word you protected"]`.
 fn always_and_profile_actually_reach_the_vault() {
     let _lock = serial();
     fresh_vault("scope");
@@ -1284,15 +1311,24 @@ fn always_and_profile_actually_reach_the_vault() {
     );
     close_session(same_client).expect("close");
 
-    // In another client's, it is not — and that is the whole point of the scope.
+    // In another client's, the word comes back — from the block, which is the
+    // person's own and carries no client. Rule 58.
     let other = create_profile("Client B".to_string(), None).expect("profile");
     let elsewhere = open_session(Some(other), "de".to_string()).expect("session");
     import_text(elsewhere, "Nordstern Consulting GmbH meldet sich.".to_string()).expect("import");
     let outside = scan(elsewhere).expect("scan");
     assert!(
-        !outside.by_layer.iter().any(|l| l.source == Source::Vault && l.count > 0),
-        "one client's value became a rule about another: {:?}",
+        outside.by_layer.iter().any(|l| l.source == Source::Vault && l.count > 0),
+        "a word the person protected did not cross to another client (rule 58): {:?}",
         outside.by_layer
+    );
+    // **And it is the block that crossed, not the client's knowledge** — the
+    // half of rule two that stands. A taught value names the identity it came
+    // from; a block names nobody, because nobody taught it.
+    assert!(
+        identities_claiming(elsewhere).is_empty(),
+        "one client's own knowledge went hunting in another's document: {:?}",
+        identities_claiming(elsewhere)
     );
     close_session(elsewhere).expect("close");
 }

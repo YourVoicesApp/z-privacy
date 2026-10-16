@@ -472,3 +472,61 @@ fn a_document_is_in_one_session_at_a_time() {
     assert_eq!(back.len(), 1, "it did not come back with the bench");
     assert_eq!(back[0].handle, "doc2", "it took a number this session had already spent");
 }
+
+/// **A document that arrives with the vault shut has no session — and that is
+/// the state 081's birth at the exit still exists for.**
+///
+/// The census the lead asked for on 16 October: rule 55 made every document in
+/// the preview bring a session with it, so «a text that leaves with no
+/// session» looked unreachable, and rule 35 («أبسط من البساطة ذاتها») would
+/// then have the exit-born session deleted rather than kept as a net.
+///
+/// It is reachable. A session's key lives in the vault, so there is nowhere to
+/// put one while the vault is shut — the birth refuses with `VaultLocked` and
+/// the preview keeps the document anyway, which is 089 rule 9's promise and
+/// does not depend on the vault. The exits stay live in that state (protection
+/// never needed the vault), and the moment the person opens the vault the
+/// glass is in exactly the state `Ground.aSessionWouldBeBorn` reports: a
+/// document in front of them, no session, and a press that must not refuse.
+///
+/// So the net is kept, and this is the measurement that says why. If a later
+/// round makes the import wait for the vault, or gives the unlock its own
+/// birth, this guard is the one that will go red and ask the question again.
+#[test]
+fn a_document_that_arrives_with_the_vault_shut_has_no_session() {
+    let _guard = serial();
+    let ground = Ground::fresh("shut");
+    vault_lock().expect("lock");
+
+    let bench = the_first_document(LETTER, Some("doc1.txt"));
+    assert_eq!(
+        conversation_open().expect("ask"),
+        None,
+        "a session was born with nowhere to keep its key"
+    );
+    // The document is there, and the exits are live: what is missing is only
+    // the drawer to file it in.
+    assert!(
+        !document_view(bench.0).expect("view").text.is_empty(),
+        "the preview lost the document because the vault was shut"
+    );
+
+    // The person opens the vault. Nothing has rescanned yet, and nothing
+    // begins a session on its own — this is the state the exit's birth is for.
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
+    assert_eq!(
+        conversation_open().expect("ask"),
+        None,
+        "unlocking the vault began a session by itself, which would make 081's net unreachable"
+    );
+
+    // And the first act that writes a decision gives it one, by rule 55 —
+    // which is why the net is a net and not the ordinary path.
+    scan(bench.0).expect("scan");
+    assert!(
+        conversation_open().expect("ask").is_some(),
+        "the first act after the vault opened left the document with no session"
+    );
+    drop(bench);
+    drop(ground);
+}

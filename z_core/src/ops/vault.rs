@@ -15,7 +15,7 @@ use crate::api::{
 };
 use crate::secret::Secret;
 use crate::session::with_core;
-use crate::vault::model::{Entity, StoredSettings, ValueRecord};
+use crate::vault::model::{Entity, Exemption, StoredSettings, ValueRecord};
 
 pub(crate) fn set_data_dir(dir: String) -> ApiResult<()> {
     let path = PathBuf::from(dir);
@@ -332,16 +332,42 @@ pub(crate) fn move_entity(entity_id: u32, profile_id: Option<String>) -> ApiResu
     })
 }
 
+/// **How far a «Forget» reaches, from the reach of the knowledge it took** —
+/// rule 59, and the one function that decides it.
+///
+/// Knowledge that belongs to one client is forgotten in that client's profile
+/// and nowhere else; knowledge that belongs to no profile is known everywhere,
+/// so forgetting it is «everywhere» whichever button was pressed — and that is
+/// the case the glass never has to choose, because `Explanation::taught_reach`
+/// reports `Everywhere` for it and the button is named after that fact.
+fn as_far_as_the_knowledge(home_profile: Option<&str>) -> Exemption {
+    match home_profile {
+        Some(id) => Exemption::Profile(id.to_string()),
+        None => Exemption::Everywhere,
+    }
+}
+
 /// Forget one value, keeping its identity.
+///
+/// **And its word's blocks are exempted, never deleted** — rule 59, through
+/// the one hand in the model (G40 reads the enumeration of these doors).
 pub(crate) fn delete_value(entity: u32, value_id: u32) -> ApiResult<()> {
     with_core(|core| {
         core.vault.with_open_mut(|vault| {
+            let home = vault.entity(entity).and_then(|e| e.profile_id.clone());
             let e = vault.entity_mut(entity).ok_or(ApiError::UnknownToken)?;
             let before = e.values.len();
+            let spellings = e
+                .values
+                .iter()
+                .find(|v| v.id == value_id)
+                .map(|v| v.spellings())
+                .unwrap_or_default();
             e.values.retain(|v| v.id != value_id);
             if e.values.len() == before {
                 return Err(ApiError::UnknownToken);
             }
+            vault.forget_the_blocks_of(&spellings, &as_far_as_the_knowledge(home.as_deref()));
             Ok(())
         })
     })
@@ -349,10 +375,15 @@ pub(crate) fn delete_value(entity: u32, value_id: u32) -> ApiResult<()> {
 
 /// Forget one spelling. The value itself is never removed this way — a value
 /// with no spellings would be a value the scanner could not match.
+///
+/// **And that spelling's block is exempted, never deleted** — rule 59. A
+/// spelling is its own word and took its own token, so forgetting one of them
+/// is the same act one word narrower.
 pub(crate) fn remove_value_alias(entity: u32, value_id: u32, alias: String) -> ApiResult<()> {
     let wanted = crate::text::nfc(&alias);
     with_core(|core| {
         core.vault.with_open_mut(|vault| {
+            let home = vault.entity(entity).and_then(|e| e.profile_id.clone());
             let e = vault.entity_mut(entity).ok_or(ApiError::UnknownToken)?;
             let v = e
                 .values
@@ -364,6 +395,18 @@ pub(crate) fn remove_value_alias(entity: u32, value_id: u32, alias: String) -> A
             if v.aliases.len() == before {
                 return Err(ApiError::UnknownToken);
             }
+            // **After the act succeeded, and never before it** — `with_open_mut`
+            // does not roll the vault back when a closure returns `Err`, so an
+            // exemption written above the refusals would survive in memory and
+            // be sealed by the next successful write. It is a one-way mark
+            // (nothing takes an exemption back but teaching the word again),
+            // and an unknown identity reads as `home = None`, which is the
+            // **widest** reach of the three. A refused press would then have
+            // silently stopped protecting the word everywhere.
+            vault.forget_the_blocks_of(
+                std::slice::from_ref(&alias),
+                &as_far_as_the_knowledge(home.as_deref()),
+            );
             Ok(())
         })
     })
@@ -741,6 +784,17 @@ fn plan(entity: u32, value_id: u32, everywhere: bool, act: bool) -> ApiResult<Fo
                 // An identity with nothing left is not kept as a shell: it would
                 // sit in the list saying nothing and meaning nothing.
                 vault.entities.retain(|e| !e.values.is_empty());
+                // **And the word's blocks are exempted from work** — rule 59,
+                // the owner on 16 October. «Forget everywhere» reaches every
+                // profile; «from this profile» reaches the one the knowledge
+                // lived in. Nothing is deleted: rule 50, and G35 reads the
+                // source for a deletion rather than trusting this line.
+                let reach = if everywhere {
+                    Exemption::Everywhere
+                } else {
+                    as_far_as_the_knowledge(home_profile.as_deref())
+                };
+                vault.forget_the_blocks_of(&spellings, &reach);
             }
 
             // What would still recognise it **afterwards** — the same meaning
@@ -781,6 +835,13 @@ fn plan(entity: u32, value_id: u32, everywhere: bool, act: bool) -> ApiResult<Fo
                     // noise, and a widget test caught the duplication.
                     "Documents you have already protected keep their tokens".to_string(),
                     "Answers you have already received are unchanged".to_string(),
+                    // **Rule 59, said out loud** — the owner, 16 October: the
+                    // word's blocks are exempted from work and deleted
+                    // never, so a document protected before this act still
+                    // reads its own tokens back. A list of what «Forget» does
+                    // not touch that left this out would be the sheet
+                    // promising more than the vault does.
+                    "Documents already protected still read their names back".to_string(),
                     if everywhere {
                         // Not «nothing on this device». F-02: an older valid
                         // vault copy may be restored and bring the value back,
@@ -1033,15 +1094,27 @@ pub(crate) fn teach_name_into(
 }
 
 /// Unlearn a name. Knowledge only: an open document keeps every token it has.
+///
+/// **And the name's blocks are exempted, never deleted** — rule 59. A taught
+/// name is a word like any other: if it ever took a token it is a block, and
+/// «Forget» on the row is the same act as «Forget» on a value.
 pub(crate) fn forget_name(id: u32) -> ApiResult<()> {
     with_core(|core| {
         core.vault.with_open_mut(|vault| {
             let before = vault.taught_names.len();
+            let gone = vault
+                .taught_names
+                .iter()
+                .find(|n| n.id == id)
+                .map(|n| (n.text.clone(), n.profile_id.clone()));
             vault.taught_names.retain(|n| n.id != id);
             if vault.taught_names.len() == before {
                 return Err(ApiError::NotFound {
                     reason: "no taught name with that id".to_string(),
                 });
+            }
+            if let Some((text, home)) = gone {
+                vault.forget_the_blocks_of(&[text], &as_far_as_the_knowledge(home.as_deref()));
             }
             Ok(())
         })
@@ -1828,12 +1901,25 @@ pub(crate) fn user_list_plan(name: String) -> ApiResult<u32> {
 }
 
 /// Forget a list and the names in it — and nothing else.
+///
+/// **It is «Forget» on many words at once** (rule 59), so every one of them
+/// exempts its own blocks, each as far as its own row reached: a list may hold
+/// a name taught for one client beside a name taught for all of them.
 pub(crate) fn forget_user_list(name: String) -> ApiResult<u32> {
     let gone: u32 = with_core(|core| {
         core.vault.with_open_mut(|vault| {
             let before = vault.taught_names.len();
+            let going: Vec<(String, Option<String>)> = vault
+                .taught_names
+                .iter()
+                .filter(|n| n.list == name)
+                .map(|n| (n.text.clone(), n.profile_id.clone()))
+                .collect();
             vault.taught_names.retain(|n| n.list != name);
             vault.lists.retain(|l| l.name != name);
+            for (text, home) in going {
+                vault.forget_the_blocks_of(&[text], &as_far_as_the_knowledge(home.as_deref()));
+            }
             Ok(before.saturating_sub(vault.taught_names.len()) as u32)
         })
     })?;

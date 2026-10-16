@@ -505,17 +505,28 @@ impl VaultStore {
     /// **Exempt a word's block from one conversation** — «In this
     /// conversation». It deletes nothing, and a word with no block is not an
     /// error: documents protected before 089 have none.
+    ///
+    /// The wider two reaches of an exemption (rule 59) are written by the
+    /// forget doors, which already hold the vault open; they call
+    /// `Vault::forget_the_blocks_of` directly and this hand stays what the
+    /// un-protect door needs.
     pub(crate) fn exempt_block(&mut self, value: &str, conversation: u32) -> bool {
         if self.state() != VaultState::Unlocked {
             return false;
         }
+        let reach = crate::vault::model::Exemption::Conversation(conversation);
         let holds = self
-            .with_open(|vault| vault.blocks.iter().any(|b| b.is(value) && !b.exempt_in.contains(&conversation)))
+            .with_open(|vault| {
+                vault
+                    .blocks
+                    .iter()
+                    .any(|b| b.is(value) && !b.exempt.contains(&reach))
+            })
             .unwrap_or(false);
         if !holds {
             return false;
         }
-        self.with_open_mut(|vault| Ok(vault.exempt_block_in(value, conversation)))
+        self.with_open_mut(|vault| Ok(vault.exempt_block(value, reach.clone())))
             .unwrap_or(false)
     }
 

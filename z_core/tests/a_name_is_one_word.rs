@@ -55,6 +55,16 @@ fn found(doc: &str, lang: &str) -> Vec<(MarkState, Kind, String, String)> {
     let dir = std::env::temp_dir().join(format!("zprivacy-one-word-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
+    // **And the premise is asserted, not hoped for.** It was stated in the
+    // paragraph above on 16 October and the guard went red in the full suite
+    // anyway, reading «Protected» where the pack offers: the one thing that
+    // could do that is a vault still answering, so the state is read here and
+    // the red says which state it was instead of looking like a pack defect.
+    assert_eq!(
+        vault_state().expect("the vault state"),
+        VaultState::Absent,
+        "this reading is the packs' own, and a vault is still answering for it"
+    );
     let s = open_session(None, lang.to_string()).expect("open");
     import_text(s, doc.to_string()).expect("import");
     scan(s).expect("scan");

@@ -1339,22 +1339,36 @@ void main() {
         await z.importText(session: b, text: doc);
         await z.scan(session: b);
         final bTokens = await z.listTokens(session: b);
-        // **PARKED 16 October, waiting on the owner — does a block cross a
-        // client profile?** The line that stood here asked that Client B
-        // inherit nothing taught to Client A, and it is one of two rules of
-        // his that now collide: 089 rule 1 (every word that took a token is a
-        // block in **his** vault and comes back wherever it stands) against
-        // 079 rule two (a value of one profile is not loaded in another).
-        // Rule 55 made every reading write blocks, so they meet here.
+        // **Rule 58, the owner on 16 October** — «البلوك يعبر من ملف عميل إلى
+        // ملف عميل… فالبلوك في خزنة المستخدم لا في ملف العميل». The line that
+        // stood here asked that Client B inherit nothing at all, and it was
+        // parked while two rules of his collided: 089 rule 1 (every word that
+        // took a token is a block in **his** vault and comes back wherever it
+        // stands) against 079 rule two (a value of one profile is not loaded
+        // in another). He has now ruled for the block, with one condition —
+        // nothing on the glass may say where or when the word was first
+        // protected — which the core measures by name
+        // (`a_blocks_card_says_no_where_and_no_when`).
         //
-        // The core side of the same law is parked by name —
-        // `vault_layer::rule_two_a_value_in_another_profile_is_not_loaded` and
-        // three others carry `#[ignore]` with the measurement. Nothing is
-        // built either way until he rules; the rest of this guard stands.
+        // So B reads the word back, and what B is **not** told is anything
+        // about Client A: the finding names the block and no identity. The
+        // profile's own half of rule two is measured in the core, in
+        // `vault_layer::rule_two_a_value_in_another_profile_is_not_loaded`.
         expect(
           bTokens,
           isNotEmpty,
-          reason: 'B read nothing at all, so the parked question above has no subject',
+          reason: 'the word Client A protected did not come back for Client B (rule 58)',
+        );
+        const aBlock = 'a word you protected';
+        final named = (await z.listFindings(session: b))
+            .where((f) => f.source == Source.vault)
+            .expand((f) => f.entities)
+            .where((who) => who != aBlock)
+            .toList();
+        expect(
+          named,
+          isEmpty,
+          reason: "Client A's own knowledge crossed with the block: $named",
         );
         await z.closeSession(session: b);
 

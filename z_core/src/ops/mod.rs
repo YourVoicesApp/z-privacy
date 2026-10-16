@@ -1666,6 +1666,7 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
     // Same reason, same shape: the taught rules' scopes are read here, outside
     // the session lock, and looked up as plain data inside it.
     let taught_scopes = taught_rule_scopes();
+    let taught_labels = taught_rule_labels();
     with_session(session.id, |s| {
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
         let p = s
@@ -1682,17 +1683,30 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
         // they decided it — but «You protected this by hand» would be false:
         // they did not select these words, they taught a word to look for.
         let taught_rule = p.source == Source::Hand && p.source_detail.starts_with("you:");
+        // **The rule behind this protection, whether it won the finding or was
+        // folded into it** — the ruling of 16 October.
+        //
+        // A word the person once protected is a block (rule 50), and from then
+        // on the block claims it in every reading; the block's hint is `Always`
+        // and outranks the taught rule in `scanner::settle`, so the rule the
+        // person actually taught became a folded layer. The card is where that
+        // is put right: the block repeats a decision, it never makes one, so
+        // the decision leads and the block says it was kept.
+        //
+        // It stays within rule 58's condition: neither sentence says where or
+        // when the word was first protected.
+        let rule_id = if taught_rule {
+            p.source_detail.strip_prefix("you:u").and_then(|n| n.parse::<u32>().ok())
+        } else {
+            finding
+                .as_ref()
+                .and_then(|f| f.also.iter().find_map(|d| d.strip_prefix("you:u")))
+                .and_then(|n| n.parse::<u32>().ok())
+        };
         // The rule's own reach, read from the vault by the id inside the
         // detail («you:u3»), so the card answers about the rule rather than
         // about the protection the rule happened to produce here.
-        let taught_scope = if taught_rule {
-            p.source_detail
-                .strip_prefix("you:u")
-                .and_then(|n| n.parse::<u32>().ok())
-                .and_then(|id| taught_scopes.get(&id).cloned())
-        } else {
-            None
-        };
+        let taught_scope = rule_id.and_then(|id| taught_scopes.get(&id).cloned());
         // And the set is read from the finding, never assumed. This line said
         // «A German privacy rule» whatever fired, which was true only while
         // German was the only set there was — the «0 tries left» shape exactly.
@@ -1706,8 +1720,11 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
         // of guessing from the source.
         let from_a_block = p.source == Source::Vault
             && p.source_detail == format!("vault:{}", crate::vault::model::BLOCK_HANDLE);
+        // A block that repeats a rule of the person's own reads as the rule:
+        // see `rule_id` above. A block that repeats nothing reads as itself.
+        let the_rule_leads = taught_rule || (from_a_block && rule_id.is_some());
         let headline = match (p.source, p.decided) {
-            _ if taught_rule => "You taught Z Privacy this rule".to_string(),
+            _ if the_rule_leads => "You taught Z Privacy this rule".to_string(),
             (Source::Hand, _) => "You protected this by hand".to_string(),
             _ if from_a_block => "You protected this word before, and Z Privacy kept it".to_string(),
             (Source::Vault, _) => "You taught Z Privacy this value".to_string(),
@@ -1721,13 +1738,32 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
         // black box arriving, so this is never allowed to come out empty.
         let mut because = Vec::new();
         if let Some(f) = &finding {
-            because.push(f.reason.clone());
-            for other in &f.also {
-                because.push(format!("{other} agreed as well"));
-            }
+            // **Each clause once, and each one a sentence** — the measured
+            // defect of 16 October was «2 rules agree · your vault knows this
+            // value · you:u1 agreed as well · you:u1 agreed as well»: the
+            // winner's reason already carries the folded clauses that
+            // `scanner::settle` wrote into it, and the loop below added them a
+            // second time, as ids. So the folded clauses are taken out of the
+            // reason and said once, by `layer_sentence`.
+            let written: Vec<String> = f.also.iter().map(|d| format!("{d} agreed as well")).collect();
+            let mine: Vec<String> = f
+                .reason
+                .split(" · ")
+                .filter(|clause| !written.iter().any(|already| already == clause))
+                .map(str::to_string)
+                .collect();
+            let folded: Vec<String> = f.also.iter().map(|d| layer_sentence(d, &taught_labels)).collect();
+            // The person's own decision first, then what the app can say for
+            // itself. Same order as the headline, so the card reads as one
+            // voice rather than two.
+            let (decisions, others): (Vec<String>, Vec<String>) =
+                folded.into_iter().partition(|line| line.starts_with("You taught"));
             if !f.also.is_empty() {
-                because.insert(0, format!("{} rules agree", f.also.len() + 1));
+                because.push(format!("{} rules agree", f.also.len() + 1));
             }
+            because.extend(decisions);
+            because.extend(mine);
+            because.extend(others);
         } else if p.source == Source::Hand {
             because.push("You selected these words yourself".to_string());
         }
@@ -1756,7 +1792,7 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
         // profile id nor its display name appears here: the name belongs where
         // a person chooses or manages a profile, and repeating it in an
         // explanation is the EXPOSURE rule broken for no gain.
-        let applies = if taught_rule {
+        let applies = if the_rule_leads {
             // A taught rule's reach is the rule's own scope, not the scope of
             // the protection it produced in this document.
             taught_scope.clone().unwrap_or_else(|| "Everywhere".to_string())
@@ -1789,7 +1825,7 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
             // stays `decided: false`, because that flag is what a **rescan**
             // reads and a rescan's rules are not changed by this round; what
             // changes is the one place a person is told whose decision it was.
-            decided: p.decided || taught_rule || from_a_block,
+            decided: p.decided || the_rule_leads || from_a_block,
             token: p.token.clone(),
             learned_at: known.as_ref().map(|k| k.learned_at).unwrap_or(0),
             entity: known.as_ref().map(|k| k.entity),
@@ -3285,6 +3321,44 @@ fn layer_key(s: Source) -> u8 {
 /// Where a taught rule applies, in the words a person reads. `None` when the
 /// rule is gone — forgotten since the document was scanned, which is allowed
 /// and must not be answered with a guess.
+/// **The word each taught rule was taught** — read beside the scopes, outside
+/// the session lock, for the same reason (G19).
+///
+/// The Why card needs it since the ruling of 16 October: a rule folded into a
+/// finding another layer won used to reach the card as its bare source id
+/// («you:u1»), which is not a sentence, and the one thing the person would
+/// recognise — the word they typed — was the part that got lost.
+fn taught_rule_labels() -> std::collections::BTreeMap<u32, String> {
+    with_core(|core| {
+        core.vault
+            .with_open(|v| v.label_rules.iter().map(|r| (r.id, r.label.clone())).collect())
+            .unwrap_or_default()
+    })
+}
+
+/// One folded layer, as a sentence a person can read.
+///
+/// A set says «de:company-form agreed as well» and that is the shape every
+/// guard since 046 has read; a **rule of the person's own** says what they
+/// taught, because «you:u1» tells them nothing they know.
+///
+/// **The word they typed is isolated** — `U+2068 … U+2069` — because it is
+/// theirs and may be in any script, and an Arabic label inside an English
+/// sentence drags the quotation marks around it. The glass has
+/// `theirOwnWord()` for the same job, and cannot use it here: what it is handed
+/// is a finished sentence, so the one place that writes this one isolates it.
+fn layer_sentence(detail: &str, labels: &std::collections::BTreeMap<u32, String>) -> String {
+    match detail
+        .strip_prefix("you:u")
+        .and_then(|n| n.parse::<u32>().ok())
+        .and_then(|id| labels.get(&id))
+    {
+        Some(label) => format!("You taught Z Privacy to protect what follows «\u{2068}{label}\u{2069}»"),
+        None if detail.starts_with("you:") => "You taught Z Privacy this rule".to_string(),
+        None => format!("{detail} agreed as well"),
+    }
+}
+
 fn taught_rule_scopes() -> std::collections::BTreeMap<u32, String> {
     with_core(|core| {
         core.vault
