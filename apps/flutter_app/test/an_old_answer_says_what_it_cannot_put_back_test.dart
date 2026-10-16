@@ -154,6 +154,14 @@ void main() {
     final oldPerson = _tokenIn(mondayText, '_PERSON_');
     await tester.runAsync(() async {
       await z.closeSession(session: monday.session);
+      // **And the app is shut between the two days** — since rule 55 (16
+      // October) a document entering the preview is born into whichever
+      // session is open, so two documents in one run are one session and
+      // Monday's token would be Friday's own. Locking and opening the vault is
+      // what a restart does to the open session's number, and «another
+      // conversation» is the state this guard is about.
+      await z.vaultLock();
+      await z.vaultUnlockWithPassphrase(passphrase: _pass);
     });
     monday.dispose();
 

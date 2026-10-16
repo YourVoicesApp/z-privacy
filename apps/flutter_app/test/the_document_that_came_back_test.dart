@@ -234,7 +234,13 @@ void main() {
     // before the hand reached them, and both come back.
     expect(bench.returned!.broughtBack, 2);
     expect(bench.returned!.unresolved, isEmpty);
-    expect(find.textContaining('2 names came back from «die Mahnung»'), findsOneWidget);
+    // **The name is isolated** since 16 October, so the sentence carries
+    // «⁨die Mahnung⁩» — the two characters that keep a right-to-left name from
+    // dragging the English around it out of order (`theirOwnWord`).
+    expect(
+      find.textContaining('2 names came back from «${theirOwnWord('die Mahnung')}»'),
+      findsOneWidget,
+    );
     // Nothing about names staying tokens, because none did.
     expect(find.textContaining('stay as tokens'), findsNothing);
 
@@ -338,7 +344,10 @@ void main() {
     expect(bench.returned!.conversations.first.number, number);
     expect(bench.returned!.conversations.first.answerPage, isTrue,
         reason: 'the answer page is the only proof left once the bench is gone, and it was silent');
-    expect(find.textContaining('came back from «die zweite Mahnung»'), findsOneWidget);
+    expect(
+      find.textContaining('came back from «${theirOwnWord('die zweite Mahnung')}»'),
+      findsOneWidget,
+    );
     // **And the name comes back** — 089 rules 1 and 4, on the glass, in the
     // owner's own case: nothing was ever taught to this vault, the bench that
     // minted the token is disposed of, the vault was locked and opened again,

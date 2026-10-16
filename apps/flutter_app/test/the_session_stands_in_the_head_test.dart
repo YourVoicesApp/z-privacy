@@ -177,7 +177,12 @@ void main() {
   testWidgets('no session, nothing drawn — on neither head', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    final g = await _ready(tester, 'none', withASession: false);
+    // **The one state in which a document in the preview has no session**
+    // since rule 55 (16 October): no vault, so there is no key to seal one
+    // with and the document waits exactly as its blocks do. That is also the
+    // state a person meets before they make a vault, which is what the bar
+    // has to hold here.
+    final g = await _ready(tester, 'none', withASession: false, withAVault: false);
     await tester.pumpWidget(_workspace(g));
     await _settle(tester);
     expect(find.byKey(TheOpenSession.mark), findsNothing,
@@ -264,7 +269,12 @@ void main() {
   testWidgets('with no session the bar is exactly as it was, at 900', (tester) async {
     await tester.binding.setSurfaceSize(const Size(900, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    final g = await _ready(tester, 'w900none', withASession: false);
+    // **The one state in which a document in the preview has no session**
+    // since rule 55 (16 October): no vault, so there is no key to seal one
+    // with and the document waits exactly as its blocks do. That is also the
+    // state a person meets before they make a vault, which is what the bar
+    // has to hold here.
+    final g = await _ready(tester, 'w900none', withASession: false, withAVault: false);
     await tester.pumpWidget(_workspace(g));
     await _settle(tester);
 

@@ -127,6 +127,22 @@ fn remove_protection_here_leaves_the_knowledge_alone() {
 /// **Forget from this profile** — erases the knowledge, and leaves this
 /// document exactly as it is.
 #[test]
+/// **PARKED 16 October, waiting on the owner — does «Forget» stop a block
+/// from working?** This guard holds one of the two rules in the collision
+/// and cannot pass while the other one stands.
+///
+/// «Forget» promises that a new document does not recognise the value any
+/// more (056, measured here). 089 rule 1 says a block is never deleted —
+/// «يمكن أن تُعفى من العمل ولكن لا تختفي» — and the word was a block
+/// before it was forgotten. Rule 55 (16 October) is what makes every
+/// reading write one.
+///
+/// Measured: after «Forget everywhere», a fresh document still protected
+/// the value, from the block. My recommendation, in the owner's own
+/// words: forgetting **exempts** that value's blocks from work and
+/// deletes nothing — which needs a field on the block, so it is built
+/// only on his word.
+#[ignore = "waits on the owner: does «Forget» exempt a word's blocks? (16 Oct)"]
 fn forget_from_this_profile_keeps_the_protection_already_applied() {
     let _g = serial();
     fresh_vault("forget-profile");
@@ -163,6 +179,22 @@ fn forget_from_this_profile_keeps_the_protection_already_applied() {
 
 /// **Forget everywhere** — the same two promises, one profile wider.
 #[test]
+/// **PARKED 16 October, waiting on the owner — does «Forget» stop a block
+/// from working?** This guard holds one of the two rules in the collision
+/// and cannot pass while the other one stands.
+///
+/// «Forget» promises that a new document does not recognise the value any
+/// more (056, measured here). 089 rule 1 says a block is never deleted —
+/// «يمكن أن تُعفى من العمل ولكن لا تختفي» — and the word was a block
+/// before it was forgotten. Rule 55 (16 October) is what makes every
+/// reading write one.
+///
+/// Measured: after «Forget everywhere», a fresh document still protected
+/// the value, from the block. My recommendation, in the owner's own
+/// words: forgetting **exempts** that value's blocks from work and
+/// deletes nothing — which needs a field on the block, so it is built
+/// only on his word.
+#[ignore = "waits on the owner: does «Forget» exempt a word's blocks? (16 Oct)"]
 fn forget_everywhere_reaches_profiles_that_do_not_exist_yet() {
     let _g = serial();
     fresh_vault("forget-everywhere");

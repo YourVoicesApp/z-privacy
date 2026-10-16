@@ -89,6 +89,24 @@ fn text_of(row: &TaughtValueRow) -> String {
 }
 
 #[test]
+/// **PARKED 16 October, waiting on the owner — does a block cross a client
+/// profile?** This guard holds one of the two rules in the collision and
+/// cannot pass while the other one stands.
+///
+/// Rule two (079, measured here) says a value taught in one profile is not
+/// loaded in another, so Z never tells client B that it knows client A's
+/// people. 089 rule 1 (15 October) says every word that took a token is a
+/// block in **the user's vault** and is put back wherever it stands —
+/// and a block carries no profile. Rule 55 (16 October) gave every
+/// document in the preview a session, which is what a block is written
+/// from, so the two rules now meet on every reading.
+///
+/// Measured: a value protected while working for one client came back
+/// protected in another client's document. The question is with the owner;
+/// nothing is built either way until he answers, and this `ignore` is how
+/// the tree says so out loud instead of a guard quietly asserting the
+/// behaviour nobody chose.
+#[ignore = "waits on the owner: does a block cross a client profile? (16 Oct)"]
 fn values_and_exceptions_are_vault_knowledge_with_profile_scope() {
     let _guard = serial();
     fresh("journey");

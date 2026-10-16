@@ -20,6 +20,30 @@
 // word anyway: it was printed when a **Connect** was refused.
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 
+/// **A name the person gave, isolated so the sentence keeps its order** — the
+/// owner's test of 16 October 2026.
+///
+/// His session is called «ألماني 1». Inside an English sentence the
+/// bidirectional algorithm pulled the digits and the quotes into the Arabic
+/// run, and the line drew as
+///
+///     This document came back from «11 .«ألماني names stay…
+///
+/// — a sentence whose words are all correct and whose order is nonsense. The
+/// fix is one pair of characters: `U+2068 FIRST STRONG ISOLATE` before the
+/// name and `U+2069 POP DIRECTIONAL ISOLATE` after it. The algorithm then
+/// takes the name's direction from its own first strong character and lays the
+/// whole of it out as one unit, so everything around it stays where the
+/// sentence put it. Flutter's text layout runs that algorithm, so this is the
+/// fix in every widget that draws the string — nothing has to be done at the
+/// drawing end.
+///
+/// **Every name a person chose goes through here**: a session's, a document's,
+/// a client's, a value of theirs. Our own words never need it, and a sentence
+/// that interpolates a name without it is the defect above waiting for the
+/// first person whose language is not ours.
+String theirOwnWord(String name) => '\u2068$name\u2069';
+
 /// What a person is told when something the app cannot name goes wrong.
 ///
 /// A new variant added to the contract lands here rather than leaking its debug
@@ -272,7 +296,7 @@ String? whatCameBack(ReturnedDocument seen) {
     // brought back none would be a sentence with a false half.
     final named = seen.conversations
         .where((c) => c.broughtBack > 0)
-        .map((c) => '«${c.name}»')
+        .map((c) => '«${theirOwnWord(c.name)}»')
         .join(' and ');
     if (named.isEmpty) {
       said.add(seen.broughtBack == 1
@@ -284,7 +308,7 @@ String? whatCameBack(ReturnedDocument seen) {
           : '${seen.broughtBack} names came back from $named.');
     }
   } else if (seen.conversations.isNotEmpty) {
-    final named = seen.conversations.map((c) => '«${c.name}»').join(' and ');
+    final named = seen.conversations.map((c) => '«${theirOwnWord(c.name)}»').join(' and ');
     said.add('This document came back from $named.');
   }
   if (seen.unresolved.isNotEmpty) {
@@ -309,11 +333,20 @@ String? whatCameBack(ReturnedDocument seen) {
       // began keeping them.
       final here = seen.conversations.fold<int>(0, (sum, c) => sum + c.unresolved);
       if (here > 0) {
+        // **And the act that answers it** — the owner, 16 October: the dialog
+        // named a reason and left him with nowhere to go. A word protected
+        // before this build kept blocks has no block, and the one thing that
+        // makes one is protecting it again in the session it belongs to —
+        // after which it comes back for ever (089 rule 1).
         said.add(here == 1
             ? 'One name stays as a token: it was protected before Z Privacy '
-                'began keeping every protected word.'
+                'began keeping every protected word. Open that document in its '
+                'session and protect the name again, and it comes back from '
+                'then on.'
             : '$here names stay as tokens: they were protected before Z '
-                'Privacy began keeping every protected word.');
+                'Privacy began keeping every protected word. Open those '
+                'documents in their session and protect the names again, and '
+                'they come back from then on.');
       }
     }
   }
@@ -343,9 +376,23 @@ String? whatCameBack(ReturnedDocument seen) {
     final whose = seen.unknownNamespaces.length == 1
         ? 'a conversation this vault does not hold'
         : 'conversations this vault does not hold';
+    // **And the act, which here is that there is none** — the owner, 16
+    // October. A namespace this vault cannot name was made by a key that is
+    // not on this machine: a conversation that was forgotten took its key with
+    // it, and another machine's key was never here. Saying so plainly is the
+    // next step; offering one that cannot work would be worse than silence.
+    //
+    // Two numbers and they are different numbers: how many names there are,
+    // and how many keys are missing. A sentence that read one off the other
+    // said «11 names … the key that made it» on the owner's own file.
+    final it = elsewhere == 1 ? 'it' : 'them';
+    final keys = seen.unknownNamespaces.length == 1
+        ? 'the key that made $it is'
+        : 'the keys that made $it are';
+    final nothing = ' Nothing here can put $it back: $keys not in this vault.';
     said.add(elsewhere > 0
-        ? '$also $many from $whose ($which).'
-        : '$also names from $whose ($which).');
+        ? '$also $many from $whose ($which).$nothing'
+        : '$also names from $whose ($which).$nothing');
   }
   return said.isEmpty ? null : said.join(' ');
 }

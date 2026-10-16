@@ -1,5 +1,12 @@
 // 041-G · the home is the composer, and the language is asked where it matters.
 //
+// **Rule 57b, 16 October 2026** — the owner, after making a session he was
+// never asked about: a session born of its first text asks its language once,
+// before the first reading, because the scanner needs it before it reads. Rule
+// 34's «opening a file does not ask» stands everywhere else, and the test
+// below that measured «no question at this door» is reversed here on purpose:
+// the question is the rule now, and what it may not be is a second one.
+//
 // The owner, 6 October: «on entering the first screen we need to choose the
 // language, then choose to import a file or write directly. We make the writing
 // screen the main screen, adding a file is a + as in a chat, and the language
@@ -119,11 +126,35 @@ void main() {
     await tester.enterText(find.byKey(HomeScreen.composer), _text);
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Open and scan'));
-    await settle(tester, rounds: 8);
+    await settle(tester, rounds: 4);
+
+    // **Rule 57b: the one question.** This text is the first thing in a session
+    // that does not exist yet, so its language is asked here and nowhere else —
+    // and nothing is read until it is answered.
+    expect(
+      find.text(TheLanguageOfANewSession.title),
+      findsOneWidget,
+      reason: 'a session was about to be born in a language nobody chose',
+    );
+    expect(find.byType(WorkspaceScreen), findsNothing,
+        reason: 'the text was read before the person said what language it is in');
+    // The old question — about the *document* — is not back: 080 took that one
+    // out and this one is about the session that is being born.
+    expect(find.text('Which language is this document?'), findsNothing);
+
+    await tester.tap(find.byKey(TheLanguageOfANewSession.keyFor('de')));
+    await settle(tester, rounds: 30);
+    expect(find.text(TheLanguageOfANewSession.title), findsNothing,
+        reason: 'the question was asked and the answer did not close it');
 
     expect(find.byType(WorkspaceScreen), findsOneWidget, reason: 'the text did not open a session');
-    // No question was asked on the way.
-    expect(find.text('Which language is this document?'), findsNothing);
+    // **And rule 57c**: the session is born with that language, and the next
+    // text in it is read with the same one without asking again.
+    expect(ground.openSessionRow?.packId, 'de',
+        reason: 'the session kept another language than the one that was chosen');
+    expect(packForTheNextText(ground), 'de');
+    expect(ground.aSessionWouldBeBorn, isFalse,
+        reason: 'the session was not born of its first text');
   });
 
   testWidgets('the language list has a line, and every language under it can be chosen', (tester) async {

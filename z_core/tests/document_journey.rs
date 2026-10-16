@@ -84,6 +84,13 @@ fn twenty_pages() -> Vec<String> {
 }
 
 fn fresh_vault(name: &str) {
+    // **Locked first**, as every other harness in this tree does. Without it a
+    // vault left open by the test before is still open in the core while this
+    // one's directory is empty, so `vault_state()` answers «Unlocked» about a
+    // vault that has no file — and the first write after that is refused with
+    // `VaultLocked`. Harmless until 16 October, when rule 55 made every import
+    // write the vault: the first thing these tests do.
+    let _ = vault_lock();
     let dir = std::env::temp_dir().join(format!("zprivacy-{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     set_data_dir(dir.to_string_lossy().to_string()).expect("data dir");
@@ -251,7 +258,34 @@ fn the_document_that_was_refused_leaves_no_trace_on_disk() {
                 .collect()
         })
         .unwrap_or_default();
-    assert_eq!(before, after, "reading a document must write nothing at all");
+    // **What the core may write, and nothing else** — G15, amended by the
+    // owner's own rules of 15 and 16 October.
+    //
+    // «Reading a document writes nothing» was the whole promise until rule 54ج
+    // («ما دخل شاشة المعاينة… يُحفظ مع قراراته، مشفّراً») and rule 55ب (every
+    // document, from the first one in a new session). The document in the
+    // preview is now kept, sealed under its session's own key, in `sessions/`
+    // — and the session itself is born as the document enters, which is what
+    // makes that directory appear on an import that writes no vault value.
+    //
+    // So the law is still a law and still refuses everything else: the sealed
+    // vault and the sealed session files, by name, and no third thing — not a
+    // temporary copy, not a cache, not a page of extracted text.
+    let allowed = ["vault.zv", "sessions"];
+    let unexpected: Vec<&String> =
+        after.iter().filter(|name| !allowed.contains(&name.as_str())).collect();
+    assert!(
+        unexpected.is_empty(),
+        "reading a document wrote something that is neither the vault nor a sealed session:          {unexpected:?}"
+    );
+    assert!(
+        after.iter().any(|name| name == "sessions"),
+        "the document in the preview was not kept at all, so this measures nothing: {after:?}"
+    );
+    assert!(
+        before.len() <= after.len(),
+        "a file that was there before the reading is gone: {before:?} → {after:?}"
+    );
     close_session(session).expect("close");
 }
 

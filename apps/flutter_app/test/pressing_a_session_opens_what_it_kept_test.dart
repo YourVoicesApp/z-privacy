@@ -245,8 +245,15 @@ void main() {
       await z.setDataDir(dir: dir.path);
       await z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort');
       final session = await z.openSession(packId: 'de');
+      // **One session, and the document's own** — rule 55, 16 October: the text
+      // entering the preview births the session it is kept in, so a
+      // `conversationBegin` on top of it would make a second row and this room
+      // would hold two doors. The session is renamed instead, which is what a
+      // person does here: «Session 1» is the name it takes and «Merkur» is the
+      // one they give it.
       await z.importText(session: session, text: 'Tobias Nyqvist 9999 000 02');
-      await z.conversationBegin(name: 'Merkur', bench: session);
+      final born = (await z.conversationOpen())!;
+      await z.conversationRename(number: born, name: 'Merkur');
       await ground.refresh();
     });
 

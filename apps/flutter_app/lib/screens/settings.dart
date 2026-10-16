@@ -25,6 +25,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
@@ -743,8 +744,11 @@ class _SessionsRoomState extends State<_SessionsRoom> {
   ///      scanned in English — true of the session, false of what is on screen.
   Future<void> _begin() async {
     final name = _name.text.trim();
-    if (name.isEmpty || _busy) return;
-    final chosen = _packId ?? appLanguage(widget.ground);
+    // **A language, chosen by the person** — rule 57a. Not a default: the
+    // button is dead without one, and this is the second half of the same law,
+    // because a door that can be reached another way has to hold on its own.
+    final chosen = _packId;
+    if (name.isEmpty || chosen == null || _busy) return;
     setState(() => _busy = true);
     final renamed = await widget.ground.beginSession(name, bench: widget.bench);
     if (renamed != null) {
@@ -794,9 +798,11 @@ class _SessionsRoomState extends State<_SessionsRoom> {
         ),
         _Card(
           title: 'New session',
-          what: 'It becomes the session you are working in straight away. Anything already '
-              'protected on the document in front of you is renamed into it — nothing has been '
-              'sent yet, so nothing that left is affected.',
+          what: 'A name and a language, both yours to choose: the language is how Z reads every '
+              'text in this session, and it is asked once here. It becomes the session you are '
+              'working in straight away. Anything already protected on the document in front of '
+              'you is renamed into it — nothing has been sent yet, so nothing that left is '
+              'affected.',
           // **A `Wrap`, because this row broke.** The two language picks put it
           // 66 pixels over the panel's width, measured — a `Row` with an
           // `Expanded` field looked safe and was not, because the fixed
@@ -825,13 +831,21 @@ class _SessionsRoomState extends State<_SessionsRoom> {
               // chosen where the session is created, and the application's is
               // already on. Two for now, from the one list that decides what is
               // offered anywhere.
+              // **Nothing is pre-marked** — rule 57a, 16 October: «لم يسألني
+              // عن لغة الجلسة». This read `_packId ?? appLanguage(g)`, so the
+              // application's language was ticked and taken by a person who
+              // only pressed «Begin» — a question already answered is not a
+              // question. The press is dead until one is chosen.
               for (final p in g.packs.where((p) => offeredLanguages.contains(p.id)))
                 _Pick(
                   label: p.label,
-                  on: (_packId ?? appLanguage(g)) == p.id,
+                  on: _packId == p.id,
                   onTap: () => setState(() => _packId = p.id),
                 ),
-              ZButton(label: 'Begin', onPressed: _busy ? null : _begin),
+              ZButton(
+                label: 'Begin',
+                onPressed: (_busy || _packId == null) ? null : _begin,
+              ),
             ],
           ),
         ),
@@ -1067,7 +1081,7 @@ class _SessionRow extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Zc.paper,
-        title: Text('Delete «${row.name}»?', style: Zc.h2),
+        title: Text('Delete «${theirOwnWord(row.name)}»?', style: Zc.h2),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Column(
@@ -1155,7 +1169,11 @@ class _KeptDocument extends StatelessWidget {
               // 083a's rule about a button that cannot work.
               onTap: press == null ? null : () => press(session, doc.number, doc.chat),
               child: Text(
-                doc.name.isEmpty ? '${doc.handle} · $what' : '${doc.handle} · ${doc.name} · $what',
+                doc.name.isEmpty
+                    ? '${doc.handle} · $what'
+                    // The document's own name, isolated: «doc1 · ألماني 1 · 3
+                    // protected places» loses its order without it.
+                    : '${doc.handle} · ${theirOwnWord(doc.name)} · $what',
                 overflow: TextOverflow.ellipsis,
                 style: Zc.tiny.copyWith(
                   color: Zc.river,

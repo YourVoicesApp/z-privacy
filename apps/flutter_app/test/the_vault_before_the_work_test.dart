@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/vault.dart';
@@ -176,6 +177,14 @@ void main() {
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Open and scan'));
     await settle(tester);
+    // **Rule 57b (the owner, 16 October)**: the first text of a new session is
+    // asked which language it is in — once, before anything is read, because the
+    // scanner needs it before it reads. The fixture answers it exactly as a
+    // person does; after that nothing in the session asks again (57c).
+    if (find.text(TheLanguageOfANewSession.title).evaluate().isNotEmpty) {
+      await tester.tap(find.byKey(TheLanguageOfANewSession.keyFor('de')));
+      await settle(tester, rounds: 20);
+    }
     expect(find.byType(WorkspaceScreen), findsOneWidget, reason: 'the session did not open');
 
     // 041-N changed what this journey is. The band used to be where a person

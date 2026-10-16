@@ -224,11 +224,20 @@ fn a_session_with_no_name_is_refused_as_input() {
         }
     }
     // And nothing was half-made on the way out of the refusal.
-    assert!(
-        conversations().expect("rows").is_empty(),
-        "a refused name still left a session in the vault"
+    //
+    // **Measured against the session the document is already in** — rule 55,
+    // 16 October: a document in the preview births its own session, so «no
+    // session exists» is no longer a state this bench can be in. What the
+    // refusal owes is that it added nothing: the list is the one row the
+    // document made, and the open session is still that one.
+    let rows = conversations().expect("rows");
+    assert_eq!(rows.len(), 1, "a refused name left a second session in the vault: {rows:?}");
+    assert_eq!(rows[0].name, "Session 1", "the row is not the one the document was born into");
+    assert_eq!(
+        conversation_open().expect("open"),
+        Some(rows[0].number),
+        "a refused name moved which session is open"
     );
-    assert_eq!(conversation_open().expect("open"), None, "a refused name still opened a session");
     close_session(bench).ok();
 }
 
@@ -267,9 +276,16 @@ fn a_birth_with_no_bench_still_names_the_document() {
         other => panic!("a session was begun without the open document: {other:?}"),
     }
 
-    // Nothing half-made: no session, none open, and the document untouched.
-    assert!(conversations().expect("rows").is_empty(), "the refused birth left a session behind");
-    assert_eq!(conversation_open().expect("open"), None, "the refused birth opened a session");
+    // Nothing half-made: no **second** session, the same one open, and the
+    // document untouched. (Rule 55 gave the document a session of its own as
+    // it entered the preview, which is why this is no longer «none».)
+    let rows = conversations().expect("rows");
+    assert_eq!(rows.len(), 1, "the refused birth left a second session behind: {rows:?}");
+    assert_eq!(
+        conversation_open().expect("open"),
+        Some(rows[0].number),
+        "the refused birth moved which session is open"
+    );
     assert_eq!(before, the_one_token(bench), "the refused birth renamed something anyway");
 
     // And named, it does the thing the room's card promises.
@@ -299,7 +315,13 @@ fn a_payload_says_which_session_it_belongs_to() {
     let _g = serial();
     fresh_vault("marked");
 
-    // Built before any session exists — the state a forgotten line leaves.
+    // **A payload with no session, which since rule 55 has one way in: a shut
+    // vault.** A document entering the preview births the session it is kept in
+    // — unless there is no key to seal one with, and then the exits stay live
+    // and say that these names belong to no session (064's own wording). So
+    // the state is reached the only way it still can be, which is also the
+    // only way a person reaches it.
+    vault_lock().expect("lock");
     let bench = bench_with(ONE);
     let bare = payload_view(build_payload(bench).expect("build")).expect("view");
     assert!(
@@ -307,6 +329,11 @@ fn a_payload_says_which_session_it_belongs_to() {
         "a payload built with no session open claims one: {:?}",
         bare.session
     );
+    assert!(
+        conversations().expect("rows").is_empty(),
+        "a session was born with the vault shut, which there is no key to seal"
+    );
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
 
     // And after a birth it carries the session's number **and** its name, so a
     // screen can say which one without asking a second question.
@@ -372,7 +399,7 @@ fn a_second_bench_is_named_into_the_open_session() {
     let view = payload_view(build_payload(second).expect("build")).expect("view");
     assert_eq!(
         view.session.map(|w| w.number),
-        Some(1),
+        conversation_open().expect("open"),
         "the payload does not belong to the open session"
     );
     close_session(second).ok();
@@ -444,9 +471,14 @@ fn a_long_conversation_does_not_grow_the_vault() {
          in its own file precisely because this body is re-sealed whole on every change."
     );
     // And the control: the conversation really was written somewhere.
+    //
+    // **By its number, not by position** — since rule 55 the first row in the
+    // list is the session the document was born into as it entered the
+    // preview, and the exchanges were recorded in the one begun by hand.
     let kept = conversations().expect("rows");
+    let number = conversation_open().expect("open").expect("one is open");
     assert_eq!(
-        kept.first().map(|r| r.turns),
+        kept.iter().find(|r| r.number == number).map(|r| r.turns),
         Some(24),
         "nothing was recorded, so the size above proves nothing: {kept:?}"
     );

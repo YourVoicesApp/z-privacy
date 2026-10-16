@@ -23,18 +23,23 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 
-/// **The languages offered on the glass** — 080, the owner: «نبدأ بلغتين».
+/// **The languages offered on the glass** — 080 («نبدأ بلغتين»), and **rule
+/// 56** since 16 October 2026: Swedish beside German and English, after the
+/// owner worked in it.
 ///
-/// Two, for now, and the word «offered» is exact: the Swedish and Arabic packs
-/// are in the core, untouched and measured, and nothing is deleted. What this
-/// list decides is what a person is **shown** when they choose the language of
-/// a session — in the room where a session is created, in Settings where the
-/// application's own language is set, and in the head of an open document,
-/// which writes the open session's language through the same core door.
+/// The word «offered» is exact: the Arabic pack is in the core, untouched and
+/// measured, and nothing is deleted — it stays unoffered until the owner says
+/// so (rule 56's own second half). What this list decides is what a person is
+/// **shown** when they choose the language of a session: in the room where a
+/// session is created, in Settings where the application's own language is
+/// set, in the head of an open document, which writes the open session's
+/// language through the same core door, and at the birth of a session that
+/// a document brings with it (rule 57b).
 ///
-/// One list, three readers, because three copies of «de, en» are three chances
-/// to disagree the day a third pack is offered.
-const offeredLanguages = <String>['de', 'en'];
+/// One list, every reader, because a second copy of «de, en, sv» is a second
+/// chance to disagree the day a fourth pack is offered — and the day Arabic is,
+/// one row changes here and nothing else.
+const offeredLanguages = <String>['de', 'en', 'sv'];
 
 /// The sheet after a file was chosen is **gone** — 080. It asked «which
 /// language is this document?», which the owner replaced with two sources and
@@ -139,6 +144,74 @@ class _Choice extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// **The one question a new session asks** — rule 57, the owner on 16 October
+/// 2026: «لم يسألني عن لغة الجلسة».
+///
+/// Rule 34 says opening a file asks nothing, and it still does — **except for
+/// the one case rule 57b names**: the file is the first thing to enter a brand
+/// new session, so there is no session language yet and the scanner needs one
+/// *before* it reads. Asked here, once in a session's life; rule 57c is that
+/// nothing in it asks again.
+///
+/// **Nothing is pre-marked.** The application's own language used to be ticked
+/// and taken silently if the person pressed on — which is how the owner made a
+/// session in a language he was never asked about. A question whose answer is
+/// already filled in is not a question.
+///
+/// `null` is the answer «not this», and it is not a failure: no language, no
+/// reading, no session, nothing kept. The caller returns and the glass is as
+/// it was.
+class TheLanguageOfANewSession extends StatelessWidget {
+  const TheLanguageOfANewSession({super.key, required this.ground});
+
+  final Ground ground;
+
+  /// For the guard, and for the shell: one key per offered language.
+  static ValueKey<String> keyFor(String id) => ValueKey<String>('new-session-language-$id');
+
+  static const title = 'Which language is this text in?';
+
+  @override
+  Widget build(BuildContext context) {
+    final offered = ground.packs.where((p) => offeredLanguages.contains(p.id)).toList();
+    return AlertDialog(
+      backgroundColor: Zc.paper,
+      title: const Text(title, style: Zc.h2),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Z reads it with that language’s habits: how people are greeted, how a '
+              'company is written, how a customer number looks. This is the session’s '
+              'language from now on, and you will not be asked again in it.',
+              style: Zc.small,
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final p in offered)
+                  ZButton(
+                    key: keyFor(p.id),
+                    label: p.label,
+                    onPressed: () => Navigator.of(context).pop(p.id),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        ZButton(label: 'Not now', onPressed: () => Navigator.of(context).pop()),
+      ],
     );
   }
 }

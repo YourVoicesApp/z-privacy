@@ -34,6 +34,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/protected_pdf.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/the_clipboard.dart' show andTheClipboardIsEmpty;
@@ -414,7 +415,10 @@ class _SendSheetState extends State<SendSheet> {
       // 3»» is the app reading its own placeholder back to the person (081).
       final named = whose.name == nameForSession(whose.number)
           ? 'Session ${whose.number}'
-          : 'Session ${whose.number} «${whose.name}»';
+          // **Isolated** — the owner's test of 16 October: an Arabic name in
+          // an English line pulls the number and the quotes into its own
+          // direction. One pair of characters, one function, every sentence.
+          : 'Session ${whose.number} «${theirOwnWord(whose.name)}»';
       return Text(
         '$named · these names are this session’s',
         style: Zc.small.copyWith(color: Zc.ink4),

@@ -27,6 +27,8 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/core/messages.dart';
+import 'package:zprivacy/widgets/language_list.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const wide = Size(1500, 1200);
@@ -113,10 +115,22 @@ Future<void> begin(
   await settle(tester, rounds: 1);
   final button = find.widgetWithText(ZButton, 'Begin');
   expect(button, findsOneWidget, reason: 'the room has no Begin control');
+  // **Rule 57a, 16 October**: a name is not enough. The language is the
+  // person's to choose and nothing is pre-marked, so the control is dead until
+  // they pick one — which is what the owner met from the other side when a
+  // session took the application's language without asking him. The law itself
+  // is measured in `the_session_asks_its_language_test`; here it is the step a
+  // person takes, and on a second birth in the same panel their earlier choice
+  // is still on the form, so the press is already live.
+  if (tester.widget<ZButton>(button).onPressed == null) {
+    final language = ground.packs.firstWhere((p) => offeredLanguages.contains(p.id));
+    await tester.tap(find.text(language.label));
+    await settle(tester, rounds: 1);
+  }
   expect(
     tester.widget<ZButton>(button).onPressed,
     isNotNull,
-    reason: 'the Begin control is dead, so a person with a name typed cannot start a session',
+    reason: 'the Begin control is dead with a name typed and a language chosen',
   );
   // **`bench:` is passed, because the core refuses a birth that does not name
   // an open document** — 064f. This helper did not pass it, and when the
@@ -171,6 +185,14 @@ Future<Ground> withADocumentBehindThePanel(WidgetTester tester, String name) asy
   await settle(tester, rounds: 1);
   await tester.tap(find.text('Open and scan'));
   await settle(tester);
+  // **Rule 57b (the owner, 16 October)**: the first text of a new session is
+  // asked which language it is in — once, before anything is read, because the
+  // scanner needs it before it reads. The fixture answers it exactly as a
+  // person does; after that nothing in the session asks again (57c).
+  if (find.text(TheLanguageOfANewSession.title).evaluate().isNotEmpty) {
+    await tester.tap(find.byKey(TheLanguageOfANewSession.keyFor('de')));
+    await settle(tester, rounds: 20);
+  }
 
   await tester.tap(find.byTooltip('Settings'));
   await settle(tester);
@@ -402,7 +424,13 @@ void main() {
     // true: the key is destroyed and nothing derives anything afterwards. So
     // the sentence says what happens, and it names who cannot undo it —
     // including us.
-    expect(find.textContaining('Delete «Weber-underlaget»?'), findsOneWidget);
+    // The name is isolated in the question (16 October), through the one
+    // function that writes it: a right-to-left name in «Delete «…»?» would
+    // otherwise drag the punctuation around it out of order.
+    expect(
+      find.textContaining('Delete «${theirOwnWord('Weber-underlaget')}»?'),
+      findsOneWidget,
+    );
     expect(find.textContaining('destroys the key'), findsOneWidget,
         reason: 'the dialog does not say what is destroyed');
     expect(find.textContaining('not by Z Privacy'), findsOneWidget,

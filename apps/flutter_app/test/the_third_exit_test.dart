@@ -196,41 +196,32 @@ void main() {
     expect(preBirth, isNotEmpty, reason: 'nothing is protected, so there are no names to rename');
     expect(before!.text, contains(preBirth.first),
         reason: 'the payload does not carry the bench’s own tokens');
-    expect(await z.conversationOpen(), isNull, reason: 'the fixture already opened a session');
+    // **Since rule 55 the document brought its session with it** (the owner,
+    // 16 October): the text was born into one as it entered the preview, so
+    // the names on this bench are already that session's and there is nothing
+    // left for the door to rename. What this guard measures is what it always
+    // measured — **only the session's names travel** — with the birth read at
+    // the door it now happens at.
+    final born = await z.conversationOpen();
+    expect(born, isNotNull, reason: 'the document entered the preview and no session was born');
 
     final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
 
     expect(out.refused, isNull, reason: 'the send was refused: ${out.refused}');
-    // The birth, read from the core rather than from the screen that asked for it.
     final rows = await z.conversations();
-    expect(rows, hasLength(1), reason: 'the send through a key began no session');
-    expect(await z.conversationOpen(), rows.single.number,
-        reason: 'a session was born and not entered');
-    expect(out.renamed, isNotNull, reason: 'no birth was reported to the press');
-    expect(out.renamed, greaterThan(0), reason: 'the birth renamed nothing on a bench with tokens');
-    // **The house's one wording, carrying the core's own number** — and it is
-    // compared against `sessionBegunSaid` rather than against a string spelt
-    // here, because a second wording of this sentence is the thing the
-    // function exists to prevent. (It spells a one as «one», which is why a
-    // `contains('1')` reading of it was wrong: measured, not assumed.)
-    expect(out.said, sessionBegunSaid(out.renamed!, hadDocument: true),
-        reason: 'the door wrote its own sentence instead of the house’s');
+    expect(rows, hasLength(1), reason: 'the send through a key began a second session');
+    expect(await z.conversationOpen(), born, reason: 'the send moved which session is open');
+    expect(out.renamed, isNull, reason: 'a birth was reported for a session that already existed');
+    expect(out.said, isNull, reason: 'the press was told a birth happened when none did');
 
     // ---- what actually left the machine
     expect(g.bodies, hasLength(1), reason: 'the model was never contacted');
     final sent = g.bodies.single;
-    final postBirth = g.bench.tokens.map((t) => t.token).toList();
-    // **The control that gives the next assertion its meaning.** If a birth
-    // renamed nothing, «no pre-birth name travelled» would be green over a
-    // text that never changed. The two sets have to be different first.
-    expect(postBirth.first, isNot(preBirth.first),
-        reason: 'the birth did not rename the bench, so no reading below can tell the two texts apart');
-    expect(sent, contains(postBirth.first),
-        reason: 'what travelled wears neither the old names nor the new ones');
-    for (final t in preBirth) {
-      expect(sent.contains(t), isFalse,
-          reason: 'the pre-birth name «$t» left the machine after the session was born');
-    }
+    final onTheBench = g.bench.tokens.map((t) => t.token).toList();
+    expect(onTheBench, preBirth,
+        reason: 'the send renamed the bench, and there was no birth to rename it for');
+    expect(sent, contains(onTheBench.first),
+        reason: 'what travelled does not wear this session’s names');
     // And the one that is the whole product: the value itself never travels.
     expect(sent.contains(_iban), isFalse, reason: 'the real IBAN left the machine');
   });
@@ -238,8 +229,12 @@ void main() {
   // ------------------------------------------------------------------ guard 2
   test('a send inside an open session begins no second one, and asks no name', () async {
     final g = await _ready('open');
-    final renamed = await g.ground.beginSession('Jupiter', bench: g.bench.session);
-    expect(renamed, isNotNull, reason: 'the fixture could not begin a session: ${g.ground.trouble}');
+    // The session the document was born into, renamed as a person does it from
+    // the sessions list — rather than begun a second time, which since rule 55
+    // would be a second row and a different guard.
+    final born = (await z.conversationOpen())!;
+    await z.conversationRename(number: born, name: 'Jupiter');
+    await g.ground.refresh();
     await g.bench.refresh();
     expect(g.ground.aSessionWouldBeBorn, isFalse,
         reason: 'the question still stands inside an open session');
@@ -290,8 +285,9 @@ void main() {
     // leave alone — the word is the person's, and nothing at an exit may
     // replace it with a number.
     final second = await _ready('named-in-the-room');
-    final begun = await second.ground.beginSession('Saturn', bench: second.bench.session);
-    expect(begun, isNotNull, reason: 'the room could not begin one: ${second.ground.trouble}');
+    final its = (await z.conversationOpen())!;
+    await z.conversationRename(number: its, name: 'Saturn');
+    await second.ground.refresh();
     await second.bench.refresh();
     final named = await beginThenAsk(second.ground, second.bench, providerId: 'openai');
     expect(named.refused, isNull, reason: 'the send was refused: ${named.refused}');
@@ -313,8 +309,9 @@ void main() {
 
     expect(out.refused, isNull, reason: 'the direct door was refused: ${out.refused}');
     expect(await z.conversations(), hasLength(1),
-        reason: 'the direct door sent without beginning a session');
-    expect(out.renamed, greaterThan(0), reason: 'the birth renamed nothing on a bench with tokens');
+        reason: 'the direct door began a second session');
+    expect(out.renamed, isNull,
+        reason: 'a birth was reported at the door for a session the document already brought');
     // **No payload view, and that is the point of the parameter.** What leaves
     // here is the document as it stands; a helper that insisted on a payload
     // would refuse this door with «There is nothing to take out yet» on a
@@ -384,14 +381,14 @@ void main() {
     expect(find.textContaining('Give it a name first'), findsNothing,
         reason: 'the refusal the owner met is still on the glass');
 
-    // And the send happened, wearing the names of the session just born.
+    // And the send happened, wearing this session's own names — the ones the
+    // bench has carried since the document entered the preview and was born
+    // into it (rule 55).
     expect(g.bodies, hasLength(1), reason: 'the model was never contacted');
     final sent = g.bodies.single;
     expect(sent.contains(_iban), isFalse, reason: 'the real IBAN left the machine');
-    for (final t in preBirth) {
-      expect(sent.contains(t), isFalse,
-          reason: 'the pre-birth name «$t» left the machine after the session was born');
-    }
+    expect(sent, contains(preBirth.first),
+        reason: 'what travelled does not wear the names on the bench');
   });
 
   // ------------------------------------------------------------------ guard 6
