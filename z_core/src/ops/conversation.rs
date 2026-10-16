@@ -40,63 +40,115 @@ fn clean(name: &str) -> ApiResult<String> {
 /// broken no promise to anybody.
 pub(crate) fn begin(name: String, bench: Option<SessionId>) -> ApiResult<ConversationRow> {
     let name = clean(&name)?;
-    with_core(|core| {
-        // **A birth with a document open must name it** — 064f. Without the
-        // bench nothing is re-derived, and the payload that leaves afterwards is
-        // stamped with this session while its text still wears pre-birth names.
-        // Refused here rather than guessed at: with several benches the core
-        // cannot know which document the person is looking at, and picking one
-        // would be a guess about the only thing that matters.
-        if bench.is_none() {
-            if let Some(live) = core.a_live_bench() {
-                return Err(ApiError::SessionWithoutItsDocument {
-                    reason: format!(
-                        "a document is open (bench {live}) and this call did not name it, so its \
-                         protected names could not be moved into the new session"
-                    ),
-                });
-            }
+    with_core(|core| begin_in(core, name, bench))
+}
+
+/// **The birth itself, with the core already in hand.**
+///
+/// Split out of [`begin`] for rule 55: the door a document enters the preview
+/// by is already inside `with_core`, and `with_core` does not nest. The name is
+/// cleaned by its caller — the only two are [`begin`], which was handed one by
+/// a person, and [`born_at_the_first_document`], which writes the house's own.
+fn begin_in(
+    core: &mut crate::session::Core,
+    name: String,
+    bench: Option<SessionId>,
+) -> ApiResult<ConversationRow> {
+    // **A birth with a document open must name it** — 064f. Without the
+    // bench nothing is re-derived, and the payload that leaves afterwards is
+    // stamped with this session while its text still wears pre-birth names.
+    // Refused here rather than guessed at: with several benches the core
+    // cannot know which document the person is looking at, and picking one
+    // would be a guess about the only thing that matters.
+    if bench.is_none() {
+        if let Some(live) = core.a_live_bench() {
+            return Err(ApiError::SessionWithoutItsDocument {
+                reason: format!(
+                    "a document is open (bench {live}) and this call did not name it, so its \
+                     protected names could not be moved into the new session"
+                ),
+            });
         }
-        let document = bench
-            .and_then(|b| core.get(b.id))
-            .map(|s| s.original_str().to_string())
-            .filter(|text| !text.is_empty());
-        // **The language is taken at the birth, from the bench that named it.**
-        // One place in the core, rather than at «the first document», which is
-        // two doors in the screen and two chances to forget. With no bench
-        // there is nothing to take and the row stays «never asked».
-        let born_with = bench.and_then(|b| core.get(b.id)).map(|s| s.pack_id.clone());
-        let number =
-            core.vault
-                .begin_conversation(&name, document.as_deref(), born_with.as_deref())?;
-        core.open_conversation = Some(number);
-        // An empty file, written now rather than at the first turn, so that a
-        // session which exists in the vault also exists on disk: a record with
-        // no file would be a session whose deletion has nothing to destroy.
-        //
-        // **Before the names are taken, and the order is now load-bearing**
-        // (089 rule 9): taking the names also keeps the document in the
-        // preview, which writes this very file. Written afterwards, as it was
-        // until 15 October, this empty body overwrote the document that had
-        // just been saved — measured, as «the document that waited for a
-        // session was lost».
-        write_body(core, number, &crate::conversation::Body::default())?;
-        let renamed = take_the_names(core, number, bench);
-        Ok(ConversationRow {
-            number,
-            name,
-            began_at: core
-                .vault
-                .conversations()
-                .into_iter()
-                .find(|(n, _, _)| *n == number)
-                .map(|(_, _, at)| at)
-                .unwrap_or(0),
-            turns: 0,
-            renamed_tokens: renamed,
-            pack_id: born_with,
-        })
+    }
+    let document = bench
+        .and_then(|b| core.get(b.id))
+        .map(|s| s.original_str().to_string())
+        .filter(|text| !text.is_empty());
+    // **The language is taken at the birth, from the bench that named it.**
+    // One place in the core, rather than at «the first document», which is
+    // two doors in the screen and two chances to forget. With no bench
+    // there is nothing to take and the row stays «never asked».
+    let born_with = bench.and_then(|b| core.get(b.id)).map(|s| s.pack_id.clone());
+    let number =
+        core.vault
+            .begin_conversation(&name, document.as_deref(), born_with.as_deref())?;
+    core.open_conversation = Some(number);
+    // An empty file, written now rather than at the first turn, so that a
+    // session which exists in the vault also exists on disk: a record with
+    // no file would be a session whose deletion has nothing to destroy.
+    //
+    // **Before the names are taken, and the order is now load-bearing**
+    // (089 rule 9): taking the names also keeps the document in the
+    // preview, which writes this very file. Written afterwards, as it was
+    // until 15 October, this empty body overwrote the document that had
+    // just been saved — measured, as «the document that waited for a
+    // session was lost».
+    write_body(core, number, &crate::conversation::Body::default())?;
+    let renamed = take_the_names(core, number, bench);
+    Ok(ConversationRow {
+        number,
+        name,
+        began_at: core
+            .vault
+            .conversations()
+            .into_iter()
+            .find(|(n, _, _)| *n == number)
+            .map(|(_, _, at)| at)
+            .unwrap_or(0),
+        turns: 0,
+        renamed_tokens: renamed,
+        pack_id: born_with,
     })
+}
+
+/// **The name a session nobody named carries** — «Session 1», «Session 2»…
+///
+/// 081, where the owner had the name field at the exit deleted — «أبسط من
+/// البساطة ذاتها» — so a press that needs a session gets one called by its own
+/// number. The glass spells the same two words in `nameForSession`, and G37
+/// measures that the two agree: one of them saying «Sitzung 2» would be a
+/// session the send sheet cannot tell from one a person named.
+pub(crate) fn a_session_called(number: u32) -> String {
+    format!("{A_SESSION_CALLED} {number}")
+}
+
+const A_SESSION_CALLED: &str = "Session";
+
+/// **The session a first document is born into** — rule 55c, the owner's answer
+/// of 16 October 2026: «نعم».
+///
+/// A *conversation* is what the person writes to a model. A **session** is the
+/// container, and a container exists the moment it holds something — so the
+/// instant a document enters the preview with nothing open, one is born. Not at
+/// the first message, not at the first exit: those were the two instants this
+/// house had, and a document that arrived before either of them had nowhere to
+/// take a number from and was kept nowhere.
+///
+/// **The number is the vault's to hand out**, so it cannot be known before the
+/// birth — the name follows it, exactly as it has at the exit door since 081. A
+/// rename that fails leaves «Session», which is less than was wanted and still
+/// true, and the session is there, which is what the document needed.
+///
+/// It names the bench on its way through ([`take_the_names`]), which is also
+/// where the blocks are written and this very document kept: the birth is the
+/// first instant at which a word's token is this session's own.
+pub(crate) fn born_at_the_first_document(
+    core: &mut crate::session::Core,
+    bench: SessionId,
+) -> ApiResult<u32> {
+    let row = begin_in(core, A_SESSION_CALLED.to_string(), Some(bench))?;
+    core.vault.rename_conversation(row.number, &a_session_called(row.number))?;
+    Ok(row.number)
 }
 
 /// **Enter an existing one.** Asks nothing, by the owner's rule — and gives the
@@ -138,13 +190,38 @@ pub(crate) fn enter(number: u32, bench: Option<SessionId>) -> ApiResult<Conversa
 /// opens. One fact, one source: a session is open when a number is held *and*
 /// there is a key to open it with.
 pub(crate) fn open() -> ApiResult<Option<u32>> {
-    Ok(with_core(|core| {
-        if core.vault.state() == crate::api::VaultState::Unlocked {
-            core.open_conversation
-        } else {
-            None
-        }
-    }))
+    Ok(with_core(open_in))
+}
+
+/// **The same question, with the core already in hand** — and the one place
+/// that answers it.
+///
+/// A number is held in the core; a **session** is a number *and* a key that
+/// opens it. The two come apart for real: the vault locked or replaced, the
+/// session forgotten, a data directory changed under a running app. Then the
+/// held number names a session this vault does not have — and a caller that
+/// trusted the number writes into a file it has no key for.
+///
+/// **Measured on 16 October**, as rule 55 was built: a bench imported a
+/// document while a stale «1» was held from another vault, and the import came
+/// back `VaultLocked` — an import refused because of a number nobody could
+/// have known was wrong. So the stale number is dropped here rather than
+/// answered twice: one fact, one source, and the next document is born into a
+/// session that exists.
+pub(crate) fn open_in(core: &mut crate::session::Core) -> Option<u32> {
+    let held = core.open_conversation?;
+    if core.vault.state() == crate::api::VaultState::Unlocked
+        && core.vault.conversation_key(held).is_some()
+    {
+        return Some(held);
+    }
+    // A shut vault is not an empty one: the number stands and comes back when
+    // the key does, which is 064's own promise and why this only forgets a
+    // number the **open** vault does not hold.
+    if core.vault.state() == crate::api::VaultState::Unlocked {
+        core.open_conversation = None;
+    }
+    None
 }
 
 /// Every session: number, handle, when, and how many turns its file holds.
@@ -385,11 +462,51 @@ pub(crate) fn set_pack(number: u32, pack_id: String) -> ApiResult<()> {
 /// text that was written or pasted into the preview and a name is a file pulled
 /// from the computer. Two sequences, as the owner wrote them.
 pub(crate) fn keep_the_preview(core: &mut crate::session::Core, bench: u32) -> ApiResult<()> {
-    let Some(number) = core.open_conversation else { return Ok(()) };
-    let Some(s) = core.sessions_get(bench) else { return Ok(()) };
-    if s.original_str().is_empty() {
+    // **Nothing in the preview, nothing to keep — and nothing to be born
+    // either.** One question for both facts, asked once: «no empty sessions»
+    // (rule 55) and «nothing to save» are the same question, and a second copy
+    // of it is a second chance for the list to hold a session holding nothing.
+    //
+    // Trimmed, because `import_text` itself reads a preview of white space as
+    // no text at all — a person who opened an empty preview has not started
+    // anything.
+    let holds_a_document =
+        core.sessions_get(bench).is_some_and(|s| !s.original_str().trim().is_empty());
+    if !holds_a_document {
         return Ok(());
     }
+    let number = match open_in(core) {
+        Some(number) => number,
+        // **The session is born here** — rule 55c. The birth keeps this
+        // document on its way through, and the rest of this function writes it
+        // again: the same number, the same marks, no number spent twice. An
+        // early return instead would be this function trusting what another
+        // one did, which is the coupling this house pays for later.
+        //
+        // With no vault open there is no key to seal a session with, so the
+        // document waits exactly as its blocks do — and the import it arrived
+        // by is never refused because a session could not be born.
+        None => match born_at_the_first_document(core, SessionId { id: bench }) {
+            Ok(number) => number,
+            Err(ApiError::VaultLocked) => return Ok(()),
+            Err(other) => return Err(other),
+        },
+    };
+    // **A document is in one session's list.** The copy exists *because* the
+    // document is in the preview, so it lives wherever the preview's session
+    // is: when the bench moves — a session begun by hand over an open document,
+    // another one entered from the list — the copy moves with it rather than
+    // standing in two lists at once (measured, before this: one document in
+    // three). The number it had stays spent in the session it leaves, because
+    // `take_number` only ever goes up.
+    let moved = core.sessions_get(bench).and_then(|s| s.kept).filter(|k| k.session != number);
+    if let Some(gone) = moved {
+        take_the_copy_out(core, gone);
+        if let Some(s) = core.get(bench) {
+            s.kept = None;
+        }
+    }
+    let Some(s) = core.sessions_get(bench) else { return Ok(()) };
     // **Written again on every act, not once when the document arrived.** «A
     // power cut finds it as it was left» is a promise about the *decisions*,
     // and a copy written once would hold the state the document had before the
@@ -447,7 +564,7 @@ pub(crate) fn keep_the_preview(core: &mut crate::session::Core, bench: u32) -> A
     }
     write_body(core, number, &body)?;
     if let Some(s) = core.get(bench) {
-        s.kept = Some(crate::session::KeptHandle { number: given, chat });
+        s.kept = Some(crate::session::KeptHandle { session: number, number: given, chat });
     }
     Ok(())
 }
@@ -469,17 +586,32 @@ pub(crate) fn keep_the_preview(core: &mut crate::session::Core, bench: u32) -> A
 /// that did. A failed write leaves the copy in the file, where the next exit or
 /// the next read finds it — never a lie about where the text is.
 pub(crate) fn the_preview_has_left(core: &mut crate::session::Core, bench: u32) {
-    let Some(number) = core.open_conversation else { return };
     let Some(handle) = core.sessions_get(bench).and_then(|s| s.kept) else { return };
-    if let Ok(Some(mut body)) = body(core, number) {
+    take_the_copy_out(core, handle);
+    if let Some(s) = core.get(bench) {
+        s.kept = None;
+    }
+}
+
+/// **The one hand that takes a saved document out of a list.**
+///
+/// Two acts reach it and they are the same act — the copy is no longer in this
+/// list: the text left the machine by a door (`the_preview_has_left`), or the
+/// bench moved to another session and took the copy with it
+/// (`keep_the_preview`). A second place that could remove a person's preview
+/// would be a deletion nobody measures, which is the rule the blocks have for
+/// the same reason (G35, G36).
+///
+/// **The handle's own session, not the open one.** They are the same at a door
+/// and different the instant a bench moves, and the list the copy is in is the
+/// one it has to be taken out of.
+fn take_the_copy_out(core: &mut crate::session::Core, handle: crate::session::KeptHandle) {
+    if let Ok(Some(mut body)) = body(core, handle.session) {
         let before = body.kept.len();
         body.kept.retain(|k| !(k.number == handle.number && k.chat == handle.chat));
         if body.kept.len() != before {
-            let _ = write_body(core, number, &body);
+            let _ = write_body(core, handle.session, &body);
         }
-    }
-    if let Some(s) = core.get(bench) {
-        s.kept = None;
     }
 }
 
@@ -549,7 +681,7 @@ pub(crate) fn open_kept(number: u32, which: u32, chat: bool, bench: SessionId) -
         };
         let Some(s) = core.get(bench.id) else { return Err(ApiError::InvalidSession) };
         s.put_back_the_preview(&kept);
-        s.kept = Some(crate::session::KeptHandle { number: which, chat });
+        s.kept = Some(crate::session::KeptHandle { session: number, number: which, chat });
         Ok(())
     })
 }

@@ -23,6 +23,7 @@ import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/widgets/the_way_back.dart';
 import 'package:zprivacy/core/messages.dart';
 
@@ -193,8 +194,11 @@ class _ShellState extends State<ZShell> {
     }
     // **One rule, both doors** — 080. This read `config.packId` and never
     // looked at the session at all, which is the whole of the owner's finding:
-    // a German conversation read with an English eye.
-    final packId = packForTheNextText(_ground);
+    // a German conversation read with an English eye. Since rule 57 the same
+    // one function also **asks**, when the text about to be read is the first
+    // in a session that does not exist yet.
+    final packId = await _theLanguageOfTheTextToCome();
+    if (packId == null || !mounted) return;
     try {
       var chat = _chat;
       if (chat == null || chat.packId != packId) {
@@ -206,8 +210,7 @@ class _ShellState extends State<ZShell> {
         chat = Workbench(session: session, profileId: null, packId: packId);
       }
       await z.importText(session: chat.session, text: text);
-      // The core scanned it as it read it (item 3); this reads what arrived.
-      await chat.readTheScanThatArrivedWithIt();
+      await _theDocumentHasEntered(chat);
       if (!mounted) return;
       setState(() {
         _chat = chat;
@@ -221,6 +224,53 @@ class _ShellState extends State<ZShell> {
         _troubleReport = null;
       });
     }
+  }
+
+  /// **The language the next text is read with** — rule 57, and the one place
+  /// that decides it for every door on this screen.
+  ///
+  /// A session that exists has a language and is never asked again (rule 57c,
+  /// rule 33): `packForTheNextText` answers for it, and for a session created
+  /// before 080 which has none of its own it answers with the application's.
+  ///
+  /// **A session that does not exist yet is asked** — rule 57b. The text about
+  /// to be read is the first thing in a session that is born as it enters the
+  /// preview (rule 55), so this is the one instant at which the question can be
+  /// asked before the scanner needs the answer. The application's language is
+  /// no longer taken silently here: that is exactly what the owner met on 16
+  /// October when he made a session and was never asked.
+  ///
+  /// `null` means «not now»: the caller reads nothing, so no session is born
+  /// and nothing is kept.
+  Future<String?> _theLanguageOfTheTextToCome() async {
+    if (!_ground.aSessionWouldBeBorn) return packForTheNextText(_ground);
+    if (!mounted) return null;
+    return showDialog<String>(
+      context: context,
+      builder: (_) => TheLanguageOfANewSession(ground: _ground),
+    );
+  }
+
+  /// **A document has entered the preview** — rule 55, the glass's half of it.
+  ///
+  /// Two things follow every import, and neither of them belongs to one door:
+  ///
+  ///   * the scan the core ran as it read the text is read back onto the bench
+  ///     (item 3, 14 October — the core scans at the door, this looks at what
+  ///     arrived);
+  ///   * **the session the document was kept in is now in the list** — born at
+  ///     this very instant if there was none, by the owner's rule of 16
+  ///     October — so the ground is asked again. Without it the Sessions room
+  ///     draws the list as it stood before the document existed, and the rule
+  ///     says «the moment it enters the preview», not «the next time something
+  ///     else refreshes».
+  ///
+  /// One function because there are two doors on this screen and a law written
+  /// at one of them is this house's most expensive trap; G37 counts the doors
+  /// and reads this name in each.
+  Future<void> _theDocumentHasEntered(Workbench bench) async {
+    await bench.readTheScanThatArrivedWithIt();
+    await _ground.refresh();
   }
 
   /// Open a session. Two ways in, and they ask for different things.
@@ -253,18 +303,24 @@ class _ShellState extends State<ZShell> {
     DocumentKind? kind;
     final profileId = null as String?;
 
-    // **080 — the language is not asked here, and not asked anywhere.** The
-    // session's own language, or the application's. The owner replaced 075d's
-    // «asked once in a conversation's life» with two sources and no third: a
-    // question at this door was the third.
-    final packId = packForTheNextText(_ground);
-
+    // **080 — the language is not asked here, and not asked anywhere** — with
+    // the one exception rule 57b made on 16 October: a session that is about to
+    // be born has no language to read with, and the scanner needs one before it
+    // reads. The session's own language, or the application's for a session
+    // that has none, or the person's answer when there is no session at all.
+    // 075d's «asked once in a conversation's life» is not back: this asks once
+    // in a *session's* life, at the instant one begins.
+    //
+    // **The file is chosen first**, so the question is asked about a document
+    // the person has actually picked and a cancelled file dialog asks nothing.
     if (!typing) {
       final chosen = await _aFileToRead();
       if (chosen == null) return;
       file = chosen.file;
       kind = chosen.kind;
     }
+    final packId = await _theLanguageOfTheTextToCome();
+    if (packId == null || !mounted) return;
 
     try {
       final session = await z.openSession(profileId: profileId, packId: packId);
@@ -286,7 +342,7 @@ class _ShellState extends State<ZShell> {
       // On import, at once, with no dialog — and by the core's own hand since
       // 14 October: the scan is part of reading the document, at both doors
       // and in whatever order a caller happens to do things.
-      await bench.readTheScanThatArrivedWithIt();
+      await _theDocumentHasEntered(bench);
       _bench?.dispose();
       setState(() {
         _bench = bench;
@@ -320,9 +376,15 @@ class _ShellState extends State<ZShell> {
       setState(() => _vaultOpen = true);
       return;
     }
-    final packId = packForTheNextText(_ground);
     try {
       if (_ground.openSession != number) await _ground.enterSession(number);
+      // **Its own session's language, and after entering it** — rules 33 and
+      // 57c. Read before the entering, as it was until 16 October, this was the
+      // language of whichever session happened to be open: a German document
+      // saved in one session, re-opened from another, came back on a bench that
+      // reads English. Nothing is asked here either way — the session this
+      // document belongs to has a language already.
+      final packId = packForTheNextText(_ground);
       final session = await z.openSession(profileId: null, packId: packId);
       final bench = Workbench(session: session, profileId: null, packId: packId);
       await z.openKeptDocument(number: number, which: which, chat: chat, bench: session);
@@ -389,7 +451,8 @@ class _ShellState extends State<ZShell> {
     final kind = _kinds[file.name.split('.').last.toLowerCase()];
     if (kind == null) {
       setState(() {
-        _trouble = 'This build reads PDF, Word and text files. «${file.name}» is none of those.';
+        _trouble = 'This build reads PDF, Word and text files. '
+            '«${theirOwnWord(file.name)}» is none of those.';
         // Nothing was read, so the core has nothing to report about it.
         _troubleReport = null;
       });

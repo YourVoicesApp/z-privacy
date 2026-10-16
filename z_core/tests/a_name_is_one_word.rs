@@ -43,6 +43,18 @@ fn serial() -> MutexGuard<'static, ()> {
 }
 
 fn found(doc: &str, lang: &str) -> Vec<(MarkState, Kind, String, String)> {
+    // **This reading is the packs' own, and it says so** — the core's vault
+    // state is global to the process, so a vault another test in this file
+    // created is still open when this one runs. Harmless until 16 October,
+    // when rule 55 gave every import a session to write blocks from: a
+    // vault-sourced hint then answers for a word this file is measuring a pack
+    // on, and the reading becomes the vault's. So the premise is stated rather
+    // than inherited: the vault is shut and the directory is this file's own
+    // and empty.
+    let _ = vault_lock();
+    let dir = std::env::temp_dir().join(format!("zprivacy-one-word-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
     let s = open_session(None, lang.to_string()).expect("open");
     import_text(s, doc.to_string()).expect("import");
     scan(s).expect("scan");
@@ -81,6 +93,7 @@ fn names_only(doc: &str, lang: &str) -> Vec<String> {
 /// follows it, and two of them follow it.
 #[test]
 fn a_salutation_names_each_word_of_the_name_it_introduces() {
+    let _g = serial();
     let one = "erreichen Sie Ihre Sachbearbeiterin Frau Katrin Sommer unter 0341 2208 4417";
     let names = names_only(one, "de");
     assert_eq!(names, vec!["Katrin".to_string(), "Sommer".to_string()], "{names:?}");
@@ -95,6 +108,7 @@ fn a_salutation_names_each_word_of_the_name_it_introduces() {
 /// law, not a second one: both rules are answered in one place.
 #[test]
 fn a_signature_names_each_word_of_the_name_it_stands_for() {
+    let _g = serial();
     let signed = "Mit freundlichen Grüßen\n\nKatrin Sommer\nKundenservice\n";
     assert_eq!(
         names_only(signed, "de"),
@@ -105,6 +119,7 @@ fn a_signature_names_each_word_of_the_name_it_stands_for() {
 /// **A title chain** — «Dr. Heike Brandt», from his second German letter.
 #[test]
 fn a_title_names_each_word_of_the_name_it_introduces() {
+    let _g = serial();
     assert_eq!(
         names_only("Unterschrieben von Dr. Heike Brandt am Montag.", "de"),
         vec!["Heike".to_string(), "Brandt".to_string()]
@@ -115,6 +130,7 @@ fn a_title_names_each_word_of_the_name_it_introduces() {
 /// word, because a person answering «is this a name?» is answering about a word.
 #[test]
 fn the_dictionary_pair_offers_each_word() {
+    let _g = serial();
     assert_eq!(
         people("Markus Feldmann kommt.", "de"),
         vec![
@@ -127,6 +143,7 @@ fn the_dictionary_pair_offers_each_word() {
 /// **The reversed pair**, the shape a list of people is written in.
 #[test]
 fn the_reversed_pair_offers_each_word() {
+    let _g = serial();
     assert_eq!(
         names_only("Feldmann, Markus\nSommer, Katrin\n", "de"),
         vec![
@@ -150,6 +167,7 @@ fn the_reversed_pair_offers_each_word() {
 /// asks one thing of all of them: no name a rule found covers a space.
 #[test]
 fn no_name_the_app_found_covers_more_than_one_word() {
+    let _g = serial();
     for (what, doc, lang) in [
         ("Mahnung_Feldmann", FELDMANN, "de"),
         ("Brief_Weber", WEBER, "de"),
@@ -213,6 +231,7 @@ fn a_value_the_person_taught_stays_one_value() {
 /// «name». Measured as unchanged, so the law cannot grow past its own words.
 #[test]
 fn the_other_kinds_are_left_exactly_as_they_were() {
+    let _g = serial();
     let other: Vec<(Kind, String)> = found(FELDMANN, "de")
         .into_iter()
         .filter(|(_, kind, _, _)| *kind != Kind::Person)
@@ -262,6 +281,7 @@ fn the_other_kinds_are_left_exactly_as_they_were() {
 /// round.
 #[test]
 fn a_surname_inside_a_company_name_keeps_the_companys_own_question() {
+    let _g = serial();
     let s = open_session(None, "de".to_string()).expect("open");
     import_text(s, WEBER.to_string()).expect("import");
     scan(s).expect("scan");
@@ -305,6 +325,7 @@ fn a_surname_inside_a_company_name_keeps_the_companys_own_question() {
 /// rather than the button growing a sixth state.
 #[test]
 fn a_hand_over_the_whole_of_a_name_is_told_it_is_already_ours() {
+    let _g = serial();
     let doc = "Ihre Sachbearbeiterin Frau Katrin Sommer ist da.\n";
     let s = open_session(None, "de".to_string()).expect("open");
     import_text(s, doc.to_string()).expect("import");
@@ -354,6 +375,7 @@ fn a_hand_over_the_whole_of_a_name_is_told_it_is_already_ours() {
 /// it.
 #[test]
 fn a_hand_selection_of_a_name_nobody_found_is_still_one_token() {
+    let _g = serial();
     let doc = "Protokoll 2026: Xander Qvistbergh ringde.\n";
     let s = open_session(None, "sv".to_string()).expect("open");
     import_text(s, doc.to_string()).expect("import");
@@ -378,6 +400,7 @@ fn a_hand_selection_of_a_name_nobody_found_is_still_one_token() {
 /// half of the name in the clear beside them.
 #[test]
 fn the_name_leaves_as_two_tokens_and_no_half_of_it_stays() {
+    let _g = serial();
     let one = "erreichen Sie Ihre Sachbearbeiterin Frau Katrin Sommer unter.";
     let s = open_session(None, "de".to_string()).expect("open");
     import_text(s, one.to_string()).expect("import");

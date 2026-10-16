@@ -174,17 +174,25 @@ void main() {
     // label — and a pack the core carries but 080 does not offer is not, which
     // is the half that makes the first half a measurement.
     final offered = packs.where((p) => offeredLanguages.contains(p.id)).toList();
-    final kept = packs.where((p) => !offeredLanguages.contains(p.id)).toList();
     expect(offered.length, greaterThan(1), reason: 'fewer than two languages are offered');
-    expect(kept, isNotEmpty,
-        reason: 'the core carries only what is offered, so «not offered» cannot be seen');
     for (final p in offered) {
       expect(find.text(p.label), findsWidgets, reason: '«${p.label}» is missing from the list');
     }
-    for (final p in kept) {
-      expect(find.text(p.label), findsNothing,
-          reason: '«${p.label}» is in the core and not offered, and the menu offers it anyway');
-    }
+    // **And «not offered» is still something a test can see** — since rule 56
+    // (the owner, 16 October) every *pack* this build carries is offered, so
+    // the half that makes the half above a measurement is read from the
+    // language table instead: Arabic is a language the core knows, rule 56
+    // leaves it unoffered until he says otherwise, and this menu does not list
+    // it. Nothing is deleted either way — that is what «offered» means.
+    final unoffered =
+        ground.languages.where((l) => !offeredLanguages.contains(l.id)).toList();
+    expect(unoffered.any((l) => l.id == 'ar'), isTrue,
+        reason: 'Arabic is not in the language table, so «not offered» cannot be seen');
+    final arabic = unoffered.firstWhere((l) => l.id == 'ar');
+    expect(find.text(arabic.label), findsNothing,
+        reason: '«${arabic.label}» is not offered and the menu offers it anyway');
+    expect(packs.every((p) => offeredLanguages.contains(p.id)), isTrue,
+        reason: 'a pack this build carries is not offered: ${packs.map((p) => p.id)}');
 
     final other = offered.firstWhere((p) => p.id != bench.packId);
     await tester.tap(find.text(other.label).last);

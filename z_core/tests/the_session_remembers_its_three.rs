@@ -926,7 +926,15 @@ fn every_protected_word_comes_back_when_the_document_opens_again() {
 const GERMAN: &str = "Sehr geehrte Frau Anna Weber, Ihre Kundennummer 4711 ist notiert.";
 
 /// How much one pack finds in that line.
+///
+/// **In a vault of its own**, since 16 October. Every word a scan protects is a
+/// block in the vault for ever (089 rule 1) and a block is put back by every
+/// later scan whatever pack is running — and rule 55 gave every document in the
+/// preview a session to write those blocks from. On one vault the second pack
+/// would be handed the first one's answers, and the comparison below would
+/// measure the vault instead of the packs.
 fn found_with(pack: &str) -> u32 {
+    fresh_vault(&format!("found-with-{pack}"));
     let bench = Bench(open_session(None, pack.to_string()).expect("open"));
     import_text(bench.0, GERMAN.to_string()).expect("import");
     let report = scan(bench.0).expect("scan");

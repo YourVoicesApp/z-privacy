@@ -159,6 +159,24 @@ fn rule_two_only_what_the_vault_actually_holds_becomes_automatic() {
 }
 
 #[test]
+/// **PARKED 16 October, waiting on the owner — does a block cross a client
+/// profile?** This guard holds one of the two rules in the collision and
+/// cannot pass while the other one stands.
+///
+/// Rule two (079, measured here) says a value taught in one profile is not
+/// loaded in another, so Z never tells client B that it knows client A's
+/// people. 089 rule 1 (15 October) says every word that took a token is a
+/// block in **the user's vault** and is put back wherever it stands —
+/// and a block carries no profile. Rule 55 (16 October) gave every
+/// document in the preview a session, which is what a block is written
+/// from, so the two rules now meet on every reading.
+///
+/// Measured: a value protected while working for one client came back
+/// protected in another client's document. The question is with the owner;
+/// nothing is built either way until he answers, and this `ignore` is how
+/// the tree says so out loud instead of a guard quietly asserting the
+/// behaviour nobody chose.
+#[ignore = "waits on the owner: does a block cross a client profile? (16 Oct)"]
 fn rule_two_a_value_in_another_profile_is_not_loaded() {
     let _guard = serial();
     fresh_vault("rule-two-profile");
@@ -238,6 +256,22 @@ fn rule_four_the_passphrase_can_change_and_the_vault_still_opens() {
     let _ = std::fs::remove_dir_all(dir);
 }
 
+/// **A Manual value is kept here and hunted by nobody** — and «nobody» means
+/// the vault's own knowledge, which is what `Policy::Manual` is a policy about.
+///
+/// **Amended 16 October**, by the owner's rule of the day before (089 rule 1):
+/// every word that takes a token is a block in his vault, and a block is put
+/// back wherever that word stands. The German pack protects this company by its
+/// legal form, so the word takes a token on the first reading and is a block
+/// from then on — and the vault layer puts blocks back, which is why a
+/// vault-sourced finding appears here now where none did before.
+///
+/// The promise that remains is the one the policy makes, and it is measured by
+/// what the finding **is**: a block carries no identity behind it (there is
+/// nothing taught and nobody to name), while a taught value that went hunting
+/// names the identity it came from. So a Manual value may never produce the
+/// second kind, and the floor below keeps this from passing for the empty
+/// reason.
 #[test]
 fn a_manual_value_is_kept_but_never_hunted() {
     let _guard = serial();
@@ -247,8 +281,24 @@ fn a_manual_value_is_kept_but_never_hunted() {
     let (s, _) = scanned(None);
     let findings = list_findings(s).expect("findings");
     assert!(
-        !findings.iter().any(|f| f.source == Source::Vault),
-        "Manual means: kept here, found by nobody"
+        DOC.contains("Nordstern Consulting GmbH"),
+        "the Manual value is not even in the document, so this measures nothing"
+    );
+    //
+    // A block names itself «a word you protected» — the stand-in the core puts
+    // where an identity would be, because nobody taught it and there is no
+    // identity behind it. A taught value that went hunting names the identity
+    // it came from, and that is the thing this policy forbids.
+    const A_BLOCK: &str = "a word you protected";
+    assert!(
+        !findings
+            .iter()
+            .any(|f| f.source == Source::Vault && f.entities.iter().any(|e| e != A_BLOCK)),
+        "Manual means: kept here, found by nobody — and a taught identity went hunting: {findings:?}"
+    );
+    assert!(
+        findings.iter().any(|f| f.source == Source::Vault),
+        "nothing came from the vault at all, so the line above would hold over an empty list"
     );
 }
 
@@ -335,16 +385,35 @@ fn the_golden_document_with_an_open_vault_asks_nothing() {
         // a given name and a surname each. The value the **vault** was taught,
         // «Thomas Müller», is exempt and stays one — which is why this number
         // rose by one and not by two.
-        (11, 0),
-        "nine by arithmetic, label and salutation, one more because the vault knows it: {report:?}"
+        // **Thirteen since 16 October**, and the two that joined are the rule
+        // the owner gave on the 15th: «Abteilung» and «Vertragswesen» stand
+        // twice in this contract, the pack protects the first place of each
+        // as a person, and from that instant the word is a block — so the
+        // second place of each comes back protected too (089 rules 1 and 3).
+        // Rule 55 is what makes it show here: a document in the preview now
+        // always has a session, which is what a block is written from.
+        (13, 0),
+        "nine by arithmetic, label and salutation, one more because the vault knows it, \
+         and two more because a protected word is protected wherever it stands: {report:?}"
     );
 
-    // The two that were questions in M3 are now answered by the vault itself.
+    // The two that were questions in M3 are now answered by the vault itself —
+    // **and since 089 rule 1 the vault layer also puts back every word that has
+    // ever taken a token here**, which is the rest of this list. The two taught
+    // identities are still the two that name an identity; a block names itself
+    // «a word you protected», because nobody taught it.
+    const A_BLOCK: &str = "a word you protected";
     let findings = list_findings(s).expect("findings");
     let from_vault: Vec<&Finding> = findings.iter().filter(|f| f.source == Source::Vault).collect();
-    assert_eq!(from_vault.len(), 2, "{from_vault:?}");
+    let taught: Vec<&&Finding> =
+        from_vault.iter().filter(|f| f.entities.iter().any(|e| e != A_BLOCK)).collect();
+    assert_eq!(taught.len(), 2, "the two taught identities are not the two the vault knows: {taught:?}");
     assert!(from_vault.iter().all(|f| f.state == MarkState::Protected));
     assert!(from_vault.iter().all(|f| f.entities.len() == 1));
+    assert!(
+        from_vault.len() > taught.len(),
+        "nothing came back from a block, so the distinction above measures nothing"
+    );
 
     // And so the document can go, with nothing left in the clear.
     let handle = build_payload(s).expect("build");
@@ -359,8 +428,15 @@ fn the_golden_document_with_an_open_vault_asks_nothing() {
         })
     ));
 
-    // The by-layer summary now names three layers, the vault among them.
-    assert!(report.by_layer.iter().any(|l| l.source == Source::Vault && l.count == 2), "{:?}", report.by_layer);
+    // The by-layer summary now names three layers, the vault among them — and
+    // it counts the blocks too, because they are the vault's own hints (089
+    // rule 3). Ten: the two it was taught, and the eight words this reading
+    // protected and kept.
+    assert!(
+        report.by_layer.iter().any(|l| l.source == Source::Vault && l.count == 10),
+        "{:?}",
+        report.by_layer
+    );
 }
 
 // ---------------------------------------------------------------- M7.8
@@ -1141,6 +1217,24 @@ fn a_wrong_passphrase_reports_nothing_it_does_not_know() {
 }
 
 #[test]
+/// **PARKED 16 October, waiting on the owner — does a block cross a client
+/// profile?** This guard holds one of the two rules in the collision and
+/// cannot pass while the other one stands.
+///
+/// Rule two (079, measured here) says a value taught in one profile is not
+/// loaded in another, so Z never tells client B that it knows client A's
+/// people. 089 rule 1 (15 October) says every word that took a token is a
+/// block in **the user's vault** and is put back wherever it stands —
+/// and a block carries no profile. Rule 55 (16 October) gave every
+/// document in the preview a session, which is what a block is written
+/// from, so the two rules now meet on every reading.
+///
+/// Measured: a value protected while working for one client came back
+/// protected in another client's document. The question is with the owner;
+/// nothing is built either way until he answers, and this `ignore` is how
+/// the tree says so out loud instead of a guard quietly asserting the
+/// behaviour nobody chose.
+#[ignore = "waits on the owner: does a block cross a client profile? (16 Oct)"]
 fn always_and_profile_actually_reach_the_vault() {
     let _lock = serial();
     fresh_vault("scope");

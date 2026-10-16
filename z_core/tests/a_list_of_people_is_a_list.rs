@@ -164,6 +164,18 @@ fn an_unknown_list_name_is_refused_on_both_paths() {
 /// A switch that does not change what leaves is worse than no switch — it is a
 /// promise the wire does not keep. Red on 82d5858 twice over: the list did not
 /// exist to be switched, and `hints_for` never asked whether it was on.
+///
+/// **The order is load-bearing since rule 55** (16 October 2026). A document
+/// now births the session it is kept in, so the very first scan writes what it
+/// protects into the vault as blocks — and a block is put back by every later
+/// scan, whichever layer found it first (089 rules 1 and 3). So the switch is
+/// asked **off first**, on a vault where these two names have never been
+/// protected, which is the question this guard exists to ask.
+///
+/// Measured the day rule 55 landed, with the old order: the list switched off
+/// after a scan had protected them left both names protected — «[] expected
+/// [Hedvig Palmgren, Faruk AB]». Not a switch that failed to bite but the
+/// owner's permanence, and the last clause below says so in its own words.
 #[test]
 fn the_switch_changes_what_leaves() {
     let _g = serial();
@@ -172,11 +184,8 @@ fn the_switch_changes_what_leaves() {
     import_user_names(BOOK.to_string(), Some(p.clone()), "sv".to_string(), Some(Scope::Profile))
         .expect("import");
 
-    assert!(
-        in_the_clear(&what_leaves(Some(&p), DOC)).is_empty(),
-        "the book did not protect, so the switch below would prove nothing"
-    );
-
+    // **Off, before anything has been protected**: the scanner is not told
+    // about them, and they leave in the clear.
     set_user_list_enabled("sv".to_string(), false).expect("off");
     assert_eq!(
         in_the_clear(&what_leaves(Some(&p), DOC)),
@@ -184,9 +193,22 @@ fn the_switch_changes_what_leaves() {
         "the list was switched off and the names were still taken out"
     );
 
+    // **On**: the book protects, which is the whole of what the switch is for
+    // — and without this the line above would prove nothing.
     set_user_list_enabled("sv".to_string(), true).expect("on");
     assert!(
         in_the_clear(&what_leaves(Some(&p), DOC)).is_empty(),
-        "the list came back on and the names stayed in the clear"
+        "the book did not protect, so the switch above proved nothing"
+    );
+
+    // **And off again, after they have been protected once: they stay
+    // protected.** Every word that took a token is a block in the owner's
+    // vault and a block is never deleted — it is exempted at its own two
+    // doors, «here» and «in this conversation», and switching off a list is
+    // neither of them (089 rules 1, 2 and 3; the owner, 15 October).
+    set_user_list_enabled("sv".to_string(), false).expect("off again");
+    assert!(
+        in_the_clear(&what_leaves(Some(&p), DOC)).is_empty(),
+        "a word already protected came back into the clear because a list was switched off"
     );
 }

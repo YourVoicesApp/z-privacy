@@ -422,28 +422,35 @@ fn rename_changes_the_name_and_not_the_number() {
     assert!(rename_kept_document(number, 9, false, "nichts".to_string()).is_err());
 }
 
-/// **A document opened before any conversation existed is kept at the birth.**
+/// **A session begun by hand over an open document keeps that document.**
 ///
-/// The number is a number *in* a conversation, so there is nowhere to write it
-/// until one exists — and the birth is the instant one does. The same shape the
-/// blocks follow, measured for the same reason: a document that waited must not
-/// be lost.
+/// The birth takes the bench's names, and the same call keeps what the bench is
+/// holding — so a document in the preview is in the list of whichever session
+/// the person is in, by the one act rather than by two that could disagree.
+///
+/// **This guard was reversed on 16 October** (rule 55). Until then it measured
+/// the opposite half of the same law: an import with no session open kept
+/// nothing, because a number is a number *in* a session and there was none —
+/// and the birth was the first instant one could be written. The owner moved
+/// that instant to the document itself: a document now births the session it
+/// is kept in, which `the_session_is_born_at_the_first_document.rs` measures.
+/// What is left here is the hand-written birth, which is still a real door —
+/// the panel's deliberate clean break, with the bench named.
 #[test]
-fn a_document_opened_before_the_session_is_kept_at_the_birth() {
+fn a_session_begun_by_hand_keeps_the_open_document() {
     let _guard = serial();
     let _ground = Ground::fresh("birth");
     let held = Bench(open_session(None, "de".to_string()).expect("open"));
     import_document(held.0, "Mahnung.txt".to_string(), LETTER.as_bytes().to_vec(), DocumentKind::Txt)
         .expect("import");
     answer_everything(held.0);
-    // Nothing is open, so nothing is kept — and nothing is lost either.
-    assert!(conversation_open().expect("open").is_none());
 
     conversation_begin("die Mahnung".to_string(), Some(held.0)).expect("begin");
     let number = conversation_open().expect("open").expect("one is open");
     let rows = kept(number);
-    assert_eq!(rows.len(), 1, "the document that waited for a session was lost");
+    assert_eq!(rows.len(), 1, "the document on the bench is not in the session that was begun");
     assert_eq!(rows[0].handle, "doc1");
+    assert_eq!(rows[0].name, "Mahnung.txt");
     assert!(rows[0].protected >= 3, "it was kept without the decisions on it");
 }
 

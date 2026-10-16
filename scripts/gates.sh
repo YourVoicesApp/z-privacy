@@ -330,6 +330,190 @@ else
   pass "G33 a protect outcome becomes a sentence in core/messages.dart and nowhere else"
 fi
 
+# ---------------------------------------------------------------- G38
+# **A session's language is chosen by the person, once** — rules 56 and 57, the
+# owner on 16 October 2026 after making a session he was never asked about:
+# «لم يسألني عن لغة الجلسة».
+#
+#   * **56** — Swedish is offered beside German and English everywhere a
+#     language is chosen; Arabic stays unoffered until he says otherwise, and
+#     both packs stay in the core either way.
+#   * **57** — a session does not begin before the person picks, nothing is
+#     pre-marked, and the application's own language no longer becomes a
+#     session's language in silence. The doors are enumerated from what they
+#     do, because «a law written at one door out of several» is what this
+#     house pays for most often.
+SHELL_DART=$FLUTTER_LIB/screens/shell.dart
+LANGS=$FLUTTER_LIB/widgets/language_list.dart
+
+G38_OFFERED=$(grep -oE "offeredLanguages = <String>\[[^]]*\]" "$LANGS" \
+              | grep -oE "'[a-z]{2}'" | tr -d "'" | tr '\n' ' ' | sed 's/ $//')
+if [ "$G38_OFFERED" = "de en sv" ]; then
+  pass "G38 the languages offered are the measured three: de en sv (Arabic unoffered, both packs kept)"
+else
+  fail "G38 the offered languages are «$G38_OFFERED» — expected «de en sv» (rule 56)"
+fi
+
+# One list, every reader. A second literal pair is the «two copies of de, en»
+# the one constant exists to prevent.
+G38_LITERALS=$(grep -RnE "\['de',\s*'en'|\[\"de\",\s*\"en\"" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+               | grep -v '/src/rust/' | grep -v "^$LANGS:" || true)
+G38_READERS=$(grep -Rn 'offeredLanguages' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+              | grep -v "^$LANGS:" | grep -c . || true)
+if [ -z "$G38_LITERALS" ] && [ "$G38_READERS" -ge 4 ]; then
+  pass "G38 one list decides what is offered, and $G38_READERS places read it"
+else
+  fail "G38 a second list of languages was written beside the one constant:"
+  printf '%s\n' "$G38_LITERALS" | sed 's/^/        /'
+fi
+
+# **The application's language chooses no session's language.** Read from the
+# source: who asks `appLanguage` at all. Two readers are right — the tally that
+# draws the app's own pack, and `packForTheNextText`, which answers for a
+# session that exists and has none of its own (080, rule 33). A third is the
+# silent default rule 57c took out.
+G38_APP=$(grep -Rn 'appLanguage(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+          | grep -v '/src/rust/' | grep -vE '^\S+: *//|// ' | cut -d: -f1 | sort -u \
+          | sed "s|$FLUTTER_LIB/||" | tr '\n' ' ' | sed 's/ $//')
+if [ "$G38_APP" = "core/session_state.dart screens/home.dart" ]; then
+  pass "G38 the application's language is read where it is drawn and nowhere a session is born"
+else
+  fail "G38 «appLanguage» is read in «$G38_APP» — expected core/session_state.dart and screens/home.dart only (rule 57c)"
+fi
+
+# **Every door a text enters by asks first.** The doors are the imports (G37's
+# own census); each must reach the one function that answers «which language»,
+# and that function is the only place the fallback is read.
+G38_QUIET=""
+for door in _askFromHome _begin; do
+  if ! awk -v want="$door" '
+    $0 ~ "^  [A-Za-z_][A-Za-z_<>,? ]* " want "\\(" { inside = 1 }
+    inside && /_theLanguageOfTheTextToCome\(/ { found = 1 }
+    inside && /^  }/ { inside = 0 }
+    END { exit(found ? 0 : 1) }
+  ' "$SHELL_DART"; then
+    G38_QUIET="$G38_QUIET $door"
+  fi
+done
+G38_ASKS=$(awk '
+  /^  [A-Za-z_][A-Za-z_<>,? ]* _?[A-Za-z_]+\(/ { match($0, /[A-Za-z_]+\(/); here = substr($0, RSTART, RLENGTH - 1) }
+  /_theLanguageOfTheTextToCome\(/ { if (here != "" && here != "_theLanguageOfTheTextToCome") print here }
+' "$SHELL_DART" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ -z "$G38_QUIET" ] && [ "$G38_ASKS" = "_askFromHome _begin" ]; then
+  pass "G38 both doors a text enters by ask which language before anything is read"
+else
+  fail "G38 these doors read a text without asking:$G38_QUIET (asked from «$G38_ASKS»)"
+fi
+
+# **And the room that begins a session by hand cannot default.** Two halves in
+# one place: the press is dead until a language is picked, and the door itself
+# refuses rather than filling one in.
+if awk '
+  /^  Future<void> _begin\(\) async \{/ { inside = 1 }
+  inside && /let|final chosen = _packId;/ { bare = 1 }
+  inside && /chosen == null/ { refuses = 1 }
+  inside && /^  }/ { inside = 0 }
+  END { exit(bare && refuses ? 0 : 1) }
+' "$FLUTTER_LIB/screens/settings.dart" \
+   && grep -q '_busy || _packId == null) ? null : _begin' "$FLUTTER_LIB/screens/settings.dart"; then
+  pass "G38 a session begun by hand waits for its language, and the press says so"
+else
+  fail "G38 the «New session» room takes a language nobody chose (rule 57a)"
+fi
+
+# ---------------------------------------------------------------- G37
+# **The session is born at its first document, and nowhere else** — rule 55,
+# the owner's answer of 16 October 2026: «المحادثة لا علاقة بالوثائق… ولكن عند
+# إدخال الوثائق نحفظها كما اتفقنا».
+#
+# A *conversation* is what the person writes to a model; the **session** is the
+# container, and a container exists the moment it holds something. The rule is
+# therefore two laws that pull against each other, and both are read from the
+# source here: **a document in the preview always has a session**, and **a
+# session never exists without a document or a conversation**. The code's word
+# for the container is still `Conversation`; 066 pays the rename.
+BORN=z_core/src/ops/conversation.rs
+
+# One hand hands out a session's number and its key.
+G37_BIRTHS=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /\.begin_conversation\(/ { if (here != "") print here }
+' "$BORN" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ "$G37_BIRTHS" = "begin_in" ]; then
+  pass "G37 one function in the core begins a session, and every door goes through it"
+else
+  fail "G37 a session is begun by: «$G37_BIRTHS» — expected «begin_in», so a second birth appeared that nobody measures"
+fi
+
+# And a birth nobody asked for happens at one door: the preview's.
+G37_SILENT=$(grep -RlE 'born_at_the_first_document\(' z_core/src --include='*.rs' 2>/dev/null \
+             | tr '\n' ' ' | sed 's/ $//')
+G37_WHERE=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /born_at_the_first_document\(/ { if (here != "" && here != "born_at_the_first_document") print here }
+' "$BORN" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ "$G37_SILENT" = "$BORN" ] && [ "$G37_WHERE" = "keep_the_preview" ]; then
+  pass "G37 a session nobody asked for is born at one door, the one a document enters by"
+else
+  fail "G37 a silent birth is reached from «$G37_WHERE» in «$G37_SILENT» — expected keep_the_preview in $BORN alone"
+fi
+
+# **No empty sessions.** The question «is there a document here» is asked
+# before anything is born, in the same function and above it — a session in the
+# list holding nothing is the defect this order prevents.
+if awk '
+  /^pub\(crate\) fn keep_the_preview\(/ { inside = 1 }
+  inside && /trim\(\)\.is_empty\(\)/ { asked = NR }
+  inside && /born_at_the_first_document\(/ { born = NR }
+  inside && /^}/ { inside = 0 }
+  END { exit(asked && born && asked < born ? 0 : 1) }
+' "$BORN"; then
+  pass "G37 nothing is born before the preview is asked whether it holds a document"
+else
+  fail "G37 keep_the_preview births a session without asking first whether anything is in the preview"
+fi
+
+# **One name, two languages.** The core writes the name of a session nobody
+# named and the glass reads it to tell an unnamed session from a named one
+# (081). Two spellings of one string is this house's «one fact, one source»,
+# and a cross-language seam is where it goes wrong quietly.
+G37_RUST=$(grep -oE 'A_SESSION_CALLED: &str = "[^"]+"' "$BORN" | sed 's/.*= "//; s/"$//')
+G37_DART=$(grep -oE "_aSessionCalled = '[^']+'" "$FLUTTER_LIB/core/session_state.dart" \
+           | sed "s/.*= '//; s/'$//")
+if [ -n "$G37_RUST" ] && [ "$G37_RUST" = "$G37_DART" ]; then
+  pass "G37 the core and the glass spell a session nobody named the same: «$G37_RUST N»"
+else
+  fail "G37 the core calls it «$G37_RUST» and the glass «$G37_DART», so one of them draws a name the other cannot read"
+fi
+
+# **And every door a document enters by on the glass tells the list.** The rule
+# says «the moment it enters the preview», which on a screen means the ground
+# is asked again at that instant — enumerated from the imports, not from the
+# doors we remember.
+G37_IMPORTS=$(grep -Rn 'z\.importText(\|z\.importDocument(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+              | grep -v '/src/rust/' | cut -d: -f1 | sort -u | tr '\n' ' ' | sed 's/ $//')
+G37_DOORS=$(awk '
+  /^  [A-Za-z_][A-Za-z_<>,? ]* _?[A-Za-z_]+\(/ { match($0, /[A-Za-z_]+\(/); here = substr($0, RSTART, RLENGTH - 1) }
+  /z\.importText\(|z\.importDocument\(/ { if (here != "") print here }
+' "$FLUTTER_LIB/screens/shell.dart" | sort -u | tr '\n' ' ' | sed 's/ $//')
+G37_QUIET=""
+for door in $G37_DOORS; do
+  if ! awk -v want="$door" '
+    $0 ~ "^  [A-Za-z_][A-Za-z_<>,? ]* " want "\\(" { inside = 1 }
+    inside && /_theDocumentHasEntered\(/ { found = 1 }
+    inside && /^  }/ { inside = 0 }
+    END { exit(found ? 0 : 1) }
+  ' "$FLUTTER_LIB/screens/shell.dart"; then
+    G37_QUIET="$G37_QUIET $door"
+  fi
+done
+if [ "$G37_IMPORTS" = "$FLUTTER_LIB/screens/shell.dart" ] \
+   && [ "$G37_DOORS" = "_askFromHome _begin" ] && [ -z "$G37_QUIET" ]; then
+  pass "G37 both doors a document enters the preview by tell the list it was kept"
+else
+  fail "G37 a document enters by «$G37_DOORS» in «$G37_IMPORTS» and these tell the list nothing:$G37_QUIET"
+fi
+
 # ---------------------------------------------------------------- G36
 # **The saved document, and the census of the doors it leaves by** — 089 rule 9,
 # the owner's rule of 15 October: «عنصرنا هو البلوك لا المستند».
@@ -404,16 +588,26 @@ fi
 # Outside the file that owns them, nothing may touch the list at all; inside
 # it, the one function below is read by name. Two halves, because «who owns
 # this» and «who else reaches in» are two questions.
+#
+# **Two acts reach that one hand since rule 55** (16 October) and they are the
+# same act — the copy is no longer in this list: the text left the machine by a
+# door, or the bench moved to another session and took the copy with it. Both
+# are named here, so a third would have to be.
 G36_GONE=$(grep -RnE '\.kept\s*\.\s*(retain|remove|clear|pop|drain|truncate|swap_remove)|\.kept\s*=\s*Vec::new' \
              z_core/src --include='*.rs' 2>/dev/null | grep -v "^$KEPT:" || true)
 G36_OWNER=$(awk '
-  /^pub\(crate\) fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
   /body\.kept\.retain\(/ { print here }
 ' "$KEPT" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ -z "$G36_GONE" ] && [ "$G36_OWNER" = "the_preview_has_left" ]; then
-  pass "G36 a saved document is taken away in one place, by the doors it left by"
+G36_HANDS=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /take_the_copy_out\(/ { if (here != "" && here != "take_the_copy_out") print here }
+' "$KEPT" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ -z "$G36_GONE" ] && [ "$G36_OWNER" = "take_the_copy_out" ] \
+   && [ "$G36_HANDS" = "keep_the_preview the_preview_has_left" ]; then
+  pass "G36 a saved document is taken out of a list in one place, reached by the door it left by and by the bench that moved"
 else
-  fail "G36 something else removes a saved document: «$G36_OWNER»"
+  fail "G36 a saved document is removed by «$G36_OWNER», reached from «$G36_HANDS» — expected take_the_copy_out, from keep_the_preview and the_preview_has_left"
   printf '%s\n' "$G36_GONE" | sed 's/^/        /'
 fi
 
@@ -1833,8 +2027,14 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_model_door_takes_it_out \
          the_direct_door_takes_it_out \
          rename_changes_the_name_and_not_the_number \
-         a_document_opened_before_the_session_is_kept_at_the_birth \
+         a_session_begun_by_hand_keeps_the_open_document \
          an_older_session_holds_none \
+         the_first_document_of_a_new_session_is_kept_and_listed \
+         a_chat_in_a_new_session_is_kept_as_chat1 \
+         a_session_of_documents_only_is_named_by_its_number \
+         the_first_number_is_retired_at_every_door \
+         nothing_is_born_without_a_document \
+         a_document_is_in_one_session_at_a_time \
          a_saved_document_keeps_its_decisions \
          a_format_four_file_holds_no_saved_document \
          a_block_keeps_its_tokens_and_its_exemptions; do

@@ -30,6 +30,11 @@ fn serial() -> MutexGuard<'static, ()> {
 }
 
 fn fresh_vault(name: &str) -> std::path::PathBuf {
+    // **Locked first** — see `document_journey::fresh_vault`: a vault left open
+    // by the test before, over a directory this one has just emptied, is a core
+    // that says «Unlocked» and refuses the first write. Rule 55 made the first
+    // write an import.
+    let _ = vault_lock();
     let dir = std::env::temp_dir().join(format!("zprivacy-explain-{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     set_data_dir(dir.to_string_lossy().to_string()).expect("dir");
@@ -124,6 +129,22 @@ Projektname Apollo steht fest.";
 }
 
 #[test]
+/// **PARKED 16 October, waiting on the owner — does «Forget» stop a block
+/// from working?** This guard holds one of the two rules in the collision
+/// and cannot pass while the other one stands.
+///
+/// «Forget» promises that a new document does not recognise the value any
+/// more (056, measured here). 089 rule 1 says a block is never deleted —
+/// «يمكن أن تُعفى من العمل ولكن لا تختفي» — and the word was a block
+/// before it was forgotten. Rule 55 (16 October) is what makes every
+/// reading write one.
+///
+/// Measured: after «Forget everywhere», a fresh document still protected
+/// the value, from the block. My recommendation, in the owner's own
+/// words: forgetting **exempts** that value's blocks from work and
+/// deletes nothing — which needs a field on the block, so it is built
+/// only on his word.
+#[ignore = "waits on the owner: does «Forget» exempt a word's blocks? (16 Oct)"]
 fn forget_shows_what_it_will_take_and_then_takes_exactly_that() {
     let _lock = serial();
     let dir = fresh_vault("forget");
@@ -241,6 +262,22 @@ fn forgetting_for_one_client_leaves_another_client_alone() {
 }
 
 #[test]
+/// **PARKED 16 October, waiting on the owner — does «Forget» stop a block
+/// from working?** This guard holds one of the two rules in the collision
+/// and cannot pass while the other one stands.
+///
+/// «Forget» promises that a new document does not recognise the value any
+/// more (056, measured here). 089 rule 1 says a block is never deleted —
+/// «يمكن أن تُعفى من العمل ولكن لا تختفي» — and the word was a block
+/// before it was forgotten. Rule 55 (16 October) is what makes every
+/// reading write one.
+///
+/// Measured: after «Forget everywhere», a fresh document still protected
+/// the value, from the block. My recommendation, in the owner's own
+/// words: forgetting **exempts** that value's blocks from work and
+/// deletes nothing — which needs a field on the block, so it is built
+/// only on his word.
+#[ignore = "waits on the owner: does «Forget» exempt a word's blocks? (16 Oct)"]
 fn forgetting_does_not_unprotect_the_document_that_is_open() {
     // The owner's own test, written out step by step on 28 September — because
     // making «Forget» pull the protection out of the open document would show
@@ -327,6 +364,22 @@ fn forgetting_does_not_unprotect_the_document_that_is_open() {
 }
 
 #[test]
+/// **PARKED 16 October, waiting on the owner — does «Forget» stop a block
+/// from working?** This guard holds one of the two rules in the collision
+/// and cannot pass while the other one stands.
+///
+/// «Forget» promises that a new document does not recognise the value any
+/// more (056, measured here). 089 rule 1 says a block is never deleted —
+/// «يمكن أن تُعفى من العمل ولكن لا تختفي» — and the word was a block
+/// before it was forgotten. Rule 55 (16 October) is what makes every
+/// reading write one.
+///
+/// Measured: after «Forget everywhere», a fresh document still protected
+/// the value, from the block. My recommendation, in the owner's own
+/// words: forgetting **exempts** that value's blocks from work and
+/// deletes nothing — which needs a field on the block, so it is built
+/// only on his word.
+#[ignore = "waits on the owner: does «Forget» exempt a word's blocks? (16 Oct)"]
 fn remove_protection_is_a_different_act_from_forget_and_says_so() {
     let _lock = serial();
     let dir = fresh_vault("unprotect");

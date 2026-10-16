@@ -204,6 +204,12 @@ void main() {
     expect(g.bench.payload?.text, contains(_company),
         reason: 'the waiting word is not in the Safe column, so there was nothing to leak');
 
+    // **Since rule 55 the document brought a session with it** (16 October):
+    // it was born as the text entered the preview. So what this guard asks is
+    // the thing it always meant — the refused press added nothing — and it
+    // asks it by counting on both sides of the press.
+    final before = (await tester.runAsync(() => z.conversations()))!.length;
+
     final out = await tester.runAsync(() => beginThenRead(g.ground, g.bench));
 
     expect(out!.view, isNull, reason: 'the exit handed out text while a word waited');
@@ -230,8 +236,8 @@ void main() {
     // And nothing was created on the way: a press that takes nothing out
     // leaves nothing behind it either.
     final rows = await tester.runAsync(() => z.conversations());
-    expect(rows, isEmpty,
-        reason: 'a refused exit began a session the person never got anything out of');
+    expect(rows, hasLength(before),
+        reason: 'a refused exit began a session the person never got anything out of: $rows');
   });
 
   // ----------------------------------------------------------------- guard 1b
@@ -366,11 +372,14 @@ void main() {
   // the socket: nothing crossed it.
   test('the send puts nothing on the wire while a word waits', () async {
     final g = await _waiting('wire');
+    // The document's own session, born as it entered the preview (rule 55);
+    // what this guard asks is that the refused send adds none.
+    final before = (await z.conversations()).length;
     final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
     expect(out.refused, isNotNull, reason: 'the send was not refused at all');
     expect(out.refused, contains('nothing left Z'));
     expect(g.bodies, isEmpty, reason: 'a request crossed the wire while a word waited');
-    expect(await z.conversations(), isEmpty,
+    expect(await z.conversations(), hasLength(before),
         reason: 'the refused send began a session anyway');
   });
 

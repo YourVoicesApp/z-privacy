@@ -269,11 +269,19 @@ fn discovery_is_still_blind_to_a_break() {
 #[test]
 fn the_german_pack_reads_none_of_this() {
     let _g = serial();
-    fresh_vault("german");
+    // **A vault of its own for each pass** — 089 rule 1, and rule 55 of 16
+    // October which is what made it bite here. Every word a scan protects is a
+    // block in the vault for ever, and a block is put back by every later scan
+    // whatever pack is running; a document in the preview now always has a
+    // session to write those blocks from. Both passes on one vault would be
+    // the German pack being handed the Swedish pass's own answers — a control
+    // measuring itself.
+    fresh_vault("german-sv");
     let s = scanned(COLUMN, "sv");
     let swedish = people(s, COLUMN, MarkState::Protected).len();
     close_session(s).ok();
 
+    fresh_vault("german-de");
     let g = scanned(COLUMN, "de");
     let german = people(g, COLUMN, MarkState::Protected);
     assert!(

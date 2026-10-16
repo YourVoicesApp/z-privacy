@@ -91,8 +91,16 @@ pub(crate) struct Dismissed {
 ///
 /// The number *and* whether it is a chat, because a `docN` and a `chatN` may
 /// share a number: two sequences, as the owner wrote them.
+///
+/// **And which session's list it is in** — rule 55, 16 October. A number is a
+/// number *in* a session, so a handle without one names a row in a file nobody
+/// said which: a document moved to another session was written into the new
+/// list and left standing in the old one, measured as «1 holds doc1, 2 holds
+/// doc1, 3 holds doc1» for one document in one preview. With the session in
+/// the handle the wrong state cannot be written down.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct KeptHandle {
+    pub session: u32,
     pub number: u32,
     pub chat: bool,
 }

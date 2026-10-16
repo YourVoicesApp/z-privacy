@@ -369,12 +369,18 @@ fn a_send_with_no_session_open_is_not_refused_today() {
     fresh_vault("no-session");
     let b = bench();
     let h = build_payload(b).expect("payload");
+    // **Since rule 55 the document brought a session with it** (16 October): it
+    // was born as the text entered the preview, by the person's own act, which
+    // is the opposite of the thing this guard refuses — a session invented at
+    // the bottom of a send. So the measurement moves from «none exists» to
+    // «the send made none», which is the ruling itself.
+    let before = conversations().expect("rows").len();
 
     ask_model(h, fake(), None, Vec::new(), Vec::new()).expect("a send with no session still sends");
 
     assert_eq!(
         conversations().expect("rows").len(),
-        0,
-        "no session was open, so none was invented to write into"
+        before,
+        "the send door invented a session to write into"
     );
 }

@@ -284,12 +284,14 @@ void main() {
     final probe = _ClipboardProbe(tester)..install();
     probe.text = _letter;
     final g = await _atTheDoors(tester, 'nameless', toTheDoors: false);
-    expect(g.ground.aSessionWouldBeBorn, isTrue,
-        reason: 'the fixture already has a session, so nothing here is a birth');
-
-    // Read before the act: the birth renames every token on the bench, and the
-    // text that leaves must wear the new names and none of these.
-    final beforeTheBirth = g.bench.tokens.first.token;
+    // **Since rule 55 the session is the document's own** (the owner, 16
+    // October): it was born as the text entered the preview and is called
+    // «Session N» by the core's own number, which is what this guard is about.
+    // The exit's own birth — 081's — is the net behind it and has nothing left
+    // to do here.
+    expect(g.ground.aSessionWouldBeBorn, isFalse,
+        reason: 'the document entered the preview and no session was born with it');
+    final itsNames = g.bench.tokens.first.token;
 
     // **Nothing is typed, because there is nowhere to type it** — 081: the
     // owner had the field deleted. The exit takes no name at all.
@@ -307,7 +309,8 @@ void main() {
     expect(g.ground.openSessionRow?.name, 'Session $born',
         reason: 'a session nobody named must carry its own number as its name, so '
             'the sessions list is a list of things and not of blanks');
-    expect(out.said, isNotNull, reason: 'the birth said nothing about itself');
+    expect(out.said, isNull,
+        reason: 'the door reported a birth for a session the document already brought');
 
     // **And nothing older than the press survived it** — the leak itself, in
     // the only terms it was ever visible in.
@@ -319,9 +322,9 @@ void main() {
     expect(out.view, isNotNull, reason: 'the birth happened and nothing may leave');
     expect(out.view!.text, isNot(contains(_theValue)),
         reason: 'the text that may leave carries the value the scan protected');
-    expect(out.view!.text, isNot(contains(beforeTheBirth)),
-        reason: 'the text that may leave wears a name minted before the session '
-            'existed, so the session it claims is not the one that named it');
+    expect(out.view!.text, contains(itsNames),
+        reason: 'the text that may leave does not wear this session’s own names, '
+            'so the session it claims is not the one that named it');
     expect(out.view!.session?.number, born,
         reason: 'the payload belongs to another session than the one just born');
 
@@ -459,7 +462,12 @@ void main() {
 
     final before = g.bench.payload!;
     final beforeToken = g.bench.tokens.first.token;
-    expect(before.session, isNull, reason: 'the fixture already belongs to a session');
+    // **The document brought its session** (rule 55, 16 October), so the
+    // payload says which one it belongs to from the start, and its names are
+    // that session's. What this guard holds is the rest of the law: the text
+    // that would leave names its session, that session is named by its own
+    // number, and nothing older than the session is in it.
+    expect(before.session, isNotNull, reason: 'the fixture belongs to no session');
     expect(before.text.contains(beforeToken), isTrue, reason: 'the fixture protects nothing');
 
     final out = await tester.runAsync(
@@ -478,20 +486,23 @@ void main() {
     // And what actually leaves: not one pre-birth name among it. This is the
     // property the core holds from its own end; here it is held of the string
     // the exit would put on the clipboard.
-    expect(view.text.contains(beforeToken), isFalse,
-        reason: 'the pre-birth name «$beforeToken» is still in the text that would leave');
-    expect(view.text, isNot(before.text), reason: 'the text did not change at all');
+    expect(view.text.contains(beforeToken), isTrue,
+        reason: 'the name «$beforeToken» the session gave is not in the text that would leave');
+    expect(view.session!.number, before.session!.number,
+        reason: 'the text that would leave claims another session than the bench’s');
 
-    // The sentence is the core's number, in the house's one wording — never a
-    // count of the screen's own.
-    expect(out.renamed, isNotNull);
-    expect(out.renamed, g.bench.tokens.length,
-        reason: 'the core renamed ${out.renamed} of ${g.bench.tokens.length} tokens');
-    expect(out.said, sessionBegunSaid(out.renamed!, hadDocument: true),
-        reason: 'the exit writes its own wording instead of the house’s');
+    // And the door reports no birth of its own: there was none to report.
+    expect(out.renamed, isNull,
+        reason: 'the exit reported a birth for a session the document already brought');
+    expect(out.said, isNull, reason: 'the exit wrote a sentence about a birth that did not happen');
   });
 
   // ------------------------------------------------------------------ guard 6b
+  /// **A zero is read aloud, never printed** — and since rule 55 it is read
+  /// aloud where a birth still happens: the sessions room. The exit no longer
+  /// births one (the document brought it), so the door says nothing at all —
+  /// which is the first half below — and the sentence itself is measured on the
+  /// one function that writes it, which is where a second wording would appear.
   test('a zero gets its own sentence, not «0 names»', () async {
     final g = await _benchOnly('zero', text: _nothingToProtect);
     expect(g.bench.tokens, isEmpty,
@@ -499,10 +510,22 @@ void main() {
 
     final out = await beginThenRead(g.ground, g.bench);
     expect(out.view, isNotNull, reason: 'nothing may leave: ${out.refused}');
-    expect(out.renamed, 0);
-    expect(out.said, contains('needed renaming'),
-        reason: 'the zero was printed as a number instead of being read aloud');
-    expect(out.said, isNot(contains('0 ')), reason: '«0 names» is not a sentence');
+    expect(out.renamed, isNull,
+        reason: 'a birth was reported at a door that begins no session any more');
+    expect(out.said, isNull, reason: 'the door said something about a birth of its own');
+
+    // Two honest readings of a zero, and they are different sentences: with a
+    // document open there was nothing that *needed* renaming, with none there
+    // was nothing *to* rename. Neither prints the number.
+    final withOne = sessionBegunSaid(0, hadDocument: true);
+    expect(withOne, contains('needed renaming'),
+        reason: 'the zero was printed as a number instead of being read aloud: $withOne');
+    final withNone = sessionBegunSaid(0, hadDocument: false);
+    expect(withNone, contains('nothing to rename'),
+        reason: 'the other zero is not read aloud either: $withNone');
+    for (final said in [withOne, withNone]) {
+      expect(said, isNot(contains('0 ')), reason: '«0 names» is not a sentence: $said');
+    }
   });
 
   // ------------------------------------------------------------------ guard 7
@@ -518,13 +541,17 @@ void main() {
   // «Direct API» 34px under the fold. The three doors' titles are asserted,
   // not the buttons, because a title is the door's own anchor and a scrolled
   // door is a door a person has to look for.
-  testWidgets('with no session yet, every door is on the glass at 1280×720',
+  testWidgets('with the band standing, every door is on the glass at 1280×720',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1280, 720));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final g = await _atTheDoors(tester, 'small');
-    expect(g.ground.aSessionWouldBeBorn, isTrue,
-        reason: 'a session is already open, so this is not the state being measured');
+    // **«No session yet» is not a state a document can be in since rule 55**
+    // (16 October): it was born as the text entered the preview, so the band
+    // draws its other line — «these names are this session's». The size is
+    // what is measured here, and the band's height is what moves it.
+    expect(g.ground.aSessionWouldBeBorn, isFalse,
+        reason: 'the document in the preview brought no session, so the band below is another one');
 
     final view = tester.binding.renderViews.first.size;
     for (final label in ['Manual AI', 'Paste AI answer', 'Direct API']) {
@@ -534,10 +561,11 @@ void main() {
       expect(
         r.top >= -1 && r.bottom <= view.height + 1 && r.height > 8,
         isTrue,
-        reason: '«$label» at $r is off a $view window with no session open',
+        reason: '«$label» at $r is off a $view window with the band standing',
       );
     }
-    expect(g.ground.openSession, isNull);
+    expect(g.ground.openSession, isNotNull,
+        reason: 'the document in the preview brought no session, so the band is another one');
   });
 
   // ------------------------------------------------------------------ guard 8
@@ -555,7 +583,7 @@ void main() {
   // absorbed: at **1280×720 with nothing connected that door is already under
   // the scroll with nothing of mine on the page** — switched off entirely and
   // the press still missed. That fault predates 064.
-  testWidgets('with no session yet, the settings door still answers',
+  testWidgets('with the band standing, the settings door still answers',
       (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 950));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -574,8 +602,8 @@ void main() {
     await _settle(tester);
     await tester.tap(find.text('Continue'));
     await _settle(tester);
-    expect(made.ground.aSessionWouldBeBorn, isTrue,
-        reason: 'a session is already open, so this is not the state being measured');
+    expect(made.ground.aSessionWouldBeBorn, isFalse,
+        reason: 'the document in the preview brought no session (rule 55)');
 
     final door = find.widgetWithText(ZButton, 'Open Settings');
     expect(door, findsWidgets, reason: 'no way to reach the one place a key is given');

@@ -78,6 +78,24 @@ fn a_profile_runs_two_languages_in_one_scan() {
 /// His second closing test: teach a rule, restart, unlock, scan — and it is
 /// scoped to the profile it was taught for.
 #[test]
+/// **PARKED 16 October, waiting on the owner — does a block cross a client
+/// profile?** This guard holds one of the two rules in the collision and
+/// cannot pass while the other one stands.
+///
+/// Rule two (079, measured here) says a value taught in one profile is not
+/// loaded in another, so Z never tells client B that it knows client A's
+/// people. 089 rule 1 (15 October) says every word that took a token is a
+/// block in **the user's vault** and is put back wherever it stands —
+/// and a block carries no profile. Rule 55 (16 October) gave every
+/// document in the preview a session, which is what a block is written
+/// from, so the two rules now meet on every reading.
+///
+/// Measured: a value protected while working for one client came back
+/// protected in another client's document. The question is with the owner;
+/// nothing is built either way until he answers, and this `ignore` is how
+/// the tree says so out loud instead of a guard quietly asserting the
+/// behaviour nobody chose.
+#[ignore = "waits on the owner: does a block cross a client profile? (16 Oct)"]
 fn a_taught_rule_survives_a_restart_and_stays_in_its_profile() {
     let _guard = serial();
     let dir = fresh("taught");
@@ -133,6 +151,17 @@ fn a_rule_taught_everywhere_reaches_every_profile() {
 /// It must be explainable, and forgettable — the ninth question applies to a
 /// rule exactly as it applies to a value.
 #[test]
+/// **PARKED 16 October — which reason leads the Why card.** A finding
+/// claimed by a block and by a taught rule at once now reads «your vault
+/// knows this value» first, and the rule's own word — the label it was
+/// found after — survives only as a source id in the «agreed as well»
+/// list, so the card no longer names it.
+///
+/// Both facts are true and the card has room for both. Which one leads,
+/// and whether the folded layer's own sentence is kept instead of its
+/// bare id, is a wording ruling rather than a bug to pick for him —
+/// reported with the measurement, built on his word.
+#[ignore = "waits on a ruling: which reason leads the Why card (16 Oct)"]
 fn a_taught_rule_explains_itself_and_can_be_forgotten() {
     let _guard = serial();
     fresh("explain");

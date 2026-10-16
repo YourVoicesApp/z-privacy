@@ -159,6 +159,14 @@ fn an_answer_from_another_conversation_is_reported_and_not_passed_through() {
     let old_iban = token_in(&monday_text, "_IBAN_");
     let old_person = token_in(&monday_text, "_PERSON_");
     close_session(monday).ok();
+    // **And the app is shut between the two days, which since rule 55 is what
+    // makes them two sessions.** A document entering the preview is born into
+    // whichever session is open (16 October), so two documents opened in one
+    // run are one session and Monday's token would be Friday's own. Locking
+    // and opening the vault is what a restart does to the open session's
+    // number, and «another day» is the state this guard is about.
+    vault_lock().expect("lock");
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
 
     // Friday. One figure in the letter has changed, so this is another
     // document — and the model's answer from Monday is what he has in front of

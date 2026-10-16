@@ -14,6 +14,12 @@
 //   * the press, which is the shell's to answer: only the shell holds a bench,
 //     so the row hands the three numbers up and nothing else.
 //
+// **And since rule 55** (the owner, 16 October): a session that holds only
+// documents — nothing written to a model in it at all — is in that list from
+// the instant its first document enters the preview, under the name the core
+// gives a session nobody named. The third test is where the core's spelling of
+// that name and the glass's are measured against each other.
+//
 // Needs the native library, so run once:  flutter build linux --debug
 @Timeout(Duration(minutes: 4))
 library;
@@ -23,6 +29,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -117,7 +124,10 @@ void main() {
 
     expect(find.text('die Mahnung'), findsOneWidget, reason: 'the session is not listed');
     // **The row, in the core's own words**: the handle, the name, the count.
-    final row = find.textContaining('doc1 · Mahnung.txt');
+    // The document's own name is isolated in the row (16 October): a
+    // right-to-left name beside «doc1 ·» would otherwise drag the handle out
+    // of order. The row is found through the same function that writes it.
+    final row = find.textContaining('doc1 · ${theirOwnWord('Mahnung.txt')}');
     expect(row, findsOneWidget, reason: 'the saved document is not listed under its session');
     expect(
       tester.widget<Text>(row.first).data,
@@ -137,6 +147,72 @@ void main() {
     expect(opened, number, reason: 'the press did not name the session');
     expect(which, 1, reason: 'the press did not name the document');
     expect(chat, isFalse, reason: 'a file from the computer was pressed as a chat');
+  });
+
+  testWidgets('a session born of its first document is listed under its own number',
+      (tester) async {
+    // **Rule 55 on the glass** — the owner, 16 October: a session appears in
+    // the list the moment its first document enters the preview, with the
+    // document under its name. Nothing is written to a model here and no
+    // session is begun: a file is opened, and that is the whole act.
+    await tester.binding.setSurfaceSize(const Size(1100, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final ground = Ground();
+    late final int number;
+    await tester.runAsync(() async {
+      final dir = Directory('${Directory.systemTemp.path}/zprivacy-055-glass-$pid');
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      addTearDown(() {
+        if (dir.existsSync()) dir.deleteSync(recursive: true);
+      });
+      await z.vaultLock();
+      await z.setDataDir(dir: dir.path);
+      await z.vaultCreateWithPassphrase(passphrase: _pass);
+      final session = await z.openSession(packId: 'de');
+      await z.importDocument(
+        session: session,
+        name: 'Mahnung.txt',
+        bytes: utf8.encode(_letter),
+        kind: DocumentKind.txt,
+      );
+      await z.closeSession(session: session);
+      await ground.refresh();
+      number = (await z.conversationOpen())!;
+    });
+
+    // **One name, two languages.** The core writes the name of a session
+    // nobody named, and the glass spells the same words in `nameForSession` —
+    // the send sheet reads it to tell an unnamed session from a named one. If
+    // either side changed its spelling this is where it is caught.
+    expect(ground.sessions, hasLength(1), reason: 'no session was born of the first document');
+    expect(
+      ground.sessions.first.name,
+      nameForSession(number),
+      reason: 'the core and the glass spell an unnamed session differently',
+    );
+    final held = ground.kept[number] ?? const [];
+    expect(held, hasLength(1), reason: 'the first document was not kept');
+    expect(held.first.handle, 'doc1');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SettingsScreen(ground: ground, onClose: () {}, room: SettingsRoom.sessions),
+      ),
+    );
+    await settle(tester);
+
+    expect(
+      find.text(nameForSession(number)),
+      findsOneWidget,
+      reason: 'a session that holds only documents is not in the list',
+    );
+    expect(
+      find.textContaining('doc1 · ${theirOwnWord('Mahnung.txt')}'),
+      findsOneWidget,
+      reason: 'its first document is not listed under it',
+    );
+    expect(find.byTooltip('Rename this document'), findsOneWidget);
   });
 
   testWidgets('a session holding nothing draws no row at all', (tester) async {
