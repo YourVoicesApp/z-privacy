@@ -384,10 +384,6 @@ pub(crate) fn remove_value_alias(entity: u32, value_id: u32, alias: String) -> A
     with_core(|core| {
         core.vault.with_open_mut(|vault| {
             let home = vault.entity(entity).and_then(|e| e.profile_id.clone());
-            vault.forget_the_blocks_of(
-                std::slice::from_ref(&alias),
-                &as_far_as_the_knowledge(home.as_deref()),
-            );
             let e = vault.entity_mut(entity).ok_or(ApiError::UnknownToken)?;
             let v = e
                 .values
@@ -399,6 +395,18 @@ pub(crate) fn remove_value_alias(entity: u32, value_id: u32, alias: String) -> A
             if v.aliases.len() == before {
                 return Err(ApiError::UnknownToken);
             }
+            // **After the act succeeded, and never before it** — `with_open_mut`
+            // does not roll the vault back when a closure returns `Err`, so an
+            // exemption written above the refusals would survive in memory and
+            // be sealed by the next successful write. It is a one-way mark
+            // (nothing takes an exemption back but teaching the word again),
+            // and an unknown identity reads as `home = None`, which is the
+            // **widest** reach of the three. A refused press would then have
+            // silently stopped protecting the word everywhere.
+            vault.forget_the_blocks_of(
+                std::slice::from_ref(&alias),
+                &as_far_as_the_knowledge(home.as_deref()),
+            );
             Ok(())
         })
     })

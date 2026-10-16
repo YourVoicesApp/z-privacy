@@ -469,3 +469,71 @@ fn nothing_short_of_teaching_it_again_undoes_a_forget() {
         "teaching the word again did not bring the protection back"
     );
 }
+
+/// **A refused press writes nothing** — the lead's finding on `623f9b7`, and
+/// the reason an exemption is the one mark in this file that must wait for the
+/// act to succeed.
+///
+/// `Vault::with_open_mut` does not roll the vault back when its closure
+/// returns `Err`: the change stays in memory and the next successful write
+/// seals it. An exemption written above a refusal is therefore permanent — and
+/// `remove_value_alias` wrote it first, where an unknown identity reads as
+/// `home = None`, which is `Everywhere`, the **widest** of the three reaches.
+/// So a press that was refused would have quietly stopped protecting the word
+/// in every profile, with no way back but teaching it again.
+#[test]
+fn a_refused_press_leaves_the_blocks_working() {
+    let _g = serial();
+    let _ground = Ground::fresh("refused");
+    let profile = create_profile("Client A".to_string(), None).expect("a");
+    protect_it_for(Some(&profile));
+    let held = blocks();
+    assert!(
+        protected_again(Some(&profile)),
+        "the control failed: the word was not coming back even before the refusal"
+    );
+
+    // A value whose own spelling is the word, and **`Manual`** — kept in the
+    // vault so its spellings and token stay stable, hunted by nobody. That is
+    // what makes this guard measure the block: with an `Always` value the word
+    // would be protected by the knowledge whatever happened to the block, and
+    // the guard would pass for the wrong reason. It did, on the first writing
+    // of it.
+    let who = create_entity(EntityKind::Client, "Akte".to_string(), Some(profile.clone()))
+        .expect("entity");
+    let value = set_value(who, None, Kind::Project, WORD.to_string(), Policy::Manual).expect("value");
+    assert!(
+        matches!(
+            remove_value_alias(who, value, WORD.to_string()),
+            Err(ApiError::UnknownToken)
+        ),
+        "the refusal this guard is about did not happen, so it measures nothing"
+    );
+    // An unknown identity, the other refusal — and the one that reads as the
+    // widest reach of the three, because an identity that is not there has no
+    // profile and «no profile» means «everywhere».
+    assert!(matches!(
+        remove_value_alias(9_999, value, WORD.to_string()),
+        Err(ApiError::UnknownToken)
+    ));
+
+    // A write that succeeds, which is what seals whatever the refusals left
+    // behind in memory.
+    teach_name("Sommer".to_string(), false, Some(profile.clone()), None).expect("teach a name");
+    assert_eq!(blocks(), held, "a refused press made or deleted a block");
+    assert!(
+        protected_again(Some(&profile)),
+        "a refused press exempted the word's block in this client, and nothing takes an exemption back"
+    );
+    assert!(
+        protected_again(None),
+        "a refused press about an identity that does not exist exempted the word everywhere"
+    );
+    // And after a restart, because the question is about what reached the file.
+    vault_lock().expect("lock");
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
+    assert!(
+        protected_again(Some(&profile)) && protected_again(None),
+        "the exemption a refused press wrote was sealed into the vault"
+    );
+}

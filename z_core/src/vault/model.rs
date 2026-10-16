@@ -296,31 +296,6 @@ impl UserLabelRule {
     }
 }
 
-/// **One word the person protected, kept for ever** — 089 rule 1, and the
-/// owner's own words of 15 October 2026: «كل كلمة يأخذ رمزاً… هي بلوك غير قابل
-/// للحذف من خزنة المستخدم… والبلوك قيمة ثابتة لا تمسح، يمكن أن تُعفى من العمل
-/// ولكن لا تختفي».
-///
-/// **Why the vault and not the conversation's file.** The first draft of 089
-/// put these in `conversation::Body`, where un-protecting deleted them and
-/// forgetting a conversation took them with it. The owner reversed both: a
-/// block outlives the conversation that made it, so it lives in the one place
-/// that outlives every conversation.
-///
-/// **Why the tokens are kept and not derived.** A token is
-/// `__Z_<namespace>_<KIND>_<tail>__`, where both halves come from the
-/// conversation's own 32 bytes (`Naming::of_session`) — so a value could be
-/// derived back into its name for as long as that key exists. Forgetting a
-/// conversation **destroys** that key (`Conversation::key`), and the owner's
-/// rule is that forgetting a conversation does not touch its blocks. A
-/// derivation is therefore not enough: what is kept here is the name the word
-/// was given, and the door back is a lookup that needs no key at all.
-///
-/// **One block per word, and the kind is the last one it was given.** The same
-/// word protected as a person in one document and as a company in another is
-/// one word and one block, carrying both tokens; the read-back compares the
-/// tail, which is a MAC over the value alone, so the kind in the middle of a
-/// name is never asked about on the way back (`returning::with_tail`).
 /// **How far an exemption reaches** — the three the owner's rules name, and no
 /// fourth is representable.
 ///
@@ -346,6 +321,31 @@ pub(crate) enum Exemption {
     Everywhere,
 }
 
+/// **One word the person protected, kept for ever** — 089 rule 1, and the
+/// owner's own words of 15 October 2026: «كل كلمة يأخذ رمزاً… هي بلوك غير قابل
+/// للحذف من خزنة المستخدم… والبلوك قيمة ثابتة لا تمسح، يمكن أن تُعفى من العمل
+/// ولكن لا تختفي».
+///
+/// **Why the vault and not the conversation's file.** The first draft of 089
+/// put these in `conversation::Body`, where un-protecting deleted them and
+/// forgetting a conversation took them with it. The owner reversed both: a
+/// block outlives the conversation that made it, so it lives in the one place
+/// that outlives every conversation.
+///
+/// **Why the tokens are kept and not derived.** A token is
+/// `__Z_<namespace>_<KIND>_<tail>__`, where both halves come from the
+/// conversation's own 32 bytes (`Naming::of_session`) — so a value could be
+/// derived back into its name for as long as that key exists. Forgetting a
+/// conversation **destroys** that key (`Conversation::key`), and the owner's
+/// rule is that forgetting a conversation does not touch its blocks. A
+/// derivation is therefore not enough: what is kept here is the name the word
+/// was given, and the door back is a lookup that needs no key at all.
+///
+/// **One block per word, and the kind is the last one it was given.** The same
+/// word protected as a person in one document and as a company in another is
+/// one word and one block, carrying both tokens; the read-back compares the
+/// tail, which is a MAC over the value alone, so the kind in the middle of a
+/// name is never asked about on the way back (`returning::with_tail`).
 #[derive(Debug, Clone)]
 pub(crate) struct Block {
     pub id: u32,

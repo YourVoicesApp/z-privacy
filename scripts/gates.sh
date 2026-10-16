@@ -586,6 +586,26 @@ else
   fail "G40 these doors take a word out of the vault and leave its blocks working:$G40_DRY"
 fi
 
+# **And the mark is written only once the act cannot be refused.** An exemption
+# is one-way (nothing takes one back but teaching the word again), and
+# `Vault::with_open_mut` does not roll the vault back when its closure returns
+# `Err` — the change stays in memory and the next successful write seals it. So
+# a door that can still refuse *after* it has exempted a word would make a
+# refused press permanent, and an unknown identity reads as «no profile», which
+# is the widest reach of the three. Found by the lead on `623f9b7` in
+# `remove_value_alias`, and read as an order here rather than trusted.
+G40_LATE=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3); act = 0; late = 0 }
+  here != "" && /forget_the_blocks_of\(/ { act = NR }
+  here != "" && act && /return Err\(|ok_or\(|ok_or_else\(/ { late = NR }
+  /^}/ { if (here != "" && act && late) printf "%s ", here; here = "" }
+' "$G40_OPS" | sed 's/ $//')
+if [ -z "$G40_LATE" ]; then
+  pass "G40 no door exempts a word and can then refuse the act, so a refused press writes nothing"
+else
+  fail "G40 these doors mark the blocks and can still refuse afterwards, which makes a refused press permanent: $G40_LATE"
+fi
+
 # **The way back asks nothing about work.** z-pdf still reads a forgotten word
 # out of a document protected before the act (rule 59's third sentence, and
 # rule 50), which is true only while the lookup is blind to the exemptions.
@@ -2223,7 +2243,8 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_forgotten_word_still_comes_back_from_an_old_document \
          every_door_that_forgets_a_word_exempts_its_blocks \
          nothing_short_of_teaching_it_again_undoes_a_forget \
-         a_document_that_arrives_with_the_vault_shut_has_no_session; do
+         a_document_that_arrives_with_the_vault_shut_has_no_session \
+         a_refused_press_leaves_the_blocks_working; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
