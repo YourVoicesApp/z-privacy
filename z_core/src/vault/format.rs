@@ -15,10 +15,21 @@ use crate::api::{ApiError, ApiResult, EntityKind, Kind, Policy};
 use crate::secret::Secret;
 use crate::vault::crypto::{self, Purpose, SecretKey};
 
-use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException, UserLabelRule, ValueRecord, Vault};
+use super::model::{
+    Entity, Exemption, Profile, ProviderLogin, StoredSettings, UserException, UserLabelRule, ValueRecord,
+    Vault,
+};
 
 /// Bumped when the shape below changes. Read from the file, never assumed.
 ///
+/// * 15 — **where a block is exempt from work**: one tagged list in place of
+///   model 14's list of conversation numbers, because «Forget» exempts a
+///   word's blocks in one profile or in every profile (rule 59, the owner on
+///   16 October 2026) and «In this conversation» is a third reach of the same
+///   state. **A one-way upgrade:** a model-14 file's numbers are read as
+///   conversation reaches, and the vault is written back at 15, which an
+///   older build refuses to open («written by a newer version»). Back the
+///   vault up before installing it.
 /// * 14 — **the blocks**: every word that has ever taken a token, with the
 ///   tokens it was given and the conversations it is exempt from (089 rule 1).
 ///   A vault from before it opens with none, which is every vault written
@@ -68,7 +79,7 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// | number | where | what it governs |
 /// |---|---|---|
 /// | `crypto::FORMAT_VERSION` = 2 | the vault file's envelope | Argon2 params, the wrapped master key, the nonce. **Unmoved by 064:** the envelope does not change, only what the body says. |
-/// | `MODEL_VERSION` = 14 | the vault body, below | identities, values, lists, settings, credentials, the session records (064) — and the blocks (089). |
+/// | `MODEL_VERSION` = 15 | the vault body, below | identities, values, lists, settings, credentials, the session records (064) — and the blocks with their exemptions (089, rule 59). |
 /// | `conversation::SESSION_FORMAT_VERSION` = 5 | each session's own file | one conversation's turns, and since 089 rule 9 the documents its preview holds. A different format in a different file; it must never borrow this number. |
 ///
 /// **This table said 12 and 1 while the constants said 13 and 4** — 089 rule 8,
@@ -77,9 +88,15 @@ use super::model::{Entity, Profile, ProviderLogin, StoredSettings, UserException
 /// table nobody has to update is a table that drifts. G35 now reads both
 /// against their constants, so the next number that moves cannot leave this
 /// row behind.
-pub(crate) const MODEL_VERSION: u16 = 14;
+pub(crate) const MODEL_VERSION: u16 = 15;
 
 // ---------------------------------------------------------------- stable codes
+
+/// The persistence codes of an [`Exemption`]'s reach (model 15). Stable, like
+/// every code in this file: a number written into a vault is a number for ever.
+const EXEMPT_CONVERSATION: u8 = 1;
+const EXEMPT_PROFILE: u8 = 2;
+const EXEMPT_EVERYWHERE: u8 = 3;
 
 /// The persistence code of a kind. `pub(crate)` since 068: the payload builder
 /// orders its per-kind tally by it, so two builds of one payload list the kinds
@@ -423,9 +440,21 @@ pub(crate) fn encode(vault: &Vault, master: &SecretKey) -> ApiResult<Vec<u8>> {
         for token in &block.tokens {
             put_str(&mut out, token);
         }
-        out.extend_from_slice(&(block.exempt_in.len() as u32).to_be_bytes());
-        for number in &block.exempt_in {
-            out.extend_from_slice(&number.to_be_bytes());
+        // Model 15 — the exemptions, each behind the tag of its reach, so a
+        // fourth reach cannot be added without a code nobody reads.
+        out.extend_from_slice(&(block.exempt.len() as u32).to_be_bytes());
+        for reach in &block.exempt {
+            match reach {
+                Exemption::Conversation(number) => {
+                    out.push(EXEMPT_CONVERSATION);
+                    out.extend_from_slice(&number.to_be_bytes());
+                }
+                Exemption::Profile(id) => {
+                    out.push(EXEMPT_PROFILE);
+                    put_str(&mut out, id);
+                }
+                Exemption::Everywhere => out.push(EXEMPT_EVERYWHERE),
+            }
         }
     }
     Ok(out)
@@ -789,16 +818,36 @@ pub(crate) fn decode(bytes: &[u8], master: &SecretKey, credentials_sealed: bool)
                 tokens.push(r.string()?);
             }
             let exempted = u32::from_be_bytes(r.array::<4>()?);
-            let mut exempt_in = Vec::new();
+            let mut exempt = Vec::new();
             for _ in 0..exempted {
-                exempt_in.push(u32::from_be_bytes(r.array::<4>()?));
+                // **A model-14 file wrote conversation numbers and no tags** —
+                // every exemption it could hold was «In this conversation»,
+                // because that was the only one the rules had. They are read
+                // as what they were, not dropped: a word un-protected in one
+                // conversation stays un-protected there after the upgrade.
+                if version >= 15 {
+                    exempt.push(match r.array::<1>()?[0] {
+                        EXEMPT_CONVERSATION => Exemption::Conversation(u32::from_be_bytes(r.array::<4>()?)),
+                        EXEMPT_PROFILE => Exemption::Profile(r.string()?),
+                        EXEMPT_EVERYWHERE => Exemption::Everywhere,
+                        other => {
+                            return Err(ApiError::PayloadRefused {
+                                reason: format!(
+                                    "this vault holds an exemption reach ({other}) this build does not know"
+                                ),
+                            })
+                        }
+                    });
+                } else {
+                    exempt.push(Exemption::Conversation(u32::from_be_bytes(r.array::<4>()?)));
+                }
             }
             blocks.push(crate::vault::model::Block {
                 id,
                 kind,
                 value,
                 tokens,
-                exempt_in,
+                exempt,
                 made_at,
             });
         }
@@ -1004,7 +1053,13 @@ mod tests {
             out.extend_from_slice(&1_760_000_000u64.to_be_bytes()); // made on
             out.extend_from_slice(&1u32.to_be_bytes()); // one token
             put_str(&mut out, "__Z_F610_PERSON_343AD503__");
-            out.extend_from_slice(&1u32.to_be_bytes()); // exempt in one
+            out.extend_from_slice(&1u32.to_be_bytes()); // exempt in one place
+            if version >= 15 {
+                // Model 15 tags the reach; model 14 wrote the number alone,
+                // and this is the fixture that proves the old shape still
+                // reads — one conversation, either way.
+                out.push(EXEMPT_CONVERSATION);
+            }
             out.extend_from_slice(&7u32.to_be_bytes()); // conversation 7
         }
         out
@@ -1239,7 +1294,15 @@ mod tests {
         assert!(before.remember_block(Kind::Custom, "Markus Feldmann", "__Z_A001_CUSTOM_41AC03BD__"));
         assert!(!before.remember_block(Kind::Custom, "Markus Feldmann", "__Z_A001_CUSTOM_41AC03BD__"),
             "the same token was written twice");
-        assert!(before.exempt_block_in("Markus Feldmann", 7));
+        assert!(before.exempt_block("Markus Feldmann", Exemption::Conversation(7)));
+        // **The three reaches, on one word** — model 15. «In this
+        // conversation» (rule 53), and the two «Forget» gives (rule 59).
+        assert!(before.exempt_block("DE89 3704 0044 0532 0130 00", Exemption::Profile("p-nordstern".to_string())));
+        assert!(before.exempt_block("DE89 3704 0044 0532 0130 00", Exemption::Everywhere));
+        assert!(
+            !before.exempt_block("DE89 3704 0044 0532 0130 00", Exemption::Everywhere),
+            "the same exemption was written twice"
+        );
 
         let after = dec(&enc(&before)).expect("decode");
         assert_eq!(after.blocks.len(), 2);
@@ -1254,7 +1317,24 @@ mod tests {
             ],
             "a token the word was given did not survive"
         );
-        assert_eq!(one.exempt_in, vec![7], "the exemption did not survive");
+        assert_eq!(
+            one.exempt,
+            vec![Exemption::Conversation(7)],
+            "the exemption did not survive"
+        );
+        let iban = after
+            .blocks
+            .iter()
+            .find(|b| b.is("DE89 3704 0044 0532 0130 00"))
+            .expect("the second block");
+        assert_eq!(
+            iban.exempt,
+            vec![Exemption::Profile("p-nordstern".to_string()), Exemption::Everywhere],
+            "a forgotten word's reaches did not survive the file"
+        );
+        // And each reach answers for itself, which is what the tag buys.
+        assert!(!iban.works_in(None, Some("p-anderer")), "«Forget everywhere» let a reading through");
+        assert!(!iban.works_in(None, None), "«Forget everywhere» let a reading with no client through");
         assert!(one.made_at > 0, "a block was written with no date");
         // And the lookup the door back is: a token, with no key and no
         // conversation, naming its word.
@@ -1265,9 +1345,20 @@ mod tests {
         assert_eq!(after.block_value_for("__Z_F610_PERSON_000000__"), None);
         // An exempted block is still a block, and it still answers on the way
         // back: an exemption is about work, not about memory.
-        assert!(!one.works_in(Some(7)));
-        assert!(one.works_in(Some(8)));
-        assert!(one.works_in(None));
+        assert!(!one.works_in(Some(7), None));
+        assert!(one.works_in(Some(8), None));
+        assert!(one.works_in(None, None));
+        // **A profile exemption is one client's and no other's** — rule 59
+        // beside rule 58: the block still crosses to every profile that has
+        // not forgotten it.
+        let mut third = sample();
+        assert!(third.remember_block(Kind::Person, "Anna Weber", "__Z_F610_PERSON_11112222__"));
+        assert!(third.exempt_block("Anna Weber", Exemption::Profile("p-a".to_string())));
+        let back = dec(&enc(&third)).expect("decode");
+        let anna = back.blocks.iter().find(|b| b.is("Anna Weber")).expect("the block");
+        assert!(!anna.works_in(None, Some("p-a")), "the client that forgot it still found it");
+        assert!(anna.works_in(None, Some("p-b")), "a block stopped crossing to a client that never forgot it");
+        assert!(anna.works_in(None, None), "a block stopped working where no client is selected");
     }
 
     #[test]

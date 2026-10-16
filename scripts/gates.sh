@@ -421,6 +421,184 @@ else
   fail "G38 the «New session» room takes a language nobody chose (rule 57a)"
 fi
 
+# ---------------------------------------------------------------- G39
+# **A block crosses from one client to the next, and says neither where nor
+# when** — rule 58, the owner's answer of 16 October 2026:
+#
+#   «البلوك يعبر من ملف عميل إلى ملف عميل. كلمة حُميت عند العميل A تُحمى عند
+#   العميل B، فالبلوك في خزنة المستخدم لا في ملف العميل. والجملة على الشاشة لا
+#   تذكر أين حُميت الكلمة أول مرة ولا متى.»
+#
+# The behaviour is measured by the guards; what is read here is the **condition**
+# he attached, because it is a promise about sentences and a sentence is added
+# by a line of code. So the enumeration is of the places a card could learn
+# where or when a word was first protected: the date on a block, the profile a
+# hint is filtered by, and the row the glass draws from `learnedAt`.
+#
+# The law it amends is not repealed: a **taught value** of one client is still
+# not loaded for another. That half lives in the values loop of `hints_for`,
+# which is why the check below reads the block loop alone.
+G39_MODEL=z_core/src/vault/model.rs
+
+# One question, asked in one place. A second reader of `exempt` would be a
+# second chance to ask it with the profile left out.
+G39_ASKERS=$(awk '
+  /^(    )?pub\(crate\) fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /works_in\(/ { if (here != "" && here != "works_in") print here }
+' z_core/src/vault/model.rs z_core/src/vault/mod.rs z_core/src/ops/mod.rs z_core/src/ops/vault.rs \
+  | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ "$G39_ASKERS" = "hints_for" ]; then
+  pass "G39 whether a block works is asked in one place, and it is the one that knows the profile"
+else
+  fail "G39 «does this block work here» is asked from «$G39_ASKERS» — expected hints_for alone (rule 58/59)"
+fi
+
+# And the block loop reads the profile **only** through that question: a second
+# mention of `active_profile` under it would be a block scoped to a client.
+G39_SCOPED=$(awk '
+  /The blocks, after the values/ { inside = 1 }
+  inside && /active_profile/ { print NR ": " $0 }
+  inside && /^        out.sort_by_key/ { inside = 0 }
+' "$G39_MODEL" | wc -l | tr -d ' ')
+if [ "$G39_SCOPED" = "1" ]; then
+  pass "G39 a block is not filtered by a client anywhere but the one exemption question"
+else
+  fail "G39 the block loop reads the active profile $G39_SCOPED times — expected once, inside works_in (rule 58)"
+fi
+
+# **No date.** A block carries `made_at`, and it may reach the file and nothing
+# else: a card that said «protected on 3 October» would be the condition broken
+# in the one place a protection explains itself.
+G39_WHEN=$(grep -rn "made_at" z_core/src --include='*.rs' 2>/dev/null \
+           | cut -d: -f1 | sort -u | grep -v 'vault/model.rs\|vault/format.rs' | tr '\n' ' ' | sed 's/ $//')
+if [ -z "$G39_WHEN" ]; then
+  pass "G39 when a block was made reaches the vault file and no sentence"
+else
+  fail "G39 a block's date is read outside the vault file, in: $G39_WHEN (rule 58's condition)"
+fi
+
+# And the one date the card *can* carry is a taught value's own, read in that
+# order: the clause is written only after the value is found.
+if awk '
+  /^pub\(crate\) fn explain\(/ { inside = 1 }
+  inside && /known\.as_ref\(\)\.map\(\|k\| k\.learned_at\)/ { if (!asked) asked = NR }
+  inside && /day_of\(/ { if (!said) said = NR }
+  inside && /^}/ { inside = 0 }
+  END { exit(asked && said && asked < said ? 0 : 1) }
+' z_core/src/ops/mod.rs; then
+  pass "G39 the Why card says «kept since» only for knowledge it found first, never for a block"
+else
+  fail "G39 the Why card can write a date without having found the value that has one (rule 58)"
+fi
+
+# The glass draws that row only when there is a date, and a block's is zero.
+if awk '
+  /learnedAt > BigInt.zero/ { asked = NR }
+  /Taught on/ { said = NR }
+  END { exit(asked && said && asked < said ? 0 : 1) }
+' apps/flutter_app/lib/widgets/why_sheet.dart; then
+  pass "G39 the glass draws «Taught on» only where there is something to draw"
+else
+  fail "G39 the Why sheet can draw a date row for a word nobody taught (rule 58)"
+fi
+
+# **No where.** A block's claimant is a stand-in the core writes where an
+# identity would stand; it reaches the glass as a count and never as a word.
+G39_HANDLE=$(grep -Rn "a word you protected" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null | tr '\n' ' ')
+if [ -z "$G39_HANDLE" ]; then
+  pass "G39 a block's stand-in name is in no sentence the glass draws"
+else
+  fail "G39 the glass writes a block's claimant into a sentence: $G39_HANDLE"
+fi
+
+# ---------------------------------------------------------------- G40
+# **«Forget» exempts a word's blocks and deletes none of them** — rule 59, the
+# owner, 16 October 2026: «Forget يُعفي بلوكات تلك الكلمة من العمل ولا يمسحها».
+#
+# Three things source can be read for. **One hand** writes an exemption, so a
+# door cannot invent a fourth reach; **every door that takes a word out of the
+# vault's knowledge** calls it, enumerated from what the doors *do* rather than
+# from the four this round remembered; and **nothing takes an exemption back**,
+# which is the half that would quietly undo the person's act.
+G40_OPS=z_core/src/ops/vault.rs
+
+G40_WRITERS=$(awk '
+  /^    pub\(crate\) fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /\.exempt\.push\(/ { if (here != "") print here }
+' "$G39_MODEL" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ "$G40_WRITERS" = "exempt_block" ]; then
+  pass "G40 one function writes an exemption, for «in this conversation» and for «Forget» alike"
+else
+  fail "G40 an exemption is written by: «$G40_WRITERS» — expected «exempt_block» (rule 59)"
+fi
+
+# **Nothing takes one back.** Every way a `Vec` loses an element, named — the
+# same reading G35 makes of the blocks themselves, because an exemption the
+# person asked for is as permanent as the block it sits on until they teach the
+# word again.
+G40_UNDONE=$(grep -RnE '\.exempt\s*\.\s*(remove|retain|clear|pop|drain|truncate|swap_remove|dedup|split_off)|\.exempt\s*=' \
+               z_core/src --include='*.rs' 2>/dev/null || true)
+if [ -z "$G40_UNDONE" ]; then
+  pass "G40 nothing in the core takes an exemption back, so a rescan cannot undo a «Forget»"
+else
+  fail "G40 an exemption is taken away, and the person's «Forget» would be undone by it:"
+  printf '%s\n' "$G40_UNDONE" | sed 's/^/        /'
+fi
+
+# **Every door, enumerated from what it does.** A function that removes a value,
+# a spelling or a taught name is a «Forget» of a word, whatever it is called —
+# so each must reach the one hand, itself or through another door that does.
+# `forget_user_name` is the named exception and says why: it presses two of the
+# others.
+G40_DRY=""
+for door in $(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /values\.retain\(|taught_names\.retain\(|aliases\.retain\(/ { if (here != "") print here }
+' "$G40_OPS" | sort -u); do
+  # `forget_user_name` is the one named exception: it presses two of the other
+  # doors (`forget_name` for the dictionary row, `delete_value` for the
+  # «always» twin), and each of those exempts. Every other door answers for
+  # itself — and never with its own signature line, which is why the wanted
+  # call is read with the door's own name excluded.
+  # The bracket form, not a backslash: `awk -v` reads escape sequences, so
+  # `\(` would arrive as a bare `(` and the regexp would not compile.
+  if [ "$door" = "forget_user_name" ]; then
+    want='forget_name[(]|delete_value[(]'
+  else
+    want='forget_the_blocks_of[(]'
+  fi
+  if ! awk -v door="$door" -v want="$want" '
+    $0 ~ "^(pub\\(crate\\) )?fn " door "\\(" { inside = 1; next }
+    inside && $0 ~ want { found = 1 }
+    inside && /^}/ { inside = 0 }
+    END { exit(found ? 0 : 1) }
+  ' "$G40_OPS"; then
+    G40_DRY="$G40_DRY $door"
+  fi
+done
+G40_DOORS=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /values\.retain\(|taught_names\.retain\(|aliases\.retain\(/ { if (here != "") print here }
+' "$G40_OPS" | sort -u | tr '\n' ' ' | sed 's/ $//')
+if [ -z "$G40_DRY" ]; then
+  pass "G40 every door that forgets a word exempts its blocks: $G40_DOORS"
+else
+  fail "G40 these doors take a word out of the vault and leave its blocks working:$G40_DRY"
+fi
+
+# **The way back asks nothing about work.** z-pdf still reads a forgotten word
+# out of a document protected before the act (rule 59's third sentence, and
+# rule 50), which is true only while the lookup is blind to the exemptions.
+if awk '
+  /pub\(crate\) fn block_value_for\(/ { inside = 1 }
+  inside && /exempt|works_in/ { asked = 1 }
+  inside && /^    }/ { inside = 0 }
+  END { exit(asked ? 1 : 0) }
+' "$G39_MODEL"; then
+  pass "G40 the door back looks a token up without asking whether the block still works"
+else
+  fail "G40 the way back consults the exemptions, so a forgotten word could not be read back (rule 59)"
+fi
 # ---------------------------------------------------------------- G37
 # **The session is born at its first document, and nowhere else** — rule 55,
 # the owner's answer of 16 October 2026: «المحادثة لا علاقة بالوثائق… ولكن عند
@@ -711,12 +889,12 @@ fi
 # itself — it is unmeasured, which for this rule is the same thing.
 G35_WRITERS=$(awk '
   /^    pub\(crate\) fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
-  /\.blocks\.push\(|\.exempt_in\.push\(/ { print here }
+  /\.blocks\.push\(|\.exempt\.push\(/ { print here }
 ' "$VAULT/model.rs" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ "$G35_WRITERS" = "exempt_block_in remember_block" ]; then
-  pass "G35 the block table is written by remember_block and exempt_block_in, and by nothing else"
+if [ "$G35_WRITERS" = "exempt_block remember_block" ]; then
+  pass "G35 the block table is written by remember_block and exempt_block, and by nothing else"
 else
-  fail "G35 the block table is written by: $G35_WRITERS — expected «exempt_block_in remember_block»"
+  fail "G35 the block table is written by: $G35_WRITERS — expected «exempt_block remember_block»"
 fi
 
 # **Every door that gives a word a token writes the block.** The three
@@ -2037,7 +2215,15 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_document_is_in_one_session_at_a_time \
          a_saved_document_keeps_its_decisions \
          a_format_four_file_holds_no_saved_document \
-         a_block_keeps_its_tokens_and_its_exemptions; do
+         a_block_keeps_its_tokens_and_its_exemptions \
+         a_block_crosses_from_one_client_to_another \
+         a_blocks_card_says_no_where_and_no_when \
+         forget_everywhere_exempts_every_profile_and_keeps_the_block \
+         forget_from_this_profile_exempts_that_client_only \
+         a_forgotten_word_still_comes_back_from_an_old_document \
+         every_door_that_forgets_a_word_exempts_its_blocks \
+         nothing_short_of_teaching_it_again_undoes_a_forget \
+         a_document_that_arrives_with_the_vault_shut_has_no_session; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

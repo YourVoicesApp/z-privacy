@@ -41,6 +41,27 @@ fn scan_under(profile: &str, doc: &str) -> Vec<(Kind, String)> {
         .collect()
 }
 
+/// The same reading, with the two facts a profile law needs: who claimed the
+/// text, and what the finding said about itself. A rule of the person's own
+/// leaves its id in the reason, so «the rule fired» and «the block fired» are
+/// told apart by reading rather than by assuming.
+fn claimed_under(profile: &str, doc: &str) -> Vec<(Source, String, String)> {
+    let session = open_session(Some(profile.to_string()), "de".to_string()).expect("session");
+    import_text(session, doc.to_string()).expect("import");
+    scan(session).expect("scan");
+    list_findings(session)
+        .expect("findings")
+        .into_iter()
+        .map(|f| {
+            (
+                f.source,
+                doc[f.span.start as usize..f.span.end as usize].to_string(),
+                f.reason,
+            )
+        })
+        .collect()
+}
+
 /// His first closing test, word for word:
 ///   Profile A: active sets = de + en
 ///   "Kundennummer: 4711"      → Customer Number
@@ -77,25 +98,18 @@ fn a_profile_runs_two_languages_in_one_scan() {
 
 /// His second closing test: teach a rule, restart, unlock, scan — and it is
 /// scoped to the profile it was taught for.
+///
+/// **Amended 16 October by rule 58**, which answered the question this guard
+/// was parked on. A **rule** taught for one client still does not reach
+/// another: no rule of the person's fires in B, which is what the rule's own
+/// scope means and what this guard is for. What does reach B is the **block**
+/// the word became when the rule protected it in A — the word is in his
+/// vault, and a block carries no client (rule 58).
+///
+/// Measured before the flip: `scan_under(&b, doc)` returned
+/// `[(CustomerNo, "7781-B")]`, and the finding behind it was the block's, with
+/// no rule of his own in its reason.
 #[test]
-/// **PARKED 16 October, waiting on the owner — does a block cross a client
-/// profile?** This guard holds one of the two rules in the collision and
-/// cannot pass while the other one stands.
-///
-/// Rule two (079, measured here) says a value taught in one profile is not
-/// loaded in another, so Z never tells client B that it knows client A's
-/// people. 089 rule 1 (15 October) says every word that took a token is a
-/// block in **the user's vault** and is put back wherever it stands —
-/// and a block carries no profile. Rule 55 (16 October) gave every
-/// document in the preview a session, which is what a block is written
-/// from, so the two rules now meet on every reading.
-///
-/// Measured: a value protected while working for one client came back
-/// protected in another client's document. The question is with the owner;
-/// nothing is built either way until he answers, and this `ignore` is how
-/// the tree says so out loud instead of a guard quietly asserting the
-/// behaviour nobody chose.
-#[ignore = "waits on the owner: does a block cross a client profile? (16 Oct)"]
 fn a_taught_rule_survives_a_restart_and_stays_in_its_profile() {
     let _guard = serial();
     let dir = fresh("taught");
@@ -119,10 +133,21 @@ fn a_taught_rule_survives_a_restart_and_stays_in_its_profile() {
         "the taught rule did not survive the restart: {in_a:?}"
     );
 
-    let in_b = scan_under(&b, doc);
+    // In client B the word comes back, and the whole question is **what** put
+    // it back. A rule of the person's own writes its own id into the finding it
+    // makes («you:u1»); the block's finding names the block and nothing else.
+    let in_b = claimed_under(&b, doc);
+    let by_the_block: Vec<&(Source, String, String)> =
+        in_b.iter().filter(|(_, text, _)| text == "7781-B").collect();
     assert!(
-        !in_b.iter().any(|(_, text)| text == "7781-B"),
-        "a rule taught for one client followed the user into another: {in_b:?}"
+        !by_the_block.is_empty(),
+        "the word the person protected in A did not come back in B (rule 58): {in_b:?}"
+    );
+    assert!(
+        by_the_block.iter().all(|(source, _, reason)| {
+            *source == Source::Vault && !reason.contains("you:u")
+        }),
+        "a rule taught for one client fired in another's document: {by_the_block:?}"
     );
 }
 
@@ -151,17 +176,23 @@ fn a_rule_taught_everywhere_reaches_every_profile() {
 /// It must be explainable, and forgettable — the ninth question applies to a
 /// rule exactly as it applies to a value.
 #[test]
-/// **PARKED 16 October — which reason leads the Why card.** A finding
-/// claimed by a block and by a taught rule at once now reads «your vault
-/// knows this value» first, and the rule's own word — the label it was
-/// found after — survives only as a source id in the «agreed as well»
-/// list, so the card no longer names it.
+/// **Which reason leads the Why card — ruled 16 October.** A finding claimed
+/// by a block *and* by a rule of the person's own now leads with the rule.
 ///
-/// Both facts are true and the card has room for both. Which one leads,
-/// and whether the folded layer's own sentence is kept instead of its
-/// bare id, is a wording ruling rather than a bug to pick for him —
-/// reported with the measurement, built on his word.
-#[ignore = "waits on a ruling: which reason leads the Why card (16 Oct)"]
+/// The reason is the one thing a card is for: **a block repeats a decision and
+/// never makes one.** The person taught «Mandantenkennung»; the block exists
+/// only because that rule once protected this word, so telling them «your
+/// vault knows this value» first answers a question they did not ask and
+/// hides the one thing they can still change — a rule can be forgotten, a
+/// block cannot (rule 50). The block's own sentence stays, under it.
+///
+/// It is within rule 58's condition: neither sentence says where or when the
+/// word was first protected.
+///
+/// Measured before the ruling: «2 rules agree · your vault knows this value ·
+/// you:u1 agreed as well · you:u1 agreed as well» — the rule's own word lost,
+/// its id said twice, and `applies` reporting the block's scope instead of the
+/// rule's.
 fn a_taught_rule_explains_itself_and_can_be_forgotten() {
     let _guard = serial();
     fresh("explain");
@@ -185,6 +216,14 @@ fn a_taught_rule_explains_itself_and_can_be_forgotten() {
     assert!(
         because.contains("Mandantenkennung"),
         "the Why sheet does not name the word it was found after: {because}"
+    );
+    // **And the word they typed is isolated** — the owner's own defect of 16
+    // October, one sentence further along: a label in another script drags the
+    // marks around it, so every word of theirs that goes into a sentence is
+    // wrapped where the sentence is written.
+    assert!(
+        because.contains("\u{2068}Mandantenkennung\u{2069}"),
+        "the person's own word went into the sentence unisolated: {because}"
     );
     // The card must agree with its own headline. «Decided by: Z Privacy, on
     // its own» under «You taught Z Privacy this rule» is one screen calling

@@ -89,24 +89,20 @@ fn text_of(row: &TaughtValueRow) -> String {
 }
 
 #[test]
-/// **PARKED 16 October, waiting on the owner — does a block cross a client
-/// profile?** This guard holds one of the two rules in the collision and
-/// cannot pass while the other one stands.
+/// **Knowledge is scoped to a profile; a block is not** — amended 16 October
+/// by the owner's rule 58, which answered the question this guard was parked
+/// on.
 ///
-/// Rule two (079, measured here) says a value taught in one profile is not
-/// loaded in another, so Z never tells client B that it knows client A's
-/// people. 089 rule 1 (15 October) says every word that took a token is a
-/// block in **the user's vault** and is put back wherever it stands —
-/// and a block carries no profile. Rule 55 (16 October) gave every
-/// document in the preview a session, which is what a block is written
-/// from, so the two rules now meet on every reading.
+/// The value below is taught **and protected** in one act (`Scope::Profile`),
+/// so the word took a token and is a block from that moment. Client B
+/// therefore reads it back — rule 58 — and what B is not told is anything
+/// about client A: the finding names no identity, and A's exception, A's
+/// label rules and A's lists stay A's. Both halves are measured here, in the
+/// order a reader needs them.
 ///
-/// Measured: a value protected while working for one client came back
-/// protected in another client's document. The question is with the owner;
-/// nothing is built either way until he answers, and this `ignore` is how
-/// the tree says so out loud instead of a guard quietly asserting the
-/// behaviour nobody chose.
-#[ignore = "waits on the owner: does a block cross a client profile? (16 Oct)"]
+/// Measured before the flip: B's finding was
+/// `entities: ["a word you protected"]`, which is the block naming itself and
+/// not A's knowledge leaking.
 fn values_and_exceptions_are_vault_knowledge_with_profile_scope() {
     let _guard = serial();
     fresh("journey");
@@ -133,10 +129,25 @@ fn values_and_exceptions_are_vault_knowledge_with_profile_scope() {
     close_session(inside).expect("close");
 
     let (outside, outside_snap) = scan_text(Some(profile_b.clone()), "Nordstern Consulting GmbH meldet sich.");
+    // Rule 58: the word is his, and it comes back for client B too.
     assert!(
-        !outside_snap.findings.iter().any(|f| f.source == Source::Vault),
-        "profile A's taught value leaked into profile B: {:?}",
+        outside_snap.findings.iter().any(|f| f.source == Source::Vault),
+        "a word the person protected did not cross to client B (rule 58): {:?}",
         outside_snap.findings
+    );
+    // And client A's knowledge did not come with it: a block names nobody,
+    // while a taught value names the identity it was taught under.
+    const A_BLOCK: &str = "a word you protected";
+    let leaked: Vec<String> = outside_snap
+        .findings
+        .iter()
+        .filter(|f| f.source == Source::Vault)
+        .flat_map(|f| f.entities.clone())
+        .filter(|who| who != A_BLOCK)
+        .collect();
+    assert!(
+        leaked.is_empty(),
+        "profile A's own knowledge leaked into profile B: {leaked:?}"
     );
     close_session(outside).expect("close");
 

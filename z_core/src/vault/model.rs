@@ -321,6 +321,31 @@ impl UserLabelRule {
 /// one word and one block, carrying both tokens; the read-back compares the
 /// tail, which is a MAC over the value alone, so the kind in the middle of a
 /// name is never asked about on the way back (`returning::with_tail`).
+/// **How far an exemption reaches** — the three the owner's rules name, and no
+/// fourth is representable.
+///
+/// Rule 53 gives «un-protect» two reaches, «Here» and «In this conversation»,
+/// and only the second is a state of a block: «Here» is one place in one
+/// document and the bench holds it. Rule 59 (16 October) gives «Forget» the
+/// other two: a word forgotten in one client's profile, and a word forgotten
+/// everywhere.
+///
+/// **Why one list and not three fields.** A block that is exempt carries the
+/// reach of the act that exempted it; three independent flags would let a
+/// build say «exempt everywhere **and** not exempt» and would need every
+/// reader to ask three questions in the right order. One list is folded once,
+/// by [`Block::works_in`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum Exemption {
+    /// «In this conversation» — the second un-protect option (rule 53).
+    Conversation(u32),
+    /// «Forget from this profile» — rule 59, and the profile is the reach of
+    /// the knowledge that was forgotten, never the session's own.
+    Profile(String),
+    /// «Forget everywhere» — rule 59.
+    Everywhere,
+}
+
 #[derive(Debug, Clone)]
 pub(crate) struct Block {
     pub id: u32,
@@ -332,11 +357,10 @@ pub(crate) struct Block {
     /// One per conversation that protected it, plus any random name a bench
     /// minted before its conversation was born and never renamed.
     pub tokens: Vec<String>,
-    /// **The conversations this block is exempt from working in** — «In this
-    /// conversation», the second of the two un-protect options (rule 6). An
-    /// exemption is a state of a block and never the absence of one, so this
-    /// list is the whole of what «un-protect» writes down.
-    pub exempt_in: Vec<u32>,
+    /// **Where this block is exempt from working** — and an exemption is a
+    /// state of a block and never the absence of one (rule 50), so this list
+    /// is the whole of what «un-protect» and «Forget» write down.
+    pub exempt: Vec<Exemption>,
     pub made_at: u64,
 }
 
@@ -346,13 +370,18 @@ impl Block {
         nfc(self.value.expose()) == nfc(text)
     }
 
-    /// Does this block work in that conversation? `None` is a bench with no
-    /// conversation open, where nothing has been exempted.
-    pub(crate) fn works_in(&self, conversation: Option<u32>) -> bool {
-        match conversation {
-            Some(number) => !self.exempt_in.contains(&number),
-            None => true,
-        }
+    /// Does this block work here? One fold over the one list, so a reach
+    /// cannot be asked about in one place and forgotten in another.
+    ///
+    /// `conversation` is `None` on a bench with no session open, and `profile`
+    /// is `None` with no client selected — in both, a reach that names one
+    /// cannot be the reach of this reading.
+    pub(crate) fn works_in(&self, conversation: Option<u32>, profile: Option<&str>) -> bool {
+        !self.exempt.iter().any(|reach| match reach {
+            Exemption::Everywhere => true,
+            Exemption::Profile(theirs) => profile == Some(theirs.as_str()),
+            Exemption::Conversation(number) => conversation == Some(*number),
+        })
     }
 }
 
@@ -512,27 +541,49 @@ impl Vault {
             kind,
             value: Secret::new(value.to_string()),
             tokens: vec![token.to_string()],
-            exempt_in: Vec::new(),
+            exempt: Vec::new(),
             made_at: now_seconds(),
         });
         true
     }
 
-    /// **Exempt this word's block from working in one conversation** — «In this
-    /// conversation» (rule 6). It deletes nothing.
+    /// **Exempt this word's block from work, as far as the act reached** — the
+    /// one writer of an exemption, for «In this conversation» (rule 53) and
+    /// for «Forget» (rule 59) alike. It deletes nothing: that is rule 50.
     ///
     /// `false` when there is no block for the word, which is the ordinary case
     /// for a document protected before this round: there is nothing to exempt,
     /// and the protection has already been taken off the bench by the caller.
-    pub(crate) fn exempt_block_in(&mut self, value: &str, conversation: u32) -> bool {
+    pub(crate) fn exempt_block(&mut self, value: &str, reach: Exemption) -> bool {
         let Some(block) = self.blocks.iter_mut().find(|b| b.is(value)) else {
             return false;
         };
-        if block.exempt_in.contains(&conversation) {
+        if block.exempt.contains(&reach) {
             return false;
         }
-        block.exempt_in.push(conversation);
+        block.exempt.push(reach);
         true
+    }
+
+    /// **Forgetting a word exempts its blocks and deletes none of them** —
+    /// rule 59, the owner on 16 October 2026: «Forget» يُعفي بلوكات تلك الكلمة
+    /// من العمل ولا يمسحها.
+    ///
+    /// This is the one hand every door that takes a word out of the vault's
+    /// knowledge calls, and the gate reads the enumeration of those doors
+    /// (G40) rather than trusting that this round found them all. A word with
+    /// no block is not an error: nothing was ever protected to exempt.
+    ///
+    /// Every spelling of the forgotten value is asked about, because a value
+    /// and each of its aliases is its own word and took its own token.
+    pub(crate) fn forget_the_blocks_of(&mut self, spellings: &[String], reach: &Exemption) -> u32 {
+        let mut exempted = 0u32;
+        for spelling in spellings {
+            if self.exempt_block(spelling, reach.clone()) {
+                exempted = exempted.saturating_add(1);
+            }
+        }
+        exempted
     }
 
     /// The word one token stands for, from the blocks alone — **no key, no
@@ -646,9 +697,18 @@ impl Vault {
             if word.trim().is_empty() || already.contains(&nfc(word)) {
                 continue;
             }
-            // Exempted «in this conversation»: it is not found here, and it is
-            // still a block. Rule 6.
-            if !block.works_in(in_conversation) {
+            // Exempted — «in this conversation» (rule 53), or by a «Forget»
+            // that reached this profile or every profile (rule 59). It is not
+            // found here, and it is still a block: rule 50.
+            //
+            // **And nothing else here asks about the profile.** A block
+            // crosses from one client to the next, because it lives in the
+            // person's vault and not in the profile — rule 58, the owner on 16
+            // October. The loop above is where a profile still decides: a
+            // taught value of one client is not loaded for another, and that
+            // law is untouched. The two are not in contradiction; they are two
+            // different things kept in one file.
+            if !block.works_in(in_conversation, active_profile) {
                 continue;
             }
             out.push(VaultHint {
