@@ -110,13 +110,16 @@ Map<String, int> footerTally(PayloadView payload, String Function(Kind) nameOf) 
 /// test names it as the fifth case so that the two rules stand side by side
 /// rather than looking like a contradiction.
 ///
-/// **The chat's door does not come through here**, and that is written down
-/// rather than left to be noticed: `home.dart` has no preview side at all, so
-/// there is nothing for this function to open for it. The owner is being asked
-/// whether that press splits in two — type, see what will leave, then choose
-/// who answers. Until he rules, the chat opens the sheet as it always did and
-/// `the_chat_door_shows_what_will_leave_test.dart` is parked with his question
-/// as its reason.
+/// **The chat has a hand of its own** — [theWayToTheDoorsFromTheChat], since
+/// the owner's rule 60-أ. It is not this one because there is no side to open
+/// there: the chat's outgoing text stands in a band above the composer, and
+/// the door is drawn inside that band.
+///
+/// What stood here until then said «the chat opens the sheet as it always
+/// did», which was true of the code and false of the glass: the sheet it opens
+/// is this one, and this one lost its text page, so **deleting that page took
+/// the «see what will leave» step out of the chat** — a breach standing in
+/// `2fb90b3`, not a thing deferred by it.
 Future<bool?> theWayToTheDoors(
   BuildContext context, {
   required Ground ground,
@@ -130,6 +133,37 @@ Future<bool?> theWayToTheDoors(
   // The config write is a round trip to the core, so the context this was
   // called with may be gone by now.
   if (!context.mounted) return null;
+  return showDialog<bool>(
+    context: context,
+    builder: (_) =>
+        SendSheet(bench: bench, ground: ground, onSettings: onSettings),
+  );
+}
+
+/// **The chat's way into the doors — rule 60-أ, the owner, 17 October.**
+///
+/// The sibling of [theWayToTheDoors], holding the same law: nobody reaches the
+/// three exits without the outgoing text on the glass. What differs is how the
+/// text is kept there, and the difference is the shape of the two screens.
+///
+/// The work surface has a side that a press can close, so its hand opens it.
+/// The chat has no side: «Ask the AI» protects the line and draws it in a band
+/// above the composer, and **this door is drawn inside that band**. So there
+/// is no state in which the exits are reachable and the text is not — the law
+/// is held by the shape rather than by a flag somebody has to pass correctly,
+/// which is this house's own rule about making the wrong state
+/// unrepresentable. G42 reads that out of the source: every `SendSheet` in the
+/// app is built by one of these two hands, and the chat's hand is called from
+/// inside the widget that draws the text.
+///
+/// It opens nothing else and decides nothing else. A `Cancel` pops the sheet
+/// and leaves the band standing with the question still in the box.
+Future<bool?> theWayToTheDoorsFromTheChat(
+  BuildContext context, {
+  required Ground ground,
+  required Workbench bench,
+  VoidCallback? onSettings,
+}) {
   return showDialog<bool>(
     context: context,
     builder: (_) =>

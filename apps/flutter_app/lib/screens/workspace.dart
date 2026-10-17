@@ -2111,7 +2111,7 @@ class _SafeFooter extends StatelessWidget {
         children: [
           Text(
             open == 0
-                ? 'This is exactly what the AI will receive. ${payload.protectedCount} values were replaced.'
+                ? exactlyWhatWouldLeave(payload.protectedCount)
                 : open == 1
                 ? 'One suggestion is still open. Until you answer it, it stands here as written — '
                       'real text on this side.'

@@ -32,6 +32,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -46,6 +47,10 @@ const _doc = 'Kunde: Nordstern Consulting GmbH\n'
 const _safePane = ValueKey<String>('workspace-safe-pane');
 const _safeClose = ValueKey<String>('workspace-safe-close');
 const _safeRail = ValueKey<String>('workspace-safe-rail');
+
+/// The chat's own band — rule 60-أ. Keyed, because this file asks whether the
+/// text is **in it** rather than anywhere on the page.
+const _whatWouldLeave = ValueKey<String>('home-what-would-leave');
 
 /// A press writes a setting through Rust and refreshes everything after it, so
 /// a press needs real moments and not pumps — the number comes from
@@ -190,55 +195,115 @@ void main() {
     expect(ground.config!.safeColumnOpen, isTrue, reason: 'the hand closed the side it was asked to open');
   });
 
-  // **Parked on the owner's word, and the park is in the test's own name** so
-  // that it is read out loud in every run of this suite rather than sitting
-  // silently green. `testWidgets` takes no reason — only a `bool` — so the
-  // reason is written here and in the name: `#[ignore = "…"]`'s nearest
-  // equivalent on this side.
-  testWidgets(
-    'the chat door shows what will leave — PARKED: the owner has not ruled '
-    'whether the chat press splits in two',
-    (tester) async {
-      // **Parked, with the owner's question as its reason.** Everything below
-      // is what this guard will measure the moment he rules; nothing in it is
-      // a guess about which way he will rule.
-      //
-      // The chat has no preview side, so `theWayToTheDoors` has nothing to
-      // open for it, and the press that asks is one act: the line is scanned
-      // and the sheet opens in the same breath (`home.dart` `_ask`). Until
-      // rule 60 the sheet's own first page was where the chat's «see what will
-      // leave» step happened — the file's own head comment says so — so the
-      // deletion takes that step out of the chat and leaves nothing in its
-      // place. The recommendation on the lead's desk is that the press splits
-      // in two: ask, see the outgoing text in a band of the chat's own, and
-      // press «Choose who answers» from inside it.
-      await tester.binding.setSurfaceSize(const Size(1280, 720));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      final (ground, chat) = await _open(tester, 'chat-door');
+  // **Rule 60-أ — the owner's answer, 17 October.** The chat's press splits in
+  // two: «Ask the AI» protects the text and draws it in a band above the
+  // composer, and the band carries the door to the three exits. So the chat
+  // gets the step rule 60 took out of it — «see what will leave» — and keeps
+  // it in the one place a chat has room for it.
+  //
+  // This guard was parked with his question as its name. What it measures now
+  // is every half of his ruling: no sheet before the band, the outgoing text
+  // on the glass and read as characters, the door inside the band, «Cancel»
+  // landing back on the band, and the band refusing to describe a text the
+  // person has since changed.
+  testWidgets('the chat door shows what will leave — rule 60-أ', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (ground, chat) = await _open(tester, 'chat-door');
 
-      await tester.pumpWidget(MaterialApp(
-        home: HomeScreen(
-          ground: ground,
-          chat: chat,
-          version: 'z_core 0.1.0',
-          onImport: () {},
-          onReadBack: () {},
-          onType: (_) {},
-          onAsk: (_) async {},
-          onVault: () {},
-          onSettings: () {},
-        ),
-      ));
-      await settle(tester);
+    await tester.pumpWidget(MaterialApp(
+      home: HomeScreen(
+        ground: ground,
+        chat: chat,
+        version: 'z_core 0.1.0',
+        onImport: () {},
+        onReadBack: () {},
+        onType: (_) {},
+        // The shell's own `onAsk` reads the line into a bench and scans it;
+        // this bench is already that bench, scanned and answered, so the hand
+        // the screen calls has nothing left to do. What is measured here is
+        // what the **screen** does after the asking, which is the half of the
+        // act rule 60-أ is about.
+        onAsk: (_) async {},
+        onVault: () {},
+        onSettings: () {},
+      ),
+    ));
+    await settle(tester, rounds: 3);
+    expect(chat.payload, isNotNull, reason: 'nothing was built, so there is nothing to see');
+    expect(chat.payload!.openSuggestions, 0, reason: 'a question is standing, and this is not that test');
 
-      // The text that would leave, on the chat's own glass, before any door is
-      // pressed — and read as characters, not as chips.
-      expect(
-        find.byType(SafeText),
-        findsOneWidget,
-        reason: 'the chat sends with no copy of the outgoing text anywhere on it',
-      );
-    },
-    skip: true,
-  );
+    // Nothing is claimed before the press: a band that stood there on its own
+    // would be describing a text nobody has asked about.
+    expect(find.byType(SafeText), findsNothing, reason: 'the band is drawn before anything was asked');
+
+    // The text the bench was scanned with, because the band's claim is about
+    // the text in the box — a guard that typed something else would measure a
+    // band telling a lie and call it a pass.
+    await tester.enterText(find.byKey(HomeScreen.composer), _doc);
+    await settle(tester, rounds: 2);
+    await tester.tap(find.text('Ask the AI'));
+    await settle(tester, rounds: 8);
+
+    // **No sheet before the band** — the owner's own order.
+    expect(
+      find.byType(SendSheet),
+      findsNothing,
+      reason: 'the chat opened the three exits before the person saw what would leave',
+    );
+
+    // The outgoing text, on the glass, inside the band.
+    final band = find.byKey(_whatWouldLeave);
+    expect(band, findsOneWidget, reason: 'the chat drew no band for what would leave');
+    final payload = find.descendant(of: band, matching: find.byType(SafeText));
+    expect(payload, findsOneWidget, reason: 'the band carries no copy of the outgoing text');
+    final rect = tester.getRect(payload);
+    final size = tester.binding.renderViews.first.size;
+    expect(
+      rect.top >= -1 && rect.left >= -1 && rect.height > 8 && rect.width > 8,
+      isTrue,
+      reason: 'the outgoing text sits outside $size — rect $rect',
+    );
+
+    // **Characters, not chips.** The band has no «Chips / Plain» switch of its
+    // own, so it draws the text the way the model reads it; a `WidgetSpan` per
+    // token would put `U+FFFC` where a word should be.
+    final shown = tester
+        .widget<SelectableText>(
+          find.descendant(of: band, matching: find.byType(SelectableText)).first,
+        )
+        .textSpan!
+        .toPlainText();
+    expect(shown, chat.payload!.text, reason: 'what is seen is not what would leave');
+
+    // The door stands in the band, and it opens the exits.
+    final door = find.descendant(of: band, matching: find.text('Choose who answers'));
+    expect(door, findsOneWidget, reason: 'the door is not in the band that draws the text');
+    await tester.tap(door);
+    await settle(tester, rounds: 6);
+    expect(find.text('Who answers'), findsOneWidget, reason: 'the band’s door opened nothing');
+
+    // **«Cancel» comes back to the band, and nothing is lost.**
+    await tester.tap(find.text('Cancel'));
+    await settle(tester, rounds: 6);
+    expect(find.byType(SendSheet), findsNothing, reason: 'Cancel left the sheet standing');
+    expect(find.byKey(_whatWouldLeave), findsOneWidget, reason: 'Cancel took the band with it');
+    expect(
+      tester.widget<TextField>(find.byKey(HomeScreen.composer)).controller!.text,
+      _doc,
+      reason: 'Cancel emptied the question',
+    );
+
+    // **And the band does not describe a text that has changed.** One press
+    // rebuilds it, and that press is named and standing — see the ruling in
+    // `home.dart`'s own band.
+    await tester.enterText(find.byKey(HomeScreen.composer), '$_doc Noch ein Satz.');
+    await settle(tester, rounds: 3);
+    expect(
+      find.byKey(_whatWouldLeave),
+      findsNothing,
+      reason: 'the band kept claiming a text the person had already changed',
+    );
+    expect(find.byType(SafeText), findsNothing, reason: 'the outgoing text is still drawn somewhere');
+  });
 }

@@ -52,6 +52,16 @@ String theirOwnWord(String name) => '\u2068$name\u2069';
 const String unnamedTrouble =
     'Something went wrong. Z Privacy did not complete the action.';
 
+/// **What a preview side claims about the text it draws** — one sentence for
+/// the two screens that draw one, since rule 60-أ gave the chat its own band.
+///
+/// The work surface said it first, beside the Safe column, and the chat's band
+/// is the same claim about the same thing: a second literal would be two
+/// screens promising the same fact in two wordings, and the drift between them
+/// is exactly what a person would read as a difference.
+String exactlyWhatWouldLeave(int replaced) =>
+    'This is exactly what the AI will receive. $replaced values were replaced.';
+
 /// **Nothing was read, because nobody said in which language** — rule 57-د.
 ///
 /// «Not now» is a real answer and not a failure: no language, no reading, no

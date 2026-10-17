@@ -796,6 +796,76 @@ if [ -z "$G41_STALE" ]; then
 else
   fail "G41 these allowed lines match nothing any more, so they permit nothing and explain nothing:$G41_STALE"
 fi
+# ---------------------------------------------------------------- G42
+# **Nobody reaches the three exits without the outgoing text on the glass** —
+# rule 60 and the owner's rule 60-أ, 17 October 2026.
+#
+# Rule 60 deleted the sheet's own page of outgoing text because the work
+# surface draws it already. That is a premise about a screen, and this gate is
+# what keeps it true: the preview side can be closed by a press and stays
+# closed, and the chat has no side at all. The measured breach, in `2fb90b3`:
+# **deleting the page took the «see what will leave» step out of the chat**,
+# because the chat opens the same sheet. 60-أ is the owner's answer — «Ask the
+# AI» protects the line and draws it in a band, and the band carries the door.
+#
+# So the doors are enumerated **from what they do**: a place that builds a
+# `SendSheet` is a door, whatever it is called, and each must come through a
+# hand that has put the text in front of the person first. Two hands, because
+# the two screens keep it there in two different ways — and the chat's is held
+# by the **shape**: its door is drawn inside the band, so there is no state to
+# check and no flag to pass.
+SEND_SHEET=$FLUTTER_LIB/widgets/send_sheet.dart
+G42_BUILT=$(grep -Rn 'SendSheet(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+            | grep -v '/src/rust/' | grep -v "^$SEND_SHEET:" \
+            | grep -vE ':[0-9]+:[[:space:]]*(//|///|\*)' || true)
+if [ -z "$G42_BUILT" ]; then
+  pass "G42 every door to the three exits is built by one of the two hands, in send_sheet.dart"
+else
+  fail "G42 these places build the send sheet themselves, so nothing makes them show the text first:"
+  printf '%s\n' "$G42_BUILT" | sed 's/^/        /'
+fi
+
+# **The work surface's hand opens the side it reads the text in.** Measured in
+# the hand's own body: a hand that stopped writing this would open the exits
+# over a closed side, which is rule 60's premise broken on the glass.
+G42_SIDE=$(awk '
+  /^Future<bool\?> theWayToTheDoors\(/ { inside = 1 }
+  inside && /safeColumnOpen: true/ { found = 1 }
+  # **`^}$` and not `^}`** — a Dart named-parameter list closes at column zero
+  # («}) async {»), so the looser marker ended the body on its own signature
+  # and this check read «BLIND» over a hand that does open the side. Found by
+  # running it before trusting it.
+  inside && /^}$/ { inside = 0 }
+  END { print (found ? "opens" : "BLIND") }
+' "$SEND_SHEET" 2>/dev/null || true)
+if [ "$G42_SIDE" = "opens" ]; then
+  pass "G42 the work surface's hand opens the preview side before the exits"
+else
+  fail "G42 the work surface's hand no longer opens the preview side — a closed side and the three exits can stand together"
+fi
+
+# **And the chat's door is drawn inside the band that draws the text.** The
+# call sites are read by the class they stand in: the same class must draw the
+# payload (`SafeText`), or the door is somewhere a person can press with
+# nothing in front of them. A second call site anywhere else is the defect this
+# check exists for.
+G42_CHAT=$(grep -Rn 'theWayToTheDoorsFromTheChat(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v "^$SEND_SHEET:" | grep -vE ':[0-9]+:[[:space:]]*(//|///|\*)' | cut -d: -f1 | sort -u || true)
+G42_BARE=""
+for f in $G42_CHAT; do
+  G42_BARE="$G42_BARE$(awk '
+    /^class [_A-Za-z]+/ { cls = $2; text = 0; door = 0 }
+    /SafeText\(/ { text = 1 }
+    /theWayToTheDoorsFromTheChat\(/ { door = 1 }
+    /^}$/ { if (door && !text) printf " %s:%s", FILENAME, cls; door = 0; text = 0 }
+  ' "$f")"
+done
+G42_N=$(printf '%s\n' "$G42_CHAT" | grep -c . || true)
+if [ -z "$G42_BARE" ] && [ "$G42_N" = "1" ]; then
+  pass "G42 the chat's door stands inside the band that draws the outgoing text"
+else
+  fail "G42 the chat's door is reachable with no text drawn beside it — callers in $G42_N file(s), bare in:$G42_BARE"
+fi
 # ---------------------------------------------------------------- G37
 # **The session is born at its first document, and nowhere else** — rule 55,
 # the owner's answer of 16 October 2026: «المحادثة لا علاقة بالوثائق… ولكن عند
