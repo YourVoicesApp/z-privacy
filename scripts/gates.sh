@@ -2411,6 +2411,59 @@ rm -f /tmp/g22.$$
 # call the whole contract from Dart and see typed errors come back.
 LIB=apps/flutter_app/build/linux/x64/debug/bundle/lib
 
+# ------------------------------------------------- the library this half speaks
+# **The suite's library is built here, because the suite's library is part of
+# the measurement** — 18 October 2026, and it is the second half of G7-lib's
+# own lesson.
+#
+# `flutter build linux --debug` is the documented way to produce
+# `bundle/lib/libz_bridge.so`, and it runs cargokit, which builds `z_bridge`
+# with **no `--features` at all**: there is no `cargokit.yaml` beside the
+# manifest, and cargokit's only feature knob is that file's `extra_flags`. So
+# the library that recipe writes carries **no echo provider** — `fake_provider`
+# is never a default feature, G1d forbids it — and every guard that asks a
+# model goes red through it with `providerUnavailable(provider: fake)`.
+#
+# Measured: on the assembled tree of 18 October, all seven tests of
+# `the_chat_is_the_third_part_test.dart` failed that way over sources that were
+# correct, and the Dart count read 381 instead of 388. The remedy had been a
+# hand-built library copied in by whoever knew — which is a measurement nobody
+# can repeat from this script, and the one thing a judge must never be.
+#
+# So the features are this script's business: it builds the bridge with them
+# and puts the result where the Dart half looks. The release package is
+# untouched by this and cannot be reached from here — `package_linux.sh` runs
+# its own `flutter build linux --release`, which writes a different directory
+# (`build/linux/x64/release/bundle`) from the debug one named above.
+#
+# What it does change is the **debug** bundle beside it: after a gate run, the
+# application in `build/linux/x64/debug/bundle` answers through a library with
+# an echo provider in it. That is what a debug bundle is for, and it is said
+# here rather than left to be discovered — a release carries no such provider,
+# and G1d keeps `fake_provider` out of the default features so that no
+# `--release` build can acquire one.
+#
+# Named with `z_core/` in front of each feature because they are **z_core's**:
+# `z_bridge` declares none of its own, and `cargo build -p z_bridge --features
+# fake_provider` would be refused by name rather than guessed at.
+BRIDGE_FEATURES=$(printf '%s' "$TEST_FEATURES" | sed 's/^--features //' |
+                  tr ',' '\n' | sed 's|^|z_core/|' | paste -sd, -)
+if [ -d "$LIB" ] && command -v cargo >/dev/null 2>&1; then
+  if cargo build -p z_bridge --features "$BRIDGE_FEATURES" --quiet >/tmp/g7b.$$ 2>&1 \
+     && [ -f target/debug/libz_bridge.so ]; then
+    cp target/debug/libz_bridge.so "$LIB/libz_bridge.so"
+    pass "G7-build the library the Dart half speaks through is built here, with the test features ($BRIDGE_FEATURES)"
+  else
+    fail "G7-build the bridge would not build with the test features ($BRIDGE_FEATURES) — the Dart half would answer through whatever is in $LIB:"
+    sed 's/^/        /' /tmp/g7b.$$ | tail -12
+  fi
+  rm -f /tmp/g7b.$$
+elif [ ! -d "$LIB" ]; then
+  skip "G7-build the library the Dart half speaks through" "no $LIB yet — run: cd apps/flutter_app && flutter build linux --debug"
+else
+  skip "G7-build the library the Dart half speaks through" "no cargo on this machine"
+fi
+
 # ---------------------------------------------------------------- G7-lib
 # The Dart half never tests this tree. It tests the library sitting in
 # `build/`, and the two part company in silence: `libz_bridge.so` is an
@@ -2461,8 +2514,22 @@ elif [ -n "$SOURCE_NEWER_THAN_LIB" ]; then
   # The same emptiness, for the same reason as above: this run measured no Dart
   # number and must not be read as having measured one.
   DART_PASSED=""
+elif ! LC_ALL=C grep -qa 'Echo (tests only)' "$LIB/libz_bridge.so"; then
+  # **The date is not the whole of «the right library»** — the other half,
+  # measured on 18 October. A library built by `flutter build linux --debug`
+  # is as new as the tree and still cannot answer: it carries no echo
+  # provider, so twenty guards go red with `providerUnavailable(provider:
+  # fake)` and not one of them names the cause. The echo provider's own label
+  # is the artefact's observable — `providers/fake.rs` is compiled only under
+  # `fake_provider`, so the string is in the .so exactly when the feature is —
+  # and refusing here means the suite is never run through a library that
+  # cannot answer. The behaviour itself is measured where behaviour belongs,
+  # by the guards that ask the fake provider a question.
+  fail "G7-lib the library in $LIB carries no echo provider, so it was not built with the test features — the Dart half would red on every guard that asks a model, naming none of this. It is built by G7-build above; a library put there by hand or by «flutter build linux --debug» alone is not the one this suite measures through"
+  skip "G7-dart contract callable from Dart" "the library cannot answer a guard that asks a model, so its answer would not be about this tree"
+  DART_PASSED=""
 else
-  pass "G7-lib the library the Dart half speaks through was built from this tree"
+  pass "G7-lib the library the Dart half speaks through was built from this tree, and carries the test features it must answer through"
   # **A red that says what failed.** The compact reporter rewrites one line, so
   # a log of it keeps only that line's last state: on 13 Oct seven failures came
   # back as one test's name and a RenderFlex dump from a file that had not
