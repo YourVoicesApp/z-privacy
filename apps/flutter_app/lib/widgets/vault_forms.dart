@@ -18,7 +18,27 @@ import 'package:zprivacy/core/messages.dart';
 // It used to carry its own sentence for a wrong passphrase and fall back to
 // the enum's debug formatting for everything else — which is exactly the
 // «one error, three sentences» drift the mapper exists to prevent.
-String vaultKeyTroubleFor(ApiError e) => humanMessage(e);
+//
+// **And it adds the next move for a file this build cannot read** — the
+// independent attacker's خ6, 17 October. He wrote `vault.zv` to zero bytes and
+// found three true-sounding answers with no way out between them. The empty
+// file is answered in the core now, where it belongs: a file of no bytes is not
+// a vault, so the room offers «create» and `create` replaces it — nothing of
+// the person's is deleted, because there is nothing in it.
+//
+// What is left here is the **damaged** file, which holds bytes that may be
+// their only copy. Z Privacy will not touch it, and the sentence says so and
+// names the two moves that are the person's: put a backup back, or move this
+// file aside. The core states the fault (`PayloadRefused` carries its own
+// words); the next move is the screen's to word, because only the screen knows
+// the person was trying to open a vault.
+String vaultKeyTroubleFor(ApiError e) {
+  final said = humanMessage(e);
+  if (e is! ApiError_PayloadRefused) return said;
+  return '$said Z Privacy has not changed the file. If you have a backup of '
+      'the vault, put it back in place; otherwise move this file somewhere else '
+      'and a new vault can be made here.';
+}
 
 /// Making a vault, opening one, or changing its passphrase.
 class VaultKeyForm extends StatefulWidget {
@@ -34,6 +54,12 @@ class VaultKeyForm extends StatefulWidget {
   final bool creating;
   final bool changing;
   final VoidCallback onDone;
+
+  /// **The one condition this form says before the press** — the core's own
+  /// minimum, written here because a button that offers a press the core will
+  /// refuse teaches the rule by breaking it (the attacker's note 5). Public so
+  /// that a guard can ask the core whether this number is still the core's.
+  static const leastCharacters = 8;
 
   @override
   State<VaultKeyForm> createState() => _VaultKeyFormState();
@@ -107,7 +133,28 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
       (!_needsTwo || _two.text.isNotEmpty) &&
       (!widget.changing || _three.text.isNotEmpty);
   bool get _agree => !_confirms || _pair.$1 == _pair.$2;
-  bool get _canSubmit => !_busy && _allFilled && _agree;
+
+  /// **The one condition the core will refuse a new passphrase for** — the
+  /// independent attacker's note 5, 17 October: this form offered the press
+  /// and `vault_create` refused it, so the only way to learn the rule was to
+  /// break it. A gate that does not hand you the key is a wall (046/L).
+  ///
+  /// **Counted in characters, the way the core counts them.** Rust asks
+  /// `passphrase.chars().count()`; `String.length` here is UTF-16 code units,
+  /// so eight emoji would be sixteen to this button and eight to the core —
+  /// and seven would be fourteen, which is how a button that read `length`
+  /// would open on a passphrase the core refuses.
+  ///
+  /// **It is a second copy of the core's number, and that is why it is
+  /// measured rather than trusted:** `passphrase_test` creates a vault with
+  /// exactly [VaultKeyForm.leastCharacters] characters and with one fewer, and
+  /// asks the real core which it takes. The day the core's eight becomes nine,
+  /// that guard reds — which is the only honest answer to «a copy of the rule
+  /// in this widget will drift», short of a field on the bridge.
+  bool get _longEnough =>
+      !_needsTwo || _pair.$1.runes.length >= VaultKeyForm.leastCharacters;
+
+  bool get _canSubmit => !_busy && _allFilled && _agree && _longEnough;
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +211,18 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
             ),
           ),
         ],
+        // Said from the first character, and only while it is still true: a
+        // condition a person reads before the press is a rule; the same
+        // sentence after a refusal is an apology.
+        if (_needsTwo && _pair.$1.isNotEmpty && !_longEnough) ...[
+          const SizedBox(height: 7),
+          Text(
+            'At least ${VaultKeyForm.leastCharacters} characters — the vault '
+            'will not be made with fewer.',
+            key: const Key('passphrase-length'),
+            style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.amber),
+          ),
+        ],
         if (widget.creating) ...[
           const SizedBox(height: 7),
           Text(
@@ -207,9 +266,12 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
           await z.vaultChangePassphrase(old: _one.text, replacement: _two.text);
         }
       } else if (widget.creating) {
-        // No length rule here. The core owns that decision and refuses a short
-        // passphrase by name; a copy of the rule in this widget is a second
-        // opinion that will drift, and the mapper already words the refusal.
+        // **The core still owns the decision**, and this call is still made
+        // without checking anything: what changed on 17 October is that the
+        // button no longer *offers* a press the core will refuse (note 5), and
+        // the condition is said above the button where a person reads it
+        // before pressing. The refusal remains the core's, worded by the
+        // mapper, for every path that reaches here another way.
         //
         // The pair is compared before the button enables — but the call is
         // still made only when they agree, so a mismatch cannot slip through

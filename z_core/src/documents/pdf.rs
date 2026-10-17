@@ -280,7 +280,7 @@ fn objects(bytes: &[u8], budget: &Budget) -> ApiResult<Objects> {
         }
         at = body_end + 6;
         seen += 1;
-        if seen % 256 == 0 {
+        if seen.is_multiple_of(256) {
             budget.check()?;
         }
     }
@@ -1421,7 +1421,7 @@ fn hex_u32(piece: &str) -> Option<u32> {
 /// A destination, as UTF-16 code units — which is what a CMap writes.
 fn hex_units(piece: &str) -> Option<Vec<u16>> {
     let digits: String = piece.chars().take_while(|c| c.is_ascii_hexdigit()).collect();
-    if digits.is_empty() || digits.len() % 4 != 0 {
+    if digits.is_empty() || !digits.len().is_multiple_of(4) {
         return None;
     }
     let mut out = Vec::new();

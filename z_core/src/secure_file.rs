@@ -11,6 +11,11 @@
 // used and `-D warnings` has nothing to say. Found by compiling for the target.
 #[cfg(unix)]
 use std::io::Read;
+// The type of the one handle this module holds open besides the vault's own:
+// the lock two copies of the program take turns at. A type and not an act —
+// every act on it carries its own line below.
+// G15-ok: the lock's type, named here so the acts below read as acts.
+use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -193,6 +198,92 @@ pub(crate) fn replace_atomically(path: &Path, temp_extension: &str, bytes: &[u8]
         .sync_all()
         .map_err(|e| refused(label, format!("the data directory could not be synced: {e}")))?;
     Ok(())
+}
+
+/// **One copy of this program writes at a time** — the independent attacker's
+/// م5 and خ9, 17 October 2026.
+///
+/// He ran two copies against one vault, forty trials, each creating an
+/// identity: in three of them **both said ok and the disk held one**. The
+/// window is between `Vault::ensure_disk_unchanged` and the `rename` inside
+/// `replace_atomically`, and the session file had no comparison at all — its
+/// write was a read, a change and a replace with nothing between them, so the
+/// later `rename` simply won.
+///
+/// **Why a lock and not «run one copy only».** The product already promises
+/// that two copies may run: `VaultChangedElsewhere` exists, and the sentence
+/// `messages.dart` words for it — «Another copy of Z Privacy changed this
+/// vault. Close that window, or lock and unlock here to take in its work» —
+/// *invites* the person to resolve it. Refusing to start a second copy would
+/// delete a promise the owner's own wording makes, and it would not fix the
+/// session file, where the right answer is not a refusal at all: the second
+/// copy should read the newest turns and add to them, which is what happens
+/// once the read and the write cannot be split.
+///
+/// **Why the operating system's lock and not a file with a pid in it.**
+/// `std::fs::File::lock` is `flock` on Unix and `LockFileEx` on Windows —
+/// Windows is the next platform, and this is the one shape that needs no
+/// `unsafe`, no dependency and no second implementation. And the property a
+/// lock *file* cannot promise: **the OS releases it when the process dies**,
+/// so a copy that crashes mid-write leaves nothing behind for the next one to
+/// puzzle out, and there is no stale lock to break — which would be the one
+/// place this program could be argued into deleting something it did not write.
+///
+/// It is **taken for the whole of a core call** (`session::with_core`), not
+/// around each write, because the loss was never in one write: it was in a
+/// read and a write with a gap between them. Inside a process the core's own
+/// mutex already serialises those calls, so this is never taken twice at once
+/// by one copy.
+///
+/// `None` means there is nothing to lock yet — no data directory, so nothing
+/// on disk to lose — or that the lock could not be taken at all. A folder that
+/// refuses it leaves the old behaviour exactly as it was, and the vault's own
+/// `ensure_disk_unchanged` still stands between two copies: this narrows a
+/// window to nothing, and is not the only thing watching it.
+pub(crate) struct OneWriter {
+    /// Dropped last: closing the handle is what releases the lock.
+    _file: File,
+}
+
+pub(crate) fn one_writer_at_a_time(dir: Option<&Path>) -> Option<OneWriter> {
+    let dir = dir?;
+    if secure_dir(dir, "writing.lock").is_err() {
+        return None;
+    }
+    let path = dir.join("writing.lock");
+    let file = open_the_lock(&path)?;
+    // Blocking on purpose: the other copy is milliseconds from finishing, and
+    // a refusal here would be a sentence about a state that is about to end.
+    // What it must never do is proceed as if it held the lock.
+    file.lock().ok()?;
+    Some(OneWriter { _file: file })
+}
+
+#[cfg(unix)]
+fn open_the_lock(path: &Path) -> Option<File> {
+    // G15-ok: the lock one copy holds while it writes ZVLT or a session file.
+    std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .mode(0o600)
+        .open(path)
+        .ok()
+}
+
+#[cfg(not(unix))]
+fn open_the_lock(path: &Path) -> Option<File> {
+    // The same lock off Unix, where the folder's own permissions are what
+    // protects it.
+    // G15-ok: opening the one-writer lock beside ZVLT.
+    std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(path)
+        .ok()
 }
 
 fn temp_path(path: &Path, temp_extension: &str) -> PathBuf {

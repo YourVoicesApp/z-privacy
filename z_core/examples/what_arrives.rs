@@ -234,7 +234,7 @@ fn grouped(n: usize) -> String {
     let digits: Vec<char> = n.to_string().chars().collect();
     let mut out = String::new();
     for (i, d) in digits.iter().enumerate() {
-        if i > 0 && (digits.len() - i) % 3 == 0 {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
             out.push(' ');
         }
         out.push(*d);

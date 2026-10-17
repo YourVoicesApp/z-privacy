@@ -293,13 +293,25 @@ pub(crate) fn extract(bytes: &[u8], kind: DocumentKind) -> ApiResult<Extracted> 
     if bytes.len() > limits::FILE_BYTES {
         return Err(refuse(
             Refusal::DocumentTooLarge {
-                mib: (bytes.len() / 1024 / 1024) as u32,
+                // **Never rounded down** — the independent attacker's ن16, 17
+                // October: a file of 25 MiB **and one byte** was reported as
+                // `mib: 25` against `limit_mib: 25`, which reads as a refusal
+                // of a file that is exactly the size allowed. A division
+                // towards zero is the wrong direction for a number whose whole
+                // job is to say «past the limit», so this rounds up: the
+                // figure may overstate by less than a megabyte and can never
+                // understate.
+                mib: bytes.len().div_ceil(1024 * 1024) as u32,
                 limit_mib: (limits::FILE_BYTES / 1024 / 1024) as u32,
             },
+            // And the detail carries the exact count, because it is read by
+            // somebody looking for a cause and a rounded number there answers
+            // a different question.
             format!(
-                "{} MiB is past the {} MiB limit for one document",
-                bytes.len() / 1024 / 1024,
-                limits::FILE_BYTES / 1024 / 1024
+                "{} bytes is past the {} MiB limit for one document ({} bytes)",
+                bytes.len(),
+                limits::FILE_BYTES / 1024 / 1024,
+                limits::FILE_BYTES
             ),
         ));
     }
@@ -356,10 +368,28 @@ mod tests {
 
     #[test]
     fn a_file_past_the_size_limit_is_refused_by_name() {
+        // **One byte past it** — the independent attacker's own fixture (ن16).
         let big = vec![b'a'; limits::FILE_BYTES + 1];
         match extract(&big, DocumentKind::Txt) {
             Err(ApiError::DocumentRefused { reason, detail }) => {
-                assert!(matches!(reason, Refusal::DocumentTooLarge { .. }), "{reason:?}");
+                let Refusal::DocumentTooLarge { mib, limit_mib } = reason else {
+                    panic!("expected DocumentTooLarge, got {reason:?}")
+                };
+                assert_eq!(limit_mib, 25, "the limit this build applies is not the one it names");
+                // **The figure may never understate.** It was a division
+                // towards zero, so this file was reported as `mib: 25` against
+                // `limit_mib: 25` — a refusal that reads as the refusal of a
+                // file exactly the size allowed.
+                assert!(
+                    mib > limit_mib,
+                    "a file past the limit is reported as {mib} MiB against a {limit_mib} MiB limit"
+                );
+                // And the detail carries the exact count, because it is read
+                // by somebody looking for a cause.
+                assert!(
+                    detail.contains(&format!("{} bytes", limits::FILE_BYTES + 1)),
+                    "{detail}"
+                );
                 assert!(detail.contains("limit"), "{detail}");
             }
             other => panic!("expected a refusal, got {other:?}"),

@@ -271,7 +271,13 @@ fn the_document_that_was_refused_leaves_no_trace_on_disk() {
     // So the law is still a law and still refuses everything else: the sealed
     // vault and the sealed session files, by name, and no third thing — not a
     // temporary copy, not a cache, not a page of extracted text.
-    let allowed = ["vault.zv", "sessions"];
+    // **And the lock one copy holds while it writes** — the independent
+    // attacker's م5/خ9, 17 October. It is a file this core creates, so it is
+    // declared here by name with the others: zero bytes, no secret in it, and
+    // its whole purpose is that two copies of this program cannot write the
+    // vault or a session file at the same instant. `the_vault_file_says_nothing`
+    // reads it like every other file in the folder.
+    let allowed = ["vault.zv", "sessions", "writing.lock"];
     let unexpected: Vec<&String> =
         after.iter().filter(|name| !allowed.contains(&name.as_str())).collect();
     assert!(

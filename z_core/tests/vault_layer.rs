@@ -1183,6 +1183,106 @@ fn unlock_after_lock_sees_that_the_vault_file_was_modified() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// **A vault file of no bytes is a way out, not a trap** — the independent
+/// attacker's خ6, 17 October 2026.
+///
+/// He wrote `vault.zv` to zero bytes and met three true-sounding answers with
+/// no next move between them: the state said `Locked`, unlocking said «this
+/// vault file is truncated» — which tells a person their identities are half
+/// there — and creating said `VaultAlreadyExists`. The file could neither be
+/// opened nor replaced.
+///
+/// The one ground on which this program may write over a file it finds is that
+/// the file holds **nothing of the person's**, and «no bytes at all» is that
+/// ground measured rather than assumed. So an empty file is not a vault: the
+/// state is `Absent`, the room offers the one act that changes it, and the
+/// create replaces zero bytes with a vault.
+///
+/// The second half is the control, and it is the half that must never move: a
+/// **damaged** file holds bytes that may be the person's only copy, and it
+/// keeps every old answer — `Locked`, a refusal by name, and not one byte
+/// touched.
+#[test]
+fn an_empty_vault_file_is_not_a_vault_and_a_damaged_one_is_never_written_over() {
+    let _lock = serial();
+    let dir = fresh_vault("empty-file");
+    let path = std::path::Path::new(&dir).join("vault.zv");
+    let real = std::fs::read(&path).expect("read the vault this test made");
+    vault_lock().expect("lock");
+
+    // 1 · zero bytes: not a vault, and the door out is open.
+    std::fs::write(&path, b"").expect("write an empty vault file");
+    assert_eq!(
+        vault_state().expect("state"),
+        VaultState::Absent,
+        "a file of no bytes answered as a vault, so the room offers «unlock» for nothing to unlock"
+    );
+    match vault_create_with_passphrase(PASS.to_string()) {
+        Ok(_) => {}
+        other => panic!("a file of no bytes refused to be replaced: {other:?}"),
+    }
+    assert!(
+        std::fs::metadata(&path).expect("metadata").len() > 0,
+        "the create reported success and wrote nothing"
+    );
+    assert_eq!(vault_state().expect("state"), VaultState::Unlocked);
+
+    // 2 · the control: a file that holds bytes is never written over, and the
+    // refusal still names itself.
+    vault_lock().expect("lock");
+    let mut damaged = real.clone();
+    damaged.truncate(real.len() / 2);
+    std::fs::write(&path, &damaged).expect("write a damaged vault file");
+    assert_eq!(
+        vault_state().expect("state"),
+        VaultState::Locked,
+        "a damaged vault file stopped being a vault, and a create would write over it"
+    );
+    match vault_create_with_passphrase(PASS.to_string()) {
+        Err(ApiError::VaultAlreadyExists) => {}
+        other => panic!("a damaged vault file was written over: {other:?}"),
+    }
+    assert_eq!(
+        std::fs::read(&path).expect("read back"),
+        damaged,
+        "a byte of the person's own file was changed"
+    );
+    // And the refusal to open it says what it is, and never «truncated» about
+    // a file that holds nothing — the two states have two sentences.
+    match vault_unlock_with_passphrase(PASS.to_string()) {
+        Err(ApiError::PayloadRefused { reason }) => {
+            assert!(
+                !reason.contains("no bytes"),
+                "a damaged file is reported as an empty one: {reason}"
+            );
+        }
+        other => panic!("expected a refusal naming the file, got {other:?}"),
+    }
+
+    // 3 · a path whose bytes cannot be read **at all** is not an empty file:
+    // the symlink guard above (`final_vault_symlink_is_not_read_as_a_vault`)
+    // measures that state, and it reds if this one is ever written as «bytes
+    // that are there and are not empty» instead of «it was read and held
+    // nothing». Named here because the two live one line apart.
+
+    // 4 · and the empty file's own sentence names what it is.
+    vault_lock().expect("lock");
+    std::fs::write(&path, b"").expect("write an empty vault file");
+    match vault_unlock_with_passphrase(PASS.to_string()) {
+        Err(ApiError::PayloadRefused { reason }) => assert!(
+            reason.contains("no bytes"),
+            "an empty vault file is reported as something else: {reason}"
+        ),
+        // `Absent` is the honest answer here too: the state says there is no
+        // vault, so a door that asks the file to open may answer either way,
+        // as long as it does not call nothing «truncated».
+        Err(ApiError::VaultAbsent) => {}
+        other => panic!("expected a refusal naming the file, got {other:?}"),
+    }
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn unlock_after_lock_still_opens_an_unchanged_vault_file() {
     let _lock = serial();

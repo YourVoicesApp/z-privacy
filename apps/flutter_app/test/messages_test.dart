@@ -54,19 +54,24 @@ final _everyError = <ApiError>[
 /// Every shape the two nested enums take, because a reason inside an error is
 /// still a reason a person reads.
 ///
-/// **All twelve, and counted** (17 October). Five of them were listed here and
-/// the other seven — every limit the reader has — were not, so the screen
-/// could answer «This file could not be opened safely» to a bomb, to a file
-/// one byte too big and to an empty one alike, and this guard was green while
-/// it did. A list of examples is only as good as its claim to be the whole
-/// list, so the count below is part of the test.
+/// **All twelve, and counted** (17 October, from two sides at once: e2's
+/// reading of the attacker's B3-4 and this round's خ5). Five of them were
+/// listed here and the other seven — every limit the reader has — were not, so
+/// the screen could answer «This file could not be opened safely» to a bomb,
+/// to a file one byte too big and to an empty one alike, and this guard was
+/// green while it did. It is a sentence, it names no type and it ends with a
+/// stop, so every check in `_readsAsHuman` passed over it. A list of examples
+/// is only as good as its claim to be the whole list, so the count is part of
+/// the test.
 final _everyRefusal = <Refusal>[
   const Refusal.scannedPdfNoTextLayer(pages: 4),
   const Refusal.encryptedPdf(),
   const Refusal.unsupportedEncoding(page: 2, readablePercent: 40),
   const Refusal.unreadableStructure(page: 7),
   const Refusal.malformedDocument(),
-  const Refusal.documentTooLarge(mib: 25, limitMib: 25),
+  // 26 against 25, not 25 against 25: ن16 made the core round the figure
+  // **up**, so a file it refuses can no longer measure exactly the limit.
+  const Refusal.documentTooLarge(mib: 26, limitMib: 25),
   const Refusal.tooManyPages(pages: 2400, limit: 2000),
   const Refusal.textTooLarge(limitMib: 8),
   const Refusal.compressionBomb(ratio: 946),
@@ -217,7 +222,9 @@ void main() {
   /// or walk away from it.
   test('a limit on the screen says the number it is', () {
     final said = <Refusal, String>{
-      const Refusal.documentTooLarge(mib: 25, limitMib: 25): '25',
+      // 26 against 25 since ن16: the core rounds the figure up, so «25 MiB
+      // against a 25 MiB limit» is a shape it can no longer produce.
+      const Refusal.documentTooLarge(mib: 26, limitMib: 25): '25',
       const Refusal.tooManyPages(pages: 2400, limit: 2000): '2000',
       const Refusal.textTooLarge(limitMib: 8): '8',
       const Refusal.compressionBomb(ratio: 946): '946',

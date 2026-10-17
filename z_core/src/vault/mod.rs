@@ -184,16 +184,52 @@ impl VaultStore {
         }
     }
 
+    /// **A file that holds no bytes is not a vault** — the independent
+    /// attacker's خ6, 17 October.
+    ///
+    /// He wrote `vault.zv` to zero bytes and met a door with no way out of it:
+    /// the state said `Locked`, unlocking said «this vault file is truncated»,
+    /// and creating said `VaultAlreadyExists`. Three true-sounding answers and
+    /// no next move, about a file with nothing of the person's in it.
+    ///
+    /// `Absent` is the honest word for that state and not a convenience: the
+    /// question this function answers is «is there a vault on this device», and
+    /// an empty file is not one. The screen then offers the one act that
+    /// changes it, and `create` replaces the file after measuring that it holds
+    /// nothing — **no byte the person wrote is ever deleted**, because there
+    /// are none.
+    ///
+    /// A **damaged** vault file is a different state and keeps the old answer:
+    /// it holds bytes, those bytes may be the person's only copy, and nothing
+    /// here will write over them.
     pub(crate) fn state(&mut self) -> VaultState {
         self.tick();
         self.load_sealed();
         if self.open.is_some() {
             VaultState::Unlocked
-        } else if self.sealed.is_some() || self.sealed_error.is_some() {
+        } else if self.sealed.is_some() || self.a_damaged_file() {
             VaultState::Locked
         } else {
             VaultState::Absent
         }
+    }
+
+    /// Is there something here this build could not read as a vault?
+    ///
+    /// **The empty file is the only thing excluded**, and the shape of this
+    /// predicate is the whole reason: `None` means the bytes could not be read
+    /// *at all* — a symlink at the final path, a permission taken off, a
+    /// folder that refuses — and that is a vault this copy cannot open, never
+    /// «there is no vault». Written the other way round first (bytes that are
+    /// there and are not empty), it turned the symlink at `vault.zv` into
+    /// `Absent`, and `final_vault_symlink_is_not_read_as_a_vault` said so in
+    /// one line: left `Absent`, right `Locked`. The suite found it before any
+    /// report did.
+    ///
+    /// So: a file is **not** damaged only when it was read and held nothing.
+    fn a_damaged_file(&self) -> bool {
+        self.sealed_error.is_some()
+            && !matches!(self.disk_bytes.as_ref(), Some(bytes) if bytes.is_empty())
     }
 
     /// Make a vault here. Refuses to write over one that already exists.
@@ -223,7 +259,14 @@ impl VaultStore {
         // look would have said about a folder that is perfectly fine.
         let mut on_disk = None;
         if let Some(path) = self.path() {
-            if crate::secure_file::read_no_follow(&path, "vault.zv")?.is_some() {
+            // **And a file of no bytes is not a vault that already exists** —
+            // خ6. Replacing it deletes nothing of the person's, which is the
+            // only ground on which this program may write over a file it finds:
+            // the measurement is `is_empty`, so the permission cannot widen by
+            // accident.
+            if crate::secure_file::read_no_follow(&path, "vault.zv")?
+                .is_some_and(|bytes| !bytes.is_empty())
+            {
                 return Err(ApiError::VaultAlreadyExists);
             }
             let bytes = sealed.to_bytes();

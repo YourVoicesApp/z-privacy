@@ -10,7 +10,25 @@ exclude = ["redteam"]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.85"
+# **1.89, and the one line that raised it** — the independent attacker's م5 and
+# خ9, 17 October 2026: two copies of this program lost a write between them,
+# and the answer is an exclusive lock held across a read and its write.
+#
+# `std::fs::File::lock` is stable since 1.89. It is `flock` on Unix and
+# `LockFileEx` on Windows, which is the next platform — one shape for both — and
+# the operating system releases it when a process dies, so a copy that crashes
+# mid-write leaves nothing behind. Every other shape costs more than a version
+# number: `flock` through `libc` needs `unsafe`, which the owner's own ruling
+# allows in `secure_file/windows.rs` and nowhere else (G4a); a crate like `fs2`
+# is a dependency we did not write, doing the thing the standard library now
+# does; and a lock *file* with a pid in it needs a stale-lock policy, which is
+# the one place this program could be argued into deleting something it did not
+# write.
+#
+# Nothing is built with 1.85 here: this machine runs 1.98, the pinned fallback
+# for the bridge's codegen is 1.97.1, and the Windows job uses the runner
+# image's own toolchain and prints it in its report.
+rust-version = "1.89"
 license = "Apache-2.0"
 
 [workspace.lints.rust]

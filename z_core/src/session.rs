@@ -761,6 +761,25 @@ pub(crate) fn with_core<R>(f: impl FnOnce(&mut Core) -> R) -> R {
         Ok(guard) => guard,
         Err(poisoned) => poisoned.into_inner(),
     };
+    // **And one copy of this program writes at a time** — the independent
+    // attacker's م5 and خ9, 17 October 2026.
+    //
+    // The mutex above makes this process one writer; this makes the **machine**
+    // one writer. Two copies lost a write between them in three of his forty
+    // trials, and the session file could lose one every time: in both cases the
+    // loss was not in a write but in a *read and a write with a gap between
+    // them* — `ensure_disk_unchanged` … `rename`, and `body()` … `write_body()`.
+    //
+    // So it is taken here, at the one boundary every such pair is already
+    // inside, rather than at each write. Nothing nests: the mutex above is not
+    // re-entrant and this crate's own rule says so, so there is never a second
+    // acquisition to deadlock against. It is dropped when the call returns —
+    // and by the operating system if this copy dies holding it, which is the
+    // property no lock *file* can promise.
+    //
+    // With no data directory there is nothing on disk to lose and nothing to
+    // lock; `one_writer_at_a_time` answers `None` and the call runs as before.
+    let _one_writer = crate::secure_file::one_writer_at_a_time(guard.vault.dir());
     f(&mut guard)
 }
 

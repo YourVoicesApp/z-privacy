@@ -353,29 +353,49 @@ String? whatCameBack(ReturnedDocument seen) {
               'look for them.');
     } else {
       // **Which cause, from the core's own split** — 089 rule 4 asks for the
-      // reason and the core already holds it. The conversations it could name
-      // account for their own unresolved names; what is left over belongs to a
-      // namespace this vault does not hold, and the clause below says that one
-      // with the handle it has. So this clause speaks only for the names whose
-      // conversation **is** here: a block would have brought them back, and
-      // the reason there is none is that they were protected before this build
-      // began keeping them.
+      // reason and the core already holds the part it can prove. The
+      // conversations it could name account for their own unresolved names;
+      // what is left over belongs to a namespace this vault does not hold, and
+      // the clause below says that one with the handle it has. So this clause
+      // speaks only for the names whose session **is** here.
       final here = seen.conversations.fold<int>(0, (sum, c) => sum + c.unresolved);
       if (here > 0) {
-        // **And the act that answers it** — the owner, 16 October: the dialog
-        // named a reason and left him with nowhere to go. A word protected
-        // before this build kept blocks has no block, and the one thing that
-        // makes one is protecting it again in the session it belongs to —
-        // after which it comes back for ever (089 rule 1).
+        // **Two causes, and this build cannot tell them apart** — the
+        // independent attacker's م4, 17 October 2026.
+        //
+        // It said one of them as a fact: «it was protected before Z Privacy
+        // began keeping every protected word». He exported a session's text,
+        // changed one hex digit in a token's tail and read the file back — and
+        // met that sentence about a file somebody had edited. A token that no
+        // longer matches any block has no block for either reason, and nothing
+        // in a `ReturnedDocument` separates them: **the law is that a sentence
+        // does not state a cause the core has not proved.**
+        //
+        // So both are named, and the act that answered the owner's own
+        // complaint of 16 October — «protect it again in its session» — is
+        // also the experiment that tells them apart: if the name comes back
+        // from then on it was the first, and if it does not, the file is not
+        // the one this program wrote.
+        //
+        // What **could** prove it is the session's own turns: each one records
+        // the tokens its payload was allowed to carry, so a token that no turn
+        // of that session ever let out was not minted there. That is a field
+        // this reading does not carry, and adding one is a change to the
+        // bridge — reported rather than guessed at.
         said.add(here == 1
-            ? 'One name stays as a token: it was protected before Z Privacy '
-                'began keeping every protected word. Open that document in its '
-                'session and protect the name again, and it comes back from '
-                'then on.'
-            : '$here names stay as tokens: they were protected before Z '
-                'Privacy began keeping every protected word. Open those '
-                'documents in their session and protect the names again, and '
-                'they come back from then on.');
+            ? 'One name stays as a token, and two different things do that: the '
+                'word was protected before Z Privacy began keeping every '
+                'protected word, or this token was changed after the file left. '
+                'Open that document in its session and protect the name again — '
+                'if it comes back from then on it was the first, and if it does '
+                'not, this file is not the one Z Privacy wrote.'
+            : '$here names stay as tokens, and two different things do that: '
+                'they were protected before Z Privacy began keeping every '
+                'protected word, or the tokens were changed after the file '
+                'left. Open those documents in their session and protect the '
+                'names again — if they come back from then on it was the '
+                'first, and if they do not, this file is not the one Z Privacy '
+                'wrote.');
       }
     }
   }
@@ -465,18 +485,27 @@ String _document(Refusal reason) => switch (reason) {
         'text, or paste the text in.',
   Refusal_UnreadableStructure(:final page) =>
     'Page $page is built in a way this build cannot read.',
-  // **The limits are said with their numbers** (the attacker's B3-4, 17
-  // October). The core names every one of these and says how big the thing was
-  // that it refused; the screen collapsed all seven into «This file could not
-  // be opened safely», which tells a person nothing they can act on — not
-  // whether the file is too big, too deep, a bomb, or simply empty. The
-  // fallback below is kept for a variant nobody has written a sentence for
-  // yet, and `messages_test` now walks all twelve so that it stays unreachable.
+  // **The limits, said with their numbers** — e2's reading of the attacker's
+  // B3-4 and this round's خ5 and ن16, both on 17 October, landing on the same
+  // seven refusals from two sides. The core names every one of them and says
+  // how big the thing was that it refused; the screen collapsed them all into
+  // «This file could not be opened safely», which tells a person nothing they
+  // can act on — not whether the file is too big, too deep, a bomb, or simply
+  // empty. The sentences below are e2's words.
   //
-  // «About», not «exactly», on the size: the core floors the megabytes, so a
-  // file one byte past 25 MiB measures as 25 — and «this file is 25 MiB and
-  // the limit is 25 MiB» is the kind of sentence that makes a person think the
-  // app is broken.
+  // **And there is no fallback under them.** A `_ =>` would answer for a
+  // variant nobody has written a sentence for, which is how these seven came
+  // to read alike in the first place; without it the day somebody adds an
+  // eighth is a compile error that names the file to write it in. The
+  // contract's twelve are walked in `messages_test` as well, so the two halves
+  // agree: a list that is missing a variant is a control that cannot bite.
+  //
+  // «About», not «exactly», on the size — and the reason changed with ن16 on
+  // the same day: the core used to **floor** the megabytes, so a file one byte
+  // past 25 MiB measured as 25 and «this file is 25 MiB and the limit is 25
+  // MiB» read as a program arguing with itself. It rounds **up** now, so the
+  // figure overstates by less than a megabyte and can never understate, which
+  // is the direction a refusal's own number must round.
   Refusal_DocumentTooLarge(:final mib, :final limitMib) =>
     'This file is about $mib MiB, and Z Privacy opens documents up to '
         '$limitMib MiB.',
@@ -498,7 +527,6 @@ String _document(Refusal reason) => switch (reason) {
         'Privacy stopped. Nothing of it was imported.',
   Refusal_EmptyDocument() =>
     'There is no text in this file for Z Privacy to protect.',
-  _ => 'This file could not be opened safely.',
 };
 
 String _network(NetworkRefusal reason, String detail) => switch (reason) {
