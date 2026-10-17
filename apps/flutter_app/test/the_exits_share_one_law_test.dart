@@ -279,8 +279,6 @@ void main() {
     ));
     await tester.tap(find.text('Open it'));
     await _settle(tester);
-    await tester.tap(find.text('Continue'));
-    await _settle(tester);
     expect(find.byType(SendSheet), findsOneWidget, reason: 'the sheet never opened');
 
     await tester.tap(find.text('Copy Protected'));
@@ -321,8 +319,6 @@ void main() {
         body: SendSheet(bench: g.bench, ground: g.ground, saveFolder: g.out.path),
       ),
     ));
-    await _settle(tester);
-    await tester.tap(find.text('Continue'));
     await _settle(tester);
 
     for (final label in ['Copy Protected', 'Save as PDF']) {

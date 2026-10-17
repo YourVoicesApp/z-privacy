@@ -301,7 +301,7 @@ class _AiRoom extends StatelessWidget {
               'paste it into whatever model you use, and bring the answer back. Nothing to '
               'set up, nothing to pay for, and the restoring works exactly the same.',
           child: Text(
-            'Always available — it is the «Review what will leave» sheet, first door.',
+            'Always available — it is the «Choose who answers» sheet, first door.',
             style: Zc.small.copyWith(color: Zc.ink4),
           ),
         ),
@@ -454,7 +454,7 @@ class _PrivacyRoom extends StatelessWidget {
         _Fixed(
           title: 'Token rotation',
           what: 'Not built yet. When it is, it will live here: whether a permanent token keeps '
-              'its number across sessions, or is drawn again each time so two conversations '
+              'its number across sessions, or is drawn again each time so two sessions '
               'cannot be linked by it.',
         ),
       ],

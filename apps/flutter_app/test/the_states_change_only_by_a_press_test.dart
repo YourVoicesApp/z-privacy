@@ -178,6 +178,39 @@ void main() {
     expect(tester.getSize(find.byKey(_originalPane)).width, closeTo(both, 2));
   });
 
+  /// **The fifth case, and it is a press** — rule 60, 17 October.
+  ///
+  /// The four cases above are the app moving a collapsed state with nobody
+  /// pressing anything, which is what the owner's rule forbids. This is the
+  /// other kind: a person presses the AI door, and the door opens the Safe
+  /// column on its way to the three exits. Rule 60 deleted the page that
+  /// showed the outgoing text because this column shows it — so a door that
+  /// opened the exits over a closed column would keep the rule in the code and
+  /// break it on the glass.
+  ///
+  /// It is written **here**, beside the rule it looks like an exception to, so
+  /// that a reader meets both at once and does not take them for a
+  /// contradiction. Nothing in the app closes this column, and that half is
+  /// untouched; what opens it is still a press, and this is the second control
+  /// that does.
+  testWidgets('a press on the AI door opens the Safe column — rule 60', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1280, 720));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (ground, _) = await _open(tester, 'ai-door');
+
+    await press(tester, _safeClose);
+    expect(ground.config!.safeColumnOpen, isFalse, reason: 'the press did not close the column');
+
+    await tester.tap(find.byTooltip('Choose the AI and what travels to it'));
+    await settle(tester, rounds: 14);
+    expect(
+      ground.config!.safeColumnOpen,
+      isTrue,
+      reason: 'the AI door opened the three exits over a closed column',
+    );
+    expect(find.byKey(_safePane), findsOneWidget, reason: 'the column did not come back');
+  });
+
   testWidgets('the panel widens and narrows, and says which way the press goes', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1920, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));

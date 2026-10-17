@@ -881,19 +881,18 @@ void main() {
       expect(find.textContaining('questions left'), findsNothing);
       expect(find.textContaining('question left'), findsNothing);
 
-      // The sheet offers the door that needs no account at all, first. Continue
-      // is the step into that door — the payload review does not share a scroller
-      // with the actions.
-      await tester.tap(find.text('Review what will leave'));
+      // **What is drawn is the payload, not a copy assembled for display** —
+      // and since rule 60 the place it is drawn is the preview side of the work
+      // surface, which says so in its own subtitle: «The request itself, not a
+      // preview of it». Read through «Plain», the side's own control, because
+      // «Chips» draws each token as a widget and a widget is not a character.
+      await tester.tap(find.text('Plain'));
       await tester.pumpAndSettle();
-      expect(find.byType(SendSheet), findsOneWidget);
-
-      // What the sheet shows is the payload, not a copy assembled for display.
       final shown = tester
           .widget<SelectableText>(
             find
                 .descendant(
-                  of: find.byType(SendSheet),
+                  of: find.byKey(const ValueKey<String>('workspace-safe-pane')),
                   matching: find.byType(SelectableText),
                 )
                 .first,
@@ -902,7 +901,11 @@ void main() {
           .toPlainText();
       expect(shown, bench.payload!.text);
 
-      await enterAiMode(tester);
+      // The sheet offers the door that needs no account at all, first — and it
+      // offers it on the only page it has.
+      await tester.tap(find.text('Choose who answers'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SendSheet), findsOneWidget);
       expect(find.text('Manual AI'), findsOneWidget);
       expect(find.text('Copy Protected'), findsOneWidget);
       expect(find.textContaining('no account, no key'), findsOneWidget);
@@ -1471,12 +1474,24 @@ void main() {
     );
     await settle(tester);
 
-    await tester.tap(find.text('Review what will leave'));
+    await tester.tap(find.text('Choose who answers'));
     await settle(tester);
     expect(find.byType(SendSheet), findsOneWidget);
-    await enterAiMode(tester);
-    // The connected provider is offered, with the model it was configured with.
-    expect(find.textContaining('a-model-name'), findsOneWidget);
+    // The connected provider is offered, with the model it was configured
+    // with — read in **its own line**, «label · model · endpoint».
+    //
+    // It used to be `textContaining('a-model-name')` anywhere on the glass,
+    // and that was unambiguous only while the sheet had two pages: the
+    // chooser named the model on the first and this line named it on the
+    // second. Rule 60 put them on one page, so the loose finder matches twice
+    // and a guard that wants «the door offers the configured model» has to say
+    // which of the two it means. The chooser's claim — which model will answer
+    // — is measured by `a_door_you_can_see_test` at the wire.
+    expect(
+      find.textContaining('· a-model-name ·'),
+      findsOneWidget,
+      reason: 'the Direct API door does not name the model this provider was configured with',
+    );
 
     await tester.tap(find.textContaining('Send to '));
     await settle(tester);
@@ -1616,37 +1631,38 @@ void main() {
       find.text('Cancel'),
       because: 'Cancel stays in the footer with suggestions open',
     );
-    expectOnScreen(
-      tester,
-      find.text('Continue'),
-      because: 'Continue stays in the footer with suggestions open',
-    );
+    // The warning stays in the sheet, in the sheet's own words. Its wording on
+    // the work surface is a second sentence about the same state and not a
+    // substitute: with this sheet open, that one is behind the modal barrier.
     expect(find.textContaining('suggestions are still open'), findsOneWidget);
     // 041-A: open suggestions no longer shut this door. They shut the **send**,
     // and the sentence beside the send button says so. The owner spent his
     // first evening unable to reach the provider list at all, because the only
     // way to it ran through a button that waits for a finished review — and
     // choosing who answers is not a reward for finishing one.
-    final continueBtn = tester.widget<InkWell>(
+    //
+    // It was measured on «Continue», the step from the review page to the
+    // doors; rule 60 deleted that page, so it is measured on the door itself.
+    expectOnScreen(
+      tester,
+      find.text('Copy Protected'),
+      because: 'the doors are not on the glass while suggestions are open',
+    );
+    final manual = tester.widget<InkWell>(
       find
-          .ancestor(of: find.text('Continue'), matching: find.byType(InkWell))
+          .ancestor(of: find.text('Copy Protected'), matching: find.byType(InkWell))
           .first,
     );
     expect(
-      continueBtn.onTap,
+      manual.onTap,
       isNotNull,
       reason: 'the doors are shut while suggestions are open',
     );
-    await wheelOverPreview(tester, 600);
+    await wheelOver(tester, find.byKey(SendSheet.bodyKey), 600);
     expectOnScreen(
       tester,
       find.text('Cancel'),
-      because: 'wheeling the preview must not move Cancel',
-    );
-    expectOnScreen(
-      tester,
-      find.text('Continue'),
-      because: 'wheeling the preview must not move Continue',
+      because: 'wheeling the sheet must not move Cancel',
     );
     expect(tester.takeException(), isNull);
   });
@@ -1867,17 +1883,6 @@ String longContract({int sections = 48, int extras = 4}) {
   return b.toString();
 }
 
-Future<void> enterAiMode(WidgetTester tester) async {
-  expectOnScreen(
-    tester,
-    find.text('Continue'),
-    because: 'Continue is the footer step into AI mode',
-  );
-  await tester.tap(find.text('Continue'));
-  await tester.pumpAndSettle();
-  expect(find.text('Manual AI'), findsOneWidget);
-}
-
 /// The widget's paint box sits inside the test surface. `tester.tap` will hit
 /// an off-stage control, so on-screen is the thing the human run actually lost.
 void expectOnScreen(
@@ -1900,24 +1905,38 @@ void expectOnScreen(
   );
 }
 
-Future<void> wheelOverPreview(WidgetTester tester, double dy) async {
-  final preview = find.byKey(SendSheet.previewKey);
-  expect(
-    preview,
-    findsOneWidget,
-    reason: 'the payload preview is the only scroller on review',
-  );
+/// A wheel over one named region, and nowhere else.
+///
+/// It was `wheelOverPreview` and it took no argument, because the sheet had
+/// one scroller and the payload was in it. Rule 60 moved the payload to the
+/// work surface, so the two things this journey measures are now in two
+/// different routes — and a helper that guesses which one it is wheeling is
+/// how a guard comes to pass for the wrong reason.
+Future<void> wheelOver(
+  WidgetTester tester,
+  Finder region,
+  double dy, {
+  Offset? at,
+}) async {
+  expect(region, findsOneWidget, reason: 'nothing to wheel: the named region is not on the glass');
+  // **A tall region's own centre is not on the window.** The payload is some
+  // thousands of pixels of text inside a scroller, so `getCenter` names a
+  // point far below the glass, a scroll event sent there lands on nothing, and
+  // every assertion after it measures nothing. Where a caller knows the point
+  // it means, it says so.
   await tester.sendEventToBinding(
     PointerScrollEvent(
-      position: tester.getCenter(preview),
+      position: at ?? tester.getCenter(region),
       scrollDelta: Offset(0, dy),
     ),
   );
   await tester.pump();
 }
 
-/// Open a document, reach Review before send, wheel the preview, keep the
-/// footer, click through to AI mode. This is the journey that failed at 1280×720.
+/// Open a document, wheel the payload in the preview side, keep the door in
+/// its footer, open the sheet and take the first exit. This is the journey that
+/// failed at 1280×720 — and since rule 60 its two halves are in two routes: the
+/// outgoing text on the work surface, the acts in the sheet.
 Future<void> reviewJourney(
   WidgetTester tester, {
   required Size size,
@@ -1989,109 +2008,135 @@ Future<void> reviewJourney(
   await tester.pumpAndSettle();
   expect(tester.takeException(), isNull);
 
+  // **The journey's other premise, said out loud: the preview side is open.**
+  //
+  // `safeColumnOpen` is remembered in `zcfg`, the tests share one data
+  // directory, and another file in this suite closes that side by a press and
+  // leaves it closed. A journey that assumed it would measure nothing here and
+  // fail with «the preview side is not drawing the payload» — which names the
+  // symptom and hides the cause. So the state is read and, if it is shut, the
+  // rail opens it: a press, which is the only thing the owner's rule of 046/K
+  // allows to move it.
+  if (ground.config?.safeColumnOpen == false) {
+    await tester.tap(find.byKey(const ValueKey<String>('workspace-safe-rail')));
+    await tester.pumpAndSettle();
+  }
+  expect(
+    find.byKey(const ValueKey<String>('workspace-safe-pane')),
+    findsOneWidget,
+    reason: 'the preview side is shut, so this journey has no payload to wheel',
+  );
+
+  // **1 · the payload and the acts, where rule 60 left them.**
+  //
+  // The law this journey was written for has not moved: the outgoing text may
+  // not share a scroller with the acts, and nothing a person needs may fall off
+  // a 1280×720 window. What moved is the text — it is read in the preview side
+  // of the work surface now, so the side is where the law is measured. Its body
+  // scrolls; the door in its footer does not travel with it.
   expectOnScreen(
     tester,
-    find.text('Review what will leave'),
-    because: 'the workspace review door itself must be reachable at this size',
+    find.text('Choose who answers'),
+    because: 'the door into the three exits must be reachable at this size',
   );
-  await tester.tap(find.text('Review what will leave'));
+  final payload = find.descendant(
+    of: find.byKey(const ValueKey<String>('workspace-safe-pane')),
+    matching: find.byType(SafeText),
+  );
+  expect(payload, findsOneWidget, reason: 'the preview side is not drawing the payload');
+  final textBefore = tester.getRect(payload);
+  final doorBefore = tester.getRect(find.text('Choose who answers'));
+  // 120 pixels below the side's own top: past its header, inside the scroller,
+  // and on the window whatever the payload's height is.
+  final side = tester.getRect(find.byKey(const ValueKey<String>('workspace-safe-pane')));
+  await wheelOver(tester, payload, 800, at: Offset(side.center.dx, side.top + 120));
+  expect(
+    tester.getRect(payload).top,
+    lessThan(textBefore.top),
+    reason:
+        'the wheel over the payload must move the payload, not vanish into SelectableText',
+  );
+  expect(
+    tester.getRect(find.text('Choose who answers')),
+    doorBefore,
+    reason: 'wheeling the payload moved the door it is read beside',
+  );
+  expectOnScreen(
+    tester,
+    find.text('Choose who answers'),
+    because: 'the door remains clickable after the wheel',
+  );
+  expect(tester.takeException(), isNull);
+
+  // **2 · the sheet, which has one page.**
+  await tester.tap(find.text('Choose who answers'));
   await tester.pumpAndSettle();
   expect(find.byType(SendSheet), findsOneWidget);
-  expect(find.text('Review before send'), findsOneWidget);
+  expect(find.text('Who answers'), findsOneWidget);
+  expect(
+    find.text('Continue'),
+    findsNothing,
+    reason: 'the sheet still pages, so rule 60 left a page behind',
+  );
   expect(tester.takeException(), isNull);
 
   expectOnScreen(
     tester,
     find.text('Cancel'),
-    because: 'Cancel is the fixed footer, not in the preview',
+    because: 'Cancel is the fixed footer, not in the body',
   );
-  expectOnScreen(
-    tester,
-    find.text('Continue'),
-    because: 'Continue is the fixed footer, not in the preview',
-  );
-  expect(
-    find.text('Copy Protected'),
-    findsNothing,
-    reason:
-        'the AI doors live on the next page so they cannot steal the preview wheel',
-  );
+  for (final primary in const [
+    'Copy Protected',
+    'Paste AI answer',
+    'Direct API',
+  ]) {
+    expectOnScreen(
+      tester,
+      find.text(primary),
+      because:
+          '$primary must be hittable without stretching the window — and the '
+          'choice now stands above the doors, which is the height rule 60 added',
+    );
+  }
 
   final footerBefore = tester.getRect(find.byKey(SendSheet.footerKey));
-  final continueBefore = tester.getRect(find.text('Continue'));
-  final preview = tester.widget<SingleChildScrollView>(
-    find.byKey(SendSheet.previewKey),
+  final body = tester.widget<SingleChildScrollView>(
+    find.byKey(SendSheet.bodyKey),
   );
-  final position = preview.controller!.position;
+  final position = body.controller!.position;
   expect(
     position.maxScrollExtent,
     greaterThan(40),
-    reason:
-        'the preview must actually overflow, or the wheel assertion is empty',
+    reason: 'the body must actually overflow, or the wheel assertion is empty',
   );
   final offsetBefore = position.pixels;
 
-  await wheelOverPreview(tester, 800);
+  await wheelOver(tester, find.byKey(SendSheet.bodyKey), 800);
 
   expect(
     position.pixels,
     greaterThan(offsetBefore),
-    reason:
-        'the wheel over the payload must move the preview, not vanish into SelectableText',
+    reason: 'the wheel over the doors moved nothing',
   );
   expect(
     tester.getRect(find.byKey(SendSheet.footerKey)),
     footerBefore,
-    reason: 'wheeling the preview must not move the footer',
-  );
-  expect(
-    tester.getRect(find.text('Continue')),
-    continueBefore,
-    reason: 'Continue stays put while the payload moves',
+    reason: 'wheeling the body must not move the footer',
   );
   expectOnScreen(
     tester,
     find.text('Cancel'),
     because: 'Cancel remains clickable after the wheel',
   );
-  expectOnScreen(
-    tester,
-    find.text('Continue'),
-    because: 'Continue remains clickable after the wheel',
-  );
   expect(tester.takeException(), isNull);
 
-  await enterAiMode(tester);
-  expect(tester.takeException(), isNull);
-  expectOnScreen(
-    tester,
-    find.text('Cancel'),
-    because: 'Cancel stays in the footer on the AI page',
-  );
-  expectOnScreen(
-    tester,
-    find.text('Back'),
-    because: 'Back is the footer return to the preview',
-  );
-  expectOnScreen(
-    tester,
-    find.text('Copy Protected'),
-    because:
-        'Copy Protected is a primary action and must be hittable without stretching the window',
-  );
-  expectOnScreen(
-    tester,
-    find.text('Paste AI answer'),
-    because:
-        'Paste AI answer is a primary action and must be hittable without stretching the window',
-  );
-  expectOnScreen(
-    tester,
-    find.text('Direct API'),
-    because:
-        'Send from here is a primary action and must be hittable without stretching the window',
-  );
-
+  // **3 · the first door, taken.**
+  //
+  // Brought back into view on purpose: step 2 wheeled this page 800 pixels to
+  // measure that the footer stays put, so the door is where that wheel left it.
+  // A `tap` on an off-stage control hits nothing and says nothing.
+  await tester.ensureVisible(find.text('Copy Protected'));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Copy Protected'));
   await settle(tester, rounds: 1);
   expect(find.text('Copied'), findsOneWidget);
@@ -2105,18 +2150,8 @@ Future<void> reviewJourney(
   expect(find.textContaining('Paste the model'), findsOneWidget);
   expectOnScreen(
     tester,
-    find.text('Back'),
-    because: 'opening the paste box must not kick Back off the screen',
-  );
-  expect(tester.takeException(), isNull);
-
-  await tester.tap(find.text('Back'));
-  await tester.pumpAndSettle();
-  expect(find.byKey(SendSheet.previewKey), findsOneWidget);
-  expectOnScreen(
-    tester,
-    find.text('Continue'),
-    because: 'Back returns to the review page with Continue on screen',
+    find.text('Cancel'),
+    because: 'opening the paste box must not kick the footer off the screen',
   );
   expect(tester.takeException(), isNull);
 }

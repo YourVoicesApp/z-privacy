@@ -27,14 +27,23 @@ import 'package:zprivacy/core/messages.dart';
 /// from the smallest line on the card.
 const kRemoveHere = 'Remove protection here';
 
-/// **The second of the two choices un-protection has** — 083, ruling 3. Its
+/// **The second of the two choices un-protection has** — 083, ruling 3.
+///
+/// **Its sentence says «session» since rule 55-هـ** (the owner, 17 October):
+/// the container is one thing and had two names on the glass. The identifier
+/// keeps the old word on purpose — `Scope::Conversation` in the core, the
+/// bridge's mirror of it and `unprotectInThisConversation` all still speak of
+/// conversations, and renaming one of them would be a vocabulary split across
+/// the seam. The rule is about the sentence a person reads.
+///
+/// Its
 /// name carries the number, because it is the direction that **uncovers**, and
 /// this project's law about that asymmetry is written over «Protect all» and
 /// «Skip all»: the dangerous direction says how many. Drawn only when the token
 /// stands in more than one place — with one place it would be a second name for
 /// «here», and two names for one act is a defect this app has already paid for.
 String removeInThisConversation(int places) =>
-    'Remove it in this conversation ($places places)';
+    'Remove it in this session ($places places)';
 const kForgetThisProfile = 'Forget from this profile';
 const kForgetEverywhere = 'Forget everywhere';
 
@@ -300,8 +309,8 @@ class _WhySheetState extends State<WhySheet> {
               ]),
               if (why.places > 1)
                 _Note(removeInThisConversation(why.places), const [
-                  'Uncovers every place this token stands in, in this conversation.',
-                  'There is no «everywhere»: un-protection reaches no further than one conversation.',
+                  'Uncovers every place this token stands in, in this session.',
+                  'There is no «everywhere»: un-protection reaches no further than one session.',
                 ]),
               if (scopedForget != null)
                 _Note(scopedForget, const [

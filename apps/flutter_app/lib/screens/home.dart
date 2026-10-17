@@ -31,12 +31,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
+import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/the_journey.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 
@@ -132,6 +134,28 @@ class _HomeScreenState extends State<HomeScreen> {
   /// True while the question is being read and scanned.
   bool _asking = false;
 
+  /// **The text the band above the composer describes** — rule 60-أ, and null
+  /// when there is no band.
+  ///
+  /// It is the text itself and not a flag, because the band's one claim is
+  /// «this is what would leave **for the question in the box**», and the box
+  /// can be edited after the asking. Compared on every keystroke (the field
+  /// already rebuilds this page), so the band is drawn only while the two
+  /// still agree.
+  ///
+  /// **The ruling, mine, asked for by the lead:** when they stop agreeing the
+  /// band **goes**, rather than staying with a line saying it is out of date.
+  /// Three reasons, in order of weight: a band that stays is a second state to
+  /// read and a second thing to word, while the press that rebuilds it is one
+  /// press away and already named; the core would refuse the stale payload
+  /// anyway (`ApiError_StalePayload` — «the document changed after this
+  /// request was prepared»), so a stale band could only mislead a person into
+  /// pressing; and rebuilding it on every keystroke would be a scan per
+  /// keystroke, which is a core call per letter and a different answer under
+  /// the person's hand while they read it. What is **not** lost: the question
+  /// stays in the box, and one press brings the band back.
+  String? _asked;
+
   /// What the last ask said, when it said anything: «open the vault first»,
   /// or the core's own refusal.
   String? _said;
@@ -168,19 +192,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     if (chat == null || !mounted) return;
     if (chat.openSuggestions > 0) return;
-    await showDialog<bool>(
-      context: context,
-      // Only when pressing it would **open** the panel. The shell's
-      // `onSettings` is a toggle, so handing it on while the panel is
-      // already standing would give the sheet a door labelled «Open
-      // Settings» that shuts them. A surface with nowhere to send the
-      // press draws no door — 063's rule, and this is the case it covers.
-      builder: (_) => SendSheet(
-        bench: chat,
-        ground: widget.ground,
-        onSettings: widget.settingsOpen ? null : widget.onSettings,
-      ),
-    );
+    // **The press stops here — rule 60-أ.** It used to open the send sheet in
+    // the same breath, and that was the chat's whole «see what will leave»
+    // step for as long as the sheet had a page showing the text. Rule 60 took
+    // that page away, so this press draws the band instead and the band
+    // carries the door. The owner's words for the two halves: «Ask the AI»
+    // protects the text and shows it; a second press chooses who answers.
+    setState(() => _asked = text);
   }
 
   /// Keep the newest answer where the person is looking.
@@ -213,6 +231,16 @@ class _HomeScreenState extends State<HomeScreen> {
     final empty = _text.text.trim().isEmpty;
     final waiting = chat?.openSuggestions ?? 0;
     final blocked = waiting > 0;
+    // **The band, decided in one place** — rule 60-أ. It is drawn when the
+    // asking built a payload **for the text that is still in the box**: see
+    // `_asked` for why a changed box takes the band away rather than leaving
+    // it to describe something that is no longer there. `blocked` cannot be
+    // true here — a press that found something unanswered never set `_asked`
+    // — and it is read anyway, so that the two states can never be on the
+    // glass together whatever a later round does to the press.
+    final leaving = (_asked != null && _asked == _text.text.trim() && !blocked)
+        ? chat?.payload
+        : null;
     return ListenableBuilder(
       // The conversation changes what this page draws, so the page listens to
       // it as well as to the ground.
@@ -459,6 +487,24 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 10),
                         ],
+                        // **What would leave — rule 60-أ**, above the box it
+                        // describes and below the thread, so the eye meets it
+                        // on the way from the question to the act.
+                        if (leaving != null) ...[
+                          _WhatWouldLeave(
+                            payload: leaving,
+                            ground: ground,
+                            bench: chat!,
+                            // 063's rule, carried over from the sheet's own
+                            // door: hand the panel on only when pressing it
+                            // would **open** it, because `onSettings` is a
+                            // toggle and a sheet standing over an open panel
+                            // would draw a door labelled «Open Settings» that
+                            // shuts them.
+                            onSettings: widget.settingsOpen ? null : widget.onSettings,
+                          ),
+                          const SizedBox(height: 10),
+                        ],
                         // **The composer is the home.** The owner, 6 October: the
                         // writing screen is the main screen, and a file is a «+» as it
                         // is in a chat. So the box has the focus — a person who opened
@@ -694,4 +740,90 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Zc.lineSoft,
       );
 
+}
+
+/// **What would leave, in the chat — the owner's rule 60-أ, 17 October 2026.**
+///
+/// Rule 60 deleted the send sheet's own page of outgoing text, on the ground
+/// that the work surface draws it beside the document. The chat has no such
+/// side, and the measured consequence was that its press reached the three
+/// exits with the text nowhere on the glass — the step its own head comment
+/// calls «see what will leave». The owner's answer was to split the press:
+/// «Ask the AI» protects the line and shows it here, and this band carries the
+/// one door onward.
+///
+/// **The door is inside the band and nowhere else**, which is the whole of how
+/// the law is kept: there is no state in which a person can reach the exits
+/// from this screen without this text in front of them, so nothing has to
+/// remember to check. G42 reads it out of the source.
+///
+/// **Characters, not chips.** The work surface offers both, because a document
+/// is read there and a chip is easier on the eye; this band has no switch and
+/// draws what the model will read, character for character.
+class _WhatWouldLeave extends StatelessWidget {
+  const _WhatWouldLeave({
+    required this.payload,
+    required this.ground,
+    required this.bench,
+    this.onSettings,
+  });
+
+  final PayloadView payload;
+  final Ground ground;
+  final Workbench bench;
+
+  /// Null means there is no panel to open, and then the sheet draws no door
+  /// rather than a dead one — 063.
+  final VoidCallback? onSettings;
+
+  /// For the guards: the band itself, so a guard can ask whether the text and
+  /// the door are **in it** rather than somewhere on the page.
+  static const named = ValueKey<String>('home-what-would-leave');
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: named,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: Zc.panel(fill: Zc.warmCard, edge: Zc.lineSoft, radius: 11),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Eyebrow('This is what would leave'),
+          const SizedBox(height: 6),
+          // The same sentence the work surface's own side says, from the same
+          // function — two screens making one claim, worded once.
+          Text(
+            exactlyWhatWouldLeave(payload.protectedCount),
+            style: Zc.small.copyWith(color: Zc.ink3),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: Zc.panel(fill: Zc.card, radius: 9),
+            child: SafeText(text: payload.text, chips: false),
+          ),
+          const SizedBox(height: 11),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ZButton(
+              label: 'Choose who answers',
+              filled: true,
+              icon: Icons.auto_awesome_outlined,
+              // **The order is not written here** — the hand holds it, where a
+              // gate can read it, and it is the sibling of the work surface's.
+              onPressed: () => unawaited(theWayToTheDoorsFromTheChat(
+                context,
+                ground: ground,
+                bench: bench,
+                onSettings: onSettings,
+              )),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -79,7 +79,7 @@ class _TokensPanelState extends State<TokensPanel> {
                         tokens.isEmpty
                             ? 'Nothing is protected yet.'
                             : '${tokens.length} ${tokens.length == 1 ? "value stands" : "values stand"} '
-                                'behind a token in this conversation.',
+                                'behind a token in this session.',
                         style: Zc.small,
                       ),
                     ],
@@ -181,7 +181,7 @@ class _TokenRow extends StatelessWidget {
               _Tag(
                 switch (row.scope) {
                   Scope.once => 'Just here',
-                  Scope.conversation => 'This conversation',
+                  Scope.conversation => 'This session',
                   Scope.profile => 'Remembered for this client',
                   Scope.always => 'Remembered everywhere',
                 },

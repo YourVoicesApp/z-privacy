@@ -8,9 +8,9 @@
 // `ConnectForm` — endpoint, model, API key — in **four** places:
 //
 //   1. `_ModelAndMode._provider`, behind «Connect» beside an unconnected
-//      provider's name. This one is on the sheet's **first page**, which is
-//      the page the sheet opens on: a person who pressed ✨AI to choose a
-//      model is one press from a key form.
+//      provider's name. This one stood at the head of the page the sheet opens
+//      on — and since rule 60 that is the only page it has: a person who
+//      pressed ✨AI to choose a model is one press from a key form.
 //   2. the Direct API door, inline, whenever nothing is connected.
 //   3. «Change the address, the model, or the key», folded, when something is.
 //   4. «Set up a local model», folded, always.
@@ -102,7 +102,6 @@ Future<Workbench> _openSheet(
   WidgetTester tester,
   Ground ground, {
   String text = _doc,
-  bool toAiPage = true,
   bool withDoor = true,
 }) async {
   late final Workbench bench;
@@ -137,10 +136,8 @@ Future<Workbench> _openSheet(
   await settle(tester);
   await tester.tap(find.text('open the sheet'));
   await settle(tester);
-  if (toAiPage) {
-    await tester.tap(find.text('Continue'));
-    await settle(tester);
-  }
+  // **No paging left** — rule 60 made the sheet one page, so the choice, the
+  // doors and this test's subject are all on it the moment it opens.
   return bench;
 }
 
@@ -165,20 +162,20 @@ void main() {
   // it.** «Connect in Settings» used to stand beside each unconnected
   // company's name here — six of them, which is what the owner pointed at. The
   // property this guard holds did not move an inch: the one AI control the
-  // review page carries must not open a key form inside the sheet, and its
+  // sheet carries must not open a key form inside the sheet, and its
   // press must ask for the panel. With nothing connected that control says «No
   // AI connected», and its press **is** the way in.
-  testWidgets('e — the first page\'s AI control opens no key form', (tester) async {
+  testWidgets('e — the sheet\'s own AI control opens no key form', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 950));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final ground = await _vault(tester, 'first-page');
-    final bench = await _openSheet(tester, ground, toAiPage: false);
+    final bench = await _openSheet(tester, ground);
 
     final control = find.byKey(TheModelThatAnswers.mark);
     expect(
       control,
       findsOneWidget,
-      reason: 'the review page names no AI at all, so this test proves nothing either way',
+      reason: 'the sheet names no AI at all, so this test proves nothing either way',
     );
     await tester.tap(control);
     await settle(tester);
@@ -230,6 +227,13 @@ void main() {
       reason: 'nothing connected, no form, and no way to reach the one place a key can be given',
     );
 
+    // **Scrolled to, not reached for blindly.** Rule 60 put the model and the
+    // mode at the head of this one page, so the third door's own way in sits
+    // below the fold on a short window — and a `tap` on an off-stage control
+    // hits nothing and reports nothing. The sheet's body is a scroller and the
+    // door is in it; what this guard is about is that the door **answers**.
+    await tester.ensureVisible(door.first);
+    await settle(tester);
     await tester.tap(door.first);
     await settle(tester);
 
@@ -484,8 +488,6 @@ void main() {
       );
       await settle(tester);
       await tester.tap(find.byTooltip('Choose the AI and what travels to it'));
-      await settle(tester);
-      await tester.tap(find.text('Continue'));
       await settle(tester);
     }
 

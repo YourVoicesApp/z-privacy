@@ -157,6 +157,87 @@ void main() {
         reason: 'the session was not born of its first text');
   });
 
+  testWidgets('rule 57-د — a session from before 080 is asked once, and «Not now» reads nothing',
+      (tester) async {
+    // The owner, 17 October: an old session has no language, so it asks —
+    // once, before the first reading in it — and it never takes the
+    // application's silently. This is the last trace of 080 that was still
+    // falling back: `packForTheNextText` answered for such a session with the
+    // app's language, which is how a German session came to be read with an
+    // English eye and nobody was asked.
+    await tester.binding.setSurfaceSize(const Size(1400, 1000));
+    final ground = await _fresh(tester, 'old-session');
+    final dir = Directory('${Directory.systemTemp.path}/zprivacy-home-old-$pid');
+
+    await tester.pumpWidget(MaterialApp(home: ZShell(dataDir: dir.path, ground: ground)));
+    await settle(tester);
+    // The first run and the vault — the same recipe as the test above, and the
+    // language chosen here is **English**, so that an answer of «de» later
+    // cannot be the application's own.
+    await tester.tap(find.text('English'));
+    await settle(tester, rounds: 1);
+    await tester.tap(find.text('Start'));
+    await settle(tester);
+    await tester.tap(find.text('Create a vault'));
+    await settle(tester);
+    await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: _pass));
+    await settle(tester);
+    await tester.tap(find.text('Back'));
+    await settle(tester, rounds: 8);
+    expect(find.byType(HomeScreen), findsOneWidget);
+
+    // **A session as 080 left them**: begun with no bench, so the core wrote
+    // «never asked» rather than a language.
+    await tester.runAsync(() async {
+      await z.conversationBegin(name: 'Alt', bench: null);
+      await ground.refresh();
+    });
+    await settle(tester, rounds: 2);
+    expect(ground.openSessionRow, isNotNull, reason: 'the old session is not the open one');
+    expect(ground.openSessionRow!.packId, isNull,
+        reason: 'a birth with no bench invented a language, so this guard has no old session');
+    expect(appLanguage(ground), 'en',
+        reason: 'the application does not speak English here, so «de» would prove nothing');
+    expect(packForTheNextText(ground), isNull,
+        reason: 'an old session still answers for a language nobody chose');
+
+    // 1 · «Not now» — nothing is read, nothing is written, and the screen says
+    // what did not happen.
+    await tester.enterText(find.byKey(HomeScreen.composer), _text);
+    await settle(tester, rounds: 1);
+    await tester.tap(find.text('Open and scan'));
+    await settle(tester, rounds: 4);
+    expect(find.text(TheLanguageOfANewSession.title), findsOneWidget,
+        reason: 'the text was about to be read in a language nobody chose');
+    await tester.tap(find.text('Not now'));
+    await settle(tester, rounds: 8);
+    expect(find.byType(WorkspaceScreen), findsNothing,
+        reason: 'the text was read after «Not now»');
+    expect(ground.openSessionRow!.packId, isNull, reason: '«Not now» wrote a language anyway');
+    expect(find.textContaining('Nothing was read'), findsOneWidget,
+        reason: 'a press did nothing and said nothing, which reads as a broken program');
+
+    // 2 · and the question is still owed, because «Not now» answered nothing.
+    await tester.enterText(find.byKey(HomeScreen.composer), _text);
+    await settle(tester, rounds: 1);
+    await tester.tap(find.text('Open and scan'));
+    await settle(tester, rounds: 4);
+    expect(find.text(TheLanguageOfANewSession.title), findsOneWidget,
+        reason: '«Not now» was taken for an answer');
+    await tester.tap(find.byKey(TheLanguageOfANewSession.keyFor('de')));
+    await settle(tester, rounds: 30);
+
+    // 3 · **once**: the answer is written into that session, by its number, so
+    // the next reading in it finds a language and asks nothing. And it is the
+    // same session — a question about a language does not make a second one.
+    expect(find.byType(WorkspaceScreen), findsOneWidget, reason: 'the text did not open');
+    expect(ground.sessions, hasLength(1), reason: 'the answer made a second session');
+    expect(ground.openSessionRow!.packId, 'de',
+        reason: 'the answer was not written into the session, so it would be asked again');
+    expect(packForTheNextText(ground), 'de',
+        reason: 'the next text in this session would be asked about a second time');
+  });
+
   testWidgets('the language list has a line, and every language under it can be chosen', (tester) async {
     await tester.binding.setSurfaceSize(const Size(900, 900));
     final ground = await _fresh(tester, 'languages');

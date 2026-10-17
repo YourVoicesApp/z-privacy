@@ -84,9 +84,6 @@ Future<Workbench> _sheet(WidgetTester tester, Ground ground) async {
     home: Scaffold(body: SendSheet(bench: bench, ground: ground)),
   ));
   await settle(tester);
-  // Step past the review page to the three doors.
-  await tester.tap(find.text('Continue'));
-  await settle(tester);
   return bench;
 }
 
@@ -210,7 +207,7 @@ void _p22() {
     final bench = await _sheetlessWorkspace(tester, ground);
 
     // The door is named for what the press does.
-    expect(find.text('Review what will leave'), findsOneWidget);
+    expect(find.text('Choose who answers'), findsOneWidget);
     expect(find.text('Send safe version'), findsNothing);
     // «Send» belongs only where a request really leaves. The rule is about
     // **controls**: the left column's caption «Send cannot read this side» is
@@ -232,11 +229,13 @@ void _p22() {
     // absence.
     expect(find.text('Review'), findsNothing);
 
-    await tester.tap(find.text('Review what will leave'));
+    await tester.tap(find.text('Choose who answers'));
     await settle(tester);
 
-    // It opened the sheet — and did nothing else.
-    expect(find.text('THIS IS WHAT WOULD LEAVE'), findsOneWidget);
+    // It opened the sheet — and did nothing else. The heading it opens on is
+    // «Who answers» since rule 60; the outgoing text it used to show on a page
+    // of its own is read in the preview side, which this press did not touch.
+    expect(find.text('Who answers'), findsOneWidget);
     expect(bench.answers, isEmpty, reason: 'Review created an answer');
     expect(bench.copiedPayload, isNull, reason: 'Review bound a payload');
     final still = await Clipboard.getData(Clipboard.kTextPlain);

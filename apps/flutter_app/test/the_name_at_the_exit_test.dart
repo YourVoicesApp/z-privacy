@@ -167,9 +167,10 @@ Future<({Workbench bench, Ground ground})> _benchOnly(
   return (bench: bench, ground: ground);
 }
 
-/// The sheet, open on its second page — where the two exits are.
+/// The sheet, open — where the two exits are, which since rule 60 is the only
+/// page it has.
 ///
-/// `Continue` is dead while the payload is null, so **arriving at the doors is
+/// A door is dead while the payload is null, so **arriving at the doors is
 /// itself a measurement**: a guard that stands here has proven a payload exists
 /// on the way in, and no guard in this file mounts the doors any other way.
 Future<({Workbench bench, Ground ground, Directory out})> _atTheDoors(
@@ -177,7 +178,6 @@ Future<({Workbench bench, Ground ground, Directory out})> _atTheDoors(
   String name, {
   bool withAVault = true,
   String text = _letter,
-  bool toTheDoors = true,
   String documentName = '',
 }) async {
   late final ({Workbench bench, Ground ground}) made;
@@ -196,17 +196,17 @@ Future<({Workbench bench, Ground ground, Directory out})> _atTheDoors(
     ),
   ));
   await _settle(tester);
-  final onward = find.text('Continue');
-  expect(onward, findsOneWidget, reason: 'the sheet did not open on its first page');
+  // **The premise, read off the only page there is** — rule 60 made the sheet
+  // one page, so the doors are standing the moment it opens. «Copy Protected»
+  // is dead when there is no payload, which is exactly what «Continue» used to
+  // prove here before the page it belonged to was deleted.
+  expect(find.text('Copy Protected'), findsOneWidget,
+      reason: 'the sheet did not open on its doors');
   expect(
-    tester.widget<ZButton>(find.widgetWithText(ZButton, 'Continue')).onPressed,
+    tester.widget<ZButton>(find.widgetWithText(ZButton, 'Copy Protected')).onPressed,
     isNotNull,
-    reason: 'Continue is dead, so there is no payload and this fixture proves nothing',
+    reason: 'the manual door is dead, so there is no payload and this fixture proves nothing',
   );
-  if (toTheDoors) {
-    await tester.tap(onward);
-    await _settle(tester);
-  }
   return (bench: made.bench, ground: made.ground, out: out);
 }
 
@@ -283,7 +283,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final probe = _ClipboardProbe(tester)..install();
     probe.text = _letter;
-    final g = await _atTheDoors(tester, 'nameless', toTheDoors: false);
+    final g = await _atTheDoors(tester, 'nameless');
     // **Since rule 55 the session is the document's own** (the owner, 16
     // October): it was born as the text entered the preview and is called
     // «Session N» by the core's own number, which is what this guard is about.
@@ -336,8 +336,6 @@ void main() {
     // **The control: the press itself still copies.** With the session now
     // open no core call is awaited, so a real tap resumes — and the clipboard
     // is emptied again before it is written.
-    await tester.tap(find.text('Continue'));
-    await _settle(tester);
     await tester.tap(find.text('Copy Protected'));
     await _settle(tester);
     expect(probe.wrote, ['', '', g.bench.payload!.text],
@@ -369,7 +367,6 @@ void main() {
     final g = await _atTheDoors(
       tester,
       'pdf-nameless',
-      toTheDoors: false,
       documentName: 'Brief_Weber.txt',
     );
     expect(g.bench.document?.name, 'Brief_Weber.txt',
@@ -383,8 +380,6 @@ void main() {
     );
     expect(out!.refused, isNull, reason: 'the nameless exit was refused: ${out.refused}');
     await tester.runAsync(() => g.bench.refresh());
-    await _settle(tester);
-    await tester.tap(find.text('Continue'));
     await _settle(tester);
     await tester.tap(find.text('Save as PDF'));
     await _settle(tester, rounds: 16);
@@ -600,16 +595,18 @@ void main() {
       ),
     ));
     await _settle(tester);
-    await tester.tap(find.text('Continue'));
-    await _settle(tester);
     expect(made.ground.aSessionWouldBeBorn, isFalse,
         reason: 'the document in the preview brought no session (rule 55)');
 
     final door = find.widgetWithText(ZButton, 'Open Settings');
     expect(door, findsWidgets, reason: 'no way to reach the one place a key is given');
+    // Scrolled to first: the choice stands at the head of the sheet's one page
+    // since rule 60, and a `tap` on an off-stage control hits nothing.
+    await tester.ensureVisible(door.first);
+    await _settle(tester);
     await tester.tap(door.first);
     await _settle(tester);
-    expect(asked, 1, reason: 'the door is on the glass and did not answer the press');
+    expect(asked, 1, reason: 'the door is in the sheet and did not answer the press');
   });
 
   // ---------------------------------------------------------- the vault is shut

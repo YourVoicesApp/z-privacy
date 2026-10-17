@@ -348,8 +348,6 @@ void main() {
       home: Scaffold(body: SendSheet(bench: g.bench, ground: g.ground)),
     ));
     await _settle(tester);
-    await tester.tap(find.text('Continue'));
-    await _settle(tester);
 
     // The label is the route and not the protocol, and loopback is «on this
     // computer», so the door is found by what every one of them starts with.

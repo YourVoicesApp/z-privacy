@@ -114,7 +114,7 @@ class _AnswerPanelState extends State<AnswerPanel> {
                           }
                           if (facts.total == 1) {
                             return const Text(
-                              'One answer in this conversation.',
+                              'One answer in this session.',
                               style: Zc.small,
                             );
                           }
@@ -282,11 +282,11 @@ class _AnswerPanelState extends State<AnswerPanel> {
                                 Expanded(
                                   child: Text(
                                     unknown.length == 1
-                                        ? 'This answer carries 1 token this conversation does not '
-                                              'know — it was made in another conversation.'
+                                        ? 'This answer carries 1 token this session does not '
+                                              'know — it was made in another session.'
                                         : 'This answer carries ${unknown.length} tokens this '
-                                              'conversation does not know — they were made in '
-                                              'another conversation.',
+                                              'session does not know — they were made in '
+                                              'another session.',
                                     style: Zc.small.copyWith(
                                       color: Zc.amber,
                                       fontWeight: FontWeight.w600,
@@ -382,7 +382,7 @@ class _AnswerPanelState extends State<AnswerPanel> {
                                 ? 'The marked words were put back here, on this device. The model '
                                       'never saw them.'
                                 : 'The dotted words were put back here, on this device. The struck '
-                                      'ones are tokens this conversation cannot put back.'
+                                      'ones are tokens this session cannot put back.'
                           : 'This is the answer exactly as it arrived, with the tokens still in it.',
                       style: Zc.tiny.copyWith(letterSpacing: 0),
                     ),
@@ -429,7 +429,7 @@ class _AnswerPanelState extends State<AnswerPanel> {
                         if (bench.answers.length > 1)
                           Expanded(
                             child: Text(
-                              'Earlier answers stay in this conversation until you close it.',
+                              'Earlier answers stay in this session until you close it.',
                               style: Zc.tiny.copyWith(letterSpacing: 0),
                             ),
                           ),

@@ -229,9 +229,9 @@ class _ShellState extends State<ZShell> {
   /// **The language the next text is read with** — rule 57, and the one place
   /// that decides it for every door on this screen.
   ///
-  /// A session that exists has a language and is never asked again (rule 57c,
-  /// rule 33): `packForTheNextText` answers for it, and for a session created
-  /// before 080 which has none of its own it answers with the application's.
+  /// A session that has a language of its own is never asked again (rule 57c,
+  /// rule 33): `packForTheNextText` answers for it, and for a text with no
+  /// session and nowhere to keep one it answers with the application's.
   ///
   /// **A session that does not exist yet is asked** — rule 57b. The text about
   /// to be read is the first thing in a session that is born as it enters the
@@ -240,15 +240,50 @@ class _ShellState extends State<ZShell> {
   /// no longer taken silently here: that is exactly what the owner met on 16
   /// October when he made a session and was never asked.
   ///
-  /// `null` means «not now»: the caller reads nothing, so no session is born
-  /// and nothing is kept.
+  /// **And an old session is asked too, once** — rule 57-د, 17 October. A
+  /// session created before 080 carries no language of its own, and until now
+  /// `packForTheNextText` answered for it with the application's: the owner's
+  /// German session read with an English eye, and nobody asked. It is the same
+  /// question at the same instant — before the first text is read in it — and
+  /// the same dialog asks it. The answer is **written into that session** by
+  /// its number, so «once» is a fact about the file and not a hope: the next
+  /// door finds a language and asks nothing.
+  ///
+  /// `null` means «not now»: the caller reads nothing, so no session is born,
+  /// nothing is kept, and the screen says that rather than leaving a press that
+  /// did nothing and said nothing.
   Future<String?> _theLanguageOfTheTextToCome() async {
-    if (!_ground.aSessionWouldBeBorn) return packForTheNextText(_ground);
+    final said = packForTheNextText(_ground);
+    if (said != null) return said;
     if (!mounted) return null;
-    return showDialog<String>(
+    // Read **before** the dialog: the answer is written into this session, and
+    // after the await «the open session» is a second reading of a fact that
+    // this function already took.
+    final old = _ground.openSessionRow;
+    final chosen = await showDialog<String>(
       context: context,
       builder: (_) => TheLanguageOfANewSession(ground: _ground),
     );
+    if (!mounted) return null;
+    if (chosen == null) {
+      setState(() {
+        _trouble = noLanguageSoNothingWasRead(aSessionIsOpen: old != null);
+        _troubleReport = null;
+      });
+      return null;
+    }
+    if (old != null && !await _ground.setSessionPack(old.number, chosen)) {
+      // The core refused and said why in its own words; a language that could
+      // not be written is not a language this session has, so nothing is read
+      // with it.
+      if (!mounted) return null;
+      setState(() {
+        _trouble = _ground.trouble ?? unnamedTrouble;
+        _troubleReport = null;
+      });
+      return null;
+    }
+    return chosen;
   }
 
   /// **A document has entered the preview** — rule 55, the glass's half of it.
@@ -382,9 +417,17 @@ class _ShellState extends State<ZShell> {
       // 57c. Read before the entering, as it was until 16 October, this was the
       // language of whichever session happened to be open: a German document
       // saved in one session, re-opened from another, came back on a bench that
-      // reads English. Nothing is asked here either way — the session this
-      // document belongs to has a language already.
-      final packId = packForTheNextText(_ground);
+      // reads English.
+      //
+      // **Through the one hand since rule 57-د**, and not `packForTheNextText`
+      // on its own: coming back to a kept document is a reading of a text in a
+      // session, so a session created before 080 is asked here exactly as it is
+      // at the other three doors. It was the fourth door, and a law written at
+      // three doors out of four is this house's most expensive trap — this one
+      // would have gone on reading an old session's documents with the
+      // application's eye.
+      final packId = await _theLanguageOfTheTextToCome();
+      if (packId == null || !mounted) return;
       final session = await z.openSession(profileId: null, packId: packId);
       final bench = Workbench(session: session, profileId: null, packId: packId);
       await z.openKeptDocument(number: number, which: which, chat: chat, bench: session);

@@ -1519,12 +1519,12 @@ fn book_reach(
         Some(S::Profile) => match profile_id {
             Some(profile) => Ok((Some(profile), true)),
             None => Err(ApiError::InputRefused {
-                reason: "these names would be kept for this client, and this conversation is not in one — open a client first, or choose «everywhere»".to_string(),
+                reason: "these names would be kept for this client, and this session is not in one — open a client first, or choose «everywhere»".to_string(),
             }),
         },
         Some(S::Always) => Ok((None, true)),
         Some(S::Once | S::Conversation) => Err(ApiError::InputRefused {
-            reason: "a list of names has no places in it yet, so it is kept for this client or for every client — «this one place» and «this conversation» are answers about a document".to_string(),
+            reason: "a list of names has no places in it yet, so it is kept for this client or for every client — «this one place» and «this session» are answers about a document".to_string(),
         }),
     }
 }

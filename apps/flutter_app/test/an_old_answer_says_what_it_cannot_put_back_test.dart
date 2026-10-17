@@ -180,7 +180,7 @@ void main() {
     expect(find.byKey(AnswerPanel.unresolved), findsOneWidget,
         reason: 'the answer came back with nothing said about it');
     expect(
-      find.textContaining('2 tokens this conversation does not know', findRichText: true),
+      find.textContaining('2 tokens this session does not know', findRichText: true),
       findsOneWidget,
       reason: 'the count is not on the screen',
     );

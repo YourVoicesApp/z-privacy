@@ -11,14 +11,24 @@
 // **the application's**; there is no third source. And two ways only to a
 // session's own language: chosen when the session is created, or the app's.
 //
+// **Rule 57-د, 17 October, narrows the fallback.** A session that exists and
+// never chose a language is **asked** — once, before the first text is read in
+// it — and the answer is written into that session. The application's language
+// is the fallback only where there is nobody to ask and nowhere to keep an
+// answer: no session, and none that could be born. So `packForTheNextText`
+// answers `null` for «nobody has said», and the three guards below are read
+// against that: the owner's own case was an old session reading his German
+// with an English eye while nobody asked him anything.
+//
 // So 075d's «the question is asked once in a conversation's life» is gone with
 // the question itself. A question at the file door was the third source, and a
 // third source is how two doors come to disagree. What this file guards now:
 //
 //   * **the rule** — `packForTheNextText` answers which language reads the next
 //     text, whatever door it came through, and asks nobody anything;
-//   * **the fallback** — a session with no language of its own follows the
-//     application's, and a session that has one does not;
+//   * **the fallback** — a text with no session and no session to come follows
+//     the application's, a session that has a language of its own does not, and
+//     a session that never chose answers «ask me» (rule 57-د);
 //   * **the write** — `conversationSetPack` puts a language on a session by its
 //     number, with no document open, which is the only way the first of the
 //     owner's two ways can hold when a session is created from the room.
@@ -134,12 +144,13 @@ void main() {
       );
     });
 
-    test('a session with no language of its own takes the app\'s', () async {
+    test('a session with no language of its own is asked, and takes nothing', () async {
       await _appLanguage('en');
       expect(
         packForTheNextText(await _groundWith(_row(null))),
-        'en',
-        reason: 'a session that never chose a language was given one nobody chose',
+        isNull,
+        reason: 'a session that never chose a language was given one nobody chose — '
+            'which is the owner\'s own case, and rule 57-د is his answer to it',
       );
     });
 
@@ -152,13 +163,18 @@ void main() {
       );
     });
 
-    test('the app\'s language is the only fallback, and it is one function', () async {
+    test('the app\'s language is the fallback only where an answer could not be kept', () async {
       // The control that gives the three above their meaning: change the one
       // value and every answer that depends on it moves, in one step.
       await _appLanguage('de');
       expect(appLanguage(await _groundWith(null)), 'de');
-      expect(packForTheNextText(await _groundWith(_row(null))), 'de');
-      // And a session with its own language does not move with it.
+      // A text with no session, and the vault shut so none could be born:
+      // nobody to ask, nowhere to put the answer, so the app's is honest.
+      expect(packForTheNextText(await _groundWith(null)), 'de');
+      // A session that never chose does **not** move with the app's language,
+      // because nothing answers for it — rule 57-د.
+      expect(packForTheNextText(await _groundWith(_row(null))), isNull);
+      // And a session with its own language does not move with it either.
       expect(packForTheNextText(await _groundWith(_row('en'))), 'en',
           reason: 'the app\'s language overrode a session\'s own');
     });
@@ -194,7 +210,14 @@ void main() {
     );
 
     // Now the application's language changes. The session that chose one keeps
-    // it; a text with no session follows the new one.
+    // it; and a text with no session, **with this vault open**, is asked —
+    // rule 57b, because the session it would be read into is about to be born
+    // and its language is the person's to choose at that instant.
+    //
+    // This assertion read `'sv'` until 17 October, and the value was never
+    // consumed in that state: the shell asked the question first and threw the
+    // answer away. Rule 57-د put the asking in the function, so «ask» is now
+    // something the type can say, and the guard says it here.
     await _appLanguage('sv', ground: ground);
     expect(
       packForTheNextText(await _groundWith(_row('en'))),
@@ -203,8 +226,8 @@ void main() {
     );
     expect(
       packForTheNextText(await _groundWith(null)),
-      'sv',
-      reason: 'a text with no session did not follow the app\'s new language',
+      isNull,
+      reason: 'a text with an open vault and no session took a language nobody chose',
     );
   });
 }

@@ -291,7 +291,7 @@ void main() {
   });
 
   // ------------------------------------------------------------------ guard 4
-  testWidgets('the review page carries the control and not the catalogue', (tester) async {
+  testWidgets('the send sheet carries the control and not the catalogue', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final g = await _ready(tester, 'sheet');
@@ -301,15 +301,18 @@ void main() {
     await _settle(tester);
 
     expect(find.byKey(TheModelThatAnswers.mark), findsOneWidget,
-        reason: 'the review page does not name the model that will answer');
+        reason: 'the sheet does not name the model that will answer');
     // The six groups and the six doors the owner pointed at.
     expect(find.text('Connect in Settings'), findsNothing,
         reason: 'the Connect doors are still standing in the middle of the work');
     for (final p in g.ground.providers.where((p) => !p.connected)) {
       expect(find.text(p.label), findsNothing,
-          reason: '«${p.label}» is still a heading on the review page');
+          reason: '«${p.label}» is still a heading on the sheet');
     }
-    // And the mode is untouched: it was never part of the catalogue.
+    // And the mode is untouched: it was never part of the catalogue, and rule
+    // 60 moved it one page without changing a word of it — the chips are read
+    // by name in a refusal (`session_state.dart`'s «Choose «The original
+    // text» first»), so their labels are not a rename anybody may make here.
     expect(find.text('Protected text'), findsOneWidget, reason: 'the mode chips went with the catalogue');
     expect(find.text('The original text'), findsOneWidget, reason: 'the mode chips went with the catalogue');
   });

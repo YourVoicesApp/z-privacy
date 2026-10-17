@@ -152,7 +152,7 @@ void main() {
       ConversationView(
         row: _row(turns: 2),
         turns: const [],
-        trouble: 'The vault is shut, so this conversation cannot be read.',
+        trouble: 'The vault is shut, so this session cannot be read.',
       ),
     );
     expect(

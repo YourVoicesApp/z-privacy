@@ -52,6 +52,35 @@ String theirOwnWord(String name) => '\u2068$name\u2069';
 const String unnamedTrouble =
     'Something went wrong. Z Privacy did not complete the action.';
 
+/// **What a preview side claims about the text it draws** — one sentence for
+/// the two screens that draw one, since rule 60-أ gave the chat its own band.
+///
+/// The work surface said it first, beside the Safe column, and the chat's band
+/// is the same claim about the same thing: a second literal would be two
+/// screens promising the same fact in two wordings, and the drift between them
+/// is exactly what a person would read as a difference.
+String exactlyWhatWouldLeave(int replaced) =>
+    'This is exactly what the AI will receive. $replaced values were replaced.';
+
+/// **Nothing was read, because nobody said in which language** — rule 57-د.
+///
+/// «Not now» is a real answer and not a failure: no language, no reading, no
+/// session, nothing kept. But a press that does nothing and says nothing reads
+/// as a broken program — the lesson of 081's emptied clipboard, «المستخدم لا
+/// يدرك أنه نفس النسخ القديم» — so the screen says what did not happen and the
+/// one thing that would make it happen.
+///
+/// Two states, two sentences, because they have two next moves: a session that
+/// is already open can be given a language in its room, and a session that was
+/// never born cannot be given anything.
+String noLanguageSoNothingWasRead({required bool aSessionIsOpen}) => aSessionIsOpen
+    ? 'Nothing was read. A text is read with one language’s habits, and this '
+          'session has never been given one — so Z Privacy did not choose for you. '
+          'Read it again and answer, or give the session its language in Settings.'
+    : 'Nothing was read. A text is read with one language’s habits, and none was '
+          'chosen — so nothing was read and no session was made. Try again and '
+          'choose one.';
+
 /// The human sentence for a typed error. The only such function in the app.
 String humanMessage(Object error) {
   if (error is! ApiError) return unnamedTrouble;
@@ -59,7 +88,7 @@ String humanMessage(Object error) {
     ApiError_NotImplemented() =>
       'This part of Z Privacy is not built yet.',
     ApiError_InvalidSession() =>
-      'That conversation is no longer open. Start a new one.',
+      'That session is no longer open. Start a new one.',
     ApiError_InvalidHandle() =>
       'This request is no longer current. Review the text again before sending.',
     ApiError_StalePayload() =>
@@ -135,7 +164,7 @@ String humanMessage(Object error) {
       'That press landed in the space between two columns, so it names no '
           'value — and Z Privacy will not choose a column for you.',
     ApiError_UnknownToken() =>
-      'That protected value is not in this conversation.',
+      'That protected value is not in this session.',
     ApiError_NothingToSend() =>
       'There is nothing to send yet. Bring in a document or write some text.',
     ApiError_PayloadRefused(:final reason) => _sentence(reason),
@@ -374,8 +403,8 @@ String? whatCameBack(ReturnedDocument seen) {
         seen.conversations.fold<int>(0, (sum, c) => sum + c.unresolved);
     final many = elsewhere == 1 ? '1 name' : '$elsewhere names';
     final whose = seen.unknownNamespaces.length == 1
-        ? 'a conversation this vault does not hold'
-        : 'conversations this vault does not hold';
+        ? 'a session this vault does not hold'
+        : 'sessions this vault does not hold';
     // **And the act, which here is that there is none** — the owner, 16
     // October. A namespace this vault cannot name was made by a key that is
     // not on this machine: a conversation that was forgotten took its key with

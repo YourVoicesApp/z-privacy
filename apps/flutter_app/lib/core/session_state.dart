@@ -1773,18 +1773,34 @@ String importSaid(NameImport report) {
 /// and the only honest guess when a config has not been read yet.
 String appLanguage(Ground ground) => ground.config?.packId ?? 'de';
 
-/// **Which language reads the next text, whatever door it came through** — 080.
+/// **Which language reads the next text, whatever door it came through** — 080,
+/// and `null` where **nobody has said** — rule 57-د.
 ///
-/// One function, and both doors call it: the chat and a file are not two
+/// One function, and every door calls it: the chat and a file are not two
 /// worlds. «ما ينطبق على الوثائق ينطبق على الشات».
 ///
-/// Nobody is asked anything. Until 080 the file door asked «which language is
-/// this document?» whenever the session had none, which was 075d's rule — and
-/// the owner replaced it: a session's language is chosen when the session is
-/// created, or it is the application's. A question at the file door is a third
-/// source, and a third source is how two doors come to disagree.
-String packForTheNextText(Ground ground) =>
-    ground.openSessionRow?.packId ?? appLanguage(ground);
+/// The three answers, and the third is the one the owner added on 17 October:
+///
+///   * a session is open and has a language of its own → that one, and nobody
+///     is asked (rules 33 and 57c);
+///   * there is no session and none could be born — the vault is shut, so
+///     there is nowhere to keep a language → the application's, because an
+///     answer that cannot be remembered is not worth asking for;
+///   * **anything else → `null`, which means «ask».** A session that will be
+///     born has its language chosen as it is born (rule 57b), and a session
+///     created before 080 that never got one is asked **once**, before the
+///     first text is read in it (rule 57-د).
+///
+/// It used to end `?? appLanguage(ground)` for both of the last two, and that
+/// is the defect the owner met: an old session read his German text with an
+/// English eye and he was never asked. A fallback is honest only where there
+/// is no one to ask and nowhere to put the answer.
+String? packForTheNextText(Ground ground) {
+  final open = ground.openSessionRow;
+  if (open != null) return open.packId;
+  if (ground.aSessionWouldBeBorn) return null;
+  return appLanguage(ground);
+}
 
 /// The provisional name a nameless birth is begun with, before the core's
 /// number is known. One word, and never left behind as a lie: the rename that

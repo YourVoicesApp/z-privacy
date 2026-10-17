@@ -213,8 +213,6 @@ void main() {
       home: Scaffold(body: SendSheet(bench: bench, ground: ground, saveFolder: out.path)),
     ));
     await settle(tester);
-    await tester.tap(find.text('Continue'));
-    await settle(tester);
 
     expect(bench.openSuggestions, 0,
         reason: 'the fixture asks something, so an original still stands in the payload '
@@ -318,8 +316,6 @@ void main() {
       home: Scaffold(body: SendSheet(bench: bench, ground: ground, saveFolder: out.path)),
     ));
     await settle(tester);
-    await tester.tap(find.text('Continue'));
-    await settle(tester);
 
     // Save, and **do not** copy.
     await tester.tap(find.text('Save as PDF'));
@@ -363,8 +359,6 @@ void main() {
         body: SendSheet(bench: bench, ground: ground, saveFolder: '$_libPath/nowhere'),
       ),
     ));
-    await settle(tester);
-    await tester.tap(find.text('Continue'));
     await settle(tester);
 
     await tester.tap(find.text('Save as PDF'));
@@ -599,8 +593,6 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: SendSheet(bench: bench, ground: ground, saveFolder: arabicOut.path)),
     ));
-    await settle(tester);
-    await tester.tap(find.text('Continue'));
     await settle(tester);
     await tester.tap(find.text('Save as PDF'));
     await settle(tester, rounds: 16);
