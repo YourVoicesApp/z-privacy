@@ -30,8 +30,8 @@
 // ## The boundary with the other seat
 //
 // Writing the turn — question, answer, time — into the session's file is the
-// core's half: `ingest_answer` is the chokepoint every protected door ends at,
-// `ask_model_directly` writes its own, and `conversation_turns(number:, bench:)`
+// core's half: `ingest_answer` is the chokepoint every door ends at — there is
+// one kind of door since rule 62 — and `conversation_turns(number:, bench:)`
 // reads them back **restored inside the core**. Guard 6 was written as a **pin**
 // while that half did not exist — it asserted the zero and spelt out what it
 // would become — and it went red by itself in the first full run after the
@@ -299,30 +299,20 @@ void main() {
   });
 
   // ------------------------------------------------------------------ guard 4
-  test('the direct door begins a session too, though the payload is not what leaves', () async {
-    final g = await _ready('direct');
-    // Direct Mode is a chosen thing, never automatic — `chooseOriginal` is the
-    // only way into it, here as on the glass.
-    g.bench.chooseOriginal(true);
-
-    final out = await beginThenAsk(g.ground, g.bench, providerId: 'openai');
-
-    expect(out.refused, isNull, reason: 'the direct door was refused: ${out.refused}');
-    expect(await z.conversations(), hasLength(1),
-        reason: 'the direct door began a second session');
-    expect(out.renamed, isNull,
-        reason: 'a birth was reported at the door for a session the document already brought');
-    // **No payload view, and that is the point of the parameter.** What leaves
-    // here is the document as it stands; a helper that insisted on a payload
-    // would refuse this door with «There is nothing to take out yet» on a
-    // bench that has nothing to build.
-    expect(out.view, isNull, reason: 'the direct door was handed a payload it does not send');
-    expect(g.bodies, hasLength(1), reason: 'the model was never contacted');
-    // Its own promise, and the reason it is a separate door with a separate
-    // name in the core: the document travels as it stands, because a person
-    // chose that. The session is still born — this door is an exit.
-    expect(g.bodies.single, contains(_iban), reason: 'Direct Mode did not send the original');
-  });
+  //
+  // **Deleted with its subject** — rule 62, the owner on 17 October.
+  //
+  // It measured the fourth exit: «the direct door begins a session too, though
+  // the payload is not what leaves», and its last line asserted that the real
+  // IBAN *did* travel, because that was the whole of what the person had
+  // chosen. There is no such door now, and no parameter that lets an exit skip
+  // the payload — so what this file would have to assert instead is already
+  // asserted one guard above, at the socket: the body that crossed the wire
+  // does not contain the IBAN.
+  //
+  // The absence of the door itself is measured in
+  // `only_the_protected_version_is_sent_test.dart`, over the app's own
+  // sources and the generated bridge.
 
   // ------------------------------------------------------------------ guard 5
   //
@@ -405,9 +395,9 @@ void main() {
   // write to», and would therefore write nothing, silently, for every send
   // from a sheet that forgot to begin one.
   //
-  // What is **his**: `ingest_answer` writes the turn for every protected door
-  // and `ask_model_directly` writes its own, and `conversation_turns` reads
-  // them back **restored inside the core** — never a raw turn on a screen,
+  // What is **his**: `ingest_answer` writes the turn for every door there is,
+  // and `conversation_turns` reads them back **restored inside the core** —
+  // never a raw turn on a screen,
   // because a token in the middle of a model's sentence is the exact lie that
   // cost the owner his trust in the restore path.
   test('a send with a newborn session writes its turn into that session\'s file', () async {

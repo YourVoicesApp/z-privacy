@@ -302,11 +302,15 @@ void main() {
   //
   // **The glass does not carry its own copy of the law.** The presses stay
   // live, because a refusal that cannot be pressed cannot open the review —
-  // rule 12. The one wall left standing is Direct Mode's, and it is named here
-  // so that nobody removes it by accident: that door sends the document **as
-  // it stands** and `ask_model_directly` asks no law, so a press there while a
-  // word waits would put the clear text on the wire.
-  testWidgets('the exits are pressable while a word waits, and Direct Mode is not',
+  // rule 12.
+  //
+  // **And now there is no wall at all** — rule 62, 17 October. One door on
+  // this sheet had to stay dead while a word waited: the one that sent the
+  // document as it stands, which asked the law nothing and would have put the
+  // clear text on the wire. The owner deleted that door, so this guard asks
+  // what it asked of the other three of every press the sheet draws — and the
+  // second half of it, the wall naming itself, is deleted with the wall.
+  testWidgets('every exit on the sheet is pressable while a word waits',
       (tester) async {
     await tester.binding.setSurfaceSize(_wide);
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -344,22 +348,16 @@ void main() {
         reason: 'the sheet words the waiting word a second time, beside a '
             'press whose refusal words it from messages.dart');
 
-    // The one wall: Direct Mode. Chosen through the method the chip calls —
-    // `chooseOriginal` is the product's own door and notifies, where writing
-    // the field would leave the glass drawing the old answer. The chip itself
-    // sits below this sheet's fold, and reaching it is another file's subject.
-    g.bench.chooseOriginal(true);
-    await _settle(tester);
-    expect(g.bench.sendOriginal, isTrue, reason: 'the mode was not chosen');
-    // The wall names itself where it stands, and nowhere else.
-    expect(find.textContaining('still waits'), findsOneWidget,
-        reason: 'the one dead door does not say why it is dead');
-    expect(
-      tester.widgetList<ZButton>(sends).every((b) => b.onPressed == null),
-      isTrue,
-      reason: 'Direct Mode is pressable while a word waits, and it sends the '
-          'document as it stands',
-    );
+    // And no press on this sheet is dead at all: the sheet carried exactly one
+    // dead door, and it is gone (rule 62). `ZButton`s with no `onPressed` are
+    // counted rather than named, so a wall added here tomorrow fails this line
+    // whatever it is called.
+    final dead = tester
+        .widgetList<ZButton>(find.byType(ZButton))
+        .where((b) => b.onPressed == null)
+        .map((b) => b.label)
+        .toList();
+    expect(dead, isEmpty, reason: 'a door on the sheet is dead while a word waits: $dead');
   });
 
   // ------------------------------------------------------------------ guard 3

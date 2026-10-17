@@ -366,38 +366,15 @@ fn the_model_door_takes_it_out() {
     );
 }
 
-/// **And at the fourth door, the one the census found** — `ask_model_directly`,
-/// where the person sends the text as it stands.
-///
-/// The owner named four doors and the core had three that take *protected* text
-/// out (G28's census). This is the fourth: Direct Mode, a deliberate choice to
-/// send the document unprotected. The text leaves the machine, so the copy in
-/// the preview goes with it — and this guard exists because the door was
-/// **missed** when the other three were written, and found by enumerating the
-/// functions that reach a provider rather than by remembering them.
-#[test]
-fn the_direct_door_takes_it_out() {
-    let _guard = serial();
-    let _ground = Ground::fresh("direct");
-    the_fake_provider();
-    let (held, number) = a_conversation_holding(LETTER, Some("Mahnung.txt"));
-    assert_eq!(kept(number).len(), 1);
-
-    ask_model_directly(
-        held.0,
-        LETTER.to_string(),
-        ProviderId { id: "fake".to_string() },
-        None,
-        Vec::new(),
-        Vec::new(),
-    )
-    .expect("the echo answers");
-    assert!(
-        kept(number).is_empty(),
-        "the text left as it stands and its copy stayed behind: {:?}",
-        kept(number)
-    );
-}
+// **The fourth door is deleted, and the census is three** — rule 62, the owner
+// on 17 October.
+//
+// A guard stood here for the door that sent the document as it stands: the
+// census of 089 rule 9 found it after the other three had been written, and it
+// took the preview's copy with it like every other exit. The owner deleted the
+// choice behind it, so the door is gone from the core and this guard with it —
+// what is left are the three above, and G36 counts them by what they do rather
+// than from a list anybody keeps.
 
 /// **«Rename» changes the name and not the number.**
 #[test]

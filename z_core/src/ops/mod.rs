@@ -705,7 +705,7 @@ pub(crate) fn ask_model(
         },
         task: crate::gateway::Task::Answer,
         context: crate::gateway::Context { workspace, history },
-        body: crate::gateway::Body::Protected(handle),
+        payload: handle,
     })?;
     // The answer is kept where every answer is kept, so the restored view and
     // the model's own words are both reachable by id.
@@ -968,86 +968,6 @@ fn allow_tokens(handle: PayloadHandle, tokens: &[String]) -> ApiResult<()> {
             }
         }
         Ok(())
-    })
-}
-
-/// The direct door: text the person chose to send as it stands.
-///
-/// It takes a session so that the refusal can be about this workspace, and it
-/// touches nothing in it: nothing is built, nothing is consumed, and no answer
-/// is stored, because there is no payload to restore an answer against.
-pub(crate) fn ask_model_directly(
-    session: SessionId,
-    text: String,
-    provider: ProviderId,
-    model: Option<String>,
-    workspace: Vec<String>,
-    history: Vec<String>,
-) -> ApiResult<crate::api::ModelAnswer> {
-    if with_session(session.id, |s| s.id).is_none() {
-        return Err(ApiError::InvalidSession);
-    }
-    if text.trim().is_empty() {
-        return Err(ApiError::InputRefused {
-            reason: "there is nothing to send".to_string(),
-        });
-    }
-    // Taken before the text is moved into the request: what is recorded is the
-    // thing that was sent, from the same variable, so the record and the wire
-    // cannot be given two different documents.
-    let kept = text.clone();
-    let answer = crate::gateway::send(crate::gateway::Request {
-        target: crate::gateway::Target {
-            provider_id: provider.id.clone(),
-            model_id: model,
-        },
-        task: crate::gateway::Task::Answer,
-        context: crate::gateway::Context { workspace, history },
-        body: crate::gateway::Body::Direct(zeroize::Zeroizing::new(text)),
-    })?;
-    // **Direct Mode is a conversation too** — the owner's rule is that a
-    // conversation inside the app is kept whole in its session, and this door
-    // is inside the app.
-    //
-    // Its own write rather than the shared one, because this path has no
-    // handle and stores no answer record: there is nothing to restore against.
-    // So the allowed list is empty, which is the truth and not a gap — the
-    // text left as it stands, and what is kept is exactly what left.
-    let open = with_core(|core| core.open_conversation);
-    // Asked before the core is taken, like `open` above: naming the file asks
-    // the session for it, and a lock inside a lock is how a send stops
-    // answering for ever rather than answering wrongly.
-    let document = document_of(session.id);
-    if let Some(number) = open {
-        with_core(|core| {
-            crate::ops::conversation::record_in(
-                core,
-                number,
-                kept,
-                answer.text.clone(),
-                Vec::new(),
-                // What answered, as the gateway resolved it — not what was
-                // asked for. It computes this for the usage ledger already.
-                crate::api::TurnVia::Through {
-                    provider: answer.usage.provider_id.clone(),
-                    model: answer.usage.model_id.clone(),
-                },
-                document,
-            )
-        })?;
-    }
-    // **089 rule 9: the document left by a door, and this is the fourth one.**
-    //
-    // Found by the census the lead asked for rather than by memory: the three
-    // doors that take *protected* text out are the ones G28 enumerates, and
-    // this one takes the text **as it stands**, by the person's own deliberate
-    // choice. It is still a door the document leaves by, so the preview's copy
-    // goes with it — and its blocks stay in the vault like every other door's.
-    with_core(|core| conversation::the_preview_has_left(core, session.id));
-    Ok(crate::api::ModelAnswer {
-        answer: None,
-        text: answer.text,
-        usage: answer.usage,
     })
 }
 

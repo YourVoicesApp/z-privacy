@@ -1,5 +1,12 @@
 // The gateway, on the screen: a model chosen from the core's catalogue, and a
-// mode a person cannot be in by accident.
+// bench with one send door.
+//
+// **It measured a mode until 17 October** — «a mode a person cannot be in by
+// accident», which was the honest guard while there were two of them. Rule 62
+// deleted the second, so what is left to measure is that there is nothing to
+// choose and nothing to inherit: the model, and a send that carries the
+// payload. The absence itself is measured in
+// `only_the_protected_version_is_sent_test.dart`.
 //
 // Needs the native library, so run once:  flutter build linux --debug
 @Timeout(Duration(minutes: 3))
@@ -7,7 +14,6 @@ library;
 
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -64,7 +70,7 @@ void main() {
     }
   });
 
-  testWidgets('a workbench starts protected, and the original is a chosen thing', (tester) async {
+  testWidgets('a workbench sends the payload, and there is nothing else to choose', (tester) async {
     late final Workbench bench;
     await tester.runAsync(() async {
       final session = await z.openSession(packId: 'de');
@@ -78,16 +84,8 @@ void main() {
       await bench.refreshModels();
     });
 
-    // The default is the only default there is.
-    expect(bench.sendOriginal, isFalse, reason: 'a workbench must not start unprotected');
     expect(bench.chosenModel, isNull, reason: 'the provider\'s own model answers until one is chosen');
     expect(bench.models, isNotEmpty, reason: 'the chooser would open empty');
-
-    // Choosing is one press, and nothing else changes it.
-    bench.chooseOriginal(true);
-    expect(bench.sendOriginal, isTrue);
-    bench.chooseOriginal(false);
-    expect(bench.sendOriginal, isFalse);
 
     // A model is chosen by its id, from the catalogue, and cleared back to the
     // provider's own.
@@ -98,18 +96,26 @@ void main() {
     expect(bench.chosenModel, isNull);
 
     // A send with no provider connected is refused, and it stays refused: the
-    // bench has no path that retries without protection.
+    // bench has no second door to retry it through — and since rule 62 it has
+    // no second door at all.
     await tester.runAsync(() async {
       final said = await bench.askModelProtected('openai');
       expect(said, isNotNull, reason: 'an unconnected provider answered');
     });
-    expect(bench.sendOriginal, isFalse, reason: 'a failed protected send changed the mode');
     bench.dispose();
   });
 
-  // The owner's own order, as he wrote it: choose Direct → open/switch
-  // document → mode == Protected.
-  testWidgets('a document that arrives never inherits the last one\'s mode', (tester) async {
+  // **The rule this test measured is answered by deletion** — rule 62.
+  //
+  // It walked the owner's own order: choose the original → open another
+  // document → the mode is back to protected, «which is the one thing it may
+  // never do». There is no mode to inherit now, so the guard that measured the
+  // inheriting is gone and the one that measures the absence stands in
+  // `only_the_protected_version_is_sent_test.dart`.
+  //
+  // What is kept from it is the half that is still about this file: a document
+  // that arrives is scanned, and the bench that holds it sends a payload.
+  testWidgets('a document that arrives is read, and what it sends is the payload', (tester) async {
     late final Workbench bench;
     await tester.runAsync(() async {
       final session = await z.openSession(packId: 'de');
@@ -117,39 +123,26 @@ void main() {
       bench = Workbench(session: session, profileId: null, packId: 'de');
       await bench.rescan();
     });
+    expect(bench.suggested, isNotEmpty, reason: 'the first document was not read');
 
-    // Choose Direct, deliberately, as a person would.
-    bench.chooseOriginal(true);
-    expect(bench.sendOriginal, isTrue);
-
-    // Another document arrives into the same workbench.
+    // Another document arrives into the same workbench, and the bench holds
+    // that one. Read as the document rather than as a count of suggestions:
+    // what arrives second here is «ein ganz anderes Dokument, ohne Namen», and
+    // a guard that asked it for findings would be asking it for the one thing
+    // it was written not to have.
+    const other = 'Ein ganz anderes Dokument, ohne Namen.';
     await tester.runAsync(() async {
-      await z.importText(session: bench.session, text: 'Ein ganz anderes Dokument, ohne Namen.');
+      await z.importText(session: bench.session, text: other);
       await bench.rescan();
     });
+    expect(bench.document?.text, contains('ohne Namen'),
+        reason: 'the second document did not reach the bench');
 
-    expect(
-      bench.sendOriginal,
-      isFalse,
-      reason: 'a new document inherited Direct Mode, which is the one thing it may never do',
-    );
-
-    // And a rescan of the **same** document does not undo a choice: the rule
-    // is about a new document, not about every refresh.
-    bench.chooseOriginal(true);
-    await tester.runAsync(() async => bench.rescan());
-    expect(
-      bench.sendOriginal,
-      isTrue,
-      reason: 'rescanning the same document took a choice away from the person who made it',
-    );
-
-    // The protected door cannot be handed a document at all, and the direct
-    // door refuses unless the mode was chosen.
-    bench.chooseOriginal(false);
+    // And the only send this bench has takes no text: it is refused for want
+    // of a provider, never for want of a mode.
     await tester.runAsync(() async {
-      final said = await bench.askModelWithTheOriginal('openai', original: _doc);
-      expect(said, contains('Choose'), reason: 'the original travelled without a choice');
+      final said = await bench.askModelProtected('openai');
+      expect(said, isNotNull, reason: 'an unconnected provider answered');
     });
     bench.dispose();
   });

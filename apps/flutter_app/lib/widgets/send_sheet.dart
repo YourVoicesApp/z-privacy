@@ -557,7 +557,7 @@ class _SendSheetState extends State<SendSheet> {
           // work surface now, and the rule it was built for — the model and
           // the mode are not behind a second page — holds here because there
           // is no second page left to put them behind.
-          _ModelAndMode(bench: widget.bench, ground: widget.ground, onSettings: widget.onSettings),
+          _WhichModel(bench: widget.bench, ground: widget.ground, onSettings: widget.onSettings),
           const SizedBox(height: 16),
           // **A warning before sending stays where the sending is.** The work
           // surface says this too, in its own words, beside the text that is
@@ -760,16 +760,15 @@ class _SendSheetState extends State<SendSheet> {
                           // for itself is the second copy of a law this round
                           // exists to remove.
                           //
-                          // **Direct Mode keeps its wall**, and that is not an
-                          // oversight: its door sends the document *as it
-                          // stands*, `ask_model_directly` asks no law, and a
-                          // press there while a word waits would put the clear
-                          // text on the wire. Whether that door gets the law or
-                          // the mode gets its own sentence is 083b's to rule.
-                          onPressed:
-                              (widget.bench.sendOriginal && open > 0) ||
-                                  widget.bench.sending ||
-                                  (payload == null && !widget.bench.sendOriginal)
+                          // **And there is no second press with a wall** —
+                          // rule 62, 17 October. One door here sent the
+                          // document as it stands and had to stay a wall,
+                          // because a word still waiting would have gone out
+                          // in the clear; the owner deleted that door, so what
+                          // is left is this press, the law behind it, and
+                          // nothing to be dead for but a text that was never
+                          // built.
+                          onPressed: widget.bench.sending || payload == null
                               ? null
                               : () async {
                                   // **The order is not written here either.**
@@ -814,13 +813,9 @@ class _SendSheetState extends State<SendSheet> {
                           // the review on the word — so a second wording
                           // beside it would be two places wording one state,
                           // which is the defect this line was the weaker half
-                          // of. What is left is the one button that is still a
-                          // wall, and it names itself.
-                          hint: !widget.bench.sendOriginal || open == 0
-                              ? null
-                              : open == 1
-                                  ? 'Direct Mode would send the document as it stands — one word still waits'
-                                  : 'Direct Mode would send the document as it stands — $open words still wait',
+                          // of. The one button that was still a wall, and
+                          // named itself here, is deleted (rule 62) — so there
+                          // is no wall on this page left to explain.
                         ),
                     ],
                   ),
@@ -947,7 +942,7 @@ class _SendSheetState extends State<SendSheet> {
   }
 }
 
-/// Which model answers, and what travels to it.
+/// Which model answers.
 ///
 /// **9 October: the catalogue left this page.** It held the whole of it,
 /// grouped by company, with an unconnected provider's models greyed and
@@ -964,13 +959,14 @@ class _SendSheetState extends State<SendSheet> {
 /// owner put the AI settings in the panel so that they never appear during
 /// work, and 063 made the panel able to stand over the document.
 ///
-/// The second choice is the only place in this app where a person can decide
-/// to send their document as it stands, and it says so in those words:
-/// «Direct API» already means the route in Z's vocabulary — this app to the
-/// provider, with the protected text — so the unredacted mode is never called
-/// «direct» on a screen.
-class _ModelAndMode extends StatefulWidget {
-  const _ModelAndMode({required this.bench, required this.ground, this.onSettings});
+/// **And there is no second choice here any more** — rule 62, the owner on
+/// 17 October. Below the model stood the one place in this app where a person
+/// could decide to send their document as it stands; the choice is deleted, so
+/// what this card asks is the one question the page is named for. «Direct API»
+/// keeps its own meaning in Z's vocabulary — the route, this app to the
+/// provider, with the protected text.
+class _WhichModel extends StatefulWidget {
+  const _WhichModel({required this.bench, required this.ground, this.onSettings});
 
   final Workbench bench;
   final Ground ground;
@@ -980,10 +976,10 @@ class _ModelAndMode extends StatefulWidget {
   final VoidCallback? onSettings;
 
   @override
-  State<_ModelAndMode> createState() => _ModelAndModeState();
+  State<_WhichModel> createState() => _WhichModelState();
 }
 
-class _ModelAndModeState extends State<_ModelAndMode> {
+class _WhichModelState extends State<_WhichModel> {
   @override
   Widget build(BuildContext context) {
     final bench = widget.bench;
@@ -1018,85 +1014,18 @@ class _ModelAndModeState extends State<_ModelAndMode> {
                     },
             ),
           ),
-          const SizedBox(height: 14),
-          Text('What travels', style: Zc.tiny.copyWith(color: Zc.ink4)),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              _Chip(
-                label: 'Protected text',
-                on: !bench.sendOriginal,
-                onTap: () => bench.chooseOriginal(false),
-              ),
-              const SizedBox(width: 8),
-              _Chip(
-                label: 'The original text',
-                on: bench.sendOriginal,
-                warn: true,
-                onTap: () => bench.chooseOriginal(true),
-              ),
-            ],
-          ),
-          if (bench.sendOriginal) ...[
-            const SizedBox(height: 8),
-            Text(
-              'The document goes as it is written, with your names and numbers in '
-              'it. The connection is encrypted; the text is not replaced.',
-              style: Zc.small.copyWith(color: Zc.amber),
-            ),
-          ],
+          // **«What travels» was a question here, and it is not one any
+          // more** — rule 62. Two chips stood below this line, «Protected
+          // text» and «The original text», with an amber sentence under the
+          // second one. The owner deleted the second choice, and a choice with
+          // no alternative is deleted and not greyed (rule 35), so the whole
+          // section goes rather than leaving a heading over one chip that can
+          // only be on.
+          //
+          // The page still says what travels, where it says it once: the line
+          // under «Who answers» names the values replaced and the characters
+          // that would leave this device.
         ],
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    required this.on,
-    required this.onTap,
-    this.warn = false,
-  });
-
-  final String label;
-  final bool on;
-
-  /// `null` means out of reach: the chip is drawn and says its name, and a
-  /// press does nothing because there is nothing behind it yet.
-  final VoidCallback? onTap;
-  final bool warn;
-
-  /// **046/H's `ready` left with the catalogue** (064/C). «The model that has a
-  /// key is drawn in a different colour» was the owner's word on 7 October
-  /// about a list of six companies of which two had keys; that list is in the
-  /// panel's AI room now, and the colour went with it. This chip is the mode,
-  /// where there is nothing to be out of reach.
-
-  @override
-  Widget build(BuildContext context) {
-    final tint = warn ? Zc.amber : Zc.river;
-    final reachable = onTap != null;
-    return Opacity(
-      opacity: reachable ? 1 : 0.45,
-      child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: on ? tint.withValues(alpha: 0.12) : Colors.transparent,
-          border: Border.all(color: on ? tint : Zc.line),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          label,
-          style: Zc.small.copyWith(
-            color: on ? tint : Zc.ink3,
-            fontWeight: on ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
-      ),
       ),
     );
   }

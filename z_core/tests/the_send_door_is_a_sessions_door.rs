@@ -209,36 +209,16 @@ fn a_document_sent_with_no_question_still_leaves_a_turn() {
     assert!(!read(&turns[0].answer).is_empty(), "the answer half is what did happen");
 }
 
-// ------------------------------------------------- 2 · the direct door
-
-/// **Direct Mode is a conversation too.**
-///
-/// It stores no answer record — there is no payload to restore one against —
-/// and that was read as «it keeps nothing», which is a different claim. What
-/// left is exactly what is kept: the text as it stands, and nothing to put
-/// back.
-#[test]
-fn the_direct_door_writes_what_it_sent_as_it_sent_it() {
-    let _g = serial();
-    fresh_vault("direct");
-    let b = bench();
-    let row = conversation_begin("as it stands".to_string(), Some(b)).expect("begin");
-    // The «original text» choice lives on the screen, not in the contract: the
-    // core's direct door takes the text and is the separation itself.
-
-    ask_model_directly(b, DOC.to_string(), fake(), None, Vec::new(), Vec::new()).expect("direct");
-
-    let turns = conversation_turns(row.number, Some(b)).expect("turns");
-    assert_eq!(turns.len(), 1, "a document left the machine as it stands and nothing was written");
-    assert!(
-        read(&turns[0].question).contains(NAME),
-        "the direct door sent the name, so the record holds the name"
-    );
-    assert!(
-        turns[0].unresolved.is_empty(),
-        "nothing was protected, so there is nothing that failed to resolve"
-    );
-}
+// ------------------------------------------------- 2 · **deleted** — rule 62
+//
+// «Direct Mode is a conversation too» stood here: the door that sent the text
+// as it stands stored no answer record, which had been read as «it keeps
+// nothing», and this guard measured that what left was exactly what was kept.
+//
+// The owner deleted the choice on 17 October, so there is no such door and no
+// turn of that shape to write. The claim the guard was defending — a
+// conversation inside the app is kept whole in its session — is measured at
+// every door that is left, in part 1 above and part 3 below.
 
 // ------------------------------------------------- 3 · the door from outside
 

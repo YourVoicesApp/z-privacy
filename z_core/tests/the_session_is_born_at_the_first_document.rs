@@ -261,19 +261,24 @@ fn a_session_of_documents_only_is_named_by_its_number() {
     assert_eq!(conversations().expect("the list")[0].name, "Die Mahnungen");
 }
 
-/// **The first document's number is spent for ever at each of the four doors**
+/// **The first document's number is spent for ever at each of the three doors**
 /// — the lead's fourth guard.
 ///
 /// Each door is pressed by its own press on its own fresh vault, never assumed
-/// to share the first one's line: a law written at one door out of four is this
-/// house's most expensive trap, and the fourth door was found by a census
-/// rather than remembered.
+/// to share the first one's line: a law written at one door out of three is
+/// this house's most expensive trap, and the door this table had fourth was
+/// found by a census rather than remembered.
+///
+/// **That fourth door is deleted** — rule 62, 17 October: it sent the document
+/// as it stands, the owner deleted the choice, and the row went with it. The
+/// count in the type below is the census, so a door that comes back without
+/// this line moving does not compile.
 #[test]
 fn the_first_number_is_retired_at_every_door() {
     let _guard = serial();
-    /// One press on one door, so the table below reads as the four doors it is.
+    /// One press on one door, so the table below reads as the three doors it is.
     type Press = fn(SessionId);
-    let doors: [(&str, Press); 4] = [
+    let doors: [(&str, Press); 3] = [
         ("copy, pull and the PDF", |bench| {
             payload_to_take_out(bench).expect("the exit opens");
         }),
@@ -285,17 +290,6 @@ fn the_first_number_is_retired_at_every_door() {
             let handle = build_payload(bench).expect("payload");
             ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
                 .expect("the echo answers");
-        }),
-        ("direct mode", |bench| {
-            ask_model_directly(
-                bench,
-                LETTER.to_string(),
-                ProviderId { id: "fake".to_string() },
-                None,
-                Vec::new(),
-                Vec::new(),
-            )
-            .expect("the echo answers");
         }),
     ];
 
