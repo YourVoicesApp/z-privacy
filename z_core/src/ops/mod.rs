@@ -62,7 +62,7 @@ pub(crate) fn import_text(session: SessionId, text_in: String) -> ApiResult<Docu
     } else {
         Some(crate::documents::txt::extract(
             text_in.as_bytes(),
-            &crate::documents::Budget::new(),
+            &crate::documents::Budget::new(text_in.len()),
         )?)
     };
     with_session(session.id, |s| {

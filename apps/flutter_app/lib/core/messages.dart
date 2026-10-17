@@ -465,6 +465,39 @@ String _document(Refusal reason) => switch (reason) {
         'text, or paste the text in.',
   Refusal_UnreadableStructure(:final page) =>
     'Page $page is built in a way this build cannot read.',
+  // **The limits are said with their numbers** (the attacker's B3-4, 17
+  // October). The core names every one of these and says how big the thing was
+  // that it refused; the screen collapsed all seven into «This file could not
+  // be opened safely», which tells a person nothing they can act on — not
+  // whether the file is too big, too deep, a bomb, or simply empty. The
+  // fallback below is kept for a variant nobody has written a sentence for
+  // yet, and `messages_test` now walks all twelve so that it stays unreachable.
+  //
+  // «About», not «exactly», on the size: the core floors the megabytes, so a
+  // file one byte past 25 MiB measures as 25 — and «this file is 25 MiB and
+  // the limit is 25 MiB» is the kind of sentence that makes a person think the
+  // app is broken.
+  Refusal_DocumentTooLarge(:final mib, :final limitMib) =>
+    'This file is about $mib MiB, and Z Privacy opens documents up to '
+        '$limitMib MiB.',
+  Refusal_TooManyPages(:final pages, :final limit) =>
+    'This document has $pages pages, and Z Privacy opens up to $limit in one '
+        'document.',
+  Refusal_TextTooLarge(:final limitMib) =>
+    'Unpacked, a part of this file is more than $limitMib MiB — more than Z '
+        'Privacy reads in one document, so none of it was imported.',
+  Refusal_CompressionBomb(:final ratio) =>
+    'A part of this file unpacks to more than $ratio times the space it takes '
+        'up. No real document does that, so Z Privacy stopped unpacking it '
+        'instead of filling the machine.',
+  Refusal_TooManyParts(:final parts, :final limit) =>
+    'This file lists $parts parts inside it, and a document has tens, not '
+        'thousands — Z Privacy opens up to $limit.',
+  Refusal_TookTooLong(:final millis) =>
+    'Reading this file was still going after ${millis ~/ 1000} seconds, so Z '
+        'Privacy stopped. Nothing of it was imported.',
+  Refusal_EmptyDocument() =>
+    'There is no text in this file for Z Privacy to protect.',
   _ => 'This file could not be opened safely.',
 };
 
