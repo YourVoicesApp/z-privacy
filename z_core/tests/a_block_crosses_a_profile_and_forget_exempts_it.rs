@@ -325,8 +325,16 @@ fn a_forgotten_word_still_comes_back_from_an_old_document() {
 ///
 /// This house's most expensive trap is a law written at one door out of
 /// several: 083a's three exits, 080's two language doors, 089 rule 9's missing
-/// fourth. So the four doors are listed here with the act each one is, and the
+/// fourth. So the doors are listed here with the act each one is, and the
 /// gate (G40) reads the same enumeration out of the source.
+///
+/// **A fifth was added on 17 October, by the independent attacker (م6):**
+/// «Delete this identity». It removed the identity and left its blocks
+/// working, while the dialog promised «the next document will not recognise
+/// these values again» — and the attacker measured the next document
+/// protecting the name on its own. One identity can hold several values and
+/// each value several spellings, so this door forgets more words in one press
+/// than any of the other four.
 #[test]
 fn every_door_that_forgets_a_word_exempts_its_blocks() {
     let _g = serial();
@@ -337,7 +345,7 @@ fn every_door_that_forgets_a_word_exempts_its_blocks() {
     // is the same in all four: the block is still there, and the word is no
     // longer protected in a new document.
     type Door = fn(&str) -> ();
-    let doors: [(&str, Door); 4] = [
+    let doors: [(&str, Door); 5] = [
         ("Forget everywhere", |profile| {
             let who = create_entity(EntityKind::Client, "Akte".to_string(), Some(profile.to_string()))
                 .expect("entity");
@@ -363,6 +371,17 @@ fn every_door_that_forgets_a_word_exempts_its_blocks() {
         ("«Forget» on a name you taught", |profile| {
             let id = teach_name(WORD.to_string(), false, Some(profile.to_string()), None).expect("teach");
             forget_name(id).expect("forget the name");
+        }),
+        // **The attacker's own press, م6.** Two values on one identity, so
+        // this measures what the door really takes: every word the identity
+        // taught, not the first one found.
+        ("«Delete this identity» in the vault room", |profile| {
+            let who = create_entity(EntityKind::Client, "Akte".to_string(), Some(profile.to_string()))
+                .expect("entity");
+            set_value(who, None, Kind::Project, WORD.to_string(), Policy::Always).expect("value");
+            set_value(who, None, Kind::Project, "Sommerwind".to_string(), Policy::Always)
+                .expect("a second value, so one spelling cannot stand for the identity");
+            delete_entity(who).expect("delete the identity");
         }),
     ];
 

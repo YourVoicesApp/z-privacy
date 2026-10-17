@@ -150,14 +150,42 @@ pub(crate) fn create_entity(kind: EntityKind, label: String, profile_id: Option<
     })
 }
 
+/// **Forget a whole identity — and every word it taught is exempted, never
+/// deleted** — rule 59, and the independent attacker's م6 of 17 October.
+///
+/// This door removed the identity and left its blocks working. The dialog on
+/// the glass promised «Documents already protected keep their tokens; the next
+/// document will not recognise these values again», and the attacker measured
+/// the next document protecting the name on its own, from the block. The
+/// screen was lying because this function was not a door in anyone's census:
+/// `delete_value` exempts, `delete_entity` did not, and G40 read
+/// `values.retain|taught_names.retain|aliases.retain` and never looked at
+/// `entities.retain`.
+///
+/// **It is the widest of the forget doors.** One identity holds several values
+/// and each value several spellings, so this reads them all through
+/// `ValueRecord::spellings` — the same reader `delete_value` uses, because
+/// «every spelling of a value» is one fact and not two.
+///
+/// **And the act sits below the refusal**, like `remove_value_alias`'s:
+/// `with_open_mut` does not roll the vault back when a closure returns `Err`,
+/// so an exemption written above the refusal would survive a refused press
+/// with nothing to take it back.
 pub(crate) fn delete_entity(entity_id: u32) -> ApiResult<()> {
     with_core(|core| {
         core.vault.with_open_mut(|vault| {
-            let before = vault.entities.len();
-            vault.entities.retain(|e| e.id != entity_id);
-            if vault.entities.len() == before {
+            let Some(entity) = vault.entities.iter().find(|e| e.id == entity_id) else {
                 return Err(ApiError::UnknownToken);
-            }
+            };
+            // Read before the identity is gone, and as far as the identity's
+            // own knowledge reached: a client's identity forgets its words for
+            // that client, and one that belongs to no profile forgets them
+            // everywhere.
+            let reach = as_far_as_the_knowledge(entity.profile_id.as_deref());
+            let spellings: Vec<String> =
+                entity.values.iter().flat_map(|v| v.spellings()).collect();
+            vault.entities.retain(|e| e.id != entity_id);
+            vault.forget_the_blocks_of(&spellings, &reach);
             Ok(())
         })
     })

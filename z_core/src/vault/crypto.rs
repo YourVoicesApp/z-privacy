@@ -439,6 +439,18 @@ impl SealedVault {
     }
 
     pub(crate) fn from_bytes(bytes: &[u8]) -> ApiResult<Self> {
+        // **A file of no bytes is named for what it is** — the independent
+        // attacker's خ6, 17 October. It fell to «this vault file is truncated»,
+        // which says a vault was cut short: the person reads that their
+        // identities are half there, when in fact nothing of theirs is in the
+        // file at all. Two different states, and the one that matters is the
+        // one with nothing to lose.
+        if bytes.is_empty() {
+            return Err(ApiError::PayloadRefused {
+                reason: "this vault file holds no bytes at all, so there is nothing in it to open"
+                    .to_string(),
+            });
+        }
         let mut r = Reader::new(bytes);
         if r.take(4)? != MAGIC {
             return Err(ApiError::PayloadRefused {

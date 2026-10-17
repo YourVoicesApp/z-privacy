@@ -98,12 +98,106 @@ void main() {
     expect(find.text('Passphrases do not match'), findsOneWidget);
     expect(button().onPressed, isNull, reason: 'a mismatched pair can be submitted');
 
-    // "abc" + "abc" → match, enabled. Short on purpose: the length rule is the
-    // core's, and this button is not claiming the passphrase is any good.
+    // "abc" + "abc" → they match, and the button is **still** shut, because
+    // eight characters is a condition the core will refuse on.
+    //
+    // **This block used to end here with the button enabled**, and the comment
+    // said «short on purpose: the length rule is the core's, and this button is
+    // not claiming the passphrase is any good». The independent attacker's note
+    // 5 is what that costs a person: the press is offered, the core refuses it,
+    // and the only way to learn the rule is to break it. A gate that does not
+    // hand you the key is a wall (046/L) — so the condition is said before the
+    // press, not after.
     await tester.enterText(find.byType(TextField).at(1), 'abc');
     await tester.pump();
     expect(find.text('Passphrases match'), findsOneWidget);
+    expect(
+      find.byKey(const Key('passphrase-length')),
+      findsOneWidget,
+      reason: 'the form does not say the one condition that will refuse this press',
+    );
+    expect(
+      button().onPressed,
+      isNull,
+      reason: 'a passphrase the core will refuse for its length can be submitted',
+    );
+
+    // Eight, and the door opens.
+    await tester.enterText(find.byType(TextField).at(0), 'achtzehn');
+    await tester.enterText(find.byType(TextField).at(1), 'achtzehn');
+    await tester.pump();
+    expect(find.byKey(const Key('passphrase-length')), findsNothing,
+        reason: 'the condition is still said about a passphrase that meets it');
     expect(button().onPressed, isNotNull);
+  });
+
+  testWidgets('the number this form promises is the number the core applies', (tester) async {
+    // **A second copy of a rule is measured, never trusted.** The form says
+    // «at least N characters» before the press, and N is written in Dart —
+    // which the comment in `_go` rightly called a second opinion that will
+    // drift. This is the answer to that: the real core is asked which
+    // passphrases it takes, on both sides of the number the form promises. The
+    // day the core's minimum moves, this reds and names it.
+    final dir = Directory.systemTemp.createTempSync('zprivacy-least-');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final ground = Ground();
+    await tester.runAsync(() async {
+      await z.vaultLock();
+      await z.setDataDir(dir: dir.path);
+      await ground.refresh();
+    });
+
+    final oneFewer = 'a' * (VaultKeyForm.leastCharacters - 1);
+    final exactly = 'a' * VaultKeyForm.leastCharacters;
+    Object? refused;
+    await tester.runAsync(() async {
+      try {
+        await z.vaultCreateWithPassphrase(passphrase: oneFewer);
+      } catch (e) {
+        refused = e;
+      }
+    });
+    expect(
+      refused,
+      isNotNull,
+      reason: 'the core took ${oneFewer.runes.length} characters, so the form promises more than the core asks',
+    );
+    expect(File('${dir.path}/vault.zv').existsSync(), isFalse,
+        reason: 'a refused passphrase wrote a vault anyway');
+
+    await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: exactly));
+    expect(File('${dir.path}/vault.zv').existsSync(), isTrue,
+        reason: 'the core refused exactly ${exactly.runes.length} characters, so the form promises less than the core asks');
+    await tester.runAsync(() => z.vaultLock());
+  });
+
+  testWidgets('eight is counted the way the core counts it, not in UTF-16 units', (tester) async {
+    // **`runes`, not `length`.** Rust counts `passphrase.chars().count()`;
+    // Dart's `String.length` is UTF-16 code units, so seven emoji are
+    // fourteen there and seven in the core. A button that read `length` would
+    // open on a passphrase the core refuses — the same defect as note 5, one
+    // case further along, and invisible to anybody typing Latin letters.
+    final ground = Ground();
+    await _form(tester, ground);
+
+    ZButton button() => tester.widget<ZButton>(
+          find.ancestor(of: find.text('Create the vault'), matching: find.byType(ZButton)),
+        );
+
+    const seven = '🜚🜚🜚🜚🜚🜚🜚';
+    expect(seven.length, 14, reason: 'the fixture is not made of surrogate pairs');
+    expect(seven.runes.length, 7);
+    await tester.enterText(find.byType(TextField).at(0), seven);
+    await tester.enterText(find.byType(TextField).at(1), seven);
+    await tester.pump();
+    expect(button().onPressed, isNull,
+        reason: 'seven characters opened the door because they were counted as fourteen');
+
+    const eight = '🜚🜚🜚🜚🜚🜚🜚🜚';
+    await tester.enterText(find.byType(TextField).at(0), eight);
+    await tester.enterText(find.byType(TextField).at(1), eight);
+    await tester.pump();
+    expect(button().onPressed, isNotNull, reason: 'eight characters were refused');
   });
 
   testWidgets('pasting into the confirmation moves the match line at once', (tester) async {

@@ -468,7 +468,7 @@ fn luhn_ok(ten: &str) -> bool {
         let p = if i % 2 == 0 { d * 2 } else { d };
         total += p / 10 + p % 10;
     }
-    total % 10 == 0
+    total.is_multiple_of(10)
 }
 
 // ------------------------------------------- social-insurance number (038-G)

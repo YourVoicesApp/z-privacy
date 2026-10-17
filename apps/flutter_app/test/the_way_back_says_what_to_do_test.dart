@@ -176,6 +176,40 @@ void main() {
       expect(one, isNot(contains('protect the names again')));
     });
 
+    test('two causes, and the sentence states neither as the one that happened — م4', () {
+      // **The independent attacker, 17 October.** He exported a session's text,
+      // changed one hex digit in the tail of a token, and read the file back.
+      // Nothing came back to the wrong owner — that held — but the dialog
+      // explained it with a cause nobody had proved: «it was protected before
+      // Z Privacy began keeping every protected word». A token edited after
+      // the export has no block either, and this build cannot tell the two
+      // apart from what it is given.
+      //
+      // So the law: **a sentence does not state a cause the core has not
+      // proved.** It names both, and ends with the one act that tells them
+      // apart by what happens next.
+      final one = whatCameBack(reading(
+        vault: VaultState.unlocked,
+        unresolved: 1,
+        from: [his(broughtBack: 0, unresolved: 1)],
+      ))!;
+      expect(one, contains('changed after the file left'),
+          reason: 'only one of the two causes is named, and it is the one nobody proved');
+      expect(one, contains('protect the name again'),
+          reason: 'the act that answers it is gone');
+      expect(one, contains('if it comes back'),
+          reason: 'the person is given two causes and no way to tell which is theirs');
+
+      final many = whatCameBack(reading(
+        vault: VaultState.unlocked,
+        unresolved: 11,
+        from: [his(broughtBack: 0, unresolved: 11)],
+      ))!;
+      expect(many, contains('changed after the file left'));
+      expect(many, contains('protect the names again'));
+      expect(many, contains('if they come back'));
+    });
+
     test('another machine’s key — plainly, that there is no way back', () {
       final said = whatCameBack(
         reading(vault: VaultState.unlocked, unresolved: 11, unknown: const ['f610']),

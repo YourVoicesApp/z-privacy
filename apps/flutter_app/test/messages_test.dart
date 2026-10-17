@@ -53,12 +53,40 @@ final _everyError = <ApiError>[
 
 /// Every shape the two nested enums take, because a reason inside an error is
 /// still a reason a person reads.
+///
+/// **This list held five of the core's twelve** until the independent attacker
+/// read the other seven off the glass (خ5, 17 October). Six of them fell
+/// through to «This file could not be opened safely», which is a sentence that
+/// passes every check in `_readsAsHuman` — it is a sentence, it names no type,
+/// it ends with a stop — and says nothing a person can act on about a limit
+/// the core applied by number. A list of variants that is missing variants is
+/// a control that cannot bite, so the count is asserted now.
 final _everyRefusal = <Refusal>[
   const Refusal.scannedPdfNoTextLayer(pages: 4),
   const Refusal.encryptedPdf(),
   const Refusal.unsupportedEncoding(page: 2, readablePercent: 40),
   const Refusal.unreadableStructure(page: 7),
   const Refusal.malformedDocument(),
+  const Refusal.documentTooLarge(mib: 26, limitMib: 25),
+  const Refusal.tooManyPages(pages: 700, limit: 512),
+  const Refusal.textTooLarge(limitMib: 4),
+  const Refusal.compressionBomb(ratio: 946),
+  const Refusal.tooManyParts(parts: 900, limit: 512),
+  const Refusal.tookTooLong(millis: 9000),
+  const Refusal.emptyDocument(),
+];
+
+/// **The numbers a refusal measured, and the sentence that has to carry them**
+/// — خ5 and note 16. Each pair is a refusal and the figures that must appear
+/// in what a person reads: the limit it applied, and the count it compared
+/// against it.
+final _refusalsThatMeasured = <(Refusal, List<String>)>[
+  (const Refusal.documentTooLarge(mib: 26, limitMib: 25), ['25']),
+  (const Refusal.textTooLarge(limitMib: 4), ['4']),
+  (const Refusal.tooManyPages(pages: 700, limit: 512), ['700', '512']),
+  (const Refusal.tooManyParts(parts: 900, limit: 512), ['900', '512']),
+  (const Refusal.compressionBomb(ratio: 946), ['946']),
+  (const Refusal.tookTooLong(millis: 9000), ['9000']),
 ];
 
 final _everyNetworkRefusal = <NetworkRefusal>[
@@ -97,6 +125,28 @@ void main() {
         reason: 'the contract has 27 ApiError variants');
     for (final e in _everyError) {
       _readsAsHuman(humanMessage(e), e.runtimeType.toString());
+    }
+  });
+
+  test('every refusal the core can name is in this list', () {
+    // The contract's own count. A new variant is a new sentence somebody has
+    // to write, and this is where they are told so — rather than a screen
+    // saying «could not be opened safely» about a rule it knows by number.
+    expect(_everyRefusal.length, 12,
+        reason: 'the contract has 12 Refusal variants');
+  });
+
+  test('a refusal that measured something says the number', () {
+    for (final (refusal, numbers) in _refusalsThatMeasured) {
+      final said = humanMessage(ApiError.documentRefused(reason: refusal, detail: 'x'));
+      _readsAsHuman(said, refusal.runtimeType.toString());
+      for (final n in numbers) {
+        expect(
+          said.contains(n),
+          isTrue,
+          reason: '${refusal.runtimeType} measured «$n» and the sentence does not say it: $said',
+        );
+      }
     }
   });
 

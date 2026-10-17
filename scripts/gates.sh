@@ -619,28 +619,59 @@ else
   printf '%s\n' "$G40_UNDONE" | sed 's/^/        /'
 fi
 
-# **Every door, enumerated from what it does.** A function that removes a value,
-# a spelling or a taught name is a «Forget» of a word, whatever it is called —
-# so each must reach the one hand, itself or through another door that does.
-# `forget_user_name` is the named exception and says why: it presses two of the
-# others.
-G40_DRY=""
-for door in $(awk '
+# **Every door, enumerated from what it does — and the census is re-made from
+# the source, never from the names this round remembers.**
+#
+# **The attacker's م6, 17 October:** `delete_entity` took an identity out of the
+# vault and left its blocks working, while the dialog promised «the next
+# document will not recognise these values again». It was invisible to this
+# gate because the gate read three collections by name —
+# `values|taught_names|aliases` — and an identity lives in a fourth. A census
+# written from the names we know finds the doors we know.
+#
+# So the shape of the act is what is counted: **a removal verb on a collection
+# that holds the person's knowledge**. Both lists are written here, so a new
+# collection and a new verb are each a change somebody has to make on purpose.
+# The verbs were read off the source first: `retain` is the only one in use,
+# and the other six are named so that the day one of them appears it is counted
+# rather than discovered by an attacker.
+G40_VERBS='retain|remove|swap_remove|pop|drain|clear|truncate'
+G40_KNOWS='entities|values|aliases|taught_names|exceptions|label_rules|lists|profiles'
+G40_CENSUS=$(awk -v verbs="$G40_VERBS" -v knows="$G40_KNOWS" '
   /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
-  /values\.retain\(|taught_names\.retain\(|aliases\.retain\(/ { if (here != "") print here }
-' "$G40_OPS" | sort -u); do
-  # `forget_user_name` is the one named exception: it presses two of the other
-  # doors (`forget_name` for the dictionary row, `delete_value` for the
-  # «always» twin), and each of those exempts. Every other door answers for
-  # itself — and never with its own signature line, which is why the wanted
-  # call is read with the door's own name excluded.
+  $0 ~ "(" knows ")[[:space:]]*\\.[[:space:]]*(" verbs ")\\(" { if (here != "") print here }
+' "$G40_OPS" | sort -u)
+G40_DRY=""
+for door in $G40_CENSUS; do
+  # **The named exceptions, and the reason each one is not a door.** Each is
+  # read from what the act does to a *word*, which is the only thing a block
+  # can be about:
+  #
+  #   * `forget_user_name` presses two of the other doors (`forget_name` for
+  #     the dictionary row, `delete_value` for the «always» twin), and both
+  #     exempt. Its own `values.retain` takes the twin of the very word
+  #     `forget_name` has just exempted.
+  #   * `forget_exception` removes a permission to leave a word **in the
+  #     clear**. Taking it back protects more, never less: no word leaves the
+  #     vault's knowledge, so there is nothing to exempt.
+  #   * `forget_label_rule` removes a rule about the word *before* a value
+  #     («Mail:», «Kundennummer:»). The label is never the protected word, and
+  #     never took a token.
+  #   * `move_user_list` carries every name from one list to another and then
+  #     drops the row the names left behind, «because an empty list is not a
+  #     list». Not one name leaves the vault's knowledge — each is still
+  #     taught, under another language — so there is nothing to exempt. This
+  #     one was found **by this census**, not by the list of doors the round
+  #     began with, which is the whole reason the census is re-made from the
+  #     shape of the act.
+  case "$door" in
+    forget_user_name) want='forget_name[(]|delete_value[(]' ;;
+    forget_exception|forget_label_rule|move_user_list) want='' ;;
+    *) want='forget_the_blocks_of[(]' ;;
+  esac
+  [ -z "$want" ] && continue
   # The bracket form, not a backslash: `awk -v` reads escape sequences, so
   # `\(` would arrive as a bare `(` and the regexp would not compile.
-  if [ "$door" = "forget_user_name" ]; then
-    want='forget_name[(]|delete_value[(]'
-  else
-    want='forget_the_blocks_of[(]'
-  fi
   if ! awk -v door="$door" -v want="$want" '
     $0 ~ "^(pub\\(crate\\) )?fn " door "\\(" { inside = 1; next }
     inside && $0 ~ want { found = 1 }
@@ -650,14 +681,12 @@ for door in $(awk '
     G40_DRY="$G40_DRY $door"
   fi
 done
-G40_DOORS=$(awk '
-  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
-  /values\.retain\(|taught_names\.retain\(|aliases\.retain\(/ { if (here != "") print here }
-' "$G40_OPS" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ -z "$G40_DRY" ]; then
-  pass "G40 every door that forgets a word exempts its blocks: $G40_DOORS"
+G40_DOORS=$(printf '%s\n' "$G40_CENSUS" | tr '\n' ' ' | sed 's/ $//')
+G40_N=$(printf '%s\n' "$G40_CENSUS" | grep -c . || true)
+if [ -z "$G40_DRY" ] && [ "$G40_N" -ge 9 ]; then
+  pass "G40 all $G40_N places that take knowledge out of the vault answer for their blocks: $G40_DOORS"
 else
-  fail "G40 these doors take a word out of the vault and leave its blocks working:$G40_DRY"
+  fail "G40 these take a word out of the vault and leave its blocks working:$G40_DRY (census of $G40_N: $G40_DOORS)"
 fi
 
 # **And the mark is written only once the act cannot be refused.** An exemption
@@ -764,8 +793,20 @@ session\.rs:[0-9]+: conversation$'
 # which is why no line of it may carry a «|» of its own.
 G41_ALLOW=$(printf '%s' "$G41_ALLOWED" | paste -sd'|' -)
 
+# **Both quote characters, since the attacker's ن15.** His note named
+# `InvalidSession` «saying conversation about a session» — true of the build he
+# attacked (`5f5bef1`, `messages.dart:62`) and already closed by rule 55-هـ in
+# the merge, which is measurable: `git show 5f5bef1:…` has the old word and
+# this tree has «That session is no longer open». So nothing escaped this gate.
+# What the note did show is a door it could have escaped by: this scan read
+# `'…'` only, and Dart takes `"…"` just as happily. One sentence in the other
+# quote would have been invisible. There is none today — measured — and now
+# there cannot be one.
 G41_DART=$(find "$FLUTTER_LIB" -name '*.dart' -not -path '*/src/rust/*' | sort \
            | xargs awk -v Q="'" "$G41_SCAN" 2>/dev/null || true)
+G41_DART2=$(find "$FLUTTER_LIB" -name '*.dart' -not -path '*/src/rust/*' | sort \
+            | xargs awk -v Q='"' "$G41_SCAN" 2>/dev/null || true)
+G41_DART=$(printf '%s\n%s\n' "$G41_DART" "$G41_DART2" | grep . || true)
 G41_RUST=$(find z_core/src -name '*.rs' | sort \
            | xargs awk -v Q='"' "$G41_SCAN" 2>/dev/null || true)
 G41_ALL=$(printf '%s\n%s\n' "$G41_DART" "$G41_RUST" | grep -c . || true)
@@ -796,6 +837,48 @@ if [ -z "$G41_STALE" ]; then
 else
   fail "G41 these allowed lines match nothing any more, so they permit nothing and explain nothing:$G41_STALE"
 fi
+# ---------------------------------------------------------------- G43
+# **One copy of this program writes at a time** — the independent attacker's م5
+# and خ9, 17 October 2026.
+#
+# He ran two copies against one vault, forty trials: in three of them both said
+# `ok` and the disk held one write. The gap is between
+# `Vault::ensure_disk_unchanged` and the `rename` inside `replace_atomically`,
+# and the session file compared nothing at all — `conversation::write` sealed a
+# body and replaced the file, so the later `rename` won and the earlier turn
+# was gone with nobody told.
+#
+# The answer is an exclusive lock held for the whole of a core call, because the
+# loss was never inside one write: it was a **read and a write with a gap
+# between them**. `session::with_core` is the one boundary every such pair is
+# already inside — so that is where it is taken, and this gate reads it there.
+#
+# Two checks, and the second is the one that keeps the first safe: a second
+# place taking the same lock would be a second acquisition in one process, and
+# `flock` on a second handle blocks against the first.
+G43_CORE=z_core/src/session.rs
+if awk '
+  /^pub\(crate\) fn with_core<R>/ { inside = 1 }
+  inside && /one_writer_at_a_time\(/ { found = 1 }
+  inside && /^}$/ { inside = 0 }
+  END { exit(found ? 0 : 1) }
+' "$G43_CORE" 2>/dev/null; then
+  pass "G43 every core call holds the one-writer lock, so a read and its write cannot be split"
+else
+  fail "G43 with_core does not take the one-writer lock — two copies can lose a write between them (م5)"
+fi
+
+G43_TAKERS=$(grep -Rn 'one_writer_at_a_time(' z_core/src --include='*.rs' 2>/dev/null \
+             | grep -v 'z_core/src/secure_file.rs:' \
+             | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
+G43_N=$(printf '%s\n' "$G43_TAKERS" | grep -c . || true)
+if [ "$G43_N" = "1" ] && printf '%s' "$G43_TAKERS" | grep -q 'session.rs'; then
+  pass "G43 one place takes the lock, and it is the boundary every write is inside"
+else
+  fail "G43 the one-writer lock is taken in $G43_N place(s), expected one in session.rs — a second is a deadlock against the first:"
+  printf '%s\n' "$G43_TAKERS" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G42
 # **Nobody reaches the three exits without the outgoing text on the glass** —
 # rule 60 and the owner's rule 60-أ, 17 October 2026.
@@ -2491,6 +2574,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          every_door_that_forgets_a_word_exempts_its_blocks \
          nothing_short_of_teaching_it_again_undoes_a_forget \
          a_hand_protection_after_forget_does_not_restore_the_automatic_one \
+         an_empty_vault_file_is_not_a_vault_and_a_damaged_one_is_never_written_over \
+         two_copies_never_lose_a_write \
+         two_copies_never_lose_a_turn \
          a_document_that_arrives_with_the_vault_shut_has_no_session \
          a_refused_press_leaves_the_blocks_working; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
