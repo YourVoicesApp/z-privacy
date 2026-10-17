@@ -1053,8 +1053,11 @@ fi
 # **enumerated from what they do**, not from a list somebody keeps: every
 # function that reaches a provider or hands the protected text to its caller.
 #
-# The census found a fourth door the first three were written without: Direct
-# Mode (`ask_model_directly`), where the person sends the text as it stands.
+# The census found a fourth door the first three were written without, and it
+# was the mode in which a person sent the document as it stands. **Rule 62
+# deleted it** (the owner, 17 October), so the census is three — and it is
+# still read from what the functions do, which is why taking a door away moves
+# this line as surely as adding one would.
 DOORS=z_core/src/ops/mod.rs
 KEPT=z_core/src/ops/conversation.rs
 
@@ -1062,14 +1065,14 @@ G36_OUT=$(awk '
   /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
   /crate::gateway::send\(|crate::providers::ask\(|payload_view\(build_payload\(/ { if (here != "") print here }
 ' "$DOORS" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ "$G36_OUT" = "ask_model ask_model_directly payload_to_take_out send" ]; then
-  pass "G36 four doors take text out of this machine, and the list is the measured one"
+if [ "$G36_OUT" = "ask_model payload_to_take_out send" ]; then
+  pass "G36 three doors take text out of this machine, and the list is the measured one"
 else
-  fail "G36 the doors that take text out are: $G36_OUT — expected «ask_model ask_model_directly payload_to_take_out send», so a door appeared that nobody measures"
+  fail "G36 the doors that take text out are: $G36_OUT — expected «ask_model payload_to_take_out send», so a door appeared that nobody measures"
 fi
 
 G36_STAYS=""
-for door in ask_model ask_model_directly payload_to_take_out send; do
+for door in ask_model payload_to_take_out send; do
   if ! awk -v want="$door" '
     $0 ~ "^(pub\\(crate\\) )?fn " want "\\(" { inside = 1 }
     inside && /the_preview_has_left\(/ { found = 1 }
@@ -1796,6 +1799,24 @@ for API in $API_FILES; do
     pass "G2 $API: send takes a handle, never text"
   fi
 
+  # G2b: **and every door that reaches a model names its text by a handle** —
+  # rule 62, and the hole that let the deleted door through.
+  #
+  # G2 above reads `send*` and asks whether a text type appears. The door the
+  # owner deleted was called `ask_model_directly`, so the name never matched —
+  # and widening the name is not enough either, because `ask_model`'s own
+  # signature carries `Option<String>` for a model id and `Vec<String>` for a
+  # workspace's instructions, which are not a document. So the shape is asked
+  # for instead of an absence: both verbs this contract reaches a model with
+  # must take a `PayloadHandle`. A door with a `String` where the handle should
+  # be has nothing to put in it.
+  BAD=$(printf '%s\n' "$SIGS" | grep -E 'pub fn (send|ask)[a-z_]*[[:space:]]*\(' | grep -v 'PayloadHandle' || true)
+  if [ -n "$BAD" ]; then
+    fail "G2b $API: a door reaches a model without a handle:"; printf '        %s\n' "$BAD"
+  else
+    pass "G2b $API: every door that reaches a model names its text by a handle"
+  fi
+
   # G7: no panic crosses the boundary — everything returns ApiResult.
   BAD=$(printf '%s\n' "$SIGS" | grep -vE "pub fn ($ALLOW_PLAIN)\b" | grep -v 'ApiResult<' || true)
   if [ -n "$BAD" ]; then
@@ -2149,10 +2170,22 @@ fi
 # ------------------------------------------------- the model gateway
 # Phase 4. Three promises, and each one is a shape rather than a hope.
 #
-# **No fallback.** Nothing may construct a direct body from a protected one. The
-# check is literal: `Body::Direct` may appear only where a caller chose it —
-# in `ops::ask_model_directly` and in the gateway's own match — and never
-# inside the protected path.
+# **There is no direct door in this tree** — rule 62, the owner on 17 October,
+# after the attacker's م1.
+#
+# This was «no fallback»: nothing may construct a direct body from a protected
+# one, counted literally, because there were two bodies and the whole promise
+# was that nothing turned one into the other. The owner then deleted the choice
+# itself — «لا يرسل Z إلى الذكاء الاصطناعي إلا النص المحمي، من أي باب خرج» — so
+# the promise is no longer about a path between two doors. It is about there
+# being one.
+#
+# So the check reads the whole seam for the names that door had, in the core,
+# in the bridge **and** in the generated Dart: a door deleted on the glass and
+# left standing in the contract is the door that is re-opened tomorrow with
+# nobody deciding anything. Comments may name it — this file's own prose does,
+# and so does the code's — so a line that is a comment is not a door, which is
+# the same reading the two checks below this one use.
 #
 # **The gateway knows no language.** A pack id or a language word inside
 # `gateway.rs` would mean the door had started reading documents.
@@ -2162,16 +2195,35 @@ fi
 # zero.
 GW=z_core/src/gateway.rs
 if [ -f "$GW" ]; then
-  BUILT=$(grep -cE 'Body::Direct\(' z_core/src/ops/*.rs z_core/src/*.rs 2>/dev/null \
-    | awk -F: '{n+=$2} END {print n+0}')
-  CHOSEN=$(sed -n '/pub(crate) fn ask_model_directly/,/^}/p' z_core/src/ops/mod.rs 2>/dev/null \
-    | grep -cE 'Body::Direct\(' || true)
-  # The gateway's own `match` reads the arm; it does not build one.
-  READS=$(grep -cE 'Body::Direct\(text\) =>' "$GW" || true)
-  if [ "$BUILT" = "$((CHOSEN + READS))" ] && [ "$CHOSEN" = "1" ]; then
-    pass "no path turns a protected request into a direct one (built once, where a person chooses it)"
+  G62_FILES="z_core/src/api.rs z_core/src/gateway.rs"
+  for f in z_core/src/ops/*.rs z_core/src/providers/*.rs bridges/native/z_bridge/src/*.rs; do
+    G62_FILES="$G62_FILES $f"
+  done
+  G62_FILES="$G62_FILES $FLUTTER_LIB/src/rust/frb_generated.dart"
+  G62_FILES="$G62_FILES $FLUTTER_LIB/src/rust/third_party/z_core/api.dart"
+  # One name per thing the door was: the contract's function, the provider
+  # call under it, the body type it travelled in, and the Dart the generator
+  # writes from the contract.
+  # `-H` so the filename is printed even if this list is ever one file: the
+  # comment filter below reads «file:line:», and without it a single file would
+  # print «line:» and every comment would be read as a door.
+  G62_LEFT=$(grep -nHE 'ask_model_directly|ask_direct|Body::Direct|askModelDirectly' $G62_FILES 2>/dev/null \
+    | grep -vE '^[^:]*:[0-9]+:[[:space:]]*(//|///|//!|#)' \
+    | sed -E 's/^([^:]*):([0-9]+):.*/\1:\2/' | tr '\n' ' ' | sed 's/ $//')
+  if [ -z "$G62_LEFT" ]; then
+    pass "rule 62: no direct door in this tree — only the protected version is sent, whichever door it leaves by"
   else
-    fail "a direct body is built $BUILT time(s); $CHOSEN in the door a person chooses, $READS read in the gateway"
+    fail "rule 62: a door that sends the text as it stands is still here: $G62_LEFT"
+  fi
+  # And the one door that is left names its text by a handle. A `String` body
+  # on this request is the same door under another name, so the shape is read
+  # rather than the name: the request carries a `PayloadHandle` and the module
+  # holds no `Zeroizing<String>` for a body to be put in.
+  if grep -qE '^\s*pub payload: PayloadHandle,' "$GW" \
+     && ! grep -qE 'Zeroizing<String>' "$GW"; then
+    pass "  the gateway's one request names its text by a handle, and holds no text of its own"
+  else
+    fail "  the gateway's request no longer carries a handle, or carries text beside it: $GW"
   fi
   if grep -nE '"(de|sv|en)"|German|Swedish|Deutsch' "$GW" | grep -vE '^[0-9]+:\s*(//|///)|//!' | grep -q .; then
     fail "the gateway names a language: $GW"
@@ -2212,6 +2264,35 @@ if [ -d "$PACKS" ]; then
     pass "  the second pack is data: $SV_FNS function in sv.rs"
   else
     fail "  the second pack carries $SV_FNS functions — a pack should be data, or say why"
+  fi
+  # **And the release says which packs it has, by asking them** — the
+  # attacker's ن13. `packaging/linux/README.txt` told whoever downloaded the
+  # archive «the detection packs are German and English», which stopped being
+  # true the day Swedish was offered (rule 56, 16 October) and nobody moved
+  # that line. A sentence that names must ask what it names, so the names are
+  # read out of the registry and looked for in the sentence.
+  #
+  # The interface line beside it is **not** checked against anything: rule 56-أ
+  # says the first screen shows no Swedish until the screens are translated, so
+  # «the interface is English» is a separate fact with its own owner.
+  RELEASE_README=packaging/linux/README.txt
+  if [ -f "$RELEASE_README" ] && [ -f "$PACKS/mod.rs" ]; then
+    MISSING=""
+    for pack in de:German sv:Swedish en:English; do
+      code=${pack%%:*}
+      word=${pack##*:}
+      if grep -qE "\b$code::pack\(\)" "$PACKS/mod.rs" \
+         && ! grep -q "$word" "$RELEASE_README"; then
+        MISSING="$MISSING $word"
+      fi
+    done
+    if [ -z "$MISSING" ]; then
+      pass "  the release README names every pack the registry offers"
+    else
+      fail "  the release README does not name these packs the registry offers:$MISSING ($RELEASE_README)"
+    fi
+  else
+    skip "  the release README's packs" "no packaging README or no registry on this branch"
   fi
 else
   skip "the pack contract" "no packs folder on this branch"
@@ -2403,6 +2484,14 @@ fi
 
 # A green run proves nothing unless the invariant tests actually exist. A test
 # that is quietly deleted takes its invariant with it and the suite still passes.
+#
+# **Two names left this roster on 17 October, and they are the exception the
+# roster is for.** `the_direct_door_takes_it_out` and
+# `the_direct_door_writes_what_it_sent_as_it_sent_it` measured the door that
+# sent a document as it stands; rule 62 deleted that door, so their invariant
+# was not lost with them — it has no subject. The roster said so loudly first:
+# both reds were read here before the names were taken out, which is the only
+# way a name may leave a list that is not a wish list.
 for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ rule_one rule_two rule_three rule_four twenty_ a_twenty \
          the_server_receives the_whole_path a_redirect_is_refused never_by_its_body longer_than_the_limit \
          each_purpose_gets_its_own a_format_one_vault a_literal_loopback ciphertext_even_inside \
@@ -2502,7 +2591,6 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_reader_sees_a_turn_the_old_door_wrote \
          a_question_sent_through_the_key_is_written_into_the_session \
          a_document_sent_with_no_question_still_leaves_a_turn \
-         the_direct_door_writes_what_it_sent_as_it_sent_it \
          an_answer_brought_back_from_outside_is_written_too \
          a_stored_turn_restores_only_what_its_payload_carried \
          a_session_read_without_a_bench_reads_itself_back \
@@ -2593,7 +2681,6 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_manual_door_takes_it_out \
          the_send_door_takes_it_out \
          the_model_door_takes_it_out \
-         the_direct_door_takes_it_out \
          rename_changes_the_name_and_not_the_number \
          a_session_begun_by_hand_keeps_the_open_document \
          an_older_session_holds_none \
@@ -2682,8 +2769,11 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "both acts say what they need" "the rule set in the top bar is a choice" \
          "the band" "read again once there is one" "never insists" \
          "asks once per name, with what the decision is worth" \
-         "no model is named in Dart" "the original is a chosen thing" \
-         "never inherits the last one" \
+         "no model is named in Dart" \
+         "there is nothing else to choose" \
+         "what it sends is the payload" \
+         "offers no way to send the original" \
+         "no door in this app carries a document to a model" \
          "takes that line, and the core says what is in it" \
          "protects that cell in every held line" \
          "between two columns says why" \
@@ -2692,7 +2782,7 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "another conversation says so, by name, above the answer" \
          "own answer restores with nothing said" \
          "puts nothing out while a word waits" \
-         "the exits are pressable while a word waits" \
+         "every exit on the sheet is pressable while a word waits" \
          "the first waiting word in reading order" \
          "closes the sheet and says it where the word is" \
          "the AI door opens the preview side" \

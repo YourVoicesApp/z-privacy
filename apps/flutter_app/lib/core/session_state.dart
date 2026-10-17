@@ -590,24 +590,11 @@ class Workbench extends ChangeNotifier {
     } on ApiError catch (e) {
       trouble = humanMessage(e);
     }
-    // A document that is not the one the choice was made about starts
-    // protected. Here rather than in `rescan`, because a rescan of the **same**
-    // document — after teaching a name, say — must not quietly undo what a
-    // person chose.
-    _protectIfTheDocumentChanged();
+    // **Nothing here has a mode to reset any more** — rule 62. A document that
+    // arrived used to be put back into the protected mode, in case the last
+    // one had been sent as it stands; there is one mode now, so there is
+    // nothing a new document could inherit.
     notifyListeners();
-  }
-
-  /// What the mode was chosen about. A name and a length is enough to tell one
-  /// document from another, and it is nothing of what is in them.
-  String? _choseFor;
-
-  void _protectIfTheDocumentChanged() {
-    final doc = snap?.document;
-    final now = doc == null ? null : '${doc.name}:${doc.text.length}';
-    if (now == _choseFor) return;
-    _choseFor = now;
-    startProtected();
   }
 
   /// A refusal has to outlive the refresh that follows it.
@@ -951,13 +938,15 @@ class Workbench extends ChangeNotifier {
   /// model on this machine is.
   String? chosenModel;
 
-  /// What the next send will carry. **False is the only default there is.**
-  ///
-  /// Z's existing vocabulary already has «Direct API», and it means the route —
-  /// this app to the provider, with the protected text. So the unredacted mode
-  /// is not called «direct» anywhere a person can see: it is «the original
-  /// text», which says what travels.
-  bool sendOriginal = false;
+  // **What the next send will carry is not a field any more** — rule 62, the
+  // owner on 17 October. There was a flag here, and two presses on «Who
+  // answers» that set it: one for the protected text and one for the document
+  // as it stands. The second is deleted, so there is nothing left to choose
+  // and no state to be in by accident — what the next send carries is the
+  // payload, as every send does.
+  //
+  // «Direct API» stays in the vocabulary, and still means what it always meant
+  // in it: the route, this app to the provider, with the protected text.
 
   bool _gone = false;
 
@@ -985,25 +974,6 @@ class Workbench extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Choosing to send the original is one press, and it is never automatic:
-  /// nothing in this class turns a failed protected send into this.
-  void chooseOriginal(bool on) {
-    sendOriginal = on;
-    notifyListeners();
-  }
-
-  /// A document that arrives is protected, whatever the last one was.
-  ///
-  /// The owner's rule for this phase: **a new document or workspace never
-  /// silently inherits Direct Mode.** A choice made about one document was
-  /// made about that document — the next one begins where every document
-  /// begins, and a person who wants the original says so again.
-  void startProtected() {
-    if (!sendOriginal) return;
-    sendOriginal = false;
-    notifyListeners();
-  }
-
   /// Ask a model with the protected payload. **No argument carries the
   /// document**, here as in the core: a handle goes, and nothing else could.
   Future<String?> askModelProtected(String providerId) async {
@@ -1023,36 +993,17 @@ class Workbench extends ChangeNotifier {
     });
   }
 
-  /// Ask a model with the document **as it stands**, because a person chose to.
-  ///
-  /// A separate function taking the text — so the only call that can carry the
-  /// original is the one a human selection reaches, and a mistaken press
-  /// cannot pass a document to the protected door. The core keeps the same
-  /// separation in its types; this is that separation where the button is.
-  Future<String?> askModelWithTheOriginal(String providerId, {required String original}) async {
-    if (!sendOriginal) {
-      // Not reachable from the screen, and refused here as well: the original
-      // travels when the mode says so, never because a caller passed it.
-      return 'Choose «The original text» first — this app does not send a '
-          'document unprotected on its own.';
-    }
-    return _ask(leaving: original, () async {
-      final said = await z.askModelDirectly(
-        session: session,
-        text: original,
-        provider: ProviderId(id: providerId),
-        model: chosenModel,
-        workspace: const [],
-        history: const [],
-      );
-      lastUsage = said.usage;
-      // There is nothing to restore: nothing was protected.
-      said_ = said.text;
-    });
-  }
+  // **The second door is gone** — rule 62. Beside [askModelProtected] stood a
+  // function that took the document as an argument, because the person had
+  // chosen on the screen to send it as it stands. It is deleted with the
+  // choice, and deleted rather than left unreachable: a method on this class
+  // that takes a `String` and sends it is what the next button gets wired to.
+  //
+  // So there is one send door on this bench, it takes no text, and the only
+  // thing it can put on a wire is a payload the core built.
 
-  /// What both doors share: the busy flag, the refusal, and the refresh. The
-  /// difference between them is the call, and it stays the call.
+  /// What the door shares with the journey below it: the busy flag, the
+  /// refusal, and the refresh.
   ///
   /// **And the journey, said step by step** (064/E). The owner's ruling of
   /// 9 October: the press takes the person to the chat, and there they see what
@@ -1142,8 +1093,10 @@ class Workbench extends ChangeNotifier {
     }
   }
 
-  /// What the model wrote, when there was nothing to restore it against.
-  String? said_;
+  // **What the model wrote when there was nothing to restore it against** was
+  // kept here, and nothing is in that state any more: every answer this app
+  // receives answers a payload, so every answer has something to be restored
+  // against. The field goes with the door that filled it (rule 62).
 
   /// What the last request cost, as the provider stated it.
   ModelUsage? lastUsage;
@@ -1943,17 +1896,19 @@ Finding? theFirstWaitingWord(List<Finding> findings) {
 /// From the core's side nothing is wrong, and no core guard can see it. That is
 /// why the text is asked for a second time, after the birth, and why both asks
 /// go to the core: a text read off the bench is a text nobody was asked about.
-/// ## `thePayloadLeaves`
+/// ## Every exit takes the payload, and that is rule 62
 ///
-/// Three of the four exits take the protected payload out — the clipboard, the
-/// PDF, and a protected send through a key. Direct Mode's door takes the
-/// **document as it stands**, by a separate call that the core keeps separate.
-/// For that one the birth, the refusal and the refresh are all still the order;
-/// steps 1 and 4 are about a text it does not send, and a helper that insisted
-/// on a payload would refuse a door that works on a bench with nothing built.
-/// So the parameter says what leaves, and nothing about it is optional:
-/// `false` returns no view, and a caller that reads `view` for its text gets
-/// null rather than something almost right.
+/// There was a parameter here — `thePayloadLeaves` — and it was `false` for
+/// exactly one caller: the door that sent the document as it stands, for which
+/// steps 1 and 4 were about a text it did not send. The owner deleted that
+/// door on 17 October, so the parameter is deleted with it rather than left
+/// standing at a default: a flag that turns the payload law off is the way a
+/// future door gets written without one, and the one state it allowed was the
+/// state rule 62 forbids.
+///
+/// So all four exits — the clipboard, the PDF, a protected send through a key,
+/// and the chat's own — go through step 1 and step 4, and nothing here can be
+/// asked to skip them.
 ///
 /// ## Step 0, and why it is step 0 — 081
 ///
@@ -1975,11 +1930,7 @@ Finding? theFirstWaitingWord(List<Finding> findings) {
 /// writes and read a sentinel nobody would ever have on their clipboard, so it
 /// was green through the whole of it. What a person pastes after pressing our
 /// button is ours.
-Future<WhatMayLeave> beginThenRead(
-  Ground ground,
-  Workbench bench, {
-  bool thePayloadLeaves = true,
-}) async {
+Future<WhatMayLeave> beginThenRead(Ground ground, Workbench bench) async {
   // Step 0. Nothing above this line, ever — and the rule itself lives in
   // `the_clipboard.dart`, where its five seats can read one copy of it.
   await emptyTheClipboardFirst();
@@ -1987,15 +1938,12 @@ Future<WhatMayLeave> beginThenRead(
   // Asked before the birth so that a press which takes nothing out leaves
   // nothing behind it either: no session, no rename, only an empty clipboard
   // and the review open on the word that is waiting.
-  ({PayloadView? view, String? refused, bool lit})? got;
-  if (thePayloadLeaves) {
-    got = await _whatMayLeave(bench);
-    if (got.refused != null) {
-      return WhatMayLeave(
-        refused: got.refused,
-        landedOnTheWaitingWord: got.lit,
-      );
-    }
+  var got = await _whatMayLeave(bench);
+  if (got.refused != null) {
+    return WhatMayLeave(
+      refused: got.refused,
+      landedOnTheWaitingWord: got.lit,
+    );
   }
   int? renamed;
   String? said;
@@ -2013,11 +1961,6 @@ Future<WhatMayLeave> beginThenRead(
     }
     said = sessionBegunSaid(renamed, hadDocument: bench.document != null);
     await bench.refresh();
-  }
-  // The birth and the refresh have happened; what follows is about the payload,
-  // and this door does not send it.
-  if (!thePayloadLeaves) {
-    return WhatMayLeave(said: said, renamed: renamed);
   }
   // Step 4. **The text, from the core, and read again when a birth moved the
   // names.** It used to be read off the bench — `bench.payload` is the
@@ -2039,7 +1982,7 @@ Future<WhatMayLeave> beginThenRead(
       );
     }
   }
-  final view = got!.view!;
+  final view = got.view!;
   final open = ground.openSession;
   // **What this check holds, and what it does not.** `PayloadView.session` is
   // stamped when the payload is built, from whichever session was open then —
@@ -2110,14 +2053,14 @@ Future<({PayloadView? view, String? refused, bool lit})> _whatMayLeave(
 /// refresh and the request — and reads what came out of the socket at the other
 /// end.
 ///
-/// Two things it does not do, each deliberate:
+/// One thing it does not do, deliberately: **it does not retry.** A protected
+/// send that fails is reported as having failed, and there is nothing else for
+/// it to reach for — since rule 62 this app has one send door, and what it
+/// carries is the payload.
 ///
-///   * it does not choose the mode. `bench.sendOriginal` was chosen by a press,
-///     and the door that carries the document is a different call in the core
-///     for exactly that reason;
-///   * it does not retry. A protected send that fails is reported as having
-///     failed — nothing here reaches for the other door, and the mode is not
-///     touched.
+/// It read a mode here until 17 October, and chose between two core calls by
+/// it. Both halves of that are gone: the choice was deleted from «Who
+/// answers», and the call that took a document was deleted from the contract.
 ///
 /// The payload it checks and the handle it sends are **one build**: both come
 /// off `Workbench.snap`, so the `refresh` inside [beginThenRead] moves them
@@ -2138,16 +2081,9 @@ Future<WhatMayLeave> beginThenAsk(
   Workbench bench, {
   required String providerId,
 }) async {
-  final original = bench.sendOriginal;
-  final out = await beginThenRead(ground, bench, thePayloadLeaves: !original);
+  final out = await beginThenRead(ground, bench);
   if (out.refused != null) return out;
-  final bad = original
-      ? await bench.askModelWithTheOriginal(
-          providerId,
-          // Read after the refresh, like everything else that leaves.
-          original: bench.document?.text ?? '',
-        )
-      : await bench.askModelProtected(providerId);
+  final bad = await bench.askModelProtected(providerId);
   if (bad != null) {
     // A birth that happened still happened, and its sentence is still true: the
     // session is open, its names are on the bench, and the send is what failed.

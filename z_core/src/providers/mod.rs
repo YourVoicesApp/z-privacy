@@ -240,29 +240,17 @@ pub(crate) fn ask(
     attempt.result
 }
 
-/// Direct Mode: the text the person chose to send, as it stands.
-///
-/// A different function from [`ask`], taking a different argument, reached from
-/// a different body type — and that is the whole of the separation. There is no
-/// handle here because nothing was protected, and there is no path from a
-/// failed [`ask`] to this function: a protected request that fails is reported
-/// as a protected request that failed.
-///
-/// What it still does: TLS unless the address is this machine, the same size
-/// limit, the same sanitised errors. Direct is «not redacted», and it is never
-/// «not encrypted».
-pub(crate) fn ask_direct(
-    id: &str,
-    credential: &str,
-    base: &str,
-    model: &str,
-    text: &str,
-    instructions: &str,
-) -> ApiResult<Said> {
-    let provider = find(id)?;
-    check_size(text.len(), provider.as_ref())?;
-    provider.ask(credential, base, model, text, instructions).result
-}
+// **[`ask`] is the only way out of this module, and that is rule 62.** Beside
+// it stood a second function that took a `&str` instead of a handle, for the
+// mode in which a person chose to send their document as it stands. The owner
+// deleted the choice on 17 October, so the function is deleted and not left
+// standing unused: an unused door is a door, and the next person to need «send
+// this text» would find one already written and wire it up without deciding
+// anything.
+//
+// What that function did beyond taking text, every request still does: TLS
+// unless the address is this machine, the same size limit below, the same
+// sanitised errors.
 
 /// The outgoing limit, checked before a socket is opened and before a body is
 /// built — so nothing large is copied in order to discover it was too large.

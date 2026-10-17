@@ -122,17 +122,21 @@ void main() {
 
     expect(find.text('Who answers'), findsOneWidget, reason: 'the AI button opened nothing');
 
-    // **Provider, model and mode are not behind a page** — the owner's own
-    // ruling, read against what the sheet is since rule 60. It used to be
-    // measured as «above the outgoing text», because the text was the first
-    // page and the choice stood over it; the text is read on the work surface
-    // now and the sheet has one page, so the measurement is that the choice
-    // and the doors are on the glass together, with nothing to press to get
-    // from one to the other.
+    // **Provider and model are not behind a page** — the owner's own ruling,
+    // read against what the sheet is since rule 60. It used to be measured as
+    // «above the outgoing text», because the text was the first page and the
+    // choice stood over it; the text is read on the work surface now and the
+    // sheet has one page, so the measurement is that the choice and the doors
+    // are on the glass together, with nothing to press to get from one to the
+    // other.
+    //
+    // It said «provider, model and mode» until 17 October, and asked for «What
+    // travels» here. Rule 62 deleted the mode, so what the sheet puts above
+    // its doors is the one choice left — and the absence of the other is
+    // measured in `only_the_protected_version_is_sent_test.dart`.
     final choice = tester.getTopLeft(find.text('Model')).dy;
     final doors = tester.getTopLeft(find.text('Manual AI')).dy;
     expect(choice, lessThan(doors), reason: 'the choice is below the doors it chooses for');
-    expect(find.text('What travels'), findsOneWidget, reason: 'the mode is not on the sheet');
     expect(find.text('Continue'), findsNothing,
         reason: 'the sheet still pages, so rule 60 left a page behind');
     // 046/L: the gate names what is waiting. It said «Answer the review

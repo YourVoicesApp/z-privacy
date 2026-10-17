@@ -74,19 +74,12 @@ void main() {
           // named, not swallowed
         }
       },
-      'askModelDirectly': () async {
-        try {
-          await askModelDirectly(
-            session: session,
-            text: 'hello',
-            provider: const ProviderId(id: 'openai'),
-            workspace: const [],
-            history: const [],
-          );
-        } on ApiError {
-          // the same: a door that refuses is a door that was reached
-        }
-      },
+      // **There is no second model call on this contract** — rule 62. One
+      // stood here beside `askModel`, taking `text:` instead of a handle, and
+      // it is deleted with the choice that called it. The surface this map
+      // walks is the whole contract, so a door coming back would be a line
+      // added here; `only_the_protected_version_is_sent_test.dart` is the
+      // guard that says it may not.
       'teachName': () async {
         // The vault is locked in this test, so the refusal is the answer: the
         // call is reached, and it says what it needs.
@@ -390,7 +383,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 120, reason: 'the contract has 120 functions');
+    expect(calls.length, 119, reason: 'the contract has 119 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

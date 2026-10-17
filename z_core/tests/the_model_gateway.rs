@@ -20,14 +20,18 @@ use z_core::api::*;
 const CREDENTIAL: &str = "sk-test-not-a-real-credential-0002";
 const OTHER_CREDENTIAL: &str = "sk-test-not-a-real-credential-0003";
 
-/// Three documents, three languages. The gateway must not know the difference.
+/// Two documents, two languages. The gateway must not know the difference.
+///
+/// There was a third — an English line with nothing in it to protect — and it
+/// was sent through the door that took text as it stands. Rule 62 deleted that
+/// door, so the fixture goes with it: what is left are two documents that are
+/// protected, which is what the claim below needs.
 const GERMAN: &str = "Kunde: Nordstern Consulting GmbH\n\
     Ansprechpartner: Herr Thomas Müller\n\
     IBAN: DE89370400440532013000\n";
 const SWEDISH: &str = "Kund: Lindgren & Söner AB\n\
     Kontaktperson: Herr Lars Andersson\n\
     Telefon: 08 123 456 78\n";
-const ENGLISH: &str = "Please summarise the attached contract in three lines.";
 
 fn recording_server(answer: String) -> (String, JoinHandle<Vec<u8>>) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind");
@@ -179,39 +183,18 @@ fn the_matrix() {
         let _ = close_session(session);
     }
 
-    // ---- the direct door sends what the person chose and says so
-    {
-        let (base, server) = recording_server(reply("Summarised."));
-        connect_provider(
-            ProviderId { id: "openai".to_string() },
-            CREDENTIAL.to_string(),
-            Some(base),
-            Some("gpt-6-astra".to_string()),
-        )
-        .expect("connect");
-
-        let session = open_session(None, "en".to_string()).expect("open");
-        import_text(session, ENGLISH.to_string()).expect("import");
-        let answer = ask_model_directly(
-            session,
-            ENGLISH.to_string(),
-            ProviderId { id: "openai".to_string() },
-            None,
-            vec![],
-            vec![],
-        )
-        .expect("direct");
-
-        let wire = String::from_utf8_lossy(&server.join().expect("the server")).to_string();
-        // Direct Mode is what it says: the text as it stands, because it was asked
-        // for. No token, because nothing was protected.
-        assert!(wire.contains("Please summarise the attached contract"), "the text did not travel");
-        assert!(!wire.contains("__Z_"), "a direct request carried a token: {wire}");
-        // Nothing is kept to restore, because there is nothing to restore.
-        assert!(answer.answer.is_none());
-        assert_eq!(answer.usage.model_id, "gpt-6-astra", "the configured model answered");
-        let _ = close_session(session);
-    }
+    // ---- **the door that sent the text as it stands is deleted** — rule 62
+    //
+    // A block here connected a provider, called the direct door with an
+    // English line, and read the socket: the text travelled, no token was on
+    // the wire, and nothing was kept to restore. Every one of those sentences
+    // was true, and the owner deleted the choice they described on
+    // 17 October — so the block is deleted rather than left asserting a door
+    // that no longer compiles.
+    //
+    // What stands in its place is the arrangement itself: the only door out of
+    // this gateway takes a handle, so there is no call in this file that could
+    // put a document on the wire.
 
     // ---- a protected request that fails is never sent the other way
     {
@@ -237,8 +220,8 @@ fn the_matrix() {
 
     // ---- the gateway knows no language
     {
-        // German protected, Swedish protected, English direct — one door, three
-        // documents, and no language anywhere in the provider or the gateway.
+        // German protected and Swedish protected — one door, two documents,
+        // and no language anywhere in the provider or the gateway.
         for (pack, doc) in [("de", GERMAN), ("sv", SWEDISH)] {
             let (base, server) = recording_server(reply("Ok."));
             connect_provider(

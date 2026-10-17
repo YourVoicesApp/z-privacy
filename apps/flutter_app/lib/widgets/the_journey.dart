@@ -50,12 +50,15 @@ class TheJourney extends StatelessWidget {
           // 1 · What was sent. Named as what it is: the text that travelled,
           // with the tokens in it, because that is the whole promise and a
           // person should be able to read what they sent after they sent it.
+          // **One title, because there is one thing that can have been sent** —
+          // rule 62. This line read a mode and said «the document as it
+          // stands, because you chose that» for the other half of it; the
+          // choice is deleted, so a sentence naming it would describe a state
+          // the app can no longer be in.
           _step(
             key: TheJourney.sent,
             on: true,
-            title: bench.sendOriginal
-                ? 'Sent — the document as it stands, because you chose that'
-                : 'Sent — your request in its safe clothing',
+            title: 'Sent — your request in its safe clothing',
             child: left == null || left.isEmpty
                 ? Text('Nothing was built to send.', style: Zc.small.copyWith(color: Zc.ink4))
                 : Container(

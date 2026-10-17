@@ -124,22 +124,12 @@ fn check(provider: &str, credential: Option<String>) {
         Err(e) => say("the protected request answered", false, &format!("{e}")),
     }
 
-    // ---- direct, and only because this line chose it
-    match ask_model_directly(
-        session,
-        DOC.to_string(),
-        ProviderId { id: provider.to_string() },
-        None,
-        vec![INSTRUCTION.to_string()],
-        vec![],
-    ) {
-        Ok(answer) => say(
-            "the direct request answered, by explicit choice",
-            true,
-            &format!("{} ms, the model {} the name back", answer.usage.millis, if answer.text.contains(NAME) { "did give" } else { "did not give" }),
-        ),
-        Err(e) => say("the direct request answered", false, &format!("{e}")),
-    }
+    // **No direct request, because there is no direct door** — rule 62, the
+    // owner on 17 October. This file asked the real provider twice: once with
+    // the protected payload, and once with the document as it stands «only
+    // because this line chose it». The choice is deleted from the product, so
+    // the second ask is deleted from the live check: what a live run measures
+    // is what a person can actually do.
     let _ = close_session(session);
 
     wrong_credential(provider);

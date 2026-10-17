@@ -434,32 +434,6 @@ Future<ModelAnswer> askModel({
   history: history,
 );
 
-/// Send text to a model **as it stands**, because the person chose to.
-///
-/// Direct Mode. A separate function, a separate body type and a separate path
-/// through the gateway: nothing turns a protected request into this one, and a
-/// protected request that fails is reported as having failed. The person knows
-/// which mode they are in, because they called this.
-///
-/// It is «not redacted». It is never «not encrypted»: the address is checked
-/// the way every other request's is, and plain HTTP reaches nothing but this
-/// machine.
-Future<ModelAnswer> askModelDirectly({
-  required SessionId session,
-  required String text,
-  required ProviderId provider,
-  String? model,
-  required List<String> workspace,
-  required List<String> history,
-}) => RustLib.instance.api.zCoreApiAskModelDirectly(
-  session: session,
-  text: text,
-  provider: provider,
-  model: model,
-  workspace: workspace,
-  history: history,
-);
-
 /// **Set the question that travels with this document** (046/N).
 ///
 /// The owner, 7 October: «ليس لدينا شات — شات مع نموذج… لا يوجد خيار مثلاً

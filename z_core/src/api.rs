@@ -2449,19 +2449,24 @@ pub fn ask_model(handle: PayloadHandle, provider: ProviderId, model: Option<Stri
     crate::ops::ask_model(handle, provider, model, workspace, history)
 }
 
-/// Send text to a model **as it stands**, because the person chose to.
-///
-/// Direct Mode. A separate function, a separate body type and a separate path
-/// through the gateway: nothing turns a protected request into this one, and a
-/// protected request that fails is reported as having failed. The person knows
-/// which mode they are in, because they called this.
-///
-/// It is «not redacted». It is never «not encrypted»: the address is checked
-/// the way every other request's is, and plain HTTP reaches nothing but this
-/// machine.
-pub fn ask_model_directly(session: SessionId, text: String, provider: ProviderId, model: Option<String>, workspace: Vec<String>, history: Vec<String>) -> ApiResult<ModelAnswer> {
-    crate::ops::ask_model_directly(session, text, provider, model, workspace, history)
-}
+// **There is no second door, and that is rule 62** — the owner, 17 October,
+// after the attacker's م1.
+//
+// Until this day there were two: `ask_model` above, which takes a handle, and
+// one beside it that took a `String` — the document as it stands, because the
+// person had chosen that on the screen. The choice is deleted, so the door is
+// deleted with it: **only the protected version is sent to AI through Z**,
+// whichever door it leaves by, and somebody who wants to send their own
+// document unprotected sends it themselves, outside this program.
+//
+// It is deleted here and not merely unreachable from the screen. A door whose
+// handle is still bolted to the contract is the door that gets re-opened
+// tomorrow by somebody wiring a button to a function that exists, with nobody
+// deciding anything — so the wrong state is made unrepresentable instead:
+// there is no signature in this contract, and no body type in the gateway,
+// through which text could be sent in place of a handle. The gate measures
+// that over this tree, and `only_the_protected_version_is_sent_test.dart`
+// measures it over the app's own sources, the generated bridge included.
 
 /// **Set the question that travels with this document** (046/N).
 ///

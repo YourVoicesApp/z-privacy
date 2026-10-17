@@ -15,20 +15,27 @@
 //! * a **credential** is what opens the door, and belongs to one provider;
 //! * a **request** is what is being asked, which is not a chat message.
 //!
-//! # The two bodies, and why they are two types
+//! # The one body, and why it is a handle
 //!
-//! [`Body::Protected`] carries a [`PayloadHandle`] — a handle, never text. The
-//! only reader of a payload's outgoing text is `providers::ask`, and gate G16
-//! fails the build if the name appears anywhere else. So the protected path
-//! **cannot** be handed raw text: there is no argument for it.
+//! A [`Request`] names the text by a [`PayloadHandle`] — a handle, never a
+//! `String`. The only reader of a payload's outgoing text is `providers::ask`,
+//! and gate G16 fails the build if the name appears anywhere else. So this
+//! door **cannot** be handed raw text: there is no argument for it, and a
+//! protected send that fails is a protected send that failed.
 //!
-//! [`Body::Direct`] carries text, because that is what Direct Mode is: the
-//! person chose to send a document as it stands. It is a different type, taken
-//! by a different function, and nothing anywhere turns one into the other. In
-//! particular there is **no fallback**: a protected send that fails is a
-//! protected send that failed, and it is reported.
-
-use zeroize::Zeroizing;
+//! **It carried two until 17 October** — rule 62. Beside the handle there was
+//! a body that carried a `String`, because the person could choose on the
+//! screen to send their document as it stands. The owner deleted the choice,
+//! so the body went with it: the state in which text reaches this door instead
+//! of a handle is no longer one this module can express. What is left here
+//! that is still a `String` is a workspace's instructions and a conversation's
+//! turns, in [`Context`] — which is what the model is told *about* the work,
+//! and the protected text of the turns at that, not a document.
+//!
+//! The words that are not deleted are the honest ones about what remains:
+//! Z minimises what travels. It is never «not encrypted» — the address is
+//! checked the way every request's is, and plain HTTP reaches nothing but this
+//! machine.
 
 use crate::api::{ApiResult, ModelUsage, PayloadHandle};
 
@@ -67,20 +74,14 @@ pub(crate) struct Context {
     pub history: Vec<String>,
 }
 
-/// The body of a request, and the whole of the difference between the modes.
-pub(crate) enum Body {
-    /// A handle to a payload the core built and audited. No text.
-    Protected(PayloadHandle),
-    /// Text the person chose to send as it stands.
-    Direct(Zeroizing<String>),
-}
-
 /// One request to one model.
 pub(crate) struct Request {
     pub target: Target,
     pub task: Task,
     pub context: Context,
-    pub body: Body,
+    /// A handle to a payload the core built and audited. **Not text**, and
+    /// there is no other field here that could be one: rule 62.
+    pub payload: PayloadHandle,
 }
 
 /// What came back, and what it cost.
@@ -91,17 +92,17 @@ pub(crate) struct Answer {
 
 /// Send a request. The one door.
 ///
-/// Both modes come through here, and the body decides which path is taken —
-/// which is why the body is a type and not a flag. Nothing in this function
-/// reads a language, a document or a session: the gateway knows a provider, a
-/// model, a credential and some text, and a German letter and a Swedish one
-/// reach it as the same three things.
+/// One door and one path, since rule 62 took the second body away: what is
+/// sent is a payload the core built, named by its handle. Nothing in this
+/// function reads a language, a document or a session — the gateway knows a
+/// provider, a model, a credential and a handle, and a German letter and a
+/// Swedish one reach it as the same three things.
 pub(crate) fn send(request: Request) -> ApiResult<Answer> {
     let Request {
         target,
         task: Task::Answer,
         context,
-        body,
+        payload,
     } = request;
     let login = crate::ops::login_for(&target.provider_id)?;
     let model = target
@@ -110,29 +111,17 @@ pub(crate) fn send(request: Request) -> ApiResult<Answer> {
         .unwrap_or_else(|| login.model.clone());
     let started = std::time::Instant::now();
 
-    let outcome = match body {
-        // The protected path hands the provider a handle's text and never
-        // sees it here: `providers::ask` is the only reader there is.
-        Body::Protected(handle) => crate::providers::ask(
-            handle,
-            &target.provider_id,
-            login.credential.expose(),
-            &login.base,
-            &model,
-            &instructions(&context),
-        ),
-        // The direct path is the person's choice, and it is a different
-        // function with a different argument. There is no way to arrive here
-        // from a failed protected send.
-        Body::Direct(text) => crate::providers::ask_direct(
-            &target.provider_id,
-            login.credential.expose(),
-            &login.base,
-            &model,
-            &text,
-            &instructions(&context),
-        ),
-    };
+    // The provider is handed the handle's text and this function never sees
+    // it: `providers::ask` is the only reader there is. There is no second arm
+    // to this any more, and no argument through which one could be written.
+    let outcome = crate::providers::ask(
+        payload,
+        &target.provider_id,
+        login.credential.expose(),
+        &login.base,
+        &model,
+        &instructions(&context),
+    );
 
     let millis = started.elapsed().as_millis().min(u128::from(u32::MAX)) as u32;
     let said = outcome?;

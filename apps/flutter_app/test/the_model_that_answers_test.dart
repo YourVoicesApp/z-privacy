@@ -309,12 +309,13 @@ void main() {
       expect(find.text(p.label), findsNothing,
           reason: '«${p.label}» is still a heading on the sheet');
     }
-    // And the mode is untouched: it was never part of the catalogue, and rule
-    // 60 moved it one page without changing a word of it — the chips are read
-    // by name in a refusal (`session_state.dart`'s «Choose «The original
-    // text» first»), so their labels are not a rename anybody may make here.
-    expect(find.text('Protected text'), findsOneWidget, reason: 'the mode chips went with the catalogue');
-    expect(find.text('The original text'), findsOneWidget, reason: 'the mode chips went with the catalogue');
+    // **And the mode is deleted, not moved** — rule 62, 17 October. Two chips
+    // stood below the model and this guard held their labels still, because a
+    // refusal in `session_state.dart` quoted one of them back by name. The
+    // owner deleted the second choice; the refusal that quoted it is gone with
+    // it, and what is left here is the one control this card is named for.
+    expect(find.text('Protected text'), findsNothing, reason: 'the deleted mode is still drawn as a chip');
+    expect(find.text('The original text'), findsNothing, reason: 'the deleted mode is still drawn as a chip');
   });
 
   // ------------------------------------------------------------------ guard 5
