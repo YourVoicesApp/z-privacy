@@ -662,6 +662,20 @@ pub(crate) struct Core {
     /// session again — 062 §D: the sealed file survives the lock, only the key
     /// is forgotten, so an auto-lock must not become the power cut again.
     pub open_conversation: Option<u32>,
+    /// **The sessions whose chat this run has already opened** — rule 68, «the
+    /// chat ends when the application closes».
+    ///
+    /// Memory only, and that is the whole of how the rule is kept: a chat
+    /// cannot be found open by a run that did not open it, because this list
+    /// is empty when the process starts. The first time a session is opened
+    /// here its chat number is spent and a new one begins; entering it again —
+    /// after a look at another session, after an auto-lock — finds its number
+    /// in this list and continues the chat the person is in the middle of.
+    ///
+    /// A list and not a flag per session: the number of sessions a run touches
+    /// is the number of rows a person clicks, and a `Vec` of `u32` at that size
+    /// is cheaper to read than a map is to keep.
+    pub chats_opened: Vec<u32>,
 }
 
 impl Core {
@@ -675,6 +689,7 @@ impl Core {
             session_settings: crate::vault::model::StoredSettings::default(),
             state_revision: 1,
             open_conversation: None,
+            chats_opened: Vec::new(),
         }
     }
 

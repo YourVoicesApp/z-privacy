@@ -180,7 +180,7 @@ fn an_answer_about_the_question_is_restored() {
     set_question(s, "Compare it with Contact person: Eleanor Whitfield.".to_string())
         .expect("question");
     let h = build_payload(s).expect("payload");
-    let said = ask_model(h, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+    let said = ask_model(h, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("ask")
         .text;
     let answer = ingest_answer(h, said).expect("ingest");

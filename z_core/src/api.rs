@@ -2065,7 +2065,18 @@ pub enum TurnDocument {
 /// states a live answer has: the model's words, a value put back, and a token
 /// nothing here can place. A screen that received plain text would have to
 /// decide for itself which was which, and it would be wrong first.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// **And both sides as they are stored, beside those segments** — rule 66, 17
+/// October: the chat draws every turn **coded**, with the restored text behind
+/// «Show the text». Both out of one read, so the thread and the bubble cannot
+/// be two different exchanges — and `AnswerSnapshot::as_written` answers for
+/// the live answer only, never for the question as it left and never for a turn
+/// read back out of the session's file a week later.
+///
+/// `Debug` is written by hand (G11): two of these fields are strings of the
+/// person's own work, and a derived one would print a document into whatever
+/// read it.
+#[derive(Clone, PartialEq, Eq)]
 pub struct TurnRow {
     /// **Which key answered this exchange** — the owner's first pillar, and it
     /// is an enum rather than two nullable strings because the question has
@@ -2074,6 +2085,37 @@ pub struct TurnRow {
     /// **What went to the chat**: the file this exchange was about, or that the
     /// person typed it, or that the turn is older than the question.
     pub document: TurnDocument,
+    /// **Which chat of this session this exchange belongs to** — rules 67–68.
+    ///
+    /// Compare it with `the_open_chat` to know whether this turn is in the
+    /// chat the person is in the middle of: the ones that are draw the chat,
+    /// the ones that are not are the session's record of what was asked before
+    /// (rule 69). `0` is a turn written before chats were counted, which
+    /// belongs to none of them.
+    pub chat_number: u32,
+    /// **Which saved document this exchange carried** — `doc1`, `chat2`, the
+    /// same spelling `KeptRow::handle` carries, built by the same function.
+    ///
+    /// Rule 69 draws «sent · answered» under the document that came in, and
+    /// after rule 9 this number is all that is left of it: the preview's copy
+    /// goes the moment the text leaves. Matching on the name instead would be
+    /// matching on something a person may rename and two documents may share.
+    ///
+    /// `None` is «this exchange carried no document»: a follow-up question
+    /// (rule 67 sends the document once), a turn written by hand, or a turn
+    /// older than this round. What ties a follow-up to the document its chat
+    /// began with is `chat_number`.
+    pub kept_handle: Option<String>,
+    /// **What was asked, as it left** — the stored form, coded, which for the
+    /// first turn of a chat is the whole payload the model saw (document,
+    /// `--- Request ---`, request) and for a later one the question alone.
+    ///
+    /// Empty only if nothing left, which is not a state any door writes.
+    pub question_as_it_left: String,
+    /// **What came back, as the model wrote it** — the stored form, coded.
+    /// Empty for a question that was copied out and never answered, which is a
+    /// real state: the person may close the app between the two halves.
+    pub answer_as_written: String,
     /// What was asked, restored. Empty segments mean no question was typed —
     /// a real state: a document may be sent with nothing asked of it, which
     /// was 046/N's whole finding.
@@ -2090,6 +2132,36 @@ pub struct TurnRow {
     /// after days away. One list for both halves — the turn is the unit a
     /// person reads.
     pub unresolved: Vec<String>,
+}
+
+/// **G11: a turn says what it is, not what it says.**
+///
+/// Written by hand because two of the fields above are the person's own work as
+/// strings — the payload as it left and the model's own answer — and a derived
+/// `Debug` would print a whole document into whatever read it. The segments
+/// redact themselves (`Segment` has its own), so they are counted here rather
+/// than shown, the way `AnswerSnapshot` counts its restored half.
+impl fmt::Debug for TurnRow {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TurnRow")
+            .field("via", &self.via)
+            .field("document", &self.document)
+            .field("chat_number", &self.chat_number)
+            .field("kept_handle", &self.kept_handle)
+            .field(
+                "question_as_it_left",
+                &format_args!("[REDACTED {} bytes]", self.question_as_it_left.len()),
+            )
+            .field(
+                "answer_as_written",
+                &format_args!("[REDACTED {} bytes]", self.answer_as_written.len()),
+            )
+            .field("question", &self.question.len())
+            .field("answer", &self.answer.len())
+            .field("at", &self.at)
+            .field("unresolved", &self.unresolved.len())
+            .finish()
+    }
 }
 
 /// Begin a session, with the name the person was asked for once.
@@ -2442,16 +2514,87 @@ pub fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<AnswerId> 
     crate::ops::send(handle, provider)
 }
 
-/// Ask a model, with a workspace's instructions and a conversation's history.
+/// Ask a model, with a workspace's instructions. **The chat's history is the
+/// core's own** — rule 67.
 ///
 /// The protected door of the Model Gateway, and the one a workspace uses. It
 /// takes a **handle**, so there is no signature here through which a document
 /// could be sent unprotected — the same promise `send` has always made, with a
 /// context and a chosen model added.
 ///
+/// **It took a history until 17 October, and every caller passed an empty
+/// one** — which is why the owner could not ask a second question about the
+/// same letter. The parameter is deleted rather than filled in by the screen:
+/// what travels is the stored turns of this chat, in the protected form they
+/// left in, and a `Vec<String>` on this signature is a place where the
+/// *restored* text of a turn could be put instead — a person's own names on
+/// their way back out to a model. The core builds it, as the core protects the
+/// question, for the same reason.
+///
 /// `model` is optional: without one, the provider's configured model answers.
-pub fn ask_model(handle: PayloadHandle, provider: ProviderId, model: Option<String>, workspace: Vec<String>, history: Vec<String>) -> ApiResult<ModelAnswer> {
-    crate::ops::ask_model(handle, provider, model, workspace, history)
+pub fn ask_model(handle: PayloadHandle, provider: ProviderId, model: Option<String>, workspace: Vec<String>) -> ApiResult<ModelAnswer> {
+    crate::ops::ask_model(handle, provider, model, workspace)
+}
+
+/// **The question alone, for a question that follows another** — rule 67.
+///
+/// The first question of a chat leaves with its document; a later one leaves by
+/// itself, and what was said before it travels as the history `ask_model`
+/// builds. Call `set_question` first, as ever: this hands back a handle to what
+/// that protected, and there is no argument here through which a raw question
+/// could arrive.
+pub fn build_the_question_alone(session: SessionId) -> ApiResult<PayloadHandle> {
+    crate::ops::build_the_question_alone(session)
+}
+
+/// **What left when a person took the chat away, and the handle of it** —
+/// rule 65's copy.
+///
+/// Two things because an answer may come back against it: `pasteAnswer` ties an
+/// answer to a payload and restores by that payload's allowed list (G9), and
+/// this copy's list covers **every token this chat has carried**. Bound to any
+/// other handle, a token born in a later question would come home as a token.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChatToTakeOut {
+    /// The text, and everything the band says about it — the same view every
+    /// other exit hands over.
+    pub what_leaves: PayloadView,
+    /// The payload that text is, so an answer carried back is restored against
+    /// what was carried out.
+    pub handle: PayloadHandle,
+}
+
+/// **The chat, for the person to take away** — rule 65, the fourth door text
+/// leaves this machine by.
+///
+/// Every turn of the open chat, the question as it left and the answer as it
+/// arrived — the protected form, which is the only form of it there is here.
+/// The text is the same one the next question carries as its history, built by
+/// the same function, so what a person copies out is what the model was shown.
+///
+/// An answer brought back against this copy writes a turn with **no question of
+/// its own**: nothing new was asked, and the transcript written back in as a
+/// question would put the chat inside itself.
+pub fn chat_to_take_out(session: SessionId) -> ApiResult<ChatToTakeOut> {
+    crate::ops::chat_to_take_out(session)
+}
+
+/// **End the chat** — rule 68, by the person's own hand.
+///
+/// The turns stay where they are (rule 69 shows them in the session's room);
+/// what ends is the run of turns a new question would carry with it. Answers
+/// with the number of the chat that is open now. Closing the application ends
+/// a chat too, and that half needs no call: a run that did not open the session
+/// cannot find a chat open in it.
+pub fn end_the_chat(number: u32) -> ApiResult<u32> {
+    crate::ops::conversation::end_the_chat(number)
+}
+
+/// **Which chat of this session is open** — the number a row's own
+/// `chat_number` is compared against, so a screen draws the boundary from the
+/// core's count and never from one of its own.
+pub fn the_open_chat(number: u32) -> ApiResult<u32> {
+    crate::ops::conversation::the_open_chat(number)
 }
 
 // **There is no second door, and that is rule 62** — the owner, 17 October,

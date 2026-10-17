@@ -128,7 +128,6 @@ fn a_workspace_asks(pack: &str, doc: &str, provider: &str, model: Option<&str>) 
         ProviderId { id: provider.to_string() },
         model.map(str::to_string),
         vec!["You are helping with a contract.".to_string()],
-        vec![],
     )
     .expect("the gateway answers");
     (answer, session)
@@ -209,7 +208,6 @@ fn the_matrix() {
             handle,
             ProviderId { id: "nothing-here".to_string() },
             None,
-            vec![],
             vec![],
         );
         assert!(refused.is_err(), "an unknown provider answered");

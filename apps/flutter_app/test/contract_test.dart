@@ -68,8 +68,37 @@ void main() {
             handle: handle,
             provider: const ProviderId(id: 'openai'),
             workspace: const [],
-            history: const [],
           );
+        } on ApiError {
+          // named, not swallowed
+        }
+      },
+      // **The history is no longer an argument** — rule 67. It was `const []`
+      // here as everywhere else, which is exactly why the core builds it now.
+      'buildTheQuestionAlone': () async {
+        try {
+          await buildTheQuestionAlone(session: session);
+        } on ApiError {
+          // nothing is asked in this test, so «nothing to send» is the answer
+        }
+      },
+      'chatToTakeOut': () async {
+        try {
+          await chatToTakeOut(session: session);
+        } on ApiError {
+          // no chat in this session yet: the refusal is the answer
+        }
+      },
+      'endTheChat': () async {
+        try {
+          await endTheChat(number: 9999);
+        } on ApiError {
+          // no session 9999 to end a chat in
+        }
+      },
+      'theOpenChat': () async {
+        try {
+          await theOpenChat(number: 9999);
         } on ApiError {
           // named, not swallowed
         }
@@ -383,7 +412,7 @@ void main() {
     // added to the contract and forgotten here fails the build rather than
     // passing quietly — which is what happened when the contract went from 52
     // to 54 and this line still said 52.
-    expect(calls.length, 119, reason: 'the contract has 119 functions');
+    expect(calls.length, 123, reason: 'the contract has 123 functions');
     // ignore: avoid_print
     print('still NotImplemented (${pending.length}): $pending');
     await vaultLock();

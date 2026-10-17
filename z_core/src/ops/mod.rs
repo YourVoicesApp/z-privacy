@@ -515,24 +515,31 @@ fn view_of(s: &mut Session) -> ApiResult<DocumentView> {
 
 // ---------------------------------------------------------------- payload
 
+/// **Which of the owner's sessions a payload belongs to** — 064d.
+///
+/// A fact about the snapshot, so it is taken at the moment of the snapshot and
+/// never looked up again later, when the answer could have changed. `None` is a
+/// payload built with no session open, which is the state a forgotten question
+/// at the exit leaves and the one thing in 064 that used to be invisible.
+///
+/// One function, because all three builders stamp it and three copies of this
+/// lookup would be three answers to «whose payload is this».
+fn the_session_this_belongs_to(
+    core: &mut crate::session::Core,
+) -> Option<crate::api::PayloadSession> {
+    let number = core.open_conversation?;
+    if core.vault.state() != crate::api::VaultState::Unlocked {
+        return None;
+    }
+    core.vault
+        .conversations()
+        .into_iter()
+        .find(|(n, _, _)| *n == number)
+        .map(|(number, name, _)| crate::api::PayloadSession { number, name })
+}
+
 pub(crate) fn build_payload(session: SessionId) -> ApiResult<PayloadHandle> {
-    // **Read before the payload is built, and stamped into it** — 064d. The
-    // session a payload belongs to is a fact about the snapshot, so it is taken
-    // at the moment of the snapshot and not looked up again later when the
-    // answer could have changed. `None` is a payload built with no session
-    // open, which is the state a forgotten question at the exit leaves and the
-    // one thing in 064 that used to be invisible.
-    let whose = with_core(|core| {
-        let number = core.open_conversation?;
-        if core.vault.state() != crate::api::VaultState::Unlocked {
-            return None;
-        }
-        core.vault
-            .conversations()
-            .into_iter()
-            .find(|(n, _, _)| *n == number)
-            .map(|(number, name, _)| crate::api::PayloadSession { number, name })
-    });
+    let whose = with_core(the_session_this_belongs_to);
     with_session(session.id, |s| {
         if s.original.is_empty() {
             return Err(ApiError::NothingToSend);
@@ -616,6 +623,114 @@ pub(crate) fn payload_to_take_out(session: SessionId) -> ApiResult<PayloadView> 
     out
 }
 
+/// **The question alone, for a question that follows another** — rule 67.
+///
+/// The first question of a chat travels with the document: `build_payload` puts
+/// the two together with `--- Request ---` between them, and that is what the
+/// model was shown. A second question does not — the owner's rule says the
+/// document is not sent again unless the person puts it in again — so what
+/// leaves is the question and nothing else, and what has already been said
+/// travels beside it as the history (`ask_model`).
+///
+/// **No text crosses the contract here either.** The screen calls
+/// [`set_question`] as it always has, which protects the words with the same
+/// packs, the same vault and the same lists the document was read with; this
+/// door hands back a handle to what that produced. There is no argument on it
+/// through which a raw question could arrive, which is the same promise
+/// `build_payload` has made since M2.
+///
+/// It refuses an empty question with `NothingToSend`, the way `build_payload`
+/// refuses an empty document: a follow-up with nothing in it is nothing to
+/// send, and the refusal names what is missing rather than sending a label with
+/// no sentence under it.
+pub(crate) fn build_the_question_alone(session: SessionId) -> ApiResult<PayloadHandle> {
+    with_core(|core| {
+        let whose = the_session_this_belongs_to(core);
+        // **What this chat has already been allowed to carry** — G9, and the
+        // reason a follow-up can be read at all. Taken before the bench is
+        // borrowed, because both come out of the one core.
+        let chat = crate::ops::conversation::the_chat_so_far(core)?;
+        let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
+        if s.question_safe.trim().is_empty() {
+            return Err(ApiError::NothingToSend);
+        }
+        let id = s.take_payload_id();
+        let mut allowed = s.question_tokens.clone();
+        allowed.extend(chat.allowed);
+        let text = s.question_safe.clone();
+        let payload = SafePayload::of_the_question_alone(s, id, whose, text, allowed);
+        // **Audited like any other payload** — G3. The question was protected
+        // against *this* bench a moment ago, so the bound the audit draws from
+        // this document's places is the right one to hold it to.
+        payload.audit(s)?;
+        let handle = payload.handle();
+        s.payloads.insert(id, payload);
+        s.trim_payloads();
+        Ok(handle)
+    })
+}
+
+/// **The chat, for the person to take away** — rule 65's copy, the fourth door.
+///
+/// Every turn of the open chat, the question as it left and the answer as it
+/// arrived, in the one form they are kept in. The text is built by
+/// `the_chat_so_far`, which is also what the next question carries as its
+/// history: **what a person copies out is what the model was shown**, and two
+/// builders would have made that two different texts.
+///
+/// **It asks the one law** (`no_word_waits`, G28/C3): it is a door text leaves
+/// this machine by, and a door that carried its own exception is the shape this
+/// house has paid for four times.
+///
+/// **It does not take the preview's copy out, and that is a reason, not an
+/// exception** — 089 rule 9. Every byte here left by one of the other three
+/// doors, each of which took the copy with it then. Doing it here would delete
+/// the copy of whatever document is on the bench *now*, which may never have
+/// left at all — `the_preview_has_left`'s own comment names the measurement.
+///
+/// **And it is not audited against the bench**, which the other builders are.
+/// The audit bounds how often a protected value may stand in **one** document's
+/// payload; a chat holds that document as often as it was sent, and holds the
+/// model's own words beside it, so the bound says nothing true here and would
+/// refuse an honest transcript. What makes this text safe is where it comes
+/// from: the session's file, every line of which crossed an audited door on its
+/// way out, and nothing is assembled here that was not already in it.
+pub(crate) fn chat_to_take_out(session: SessionId) -> ApiResult<crate::api::ChatToTakeOut> {
+    no_word_waits(session.id)?;
+    let handle = build_the_chat(session)?;
+    // **The handle goes with the text, and that is not a convenience.** An
+    // answer brought back by hand is restored against the payload it is bound
+    // to (G9), so «Add an answer» after «Copy the chat» must bind to *this*
+    // copy — whose allowed list covers every token the chat ever carried. Bound
+    // to whatever handle was last on the table, a token born in the third
+    // question would come home unresolved and the person would read their own
+    // token in the answer.
+    Ok(crate::api::ChatToTakeOut { what_leaves: payload_view(handle)?, handle })
+}
+
+/// The chat as one payload, kept like any other so that what leaves is named by
+/// a handle and read through one accessor.
+fn build_the_chat(session: SessionId) -> ApiResult<PayloadHandle> {
+    with_core(|core| {
+        let whose = the_session_this_belongs_to(core);
+        let chat = crate::ops::conversation::the_chat_so_far(core)?;
+        if chat.lines.is_empty() {
+            return Err(ApiError::NothingToSend);
+        }
+        // A plain divider: one blank line between the labelled halves, the same
+        // joining `gateway::instructions` does for the history, so the copy in
+        // a person's hand reads as the request the model read.
+        let text = chat.lines.join("\n\n");
+        let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
+        let id = s.take_payload_id();
+        let payload = SafePayload::of_the_chat(s, id, whose, text, chat.allowed, chat.kept);
+        let handle = payload.handle();
+        s.payloads.insert(id, payload);
+        s.trim_payloads();
+        Ok(handle)
+    })
+}
+
 pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<AnswerId> {
     // The freshness check happens before anything else: a stale request must not
     // even reach a provider, let alone be posted.
@@ -658,12 +773,26 @@ pub(crate) fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<Ans
 }
 
 /// The protected door: a handle, a model, and what the workspace has to say.
+///
+/// **It no longer takes a history, and that is rule 67** — the owner, 17
+/// October, after finding he could not ask a second question about the same
+/// letter: «لا أستطيع أن أتابع الشات معه على نفس الموضوع». The screen used to
+/// pass one and passed `const []`, every time, for every caller — so every
+/// question reached the model alone and whatever came back was an answer to a
+/// stranger.
+///
+/// The parameter is **deleted** rather than filled in by the screen, because
+/// the history is the stored turns of this chat and nothing else may be in it.
+/// A `Vec<String>` on this signature is a place where somebody could put the
+/// restored text of a turn — the person's own names, on their way back out to
+/// a model — and no amount of care at the call site is worth a door that
+/// cannot be opened by mistake. It is the same reason the question is protected
+/// here and not in the screen.
 pub(crate) fn ask_model(
     handle: PayloadHandle,
     provider: ProviderId,
     model: Option<String>,
     workspace: Vec<String>,
-    history: Vec<String>,
 ) -> ApiResult<crate::api::ModelAnswer> {
     // Everything `send` checks, it checks here too, and for the same reasons:
     // a stale payload must not reach a provider, and a word still waiting stops
@@ -698,6 +827,14 @@ pub(crate) fn ask_model(
     with_core(|core| the_decisions_are_written(core, handle.session));
     allow_tokens(handle, &safe.tokens)?;
     let workspace = safe.text;
+    // **The earlier turns of this chat, built by the core** — rule 67.
+    //
+    // Read here, one line before the send, so that what travels is what the
+    // file holds at the moment of the send and not what it held when a screen
+    // last looked. In the protected form they were stored in: the question as
+    // it left and the answer as it arrived, never restored — `the_chat_so_far`
+    // says the rest.
+    let history = with_core(crate::ops::conversation::the_chat_so_far)?.lines;
     let answer = crate::gateway::send(crate::gateway::Request {
         target: crate::gateway::Target {
             provider_id: provider.id.clone(),
@@ -2708,7 +2845,23 @@ pub(crate) fn ingest_answer(
     raw: String,
     via: crate::api::TurnVia,
 ) -> ApiResult<AnswerId> {
-    with_payload_record(payload, |_| ())?;
+    // **What was asked is what left by this door** — rule 63: what the session
+    // keeps is the record of the two doors, and rule 65: the whole of what left
+    // moves into the chat.
+    //
+    // Until today this was `question_safe` — the request without the document
+    // it was about. A chat drawn from that would show the person a first turn
+    // they never sent, and the history the next question carries (rule 67)
+    // would be a question the model was never shown with its document. So the
+    // turn holds the payload **as it left**: document, `--- Request ---`,
+    // request — or, for a follow-up, the question alone, which is also exactly
+    // what left.
+    //
+    // Read through `view()`, which is the one accessor a payload's text leaves
+    // by outside the network folder — the same string the Safe column is drawn
+    // with. The other accessor has exactly one reader and G16 names it; this
+    // comment may not even spell it, which is how blunt that gate is.
+    let as_it_left = with_payload_record(payload, |p| p.view().text)?;
     // Read before the answer is stored, so the answer carries the session it was
     // actually taken in rather than whichever one is open when it is next read.
     let in_session = with_core(|core| {
@@ -2740,30 +2893,41 @@ pub(crate) fn ingest_answer(
     // `VaultLocked` has to stay `VaultLocked`, because the screen that sees it
     // locks, and a refusal reworded here would take that away.
     if let Some((number, _)) = in_session.clone() {
-        let gathered = with_session(payload.session, |s| {
-            (
-                // The question in the form that left, not as it was typed: the
-                // file keeps both halves as they travelled, so nothing on disk
-                // resolves to a name except through this session's own store.
-                s.question_safe.clone(),
-                s.payloads
-                    .get(&payload.id)
-                    .map(|p| p.allowed_token_ids.clone())
-                    .unwrap_or_default(),
-            )
+        let (allowed, kept, what_it_was) = with_session(payload.session, |s| {
+            s.payloads
+                .get(&payload.id)
+                .map(|p| (p.allowed_token_ids.clone(), p.kept(), Some(p.what_it_is())))
+                .unwrap_or_default()
         })
         .ok_or(ApiError::InvalidSession)?;
-        let (question, allowed) = gathered;
+        // The question in the form that left, not as it was typed: the file
+        // keeps both halves as they travelled, so nothing on disk resolves to a
+        // name except through this session's own store.
+        //
+        // **Except when what left was the chat itself.** «Add an answer» after
+        // «Copy the chat» binds the answer to the copy, so that every token the
+        // chat ever carried is restored in it — and nothing new was asked. The
+        // transcript written back in as a question would put the chat inside
+        // itself, show the person a question they never typed, and carry the
+        // whole thing twice to the next model. The payload is asked what it
+        // was rather than this door remembering.
+        let question = match what_it_was {
+            Some(crate::payload::WhatThePayloadIs::TheChatItself) => String::new(),
+            _ => as_it_left,
+        };
         let document = document_of(payload.session);
         with_core(|core| {
             crate::ops::conversation::record_in(
                 core,
                 number,
-                question,
-                raw.clone(),
-                allowed,
-                via,
-                document,
+                crate::ops::conversation::Exchange {
+                    question,
+                    answer: raw.clone(),
+                    allowed,
+                    via,
+                    document,
+                    kept,
+                },
             )
         })?;
     }

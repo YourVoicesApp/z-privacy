@@ -160,7 +160,6 @@ fn every_door_that_takes_text_out_refuses_with_the_same_number() {
                 ProviderId { id: "openai".to_string() },
                 None,
                 vec!["Summarise it.".to_string()],
-                vec![],
             )
             .expect_err("the gateway"),
         ),
@@ -241,7 +240,6 @@ fn the_word_answered_the_exit_opens() {
             ProviderId { id: "openai".to_string() },
             None,
             vec!["Summarise it.".to_string()],
-            vec![],
         )
         .expect_err("no credential in this process"),
     ] {

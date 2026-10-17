@@ -2326,22 +2326,19 @@ class _TheQuestionState extends State<_TheQuestion> {
               'and the answers are kept.',
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
             ),
-            const SizedBox(height: 3),
-            // **And the one a later tidy-up would delete as redundant.**
+            // **And the sentence that stood here is gone, because the debt was
+            // paid** — rule 67, 17 October.
             //
-            // It is not about this build's shape. It is about what a person
-            // will otherwise assume from «answer 1 of 2» — that the model
-            // remembered — and that assumption would be ours to have planted.
-            // `history` with roles is the deferred debt; until it lands, each
-            // question is asked alone, and the screen says so.
+            // It said «Each question is asked on its own: the model does not
+            // see the earlier ones», and it was honest for as long as
+            // `history` was `const []`. The core now carries the turns of the
+            // open chat with every later question, so the line became a lie
+            // the moment that landed and went with it. Deleted, not reworded:
+            // what the chat does is drawn in the chat itself.
             //
-            // `the_question_is_on_the_screen_test.dart` guards this sentence by
-            // name, for exactly the reason a tidy-up would remove it.
-            Text(
-              'Each question is asked on its own: the model does not see the '
-              'earlier ones.',
-              style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
-            ),
+            // `the_question_is_on_the_screen_test.dart` measures that it is
+            // not here, which is how a line removed in one round stays
+            // removed.
           ],
         ],
       ),

@@ -357,7 +357,7 @@ fn the_model_door_takes_it_out() {
     assert_eq!(kept(number).len(), 1);
 
     let handle = build_payload(held.0).expect("payload");
-    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
     assert!(
         kept(number).is_empty(),

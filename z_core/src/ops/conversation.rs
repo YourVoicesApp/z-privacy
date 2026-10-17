@@ -94,6 +94,9 @@ fn begin_in(
     // just been saved — measured, as «the document that waited for a
     // session was lost».
     write_body(core, number, &crate::conversation::Body::default())?;
+    // **And its chat is the one this run opened** — rule 68. Nothing is spent
+    // here: the body a line above has chat 1 open and no turn in it.
+    the_chat_of_this_run(core, number)?;
     let renamed = take_the_names(core, number, bench);
     Ok(ConversationRow {
         number,
@@ -166,6 +169,9 @@ pub(crate) fn enter(number: u32, bench: Option<SessionId>) -> ApiResult<Conversa
             });
         };
         core.open_conversation = Some(number);
+        // **The chat the person left behind is over** — rule 68, when this is
+        // the first time this run has opened this session.
+        the_chat_of_this_run(core, number)?;
         let renamed = take_the_names(core, number, bench);
         let turns = match body(core, number) {
             Ok(Some(body)) => body.turns.len() as u32,
@@ -286,7 +292,15 @@ pub(crate) fn record(
                 reason: "there is no session open to write to".to_string(),
             });
         };
-        record_in(core, number, question, answer, Vec::new(), via, document)
+        // **No anchor from this door.** It is the by-hand door, called with two
+        // strings and no payload, so there is no saved document it can name
+        // and inventing one would be the guess rule 69's number exists to
+        // refuse.
+        record_in(
+            core,
+            number,
+            Exchange { question, answer, allowed: Vec::new(), via, document, kept: None },
+        )
     })
 }
 
@@ -307,16 +321,46 @@ pub(crate) fn record(
 /// from the core here: the only places that know are the doors, and a value
 /// worked out at this depth would be «whatever is configured now» about an
 /// exchange that has already happened.
+///
+/// **One struct and not six parameters**, and clippy's count is the smaller
+/// half of why: `question` and `answer` are both `String`, and two strings side
+/// by side in a call are a swap waiting to happen — a defect that shows itself
+/// a month later as an answer standing where the question should be. Named
+/// fields cannot be swapped silently.
+pub(crate) struct Exchange {
+    /// What was asked, in the form it left in.
+    pub question: String,
+    /// What came back, exactly as it arrived. Empty is a real state: a question
+    /// copied out and not yet answered.
+    pub answer: String,
+    /// The tokens the payload this turn left in was permitted to carry — G9.
+    pub allowed: Vec<String>,
+    /// Which key answered, or that the person carried it — 075c.
+    pub via: crate::api::TurnVia,
+    /// What it was about: a file by name, or that the person typed it.
+    pub document: crate::api::TurnDocument,
+    /// **The saved document the payload carried**, stamped on it when it was
+    /// built — rule 69's anchor. It comes from the door for the same reason
+    /// `via` does: the door knows what left, and a number worked out at this
+    /// depth would be «whatever is in the preview now» about an exchange that
+    /// has already happened.
+    pub kept: Option<crate::session::KeptHandle>,
+}
+
 pub(crate) fn record_in(
     core: &mut crate::session::Core,
     number: u32,
-    question: String,
-    answer: String,
-    allowed: Vec<String>,
-    via: crate::api::TurnVia,
-    document: crate::api::TurnDocument,
+    exchange: Exchange,
 ) -> ApiResult<u32> {
+    let Exchange { question, answer, allowed, via, document, kept } = exchange;
     let mut body = body(core, number)?.unwrap_or_default();
+    // **Which chat it belongs to is the file's own answer** — rule 67, and it
+    // is taken from the body that is about to be written rather than passed in
+    // by a door. A door knows what was asked; the chat a session is in the
+    // middle of is the session's fact, and a parameter for it would be one more
+    // thing every door has to get right (`via` is a parameter for the opposite
+    // reason: only the door knows what answered).
+    let chat_number = body.chat_now;
     body.turns.push(crate::conversation::Turn {
         question,
         answer,
@@ -324,9 +368,165 @@ pub(crate) fn record_in(
         allowed,
         via,
         document,
+        chat_number,
+        kept_number: kept.map_or(0, |k| k.number),
+        kept_chat: kept.is_some_and(|k| k.chat),
     });
     write_body(core, number, &body)?;
     Ok(body.turns.len() as u32)
+}
+
+/// **The label on an earlier request, and on an earlier answer.**
+///
+/// English, like every other string that leaves this device — the payload's own
+/// `--- Request ---` says why — and deliberately *not* those two words: the
+/// first turn's question **is** a whole payload, `--- Request ---` and all, so
+/// a history that labelled it with the same words would hand the model the
+/// label twice and nothing to tell one turn's text from the next one's.
+const AN_EARLIER_REQUEST: &str = "--- Earlier request ---";
+const AN_EARLIER_ANSWER: &str = "--- Earlier answer ---";
+
+/// **The turns of the chat that is open, in the form they travelled in** —
+/// rule 67, the owner's «لا أستطيع أن أتابع الشات معه على نفس الموضوع».
+///
+/// One entry per side of each turn, labelled, oldest first. **One builder and
+/// two readers**: the history a new question carries (`ops::ask_model`) and the
+/// copy a person takes away (`ops::chat_to_take_out`) are the same text, so
+/// they are the same function. Two of them would part company the first day
+/// somebody changed a label, and the person would be copying out something
+/// other than what the model was shown.
+///
+/// **Nothing is restored and nothing is protected again.** What the file holds
+/// is what travelled — the question as it left, the answer as it arrived — and
+/// a restore here would put the person's own names into the next request,
+/// which is the single thing this program exists to prevent. Protecting it
+/// again would mint tokens for tokens.
+///
+/// **Only the open chat.** Rule 68 ends a chat when the person says so or the
+/// application closes, and `Turn::chat_number` is where that boundary is
+/// written down. A turn from a chat that ended is in the session's room
+/// (rule 69) and not in this list.
+///
+/// No session open, or no file yet: nothing, and that is the truth rather than
+/// an absence — a question asked with no session open writes no turn either
+/// (`ops::ingest_answer`), so there is nothing earlier for it to carry.
+pub(crate) fn the_chat_so_far(core: &mut crate::session::Core) -> ApiResult<TheChatSoFar> {
+    let Some(number) = open_in(core) else { return Ok(TheChatSoFar::default()) };
+    let Some(body) = body(core, number)? else { return Ok(TheChatSoFar::default()) };
+    let mut out = TheChatSoFar::default();
+    for turn in body.turns.iter().filter(|t| t.chat_number == body.chat_now) {
+        if !turn.question.trim().is_empty() {
+            out.lines.push(format!("{AN_EARLIER_REQUEST}\n{}", turn.question));
+        }
+        if !turn.answer.trim().is_empty() {
+            out.lines.push(format!("{AN_EARLIER_ANSWER}\n{}", turn.answer));
+        }
+        for token in &turn.allowed {
+            if !out.allowed.contains(token) {
+                out.allowed.push(token.clone());
+            }
+        }
+        // **The document this chat began with** — rule 69, the first turn that
+        // names one. The transcript holds that document word for word (its
+        // first turn is the payload as it left), so a copy of the chat carries
+        // it and an answer brought back against that copy belongs under the
+        // same document in the session's room.
+        if out.kept.is_none() && turn.kept_number > 0 {
+            out.kept = Some(crate::session::KeptHandle {
+                session: number,
+                number: turn.kept_number,
+                chat: turn.kept_chat,
+            });
+        }
+    }
+    Ok(out)
+}
+
+/// **What the open chat holds**: its text, and the tokens it was allowed to
+/// carry.
+///
+/// Two facts from one walk over the turns, in one answer, because they are read
+/// together and must agree. A second function for the tokens would walk the
+/// same file for the same chat and could be given a different filter — and a
+/// follow-up question allowed a token the history never carried would restore a
+/// name the model was never shown.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub(crate) struct TheChatSoFar {
+    /// One entry per side of each turn, labelled, oldest first.
+    pub lines: Vec<String>,
+    /// **Every token the turns of this chat were allowed to carry** — G9.
+    ///
+    /// What may come back in the answer to the next question, which is wider
+    /// than what stands in that question: three words leave, and the answer to
+    /// them names what the first request showed the model.
+    pub allowed: Vec<String>,
+    /// **The saved document this chat began with** — rule 69's anchor for a
+    /// copy of the chat. `None` when no turn of it named one.
+    pub kept: Option<crate::session::KeptHandle>,
+}
+
+/// **End the chat** — rule 68, by the person's own hand.
+///
+/// The number is spent: `chat_now` goes up and never comes back, so the turns
+/// that were in it are not in the open one and the next question carries none
+/// of them. The turns themselves **stay**: a chat that ended is not a chat that
+/// was deleted, and rule 69 shows them under the document in the session's
+/// room.
+///
+/// Answers with the number of the chat that is open now, so a screen draws the
+/// boundary from the core's own count instead of adding one for itself.
+pub(crate) fn end_the_chat(number: u32) -> ApiResult<u32> {
+    with_core(|core| {
+        let mut body = body(core, number)?.unwrap_or_default();
+        body.chat_now = body.chat_now.saturating_add(1);
+        let now = body.chat_now;
+        write_body(core, number, &body)?;
+        Ok(now)
+    })
+}
+
+/// **Which chat of this session is open** — the number every row is compared
+/// against.
+///
+/// A session with no file yet is in chat 1: nothing has been written, so the
+/// first chat is the one that is open. Asked of the file and nowhere else, so
+/// a screen and the next question cannot disagree about where the boundary is.
+pub(crate) fn the_open_chat(number: u32) -> ApiResult<u32> {
+    with_core(|core| Ok(body(core, number)?.map_or(1, |b| b.chat_now)))
+}
+
+/// **A chat begins when a session is opened in a new run** — rule 68, the half
+/// the person does not do by hand.
+///
+/// «The chat ends when the application closes», so a run that did not open this
+/// session must not find a chat open in it. `Core::chats_opened` is empty when
+/// the process starts, which is the whole of how that is kept: the first
+/// opening here spends the number the last run was writing into, and a second
+/// opening of the same session in the same run finds it in the list and changes
+/// nothing — looking at another session and coming back is neither of the two
+/// things rule 68 says ends a chat, and neither is an auto-lock.
+///
+/// **A chat with no turn in it is not spent**, which is why there is no special
+/// case for a newborn session: its file was written a line ago with chat 1 open
+/// and nothing in it, and nothing is what there is to end. A person who typed a
+/// question and never sent it has had no chat.
+fn the_chat_of_this_run(core: &mut crate::session::Core, number: u32) -> ApiResult<()> {
+    if core.chats_opened.contains(&number) {
+        return Ok(());
+    }
+    if let Some(mut body) = body(core, number)? {
+        if body.turns.iter().any(|t| t.chat_number == body.chat_now) {
+            body.chat_now = body.chat_now.saturating_add(1);
+            // Written before the number is remembered, so a write that fails
+            // is tried again at the next opening rather than being recorded as
+            // done: remembering first would leave the previous run's chat open
+            // for ever, and a new question would carry turns the person
+            // finished with yesterday.
+            write_body(core, number, &body)?;
+        }
+    }
+    core.chats_opened.push(number);
+    Ok(())
 }
 
 /// **Every turn session `number` holds, restored.**
@@ -391,6 +591,20 @@ pub(crate) fn turns(number: u32, bench: Option<SessionId>) -> ApiResult<Vec<crat
             rows.push(crate::api::TurnRow {
                 via: turn.via.clone(),
                 document: turn.document.clone(),
+                chat_number: turn.chat_number,
+                // **The number, spelled by the one function that spells it** —
+                // rule 69. `None` is «this exchange carried no document», which
+                // is a follow-up question's truth and an old turn's.
+                kept_handle: (turn.kept_number > 0).then(|| {
+                    crate::conversation::Body::handle_spelling(turn.kept_number, turn.kept_chat)
+                }),
+                // **Both sides as they are stored, beside both sides restored**
+                // — rule 66: the chat draws every turn **coded**, and the
+                // bubble behind «Show the text» draws it restored. One call
+                // gives a screen both, out of one read of one file, so the
+                // thread and the bubble cannot be two different exchanges.
+                question_as_it_left: turn.question.clone(),
+                answer_as_written: turn.answer.clone(),
                 question: question.segments,
                 answer: answer.segments,
                 at: turn.at,
@@ -571,11 +785,18 @@ pub(crate) fn keep_the_preview(core: &mut crate::session::Core, bench: u32) -> A
 
 /// **It left by a door: the copy is deleted and the number is retired** — rule 9.
 ///
-/// Send, copy, pull, PDF: four presses on the glass, and in the core the three
-/// doors that take text out of the machine (G28's own census —
-/// `payload_to_take_out`, `send`, `ask_model`). Its **blocks stay in the
-/// vault**: what leaves the conversation is the copy of the document, never
-/// what the person protected.
+/// Send, copy, pull, PDF: four presses on the glass, and in the core the doors
+/// that take text out of the machine — G28's own census, which reads them from
+/// what they do: `payload_to_take_out`, `send`, `ask_model` and, since rule 65,
+/// `chat_to_take_out`. Its **blocks stay in the vault**: what leaves the
+/// conversation is the copy of the document, never what the person protected.
+///
+/// **Three of the four call this, and the fourth is named for its reason.**
+/// `chat_to_take_out` hands out the turns of a chat, and every one of them left
+/// this machine through one of the other three — which took the preview's copy
+/// with it then. Calling this there would delete the copy of whatever document
+/// is on the bench **now**, which may be one that has never left: measured as a
+/// document losing its decisions because the person copied an older chat.
 ///
 /// The number is retired by never being handed out again: `Body::take_number`
 /// only goes up, so `doc1` is spent for ever and a stale reference to it cannot

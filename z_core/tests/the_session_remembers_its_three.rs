@@ -295,7 +295,7 @@ fn a_turn_remembers_which_key_and_model_answered_it() {
     ready_to_send(held.0);
     let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
     let handle = build_payload(held.0).expect("payload");
-    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
 
     close_the_app_and_reopen(held.0);
@@ -377,7 +377,7 @@ fn a_session_holding_both_kinds_of_turn_keeps_them_apart() {
 
     // One through a key of ours…
     let first = build_payload(held.0).expect("payload");
-    ask_model(first, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+    ask_model(first, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
     // …and one the person carried back.
     let second = build_payload(held.0).expect("payload again");
@@ -438,7 +438,7 @@ fn a_turn_remembers_which_file_it_was_about() {
     }
     let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
     let handle = build_payload(held.0).expect("payload");
-    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
 
     close_the_app_and_reopen(held.0);
@@ -470,7 +470,7 @@ fn text_the_person_typed_says_there_was_no_file() {
     ready_to_send(held.0); // import_text: typed, with no file name
     let born = conversation_begin("vad säger texten".to_string(), Some(held.0)).expect("begin");
     let handle = build_payload(held.0).expect("payload");
-    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
 
     close_the_app_and_reopen(held.0);
@@ -516,7 +516,7 @@ fn the_report_still_names_no_file_though_the_session_knows_it() {
     }
     let born = conversation_begin("vad säger brevet".to_string(), Some(held.0)).expect("begin");
     let handle = build_payload(held.0).expect("payload");
-    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
 
     // The session holds it…
@@ -637,7 +637,7 @@ fn three_reaches(bench: SessionId) -> u32 {
     );
     let born = conversation_begin("vad säger brevet".to_string(), Some(bench)).expect("begin");
     let handle = build_payload(bench).expect("payload");
-    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
     born.number
 }
@@ -701,7 +701,7 @@ fn a_token_the_payload_never_allowed_stays_a_token() {
         "the foreign token did not travel with the document, so this guard measures nothing"
     );
     let handle = build_payload(second.0).expect("payload");
-    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new(), Vec::new())
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
 
     // ---- read cold: no bench at all

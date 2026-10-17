@@ -837,6 +837,101 @@ if [ -z "$G41_STALE" ]; then
 else
   fail "G41 these allowed lines match nothing any more, so they permit nothing and explain nothing:$G41_STALE"
 fi
+# ---------------------------------------------------------------- G46
+# **The chat the model is shown is the core's, built in one place** — rule 67,
+# the owner's «لا أستطيع أن أتابع الشات معه على نفس الموضوع» of 17 October.
+#
+# `ask_model` carried a `history: Vec<String>` from Phase 4 until this round,
+# and **every caller passed `const []`**. So the parameter was not a door the
+# screen used: it was a door the screen could use, and the first thing anybody
+# would have put through it is the *restored* text of a turn — the person's own
+# names, on their way back out to a model, because that is the form a screen
+# has them in. The parameter is deleted and the core fills the context from the
+# stored turns of the open chat.
+#
+# Four things, each of them the shape of a way this could come undone:
+#
+#  1 — the contract takes no history from anybody;
+#  2 — `ask_model`'s own body asks the builder, read from the body and not from
+#      the file, so a call in a neighbouring function cannot answer for it;
+#  3 — the builder is **one** function, and the copy a person takes away is
+#      built from it too: what leaves on the clipboard is what the model was
+#      shown, and two builders would have made those two different texts;
+#  4 — nothing on the glass assembles a history.
+API_C=z_core/src/api.rs
+OPS_C=z_core/src/ops/mod.rs
+CHAT_C=z_core/src/ops/conversation.rs
+
+# Both surfaces the UI can reach, as G2b reads both: a door on the bridge's own
+# wrapper is as much a door as one on the core's contract.
+G46_ARG=$(grep -n '^pub fn ' $API_FILES 2>/dev/null | grep -E 'history' || true)
+if [ -z "$G46_ARG" ]; then
+  pass "G46 no door on either contract surface takes a history: the core builds it"
+else
+  fail "G46 a contract function takes a history again:"; printf '%s\n' "$G46_ARG" | sed 's/^/        /'
+fi
+
+# **The comment lines are thrown away first, and that is not tidiness.** Pinned
+# with the builder taken out of `ask_model` and the gate stayed green: the
+# sentence above the deleted line still named the builder, so a comment
+# answered for the code. A guard that reads prose measures prose.
+G46_BODY=$(awk '
+  /^pub\(crate\) fn ask_model\(/ {inside=1}
+  inside && /^}/ {print; inside=0; next}
+  inside && $0 !~ /^[[:space:]]*\/\// {print}
+' "$OPS_C")
+if printf '%s\n' "$G46_BODY" | grep -q 'the_chat_so_far'; then
+  pass "G46 ask_model's own body builds the chat it carries"
+else
+  fail "G46 ask_model reaches a model without asking for the chat so far — a second question would arrive alone again"
+fi
+
+G46_BUILT=$(grep -c 'fn the_chat_so_far' "$CHAT_C" 2>/dev/null || echo 0)
+G46_READERS=$(awk '
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /the_chat_so_far/ && $0 !~ /^[[:space:]]*\/\// { if (here != "") print here }
+' "$OPS_C" | sort -u | tr '\n' ' ' | sed 's/ $//')
+# And the one place the gateway's context is filled.
+G46_FILLS=$(grep -c 'context: crate::gateway::Context {' "$OPS_C" 2>/dev/null || echo 0)
+if [ "$G46_BUILT" = "1" ] && [ "$G46_FILLS" = "1" ] \
+   && [ "$G46_READERS" = "ask_model build_the_chat build_the_question_alone" ]; then
+  pass "G46 one builder makes the chat, and its readers are the three that need it: ask_model, build_the_chat, build_the_question_alone"
+else
+  fail "G46 the chat is built in $G46_BUILT place(s), the context is filled in $G46_FILLS, and the readers are «$G46_READERS» — expected one, one, and «ask_model build_the_chat build_the_question_alone»"
+fi
+
+# `^[^/]*` so that a line of prose about the argument that was deleted is not
+# read as the argument coming back: a comment's `//` stands before the word, and
+# an argument's does not. The deletion is written down in `session_state.dart`
+# in exactly those words, which is how this was found.
+# **And the document a turn names is the one the payload carried** — rule 69.
+#
+# Stamped on the payload when it was built, read off the payload when the answer
+# lands. The two differ in exactly the path that matters: a person who copies
+# the text out and comes back with an answer from a browser has had the
+# preview's copy taken out in between (rule 9), so the bench holds nothing to
+# name. Pinned by reading `s.kept` here instead, and the pasted answer lost its
+# anchor at once.
+G46_STAMP=$(awk '
+  /^pub\(crate\) fn ingest_answer\(/ {inside=1}
+  inside && /^}/ {inside=0; next}
+  inside && $0 !~ /^[[:space:]]*\/\// {print}
+' "$OPS_C")
+if printf '%s\n' "$G46_STAMP" | grep -q 'p\.kept()' \
+   && ! printf '%s\n' "$G46_STAMP" | grep -qE '\bs\.kept\b'; then
+  pass "G46 the document a turn names is the one its payload carried, not whatever the bench holds when the answer lands"
+else
+  fail "G46 ingest_answer takes the preview's handle off the bench — an answer carried back by hand would name no document, because the copy left before it came home"
+fi
+
+G46_DART=$(grep -RnE '^[^/]*\bhistory:' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' || true)
+if [ -z "$G46_DART" ]; then
+  pass "G46 no screen assembles a history"
+else
+  fail "G46 a screen hands a history to the core:"; printf '%s\n' "$G46_DART" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G45
 # **An attribute belongs immediately above the item it is about** — the trap
 # this crate has carried three times, and the lead caught the third on
@@ -1174,22 +1269,58 @@ fi
 #
 # The census found a fourth door the first three were written without, and it
 # was the mode in which a person sent the document as it stands. **Rule 62
-# deleted it** (the owner, 17 October), so the census is three — and it is
-# still read from what the functions do, which is why taking a door away moves
-# this line as surely as adding one would.
+# deleted it** (the owner, 17 October), so the census went back to three — and
+# **rule 65 added a real fourth the same week**: `chat_to_take_out`, the copy of
+# the chat. Both moves were read off what the functions do rather than off a
+# list somebody keeps, which is why taking a door away moves this line as
+# surely as adding one does.
+#
+# `DOORS_OUT` is this census, and G28 reads it too: the law «nothing leaves
+# while a word waits» is asked of every door this line finds, so the two gates
+# cannot disagree about how many doors there are.
 DOORS=z_core/src/ops/mod.rs
 KEPT=z_core/src/ops/conversation.rs
 
-G36_OUT=$(awk '
-  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
-  /crate::gateway::send\(|crate::providers::ask\(|payload_view\(build_payload\(/ { if (here != "") print here }
+# **And it is read as the act, not as one spelling of it.** The first version of
+# this line looked for `payload_view(build_…(` — the two halves written as one
+# expression — and the chat door was written that way until it had to hand its
+# handle back beside the text. One statement became two, the pattern stopped
+# matching, and the census said three doors about a tree that had four. It
+# failed, which is the safe direction; it failed because it was reading
+# punctuation. So each function is asked for the two things that make it a door:
+# does it **build** a payload, and does it **hand the text** to its caller — in
+# either order, in however many statements. Reaching a provider is the other way
+# in.
+DOORS_OUT=$(awk '
+  function verdict() { if (here != "" && (prov || (built && handed))) print here }
+  /^(pub\(crate\) )?fn [a-z_]+/ {
+    verdict()
+    match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3)
+    prov = 0; built = 0; handed = 0
+  }
+  # The tests at the foot of the file are not doors, and they build payloads and
+  # read views by the dozen. Without this the last function in the file wears
+  # all of it: measured, with `switch_pack` named a door that takes text out.
+  /^#\[cfg\(test\)\]/ { verdict(); here = ""; prov = 0; built = 0; handed = 0 }
+  /crate::gateway::send\(|crate::providers::ask\(/ { prov = 1 }
+  /= *build_[a-z_]+\(|payload_view\(build_/ { built = 1 }
+  /payload_view\(/ { handed = 1 }
+  END { verdict() }
 ' "$DOORS" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ "$G36_OUT" = "ask_model payload_to_take_out send" ]; then
-  pass "G36 three doors take text out of this machine, and the list is the measured one"
+if [ "$DOORS_OUT" = "ask_model chat_to_take_out payload_to_take_out send" ]; then
+  pass "G36 four doors take text out of this machine, and the list is the measured one"
 else
-  fail "G36 the doors that take text out are: $G36_OUT — expected «ask_model payload_to_take_out send», so a door appeared that nobody measures"
+  fail "G36 the doors that take text out are: $DOORS_OUT — expected «ask_model chat_to_take_out payload_to_take_out send», so a door appeared that nobody measures"
 fi
 
+# **And every door that takes text out takes the preview's copy with it — with
+# one named exception, and the name carries its reason.** `chat_to_take_out`
+# hands out the turns of a chat, and every one of them left this machine through
+# one of the other three, which took the copy with it then. Calling it there
+# would delete the copy of whatever document is on the bench *now*, which may
+# never have left:
+# `copying_the_chat_leaves_a_document_that_never_left_in_the_preview` is the
+# measurement, and it is what makes this line an exception rather than a hole.
 G36_STAYS=""
 for door in ask_model payload_to_take_out send; do
   if ! awk -v want="$door" '
@@ -1202,9 +1333,17 @@ for door in ask_model payload_to_take_out send; do
   fi
 done
 if [ -z "$G36_STAYS" ]; then
-  pass "G36 every door that takes text out takes the preview's copy with it"
+  pass "G36 every door that takes text out takes the preview's copy with it, and the chat door says why it does not"
 else
   fail "G36 these doors take text out and leave the saved copy behind:$G36_STAYS"
+fi
+
+# And the exception is **declared where it is made**, so a reader of the code
+# meets the reason before a reader of this file does.
+if grep -q 'does not take the preview.s copy out, and that is a reason, not an' "$DOORS"; then
+  pass "G36 the one door that keeps the preview's copy says so in its own words"
+else
+  fail "G36 chat_to_take_out is an exception to rule 9 with no reason written at it"
 fi
 
 # **And every door a document arrives by keeps it.** Asked the way G34 asks
@@ -1265,8 +1404,8 @@ fi
 # the three numbers, and the one rule 9 spends: a saved document is in the
 # conversation's file, not in the vault's body.
 G36_FMT=$(grep -oE 'SESSION_FORMAT_VERSION: u16 = [0-9]+' z_core/src/conversation.rs | grep -oE '[0-9]+$')
-if [ "$G36_FMT" = "5" ] && grep -q "SESSION_FORMAT_VERSION\` = 5 |" z_core/src/vault/format.rs; then
-  pass "G36 the session file is at format 5, and the fence table names it"
+if [ "$G36_FMT" = "6" ] && grep -q "SESSION_FORMAT_VERSION\` = 6 |" z_core/src/vault/format.rs; then
+  pass "G36 the session file is at format 6, and the fence table names it"
 else
   fail "G36 the session format is $G36_FMT and the fence table in vault/format.rs does not say so"
 fi
@@ -1572,7 +1711,7 @@ fi
 G29_BAD=""
 for door in import_text import_document; do
   BODY=$(awk -v d="$door" '
-    $0 ~ "^pub\\(crate\\) fn " d "\\(" {inside=1}
+    $0 ~ "^(pub\\(crate\\) )?fn " d "\\(" {inside=1}
     inside && /^}/ {print; inside=0; next}
     inside {print}
   ' "$DOORS")
@@ -1626,10 +1765,22 @@ fi
 # And every door that takes text out of the machine asks it. The body of each
 # one is read, not the file: a call in a neighbouring function would otherwise
 # answer for a door that does not check at all.
+#
+# **The list is the census's, not a hand list** — the attacker's lesson of 17
+# October, twice over: a census that names its members is green on the day a
+# fourth door is added. `DOORS_OUT` is read from what the functions *do* (G36
+# below, where it is built), so a door that reaches a provider or hands the
+# protected text to its caller is in this loop the moment it exists.
+#
+# And the signature is read with the `pub(crate)` optional, because a door the
+# census finds may be a private one: pinned with a fifth door that was `fn`
+# rather than `pub(crate) fn`, this loop said «missing» about a door that was
+# right there. It failed, which is the safe direction, and it failed for the
+# wrong reason — which is the one a later reader would believe.
 G28_BAD=""
-for door in payload_to_take_out send ask_model; do
+for door in $DOORS_OUT; do
   BODY=$(awk -v d="$door" '
-    $0 ~ "^pub\\(crate\\) fn " d "\\(" {inside=1}
+    $0 ~ "^(pub\\(crate\\) )?fn " d "\\(" {inside=1}
     inside && /^}/ {print; inside=0; next}
     inside {print}
   ' "$LAW")
@@ -1640,7 +1791,7 @@ for door in payload_to_take_out send ask_model; do
   fi
 done
 if [ -z "$G28_BAD" ]; then
-  pass "G28 all three exits ask the one law: payload_to_take_out, send, ask_model"
+  pass "G28 every exit asks the one law: $(printf '%s' "$DOORS_OUT" | tr '\n' ' ')"
 else
   fail "G28 an exit does not ask no_word_waits():$G28_BAD"
 fi
@@ -1980,7 +2131,7 @@ else
 fi
 
 G11_MISSING=""
-for t in Secret SafePayload DocumentView PayloadView RevealedValue Segment EntityRow EntityCard WorkspaceSnapshot VaultSnapshot TaughtValueRow AnswerSnapshot; do
+for t in Secret SafePayload DocumentView PayloadView RevealedValue Segment EntityRow EntityCard WorkspaceSnapshot VaultSnapshot TaughtValueRow AnswerSnapshot TurnRow; do
   grep -Rqs "impl fmt::Debug for $t" z_core/src || G11_MISSING="$G11_MISSING $t"
 done
 if [ -n "$G11_MISSING" ]; then
@@ -2846,7 +2997,22 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          two_copies_never_lose_a_turn \
          a_reason_that_quotes_a_persons_word_isolates_it \
          a_document_that_arrives_with_the_vault_shut_has_no_session \
-         a_refused_press_leaves_the_blocks_working; do
+         a_refused_press_leaves_the_blocks_working \
+         a_second_question_carries_the_first_turn_as_it_left \
+         a_follow_up_question_leaves_without_the_document \
+         a_follow_up_with_no_question_in_it_is_refused \
+         a_chat_that_ended_is_not_carried_into_the_next_one \
+         a_new_run_does_not_continue_the_chat_it_finds \
+         entering_the_same_session_again_in_one_run_keeps_its_chat \
+         the_chat_a_person_takes_away_is_the_text_the_model_was_shown \
+         copying_the_chat_leaves_a_document_that_never_left_in_the_preview \
+         the_chat_does_not_leave_while_a_word_waits \
+         a_session_with_no_chat_in_it_has_nothing_to_take_out \
+         a_format_five_file_reads_and_its_turns_belong_to_no_chat \
+         an_answer_brought_back_by_hand_joins_the_open_chat \
+         a_turn_carries_both_sides_coded_and_restored \
+         a_turn_names_the_document_it_carried_after_the_copy_is_gone \
+         an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
@@ -2932,7 +3098,8 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "a session from before 080 is asked once" \
          "the chat door shows what will leave" \
          "a host that answered nothing says so" \
-         "the number this form promises is the number the core applies"; do
+         "the number this form promises is the number the core applies" \
+         "no longer says that each question is asked alone"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

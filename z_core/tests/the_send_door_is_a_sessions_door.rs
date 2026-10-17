@@ -154,7 +154,7 @@ fn a_question_sent_through_the_key_is_written_into_the_session() {
     set_question(b, format!("What did {NAME} earn?")).expect("question");
     let h = build_payload(b).expect("payload");
 
-    let said = ask_model(h, fake(), None, Vec::new(), Vec::new()).expect("ask");
+    let said = ask_model(h, fake(), None, Vec::new()).expect("ask");
     assert!(!said.text.is_empty(), "the echo answered nothing, so nothing is being measured");
 
     let turns = conversation_turns(row.number, Some(b)).expect("turns");
@@ -186,13 +186,18 @@ fn a_question_sent_through_the_key_is_written_into_the_session() {
     );
 }
 
-/// **The same door with nothing typed: an empty question is written, not
-/// refused.**
+/// **The same door with nothing typed: the turn is written, not refused.**
 ///
 /// A document may be sent with no question — that was 046/N's whole finding —
 /// and refusing here would redden the very press the owner used this morning.
-/// «Nothing was typed» and «something was lost» must not be spelled the same,
-/// and they are not: the emptiness comes from the empty question itself.
+/// «Nothing was typed» and «something was lost» must not be spelled the same.
+///
+/// **How they are spelled apart changed with rule 65** (17 October). The turn's
+/// question half used to be the request alone, so «nothing typed» was an empty
+/// half; it is now **what left by this door**, which is the document itself
+/// (rule 63: the session keeps the record of the two doors). So nothing typed
+/// is spelled by the absence of the request section, and something lost would
+/// still be spelled by an empty half — two states, two spellings, as before.
 #[test]
 fn a_document_sent_with_no_question_still_leaves_a_turn() {
     let _g = serial();
@@ -201,11 +206,20 @@ fn a_document_sent_with_no_question_still_leaves_a_turn() {
     let row = conversation_begin("no question".to_string(), Some(b)).expect("begin");
     let h = build_payload(b).expect("payload");
 
-    ask_model(h, fake(), None, Vec::new(), Vec::new()).expect("ask");
+    ask_model(h, fake(), None, Vec::new()).expect("ask");
 
     let turns = conversation_turns(row.number, Some(b)).expect("turns");
     assert_eq!(turns.len(), 1, "a document left and nothing was written");
-    assert_eq!(read(&turns[0].question), "", "nothing was typed, so the question is empty");
+    let asked = read(&turns[0].question);
+    assert!(
+        asked.contains("Payroll run"),
+        "the document that left is not in the turn, so the chat would draw a first \
+         turn the person never sent"
+    );
+    assert!(
+        !asked.contains("--- Request ---"),
+        "nothing was typed and the turn carries a request section anyway"
+    );
     assert!(!read(&turns[0].answer).is_empty(), "the answer half is what did happen");
 }
 
@@ -310,7 +324,7 @@ fn a_session_read_without_a_bench_reads_itself_back() {
     let b = bench();
     let row = conversation_begin("no bench".to_string(), Some(b)).expect("begin");
     let h = build_payload(b).expect("payload");
-    ask_model(h, fake(), None, Vec::new(), Vec::new()).expect("ask");
+    ask_model(h, fake(), None, Vec::new()).expect("ask");
 
     let turns = conversation_turns(row.number, None).expect("turns");
     assert_eq!(turns.len(), 1, "the turn is in the file either way");
@@ -356,7 +370,7 @@ fn a_send_with_no_session_open_is_not_refused_today() {
     // «the send made none», which is the ruling itself.
     let before = conversations().expect("rows").len();
 
-    ask_model(h, fake(), None, Vec::new(), Vec::new()).expect("a send with no session still sends");
+    ask_model(h, fake(), None, Vec::new()).expect("a send with no session still sends");
 
     assert_eq!(
         conversations().expect("rows").len(),
