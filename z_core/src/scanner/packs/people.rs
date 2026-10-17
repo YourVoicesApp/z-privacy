@@ -478,8 +478,11 @@ fn salutations(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>
         // …» so that no pack needs an article of its own: «an English», «a
         // Swedish».
         let said = match title {
-            Some(t) => format!("«{w} {t}»"),
-            None => format!("«{w}»"),
+            // The words are out of the person's own document, so they are
+            // isolated: a German or Arabic name inside an English reason
+            // takes the punctuation around it with it otherwise.
+            Some(t) => format!("«{}»", crate::text::their_own_word(&format!("{w} {t}"))),
+            None => format!("«{}»", crate::text::their_own_word(w)),
         };
         let (confidence, rule, reason) = if proof {
             (
@@ -548,7 +551,10 @@ fn titled_names(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate
                     Kind::Person,
                     Confidence::Auto,
                     "title",
-                    format!("a name after «{said}» — a title introduces the person who follows it"),
+                    format!(
+                        "a name after «{}» — a title introduces the person who follows it",
+                        crate::text::their_own_word(&said)
+                    ),
                 ));
             }
         }
@@ -750,8 +756,10 @@ fn dictionary_names(
             // list had grown to 5,712 and 3,246 in the meantime. A sentence
             // that counts something has to ask it.
             format!(
-                "«{given}» is one of the {} given names and «{family}» one of the {} surnames in the {} name dictionary — two names in a row, offered for your word",
+                "«{}» is one of the {} given names and «{}» one of the {} surnames in the {} name dictionary — two names in a row, offered for your word",
+                crate::text::their_own_word(given),
                 names.counts().0,
+                crate::text::their_own_word(family),
                 names.counts().1,
                 pack.in_english
             ),
@@ -842,7 +850,8 @@ fn companies(words: &[Word<'_>], pack: &LanguagePack, out: &mut Vec<Candidate>) 
             Confidence::Suggest,
             "company-form",
             format!(
-                "a name ending in «{w}», which is a legal form in {} — probably this client's company",
+                "a name ending in «{}», which is a legal form in {} — probably this client's company",
+                crate::text::their_own_word(w),
                 pack.in_english
             ),
         ));
@@ -979,9 +988,16 @@ fn reversed_pairs(
             Confidence::Suggest,
             "name-reversed-pair",
             if both {
-                format!("«{family}, {given}» — a surname and a given name this build knows, written the way a list of people is written")
+                format!(
+                    "«{}» — a surname and a given name this build knows, written the way a list of people is written",
+                    crate::text::their_own_word(&format!("{family}, {given}"))
+                )
             } else {
-                format!("«{given}» is a given name this build knows, and «{family}» stands before it with a comma — the way a list of people is written")
+                format!(
+                    "«{}» is a given name this build knows, and «{}» stands before it with a comma — the way a list of people is written",
+                    crate::text::their_own_word(given),
+                    crate::text::their_own_word(family)
+                )
             },
         ));
         i += 2;

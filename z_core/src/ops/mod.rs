@@ -2900,8 +2900,10 @@ pub(crate) fn restoration(session: SessionId, answer: AnswerId) -> ApiResult<cra
     if let Some(name) = gone {
         return Err(ApiError::PayloadRefused {
             reason: format!(
-                "this answer was taken in the session «{name}», which has been deleted. \
-                 Its key was destroyed with it, so nothing can be unprotected from it again."
+                // The session's name is the person's own word.
+                "this answer was taken in the session «{}», which has been deleted. \
+                 Its key was destroyed with it, so nothing can be unprotected from it again.",
+                crate::text::their_own_word(&name)
             ),
         });
     }
@@ -3342,18 +3344,24 @@ fn taught_rule_labels() -> std::collections::BTreeMap<u32, String> {
 /// guard since 046 has read; a **rule of the person's own** says what they
 /// taught, because «you:u1» tells them nothing they know.
 ///
-/// **The word they typed is isolated** — `U+2068 … U+2069` — because it is
-/// theirs and may be in any script, and an Arabic label inside an English
-/// sentence drags the quotation marks around it. The glass has
-/// `theirOwnWord()` for the same job, and cannot use it here: what it is handed
-/// is a finished sentence, so the one place that writes this one isolates it.
+/// **The word they typed is isolated** — `text::their_own_word`, which is
+/// `U+2068 … U+2069` — because it is theirs and may be in any script, and an
+/// Arabic label inside an English sentence drags the quotation marks around
+/// it. The glass has `theirOwnWord()` for the same job and cannot use it here:
+/// what it is handed is a finished sentence, so the one place that writes this
+/// one isolates it. It was the pair written out by hand until 17 October; one
+/// function now, on both sides of the bridge, so that the next sentence to
+/// need it has somewhere to call.
 fn layer_sentence(detail: &str, labels: &std::collections::BTreeMap<u32, String>) -> String {
     match detail
         .strip_prefix("you:u")
         .and_then(|n| n.parse::<u32>().ok())
         .and_then(|id| labels.get(&id))
     {
-        Some(label) => format!("You taught Z Privacy to protect what follows «\u{2068}{label}\u{2069}»"),
+        Some(label) => format!(
+            "You taught Z Privacy to protect what follows «{}»",
+            crate::text::their_own_word(label)
+        ),
         None if detail.starts_with("you:") => "You taught Z Privacy this rule".to_string(),
         None => format!("{detail} agreed as well"),
     }

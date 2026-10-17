@@ -1386,14 +1386,14 @@ class Workbench extends ChangeNotifier {
   Future<String?> addUserName(String text, {required UserNameKind kind, required bool always}) async {
     return _aboutNames(() async {
       await z.addUserName(text: text, kind: kind, always: always, list: intoList);
-      return 'Added «$text».';
+      return 'Added «${theirOwnWord(text)}».';
     });
   }
 
   Future<String?> forgetUserName(UserNameRow row) async {
     return _aboutNames(() async {
       await z.forgetUserName(id: row.id, entityId: row.entityId);
-      return 'Forgot «${row.text}».';
+      return 'Forgot «${theirOwnWord(row.text)}».';
     });
   }
 

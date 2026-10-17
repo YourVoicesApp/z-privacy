@@ -483,7 +483,7 @@ class _PlainForgetSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Forget «$what»?', style: Zc.h2),
+              Text('Forget «${theirOwnWord(what)}»?', style: Zc.h2),
               const SizedBox(height: 14),
               const Eyebrow('This will remove'),
               const SizedBox(height: 7),
@@ -541,7 +541,7 @@ class _ForgetSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Forget «${plan.what}»?', style: Zc.h2),
+              Text('Forget «${theirOwnWord(plan.what)}»?', style: Zc.h2),
               const SizedBox(height: 14),
               const Eyebrow('This will remove'),
               const SizedBox(height: 7),

@@ -17,6 +17,31 @@ pub(crate) fn nfc(s: &str) -> String {
 
 /// Length of `s` in UTF-16 code units — what Dart's `String.length` returns.
 #[allow(dead_code)] // reached once protect() lands in 005
+/// **A word of the person's own, isolated so the sentence keeps its order** —
+/// the owner's test of 16 October 2026, and the same pair of characters the
+/// glass uses (`theirOwnWord` in `messages.dart`).
+///
+/// `U+2068 FIRST STRONG ISOLATE` before it and `U+2069 POP DIRECTIONAL
+/// ISOLATE` after. The bidirectional algorithm then takes the word's direction
+/// from its own first strong character and lays the whole of it out as one
+/// unit, so the English around it stays where the sentence put it. His session
+/// «ألماني 1» inside an English line drew as «This document came back from «11
+/// .«ألماني names stay…» — every word right and the order nonsense.
+///
+/// **Why the core and not only the screen.** A sentence the core writes
+/// arrives at the glass finished: the app is handed a string and has nothing
+/// left to isolate. So wherever the core quotes something that came from the
+/// person — a label they taught, a line of their CSV, a word in their
+/// document, a name inside their file — it wraps it here.
+///
+/// **Our own words never go through this**: a language id, a pack, a rule
+/// set's name, a kind. They are ours, they are already in the sentence's
+/// direction, and isolating them would be a pair of characters with nothing to
+/// do. G44 reads both halves of that rule out of the source.
+pub(crate) fn their_own_word(word: &str) -> String {
+    format!("\u{2068}{word}\u{2069}")
+}
+
 pub(crate) fn utf16_len(s: &str) -> usize {
     s.chars().map(char::len_utf16).sum()
 }

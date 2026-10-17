@@ -121,9 +121,12 @@ impl LabelRule {
     /// The sentence the review row and the `Why?` sheet show.
     fn reason(&self, written: &str) -> String {
         if self.set == "you" {
-            format!("you taught Z Privacy that the value after «{written}:» is a {}", kind_word(self.kind))
+            format!("you taught Z Privacy that the value after «{}:» is a {}", crate::text::their_own_word(written), kind_word(self.kind))
         } else {
-            format!("the value written after «{written}:», which says what it is")
+            format!(
+                "the value written after «{}:», which says what it is",
+                crate::text::their_own_word(written)
+            )
         }
     }
 
@@ -578,7 +581,8 @@ fn table_columns(text: &str, rules: &[LabelRule]) -> Vec<Candidate> {
                         source: rule.source,
                         source_detail: rule.detail(),
                         reason: format!(
-                            "under «{column_text}» in a table, and that column's own header says what stands in it"
+                            "under «{}» in a table, and that column's own header says what stands in it",
+                            crate::text::their_own_word(column_text)
                         ),
                         entities: Vec::new(),
                         also: Vec::new(),

@@ -5,11 +5,18 @@
 //! what is here is what is xAI's — its id, its address, its catalogue, and how
 //! it wants a key presented.
 //!
-//! **Never called live.** This build has no xAI credential and none is being
-//! obtained: the provider is in the catalogue **awaiting a key**, which is what
-//! the screen says about it, and what the catalogue's own `available` reports.
-//! The two providers the owner has keys for are OpenAI and Anthropic, and they
-//! are the only two this program has ever spoken to.
+//! **Called live, and it answered.** The owner put an xAI key into Z Privacy
+//! and asked Grok through it, and the exchange worked. So this file's own note
+//! is corrected rather than left standing: it said «never called live — this
+//! build has no xAI credential and none is being obtained», which was true
+//! when it was written and became a sentence about a thing that had happened.
+//!
+//! No code changed with this note, and nothing here is a claim about a date:
+//! the run is his and the day of it is not written down anywhere this file can
+//! read. What the catalogue reports is unchanged and always was a question
+//! about the credential it finds, never about this comment: `available` is
+//! true where a key is, and the screen says «awaiting a key» where there is
+//! none.
 
 use crate::api::ModelCapability as Capability;
 

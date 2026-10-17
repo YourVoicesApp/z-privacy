@@ -151,7 +151,7 @@ String humanMessage(Object error) {
       'Z Privacy will not change a permission you set, so nothing was saved — '
           '${_lower(reason)}. Change the permission yourself, or choose another '
           'folder.',
-    ApiError_DocumentRefused(:final reason) => _document(reason),
+    ApiError_DocumentRefused(:final reason, :final detail) => _document(reason, detail),
     ApiError_BadSpan() =>
       'That selection could not be read. Try selecting the words again.',
     // 046/Q. **Why, and not merely that it will not** (the lead's condition):
@@ -466,8 +466,18 @@ String _sentence(String fact) {
   return capitalised.endsWith('.') ? capitalised : '$capitalised.';
 }
 
-String _document(Refusal reason) => switch (reason) {
-  Refusal_MalformedDocument() => 'This document is damaged or incomplete.',
+/// **And the detail, where the core wrote one** — the attacker's ن15 again.
+///
+/// `MalformedDocument` had one sentence for every shape of broken file, and
+/// the core's own detail — «this file does not begin like a PDF», «this PDF
+/// lists no pages», «no objects could be read out of this PDF» — never reached
+/// the glass. Those are the words a person can act on, and the shape is the
+/// one `InsecureUrl` already uses: the core writes the fact, this says it, and
+/// the general sentence is kept for a refusal that carries no detail at all.
+String _document(Refusal reason, String detail) => switch (reason) {
+  Refusal_MalformedDocument() => detail.isEmpty
+      ? 'This document is damaged or incomplete.'
+      : _sentence(detail),
   Refusal_EncryptedPdf() =>
     'This PDF is password-protected. Remove the password and try again.',
   Refusal_ScannedPdfNoTextLayer(:final pages) => pages == 1
@@ -551,5 +561,12 @@ String _network(NetworkRefusal reason, String detail) => switch (reason) {
         '${limitKib} KiB in one request.',
   NetworkRefusal_Unreadable() =>
     'The provider answered with something that is not an answer.',
-  _ => 'The connection to that provider did not work.',
+  // **The ninth, and it was the one that fell through** — the independent
+  // attacker's ن15. «The connection to that provider did not work» fits every
+  // other branch here too, which is why it said nothing: not whether the
+  // address is wrong, this machine is offline, or the provider is down. The
+  // core separates the nine; this is the one it had no sentence for.
+  NetworkRefusal_Unreachable() =>
+    'That address could not be reached at all — nothing answered. Check that '
+        'you are online and that the address is right. Nothing was sent.',
 };

@@ -20,6 +20,7 @@ import 'dart:typed_data';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/messages.dart' show theirOwnWord;
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -518,7 +519,7 @@ class _NameRow extends StatelessWidget {
               ),
             ),
             IconButton(
-              tooltip: 'Forget «${row.text}»',
+              tooltip: 'Forget «${theirOwnWord(row.text)}»',
               icon: const Icon(Icons.close, size: 15),
               color: Zc.ink4,
               visualDensity: VisualDensity.compact,

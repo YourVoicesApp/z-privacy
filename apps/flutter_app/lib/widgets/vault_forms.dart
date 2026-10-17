@@ -1043,7 +1043,7 @@ class _TeachRuleSheetState extends State<TeachRuleSheet> {
                   ),
                   for (final p in g.profiles)
                     _Pick(
-                      label: 'Profile — ${p.name}',
+                      label: 'Profile — ${theirOwnWord(p.name)}',
                       on: _profile == p.id,
                       onTap: () => setState(() => _profile = p.id),
                     ),
