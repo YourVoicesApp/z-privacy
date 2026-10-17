@@ -976,6 +976,12 @@ class Workbench extends ChangeNotifier {
 
   /// Ask a model with the protected payload. **No argument carries the
   /// document**, here as in the core: a handle goes, and nothing else could.
+  ///
+  /// **And no argument carries the chat either** — rule 67. There was a
+  /// `history:` here and it was `const []`, every time: the core now builds it
+  /// from the turns of the open chat, in the form they left in. A screen that
+  /// assembled a history would be assembling text that leaves, which is the one
+  /// thing no screen in this program does.
   Future<String?> askModelProtected(String providerId) async {
     final h = handle;
     if (h == null) return 'There is nothing to send yet.';
@@ -985,7 +991,6 @@ class Workbench extends ChangeNotifier {
         provider: ProviderId(id: providerId),
         model: chosenModel,
         workspace: const [],
-        history: const [],
       );
       lastUsage = said.usage;
       showing = said.answer;

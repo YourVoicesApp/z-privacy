@@ -74,7 +74,6 @@ fn asked(h: PayloadHandle, question: &str) -> String {
         ProviderId { id: "fake".to_string() },
         None,
         vec![question.to_string()],
-        Vec::new(),
     )
     .expect("ask")
     .text
@@ -213,7 +212,6 @@ fn a_question_is_not_a_way_around_the_gate() {
         ProviderId { id: "fake".to_string() },
         None,
         vec!["Organise these records.".to_string()],
-        Vec::new(),
     ) {
         Err(ApiError::OpenSuggestions { count }) => assert_eq!(count, open),
         other => panic!("a question got past the gate: {other:?}"),

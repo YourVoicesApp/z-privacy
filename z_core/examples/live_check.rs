@@ -94,7 +94,6 @@ fn check(provider: &str, credential: Option<String>) {
         ProviderId { id: provider.to_string() },
         None,
         vec![INSTRUCTION.to_string()],
-        vec![],
     ) {
         Ok(answer) => {
             say("the protected request answered", true, &format!("{} ms", answer.usage.millis));
@@ -158,7 +157,7 @@ fn wrong_credential(provider: &str) {
     let _ = scan(session);
     settle(session);
     let Ok(handle) = build_payload(session) else { return };
-    match ask_model(handle, ProviderId { id: provider.to_string() }, None, vec![], vec![]) {
+    match ask_model(handle, ProviderId { id: provider.to_string() }, None, vec![]) {
         Ok(_) => say("a wrong credential is refused", false, "it was accepted"),
         Err(e) => {
             let said = format!("{e}");

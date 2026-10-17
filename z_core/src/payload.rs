@@ -12,6 +12,27 @@ use std::fmt;
 
 use crate::text::nfc;
 
+/// **What a payload holds**, which decides two things no caller should have to
+/// remember: what the turn an answer writes calls its question, and which saved
+/// document that turn is anchored to (rule 69).
+///
+/// Three kinds and not a flag, because they are three different acts: the first
+/// question of a chat goes with its document; a later one goes alone (rule 67);
+/// and the chat's own copy goes out holding **nothing new** — every line of it
+/// left by another door already.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum WhatThePayloadIs {
+    /// The document and the request under it — `--- Request ---` between them.
+    ADocumentAndItsRequest,
+    /// A question that follows another, travelling by itself (rule 67).
+    AQuestionAlone,
+    /// **The chat itself**, for the person to take away (rule 65). An answer
+    /// brought back against this writes a turn with **no question of its own**:
+    /// nothing new was asked, and writing the transcript back into the file
+    /// would put the chat inside itself and carry it twice to the next model.
+    TheChatItself,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum PayloadSendState {
     Ready,
@@ -47,6 +68,23 @@ pub(crate) struct SafePayload {
     /// **The answer page's token, when this bench has printed one** — 079.
     /// Allowed beside the text's own tokens and never part of the text.
     answer_page: Option<String>,
+    /// **Which saved document this payload carried** — rule 69's anchor,
+    /// stamped when the payload was built and for the same reason the session
+    /// is (064d): it is a fact about the snapshot.
+    ///
+    /// Read when the answer arrives, out of this record rather than off the
+    /// bench, because the two differ exactly where it matters: a person who
+    /// copies the text out and comes back with an answer from a browser has
+    /// had the preview's copy taken out in between (rule 9), so the bench then
+    /// holds nothing to name while this still does.
+    ///
+    /// `None` for a payload that carried no document: the question alone
+    /// (rule 67). The chat's own copy **does** carry one — the document its
+    /// first turn went out with, which is in the transcript word for word.
+    kept: Option<crate::session::KeptHandle>,
+    /// Which of the three things this is, so that the door which writes the
+    /// turn asks the payload instead of remembering.
+    what_it_is: WhatThePayloadIs,
     send_state: PayloadSendState,
 }
 
@@ -208,22 +246,7 @@ impl SafePayload {
         // which is the whole point. A kind with no token here does not appear,
         // rather than appearing as zero: the footer lists what is hidden, not
         // what is not.
-        let mut tallies: std::collections::BTreeMap<u8, (crate::api::Kind, u32)> =
-            std::collections::BTreeMap::new();
-        for token in &allowed_token_ids {
-            if let Some(entry) = session.tokens.get(token) {
-                let slot = tallies
-                    .entry(crate::vault::format::kind_code(entry.kind))
-                    .or_insert((entry.kind, 0));
-                slot.1 = slot.1.saturating_add(1);
-            }
-        }
-        // Ordered by the kind's own persistence code, so two builds of one
-        // payload list them in one order and a screen never reshuffles.
-        let by_kind: Vec<crate::api::KindTally> = tallies
-            .into_values()
-            .map(|(kind, count)| crate::api::KindTally { kind, count })
-            .collect();
+        let by_kind = tally(session, &allowed_token_ids);
 
         // **The answer page's token is allowed, and counted nowhere** — 079.
         //
@@ -258,8 +281,129 @@ impl SafePayload {
             conversation,
             by_kind,
             answer_page,
+            kept: session.kept,
+            what_it_is: WhatThePayloadIs::ADocumentAndItsRequest,
             send_state: PayloadSendState::Ready,
         }
+    }
+
+    /// **A payload whose text the core assembled out of text that has already
+    /// been protected** — the question alone (rule 67) and the chat as it left
+    /// (rule 65's copy).
+    ///
+    /// [`Self::build`] walks a document and its protections together, so it
+    /// knows what it put into the text and needs no search of it. This one is
+    /// handed strings that have been through that already, and the honest way
+    /// to say which tokens stand in them is to **look**: `allowed` is what may
+    /// come back, which is wider than what stands here on purpose — a
+    /// follow-up question is three words long and the answer to it names what
+    /// the first request showed the model. So `by_kind` and `protected` count
+    /// the tokens that are actually in `text`, and the rest are allowed and
+    /// counted nowhere, exactly as the answer page's token has been since 079.
+    ///
+    /// **No page edges.** A page is a fact about a file the reader opened, and
+    /// neither of these two texts is one; «page 1» here would be a measurement
+    /// nobody took, which is what a saved document's own comment refuses for
+    /// the same reason.
+    /// **The question alone** (rule 67): what `set_question` protected, with
+    /// every token this chat has carried allowed back. It carries no document,
+    /// so it anchors none.
+    pub(crate) fn of_the_question_alone(
+        session: &Session,
+        id: u32,
+        conversation: Option<crate::api::PayloadSession>,
+        text: String,
+        allowed: Vec<String>,
+    ) -> Self {
+        Self::of_assembled_text(
+            session,
+            id,
+            conversation,
+            text,
+            allowed,
+            None,
+            WhatThePayloadIs::AQuestionAlone,
+        )
+    }
+
+    /// **The chat, for the person to take away** (rule 65). `kept` is the
+    /// document its first turn went out with: the transcript holds that
+    /// document word for word, so an answer brought back against this copy
+    /// belongs under the same document in the session's room (rule 69).
+    pub(crate) fn of_the_chat(
+        session: &Session,
+        id: u32,
+        conversation: Option<crate::api::PayloadSession>,
+        text: String,
+        allowed: Vec<String>,
+        kept: Option<crate::session::KeptHandle>,
+    ) -> Self {
+        Self::of_assembled_text(
+            session,
+            id,
+            conversation,
+            text,
+            allowed,
+            kept,
+            WhatThePayloadIs::TheChatItself,
+        )
+    }
+
+    /// Which of the three things this payload is — asked by the door that
+    /// writes the turn, so that nothing there has to remember.
+    pub(crate) fn what_it_is(&self) -> WhatThePayloadIs {
+        self.what_it_is
+    }
+
+    fn of_assembled_text(
+        session: &Session,
+        id: u32,
+        conversation: Option<crate::api::PayloadSession>,
+        text: String,
+        allowed: Vec<String>,
+        kept: Option<crate::session::KeptHandle>,
+        what_it_is: WhatThePayloadIs,
+    ) -> Self {
+        let mut allowed_token_ids: Vec<String> = Vec::new();
+        for token in allowed {
+            if !allowed_token_ids.contains(&token) {
+                allowed_token_ids.push(token);
+            }
+        }
+        let standing: Vec<String> = allowed_token_ids
+            .iter()
+            .filter(|t| text.contains(t.as_str()))
+            .cloned()
+            .collect();
+        let by_kind = tally(session, &standing);
+        let answer_page = session.answer_page.clone();
+        if let Some(token) = &answer_page {
+            if !allowed_token_ids.iter().any(|t| t == token) {
+                allowed_token_ids.push(token.clone());
+            }
+        }
+        Self {
+            id,
+            session: session.id,
+            revision: session.revision,
+            text,
+            allowed_token_ids,
+            protected: standing.len().min(u32::MAX as usize) as u32,
+            open_suggestions: session.open_suggestions(),
+            page_edges: Vec::new(),
+            conversation,
+            by_kind,
+            answer_page,
+            kept,
+            what_it_is,
+            send_state: PayloadSendState::Ready,
+        }
+    }
+
+    /// Which saved document this payload carried, for the turn the answer
+    /// writes — rule 69.
+    pub(crate) fn kept(&self) -> Option<crate::session::KeptHandle> {
+        self.kept
     }
 
     pub(crate) fn handle(&self) -> PayloadHandle {
@@ -369,6 +513,32 @@ impl SafePayload {
             PayloadSendState::Ready
         };
     }
+}
+
+/// **How many distinct tokens of each kind stand in a text** — 068.
+///
+/// One function because two builders need it and the figure may not be worked
+/// out in two places: the footer lists what is hidden, and two tallies that
+/// disagreed would be two answers to «what is in this text». Ordered by the
+/// kind's own persistence code, so two builds of one payload list them in one
+/// order and a screen never reshuffles.
+///
+/// A kind with no token here does not appear, rather than appearing as zero.
+fn tally(session: &Session, tokens: &[String]) -> Vec<crate::api::KindTally> {
+    let mut tallies: std::collections::BTreeMap<u8, (crate::api::Kind, u32)> =
+        std::collections::BTreeMap::new();
+    for token in tokens {
+        if let Some(entry) = session.tokens.get(token) {
+            let slot = tallies
+                .entry(crate::vault::format::kind_code(entry.kind))
+                .or_insert((entry.kind, 0));
+            slot.1 = slot.1.saturating_add(1);
+        }
+    }
+    tallies
+        .into_values()
+        .map(|(kind, count)| crate::api::KindTally { kind, count })
+        .collect()
 }
 
 /// Non-overlapping occurrences of `needle` in `haystack`.

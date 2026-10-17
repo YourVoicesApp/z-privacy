@@ -281,6 +281,29 @@ sealed class ApiError with _$ApiError implements FrbException {
   const factory ApiError.betweenColumns() = ApiError_BetweenColumns;
 }
 
+class ChatToTakeOut {
+  /// The text, and everything the band says about it — the same view every
+  /// other exit hands over.
+  final PayloadView whatLeaves;
+
+  /// The payload that text is, so an answer carried back is restored against
+  /// what was carried out.
+  final PayloadHandle handle;
+
+  const ChatToTakeOut({required this.whatLeaves, required this.handle});
+
+  @override
+  int get hashCode => whatLeaves.hashCode ^ handle.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ChatToTakeOut &&
+          runtimeType == other.runtimeType &&
+          whatLeaves == other.whatLeaves &&
+          handle == other.handle;
+}
+
 class ConversationRow {
   /// The identity. Never changes, never reused — not even after a deletion.
   final int number;
@@ -2985,6 +3008,41 @@ class TurnRow {
   /// person typed it, or that the turn is older than the question.
   final TurnDocument document;
 
+  /// **Which chat of this session this exchange belongs to** — rules 67–68.
+  ///
+  /// Compare it with `the_open_chat` to know whether this turn is in the
+  /// chat the person is in the middle of: the ones that are draw the chat,
+  /// the ones that are not are the session's record of what was asked before
+  /// (rule 69). `0` is a turn written before chats were counted, which
+  /// belongs to none of them.
+  final int chatNumber;
+
+  /// **Which saved document this exchange carried** — `doc1`, `chat2`, the
+  /// same spelling `KeptRow::handle` carries, built by the same function.
+  ///
+  /// Rule 69 draws «sent · answered» under the document that came in, and
+  /// after rule 9 this number is all that is left of it: the preview's copy
+  /// goes the moment the text leaves. Matching on the name instead would be
+  /// matching on something a person may rename and two documents may share.
+  ///
+  /// `None` is «this exchange carried no document»: a follow-up question
+  /// (rule 67 sends the document once), a turn written by hand, or a turn
+  /// older than this round. What ties a follow-up to the document its chat
+  /// began with is `chat_number`.
+  final String? keptHandle;
+
+  /// **What was asked, as it left** — the stored form, coded, which for the
+  /// first turn of a chat is the whole payload the model saw (document,
+  /// `--- Request ---`, request) and for a later one the question alone.
+  ///
+  /// Empty only if nothing left, which is not a state any door writes.
+  final String questionAsItLeft;
+
+  /// **What came back, as the model wrote it** — the stored form, coded.
+  /// Empty for a question that was copied out and never answered, which is a
+  /// real state: the person may close the app between the two halves.
+  final String answerAsWritten;
+
   /// What was asked, restored. Empty segments mean no question was typed —
   /// a real state: a document may be sent with nothing asked of it, which
   /// was 046/N's whole finding.
@@ -3008,6 +3066,10 @@ class TurnRow {
   const TurnRow({
     required this.via,
     required this.document,
+    required this.chatNumber,
+    this.keptHandle,
+    required this.questionAsItLeft,
+    required this.answerAsWritten,
     required this.question,
     required this.answer,
     required this.at,
@@ -3018,6 +3080,10 @@ class TurnRow {
   int get hashCode =>
       via.hashCode ^
       document.hashCode ^
+      chatNumber.hashCode ^
+      keptHandle.hashCode ^
+      questionAsItLeft.hashCode ^
+      answerAsWritten.hashCode ^
       question.hashCode ^
       answer.hashCode ^
       at.hashCode ^
@@ -3030,6 +3096,10 @@ class TurnRow {
           runtimeType == other.runtimeType &&
           via == other.via &&
           document == other.document &&
+          chatNumber == other.chatNumber &&
+          keptHandle == other.keptHandle &&
+          questionAsItLeft == other.questionAsItLeft &&
+          answerAsWritten == other.answerAsWritten &&
           question == other.question &&
           answer == other.answer &&
           at == other.at &&

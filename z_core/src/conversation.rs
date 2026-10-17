@@ -66,7 +66,20 @@ use crate::vault::crypto::{self, Purpose, SecretKey};
 ///   `chat1`, `chat2`…. Leaving by a door takes it out and retires its number.
 ///   A version 4 file reads with none, which is every session written before
 ///   this round.
-pub(crate) const SESSION_FORMAT_VERSION: u16 = 5;
+/// * 6 — **which chat each turn belongs to, and which saved document it
+///   carried** (rules 67–69, the owner's «نعم» of
+///   17 October: «لا أستطيع أن أتابع الشات معه على نفس الموضوع»). A chat is the
+///   run of turns a question and its follow-ups make; it ends when the person
+///   ends it or the application closes. Every turn names its chat, and the
+///   session names the chat that is open. A version 5 file reads with every
+///   turn in **chat 0** — no numbered chat at all — and the open chat 1, which
+///   is the truth about it: those turns were asked before chats were counted
+///   and the application has been closed since, so none of them belongs to the
+///   one that is open now. Its turns name no saved document either, which is
+///   the same honest zero: the number was not written down when they were
+///   asked, and rule 69's «sent · answered» is drawn from that number because
+///   after rule 9 it is all that is left of a document that went out.
+pub(crate) const SESSION_FORMAT_VERSION: u16 = 6;
 
 /// The folder each session's file sits in, under the data directory.
 const FOLDER: &str = "sessions";
@@ -128,6 +141,46 @@ pub(crate) struct Turn {
     /// because the vault body is resealed whole on every change while a session
     /// file is not (062 §A).
     pub document: crate::api::TurnDocument,
+    /// **Which chat of this session this exchange belongs to** — rules 67–68,
+    /// format 6.
+    ///
+    /// Rule 67 sends the earlier turns with every later question, and rule 68
+    /// says where that stops: a chat ends when the person ends it or the
+    /// application closes. So the boundary is **written down beside the turn**,
+    /// not worked out from the clock or from how far apart two turns are — the
+    /// history a question carries is the turns of the open chat and no others.
+    ///
+    /// `0` is a turn older than this round. It belongs to no numbered chat, and
+    /// chats are numbered from 1, so an old turn can never be read as part of
+    /// the chat that is open — which «chat 1» as a default would have done, and
+    /// it would have handed a new question yesterday's conversation.
+    ///
+    /// **Not [`Kept::chat`]**, which is a `bool` two fields below and means
+    /// something else entirely: whether a saved document was written here with
+    /// the AI (`chat1`) or pulled off the computer (`doc1`). One word, two
+    /// meanings, so they are spelled apart.
+    pub chat_number: u32,
+    /// **Which saved document this exchange carried** — its number, `0` for
+    /// none, and whether that number is a `chatN` or a `docN` (rule 54-ج's two
+    /// sequences).
+    ///
+    /// Rule 69 draws «sent · answered» under the document that came in, and
+    /// after rule 9 the **number is all that is left of it**: the preview's
+    /// copy goes the moment the text leaves, so a room that matched on the
+    /// name would be matching on something a person may rename, and on
+    /// something two documents may share.
+    ///
+    /// It is stamped on the **payload** when that was built, not read off the
+    /// bench when the answer arrives — the two differ exactly where it
+    /// matters: a person who copies the text out and comes back with an answer
+    /// from a browser has already had the copy taken out of the list, and the
+    /// bench holds nothing to name.
+    ///
+    /// `0` is «no saved document», which is the honest state of a follow-up
+    /// question: it carried no document (rule 67), so it names none. What ties
+    /// it to the one the chat began with is `chat_number` above.
+    pub kept_number: u32,
+    pub kept_chat: bool,
 }
 
 /// **One mark on a saved document** — the decision, not the value.
@@ -282,6 +335,15 @@ pub(crate) struct Body {
     /// numbers follow.
     pub next_doc: u32,
     pub next_chat: u32,
+    /// **The chat that is open in this session** — rule 68, format 6.
+    ///
+    /// Numbered from 1, and it only ever goes up, for the same reason the two
+    /// numbers above do: a chat that has ended must never be written into
+    /// again, and a number spent for ever is how that is made true rather than
+    /// remembered. `end_the_chat` spends one; so does the first time this
+    /// session is opened in a run, because closing the application ends the
+    /// chat and a new run cannot find one open.
+    pub chat_now: u32,
 }
 
 /// **The numbers start at one, not at zero** — and that is why this is written
@@ -292,7 +354,7 @@ pub(crate) struct Body {
 /// the same reason.
 impl Default for Body {
     fn default() -> Self {
-        Self { turns: Vec::new(), kept: Vec::new(), next_doc: 1, next_chat: 1 }
+        Self { turns: Vec::new(), kept: Vec::new(), next_doc: 1, next_chat: 1, chat_now: 1 }
     }
 }
 
@@ -307,7 +369,16 @@ impl Body {
 
     /// What a saved document is called in the list: `doc3`, `chat1`.
     pub(crate) fn handle_of(kept: &Kept) -> String {
-        format!("{}{}", if kept.chat { "chat" } else { "doc" }, kept.number)
+        Self::handle_spelling(kept.number, kept.chat)
+    }
+
+    /// **The same spelling, from the two facts that make it** — because a turn
+    /// names the document it carried by number and flag (rule 69) and has no
+    /// `Kept` to hand: the copy it points at has usually left the list by then.
+    /// One function, so the list and the chat cannot spell one document two
+    /// ways.
+    pub(crate) fn handle_spelling(number: u32, chat: bool) -> String {
+        format!("{}{}", if chat { "chat" } else { "doc" }, number)
     }
 
     pub(crate) fn to_bytes(&self) -> Vec<u8> {
@@ -346,6 +417,12 @@ impl Body {
                     put_str(&mut out, name);
                 }
             }
+            // Format 6 — which chat this turn belongs to, at the end of the
+            // turn's own record, so a format 5 file's turns are read whole by
+            // the reader below and simply belong to no numbered chat.
+            out.extend_from_slice(&turn.chat_number.to_be_bytes());
+            out.extend_from_slice(&turn.kept_number.to_be_bytes());
+            out.push(u8::from(turn.kept_chat));
         }
         // Format 5 — the documents the preview holds, after the turns, so that
         // a build which stops above reads every turn it knows and simply holds
@@ -380,6 +457,10 @@ impl Body {
                 put_str(&mut out, value);
             }
         }
+        // Format 6 — the chat that is open, last of all, after everything
+        // format 5 wrote. Nothing already written moves, which is the rule
+        // every version here has followed.
+        out.extend_from_slice(&self.chat_now.to_be_bytes());
         out
     }
 
@@ -451,7 +532,31 @@ impl Body {
             } else {
                 crate::api::TurnDocument::NotRecorded
             };
-            turns.push(Turn { question, answer, at: when, allowed, via, document });
+            // A format-5 turn stops above, as a format-3 one stops before its
+            // document: it belongs to **no numbered chat** (0), which is not
+            // «the chat that is open» — the distinction format 6 exists to
+            // keep, because reading an old turn as part of today's chat would
+            // send a stranger's conversation with the next question.
+            let (chat_number, kept_number, kept_chat) = if version >= 6 {
+                (
+                    u32::from_be_bytes(array::<4>(bytes, &mut at)?),
+                    u32::from_be_bytes(array::<4>(bytes, &mut at)?),
+                    array::<1>(bytes, &mut at)?[0] != 0,
+                )
+            } else {
+                (0, 0, false)
+            };
+            turns.push(Turn {
+                question,
+                answer,
+                at: when,
+                allowed,
+                via,
+                document,
+                chat_number,
+                kept_number,
+                kept_chat,
+            });
         }
         // Format 5. A session written before this round stops above and holds
         // no document — which is the truth about it, not a document lost.
@@ -515,7 +620,17 @@ impl Body {
                 });
             }
         }
-        Ok(Self { turns, kept, next_doc, next_chat })
+        // Format 6. A session written before this round holds no chat number,
+        // and the chat that is open in it is **1** — the first one anybody
+        // will write into. Its own turns are in chat 0, so the first question
+        // asked of an old session carries nothing of what was asked before the
+        // application last closed, which is rule 68 read backwards.
+        let chat_now = if version >= 6 {
+            u32::from_be_bytes(array::<4>(bytes, &mut at)?)
+        } else {
+            1
+        };
+        Ok(Self { turns, kept, next_doc, next_chat, chat_now })
     }
 }
 
@@ -664,11 +779,72 @@ mod tests {
                     model: "the-model-the-person-saw".to_string(),
                 },
                 document: crate::api::TurnDocument::Named { name: "Brev.txt".to_string() },
+                chat_number: 3,
+                kept_number: 2,
+                kept_chat: true,
             }],
+            chat_now: 3,
             ..Body::default()
         };
         let back = Body::from_bytes(&body.to_bytes()).expect("round trip");
         assert_eq!(back, body);
+    }
+
+    /// **A format 5 file still reads, and none of its turns is in today's
+    /// chat** — the claim in the doc comment above `SESSION_FORMAT_VERSION`,
+    /// measured rather than believed.
+    ///
+    /// Hand-built bytes, like the version 1 instrument above and for the same
+    /// reason: the writer cannot produce a format 5 file any more, so this is
+    /// the only thing that can say an older one is read whole. What it has to
+    /// prove is not only that the bytes parse — it is that an old turn comes
+    /// back in **chat 0** while the open chat is **1**, because a turn read as
+    /// part of the open chat would be sent with the next question (rule 67) to
+    /// a model that was never shown it.
+    #[test]
+    fn a_format_five_file_reads_and_its_turns_belong_to_no_chat() {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&5u16.to_be_bytes());
+        bytes.extend_from_slice(&1u32.to_be_bytes());
+        // One turn, as format 5 wrote it: question, answer, when, no allowed
+        // tokens, «through this key», «the person typed it».
+        for s in ["asked", "answered"] {
+            bytes.extend_from_slice(&(s.len() as u32).to_be_bytes());
+            bytes.extend_from_slice(s.as_bytes());
+        }
+        bytes.extend_from_slice(&11u64.to_be_bytes());
+        bytes.extend_from_slice(&0u32.to_be_bytes());
+        bytes.push(2);
+        for s in ["fake", "echo"] {
+            bytes.extend_from_slice(&(s.len() as u32).to_be_bytes());
+            bytes.extend_from_slice(s.as_bytes());
+        }
+        bytes.push(1);
+        // Format 5's tail: the two next-numbers and no saved document.
+        bytes.extend_from_slice(&1u32.to_be_bytes());
+        bytes.extend_from_slice(&1u32.to_be_bytes());
+        bytes.extend_from_slice(&0u32.to_be_bytes());
+
+        let body = Body::from_bytes(&bytes).expect("a format 5 file is readable");
+        assert_eq!(body.turns.len(), 1, "the turn a format 5 file holds was lost");
+        assert_eq!(body.turns[0].question, "asked");
+        assert_eq!(
+            body.turns[0].chat_number, 0,
+            "a turn written before chats were counted was read as part of a numbered chat"
+        );
+        assert_eq!(
+            body.chat_now, 1,
+            "an old session's open chat must be the first one anybody writes into"
+        );
+        assert_ne!(
+            body.turns[0].chat_number, body.chat_now,
+            "an old turn landed in the open chat, so the next question would carry it"
+        );
+        assert_eq!(
+            body.turns[0].kept_number, 0,
+            "an old turn named a saved document nobody wrote down, which rule 69 \
+             would then draw «sent · answered» under"
+        );
     }
 
     /// **A saved document survives the file with every decision on it** —
@@ -711,6 +887,7 @@ mod tests {
             }],
             next_doc: 4,
             next_chat: 1,
+            chat_now: 1,
         };
         let back = Body::from_bytes(&body.to_bytes()).expect("round trip");
         assert_eq!(back, body);

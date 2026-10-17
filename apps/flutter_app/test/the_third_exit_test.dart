@@ -419,13 +419,22 @@ void main() {
     expect(turns, hasLength(1), reason: 'the file holds ${turns.length} turns for one send');
     final turn = turns.single;
 
-    // **An empty question is a real state, not a missing one.** Nothing was
-    // typed into the workspace's question field here, and the owner sent a
-    // document with nothing asked of it hours before this round — which was
-    // 046/N's whole finding. «Not written» and «lost» must not be spelt the
-    // same, so this is asserted as empty rather than skipped.
-    expect(turn.question.map((s) => s.text).join(), isEmpty,
-        reason: 'a question was written into a turn where none was typed');
+    // **What the turn holds is what left by this door** — rule 63, and since
+    // rule 65 that is the whole of it: the document itself, with its tokens put
+    // back for the glass. Nothing was typed into the question field here, and
+    // the owner sent a document with nothing asked of it hours before 046/N —
+    // so «nothing typed» is still a state of its own, spelt now by the absence
+    // of the request section rather than by an empty half. «Not written» and
+    // «lost» remain two different things: a lost half would be empty.
+    final asked = turn.question.map((s) => s.text).join();
+    expect(asked, contains('Bitte überweisen Sie'),
+        reason: 'the document that left is not in the turn, so the chat would '
+            'draw a first turn the person never sent');
+    expect(asked, isNot(contains('--- Request ---')),
+        reason: 'nothing was typed and the turn carries a request section anyway');
+    // And the chat it belongs to is the one this session is in.
+    expect(turn.chatNumber, await z.theOpenChat(number: row.number),
+        reason: 'the turn landed outside the chat the person is in');
     // The answer, restored by the core. The fixture's fake provider says
     // «Verstanden.», and this payload's tokens do not appear in it — so there
     // is nothing to restore and nothing unresolved, which is itself the honest

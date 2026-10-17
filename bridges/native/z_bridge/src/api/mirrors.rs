@@ -1511,6 +1511,37 @@ pub struct _TurnRow {
     /// **What went to the chat**: the file this exchange was about, or that the
     /// person typed it, or that the turn is older than the question.
     pub document: TurnDocument,
+    /// **Which chat of this session this exchange belongs to** — rules 67–68.
+    ///
+    /// Compare it with `the_open_chat` to know whether this turn is in the
+    /// chat the person is in the middle of: the ones that are draw the chat,
+    /// the ones that are not are the session's record of what was asked before
+    /// (rule 69). `0` is a turn written before chats were counted, which
+    /// belongs to none of them.
+    pub chat_number: u32,
+    /// **Which saved document this exchange carried** — `doc1`, `chat2`, the
+    /// same spelling `KeptRow::handle` carries, built by the same function.
+    ///
+    /// Rule 69 draws «sent · answered» under the document that came in, and
+    /// after rule 9 this number is all that is left of it: the preview's copy
+    /// goes the moment the text leaves. Matching on the name instead would be
+    /// matching on something a person may rename and two documents may share.
+    ///
+    /// `None` is «this exchange carried no document»: a follow-up question
+    /// (rule 67 sends the document once), a turn written by hand, or a turn
+    /// older than this round. What ties a follow-up to the document its chat
+    /// began with is `chat_number`.
+    pub kept_handle: Option<String>,
+    /// **What was asked, as it left** — the stored form, coded, which for the
+    /// first turn of a chat is the whole payload the model saw (document,
+    /// `--- Request ---`, request) and for a later one the question alone.
+    ///
+    /// Empty only if nothing left, which is not a state any door writes.
+    pub question_as_it_left: String,
+    /// **What came back, as the model wrote it** — the stored form, coded.
+    /// Empty for a question that was copied out and never answered, which is a
+    /// real state: the person may close the app between the two halves.
+    pub answer_as_written: String,
     /// What was asked, restored. Empty segments mean no question was typed —
     /// a real state: a document may be sent with nothing asked of it, which
     /// was 046/N's whole finding.
@@ -1527,6 +1558,16 @@ pub struct _TurnRow {
     /// after days away. One list for both halves — the turn is the unit a
     /// person reads.
     pub unresolved: Vec<String>,
+}
+
+#[frb(mirror(ChatToTakeOut))]
+pub struct _ChatToTakeOut {
+    /// The text, and everything the band says about it — the same view every
+    /// other exit hands over.
+    pub what_leaves: PayloadView,
+    /// The payload that text is, so an answer carried back is restored against
+    /// what was carried out.
+    pub handle: PayloadHandle,
 }
 
 #[frb(mirror(RevealState))]

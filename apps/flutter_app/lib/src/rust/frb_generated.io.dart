@@ -93,6 +93,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
+  ChatToTakeOut dco_decode_chat_to_take_out(dynamic raw);
+
+  @protected
   ConversationRow dco_decode_conversation_row(dynamic raw);
 
   @protected
@@ -590,6 +593,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
+
+  @protected
+  ChatToTakeOut sse_decode_chat_to_take_out(SseDeserializer deserializer);
 
   @protected
   ConversationRow sse_decode_conversation_row(SseDeserializer deserializer);
@@ -1150,6 +1156,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_chat_to_take_out(
+    ChatToTakeOut self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_conversation_row(

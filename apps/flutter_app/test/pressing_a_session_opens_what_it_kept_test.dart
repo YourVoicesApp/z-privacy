@@ -85,6 +85,19 @@ TurnRow _turn() => TurnRow(
   // as the first rather than waiting for the compiler to ask twice.
   via: const TurnVia.notRecorded(),
   document: const TurnDocument.notRecorded(),
+  // **A turn older than the chats** (format 6, rule 67): it belongs to no
+  // numbered chat and names no saved document, which is the same truthful zero
+  // the reader gives a file written before this round. These four tests are
+  // about what the screen shows of a **restored** turn, so the two coded sides
+  // carry the stored form of the halves above — the form everything in this
+  // file is drawn from is the restored one, and a fixture that put prose in the
+  // coded fields would be claiming a protection it never made.
+  chatNumber: 0,
+  keptHandle: null,
+  questionAsItLeft: 'What does __Z_1A2B_PERSON_3C4D__ earn?',
+  answerAsWritten:
+      'The gross figure for __Z_1A2B_PERSON_3C4D__ is 42 500, and '
+      '__Z_7K2M_PERSON_9QX4__ is not in this session.',
 );
 
 Future<void> _pumpView(WidgetTester tester, Widget view) async {

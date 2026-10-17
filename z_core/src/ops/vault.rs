@@ -24,6 +24,16 @@ pub(crate) fn set_data_dir(dir: String) -> ApiResult<()> {
         // The settings file lives beside the vault, and is read at once so a
         // first run is known before anything else is asked.
         core.config.set_dir(&path)?;
+        // **And no chat is open in a folder this run has not opened** — rule
+        // 68. `chats_opened` holds session *numbers*, and numbers start again
+        // at one in another folder: session 1 here is not session 1 there. Left
+        // standing, the first session of a second folder would be read as one
+        // this run had already opened, and the turns of whatever was asked in
+        // it before the application last closed would travel with the next
+        // question. An auto-lock is deliberately **not** on this list: the same
+        // folder, the same sessions, the same chat the person is in the middle
+        // of.
+        core.chats_opened.clear();
         Ok(())
     })
 }

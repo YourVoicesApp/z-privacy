@@ -113,20 +113,22 @@ void main() {
     expect(find.textContaining('2 values replaced'), findsOneWidget);
   });
 
-  /// **The sentence a later tidy-up removes as redundant** (046/N).
+  /// **The sentence that is gone, because it became false** — rule 67.
   ///
-  /// It is not about this build's shape, which is why it has a test of its own
-  /// and why that test says so here. It is about what a person will otherwise
-  /// assume from «answer 1 of 2» — that the model remembered the earlier
-  /// questions — and the assumption would be **ours to have planted**.
-  /// `history` with roles has been the deferred debt since Phase 4; until it
-  /// lands, each question is asked alone and the screen admits it.
+  /// It said «Each question is asked on its own: the model does not see the
+  /// earlier ones», and it was true for as long as `askModelProtected` passed
+  /// `history: const []`. The owner found what that cost — «لا أستطيع أن أتابع
+  /// الشات معه على نفس الموضوع» — and the core now carries the turns of the
+  /// open chat with every later question. A sentence that was honest while the
+  /// debt stood is a lie the moment it is paid, so this test is turned over: it
+  /// measures that the sentence is **not** on the glass, which is the one way
+  /// a line removed in one round does not come back in the next one.
   ///
-  /// And the pair of sentences is deliberate, because two different things are
-  /// in play: the **request** is replaced, and the **answers** are kept. A line
-  /// saying only «the second question replaces this» is true of the request and
-  /// misleading about what a person can still see.
-  testWidgets('the screen says that each question is asked on its own', (tester) async {
+  /// The other half of the pair stays for now and is measured below: the
+  /// **request** is replaced, and the **answers** are kept — two different
+  /// things, and a line saying only «the second question replaces this» is
+  /// true of the request and misleading about what a person can still see.
+  testWidgets('the screen no longer says that each question is asked alone', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1500, 1100));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final (_, bench) = await _open(tester, 'alone');
@@ -138,9 +140,9 @@ void main() {
 
     expect(
       find.textContaining('the model does not see the earlier ones'),
-      findsOneWidget,
-      reason: 'nothing tells a person the model has no memory of the earlier '
-          'questions — «answer 1 of 2» invites exactly that assumption',
+      findsNothing,
+      reason: 'the screen tells a person the model has no memory of the '
+          'earlier questions, and since rule 67 it has one',
     );
     // And the other half of the pair: what is replaced, and what is kept.
     expect(find.textContaining('a new question replaces the request'), findsOneWidget);
