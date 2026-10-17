@@ -15,8 +15,6 @@ pub(crate) fn nfc(s: &str) -> String {
     s.nfc().collect()
 }
 
-/// Length of `s` in UTF-16 code units — what Dart's `String.length` returns.
-#[allow(dead_code)] // reached once protect() lands in 005
 /// **A word of the person's own, isolated so the sentence keeps its order** —
 /// the owner's test of 16 October 2026, and the same pair of characters the
 /// glass uses (`theirOwnWord` in `messages.dart`).
@@ -42,6 +40,8 @@ pub(crate) fn their_own_word(word: &str) -> String {
     format!("\u{2068}{word}\u{2069}")
 }
 
+/// Length of `s` in UTF-16 code units — what Dart's `String.length` returns.
+#[allow(dead_code)] // reached once protect() lands in 005
 pub(crate) fn utf16_len(s: &str) -> usize {
     s.chars().map(char::len_utf16).sum()
 }

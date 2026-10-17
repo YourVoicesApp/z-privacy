@@ -837,6 +837,42 @@ if [ -z "$G41_STALE" ]; then
 else
   fail "G41 these allowed lines match nothing any more, so they permit nothing and explain nothing:$G41_STALE"
 fi
+# ---------------------------------------------------------------- G45
+# **An attribute belongs immediately above the item it is about** — the trap
+# this crate has carried three times, and the lead caught the third on
+# 17 October 2026.
+#
+# Inserting a function «above the signature» puts it **below** the doc comment
+# and below the attributes, which belong to the item that is now one item
+# further down. In `text.rs` the new `their_own_word` landed between
+# `utf16_len`'s `///` line and its `#[allow(dead_code)]` and its own signature:
+# the doc and the allowance moved onto the new function, and `utf16_len` was
+# left with neither. The same insertion made `Scope` carry two doc blocks with
+# a `derive` between them — «how long a protection lasts» above the derive and
+# «how far a protection reaches» below it — since task 034.
+#
+# The shape is cheap to read and almost never legal prose: **an attribute line
+# followed immediately by a doc line**. Rust accepts it (every doc comment and
+# attribute before an item applies to that item), so neither rustc nor clippy
+# says a word — and that is exactly why it survived three rounds. The rule this
+# gate holds is the ordinary one: doc first, attributes last, the item next.
+#
+# It found three the day it was written: the two above and one interleaved
+# `#[allow(dead_code)]` in `vault/crypto.rs`, which was harmless and unreadable
+# in the same way.
+G45_FUSED=$(awk '
+  prev ~ /^[[:space:]]*#\[/ && $0 ~ /^[[:space:]]*\/\/\// {
+    print FILENAME ":" FNR ": " prev " ⟶ " $0
+  }
+  { prev = $0 }
+' $(find z_core/src bridges -name '*.rs' | sort) 2>/dev/null || true)
+if [ -z "$G45_FUSED" ]; then
+  pass "G45 every attribute stands immediately above the item it is about, so no doc comment belongs to the wrong one"
+else
+  fail "G45 an attribute is separated from its item by a doc comment — whatever follows has taken the item above's doc and attributes:"
+  printf '%s\n' "$G45_FUSED" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G44
 # **A word of the person's own, inside a sentence of ours, is isolated** — the
 # owner's test of 16 October 2026, held as a class since 17 October.

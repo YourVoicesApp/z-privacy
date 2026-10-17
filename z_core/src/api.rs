@@ -750,10 +750,14 @@ pub struct Span {
 
 // ---------------------------------------------------------------- vocabulary
 
-/// How long a protection lasts.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// How far a protection reaches. Four steps, each one wider than the last, and
 /// each one **doing** what it says (task 034).
+///
+/// It read «how long a protection lasts» in one line until 17 October, and
+/// that line stayed **above** the `derive` when task 034 wrote this block
+/// below it — the same insertion fault three places in this crate carried, and
+/// G45 now reads it out of the source. «How long» was the older and narrower
+/// reading of the same enum; the four steps below are what it is.
 ///
 /// Until then `Conversation` and `Always` were labels: the breadth came from
 /// whether `protect` or `protect_all_matches` was called, and `Always` promised
@@ -761,6 +765,7 @@ pub struct Span {
 /// and found by itself from now on» and the app did not do it — which is the
 /// worst kind of untruth a privacy product can tell, because the user stops
 /// watching for what they think is handled.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Scope {
     /// This one place, and nothing else.
     Once,
