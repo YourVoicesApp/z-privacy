@@ -53,12 +53,26 @@ final _everyError = <ApiError>[
 
 /// Every shape the two nested enums take, because a reason inside an error is
 /// still a reason a person reads.
+///
+/// **All twelve, and counted** (17 October). Five of them were listed here and
+/// the other seven — every limit the reader has — were not, so the screen
+/// could answer «This file could not be opened safely» to a bomb, to a file
+/// one byte too big and to an empty one alike, and this guard was green while
+/// it did. A list of examples is only as good as its claim to be the whole
+/// list, so the count below is part of the test.
 final _everyRefusal = <Refusal>[
   const Refusal.scannedPdfNoTextLayer(pages: 4),
   const Refusal.encryptedPdf(),
   const Refusal.unsupportedEncoding(page: 2, readablePercent: 40),
   const Refusal.unreadableStructure(page: 7),
   const Refusal.malformedDocument(),
+  const Refusal.documentTooLarge(mib: 25, limitMib: 25),
+  const Refusal.tooManyPages(pages: 2400, limit: 2000),
+  const Refusal.textTooLarge(limitMib: 8),
+  const Refusal.compressionBomb(ratio: 946),
+  const Refusal.tooManyParts(parts: 521, limit: 512),
+  const Refusal.tookTooLong(millis: 20000),
+  const Refusal.emptyDocument(),
 ];
 
 final _everyNetworkRefusal = <NetworkRefusal>[
@@ -101,6 +115,8 @@ void main() {
   });
 
   test('every refusal inside an error has a human sentence', () {
+    expect(_everyRefusal.length, 12,
+        reason: 'the contract has 12 Refusal variants');
     for (final r in _everyRefusal) {
       final e = ApiError.documentRefused(reason: r, detail: 'x');
       _readsAsHuman(humanMessage(e), r.runtimeType.toString());
@@ -190,6 +206,46 @@ void main() {
       anyOf(contains('save'), contains('paste')),
       reason: 'a refusal without a next move leaves the person with nothing to do',
     );
+  });
+
+  /// **B3-4 · a limit that is not said is a limit the person cannot act on.**
+  ///
+  /// The attacker pushed a 25 MiB + 1 file, a DOCX part of 8 MiB + 1 and a
+  /// 946× bomb through the core: it named all three, and the screen said «This
+  /// file could not be opened safely» to each. The number is the whole of the
+  /// news — it is what tells a person whether to split the file, convert it,
+  /// or walk away from it.
+  test('a limit on the screen says the number it is', () {
+    final said = <Refusal, String>{
+      const Refusal.documentTooLarge(mib: 25, limitMib: 25): '25',
+      const Refusal.tooManyPages(pages: 2400, limit: 2000): '2000',
+      const Refusal.textTooLarge(limitMib: 8): '8',
+      const Refusal.compressionBomb(ratio: 946): '946',
+      const Refusal.tooManyParts(parts: 521, limit: 512): '512',
+      const Refusal.tookTooLong(millis: 20000): '20',
+    };
+    said.forEach((refusal, number) {
+      final message = humanMessage(
+        ApiError.documentRefused(reason: refusal, detail: ''),
+      );
+      expect(message, contains(number),
+          reason: '${refusal.runtimeType} does not say its limit: $message');
+    });
+  });
+
+  /// And the bomb is not a scanned page. The core used to reach
+  /// `ScannedPdfNoTextLayer` for a 946× page stream, and the screen turned that
+  /// into «This PDF is a picture of a page with no text in it» — a false
+  /// sentence about a true refusal.
+  test('a compression bomb is not described as a picture of a page', () {
+    final said = humanMessage(
+      const ApiError.documentRefused(
+        reason: Refusal.compressionBomb(ratio: 946),
+        detail: '',
+      ),
+    );
+    expect(said.toLowerCase(), isNot(contains('picture')));
+    expect(said.toLowerCase(), isNot(contains('scan')));
   });
 
   test('the one we measured live now reads as a sentence', () {
