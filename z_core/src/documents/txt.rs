@@ -67,7 +67,7 @@ mod tests {
     use crate::api::{ApiError, Place};
 
     fn read(text: &[u8]) -> ApiResult<Extracted> {
-        extract(text, &Budget::new())
+        extract(text, &Budget::new(text.len()))
     }
 
     #[test]

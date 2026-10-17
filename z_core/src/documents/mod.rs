@@ -19,6 +19,8 @@ pub(crate) mod pdf;
 pub(crate) mod txt;
 pub(crate) mod zip;
 
+use std::cell::{Cell, RefCell};
+use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
 
 #[cfg(test)]
@@ -46,7 +48,41 @@ pub(crate) mod limits {
     pub(crate) const ZIP_ENTRIES: u32 = 512;
     /// How much bigger a part may be than its compressed form. A zip bomb is a
     /// few kilobytes that unpack into gigabytes; a document is well under this.
+    ///
+    /// **Measured on what this reader actually unpacks** (17 October), because
+    /// the same number now holds a PDF's streams too: the worst swell in any
+    /// stream the PDF reader opens, over the owner's three golden documents and
+    /// his five z-pdfs, is **95.7×** — one object stream in the 146-page tax
+    /// book. The 1020× stream in his 734-page catalogue is an **image**, and
+    /// this reader never opens one. So 200 leaves a factor of two over the
+    /// worst real document and still refuses the attacker's 946×.
     pub(crate) const MAX_RATIO: u32 = 200;
+    /// One Flate stream inside a PDF, decoded — V1-J's number, and the same
+    /// one a zip entry gets, for the same reason: no single part of a document
+    /// is this big. Measured: the biggest stream this reader opens in any of
+    /// the owner's documents is 784,761 bytes, in the tax book.
+    pub(crate) const PDF_STREAM_BYTES: usize = 8 * 1024 * 1024;
+    /// What **one whole document** may unpack to, counted over every Flate
+    /// stream this reader opens, whatever its role.
+    ///
+    /// **Two numbers and not one, and the reason is a measurement.** V1-J puts
+    /// a flat ceiling of 16 MiB on the whole document, and it can: it refuses
+    /// every object stream before loading one, so nothing it reads is a Word
+    /// file. This reader must read them — the page tree of seven Swedish
+    /// e-documents on this machine is packed in one — and the owner's 734-page
+    /// catalogue unpacks to **39.50 MiB** out of a 4.87 MiB file. A flat 16 MiB
+    /// would refuse his own golden document, and the house already paid for
+    /// that lesson once with `PAGES`: a limit that refuses a real document
+    /// defends nothing.
+    ///
+    /// So the law is the ratio rule again, at the document's own scale: a
+    /// document does not swell more than thirty-twofold over all its streams
+    /// together — his worst real file swells **8.1×**, which leaves a factor of
+    /// four — and never less than V1-J's 16 MiB, so a small file gets exactly
+    /// the library's number. The attacker's 49 KiB object-stream bomb asks for
+    /// 48 MiB, which is 1,000×.
+    pub(crate) const PDF_UNPACKED_SWELL: usize = 32;
+    pub(crate) const PDF_UNPACKED_FLOOR: usize = 16 * 1024 * 1024;
     /// How long reading may take before we stop and say so.
     ///
     /// Measured on the biggest files we accept. The 734-page export reads in
@@ -168,17 +204,39 @@ impl Builder {
 }
 
 /// A clock and a size, checked while reading rather than after.
+///
+/// **One budget for one document.** It is made once, where the file arrives,
+/// and handed down to every reader and every stream inside it: the clock bounds
+/// the work, and the meter below bounds what may be unpacked out of the file in
+/// all. A limit that lives in the loop that inflates can stop a bomb while it
+/// is inflating; one applied afterwards has already lost.
 #[derive(Debug)]
 pub(crate) struct Budget {
     started: Instant,
     limit: Duration,
+    /// The file's own size — what every «how much may come out of it» is
+    /// measured against.
+    file_bytes: usize,
+    /// What has been unpacked out of it so far.
+    unpacked: Cell<usize>,
+    /// The streams already counted, by object number. A page's font is read
+    /// again on every page that names it, and the owner's 734-page catalogue
+    /// names its own fonts 734 times: counting those bytes again each time
+    /// would measure the **reader's** repeated work and not the document's
+    /// size, and would refuse his file for a cost the file never asked for.
+    /// Reading one stream twice is work, and the clock above is what answers
+    /// for work.
+    counted: RefCell<BTreeSet<u32>>,
 }
 
 impl Budget {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(file_bytes: usize) -> Self {
         Self {
             started: Instant::now(),
             limit: Duration::from_millis(limits::MILLIS),
+            file_bytes,
+            unpacked: Cell::new(0),
+            counted: RefCell::new(BTreeSet::new()),
         }
     }
 
@@ -192,6 +250,37 @@ impl Budget {
             ));
         }
         Ok(())
+    }
+
+    /// What this file's own bytes allow to be unpacked out of it, in all.
+    pub(crate) fn unpacked_ceiling(&self) -> usize {
+        limits::PDF_UNPACKED_FLOOR.max(self.file_bytes.saturating_mul(limits::PDF_UNPACKED_SWELL))
+    }
+
+    /// Room left for one stream to inflate into. Asked **before** a byte is
+    /// inflated, so that the decompressor itself is stopped at the ceiling.
+    pub(crate) fn room_for(&self, object: u32) -> usize {
+        if self.counted.borrow().contains(&object) {
+            // Already paid for: its own limit still holds it, the document's
+            // ceiling is not charged twice.
+            return limits::PDF_STREAM_BYTES;
+        }
+        self.unpacked_ceiling().saturating_sub(self.unpacked.get())
+    }
+
+    /// Write down what one stream really unpacked to, once per object.
+    pub(crate) fn unpacked(&self, object: u32, bytes: usize) {
+        if self.counted.borrow_mut().insert(object) {
+            self.unpacked.set(self.unpacked.get().saturating_add(bytes));
+        }
+    }
+
+    pub(crate) fn unpacked_so_far(&self) -> usize {
+        self.unpacked.get()
+    }
+
+    pub(crate) fn file_bytes(&self) -> usize {
+        self.file_bytes
     }
 }
 
@@ -229,7 +318,7 @@ pub(crate) fn extract(bytes: &[u8], kind: DocumentKind) -> ApiResult<Extracted> 
     if bytes.is_empty() {
         return Err(refuse(Refusal::EmptyDocument, "the file is empty".to_string()));
     }
-    let budget = Budget::new();
+    let budget = Budget::new(bytes.len());
     let extracted = match kind {
         DocumentKind::Txt => txt::extract(bytes, &budget),
         DocumentKind::Docx => docx::extract(bytes, &budget),

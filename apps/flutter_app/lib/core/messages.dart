@@ -485,31 +485,48 @@ String _document(Refusal reason) => switch (reason) {
         'text, or paste the text in.',
   Refusal_UnreadableStructure(:final page) =>
     'Page $page is built in a way this build cannot read.',
-  // **The limits, said with their numbers** — the independent attacker's خ5 and
-  // note 16, 17 October. Six of the core's refusals fell through to «This file
-  // could not be opened safely», which names nothing a person can act on and
-  // hides the fact that the program applied a rule it knows the number of. The
-  // core measures the limit; this says it.
-  Refusal_DocumentTooLarge(:final limitMib) =>
-    'This document is larger than the $limitMib MiB one file may be, so Z '
-        'Privacy did not read it. Split it, or paste in the part you need.',
-  Refusal_TextTooLarge(:final limitMib) =>
-    'The text inside this file passed the $limitMib MiB Z Privacy will read, so '
-        'it was refused rather than half-read. Paste in the part you need.',
+  // **The limits, said with their numbers** — e2's reading of the attacker's
+  // B3-4 and this round's خ5 and ن16, both on 17 October, landing on the same
+  // seven refusals from two sides. The core names every one of them and says
+  // how big the thing was that it refused; the screen collapsed them all into
+  // «This file could not be opened safely», which tells a person nothing they
+  // can act on — not whether the file is too big, too deep, a bomb, or simply
+  // empty. The sentences below are e2's words.
+  //
+  // **And there is no fallback under them.** A `_ =>` would answer for a
+  // variant nobody has written a sentence for, which is how these seven came
+  // to read alike in the first place; without it the day somebody adds an
+  // eighth is a compile error that names the file to write it in. The
+  // contract's twelve are walked in `messages_test` as well, so the two halves
+  // agree: a list that is missing a variant is a control that cannot bite.
+  //
+  // «About», not «exactly», on the size — and the reason changed with ن16 on
+  // the same day: the core used to **floor** the megabytes, so a file one byte
+  // past 25 MiB measured as 25 and «this file is 25 MiB and the limit is 25
+  // MiB» read as a program arguing with itself. It rounds **up** now, so the
+  // figure overstates by less than a megabyte and can never understate, which
+  // is the direction a refusal's own number must round.
+  Refusal_DocumentTooLarge(:final mib, :final limitMib) =>
+    'This file is about $mib MiB, and Z Privacy opens documents up to '
+        '$limitMib MiB.',
   Refusal_TooManyPages(:final pages, :final limit) =>
-    'This document is $pages pages and Z Privacy reads at most $limit, so it '
-        'was refused rather than half-read.',
-  Refusal_TooManyParts(:final parts, :final limit) =>
-    'This file holds $parts parts inside it and Z Privacy opens at most $limit.',
+    'This document has $pages pages, and Z Privacy opens up to $limit in one '
+        'document.',
+  Refusal_TextTooLarge(:final limitMib) =>
+    'Unpacked, a part of this file is more than $limitMib MiB — more than Z '
+        'Privacy reads in one document, so none of it was imported.',
   Refusal_CompressionBomb(:final ratio) =>
-    'A small part of this file unpacks into $ratio times its own size, which '
-        'is how a file attacks the program that reads it. Z Privacy refused it '
-        'and read nothing.',
+    'A part of this file unpacks to more than $ratio times the space it takes '
+        'up. No real document does that, so Z Privacy stopped unpacking it '
+        'instead of filling the machine.',
+  Refusal_TooManyParts(:final parts, :final limit) =>
+    'This file lists $parts parts inside it, and a document has tens, not '
+        'thousands — Z Privacy opens up to $limit.',
   Refusal_TookTooLong(:final millis) =>
-    'Reading this file passed the $millis ms Z Privacy allows one document, so '
-        'it stopped rather than hold the program.',
+    'Reading this file was still going after ${millis ~/ 1000} seconds, so Z '
+        'Privacy stopped. Nothing of it was imported.',
   Refusal_EmptyDocument() =>
-    'There is nothing in this document to protect: it holds no text at all.',
+    'There is no text in this file for Z Privacy to protect.',
 };
 
 String _network(NetworkRefusal reason, String detail) => switch (reason) {

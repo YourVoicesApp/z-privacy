@@ -2308,6 +2308,46 @@ else
   pass "  the site offers no file, so there is no build for it to name"
 fi
 
+# ------------------------------------------------- nothing names this machine
+# **A release says nothing about the machine that built it** — the independent
+# attacker's خ3 and ن6, 17 October. `lib/libz_bridge.so` in the installed
+# release carried 195 strings of `/home/<user>/.cargo/registry/src/…`, the GTK
+# plugin carried this tree's build directory in its debug information, and
+# `libapp.so` carried `file:///home/<user>/…/dart_plugin_registrant.dart`.
+# None of them is a secret, and together they are one developer's machine and
+# user name inside a file strangers are asked to trust.
+#
+# Two questions, because the archive is built rarely and the script that builds
+# it is read every day: does the script still take this machine out of what it
+# packs, and — when an archive is actually here — is it in fact out.
+PKG=scripts/package_linux.sh
+if [ -f "$PKG" ]; then
+  MISSING=""
+  grep -q 'remap-path-prefix' "$PKG" || MISSING="$MISSING remap-path-prefix"
+  grep -q 'strip --strip-unneeded' "$PKG" || MISSING="$MISSING strip"
+  grep -q 'redrawn' "$PKG" || MISSING="$MISSING the-snapshot-rewrite"
+  grep -q 'the archive would carry paths from this machine' "$PKG" || MISSING="$MISSING its-own-refusal"
+  if [ -z "$MISSING" ]; then
+    pass "the packaging script takes this machine out of the binaries"
+  else
+    fail "the packaging script no longer does:$MISSING ($PKG)"
+  fi
+else
+  fail "there is no packaging script ($PKG)"
+fi
+ARCHIVE=$(ls -t dist/zprivacy-v1-linux-*.tar.gz 2>/dev/null | head -1)
+if [ -n "$ARCHIVE" ] && [ -f "$ARCHIVE" ]; then
+  # Every byte of every file in it, read back out of the archive itself: the
+  # binaries, the notices, BUILD-INFO, the crate list.
+  if tar xzOf "$ARCHIVE" 2>/dev/null | grep -qa '/home/'; then
+    fail "  the archive carries a path from this machine ($ARCHIVE)"
+  else
+    pass "  no «/home/» anywhere in $(basename "$ARCHIVE")"
+  fi
+else
+  skip "  no «/home/» anywhere in the archive" "no archive in dist/ on this machine"
+fi
+
 # ------------------------------------------------- the third golden
 # 734 pages of Austrian medical German: a code table with one page of doctors
 # in the middle. It holds both halves of the promise at once — the people are

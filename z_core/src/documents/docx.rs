@@ -279,7 +279,7 @@ mod tests {
     }
 
     fn assert_malformed(file: &[u8]) {
-        match extract(file, &Budget::new()) {
+        match extract(file, &Budget::new(file.len())) {
             Err(ApiError::DocumentRefused { reason, .. }) => {
                 assert_eq!(reason, Refusal::MalformedDocument);
             }
@@ -295,7 +295,7 @@ mod tests {
             para("Kunde: Nordstern Consulting GmbH"),
             para("Herr Thomas Müller")
         ));
-        let out = extract(&file, &Budget::new()).expect("read");
+        let out = extract(&file, &Budget::new(file.len())).expect("read");
         assert_eq!(out.text, "Kunde: Nordstern Consulting GmbH\n\nHerr Thomas Müller");
         assert!(!out.text.contains("w:"), "no markup leaked into the text");
     }
@@ -308,7 +308,7 @@ mod tests {
             para("zwei"),
             para("Herr Thomas Müller")
         ));
-        let out = extract(&file, &Budget::new()).expect("read");
+        let out = extract(&file, &Budget::new(file.len())).expect("read");
         let at = out.text.find("Thomas").expect("the name");
         assert_eq!(out.place_of(at), Some(Place { page: 1, paragraph: 3 }));
     }
@@ -321,7 +321,7 @@ mod tests {
             r#"<w:p><w:r><w:br w:type="page"/></w:r></w:p>"#,
             para("Müller auf Seite zwei")
         ));
-        let out = extract(&file, &Budget::new()).expect("read");
+        let out = extract(&file, &Budget::new(file.len())).expect("read");
         assert_eq!(out.pages, 2);
         let at = out.text.find("Müller").expect("the name");
         assert_eq!(out.place_of(at).map(|p| p.page), Some(2));
@@ -330,7 +330,7 @@ mod tests {
     #[test]
     fn entities_and_tabs_read_as_written() {
         let file = docx(&para("M&#252;ller &amp; S&#xF6;hne<w:tab/>GmbH"));
-        let out = extract(&file, &Budget::new()).expect("read");
+        let out = extract(&file, &Budget::new(file.len())).expect("read");
         assert!(out.text.contains("Müller & Söhne"), "{:?}", out.text);
         assert!(out.text.contains('\t'), "{:?}", out.text);
     }
@@ -338,7 +338,7 @@ mod tests {
     #[test]
     fn a_zip_without_a_word_part_is_refused_by_name() {
         let file = super::zip::tests::zip_with("other.xml", b"<x/>", false);
-        match extract(&file, &Budget::new()) {
+        match extract(&file, &Budget::new(file.len())) {
             Err(ApiError::DocumentRefused { reason, detail }) => {
                 assert_eq!(reason, Refusal::MalformedDocument);
                 assert!(detail.contains("Word"), "{detail}");
@@ -350,7 +350,7 @@ mod tests {
     #[test]
     fn a_docx_with_no_words_is_refused_not_imported_empty() {
         let file = docx(&para("   "));
-        match extract(&file, &Budget::new()) {
+        match extract(&file, &Budget::new(file.len())) {
             Err(ApiError::DocumentRefused { reason, .. }) => assert_eq!(reason, Refusal::EmptyDocument),
             other => panic!("expected a refusal, got {other:?}"),
         }
@@ -387,7 +387,7 @@ mod tests {
             r#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">"#,
             r#"<w:body><w:p><w:t>ZXQ-DOCX-PARTIAL-77220</w:t></w:p><unclosed"#,
         );
-        match extract(&zip_xml(xml, false), &Budget::new()) {
+        match extract(&zip_xml(xml, false), &Budget::new(0)) {
             Err(ApiError::DocumentRefused { reason, .. }) => {
                 assert_eq!(reason, Refusal::MalformedDocument);
             }

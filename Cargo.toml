@@ -47,3 +47,32 @@ unwrap_used = "deny"
 expect_used = "deny"
 panic = "deny"
 indexing_slicing = "warn"
+
+# ---------------------------------------------------------------- what ships
+# **A release says nothing about the machine that built it.**
+#
+# The independent attacker's خ3 and ن6, 17 October: `lib/libz_bridge.so` in the
+# installed release carried **195** strings of the form
+#
+#     /home/<user>/.cargo/registry/src/index.crates.io-…/<crate>-<version>/…
+#
+# — the panic locations of every dependency, among them
+# `ring-…/src/ec/suite_b/private_key.rs` — and the file was `not stripped`.
+# Neither half is a secret. Together they are one developer's machine, and its
+# user name, inside a binary we ask strangers to trust.
+#
+# Both are build settings, so they are fixed in the build file rather than in
+# the script that packs the archive: anybody who runs `cargo build --release`
+# gets the same binary, whatever they pack it with.
+[profile.release]
+# No symbol table left to read the machine out of. One line, every builder.
+strip = "symbols"
+# The paths themselves are **not** fixable here on this toolchain: Cargo's own
+# `trim-paths = "all"` is still unstable in the cargo of this build (1.98.0,
+# «the package requires the Cargo feature called trim-paths»), and the stable
+# way of saying it — `--remap-path-prefix` — needs an absolute path that is
+# different on every machine, which a file in the repository cannot know. So
+# the remapping lives in `scripts/package_linux.sh`, where `$HOME` is known,
+# and the gate reads the finished archive rather than trusting either of them.
+# The day this toolchain's cargo stabilises `trim-paths`, two lines here
+# replace that.
