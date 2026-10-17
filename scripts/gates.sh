@@ -108,12 +108,77 @@ else
   printf '%s\n' "$G27_READS" | sed 's/^/        /'
 fi
 
-# And both doors ask one function for the language of the next text.
-G27_DOORS=$(grep -n 'packForTheNextText' "$FLUTTER_LIB/screens/shell.dart" 2>/dev/null || true)
-if [ "$(printf '%s\n' "$G27_DOORS" | grep -c .)" -ge 2 ]; then
-  pass "G27 the chat door and the file door take their language from one function"
+# **And every door that reads a text in a session asks the one hand** — 080,
+# and rule 57-د since 17 October.
+#
+# It used to count the mentions of `packForTheNextText` in `shell.dart` and
+# pass at two or more. That measured the old shape: two doors, each reading the
+# fallback for itself. Rule 57-د puts the asking in one place —
+# `_theLanguageOfTheTextToCome` — because an old session with no language of its
+# own must be **asked**, once, and the answer written into it; and the fourth
+# door, `_openKept`, was reading the fallback on its own, so a session from
+# before 080 had its kept documents read with the application's eye for ever.
+#
+# So the doors are enumerated **from what they do**: a method of the shell that
+# reads a text into a session is one, whatever it is called, and each must ask.
+# A fifth door added tomorrow is counted the day it is written.
+G27_DOORS=$(awk '
+  /^  (Future<[^>]*>|void) [_A-Za-z]+\(/ { name = $0; sub(/^  /, "", name); sub(/\(.*/, "", name);
+                                          inside = 1; reads = 0; asks = 0 }
+  inside && /z\.importText\(|z\.importDocument\(|z\.openKeptDocument\(/ { reads = 1 }
+  inside && /_theLanguageOfTheTextToCome\(/ { asks = 1 }
+  inside && /^  \}/ { if (reads) print (asks ? "asks" : "SILENT") " " name; inside = 0 }
+' "$FLUTTER_LIB/screens/shell.dart" 2>/dev/null || true)
+G27_SILENT=$(printf '%s\n' "$G27_DOORS" | grep -c '^SILENT' || true)
+G27_ASKS=$(printf '%s\n' "$G27_DOORS" | grep -c '^asks' || true)
+if [ "$G27_SILENT" = "0" ] && [ "$G27_ASKS" -ge 3 ]; then
+  pass "G27 all $G27_ASKS doors that read a text in a session take its language from one hand"
 else
-  fail "G27 only $(printf '%s\n' "$G27_DOORS" | grep -c .) door(s) in shell.dart ask packForTheNextText — the other one decides for itself"
+  fail "G27 $G27_SILENT door(s) read a text in a session without asking the one hand (and $G27_ASKS do ask; three are known):"
+  printf '%s\n' "$G27_DOORS" | sed 's/^/        /'
+fi
+
+# **«Nobody has said» is an answer the type can hold** — rule 57-د.
+#
+# `packForTheNextText` returned a `String` and ended `?? appLanguage(ground)`,
+# so an old session's silence was spelled as the application's language and no
+# caller could tell the two apart. It answers `String?` now, and `null` means
+# «ask». The signature is the measurement, because a build that puts the
+# fallback back has to delete the `?` to do it.
+if grep -q 'String? packForTheNextText(Ground ground)' "$FLUTTER_LIB/core/session_state.dart" 2>/dev/null; then
+  pass "G27 the language of the next text can answer «nobody has said»"
+else
+  fail "G27 packForTheNextText no longer answers String? — an unchosen language is being spelled as a chosen one"
+fi
+
+# And one reader of it, which is the hand: a second reader is a second place
+# where «nobody has said» could quietly become the application's language.
+G27_READERS=$(grep -Rn 'packForTheNextText(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+              | grep -v '/src/rust/' | grep -vE ':[0-9]+: *//' \
+              | grep -v 'String? packForTheNextText' || true)
+G27_RN=$(printf '%s\n' "$G27_READERS" | grep -c . || true)
+if [ "$G27_RN" = "1" ] && printf '%s' "$G27_READERS" | grep -q 'screens/shell.dart'; then
+  pass "G27 one reader asks for the language of the next text, and it is the hand that also asks the person"
+else
+  fail "G27 the language of the next text is read in $G27_RN place(s), expected one in screens/shell.dart:"
+  printf '%s\n' "$G27_READERS" | sed 's/^/        /'
+fi
+
+# **And the door back asks no language at all** — 079 rule 3. It reads a
+# protected file into its own names, takes no session and scans nothing, so a
+# question there would be a question about nothing.
+G27_BACK=$(awk '
+  /^  (Future<[^>]*>|void) [_A-Za-z]+\(/ { inside = 1; back = 0; asks = 0 }
+  inside && /readADocumentThatCameBack\(/ { back = 1 }
+  inside && /_theLanguageOfTheTextToCome\(|packForTheNextText\(/ { asks = 1 }
+  inside && /^  \}/ { if (back) print (asks ? "ASKS" : "silent"); inside = 0 }
+' "$FLUTTER_LIB/screens/shell.dart" 2>/dev/null || true)
+if [ "$G27_BACK" = "silent" ]; then
+  pass "G27 the door back reads a file with no language asked of anybody"
+elif [ -z "$G27_BACK" ]; then
+  fail "G27 no door back found in shell.dart — this check measures nothing"
+else
+  fail "G27 the door back asks for a language ($G27_BACK): it takes no session, so there is nothing for an answer to belong to"
 fi
 
 # ---------------------------------------------------------------- G30
@@ -382,10 +447,19 @@ else
 fi
 
 # **Every door a text enters by asks first.** The doors are the imports (G37's
-# own census); each must reach the one function that answers «which language»,
-# and that function is the only place the fallback is read.
+# own census) **and the way back to a kept document**; each must reach the one
+# function that answers «which language», and that function is the only place
+# the fallback is read.
+#
+# **`_openKept` joined them on 17 October, rule 57-د.** It read the language
+# straight from `packForTheNextText`, which answered for a session created
+# before 080 with the application's — so an old session's kept documents came
+# back read with the wrong eye, for ever, and nobody was asked. Three doors
+# named here by hand, and G27 enumerates them from what they do, so a fourth
+# one written tomorrow is caught by the gate that counts rather than by the
+# gate that remembers.
 G38_QUIET=""
-for door in _askFromHome _begin; do
+for door in _askFromHome _begin _openKept; do
   if ! awk -v want="$door" '
     $0 ~ "^  [A-Za-z_][A-Za-z_<>,? ]* " want "\\(" { inside = 1 }
     inside && /_theLanguageOfTheTextToCome\(/ { found = 1 }
@@ -399,10 +473,10 @@ G38_ASKS=$(awk '
   /^  [A-Za-z_][A-Za-z_<>,? ]* _?[A-Za-z_]+\(/ { match($0, /[A-Za-z_]+\(/); here = substr($0, RSTART, RLENGTH - 1) }
   /_theLanguageOfTheTextToCome\(/ { if (here != "" && here != "_theLanguageOfTheTextToCome") print here }
 ' "$SHELL_DART" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ -z "$G38_QUIET" ] && [ "$G38_ASKS" = "_askFromHome _begin" ]; then
-  pass "G38 both doors a text enters by ask which language before anything is read"
+if [ -z "$G38_QUIET" ] && [ "$G38_ASKS" = "_askFromHome _begin _openKept" ]; then
+  pass "G38 all three doors a text enters by ask which language before anything is read"
 else
-  fail "G38 these doors read a text without asking:$G38_QUIET (asked from «$G38_ASKS»)"
+  fail "G38 these doors read a text without asking:$G38_QUIET (asked from «$G38_ASKS», expected «_askFromHome _begin _openKept»)"
 fi
 
 # **And the room that begins a session by hand cannot default.** Two halves in
@@ -618,6 +692,109 @@ if awk '
   pass "G40 the door back looks a token up without asking whether the block still works"
 else
   fail "G40 the way back consults the exemptions, so a forgotten word could not be read back (rule 59)"
+fi
+# ---------------------------------------------------------------- G41
+# **The container on the glass is a «session», never a «conversation»** — rule
+# 55-هـ, the owner, 17 October 2026.
+#
+# Rule 55 made the session the thing that holds the work — a session is born at
+# its first document and keeps it — and the screens went on calling it a
+# conversation in twenty-odd sentences, some of them beside the word «session»
+# in the same card. One thing with two names on one glass is a product a person
+# has to translate before they can read it.
+#
+# **What the word still means where it stays:** «conversation» is what was
+# written to the AI and what came back. Those sentences name the session beside
+# it, as the thing that keeps the exchange — which is exactly the distinction
+# this gate is here to hold open.
+#
+# It reads **string literals only**, with a scanner that tracks whether a quote
+# is open across lines, because a grep for the word in this tree answers with a
+# hundred identifiers — `conversation_begin`, `Scope::Conversation`,
+# `open_conversation` — and those are code, not sentences. Comments may say
+# whatever they need to: they explain where a rule came from, and a comment that
+# cannot name the old word cannot record the rename.
+G41_SCAN='
+FNR == 1 { inside = 0 }
+{
+  line = $0
+  if (line ~ /^[[:space:]]*(\/\/|\/\*|\*)/) next
+  gsub(/\\./, "", line)
+  n = split(line, p, Q)
+  for (i = 1; i <= n; i++) {
+    state = (i % 2 == 1) ? inside : !inside
+    if (state && p[i] ~ /[Cc]onversation/) print FILENAME ":" FNR ": " p[i]
+  }
+  quotes = (n > 0) ? n - 1 : 0
+  if (quotes % 2 == 1) inside = !inside
+}'
+
+# **The allowed list, and the reason for every line of it.**
+#
+#   1. `home.dart` — «This session keeps its conversation, sealed in your
+#      vault» and «No session is open — nothing of this conversation is kept»:
+#      the exchange with the model, with the session named beside it as the
+#      thing that keeps it. The lead's own wording, both halves.
+#   2. `the_journey.dart` — «Nothing of this conversation is written anywhere: a
+#      session is what keeps one, and none is open»: the same two words in one
+#      sentence, which is why it is the clearest of them.
+#   3. `settings.dart` — «there are no sessions to show … the conversations
+#      themselves were never in it»: the rows and their keys are in the vault,
+#      the exchanges never were. Both words, each about its own thing.
+#   4. the import path of `conversation_view.dart`, in two files: a file name is
+#      not a sentence, and the widget keeps the name of what it draws — the
+#      turns of an exchange.
+#   5. the two widget keys `the-conversation` and `open-this-conversation`: a
+#      key is read by a guard and never by a person.
+#   6. `session.rs`'s `.field("conversation", …)`: the label of a field in a
+#      `Debug` dump, which no screen shows.
+#
+# **A phrase and not a line number**, so the list does not rot as files move —
+# and if somebody re-wraps one of these sentences the gate reds and the line has
+# to be justified again, which is the pressure this list exists to apply.
+G41_ALLOWED='conversation, sealed in your vault
+this conversation is kept\.
+Nothing of this conversation is written anywhere
+the conversations themselves were never in it\.
+package:zprivacy/widgets/conversation_view\.dart
+: the-conversation$
+: open-this-conversation$
+session\.rs:[0-9]+: conversation$'
+# One line each, joined into one expression — and read back line by line below,
+# which is why no line of it may carry a «|» of its own.
+G41_ALLOW=$(printf '%s' "$G41_ALLOWED" | paste -sd'|' -)
+
+G41_DART=$(find "$FLUTTER_LIB" -name '*.dart' -not -path '*/src/rust/*' | sort \
+           | xargs awk -v Q="'" "$G41_SCAN" 2>/dev/null || true)
+G41_RUST=$(find z_core/src -name '*.rs' | sort \
+           | xargs awk -v Q='"' "$G41_SCAN" 2>/dev/null || true)
+G41_ALL=$(printf '%s\n%s\n' "$G41_DART" "$G41_RUST" | grep -c . || true)
+G41_LEFT=$(printf '%s\n%s\n' "$G41_DART" "$G41_RUST" | grep . | grep -vE "$G41_ALLOW" || true)
+if [ -z "$G41_LEFT" ]; then
+  pass "G41 every sentence on the glass calls the container a session ($G41_ALL mentions, all of them allowed by name)"
+else
+  fail "G41 these sentences still call the container a «conversation» — rule 55-هـ (or they belong in G41's allowed list, with a reason):"
+  printf '%s\n' "$G41_LEFT" | sed 's/^/        /'
+fi
+
+# **And an exception that matches nothing is a finding, not a comfort.** A
+# control that cannot bite is this house's own lesson: a stale line here would
+# quietly permit a sentence somebody has already deleted, and the next rename
+# would inherit a list nobody can read.
+G41_STALE=""
+while IFS= read -r allowed; do
+  [ -z "$allowed" ] && continue
+  if ! printf '%s\n%s\n' "$G41_DART" "$G41_RUST" | grep -qE "$allowed"; then
+    G41_STALE="$G41_STALE
+        $allowed"
+  fi
+done <<EOF
+$G41_ALLOWED
+EOF
+if [ -z "$G41_STALE" ]; then
+  pass "G41 every line of the allowed list still answers for a sentence that exists"
+else
+  fail "G41 these allowed lines match nothing any more, so they permit nothing and explain nothing:$G41_STALE"
 fi
 # ---------------------------------------------------------------- G37
 # **The session is born at its first document, and nowhere else** — rule 55,
@@ -2243,6 +2420,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_forgotten_word_still_comes_back_from_an_old_document \
          every_door_that_forgets_a_word_exempts_its_blocks \
          nothing_short_of_teaching_it_again_undoes_a_forget \
+         a_hand_protection_after_forget_does_not_restore_the_automatic_one \
          a_document_that_arrives_with_the_vault_shut_has_no_session \
          a_refused_press_leaves_the_blocks_working; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
@@ -2320,7 +2498,12 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "puts nothing out while a word waits" \
          "the exits are pressable while a word waits" \
          "the first waiting word in reading order" \
-         "closes the sheet and says it where the word is"; do
+         "closes the sheet and says it where the word is" \
+         "the AI door opens the preview side" \
+         "a press on the AI door opens the Safe column" \
+         "the side’s own door needs no opening" \
+         "a session from before 080 is asked once" \
+         "the chat door shows what will leave"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

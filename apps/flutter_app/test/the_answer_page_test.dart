@@ -160,8 +160,6 @@ Future<File?> _pressSave(
   ));
   await tester.tap(find.text('Open the sheet'));
   await _settle(tester);
-  await tester.tap(find.text('Continue'));
-  await _settle(tester);
   await tester.tap(find.text('Save as PDF'));
   // **Until the press has finished, not until the file exists.** The bytes
   // reach the disk one step before the press binds the payload an answer is

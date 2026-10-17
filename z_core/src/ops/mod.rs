@@ -1799,10 +1799,10 @@ pub(crate) fn explain(session: SessionId, span: Span) -> ApiResult<Explanation> 
         } else {
             match p.scope {
                 Scope::Once => "This one place".to_string(),
-                Scope::Conversation => "This conversation".to_string(),
+                Scope::Conversation => "This session".to_string(),
                 Scope::Profile => match &s.profile_id {
                     Some(_) => "This profile".to_string(),
-                    None => "This conversation".to_string(),
+                    None => "This session".to_string(),
                 },
                 Scope::Always => "Everywhere".to_string(),
             }
@@ -2012,7 +2012,7 @@ fn remember_in_vault(session: SessionId, span: Span, scope: Scope, kind: Kind) -
             // The sentence 046/D was written for: nineteen spaces sat between
             // «it» and «for», because the literal was wrapped across two lines
             // with no «\\» to eat the newline and the indentation.
-            reason: "this conversation is not in a profile, so there is no profile to remember \
+            reason: "this session is not in a profile, so there is no profile to remember \
                      it for — choose «always», or open a profile first"
                 .to_string(),
         });
@@ -3609,7 +3609,7 @@ pub(crate) fn teach_exception(session: SessionId, finding: u32, scope: Scope) ->
         };
         let target_profile = match scope {
             Scope::Profile => profile.ok_or_else(|| ApiError::InputRefused {
-                reason: "this conversation is not in a profile, so there is no profile exception to remember"
+                reason: "this session is not in a profile, so there is no profile exception to remember"
                     .to_string(),
             })?,
             Scope::Always => String::new(),

@@ -366,7 +366,7 @@ class _FindInDocumentState extends State<FindInDocument> {
                     if (protected > 1)
                       ZButton(
                         key: FindInDocument.everyKey,
-                        label: 'Un-protect in this conversation ($protected places)',
+                        label: 'Un-protect in this session ($protected places)',
                         onPressed: _busy
                             ? null
                             : () => unawaited(_act(() async {

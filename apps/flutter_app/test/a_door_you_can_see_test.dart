@@ -120,20 +120,21 @@ void main() {
     await tester.tap(door);
     await settle(tester);
 
-    expect(find.text('Review before send'), findsOneWidget, reason: 'the AI button opened nothing');
+    expect(find.text('Who answers'), findsOneWidget, reason: 'the AI button opened nothing');
 
-    // Provider, model and mode stand above the text, not behind a second page.
+    // **Provider, model and mode are not behind a page** — the owner's own
+    // ruling, read against what the sheet is since rule 60. It used to be
+    // measured as «above the outgoing text», because the text was the first
+    // page and the choice stood over it; the text is read on the work surface
+    // now and the sheet has one page, so the measurement is that the choice
+    // and the doors are on the glass together, with nothing to press to get
+    // from one to the other.
     final choice = tester.getTopLeft(find.text('Model')).dy;
-    // The eyebrow is drawn in capitals; the finder reads what is on screen.
-    final text = tester.getTopLeft(find.text('THIS IS WHAT WOULD LEAVE')).dy;
-    expect(choice, lessThan(text), reason: 'the choice is still below the text');
-    expect(find.text('What travels'), findsOneWidget, reason: 'the mode is not on the first page');
-
-    // Only sending waits for the review — and it says so where the send is.
-    final onwards = find.widgetWithText(ZButton, 'Continue');
-    expect(tester.widget<ZButton>(onwards).onPressed, isNotNull, reason: 'the doors are still shut');
-    await tester.tap(onwards);
-    await settle(tester);
+    final doors = tester.getTopLeft(find.text('Manual AI')).dy;
+    expect(choice, lessThan(doors), reason: 'the choice is below the doors it chooses for');
+    expect(find.text('What travels'), findsOneWidget, reason: 'the mode is not on the sheet');
+    expect(find.text('Continue'), findsNothing,
+        reason: 'the sheet still pages, so rule 60 left a page behind');
     // 046/L: the gate names what is waiting. It said «Answer the review
     // first», which named no number — and this assertion was finding the
     // **workspace's** copy of that sentence through the open dialog, not the
@@ -235,7 +236,7 @@ void main() {
     // model chosen **by name** is the model the request carries.
     final control = find.byKey(TheModelThatAnswers.mark);
     expect(control, findsOneWidget,
-        reason: 'the review page does not name the model that will answer');
+        reason: 'the sheet does not name the model that will answer');
 
     // Read **after** the key: a catalogue taken before `connectProvider` says
     // «no key» in every row, and a list built on it would be green for the
@@ -259,8 +260,6 @@ void main() {
     await settle(tester);
     expect(bench.chosenModel, theirs.modelId, reason: 'tapping a model chose nothing');
 
-    await tester.tap(find.widgetWithText(ZButton, 'Continue'));
-    await settle(tester);
     await tester.tap(find.textContaining('Send to').first);
     await settle(tester);
 

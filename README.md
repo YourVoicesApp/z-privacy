@@ -28,7 +28,7 @@ never sent                     the only thing that leaves
 The path a person walks:
 
 ```text
-Import → Scan → Review → Protect → Review what will leave → AI → Restore
+Import → Scan → Review → Protect → Choose who answers → AI → Restore
 ```
 
 ## Status

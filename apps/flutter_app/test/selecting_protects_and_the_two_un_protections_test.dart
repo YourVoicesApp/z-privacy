@@ -150,7 +150,13 @@ void main() {
     final inTheCard = find.descendant(of: find.byType(WhySheet), matching: find.byType(Text));
     final words = tester.widgetList<Text>(inTheCard).map((t) => t.data ?? '').toList();
     expect(
-      words.where((w) => w.contains('in this conversation')),
+      // **The owner's own name for it, and he changed it on 17 October**:
+      // rule 55-هـ makes the container a «session» everywhere a sentence
+      // names it, and this option is one of the places he pointed at. The
+      // helper that builds the string keeps its old identifier, because the
+      // core's `Scope::Conversation` does — the glass is what the rule is
+      // about.
+      words.where((w) => w.contains('in this session')),
       isNotEmpty,
       reason: 'the second choice is not offered by the name the owner gave it: $words',
     );
@@ -183,7 +189,7 @@ void main() {
         reason: 'the uncovered place does not read as the document reads');
   });
 
-  testWidgets('«in this conversation» uncovers every place that carries the token', (tester) async {
+  testWidgets('«in this session» uncovers every place that carries the token', (tester) async {
     final bench = await ready(tester);
     await tester.runAsync(() => bench.select(_spanOf('Lindqvist')));
     await settle(tester, rounds: 2);

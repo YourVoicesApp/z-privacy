@@ -136,7 +136,7 @@ void main() {
     // count and the handle. It does **not** say «protected before Z Privacy
     // began keeping every protected word», because that cause belongs to the
     // names whose conversation is here and these have none (089 rule 4).
-    final said = find.textContaining('3 names from a conversation this vault does not hold');
+    final said = find.textContaining('3 names from a session this vault does not hold');
     expect(said, findsOneWidget, reason: 'the line that says where these names are from is not drawn');
     final line = tester.widget<Text>(said.first).data!;
     expect(line, contains('7f3a'), reason: 'the line does not name the namespace: $line');

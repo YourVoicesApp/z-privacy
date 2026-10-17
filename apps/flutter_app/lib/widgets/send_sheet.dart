@@ -1,5 +1,14 @@
-// Review Before Send — the last screen before anything leaves the device, and
-// the three ways out of it.
+// Who Answers — the last screen before anything leaves the device, and the
+// three ways out of it.
+//
+// **17 October, rule 60: the review page is gone.** The sheet used to open on
+// a page of its own that showed the outgoing text — «Review before send», then
+// «Continue» to the doors. The owner's ruling removes it: what will leave is
+// read in the preview side of the work surface, where it already stands word
+// for word («Safe — AI will receive»), and a second copy of it one press away
+// was the same text asked for twice. What the page also held — which model
+// answers and what travels to it — moved to the head of this one, so the
+// choice still stands above the doors and not behind a page.
 //
 // The boards and the owner both insist on the same thing here: Z Privacy must
 // not look like a product for people who know what an API key is. So this sheet
@@ -25,9 +34,10 @@
 // Layout is a window, not a font size. At 1280×720 the sheet is:
 //
 //   header   fixed
-//   body     the only scroll — preview on the first page, the three doors on the
-//            second. The payload never shares a scroller with the actions.
-//   footer   Cancel / Back / Continue, always on screen
+//   body     the only scroll — the choice and the three doors. The outgoing
+//            text is not in here at all (rule 60), so nothing shares a
+//            scroller with the actions.
+//   footer   Cancel, always on screen
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -41,7 +51,6 @@ import 'package:zprivacy/core/the_clipboard.dart' show andTheClipboardIsEmpty;
 import 'package:zprivacy/src/rust/api/core.dart' show coreVersion;
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
-import 'package:zprivacy/widgets/document_text.dart';
 
 /// **The per-kind tally the protected PDF's footer states — 068.**
 ///
@@ -78,6 +87,56 @@ Map<String, int> footerTally(PayloadView payload, String Function(Kind) nameOf) 
   return out;
 }
 
+/// **The way into the doors, and it opens the preview side first.**
+///
+/// Rule 60 takes away the page that showed the outgoing text, on the ground
+/// that the work surface shows it already. That ground is a premise about the
+/// screen, and the screen can refuse it: the preview side is closed by a press
+/// and stays closed — `safeColumnOpen` is remembered in `zcfg` — so a door
+/// that opened this sheet over a closed side would stand a person on the three
+/// exits with the text they are about to send nowhere on the glass. The rule
+/// would have been kept in the code and broken on the glass.
+///
+/// So the order is written **once, here**, where a guard can drive it, and not
+/// in the widgets that draw the doors. That is this house's oldest lesson about
+/// a law written at one door out of several.
+///
+/// **This opens the side; nothing here ever closes it.** The owner's rule of
+/// 046/K — «الطوي والفتح لا يتم تلقائياً، يتم بالضغط على إشارة محددة» — is
+/// about the app moving that state by itself: a panel opening, a window
+/// narrowing, a document arriving, a scan ending. Those four are measured in
+/// `the_states_change_only_by_a_press_test.dart` and none of them is this. A
+/// press on a door whose own law is «what leaves is seen» is a press, and the
+/// test names it as the fifth case so that the two rules stand side by side
+/// rather than looking like a contradiction.
+///
+/// **The chat's door does not come through here**, and that is written down
+/// rather than left to be noticed: `home.dart` has no preview side at all, so
+/// there is nothing for this function to open for it. The owner is being asked
+/// whether that press splits in two — type, see what will leave, then choose
+/// who answers. Until he rules, the chat opens the sheet as it always did and
+/// `the_chat_door_shows_what_will_leave_test.dart` is parked with his question
+/// as its reason.
+Future<bool?> theWayToTheDoors(
+  BuildContext context, {
+  required Ground ground,
+  required Workbench bench,
+  VoidCallback? onSettings,
+}) async {
+  final config = ground.config;
+  if (config != null && !config.safeColumnOpen) {
+    await ground.saveConfig(config.with_(safeColumnOpen: true));
+  }
+  // The config write is a round trip to the core, so the context this was
+  // called with may be gone by now.
+  if (!context.mounted) return null;
+  return showDialog<bool>(
+    context: context,
+    builder: (_) =>
+        SendSheet(bench: bench, ground: ground, onSettings: onSettings),
+  );
+}
+
 class SendSheet extends StatefulWidget {
   const SendSheet({
     super.key,
@@ -106,17 +165,20 @@ class SendSheet extends StatefulWidget {
   /// running the tests never writes into the person's documents.
   final String? saveFolder;
 
-  /// The payload preview — the only region that accepts a wheel on the first page.
-  static const previewKey = ValueKey<String>('send-sheet-preview');
+  /// The sheet's one scrolling region — the choice and the three doors.
+  ///
+  /// It was `previewKey` while the sheet had two pages and the first one was
+  /// the outgoing text; rule 60 took that page away, and the key is named
+  /// after what is actually in here so that a guard cannot wheel one thing
+  /// while believing it wheels another.
+  static const bodyKey = ValueKey<String>('send-sheet-body');
 
-  /// Cancel / Back / Continue. Never inside the preview scroller.
+  /// Cancel. Never inside the body's scroller.
   static const footerKey = ValueKey<String>('send-sheet-footer');
 
   @override
   State<SendSheet> createState() => _SendSheetState();
 }
-
-enum _SheetPage { review, ai }
 
 class _SendSheetState extends State<SendSheet> {
   @override
@@ -128,7 +190,7 @@ class _SendSheetState extends State<SendSheet> {
   }
 
   final _pasted = TextEditingController();
-  final _previewScroll = ScrollController();
+  final _bodyScroll = ScrollController();
 
   /// What the birth said, once one has happened at this sheet — the core's own
   /// number in the house's one wording. Kept rather than recomputed: asking
@@ -257,12 +319,11 @@ class _SendSheetState extends State<SendSheet> {
     });
   }
   String? _trouble;
-  _SheetPage _page = _SheetPage.review;
 
   @override
   void dispose() {
     _pasted.dispose();
-    _previewScroll.dispose();
+    _bodyScroll.dispose();
     super.dispose();
   }
 
@@ -305,12 +366,8 @@ class _SendSheetState extends State<SendSheet> {
                   children: [
                     _header(payload),
                     Container(height: 1, color: Zc.line),
-                    Expanded(
-                      child: _page == _SheetPage.review
-                          ? _preview(payload, open)
-                          : _aiDoors(payload, open, connected),
-                    ),
-                    _footer(context, open: open, payload: payload),
+                    Expanded(child: _aiDoors(payload, open, connected)),
+                    _footer(context),
                   ],
                 ),
               );
@@ -330,7 +387,12 @@ class _SendSheetState extends State<SendSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Review before send', style: Zc.h2),
+                // **The name of what is left** — rule 60. «Review before
+                // send» named the page this sheet no longer has, and the
+                // reviewing is done on the work surface; what happens here is
+                // choosing who answers. The counts line below it is unchanged,
+                // and it is the only place the character count is said.
+                const Text('Who answers', style: Zc.h2),
                 const SizedBox(height: 4),
                 Text(
                   payload == null
@@ -347,48 +409,6 @@ class _SendSheetState extends State<SendSheet> {
             color: Zc.ink3,
             onPressed: () => Navigator.of(context).pop(),
           ),
-        ],
-      ),
-    );
-  }
-
-  /// Payload only. Suggestions and a trouble line belong here because they
-  /// describe the text; the doors do not.
-  Widget _preview(PayloadView? payload, int open) {
-    return SingleChildScrollView(
-      key: SendSheet.previewKey,
-      controller: _previewScroll,
-      padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _ModelAndMode(bench: widget.bench, ground: widget.ground, onSettings: widget.onSettings),
-          const SizedBox(height: 16),
-          if (open > 0) ...[
-            Trouble(
-              open == 1
-                  ? 'One suggestion is still open. It stands in the text below as written, '
-                        'and nothing can be sent until you answer it. There is no «send anyway».'
-                  : '$open suggestions are still open. They stand in the text below as '
-                        'written, and nothing can be sent until you answer them. There is no '
-                        '«send anyway».',
-            ),
-            const SizedBox(height: 16),
-          ],
-          const Eyebrow('This is what would leave'),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: Zc.panel(fill: Zc.card, radius: 10),
-            child: payload == null
-                ? const Text('Nothing is built.', style: Zc.small)
-                : SafeText(text: payload.text, chips: false),
-          ),
-          if (_trouble != null) ...[
-            const SizedBox(height: 14),
-            Trouble(_trouble!),
-          ],
         ],
       ),
     );
@@ -491,10 +511,37 @@ class _SendSheetState extends State<SendSheet> {
     List<ProviderFact> connected,
   ) {
     return SingleChildScrollView(
+      key: SendSheet.bodyKey,
+      controller: _bodyScroll,
       padding: const EdgeInsets.fromLTRB(22, 16, 22, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // **The choice stands above the doors** — the owner's own hand on
+          // this sheet («a door you can see»), kept through rule 60. It was
+          // above the outgoing text on a first page; the text is read on the
+          // work surface now, and the rule it was built for — the model and
+          // the mode are not behind a second page — holds here because there
+          // is no second page left to put them behind.
+          _ModelAndMode(bench: widget.bench, ground: widget.ground, onSettings: widget.onSettings),
+          const SizedBox(height: 16),
+          // **A warning before sending stays where the sending is.** The work
+          // surface says this too, in its own words, beside the text that is
+          // standing as written — but this sheet is a modal route over it, so
+          // with the sheet open that sentence is behind the barrier and off the
+          // glass. The law it carries is the one this product rests on, so it
+          // is said where the press is.
+          if (open > 0) ...[
+            Trouble(
+              open == 1
+                  ? 'One suggestion is still open. It stands in the text as written, '
+                        'and nothing can be sent until you answer it. There is no «send anyway».'
+                  : '$open suggestions are still open. They stand in the text as '
+                        'written, and nothing can be sent until you answer them. There is no '
+                        '«send anyway».',
+            ),
+            const SizedBox(height: 16),
+          ],
           _whoseNames(payload),
           if (_begun != null) ...[
             const SizedBox(height: 8),
@@ -776,11 +823,9 @@ class _SendSheetState extends State<SendSheet> {
     );
   }
 
-  Widget _footer(
-    BuildContext context, {
-    required int open,
-    required PayloadView? payload,
-  }) {
+  /// Cancel, and nothing else. It takes no payload and no count because it
+  /// decides nothing about them — rule 60 left this footer one job.
+  Widget _footer(BuildContext context) {
     return Container(
       key: SendSheet.footerKey,
       width: double.infinity,
@@ -796,31 +841,9 @@ class _SendSheetState extends State<SendSheet> {
             onPressed: () => Navigator.of(context).pop(),
           ),
           const Spacer(),
-          if (_page == _SheetPage.ai) ...[
-            ZButton(
-              label: 'Back',
-              onPressed: () => setState(() {
-                _page = _SheetPage.review;
-                _pasting = false;
-              }),
-            ),
-            const SizedBox(width: 10),
-          ],
-          if (_page == _SheetPage.review)
-            ZButton(
-              label: 'Continue',
-              filled: true,
-              // Open suggestions do not shut this door any more: they shut the
-              // send, where the sentence beside the button says so. The reason
-              // was once that a person who cannot reach the doors cannot
-              // connect a provider either — which stopped being the reason on
-              // 8 October, when connecting moved to the settings panel. The
-              // door still opens, because choosing **who answers** is not a
-              // reward for finishing the review.
-              onPressed: payload == null
-                  ? null
-                  : () => setState(() => _page = _SheetPage.ai),
-            ),
+          // **«Back» and «Continue» went with the page they moved between** —
+          // rule 60. One page needs no paging, and «Cancel» is the whole of
+          // what a footer owes a person here: a way out that takes nothing out.
         ],
       ),
     );

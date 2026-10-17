@@ -537,3 +537,103 @@ fn a_refused_press_leaves_the_blocks_working() {
         "the exemption a refused press wrote was sealed into the vault"
     );
 }
+
+// --------------------------------------------------------------- rule 59-أ
+
+/// **A hand protection after «Forget» does not bring the automatic one back**
+/// — rule 59-أ, the owner's word of 17 October.
+///
+/// This is the edge this round proposed and he ruled on, and he ruled «no» on
+/// the opposite reading: the only act that lifts an exemption is teaching the
+/// word in the vault again. A hand selection protects the word **where the
+/// hand was** — rule 11, the person's own doing — and that is the whole of
+/// what it does.
+///
+/// The two acts cannot be one because they are not the same size. A hand
+/// selection is a fact about one document. Automatic protection is a standing
+/// instruction about every document that comes after, and «Forget» is the act
+/// that withdrew it. Nothing but giving the instruction again gives it back —
+/// and reading a hand selection as «he wants it everywhere once more» would
+/// take a decision back on the person's behalf, in the one direction that
+/// **uncovers** nothing and **covers** what he uncovered on purpose.
+///
+/// `nothing_short_of_teaching_it_again_undoes_a_forget` measures the same
+/// edge against a rescan and a hand in another session. What is added here is
+/// the owner's own sequence, by name, and **the restart**: the question his
+/// «no» answers is what the file says tomorrow, not what memory says now.
+#[test]
+fn a_hand_protection_after_forget_does_not_restore_the_automatic_one() {
+    let _g = serial();
+    let _ground = Ground::fresh("by-hand-after-forget");
+    let profile = create_profile("Client A".to_string(), None).expect("a");
+
+    // 1 · the standing instruction, given the way a person gives it: a word
+    // protected «everywhere» from inside a document.
+    let taught = open_session(Some(profile.clone()), "de".to_string()).expect("session");
+    import_text(taught, DOC.to_string()).expect("import");
+    scan(taught).expect("scan");
+    protect(taught, span_of(DOC, WORD), Scope::Always, Kind::Project).expect("always");
+    close_session(taught).expect("close");
+    assert!(
+        protected_again(Some(&profile)),
+        "the control failed: the word was not protected automatically even before the «Forget»"
+    );
+    let held = blocks();
+
+    // 2 · «Forget everywhere», and the law of rule 59: a new document does not
+    // know the word any more.
+    let known = search_vault(WORD.to_string()).expect("search");
+    let card = entity(known[0].id).expect("card");
+    forget_value(known[0].id, card.values[0].id, true).expect("forget everywhere");
+    assert!(
+        !protected_again(Some(&profile)),
+        "«Forget everywhere» left the automatic protection standing"
+    );
+
+    // 3 · the hand, in a session of its own — begun by hand on purpose,
+    // because a bench opened while a session is open joins it and would mint
+    // the token the block already holds, so nothing would be written and this
+    // guard would pass by measuring nothing.
+    let by_hand = open_session(Some(profile.clone()), "de".to_string()).expect("session");
+    conversation_begin("a session after the forget".to_string(), Some(by_hand))
+        .expect("a session of its own");
+    import_text(by_hand, LATER.to_string()).expect("import");
+    scan(by_hand).expect("scan");
+    protect(by_hand, span_of(LATER, WORD), Scope::Once, Kind::Project).expect("by hand");
+    assert!(
+        !list_tokens(by_hand).expect("tokens").is_empty(),
+        "the hand protected nothing in its own document, so rule 11 broke and 59-أ is unmeasured"
+    );
+    close_session(by_hand).expect("close");
+
+    // 4 · rule 59-أ itself: the next document is still not asked to find the
+    // word by itself.
+    assert!(
+        !protected_again(Some(&profile)),
+        "a hand protection after «Forget» started the automatic protection again"
+    );
+
+    // 5 · and over a restart, because the exemption is a line in a file and
+    // the hand's own act wrote to that same file.
+    vault_lock().expect("lock");
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
+    assert!(
+        !protected_again(Some(&profile)),
+        "the vault came back from disk with the forgotten word hunting again"
+    );
+    assert!(
+        blocks() >= held,
+        "a block was deleted somewhere along this journey, and no act in it may delete one"
+    );
+
+    // 6 · the one way back, and it is the way in.
+    let again = open_session(Some(profile.clone()), "de".to_string()).expect("session");
+    import_text(again, DOC.to_string()).expect("import");
+    scan(again).expect("scan");
+    protect(again, span_of(DOC, WORD), Scope::Always, Kind::Project).expect("always again");
+    close_session(again).expect("close");
+    assert!(
+        protected_again(Some(&profile)),
+        "teaching the word in the vault again did not bring the automatic protection back"
+    );
+}

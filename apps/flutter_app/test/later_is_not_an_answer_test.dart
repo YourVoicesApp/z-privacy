@@ -134,7 +134,7 @@ void main() {
 
     // Send is still shut. The rule is not loosened.
     final send = tester.widget<ZButton>(
-      find.widgetWithText(ZButton, 'Review what will leave'),
+      find.widgetWithText(ZButton, 'Choose who answers'),
     );
     expect(send.onPressed, isNull, reason: 'the door opened with a question still open');
 
@@ -166,7 +166,7 @@ void main() {
 
     // The door is open now, and the way-through line is gone with the question.
     final send = tester.widget<ZButton>(
-      find.widgetWithText(ZButton, 'Review what will leave'),
+      find.widgetWithText(ZButton, 'Choose who answers'),
     );
     expect(send.onPressed, isNotNull, reason: 'the door stayed shut with nothing open');
     expect(find.byKey(_goKey), findsNothing);

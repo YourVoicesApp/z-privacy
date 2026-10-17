@@ -875,10 +875,17 @@ class _TopBar extends StatelessWidget {
                 // order. The sheet answers `true` when something actually
                 // left, so nothing else moves a person off their document:
                 // a cancel, a copy or a saved PDF leaves them where they are.
+                // **The order is not written here** — `theWayToTheDoors`
+                // holds it, where a guard can drive it: the preview side is
+                // opened first, because rule 60 took the sheet's own copy of
+                // the outgoing text away and this door can be pressed with
+                // that side closed.
                 onPressed: () async {
-                  final sent = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => SendSheet(bench: bench, ground: ground, onSettings: onSettings),
+                  final sent = await theWayToTheDoors(
+                    context,
+                    ground: ground,
+                    bench: bench,
+                    onSettings: onSettings,
                   );
                   if (sent == true) onHome();
                 },
@@ -1022,7 +1029,7 @@ class _ProfileSwitcherState extends State<ProfileSwitcher> {
               const Text('Profiles', style: Zc.h2),
               const SizedBox(height: 6),
               Text(
-                'Choose which client dictionary this conversation uses. The profile ID stays '
+                'Choose which client dictionary this session uses. The profile ID stays '
                 'inside the vault; the display name is what people see.',
                 style: Zc.small,
               ),
@@ -2123,31 +2130,40 @@ class _SafeFooter extends StatelessWidget {
             runSpacing: 9,
             children: [
               ZButton(
-                // «Review», not «Send»: this press opens the review sheet and
-                // nothing leaves. The owner's rule of 29 September — **a
-                // button's name describes the act its own press causes, not
-                // one that may happen two steps later.**
+                // **The name of the act this press causes** — the owner's rule
+                // of 29 September, applied again now that the act has changed.
                 //
-                // Not «Review & Send» either: after reviewing, a person may
-                // take the manual path with Copy Protected and never send at
-                // all, so «Send» would still be a promise we do not keep.
+                // It was «Review what will leave», and that was honest while
+                // the press opened a page showing the outgoing text. Rule 60
+                // took that page away: what will leave is read **here**, in
+                // the side this button stands in, and the press opens the
+                // three doors. So the name says choosing, which is what the
+                // sheet is now, and the reviewing is not promised by a button
+                // because it is already on the glass.
                 //
-                // And not the bare «Review», because the left column already
-                // has one — that opens the list of suggestions. Two buttons
-                // with one word meaning two things is a smaller version of the
-                // same fault. This names what the press shows: the exact text
-                // that would leave, which is the sheet's own first heading.
-                label: 'Review what will leave',
+                // Still not «Send»: a person may take the manual path with
+                // Copy Protected and never send at all, so «Send» would be a
+                // promise we do not keep. And still not the bare «Review»,
+                // which the left column already uses for the list of
+                // suggestions.
+                label: 'Choose who answers',
                 filled: true,
                 icon: Icons.fact_check_outlined,
                 // Disabled while anything is open — and the reason is beside it,
                 // because «send anyway» does not exist and never will.
+                //
+                // Through the same one hand as the top bar's door, although
+                // this press comes from inside the preview side and could not
+                // find it closed: two doors and one order, so that a reader
+                // does not have to check which of them keeps the law.
                 onPressed: open > 0
                     ? null
-                    : () => showDialog<bool>(
-                        context: context,
-                        builder: (_) => SendSheet(bench: bench, ground: ground, onSettings: onSettings),
-                      ),
+                    : () => unawaited(theWayToTheDoors(
+                        context,
+                        ground: ground,
+                        bench: bench,
+                        onSettings: onSettings,
+                      )),
                 hint: null,
               ),
               if (bench.answers.isNotEmpty && bench.showing == null)

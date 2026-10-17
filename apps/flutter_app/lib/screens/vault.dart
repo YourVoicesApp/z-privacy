@@ -334,7 +334,7 @@ class _VaultScreenState extends State<VaultScreen> {
                 if (widget.bench != null) ...[
                   ZButton(
                     key: ProfileSwitcher.door,
-                    label: 'Conversation profile',
+                    label: 'Session profile',
                     onPressed: () async {
                       await showDialog<void>(
                         context: context,
