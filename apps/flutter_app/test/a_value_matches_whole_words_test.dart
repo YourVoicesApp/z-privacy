@@ -64,7 +64,7 @@ void main() {
 
     await tester.binding.setSurfaceSize(const Size(1500, 1000));
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
     ));
     await settle(tester);
 
@@ -133,7 +133,7 @@ void main() {
 
     await tester.binding.setSurfaceSize(const Size(1500, 1000));
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
     ));
     await settle(tester);
 

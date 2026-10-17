@@ -27,7 +27,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/protecting.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/home.dart';
+import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/the_way_back.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -109,7 +109,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -219,7 +219,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -313,7 +313,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -413,7 +413,14 @@ void main() {
   // protected» is a state this screen cannot reach (G34, and
   // `z_core/tests/the_door_back.rs`).
 
-  testWidgets('the + menu offers the way back, and it is not the way in', (tester) async {
+  // **Where the two doors live since rule 70**, and they are in two different
+  // places now: the way in is the «+» at the top of the one screen, one press
+  // and no menu, and the way back is a room in the settings — the owner's own
+  // placing, «نجعل الإعدادات تحتوي على إدخال z-pdf».
+  //
+  // What this guard holds is the distinction 089 rule 5 exists for: they are
+  // two acts, and neither press reaches the other's act.
+  testWidgets('the way in and the way back are two presses, in two places', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1300, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final ground = Ground();
@@ -421,49 +428,49 @@ void main() {
     var toWorkOn = 0;
     var cameBack = 0;
 
+    // The work screen, with nothing on it — which is where a person who has
+    // just opened the app stands.
     await tester.pumpWidget(MaterialApp(
-      home: HomeScreen(
+      home: WorkspaceScreen(
+        bench: null,
         ground: ground,
-        version: 'z_core 0.1.0',
         onImport: () => toWorkOn += 1,
-        onReadBack: () => cameBack += 1,
         onType: (_) {},
-        onAsk: (_) async {},
         onVault: () {},
         onSettings: () {},
       ),
     ));
     await settle(tester, rounds: 2);
 
-    // The «+» is still one press and still says what it is for.
+    // The «+» is one press and still says what it is for — and it is **not**
+    // a menu any more: there is nothing to choose between.
     final plus = find.byTooltip('Add a document — PDF, Word or text');
     expect(plus, findsOneWidget);
     await tester.tap(plus);
     await tester.pumpAndSettle();
+    expect(toWorkOn, 1, reason: 'the + did not open the way in');
+    expect(find.text('z-pdf — read a protected document back'), findsNothing,
+        reason: 'the way back is still offered at the way in');
 
-    expect(find.text('Add a document'), findsOneWidget,
-        reason: 'the + lost the entry it has always had');
-    expect(
-      find.text('z-pdf — read a protected document back'),
-      findsOneWidget,
-      reason: 'the + menu has no «z-pdf» entry: 079 rule 3 is still unbuilt',
-    );
-
-    // **One press opens it**, and it is the other door: a file coming back is
-    // not a file to work on, and the two callbacks are two acts.
-    await tester.tap(find.text('z-pdf — read a protected document back'));
+    // And the way back is a press of its own, in the room that holds the key
+    // the reading needs.
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsScreen(
+          ground: ground,
+          room: SettingsRoom.vault,
+          onClose: () {},
+          onReadBack: () => cameBack += 1,
+        ),
+      ),
+    ));
+    await settle(tester, rounds: 2);
+    expect(find.text('z-pdf — read a protected document back'), findsOneWidget,
+        reason: 'the vault room does not offer the way back');
+    await tester.tap(find.text('Choose a z-pdf file'));
     await tester.pumpAndSettle();
-    expect(cameBack, 1, reason: 'the z-pdf entry opened nothing');
-    expect(toWorkOn, 0, reason: 'the z-pdf entry opened the ordinary import door');
-
-    // The control: the first entry still does what it did, so the number above
-    // is «the right door» and not «the only door left».
-    await tester.tap(plus);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Add a document'));
-    await tester.pumpAndSettle();
-    expect(toWorkOn, 1, reason: 'the ordinary import door stopped working');
-    expect(cameBack, 1);
+    expect(cameBack, 1, reason: 'the press in the settings opened nothing');
+    expect(toWorkOn, 1, reason: 'the way back went through the way in');
   });
 
   testWidgets('the reading names every token that stayed a token', (tester) async {

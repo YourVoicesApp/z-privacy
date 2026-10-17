@@ -110,16 +110,10 @@ Map<String, int> footerTally(PayloadView payload, String Function(Kind) nameOf) 
 /// test names it as the fifth case so that the two rules stand side by side
 /// rather than looking like a contradiction.
 ///
-/// **The chat has a hand of its own** — [theWayToTheDoorsFromTheChat], since
-/// the owner's rule 60-أ. It is not this one because there is no side to open
-/// there: the chat's outgoing text stands in a band above the composer, and
-/// the door is drawn inside that band.
-///
-/// What stood here until then said «the chat opens the sheet as it always
-/// did», which was true of the code and false of the glass: the sheet it opens
-/// is this one, and this one lost its text page, so **deleting that page took
-/// the «see what will leave» step out of the chat** — a breach standing in
-/// `2fb90b3`, not a thing deferred by it.
+/// **And it is the one hand again, since rule 70.** The chat had a hand of its
+/// own for one day — rule 60-أ, for a chat that had no preview side to open.
+/// The screen that had no preview side is gone, so this hand's law covers
+/// every door to the exits there is: see the note where the second one stood.
 Future<bool?> theWayToTheDoors(
   BuildContext context, {
   required Ground ground,
@@ -140,36 +134,18 @@ Future<bool?> theWayToTheDoors(
   );
 }
 
-/// **The chat's way into the doors — rule 60-أ, the owner, 17 October.**
-///
-/// The sibling of [theWayToTheDoors], holding the same law: nobody reaches the
-/// three exits without the outgoing text on the glass. What differs is how the
-/// text is kept there, and the difference is the shape of the two screens.
-///
-/// The work surface has a side that a press can close, so its hand opens it.
-/// The chat has no side: «Ask the AI» protects the line and draws it in a band
-/// above the composer, and **this door is drawn inside that band**. So there
-/// is no state in which the exits are reachable and the text is not — the law
-/// is held by the shape rather than by a flag somebody has to pass correctly,
-/// which is this house's own rule about making the wrong state
-/// unrepresentable. G42 reads that out of the source: every `SendSheet` in the
-/// app is built by one of these two hands, and the chat's hand is called from
-/// inside the widget that draws the text.
-///
-/// It opens nothing else and decides nothing else. A `Cancel` pops the sheet
-/// and leaves the band standing with the question still in the box.
-Future<bool?> theWayToTheDoorsFromTheChat(
-  BuildContext context, {
-  required Ground ground,
-  required Workbench bench,
-  VoidCallback? onSettings,
-}) {
-  return showDialog<bool>(
-    context: context,
-    builder: (_) =>
-        SendSheet(bench: bench, ground: ground, onSettings: onSettings),
-  );
-}
+// **The chat's own hand is gone, and so is the case it was written for** —
+// rule 70 settles rule 60-أ's first half.
+//
+// That rule split the press in two «في المحادثة، حيث لا جانب معاينة» — in the
+// chat, where there is no preview side. The first screen was that place: its
+// chat had no columns, so «Ask the AI» drew the outgoing text in a band above
+// the composer and the band carried the one door onward. One screen with three
+// parts has no such state — every question is asked beside the middle column
+// that draws what will leave — so the hand is deleted rather than kept for a
+// screen nobody can reach (rule 35), and [theWayToTheDoors] above is the one
+// hand again. The rule's other half is untouched and still measured: the AI
+// door on the work surface opens the preview side before the doors.
 
 class SendSheet extends StatefulWidget {
   const SendSheet({

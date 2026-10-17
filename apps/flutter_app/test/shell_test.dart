@@ -20,7 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/home.dart';
+import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/core/protecting.dart';
@@ -30,6 +30,7 @@ import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/widgets/tokens.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
+import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -55,7 +56,13 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('Home draws the ground as the core reports it, not as Dart guesses', (
+  // **The four tallies went with the first screen, and so did the one guard
+  // that read them** — rule 70. What they said is still said, in the room that
+  // is about the program rather than about a document: the vault's own state
+  // and its count of identities, and the build stamp that would otherwise have
+  // left the glass altogether. Same claim, same words, the surface the owner's
+  // ruling leaves standing.
+  testWidgets('the settings draw the ground as the core reports it, not as Dart guesses', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
@@ -63,88 +70,49 @@ void main() {
 
     final ground = Ground();
     late final VaultState vault;
-    late final List<PackRow> packs;
-    late final List<ProviderRow> providers;
+    late final int identities;
+    late final String stamp;
     await tester.runAsync(() async {
       await ground.refresh();
       // What the core says, asked directly. The screen must agree with these.
       vault = await z.vaultState();
-      packs = await z.packs();
-      providers = await z.providers();
+      identities = (await z.vaultSnapshot()).identityCount;
     });
+    // The core's own line, read outside the zone like everything else it says.
+    stamp = coreVersion();
 
     await tester.pumpWidget(
       MaterialApp(
-        home: HomeScreen(
-          ground: ground,
-          version: 'z_core 0.1.0',
-          onImport: () {},
-          onReadBack: () {},
-          onType: (_) {},
-          onAsk: (_) async {},
-          onVault: () {},
-          onSettings: () {},
+        home: Scaffold(
+          body: SettingsScreen(
+            ground: ground,
+            room: SettingsRoom.vault,
+            onClose: () {},
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Z Privacy'), findsOneWidget);
-    // 041-G — the home is the composer. «Import a document» and «New private
-    // session» were two buttons and one of them opened a sheet that asked a
-    // language first; the page is a box to write in now, with a «+» for a file,
-    // and the vault is still a press away.
-    // The box, by its key: 064/D put a second field on this page — the session
-    // question, while a person has no session — and the claim here is about
-    // the box a person writes in, not about how many fields the page has.
-    expect(find.byKey(HomeScreen.composer), findsOneWidget,
-        reason: 'the home is not a box to write in');
-    expect(find.byTooltip('Add a document — PDF, Word or text'), findsOneWidget);
-    expect(find.text('Open Z Vault'), findsOneWidget);
-    // No invented history: Home says what is kept, once, and says it in the
-    // form that is true right now. **064/E changed the sentence, not the
-    // claim:** a session keeps its conversation sealed in the vault since the
-    // core began writing turns, so «conversations are not saved» is the honest
-    // line only while no session is open — which is this journey's own state.
-    expect(find.text('LOCAL CONVERSATIONS'), findsNothing);
-    expect(
-      find.textContaining(
-        'No session is open — nothing of this conversation is kept',
-      ),
-      findsOneWidget,
-    );
-
-    // The pack's label is the pack's own, never a string typed into a screen —
-    // and it is the pack **in use**, read from the settings, not the first one
-    // installed. It also says what the app will do with it, which depends on a
-    // setting rather than on a sentence someone wrote once.
-    expect(packs, isNotEmpty, reason: 'this build carries a pack');
-    final inUse = packs.firstWhere(
-      (p) => p.id == ground.config?.packId,
-      orElse: () => packs.first,
-    );
-    final scans = ground.config?.scanOnImport ?? true;
-    expect(
-      find.text(
-        '${inUse.label} · ${scans ? "scan on import" : "scan when you ask"}',
-      ),
-      findsOneWidget,
-    );
-
-    // The provider count on screen is the core's count.
-    final connected = providers.where((p) => p.connected).length;
-    expect(find.text('$connected'), findsWidgets);
-
-    // And the vault line says the state the core is in — not a friendlier version
+    // The vault line says the state the core is in — not a friendlier version
     // of it. A locked vault must look locked.
     switch (vault) {
       case VaultState.unlocked:
-        expect(find.textContaining('identities the app knows'), findsOneWidget);
+        expect(find.text('Unlocked · $identities identities'), findsOneWidget,
+            reason: 'the room does not say the count the core reports');
       case VaultState.locked:
         expect(find.text('Locked'), findsOneWidget);
       case VaultState.absent:
         expect(find.text('None'), findsOneWidget);
     }
+
+    // **The build stamp, verbatim.** It is the core's own line and the one
+    // thing a person sends with a report about a program that misbehaved; it
+    // stood in the head of the first screen, and it stands in the head of this
+    // panel for exactly as long as there is a panel.
+    expect(find.text(stamp), findsOneWidget,
+        reason: 'the build stamp is nowhere on the glass since the first screen went');
+    expect(stamp, contains('z_core'), reason: 'the core stopped naming itself, so the line above proves nothing');
   });
 
   testWidgets('the Workspace band reports the scan the core ran, number for number', (
@@ -185,7 +153,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -243,7 +211,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -286,7 +254,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -373,7 +341,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -494,7 +462,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -613,7 +581,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -688,7 +656,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -757,7 +725,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -838,7 +806,7 @@ void main() {
           home: WorkspaceScreen(
             bench: bench,
             ground: ground,
-            onHome: () {},
+            onImport: () {}, onType: (_) {},
             onVault: () {},
             // Given a panel to open because this test asks the sheet for its
             // way to the settings, and a surface with nowhere to send the
@@ -1024,7 +992,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
         ),
       );
       await settle(tester);
@@ -1083,7 +1051,7 @@ void main() {
     final clip = _ClipboardProbe(tester)..install();
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -1231,7 +1199,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
         ),
       );
       await settle(tester);
@@ -1469,7 +1437,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -1694,7 +1662,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester, rounds: 2);
@@ -2002,7 +1970,7 @@ Future<void> reviewJourney(
 
   await tester.pumpWidget(
     MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
     ),
   );
   await tester.pumpAndSettle();

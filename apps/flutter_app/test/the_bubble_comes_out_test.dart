@@ -86,7 +86,7 @@ void main() {
     // A laptop window, not a test bench.
     await tester.binding.setSurfaceSize(const Size(1280, 800));
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
     ));
     await settle(tester);
     expect(bench.suggested, isNotEmpty, reason: 'nothing is waiting, so this proves nothing');
@@ -158,7 +158,7 @@ void main() {
 
     await tester.binding.setSurfaceSize(const Size(1500, 1000));
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () => toTheVault++),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () => toTheVault++),
     ));
     await settle(tester);
 

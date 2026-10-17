@@ -15,11 +15,9 @@ import 'package:flutter/services.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/the_clipboard.dart';
 import 'package:zprivacy/screens/first_run.dart';
-import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/screens/workspace.dart';
-import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
@@ -63,14 +61,13 @@ class _ShellState extends State<ZShell> {
   late final Ground _ground = widget.ground ?? Ground();
   Workbench? _bench;
 
-  /// **The home's own conversation** (046/G).
-  ///
-  /// A second bench, beside the document's, and deliberately not the same one:
-  /// `_bench` being non-null is what puts the Workspace on screen, so a chat
-  /// held there would throw a person out of the home the moment they asked
-  /// something. This one is opened at the first question and lives until the
-  /// app closes, which is what «conversations are not saved» already promises.
-  Workbench? _chat;
+  // **The home's own second conversation is gone** (046/G, deleted by rule
+  // 70). It existed because `_bench` being non-null was what put the Workspace
+  // on screen: a chat held there would have thrown a person out of the home
+  // the moment they asked something, so the home opened a bench of its own. The
+  // home is gone, the Workspace is the screen, and one bench is the whole of
+  // what a person is working on — so the second one is deleted rather than
+  // kept for a screen nobody can reach (rule 35).
   String? _trouble;
 
   /// The report the core wrote about the file it would not open. Built at the
@@ -170,61 +167,22 @@ class _ShellState extends State<ZShell> {
     _window.dispose();
     _ground.removeListener(_groundChanged);
     _bench?.dispose();
-    _chat?.dispose();
     _ground.dispose();
     super.dispose();
   }
 
-  /// Read the home's line into the conversation and scan it.
-  ///
-  /// The vault gate is the same one `_begin` holds and for the same reason
-  /// (041-N, the owner: «you cannot begin without an open vault») — the door
-  /// opens instead of the work, and asking a model is beginning work. The
-  /// session is opened once and reused, so the answers of one conversation
-  /// stay in it; the text of each question replaces the last, which is what
-  /// the core's one-document-per-session shape already means.
-  ///
-  /// It scans and stops. What happens next belongs to the screen, because it
-  /// depends on what the scan found — and the one thing that may not happen
-  /// here is sending.
-  Future<void> _askFromHome(String text) async {
-    if (_ground.vault != VaultState.unlocked) {
-      setState(() => _vaultOpen = true);
-      return;
-    }
-    // **One rule, both doors** — 080. This read `config.packId` and never
-    // looked at the session at all, which is the whole of the owner's finding:
-    // a German conversation read with an English eye. Since rule 57 the same
-    // one function also **asks**, when the text about to be read is the first
-    // in a session that does not exist yet.
-    final packId = await _theLanguageOfTheTextToCome();
-    if (packId == null || !mounted) return;
-    try {
-      var chat = _chat;
-      if (chat == null || chat.packId != packId) {
-        // The language the session holds, or the application's — and a change
-        // of either opens a new bench rather than scanning tomorrow's question
-        // with yesterday's language.
-        final session = await z.openSession(profileId: null, packId: packId);
-        chat?.dispose();
-        chat = Workbench(session: session, profileId: null, packId: packId);
-      }
-      await z.importText(session: chat.session, text: text);
-      await _theDocumentHasEntered(chat);
-      if (!mounted) return;
-      setState(() {
-        _chat = chat;
-        _trouble = null;
-        _troubleReport = null;
-      });
-    } on ApiError catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _trouble = humanMessage(e);
-        _troubleReport = null;
-      });
-    }
-  }
+  // **«Ask the AI» from the home is gone with the home** — rule 70, and it
+  // takes rule 60-أ's band with it: that rule split the press in two «في
+  // المحادثة، حيث لا جانب معاينة» — in the chat, where there is no preview
+  // side — and after rule 70 there is no such place. The one screen always has
+  // the middle column, so the law «you see what will leave, then you choose
+  // who answers» is kept by the surface itself, which is the rule's other half
+  // («وزر AI في سطح العمل يفتح جانب المعاينة دائماً قبل الأبواب») and still
+  // measured in G42.
+  //
+  // What a person writes at the top of the screen now enters the preview, the
+  // same door a file comes in by — `_begin(typing: true)` — and is asked about
+  // from the middle column like everything else.
 
   /// **The language the next text is read with** — rule 57, and the one place
   /// that decides it for every door on this screen.
@@ -512,7 +470,7 @@ class _ShellState extends State<ZShell> {
   /// it at all**. The core's door takes no session, which is what makes «never
   /// scanned, never protected» a thing this screen cannot get wrong (G34).
   ///
-  /// The vault gate is the same one `_begin` and `_askFromHome` hold, and here
+  /// The vault gate is the same one `_begin` holds, and here
   /// it is also 079 rule 8: a locked vault is a standing door, because the key
   /// to a z-pdf's meaning lives in one place. The door opens instead of a
   /// sentence about why nothing came back.
@@ -554,12 +512,9 @@ class _ShellState extends State<ZShell> {
     }
   }
 
-  void _home() {
-    final bench = _bench;
-    setState(() => _bench = null);
-    bench?.dispose();
-    _ground.refresh();
-  }
+  // **There is no way home, because there is nowhere else to be** — rule 70.
+  // This emptied the bench and let the first screen come back; both the press
+  // (the «Documents» arrow) and the key (Alt+Left) are deleted with it.
 
   @override
   Widget build(BuildContext context) {
@@ -597,6 +552,11 @@ class _ShellState extends State<ZShell> {
               // here, exactly as the «+» and «z-pdf» presses do.
               onOpenKept: (number, which, chat) =>
                   unawaited(_openKept(number, which, chat)),
+              // **«z-pdf» — the door back, from the room it lives in now**
+              // (rule 70). The press travels here for the same reason
+              // `onOpenKept` does: only the shell may open a file chooser,
+              // and the reading stands over everything.
+              onReadBack: () => unawaited(_readBack()),
               onClose: () {
                 setState(() => _settingsOpen = false);
                 _ground.refresh();
@@ -680,31 +640,34 @@ class _ShellState extends State<ZShell> {
         },
       );
     }
-    final bench = _bench;
-    if (bench != null) {
-      return WorkspaceScreen(
-        bench: bench,
-        ground: _ground,
-        onHome: _home,
-        onVault: () => setState(() => _vaultOpen = true),
-        onSettings: () => setState(() => _settingsOpen = !_settingsOpen),
-        settingsOpen: _settingsOpen,
-      );
-    }
+    // **One screen, and it is this one** — rule 70, the owner: «نلغي الشاشة
+    // الأولى… ليصبح التطبيق فقط ثلاثة أقسام في شاشة واحدة». There is no
+    // branch here any more: the Workspace is what the app is, with or without
+    // a document, and the two ways in stand at the top of it.
+    //
+    // What was lost with the first screen is worth naming, because none of it
+    // was asked for and none of it is hidden: the four tallies (identities,
+    // profiles, providers, pack), the home's own second conversation, and the
+    // «+» menu's z-pdf entry, which is in Settings now (rule 70 again).
     return Stack(
       children: [
-        HomeScreen(
+        WorkspaceScreen(
+          bench: _bench,
           ground: _ground,
-          version: coreVersion(),
-          chat: _chat,
           onImport: () => _begin(typing: false),
-          onReadBack: () => unawaited(_readBack()),
           onType: (text) => _begin(typing: true, text: text),
-          onAsk: _askFromHome,
           onVault: () => setState(() => _vaultOpen = true),
           onSettings: () => setState(() => _settingsOpen = !_settingsOpen),
           settingsOpen: _settingsOpen,
         ),
+        // **The refusal stands over the work, where the press was** — and it
+        // is this screen's because this screen holds the doors that refuse: a
+        // file of a kind no reader here has, a document the core would not
+        // open, and the report a person can send that is not the document.
+        //
+        // It was drawn on the first screen until rule 70. The band itself is
+        // unchanged, and so is the one thing about it that matters: a press on
+        // it takes it away.
         if (_trouble != null)
           Positioned(
             left: 0,

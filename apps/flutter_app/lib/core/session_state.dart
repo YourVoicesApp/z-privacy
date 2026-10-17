@@ -130,6 +130,24 @@ class Ground extends ChangeNotifier {
   /// under it are one answer rather than two that can disagree.
   Map<int, List<KeptRow>> kept = const {};
 
+  /// **What each session's own turns say about what it holds** — rule 69, the
+  /// owner, 17 October 2026: «قائمة الجلسة تسجّل البابين» — the session list
+  /// records both doors.
+  ///
+  /// By session number, and read beside [kept] from the same door, so a
+  /// document and the line under it are one answer rather than two that can
+  /// disagree.
+  ///
+  /// **Only where there is something to say.** A session whose row reports no
+  /// exchanges, or which holds nothing in its preview, is not read at all: each
+  /// reading is a sealed file, and the row's own count already answers «is
+  /// there anything to ask about».
+  ///
+  /// **Asked with no bench**, which is both cheaper and tighter than passing
+  /// one: nothing is restored, so no value crosses the boundary for a line that
+  /// only says whether a document was sent and answered.
+  Map<int, List<TurnRow>> turns = const {};
+
   /// Which session is open, by number. `None` until the first one is begun or
   /// entered — and `None` again after a lock, because the core forgets the
   /// number with the key rather than leaving one no key opens.
@@ -285,14 +303,23 @@ class Ground extends ChangeNotifier {
         // 089 rule 9. One call per session, which is one sealed file read per
         // session: the same cost the row's own «N exchanges» already pays.
         final held = <int, List<KeptRow>>{};
+        // **Rule 69's half of the same loop.** One more sealed read per
+        // session that can answer, and none for a session that cannot: no
+        // exchanges, or nothing kept in the preview to say it about.
+        final said = <int, List<TurnRow>>{};
         for (final row in sessions) {
           held[row.number] = await z.keptDocuments(number: row.number);
+          if (row.turns > 0 && held[row.number]!.isNotEmpty) {
+            said[row.number] = await z.conversationTurns(number: row.number, bench: null);
+          }
         }
         kept = held;
+        turns = said;
       } else {
         sessions = const [];
         openSession = null;
         kept = const {};
+        turns = const {};
       }
       rememberKinds(kinds);
       trouble = null;
@@ -2095,6 +2122,48 @@ Future<WhatMayLeave> beginThenAsk(
     return WhatMayLeave(said: out.said, renamed: out.renamed, refused: bad);
   }
   return out;
+}
+
+/// **Both doors of one kept document, in a line** — rule 69, the owner, 17
+/// October 2026: «تحت الوثيقة التي دخلت: أنها أُرسلت للذكاء الاصطناعي وأُجيبت».
+///
+/// Worded here rather than in the room, where a test can read it without a
+/// panel — the same place `sessionBegunSaid` is worded, and for the same
+/// reason.
+///
+/// `null` means **the turns say nothing about this document**, and that covers
+/// two different silences on purpose:
+///
+///   * nothing was sent about it — the ordinary state of a document a person is
+///     still working on;
+///   * and the turns **cannot** say. A turn records what it was about as a
+///     file's name or as «the person typed it» (`TurnDocument`), never as the
+///     kept document's own number — so two kept files with one name, or two
+///     written texts in one session, are a question this data cannot answer.
+///     A line under the wrong document would be worse than no line, so the
+///     answer is silence.
+///
+/// **The exact anchor is one field in the core**: the kept number on the turn,
+/// written where the turn is written. Until it exists this is as close as the
+/// glass can come without guessing — and it never guesses.
+String? theDoorsOfAKeptDocument(KeptRow doc, List<KeptRow> all, List<TurnRow> turns) {
+  // Can this document be told from its neighbours at all?
+  final mine = doc.chat
+      ? all.where((other) => other.chat).length == 1
+      : doc.name.isNotEmpty && all.where((other) => !other.chat && other.name == doc.name).length == 1;
+  if (!mine) return null;
+  bool about(TurnRow turn) => switch (turn.document) {
+        TurnDocument_Typed() => doc.chat,
+        TurnDocument_Named(:final name) => !doc.chat && name == doc.name,
+        TurnDocument_NotRecorded() => false,
+      };
+  final its = turns.where(about).toList();
+  if (its.isEmpty) return null;
+  // One line for the document, not one per turn: «sent» is about the document
+  // and «answered» is about whether any of its exchanges came back.
+  return its.any((turn) => turn.answer.isNotEmpty)
+      ? 'sent to AI · answered'
+      : 'sent to AI · no answer yet';
 }
 
 /// The columns a table carried that this build could not name a kind for.

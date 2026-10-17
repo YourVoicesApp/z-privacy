@@ -19,7 +19,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
-import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -63,7 +62,7 @@ void main() {
     });
 
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () => toTheVault++),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () => toTheVault++),
     ));
     await settle(tester);
 
@@ -168,12 +167,17 @@ void main() {
     // The way back runs through the core: close, refresh, and a frame for the
     // shell to notice.
     await settle(tester, rounds: 8);
-    expect(find.byType(HomeScreen), findsOneWidget, reason: 'the vault did not lead on to Home');
+    // **And it leads on to the one screen** — rule 70. It led to Home until
+    // 17 October; what is behind the vault now is the work itself, with
+    // nothing in it and the way in at the top of it.
+    expect(find.byType(WorkspaceScreen), findsOneWidget,
+        reason: 'the vault did not lead on to the work');
+    expect(find.text('Write or paste your text here…'), findsOneWidget,
+        reason: 'the way in is not on the screen the vault leads to');
 
-    // 041-G — the box is the home: no sheet, no question, just the text.
-    // By key since 064/D: this page has a second field while a person has no
-    // session — the session question — and it comes first in the tree.
-    await tester.enterText(find.byKey(HomeScreen.composer), _doc);
+    // 041-G — the box is the way in: no sheet, no question, just the text.
+    // By key, because this screen has more than one field in it.
+    await tester.enterText(find.byKey(WorkspaceScreen.composer), _doc);
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Open and scan'));
     await settle(tester);

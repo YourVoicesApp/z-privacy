@@ -479,7 +479,7 @@ void main() {
           home: WorkspaceScreen(
             bench: bench,
             ground: ground,
-            onHome: () {},
+            onImport: () {}, onType: (_) {},
             onVault: () {},
             onSettings: () => askedForSettings++,
             settingsOpen: panelStanding,

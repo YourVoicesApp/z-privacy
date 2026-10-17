@@ -21,12 +21,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
-import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
+import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
@@ -157,7 +157,7 @@ Future<Ground> aDocumentOnTheBench(WidgetTester tester, String name) async {
   // while a person has no session and comes **first** in the tree, so this
   // reach — «the first field on the page» — was putting the document into the
   // session's name field and opening nothing.
-  await tester.enterText(find.byKey(HomeScreen.composer), _doc);
+  await tester.enterText(find.byKey(WorkspaceScreen.composer), _doc);
   await settle(tester, rounds: 1);
   await tester.tap(find.text('Open and scan'));
   await settle(tester);
@@ -215,6 +215,38 @@ void main() {
     expect(box.right, wide.width, reason: 'the panel is not against the right edge');
     expect(box.top, 0, reason: 'the panel does not start at the top');
     expect(box.bottom, wide.height, reason: 'the panel does not reach the bottom');
+  });
+
+  // **The build stamp, in the head of the panel** — rule 70, 17 October.
+  //
+  // It stood in the head of the first screen: «z_core 0.1.0 · date · sha», the
+  // core's own line, and the one thing a person sends with a report about a
+  // program that misbehaved. Deleting that screen would have taken it off the
+  // glass altogether, so it moved to the head of the one panel that is about
+  // the program rather than about a document — and this is the guard
+  // `the_session_stands_in_the_head_test.dart` points at, where the old one
+  // measured it in the chat's head.
+  testWidgets('the panel’s head carries the build stamp the first screen used to', (tester) async {
+    await tester.binding.setSurfaceSize(wide);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await aDocumentOnTheBench(tester, 'the-stamp');
+    await tester.tap(_door);
+    await settle(tester);
+    expect(find.byType(SettingsScreen), findsOneWidget, reason: 'the settings did not open');
+
+    final stamp = coreVersion();
+    expect(stamp, contains('z_core'),
+        reason: 'the core stopped naming itself, so the reading below proves nothing');
+    final line = find.text(stamp);
+    expect(line, findsOneWidget, reason: 'the build stamp is nowhere on the glass');
+    // In the panel's own head, which is where it is reached for: inside the
+    // panel, and in its top strip rather than somewhere down a room.
+    final rect = tester.getRect(line);
+    final panel = tester.getRect(find.byType(SettingsScreen));
+    expect(rect.left, greaterThanOrEqualTo(panel.left),
+        reason: 'the stamp is outside the panel: $rect against $panel');
+    expect(rect.top, lessThan(60), reason: 'the stamp is not in the head of the panel: $rect');
   });
 
   // ---------------------------------------------------------------- guard b

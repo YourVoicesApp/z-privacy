@@ -38,11 +38,21 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('the way back is a button a person can see, and Alt+Left is the same door', (tester) async {
+  // **The way back is gone, and that is rule 70, not a regression** — the
+  // owner: «لا أسهم بين شاشات لأنه لا شاشات». This guard measured an arrow, a
+  // word, a tooltip naming Alt+Left, and the mark as a second door to the same
+  // place; there is one screen now and nowhere for any of them to arrive, so
+  // all four are deleted rather than disabled (rule 35).
+  //
+  // What replaced the need for them is measured in
+  // `the_one_screen_test.dart`: the way *in* is at the top of the screen a
+  // person is already standing on, so there is no screen to go back from.
+  // Here, only the absence is read — because a dead arrow is exactly what rule
+  // 35 forbids.
+  testWidgets('no way back is drawn, because there is nowhere to go back to', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
     final ground = Ground();
     late final Workbench bench;
-    var home = 0;
     await tester.runAsync(() async {
       await ground.refresh();
       final session = await z.openSession(packId: 'de');
@@ -52,43 +62,34 @@ void main() {
     });
 
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () => home++, onVault: () {})),
+      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {})),
     );
     await settle(tester);
 
-    // An arrow, a word, and a tooltip that names the key — the mark alone was
-    // the whole of the way home, and nothing on it said so.
-    final back = find.byTooltip('Back to your documents · Alt+Left');
-    expect(back, findsOneWidget, reason: 'the top bar has no back control');
+    expect(find.byTooltip('Back to your documents · Alt+Left'), findsNothing,
+        reason: 'the back control is still on the bar, and it goes nowhere');
+    expect(find.text('Documents'), findsNothing, reason: 'the bar still offers a screen of documents');
+    expect(find.byIcon(Icons.arrow_back), findsNothing, reason: 'an arrow back is drawn on the one screen');
+    // The mark stays, and it is **not** a door any more: a picture that was a
+    // door to a screen that no longer exists would be a press that does
+    // nothing at all.
+    expect(find.byType(BrandMark), findsOneWidget, reason: 'the mark went with the arrow');
+    expect(find.byTooltip('Z Privacy · home'), findsNothing,
+        reason: 'the mark still offers a home to go to');
     expect(
-      find.descendant(of: back, matching: find.byIcon(Icons.arrow_back)),
-      findsOneWidget,
-      reason: 'the back control has no arrow',
+      find.ancestor(of: find.byType(BrandMark), matching: find.byType(InkWell)),
+      findsNothing,
+      reason: 'the mark is still a press, and it opens nothing',
     );
-    expect(find.text('Documents'), findsOneWidget, reason: 'the back control says nothing');
 
-    await tester.tap(back);
-    await tester.pump();
-    expect(home, 1, reason: 'the back button did not go home');
-
-    // The keyboard reaches the same door.
+    // Alt+Left reaches nothing: the binding is gone with the screen.
     await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
     await tester.pump();
-    expect(home, 2, reason: 'Alt+Left did not go home');
-
-    // And the mark stays a way home: nothing a person already learned is taken
-    // away from them. The word beside it steps aside while a document is open —
-    // the mark is what they tapped, and the mark is still there.
-    //
-    // **It is the owner's picture since 072**, at the same 28 px the lettered
-    // tile was: the claim here is about the mark being a door, not about what
-    // the mark is drawn from.
+    expect(find.byType(WorkspaceScreen), findsOneWidget,
+        reason: 'Alt+Left took the document off the screen');
     expect(find.text('Z Privacy'), findsNothing, reason: 'the wordmark crowds the bar at 964');
-    await tester.tap(find.byType(BrandMark));
-    await tester.pump();
-    expect(home, 3, reason: 'the mark stopped being a way home');
 
     bench.dispose();
   });
@@ -111,7 +112,7 @@ void main() {
     expect(bench.payload!.openSuggestions, greaterThan(0), reason: 'this document asks nothing');
 
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {})),
+      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {})),
     );
     await settle(tester);
 
@@ -212,7 +213,7 @@ void main() {
         home: WorkspaceScreen(
           bench: bench,
           ground: ground,
-          onHome: () {},
+          onImport: () {}, onType: (_) {},
           onVault: () {},
           // **Setup, changed on 8 October; the claim below did not.**
           // The way to connect an unreached provider is now the settings

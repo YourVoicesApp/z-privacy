@@ -31,7 +31,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -110,18 +109,16 @@ Future<({Ground ground, Workbench bench})> _ready(
   return made;
 }
 
-Widget _home(({Ground ground, Workbench bench}) g) => MaterialApp(
-  home: HomeScreen(
-    ground: g.ground,
-    version: 'z_core 0.1.0',
-    chat: g.bench,
-    onImport: () {},
-    onReadBack: () {},
-    onType: (_) {},
-    onAsk: (_) async {},
-    onVault: () {},
-    onSettings: () {},
-  ),
+/// **Where the control lives since rule 70**: the send sheet, and nowhere
+/// else.
+///
+/// It stood in the head of the first screen's chat as well — 064/C, «the two
+/// facts about this conversation: which direction of work am I in, and which
+/// model is about to receive the text» — and that screen is gone. The sheet is
+/// the surface the owner is standing on when the question is «who answers»,
+/// which is the one place the control answers a question anybody has.
+Widget _sheet(({Ground ground, Workbench bench}) g) => MaterialApp(
+  home: Scaffold(body: SendSheet(bench: g.bench, ground: g.ground, onSettings: () {})),
 );
 
 void main() {
@@ -133,15 +130,15 @@ void main() {
   });
 
   // ------------------------------------------------------------------ guard 1
-  testWidgets('the chat names the model that will answer, always', (tester) async {
+  testWidgets('the sheet names the model that will answer, always', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final g = await _ready(tester, 'named');
-    await tester.pumpWidget(_home(g));
+    await tester.pumpWidget(_sheet(g));
     await _settle(tester);
 
     final control = find.byKey(TheModelThatAnswers.mark);
-    expect(control, findsOneWidget, reason: 'the chat screen does not say which model will answer');
+    expect(control, findsOneWidget, reason: 'the sheet does not say which model will answer');
     // The configured model's own name, from the catalogue — the screen carries
     // no model name of its own, which is what the catalogue exists for.
     final its = g.bench.models.firstWhere((m) => m.modelId == configured);
@@ -182,7 +179,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1200, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final g = await _ready(tester, 'list');
-    await tester.pumpWidget(_home(g));
+    await tester.pumpWidget(_sheet(g));
     await _settle(tester);
 
     await tester.tap(find.byKey(TheModelThatAnswers.mark));
@@ -234,59 +231,36 @@ void main() {
   //
   // So the control is in the strip that never scrolls, and the window where it
   // went wrong is measured here from now on.
-  testWidgets('at 900×760 the control is on the glass and the composer keeps its place',
-      (tester) async {
-    await tester.binding.setSurfaceSize(const Size(900, 760));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final g = await _ready(tester, 'tight');
-    // **The ordinary state, deliberately.** With a suggestion still open the
-    // composer's band draws the gate's own warning box as well, and that band
-    // scrolls inside itself by design — measured: the page's last line then
-    // lies at y = 857 of 760, which is the band scrolling and not the fault
-    // this guard is about. Answering first puts the composer in the shape the
-    // owner's chat is in when he presses send.
-    await tester.runAsync(() async {
-      for (final f in g.bench.suggested) {
-        await z.answerFinding(session: g.bench.session, finding: f.id, answer: FindingAnswer.protect);
-      }
-      await g.bench.refresh();
-    });
-    await tester.pumpWidget(_home(g));
-    await _settle(tester);
-
-    final control = find.byKey(TheModelThatAnswers.mark);
-    expect(control, findsOneWidget, reason: 'the control is gone at 900×760');
-    final r = tester.getRect(control);
-    expect(r.right, lessThanOrEqualTo(900), reason: 'the control hangs off the window: $r');
-    expect(r.bottom, lessThanOrEqualTo(760), reason: 'the control is below the glass: $r');
-
-    // The line the composer's band ends with — the one that was pushed to
-    // y = 804. Measured here as a rect, because the fault did not move the
-    // control: it moved what the control was standing beside.
-    final last = find.textContaining('Nothing is uploaded');
-    expect(last, findsOneWidget, reason: 'the page’s last line is past the end of a scroller again');
-    expect(tester.getRect(last).bottom, lessThanOrEqualTo(760),
-        reason: 'the page’s last line ends at y=${tester.getRect(last).bottom.toStringAsFixed(0)} '
-            'in a 760 px window — the composer’s band grew again');
-  });
+  // **The guard that measured the composer's own place is gone with the
+  // composer** — rule 70.
+  //
+  // It read 900×760 because 064/C's defect was measured there: a third element
+  // in the composer's row took its width from the `Wrap` holding «Open and
+  // scan» and «Ask the AI», the buttons wrapped, the pinned band grew, and the
+  // first screen's last line ended 44 px below the glass. There is no such row
+  // and no such band — the way in is one strip at the top of the one screen,
+  // measured in `the_way_in_is_at_the_top_test.dart` — and this control is in
+  // the sheet, whose own tight-window reading is
+  // `the_name_at_the_exit_test.dart`'s «every door is on the glass at
+  // 1280×720».
 
   // ------------------------------------------------------------------ guard 3
   testWidgets('nothing connected: one line and one door, not a catalogue', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final g = await _ready(tester, 'empty', connected: false);
-    await tester.pumpWidget(_home(g));
+    await tester.pumpWidget(_sheet(g));
     await _settle(tester);
 
     final control = find.byKey(TheModelThatAnswers.mark);
     expect(control, findsOneWidget,
-        reason: 'with no key the chat says nothing at all about the AI that would answer');
+        reason: 'with no key the sheet says nothing at all about the AI that would answer');
     expect(find.descendant(of: control, matching: find.textContaining('No AI connected')), findsOneWidget,
         reason: 'the control does not say that nothing can answer yet');
     // Not a catalogue: no company name and no model name is drawn on this
     // screen when none of them can answer.
     for (final p in g.ground.providers) {
-      expect(find.text(p.label), findsNothing, reason: '«${p.label}» is drawn on the chat with no key anywhere');
+      expect(find.text(p.label), findsNothing, reason: '«${p.label}» is drawn on the sheet with no key anywhere');
     }
   });
 
