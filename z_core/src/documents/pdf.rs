@@ -81,7 +81,7 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
         // Fail-closed, before a single character is believed: if this page's fonts
         // or its content's filters are ones this reader does not follow, nothing on
         // the page can be trusted — not even the part that looks like words.
-        let fonts = page_fonts(&objects, &page);
+        let fonts = page_fonts(&objects, &page, budget)?;
         if let Some(why) = unreadable_structure(&objects, &page, &fonts) {
             return Err(refuse(
                 Refusal::UnreadableStructure { page: page_number },
@@ -91,7 +91,7 @@ pub(crate) fn extract(bytes: &[u8], budget: &Budget) -> ApiResult<Extracted> {
             ));
         }
 
-        let runs = runs_of(&objects, &page, &fonts, budget)?;
+        let runs = runs_of(&objects, &page, page_number, &fonts, budget)?;
         let page_text: String = runs
             .iter()
             .filter_map(|r| match r {
@@ -294,14 +294,14 @@ fn objects(bytes: &[u8], budget: &Budget) -> ApiResult<Objects> {
 
     // PDF 1.5 and later pack most objects — pages and fonts included — inside
     // compressed object streams. Without opening those, a modern PDF looks empty.
-    let packed: Vec<ObjBody> = out
-        .values()
-        .filter(|o| o.dict.contains("/ObjStm"))
-        .cloned()
+    let packed: Vec<(u32, ObjBody)> = out
+        .iter()
+        .filter(|(_, o)| o.dict.contains("/ObjStm"))
+        .map(|(number, body)| (*number, body.clone()))
         .collect();
-    for holder in packed {
+    for (number, holder) in packed {
         budget.check()?;
-        unpack_object_stream(&holder, &mut out);
+        unpack_object_stream(number, &holder, &mut out, budget)?;
     }
     Ok(out)
 }
@@ -446,11 +446,16 @@ fn split_body(bytes: &[u8], start: usize, end: usize) -> ObjBody {
 }
 
 /// `/Type/ObjStm`: `N` pairs of «number offset», then the objects themselves.
-fn unpack_object_stream(holder: &ObjBody, out: &mut Objects) {
-    let Some(raw) = holder.stream.as_ref() else { return };
-    let plain = match decode_stream(&holder.dict, raw) {
+fn unpack_object_stream(
+    number: u32,
+    holder: &ObjBody,
+    out: &mut Objects,
+    budget: &Budget,
+) -> ApiResult<()> {
+    let Some(raw) = holder.stream.as_ref() else { return Ok(()) };
+    let plain = match decode_stream(&holder.dict, raw, number, Role::ObjectStream, budget)? {
         Some(plain) => plain,
-        None => return,
+        None => return Ok(()),
     };
     // The offsets in this stream count **bytes**, so the stream is cut in bytes
     // and each object is made into text on its own. Converting the whole stream
@@ -468,7 +473,7 @@ fn unpack_object_stream(holder: &ObjBody, out: &mut Objects) {
     let count = number_after(&holder.dict, "/N").unwrap_or(0) as usize;
     let first = number_after(&holder.dict, "/First").unwrap_or(0) as usize;
     if count == 0 || first == 0 || first > plain.len() {
-        return;
+        return Ok(());
     }
     let header = String::from_utf8_lossy(plain.get(..first).unwrap_or_default()).to_string();
     let numbers: Vec<u32> = header
@@ -509,27 +514,144 @@ fn unpack_object_stream(holder: &ObjBody, out: &mut Objects) {
             });
         }
     }
+    Ok(())
 }
 
-/// Inflate a stream when its dictionary says it is deflated, bounded.
-fn decode_stream(dict: &str, raw: &[u8]) -> Option<Vec<u8>> {
-    if !dict.contains("/FlateDecode") {
-        return Some(raw.to_vec());
-    }
-    let mut decoder = ZlibDecoder::new(raw).take(limits::ZIP_ENTRY_BYTES as u64 + 1);
-    let mut out = Vec::new();
-    match decoder.read_to_end(&mut out) {
-        Ok(_) if !out.is_empty() => Some(out),
-        // Some writers leave junk before the zlib header; try again from the first
-        // plausible start rather than giving up on the page.
-        _ => {
-            let skip = raw.iter().position(|b| *b == 0x78)?;
-            let mut decoder = ZlibDecoder::new(raw.get(skip..)?).take(limits::ZIP_ENTRY_BYTES as u64 + 1);
-            let mut out = Vec::new();
-            decoder.read_to_end(&mut out).ok()?;
-            (!out.is_empty()).then_some(out)
+/// What a stream is for. Four roles, and a refusal that names the one it was:
+/// «a page's content» and «a font's character map» are different news to the
+/// person reading the sentence.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Role {
+    PageContent,
+    Form,
+    CharacterMap,
+    ObjectStream,
+}
+
+impl Role {
+    fn said(self) -> &'static str {
+        match self {
+            Role::PageContent => "a page's content",
+            Role::Form => "a form drawn on a page",
+            Role::CharacterMap => "a font's character map",
+            Role::ObjectStream => "an object stream",
         }
     }
+}
+
+/// Inflate a stream when its dictionary says it is deflated — **the one hand
+/// every stream in a PDF passes**, whatever its role, and the one budget.
+///
+/// `Ok(None)` is «these bytes are not a stream this build can inflate», which
+/// is what it has always been and what the callers skip over. An `Err` is a
+/// limit that was passed, named, and never a document half read: before this
+/// round the limit was an 8 MiB `take` whose answer nobody asked, so a stream
+/// that inflated to 9 MiB was handed back as its first eight — a page the
+/// person was told was «100% readable» with the rest of it silently gone.
+fn decode_stream(
+    dict: &str,
+    raw: &[u8],
+    object: u32,
+    what: Role,
+    budget: &Budget,
+) -> ApiResult<Option<Vec<u8>>> {
+    if !dict.contains("/FlateDecode") {
+        return Ok(Some(raw.to_vec()));
+    }
+    if let Some(out) = inflate_bounded(raw, object, what, budget)? {
+        return Ok(Some(out));
+    }
+    // Some writers leave junk before the zlib header; try again from the first
+    // plausible start rather than giving up on the page. **Through the same
+    // hand**, so the second reading is held by the same three rules as the
+    // first — a limit written for one path and not its sibling is the trap this
+    // house pays for most often.
+    let Some(skip) = raw.iter().position(|b| *b == 0x78) else {
+        return Ok(None);
+    };
+    let Some(from) = raw.get(skip..) else { return Ok(None) };
+    inflate_bounded(from, object, what, budget)
+}
+
+/// Inflate, stopping **while** it inflates, at the smallest of three ceilings.
+///
+/// The three are V1-J's, read off the library's own loop and written here in
+/// this reader's own terms: no one stream past `PDF_STREAM_BYTES`, no stream
+/// swelling past `MAX_RATIO` times the bytes it is written in, and no document
+/// unpacking past what its own size allows. Expressing all three as a **byte
+/// ceiling** before the first byte comes out is what lets `Read::take` be the
+/// thing that enforces them: a bomb never gets to allocate what it promised.
+fn inflate_bounded(
+    raw: &[u8],
+    object: u32,
+    what: Role,
+    budget: &Budget,
+) -> ApiResult<Option<Vec<u8>>> {
+    let by_itself = limits::PDF_STREAM_BYTES;
+    let by_swell = raw.len().saturating_mul(limits::MAX_RATIO as usize);
+    let by_document = budget.room_for(object);
+    let stop_at = by_itself.min(by_swell).min(by_document);
+
+    let mut decoder = ZlibDecoder::new(raw).take(stop_at as u64 + 1);
+    let mut out = Vec::new();
+    let read = decoder.read_to_end(&mut out);
+
+    // **The size is asked before the error.** A stream crafted to inflate past
+    // the ceiling and then end badly must be refused for passing it — not
+    // retried from another offset, and never handed back as the part that
+    // fitted. What was cut is not what was read.
+    if out.len() > stop_at {
+        let mib = |bytes: usize| bytes / 1024 / 1024;
+        return Err(if out.len() > by_itself {
+            refuse(
+                Refusal::TextTooLarge {
+                    limit_mib: mib(by_itself) as u32,
+                },
+                format!(
+                    "{} in this PDF unpacks to more than {} MiB, and no part of a document is that big",
+                    what.said(),
+                    mib(by_itself)
+                ),
+            )
+        } else if out.len() > by_swell {
+            // **Rounded up, so the number is never the limit itself.** The
+            // inflation was stopped at 200× and one byte, so what the swell
+            // really is cannot be known from here — only that it is more than
+            // this. A sentence that reads «200× its size, which no document
+            // does» about a limit of 200 is the same fault as «25 MiB is past
+            // the 25 MiB limit».
+            let ratio = out.len().div_ceil(raw.len().max(1)) as u32;
+            refuse(
+                Refusal::CompressionBomb { ratio },
+                format!(
+                    "{} unpacks to more than {ratio}× the bytes it is written in, which no document does",
+                    what.said()
+                ),
+            )
+        } else {
+            let total = budget.unpacked_so_far().saturating_add(out.len());
+            // Both numbers rounded **away** from the limit, for the reason the
+            // swell arm above gives: the stop happened one byte past the
+            // ceiling, and a sentence that says «38 MiB is past the 38 MiB a
+            // file this size may ask for» tells the person nothing.
+            let ratio = total.div_ceil(budget.file_bytes().max(1)) as u32;
+            refuse(
+                Refusal::CompressionBomb { ratio },
+                format!(
+                    "the parts of this PDF unpack to more than {} MiB in all — {ratio}× the file's own size, \
+                     past the {} MiB a file of {} KiB may ask for",
+                    total.div_ceil(1024 * 1024),
+                    mib(budget.unpacked_ceiling()),
+                    budget.file_bytes() / 1024
+                ),
+            )
+        });
+    }
+    if read.is_err() || out.is_empty() {
+        return Ok(None);
+    }
+    budget.unpacked(object, out.len());
+    Ok(Some(out))
 }
 
 /// `find(haystack, from, needle)` → offset **relative to `from`**.
@@ -791,8 +913,14 @@ const FORM_DEPTH: u32 = 8;
 ///
 /// An image stays an image: `/Subtype /Image` is not followed, so a real scan
 /// is still refused by name.
-fn runs_of(objects: &Objects, page: &str, fonts: &Fonts, budget: &Budget) -> ApiResult<Vec<Run>> {
-    let content = page_content(objects, page)?;
+fn runs_of(
+    objects: &Objects,
+    page: &str,
+    page_number: u32,
+    fonts: &Fonts,
+    budget: &Budget,
+) -> ApiResult<Vec<Run>> {
+    let content = page_content(objects, page, page_number, budget)?;
     let mut walk = Walk {
         objects,
         budget,
@@ -831,13 +959,15 @@ impl Walk<'_> {
             if !body.dict.contains("/Form") {
                 continue;
             }
-            let Some(plain) = body.stream.as_ref().and_then(|raw| decode_stream(&body.dict, raw)) else {
-                continue;
+            let plain = match body.stream.as_ref() {
+                Some(raw) => decode_stream(&body.dict, raw, number, Role::Form, self.budget)?,
+                None => None,
             };
+            let Some(plain) = plain else { continue };
             // The form's own fonts sit over the page's: a form with no
             // /Resources inherits them, and one with its own names them itself.
             let mut inner = fonts.clone();
-            inner.absorb(page_fonts(self.objects, &body.dict));
+            inner.absorb(page_fonts(self.objects, &body.dict, self.budget)?);
             let dict = body.dict.clone();
             self.path.push(number);
             self.collect(&dict, &plain, &inner, depth + 1)?;
@@ -951,7 +1081,12 @@ fn drawn(content: &[u8], name: &str) -> bool {
 /// marks on a single page. The rule the object reader already follows, written
 /// down in task 018 — «the dictionaries are ASCII and may be read as text; the
 /// streams are not» — had never reached the content.
-fn page_content(objects: &Objects, page: &str) -> ApiResult<Vec<u8>> {
+fn page_content(
+    objects: &Objects,
+    page: &str,
+    page_number: u32,
+    budget: &Budget,
+) -> ApiResult<Vec<u8>> {
     let mut refs = references(page, "/Contents");
     if refs.is_empty() {
         if let Some(single) = reference(page, "/Contents") {
@@ -962,7 +1097,26 @@ fn page_content(objects: &Objects, page: &str) -> ApiResult<Vec<u8>> {
     for number in refs {
         let Some(body) = objects.get(&number) else { continue };
         if let Some(raw) = body.stream.as_ref() {
-            if let Some(plain) = decode_stream(&body.dict, raw) {
+            if let Some(plain) = decode_stream(&body.dict, raw, number, Role::PageContent, budget)? {
+                // **A page is one thing to read, and this is its size.** The
+                // limits above hold each stream on its own, and a page's
+                // `/Contents` is a list: the same stored 1 MiB object named
+                // twenty times in it was concatenated into 20 MiB of content
+                // out of a 1 MiB file, with no filter for any Flate rule to
+                // see. One page may hold what one stream may hold — measured,
+                // the biggest page this reader meets in the owner's documents
+                // is 107,108 bytes.
+                if out.len().saturating_add(plain.len()) > limits::PDF_STREAM_BYTES {
+                    return Err(refuse(
+                        Refusal::TextTooLarge {
+                            limit_mib: (limits::PDF_STREAM_BYTES / 1024 / 1024) as u32,
+                        },
+                        format!(
+                            "page {page_number} names more than {} MiB of content, and no page of a document holds that",
+                            limits::PDF_STREAM_BYTES / 1024 / 1024
+                        ),
+                    ));
+                }
                 out.extend_from_slice(&plain);
                 out.push(b'\n');
             }
@@ -1039,7 +1193,7 @@ fn named_refs(dictionary: &str) -> Vec<(String, u32)> {
     out
 }
 
-fn page_fonts(objects: &Objects, page: &str) -> Fonts {
+fn page_fonts(objects: &Objects, page: &str, budget: &Budget) -> ApiResult<Fonts> {
     let mut fonts = Fonts::default();
     let dictionary = sub_dict(objects, &resources_of(objects, page), "/Font");
     for (name, number) in named_refs(&dictionary) {
@@ -1071,17 +1225,20 @@ fn page_fonts(objects: &Objects, page: &str) -> Fonts {
             || font.contains("Identity-H")
             || encoding.contains("Identity-H")
             || encoding.contains("/CMap");
-        let cmap = reference(&font, "/ToUnicode")
-            .and_then(|n| objects.get(&n))
-            .map(|body| {
-                let plain = body
-                    .stream
-                    .as_ref()
-                    .and_then(|raw| decode_stream(&body.dict, raw))
-                    .unwrap_or_default();
-                parse_to_unicode(&String::from_utf8_lossy(&plain))
-            })
-            .unwrap_or_default();
+        // The map is a stream like any other, and it passes the same hand: a
+        // `/ToUnicode` of 9 MiB used to be cut at 8 and the half-read table
+        // refused the page as «built in a way this build cannot read», which
+        // named the font for a fault that was the budget's.
+        let cmap = match reference(&font, "/ToUnicode").and_then(|n| objects.get(&n).map(|body| (n, body))) {
+            Some((n, body)) => {
+                let plain = match body.stream.as_ref() {
+                    Some(raw) => decode_stream(&body.dict, raw, n, Role::CharacterMap, budget)?,
+                    None => None,
+                };
+                parse_to_unicode(&String::from_utf8_lossy(&plain.unwrap_or_default()))
+            }
+            None => BTreeMap::new(),
+        };
         if cmap.is_empty() {
             // No table. A font that remaps its glyphs, or one whose codes are
             // two bytes wide, cannot be read without one — and is refused by
@@ -1098,7 +1255,7 @@ fn page_fonts(objects: &Objects, page: &str) -> Fonts {
         // answer is in the file, and reading it is not a guess.
         fonts.maps.insert(name.to_string(), FontMap { table: cmap, two_byte });
     }
-    fonts
+    Ok(fonts)
 }
 
 /// `beginbfchar`/`beginbfrange` — the font's own table from its codes to Unicode.
@@ -1751,7 +1908,7 @@ mod tests {
     #[test]
     fn a_pdf_whose_headers_stand_on_their_own_lines_is_read() {
         let bytes = pdf_written_the_way_google_writes_one("Rechnung 2026-10518");
-        let out = extract(&bytes, &Budget::new()).expect("a legal PDF must be read");
+        let out = extract(&bytes, &Budget::new(bytes.len())).expect("a legal PDF must be read");
         assert!(
             out.text.contains("Rechnung 2026-10518"),
             "the page's own line did not arrive: {:?}",
@@ -1831,7 +1988,7 @@ mod tests {
             "ist der Betrag nicht eingegangen.",
         ];
         let bytes = pdf_one_text_object_per_word(&written);
-        let out = extract(&bytes, &Budget::new()).expect("a legal PDF must be read");
+        let out = extract(&bytes, &Budget::new(bytes.len())).expect("a legal PDF must be read");
         let read: Vec<&str> =
             out.text.lines().map(str::trim).filter(|l| !l.is_empty()).collect();
         assert_eq!(read, written, "the reader gave every word a line of its own");
@@ -1893,7 +2050,7 @@ mod tests {
     #[test]
     fn a_page_whose_text_spells_a_keyword_is_still_read_whole() {
         let bytes = pdf_with_pages(&["Der Vertrag endobjekt wurde geprueft und endstreamt."]);
-        let out = extract(&bytes, &Budget::new()).expect("a legal PDF must be read");
+        let out = extract(&bytes, &Budget::new(bytes.len())).expect("a legal PDF must be read");
         assert!(
             out.text.contains("wurde geprueft und endstreamt."),
             "the page was cut at a word that spells a keyword: {:?}",
@@ -1939,7 +2096,7 @@ mod tests {
         ));
         pdf.push_str("trailer\n<< /Root 1 0 R >>\n%%EOF\n");
 
-        let out = extract(&latin1(&pdf), &Budget::new()).expect("the page tree is in the stream");
+        let out = extract(&latin1(&pdf), &Budget::new(pdf.len())).expect("the page tree is in the stream");
         assert_eq!(out.pages, 1, "the packed page was not counted");
         assert!(
             out.text.contains("Mahnung 2026-10518"),
@@ -2005,7 +2162,7 @@ mod tests {
     }
 
     fn read(bytes: &[u8]) -> ApiResult<Extracted> {
-        extract(bytes, &Budget::new())
+        extract(bytes, &Budget::new(bytes.len()))
     }
 
     /// Measured on a 221-page book: 225 page streams that say only `… Do`, and
