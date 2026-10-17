@@ -29,6 +29,7 @@ import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
+import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
@@ -95,6 +96,7 @@ class SettingsScreen extends StatefulWidget {
     this.room,
     this.bench,
     this.onOpenKept,
+    this.onReadBack,
   });
 
   final Ground ground;
@@ -103,6 +105,18 @@ class SettingsScreen extends StatefulWidget {
   /// no shell behind it (a test of the room itself), and the rows then say so
   /// rather than offering a press that does nothing.
   final OpenKept? onOpenKept;
+
+  /// **«z-pdf», the door back — and this is where it lives since rule 70.**
+  ///
+  /// It stood on the first screen, in the «+» menu beside «Add a document»,
+  /// and the first screen is gone: the owner's own placing, 17 October —
+  /// «نجعل الإعدادات تحتوي على إدخال z-pdf». The press travels exactly as
+  /// `onOpenKept` does, because only the shell may open a file chooser and
+  /// show the reading over everything.
+  ///
+  /// Null in a panel built with no shell behind it, and then the room draws no
+  /// press rather than a dead one — 083a.
+  final VoidCallback? onReadBack;
   final SettingsRoom? room;
 
   /// **The document open behind the panel, if there is one** — 064f.
@@ -186,6 +200,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(width: 9),
                   const Text('Settings', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink)),
                   const Spacer(),
+                  // **The build stamp, which rule 70 would otherwise have
+                  // taken off the glass altogether.** It stood in the head of
+                  // the first screen — «z_core 0.1.0 · date · sha», the core's
+                  // own line, verbatim — and it is the one thing a person
+                  // sends with a report about a program that misbehaved. The
+                  // first screen is gone, so it stands in the head of the one
+                  // panel that is about the program rather than about a
+                  // document.
+                  //
+                  // Room to shrink and not room to overflow, which is the
+                  // lesson the home's own strip learnt on 3 October: it is
+                  // three times the length of «z_core 0.1.0» and the door
+                  // beside it is what a person is reaching for.
+                  Flexible(
+                    child: Text(
+                      coreVersion(),
+                      style: Zc.tiny.copyWith(fontFamily: Zc.mono),
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
                   SettingsDoor(open: true, onTap: widget.onClose),
                 ],
               ),
@@ -198,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   SettingsRoom.ai => _AiRoom(ground: g, catalogue: _catalogue),
                   SettingsRoom.privacy => _PrivacyRoom(ground: g),
                   SettingsRoom.language => _LanguageRoom(ground: g),
-                  SettingsRoom.vault => _VaultRoom(ground: g),
+                  SettingsRoom.vault => _VaultRoom(ground: g, onReadBack: widget.onReadBack),
                   SettingsRoom.sessions => _SessionsRoom(
                     ground: g,
                     bench: widget.bench,
@@ -539,9 +576,20 @@ class _LanguageRoom extends StatelessWidget {
 // ---------------------------------------------------------------- Vault
 
 class _VaultRoom extends StatelessWidget {
-  const _VaultRoom({required this.ground});
+  const _VaultRoom({required this.ground, this.onReadBack});
 
   final Ground ground;
+
+  /// **The door back, in the room that holds the key** — rule 70.
+  ///
+  /// It is here and not in Privacy because of 079 rule 8: the meaning of a
+  /// z-pdf lives in the vault, so a locked vault is a standing door and this
+  /// is the room that says what the vault is doing. Null means no shell, and
+  /// then no press is drawn.
+  final VoidCallback? onReadBack;
+
+  /// The press, so a guard can reach it by name rather than by its sentence.
+  static const theDoorBack = ValueKey<String>('settings-z-pdf');
 
   @override
   Widget build(BuildContext context) {
@@ -573,6 +621,36 @@ class _VaultRoom extends StatelessWidget {
               ),
             ],
           ),
+        ),
+        // **«z-pdf» — the door back, and the only way in that is not a way in**
+        // (079 rule 3, built as 089 rule 5; moved here by rule 70).
+        //
+        // Directly under the vault's own state, because that state is what
+        // decides whether this press can mean anything: the names a z-pdf
+        // carries live in the vault, and with it locked the press opens the
+        // vault instead of a file (079 rule 8, held in the shell).
+        _Card(
+          title: 'z-pdf — read a protected document back',
+          what: 'The reverse act. A document that left this app with tokens in it is read '
+              'back into its own names, here, from your vault — and it is never scanned, '
+              'never protected and never put on a bench. Nothing of it is sent anywhere.',
+          child: onReadBack == null
+              // A press with no shell behind it would open nothing: the room
+              // says what the door is and does not draw one.
+              ? Text(
+                  'Open this panel from the app to choose a file.',
+                  style: Zc.small.copyWith(color: Zc.ink4),
+                )
+              : Align(
+                  alignment: Alignment.centerLeft,
+                  child: ZButton(
+                    key: theDoorBack,
+                    label: 'Choose a z-pdf file',
+                    icon: Icons.undo_outlined,
+                    tint: Zc.river,
+                    onPressed: onReadBack,
+                  ),
+                ),
         ),
         if (c != null)
           _Number(
@@ -1155,9 +1233,21 @@ class _KeptDocument extends StatelessWidget {
   Widget build(BuildContext context) {
     final press = onOpen;
     final what = doc.protected == 1 ? '1 protected place' : '${doc.protected} protected places';
+    // **Both doors of this document** — rule 69. Worded in
+    // `session_state.dart`, where a test reads it without a panel; `null` is
+    // «nothing was sent about this one», and then nothing is drawn. The turn
+    // carries this document's own handle, so the line is about this row and
+    // not about whichever of its neighbours shares a name.
+    final doors = theDoorsOfAKeptDocument(
+      doc,
+      ground.turns[session] ?? const <TurnRow>[],
+    );
     return Padding(
       padding: const EdgeInsets.only(top: 6),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+      Row(
         children: [
           const Icon(Icons.description_outlined, size: 14, color: Zc.ink4),
           const SizedBox(width: 7),
@@ -1194,6 +1284,15 @@ class _KeptDocument extends StatelessWidget {
               onPressed: () => _rename(context),
             ),
           ),
+        ],
+      ),
+          if (doors != null)
+            Padding(
+              // Indented to the document's own text, under it, because it is
+              // about that document and not about the session's list.
+              padding: const EdgeInsets.only(left: 21),
+              child: Text(doors, style: Zc.tiny.copyWith(color: Zc.ink4)),
+            ),
         ],
       ),
     );

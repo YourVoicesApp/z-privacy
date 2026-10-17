@@ -39,7 +39,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/first_run.dart';
-import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -124,36 +123,23 @@ void main() {
   });
 
   // ------------------------------------------------------------------ guard 2
-  testWidgets('the chat’s head and the panel’s head carry it', (tester) async {
+  //
+  // **It said «the chat’s head and the panel’s head» until rule 70.** The
+  // chat's head was the first screen's strip, which is gone with the screen;
+  // the panel's head is the one head left that is about the app rather than
+  // about a document, and it is where the build stamp went for the same
+  // reason.
+  testWidgets('the panel’s head carries it', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1100, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final g = await _ready(tester, 'chat');
-
-    await tester.pumpWidget(MaterialApp(
-      home: HomeScreen(
-        ground: g.ground,
-        version: 'z_core 0.1.0',
-        chat: g.bench,
-        onImport: () {},
-        onReadBack: () {},
-        onType: (_) {},
-        onAsk: (_) async {},
-        onVault: () {},
-        onSettings: () {},
-      ),
-    ));
-    await _settle(tester);
-    expect(find.byType(BrandMark), findsOneWidget, reason: 'the chat’s head draws no picture');
-    expect(find.byType(ZMark), findsNothing, reason: 'the chat’s head still wears the lettered tile');
-    final chat = tester.getRect(find.byType(BrandMark));
-    expect(chat.top, lessThan(120), reason: 'the picture is not in the head of the chat: $chat');
-    expect(_overflows(tester), isEmpty, reason: 'the chat’s head overflows with the picture on it');
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: SettingsScreen(ground: g.ground, onClose: () {})),
     ));
     await _settle(tester);
     expect(find.byType(BrandMark), findsOneWidget, reason: 'the panel’s head draws no picture');
+    expect(find.byType(ZMark), findsNothing, reason: 'the panel’s head still wears the lettered tile');
     final panel = tester.getRect(find.byType(BrandMark));
     expect(panel.top, lessThan(80), reason: 'the picture is not in the panel’s head: $panel');
     expect(_overflows(tester), isEmpty, reason: 'the panel’s head overflows with the picture on it');
@@ -175,7 +161,7 @@ void main() {
       home: WorkspaceScreen(
         bench: g.bench,
         ground: g.ground,
-        onHome: () {},
+        onImport: () {}, onType: (_) {},
         onVault: () {},
         onSettings: () {},
       ),

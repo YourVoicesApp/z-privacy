@@ -31,7 +31,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/find_in_document.dart';
-import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/widgets/the_chat.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
 import 'package:zprivacy/widgets/name_review.dart';
@@ -47,15 +47,43 @@ class WorkspaceScreen extends StatefulWidget {
     super.key,
     required this.bench,
     required this.ground,
-    required this.onHome,
+    required this.onImport,
+    required this.onType,
     required this.onVault,
     this.onSettings,
     this.settingsOpen = false,
   });
 
-  final Workbench bench;
+  /// **The document, or nothing yet** — rule 70.
+  ///
+  /// It was required until 17 October, because there was a first screen to
+  /// stand on while there was no document. There is none: this screen is the
+  /// app, and «no document» is a state of it rather than a different place.
+  /// Null draws the same three parts, each with the one sentence that says
+  /// what it will hold.
+  final Workbench? bench;
   final Ground ground;
-  final VoidCallback onHome;
+
+  /// The box a person writes or pastes into, at the top of the screen, and
+  /// the press that opens a file chooser. Named on the screen itself so a
+  /// guard can reach either without knowing which private widget draws it.
+  static const composer = ValueKey<String>('the-way-in-composer');
+  static const addDocument = ValueKey<String>('the-way-in-add');
+
+  /// **The two ways in, at the top of the screen** — rule 70, the owner:
+  /// «نجعل إدخال الملفات يتم أعلى الشاشة». A file to work on, and text the
+  /// person writes or pastes. Both open a session and replace what is on the
+  /// bench, which is what they did from the first screen.
+  ///
+  /// **Required, where `onSettings` beside them is not**, and the difference is
+  /// what a test can reach. A settings door nobody wired is caught by a test
+  /// that looks for it on the glass; a «+» nobody wired opens the operating
+  /// system's file chooser, which no widget test can drive — so there is no
+  /// guard that could catch it, and the only thing left that can is the
+  /// compiler. Since rule 70 this strip is also the app's only entrance: a
+  /// screen built without it is not a state of the product.
+  final VoidCallback onImport;
+  final void Function(String text) onType;
 
   /// Open the vault screen over this one. Required rather than optional: a
   /// Workspace that cannot reach the vault has buttons that refuse into a
@@ -165,6 +193,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// the walk without a press (ruling 5).
   Future<void> _walk() async {
     final bench = widget.bench;
+    // Every act below this line belongs to a document. Since rule 70 this
+    // screen is also the screen with no document on it, and its own controls
+    // are the only callers — so «nothing to walk through» is said once, here,
+    // rather than assumed six times.
+    if (bench == null) return;
     final lit = bench.focusedFinding;
     final walking = bench.walking && lit != null && lit.state == MarkState.suggested;
     final go = walking
@@ -187,18 +220,22 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// word in the clear has no question to answer at it. What this does is light
   /// the span and bring both columns to it.
   Future<void> _goToSpan(Span where) async {
+    final bench = widget.bench;
+    if (bench == null) return;
     setState(() {
       _lookingAt = where;
       // The walk's bubble belongs to the walk; a search took us elsewhere.
       _choosing = null;
     });
-    await goToTheWord(widget.bench, where, anchor: _focusKey);
+    await goToTheWord(bench, where, anchor: _focusKey);
   }
 
   /// Go to one word and put its buttons where it landed. The movement is the
   /// one function's; what is left here is the bubble, which belongs to this
   /// screen because it is drawn over both columns and over the panel.
   Future<void> _goTo(Finding word) async {
+    final bench = widget.bench;
+    if (bench == null) return;
     setState(() {
       _lookingAt = word.span;
       // Seen, so `_jumpIfMoved` does not move it a second time: this method
@@ -206,7 +243,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _wasFocused = word.id;
     });
     final at = await goToTheWord(
-      widget.bench,
+      bench,
       word.span,
       anchor: _focusKey,
       finding: word.id,
@@ -234,6 +271,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// [theWaitingWordAfter] and this line becomes a no-op.
   Future<void> _answer(Finding word, FindingAnswer choice) async {
     final bench = widget.bench;
+    if (bench == null) return;
     // **Only the walk walks on.** A person who pressed a word in the text
     // answered *that* word: the bubble goes and they are left where they were
     // reading, which is what they asked for. Moving them to another word
@@ -259,7 +297,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// a place a person arrives at — so going to a page is choosing which finding
   /// it points at: the first one on that page.
   void _goToPage(int page) {
-    final onIt = widget.bench.findings.where((f) => f.place?.page == page);
+    final bench = widget.bench;
+    if (bench == null) return;
+    final onIt = bench.findings.where((f) => f.place?.page == page);
     if (onIt.isEmpty) {
       // Nothing was found on it, so there is nothing to point at — and saying
       // so is better than a jump that does not happen.
@@ -275,13 +315,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// list points somewhere new, the column scrolls there after the frame that
   /// drew the anchor.
   void _jumpIfMoved() {
-    final now = widget.bench.focused;
+    final bench = widget.bench;
+    if (bench == null) return;
+    final now = bench.focused;
     if (now == _wasFocused) return;
     _wasFocused = now;
     // The focus moved, so what we are looking at moved with it — set here and
     // not in the setter of a second slot, because this is the one place that
     // notices the change, however it was made.
-    final span = widget.bench.focusedFinding?.span;
+    final span = bench.focusedFinding?.span;
     _lookingAt = span;
     if (now == null || span == null) return;
     // **One movement, one owner** — 083, ruling 14, and a defect measured when
@@ -296,7 +338,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     // So this path goes through the same function as every other, and `_goTo`
     // — which moves the focus itself — marks the change as seen before it
     // calls, so there is never a second movement for one word.
-    unawaited(goToTheWord(widget.bench, span, anchor: _focusKey));
+    unawaited(goToTheWord(bench, span, anchor: _focusKey));
   }
 
   /// The way to the settings, handed on **only while the panel is shut**.
@@ -323,19 +365,31 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       // touches `ground` and nothing else, so that «happened to» became a
       // column that did not come back. Measured by the rule test: the config
       // said open and the screen still drew the rail.
+      // **`Listenable.merge` takes nulls and ignores them**, which is why a
+      // screen with no bench listens to the ground alone without a branch
+      // here: `List<Listenable?>` is the signature.
       listenable: Listenable.merge([bench, widget.ground]),
-      // Alt+Left is the back door of every document reader there is, and the
-      // owner reached for it before he found the arrow. `CallbackShortcuts`
-      // needs somewhere for the keys to land, so the focus node under it is
-      // autofocused: nothing else on this screen takes focus on arrival.
+      // **Alt+Left is gone with the screen it went back to** — rule 70, «لا
+      // أسهم بين شاشات لأنه لا شاشات». It was the back door of every document
+      // reader there is, and the owner reached for it before he found the
+      // arrow; there is no longer anywhere for it to arrive.
+      // `CallbackShortcuts` needs somewhere for the keys to land, so the focus
+      // node under it is autofocused: nothing else on this screen takes focus
+      // on arrival.
       builder: (context, _) => CallbackShortcuts(
         bindings: {
-          const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): widget.onHome,
           // A bubble closes the way every small thing closes.
           const SingleActivator(LogicalKeyboardKey.escape): _closeBubble,
         },
+        // **The focus arrives in the box at the top** — rule 70, and the
+        // reason is the owner's own, carried over from the first screen: «a
+        // person who opened this app to paste a letter can paste it». So the
+        // autofocus that stood here, on nothing but a holder for the keys, is
+        // on the writing box instead; the keys still land because the box is
+        // inside this subtree and nothing in a `TextField` eats Escape. Two
+        // autofocus requests in one scope is a framework warning, which is why
+        // this is a move and not an addition.
         child: Focus(
-        autofocus: true,
         child: Scaffold(
         body: Stack(
           children: [
@@ -344,26 +398,50 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             _TopBar(
               bench: bench,
               ground: widget.ground,
-              onHome: widget.onHome,
               onPage: _goToPage,
               onVault: widget.onVault,
               onLockVault: () => unawaited(widget.ground.lockVault()),
               onSettings: _toSettings,
               settingsOpen: widget.settingsOpen,
             ),
-            _Band(bench: bench, onVault: widget.onVault),
+            // **The way in, at the top of the screen** — rule 70. One strip,
+            // whether or not there is a document, because with the first
+            // screen gone this is the only way a document or a written text
+            // can enter and a person must never be standing somewhere it
+            // cannot be reached.
+            //
+            // **A strip of its own and not a part of the bar**, and the reason
+            // is measured: with «Documents» on it the bar's own content came to
+            // 2.8 px of slack at a 900-wide window (064/B, and it cost the page
+            // count its place). Deleting that control gives back about 110 px
+            // — enough for a «+», nowhere near enough for a box a person
+            // writes a letter into. The bar keeps its facts; the entry gets its
+            // own row, directly under it, which is «أعلى الشاشة» either way.
+            _TheWayIn(
+              onImport: widget.onImport,
+              onType: widget.onType,
+              busy: bench?.busy ?? false,
+            ),
+            if (bench != null) _Band(bench: bench, onVault: widget.onVault),
             // **A document that came back says so, in its own line** — 079,
             // the import side. Under the band and not in it: that row already
             // holds the two longest sentences on this screen and overflowed by
             // 15 pixels the first time a third child was drawn in it
             // (14 October, item 3). This one is about the document rather than
             // about the scan, and it is drawn only when there is a token in it.
-            _CameBack(bench: bench),
-            if (bench.trouble != null)
+            if (bench != null) _CameBack(bench: bench),
+            if (bench?.trouble != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
-                child: Trouble(bench.trouble!),
+                child: Trouble(bench!.trouble!),
               ),
+            // **The three parts, with nothing in them yet** — rule 70. Not a
+            // second screen and not a page of prose: the same three regions,
+            // each saying the one thing it is for, so that what arrives when a
+            // document does is in the place the person was already looking at.
+            if (bench == null)
+              const Expanded(child: _TheThreePartsEmpty())
+            else
             Expanded(
               child: LayoutBuilder(
                 builder: (context, box) {
@@ -461,9 +539,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           bench: bench,
                           width: panelWidth,
                         ),
-                        OpenPanel.answer => AnswerPanel(
+                        // **The third part of the one screen** — rule 65.
+                        // `AnswerPanel` stood here: one answer at a time, with
+                        // arrows between answers and a switch over the whole
+                        // panel. The conversation stands here now, coded, with
+                        // the compose box at its foot — and the answer is a
+                        // line in it rather than a place to go.
+                        OpenPanel.chat => TheChat(
                           bench: bench,
+                          ground: widget.ground,
                           width: panelWidth,
+                          onSettings: _toSettings,
                         ),
                       },
                     ],
@@ -482,7 +568,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         // away — and a bubble left over it would offer an answer to a word that
         // has one. Measured: after «Protect all» the walk's bubble stood on a
         // settled word with nothing waiting anywhere.
-        if (_stillWaiting(bench, _choosing) != null) ...[
+        if (bench != null && _stillWaiting(bench, _choosing) != null) ...[
           if (!_choosingFromTheWalk)
             Positioned.fill(
               // A press anywhere else closes it and does nothing — the owner's
@@ -509,6 +595,204 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 }
 
+/// **The way in, at the top of the screen** — rule 70, 17 October 2026.
+///
+/// The owner: «نلغي الشاشة الأولى ونجعل إدخال الملفات يتم أعلى الشاشة الأولى
+/// ليصبح التطبيق فقط ثلاثة أقسام في شاشة واحدة». Both doors that bring a text
+/// in used to stand on the first screen, which no longer exists — so they
+/// stand here, in one strip, drawn whether or not something is already open.
+///
+/// **It is drawn with a document open too, and that is the point**: with no
+/// first screen and no «back», this strip is the only way to begin the next
+/// piece of work. Both presses open a session and replace what is on the
+/// bench, exactly as they did from the first screen — and the document they
+/// replace is not lost, because a document in the preview is kept (089 rule 9)
+/// and the Sessions room opens it again.
+///
+/// **z-pdf is not here.** It was the second entry of this «+» menu until rule
+/// 70 put it in Settings: it is the reverse act, never scanned and never put
+/// on a bench, and a person who means it has already said so. One press, one
+/// meaning — so this «+» is a button now and not a menu.
+class _TheWayIn extends StatefulWidget {
+  const _TheWayIn({
+    required this.onImport,
+    required this.onType,
+    required this.busy,
+  });
+
+  final VoidCallback onImport;
+  final void Function(String text) onType;
+
+  /// True while the core is reading something. The presses go quiet rather
+  /// than queueing a second import behind the first.
+  final bool busy;
+
+  @override
+  State<_TheWayIn> createState() => _TheWayInState();
+}
+
+class _TheWayInState extends State<_TheWayIn> {
+  final _text = TextEditingController();
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  /// Read what is in the box, and leave the box empty.
+  ///
+  /// Cleared **before** the call and not after it: the text is already in the
+  /// core's hands by then, and a box that still held it would invite the same
+  /// letter to be read twice.
+  void _open() {
+    final text = _text.text.trim();
+    if (text.isEmpty) return;
+    _text.clear();
+    widget.onType(text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final empty = _text.text.trim().isEmpty;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+      decoration: const BoxDecoration(
+        color: Zc.warmCard,
+        border: Border(bottom: BorderSide(color: Zc.line)),
+      ),
+      child: Row(
+        children: [
+          Tooltip(
+            message: 'Add a document — PDF, Word or text',
+            child: IconButton(
+              key: WorkspaceScreen.addDocument,
+              onPressed: widget.busy ? null : widget.onImport,
+              icon: const Icon(Icons.add, size: 20),
+              color: Zc.clay,
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+              padding: EdgeInsets.zero,
+            ),
+          ),
+          const SizedBox(width: 10),
+          // The box, and it gives: a strip that has to hold a letter is not a
+          // strip, so it grows to three lines and scrolls inside itself.
+          Expanded(
+            child: Container(
+              decoration: Zc.panel(fill: Zc.card, radius: 9),
+              padding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
+              child: TextField(
+                key: WorkspaceScreen.composer,
+                controller: _text,
+                autofocus: true,
+                minLines: 1,
+                maxLines: 3,
+                style: Zc.document.copyWith(fontSize: 13.5),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  hintText: 'Write or paste your text here…',
+                  hintStyle: Zc.body.copyWith(color: Zc.ink4),
+                ),
+                onChanged: (_) => setState(() {}),
+                onSubmitted: (_) => _open(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // **Bounded, because its sibling is `Expanded`** — and that is a
+          // measured fact about `ZButton`, not a precaution: it flexes its own
+          // label so that a narrow window makes it taller rather than hiding a
+          // word, and a flex child in a row whose width is unbounded is a
+          // render assertion. The first form of this strip threw exactly that,
+          // in 149 tests at once. 200 px holds «Open and scan» and its icon at
+          // 13.5 px with room over, so nothing wraps at any window the app is
+          // measured at.
+          //
+          // **And no `hint`**: a disabled `ZButton` with one draws a sentence
+          // beside itself, and the box next to it already says «Write or paste
+          // your text here…». Two sentences for one state is one too many, and
+          // the hint is the one that would be read second.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 200),
+            child: ZButton(
+              label: 'Open and scan',
+              icon: Icons.shield_outlined,
+              onPressed: empty || widget.busy ? null : _open,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// **The three parts with nothing in them yet** — rule 70.
+///
+/// Not a welcome page: the same three regions this screen always has, each
+/// saying the one thing it is for. A person who writes in the strip above
+/// watches the first of them fill, which is why the sentences describe the
+/// places and not the product.
+///
+/// The two columns' own words are the ones the `_Side` headers use, so the
+/// empty screen and the full one call the same region the same thing.
+class _TheThreePartsEmpty extends StatelessWidget {
+  const _TheThreePartsEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _part(
+          'Original — local only',
+          'Never sent to AI · Send cannot read this side',
+          'Your document arrives here, as it is written. Nothing on this side can reach '
+              'the network.',
+          Zc.ink4,
+        ),
+        Container(width: 1, color: Zc.line),
+        _part(
+          'Safe — AI will receive',
+          'The request itself, not a preview of it',
+          'What an AI would receive stands here beside the original, word for word, '
+              'before anything is sent.',
+          Zc.clay,
+        ),
+        Container(width: 1, color: Zc.line),
+        _part(
+          'The chat',
+          'Your questions, and what came back',
+          // **«Chat» and not «the conversation»** — rule 55-هـ, and G41 is what
+          // said so: on the glass the word for a container is «session», and
+          // this part is called «The chat» in the owner's own ruling (65).
+          'The chat opens here with the first answer, and every question after it carries '
+              'what was already said.',
+          Zc.river,
+        ),
+      ],
+    );
+  }
+
+  Widget _part(String eyebrow, String rule, String what, Color tint) => Expanded(
+        child: Container(
+          color: Zc.paper,
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Eyebrow(eyebrow, color: tint),
+              const SizedBox(height: 4),
+              Text(rule, style: Zc.tiny.copyWith(letterSpacing: 0)),
+              const SizedBox(height: 16),
+              Text(what, style: Zc.small.copyWith(color: Zc.ink4)),
+            ],
+          ),
+        ),
+      );
+}
+
 /// The seven things that change the ground the Workspace stands on. In M7.1 they
 /// *report* — each becomes an act in its own milestone, and the behaviour board
 /// already says what each must ask before it changes an open document.
@@ -516,7 +800,6 @@ class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.bench,
     required this.ground,
-    required this.onHome,
     required this.onPage,
     required this.onVault,
     required this.onLockVault,
@@ -524,9 +807,12 @@ class _TopBar extends StatelessWidget {
     required this.settingsOpen,
   });
 
-  final Workbench bench;
+  /// Null while nothing is open — rule 70. The bar then states the two facts
+  /// that are still true of the app (the vault, and the way to the settings)
+  /// and says nothing about a document, a profile or a pack, because there is
+  /// no document for any of those to be about.
+  final Workbench? bench;
   final Ground ground;
-  final VoidCallback onHome;
 
   /// Go to a page: the Original column scrolls to the first finding on it.
   final void Function(int page) onPage;
@@ -545,30 +831,8 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final doc = bench.document;
-    final profile = bench.profileId == null
-        ? 'Everywhere'
-        : ground.profiles
-              .firstWhere(
-                (p) => p.id == bench.profileId,
-                orElse: () =>
-                    ProfileRow(id: bench.profileId!, name: bench.profileId!, languages: const []),
-              )
-              .name;
-    // What actually ran, not what the session was opened with. A profile may
-    // run two rule sets at once, and naming only one of them here would say
-    // «German» over a document whose English label had just been detected.
-    final active = ground.profiles
-        .where((p) => p.id == bench.profileId)
-        .expand((p) => p.languages)
-        .toList();
-    final ran = active.isEmpty ? [bench.packId] : active;
-    // One name per language, from the core's table — so the bar, the menu and
-    // the vault's lists all call a language the same thing.
-    final packLabel = ran.map(ground.languageName).join(' · ');
-    // «general rules» is said when **nothing** that ran has rules of its own.
-    final bare = ran.every((id) => !ground.hasRules(id));
-
+    final bench = this.bench;
+    final doc = bench?.document;
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 13, 18, 13),
       decoration: const BoxDecoration(
@@ -577,76 +841,30 @@ class _TopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // The way back, with an arrow on it. The mark beside it went home
-          // too, and still does — but nothing on a logo says «back», and the
-          // owner spent his first evening without a way out of a document.
-          // Flexible since 063, and measured: with the settings door added the
-          // bar's own content came to 941 at a one-page document, so at a
-          // 900-wide window it overflowed by 41 and the door — last on the bar
-          // — hung off the glass at x=907 where no press could reach it. That
-          // is 063's own defect in miniature: a settings control nobody can
-          // press. The word gives way instead, exactly as the product's name
-          // already does a few lines below, and the arrow and the tooltip stay.
-          // Before: 5.9 px over at 900 with no door at all. After: nothing.
-          Flexible(
-            child: Tooltip(
-              message: 'Back to your documents · Alt+Left',
-              child: TextButton.icon(
-                onPressed: onHome,
-                icon: const Icon(Icons.arrow_back, size: 17),
-                label: const Text(
-                  'Documents',
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: Zc.ink,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ),
+          // **The way back is gone, and so is the screen it went back to** —
+          // rule 70, the owner: «لا أسهم بين شاشات لأنه لا شاشات». What stood
+          // here was an arrow and the word «Documents», and the mark beside it
+          // was a second door to the same place. One screen has no «back», and
+          // a control that goes nowhere is deleted rather than disabled
+          // (rule 35).
+          //
+          // What is left is the mark itself, which is not a door: the owner's
+          // picture, at the lettered tile's own 28 px (072). The product's own
+          // name stands beside it only while no document does — the bar
+          // overflowed by 50 px at 964 wide once the AI door was on it, and of
+          // everything standing there the name is the one thing a person is not
+          // reading when their own document is open.
+          const Padding(
+            padding: EdgeInsets.all(3),
+            child: BrandMark(size: 28),
           ),
-          const SizedBox(width: 12),
-          // The mark goes home too, and still does. The **word** beside it
-          // steps aside while a document is open: the bar overflowed by 50 px
-          // at 964 wide once the back control and the AI door were on it
-          // (measured), and of everything standing there the product's own
-          // name is the one thing a person is not reading — the document's
-          // name is the identity of this moment, and the mark still says whose
-          // app this is.
-          Tooltip(
-            message: 'Z Privacy · home',
-            child: InkWell(
-              onTap: onHome,
-              borderRadius: BorderRadius.circular(9),
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Row(
-                  children: [
-                    // The owner's picture, at the lettered tile's own 28 px
-                    // — 072. A swap on the most crowded strip in the app, which
-                    // is why the guard reads the overflow count at 900 rather
-                    // than trusting that a same-size swap costs nothing.
-                    const BrandMark(size: 28),
-                    if (doc == null) ...[
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Z Privacy',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Zc.ink,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+          if (doc == null) ...[
+            const SizedBox(width: 10),
+            const Text(
+              'Z Privacy',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink),
             ),
-          ),
+          ],
           const SizedBox(width: 14),
           if (doc != null) ...[
             Icon(
@@ -720,86 +938,30 @@ class _TopBar extends StatelessWidget {
             ],
           ],
           const Spacer(),
-          // **The profile door, only while there is a profile to choose.**
-          // 075a, and 067's rule applied a second time: a work surface keeps
-          // what it can act on and the catalogue lives on the board. With one
-          // profile in the vault the only choice this dialog offers is
-          // «Everywhere» or the single thing there is, which is the control the
-          // owner says he never understood because he never needed it.
+          // **Everything the bar says about a document, behind one gate.**
           //
-          // The second half of the condition is not symmetry: a bench already
-          // **inside** a profile must keep the control however few exist, or a
-          // person stands in a state they can neither see nor leave — and this
-          // top bar's own rule is that it names what actually ran.
-          if (ground.profiles.length > 1 || bench.profileId != null)
-            _ProfileFact(bench: bench, ground: ground, value: profile),
-          // The rule set, and a way to change it. Every pack this build carries
-          // comes from the core's own list — nothing here is written in Dart —
-          // and the one that ran is marked. Switching is a rescan, which is why
-          // it says so before it happens rather than afterwards.
-          PopupMenuButton<String>(
-            tooltip: 'Read this document with another rule set',
-            enabled: !bench.busy && ground.packs.isNotEmpty,
-            onSelected: (id) => bench.switchPack(id),
-            itemBuilder: (_) => [
-              for (final p in ground.packs.where((p) => offeredLanguages.contains(p.id)))
-                PopupMenuItem<String>(
-                  value: p.id,
-                  child: Row(
-                    children: [
-                      Icon(
-                        ran.contains(p.id) ? Icons.check : Icons.check_box_outline_blank,
-                        size: 15,
-                        color: ran.contains(p.id) ? Zc.river : Colors.transparent,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(p.label, style: Zc.small),
-                    ],
-                  ),
-                ),
-              // A line, and under it every other language **that is
-              // offered**. The owner, 6 October: the list shows both, and the
-              // line is what tells them apart — and since 041-Q both halves can
-              // be chosen, because a language with no dictionary still has the
-              // general rules, the vault, and the person's own list. The list is
-              // the core's, filtered by what 080 offers: this menu writes the
-              // open session's language through `switch_pack`, so it is a third
-              // door to the same value and may not offer what the other two do
-              // not. Nothing is deleted — the packs are in the core, and the
-              // day a third is offered one list changes.
-              const PopupMenuDivider(),
-              PopupMenuItem<String>(
-                enabled: false,
-                child: Text('General rules only', style: Zc.tiny),
-              ),
-              for (final other in ground.languages
-                  .where((l) => !l.hasRules && offeredLanguages.contains(l.id)))
-                PopupMenuItem<String>(
-                  value: other.id,
-                  child: Row(
-                    children: [
-                      Icon(
-                        ran.contains(other.id) ? Icons.check : Icons.check_box_outline_blank,
-                        size: 15,
-                        color: ran.contains(other.id) ? Zc.river : Colors.transparent,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(other.label, style: Zc.small)),
-                      const SizedBox(width: 10),
-                      Text(other.id.toUpperCase(), style: Zc.tiny.copyWith(color: Zc.ink4)),
-                    ],
-                  ),
-                ),
-            ],
-            // The bar names the language — from the core's table, so one
-            // language has one name everywhere — and says when all it has is
-            // the general rules. «Svenska» and «العربية · general rules» are
-            // read the same way: this is what ran.
-            child: _Fact(
-              label: 'Pack',
-              value: bare ? '$packLabel · general rules' : packLabel,
-            ),
-          ),
+          // The profile that ran, and the rule set that ran: two facts about a
+          // reading, and with nothing being read there is nothing truthful for
+          // either of them to say. They were computed at the head of this
+          // build and handed down; each now takes the bench and works its own
+          // sentence out, which is what made this gate one line instead of
+          // five nullable locals (rule 70).
+          if (bench != null) ...[
+            // **The profile door, only while there is a profile to choose.**
+            // 075a, and 067's rule applied a second time: a work surface keeps
+            // what it can act on and the catalogue lives on the board. With one
+            // profile in the vault the only choice this dialog offers is
+            // «Everywhere» or the single thing there is, which is the control
+            // the owner says he never understood because he never needed it.
+            //
+            // The second half of the condition is not symmetry: a bench already
+            // **inside** a profile must keep the control however few exist, or a
+            // person stands in a state they can neither see nor leave — and this
+            // top bar's own rule is that it names what actually ran.
+            if (ground.profiles.length > 1 || bench.profileId != null)
+              _ProfileFact(bench: bench, ground: ground),
+            _PackFact(bench: bench, ground: ground),
+          ],
           // The permanent door. 041-N made the vault the way in, and the bar
           // was left stating a fact nobody could act on: the only ways back to
           // it from a document were the review panels' buttons, and a person
@@ -808,16 +970,16 @@ class _TopBar extends StatelessWidget {
           // stand up from the desk.
           _Fact(
             label: 'Vault',
-            value: switch (bench.snap?.vault ?? ground.vault) {
+            value: switch (bench?.snap?.vault ?? ground.vault) {
               VaultState.unlocked => 'Unlocked',
               VaultState.locked => 'Locked',
               VaultState.absent => 'None',
             },
-            tint: (bench.snap?.vault ?? ground.vault) == VaultState.unlocked
+            tint: (bench?.snap?.vault ?? ground.vault) == VaultState.unlocked
                 ? Zc.river
                 : Zc.ink4,
             onTap: () async {
-              final open = (bench.snap?.vault ?? ground.vault) == VaultState.unlocked;
+              final open = (bench?.snap?.vault ?? ground.vault) == VaultState.unlocked;
               if (!open) {
                 onVault();
                 return;
@@ -835,7 +997,7 @@ class _TopBar extends StatelessWidget {
               if (what == 'open') onVault();
               if (what == 'lock') onLockVault();
             },
-            hint: (bench.snap?.vault ?? ground.vault) == VaultState.unlocked
+            hint: (bench?.snap?.vault ?? ground.vault) == VaultState.unlocked
                 ? 'Open Z Vault, or lock it now'
                 : 'Open Z Vault',
           ),
@@ -869,25 +1031,26 @@ class _TopBar extends StatelessWidget {
             Tooltip(
               message: 'Choose the AI and what travels to it',
               child: TextButton.icon(
-                // **A send lands in the chat** — 064/E, the owner's ruling:
-                // the press takes the person to the screen where what was
-                // sent, what came back and what was pulled in are drawn in
-                // order. The sheet answers `true` when something actually
-                // left, so nothing else moves a person off their document:
-                // a cancel, a copy or a saved PDF leaves them where they are.
+                // **A send lands in the chat, and the chat is on this screen**
+                // — rule 65. It used to answer `true` and the press took the
+                // person *home*, to the one place a conversation was drawn.
+                // There is no home: the third part of this screen opens by
+                // itself when the answer arrives (`session_state.dart`), so
+                // what this press has to do is open the doors and nothing
+                // else. The answer the sheet gives is no longer read by
+                // anybody — a send moves nobody anywhere.
                 // **The order is not written here** — `theWayToTheDoors`
                 // holds it, where a guard can drive it: the preview side is
                 // opened first, because rule 60 took the sheet's own copy of
                 // the outgoing text away and this door can be pressed with
                 // that side closed.
                 onPressed: () async {
-                  final sent = await theWayToTheDoors(
+                  await theWayToTheDoors(
                     context,
                     ground: ground,
-                    bench: bench,
+                    bench: bench!,
                     onSettings: onSettings,
                   );
-                  if (sent == true) onHome();
                 },
                 icon: const Icon(Icons.auto_awesome_outlined, size: 16),
                 label: const Text('AI', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
@@ -912,7 +1075,7 @@ class _TopBar extends StatelessWidget {
                 // threw wrote nothing and left the clipboard holding whatever
                 // was there — the same shape as the owner's 12 October leak.
                 await emptyTheClipboardFirst();
-                final report = await bench.reportText();
+                final report = await bench!.reportText();
                 await Clipboard.setData(ClipboardData(text: report));
               },
             ),
@@ -932,19 +1095,122 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _ProfileFact extends StatelessWidget {
-  const _ProfileFact({
-    required this.bench,
-    required this.ground,
-    required this.value,
-  });
+/// **The rule set that ran, and the way to change it** — the bar's own fact.
+///
+/// Written out of `_TopBar` by rule 70, and not for tidiness: the bar now
+/// stands over a screen with no document on it, and «which pack read this» has
+/// no truthful answer there. A fact that needs a bench takes one, so the bar's
+/// own `if (bench != null)` is the whole of the difference — rather than five
+/// locals computed at the head of a build that may have nothing to compute
+/// them from.
+class _PackFact extends StatelessWidget {
+  const _PackFact({required this.bench, required this.ground});
 
   final Workbench bench;
   final Ground ground;
-  final String value;
 
   @override
   Widget build(BuildContext context) {
+    // What actually ran, not what the session was opened with. A profile may
+    // run two rule sets at once, and naming only one of them here would say
+    // «German» over a document whose English label had just been detected.
+    final active = ground.profiles
+        .where((p) => p.id == bench.profileId)
+        .expand((p) => p.languages)
+        .toList();
+    final ran = active.isEmpty ? [bench.packId] : active;
+    // One name per language, from the core's table — so the bar, the menu and
+    // the vault's lists all call a language the same thing.
+    final packLabel = ran.map(ground.languageName).join(' · ');
+    // «general rules» is said when **nothing** that ran has rules of its own.
+    final bare = ran.every((id) => !ground.hasRules(id));
+    return PopupMenuButton<String>(
+          tooltip: 'Read this document with another rule set',
+          enabled: !bench.busy && ground.packs.isNotEmpty,
+          onSelected: (id) => bench.switchPack(id),
+          itemBuilder: (_) => [
+            for (final p in ground.packs.where((p) => offeredLanguages.contains(p.id)))
+              PopupMenuItem<String>(
+                value: p.id,
+                child: Row(
+                  children: [
+                    Icon(
+                      ran.contains(p.id) ? Icons.check : Icons.check_box_outline_blank,
+                      size: 15,
+                      color: ran.contains(p.id) ? Zc.river : Colors.transparent,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(p.label, style: Zc.small),
+                  ],
+                ),
+              ),
+            // A line, and under it every other language **that is
+            // offered**. The owner, 6 October: the list shows both, and the
+            // line is what tells them apart — and since 041-Q both halves can
+            // be chosen, because a language with no dictionary still has the
+            // general rules, the vault, and the person's own list. The list is
+            // the core's, filtered by what 080 offers: this menu writes the
+            // open session's language through `switch_pack`, so it is a third
+            // door to the same value and may not offer what the other two do
+            // not. Nothing is deleted — the packs are in the core, and the
+            // day a third is offered one list changes.
+            const PopupMenuDivider(),
+            PopupMenuItem<String>(
+              enabled: false,
+              child: Text('General rules only', style: Zc.tiny),
+            ),
+            for (final other in ground.languages
+                .where((l) => !l.hasRules && offeredLanguages.contains(l.id)))
+              PopupMenuItem<String>(
+                value: other.id,
+                child: Row(
+                  children: [
+                    Icon(
+                      ran.contains(other.id) ? Icons.check : Icons.check_box_outline_blank,
+                      size: 15,
+                      color: ran.contains(other.id) ? Zc.river : Colors.transparent,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(other.label, style: Zc.small)),
+                    const SizedBox(width: 10),
+                    Text(other.id.toUpperCase(), style: Zc.tiny.copyWith(color: Zc.ink4)),
+                  ],
+                ),
+              ),
+          ],
+          // The bar names the language — from the core's table, so one
+          // language has one name everywhere — and says when all it has is
+          // the general rules. «Svenska» and «العربية · general rules» are
+          // read the same way: this is what ran.
+          child: _Fact(
+            label: 'Pack',
+            value: bare ? '$packLabel · general rules' : packLabel,
+          ),
+        );
+  }
+}
+
+class _ProfileFact extends StatelessWidget {
+  const _ProfileFact({required this.bench, required this.ground});
+
+  final Workbench bench;
+  final Ground ground;
+
+  @override
+  Widget build(BuildContext context) {
+    // **The profile's own name, worked out where it is drawn** — moved in from
+    // the head of `_TopBar.build` by rule 70, for the same reason the pack's
+    // was: the bar stands over a screen with no bench on it, and a local
+    // computed from one cannot be computed there at all.
+    final value = bench.profileId == null
+        ? 'Everywhere'
+        : ground.profiles
+              .firstWhere(
+                (p) => p.id == bench.profileId,
+                orElse: () =>
+                    ProfileRow(id: bench.profileId!, name: bench.profileId!, languages: const []),
+              )
+              .name;
     final enabled = ground.vault == VaultState.unlocked;
     return Padding(
       padding: const EdgeInsets.only(left: 20),
@@ -2166,11 +2432,15 @@ class _SafeFooter extends StatelessWidget {
                       )),
                 hint: null,
               ),
-              if (bench.answers.isNotEmpty && bench.showing == null)
+              // **The way back to the chat, for a person who put it away** —
+              // rule 65. It said «Show the answer» and showed one; the chat is
+              // the thing to come back to now, and it is drawn only while
+              // there is one and it is not already standing.
+              if (bench.chatTurns.isNotEmpty && bench.panel != OpenPanel.chat)
                 ZButton(
-                  label: 'Show the answer',
-                  icon: Icons.subject,
-                  onPressed: () => bench.show(bench.answers.last),
+                  label: 'Show the chat',
+                  icon: Icons.forum_outlined,
+                  onPressed: bench.openTheChat,
                 ),
             ],
           ),
@@ -2322,8 +2592,14 @@ class _TheQuestionState extends State<_TheQuestion> {
             // true of the request and misleading about what a person can still
             // see.
             Text(
-              'One request at a time — a new question replaces the request, '
-              'and the answers are kept.',
+              // **Rewritten by rule 67**, which made its second half the
+              // smaller truth: the answers were «kept», and what they are now
+              // is a conversation that carries itself forward. The first half
+              // stands and is still the thing a person needs to know before
+              // they type: this box holds one request, and the next question
+              // replaces it.
+              'One request at a time — a new question replaces this one, and the chat '
+              'keeps every exchange.',
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
             ),
             // **And the sentence that stood here is gone, because the debt was

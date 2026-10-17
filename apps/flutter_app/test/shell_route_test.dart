@@ -17,7 +17,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/first_run.dart';
-import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/tokens.dart';
@@ -136,7 +135,7 @@ void main() {
     // By key since 064/D: the session question is a second field on this page
     // whenever a vault is unlocked and no session is open.
     await tester.enterText(
-      find.byKey(HomeScreen.composer),
+      find.byKey(WorkspaceScreen.composer),
       'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.',
     );
     await settle(tester, rounds: 1);
@@ -232,7 +231,7 @@ void main() {
         reason: 'the window left the screen and the core still says a value is revealed');
   });
 
-  testWidgets('a fresh device opens on the first-run page, not on Home', (tester) async {
+  testWidgets('a fresh device opens on the first-run page, not on the three parts', (tester) async {
     // Tall enough for both promises: since P2-6 the page carries the German
     // and the English text until a language is chosen, because it has no
     // right to assume one.
@@ -252,19 +251,25 @@ void main() {
 
     expect(find.byType(FirstRunScreen), findsOneWidget,
         reason: 'the shell must show the first-run page while the core says it is due');
-    expect(find.byType(HomeScreen), findsNothing);
+    expect(find.byType(WorkspaceScreen), findsNothing);
     expect(find.text('No Z Privacy server.'), findsOneWidget);
 
-    // Passing it leaves for Home, in this run at least — the lasting answer
-    // needs a vault to be written into, and this device has none.
+    // **Passing it leaves for the one screen** — rule 70, in this run at
+    // least: the lasting answer needs a vault to be written into, and this
+    // device has none.
     //
     // The language is chosen first because there is no Start before one: this
     // test is about which screen the shell picks, and it has to make the
     // page's own decision to get past it.
     await pastTheFirstRun(tester);
-    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byType(WorkspaceScreen), findsOneWidget);
     expect(find.byType(FirstRunScreen), findsNothing);
-    expect(find.text('Open Z Vault'), findsOneWidget);
+    // What the one screen says when it holds nothing: the way in, and the
+    // three parts each naming what they are for.
+    expect(find.text('Write or paste your text here…'), findsOneWidget);
+    // The eyebrows are drawn upper-cased by `Eyebrow`, which is why the
+    // reach is the word as it is on the glass.
+    expect(find.text('THE CHAT'), findsOneWidget);
   });
 }
 

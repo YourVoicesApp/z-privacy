@@ -18,7 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/first_run.dart';
-import 'package:zprivacy/screens/home.dart';
+import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -75,10 +75,10 @@ void main() {
     await tester.tap(find.text('Create a vault'));
     await settle(tester);
     expect(find.byType(VaultScreen), findsOneWidget, reason: 'the first run did not end at the vault');
-    expect(find.byType(HomeScreen), findsNothing, reason: 'the home was reached with no vault');
+    expect(find.byType(WorkspaceScreen), findsNothing, reason: 'the work was reached with no vault');
   });
 
-  testWidgets('a locked vault stands in front of the composer, and opening it lets the work begin',
+  testWidgets('a locked vault stands in front of the way in, and opening it lets the work begin',
       (tester) async {
     final (dir, ground) = await aFreshDevice(tester, 'locked');
 
@@ -95,15 +95,18 @@ void main() {
 
     expect(find.byType(VaultScreen), findsOneWidget,
         reason: 'a locked vault let the app start without being opened');
-    expect(find.byType(HomeScreen), findsNothing);
+    expect(find.byType(WorkspaceScreen), findsNothing);
 
-    // Opened, the home is there — and the composer with it.
+    // Opened, the one screen is there — and the box at the top of it with it.
     await tester.runAsync(() async {
       await z.vaultUnlockWithPassphrase(passphrase: _pass);
       await ground.refresh();
     });
     await settle(tester);
-    expect(find.byType(HomeScreen), findsOneWidget, reason: 'an open vault did not reach the home');
+    expect(find.byType(WorkspaceScreen), findsOneWidget,
+        reason: 'an open vault did not reach the work');
+    expect(find.text('Write or paste your text here…'), findsOneWidget,
+        reason: 'the way in is not behind the vault');
   });
 
   testWidgets('with the vault locked, starting work opens the vault instead', (tester) async {
@@ -115,19 +118,25 @@ void main() {
     });
     await tester.pumpWidget(MaterialApp(home: ZShell(dataDir: dir.path, ground: ground)));
     await settle(tester);
-    expect(find.byType(HomeScreen), findsOneWidget, reason: 'an open vault should reach the home');
+    expect(find.byType(WorkspaceScreen), findsOneWidget,
+        reason: 'an open vault should reach the work');
 
-    // The vault locks under them — and the home is still theirs to read.
+    // The vault locks under them — and the screen is still theirs to read.
     await tester.runAsync(() async {
       await z.vaultLock();
       await ground.refresh();
     });
     await settle(tester);
 
-    // Whatever starts work now leads to the vault: this is the «+» the owner
-    // pressed, and the composer behind it.
+    // Whatever starts work now leads to the vault: the «+» the owner pressed,
+    // and the box beside it.
+    //
+    // **Rule 70 moved where this is read, not what it says.** The gate is in
+    // `_begin`, which both ways in come through, and it opens the vault
+    // instead of the work — so what the screen must show with the vault shut
+    // and no document is the vault, however the app got here.
     expect(find.byType(VaultScreen), findsOneWidget,
-        reason: 'the composer was offered with the vault shut');
+        reason: 'the way in was offered with the vault shut');
   });
 }
 

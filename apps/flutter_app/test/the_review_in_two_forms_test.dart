@@ -107,7 +107,13 @@ void main() {
   });
 
   Future<Workbench> ready(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1700, 1000);
+    // **1080 and not 1000 since rule 70.** The way in is a strip at the top of
+    // this screen now, and it costs the work under it its own height: at 1000
+    // the third row of the review list fell below the fold, a `ListView` never
+    // built it, and `find.text` is blind to a widget that was never built. The
+    // list is a scroller and that is not a defect — so the window grows by the
+    // strip rather than this file scrolling to prove what it already proves.
+    tester.view.physicalSize = const Size(1700, 1080);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
@@ -122,7 +128,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);

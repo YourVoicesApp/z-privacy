@@ -194,10 +194,15 @@ String _answerToken(List<String> pages) {
 }
 
 /// Paste [raw] back as an answer on [bench] and read what the core restores.
-Future<AnswerSnapshot> _pasteBack(Workbench bench, String raw) async {
+///
+/// **Through the session's own turn since rule 65**: the bench no longer names
+/// «which answer is on screen» — the chat draws every turn — so what is read
+/// here is the turn the paste wrote, which is the same pair the thread draws.
+Future<TurnRow> _pasteBack(Workbench bench, String raw) async {
   final refused = await bench.pasteAnswer(raw);
   expect(refused, isNull, reason: 'the answer could not come back: $refused');
-  return z.answerSnapshot(session: bench.session, answer: bench.showing!);
+  expect(bench.chatTurns, isNotEmpty, reason: 'the answer wrote no turn');
+  return bench.chatTurns.last;
 }
 
 String _read(List<Segment> segments) => segments.map((s) => s.text).join();
@@ -246,11 +251,11 @@ void main() {
         reason: 'the word is readable somewhere in the file');
 
     // And it finds its way back: exactly the word, nothing named unknown.
-    late final AnswerSnapshot snap;
-    await tester.runAsync(() async => snap = await _pasteBack(bench, token));
-    expect(snap.unknownTokens, isEmpty,
+    late final TurnRow turn;
+    await tester.runAsync(() async => turn = await _pasteBack(bench, token));
+    expect(turn.unresolved, isEmpty,
         reason: 'the answer page\'s token is unknown in the session that printed it');
-    expect(_read(snap.restored), _answerWord,
+    expect(_read(turn.answer), _answerWord,
         reason: 'the token did not restore to exactly the word');
   });
 
@@ -293,11 +298,11 @@ void main() {
     expect(secondToken, isNot(firstToken),
         reason: 'two sessions printed the same answer token, so there is no isolation to measure');
 
-    late final AnswerSnapshot snap;
-    await tester.runAsync(() async => snap = await _pasteBack(second, '$firstToken / $secondToken'));
-    expect(snap.unknownTokens, [firstToken],
-        reason: 'the first session\'s token was not named unknown in the second: ${snap.unknownTokens}');
-    final restored = _read(snap.restored);
+    late final TurnRow turn;
+    await tester.runAsync(() async => turn = await _pasteBack(second, '$firstToken / $secondToken'));
+    expect(turn.unresolved, [firstToken],
+        reason: 'the first session\'s token was not named unknown in the second: ${turn.unresolved}');
+    final restored = _read(turn.answer);
     expect(restored, '$firstToken / $_answerWord',
         reason: 'the foreign token was restored, dropped, or the control did not restore: «$restored»');
   });

@@ -44,7 +44,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -114,25 +113,17 @@ Widget _workspace(({Ground ground, Workbench bench}) g) => MaterialApp(
   home: WorkspaceScreen(
     bench: g.bench,
     ground: g.ground,
-    onHome: () {},
+    onImport: () {}, onType: (_) {},
     onVault: () {},
     onSettings: () {},
   ),
 );
 
-Widget _home(Ground ground, Workbench? chat) => MaterialApp(
-  home: HomeScreen(
-    ground: ground,
-    version: 'z_core 0.1.0 · 3701ee8',
-    chat: chat,
-    onImport: () {},
-    onReadBack: () {},
-    onType: (_) {},
-    onAsk: (_) async {},
-    onVault: () {},
-    onSettings: () {},
-  ),
-);
+// **The chat's own head is gone** — rule 70. It was the first screen's strip,
+// and 064/B put the session's name in it beside the model that answers: «a
+// person standing in this screen has no file and the same question, which
+// direction of work am I in». One screen has one head, measured in the guards
+// below, and the session's name stands in it beside the document's.
 
 void main() {
   setUpAll(() async {
@@ -188,10 +179,6 @@ void main() {
     expect(find.byKey(TheOpenSession.mark), findsNothing,
         reason: 'an empty session mark stands in the bar with no session open');
 
-    await tester.pumpWidget(_home(g.ground, g.bench));
-    await _settle(tester);
-    expect(find.byKey(TheOpenSession.mark), findsNothing,
-        reason: 'the chat’s head claims a session that does not exist');
   });
 
   // ------------------------------------------------------------------ guard 3
@@ -287,28 +274,10 @@ void main() {
   });
 
   // ------------------------------------------------------------------ guard 4
-  testWidgets('the chat’s head names it too, and the build stamp keeps its place', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1100, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final g = await _ready(tester, 'chat');
-    await tester.pumpWidget(_home(g.ground, g.bench));
-    await _settle(tester);
-
-    final mark = find.byKey(TheOpenSession.mark);
-    expect(mark, findsOneWidget, reason: 'the chat’s head says nothing about the open session');
-    expect(
-      find.descendant(of: mark, matching: find.textContaining('Nordstern')),
-      findsOneWidget,
-      reason: 'the chat’s head does not carry the session’s name',
-    );
-    final r = tester.getRect(mark);
-    expect(r.right, lessThanOrEqualTo(1100), reason: 'the name is off an 1100-wide window: $r');
-    expect(r.top, lessThan(120), reason: 'the name is not in the head of the screen: $r');
-    // The stamp is the longest thing on that strip and it was given room to
-    // shrink rather than room to overflow — so a new neighbour must not have
-    // taken its place entirely.
-    expect(find.textContaining('z_core 0.1.0'), findsOneWidget,
-        reason: 'the build stamp was pushed off the strip');
-    expect(_overflows(tester), isEmpty, reason: 'the chat’s head overflows with the session on it');
-  });
+  //
+  // **It measured the chat's head and the build stamp in it, and rule 70 took
+  // both.** The head was the first screen's strip; the stamp — the core's own
+  // «z_core 0.1.0 · date · sha» — would have left the glass altogether with
+  // it, so it stands in the head of the settings panel now and is measured
+  // where it went: `the_settings_cover_the_work_test.dart`.
 }

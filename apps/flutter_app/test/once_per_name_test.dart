@@ -58,7 +58,7 @@ void main() {
     expect(twice, isNotEmpty, reason: 'nothing in DE-1 stands in two places any more');
 
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {})),
+      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {})),
     );
     await settle(tester);
     await tester.tap(find.text('Review'));
@@ -109,7 +109,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () => vault++),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () => vault++),
       ),
     );
     await settle(tester);

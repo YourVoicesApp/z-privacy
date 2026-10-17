@@ -19,7 +19,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zprivacy/screens/home.dart';
+import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/shell.dart';
@@ -179,7 +179,7 @@ Future<Ground> withADocumentBehindThePanel(WidgetTester tester, String name) asy
   // the field, because a tree left red between two commits is a tree the lead
   // cannot merge either half of.
   await tester.enterText(
-    find.byKey(HomeScreen.composer),
+    find.byKey(WorkspaceScreen.composer),
     'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.',
   );
   await settle(tester, rounds: 1);

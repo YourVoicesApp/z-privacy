@@ -20,16 +20,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/home.dart';
+import 'package:zprivacy/screens/settings.dart';
+import 'package:zprivacy/widgets/the_chat.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/core/protecting.dart';
 import 'package:zprivacy/widgets/review.dart';
-import 'package:zprivacy/screens/answer.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/widgets/tokens.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
+import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -55,7 +56,13 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('Home draws the ground as the core reports it, not as Dart guesses', (
+  // **The four tallies went with the first screen, and so did the one guard
+  // that read them** — rule 70. What they said is still said, in the room that
+  // is about the program rather than about a document: the vault's own state
+  // and its count of identities, and the build stamp that would otherwise have
+  // left the glass altogether. Same claim, same words, the surface the owner's
+  // ruling leaves standing.
+  testWidgets('the settings draw the ground as the core reports it, not as Dart guesses', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1400, 1000));
@@ -63,88 +70,49 @@ void main() {
 
     final ground = Ground();
     late final VaultState vault;
-    late final List<PackRow> packs;
-    late final List<ProviderRow> providers;
+    late final int identities;
+    late final String stamp;
     await tester.runAsync(() async {
       await ground.refresh();
       // What the core says, asked directly. The screen must agree with these.
       vault = await z.vaultState();
-      packs = await z.packs();
-      providers = await z.providers();
+      identities = (await z.vaultSnapshot()).identityCount;
     });
+    // The core's own line, read outside the zone like everything else it says.
+    stamp = coreVersion();
 
     await tester.pumpWidget(
       MaterialApp(
-        home: HomeScreen(
-          ground: ground,
-          version: 'z_core 0.1.0',
-          onImport: () {},
-          onReadBack: () {},
-          onType: (_) {},
-          onAsk: (_) async {},
-          onVault: () {},
-          onSettings: () {},
+        home: Scaffold(
+          body: SettingsScreen(
+            ground: ground,
+            room: SettingsRoom.vault,
+            onClose: () {},
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Z Privacy'), findsOneWidget);
-    // 041-G — the home is the composer. «Import a document» and «New private
-    // session» were two buttons and one of them opened a sheet that asked a
-    // language first; the page is a box to write in now, with a «+» for a file,
-    // and the vault is still a press away.
-    // The box, by its key: 064/D put a second field on this page — the session
-    // question, while a person has no session — and the claim here is about
-    // the box a person writes in, not about how many fields the page has.
-    expect(find.byKey(HomeScreen.composer), findsOneWidget,
-        reason: 'the home is not a box to write in');
-    expect(find.byTooltip('Add a document — PDF, Word or text'), findsOneWidget);
-    expect(find.text('Open Z Vault'), findsOneWidget);
-    // No invented history: Home says what is kept, once, and says it in the
-    // form that is true right now. **064/E changed the sentence, not the
-    // claim:** a session keeps its conversation sealed in the vault since the
-    // core began writing turns, so «conversations are not saved» is the honest
-    // line only while no session is open — which is this journey's own state.
-    expect(find.text('LOCAL CONVERSATIONS'), findsNothing);
-    expect(
-      find.textContaining(
-        'No session is open — nothing of this conversation is kept',
-      ),
-      findsOneWidget,
-    );
-
-    // The pack's label is the pack's own, never a string typed into a screen —
-    // and it is the pack **in use**, read from the settings, not the first one
-    // installed. It also says what the app will do with it, which depends on a
-    // setting rather than on a sentence someone wrote once.
-    expect(packs, isNotEmpty, reason: 'this build carries a pack');
-    final inUse = packs.firstWhere(
-      (p) => p.id == ground.config?.packId,
-      orElse: () => packs.first,
-    );
-    final scans = ground.config?.scanOnImport ?? true;
-    expect(
-      find.text(
-        '${inUse.label} · ${scans ? "scan on import" : "scan when you ask"}',
-      ),
-      findsOneWidget,
-    );
-
-    // The provider count on screen is the core's count.
-    final connected = providers.where((p) => p.connected).length;
-    expect(find.text('$connected'), findsWidgets);
-
-    // And the vault line says the state the core is in — not a friendlier version
+    // The vault line says the state the core is in — not a friendlier version
     // of it. A locked vault must look locked.
     switch (vault) {
       case VaultState.unlocked:
-        expect(find.textContaining('identities the app knows'), findsOneWidget);
+        expect(find.text('Unlocked · $identities identities'), findsOneWidget,
+            reason: 'the room does not say the count the core reports');
       case VaultState.locked:
         expect(find.text('Locked'), findsOneWidget);
       case VaultState.absent:
         expect(find.text('None'), findsOneWidget);
     }
+
+    // **The build stamp, verbatim.** It is the core's own line and the one
+    // thing a person sends with a report about a program that misbehaved; it
+    // stood in the head of the first screen, and it stands in the head of this
+    // panel for exactly as long as there is a panel.
+    expect(find.text(stamp), findsOneWidget,
+        reason: 'the build stamp is nowhere on the glass since the first screen went');
+    expect(stamp, contains('z_core'), reason: 'the core stopped naming itself, so the line above proves nothing');
   });
 
   testWidgets('the Workspace band reports the scan the core ran, number for number', (
@@ -185,7 +153,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -243,7 +211,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -286,7 +254,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -373,7 +341,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -494,7 +462,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -613,7 +581,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -688,7 +656,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -757,7 +725,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -826,6 +794,18 @@ void main() {
       final ground = Ground();
       late final Workbench bench;
       await tester.runAsync(() async {
+        // **This journey is about the doors, not about sessions — said out
+        // loud**, in `reviewJourney`'s own words and for its own reason: the
+        // core's vault state is global, an earlier test in this file leaves
+        // one unlocked, and with one unlocked the sheet begins a session at
+        // the press — «and the nameless press copied nothing». Measured here
+        // too: with a vault made for this test, «Copy Protected» wrote nothing
+        // at all and the sheet kept standing.
+        //
+        // What it means for the tail below: with no vault there is no session,
+        // so an answer brought back by hand is kept nowhere — which is the
+        // state the chat says out loud, and what is measured there.
+        await z.vaultLock();
         await ground.refresh();
         final session = await z.openSession(packId: 'de');
         await z.importText(session: session, text: _doc);
@@ -838,7 +818,7 @@ void main() {
           home: WorkspaceScreen(
             bench: bench,
             ground: ground,
-            onHome: () {},
+            onImport: () {}, onType: (_) {},
             onVault: () {},
             // Given a panel to open because this test asks the sheet for its
             // way to the settings, and a surface with nowhere to send the
@@ -914,7 +894,7 @@ void main() {
       // before the local fold is scrolled into view.
       final clip = _ClipboardProbe(tester)..install();
       await tester.tap(find.text('Copy Protected'));
-      await settle(tester, rounds: 1);
+      await settle(tester, rounds: 8);
       final safe = bench.payload!.text;
       expect(
         clip.text,
@@ -961,43 +941,60 @@ void main() {
         reason: 'no form and no way to reach the place a key is given',
       );
 
-      // Bring an answer back by hand — the token store does not care how it
-      // travelled — and the real values come home.
+      // **Bring an answer back by hand, on a bench with no key at all.**
+      //
+      // This journey never makes a vault — that is its subject: «the manual
+      // door needs no key». Since rule 69 an exchange is kept in the session's
+      // own file, and a session is named from a key, so there is nothing here
+      // for this answer to be kept in. What is measured is therefore what this
+      // bench can honestly say: the chat opens where the work is (rule 65) and
+      // it says in words that nothing is keeping what came back, rather than
+      // drawing a thread that does not exist.
+      //
+      // **The pair itself — the answer coded, the names restored — is measured
+      // through the same door with a session**: «the answer is coded in the
+      // thread, and the names come back in its bubble» below, and
+      // `the_chat_is_the_third_part_test`. It was measured here from
+      // `bench.answers`, the payload's own list, which needed no session;
+      // `answerFacts` fed the panel rule 65 deleted and the session's turn is
+      // the one source now.
       await tester.runAsync(() async {
         await bench.pasteAnswer('Danke. Zusammenfassung:\n$safe');
       });
       await settle(tester);
-      expect(bench.answers, hasLength(1));
-
-      late final List<Segment> segments;
-      late final String raw;
-      await tester.runAsync(() async {
-        segments = (await bench.answerFacts(bench.answers.first)).restored;
-        raw = (await bench.answerFacts(bench.answers.first)).asWritten;
-      });
-      final restored = segments.map((s) => s.text).join();
+      expect(bench.chatTurns, isEmpty,
+          reason: 'a turn was kept on a bench with no vault to name a session');
+      expect(find.byType(TheChat), findsOneWidget,
+          reason: 'the answer did not open the third part of the screen');
       expect(
-        raw,
-        isNot(contains('Thomas Müller')),
-        reason: 'the answer as it arrived holds no value',
+        find.descendant(
+          of: find.byType(TheChat),
+          matching: find.textContaining(theChatKeepsNothing),
+        ),
+        findsOneWidget,
+        reason: 'an answer no session can keep is drawn as though it were kept',
       );
       expect(
-        restored,
-        contains('Thomas Müller'),
-        reason: 'and restoring puts it back, here',
-      );
-      expect(
-        segments.any((s) => s.piece == Piece.restored),
-        isTrue,
-        reason: 'the core marks what it put back',
+        find.descendant(
+          of: find.byType(TheChat),
+          matching: find.textContaining('Thomas Müller'),
+        ),
+        findsNothing,
+        reason: 'the panel drew a name the model never saw',
       );
 
       bench.dispose();
     },
   );
 
+  // **«Shown twice» became «coded, and the names one press away»** — rule 66,
+  // 17 October. The panel had a tab over the whole of it — «Restored» or «As
+  // the model wrote it» — and the owner's ruling turns that around: the thread
+  // draws what travelled, coded, and the restored text opens in a bubble under
+  // the answer it belongs to. Both views are still on the glass; what changed
+  // is which of them is the default and how far the other one is.
   testWidgets(
-    'the answer is shown twice: restored, and as the model wrote it',
+    'the answer is coded in the thread, and the names come back in its bubble',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(1700, 1100));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -1005,6 +1002,7 @@ void main() {
       final ground = Ground();
       late final Workbench bench;
       await tester.runAsync(() async {
+        await freshVaultForUiTest('coded-thread');
         await ground.refresh();
         final session = await z.openSession(packId: 'de');
         await z.importText(session: session, text: _doc);
@@ -1018,32 +1016,42 @@ void main() {
           );
         }
         await bench.refresh();
+        // The session first, then the handle: a birth renames every token in
+        // it, and a payload remembered before it would carry the old names.
+        await aSessionToKeepItIn(ground, bench);
         bench.rememberCopiedPayload();
         await bench.pasteAnswer('Verstanden:\n${bench.payload!.text}');
       });
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
         ),
       );
       await settle(tester);
 
-      expect(find.byType(AnswerPanel), findsOneWidget);
-      expect(find.text('Restored'), findsOneWidget);
-      expect(find.text('As the model wrote it'), findsOneWidget);
+      expect(find.byType(TheChat), findsOneWidget);
+      Finder inChat(Finder f) =>
+          find.descendant(of: find.byType(TheChat), matching: f);
 
-      Finder inPanel(Finder f) =>
-          find.descendant(of: find.byType(AnswerPanel), matching: f);
+      // **Coded is what the thread draws**, and the name is not in it.
+      expect(inChat(find.textContaining('__Z_')), findsWidgets);
+      expect(inChat(find.textContaining('Thomas Müller')), findsNothing,
+          reason: 'the thread draws a name the model never saw');
+      // And no tab over the panel: there is nothing to switch any more.
+      expect(find.text('As the model wrote it'), findsNothing);
 
-      // Restored is what opens, and the real value is in it — locally.
-      expect(inPanel(find.textContaining('Thomas Müller')), findsOneWidget);
-
-      // The other view is the same answer with the tokens still in it.
-      await tester.tap(find.text('As the model wrote it'));
+      // **One press, and the names are in the bubble** — and nowhere else.
+      await tester.tap(find.byKey(TheChat.showTheText(0)));
       await settle(tester);
-      expect(inPanel(find.textContaining('Thomas Müller')), findsNothing);
-      expect(inPanel(find.textContaining('__Z_')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(TheChat.bubble(0)),
+          matching: find.textContaining('Thomas Müller'),
+        ),
+        findsOneWidget,
+        reason: 'the restored value is not in the bubble the press opened',
+      );
 
       bench.dispose();
     },
@@ -1060,6 +1068,7 @@ void main() {
     late final String restored;
     late final String raw;
     await tester.runAsync(() async {
+      await freshVaultForUiTest('copy-restored');
       await ground.refresh();
       final session = await z.openSession(packId: 'de');
       await z.importText(session: session, text: _doc);
@@ -1073,28 +1082,45 @@ void main() {
         );
       }
       await bench.refresh();
+      // The session first, then the handle, for the reason above.
+      await aSessionToKeepItIn(ground, bench);
       bench.rememberCopiedPayload();
       await bench.pasteAnswer('Verstanden:\n${bench.payload!.text}');
-      final segments = (await bench.answerFacts(bench.answers.first)).restored;
-      restored = segments.map((s) => s.text).join();
-      raw = (await bench.answerFacts(bench.answers.first)).asWritten;
+      // **Read from the turn the core wrote**, which is what the thread draws:
+      // the restored segments and the answer as it arrived. `answerFacts` fed
+      // the panel that is gone, and asking the session for its own turn is one
+      // source rather than two for the same pair.
+      final turn = bench.chatTurns.last;
+      restored = turn.answer.map((s) => s.text).join();
+      raw = turn.answerAsWritten;
     });
 
     final clip = _ClipboardProbe(tester)..install();
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
 
     Finder inPanel(Finder f) =>
-        find.descendant(of: find.byType(AnswerPanel), matching: f);
+        find.descendant(of: find.byType(TheChat), matching: f);
 
+    // **The press lives in the bubble since rule 66**: the restored text and
+    // the way to copy it are one thing, opened together.
+    await tester.tap(find.byKey(TheChat.showTheText(0)));
+    await settle(tester);
     expect(inPanel(find.text('Copy Restored')), findsOneWidget);
     expect(find.text('Copy'), findsNothing);
     expect(restored, contains('Thomas Müller'));
 
+    // **Brought into view before it is pressed.** The press lives in the
+    // bubble, the bubble opens under the turn it belongs to, and after ed's A1
+    // the first turn is the whole payload the model saw — so «Copy Restored»
+    // stood 33 px under a 1100-tall window and `tap` derived an offset outside
+    // the render tree. Only a press sees a scroller's clip.
+    await tester.ensureVisible(inPanel(find.text('Copy Restored')));
+    await settle(tester, rounds: 2);
     await tester.tap(inPanel(find.text('Copy Restored')));
     await tester.pumpAndSettle();
 
@@ -1179,17 +1205,26 @@ void main() {
         reason: 'a cancelled press left the old restored text to be pasted — '
             'which is the owner’s own leak, in the panel instead of the exit');
 
-    await tester.tap(find.text('As the model wrote it'));
-    await settle(tester);
-    expect(inPanel(find.text('Copy Protected')), findsOneWidget);
-    expect(inPanel(find.text('Copy Restored')), findsNothing);
-    expect(find.text('Copy'), findsNothing);
-
-    await tester.tap(inPanel(find.text('Copy Protected')));
-    await tester.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsNothing);
-    expect(clip.text, raw);
-    expect(clip.text, isNot(contains('Thomas Müller')));
+    // **The coded copy is not behind a tab any more** — rule 66, and the claim
+    // moves with the door rather than going.
+    //
+    // The panel had «As the model wrote it» over the whole of it and the coded
+    // copy stood on that side. The thread draws the coded form by default now,
+    // so there is nothing to switch to, and what takes it out is rule 65's own
+    // door at the foot of the chat: «Copy the chat», which carries every turn
+    // in the form it travelled in (A4). What was being measured here — **a
+    // coded copy asks nothing and leaves no name behind** — is measured on
+    // that door.
+    expect(find.text('As the model wrote it'), findsNothing,
+        reason: 'the tab rule 66 deleted is back over the answer');
+    await tester.tap(inPanel(find.text('Copy the chat')));
+    await settle(tester, rounds: 4);
+    expect(find.byType(AlertDialog), findsNothing,
+        reason: 'taking the coded chat out asked a question it does not need to ask');
+    expect(clip.text, contains(raw),
+        reason: 'what left does not hold the answer as the model wrote it');
+    expect(clip.text, isNot(contains('Thomas Müller')),
+        reason: 'the chat that left holds a name the model never saw');
     expect(clip.text, contains('__Z_'));
 
     bench.dispose();
@@ -1231,7 +1266,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
         ),
       );
       await settle(tester);
@@ -1469,7 +1504,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -1498,7 +1533,16 @@ void main() {
 
     // It went, and it came back.
     expect(bench.trouble, isNull, reason: 'the send failed: ${bench.trouble}');
-    expect(bench.answers, hasLength(1));
+    // **What proves the answer arrived, in a journey with no session.** The
+    // record of an exchange is the session's own turn since rule 69, and this
+    // test locks the vault on purpose — «about the wire, not about sessions»,
+    // the line above — so there is no session to keep a turn in and the chat
+    // draws nothing. `lastUsage` is written from the `ModelAnswer` the bridge
+    // decoded, so it is set only if a model answered, which is the whole of
+    // what this line ever claimed. The turn is measured where a session
+    // exists: `the_chat_is_the_third_part_test` and `the_third_exit_test`.
+    expect(bench.lastUsage, isNotNull,
+        reason: 'no answer came back through the door');
     expect(bodyReceived, isNotNull, reason: 'the server was never contacted');
 
     // And what arrived is the payload, character for character, with nothing of
@@ -1515,15 +1559,36 @@ void main() {
     }
     expect(authReceived, 'Bearer sk-test-not-a-real-credential');
 
-    // The answer panel opened on its own with the restored view.
+    // **The chat opened on its own** — rule 65: an answer does not land on a
+    // screen of its own any more, the third part of this one opens where the
+    // work is. That much is true with no session: the panel stands, and it
+    // says in words that nothing is keeping what came back.
+    //
+    // **What the thread draws is measured where a session exists**, which is
+    // not a reach this test can make: it locks the vault on purpose, so there
+    // is no session, no turn, and nothing for the thread to draw. The coded
+    // thread and the name behind «Show the text» are rules 65 and 66, and
+    // they are measured against a real exchange in «the answer is coded in
+    // the thread» above and in `the_chat_is_the_third_part_test`, both of
+    // which begin a session first. Pressing `showTheText(0)` here found no
+    // widget at all — the honest shape of a chat with nothing in it.
     await settle(tester);
-    expect(find.byType(AnswerPanel), findsOneWidget);
+    expect(find.byType(TheChat), findsOneWidget);
     expect(
       find.descendant(
-        of: find.byType(AnswerPanel),
+        of: find.byType(TheChat),
         matching: find.textContaining('Thomas Müller'),
       ),
+      findsNothing,
+      reason: 'the thread drew a name the model never saw',
+    );
+    expect(
+      find.descendant(
+        of: find.byType(TheChat),
+        matching: find.textContaining(theChatKeepsNothing),
+      ),
       findsOneWidget,
+      reason: 'an answer no session can keep is drawn as though it were kept',
     );
 
     await tester.runAsync(() async {
@@ -1534,7 +1599,7 @@ void main() {
 
   // ------------------------------------------------------ 1280×720 review flow
   //
-  // The human run could not reach Copy Protected / Paste AI answer / Send from
+  // The human run could not reach Copy Protected / the manual door / Send from
   // here at this size: the payload swallowed the wheel, and the doors lived
   // below the window. These tests walk the journey, not just takeException().
 
@@ -1694,7 +1759,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester, rounds: 2);
@@ -1793,6 +1858,27 @@ Future<void> freshVaultForUiTest(String name) async {
   if (dir.existsSync()) dir.deleteSync(recursive: true);
   await z.setDataDir(dir: dir.path);
   await z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort');
+}
+
+/// **A session for the chat to keep a turn in** — rules 65 and 69.
+///
+/// An exchange is kept in the session's own file now, not beside the payload
+/// in memory: `answerFacts` fed the panel rule 65 deleted, and the thread
+/// reads `conversation_turns`. So a test that wants a turn to exist has to
+/// have had a session born, which is what every exit door does by itself
+/// (rule 55, 081) — and what the four guards below were doing implicitly while
+/// the answer lived on the bench.
+///
+/// It needs a vault, because a birth renames this document's tokens from the
+/// session's own key. With no vault there is no session, the answer is kept
+/// nowhere, and the chat says exactly that (`theChatKeepsNothing`) — an
+/// honest screen, and not the one these guards are about.
+Future<void> aSessionToKeepItIn(Ground ground, Workbench bench) async {
+  await ground.refresh();
+  if (ground.aSessionWouldBeBorn) {
+    await ground.beginSessionItNames(bench: bench.session);
+    await bench.refresh();
+  }
 }
 
 /// Captures clipboard writes. Widget tests have no system clipboard; this is
@@ -2002,7 +2088,7 @@ Future<void> reviewJourney(
 
   await tester.pumpWidget(
     MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
     ),
   );
   await tester.pumpAndSettle();
@@ -2085,9 +2171,15 @@ Future<void> reviewJourney(
     find.text('Cancel'),
     because: 'Cancel is the fixed footer, not in the body',
   );
+  // **«Paste AI answer» is not one of these any more** — rule 65, 17 October.
+  // The way back from a manual door is «Add an answer» at the foot of the
+  // chat, where the thread it joins is: a second paste door inside the sheet
+  // would be a way back into a conversation the sheet cannot see. The
+  // sentence under «Manual AI» says where it went, and `send_sheet.dart`
+  // names the rule where the button stood.
   for (final primary in const [
     'Copy Protected',
-    'Paste AI answer',
+    'Manual AI',
     'Direct API',
   ]) {
     expectOnScreen(
@@ -2145,13 +2237,14 @@ Future<void> reviewJourney(
     bench.payload!.text,
     reason: 'Copy Protected copies the SafePayload, exactly',
   );
-  await tester.tap(find.text('Paste AI answer'));
-  await tester.pump();
-  expect(find.textContaining('Paste the model'), findsOneWidget);
-  expectOnScreen(
-    tester,
-    find.text('Cancel'),
-    because: 'opening the paste box must not kick the footer off the screen',
-  );
+  // **4 · the way back is not in the sheet any more** — rule 65.
+  //
+  // This journey used to press «Paste AI answer» here and measure that the box
+  // it opened did not kick the footer off a 1280×720 window. The door is gone
+  // from the sheet and the box opens at the foot of the chat now, so the claim
+  // is not weakened — it is measured where the box is, under «Add an answer»
+  // in `the_chat_is_the_third_part_test`'s guard at the window the app opens
+  // at. Pressing a label that is not there would have failed; asserting its
+  // absence here would be a second copy of G41's own roster.
   expect(tester.takeException(), isNull);
 }

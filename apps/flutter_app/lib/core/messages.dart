@@ -216,6 +216,24 @@ String sourceName(Source s) => switch (s) {
   Source.hand => 'You',
 };
 
+/// **Who answered one turn of a chat**, in the words the thread uses — rules
+/// 65 and 75c.
+///
+/// The core resolves this when the turn is written and the three states are
+/// its own: «لا نعرف» ليست «لم يكن هناك». A name is never guessed from the
+/// provider configured today, because the turn in front of a person may be
+/// older than that choice.
+String whoAnswered(TurnVia via) => switch (via) {
+  TurnVia_Through(:final provider) => provider,
+  // The person carried the text out and the answer back, so nothing of ours
+  // answered it — and the thread says that rather than naming a key.
+  TurnVia_Pasted() => 'brought back by hand',
+  // A turn older than the question. The chat draws only this round's turns, so
+  // this is the answer to a question the thread cannot ask — and it is still
+  // answered, because an absence has more than one cause.
+  TurnVia_NotRecorded() => 'not recorded',
+};
+
 /// **What one press was made on** — the only thing that changes the sentence an
 /// outcome gets, and so the only argument beside the outcome itself.
 ///

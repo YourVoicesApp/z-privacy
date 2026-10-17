@@ -18,7 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/widgets/the_chat.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -41,7 +41,17 @@ Future<void> settle(WidgetTester tester, {int rounds = 8}) async {
   }
 }
 
-Future<(Ground, Workbench)> _open(WidgetTester tester, String name) async {
+/// `vault: true` makes one before the document is opened, which only the guard
+/// that needs a **session** asks for: a session is born at an exit (rule 55)
+/// and it renames this document's tokens from its own key, so there has to be
+/// a key. The other guards here are about the request in the column and are
+/// left exactly as they were — a vault in all of them would be a condition
+/// nobody measured.
+Future<(Ground, Workbench)> _open(
+  WidgetTester tester,
+  String name, {
+  bool vault = false,
+}) async {
   final ground = Ground();
   late final Workbench bench;
   await tester.runAsync(() async {
@@ -50,7 +60,9 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name) async {
     addTearDown(() {
       if (here.existsSync()) here.deleteSync(recursive: true);
     });
+    await z.vaultLock();
     await z.setDataDir(dir: here.path);
+    if (vault) await z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort dafür');
     await ground.refresh();
     final session = await z.openSession(packId: 'de');
     bench = Workbench(session: session, profileId: null, packId: 'de');
@@ -64,7 +76,7 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name) async {
   });
   addTearDown(bench.dispose);
   await tester.pumpWidget(MaterialApp(
-    home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+    home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
   ));
   await settle(tester);
   return (ground, bench);
@@ -144,10 +156,15 @@ void main() {
       reason: 'the screen tells a person the model has no memory of the '
           'earlier questions, and since rule 67 it has one',
     );
-    // And the other half of the pair: what is replaced, and what is kept.
-    expect(find.textContaining('a new question replaces the request'), findsOneWidget);
+    // And the other half of the pair: what is replaced, and what is kept. The
+    // wording moved with rule 65 — «the answers are kept» became «the chat
+    // keeps every exchange», which is where they are kept now and the word the
+    // owner's own ruling uses for this part (G41 reads every sentence for it).
+    // The claim is the one that was always being measured: both halves are
+    // said, so neither is read as loss.
+    expect(find.textContaining('a new question replaces this one'), findsOneWidget);
     expect(
-      find.textContaining('the answers are kept'),
+      find.textContaining('the chat keeps every exchange'),
       findsOneWidget,
       reason: 'the screen says the request is replaced and is silent about the '
           'answers, which is the half a person would read as loss',
@@ -155,17 +172,21 @@ void main() {
     expect(bench.question, 'Summarise it.');
   });
 
-  /// **The question at the head of its answer**, and it follows the tab.
+  /// **The pair, in the thread** — rules 65 and 66.
   ///
   /// The owner asked that the answer appear under the question rather than in a
-  /// third screen, and it never was in a third screen — this panel has been in
-  /// the workspace all along. What was missing was the **legibility of the
-  /// pair**. Quoting the raw sentence above «as the model wrote it» would say
-  /// the model had read a name it never saw, so the head follows the tab.
-  testWidgets('the answer panel quotes the question, in the words of the open tab', (tester) async {
+  /// third screen, and 046/N's answer was a quote at the head of the panel,
+  /// following its «Restored / As the model wrote it» tab. The chat answers it
+  /// better and with no tab at all: the question stands immediately above the
+  /// answer it was asked with, both **coded** — what actually travelled — and
+  /// the restored text is one press away, per answer.
+  ///
+  /// So the assertion that moved is the one that mattered: the pair is legible,
+  /// and neither side of it claims the model read a name it never saw.
+  testWidgets('the chat shows the question above its answer, as it left', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1500, 1100));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    final (_, bench) = await _open(tester, 'quoted');
+    final (ground, bench) = await _open(tester, 'quoted', vault: true);
 
     await tester.enterText(find.byKey(_field), 'What did Thomas Müller earn?');
     await settle(tester, rounds: 2);
@@ -173,39 +194,65 @@ void main() {
     await settle(tester, rounds: 16);
 
     // An answer through the door that works offline: the safe text goes out by
-    // hand and comes back. The panel then has something to head.
+    // hand and comes back. The thread then has a turn to draw.
+    //
+    // **The session is begun first, because that is what keeps a turn.** The
+    // copy door begins one by itself (rule 55: a session is born at the first
+    // exit) and this walks the same step by hand: without it the answer is
+    // kept nowhere, the chat has nothing to draw, and the panel says so in
+    // `theChatKeepsNothing` — which is an honest screen and not the shape
+    // rules 65 and 66 are about.
     await tester.runAsync(() async {
+      if (ground.aSessionWouldBeBorn) {
+        await ground.beginSessionItNames(bench: bench.session);
+        await bench.refresh();
+      }
       bench.rememberCopiedPayload();
       await bench.pasteAnswer('They earned 42 500.');
     });
     await settle(tester, rounds: 12);
 
-    expect(find.text('You asked'), findsOneWidget,
-        reason: 'the answer does not say which request it answered');
-
-    // **Inside the panel**, and not anywhere on the screen: the field itself
-    // still holds the sentence a person typed, so an unscoped finder was green
-    // for the field rather than for the head. The same trap three other
-    // guards fell into today.
-    // No return type written out: `Finding` is the core's own type and it is
-    // imported here, so annotating this `Finding` compiled and then threw at
-    // run time. Two names, one word, and the compiler had no reason to object.
-    inPanel(String text) => find.descendant(
-          of: find.byType(AnswerPanel),
+    expect(find.byType(TheChat), findsOneWidget, reason: 'the answer did not open the chat');
+    inChat(String text) => find.descendant(
+          of: find.byType(TheChat),
           matching: find.textContaining(text),
         );
 
-    // Restored view: the question as the person typed it, name and all —
-    // because this side of the panel is the side where values come back.
-    expect(inPanel('What did Thomas Müller earn?'), findsOneWidget);
+    // **Both sides are coded**, and the thread says so of each: «you · coded»
+    // above, the answerer and «coded» below.
+    expect(inChat('you'), findsWidgets, reason: 'the question’s side is not named');
+    expect(find.descendant(of: find.byType(TheChat), matching: find.text('coded')),
+        findsWidgets, reason: 'the thread does not say that what it draws is coded');
 
-    // The model's view: the question as the model received it. The name is a
-    // token there, or the panel would claim the model read it.
-    await tester.tap(find.text('As the model wrote it'));
-    await settle(tester, rounds: 4);
-    expect(inPanel('Thomas Müller'), findsNothing,
-        reason: 'the model view quotes a name the model never saw');
-    expect(inPanel('__Z_'), findsWidgets);
+    // **The question as it left**: the token, never the name. A thread that
+    // quoted the person’s own sentence here would be saying the model read it.
+    expect(inChat('__Z_'), findsWidgets, reason: 'the question is not drawn as it left');
+    expect(inChat('Thomas Müller'), findsNothing,
+        reason: 'the thread quotes a name the model never saw');
+
+    // **And the question is above the answer**, which is the whole of what
+    // 046/N asked for: read as a pair, in the order they happened.
+    final sides = tester.widgetList<Text>(
+      find.descendant(of: find.byType(TheChat), matching: find.byType(Text)),
+    );
+    expect(sides, isNotEmpty);
+    final you = tester.getRect(find.descendant(
+      of: find.byType(TheChat),
+      matching: find.text('you'),
+    ).first);
+    final answered = tester.getRect(find.descendant(
+      of: find.byType(TheChat),
+      matching: find.byKey(TheChat.showTheText(0)),
+    ));
+    expect(you.top, lessThan(answered.top),
+        reason: 'the question is drawn below the answer it was asked with');
+
+    // **The names come back in the bubble, and only there** — rule 66.
+    expect(inChat('42 500'), findsWidgets, reason: 'the answer is not in the thread');
+    await tester.tap(find.byKey(TheChat.showTheText(0)));
+    await settle(tester, rounds: 2);
+    expect(find.byKey(TheChat.bubble(0)), findsOneWidget,
+        reason: '«Show the text» opened no bubble');
     // No `dispose` here: `_open` registered one as a tear-down, and calling it
     // twice is an error the harness reports as a failure of the test.
   });

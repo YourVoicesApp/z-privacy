@@ -131,10 +131,17 @@ G27_DOORS=$(awk '
 ' "$FLUTTER_LIB/screens/shell.dart" 2>/dev/null || true)
 G27_SILENT=$(printf '%s\n' "$G27_DOORS" | grep -c '^SILENT' || true)
 G27_ASKS=$(printf '%s\n' "$G27_DOORS" | grep -c '^asks' || true)
-if [ "$G27_SILENT" = "0" ] && [ "$G27_ASKS" -ge 3 ]; then
+# **Two, since rule 70, and the number is read rather than remembered.** It was
+# three: `_begin`, `_openKept` and `_askFromHome` — the first screen's own chat,
+# which read a question into a session of its own. That screen is gone with the
+# rule, so the count came down by a door, and taking one away moves this line as
+# surely as adding one would (the same arithmetic rule 62 taught G36 on 17
+# October). The doors are still enumerated from what they do, so a third one
+# written tomorrow is counted the day it is written.
+if [ "$G27_SILENT" = "0" ] && [ "$G27_ASKS" -ge 2 ]; then
   pass "G27 all $G27_ASKS doors that read a text in a session take its language from one hand"
 else
-  fail "G27 $G27_SILENT door(s) read a text in a session without asking the one hand (and $G27_ASKS do ask; three are known):"
+  fail "G27 $G27_SILENT door(s) read a text in a session without asking the one hand (and $G27_ASKS do ask; two are known):"
   printf '%s\n' "$G27_DOORS" | sed 's/^/        /'
 fi
 
@@ -440,10 +447,15 @@ fi
 G38_APP=$(grep -Rn 'appLanguage(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
           | grep -v '/src/rust/' | grep -vE '^\S+: *//|// ' | cut -d: -f1 | sort -u \
           | sed "s|$FLUTTER_LIB/||" | tr '\n' ' ' | sed 's/ $//')
-if [ "$G38_APP" = "core/session_state.dart screens/home.dart" ]; then
-  pass "G38 the application's language is read where it is drawn and nowhere a session is born"
+# **One reader since rule 70**, and it was two: the second was the first
+# screen's own tally, which drew the app's pack beside the vault's count, and
+# both went with the screen. What is left is `packForTheNextText`, which answers
+# for a session that exists and has no language of its own (080, rule 33) — and
+# that one reader is the whole of what this check is for.
+if [ "$G38_APP" = "core/session_state.dart" ]; then
+  pass "G38 the application's language is read in one place, and nowhere a session is born"
 else
-  fail "G38 «appLanguage» is read in «$G38_APP» — expected core/session_state.dart and screens/home.dart only (rule 57c)"
+  fail "G38 «appLanguage» is read in «$G38_APP» — expected core/session_state.dart only (rule 57c)"
 fi
 
 # **Every door a text enters by asks first.** The doors are the imports (G37's
@@ -454,12 +466,15 @@ fi
 # **`_openKept` joined them on 17 October, rule 57-د.** It read the language
 # straight from `packForTheNextText`, which answered for a session created
 # before 080 with the application's — so an old session's kept documents came
-# back read with the wrong eye, for ever, and nobody was asked. Three doors
-# named here by hand, and G27 enumerates them from what they do, so a fourth
-# one written tomorrow is caught by the gate that counts rather than by the
-# gate that remembers.
+# back read with the wrong eye, for ever, and nobody was asked.
+#
+# **And `_askFromHome` left them the same day** — rule 70: it read the first
+# screen's own question into a session of its own, and that screen is gone. Two
+# doors named here by hand, and G27 enumerates them from what they do, so a
+# third one written tomorrow is caught by the gate that counts rather than by
+# the gate that remembers.
 G38_QUIET=""
-for door in _askFromHome _begin _openKept; do
+for door in _begin _openKept; do
   if ! awk -v want="$door" '
     $0 ~ "^  [A-Za-z_][A-Za-z_<>,? ]* " want "\\(" { inside = 1 }
     inside && /_theLanguageOfTheTextToCome\(/ { found = 1 }
@@ -473,10 +488,10 @@ G38_ASKS=$(awk '
   /^  [A-Za-z_][A-Za-z_<>,? ]* _?[A-Za-z_]+\(/ { match($0, /[A-Za-z_]+\(/); here = substr($0, RSTART, RLENGTH - 1) }
   /_theLanguageOfTheTextToCome\(/ { if (here != "" && here != "_theLanguageOfTheTextToCome") print here }
 ' "$SHELL_DART" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ -z "$G38_QUIET" ] && [ "$G38_ASKS" = "_askFromHome _begin _openKept" ]; then
-  pass "G38 all three doors a text enters by ask which language before anything is read"
+if [ -z "$G38_QUIET" ] && [ "$G38_ASKS" = "_begin _openKept" ]; then
+  pass "G38 both doors a text enters by ask which language before anything is read"
 else
-  fail "G38 these doors read a text without asking:$G38_QUIET (asked from «$G38_ASKS», expected «_askFromHome _begin _openKept»)"
+  fail "G38 these doors read a text without asking:$G38_QUIET (asked from «$G38_ASKS», expected «_begin _openKept»)"
 fi
 
 # **And the room that begins a session by hand cannot default.** Two halves in
@@ -760,31 +775,35 @@ FNR == 1 { inside = 0 }
 
 # **The allowed list, and the reason for every line of it.**
 #
-#   1. `home.dart` — «This session keeps its conversation, sealed in your
-#      vault» and «No session is open — nothing of this conversation is kept»:
-#      the exchange with the model, with the session named beside it as the
-#      thing that keeps it. The lead's own wording, both halves.
-#   2. `the_journey.dart` — «Nothing of this conversation is written anywhere: a
-#      session is what keeps one, and none is open»: the same two words in one
-#      sentence, which is why it is the clearest of them.
-#   3. `settings.dart` — «there are no sessions to show … the conversations
+#   1. **`home.dart`'s two and `the_journey.dart`'s one are gone** — rule 70, 17
+#      October. They were «This session keeps its conversation, sealed in your
+#      vault», «No session is open — nothing of this conversation is kept» and
+#      «Nothing of this conversation is written anywhere: a session is what
+#      keeps one, and none is open»: the first screen's own line about what it
+#      kept, and the journey's. Both files are deleted with the screen, so the
+#      exceptions go with them — and this list's own staleness check below is
+#      what would have said so if they had been left here.
+#
+#      **What that leaves owed, in writing**: «an answer no session could
+#      keep» is a real state (no vault, so no key to seal one with) and the
+#      journey was where the app said so. The chat panel is where it belongs
+#      now — paper 090 B3 — and this is the note that it is not said anywhere
+#      while that panel is unbuilt.
+#   2. `settings.dart` — «there are no sessions to show … the conversations
 #      themselves were never in it»: the rows and their keys are in the vault,
 #      the exchanges never were. Both words, each about its own thing.
-#   4. the import path of `conversation_view.dart`, in two files: a file name is
+#   3. the import path of `conversation_view.dart`, in two files: a file name is
 #      not a sentence, and the widget keeps the name of what it draws — the
 #      turns of an exchange.
-#   5. the two widget keys `the-conversation` and `open-this-conversation`: a
+#   4. the two widget keys `the-conversation` and `open-this-conversation`: a
 #      key is read by a guard and never by a person.
-#   6. `session.rs`'s `.field("conversation", …)`: the label of a field in a
+#   5. `session.rs`'s `.field("conversation", …)`: the label of a field in a
 #      `Debug` dump, which no screen shows.
 #
 # **A phrase and not a line number**, so the list does not rot as files move —
 # and if somebody re-wraps one of these sentences the gate reds and the line has
 # to be justified again, which is the pressure this list exists to apply.
-G41_ALLOWED='conversation, sealed in your vault
-this conversation is kept\.
-Nothing of this conversation is written anywhere
-the conversations themselves were never in it\.
+G41_ALLOWED='the conversations themselves were never in it\.
 package:zprivacy/widgets/conversation_view\.dart
 : the-conversation$
 : open-this-conversation$
@@ -1093,6 +1112,45 @@ else
   printf '%s\n' "$G43_TAKERS" | sed 's/^/        /'
 fi
 
+# ---------------------------------------------------------------- G47
+# **The answer is coded in the thread, and the names come back in one place**
+# — rule 66, the owner, 17 October 2026: «تظهر الإجابة داخل الشات مرمزة مع زر
+# عرض النص ليظهر في فقاعة… لا يظهر الجواب مباشرة بلا ترميز».
+#
+# Two sides of one law, and the second is the one a later round would break by
+# accident: the thread draws what **travelled** — the coded strings the core
+# stored — and the restored text, with the real values in it, is drawn in the
+# bubble a press opens and nowhere else. A panel that drew the restored
+# segments in the thread would put a person's own names on the glass with
+# nothing asked for, which is the whole of what rule 66 forbids.
+#
+# Read from the source by **class**, the way G42 read the chat's door: a
+# `TurnRow`'s restored side is `.answer`, and the only class allowed to touch
+# it is the bubble's state. `.answerAsWritten` is the coded one and is
+# deliberately not matched — the pattern ends at a non-letter, so the two
+# cannot be confused.
+CHAT_DART=$FLUTTER_LIB/widgets/the_chat.dart
+if [ -f "$CHAT_DART" ]; then
+  G47_RESTORED=$(awk '
+    /^class [_A-Za-z]+/ { cls = $2 }
+    /\.answer[^A-Za-z]/ { if (cls != "") print cls }
+  ' "$CHAT_DART" | sort -u | tr '\n' ' ' | sed 's/ $//')
+  if [ "$G47_RESTORED" = "_BubbleState" ]; then
+    pass "G47 the restored answer is drawn in one class, and it is the bubble a press opens"
+  else
+    fail "G47 the restored side of a turn is read in «$G47_RESTORED» — expected «_BubbleState» only (rule 66)"
+  fi
+  # And the coded sides go through the painter the Safe column uses, so a token
+  # is drawn the same way wherever a person meets it — never as bare text.
+  if grep -q 'child: SafeText(text: text, chips: false)' "$CHAT_DART"; then
+    pass "G47 the thread draws what travelled with the Safe column's own painter"
+  else
+    fail "G47 the chat draws the coded sides itself — a token must look the same wherever it stands"
+  fi
+else
+  fail "G47 widgets/the_chat.dart is missing — the third part of the one screen is not built (rule 65)"
+fi
+
 # ---------------------------------------------------------------- G42
 # **Nobody reaches the three exits without the outgoing text on the glass** —
 # rule 60 and the owner's rule 60-أ, 17 October 2026.
@@ -1107,16 +1165,18 @@ fi
 #
 # So the doors are enumerated **from what they do**: a place that builds a
 # `SendSheet` is a door, whatever it is called, and each must come through a
-# hand that has put the text in front of the person first. Two hands, because
-# the two screens keep it there in two different ways — and the chat's is held
-# by the **shape**: its door is drawn inside the band, so there is no state to
-# check and no flag to pass.
+# hand that has put the text in front of the person first.
+#
+# **One hand again since rule 70** (17 October). There were two, because there
+# were two screens and they kept the text in front of a person in two different
+# ways; the first screen is gone, so the hand that was written for it is gone
+# with it — see the note where its own check stood, below.
 SEND_SHEET=$FLUTTER_LIB/widgets/send_sheet.dart
 G42_BUILT=$(grep -Rn 'SendSheet(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
             | grep -v '/src/rust/' | grep -v "^$SEND_SHEET:" \
             | grep -vE ':[0-9]+:[[:space:]]*(//|///|\*)' || true)
 if [ -z "$G42_BUILT" ]; then
-  pass "G42 every door to the three exits is built by one of the two hands, in send_sheet.dart"
+  pass "G42 every door to the three exits is built by the one hand, in send_sheet.dart"
 else
   fail "G42 these places build the send sheet themselves, so nothing makes them show the text first:"
   printf '%s\n' "$G42_BUILT" | sed 's/^/        /'
@@ -1141,28 +1201,23 @@ else
   fail "G42 the work surface's hand no longer opens the preview side — a closed side and the three exits can stand together"
 fi
 
-# **And the chat's door is drawn inside the band that draws the text.** The
-# call sites are read by the class they stand in: the same class must draw the
-# payload (`SafeText`), or the door is somewhere a person can press with
-# nothing in front of them. A second call site anywhere else is the defect this
-# check exists for.
-G42_CHAT=$(grep -Rn 'theWayToTheDoorsFromTheChat(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
-           | grep -v "^$SEND_SHEET:" | grep -vE ':[0-9]+:[[:space:]]*(//|///|\*)' | cut -d: -f1 | sort -u || true)
-G42_BARE=""
-for f in $G42_CHAT; do
-  G42_BARE="$G42_BARE$(awk '
-    /^class [_A-Za-z]+/ { cls = $2; text = 0; door = 0 }
-    /SafeText\(/ { text = 1 }
-    /theWayToTheDoorsFromTheChat\(/ { door = 1 }
-    /^}$/ { if (door && !text) printf " %s:%s", FILENAME, cls; door = 0; text = 0 }
-  ' "$f")"
-done
-G42_N=$(printf '%s\n' "$G42_CHAT" | grep -c . || true)
-if [ -z "$G42_BARE" ] && [ "$G42_N" = "1" ]; then
-  pass "G42 the chat's door stands inside the band that draws the outgoing text"
-else
-  fail "G42 the chat's door is reachable with no text drawn beside it — callers in $G42_N file(s), bare in:$G42_BARE"
-fi
+# **The chat's own door is gone, and with it the case it was written for** —
+# rule 70 settles rule 60-أ's first half, 17 October.
+#
+# This read `theWayToTheDoorsFromTheChat` out of the source and asked whether
+# the class that called it also drew the outgoing text (`SafeText`), because the
+# first screen's chat had no preview side to open: the law «what leaves is seen»
+# was held there by the door standing *inside* the band that drew the text. One
+# screen with three parts has no such state — every question is asked beside the
+# middle column, which draws what will leave — so the hand, the band and this
+# check are deleted together rather than left as a check over nothing. **An
+# exception that matches nothing is a finding, not a comfort**, and a check whose
+# subject no longer exists is the same shape: it would have gone on passing by
+# measuring an empty list.
+#
+# What is still measured, above: every `SendSheet` in the app is built by the one
+# hand in `send_sheet.dart`, and that hand opens the preview side first.
+
 # ---------------------------------------------------------------- G37
 # **The session is born at its first document, and nowhere else** — rule 55,
 # the owner's answer of 16 October 2026: «المحادثة لا علاقة بالوثائق… ولكن عند
@@ -1249,9 +1304,13 @@ for door in $G37_DOORS; do
     G37_QUIET="$G37_QUIET $door"
   fi
 done
+# **One door since rule 70**, and it was two: `_askFromHome` read the first
+# screen's own question into a session of its own, and that screen is gone. The
+# name is still read out of the source rather than remembered, so a second door
+# written tomorrow has to tell the list too.
 if [ "$G37_IMPORTS" = "$FLUTTER_LIB/screens/shell.dart" ] \
-   && [ "$G37_DOORS" = "_askFromHome _begin" ] && [ -z "$G37_QUIET" ]; then
-  pass "G37 both doors a document enters the preview by tell the list it was kept"
+   && [ "$G37_DOORS" = "_begin" ] && [ -z "$G37_QUIET" ]; then
+  pass "G37 every door a document enters the preview by tells the list it was kept"
 else
   fail "G37 a document enters by «$G37_DOORS» in «$G37_IMPORTS» and these tell the list nothing:$G37_QUIET"
 fi
@@ -2352,6 +2411,59 @@ rm -f /tmp/g22.$$
 # call the whole contract from Dart and see typed errors come back.
 LIB=apps/flutter_app/build/linux/x64/debug/bundle/lib
 
+# ------------------------------------------------- the library this half speaks
+# **The suite's library is built here, because the suite's library is part of
+# the measurement** — 18 October 2026, and it is the second half of G7-lib's
+# own lesson.
+#
+# `flutter build linux --debug` is the documented way to produce
+# `bundle/lib/libz_bridge.so`, and it runs cargokit, which builds `z_bridge`
+# with **no `--features` at all**: there is no `cargokit.yaml` beside the
+# manifest, and cargokit's only feature knob is that file's `extra_flags`. So
+# the library that recipe writes carries **no echo provider** — `fake_provider`
+# is never a default feature, G1d forbids it — and every guard that asks a
+# model goes red through it with `providerUnavailable(provider: fake)`.
+#
+# Measured: on the assembled tree of 18 October, all seven tests of
+# `the_chat_is_the_third_part_test.dart` failed that way over sources that were
+# correct, and the Dart count read 381 instead of 388. The remedy had been a
+# hand-built library copied in by whoever knew — which is a measurement nobody
+# can repeat from this script, and the one thing a judge must never be.
+#
+# So the features are this script's business: it builds the bridge with them
+# and puts the result where the Dart half looks. The release package is
+# untouched by this and cannot be reached from here — `package_linux.sh` runs
+# its own `flutter build linux --release`, which writes a different directory
+# (`build/linux/x64/release/bundle`) from the debug one named above.
+#
+# What it does change is the **debug** bundle beside it: after a gate run, the
+# application in `build/linux/x64/debug/bundle` answers through a library with
+# an echo provider in it. That is what a debug bundle is for, and it is said
+# here rather than left to be discovered — a release carries no such provider,
+# and G1d keeps `fake_provider` out of the default features so that no
+# `--release` build can acquire one.
+#
+# Named with `z_core/` in front of each feature because they are **z_core's**:
+# `z_bridge` declares none of its own, and `cargo build -p z_bridge --features
+# fake_provider` would be refused by name rather than guessed at.
+BRIDGE_FEATURES=$(printf '%s' "$TEST_FEATURES" | sed 's/^--features //' |
+                  tr ',' '\n' | sed 's|^|z_core/|' | paste -sd, -)
+if [ -d "$LIB" ] && command -v cargo >/dev/null 2>&1; then
+  if cargo build -p z_bridge --features "$BRIDGE_FEATURES" --quiet >/tmp/g7b.$$ 2>&1 \
+     && [ -f target/debug/libz_bridge.so ]; then
+    cp target/debug/libz_bridge.so "$LIB/libz_bridge.so"
+    pass "G7-build the library the Dart half speaks through is built here, with the test features ($BRIDGE_FEATURES)"
+  else
+    fail "G7-build the bridge would not build with the test features ($BRIDGE_FEATURES) — the Dart half would answer through whatever is in $LIB:"
+    sed 's/^/        /' /tmp/g7b.$$ | tail -12
+  fi
+  rm -f /tmp/g7b.$$
+elif [ ! -d "$LIB" ]; then
+  skip "G7-build the library the Dart half speaks through" "no $LIB yet — run: cd apps/flutter_app && flutter build linux --debug"
+else
+  skip "G7-build the library the Dart half speaks through" "no cargo on this machine"
+fi
+
 # ---------------------------------------------------------------- G7-lib
 # The Dart half never tests this tree. It tests the library sitting in
 # `build/`, and the two part company in silence: `libz_bridge.so` is an
@@ -2402,8 +2514,22 @@ elif [ -n "$SOURCE_NEWER_THAN_LIB" ]; then
   # The same emptiness, for the same reason as above: this run measured no Dart
   # number and must not be read as having measured one.
   DART_PASSED=""
+elif ! LC_ALL=C grep -qa 'Echo (tests only)' "$LIB/libz_bridge.so"; then
+  # **The date is not the whole of «the right library»** — the other half,
+  # measured on 18 October. A library built by `flutter build linux --debug`
+  # is as new as the tree and still cannot answer: it carries no echo
+  # provider, so twenty guards go red with `providerUnavailable(provider:
+  # fake)` and not one of them names the cause. The echo provider's own label
+  # is the artefact's observable — `providers/fake.rs` is compiled only under
+  # `fake_provider`, so the string is in the .so exactly when the feature is —
+  # and refusing here means the suite is never run through a library that
+  # cannot answer. The behaviour itself is measured where behaviour belongs,
+  # by the guards that ask the fake provider a question.
+  fail "G7-lib the library in $LIB carries no echo provider, so it was not built with the test features — the Dart half would red on every guard that asks a model, naming none of this. It is built by G7-build above; a library put there by hand or by «flutter build linux --debug» alone is not the one this suite measures through"
+  skip "G7-dart contract callable from Dart" "the library cannot answer a guard that asks a model, so its answer would not be about this tree"
+  DART_PASSED=""
 else
-  pass "G7-lib the library the Dart half speaks through was built from this tree"
+  pass "G7-lib the library the Dart half speaks through was built from this tree, and carries the test features it must answer through"
   # **A red that says what failed.** The compact reporter rewrites one line, so
   # a log of it keeps only that line's last state: on 13 Oct seven failures came
   # back as one test's name and a RenderFlex dump from a file that had not
@@ -3051,11 +3177,36 @@ done
 
 # The same, for the screens. These are the tests that hold «no number on screen
 # is invented in Dart» to account, so their absence must be as loud.
+#
+# **Two names left this list on 17 October, and a name leaving it is as much a
+# decision as a name joining it** (rule 70):
+#
+#   * «the chat door shows what will leave» — rule 60-أ's band, on the first
+#     screen's chat. The screen is gone, the band with it, and the rule's other
+#     half («the AI door opens the preview side») is two lines above.
+#   * «not on Home» became «not on the three parts»: the same guard, asking
+#     which screen a fresh device opens on, now that there is one screen.
+#
+# **And one left it when the chat replaced the answer panel:** «as the model
+# wrote it» was the label of a tab over the whole panel, and rule 66 turned
+# that around — the thread draws what travelled, coded, and the names come back
+# in a bubble per answer. The phrase survived in a *comment* after the rename,
+# which is a roster entry green for the wrong reason, so it was replaced by the
+# property's new name rather than left to pass on a sentence nobody measures.
+#
+# The names that joined it are where this round's own shape is read: the way in
+# at the top of the one screen with nothing open and with a document open, the
+# absence of a way back, the two doors standing in two places, rule 69's line
+# under a kept document — what it says, the handle that anchors it, and a
+# follow-up answering for the chat its document began — and the chat itself:
+# coded with the names one press away, a second question to the same door, an
+# added answer with no question above it, the writing below the thread, the two
+# tight windows, and an end that keeps what was said.
 for t in "the core reports it" "the scan the core ran" "own two strings" "never the credential" \
          "not one Dart worked out" "Skip decides nothing" "does not touch what leaves" \
-         "the manual door needs no key" "as the model wrote it" "only the safe text arrives" \
+         "the manual door needs no key" "only the safe text arrives" \
          "the vault room" "say where they live" "in the language it is offering" \
-         "not on Home" "word for word" "forgetting shows its cost first" \
+         "not on the three parts" "word for word" "forgetting shows its cost first" \
          "clipboard untouched until confirmed" \
          "named a rescan, not scanned on import" \
          "offers Disconnect, not" "names both acts by their reach" \
@@ -3096,7 +3247,22 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "a press on the AI door opens the Safe column" \
          "the side’s own door needs no opening" \
          "a session from before 080 is asked once" \
-         "the chat door shows what will leave" \
+         "the way in at the top, and the three parts named" \
+         "the way in is still at the top of the same screen" \
+         "no way back is drawn, because there is nowhere to go back to" \
+         "the way in and the way back are two presses, in two places" \
+         "says a kept document was sent to AI and answered" \
+         "the handle is the anchor, so two documents of one name are told apart" \
+         "a follow-up question answers for the document its chat began with" \
+         "opens the chat, coded, with the name only in the bubble" \
+         "coded in the thread, and the names come back in its bubble" \
+         "makes a second turn, to the same door" \
+         "drawn with no question above it" \
+         "the writing is below the thread, and against the bottom of the panel" \
+         "the thread scrolls under a writing box that stays where it is" \
+         "the chat is on the glass, acts and all" \
+         "ending the chat closes the panel and keeps what was said" \
+         "the chat shows the question above its answer, as it left" \
          "a host that answered nothing says so" \
          "the number this form promises is the number the core applies" \
          "no longer says that each question is asked alone"; do

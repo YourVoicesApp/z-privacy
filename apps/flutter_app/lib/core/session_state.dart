@@ -10,6 +10,10 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+// **The clipboard, here and not only in the widgets** — rule 65's own exit:
+// «Copy the chat» puts the core's text on it in the same act that binds the
+// handle, so the two cannot come apart (081).
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:zprivacy/core/the_clipboard.dart';
 
 // Prefixed on purpose: every line below that says `z.` is a call into Rust, and
@@ -129,6 +133,24 @@ class Ground extends ChangeNotifier {
   /// Read with the sessions and from the same door, so the list and the rows
   /// under it are one answer rather than two that can disagree.
   Map<int, List<KeptRow>> kept = const {};
+
+  /// **What each session's own turns say about what it holds** — rule 69, the
+  /// owner, 17 October 2026: «قائمة الجلسة تسجّل البابين» — the session list
+  /// records both doors.
+  ///
+  /// By session number, and read beside [kept] from the same door, so a
+  /// document and the line under it are one answer rather than two that can
+  /// disagree.
+  ///
+  /// **Only where there is something to say.** A session whose row reports no
+  /// exchanges, or which holds nothing in its preview, is not read at all: each
+  /// reading is a sealed file, and the row's own count already answers «is
+  /// there anything to ask about».
+  ///
+  /// **Asked with no bench**, which is both cheaper and tighter than passing
+  /// one: nothing is restored, so no value crosses the boundary for a line that
+  /// only says whether a document was sent and answered.
+  Map<int, List<TurnRow>> turns = const {};
 
   /// Which session is open, by number. `None` until the first one is begun or
   /// entered — and `None` again after a lock, because the core forgets the
@@ -285,14 +307,23 @@ class Ground extends ChangeNotifier {
         // 089 rule 9. One call per session, which is one sealed file read per
         // session: the same cost the row's own «N exchanges» already pays.
         final held = <int, List<KeptRow>>{};
+        // **Rule 69's half of the same loop.** One more sealed read per
+        // session that can answer, and none for a session that cannot: no
+        // exchanges, or nothing kept in the preview to say it about.
+        final said = <int, List<TurnRow>>{};
         for (final row in sessions) {
           held[row.number] = await z.keptDocuments(number: row.number);
+          if (row.turns > 0 && held[row.number]!.isNotEmpty) {
+            said[row.number] = await z.conversationTurns(number: row.number, bench: null);
+          }
         }
         kept = held;
+        turns = said;
       } else {
         sessions = const [];
         openSession = null;
         kept = const {};
+        turns = const {};
       }
       rememberKinds(kinds);
       trouble = null;
@@ -441,9 +472,13 @@ class Ground extends ChangeNotifier {
 /// session's turns — remember it, comment it, guard it, make it
 /// unrepresentable.
 ///
-/// `showing` is **not** folded in: it names *which answer*, and the chat reads
-/// it too. This names *which panel*, and nothing else.
-enum OpenPanel { none, names, review, tokens, answer }
+/// **`answer` became `chat` on 17 October** — rule 65. The slot held «the
+/// answer», one answer at a time with arrows between them; it holds the
+/// conversation now, every turn of the chat that is open, and the answer is a
+/// line in it rather than a destination. The value is renamed and not added to:
+/// there is no state in which both could be open, because there is no «the
+/// answer» any more.
+enum OpenPanel { none, names, review, tokens, chat }
 
 
 /// One conversation: the document, what was found in it, and what would leave.
@@ -499,7 +534,10 @@ class Workbench extends ChangeNotifier {
   Revision get revision => Revision(n: snap?.revision ?? 0);
   PayloadHandle? get handle => snap?.handle;
   PayloadView? get payload => snap?.payload;
-  List<AnswerId> get answers => snap?.answers ?? const [];
+  // **`answers` is gone with the panel that navigated them** (rule 65): the
+  // snapshot still lists them — the core keeps every answer of a session — and
+  // nothing on the glass asks «which of them», because the thread holds them
+  // all in order.
   ScanOrigin get scanOrigin => snap?.scanOrigin ?? ScanOrigin.notScanned;
 
   /// Chips or plain, on the Safe side. A drawing choice; the string is the same.
@@ -915,9 +953,21 @@ class Workbench extends ChangeNotifier {
 
   // ---------------------------------------------------------------- sending
 
-  /// Which answer is on screen. The list itself comes from the snapshot.
-  AnswerId? showing;
-  PayloadHandle? copiedPayload;
+  // **«Which answer is on screen» is gone** — rule 65. There was one answer at
+  // a time and this named it, with arrows either side and a panel that drew
+  // it. The chat draws every turn of itself, so «which one» has no answer and
+  // needs none: what is on the screen is the conversation.
+
+  /// **What the last copy door bound, and which door it was** — one field, so
+  /// «the most recent copy» is a fact and not an order of reads.
+  ///
+  /// It was two — the document's handle and the chat's — and the law «an
+  /// answer belongs to the last thing copied» then had to be spelled as a
+  /// precedence between them: `chat ?? document`, which is chat-first and not
+  /// latest-first. Copy the chat, then copy the document alone, and the chat
+  /// would still have won. One field cannot be out of step with itself: the
+  /// door that ran last wrote it, and the wrong state is unrepresentable.
+  ({PayloadHandle handle, WhatWasCopied what})? copied;
   bool sending = false;
 
   /// Send the built payload to a provider.
@@ -982,10 +1032,15 @@ class Workbench extends ChangeNotifier {
   /// from the turns of the open chat, in the form they left in. A screen that
   /// assembled a history would be assembling text that leaves, which is the one
   /// thing no screen in this program does.
+  ///
+  /// **The provider is remembered as the chat's door** (rule 65): the first
+  /// question chooses who answers, and every question typed in the chat after
+  /// it goes to the same door until the person opens «Choose who answers»
+  /// again.
   Future<String?> askModelProtected(String providerId) async {
     final h = handle;
     if (h == null) return 'There is nothing to send yet.';
-    return _ask(leaving: payload?.text ?? '', () async {
+    return _ask(() async {
       final said = await z.askModel(
         handle: h,
         provider: ProviderId(id: providerId),
@@ -993,10 +1048,89 @@ class Workbench extends ChangeNotifier {
         workspace: const [],
       );
       lastUsage = said.usage;
-      showing = said.answer;
-      panel = OpenPanel.answer;
+      chatProvider = providerId;
+      panel = OpenPanel.chat;
     });
   }
+
+  /// **Ask with the question alone** — rule 67 and A2.
+  ///
+  /// The handle is built here and not kept on the bench: the bench's own
+  /// handle is the *document's* payload, and a follow-up question carries no
+  /// document. Two handles on one bench would be two things called «what
+  /// leaves», so this one is built, sent and let go in one act — a payload is
+  /// a snapshot of a moment and this is its moment.
+  ///
+  /// The core refuses an empty question, and refuses a question with a word
+  /// still waiting in it: the refusal is said and the review is opened on the
+  /// first waiting word, which is what every other exit does.
+  Future<String?> askTheQuestionAlone(String providerId) async {
+    PayloadHandle h;
+    try {
+      h = await z.buildTheQuestionAlone(session: session);
+    } on ApiError catch (e) {
+      final said = humanMessage(e);
+      openTheReviewAtTheFirstWaitingWord(said: said);
+      notifyListeners();
+      return said;
+    }
+    return _ask(() async {
+      final said = await z.askModel(
+        handle: h,
+        provider: ProviderId(id: providerId),
+        model: chosenModel,
+        workspace: const [],
+      );
+      lastUsage = said.usage;
+      chatProvider = providerId;
+      panel = OpenPanel.chat;
+    });
+  }
+
+  /// **The chat, out through the core's own door** — A4.
+  ///
+  /// One call: the text that leaves and the handle it was built as. The text
+  /// goes to the clipboard, the handle is bound so an answer brought back can
+  /// be tied to it, and nothing of the thread is assembled on this side.
+  Future<String?> takeTheChatOut() async {
+    try {
+      final out = await z.chatToTakeOut(session: session);
+      await Clipboard.setData(ClipboardData(text: out.whatLeaves.text));
+      copied = (handle: out.handle, what: WhatWasCopied.theChat);
+      trouble = null;
+      notifyListeners();
+      return null;
+    } on ApiError catch (e) {
+      final said = humanMessage(e);
+      // The same two acts as every refused exit: say it, and open the review
+      // on the word that is waiting — with the clipboard already empty, which
+      // is what `andTheClipboardIsEmpty` says out loud.
+      openTheReviewAtTheFirstWaitingWord(said: andTheClipboardIsEmpty(said));
+      trouble = andTheClipboardIsEmpty(said);
+      notifyListeners();
+      return said;
+    }
+  }
+
+  /// **An answer came back and nothing kept it** — 064/E's `keptNowhere`, as a
+  /// state of this bench rather than a stage of a journey.
+  ///
+  /// It is set by the two doors an answer arrives through, from what the thread
+  /// held **after** the core was asked again: an answer that wrote no turn was
+  /// kept nowhere, which happens with no vault — the core refuses to write a
+  /// turn it has no key to seal (rule 69). It is read by the panel, which says
+  /// [theChatKeepsNothing] under an empty thread.
+  ///
+  /// Why not «is a session open»: that is the *cause*, and the panel would then
+  /// be making the inference. This says what happened to the answer, which is
+  /// the thing a person is owed.
+  bool keptNowhere = false;
+
+  /// **Who answers this chat** — the provider the first question went to, kept
+  /// so the compose box can say the name beside its arrow and send there
+  /// without opening the sheet again (rule 65). Null until something has been
+  /// sent through a key.
+  String? chatProvider;
 
   // **The second door is gone** — rule 62. Beside [askModelProtected] stood a
   // function that took the document as an argument, because the person had
@@ -1007,87 +1141,144 @@ class Workbench extends ChangeNotifier {
   // So there is one send door on this bench, it takes no text, and the only
   // thing it can put on a wire is a payload the core built.
 
-  /// What the door shares with the journey below it: the busy flag, the
-  /// refusal, and the refresh.
+  /// What every door through this bench shares: the busy flag, the refusal,
+  /// and the two reads after it.
   ///
-  /// **And the journey, said step by step** (064/E). The owner's ruling of
-  /// 9 October: the press takes the person to the chat, and there they see what
-  /// was sent, then the answer when it comes back, then the answer pulled
-  /// inside — unwrapped, shown restored, and written into the session. Those
-  /// are three real moments of one request, so the stage is published as each
-  /// one happens rather than at the end: a person watching a slow model has the
-  /// right to know which of the three they are waiting in.
-  Future<String?> _ask(Future<void> Function() door, {required String leaving}) async {
+  /// **The journey is gone and the chat is what replaced it** (rule 65). This
+  /// used to publish a stage per moment — sent, answered, pulled in, kept
+  /// nowhere — for a widget that drew the three steps of one request on the
+  /// first screen. The conversation itself is on the glass now: what was sent
+  /// and what came back are turns in it, so the moments are the thread's own
+  /// and nothing has to be told about them separately. A state nothing reads
+  /// is deleted rather than kept for sentiment.
+  Future<String?> _ask(Future<void> Function() door) async {
     sending = true;
-    // **What actually left**, kept before the call rather than reconstructed
-    // after it: the payload is rebuilt by the refresh below, and «the request
-    // in its safe clothing» is a claim about the text that travelled.
-    sentAsItLeft = leaving;
-    stage = SendStage.sent;
-    turn = null;
     notifyListeners();
     try {
       await door();
       trouble = null;
       sending = false;
-      stage = SendStage.answered;
       notifyListeners();
       await refresh();
-      // **The turn, read back from the session's own file** — and this is the
-      // order the owner named: pulled inside means written, and nothing
-      // restored is shown before it is. With no session open the core writes
-      // nothing (`record` refuses with «there is no session open to write
-      // to»), so there is no third step to show and the screen says that
-      // plainly instead of pretending.
-      await readTheTurn();
+      // **The chat, read back from the session's own file** — pulled inside
+      // means written, and nothing is drawn in the thread before it is. With
+      // no session open the core writes nothing (`record` refuses with «there
+      // is no session open to write to»), so the thread stays as it was and
+      // the panel says that plainly instead of pretending.
+      await readTheChat();
+      // The same state as the by-hand door's: an answer that wrote no turn was
+      // kept nowhere, and the panel says so rather than drawing an empty chat
+      // under an answer that did arrive.
+      keptNowhere = chatTurns.isEmpty;
+      notifyListeners();
       return null;
     } on ApiError catch (e) {
       sending = false;
       trouble = humanMessage(e);
-      stage = SendStage.refused;
       notifyListeners();
       // A failure of one door is a failure of that door. Nothing here tries
-      // the other one, and the mode is not touched.
+      // another one.
       return humanMessage(e);
     }
   }
 
-  /// Where this request has got to. `none` until one is made.
-  SendStage stage = SendStage.none;
-
-  /// The text that travelled, in the clothing it travelled in.
-  String? sentAsItLeft;
-
-  /// The written turn, as the core restores it. Null until one is read, and
-  /// null for a send that no session could keep.
-  TurnRow? turn;
-
-  /// Read the open session's last turn, restored **inside the core**.
+  /// **Which chat is open, by the core's own counter** — rule 68, A3.
   ///
-  /// The restoring happens there and crosses the boundary already done, with
-  /// `unresolved` naming every token it could not resolve: a raw turn on a
-  /// screen would put `__Z_5CDD_IBAN_5B32__` in the middle of a model's
-  /// sentence, which is the exact lie the restore path exists to prevent.
-  Future<void> readTheTurn() async {
+  /// Zero until it has been asked. It is asked of the core and never counted
+  /// here: «the chat ends when the app closes» is a fact about the session's
+  /// file (the counter is bumped when the session is opened), so a number
+  /// remembered on this bench would be a second opinion about which
+  /// conversation a person is in.
+  int openChat = 0;
+
+  /// **Every turn of the chat that is open**, restored and coded, as the core
+  /// hands them over — rules 65 and 66.
+  ///
+  /// The whole thread and not the last turn: the panel draws the conversation,
+  /// so «what is in it» is one list read in one call. Turns of an earlier chat
+  /// in the same session are not in it — they are in the Sessions room, under
+  /// the document they were about (rule 69).
+  List<TurnRow> chatTurns = const [];
+
+  /// Read the open chat: which one it is, and every turn in it.
+  ///
+  /// **Both in one place**, because the second question has no meaning without
+  /// the first: a list of turns filtered by a chat number this bench guessed
+  /// would draw yesterday's conversation under today's compose box. `0` on a
+  /// turn means «older than this round» (A3), and such a turn belongs to no
+  /// chat a person can continue.
+  Future<void> readTheChat() async {
     final open = await _openConversation();
     if (open == null) {
-      turn = null;
-      stage = stage == SendStage.answered ? SendStage.keptNowhere : stage;
+      // No session: nothing was written, so there is nothing to draw. The
+      // panel says it in words — see `theChatKeepsNothing`.
+      chatTurns = const [];
+      openChat = 0;
       notifyListeners();
       return;
     }
     try {
+      openChat = await z.theOpenChat(number: open);
       final rows = await z.conversationTurns(number: open, bench: session);
-      turn = rows.isEmpty ? null : rows.last;
-      if (turn != null) stage = SendStage.pulledIn;
+      chatTurns = rows.where((t) => t.chatNumber == openChat && openChat > 0).toList();
     } on ApiError catch (e) {
-      // A turn that cannot be read is not an answer that did not arrive: the
-      // answer is still on the screen above, and this says only that the
-      // reading failed.
-      turn = null;
+      // A thread that cannot be read is not a chat that did not happen: what
+      // is on the glass stays, and this says only that the reading failed.
       trouble = humanMessage(e);
     }
     notifyListeners();
+  }
+
+  /// **Open the chat, for a person who put it away.** The thread is read again
+  /// as it opens: a turn may have been written since (an answer brought back
+  /// by hand), and a panel that drew its own stale copy would be the second
+  /// source this class exists to prevent.
+  void openTheChat() {
+    panel = OpenPanel.chat;
+    notifyListeners();
+    unawaited(readTheChat());
+  }
+
+  /// **Put the panel away, without ending anything** — rule 68 has two ends
+  /// and closing a panel is neither of them.
+  ///
+  /// It is a method and not a line in a widget because the two states it
+  /// touches are this bench's: which panel stands in the slot, and nothing
+  /// else. The chat is where it was when it is opened again.
+  void closeThePanel() {
+    if (panel != OpenPanel.chat) return;
+    panel = OpenPanel.none;
+    notifyListeners();
+  }
+
+  /// **End this chat** — rule 68, and the only explicit end there is: closing
+  /// the app is the other, and the core counts that one by itself.
+  ///
+  /// The turns stay in the session's file and in the Sessions room; what ends
+  /// is what the next question carries. The panel closes with it, because a
+  /// thread that is over is not the thing a person is looking at.
+  Future<String?> endTheChat() async {
+    final open = await _openConversation();
+    if (open == null) {
+      // Nothing was kept, so there is nothing to end.
+      chatTurns = const [];
+      panel = OpenPanel.none;
+      notifyListeners();
+      return null;
+    }
+    try {
+      openChat = await z.endTheChat(number: open);
+      chatTurns = const [];
+      chatProvider = null;
+      panel = OpenPanel.none;
+      trouble = null;
+      notifyListeners();
+      return null;
+    } on ApiError catch (e) {
+      trouble = humanMessage(e);
+      notifyListeners();
+      return humanMessage(e);
+    }
   }
 
   Future<int?> _openConversation() async {
@@ -1112,15 +1303,15 @@ class Workbench extends ChangeNotifier {
     sending = true;
     notifyListeners();
     try {
-      final answer = await z.send(
+      await z.send(
         handle: h,
         provider: ProviderId(id: providerId),
       );
-      showing = answer;
-      panel = OpenPanel.answer;
+      panel = OpenPanel.chat;
       trouble = null;
       sending = false;
       await refresh();
+      await readTheChat();
       return null;
     } on ApiError catch (e) {
       sending = false;
@@ -1135,15 +1326,28 @@ class Workbench extends ChangeNotifier {
   /// store does not care how the answer travelled.
   Future<String?> pasteAnswer(String raw) async {
     if (raw.trim().isEmpty) return 'Nothing was pasted.';
-    final copied = copiedPayload;
-    if (copied == null)
+    // **Whatever was copied last.** An answer brought back to a copied chat
+    // answers the chat — its allowed list covers every turn — and an answer
+    // brought back to a copied document answers the document. One field holds
+    // which, so there is no precedence here to get the wrong way round.
+    final bound = copied;
+    if (bound == null) {
       return 'Copy the safe text first, so the answer can be tied to that payload.';
+    }
     try {
-      final answer = await z.ingestAnswer(payload: copied, raw: raw);
-      showing = answer;
-      panel = OpenPanel.answer;
+      await z.ingestAnswer(payload: bound.handle, raw: raw);
+      panel = OpenPanel.chat;
       trouble = null;
       await refresh();
+      // **The thread is read again, because a turn was just written** — rule
+      // 65. Without this the panel would draw the conversation as it stood
+      // before the answer arrived: the core has it, the glass would not, and
+      // nothing on the screen would say which of the two was right.
+      await readTheChat();
+      // And if it wrote no turn, nothing kept this answer: said on the glass,
+      // never left for the person to discover when the window closes.
+      keptNowhere = chatTurns.isEmpty;
+      notifyListeners();
       return null;
     } on ApiError catch (e) {
       trouble = humanMessage(e);
@@ -1152,18 +1356,17 @@ class Workbench extends ChangeNotifier {
     }
   }
 
-  /// One read for everything about one answer: both views, its position, and
-  /// which answers sit either side of it.
-  ///
-  /// The screen used to fetch the two views here and count `2 of 2` from a
-  /// Dart list — two sources for one fact. Navigation would have made that a
-  /// third, and a stale neighbour is how «Answer 1» ends up drawn while the
-  /// copy button still belongs to «Answer 2».
-  Future<AnswerSnapshot> answerFacts(AnswerId answer) =>
-      z.answerSnapshot(session: session, answer: answer);
+  // **One read for everything about one answer** stood here, and the panel it
+  // fed is gone (rule 65): both views, the position, and the answers either
+  // side. The chat reads turns — the question as it left, the answer as it was
+  // written, the restored segments and the tokens it could not place — in one
+  // call for the whole thread, so there is nothing left for this to answer.
+  // The core's door is untouched: `answer_snapshot` is still in the contract.
 
   void rememberCopiedPayload() {
-    copiedPayload = handle;
+    final h = handle;
+    if (h == null) return;
+    copied = (handle: h, what: WhatWasCopied.theDocument);
   }
 
   /// **The question that travels with this document** (046/N).
@@ -1197,20 +1400,6 @@ class Workbench extends ChangeNotifier {
     await refresh();
     notifyListeners();
     return null;
-  }
-
-  void show(AnswerId? answer) {
-    showing = answer;
-    // `panel == answer` can only mean there is one to show, because the two
-    // move together here and in the three places an answer arrives.
-    if (answer == null) {
-      if (panel == OpenPanel.answer) {
-        panel = OpenPanel.none;
-      }
-    } else {
-      panel = OpenPanel.answer;
-    }
-    notifyListeners();
   }
 
   /// Leaving the vault, or the workspace, re-hides everything that was shown —
@@ -1794,14 +1983,35 @@ String sessionBegunSaid(int renamed, {required bool hadDocument}) {
       : 'Begun, and $renamed names on this document moved into it.';
 }
 
-/// **Where a request has got to** — 064/E, the owner's three steps.
+// **«Where a request has got to» is gone, and the chat is what answers it now**
+// — rule 65, 17 October. It was 064/E's three steps — what was sent, the answer
+// when it returned, the answer pulled inside — published as a value for a
+// widget on the first screen to draw. The conversation is on the glass instead:
+// each of those moments is a turn in it, or the absence of one. A value nothing
+// reads is deleted rather than kept for sentiment, and its one honest fourth
+// state is now a sentence in the panel — [theChatKeepsNothing] — because «an
+// answer came back and no session kept it» is still a thing that happens.
+
+/// **Which of the two things a copy took out** — 089 rule 9's census, on the
+/// glass side.
 ///
-/// «What was sent appears; the answer appears when it returns; then the answer
-/// is pulled inside» — unwrapped, shown restored, and written into the session.
-/// `keptNowhere` is the honest fourth: an answer came back and no session was
-/// open to keep it, which the core refuses to write rather than inventing a
-/// file for.
-enum SendStage { none, sent, answered, pulledIn, keptNowhere, refused }
+/// Named rather than a `bool` for the reason `TurnVia` is: the two are two
+/// acts with two laws. A document's payload allows the tokens of that
+/// document; the chat's allows every token the chat carried, whichever turn
+/// each was born in. An answer brought back is restored against whichever one
+/// the person actually copied.
+enum WhatWasCopied { theDocument, theChat }
+
+/// **An answer that no session could keep says so** — the honest state 064/E's
+/// `keptNowhere` named, worded where a test can read it.
+///
+/// It happens with no vault: a document waits in the preview as its blocks do,
+/// the core refuses to write a turn it has no key to seal, and the answer is on
+/// the glass with nothing holding it. Said in the chat, under the thread,
+/// because that is where a person is looking for what was kept.
+const theChatKeepsNothing =
+    'This answer is on your screen and nowhere else: no session is open to keep '
+    'it, so closing the app ends it with the chat.';
 
 /// **What an exit may take out, once the session question is settled** — 064.
 ///
@@ -2095,6 +2305,123 @@ Future<WhatMayLeave> beginThenAsk(
     return WhatMayLeave(said: out.said, renamed: out.renamed, refused: bad);
   }
   return out;
+}
+
+/// **Both doors of one kept document, in a line** — rule 69, the owner, 17
+/// October 2026: «تحت الوثيقة التي دخلت: أنها أُرسلت للذكاء الاصطناعي وأُجيبت».
+///
+/// Worded here rather than in the room, where a test can read it without a
+/// panel — the same place `sessionBegunSaid` is worded, and for the same
+/// reason.
+///
+/// **The anchor is the core's own, and it is exact.** A turn carries the handle
+/// of the document that left with it — «doc1», «chat2» — stamped on the payload
+/// when it was built, so a renamed document, two files with one name and two
+/// written texts in one session are all told apart by the thing that cannot
+/// change. The first form of this matched on the document's *name* and kept
+/// silent wherever two could not be told apart; that silence is gone with the
+/// guessing, because `keptHandle` is a number and not a word.
+///
+/// **A follow-up question carries no document**, so its own handle is null: the
+/// chat's first turn names the document and every turn of that chat follows it
+/// (`chatNumber`). So «answered» is read across the whole chat the document
+/// began, not only across the turn it left in.
+///
+/// `null` means the turns say nothing about this document — the ordinary state
+/// of one a person is still working on.
+String? theDoorsOfAKeptDocument(KeptRow doc, List<TurnRow> turns) {
+  final named = turns.where((turn) => turn.keptHandle == doc.handle).toList();
+  if (named.isEmpty) return null;
+  // The chats this document began. `0` is «older than this round» (A3) and
+  // belongs to no chat, so a turn carrying it answers only for itself.
+  final chats = named.where((t) => t.chatNumber > 0).map((t) => t.chatNumber).toSet();
+  final its = [
+    ...named,
+    ...turns.where((t) => t.chatNumber > 0 && chats.contains(t.chatNumber)),
+  ];
+  // One line for the document, not one per turn: «sent» is about the document,
+  // and «answered» is about whether anything in its chat came back. The raw
+  // answer is the test, because that is what the session stored — an empty one
+  // is a real state: a question copied out and not yet answered.
+  return its.any((turn) => turn.answerAsWritten.isNotEmpty)
+      ? 'sent to AI · answered'
+      : 'sent to AI · no answer yet';
+}
+
+/// **The chat asks the next question** — rules 65 and 67, 17 October 2026.
+///
+/// The compose box at the foot of the thread, in one hand, for the same reason
+/// [beginThenRead] is one hand: the order is the law, and an order written
+/// inside an `onPressed` cannot be measured — a core call started in a widget
+/// callback does not resume under `testWidgets`.
+///
+/// ## The order, and why each step is where it is
+///
+///   0. **the clipboard is emptied** — 081, the owner: «the work always
+///      happens on a clean container». This is an exit press like the other
+///      four, and step 0 is step 0 at all of them. Nothing below can forget it
+///      because there is nothing left to forget.
+///   1. **the question is protected, by the core** (`setQuestion`): what the
+///      person typed is scanned where everything else is, and the middle
+///      column draws what will leave before the arrow is pressed. No second
+///      scanner on the glass.
+///   2. **a session is born if none is open** — the same step every exit takes
+///      (081): a person asking a question is not asking to be interviewed
+///      about what the drawer is called.
+///   3. **the handle is built after the birth**, never before it: a birth
+///      renames every token in the session, and a handle built first would
+///      carry the old names while claiming the new session. That is the trap
+///      `beginThenRead`'s own step 4 exists for.
+///   4. **the question alone goes** (A2): no document — rule 67's «الوثيقة لا
+///      تُرسل مرة ثانية». What continues the conversation is the history the
+///      core builds from the stored turns, not a second copy of the letter.
+///
+/// A refusal at step 3 is the review's: the core says how many words are
+/// waiting and this opens the review on the first of them, exactly as every
+/// other exit does. `null` means it went.
+Future<String?> theChatAsks(
+  Ground ground,
+  Workbench bench, {
+  required String text,
+  required String providerId,
+}) async {
+  if (text.trim().isEmpty) return 'Write a question first.';
+  await emptyTheClipboardFirst();
+  final bad = await bench.setQuestion(text);
+  if (bad != null) return bad;
+  if (ground.aSessionWouldBeBorn) {
+    final renamed = await ground.beginSessionItNames(bench: bench.session);
+    if (renamed == null) {
+      return ground.trouble ?? 'The session was not begun, so nothing was sent.';
+    }
+    await bench.refresh();
+  }
+  return bench.askTheQuestionAlone(providerId);
+}
+
+/// **Copy the whole chat, as it left** — rule 65's own exit (A4).
+///
+/// Every turn of the open chat, the question as it left and the answer as it
+/// was written, joined by the core — **never assembled in Dart**: a thread
+/// built here would be a second opinion about what was sent, and the first
+/// time the two disagreed the quieter one would win. The core's door asks the
+/// same law as every other exit and refuses with the same words.
+///
+/// The handle it hands back is bound as [Workbench.copied], so an answer
+/// brought back from the web restores every name this chat carried, whichever
+/// turn each was born in.
+Future<String?> copyTheChat(Ground ground, Workbench bench) async {
+  // Step 0, as at every exit — and this one really does write to the
+  // clipboard, which is the case the rule was written for.
+  await emptyTheClipboardFirst();
+  if (ground.aSessionWouldBeBorn) {
+    final renamed = await ground.beginSessionItNames(bench: bench.session);
+    if (renamed == null) {
+      return ground.trouble ?? 'The session was not begun, so nothing was copied.';
+    }
+    await bench.refresh();
+  }
+  return bench.takeTheChatOut();
 }
 
 /// The columns a table carried that this build could not name a kind for.

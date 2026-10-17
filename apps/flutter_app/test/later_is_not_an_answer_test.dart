@@ -57,7 +57,23 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name, {String text
     final here = Directory('${Directory.systemTemp.path}/zprivacy-later-$name-$pid');
     if (here.existsSync()) here.deleteSync(recursive: true);
     addTearDown(() {
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      // **Best effort, and that is the claim this directory is under.** The
+      // core may still be writing in here when the test ends — a session's
+      // body is written when the first opening of a run spends a chat (A3) —
+      // and `deleteSync(recursive: true)` then throws «Directory not empty»
+      // over a file that appeared during its own walk. Measured: this file
+      // red in a gate run at 00:04 on 18 October and green by itself, and the
+      // same race took `zprivacy-ask-names-…` on 17 October. A temporary
+      // directory that outlives a test proves nothing either way, so a
+      // failure to remove it is not a failure of the test.
+      try {
+        if (here.existsSync()) here.deleteSync(recursive: true);
+      } on FileSystemException {
+        // Left behind on purpose, rather than red for a reason no claim here
+        // is about. Fifty-five files in this suite own a directory like this
+        // one; one helper for all of them is the real fix and is written down
+        // as a debt.
+      }
     });
     await z.setDataDir(dir: here.path);
     await ground.refresh();
@@ -69,7 +85,7 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name, {String text
   });
   addTearDown(bench.dispose);
   await tester.pumpWidget(MaterialApp(
-    home: WorkspaceScreen(bench: bench, ground: ground, onHome: () {}, onVault: () {}),
+    home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
   ));
   await settle(tester);
   return (ground, bench);

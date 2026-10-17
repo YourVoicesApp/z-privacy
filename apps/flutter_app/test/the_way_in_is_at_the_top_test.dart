@@ -1,4 +1,11 @@
-// 041-G · the home is the composer, and the language is asked where it matters.
+// 041-G · the way in is a box at the top of the one screen, and the language is
+// asked where it matters.
+//
+// **Rule 70, 17 October 2026.** This file was `the_home_is_the_composer`: the
+// box lived on a first screen, and the first screen is gone. The box did not
+// change — «Write or paste your text here…», «Open and scan», the «+» beside
+// it — it moved to the top of the one screen, which is where every one of
+// these guards now reaches for it.
 //
 // **Rule 57b, 16 October 2026** — the owner, after making a session he was
 // never asked about: a session born of its first text asks its language once,
@@ -23,11 +30,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/home.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/language_list.dart';
-import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
@@ -56,27 +61,25 @@ void main() {
     await RustLib.init();
   });
 
-  testWidgets('the home is a box ready to be written in, and asks no language first', (tester) async {
+  testWidgets('the way in is a box ready to be written in, and asks no language first', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1300, 1000));
     final ground = await _fresh(tester, 'composer');
     String? opened;
 
     await tester.pumpWidget(MaterialApp(
-      home: HomeScreen(
+      home: WorkspaceScreen(
+        bench: null,
         ground: ground,
-        version: 'z_core 0.1.0',
         onImport: () {},
-        onReadBack: () {},
         onType: (text) => opened = text,
-        onAsk: (_) async {},
         onVault: () {},
         onSettings: () {},
       ),
     ));
     await settle(tester);
 
-    final box = find.byKey(HomeScreen.composer);
-    expect(box, findsOneWidget, reason: 'the home is not a box to write in');
+    final box = find.byKey(WorkspaceScreen.composer);
+    expect(box, findsOneWidget, reason: 'there is no box to write in at the top of the screen');
     // The focus is already there: a person who opened this app to paste can paste.
     expect(
       tester.widget<TextField>(box).focusNode?.hasFocus ?? tester.binding.focusManager.primaryFocus != null,
@@ -122,8 +125,9 @@ void main() {
     // shell to notice. Measured at five rounds; eight is room to breathe.
     await settle(tester, rounds: 8);
 
-    expect(find.byType(HomeScreen), findsOneWidget);
-    await tester.enterText(find.byKey(HomeScreen.composer), _text);
+    expect(find.byType(WorkspaceScreen), findsOneWidget,
+        reason: 'the vault did not lead on to the one screen');
+    await tester.enterText(find.byKey(WorkspaceScreen.composer), _text);
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Open and scan'));
     await settle(tester, rounds: 4);
@@ -136,7 +140,11 @@ void main() {
       findsOneWidget,
       reason: 'a session was about to be born in a language nobody chose',
     );
-    expect(find.byType(WorkspaceScreen), findsNothing,
+    // **«Nothing was read» is no longer «no work screen»** — rule 70: the work
+    // screen is on the glass from the first frame. What says it was not read
+    // is that none of it is drawn, which is the thing the rule is actually
+    // about.
+    expect(find.textContaining('Ansprechpartner'), findsNothing,
         reason: 'the text was read before the person said what language it is in');
     // The old question — about the *document* — is not back: 080 took that one
     // out and this one is about the session that is being born.
@@ -184,7 +192,7 @@ void main() {
     await settle(tester);
     await tester.tap(find.text('Back'));
     await settle(tester, rounds: 8);
-    expect(find.byType(HomeScreen), findsOneWidget);
+    expect(find.byType(WorkspaceScreen), findsOneWidget);
 
     // **A session as 080 left them**: begun with no bench, so the core wrote
     // «never asked» rather than a language.
@@ -203,7 +211,7 @@ void main() {
 
     // 1 · «Not now» — nothing is read, nothing is written, and the screen says
     // what did not happen.
-    await tester.enterText(find.byKey(HomeScreen.composer), _text);
+    await tester.enterText(find.byKey(WorkspaceScreen.composer), _text);
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Open and scan'));
     await settle(tester, rounds: 4);
@@ -211,14 +219,16 @@ void main() {
         reason: 'the text was about to be read in a language nobody chose');
     await tester.tap(find.text('Not now'));
     await settle(tester, rounds: 8);
-    expect(find.byType(WorkspaceScreen), findsNothing,
+    // Rule 70: the screen is always here, so what says nothing was read is
+    // that nothing of the text is drawn on it.
+    expect(find.textContaining('Ansprechpartner'), findsNothing,
         reason: 'the text was read after «Not now»');
     expect(ground.openSessionRow!.packId, isNull, reason: '«Not now» wrote a language anyway');
     expect(find.textContaining('Nothing was read'), findsOneWidget,
         reason: 'a press did nothing and said nothing, which reads as a broken program');
 
     // 2 · and the question is still owed, because «Not now» answered nothing.
-    await tester.enterText(find.byKey(HomeScreen.composer), _text);
+    await tester.enterText(find.byKey(WorkspaceScreen.composer), _text);
     await settle(tester, rounds: 1);
     await tester.tap(find.text('Open and scan'));
     await settle(tester, rounds: 4);
@@ -230,7 +240,9 @@ void main() {
     // 3 · **once**: the answer is written into that session, by its number, so
     // the next reading in it finds a language and asks nothing. And it is the
     // same session — a question about a language does not make a second one.
-    expect(find.byType(WorkspaceScreen), findsOneWidget, reason: 'the text did not open');
+    // Both columns draw it — the original and what would leave — so the reach
+    // is «anywhere on the glass».
+    expect(find.textContaining('Ansprechpartner'), findsWidgets, reason: 'the text did not open');
     expect(ground.sessions, hasLength(1), reason: 'the answer made a second session');
     expect(ground.openSessionRow!.packId, 'de',
         reason: 'the answer was not written into the session, so it would be asked again');

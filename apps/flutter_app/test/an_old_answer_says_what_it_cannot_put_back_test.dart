@@ -13,8 +13,9 @@
 // This file is the screen half of the fix, and it asserts the two things that
 // make it a fix rather than a note in a changelog:
 //
-//   * the band is **above** the answer and says how many tokens this
-//     conversation does not know, and names them;
+//   * the band is **above** the restored text and says how many tokens this
+//     conversation does not know, and names them — in the bubble «Show the
+//     text» opens, since rule 66 draws the answer coded until a person asks;
 //   * the token in the text is **not drawn as the answer** — it carries the
 //     struck mark, so no reading of that sentence can take it for words the
 //     model wrote.
@@ -31,7 +32,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/widgets/the_chat.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -63,7 +64,7 @@ Future<void> settle(WidgetTester tester, {int rounds = 8}) async {
 /// asked for — the thing this change is about.
 TextStyle? _styleOf(WidgetTester tester, String text) {
   final texts = tester.widgetList<SelectableText>(
-    find.descendant(of: find.byType(AnswerPanel), matching: find.byType(SelectableText)),
+    find.descendant(of: find.byType(TheChat), matching: find.byType(SelectableText)),
   );
   for (final t in texts) {
     TextStyle? found;
@@ -127,11 +128,22 @@ Future<String> _aProfile(WidgetTester tester, Ground ground, String name) async 
   return id;
 }
 
-Future<void> _pump(WidgetTester tester, Workbench bench) async {
+/// **The chat, with the restored text open** — rules 65 and 66.
+///
+/// The panel draws the answer coded; what this file is about lives in the
+/// bubble «Show the text» opens, which is where a value comes back and where a
+/// token that could not come back is named. So the press is part of the
+/// fixture: the band and the marks are not on the glass until it happens, and
+/// that is the rule and not an accident.
+Future<void> _pump(WidgetTester tester, Workbench bench, Ground ground) async {
   await tester.pumpWidget(MaterialApp(
-    home: Scaffold(body: SizedBox(width: 760, child: AnswerPanel(bench: bench, width: 760))),
+    home: Scaffold(
+      body: SizedBox(width: 760, child: TheChat(bench: bench, ground: ground, width: 760)),
+    ),
   ));
   await settle(tester);
+  await tester.tap(find.byKey(TheChat.showTheText(0)));
+  await settle(tester, rounds: 2);
 }
 
 void main() {
@@ -174,10 +186,10 @@ void main() {
       friday.rememberCopiedPayload();
       await friday.pasteAnswer(fromMonday);
     });
-    await _pump(tester, friday);
+    await _pump(tester, friday, ground);
 
     // **The band, above the answer.**
-    expect(find.byKey(AnswerPanel.unresolved), findsOneWidget,
+    expect(find.byKey(TheChat.unresolved), findsOneWidget,
         reason: 'the answer came back with nothing said about it');
     expect(
       find.textContaining('2 tokens this session does not know', findRichText: true),
@@ -214,11 +226,11 @@ void main() {
       today.rememberCopiedPayload();
       await today.pasteAnswer('I checked $iban: the balance is 42 500.');
     });
-    await _pump(tester, today);
+    await _pump(tester, today, ground);
 
     // **The control.** A warning that fires on an ordinary answer is worse than
     // no warning, and this is the case the band must stay out of.
-    expect(find.byKey(AnswerPanel.unresolved), findsNothing,
+    expect(find.byKey(TheChat.unresolved), findsNothing,
         reason: 'the band fired on an answer this conversation made');
     final put = _styleOf(tester, 'GB29 NWBK 6016 1331 9268 19');
     expect(put, isNotNull, reason: 'the account was not put back');
