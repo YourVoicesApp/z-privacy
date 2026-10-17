@@ -837,6 +837,125 @@ if [ -z "$G41_STALE" ]; then
 else
   fail "G41 these allowed lines match nothing any more, so they permit nothing and explain nothing:$G41_STALE"
 fi
+# ---------------------------------------------------------------- G45
+# **An attribute belongs immediately above the item it is about** — the trap
+# this crate has carried three times, and the lead caught the third on
+# 17 October 2026.
+#
+# Inserting a function «above the signature» puts it **below** the doc comment
+# and below the attributes, which belong to the item that is now one item
+# further down. In `text.rs` the new `their_own_word` landed between
+# `utf16_len`'s `///` line and its `#[allow(dead_code)]` and its own signature:
+# the doc and the allowance moved onto the new function, and `utf16_len` was
+# left with neither. The same insertion made `Scope` carry two doc blocks with
+# a `derive` between them — «how long a protection lasts» above the derive and
+# «how far a protection reaches» below it — since task 034.
+#
+# The shape is cheap to read and almost never legal prose: **an attribute line
+# followed immediately by a doc line**. Rust accepts it (every doc comment and
+# attribute before an item applies to that item), so neither rustc nor clippy
+# says a word — and that is exactly why it survived three rounds. The rule this
+# gate holds is the ordinary one: doc first, attributes last, the item next.
+#
+# It found three the day it was written: the two above and one interleaved
+# `#[allow(dead_code)]` in `vault/crypto.rs`, which was harmless and unreadable
+# in the same way.
+G45_FUSED=$(awk '
+  prev ~ /^[[:space:]]*#\[/ && $0 ~ /^[[:space:]]*\/\/\// {
+    print FILENAME ":" FNR ": " prev " ⟶ " $0
+  }
+  { prev = $0 }
+' $(find z_core/src bridges -name '*.rs' | sort) 2>/dev/null || true)
+if [ -z "$G45_FUSED" ]; then
+  pass "G45 every attribute stands immediately above the item it is about, so no doc comment belongs to the wrong one"
+else
+  fail "G45 an attribute is separated from its item by a doc comment — whatever follows has taken the item above's doc and attributes:"
+  printf '%s\n' "$G45_FUSED" | sed 's/^/        /'
+fi
+
+# ---------------------------------------------------------------- G44
+# **A word of the person's own, inside a sentence of ours, is isolated** — the
+# owner's test of 16 October 2026, held as a class since 17 October.
+#
+# His session is called «ألماني 1», and inside an English line the
+# bidirectional algorithm pulled the digits and the quotes into the Arabic run:
+# «This document came back from «11 .«ألماني names stay…» — every word correct
+# and the order nonsense. The fix is one pair of characters, `U+2068` and
+# `U+2069`, and the law was written at one sentence out of forty.
+#
+# **Both sides, because a sentence can be written on either.** The glass calls
+# `theirOwnWord`, the core calls `text::their_own_word`, and the core's reach
+# is the one that matters most: what the app is handed is a finished string,
+# with nothing left to isolate.
+#
+# The signal is the quotation marks this house puts round a quoted word: a «»
+# with an interpolation **inside** it. The isolated form reads `«{}»` with the
+# function in the arguments, so what this looks for is the shape that is left
+# when nobody called it.
+#
+# **Our own words are not in this law and must not be wrapped**: a language id,
+# a pack, a rule set's name, a kind, a handle like «doc1». They are ours, they
+# are already in the sentence's direction, and a pair of invisible characters
+# round them would be two characters with nothing to do. Each one is allowed
+# here by name, with its reason.
+G44_ALLOWED_RUST='«\{pack_id\}
+«\{missing\}'
+# 1 · `«{pack_id}»` — a language id this build knows (de, en, sv). The app
+#     chooses it from the core's own list; a person never types it.
+# 2 · `«{missing}»` — the name of a rule set, also ours: the screen offers the
+#     sets the core reports and sends one back.
+G44_RUST=$(find z_core/src -name '*.rs' | sort | xargs awk '
+  # Stop at the test module: an assertion message is not a sentence a person
+  # reads. Both spellings, because `secure_file.rs` gates its tests on the
+  # platform too.
+  FNR == 1 { testing = 0 }
+  /^#\[cfg\((all\()?test[,)]/ { testing = 1 }
+  testing { next }
+  /^[[:space:]]*(\/\/|\/\/\/)/ { next }
+  /«\{[a-zA-Z_]/ { print FILENAME ":" FNR ": " $0 }
+' 2>/dev/null || true)
+G44_RUST_LEFT=$(printf '%s\n' "$G44_RUST" | grep . | grep -vE "$(printf '%s' "$G44_ALLOWED_RUST" | paste -sd'|' -)" || true)
+if [ -z "$G44_RUST_LEFT" ]; then
+  pass "G44 every word of the person's own that the core quotes is isolated ($(printf '%s\n' "$G44_RUST" | grep -c .) quoted, all of them ours by name)"
+else
+  fail "G44 the core quotes these without isolating them — an Arabic or German word here takes the punctuation with it (or they are ours, and belong in G44's allowed list with a reason):"
+  printf '%s\n' "$G44_RUST_LEFT" | sed 's/^/        /'
+fi
+
+# And the glass, where the same law is one function away.
+G44_ALLOWED_DART='«\$\{?list\.name
+«\$name» is (in use again|off)
+Forgot «\$name» and'
+# 1 · `list.name` and the `$name` beside it — a list **is** a language and the
+#     core refuses any name it does not know (`clean_list_name`), so the word
+#     in these three sentences is ours even though a person pressed to get it.
+G44_DART=$(grep -RnE '«\$' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
+G44_DART_LEFT=$(printf '%s\n' "$G44_DART" | grep . | grep -v 'theirOwnWord' \
+                | grep -vE "$(printf '%s' "$G44_ALLOWED_DART" | paste -sd'|' -)" || true)
+if [ -z "$G44_DART_LEFT" ]; then
+  pass "G44 every word of the person's own that a screen quotes goes through theirOwnWord"
+else
+  fail "G44 these sentences quote a word of the person's own without isolating it (or it is ours, and belongs in G44's allowed list with a reason):"
+  printf '%s\n' "$G44_DART_LEFT" | sed 's/^/        /'
+fi
+
+# **And one function on each side, not a pair of characters written by hand.**
+# The core's own sentence for a taught rule carried `\u{2068}…\u{2069}` inline
+# until 17 October, which is how a law comes to be applied at the one place
+# somebody remembered.
+G44_HAND=$(grep -RnE '\\u\{2068\}|\\u2068' z_core/src "$FLUTTER_LIB" --include='*.rs' --include='*.dart' 2>/dev/null \
+           | grep -v '/src/rust/' \
+           | grep -vE 'text\.rs:[0-9]+:[[:space:]]*format!' \
+           | grep -vE 'messages\.dart:[0-9]+:String theirOwnWord' \
+           | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
+if [ -z "$G44_HAND" ]; then
+  pass "G44 the isolate is one function on each side, and nothing writes the pair by hand"
+else
+  fail "G44 the isolate pair is written out here instead of called, so the next sentence that needs it has nowhere to look:"
+  printf '%s\n' "$G44_HAND" | sed 's/^/        /'
+fi
+
 # ---------------------------------------------------------------- G43
 # **One copy of this program writes at a time** — the independent attacker's م5
 # and خ9, 17 October 2026.
@@ -1884,9 +2003,30 @@ fi
 
 
 # ---------------------------------------------------------------- G15
-# No intermediate files: reading a document must never touch the disk. The only
-# file this crate may write is the sealed vault, and each such line carries a
-# «G15-ok» comment above it so that the exemptions are countable.
+# No intermediate files: reading a document must never touch the disk, and each
+# line that touches it at all carries a «G15-ok» comment above it so that the
+# exemptions are countable.
+#
+# **What this crate may write, in full** — the independent attacker's note 12,
+# 17 October 2026, and he was right: this gate's own sentence said «the vault»
+# and «the settings» while the core had been writing two more kinds of file for
+# days. A gate that names less than the program does is a gate a reader trusts
+# for the wrong reason. The four, each by name:
+#
+#   * `vault.zv` — the sealed vault, the one file this program was written
+#     around (G15's original subject).
+#   * `settings.zcfg` — the settings, which are touched in `config.rs` and
+#     nowhere else; that is G15b below, and the count is kept apart from the
+#     vault's for exactly that reason.
+#   * `sessions/N.zs` — one sealed file per session, since rule 54ج and 55ب:
+#     the document in the preview is kept with its decisions, under the
+#     session's own key.
+#   * `writing.lock` — the lock one copy of the program holds while it writes,
+#     since the attacker's م5: zero bytes, no secret in it, and the only reason
+#     two copies cannot lose a write between them.
+#
+# A fifth kind is a change somebody makes on purpose, and the line that writes
+# it needs its own «G15-ok» before this gate will pass it.
 FS_HITS=$(grep -RnE '\b(std::fs::|File::create|File::open|temp_dir|tempfile|NamedTempFile|OpenOptions)' z_core/src 2>/dev/null \
   | grep -vE ':[0-9]+:[[:space:]]*//' || true)
 FS_BAD=""
@@ -1909,7 +2049,7 @@ if [ -n "$FS_BAD" ]; then
 else
   VAULT_LINES=$(grep -Rc 'G15-ok' z_core/src 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
   CFG_LINES=$(grep -Rc 'G15-cfg' z_core/src 2>/dev/null | awk -F: '{s+=$2} END {print s+0}')
-  pass "G15 no filesystem in z_core/src except $VAULT_LINES vault lines and $CFG_LINES settings lines"
+  pass "G15 no filesystem in z_core/src except $VAULT_LINES lines for vault.zv, sessions/*.zs and writing.lock, and $CFG_LINES for settings.zcfg"
 fi
 
 # The settings file may only be touched from config.rs. Two kinds of file, and
@@ -2617,6 +2757,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          an_empty_vault_file_is_not_a_vault_and_a_damaged_one_is_never_written_over \
          two_copies_never_lose_a_write \
          two_copies_never_lose_a_turn \
+         a_reason_that_quotes_a_persons_word_isolates_it \
          a_document_that_arrives_with_the_vault_shut_has_no_session \
          a_refused_press_leaves_the_blocks_working; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
@@ -2699,7 +2840,9 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "a press on the AI door opens the Safe column" \
          "the side’s own door needs no opening" \
          "a session from before 080 is asked once" \
-         "the chat door shows what will leave"; do
+         "the chat door shows what will leave" \
+         "a host that answered nothing says so" \
+         "the number this form promises is the number the core applies"; do
   if grep -Rqs -- "$t" apps/flutter_app/test 2>/dev/null; then
     pass "  screen test present: $t"
   else

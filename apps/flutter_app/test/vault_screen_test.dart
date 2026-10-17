@@ -39,6 +39,23 @@ Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
   await tester.pumpAndSettle();
 }
 
+
+/// **A word of the person's own, as a sentence now carries it** — 17 October:
+/// every such word is isolated (`theirOwnWord` on the glass,
+/// `text::their_own_word` in the core), so it stands between `U+2068` and
+/// `U+2069` wherever one of our sentences quotes it.
+///
+/// The pair is written out here as literals rather than taken from the
+/// product's own function on purpose: a guard that asked with `theirOwnWord`
+/// would follow it wherever it went, and would stay green the day it stopped
+/// isolating anything.
+///
+/// Two shapes, because the quotation marks are not always ours to put: a
+/// heading says «Client · ⁨Nordstern⁩» with no marks at all, and a dialog says
+/// «Forget ⁨…⁩?» with them.
+String isolated(String word) => '\u2068$word\u2069';
+String quoted(String word) => '«${isolated(word)}»';
+
 void main() {
   late Directory dir;
 
@@ -150,7 +167,8 @@ void main() {
     await tester.tap(find.text('Nordstern'));
     await settle(tester);
     expect(find.byType(EntityDetail), findsOneWidget);
-    expect(find.text('Client · Nordstern'), findsOneWidget);
+    // The kind is our word and the label is theirs, isolated since 17 October.
+    expect(find.text('Client · ${isolated("Nordstern")}'), findsOneWidget);
 
     // A value is hidden until it is asked for — here as everywhere else.
     expect(find.textContaining('Nordstern Consulting GmbH'), findsNothing);
@@ -506,7 +524,7 @@ void main() {
     // Forgetting shows what it costs **before** it happens, with numbers.
     await tester.tap(find.text('Forget everywhere').first);
     await settle(tester, rounds: 2);
-    expect(find.textContaining('Forget «Nordstern Consulting GmbH»?'), findsOneWidget);
+    expect(find.textContaining('Forget ${quoted("Nordstern Consulting GmbH")}?'), findsOneWidget);
     expect(find.text('THIS WILL REMOVE'), findsOneWidget);
     expect(find.text('IT WILL NOT CHANGE'), findsOneWidget);
     expect(find.textContaining('already protected'), findsWidgets);
@@ -638,7 +656,7 @@ void main() {
     await tester.tap(find.widgetWithText(ZButton, 'Forget from this profile'));
     await settle(tester, rounds: 2);
     final confirmation = find.ancestor(
-      of: find.textContaining('Forget «Nordstern Consulting GmbH»?'),
+      of: find.textContaining('Forget ${quoted("Nordstern Consulting GmbH")}?'),
       matching: find.byType(Dialog),
     );
     expect(confirmation, findsOneWidget);
@@ -775,7 +793,7 @@ void main() {
     await settle(tester);
 
     // It asks, it names what it would take, and it has taken nothing yet.
-    expect(find.text('Forget «$secret»?'), findsOneWidget);
+    expect(find.text('Forget ${quoted(secret)}?'), findsOneWidget);
     expect(find.text('THIS WILL REMOVE'), findsOneWidget);
     expect(
       await stillTaught(),
@@ -904,7 +922,7 @@ void main() {
     // The dialog says which one it is about, so the test does not have to
     // assume an order to know what should be gone afterwards.
     final aboutRule = find
-        .textContaining('After «Mandantenkennung:»')
+        .textContaining('After «${isolated("Mandantenkennung")}:»')
         .evaluate()
         .isNotEmpty;
 

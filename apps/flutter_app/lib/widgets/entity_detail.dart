@@ -13,6 +13,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/messages.dart' show theirOwnWord;
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -65,7 +66,11 @@ class _EntityDetailState extends State<EntityDetail>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${entityKindLabel(card.kind)} · ${card.label}', style: Zc.h2),
+                  // **The client's own name, isolated** — the law of 16 October. The
+            // kind is our word and stays ours; the label is theirs, and an
+            // Arabic one in this heading pulled the «·» to the wrong side.
+            Text('${entityKindLabel(card.kind)} · ${theirOwnWord(card.label)}',
+                style: Zc.h2),
                   const SizedBox(height: 5),
                   Text(
                     card.values.isEmpty
@@ -336,7 +341,8 @@ class _EntityDetailState extends State<EntityDetail>
         backgroundColor: Zc.paper,
         title: const Text('Delete this identity?', style: Zc.h2),
         content: Text(
-          '«${card.label}» and its ${plural(card.values.length, "value")} are removed from the vault. '
+          '«${theirOwnWord(card.label)}» and its '
+          '${plural(card.values.length, "value")} are removed from the vault. '
           'Documents already protected keep their tokens; the next document will not '
           'recognise these values again.',
           style: Zc.body,

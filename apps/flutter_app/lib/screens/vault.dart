@@ -370,7 +370,9 @@ class _VaultScreenState extends State<VaultScreen> {
                     g.vaultQuery.isEmpty
                         ? 'No identities yet. The first one is usually the client whose documents '
                               'you work on.'
-                        : 'Nothing on this device matches «${g.vaultQuery}».',
+                        // What they typed, isolated: the sentence keeps its
+                        // order whatever language they searched in.
+                        : 'Nothing on this device matches «${theirOwnWord(g.vaultQuery)}».',
                     style: Zc.small,
                     textAlign: TextAlign.center,
                   ),
@@ -804,8 +806,12 @@ class _PlainTitle extends StatelessWidget {
       );
 }
 
-String _scope(String? profile) =>
-    profile == null ? 'Everywhere' : 'Profile: $profile';
+/// **The client's own name, isolated** — the law of 16 October, and this is
+/// one place for both callers: a profile named «ألماني» in an English line
+/// pulls what follows it into its own direction without the pair.
+String _scope(String? profile) => profile == null
+    ? 'Everywhere'
+    : 'Profile: ${theirOwnWord(profile)}';
 
 /// The name of the forget act for knowledge with this reach.
 ///
@@ -934,7 +940,8 @@ class _EntityRowTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${plural(row.values, "value")} · ${row.policySummary} · $profile',
+                    '${plural(row.values, "value")} · ${row.policySummary} · '
+                    '${theirOwnWord(profile)}',
                     style: Zc.small.copyWith(color: Zc.ink4),
                   ),
                 ],
@@ -1034,7 +1041,9 @@ class _TaughtRuleTile extends StatelessWidget {
     // The rule above its action, rather than beside it: the act's name now
     // carries its scope, and a name that long beside an `Expanded` label
     // squeezed the button until its own text overflowed by 58 px.
-    final line = 'After «${row.label}:» → $kind';
+    // The label is the person's own word — «Kundennummer:», «المرجع:» — so it
+    // is isolated and the arrow stays on the right side of it.
+    final line = 'After «${theirOwnWord(row.label)}:» → $kind';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(

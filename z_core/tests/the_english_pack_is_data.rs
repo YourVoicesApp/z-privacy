@@ -155,7 +155,12 @@ fn ltd_is_called_an_english_legal_form() {
         .map(|f| f.reason)
         .collect();
     assert!(
-        said.iter().any(|r| r.contains("«Ltd»") && r.contains("legal form in English")),
+        // **«Ltd» as a reason now carries it** — 17 October: every word of the
+        // person's own is isolated where one of our sentences quotes it, so
+        // the word stands between `U+2068` and `U+2069`. Escapes and not the
+        // characters themselves, because rustc denies a direction codepoint in
+        // a literal — for the same reason the law exists.
+        said.iter().any(|r| r.contains("«\u{2068}Ltd\u{2069}»") && r.contains("legal form in English")),
         "the reason does not say «Ltd» is a legal form in English: {said:?}"
     );
     assert!(

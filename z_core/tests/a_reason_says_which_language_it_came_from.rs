@@ -27,6 +27,20 @@ const GERMAN: &str = include_str!("fixtures/Brief_Weber.txt");
 /// Every language this build carries, by the English name a reason would use.
 const LANGUAGES: &[&str] = &["German", "Swedish", "English"];
 
+/// **A word of the person's own, as a reason now quotes it** — 17 October: the
+/// core isolates every such word (`text::their_own_word`), so «AB» inside a
+/// sentence of ours now stands between `U+2068` and `U+2069`. The guards below
+/// ask for the word in the sentence, and the sentence is what changed; this is
+/// what they ask with, in one place rather than four.
+///
+/// The pair is written as escapes and never as the characters themselves:
+/// rustc denies a direction codepoint in a literal, for the same reason this
+/// whole law exists — a file somebody reads should not have its own order
+/// changed by what it quotes.
+fn quoted(word: &str) -> String {
+    format!("«\u{2068}{word}\u{2069}»")
+}
+
 fn reasons(pack: &str, text: &str) -> Vec<String> {
     let s = open_session(None, pack.to_string()).expect("open");
     import_text(s, text.to_string()).expect("import");
@@ -64,12 +78,12 @@ fn a_company_form_belongs_to_the_language_that_lists_it() {
     // «AB» is Swedish, «GmbH» is German, and the sentence is the same sentence.
     let swedish = reasons("sv", SWEDISH);
     assert!(
-        swedish.iter().any(|r| r.contains("«AB»") && r.contains("legal form in Swedish")),
+        swedish.iter().any(|r| r.contains(&quoted("AB")) && r.contains("legal form in Swedish")),
         "no reason says «AB» is a legal form in Swedish: {swedish:?}"
     );
     let german = reasons("de", GERMAN);
     assert!(
-        german.iter().any(|r| r.contains("«GmbH»") && r.contains("legal form in German")),
+        german.iter().any(|r| r.contains(&quoted("GmbH")) && r.contains("legal form in German")),
         "no reason says «GmbH» is a legal form in German: {german:?}"
     );
 }

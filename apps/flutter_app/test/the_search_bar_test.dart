@@ -102,6 +102,23 @@ String? _theGoButton(WidgetTester tester) {
   return labels.isEmpty ? null : labels.first;
 }
 
+
+/// **A word of the person's own, as a sentence now carries it** — 17 October:
+/// every such word is isolated (`theirOwnWord` on the glass,
+/// `text::their_own_word` in the core), so it stands between `U+2068` and
+/// `U+2069` wherever one of our sentences quotes it.
+///
+/// The pair is written out here as literals rather than taken from the
+/// product's own function on purpose: a guard that asked with `theirOwnWord`
+/// would follow it wherever it went, and would stay green the day it stopped
+/// isolating anything.
+///
+/// Two shapes, because the quotation marks are not always ours to put: a
+/// heading says «Client · ⁨Nordstern⁩» with no marks at all, and a dialog says
+/// «Forget ⁨…⁩?» with them.
+String isolated(String word) => '\u2068$word\u2069';
+String quoted(String word) => '«${isolated(word)}»';
+
 void main() {
   late Directory dir;
 
@@ -160,7 +177,7 @@ void main() {
       of: find.byType(FindInDocument),
       matching: find.textContaining(text),
     );
-    expect(inTheBar('«Lindqvist» — 4 places'), findsOneWidget);
+    expect(inTheBar('${quoted("Lindqvist")} — 4 places'), findsOneWidget);
     // One place inside the company the pack still asks about, one inside the
     // name it asks about, and two alone.
     expect(find.text('2 waiting'), findsOneWidget);

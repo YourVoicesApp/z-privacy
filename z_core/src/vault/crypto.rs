@@ -108,7 +108,6 @@ pub(crate) enum Purpose {
     /// variant would leave `z-privacy/vault/1/token-name` free for somebody to
     /// claim for something else. The code that used it is gone; the string is
     /// spent for ever.
-    #[allow(dead_code)]
     ///
     /// Nothing is sealed with this key and nothing is stored under it: a token
     /// name is derived from it every time, out of the client, the document's
@@ -116,6 +115,7 @@ pub(crate) enum Purpose {
     /// client give the same token for ever with no record kept, and it is why
     /// the key must never leave this crate — a name derived under a key that
     /// did leave would be a value anybody could test a guess against.
+    #[allow(dead_code)]
     TokenName,
     /// **Seals one session's own file** — 064. Derived from the *session* key,
     /// not from the vault's master.

@@ -141,3 +141,81 @@ fn no_refusal_on_this_path_carries_a_hole() {
     }
     close_session(s).ok();
 }
+
+/// **A word of the person's own, inside a sentence of ours, is isolated** —
+/// the owner's test of 16 October, held as a class on 17 October.
+///
+/// The glass has `theirOwnWord` and forty sentences went through it; the
+/// core's own sentences arrive at the glass **finished**, so a word quoted
+/// here and not isolated here can never be isolated at all. His session
+/// «ألماني 1» inside an English line drew as «came back from «11 .«ألماني» —
+/// every word right and the order nonsense — and the same algorithm is in
+/// every reason the scanner writes about a name it found.
+///
+/// Measured on the surface where it matters most: the Why card's own reason,
+/// about a name in a document whose script is not the sentence's. The pair is
+/// `U+2068 … U+2069`, and the assertion is that the name stands **between**
+/// them rather than anywhere in the line.
+#[test]
+fn a_reason_that_quotes_a_persons_word_isolates_it() {
+    let _g = serial();
+    fresh_vault("isolated");
+    // An Arabic name after a German title: the reason for it is English prose,
+    // and this is the sentence the owner met.
+    // **Two names, and the German one is the control.** An Arabic name after a
+    // German title is what the owner met, and the pack may or may not shape it
+    // as a name; «Müller» after «Herr» it certainly finds, so the sentence
+    // this guard reads exists whatever the scanner makes of the other. The law
+    // is about every word of theirs, not only the ones in another script.
+    const LETTER: &str =
+        "Sehr geehrter Herr Müller,\nSehr geehrter Herr مصطفى,\nIhre Akte liegt vor.\n";
+    let s = open_session(None, "de".to_string()).expect("open");
+    // **The import's own reading, and no second one.** An import scans (14
+    // October), and the salutation protects the name after «Herr» on sight —
+    // which makes it a block. A second `scan` here would be the second
+    // reading, where the block answers first and the sentence becomes «your
+    // vault knows this value»: true, and not the sentence this guard is about.
+    import_text(s, LETTER.to_string()).expect("import");
+
+    let reasons: Vec<String> = list_findings(s)
+        .expect("findings")
+        .into_iter()
+        .map(|f| f.reason)
+        .filter(|reason| reason.contains('«'))
+        .collect();
+    assert!(
+        !reasons.is_empty(),
+        "no reason on this document quotes a word, so this guard measures nothing: {:?}",
+        list_findings(s).expect("findings").into_iter().map(|f| f.reason).collect::<Vec<_>>()
+    );
+    // **And the sentence this guard really reads, named** — the first pin
+    // aimed at «a title introduces the person who follows it» and the guard
+    // stayed green, because the reason in play is the salutation's other
+    // wording and the quoted word is built in `pack.said()`. A pin that does
+    // not bite is a guard measuring something else than its author thinks.
+    for reason in &reasons {
+        // Every quoted run is isolated: the opening mark is followed by the
+        // first of the pair, and the closing one preceded by the second.
+        assert!(
+            !reason.contains("«\u{2069}") && !reason.contains("\u{2068}»"),
+            "an empty isolate: {reason:?}"
+        );
+        assert!(
+            reason.matches('«').count() == reason.matches('\u{2068}').count(),
+            "a word is quoted without being isolated: {reason:?}"
+        );
+        assert!(
+            reason.matches('»').count() == reason.matches('\u{2069}').count(),
+            "a quoted word is left open at one end: {reason:?}"
+        );
+    }
+    // And the person's own word really is the thing between the pair, not our
+    // sentence around it.
+    assert!(
+        reasons.iter().any(|reason| reason.contains("\u{2068}مصطفى\u{2069}")
+            || reason.contains("\u{2068}Müller\u{2069}")
+            || reason.contains("\u{2068}Herr\u{2069}")),
+        "no reason has a person's word between the pair: {reasons:?}"
+    );
+    close_session(s).ok();
+}

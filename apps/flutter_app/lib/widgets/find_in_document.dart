@@ -297,8 +297,11 @@ class _FindInDocumentState extends State<FindInDocument> {
               children: [
                 Text(
                   places.isEmpty
-                      ? '«$_searched» is not in this document'
-                      : '«$_searched» — ${places.length} ${places.length == 1 ? "place" : "places"}:',
+                      // The word they searched for, isolated: the count after
+                      // it is ours and must stay after it.
+                      ? '«${theirOwnWord(_searched)}» is not in this document'
+                      : '«${theirOwnWord(_searched)}» — ${places.length} '
+                            '${places.length == 1 ? "place" : "places"}:',
                   style: Zc.small.copyWith(fontWeight: FontWeight.w600),
                 ),
                 if (protected > 0) _Count('$protected protected', Zc.clay, Zc.clayWash),

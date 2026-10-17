@@ -83,7 +83,12 @@ pub(crate) fn read_entry(bytes: &[u8], wanted: &str) -> ApiResult<Option<Vec<u8>
             if flags & FLAG_ENCRYPTED != 0 {
                 return Err(refuse(
                     Refusal::EncryptedPdf,
-                    format!("«{wanted}» inside this file is password-protected"),
+                    // A name out of the person's own file, isolated like any
+                    // other word of theirs in one of our sentences.
+                    format!(
+                        "«{}» inside this file is password-protected",
+                        crate::text::their_own_word(wanted)
+                    ),
                 ));
             }
             if compressed == u32::MAX as usize || uncompressed == u32::MAX as usize {
@@ -95,7 +100,8 @@ pub(crate) fn read_entry(bytes: &[u8], wanted: &str) -> ApiResult<Option<Vec<u8>
                         limit_mib: (limits::ZIP_ENTRY_BYTES / 1024 / 1024) as u32,
                     },
                     format!(
-                        "«{wanted}» would be {} MiB once unpacked, past the {} MiB limit",
+                        "«{}» would be {} MiB once unpacked, past the {} MiB limit",
+                        crate::text::their_own_word(wanted),
                         uncompressed / 1024 / 1024,
                         limits::ZIP_ENTRY_BYTES / 1024 / 1024
                     ),
@@ -108,7 +114,10 @@ pub(crate) fn read_entry(bytes: &[u8], wanted: &str) -> ApiResult<Option<Vec<u8>
                 if ratio > limits::MAX_RATIO {
                     return Err(refuse(
                         Refusal::CompressionBomb { ratio },
-                        format!("«{wanted}» claims to unpack {ratio}× its size, which no document does"),
+                        format!(
+                            "«{}» claims to unpack {ratio}× its size, which no document does",
+                            crate::text::their_own_word(wanted)
+                        ),
                     ));
                 }
             }

@@ -80,6 +80,9 @@ final _everyRefusal = <Refusal>[
   const Refusal.emptyDocument(),
 ];
 
+/// **All nine of the network's own** — ن15, the same lesson as the twelve
+/// above: this list held eight, and the ninth (`unreachable`) was the one
+/// falling through to a sentence that fitted them all.
 final _everyNetworkRefusal = <NetworkRefusal>[
   const NetworkRefusal.notConnected(),
   const NetworkRefusal.insecureUrl(),
@@ -89,6 +92,7 @@ final _everyNetworkRefusal = <NetworkRefusal>[
   const NetworkRefusal.responseTooLarge(limitKib: 2048),
   const NetworkRefusal.payloadTooLarge(kib: 900, limitKib: 512),
   const NetworkRefusal.unreadable(),
+  const NetworkRefusal.unreachable(),
 ];
 
 /// What may never appear in something a person reads.
@@ -126,6 +130,8 @@ void main() {
       final e = ApiError.documentRefused(reason: r, detail: 'x');
       _readsAsHuman(humanMessage(e), r.runtimeType.toString());
     }
+    expect(_everyNetworkRefusal.length, 9,
+        reason: 'the contract has 9 NetworkRefusal variants');
     for (final r in _everyNetworkRefusal) {
       final e = ApiError.networkRefused(reason: r, detail: 'an address must be https');
       _readsAsHuman(humanMessage(e), r.runtimeType.toString());
@@ -244,6 +250,40 @@ void main() {
   /// `ScannedPdfNoTextLayer` for a 946× page stream, and the screen turned that
   /// into «This PDF is a picture of a page with no text in it» — a false
   /// sentence about a true refusal.
+  /// **ن15 · the two that were left** — the independent attacker's last note,
+  /// 17 October. Both were the same defect as the limits above, one layer
+  /// further in: a sentence that fits every case says nothing about the one
+  /// that happened.
+  test('a host that answered nothing says so, and a broken file says how', () {
+    final unreachable = humanMessage(
+      const ApiError.networkRefused(reason: NetworkRefusal.unreachable(), detail: ''),
+    );
+    _readsAsHuman(unreachable, 'NetworkRefusal_Unreachable');
+    expect(unreachable, isNot(contains('did not work')),
+        reason: 'the ninth network refusal still falls to the sentence that fits all nine');
+    expect(unreachable, contains('nothing answered'),
+        reason: 'the one fact this refusal carries — that nothing answered — is not said');
+
+    // And the core's own detail reaches the glass, which is where the words a
+    // person can act on were sitting all along.
+    final broken = humanMessage(
+      const ApiError.documentRefused(
+        reason: Refusal.malformedDocument(),
+        detail: 'this PDF lists no pages',
+      ),
+    );
+    _readsAsHuman(broken, 'Refusal_MalformedDocument with a detail');
+    expect(broken, contains('lists no pages'),
+        reason: 'the core said what was wrong with the file and the screen dropped it');
+    // With no detail the general sentence is still there, because a refusal
+    // that carries nothing must not read as an empty line.
+    final bare = humanMessage(
+      const ApiError.documentRefused(reason: Refusal.malformedDocument(), detail: ''),
+    );
+    _readsAsHuman(bare, 'Refusal_MalformedDocument with no detail');
+    expect(bare, contains('damaged or incomplete'));
+  });
+
   test('a compression bomb is not described as a picture of a page', () {
     final said = humanMessage(
       const ApiError.documentRefused(

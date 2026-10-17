@@ -1645,19 +1645,27 @@ pub(crate) fn import_user_names(
             "person" => K::Person,
             "company" => K::Company,
             "" => {
-                reasons.push(format!("line {line_no}: «{text}» has no type"));
+                reasons.push(format!(
+                    "line {line_no}: «{}» has no type",
+                    crate::text::their_own_word(&text)
+                ));
                 continue;
             }
             other => {
                 reasons.push(format!(
-                    "line {line_no}: «{text}» is a «{other}», and the types are given, family, person and company"
+                    // The line is theirs and the type they wrote is theirs:
+                    // both are quoted back, so both are isolated.
+                    "line {line_no}: «{}» is a «{}», and the types are given, family, person and company",
+                    crate::text::their_own_word(&text),
+                    crate::text::their_own_word(other)
                 ));
                 continue;
             }
         };
         if matches!(kind, K::Given | K::Family) && text.split_whitespace().count() != 1 {
             reasons.push(format!(
-                "line {line_no}: «{text}» is two words — a given name and a family name are two rows"
+                "line {line_no}: «{}» is two words — a given name and a family name are two rows",
+                crate::text::their_own_word(&text)
             ));
             continue;
         }
@@ -1735,7 +1743,10 @@ pub(crate) fn import_user_names(
                     })?;
                 }
             }
-            Err(ApiError::InputRefused { reason }) => reasons.push(format!("«{text}»: {reason}")),
+            Err(ApiError::InputRefused { reason }) => reasons.push(format!(
+                    "«{}»: {reason}",
+                    crate::text::their_own_word(&text)
+                )),
             Err(other) => return Err(other),
         }
     }
@@ -2012,7 +2023,10 @@ fn clean_list_name(name: String) -> ApiResult<String> {
     if !known {
         return Err(ApiError::InputRefused {
             reason: format!(
-                "«{name}» is not a language this build knows; a list is a language, one for each"
+                // What they typed, quoted back to them — so it is isolated,
+                // like any word of theirs in a sentence of ours.
+                "«{}» is not a language this build knows; a list is a language, one for each",
+                crate::text::their_own_word(&name)
             ),
         });
     }
