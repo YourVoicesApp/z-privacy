@@ -199,7 +199,6 @@ class _SendSheetState extends State<SendSheet> {
     unawaited(widget.bench.refreshModels());
   }
 
-  final _pasted = TextEditingController();
   final _bodyScroll = ScrollController();
 
   /// What the birth said, once one has happened at this sheet — the core's own
@@ -207,7 +206,6 @@ class _SendSheetState extends State<SendSheet> {
   /// again would be asking a different question and getting a different answer.
   String? _begun;
   bool _copied = false;
-  bool _pasting = false;
 
   /// Where the last save went, in full. A path is the whole of the answer to
   /// «where did it go», so it is shown whole and not as «Saved».
@@ -283,56 +281,10 @@ class _SendSheetState extends State<SendSheet> {
     });
   }
 
-  /// Read the clipboard and put it in the answer field. Nothing else.
-  ///
-  /// **Paste is an act of editing, not of processing** (the owner, 29
-  /// September). It creates no answer, restores nothing, touches no vault and
-  /// opens no socket — and it does not change which payload the answer will
-  /// be tied to, so the F-05 binding is exactly where it was.
-  ///
-  /// The button used to only open and close this box, which is why a person
-  /// pressed «Paste» and nothing was pasted.
-  Future<void> _paste() async {
-    String? text;
-    try {
-      // Read **only** on the press. Nothing watches the clipboard.
-      final data = await Clipboard.getData(Clipboard.kTextPlain);
-      text = data?.text;
-    } catch (_) {
-      // A platform exception is not a sentence. The person is told what
-      // happened to them, not what happened to the channel.
-      if (mounted) {
-        setState(() {
-          _pasting = true;
-          _trouble = 'Z Privacy could not read the clipboard.';
-        });
-      }
-      return;
-    }
-    if (!mounted) return;
-    if (text == null || text.isEmpty) {
-      // The box still opens: they may want to type the answer by hand.
-      setState(() {
-        _pasting = true;
-        _trouble = 'There is no text on the clipboard.';
-      });
-      return;
-    }
-    setState(() {
-      _pasting = true;
-      _trouble = null;
-      // Replaced whole, not inserted at the cursor. This field holds one
-      // complete answer from a model; it is not a general text editor, and
-      // «where did my cursor leave off» is a question it should never raise.
-      _pasted.text = text!;
-      _pasted.selection = TextSelection.collapsed(offset: text.length);
-    });
-  }
   String? _trouble;
 
   @override
   void dispose() {
-    _pasted.dispose();
     _bodyScroll.dispose();
     super.dispose();
   }
@@ -574,8 +526,9 @@ class _SendSheetState extends State<SendSheet> {
             what:
                 'Use an AI chat you already have. Take the text above — to the clipboard, '
                 'or as a PDF saved on this machine — paste it into any model you like, and '
-                'bring the answer back here. Restoring works the same either way — no '
-                'account, no key. Neither way sends anything from here.',
+                'bring the answer back with «Add an answer» under the chat. Restoring works '
+                'the same either way — no account, no key. Neither way sends anything from '
+                'here.',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -642,11 +595,13 @@ class _SendSheetState extends State<SendSheet> {
                               await _savePdf(out.view!);
                             },
                     ),
-                    ZButton(
-                      label: 'Paste AI answer',
-                      icon: Icons.content_paste_go,
-                      onPressed: _paste,
-                    ),
+                    // **«Paste AI answer» moved to the chat** — rule 65: the
+                    // two buttons under the thread are «Copy the chat» and
+                    // «Add an answer», and an answer brought back belongs
+                    // beside the conversation it joins rather than inside the
+                    // sheet that chooses who answers. The press, the
+                    // clipboard read and its two refusals went with it, in
+                    // `widgets/the_chat.dart`.
                   ],
                 ),
                 if (_savedTo != null) ...[
@@ -659,39 +614,6 @@ class _SendSheetState extends State<SendSheet> {
                     'The protected text, with the build stamp, the counts and a sha256 of '
                     'that text in the footer, and a last page for the answer. Nothing was sent.',
                     style: Zc.small.copyWith(color: Zc.ink2),
-                  ),
-                ],
-                if (_pasting) ...[
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _pasted,
-                    maxLines: 8,
-                    minLines: 4,
-                    style: Zc.document.copyWith(fontSize: 13.5),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Zc.card,
-                      hintText: 'Paste the model’s answer here…',
-                      hintStyle: Zc.body.copyWith(color: Zc.ink4),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Zc.line),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ZButton(
-                    label: 'Restore the real values',
-                    filled: true,
-                    onPressed: () async {
-                      final bad = await widget.bench.pasteAnswer(_pasted.text);
-                      if (!context.mounted) return;
-                      if (bad == null) {
-                        Navigator.of(context).pop(true);
-                      } else {
-                        setState(() => _trouble = bad);
-                      }
-                    },
                   ),
                 ],
               ],

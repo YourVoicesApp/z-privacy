@@ -1235,11 +1235,11 @@ class _KeptDocument extends StatelessWidget {
     final what = doc.protected == 1 ? '1 protected place' : '${doc.protected} protected places';
     // **Both doors of this document** — rule 69. Worded in
     // `session_state.dart`, where a test reads it without a panel; `null` is
-    // «the turns say nothing about this one», and then nothing is drawn rather
-    // than a line that hedges.
+    // «nothing was sent about this one», and then nothing is drawn. The turn
+    // carries this document's own handle, so the line is about this row and
+    // not about whichever of its neighbours shares a name.
     final doors = theDoorsOfAKeptDocument(
       doc,
-      ground.kept[session] ?? const <KeptRow>[],
       ground.turns[session] ?? const <TurnRow>[],
     );
     return Padding(

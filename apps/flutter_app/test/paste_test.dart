@@ -23,6 +23,7 @@ import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
+import 'package:zprivacy/widgets/the_chat.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
 
 /// Stand in for the system clipboard. `null` is «nothing there»; throwing is
@@ -70,6 +71,28 @@ Future<Workbench> _sheetlessWorkspace(WidgetTester tester, Ground ground) async 
   return bench;
 }
 
+/// **The chat panel, where «Add an answer» lives since rule 65.**
+///
+/// The press, the clipboard read and its two refusals moved here from the send
+/// sheet with the button: an answer brought back from outside belongs beside
+/// the conversation it joins. Everything these five guards assert is about
+/// that press, so they followed it.
+Future<Workbench> _chat(WidgetTester tester, Ground ground) async {
+  late final Workbench bench;
+  await tester.runAsync(() async {
+    final session = await z.openSession(profileId: null, packId: 'de');
+    bench = Workbench(session: session, profileId: null, packId: 'de');
+    await z.importText(session: session, text: 'E-Mail: a.weber@nordstern.de');
+    await bench.rescan();
+    await ground.refresh();
+  });
+  await tester.pumpWidget(MaterialApp(
+    home: Scaffold(body: SizedBox(width: 760, child: TheChat(bench: bench, ground: ground, width: 760))),
+  ));
+  await settle(tester);
+  return bench;
+}
+
 /// A session with something to protect, and the sheet open on its AI page.
 Future<Workbench> _sheet(WidgetTester tester, Ground ground) async {
   late final Workbench bench;
@@ -99,14 +122,16 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     _installClipboard(tester);
     final ground = Ground();
-    await _sheet(tester, ground);
+    await _chat(tester, ground);
 
     const answer = 'Hello __Z_1234_PERSON_ABCD__, your note is ready.';
     _clipboard = answer;
-    await tester.tap(find.text('Paste AI answer'));
+    await tester.tap(find.text('Add an answer'));
     await settle(tester);
 
-    final field = tester.widget<TextField>(find.byType(TextField).first);
+    // **By key**: this panel's compose box comes first in the tree, and «the
+    // first field on the page» is the reach that cost 064/D a guard.
+    final field = tester.widget<TextField>(find.byKey(TheChat.pasted));
     expect(field.controller!.text, answer, reason: 'the field is not the clipboard');
   });
 
@@ -115,17 +140,30 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     _installClipboard(tester);
     final ground = Ground();
-    await _sheet(tester, ground);
+    await _chat(tester, ground);
 
     _clipboard = 'first answer';
-    await tester.tap(find.text('Paste AI answer'));
+    await tester.tap(find.byKey(TheChat.add));
     await settle(tester);
 
+    // **Pressed by its key, because the label is part of the state.** With the
+    // box open the three acts give way to it and that press reads «Not now» —
+    // one place, one toggle, two words for the two directions. The key is the
+    // thing that does not move.
+    expect(find.text('Not now'), findsOneWidget,
+        reason: 'the press that closes the box does not say so');
+
+    // A second press shuts the box; the third opens it with the new clipboard
+    // — which is the behaviour, and the reason the press toggles.
     _clipboard = 'second answer';
-    await tester.tap(find.text('Paste AI answer'));
+    await tester.tap(find.byKey(TheChat.add));
+    await settle(tester);
+    expect(find.text('Add an answer'), findsOneWidget,
+        reason: 'the box shut and the acts did not come back');
+    await tester.tap(find.byKey(TheChat.add));
     await settle(tester);
 
-    final field = tester.widget<TextField>(find.byType(TextField).first);
+    final field = tester.widget<TextField>(find.byKey(TheChat.pasted));
     expect(field.controller!.text, 'second answer',
         reason: 'the second paste appended instead of replacing');
   });
@@ -135,15 +173,15 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     _installClipboard(tester);
     final ground = Ground();
-    await _sheet(tester, ground);
+    await _chat(tester, ground);
 
     _clipboard = null;
-    await tester.tap(find.text('Paste AI answer'));
+    await tester.tap(find.text('Add an answer'));
     await settle(tester);
 
-    expect(find.text('There is no text on the clipboard.'), findsOneWidget);
+    expect(find.textContaining('There is no text on the clipboard.'), findsOneWidget);
     // The box still opens: they may want to type the answer by hand.
-    expect(find.byType(TextField), findsWidgets);
+    expect(find.byKey(TheChat.pasted), findsOneWidget);
   });
 
   testWidgets('a clipboard that will not answer gives a sentence, not an exception',
@@ -152,13 +190,13 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     _installClipboard(tester);
     final ground = Ground();
-    await _sheet(tester, ground);
+    await _chat(tester, ground);
 
     _clipboardThrows = true;
-    await tester.tap(find.text('Paste AI answer'));
+    await tester.tap(find.text('Add an answer'));
     await settle(tester);
 
-    expect(find.text('Z Privacy could not read the clipboard.'), findsOneWidget);
+    expect(find.textContaining('Z Privacy could not read the clipboard.'), findsOneWidget);
     expect(find.textContaining('PlatformException'), findsNothing);
   });
 
@@ -174,20 +212,22 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     _installClipboard(tester);
     final ground = Ground();
-    final bench = await _sheet(tester, ground);
+    final bench = await _chat(tester, ground);
 
-    // Copy first, which is what binds the answer to a payload.
-    await tester.tap(find.text('Copy Protected'));
-    await settle(tester);
-    final bound = bench.copiedPayload;
+    // The binding a copy makes, made the way the copy door makes it — the
+    // door itself is the send sheet's and is measured there.
+    await tester.runAsync(() async => bench.rememberCopiedPayload());
+    final bound = bench.copied;
     expect(bound, isNotNull, reason: 'copying did not bind a payload');
+    expect(bound!.what, WhatWasCopied.theDocument,
+        reason: 'the document’s own copy bound something else');
 
     _clipboard = 'an answer from some model';
-    await tester.tap(find.text('Paste AI answer'));
+    await tester.tap(find.text('Add an answer'));
     await settle(tester);
 
-    expect(bench.copiedPayload, bound, reason: 'Paste re-aimed the answer at another payload');
-    expect(bench.answers, isEmpty, reason: 'Paste created an answer by itself');
+    expect(bench.copied, bound, reason: 'Paste re-aimed the answer at another payload');
+    expect(bench.chatTurns, isEmpty, reason: 'Paste created an answer by itself');
   });
 }
 
@@ -236,8 +276,8 @@ void _p22() {
     // «Who answers» since rule 60; the outgoing text it used to show on a page
     // of its own is read in the preview side, which this press did not touch.
     expect(find.text('Who answers'), findsOneWidget);
-    expect(bench.answers, isEmpty, reason: 'Review created an answer');
-    expect(bench.copiedPayload, isNull, reason: 'Review bound a payload');
+    expect(bench.chatTurns, isEmpty, reason: 'Review created an answer');
+    expect(bench.copied, isNull, reason: 'Review bound a payload');
     final still = await Clipboard.getData(Clipboard.kTextPlain);
     expect(still?.text, startsWith('SENTINEL'), reason: 'Review wrote to the clipboard');
   });

@@ -368,7 +368,7 @@ void main() {
     expect(find.textContaining('could not write into $_libPath/nowhere'), findsOneWidget,
         reason: 'the refusal does not name the folder, so it cannot be acted on');
     expect(find.text('Save as PDF'), findsOneWidget, reason: 'the button is still «Saving…»');
-    expect(bench.copiedPayload, isNull, reason: 'a refusal bound a payload nothing took');
+    expect(bench.copied, isNull, reason: 'a refusal bound a payload nothing took');
   });
 
   // ------------------------------------------- 046/R · Arabic, written to be read

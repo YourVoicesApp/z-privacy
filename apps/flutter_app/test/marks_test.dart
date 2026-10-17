@@ -25,7 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/widgets/the_chat.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -259,11 +259,17 @@ void main() {
     });
     await pumpWorkspace(tester, bench, ground);
 
-    expect(find.byType(AnswerPanel), findsOneWidget);
+    // **The fourth mark lives in the chat's bubble since rule 66**: the thread
+    // draws the answer coded, and a value that came back is drawn where it
+    // comes back — one press away, per answer, never as the panel's own state.
+    expect(find.byType(TheChat), findsOneWidget,
+        reason: 'the answer did not open the chat, so there is nothing to read');
+    await tester.tap(find.byKey(TheChat.showTheText(0)));
+    await settle(tester);
     final style = styleOf(
       tester,
       'Blaues Dach',
-      within: find.byType(AnswerPanel),
+      within: find.byType(TheChat),
     );
     expect(style, isNotNull, reason: 'the restored value is not drawn as its own run');
     expect(

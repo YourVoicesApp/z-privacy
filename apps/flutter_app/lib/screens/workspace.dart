@@ -31,7 +31,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/acts.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/find_in_document.dart';
-import 'package:zprivacy/screens/answer.dart';
+import 'package:zprivacy/widgets/the_chat.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
 import 'package:zprivacy/widgets/name_review.dart';
@@ -539,9 +539,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           bench: bench,
                           width: panelWidth,
                         ),
-                        OpenPanel.answer => AnswerPanel(
+                        // **The third part of the one screen** — rule 65.
+                        // `AnswerPanel` stood here: one answer at a time, with
+                        // arrows between answers and a switch over the whole
+                        // panel. The conversation stands here now, coded, with
+                        // the compose box at its foot — and the answer is a
+                        // line in it rather than a place to go.
+                        OpenPanel.chat => TheChat(
                           bench: bench,
+                          ground: widget.ground,
                           width: panelWidth,
+                          onSettings: _toSettings,
                         ),
                       },
                     ],
@@ -2424,11 +2432,15 @@ class _SafeFooter extends StatelessWidget {
                       )),
                 hint: null,
               ),
-              if (bench.answers.isNotEmpty && bench.showing == null)
+              // **The way back to the chat, for a person who put it away** —
+              // rule 65. It said «Show the answer» and showed one; the chat is
+              // the thing to come back to now, and it is drawn only while
+              // there is one and it is not already standing.
+              if (bench.chatTurns.isNotEmpty && bench.panel != OpenPanel.chat)
                 ZButton(
-                  label: 'Show the answer',
-                  icon: Icons.subject,
-                  onPressed: () => bench.show(bench.answers.last),
+                  label: 'Show the chat',
+                  icon: Icons.forum_outlined,
+                  onPressed: bench.openTheChat,
                 ),
             ],
           ),
@@ -2580,8 +2592,14 @@ class _TheQuestionState extends State<_TheQuestion> {
             // true of the request and misleading about what a person can still
             // see.
             Text(
-              'One request at a time — a new question replaces the request, '
-              'and the answers are kept.',
+              // **Rewritten by rule 67**, which made its second half the
+              // smaller truth: the answers were «kept», and what they are now
+              // is a conversation that carries itself forward. The first half
+              // stands and is still the thing a person needs to know before
+              // they type: this box holds one request, and the next question
+              // replaces it.
+              'One request at a time — a new question replaces this one, and the chat '
+              'keeps every exchange.',
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
             ),
             // **And the sentence that stood here is gone, because the debt was

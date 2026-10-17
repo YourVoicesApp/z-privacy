@@ -1112,6 +1112,45 @@ else
   printf '%s\n' "$G43_TAKERS" | sed 's/^/        /'
 fi
 
+# ---------------------------------------------------------------- G47
+# **The answer is coded in the thread, and the names come back in one place**
+# — rule 66, the owner, 17 October 2026: «تظهر الإجابة داخل الشات مرمزة مع زر
+# عرض النص ليظهر في فقاعة… لا يظهر الجواب مباشرة بلا ترميز».
+#
+# Two sides of one law, and the second is the one a later round would break by
+# accident: the thread draws what **travelled** — the coded strings the core
+# stored — and the restored text, with the real values in it, is drawn in the
+# bubble a press opens and nowhere else. A panel that drew the restored
+# segments in the thread would put a person's own names on the glass with
+# nothing asked for, which is the whole of what rule 66 forbids.
+#
+# Read from the source by **class**, the way G42 read the chat's door: a
+# `TurnRow`'s restored side is `.answer`, and the only class allowed to touch
+# it is the bubble's state. `.answerAsWritten` is the coded one and is
+# deliberately not matched — the pattern ends at a non-letter, so the two
+# cannot be confused.
+CHAT_DART=$FLUTTER_LIB/widgets/the_chat.dart
+if [ -f "$CHAT_DART" ]; then
+  G47_RESTORED=$(awk '
+    /^class [_A-Za-z]+/ { cls = $2 }
+    /\.answer[^A-Za-z]/ { if (cls != "") print cls }
+  ' "$CHAT_DART" | sort -u | tr '\n' ' ' | sed 's/ $//')
+  if [ "$G47_RESTORED" = "_BubbleState" ]; then
+    pass "G47 the restored answer is drawn in one class, and it is the bubble a press opens"
+  else
+    fail "G47 the restored side of a turn is read in «$G47_RESTORED» — expected «_BubbleState» only (rule 66)"
+  fi
+  # And the coded sides go through the painter the Safe column uses, so a token
+  # is drawn the same way wherever a person meets it — never as bare text.
+  if grep -q 'child: SafeText(text: text, chips: false)' "$CHAT_DART"; then
+    pass "G47 the thread draws what travelled with the Safe column's own painter"
+  else
+    fail "G47 the chat draws the coded sides itself — a token must look the same wherever it stands"
+  fi
+else
+  fail "G47 widgets/the_chat.dart is missing — the third part of the one screen is not built (rule 65)"
+fi
+
 # ---------------------------------------------------------------- G42
 # **Nobody reaches the three exits without the outgoing text on the glass** —
 # rule 60 and the owner's rule 60-أ, 17 October 2026.
@@ -3081,14 +3120,24 @@ done
 #   * «not on Home» became «not on the three parts»: the same guard, asking
 #     which screen a fresh device opens on, now that there is one screen.
 #
-# And six joined it, which is where this round's own shape is read: the way in
+# **And one left it when the chat replaced the answer panel:** «as the model
+# wrote it» was the label of a tab over the whole panel, and rule 66 turned
+# that around — the thread draws what travelled, coded, and the names come back
+# in a bubble per answer. The phrase survived in a *comment* after the rename,
+# which is a roster entry green for the wrong reason, so it was replaced by the
+# property's new name rather than left to pass on a sentence nobody measures.
+#
+# The names that joined it are where this round's own shape is read: the way in
 # at the top of the one screen with nothing open and with a document open, the
-# absence of a way back, the two doors standing in two places, and rule 69's
-# line under a kept document — both what it says and, in the second of them,
-# the silence it keeps when the turns cannot tell two documents apart.
+# absence of a way back, the two doors standing in two places, rule 69's line
+# under a kept document — what it says, the handle that anchors it, and a
+# follow-up answering for the chat its document began — and the chat itself:
+# coded with the names one press away, a second question to the same door, an
+# added answer with no question above it, the writing below the thread, the two
+# tight windows, and an end that keeps what was said.
 for t in "the core reports it" "the scan the core ran" "own two strings" "never the credential" \
          "not one Dart worked out" "Skip decides nothing" "does not touch what leaves" \
-         "the manual door needs no key" "as the model wrote it" "only the safe text arrives" \
+         "the manual door needs no key" "only the safe text arrives" \
          "the vault room" "say where they live" "in the language it is offering" \
          "not on the three parts" "word for word" "forgetting shows its cost first" \
          "clipboard untouched until confirmed" \
@@ -3136,7 +3185,17 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "no way back is drawn, because there is nowhere to go back to" \
          "the way in and the way back are two presses, in two places" \
          "says a kept document was sent to AI and answered" \
-         "two documents a turn cannot tell apart are both left silent" \
+         "the handle is the anchor, so two documents of one name are told apart" \
+         "a follow-up question answers for the document its chat began with" \
+         "opens the chat, coded, with the name only in the bubble" \
+         "coded in the thread, and the names come back in its bubble" \
+         "makes a second turn, to the same door" \
+         "drawn with no question above it" \
+         "the writing is below the thread, and against the bottom of the panel" \
+         "the thread scrolls under a writing box that stays where it is" \
+         "the chat is on the glass, acts and all" \
+         "ending the chat closes the panel and keeps what was said" \
+         "the chat shows the question above its answer, as it left" \
          "a host that answered nothing says so" \
          "the number this form promises is the number the core applies" \
          "no longer says that each question is asked alone"; do

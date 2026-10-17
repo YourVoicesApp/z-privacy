@@ -366,15 +366,38 @@ void main() {
     // **The counts come from the core, not from a literal.** The old form of
     // this claim said «one API KEY, two ADDRESS», which was true of the sheet
     // because the sheet only ever mounted `providers.first`. The panel draws a
-    // Direct API card for every provider the build knows — measured: six — so
-    // a literal here would have been a fact about one screen's shortcut.
+    // Direct API card for every provider the build knows — measured: six in a
+    // release, seven in a build that carries the echo provider — so a literal
+    // here would have been a fact about one screen's shortcut.
+    //
+    // **One field per card, not one per key needed.** It read
+    // `where(credentialRequired)` and went red by one in a test build: the
+    // echo provider's address is loopback, so it needs no key, and it still
+    // gets a card with the field on it. That is the form's own design and not
+    // a defect — a key field that disappeared while a person typed a loopback
+    // address into it would be worse than one that is not needed — and what
+    // the screen owes instead is to **say** which cards need no key. Both
+    // halves are measured here.
+    final cards = ground.providers.length;
     final keyed = ground.providers.where((p) => p.credentialRequired).length;
     expect(keyed, greaterThan(0), reason: 'no provider asks for a key, so this proves nothing');
 
     expect(
       find.text('API KEY'),
-      findsNWidgets(keyed),
-      reason: 'the Direct API cards ask for $keyed keys and the screen drew a different number',
+      findsNWidgets(cards),
+      reason: 'the panel drew $cards Direct API cards and a different number of key fields',
+    );
+    // And every card that needs no key says so, in both places it is said: the
+    // card's own line and the form's.
+    expect(
+      find.textContaining('no credential is needed'),
+      findsNWidgets(cards - keyed),
+      reason: 'a card that needs no key does not say so',
+    );
+    expect(
+      find.textContaining('No key is needed at this address'),
+      findsNWidgets(cards - keyed),
+      reason: 'the form over a keyless address still promises to seal a key',
     );
     // Where the key would live, which is `shell_test.dart`'s claim and not its
     // wording: the sentence depends on the vault, and the two tests stand on

@@ -526,7 +526,7 @@ void main() {
   // ------------------------------------------------------------------ guard 7
   //
   // **The question may not cost a door its place on the glass.** The human run
-  // of 046/O lost Copy Protected, Paste AI answer and Send from here below the
+  // of 046/O lost Copy Protected, the manual door and Send from here below the
   // window at 1280×720, and `shell_test`'s journeys were written to walk that
   // size rather than trust `takeException`. The band stands in exactly the
   // state the owner meets on a fresh machine — a vault, no session yet — so it
@@ -549,7 +549,12 @@ void main() {
         reason: 'the document in the preview brought no session, so the band below is another one');
 
     final view = tester.binding.renderViews.first.size;
-    for (final label in ['Manual AI', 'Paste AI answer', 'Direct API']) {
+    // **Three titles, and the second one is the sheet's own door now.**
+    // «Paste AI answer» stood here until rule 65 moved the way back to the
+    // foot of the chat («Add an answer»), so the title of the manual door is
+    // what anchors that third of the sheet — the same thing the other two
+    // labels are: a door's own name, not a button inside it.
+    for (final label in ['Manual AI', 'Copy Protected', 'Direct API']) {
       final it = find.text(label);
       expect(it, findsOneWidget, reason: '«$label» is not in the tree at all');
       final r = tester.getRect(it);
