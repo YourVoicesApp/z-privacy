@@ -253,9 +253,18 @@ fi
 #
 # Named rather than counted so that a fourth asker has to say which of these it
 # is — the loosening this gate exists to make visible.
+#
+# **The fourth seat, 18 Oct, and this gate is what asked for it.** The attacker's
+# B1-3: `payload.rs` — the exit audit, where a protected value's places are
+# counted. A token spells its kind in capital letters, so a plain count found
+# «IBAN» inside every account this document protected and refused every door.
+# It is a different act over the same fact: not «a token is not a candidate»
+# but «a token is not a place a value stands». One call there, over both texts
+# at once, because the two sides of a bound measured by two expressions are how
+# they drift apart.
 SCANNER=z_core/src/scanner/mod.rs
 TOKENS=z_core/src/tokens.rs
-G31_SEATS="scanner/mod.rs ops/mod.rs returning.rs"
+G31_SEATS="scanner/mod.rs ops/mod.rs returning.rs payload.rs"
 G31_CALLS=$(grep -Rn 'token_spans(' z_core/src --include='*.rs' | grep -v 'fn token_spans' || true)
 G31_N=$(printf '%s\n' "$G31_CALLS" | grep -c . || true)
 G31_BAD=""
@@ -263,8 +272,8 @@ for seat in $G31_SEATS; do
   HOW_MANY=$(printf '%s\n' "$G31_CALLS" | grep -c "$seat:" || true)
   [ "$HOW_MANY" = "1" ] || G31_BAD="$G31_BAD $seat($HOW_MANY)"
 done
-if [ "$G31_N" = "3" ] && [ -z "$G31_BAD" ]; then
-  pass "G31 where the tokens stand is asked in three named places, once each"
+if [ "$G31_N" = "4" ] && [ -z "$G31_BAD" ]; then
+  pass "G31 where the tokens stand is asked in four named places, once each"
 else
   fail "G31 the token law is asked in $G31_N place(s), expected one each in$( \
        for seat in $G31_SEATS; do printf ' %s' "$seat"; done)$G31_BAD:"
@@ -949,6 +958,76 @@ if [ -z "$G46_DART" ]; then
   pass "G46 no screen assembles a history"
 else
   fail "G46 a screen hands a history to the core:"; printf '%s\n' "$G46_DART" | sed 's/^/        /'
+fi
+
+# ---------------------------------------------------------------- G48
+# **A word that names a field is not a value, and a value does not stand inside
+# our own token** — the attacker's B1-3 of 17 October, both halves.
+#
+# He typed `… Frau Katrin Sommer? IBAN DE89 …` about a letter already protected
+# to the end. The label left as a `PERSON` token whose value was four letters,
+# and the exit audit then counted those four letters inside every
+# `__Z_…_IBAN_…__` in the payload and refused to build: copy, PDF, pull and
+# send all closed on that document, and on `34ed785` the chat with them, until
+# a protection nobody asked for was undone.
+#
+# Three things, each the shape of a way it could come undone:
+#
+#  1 — the scanner asks the label vocabulary before any layer's candidate
+#      becomes a finding, read from the body of `scan` and not from the file;
+#  2 — **one** function answers «which words name a field», so the boundary a
+#      grouped value stops at and the name a label is not cannot drift apart;
+#  3 — the audit cannot count without being told which stretches are ours: the
+#      counting function takes the spans, so a caller that forgets them does
+#      not compile; it asks **once**, over both texts at once (G31's fourth
+#      seat), counts both sides of its bound by that one answer, and hands
+#      neither side an empty list — one definition of «where a value stands»,
+#      or the bound is not about one thing.
+SCAN_C=z_core/src/scanner/mod.rs
+RULES_C=z_core/src/scanner/rules.rs
+PAYLOAD_C=z_core/src/payload.rs
+
+# Comment lines thrown away first, for G46's own reason: a sentence naming the
+# function would otherwise answer for a deleted line.
+G48_LAW=$(awk '
+  /^pub\(crate\) fn scan\(/ {inside=1}
+  inside && /^}/ {print; inside=0; next}
+  inside && $0 !~ /^[[:space:]]*\/\// {print}
+' "$SCAN_C" 2>/dev/null)
+if printf '%s\n' "$G48_LAW" | grep -q 'is_label_word'; then
+  pass "G48 no layer's candidate may be a word that names a field, asked once over the text"
+else
+  fail "G48 the scanner settles its findings without asking whether one of them is a label — «IBAN» becomes a person again"
+fi
+
+G48_ANSWERS=$(grep -c '^\(pub(crate) \)\?fn is_label_word(' "$RULES_C" 2>/dev/null || echo 0)
+G48_READERS=$(grep -Rln 'is_label_word(' z_core/src 2>/dev/null | sort | tr '\n' ' ')
+if [ "$G48_ANSWERS" = "1" ] \
+   && [ "$G48_READERS" = "z_core/src/scanner/mod.rs z_core/src/scanner/rules.rs " ]; then
+  pass "G48 one function says which words name a field, and both readers ask it"
+else
+  fail "G48 «which words name a field» is answered in $G48_ANSWERS place(s) and read in «$G48_READERS» — expected one answer, read by the scanner and by the grouped boundary"
+fi
+
+G48_COUNT=$(grep -c '^fn count(haystack: &str, needle: &str, ours: &\[(usize, usize)\]) -> usize {' "$PAYLOAD_C" 2>/dev/null || echo 0)
+G48_BODY=$(awk '
+  /^    pub\(crate\) fn audit\(/ {inside=1}
+  inside && /^    }/ {print; inside=0; next}
+  inside && $0 !~ /^[[:space:]]*\/\// {print}
+' "$PAYLOAD_C" 2>/dev/null)
+# **One ask, two counts, and no empty list** — the three ways this fix comes
+# undone, and the only three. The signature means no caller can leave the spans
+# out at all, so what is left is asking for them once (G31's fourth seat),
+# giving one to each side of the bound, and not handing either side an empty
+# list to shut the law up without deleting it.
+G48_SPANS=$(printf '%s\n' "$G48_BODY" | grep -c 'token_spans(')
+G48_SIDES=$(printf '%s\n' "$G48_BODY" | grep -c 'count(&')
+G48_EMPTY=$(printf '%s\n' "$G48_BODY" | grep -cE 'Vec::new\(\)|&\[\]')
+if [ "$G48_COUNT" = "1" ] && [ "$G48_SPANS" = "1" ] \
+   && [ "$G48_SIDES" = "2" ] && [ "$G48_EMPTY" = "0" ]; then
+  pass "G48 the audit asks once where our own tokens stand, counts both sides of its bound by it, and hands neither an empty list"
+else
+  fail "G48 the counting signature is in $G48_COUNT place(s); the audit asks for the spans $G48_SPANS time(s), counts $G48_SIDES side(s) and passes $G48_EMPTY empty list(s) — expected 1 · 1 · 2 · 0"
 fi
 
 # ---------------------------------------------------------------- G45
@@ -3138,7 +3217,12 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          an_answer_brought_back_by_hand_joins_the_open_chat \
          a_turn_carries_both_sides_coded_and_restored \
          a_turn_names_the_document_it_carried_after_the_copy_is_gone \
-         an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name; do
+         an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name \
+         the_word_that_names_a_field_is_not_a_person \
+         a_name_after_a_salutation_ends_with_the_sentence \
+         the_exit_audit_does_not_count_a_value_inside_our_own_token \
+         the_attackers_question_leaves_and_every_door_stays_open \
+         a_label_a_walk_may_honestly_reach_is_still_not_a_name; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else

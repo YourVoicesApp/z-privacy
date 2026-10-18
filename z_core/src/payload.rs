@@ -444,12 +444,39 @@ impl SafePayload {
     pub(crate) fn audit(&self, session: &Session) -> ApiResult<()> {
         let payload_nfc = nfc(&self.text);
         let original_nfc = nfc(session.original_str());
+        // **Our own tokens are not places a value stands** — the attacker's
+        // B1-3 of 17 October, the second half.
+        //
+        // A token spells its kind in capitals between two underscores
+        // (`__Z_9A2A_IBAN_20583538__`), so a plain substring count over the
+        // payload finds the value «IBAN» in every account this document
+        // protected. He reached it through a question; a person reaches it with
+        // their own hand, by protecting the word «IBAN» in their letter: both
+        // labels are replaced, nothing of the value stands in the clear, and
+        // the audit refused — «a protected value still stands 4 time(s) where
+        // at most 0 was expected». Copy, PDF, pull and send are all this
+        // function's doors, so the document could never leave again.
+        //
+        // The spans come from the same `tokens::token_spans` the scanner uses
+        // to refuse a finding standing on a token (079 rule 5), and **both
+        // sides are measured the same way**: an upper bound that counted the
+        // original's places by one definition and the payload's by another
+        // would not be comparing one thing, and the error would land on
+        // whichever side counted higher. A returning document carries tokens
+        // of its own, which is exactly where the two sides differ.
+        //
+        // **One call over both texts, and that is the point**, not a saving:
+        // «where a value stands» is one definition here, and the two sides of a
+        // bound measured by two expressions is how they drift apart. It is also
+        // what G31 asks of a fourth asker of this law — which act it is.
+        let [ours_in_original, ours_in_payload] =
+            [&original_nfc, &payload_nfc].map(|text| crate::tokens::token_spans(text));
         for spelling in session.tokens.all_secrets() {
             if spelling.is_empty() {
                 continue;
             }
             let spelling = nfc(&spelling);
-            let in_original = count(&original_nfc, &spelling);
+            let in_original = count(&original_nfc, &spelling, &ours_in_original);
             // Count by INTENT, not by what the range happens to cover: a
             // protection whose token stands for this spelling is meant to hide
             // one of its places. If such a protection exists and the value is
@@ -465,7 +492,7 @@ impl SafePayload {
                 })
                 .count();
             let allowed = in_original.saturating_sub(replaced);
-            let actual = count(&payload_nfc, &spelling);
+            let actual = count(&payload_nfc, &spelling, &ours_in_payload);
             if actual > allowed {
                 return Err(ApiError::PayloadRefused {
                     reason: format!(
@@ -541,8 +568,16 @@ fn tally(session: &Session, tokens: &[String]) -> Vec<crate::api::KindTally> {
         .collect()
 }
 
-/// Non-overlapping occurrences of `needle` in `haystack`.
-fn count(haystack: &str, needle: &str) -> usize {
+/// Non-overlapping occurrences of `needle` in `haystack`, **outside the
+/// stretches this program minted**.
+///
+/// `ours` is `tokens::token_spans` over this same string. A place that lies
+/// inside one of our tokens is not a place the value stands: the token spells
+/// its kind in capital letters, and nothing between those underscores is the
+/// person's text. Passed in rather than computed here because the caller asks
+/// this question once per protected value and the spans are a property of the
+/// string.
+fn count(haystack: &str, needle: &str, ours: &[(usize, usize)]) -> usize {
     if needle.is_empty() {
         return 0;
     }
@@ -551,8 +586,12 @@ fn count(haystack: &str, needle: &str) -> usize {
     while let Some(rest) = haystack.get(from..) {
         match rest.find(needle) {
             Some(at) => {
-                n += 1;
-                from = from + at + needle.len();
+                let start = from + at;
+                let end = start + needle.len();
+                if !ours.iter().any(|(s, e)| start < *e && *s < end) {
+                    n += 1;
+                }
+                from = end;
             }
             None => break,
         }

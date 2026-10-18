@@ -100,6 +100,36 @@ pub(crate) fn scan(
     // Before the exceptions, so that what a person refuses is what a person was
     // shown.
     all = each_name_one_word(text, all);
+    // **A word that names a field is not a value** — the attacker's B1-3 of 17
+    // October, and asked here for the reason the law above and the law below
+    // are asked here: it is a law about the text, and a rule written at one
+    // layer is not applied to the second.
+    //
+    // Measured on his question about this very letter: `… Frau Katrin Sommer?
+    // IBAN DE89 …`. The salutation's walk crossed the question mark, reached a
+    // third name-shaped word, and the label left the machine as a `PERSON`
+    // token whose value was the four letters «IBAN» — a protection nobody
+    // asked for, which then closed every exit (see `payload::audit`, the other
+    // half of that finding).
+    //
+    // The vocabulary is the one a grouped value already stops at
+    // (`rules::is_label_word`, «…0130 00, BIC COBADEFFXXX» must not swallow
+    // the next field), because this house pays twice for every question it
+    // answers in two places: a label at `Auto` is paid for with its own shape,
+    // and the shape is whatever the arithmetic rule asks.
+    //
+    // **What a person's own hand or own vault calls a value is left alone**, as
+    // `each_name_one_word` leaves it alone and for the same reason: those
+    // values came from somebody's will, and this law is about what a layer
+    // inferred. The one case it gives up is a person whose name is spelled
+    // like a field — nobody is called «IBAN», and if ever somebody is, their
+    // hand and their vault still protect it.
+    all.retain(|candidate| {
+        matches!(candidate.source, Source::Vault | Source::Hand)
+            || !text
+                .get(candidate.start..candidate.end)
+                .is_some_and(|word| rules::is_label_word(word, &label_rules))
+    });
     all.retain(|candidate| !excepted(text, candidate, exceptions));
     // **A token is not a candidate** — 079 rule 5, and a must-fix the moment an
     // import began scanning (14 October, item 3).
