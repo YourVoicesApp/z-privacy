@@ -449,7 +449,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get onePassphrase =>
-      'Eine Passphrase, auf diesem Gerät behalten. Alles, was Z lernt, während Sie arbeiten — Ihre Namen, Ihre Listen, Ihre Entscheidungen — wird darin behalten.';
+      'Eine Passphrase, auf diesem Gerät aufbewahrt. Alles, was Z lernt, während Sie arbeiten — Ihre Namen, Ihre Listen, Ihre Entscheidungen — wird darin aufbewahrt.';
 
   @override
   String get byYourVoices => 'von YourVoices';
@@ -543,7 +543,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pageWord => 'Seite';
 
   @override
-  String get chooseTheAiAndWhatTravels => 'Die KI wählen und was zu ihr reist';
+  String get chooseTheAiAndWhatTravels => 'Die KI wählen und was an sie geht';
 
   @override
   String get readThisDocumentWithAnotherRuleSet =>
@@ -602,7 +602,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get notScannedYet => 'Noch nicht geprüft';
 
   @override
-  String get asItWasKept => 'Wie es bewahrt wurde';
+  String get asItWasKept => 'Wie es aufbewahrt wurde';
 
   @override
   String lastScanNote(String note) {
@@ -735,7 +735,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get oneRequestAtATime =>
-      'Eine Anfrage auf einmal — eine neue Frage ersetzt diese, und der Chat behält jeden Austausch.';
+      'Eine Anfrage nach der anderen — eine neue Frage ersetzt diese, und der Chat behält jeden Austausch.';
 
   @override
   String get oneQuestionLeftGoToIt => '1 Frage offen — dorthin gehen';
@@ -774,7 +774,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String exchangesCarriedIntoTheNext(int count) {
-    return '$count Austausche, die in die nächste Frage mitgenommen werden.';
+    return '$count Fragen und Antworten, die in die nächste Frage mitgenommen werden.';
   }
 
   @override
@@ -847,7 +847,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theDottedWordsWerePutBackHere =>
-      'Die punktierten Wörter wurden hier wieder eingesetzt, auf diesem Gerät. Die durchgestrichenen sind Platzhalter, die diese Sitzung nicht zurückgeben kann.';
+      'Die punktierten Wörter wurden hier wieder eingesetzt, auf diesem Gerät. Die durchgestrichenen sind Platzhalter, die diese Sitzung nicht zurückholen kann.';
 
   @override
   String get copyRestoredTextQuestion => 'Wiederhergestellten Text kopieren?';
