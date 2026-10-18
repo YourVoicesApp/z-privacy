@@ -982,6 +982,101 @@ else
   fail "G46 a screen hands a history to the core:"; printf '%s\n' "$G46_DART" | sed 's/^/        /'
 fi
 
+# ---------------------------------------------------------------- G53
+# **The second platform asks for what the first one measures** — 093, and the
+# fault this file has now watched happen twice in one workflow.
+#
+# `windows-core.yml` asked for `fake_provider` alone when `test_clock` arrived,
+# so six tests did not exist in that job and it reported green without them.
+# Its own comment says so. By 093 it had happened again for `measuring`: Linux
+# had three test features and Windows asked for two. A feature the suite forgets
+# to ask for takes its tests with it **silently** — the suite shrinks and still
+# says «ok», which is the truth about what ran and a lie about what is safe.
+#
+# So the two lists are held equal here, from the one place Linux writes them
+# down (`TEST_FEATURES` at the top of this file). Read on Linux, about Windows:
+# that is the only kind of guard that crosses a seam nobody on this desk can
+# run.
+#
+# Four checks, each the shape of a way the Windows half goes quiet:
+#
+#  1 — every core feature list in the workflow names what `TEST_FEATURES`
+#      names, and the bridge's list is the same three renamed `z_core/…`;
+#  2 — the Dart half is there and may not be excused: `flutter test` with no
+#      `continue-on-error` anywhere in the file (074's audit found no Dart test
+#      on Windows at all, and «it is allowed to fail» is the same silence with
+#      a flag on it);
+#  3 — the release is proved, not promised: the job runs
+#      `scripts/package_windows.sh`, and that script names the runner's own
+#      paths as needles beside `/home/`;
+#  4 — the one-writer measurement is asked for **by name**, so a test that
+#      becomes `#[cfg(unix)]` one day reds here instead of ceasing to exist.
+WINDOWS_JOB=.github/workflows/windows-core.yml
+PACK_WIN=scripts/package_windows.sh
+
+G53_WANT=$(printf '%s' "$TEST_FEATURES" | sed 's/^--features //' | tr ',' '\n' | sort | paste -sd, -)
+# **Comment lines thrown away first, and the prefix of the bridge's own list
+# with them** — G46's lesson, paid again here: this gate's first draft counted
+# the sentences above the steps, which name the script, the test and
+# «continue-on-error» precisely because they explain them. A gate that reads
+# prose measures prose. So every census below reads a line of YAML that does
+# something: a `run:`, a key, a continued command.
+#
+# `--features z_core/…` captures as «z_core» under this pattern, because the
+# match stops at the slash. That is the bridge's list and it is read on its own
+# line below, so it is dropped here by name rather than by luck.
+G53_CODE=$(grep -vE '^[[:space:]]*#' "$WINDOWS_JOB" 2>/dev/null)
+G53_CORE_LISTS=$(printf '%s\n' "$G53_CODE" | grep -oE -- '--features [a-z_,]+' \
+                 | sed 's/^--features //' | grep -v '^z_core$' | sort -u)
+G53_BAD=""
+while IFS= read -r list; do
+  [ -z "$list" ] && continue
+  got=$(printf '%s' "$list" | tr ',' '\n' | sort | paste -sd, -)
+  [ "$got" = "$G53_WANT" ] || G53_BAD="$G53_BAD «$list»"
+done <<EOF
+$G53_CORE_LISTS
+EOF
+G53_BRIDGE=$(printf '%s\n' "$G53_CODE" | grep -oE -- '--features z_core/[a-z_,/]+' \
+             | sed 's|^--features ||' | sed 's|z_core/||g' | tr ',' '\n' | sed 's|^ *||' \
+             | grep -v '^$' | sort -u | paste -sd, -)
+if [ -n "$G53_CORE_LISTS" ] && [ -z "$G53_BAD" ] && [ "$G53_BRIDGE" = "$G53_WANT" ]; then
+  pass "G53 the Windows job asks for the test features Linux measures with ($G53_WANT), for the core and for the bridge"
+else
+  fail "G53 the Windows job's core lists are$G53_BAD and its bridge list is «$G53_BRIDGE» — expected «$G53_WANT»; a feature it does not ask for takes its tests with it silently"
+fi
+
+G53_DART=$(printf '%s\n' "$G53_CODE" | grep -c 'flutter test --concurrency=1' || true)
+G53_EXCUSED=$(printf '%s\n' "$G53_CODE" | grep -cE '^[[:space:]]*continue-on-error:' || true)
+if [ "$G53_DART" = "1" ] && [ "$G53_EXCUSED" = "0" ]; then
+  pass "G53 the Dart half runs on Windows, once, and is not allowed to fail quietly"
+else
+  fail "G53 the Windows job runs the Dart suite $G53_DART time(s) and excuses $G53_EXCUSED step(s) — expected one run and no «continue-on-error»"
+fi
+
+G53_PACKS=$(printf '%s\n' "$G53_CODE" | grep -cE '^[[:space:]]*run: bash scripts/package_windows\.sh' || true)
+# **The line that searches, not the sentence that explains it.** Pinned: with
+# the loop deleted the three needles were still in the file, because the
+# comment above it names each one and says why. Twice in one gate — this is the
+# single most expensive habit in this house, and it is cheap to measure the
+# other way.
+G53_NEEDLE_LINE=$(grep -E '^for needle in ' "$PACK_WIN" 2>/dev/null | head -1)
+G53_NEEDLES=0
+for needle in 'D:\a\' 'C:\Users\runneradmin' '/home/'; do
+  printf '%s' "$G53_NEEDLE_LINE" | grep -qF -- "$needle" && G53_NEEDLES=$((G53_NEEDLES + 1))
+done
+if [ "$G53_PACKS" = "1" ] && [ "$G53_NEEDLES" = "3" ] && [ -f "$PACK_WIN" ]; then
+  pass "G53 the Windows release is stamped and proved by one script, and it looks for the runner's own paths as well as «/home/»"
+else
+  fail "G53 the job calls the packaging script $G53_PACKS time(s) and the script names $G53_NEEDLES of the 3 builder paths — a release may not carry the name of the machine that built it"
+fi
+
+G53_WRITER=$(printf '%s\n' "$G53_CODE" | grep -cE -- '--test two_copies_never_lose_a_write' || true)
+if [ "$G53_WRITER" = "1" ]; then
+  pass "G53 the one-writer measurement is asked for by name on Windows, where the lock is LockFileEx"
+else
+  fail "G53 nothing in the Windows job names two_copies_never_lose_a_write — the one guard the Windows lock is under would stop existing silently"
+fi
+
 # ---------------------------------------------------------------- G49
 # **One reading of the bench, and every door asks it** — 091, rules 72 and
 # 72-أ, the owner's «the chat box is there from the first moment».
