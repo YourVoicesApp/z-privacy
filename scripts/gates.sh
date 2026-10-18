@@ -2314,7 +2314,11 @@ else
   skip "G50/G51 the sentences are in one list" "no checker yet"
 fi
 
-# ------------------------------------------------------------------ G53
+# ------------------------------------------------------------------ G54
+# **G53 on this branch until 093 landed**, which took that number for the
+# Windows job — five checks of its own, and `G53_BAD` among its variables.
+# Two gates under one number is a red that names two things, and two stanzas
+# sharing a variable is a value one of them did not set.
 # **One teardown for every test folder** — 19 October 2026, after a race that
 # reddened three different guards in one file across three full runs.
 #
@@ -2333,17 +2337,17 @@ fi
 # sweep nobody guards is a sweep that has to be done again.
 #
 # The one place allowed is the helper itself, where the retry lives.
-G53_ALLOWED='the_folder_lets_go.dart'
-G53_BAD=$(grep -RnE 'deleteSync\(recursive: true\)' apps/flutter_app/test 2>/dev/null \
+G54_ALLOWED='the_folder_lets_go.dart'
+G54_BAD=$(grep -RnE 'deleteSync\(recursive: true\)' apps/flutter_app/test 2>/dev/null \
           | grep -vE ':[0-9]+:[[:space:]]*(//|///)' \
-          | grep -v "$G53_ALLOWED" || true)
-if [ -z "$G53_BAD" ]; then
-  G53_USES=$(grep -RcE 'removeWhenItLetsGo\(' apps/flutter_app/test 2>/dev/null \
+          | grep -v "$G54_ALLOWED" || true)
+if [ -z "$G54_BAD" ]; then
+  G54_USES=$(grep -RcE 'removeWhenItLetsGo\(' apps/flutter_app/test 2>/dev/null \
              | awk -F: '{s+=$2} END {print s+0}')
-  pass "G53 every test folder goes through removeWhenItLetsGo ($G53_USES sites), and nothing deletes one by hand"
+  pass "G54 every test folder goes through removeWhenItLetsGo ($G54_USES sites), and nothing deletes one by hand"
 else
-  fail "G53 a test folder is deleted by hand — the core can be writing into it, and the teardown reds a guard it is not about:"
-  printf '%s\n' "$G53_BAD" | sed 's/^/        /'
+  fail "G54 a test folder is deleted by hand — the core can be writing into it, and the teardown reds a guard it is not about:"
+  printf '%s\n' "$G54_BAD" | sed 's/^/        /'
 fi
 
 # ------------------------------------------------------------------ G52
