@@ -915,7 +915,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get vaultAndSecurityWhat =>
-      'Der Schlüssel, das Schloss, und wo eine Zugangsberechtigung liegt.';
+      'Der Schlüssel, das Schloss, und wo Zugangsdaten liegen.';
 
   @override
   String get zVault => 'Z-Tresor';
@@ -963,28 +963,26 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get encryptedLocalCredentialStorage =>
-      'Verschlüsselte lokale Speicherung von Zugangsberechtigungen';
+      'Verschlüsselte lokale Speicherung von Zugangsdaten';
 
   @override
   String get credentialHomesWhat =>
-      'Ein Anbieterschlüssel hat zwei Orte und keinen dritten: versiegelt im Tresor, wenn einer offen ist, oder im Speicher für diesen Durchgang, wenn es keinen gibt. Nie eine Datei im Klartext, und nie zurück an die Benutzeroberfläche — es gibt im ganzen Vertrag keinen Aufruf, der einen zurückgibt.';
+      'Ein Anbieterschlüssel hat zwei Orte und keinen dritten: versiegelt im Tresor, wenn einer offen ist, oder im Speicher, solange die App offen ist, wenn es keinen gibt. Nie eine Datei im Klartext, und nie zurück an die Benutzeroberfläche — es gibt im ganzen Vertrag keinen Aufruf, der einen zurückgibt.';
 
   @override
   String get credentialSealedInTheVault => 'versiegelt im Tresor';
 
   @override
-  String get credentialInMemory =>
-      'im Speicher, verschwunden wenn die App schließt';
+  String get credentialInMemory => 'im Speicher, weg, sobald die App schließt';
 
   @override
   String get credentialNoKeyStored => 'kein Schlüssel gespeichert';
 
   @override
-  String get noProviderHoldsACredential =>
-      'Kein Anbieter hält eine Zugangsberechtigung.';
+  String get noProviderHoldsACredential => 'Kein Anbieter hält Zugangsdaten.';
 
   @override
-  String get deviceBoundProtection => 'Geräte­gebundener Schutz';
+  String get deviceBoundProtection => 'Gerätegebundener Schutz';
 
   @override
   String get deviceBoundWhat =>
@@ -1020,7 +1018,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noSessionsYetWhat =>
-      'Eine entsteht, sobald Sie zum ersten Mal geschützten Text kopieren oder ein PDF verlangen — sie wird nicht aus Mangel an einem Namen abgelehnt, sie nimmt ihre eigene Nummer als einen, und Sie können sie hier umbenennen. Sie müssen nie zuerst eine von Hand anlegen.';
+      'Eine entsteht, sobald Sie zum ersten Mal geschützten Text kopieren oder ein PDF verlangen — sie wird nicht aus Mangel an einem Namen abgelehnt, sie nimmt ihre eigene Nummer als Namen, und Sie können sie hier umbenennen. Sie müssen nie zuerst eine von Hand anlegen.';
 
   @override
   String theOneYouAreIn(String when, String exchanges) {
@@ -1074,7 +1072,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get everyDocumentCanNeverBeUnprotected =>
-      'Jedes Dokument und jede Nachricht, die darin geschützt wurde, kann nie wieder entschützt werden — nicht von Ihnen und nicht von Z Privacy. Der Schlüssel war das Einzige, was es hätte tun können, und er wird nicht mehr existieren.';
+      'Jedes Dokument und jede Nachricht, die darin geschützt wurde, kann nie wieder von seinem Schutz befreit werden — nicht von Ihnen und nicht von Z Privacy. Der Schlüssel war das Einzige, was es hätte tun können, und er wird nicht mehr existieren.';
 
   @override
   String get anythingYouSentStaysAsItWas =>
@@ -1133,11 +1131,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get directApiWhat =>
-      'Verbinden Sie sich mit einem entfernten KI-Anbieter mit Ihrer API-Zugangsberechtigung. Der Schlüssel geht einmal hinein und kommt nie wieder heraus — kein Bildschirm in dieser App kann ihn Ihnen wieder zeigen.';
+      'Verbinden Sie sich mit einem entfernten KI-Anbieter mit Ihren API-Zugangsdaten. Der Schlüssel geht einmal hinein und kommt nie wieder heraus — kein Bildschirm in dieser App kann ihn Ihnen wieder zeigen.';
 
   @override
   String get atThisAddressNoCredential =>
-      'An dieser Adresse ist keine Zugangsberechtigung nötig.';
+      'An dieser Adresse sind keine Zugangsdaten nötig.';
 
   @override
   String get protocol => 'Protokoll';
@@ -1147,7 +1145,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get connectedKeyThisRunOnly =>
-      'Verbunden · Schlüssel nur für diesen Durchgang aufbewahrt';
+      'Verbunden · Schlüssel nur, solange die App offen ist';
 
   @override
   String get connectedNoKeyNeeded => 'Verbunden · kein Schlüssel nötig';
@@ -1171,14 +1169,14 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noVaultSoThisRunOnly =>
-      'Es ist kein Tresor offen, das hier gilt also nur für diesen Durchgang. Der Tresor ist die eine Datei, die diese App schreibt — ohne ihn wird nichts erinnert.';
+      'Es ist kein Tresor offen, das hier gilt also nur, solange die App offen ist. Der Tresor ist die eine Datei, die diese App schreibt — ohne ihn wird nichts erinnert.';
 
   @override
   String get scanOnArrival => 'Ein Dokument prüfen, sobald es ankommt';
 
   @override
   String get scanOnArrivalWhat =>
-      'Kein Dialog, kein Knopf. Dies auszuschalten heißt, dass ein Dokument ungeschützt daliegt, bis Sie Erneut prüfen drücken — genau der Augenblick, den die Entwürfe vermeiden sollten.';
+      'Kein Dialog, kein Knopf. Dies auszuschalten heißt, dass ein Dokument ungeschützt daliegt, bis Sie «Erneut prüfen» drücken — genau der Augenblick, den die Entwürfe vermeiden sollten.';
 
   @override
   String get answerEverySuggestion =>
