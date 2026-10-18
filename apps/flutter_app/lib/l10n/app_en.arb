@@ -1220,5 +1220,418 @@
   "writeAQuestionFirst": "Write a question first.",
   "@writeAQuestionFirst": {
     "description": "The chat's own refusal for an empty box: said before the clipboard is touched and before any door is asked, because there is nothing to ask about."
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "The panel's own name, in its head and on the press that opens it."
+  },
+  "roomPrivacy": "Privacy",
+  "@roomPrivacy": {
+    "description": "The Privacy room in the panel's list."
+  },
+  "roomLanguageAndRules": "Language & rules",
+  "@roomLanguageAndRules": {
+    "description": "The Language room in the panel's list."
+  },
+  "roomVaultAndSecurity": "Vault & security",
+  "@roomVaultAndSecurity": {
+    "description": "The Vault room in the panel's list."
+  },
+  "roomSessions": "Sessions",
+  "@roomSessions": {
+    "description": "The Sessions room in the panel's list."
+  },
+  "languageAndRulesWhat": "A privacy pack is a detection engine, not the language of the interface — and more than one pack can run in a single scan, so this is a starting point rather than the only rules allowed.",
+  "@languageAndRulesWhat": {
+    "description": "The Language room's own line. **It ended «The interface itself is English.» until 092**, which is what made that false: the sentence is deleted rather than reworded, because the interface now follows this choice."
+  },
+  "appLanguage": "App language",
+  "@appLanguage": {
+    "description": "The card that chooses the language a text with no session language is read with — and, since 080, the interface's own."
+  },
+  "appLanguageWhat": "The language a session is read with when it has none of its own — and which habits the scanner knows in it: salutations, company forms, the way a customer number is written. A session created with a language of its own keeps that one; this is what every other text is read with. The interface follows this choice.",
+  "@appLanguageWhat": {
+    "description": "What the one choice does. The last sentence is new in 092 and replaces the dead «Interface» card: 080 says one choice writes both, so the card that writes them says so."
+  },
+  "theInterfaceIsEnglishUntilTranslated": "{language}: the detection pack is {language}; the interface is English until its sentences are translated.",
+  "@theInterfaceIsEnglishUntilTranslated": {
+    "description": "Rule 56-أ in the room where it bites: a language whose list is still the English source is a real scanner language and not yet an interface language, and the card says which it is rather than switching silently.",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "myPrivacyRules": "My privacy rules",
+  "@myPrivacyRules": {
+    "description": "The card for rules a person writes themselves."
+  },
+  "myPrivacyRulesWhat": "Not built yet. Rules you write yourself — a customer number format only your office uses, a project codename — will live here, beside the pack rather than inside it.",
+  "@myPrivacyRulesWhat": {
+    "description": "Rule 35's own shape for a thing that is coming: named, with no control that does nothing."
+  },
+  "vaultAndSecurityWhat": "The key, the lock, and where a credential lives.",
+  "@vaultAndSecurityWhat": {
+    "description": "The Vault room's own line."
+  },
+  "zVault": "Z Vault",
+  "@zVault": {
+    "description": "The vault's own card."
+  },
+  "vaultOpenWhat": "Open. Your identities are loaded and the fourth detection layer is running.",
+  "@vaultOpenWhat": {
+    "description": "The vault's state, said as what it does."
+  },
+  "vaultLockedWhat": "Locked. The rules and the pack still run — an IBAN is still caught — but not who it belongs to.",
+  "@vaultLockedWhat": {
+    "description": "The vault's state, said as what still works."
+  },
+  "vaultAbsentWhat": "Not created on this device. Nothing is recognised by name.",
+  "@vaultAbsentWhat": {
+    "description": "The vault's state on a device that has none."
+  },
+  "unlockedWithIdentities": "Unlocked · {count} identities",
+  "@unlockedWithIdentities": {
+    "description": "The vault's state with the number the core counted.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "zPdfReadBack": "z-pdf — read a protected document back",
+  "@zPdfReadBack": {
+    "description": "The door back, in the room it lives in since rule 70."
+  },
+  "zPdfWhat": "The reverse act. A document that left this app with tokens in it is read back into its own names, here, from your vault — and it is never scanned, never protected and never put on a bench. Nothing of it is sent anywhere.",
+  "@zPdfWhat": {
+    "description": "What the door back is and, as importantly, the three things it is not. «The door back has no seat»: no session is passed to it."
+  },
+  "openThisPanelFromTheApp": "Open this panel from the app to choose a file.",
+  "@openThisPanelFromTheApp": {
+    "description": "Said when the panel is drawn without the shell's own file door behind it."
+  },
+  "chooseAZPdfFile": "Choose a z-pdf file",
+  "@chooseAZPdfFile": {
+    "description": "The press that opens the file chooser for the door back."
+  },
+  "lockTheVaultAfter": "Lock the vault after",
+  "@lockTheVaultAfter": {
+    "description": "The idle lock's own card."
+  },
+  "minutesUnusedZeroIsNever": "minutes unused · 0 = never",
+  "@minutesUnusedZeroIsNever": {
+    "description": "The unit under the idle lock's number."
+  },
+  "lockTheVaultAfterWhat": "Kept by the vault itself, not by a timer in a screen: every way into it checks the clock first, so a bug in the interface cannot leave it open.",
+  "@lockTheVaultAfterWhat": {
+    "description": "Where the lock lives, which is the whole reason it can be trusted. «behalten» is wrong here and «gehalten» is right: nothing is being stored."
+  },
+  "encryptedLocalCredentialStorage": "Encrypted local credential storage",
+  "@encryptedLocalCredentialStorage": {
+    "description": "The card about where a provider key lives."
+  },
+  "credentialHomesWhat": "A provider key has two homes and no third: sealed inside the vault when one is open, or in memory for this run when there is none. Never a file in the clear, and never returned to the interface — there is no call in the whole contract that gives one back.",
+  "@credentialHomesWhat": {
+    "description": "The key's two homes, and the contract's own promise about the third."
+  },
+  "credentialSealedInTheVault": "sealed in the vault",
+  "@credentialSealedInTheVault": {
+    "description": "Where this provider's key is, in the list of providers that hold one."
+  },
+  "credentialInMemory": "in memory, gone when the app closes",
+  "@credentialInMemory": {
+    "description": "Where this provider's key is, when there is no vault to seal it in."
+  },
+  "credentialNoKeyStored": "no key stored",
+  "@credentialNoKeyStored": {
+    "description": "This provider holds none."
+  },
+  "noProviderHoldsACredential": "No provider holds a credential.",
+  "@noProviderHoldsACredential": {
+    "description": "The list of providers that hold a key, when it is empty."
+  },
+  "deviceBoundProtection": "Device-bound protection",
+  "@deviceBoundProtection": {
+    "description": "A card for a thing that is coming."
+  },
+  "deviceBoundWhat": "Not built yet. A key tied to this device’s own authentication would sit above the layer above, without changing what is stored — the same records, one more lock.",
+  "@deviceBoundWhat": {
+    "description": "What it would and would not change."
+  },
+  "sessionsWhat": "A session keeps its own key, and the keys are in the vault.",
+  "@sessionsWhat": {
+    "description": "The Sessions room's own line. «keeps its own key» is retained, not stored — the key is hers; «hat» says it without either word."
+  },
+  "theVaultIsShutNoSessions": "The vault is shut, so there are no sessions to show. Open it and they come back — the conversations themselves were never in it.",
+  "@theVaultIsShutNoSessions": {
+    "description": "Why the room is empty with a locked vault, and the one thing that would otherwise be feared: nothing was lost."
+  },
+  "eachSessionHasItsOwnEncryption": "Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot.",
+  "@eachSessionHasItsOwnEncryption": {
+    "description": "What a session is for, said as the thing it buys the person rather than as a mechanism."
+  },
+  "newSession": "New session",
+  "@newSession": {
+    "description": "The card that creates one."
+  },
+  "newSessionWhat": "A name and a language, both yours to choose: the language is how Z reads every text in this session, and it is asked once here. It becomes the session you are working in straight away. Anything already protected on the document in front of you is renamed into it — nothing has been sent yet, so nothing that left is affected.",
+  "@newSessionWhat": {
+    "description": "Rules 57b and 064f: the language is asked as the session is born, and the bench in front of the person is renamed with it."
+  },
+  "whatIsThisOneAbout": "What is this one about?",
+  "@whatIsThisOneAbout": {
+    "description": "The hint in the box that names a session — a question, because the name is the person's own word."
+  },
+  "begin": "Begin",
+  "@begin": {
+    "description": "The press that creates the session."
+  },
+  "noSessionsYet": "No sessions yet",
+  "@noSessionsYet": {
+    "description": "The card in the room before there is one."
+  },
+  "noSessionsYetWhat": "One is born the first time you copy safe text or ask for a PDF — it is not refused for want of a name, it takes its own number for one, and you can rename it here. You never have to make one by hand first.",
+  "@noSessionsYetWhat": {
+    "description": "Rule 55 and 081: a birth asks nothing, and the room is where a name is given if one is ever wanted."
+  },
+  "theOneYouAreIn": "{when} · {exchanges} · the one you are in",
+  "@theOneYouAreIn": {
+    "description": "A session's row, when it is the open one.",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      },
+      "exchanges": {
+        "type": "String"
+      }
+    }
+  },
+  "workInThisSession": "Work in this session",
+  "@workInThisSession": {
+    "description": "The press that enters a session."
+  },
+  "enter": "Enter",
+  "@enter": {
+    "description": "The press on a session's row."
+  },
+  "renameThisSession": "Rename this session",
+  "@renameThisSession": {
+    "description": "The press that asks for a new word."
+  },
+  "deleteThisSession": "Delete this session",
+  "@deleteThisSession": {
+    "description": "The press that destroys the key."
+  },
+  "oneExchange": "1 exchange",
+  "@oneExchange": {
+    "description": "How many exchanges a session holds."
+  },
+  "exchangesCount": "{count} exchanges",
+  "@exchangesCount": {
+    "description": "How many exchanges a session holds. «Austausche» is a plural nobody says, which is the lead's own correction in sitting two.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "renameSessionNumber": "Rename session {number}?",
+  "@renameSessionNumber": {
+    "description": "The head of the rename question.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "theNumberStaysWhatItIs": "The number stays {number} — it is what this session is, and nothing that was protected in it changes. Only the word on the row does.",
+  "@theNumberStaysWhatItIs": {
+    "description": "081: «the number is the identity and does not move». A rename touches the word and nothing else.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "keepTheName": "Keep the name",
+  "@keepTheName": {
+    "description": "Leaves the rename question without renaming. «behalten» is right: nothing is stored, the name is retained."
+  },
+  "renameIt": "Rename it",
+  "@renameIt": {
+    "description": "Confirms the rename."
+  },
+  "deleteNamed": "Delete «{name}»?",
+  "@deleteNamed": {
+    "description": "The head of the delete question, around the person's own word. The guillemets are the sentence's; the **isolate pair** U+2068/U+2069 is applied by the caller through `theirOwnWord`, and G44's own half over this file checks that every caller of a value quoting a placeholder does so. It was tried inside the value instead, so that no caller could forget it — and `gen-l10n` writes the raw code points into the generated Dart, which the analyzer flags as `text_direction_code_point_in_literal` in a file nobody can fix. Eight unfixable warnings that would hide real ones is a worse trade than a gate, so the gate it is.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "thisDestroysTheKey": "This destroys the key this session was protected with.",
+  "@thisDestroysTheKey": {
+    "description": "The first line of the delete question: what the act is."
+  },
+  "everyDocumentCanNeverBeUnprotected": "Every document and every message protected in it can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist.",
+  "@everyDocumentCanNeverBeUnprotected": {
+    "description": "What the act costs, said without softening: the one-way door of rule 59."
+  },
+  "anythingYouSentStaysAsItWas": "Anything you sent out of this session stays exactly as it was. What goes is the way back from it.",
+  "@anythingYouSentStaysAsItWas": {
+    "description": "The half a person needs in order not to fear the wrong thing: the delete reaches the key, not what already left."
+  },
+  "keepIt": "Keep it",
+  "@keepIt": {
+    "description": "Leaves the delete question without deleting."
+  },
+  "deleteTheSession": "Delete the session",
+  "@deleteTheSession": {
+    "description": "Confirms the delete."
+  },
+  "oneProtectedPlace": "1 protected place",
+  "@oneProtectedPlace": {
+    "description": "How many places in a kept document carry a token."
+  },
+  "protectedPlacesCount": "{count} protected places",
+  "@protectedPlacesCount": {
+    "description": "How many places in a kept document carry a token.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "renameThisDocument": "Rename this document",
+  "@renameThisDocument": {
+    "description": "The press on a kept document's row."
+  },
+  "renameHandle": "Rename {handle}?",
+  "@renameHandle": {
+    "description": "The head of the document rename question, by the handle the core gave it.",
+    "placeholders": {
+      "handle": {
+        "type": "String"
+      }
+    }
+  },
+  "theNameIsWhatYouRead": "The name is what you read in this list. {handle} stays what it is: a number is spent once and never given to another document.",
+  "@theNameIsWhatYouRead": {
+    "description": "The same law as a session's number, for a document's handle.",
+    "placeholders": {
+      "handle": {
+        "type": "String"
+      }
+    }
+  },
+  "aNameForThisDocument": "A name for this document",
+  "@aNameForThisDocument": {
+    "description": "The hint in the document rename box."
+  },
+  "roomAi": "AI",
+  "@roomAi": {
+    "description": "The AI room's own name."
+  },
+  "aiWhat": "Three ways to ask a model. The first needs no account at all.",
+  "@aiWhat": {
+    "description": "The AI room's own line."
+  },
+  "manualAi": "Manual AI",
+  "@manualAi": {
+    "description": "The first way: no account, no key."
+  },
+  "manualAiWhat": "Use an AI chat you already have. Copy the safe text out of the Workspace, paste it into whatever model you use, and bring the answer back. Nothing to set up, nothing to pay for, and the restoring works exactly the same.",
+  "@manualAiWhat": {
+    "description": "The first way, and the one the owner's own demo uses."
+  },
+  "alwaysAvailableFirstDoor": "Always available — it is the «Choose who answers» sheet, first door.",
+  "@alwaysAvailableFirstDoor": {
+    "description": "Where the first way is, on the glass."
+  },
+  "directApi": "Direct API",
+  "@directApi": {
+    "description": "The second way: a remote provider with a key."
+  },
+  "directApiWhat": "Connect to a remote AI provider with your API credential. The key goes in once and never comes back out — no screen in this app can show it to you again.",
+  "@directApiWhat": {
+    "description": "The second way, and the promise about the key that the contract keeps."
+  },
+  "atThisAddressNoCredential": "At this address no credential is needed.",
+  "@atThisAddressNoCredential": {
+    "description": "A provider at a loopback address asks for no key."
+  },
+  "protocol": "Protocol",
+  "@protocol": {
+    "description": "The provider's own protocol, named by the core."
+  },
+  "connectedKeySealed": "Connected · key sealed in the vault",
+  "@connectedKeySealed": {
+    "description": "This provider's state."
+  },
+  "connectedKeyThisRunOnly": "Connected · key kept for this run only",
+  "@connectedKeyThisRunOnly": {
+    "description": "This provider's state with no vault to seal the key in. «aufbewahrt»: the key is stored, in memory."
+  },
+  "connectedNoKeyNeeded": "Connected · no key needed",
+  "@connectedNoKeyNeeded": {
+    "description": "This provider's state at an address that asks for none."
+  },
+  "notConnected": "Not connected",
+  "@notConnected": {
+    "description": "This provider's state."
+  },
+  "localAi": "Local AI",
+  "@localAi": {
+    "description": "The third way: a model on this machine."
+  },
+  "localAiWhat": "Runs through an AI service on this computer — llama.cpp, Ollama, LM Studio, anything that answers the same shape. No key, no account, and the request never leaves this computer. Plain http is accepted only for a literal loopback address.",
+  "@localAiWhat": {
+    "description": "The third way, and why http is allowed exactly here and nowhere else."
+  },
+  "models": "Models",
+  "@models": {
+    "description": "The head of a provider's model list."
+  },
+  "privacyWhat": "What the app does by itself, and how far it goes without asking.",
+  "@privacyWhat": {
+    "description": "The Privacy room's own line."
+  },
+  "noVaultSoThisRunOnly": "There is no vault open, so these are for this run only. The vault is the one file this app writes — without it, nothing is remembered.",
+  "@noVaultSoThisRunOnly": {
+    "description": "Why a setting changed here will not be there tomorrow. G15's own promise, said to the person."
+  },
+  "scanOnArrival": "Scan a document the moment it arrives",
+  "@scanOnArrival": {
+    "description": "The setting that scans on import."
+  },
+  "scanOnArrivalWhat": "No dialog, no button. Turning this off means a document sits unprotected until you press Rescan — which is exactly the moment the boards were written to avoid.",
+  "@scanOnArrivalWhat": {
+    "description": "What turning it off costs."
+  },
+  "answerEverySuggestion": "Answer every suggestion before sending",
+  "@answerEverySuggestion": {
+    "description": "Not a setting, and the card says so."
+  },
+  "answerEverySuggestionWhat": "Not a setting. A suggestion that has not been answered is never quietly treated as safe, and there is no «send anyway» — not here, not in a hidden flag, not anywhere in the code.",
+  "@answerEverySuggestionWhat": {
+    "description": "A law drawn where a person looks for a switch, so that its absence is an answer rather than a gap."
+  },
+  "aRevealedValueStaysFor": "A revealed value stays for",
+  "@aRevealedValueStaysFor": {
+    "description": "The reveal timer's card."
+  },
+  "aRevealedValueStaysForWhat": "Revealing draws on the screen and never writes into what leaves. This is only how long it stays drawn.",
+  "@aRevealedValueStaysForWhat": {
+    "description": "What the number does and, more importantly, what it does not."
+  },
+  "tokenRotation": "Token rotation",
+  "@tokenRotation": {
+    "description": "A card for a thing that is coming."
+  },
+  "tokenRotationWhat": "Not built yet. When it is, it will live here: whether a permanent token keeps its number across sessions, or is drawn again each time so two sessions cannot be linked by it.",
+  "@tokenRotationWhat": {
+    "description": "What the choice would be. «behält» is retained, not stored."
   }
 }

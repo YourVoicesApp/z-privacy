@@ -1308,8 +1308,17 @@ Forgot «\$name» and'
 # 1 · `list.name` and the `$name` beside it — a list **is** a language and the
 #     core refuses any name it does not know (`clean_list_name`), so the word
 #     in these three sentences is ours even though a person pressed to get it.
+#
+# **And `lib/l10n/` is not read by this half, since 092.** A sentence in the
+# one list is drawn by the generated class as `'Delete «$name»?'` — the
+# sentence and its caller are now in different files, so no line of the
+# generated Dart can ever carry `theirOwnWord`, and nobody could edit it if it
+# did. Silencing it there alone would have left the law unguarded for every
+# migrated sentence, which is why the half below this one exists: it reads the
+# **list** and the **callers**, where both parts of the pair are still visible.
 G44_DART=$(grep -RnE '«\$' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
-           | grep -v '/src/rust/' | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
+           | grep -v '/src/rust/' | grep -v '/l10n/' \
+           | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
 G44_DART_LEFT=$(printf '%s\n' "$G44_DART" | grep . | grep -v 'theirOwnWord' \
                 | grep -vE "$(printf '%s' "$G44_ALLOWED_DART" | paste -sd'|' -)" || true)
 if [ -z "$G44_DART_LEFT" ]; then
@@ -1317,6 +1326,47 @@ if [ -z "$G44_DART_LEFT" ]; then
 else
   fail "G44 these sentences quote a word of the person's own without isolating it (or it is ours, and belongs in G44's allowed list with a reason):"
   printf '%s\n' "$G44_DART_LEFT" | sed 's/^/        /'
+fi
+
+# **The same law for a sentence that has moved into the one list** — 092.
+#
+# A value in `lib/l10n/app_en.arb` that quotes a placeholder — `«{name}»` — is
+# a sentence about a word the person chose, and the isolate is applied by
+# whoever calls it. So for each such key, every call of `sentences.<key>(` in a
+# hand-written file must wrap its argument in `theirOwnWord`.
+#
+# **Why the pair is not inside the value instead**, where no caller could
+# forget it: `gen-l10n` writes the raw code points into the generated Dart and
+# the analyzer flags every one of them (`text_direction_code_point_in_literal`)
+# in a file nobody can fix — eight unfixable warnings for one sentence, which
+# would hide the next real one. Measured on 19 October, then reversed, and this
+# gate is what was bought with the reversal.
+G44_ARB=$FLUTTER_LIB/l10n/app_en.arb
+G44_LIST_BAD=""
+G44_QUOTING=""
+if [ -f "$G44_ARB" ]; then
+  # The list is one key per line, so the key of a value that quotes a
+  # placeholder is read off the same line as the quote.
+  G44_QUOTING=$(grep -oE '"[A-Za-z0-9_]+": "[^"]*«\{' "$G44_ARB" 2>/dev/null \
+                | sed -E 's/": ".*$//; s/^"//' | sort -u || true)
+  for KEY in $G44_QUOTING; do
+    CALLS=$(grep -RnE "sentences\.$KEY\(" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+            | grep -v '/l10n/' | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
+    if [ -z "$CALLS" ]; then
+      G44_LIST_BAD="$G44_LIST_BAD«$KEY» quotes a word of the person's own and nothing calls it
+"
+      continue
+    fi
+    NAKED=$(printf '%s\n' "$CALLS" | grep -v 'theirOwnWord' || true)
+    [ -n "$NAKED" ] && G44_LIST_BAD="$G44_LIST_BAD$NAKED
+"
+  done
+fi
+if [ -z "$G44_LIST_BAD" ]; then
+  pass "G44 every sentence in the one list that quotes a person's own word is called through theirOwnWord ($(printf '%s\n' "$G44_QUOTING" | grep -c . || true) such sentence)"
+else
+  fail "G44 a sentence in the one list quotes a word of the person's own and its caller does not isolate it:"
+  printf '%s\n' "$G44_LIST_BAD" | grep . | sed 's/^/        /'
 fi
 
 # **And one function on each side, not a pair of characters written by hand.**
@@ -2262,6 +2312,76 @@ if [ -f scripts/check_the_one_list.py ]; then
   fi
 else
   skip "G50/G51 the sentences are in one list" "no checker yet"
+fi
+
+# ------------------------------------------------------------------ G55
+# **No sentence carries a character nobody can see** — 19 October 2026.
+#
+# The lead, reading the ninety German values of 092's third sitting, found
+# `deviceBoundProtection` drafted with a **soft hyphen** inside
+# «Geräte­gebundener Schutz». Invisible in every editor, every diff and every
+# review; written by the hand that drafted the value, caught by the hand that
+# read it. One pair of eyes is not a method, so the class is refused where the
+# sentences live: format, control, private-use and surrogate code points, in
+# every value of every `lib/l10n/*.arb`.
+#
+# **The isolate marks are in that class and are not an exception.** `U+2068`
+# and `U+2069` are needed — a word the person chose, quoted inside a sentence
+# of ours, is isolated or the bidirectional algorithm takes the punctuation
+# into it (G44, the owner's «ألماني 1») — and they live at the **call site**,
+# which G44's own half over this file checks. The two gates together say the
+# law exactly: the sentence carries the quotation marks, the caller carries the
+# isolate. The other arrangement is already refused by the toolchain, because
+# `gen-l10n` writes raw code points into the generated Dart and the analyzer
+# flags each one in a file nobody can edit.
+#
+# A Python checker, because the question is about Unicode categories and a
+# shell cannot ask it.
+if [ -f scripts/check_no_invisible_sentence.py ]; then
+  if OUT=$(python3 scripts/check_no_invisible_sentence.py 2>&1); then
+    pass "G55 no sentence in the one list carries an invisible character — $OUT"
+  else
+    fail "G55 a sentence carries a character nobody can see:"
+    printf '%s\n' "$OUT" | sed 's/^/        /'
+  fi
+else
+  skip "G55 no sentence carries an invisible character" "no checker yet"
+fi
+
+# ------------------------------------------------------------------ G54
+# **G53 on this branch until 093 landed**, which took that number for the
+# Windows job — five checks of its own, and `G53_BAD` among its variables.
+# Two gates under one number is a red that names two things, and two stanzas
+# sharing a variable is a value one of them did not set.
+# **One teardown for every test folder** — 19 October 2026, after a race that
+# reddened three different guards in one file across three full runs.
+#
+# A test that gives the core a folder of its own used to delete it by hand:
+# `if (here.existsSync()) here.deleteSync(recursive: true);`. That reads the
+# folder, unlinks what it found, then removes the folder — and the core is a
+# live Rust library in the same process. A file appearing between the reading
+# and the removal (a session being sealed, `writing.lock`, the `zv.new` of an
+# atomic replace) makes the last step fail with `ENOTEMPTY`, **the teardown
+# throws**, and the test is reported as an error with its own claim already
+# proved. Green alone, red in company, and a different guard each time.
+#
+# 133 lines in 57 files did it. They go through `removeWhenItLetsGo` now, and
+# this gate is what stops the race coming back one file at a time: a new
+# `deleteSync(recursive: true)` under `test/` is refused **by name**, because a
+# sweep nobody guards is a sweep that has to be done again.
+#
+# The one place allowed is the helper itself, where the retry lives.
+G54_ALLOWED='the_folder_lets_go.dart'
+G54_BAD=$(grep -RnE 'deleteSync\(recursive: true\)' apps/flutter_app/test 2>/dev/null \
+          | grep -vE ':[0-9]+:[[:space:]]*(//|///)' \
+          | grep -v "$G54_ALLOWED" || true)
+if [ -z "$G54_BAD" ]; then
+  G54_USES=$(grep -RcE 'removeWhenItLetsGo\(' apps/flutter_app/test 2>/dev/null \
+             | awk -F: '{s+=$2} END {print s+0}')
+  pass "G54 every test folder goes through removeWhenItLetsGo ($G54_USES sites), and nothing deletes one by hand"
+else
+  fail "G54 a test folder is deleted by hand — the core can be writing into it, and the teardown reds a guard it is not about:"
+  printf '%s\n' "$G54_BAD" | sed 's/^/        /'
 fi
 
 # ------------------------------------------------------------------ G52

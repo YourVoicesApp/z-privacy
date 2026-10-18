@@ -23,6 +23,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -37,7 +38,7 @@ Future<(Workbench, Ground)> _open(WidgetTester tester, {String? dir}) async {
   await tester.runAsync(() async {
     await z.vaultLock();
     final home = Directory(dir ?? '${Directory.systemTemp.path}/zprivacy-choice-$pid');
-    if (dir == null && home.existsSync()) home.deleteSync(recursive: true);
+    if (dir == null && home.existsSync()) removeWhenItLetsGo(home);
     home.createSync(recursive: true);
     await z.setDataDir(dir: home.path);
     await ground.refresh();
@@ -146,7 +147,7 @@ void main() {
   testWidgets('the handle moves the two columns, keeps both, and is remembered', (tester) async {
     final home = '${Directory.systemTemp.path}/zprivacy-handle-$pid';
     final dir = Directory(home);
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     final (bench, ground) = await _open(tester, dir: home);
     await _pump(tester, bench, ground);
 

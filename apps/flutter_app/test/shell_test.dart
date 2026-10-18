@@ -33,6 +33,7 @@ import 'package:zprivacy/widgets/vault_forms.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -1855,7 +1856,7 @@ Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
 Future<void> freshVaultForUiTest(String name) async {
   await z.vaultLock();
   final dir = Directory('${Directory.systemTemp.path}/zprivacy-ui-$name-$pid');
-  if (dir.existsSync()) dir.deleteSync(recursive: true);
+  removeWhenItLetsGo(dir);
   await z.setDataDir(dir: dir.path);
   await z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort');
 }

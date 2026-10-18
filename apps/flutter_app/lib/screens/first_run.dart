@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/l10n/app_localizations.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/language_list.dart' show offeredLanguages;
@@ -74,32 +75,22 @@ _Promise _promiseOf(String code) {
   );
 }
 
-/// **The languages this page can be read in** — rule 56-أ, as arithmetic
-/// rather than as a second list beside `offeredLanguages`.
+/// **The languages this page can be read in** — rule 56-أ.
 ///
 /// Swedish is offered everywhere else a language is chosen (rule 56), and its
-/// file is still a copy of the English: 56-أ says the file exists so the gate
-/// can count it, and the values differ the day somebody translates them. A
-/// button marked «Svenska» on **this** page would hand a person four English
-/// promises under a Swedish name — which is the fault P2-6 fixed here once
-/// already, in the other direction.
+/// file is still a copy of the English. A button marked «Svenska» on **this**
+/// page would hand a person four English promises under a Swedish name —
+/// which is the fault P2-6 fixed here once already, in the other direction.
 ///
-/// So the page asks the list instead of holding an opinion: a language belongs
-/// on it when the promise it would draw is **in** that language. For the source
-/// language that is true by definition; for any other it is true the day its
-/// values stop being the English ones, and nothing here changes on that day.
-List<String> _languagesThisPageSpeaks() {
-  final source = _promiseOf('en');
-  bool readable(String code) {
-    if (code == 'en') return true;
-    final p = _promiseOf(code);
-    return p.nots.join('\u0000') != source.nots.join('\u0000') ||
-        p.paragraphs.join('\u0000') != source.paragraphs.join('\u0000') ||
-        p.rules.join('\u0000') != source.rules.join('\u0000');
-  }
-
-  return offeredLanguages.where(readable).toList();
-}
+/// **The comparison itself is not here any more.** It was: this function held
+/// its own `readable(code)`, comparing a promise against the English one. Then
+/// the Language room needed the same answer, and so did the locale the root
+/// applies — one law in three places, and the quietest copy wins the day they
+/// disagree. It is [theListIsWrittenIn] now, in `core/sentences.dart`, beside
+/// the list it is a question about. What is left here is the one thing that is
+/// this page's own: *which* languages it offers at all.
+List<String> _languagesThisPageSpeaks() =>
+    offeredLanguages.where(theListIsWrittenIn).toList();
 
 class FirstRunScreen extends StatefulWidget {
   const FirstRunScreen({super.key, required this.ground, required this.onStart});

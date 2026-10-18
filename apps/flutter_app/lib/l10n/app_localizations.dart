@@ -1456,6 +1456,546 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Write a question first.'**
   String get writeAQuestionFirst;
+
+  /// The panel's own name, in its head and on the press that opens it.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// The Privacy room in the panel's list.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get roomPrivacy;
+
+  /// The Language room in the panel's list.
+  ///
+  /// In en, this message translates to:
+  /// **'Language & rules'**
+  String get roomLanguageAndRules;
+
+  /// The Vault room in the panel's list.
+  ///
+  /// In en, this message translates to:
+  /// **'Vault & security'**
+  String get roomVaultAndSecurity;
+
+  /// The Sessions room in the panel's list.
+  ///
+  /// In en, this message translates to:
+  /// **'Sessions'**
+  String get roomSessions;
+
+  /// The Language room's own line. **It ended «The interface itself is English.» until 092**, which is what made that false: the sentence is deleted rather than reworded, because the interface now follows this choice.
+  ///
+  /// In en, this message translates to:
+  /// **'A privacy pack is a detection engine, not the language of the interface — and more than one pack can run in a single scan, so this is a starting point rather than the only rules allowed.'**
+  String get languageAndRulesWhat;
+
+  /// The card that chooses the language a text with no session language is read with — and, since 080, the interface's own.
+  ///
+  /// In en, this message translates to:
+  /// **'App language'**
+  String get appLanguage;
+
+  /// What the one choice does. The last sentence is new in 092 and replaces the dead «Interface» card: 080 says one choice writes both, so the card that writes them says so.
+  ///
+  /// In en, this message translates to:
+  /// **'The language a session is read with when it has none of its own — and which habits the scanner knows in it: salutations, company forms, the way a customer number is written. A session created with a language of its own keeps that one; this is what every other text is read with. The interface follows this choice.'**
+  String get appLanguageWhat;
+
+  /// Rule 56-أ in the room where it bites: a language whose list is still the English source is a real scanner language and not yet an interface language, and the card says which it is rather than switching silently.
+  ///
+  /// In en, this message translates to:
+  /// **'{language}: the detection pack is {language}; the interface is English until its sentences are translated.'**
+  String theInterfaceIsEnglishUntilTranslated(String language);
+
+  /// The card for rules a person writes themselves.
+  ///
+  /// In en, this message translates to:
+  /// **'My privacy rules'**
+  String get myPrivacyRules;
+
+  /// Rule 35's own shape for a thing that is coming: named, with no control that does nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Not built yet. Rules you write yourself — a customer number format only your office uses, a project codename — will live here, beside the pack rather than inside it.'**
+  String get myPrivacyRulesWhat;
+
+  /// The Vault room's own line.
+  ///
+  /// In en, this message translates to:
+  /// **'The key, the lock, and where a credential lives.'**
+  String get vaultAndSecurityWhat;
+
+  /// The vault's own card.
+  ///
+  /// In en, this message translates to:
+  /// **'Z Vault'**
+  String get zVault;
+
+  /// The vault's state, said as what it does.
+  ///
+  /// In en, this message translates to:
+  /// **'Open. Your identities are loaded and the fourth detection layer is running.'**
+  String get vaultOpenWhat;
+
+  /// The vault's state, said as what still works.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked. The rules and the pack still run — an IBAN is still caught — but not who it belongs to.'**
+  String get vaultLockedWhat;
+
+  /// The vault's state on a device that has none.
+  ///
+  /// In en, this message translates to:
+  /// **'Not created on this device. Nothing is recognised by name.'**
+  String get vaultAbsentWhat;
+
+  /// The vault's state with the number the core counted.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked · {count} identities'**
+  String unlockedWithIdentities(int count);
+
+  /// The door back, in the room it lives in since rule 70.
+  ///
+  /// In en, this message translates to:
+  /// **'z-pdf — read a protected document back'**
+  String get zPdfReadBack;
+
+  /// What the door back is and, as importantly, the three things it is not. «The door back has no seat»: no session is passed to it.
+  ///
+  /// In en, this message translates to:
+  /// **'The reverse act. A document that left this app with tokens in it is read back into its own names, here, from your vault — and it is never scanned, never protected and never put on a bench. Nothing of it is sent anywhere.'**
+  String get zPdfWhat;
+
+  /// Said when the panel is drawn without the shell's own file door behind it.
+  ///
+  /// In en, this message translates to:
+  /// **'Open this panel from the app to choose a file.'**
+  String get openThisPanelFromTheApp;
+
+  /// The press that opens the file chooser for the door back.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a z-pdf file'**
+  String get chooseAZPdfFile;
+
+  /// The idle lock's own card.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock the vault after'**
+  String get lockTheVaultAfter;
+
+  /// The unit under the idle lock's number.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes unused · 0 = never'**
+  String get minutesUnusedZeroIsNever;
+
+  /// Where the lock lives, which is the whole reason it can be trusted. «behalten» is wrong here and «gehalten» is right: nothing is being stored.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept by the vault itself, not by a timer in a screen: every way into it checks the clock first, so a bug in the interface cannot leave it open.'**
+  String get lockTheVaultAfterWhat;
+
+  /// The card about where a provider key lives.
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted local credential storage'**
+  String get encryptedLocalCredentialStorage;
+
+  /// The key's two homes, and the contract's own promise about the third.
+  ///
+  /// In en, this message translates to:
+  /// **'A provider key has two homes and no third: sealed inside the vault when one is open, or in memory for this run when there is none. Never a file in the clear, and never returned to the interface — there is no call in the whole contract that gives one back.'**
+  String get credentialHomesWhat;
+
+  /// Where this provider's key is, in the list of providers that hold one.
+  ///
+  /// In en, this message translates to:
+  /// **'sealed in the vault'**
+  String get credentialSealedInTheVault;
+
+  /// Where this provider's key is, when there is no vault to seal it in.
+  ///
+  /// In en, this message translates to:
+  /// **'in memory, gone when the app closes'**
+  String get credentialInMemory;
+
+  /// This provider holds none.
+  ///
+  /// In en, this message translates to:
+  /// **'no key stored'**
+  String get credentialNoKeyStored;
+
+  /// The list of providers that hold a key, when it is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No provider holds a credential.'**
+  String get noProviderHoldsACredential;
+
+  /// A card for a thing that is coming.
+  ///
+  /// In en, this message translates to:
+  /// **'Device-bound protection'**
+  String get deviceBoundProtection;
+
+  /// What it would and would not change.
+  ///
+  /// In en, this message translates to:
+  /// **'Not built yet. A key tied to this device’s own authentication would sit above the layer above, without changing what is stored — the same records, one more lock.'**
+  String get deviceBoundWhat;
+
+  /// The Sessions room's own line. «keeps its own key» is retained, not stored — the key is hers; «hat» says it without either word.
+  ///
+  /// In en, this message translates to:
+  /// **'A session keeps its own key, and the keys are in the vault.'**
+  String get sessionsWhat;
+
+  /// Why the room is empty with a locked vault, and the one thing that would otherwise be feared: nothing was lost.
+  ///
+  /// In en, this message translates to:
+  /// **'The vault is shut, so there are no sessions to show. Open it and they come back — the conversations themselves were never in it.'**
+  String get theVaultIsShutNoSessions;
+
+  /// What a session is for, said as the thing it buys the person rather than as a mechanism.
+  ///
+  /// In en, this message translates to:
+  /// **'Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot.'**
+  String get eachSessionHasItsOwnEncryption;
+
+  /// The card that creates one.
+  ///
+  /// In en, this message translates to:
+  /// **'New session'**
+  String get newSession;
+
+  /// Rules 57b and 064f: the language is asked as the session is born, and the bench in front of the person is renamed with it.
+  ///
+  /// In en, this message translates to:
+  /// **'A name and a language, both yours to choose: the language is how Z reads every text in this session, and it is asked once here. It becomes the session you are working in straight away. Anything already protected on the document in front of you is renamed into it — nothing has been sent yet, so nothing that left is affected.'**
+  String get newSessionWhat;
+
+  /// The hint in the box that names a session — a question, because the name is the person's own word.
+  ///
+  /// In en, this message translates to:
+  /// **'What is this one about?'**
+  String get whatIsThisOneAbout;
+
+  /// The press that creates the session.
+  ///
+  /// In en, this message translates to:
+  /// **'Begin'**
+  String get begin;
+
+  /// The card in the room before there is one.
+  ///
+  /// In en, this message translates to:
+  /// **'No sessions yet'**
+  String get noSessionsYet;
+
+  /// Rule 55 and 081: a birth asks nothing, and the room is where a name is given if one is ever wanted.
+  ///
+  /// In en, this message translates to:
+  /// **'One is born the first time you copy safe text or ask for a PDF — it is not refused for want of a name, it takes its own number for one, and you can rename it here. You never have to make one by hand first.'**
+  String get noSessionsYetWhat;
+
+  /// A session's row, when it is the open one.
+  ///
+  /// In en, this message translates to:
+  /// **'{when} · {exchanges} · the one you are in'**
+  String theOneYouAreIn(String when, String exchanges);
+
+  /// The press that enters a session.
+  ///
+  /// In en, this message translates to:
+  /// **'Work in this session'**
+  String get workInThisSession;
+
+  /// The press on a session's row.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter'**
+  String get enter;
+
+  /// The press that asks for a new word.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename this session'**
+  String get renameThisSession;
+
+  /// The press that destroys the key.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this session'**
+  String get deleteThisSession;
+
+  /// How many exchanges a session holds.
+  ///
+  /// In en, this message translates to:
+  /// **'1 exchange'**
+  String get oneExchange;
+
+  /// How many exchanges a session holds. «Austausche» is a plural nobody says, which is the lead's own correction in sitting two.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} exchanges'**
+  String exchangesCount(int count);
+
+  /// The head of the rename question.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename session {number}?'**
+  String renameSessionNumber(int number);
+
+  /// 081: «the number is the identity and does not move». A rename touches the word and nothing else.
+  ///
+  /// In en, this message translates to:
+  /// **'The number stays {number} — it is what this session is, and nothing that was protected in it changes. Only the word on the row does.'**
+  String theNumberStaysWhatItIs(int number);
+
+  /// Leaves the rename question without renaming. «behalten» is right: nothing is stored, the name is retained.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the name'**
+  String get keepTheName;
+
+  /// Confirms the rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename it'**
+  String get renameIt;
+
+  /// The head of the delete question, around the person's own word. The guillemets are the sentence's; the **isolate pair** U+2068/U+2069 is applied by the caller through `theirOwnWord`, and G44's own half over this file checks that every caller of a value quoting a placeholder does so. It was tried inside the value instead, so that no caller could forget it — and `gen-l10n` writes the raw code points into the generated Dart, which the analyzer flags as `text_direction_code_point_in_literal` in a file nobody can fix. Eight unfixable warnings that would hide real ones is a worse trade than a gate, so the gate it is.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete «{name}»?'**
+  String deleteNamed(String name);
+
+  /// The first line of the delete question: what the act is.
+  ///
+  /// In en, this message translates to:
+  /// **'This destroys the key this session was protected with.'**
+  String get thisDestroysTheKey;
+
+  /// What the act costs, said without softening: the one-way door of rule 59.
+  ///
+  /// In en, this message translates to:
+  /// **'Every document and every message protected in it can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist.'**
+  String get everyDocumentCanNeverBeUnprotected;
+
+  /// The half a person needs in order not to fear the wrong thing: the delete reaches the key, not what already left.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything you sent out of this session stays exactly as it was. What goes is the way back from it.'**
+  String get anythingYouSentStaysAsItWas;
+
+  /// Leaves the delete question without deleting.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it'**
+  String get keepIt;
+
+  /// Confirms the delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the session'**
+  String get deleteTheSession;
+
+  /// How many places in a kept document carry a token.
+  ///
+  /// In en, this message translates to:
+  /// **'1 protected place'**
+  String get oneProtectedPlace;
+
+  /// How many places in a kept document carry a token.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} protected places'**
+  String protectedPlacesCount(int count);
+
+  /// The press on a kept document's row.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename this document'**
+  String get renameThisDocument;
+
+  /// The head of the document rename question, by the handle the core gave it.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename {handle}?'**
+  String renameHandle(String handle);
+
+  /// The same law as a session's number, for a document's handle.
+  ///
+  /// In en, this message translates to:
+  /// **'The name is what you read in this list. {handle} stays what it is: a number is spent once and never given to another document.'**
+  String theNameIsWhatYouRead(String handle);
+
+  /// The hint in the document rename box.
+  ///
+  /// In en, this message translates to:
+  /// **'A name for this document'**
+  String get aNameForThisDocument;
+
+  /// The AI room's own name.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get roomAi;
+
+  /// The AI room's own line.
+  ///
+  /// In en, this message translates to:
+  /// **'Three ways to ask a model. The first needs no account at all.'**
+  String get aiWhat;
+
+  /// The first way: no account, no key.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual AI'**
+  String get manualAi;
+
+  /// The first way, and the one the owner's own demo uses.
+  ///
+  /// In en, this message translates to:
+  /// **'Use an AI chat you already have. Copy the safe text out of the Workspace, paste it into whatever model you use, and bring the answer back. Nothing to set up, nothing to pay for, and the restoring works exactly the same.'**
+  String get manualAiWhat;
+
+  /// Where the first way is, on the glass.
+  ///
+  /// In en, this message translates to:
+  /// **'Always available — it is the «Choose who answers» sheet, first door.'**
+  String get alwaysAvailableFirstDoor;
+
+  /// The second way: a remote provider with a key.
+  ///
+  /// In en, this message translates to:
+  /// **'Direct API'**
+  String get directApi;
+
+  /// The second way, and the promise about the key that the contract keeps.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a remote AI provider with your API credential. The key goes in once and never comes back out — no screen in this app can show it to you again.'**
+  String get directApiWhat;
+
+  /// A provider at a loopback address asks for no key.
+  ///
+  /// In en, this message translates to:
+  /// **'At this address no credential is needed.'**
+  String get atThisAddressNoCredential;
+
+  /// The provider's own protocol, named by the core.
+  ///
+  /// In en, this message translates to:
+  /// **'Protocol'**
+  String get protocol;
+
+  /// This provider's state.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected · key sealed in the vault'**
+  String get connectedKeySealed;
+
+  /// This provider's state with no vault to seal the key in. «aufbewahrt»: the key is stored, in memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected · key kept for this run only'**
+  String get connectedKeyThisRunOnly;
+
+  /// This provider's state at an address that asks for none.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected · no key needed'**
+  String get connectedNoKeyNeeded;
+
+  /// This provider's state.
+  ///
+  /// In en, this message translates to:
+  /// **'Not connected'**
+  String get notConnected;
+
+  /// The third way: a model on this machine.
+  ///
+  /// In en, this message translates to:
+  /// **'Local AI'**
+  String get localAi;
+
+  /// The third way, and why http is allowed exactly here and nowhere else.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs through an AI service on this computer — llama.cpp, Ollama, LM Studio, anything that answers the same shape. No key, no account, and the request never leaves this computer. Plain http is accepted only for a literal loopback address.'**
+  String get localAiWhat;
+
+  /// The head of a provider's model list.
+  ///
+  /// In en, this message translates to:
+  /// **'Models'**
+  String get models;
+
+  /// The Privacy room's own line.
+  ///
+  /// In en, this message translates to:
+  /// **'What the app does by itself, and how far it goes without asking.'**
+  String get privacyWhat;
+
+  /// Why a setting changed here will not be there tomorrow. G15's own promise, said to the person.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no vault open, so these are for this run only. The vault is the one file this app writes — without it, nothing is remembered.'**
+  String get noVaultSoThisRunOnly;
+
+  /// The setting that scans on import.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan a document the moment it arrives'**
+  String get scanOnArrival;
+
+  /// What turning it off costs.
+  ///
+  /// In en, this message translates to:
+  /// **'No dialog, no button. Turning this off means a document sits unprotected until you press Rescan — which is exactly the moment the boards were written to avoid.'**
+  String get scanOnArrivalWhat;
+
+  /// Not a setting, and the card says so.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer every suggestion before sending'**
+  String get answerEverySuggestion;
+
+  /// A law drawn where a person looks for a switch, so that its absence is an answer rather than a gap.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a setting. A suggestion that has not been answered is never quietly treated as safe, and there is no «send anyway» — not here, not in a hidden flag, not anywhere in the code.'**
+  String get answerEverySuggestionWhat;
+
+  /// The reveal timer's card.
+  ///
+  /// In en, this message translates to:
+  /// **'A revealed value stays for'**
+  String get aRevealedValueStaysFor;
+
+  /// What the number does and, more importantly, what it does not.
+  ///
+  /// In en, this message translates to:
+  /// **'Revealing draws on the screen and never writes into what leaves. This is only how long it stays drawn.'**
+  String get aRevealedValueStaysForWhat;
+
+  /// A card for a thing that is coming.
+  ///
+  /// In en, this message translates to:
+  /// **'Token rotation'**
+  String get tokenRotation;
+
+  /// What the choice would be. «behält» is retained, not stored.
+  ///
+  /// In en, this message translates to:
+  /// **'Not built yet. When it is, it will live here: whether a permanent token keeps its number across sessions, or is drawn again each time so two sessions cannot be linked by it.'**
+  String get tokenRotationWhat;
 }
 
 class _AppLocalizationsDelegate

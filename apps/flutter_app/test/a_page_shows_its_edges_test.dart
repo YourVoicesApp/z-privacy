@@ -13,6 +13,7 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -28,7 +29,7 @@ Future<(Workbench, Ground)> _open(WidgetTester tester, String text) async {
   await tester.runAsync(() async {
     await z.vaultLock();
     final dir = Directory('${Directory.systemTemp.path}/zprivacy-pages-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     dir.createSync(recursive: true);
     await z.setDataDir(dir: dir.path);
     await ground.refresh();

@@ -18,6 +18,7 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/name_review.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -28,7 +29,7 @@ Future<Workbench> _bench(WidgetTester tester, Ground ground, {required bool vaul
   await tester.runAsync(() async {
     await z.vaultLock();
     final dir = Directory('${Directory.systemTemp.path}/zprivacy-own-${vault ? "with" : "without"}-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
     if (vault) await z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort');
     await ground.refresh();
@@ -227,7 +228,7 @@ void main() {
     await tester.runAsync(() async {
       await z.vaultLock();
       final dir = Directory('${Directory.systemTemp.path}/zprivacy-lists-$pid');
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
       await z.setDataDir(dir: dir.path);
       await z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort');
       await ground.refresh();

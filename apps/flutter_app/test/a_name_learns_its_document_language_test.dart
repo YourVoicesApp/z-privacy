@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -48,7 +49,7 @@ void main() {
     await tester.runAsync(() async {
       await z.vaultLock();
       dir = Directory('${Directory.systemTemp.path}/zprivacy-doclang-$tag-$pid');
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
       await z.setDataDir(dir: dir.path);
       await z.vaultCreateWithPassphrase(passphrase: _pass);
       // German is what a fresh device starts with, which is the premise of

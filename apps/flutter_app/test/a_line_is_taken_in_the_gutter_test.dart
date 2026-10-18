@@ -43,6 +43,8 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
 
+import 'the_folder_lets_go.dart';
+
 import 'drawn_document.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -89,10 +91,12 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name, {String text
   late final Workbench bench;
   await tester.runAsync(() async {
     final here = Directory('${Directory.systemTemp.path}/zprivacy-gutter-$name-$pid');
-    if (here.existsSync()) here.deleteSync(recursive: true);
-    addTearDown(() {
-      if (here.existsSync()) here.deleteSync(recursive: true);
-    });
+    removeWhenItLetsGo(here);
+    // **Removed when the core lets go of it** — and this line is why three
+    // guards in this file reddened on three full runs while each passed alone.
+    // The teardown threw `ENOTEMPTY`, so the test was reported as an error
+    // with its own claim already proved. See `the_folder_lets_go.dart`.
+    addTearDown(() => removeWhenItLetsGo(here));
     await z.setDataDir(dir: here.path);
     await ground.refresh();
     final session = await z.openSession(packId: 'en');

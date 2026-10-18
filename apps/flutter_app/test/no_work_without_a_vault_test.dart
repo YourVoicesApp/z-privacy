@@ -23,6 +23,7 @@ import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -49,7 +50,7 @@ void main() {
     final ground = Ground();
     await tester.runAsync(() async {
       await z.vaultLock();
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
       await z.setDataDir(dir: dir.path);
       await ground.refresh();
     });

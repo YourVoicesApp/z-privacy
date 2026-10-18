@@ -16,6 +16,7 @@ import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
@@ -513,7 +514,7 @@ void main() {
         'zprivacy-provider-contract-$pid-',
       );
       addTearDown(() {
-        if (dir.existsSync()) dir.deleteSync(recursive: true);
+        removeWhenItLetsGo(dir);
       });
       await setDataDir(dir: dir.path);
       await vaultLock();

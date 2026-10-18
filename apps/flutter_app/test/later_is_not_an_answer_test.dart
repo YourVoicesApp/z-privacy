@@ -29,6 +29,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
@@ -55,7 +56,7 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name, {String text
   late final Workbench bench;
   await tester.runAsync(() async {
     final here = Directory('${Directory.systemTemp.path}/zprivacy-later-$name-$pid');
-    if (here.existsSync()) here.deleteSync(recursive: true);
+    removeWhenItLetsGo(here);
     addTearDown(() {
       // **Best effort, and that is the claim this directory is under.** The
       // core may still be writing in here when the test ends — a session's
@@ -67,7 +68,7 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name, {String text
       // directory that outlives a test proves nothing either way, so a
       // failure to remove it is not a failure of the test.
       try {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       } on FileSystemException {
         // Left behind on purpose, rather than red for a reason no claim here
         // is about. Fifty-five files in this suite own a directory like this

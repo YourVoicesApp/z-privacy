@@ -50,6 +50,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -122,13 +123,13 @@ void main() {
     // real, because that is the only place a screen reads it from — and
     // without this it would write the person's own settings file.
     own = Directory('${Directory.systemTemp.path}/zprivacy-080-config-$pid');
-    if (own.existsSync()) own.deleteSync(recursive: true);
+    removeWhenItLetsGo(own);
     await z.vaultLock();
     await z.setDataDir(dir: own.path);
   });
 
   tearDownAll(() {
-    if (own.existsSync()) own.deleteSync(recursive: true);
+    removeWhenItLetsGo(own);
   });
 
   group('the rule', () {
@@ -182,9 +183,9 @@ void main() {
 
   test('a new session follows the app\'s language and an old one keeps its own', () async {
     final dir = Directory('${Directory.systemTemp.path}/zprivacy-080-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     addTearDown(() {
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
     });
     await z.vaultLock();
     await z.setDataDir(dir: dir.path);

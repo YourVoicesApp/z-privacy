@@ -18,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -32,12 +33,12 @@ void main() {
     }
     await RustLib.init();
     dir = Directory('${Directory.systemTemp.path}/zprivacy-gateway-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
   });
 
   tearDownAll(() {
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
   });
 
   testWidgets('the catalogue comes from the core, and no model is named in Dart', (tester) async {

@@ -22,6 +22,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/find_in_document.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _originalPane = ValueKey<String>('workspace-original-pane');
@@ -128,12 +129,12 @@ void main() {
     }
     await RustLib.init();
     dir = Directory('${Directory.systemTemp.path}/zprivacy-find-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
   });
 
   tearDownAll(() {
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
   });
 
   Future<Workbench> ready(WidgetTester tester, {String? text}) async {

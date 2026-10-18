@@ -23,6 +23,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/tokens.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 Future<void> setDataDirForTest(String path) => z.setDataDir(dir: path);
@@ -46,11 +47,11 @@ void main() {
     }
     await RustLib.init();
     dir = Directory('${Directory.systemTemp.path}/zprivacy-shell-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
   });
 
   tearDownAll(() {
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
   });
 
   // The shell is the one place that watches the window, so it is the only place
@@ -95,9 +96,9 @@ void main() {
 
   Directory ownDir(String name) {
     final own = Directory('${Directory.systemTemp.path}/zprivacy-shell-$name-$pid');
-    if (own.existsSync()) own.deleteSync(recursive: true);
+    removeWhenItLetsGo(own);
     addTearDown(() {
-      if (own.existsSync()) own.deleteSync(recursive: true);
+      removeWhenItLetsGo(own);
     });
     return own;
   }
@@ -296,9 +297,9 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final own = Directory('${Directory.systemTemp.path}/zprivacy-folder-$pid');
-    if (own.existsSync()) own.deleteSync(recursive: true);
+    removeWhenItLetsGo(own);
     addTearDown(() {
-      if (own.existsSync()) own.deleteSync(recursive: true);
+      removeWhenItLetsGo(own);
     });
 
     final ground = Ground();

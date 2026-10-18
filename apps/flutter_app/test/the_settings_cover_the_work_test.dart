@@ -28,6 +28,7 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -124,9 +125,9 @@ bool documentIsDrawn(WidgetTester tester, String needle) =>
 
 Directory ownDir(String name) {
   final own = Directory('${Directory.systemTemp.path}/zprivacy-panel-$name-$pid');
-  if (own.existsSync()) own.deleteSync(recursive: true);
+  removeWhenItLetsGo(own);
   addTearDown(() {
-    if (own.existsSync()) own.deleteSync(recursive: true);
+    removeWhenItLetsGo(own);
   });
   return own;
 }

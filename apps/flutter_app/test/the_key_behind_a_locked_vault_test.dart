@@ -47,6 +47,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/the_chat.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _pass = 'ein gutes Passwort für den Tresor';
@@ -73,11 +74,11 @@ Future<({Ground ground, Workbench bench})> _ready(WidgetTester tester, String na
   late final Workbench bench;
   await tester.runAsync(() async {
     final dir = Directory('${Directory.systemTemp.path}/zprivacy-lockedkey-$name-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     addTearDown(() {
       // Best effort, for the race named in `later_is_not_an_answer_test.dart`.
       try {
-        if (dir.existsSync()) dir.deleteSync(recursive: true);
+        removeWhenItLetsGo(dir);
       } on FileSystemException {
         // Left behind rather than red for something no claim here is about.
       }

@@ -29,6 +29,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/widgets/language_list.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const wide = Size(1500, 1200);
@@ -43,9 +44,9 @@ Future<void> settle(WidgetTester tester, {int rounds = 5}) async {
 
 Directory ownDir(String name) {
   final own = Directory('${Directory.systemTemp.path}/zprivacy-room-$name-$pid');
-  if (own.existsSync()) own.deleteSync(recursive: true);
+  removeWhenItLetsGo(own);
   addTearDown(() {
-    if (own.existsSync()) own.deleteSync(recursive: true);
+    removeWhenItLetsGo(own);
   });
   return own;
 }
