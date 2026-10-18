@@ -10,7 +10,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theKeyIsBehindTheLockedVault =>
-      'Z Privacy kann keinen Schlüssel erreichen, solange der Tresor verschlossen ist. Öffnen Sie ihn, oder geben Sie einen Schlüssel für diesen Lauf.';
+      'Z Privacy kann keinen Schlüssel erreichen, solange der Tresor verschlossen ist. Öffnen Sie ihn, oder geben Sie einen Schlüssel nur für dieses Mal an.';
 
   @override
   String get theChatKeepsNothing =>
@@ -26,7 +26,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String exactlyWhatWouldLeave(int replaced) {
-    return 'Das ist genau, was die KI erhält. $replaced Werte wurden ersetzt.';
+    return 'Genau das erhält die KI. $replaced Werte wurden ersetzt.';
   }
 
   @override
@@ -135,12 +135,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String pressCutsIntoProtectedTextOne(String what) {
-    return '$what schneidet in geschützten Text, es wurde deshalb nichts geändert. Es würde auf 1 ganzes Element aufgerundet.';
+    return '$what schneidet in geschützten Text, es wurde deshalb nichts geändert. Es würde auf 1 ganzes Element ausgedehnt.';
   }
 
   @override
   String pressCutsIntoProtectedTextMany(String what, int items) {
-    return '$what schneidet in geschützten Text, es wurde deshalb nichts geändert. Es würde auf $items ganze Elemente aufgerundet.';
+    return '$what schneidet in geschützten Text, es wurde deshalb nichts geändert. Es würde auf $items ganze Elemente ausgedehnt.';
   }
 
   @override
@@ -204,11 +204,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get oneNameStaysATokenTwoCauses =>
-      'Ein Name bleibt ein Platzhalter, und dafür gibt es zwei verschiedene Gründe: Das Wort wurde geschützt, bevor Z Privacy begann, jedes geschützte Wort zu behalten, oder dieser Platzhalter wurde verändert, nachdem die Datei das Gerät verlassen hat. Öffnen Sie dieses Dokument in seiner Sitzung und schützen Sie den Namen erneut — kommt er von dann an zurück, war es das Erste; kommt er nicht zurück, ist diese Datei nicht die, die Z Privacy geschrieben hat.';
+      'Ein Name bleibt ein Platzhalter, und dafür gibt es zwei verschiedene Gründe: Das Wort wurde geschützt, bevor Z Privacy begann, jedes geschützte Wort zu behalten, oder dieser Platzhalter wurde verändert, nachdem die Datei das Gerät verlassen hat. Öffnen Sie dieses Dokument in seiner Sitzung und schützen Sie den Namen erneut — kommt er von da an zurück, war es der erste Grund; kommt er nicht zurück, ist diese Datei nicht die, die Z Privacy geschrieben hat.';
 
   @override
   String namesStayTokensTwoCauses(int count) {
-    return '$count Namen bleiben Platzhalter, und dafür gibt es zwei verschiedene Gründe: Sie wurden geschützt, bevor Z Privacy begann, jedes geschützte Wort zu behalten, oder die Platzhalter wurden verändert, nachdem die Datei das Gerät verlassen hat. Öffnen Sie diese Dokumente in ihrer Sitzung und schützen Sie die Namen erneut — kommen sie von dann an zurück, war es das Erste; kommen sie nicht zurück, ist diese Datei nicht die, die Z Privacy geschrieben hat.';
+    return '$count Namen bleiben Platzhalter, und dafür gibt es zwei verschiedene Gründe: Sie wurden geschützt, bevor Z Privacy begann, jedes geschützte Wort zu behalten, oder die Platzhalter wurden verändert, nachdem die Datei das Gerät verlassen hat. Öffnen Sie diese Dokumente in ihrer Sitzung und schützen Sie die Namen erneut — kommen sie von da an zurück, war es der erste Grund; kommen sie nicht zurück, ist diese Datei nicht die, die Z Privacy geschrieben hat.';
   }
 
   @override
@@ -313,7 +313,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get troubleVaultChangedElsewhere =>
-      'Eine andere Kopie von Z Privacy hat diesen Tresor geändert. Schließen Sie jenes Fenster, oder schließen und öffnen Sie den Tresor hier, um die Arbeit zu übernehmen.';
+      'Eine andere Kopie von Z Privacy hat diesen Tresor geändert. Schließen Sie jenes Fenster, oder verschließen und öffnen Sie den Tresor hier, um dessen Arbeit zu übernehmen.';
 
   @override
   String troubleStoragePermissionsKept(String reason) {
