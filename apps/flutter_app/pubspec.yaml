@@ -13,6 +13,16 @@ dependencies:
   file_selector: ^1.1.0
   flutter:
     sdk: flutter
+  # **The sentences in one list** — 092, the owner's own words: «نحن نعمل على
+  # فلوتر… نحتاج أن نعقد قوائم الجمل». Flutter's own tooling and nothing else:
+  # `flutter_localizations` carries the framework's own strings in each locale,
+  # `intl` is what the generated class and the ICU placeholders are built on,
+  # and `gen-l10n` (see `l10n.yaml`) turns `lib/l10n/*.arb` into Dart at build
+  # time. Both are first-party, speak no protocol (G5a), and bring no native
+  # half.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   flutter_rust_bridge: 2.13.0
   freezed_annotation: ^3.1.0
   # «Save as PDF» (046/O). Pure Dart — no native library, no platform channel,
@@ -35,6 +45,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # 092: `lib/l10n/*.arb` become `AppLocalizations` at build time, by
+  # `l10n.yaml` beside this file. Nothing is generated into the repository that
+  # a build cannot make again.
+  generate: true
   assets:
     # The mark, in every size the product uses. They are generated from
     # `brand/source.png` by `scripts/build_brand.py` and never edited by hand —

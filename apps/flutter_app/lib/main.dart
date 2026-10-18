@@ -8,11 +8,15 @@
 // This file does three things and stops: start the bridge, set the colours, and
 // say where the vault lives. Which screen is on is `ZShell`'s to decide, in a
 // file of its own, so that the decision can be tested.
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
+import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/l10n/app_localizations.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -46,18 +50,71 @@ ThemeData zTheme() => ThemeData(
       ),
     );
 
-class ZPrivacyApp extends StatelessWidget {
+/// **The root, and the one place a locale is applied** — 092.
+///
+/// It holds the `Ground` so that it can read the language the person chose
+/// (`settings.zcfg`'s `ui_language`, which reaches the glass as
+/// `Settings.language`) and put it on the `MaterialApp` above every screen.
+/// The shell used to make its own; it is given this one, so there is one
+/// reader of the settings and no second opinion about which language is on.
+///
+/// **Not the operating system's locale**, by the owner's own design: the
+/// language is a choice he makes on the first screen and can change in the
+/// Language room, and a machine in another country does not change what his
+/// screens say. `MaterialApp.locale` is set, so Flutter never falls back to
+/// the platform.
+class ZPrivacyApp extends StatefulWidget {
   const ZPrivacyApp({super.key});
 
   @override
+  State<ZPrivacyApp> createState() => _ZPrivacyAppState();
+}
+
+class _ZPrivacyAppState extends State<ZPrivacyApp> {
+  final Ground _ground = Ground();
+
+  @override
+  void initState() {
+    super.initState();
+    _ground.addListener(_languageMayHaveChanged);
+    unawaited(_ground.refresh());
+  }
+
+  @override
+  void dispose() {
+    _ground.removeListener(_languageMayHaveChanged);
+    _ground.dispose();
+    super.dispose();
+  }
+
+  /// **A change in the Language room applies without a restart** — 092's third
+  /// step. The room writes the setting, the ground refreshes, and this rebuilds
+  /// the application with the new locale; nothing else has to know.
+  void _languageMayHaveChanged() {
+    final now = theLocaleOf(_ground.config?.language ?? 'en');
+    if (now != _locale) setState(() => _locale = now);
+  }
+
+  Locale _locale = const Locale('en');
+
+  @override
   Widget build(BuildContext context) {
+    // **Said before the subtree is built**, which is why it is here and not in
+    // an `initState`: the holder in `core/sentences.dart` is what every
+    // sentence in the house reads, and it must be the locale this build is
+    // about. See that file for why the sentences are not reached by context.
+    theSentencesAreNow(_locale);
     return MaterialApp(
       title: 'Z Privacy',
       debugShowCheckedModeBanner: false,
       theme: zTheme(),
-      // The vault is the only file this program writes. Where it goes is the
-      // core's answer, not this file's guess — see `z_core::default_data_dir`.
-      home: const ZShell(),
+      // **The language is the person's, not the machine's** — 092.
+      locale: _locale,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      // Left to right, always: Arabic is stopped (rule 56-أ's sibling), and
+      // every language this list carries is written left to right.
+      home: ZShell(ground: _ground),
     );
   }
 }

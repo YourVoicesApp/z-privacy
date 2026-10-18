@@ -1,0 +1,16 @@
+# **The sentences in one list** — 092, 18 October 2026.
+#
+# The English file is the source: every sentence the glass shows has a key
+# there and a description beside it, and the other languages are copies of the
+# keys with their own values. `flutter gen-l10n` (run by the build, by
+# `generate: true` in `pubspec.yaml`) writes the Dart.
+#
+# `nullable-getter: false` so `AppLocalizations.of(context)` is not an option
+# that every call site has to answer for: the delegate is installed at the root
+# and a screen below it always has the list. The one place that needs a list
+# without a context says so for itself — see `core/messages.dart`.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

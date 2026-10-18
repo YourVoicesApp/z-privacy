@@ -188,7 +188,10 @@ class ActsBar extends StatelessWidget {
       //
       // No Undo beside it either — there is nothing of this document to undo —
       // which is why it is not `known`.
-      ProtectState.alreadyOurs => const ZButton(
+      // **Not `const` since 092**: the hint is a sentence from the one list
+      // now, and a list that answers in the language the app is in cannot be
+      // a compile-time constant. The widget is the same widget.
+      ProtectState.alreadyOurs => ZButton(
           label: 'Protect',
           filled: true,
           hint: theTokenIsAlreadyOurs,

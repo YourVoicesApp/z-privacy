@@ -18,6 +18,7 @@
 // Before this file, `ApiError.importRefused(reason: …)` reached the screen with
 // the enum's own debug formatting around it — and `importRefused` was the wrong
 // word anyway: it was printed when a **Connect** was refused.
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 
 /// **A name the person gave, isolated so the sentence keeps its order** — the
@@ -49,8 +50,7 @@ String theirOwnWord(String name) => '\u2068$name\u2069';
 /// A new variant added to the contract lands here rather than leaking its debug
 /// formatting. `errorIsCovered` exists so a test can prove that never happens
 /// silently.
-const String unnamedTrouble =
-    'Something went wrong. Z Privacy did not complete the action.';
+String get unnamedTrouble => sentences.unnamedTrouble;
 
 /// **What a preview side claims about the text it draws** — one sentence for
 /// the two screens that draw one, since rule 60-أ gave the chat its own band.
@@ -60,7 +60,7 @@ const String unnamedTrouble =
 /// screens promising the same fact in two wordings, and the drift between them
 /// is exactly what a person would read as a difference.
 String exactlyWhatWouldLeave(int replaced) =>
-    'This is exactly what the AI will receive. $replaced values were replaced.';
+    sentences.exactlyWhatWouldLeave(replaced);
 
 /// **Nothing was read, because nobody said in which language** — rule 57-د.
 ///
@@ -74,62 +74,45 @@ String exactlyWhatWouldLeave(int replaced) =>
 /// is already open can be given a language in its room, and a session that was
 /// never born cannot be given anything.
 String noLanguageSoNothingWasRead({required bool aSessionIsOpen}) => aSessionIsOpen
-    ? 'Nothing was read. A text is read with one language’s habits, and this '
-          'session has never been given one — so Z Privacy did not choose for you. '
-          'Read it again and answer, or give the session its language in Settings.'
-    : 'Nothing was read. A text is read with one language’s habits, and none was '
-          'chosen — so nothing was read and no session was made. Try again and '
-          'choose one.';
+    ? sentences.noLanguageAndASessionIsOpen
+    : sentences.noLanguageAndNoSession;
 
 /// The human sentence for a typed error. The only such function in the app.
 String humanMessage(Object error) {
   if (error is! ApiError) return unnamedTrouble;
   return switch (error) {
-    ApiError_NotImplemented() =>
-      'This part of Z Privacy is not built yet.',
-    ApiError_InvalidSession() =>
-      'That session is no longer open. Start a new one.',
-    ApiError_InvalidHandle() =>
-      'This request is no longer current. Review the text again before sending.',
-    ApiError_StalePayload() =>
-      'The document changed after this request was prepared. Review it again, '
-          'so that what you send is what you last saw.',
-    ApiError_VaultLocked() =>
-      'Your vault is locked. Unlock it to use what it knows.',
-    ApiError_VaultRequired() =>
-      'Unlock or create your vault before saving this for future use.',
+    ApiError_NotImplemented() => sentences.troubleNotImplemented,
+    ApiError_InvalidSession() => sentences.troubleInvalidSession,
+    ApiError_InvalidHandle() => sentences.troubleInvalidHandle,
+    ApiError_StalePayload() => sentences.troubleStalePayload,
+    ApiError_VaultLocked() => sentences.troubleVaultLocked,
+    ApiError_VaultRequired() => sentences.troubleVaultRequired,
     ApiError_VaultAuthenticationFailed() =>
-      'Could not unlock the vault. The passphrase may be incorrect, or the '
-          'vault may be corrupted or modified.',
+      sentences.troubleVaultAuthenticationFailed,
     ApiError_UnsupportedKdfParameters() =>
-      'This vault uses unsupported security settings.',
-    ApiError_TrailingVaultData() =>
-      'This vault file has extra data after its end and was not opened.',
-    ApiError_ProviderUnavailable() =>
-      'That AI provider is not available in this build.',
+      sentences.troubleUnsupportedKdfParameters,
+    ApiError_TrailingVaultData() => sentences.troubleTrailingVaultData,
+    ApiError_ProviderUnavailable() => sentences.troubleProviderUnavailable,
     // 083a. **Short, and true of every door that raises it.** All three exits
     // ask one law in the core now, and this is the sentence they all carry, so
     // it says the two things a person needs at that moment: how many of their
     // own words are waiting, and that nothing went out. The review opens on
     // the first of those words at the same time, which is the rest of the
     // answer (083, rule 12).
-    ApiError_OpenSuggestions(:final count) => count == 1
-        ? 'One word waits for your answer — nothing left Z.'
-        : '$count words wait for your answer — nothing left Z.',
+    ApiError_OpenSuggestions(:final count) =>
+      count == 1 ? sentences.oneWordWaits : sentences.wordsWait(count),
     // The core split `ImportRefused` on 30 September, so this no longer has to
     // word one sentence for three unrelated stories. Each of these is a
     // different next move for the person: change what you entered · name
     // something else · make a vault · nothing you typed is wrong.
     ApiError_InputRefused(:final reason) => _sentence(reason),
     ApiError_NotFound(:final reason) => _sentence(reason),
-    ApiError_VaultAbsent() =>
-      'There is no vault on this device yet. Create one to keep anything for tomorrow.',
-    ApiError_VaultAlreadyExists() =>
-      'A vault already exists on this device, and Z Privacy will not write over it.',
+    ApiError_VaultAbsent() => sentences.troubleVaultAbsent,
+    ApiError_VaultAlreadyExists() => sentences.troubleVaultAlreadyExists,
     // Not the person's doing, and said so — the fault is in a location, and
     // the reason names which one and why.
     ApiError_StorageRefused(:final reason) =>
-      'Z Privacy will not use that location — ${_lower(reason)}',
+      sentences.troubleStorageRefused(_lower(reason)),
     // 050/A. **The place is fine.** This used to be a `StorageRefused`, so a
     // person whose second window had written was told «Z Privacy will not use
     // that location» about a folder that is writable and a file that is
@@ -137,9 +120,7 @@ String humanMessage(Object error) {
     // and it ends with the two things that work — close the other window, or
     // take in its work — because a refusal without a next move leaves the
     // person holding an open vault they cannot save.
-    ApiError_VaultChangedElsewhere() =>
-      'Another copy of Z Privacy changed this vault. Close that window, or '
-          'lock and unlock here to take in its work.',
+    ApiError_VaultChangedElsewhere() => sentences.troubleVaultChangedElsewhere,
     // 058. **The promise, and not only the cause.** Z could write here; it is
     // declining to, because the person took a permission off the folder. So
     // this does not say «will not use that location» — the location is the one
@@ -148,25 +129,18 @@ String humanMessage(Object error) {
     // because it is the part they cannot find out any other way, and both next
     // moves are theirs to pick.
     ApiError_StoragePermissionsKept(:final reason) =>
-      'Z Privacy will not change a permission you set, so nothing was saved — '
-          '${_lower(reason)}. Change the permission yourself, or choose another '
-          'folder.',
+      sentences.troubleStoragePermissionsKept(_lower(reason)),
     ApiError_DocumentRefused(:final reason, :final detail) => _document(reason, detail),
-    ApiError_BadSpan() =>
-      'That selection could not be read. Try selecting the words again.',
+    ApiError_BadSpan() => sentences.troubleBadSpan,
     // 046/Q. **Why, and not merely that it will not** (the lead's condition):
     // the press was read without trouble, so «could not be read» would be
     // false, and the person's next move is to press on a value rather than to
     // press again in the same place. Snapping to the nearest cell would have
     // needed no sentence at all — and would have been the app deciding which
     // column he meant.
-    ApiError_BetweenColumns() =>
-      'That press landed in the space between two columns, so it names no '
-          'value — and Z Privacy will not choose a column for you.',
-    ApiError_UnknownToken() =>
-      'That protected value is not in this session.',
-    ApiError_NothingToSend() =>
-      'There is nothing to send yet. Bring in a document or write some text.',
+    ApiError_BetweenColumns() => sentences.troubleBetweenColumns,
+    ApiError_UnknownToken() => sentences.troubleUnknownToken,
+    ApiError_NothingToSend() => sentences.troubleNothingToSend,
     ApiError_PayloadRefused(:final reason) => _sentence(reason),
     // 064f. The person did nothing wrong and nothing was created, so the
     // sentence says what did not happen and what to do — never «invalid call».
@@ -174,11 +148,8 @@ String humanMessage(Object error) {
     // document down. It exists so that no future door can make a session that
     // cannot name the document in front of them.
     ApiError_SessionWithoutItsDocument() =>
-      'The session was not started, because Z Privacy could not tell which document you have '
-          'open — and a session has to rename what is already protected on it. Nothing was '
-          'changed. Open the document and start the session from there.',
-    ApiError_PayloadAlreadySent() =>
-      'This request was already sent. Prepare it again to send once more.',
+      sentences.troubleSessionWithoutItsDocument,
+    ApiError_PayloadAlreadySent() => sentences.troublePayloadAlreadySent,
     ApiError_NetworkRefused(:final reason, :final detail) =>
       _network(reason, detail),
     // Not a wildcard by accident: the test below walks every variant, so a new
@@ -200,7 +171,7 @@ String humanMessage(Object error) {
 /// protected, by this program, in the conversation it came from. What a person
 /// must not be told is «protected» again, because a second token would then be
 /// standing over the first and the answer would come back unreadable.
-const String theTokenIsAlreadyOurs = 'This is already protected — Z put it there.';
+String get theTokenIsAlreadyOurs => sentences.theTokenIsAlreadyOurs;
 
 /// **What each source is called on screen**, and why the mark is there.
 ///
@@ -210,10 +181,10 @@ const String theTokenIsAlreadyOurs = 'This is already protected — Z put it the
 /// may not reach into `widgets`. The chips on the token list and on the acts
 /// card read the same four words, which is the point.
 String sourceName(Source s) => switch (s) {
-  Source.generalRule => 'Rule',
-  Source.languagePack => 'Pack',
-  Source.vault => 'Vault',
-  Source.hand => 'You',
+  Source.generalRule => sentences.sourceRule,
+  Source.languagePack => sentences.sourcePack,
+  Source.vault => sentences.sourceVault,
+  Source.hand => sentences.sourceYou,
 };
 
 /// **Who answered one turn of a chat**, in the words the thread uses — rules
@@ -227,11 +198,11 @@ String whoAnswered(TurnVia via) => switch (via) {
   TurnVia_Through(:final provider) => provider,
   // The person carried the text out and the answer back, so nothing of ours
   // answered it — and the thread says that rather than naming a key.
-  TurnVia_Pasted() => 'brought back by hand',
+  TurnVia_Pasted() => sentences.answeredByHand,
   // A turn older than the question. The chat draws only this round's turns, so
   // this is the answer to a question the thread cannot ask — and it is still
   // answered, because an absence has more than one cause.
-  TurnVia_NotRecorded() => 'not recorded',
+  TurnVia_NotRecorded() => sentences.answeredNotRecorded,
 };
 
 /// **What one press was made on** — the only thing that changes the sentence an
@@ -275,28 +246,27 @@ String protectSaid(ProtectOutcome outcome, ProtectAct act) => switch (outcome) {
   // wording decision, kept word for word from the press that held it.
   ProtectOutcome_Applied(:final token, :final places) => switch (act) {
     ProtectAct.aCell => switch (places) {
-      0 => 'Every cell in that column was already protected.',
-      1 => 'Protected one cell, as $token.',
-      _ => 'Protected $places cells down that column, the first as $token.',
+      0 => sentences.everyCellWasAlreadyProtected,
+      1 => sentences.protectedOneCell(token),
+      _ => sentences.protectedCellsDownTheColumn(places, token),
     },
     _ => places == 1
-        ? 'Protected as $token.'
-        : 'Protected as $token, in $places places.',
+        ? sentences.protectedAs(token)
+        : sentences.protectedAsInPlaces(token, places),
   },
   // **Who by, at every press.** The bar left this half out; a person told
   // «already protected» and not told whether that was their own hand or the
   // vault has to go and look.
   ProtectOutcome_AlreadyProtected(:final token, :final source) =>
-    'Already protected as $token, by ${sourceName(source).toLowerCase()}.',
+    sentences.alreadyProtectedBy(token, sourceName(source).toLowerCase()),
   ProtectOutcome_BelongsToEntity(:final entity, :final token) =>
-    'That belongs to $entity and keeps its token $token.',
+    sentences.belongsToEntity(entity, token),
   // One wording, and the act supplies the subject. Nothing changed, and what
   // the act *would* take is said in the same breath so that a second press on
   // «Protect whole items» is a decision and not a surprise.
-  ProtectOutcome_Snapped(:final spans) =>
-    '${_whatWasPressed(act)} cuts into protected text, so nothing changed. '
-        'It would snap to ${spans.length} whole '
-        '${spans.length == 1 ? "item" : "items"}.',
+  ProtectOutcome_Snapped(:final spans) => spans.length == 1
+      ? sentences.pressCutsIntoProtectedTextOne(_whatWasPressed(act))
+      : sentences.pressCutsIntoProtectedTextMany(_whatWasPressed(act), spans.length),
   // 079 rule 5. One state, one wording, whichever press reached it.
   ProtectOutcome_StandsOnAToken() => theTokenIsAlreadyOurs,
 };
@@ -304,9 +274,9 @@ String protectSaid(ProtectOutcome outcome, ProtectAct act) => switch (outcome) {
 /// What the press was on, as a sentence's subject. Three words, and the reason
 /// they are not three sentences is above.
 String _whatWasPressed(ProtectAct act) => switch (act) {
-  ProtectAct.aSelection => 'The selection',
-  ProtectAct.aCell => 'That cell',
-  ProtectAct.aPlaceTheBarFound => 'That place',
+  ProtectAct.aSelection => sentences.theSelection,
+  ProtectAct.aCell => sentences.thatCell,
+  ProtectAct.aPlaceTheBarFound => sentences.thatPlace,
 };
 
 /// **What a document that came back carries, in one sentence** — 079, the
@@ -344,19 +314,19 @@ String? whatCameBack(ReturnedDocument seen) {
     final named = seen.conversations
         .where((c) => c.broughtBack > 0)
         .map((c) => '«${theirOwnWord(c.name)}»')
-        .join(' and ');
+        .join(sentences.andBetweenNames);
     if (named.isEmpty) {
       said.add(seen.broughtBack == 1
-          ? 'One name came back.'
-          : '${seen.broughtBack} names came back.');
+          ? sentences.oneNameCameBack
+          : sentences.namesCameBack(seen.broughtBack));
     } else {
       said.add(seen.broughtBack == 1
-          ? 'One name came back from $named.'
-          : '${seen.broughtBack} names came back from $named.');
+          ? sentences.oneNameCameBackFrom(named)
+          : sentences.namesCameBackFrom(seen.broughtBack, named));
     }
   } else if (seen.conversations.isNotEmpty) {
-    final named = seen.conversations.map((c) => '«${theirOwnWord(c.name)}»').join(' and ');
-    said.add('This document came back from $named.');
+    final named = seen.conversations.map((c) => '«${theirOwnWord(c.name)}»').join(sentences.andBetweenNames);
+    said.add(sentences.thisDocumentCameBackFrom(named));
   }
   if (seen.unresolved.isNotEmpty) {
     final n = seen.unresolved.length;
@@ -365,10 +335,8 @@ String? whatCameBack(ReturnedDocument seen) {
       // a vault that may be locked **or** absent («Unlock or create your
       // vault…»): a person with no vault cannot unlock one.
       said.add(n == 1
-          ? 'One name is still a token: unlock or create your vault and Z can '
-              'look for it.'
-          : '$n names are still tokens: unlock or create your vault and Z can '
-              'look for them.');
+          ? sentences.oneNameIsStillATokenVaultShut
+          : sentences.namesAreStillTokensVaultShut(n));
     } else {
       // **Which cause, from the core's own split** — 089 rule 4 asks for the
       // reason and the core already holds the part it can prove. The
@@ -401,19 +369,8 @@ String? whatCameBack(ReturnedDocument seen) {
         // this reading does not carry, and adding one is a change to the
         // bridge — reported rather than guessed at.
         said.add(here == 1
-            ? 'One name stays as a token, and two different things do that: the '
-                'word was protected before Z Privacy began keeping every '
-                'protected word, or this token was changed after the file left. '
-                'Open that document in its session and protect the name again — '
-                'if it comes back from then on it was the first, and if it does '
-                'not, this file is not the one Z Privacy wrote.'
-            : '$here names stay as tokens, and two different things do that: '
-                'they were protected before Z Privacy began keeping every '
-                'protected word, or the tokens were changed after the file '
-                'left. Open those documents in their session and protect the '
-                'names again — if they come back from then on it was the '
-                'first, and if they do not, this file is not the one Z Privacy '
-                'wrote.');
+            ? sentences.oneNameStaysATokenTwoCauses
+            : sentences.namesStayTokensTwoCauses(here));
       }
     }
   }
@@ -425,7 +382,7 @@ String? whatCameBack(ReturnedDocument seen) {
     // «It also» only after something else has been said: a document whose every
     // name belongs elsewhere gets a sentence that stands on its own, because a
     // line beginning «It also» with nothing before it names nothing.
-    final also = said.isEmpty ? 'This document carries' : 'It also carries';
+    final also = said.isEmpty ? sentences.carriesFirst : sentences.carriesAlso;
     // **And how many stayed tokens**, because since 089 this clause is the only
     // one that speaks for these names: every other token in the document came
     // back from a block, so «3 names stay as tokens» above is about the ones
@@ -439,27 +396,27 @@ String? whatCameBack(ReturnedDocument seen) {
     // nothing; what is true there is only where they are from.
     final elsewhere = seen.unresolved.length -
         seen.conversations.fold<int>(0, (sum, c) => sum + c.unresolved);
-    final many = elsewhere == 1 ? '1 name' : '$elsewhere names';
-    final whose = seen.unknownNamespaces.length == 1
-        ? 'a session this vault does not hold'
-        : 'sessions this vault does not hold';
-    // **And the act, which here is that there is none** — the owner, 16
-    // October. A namespace this vault cannot name was made by a key that is
-    // not on this machine: a conversation that was forgotten took its key with
-    // it, and another machine's key was never here. Saying so plainly is the
-    // next step; offering one that cannot work would be worse than silence.
-    //
-    // Two numbers and they are different numbers: how many names there are,
-    // and how many keys are missing. A sentence that read one off the other
-    // said «11 names … the key that made it» on the owner's own file.
-    final it = elsewhere == 1 ? 'it' : 'them';
-    final keys = seen.unknownNamespaces.length == 1
-        ? 'the key that made $it is'
-        : 'the keys that made $it are';
-    final nothing = ' Nothing here can put $it back: $keys not in this vault.';
-    said.add(elsewhere > 0
-        ? '$also $many from $whose ($which).$nothing'
-        : '$also names from $whose ($which).$nothing');
+    // **One sentence per state, not seven pieces** — 092. The English
+    // composed this from «carries», a count, «from», whose, the handle and a
+    // tail; German does not keep that order, and a list of fragments cannot be
+    // translated into a sentence. So each state is one key with placeholders,
+    // and the only pieces left are in the one state that has no count to give:
+    // «names from … » where every unresolved name is already accounted for by
+    // a session that could be named, and «0 names» would count nothing.
+    said.add(elsewhere == 1
+        ? sentences.carriesOneNameFromElsewhere(also, which)
+        : elsewhere > 1
+            ? (seen.unknownNamespaces.length == 1
+                ? sentences.carriesNamesFromOneSessionElsewhere(also, elsewhere, which)
+                : sentences.carriesNamesFromSessionsElsewhere(also, elsewhere, which))
+            : sentences.carriesNamesFromElsewhereWithNoCount(
+                also,
+                seen.unknownNamespaces.length == 1
+                    ? sentences.aSessionThisVaultDoesNotHold
+                    : sentences.sessionsThisVaultDoesNotHold,
+                which,
+                sentences.theKeyThatMadeThemIs,
+              ));
   }
   return said.isEmpty ? null : said.join(' ');
 }
@@ -472,7 +429,7 @@ String? whatCameBack(ReturnedDocument seen) {
 /// the vault folder: a symlink…» reads as one line rather than two halves.
 String _lower(String fact) {
   final trimmed = fact.trim();
-  if (trimmed.isEmpty) return 'the reason was not reported.';
+  if (trimmed.isEmpty) return sentences.theReasonWasNotReported;
   final lowered = trimmed[0].toLowerCase() + trimmed.substring(1);
   return lowered.endsWith('.') ? lowered : '$lowered.';
 }
@@ -493,26 +450,20 @@ String _sentence(String fact) {
 /// one `InsecureUrl` already uses: the core writes the fact, this says it, and
 /// the general sentence is kept for a refusal that carries no detail at all.
 String _document(Refusal reason, String detail) => switch (reason) {
-  Refusal_MalformedDocument() => detail.isEmpty
-      ? 'This document is damaged or incomplete.'
-      : _sentence(detail),
-  Refusal_EncryptedPdf() =>
-    'This PDF is password-protected. Remove the password and try again.',
+  Refusal_MalformedDocument() =>
+    detail.isEmpty ? sentences.refusalMalformedDocument : _sentence(detail),
+  Refusal_EncryptedPdf() => sentences.refusalEncryptedPdf,
   Refusal_ScannedPdfNoTextLayer(:final pages) => pages == 1
-      ? 'This PDF is a picture of a page with no text in it, so nothing could '
-            'be read — and Z Privacy will not import a document it cannot see.'
-      : 'This PDF is $pages pages of pictures with no text in them, so nothing '
-            'could be read.',
+      ? sentences.refusalScannedOnePage
+      : sentences.refusalScannedPages(pages),
   // The core measured two things here and the screen used to pass on neither:
   // how much of the page decoded, and what a person can do about it. Read
   // without them — «Page 5 could not be read as text» — it sounds like the app
   // took a page of words for a picture, which is what the owner read it as.
   Refusal_UnsupportedEncoding(:final page, :final readablePercent) =>
-    'Only $readablePercent% of page $page decoded into characters, so this '
-        'document is refused rather than half-read. Open it and save it as '
-        'text, or paste the text in.',
+    sentences.refusalUnsupportedEncoding(readablePercent, page),
   Refusal_UnreadableStructure(:final page) =>
-    'Page $page is built in a way this build cannot read.',
+    sentences.refusalUnreadableStructure(page),
   // **The limits, said with their numbers** — e2's reading of the attacker's
   // B3-4 and this round's خ5 and ن16, both on 17 October, landing on the same
   // seven refusals from two sides. The core names every one of them and says
@@ -535,26 +486,18 @@ String _document(Refusal reason, String detail) => switch (reason) {
   // figure overstates by less than a megabyte and can never understate, which
   // is the direction a refusal's own number must round.
   Refusal_DocumentTooLarge(:final mib, :final limitMib) =>
-    'This file is about $mib MiB, and Z Privacy opens documents up to '
-        '$limitMib MiB.',
+    sentences.refusalDocumentTooLarge(mib, limitMib),
   Refusal_TooManyPages(:final pages, :final limit) =>
-    'This document has $pages pages, and Z Privacy opens up to $limit in one '
-        'document.',
+    sentences.refusalTooManyPages(pages, limit),
   Refusal_TextTooLarge(:final limitMib) =>
-    'Unpacked, a part of this file is more than $limitMib MiB — more than Z '
-        'Privacy reads in one document, so none of it was imported.',
+    sentences.refusalTextTooLarge(limitMib),
   Refusal_CompressionBomb(:final ratio) =>
-    'A part of this file unpacks to more than $ratio times the space it takes '
-        'up. No real document does that, so Z Privacy stopped unpacking it '
-        'instead of filling the machine.',
+    sentences.refusalCompressionBomb(ratio),
   Refusal_TooManyParts(:final parts, :final limit) =>
-    'This file lists $parts parts inside it, and a document has tens, not '
-        'thousands — Z Privacy opens up to $limit.',
+    sentences.refusalTooManyParts(parts, limit),
   Refusal_TookTooLong(:final millis) =>
-    'Reading this file was still going after ${millis ~/ 1000} seconds, so Z '
-        'Privacy stopped. Nothing of it was imported.',
-  Refusal_EmptyDocument() =>
-    'There is no text in this file for Z Privacy to protect.',
+    sentences.refusalTookTooLong(millis ~/ 1000),
+  Refusal_EmptyDocument() => sentences.refusalEmptyDocument,
 };
 
 /// **A key the vault is holding is not a key that was never given** — the
@@ -574,13 +517,10 @@ String _document(Refusal reason, String detail) => switch (reason) {
 /// to send a question to find out that the vault is shut. Three places that
 /// said it in their own words would drift, and the first time they disagreed
 /// the quieter one would win.
-const theKeyIsBehindTheLockedVault =
-    'Z Privacy cannot reach a key while the vault is locked. Unlock it, or '
-    'give a key for this run.';
+String get theKeyIsBehindTheLockedVault => sentences.theKeyIsBehindTheLockedVault;
 
 String _network(NetworkRefusal reason, String detail) => switch (reason) {
-  NetworkRefusal_NotConnected() =>
-    'No AI provider is connected. Add an address and a key first.',
+  NetworkRefusal_NotConnected() => sentences.networkNotConnected,
   // **A key the vault is holding is not a key that was never given** — the
   // owner, 18 October 2026, who read the sentence above about a key sealed in
   // his own vault after it auto-locked, and was told to add one.
@@ -594,28 +534,20 @@ String _network(NetworkRefusal reason, String detail) => switch (reason) {
   // The detail names the rule and gives a working example — a fact the person
   // needs in order to fix it, not phrasing.
   NetworkRefusal_InsecureUrl() =>
-    detail.isEmpty ? 'That address is not safe to send to.' : _sentence(detail),
-  NetworkRefusal_Redirected() =>
-    'That address sent us somewhere else. Z Privacy does not follow redirects '
-        'with your text, so nothing was sent.',
+    detail.isEmpty ? sentences.networkInsecureUrl : _sentence(detail),
+  NetworkRefusal_Redirected() => sentences.networkRedirected,
   NetworkRefusal_BadStatus(:final status) =>
-    'The provider refused the request with status $status. Nothing of your '
-        'document was kept by Z Privacy.',
-  NetworkRefusal_Timeout() =>
-    'The provider did not answer in time. Nothing else was sent.',
+    sentences.networkBadStatus(status),
+  NetworkRefusal_Timeout() => sentences.networkTimeout,
   NetworkRefusal_ResponseTooLarge(:final limitKib) =>
-    'The answer was larger than ${limitKib} KiB and was not read.',
+    sentences.networkResponseTooLarge(limitKib),
   NetworkRefusal_PayloadTooLarge(:final kib, :final limitKib) =>
-    'This text is ${kib} KiB and the provider accepts '
-        '${limitKib} KiB in one request.',
-  NetworkRefusal_Unreadable() =>
-    'The provider answered with something that is not an answer.',
+    sentences.networkPayloadTooLarge(kib, limitKib),
+  NetworkRefusal_Unreadable() => sentences.networkUnreadable,
   // **The ninth, and it was the one that fell through** — the independent
   // attacker's ن15. «The connection to that provider did not work» fits every
   // other branch here too, which is why it said nothing: not whether the
   // address is wrong, this machine is offline, or the provider is down. The
   // core separates the nine; this is the one it had no sentence for.
-  NetworkRefusal_Unreachable() =>
-    'That address could not be reached at all — nothing answered. Check that '
-        'you are online and that the address is right. Nothing was sent.',
+  NetworkRefusal_Unreachable() => sentences.networkUnreachable,
 };
