@@ -112,10 +112,20 @@ String _tokenIn(String text, String kind) {
   throw StateError('no $kind token in «$text»');
 }
 
-Future<String> _aProfile(WidgetTester tester, Ground ground, String name) async {
+/// The profile, and **the folder it lives in** — because a test that needs to
+/// spell «the application closed and opened again» needs the folder: pointing
+/// the core at it is the one door that says «this run has opened nothing
+/// here», which is what a new process is.
+Future<({String profile, String folder})> _aProfile(
+  WidgetTester tester,
+  Ground ground,
+  String name,
+) async {
   late String id;
+  late String folder;
   await tester.runAsync(() async {
     final here = Directory('${Directory.systemTemp.path}/zprivacy-days-$name-$pid');
+    folder = here.path;
     if (here.existsSync()) here.deleteSync(recursive: true);
     addTearDown(() {
       if (here.existsSync()) here.deleteSync(recursive: true);
@@ -125,7 +135,7 @@ Future<String> _aProfile(WidgetTester tester, Ground ground, String name) async 
     await ground.refresh();
     id = await z.createProfile(name: 'Nordstern', session: null);
   });
-  return id;
+  return (profile: id, folder: folder);
 }
 
 /// **The chat, with the restored text open** — rules 65 and 66.
@@ -158,7 +168,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1200, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final ground = Ground();
-    final profile = await _aProfile(tester, ground, 'band');
+    final (profile: profile, folder: folder) = await _aProfile(tester, ground, 'band');
 
     // Monday.
     final (monday, mondayText) = await _aDay(tester, profile);
@@ -169,10 +179,19 @@ void main() {
       // **And the app is shut between the two days** — since rule 55 (16
       // October) a document entering the preview is born into whichever
       // session is open, so two documents in one run are one session and
-      // Monday's token would be Friday's own. Locking and opening the vault is
-      // what a restart does to the open session's number, and «another
-      // conversation» is the state this guard is about.
+      // Monday's token would be Friday's own. «Another conversation» is the
+      // state this guard is about.
+      //
+      // **A lock and an unlock stopped being a restart on 18 October.** They
+      // were one only because a lock forgot which session was open, which was
+      // a side effect of one line and not a law — the owner's second question
+      // after an Unlock was answered into a session born on the spot while the
+      // chat he was reading stayed in the one before it. An unlock gives the
+      // session back now (`the_lock_gives_the_session_back.rs`), so the restart
+      // is spelled by the one door that means it: the core pointed at its
+      // folder again, which is "this run has opened nothing here".
       await z.vaultLock();
+      await z.setDataDir(dir: folder);
       await z.vaultUnlockWithPassphrase(passphrase: _pass);
     });
     monday.dispose();
@@ -217,7 +236,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(1200, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final ground = Ground();
-    final profile = await _aProfile(tester, ground, 'control');
+    final (profile: profile, folder: _) = await _aProfile(tester, ground, 'control');
 
     final (today, text) = await _aDay(tester, profile);
     addTearDown(today.dispose);

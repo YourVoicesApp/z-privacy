@@ -34,6 +34,9 @@ pub(crate) fn set_data_dir(dir: String) -> ApiResult<()> {
         // folder, the same sessions, the same chat the person is in the middle
         // of.
         core.chats_opened.clear();
+        // And the number a lock kept belongs to the folder it was open in, for
+        // the same reason: session 1 here is not session 1 there.
+        core.conversation_before_the_lock = None;
         Ok(())
     })
 }
@@ -57,9 +60,37 @@ pub(crate) fn vault_unlock(passphrase: String) -> ApiResult<VaultUnlockOutcome> 
     match with_core(|core| core.vault.unlock(&passphrase)) {
         Ok((identities, values)) => {
             crate::session::bump_truth();
+            the_session_the_lock_took_away();
             Ok(VaultUnlockOutcome::Unlocked { identities, values })
         }
         Err(other) => Err(other),
+    }
+}
+
+/// **Enter again the session the lock took away** — the other half of
+/// `vault_lock`'s kept number.
+///
+/// By the same door a person would use (`conversation::enter`), for its own
+/// reasons and not for tidiness: entering is what re-derives this document's
+/// names into the session and what asks whether this run has already opened it
+/// (rule 68), and a second way in here would be a second opinion about both.
+/// The bench is `None` on purpose: the names on it are already this session's —
+/// a lock renames nothing — and `enter`'s rename is for a person arriving at a
+/// session from somewhere else, not for restoring what a lock removed.
+///
+/// **Three states, and each is measured.** With nothing kept, nothing is
+/// entered and no session is born: an unlock in a run that had none open
+/// leaves none open. With a number whose session no longer exists — forgotten
+/// from the room while the vault was shut — `enter` refuses before it assigns
+/// anything, so the refusal is swallowed here and nothing is left open; the
+/// next exit births a session as it would have anyway. And the number is
+/// **taken**, so it is spent once.
+fn the_session_the_lock_took_away() {
+    let kept = with_core(|core| core.conversation_before_the_lock.take());
+    if let Some(number) = kept {
+        // A refusal here is not news for the person: the session they were in
+        // is gone, and the one act they asked for — the unlock — succeeded.
+        let _ = crate::ops::conversation::enter(number, None);
     }
 }
 
@@ -79,7 +110,16 @@ pub(crate) fn vault_lock() -> ApiResult<()> {
         // goes, and the next unlock plus an `enter` brings both back. That is
         // 062 §D: a lock must not become the power cut the whole task exists to
         // prevent, and it must not leave a number standing that no key opens.
-        core.open_conversation = None;
+        //
+        // **And the number itself is not secret** — 18 October 2026. 064 let it
+        // go with the key as a side effect of this line, not as a law: what the
+        // key guards is the way into the file, and «which session was open» is
+        // a fact about this run that no passphrase protects. So it is kept, and
+        // `vault_unlock` enters that session again. Without this the owner's
+        // Unlock left no session open at all, his next question was answered
+        // into one born on the spot, and the chat he was looking at — in the
+        // session before it — stopped being the chat the panel drew.
+        core.conversation_before_the_lock = core.open_conversation.take();
     });
     crate::session::bump_truth();
     Ok(())

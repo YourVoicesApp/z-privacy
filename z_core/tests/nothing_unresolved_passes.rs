@@ -159,19 +159,30 @@ fn an_answer_from_another_conversation_is_reported_and_not_passed_through() {
     let old_iban = token_in(&monday_text, "_IBAN_");
     let old_person = token_in(&monday_text, "_PERSON_");
     close_session(monday).ok();
-    // **And the app is shut between the two days, which since rule 55 is what
-    // makes them two sessions.** A document entering the preview is born into
-    // whichever session is open (16 October), so two documents opened in one
-    // run are one session and Monday's token would be Friday's own. Locking
-    // and opening the vault is what a restart does to the open session's
-    // number, and «another day» is the state this guard is about.
-    vault_lock().expect("lock");
-    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
 
     // Friday. One figure in the letter has changed, so this is another
     // document — and the model's answer from Monday is what he has in front of
     // him.
-    let (friday, handle, _) = a_day_on(&profile, EDITED);
+    //
+    // **And it is another session, which since rule 55 is what makes the two
+    // days two.** A document entering a preview is born into whichever session
+    // is open (16 October), so two documents in one run are one session and
+    // Monday's token would be Friday's own.
+    //
+    // **The stand-in for a restart changed on 18 October.** It was a lock and
+    // an unlock, because a lock forgot which session was open and the next
+    // document was born into a new one — and that was a side effect of one
+    // line, not a law: the owner's second question after an Unlock was
+    // answered into a session born on the spot while the chat he was reading
+    // stayed in the one before it. An unlock gives the session back now
+    // (`the_lock_gives_the_session_back.rs`), so this guard says what it means
+    // instead of leaning on that: Friday's document is begun into a session of
+    // its own, by the door that births one, which re-derives this document's
+    // names from **this** session's key. That is the state the guard is about —
+    // two days, two keys — and it no longer depends on what a lock forgets.
+    let (friday, _, _) = a_day_on(&profile, EDITED);
+    conversation_begin("Freitag".to_string(), Some(friday)).expect("Friday's own session");
+    let handle = build_payload(friday).expect("payload, with Friday's own names");
     let from_monday = format!("I checked {old_iban} for {old_person}: the balance is 42 500.");
     let answer = ingest_answer(handle, from_monday.clone()).expect("ingest");
 

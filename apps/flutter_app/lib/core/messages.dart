@@ -557,9 +557,40 @@ String _document(Refusal reason, String detail) => switch (reason) {
     'There is no text in this file for Z Privacy to protect.',
 };
 
+/// **A key the vault is holding is not a key that was never given** — the
+/// owner, 18 October 2026, who read «No AI provider is connected. Add an
+/// address and a key first.» about a key sealed in his own vault after it
+/// auto-locked.
+///
+/// Both moves are named, because the state does not say which one the person
+/// needs: a shut vault answers nothing about its contents, so «unlock it» is
+/// for the one whose key is in there and «give a key for this run» is for the
+/// one who never had one. Naming only the first would be the same guess in the
+/// other direction.
+///
+/// **One sentence, three seats.** It is the refusal a send gets back
+/// (`NetworkRefusal.vaultLocked`), and it is what the compose line and the
+/// Direct API card say **before** a press — because a person should not have
+/// to send a question to find out that the vault is shut. Three places that
+/// said it in their own words would drift, and the first time they disagreed
+/// the quieter one would win.
+const theKeyIsBehindTheLockedVault =
+    'Z Privacy cannot reach a key while the vault is locked. Unlock it, or '
+    'give a key for this run.';
+
 String _network(NetworkRefusal reason, String detail) => switch (reason) {
   NetworkRefusal_NotConnected() =>
     'No AI provider is connected. Add an address and a key first.',
+  // **A key the vault is holding is not a key that was never given** — the
+  // owner, 18 October 2026, who read the sentence above about a key sealed in
+  // his own vault after it auto-locked, and was told to add one.
+  //
+  // Both moves are named, because the state does not say which one the person
+  // needs: a shut vault answers nothing about its contents, so «unlock it» is
+  // for the one whose key is in there and «give a key for this run» is for the
+  // one who never had one. Naming only the first would be the same guess in
+  // the other direction.
+  NetworkRefusal_VaultLocked() => theKeyIsBehindTheLockedVault,
   // The detail names the rule and gives a working example — a fact the person
   // needs in order to fix it, not phrasing.
   NetworkRefusal_InsecureUrl() =>

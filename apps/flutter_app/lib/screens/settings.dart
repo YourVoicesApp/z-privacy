@@ -349,11 +349,19 @@ class _AiRoom extends StatelessWidget {
             // the endpoint — which is the only place it answers a question
             // anyone actually has.
             title: 'Direct API',
-            what: row.credentialRequired
-                ? 'Connect to a remote AI provider with your API credential. The key goes in '
-                    'once and never comes back out — no screen in this app can show it to you '
-                    'again.'
-                : 'At this address no credential is needed.',
+            // **And what the vault's state means for this card** — 18
+            // October 2026. A sealed login cannot be read while the vault is
+            // shut, so this card reports «Not connected» about a provider the
+            // person connected weeks ago. The card says why, in the sentence
+            // the refusal would have used, rather than leaving a press to
+            // discover it.
+            what: ground.vault == VaultState.locked && !row.connected
+                ? theKeyIsBehindTheLockedVault
+                : row.credentialRequired
+                    ? 'Connect to a remote AI provider with your API credential. The key goes in '
+                        'once and never comes back out — no screen in this app can show it to you '
+                        'again.'
+                    : 'At this address no credential is needed.',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

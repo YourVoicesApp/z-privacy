@@ -1695,11 +1695,12 @@ extension NetworkRefusalPatterns on NetworkRefusal {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( NetworkRefusal_NotConnected value)?  notConnected,TResult Function( NetworkRefusal_InsecureUrl value)?  insecureUrl,TResult Function( NetworkRefusal_Redirected value)?  redirected,TResult Function( NetworkRefusal_BadStatus value)?  badStatus,TResult Function( NetworkRefusal_Timeout value)?  timeout,TResult Function( NetworkRefusal_ResponseTooLarge value)?  responseTooLarge,TResult Function( NetworkRefusal_PayloadTooLarge value)?  payloadTooLarge,TResult Function( NetworkRefusal_Unreadable value)?  unreadable,TResult Function( NetworkRefusal_Unreachable value)?  unreachable,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( NetworkRefusal_NotConnected value)?  notConnected,TResult Function( NetworkRefusal_VaultLocked value)?  vaultLocked,TResult Function( NetworkRefusal_InsecureUrl value)?  insecureUrl,TResult Function( NetworkRefusal_Redirected value)?  redirected,TResult Function( NetworkRefusal_BadStatus value)?  badStatus,TResult Function( NetworkRefusal_Timeout value)?  timeout,TResult Function( NetworkRefusal_ResponseTooLarge value)?  responseTooLarge,TResult Function( NetworkRefusal_PayloadTooLarge value)?  payloadTooLarge,TResult Function( NetworkRefusal_Unreadable value)?  unreadable,TResult Function( NetworkRefusal_Unreachable value)?  unreachable,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case NetworkRefusal_NotConnected() when notConnected != null:
-return notConnected(_that);case NetworkRefusal_InsecureUrl() when insecureUrl != null:
+return notConnected(_that);case NetworkRefusal_VaultLocked() when vaultLocked != null:
+return vaultLocked(_that);case NetworkRefusal_InsecureUrl() when insecureUrl != null:
 return insecureUrl(_that);case NetworkRefusal_Redirected() when redirected != null:
 return redirected(_that);case NetworkRefusal_BadStatus() when badStatus != null:
 return badStatus(_that);case NetworkRefusal_Timeout() when timeout != null:
@@ -1725,11 +1726,12 @@ return unreachable(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( NetworkRefusal_NotConnected value)  notConnected,required TResult Function( NetworkRefusal_InsecureUrl value)  insecureUrl,required TResult Function( NetworkRefusal_Redirected value)  redirected,required TResult Function( NetworkRefusal_BadStatus value)  badStatus,required TResult Function( NetworkRefusal_Timeout value)  timeout,required TResult Function( NetworkRefusal_ResponseTooLarge value)  responseTooLarge,required TResult Function( NetworkRefusal_PayloadTooLarge value)  payloadTooLarge,required TResult Function( NetworkRefusal_Unreadable value)  unreadable,required TResult Function( NetworkRefusal_Unreachable value)  unreachable,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( NetworkRefusal_NotConnected value)  notConnected,required TResult Function( NetworkRefusal_VaultLocked value)  vaultLocked,required TResult Function( NetworkRefusal_InsecureUrl value)  insecureUrl,required TResult Function( NetworkRefusal_Redirected value)  redirected,required TResult Function( NetworkRefusal_BadStatus value)  badStatus,required TResult Function( NetworkRefusal_Timeout value)  timeout,required TResult Function( NetworkRefusal_ResponseTooLarge value)  responseTooLarge,required TResult Function( NetworkRefusal_PayloadTooLarge value)  payloadTooLarge,required TResult Function( NetworkRefusal_Unreadable value)  unreadable,required TResult Function( NetworkRefusal_Unreachable value)  unreachable,}){
 final _that = this;
 switch (_that) {
 case NetworkRefusal_NotConnected():
-return notConnected(_that);case NetworkRefusal_InsecureUrl():
+return notConnected(_that);case NetworkRefusal_VaultLocked():
+return vaultLocked(_that);case NetworkRefusal_InsecureUrl():
 return insecureUrl(_that);case NetworkRefusal_Redirected():
 return redirected(_that);case NetworkRefusal_BadStatus():
 return badStatus(_that);case NetworkRefusal_Timeout():
@@ -1751,11 +1753,12 @@ return unreachable(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( NetworkRefusal_NotConnected value)?  notConnected,TResult? Function( NetworkRefusal_InsecureUrl value)?  insecureUrl,TResult? Function( NetworkRefusal_Redirected value)?  redirected,TResult? Function( NetworkRefusal_BadStatus value)?  badStatus,TResult? Function( NetworkRefusal_Timeout value)?  timeout,TResult? Function( NetworkRefusal_ResponseTooLarge value)?  responseTooLarge,TResult? Function( NetworkRefusal_PayloadTooLarge value)?  payloadTooLarge,TResult? Function( NetworkRefusal_Unreadable value)?  unreadable,TResult? Function( NetworkRefusal_Unreachable value)?  unreachable,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( NetworkRefusal_NotConnected value)?  notConnected,TResult? Function( NetworkRefusal_VaultLocked value)?  vaultLocked,TResult? Function( NetworkRefusal_InsecureUrl value)?  insecureUrl,TResult? Function( NetworkRefusal_Redirected value)?  redirected,TResult? Function( NetworkRefusal_BadStatus value)?  badStatus,TResult? Function( NetworkRefusal_Timeout value)?  timeout,TResult? Function( NetworkRefusal_ResponseTooLarge value)?  responseTooLarge,TResult? Function( NetworkRefusal_PayloadTooLarge value)?  payloadTooLarge,TResult? Function( NetworkRefusal_Unreadable value)?  unreadable,TResult? Function( NetworkRefusal_Unreachable value)?  unreachable,}){
 final _that = this;
 switch (_that) {
 case NetworkRefusal_NotConnected() when notConnected != null:
-return notConnected(_that);case NetworkRefusal_InsecureUrl() when insecureUrl != null:
+return notConnected(_that);case NetworkRefusal_VaultLocked() when vaultLocked != null:
+return vaultLocked(_that);case NetworkRefusal_InsecureUrl() when insecureUrl != null:
 return insecureUrl(_that);case NetworkRefusal_Redirected() when redirected != null:
 return redirected(_that);case NetworkRefusal_BadStatus() when badStatus != null:
 return badStatus(_that);case NetworkRefusal_Timeout() when timeout != null:
@@ -1780,10 +1783,11 @@ return unreachable(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notConnected,TResult Function()?  insecureUrl,TResult Function( int status)?  redirected,TResult Function( int status)?  badStatus,TResult Function( int millis)?  timeout,TResult Function( int limitKib)?  responseTooLarge,TResult Function( int kib,  int limitKib)?  payloadTooLarge,TResult Function()?  unreadable,TResult Function()?  unreachable,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  notConnected,TResult Function()?  vaultLocked,TResult Function()?  insecureUrl,TResult Function( int status)?  redirected,TResult Function( int status)?  badStatus,TResult Function( int millis)?  timeout,TResult Function( int limitKib)?  responseTooLarge,TResult Function( int kib,  int limitKib)?  payloadTooLarge,TResult Function()?  unreadable,TResult Function()?  unreachable,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case NetworkRefusal_NotConnected() when notConnected != null:
-return notConnected();case NetworkRefusal_InsecureUrl() when insecureUrl != null:
+return notConnected();case NetworkRefusal_VaultLocked() when vaultLocked != null:
+return vaultLocked();case NetworkRefusal_InsecureUrl() when insecureUrl != null:
 return insecureUrl();case NetworkRefusal_Redirected() when redirected != null:
 return redirected(_that.status);case NetworkRefusal_BadStatus() when badStatus != null:
 return badStatus(_that.status);case NetworkRefusal_Timeout() when timeout != null:
@@ -1809,10 +1813,11 @@ return unreachable();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notConnected,required TResult Function()  insecureUrl,required TResult Function( int status)  redirected,required TResult Function( int status)  badStatus,required TResult Function( int millis)  timeout,required TResult Function( int limitKib)  responseTooLarge,required TResult Function( int kib,  int limitKib)  payloadTooLarge,required TResult Function()  unreadable,required TResult Function()  unreachable,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  notConnected,required TResult Function()  vaultLocked,required TResult Function()  insecureUrl,required TResult Function( int status)  redirected,required TResult Function( int status)  badStatus,required TResult Function( int millis)  timeout,required TResult Function( int limitKib)  responseTooLarge,required TResult Function( int kib,  int limitKib)  payloadTooLarge,required TResult Function()  unreadable,required TResult Function()  unreachable,}) {final _that = this;
 switch (_that) {
 case NetworkRefusal_NotConnected():
-return notConnected();case NetworkRefusal_InsecureUrl():
+return notConnected();case NetworkRefusal_VaultLocked():
+return vaultLocked();case NetworkRefusal_InsecureUrl():
 return insecureUrl();case NetworkRefusal_Redirected():
 return redirected(_that.status);case NetworkRefusal_BadStatus():
 return badStatus(_that.status);case NetworkRefusal_Timeout():
@@ -1834,10 +1839,11 @@ return unreachable();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notConnected,TResult? Function()?  insecureUrl,TResult? Function( int status)?  redirected,TResult? Function( int status)?  badStatus,TResult? Function( int millis)?  timeout,TResult? Function( int limitKib)?  responseTooLarge,TResult? Function( int kib,  int limitKib)?  payloadTooLarge,TResult? Function()?  unreadable,TResult? Function()?  unreachable,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  notConnected,TResult? Function()?  vaultLocked,TResult? Function()?  insecureUrl,TResult? Function( int status)?  redirected,TResult? Function( int status)?  badStatus,TResult? Function( int millis)?  timeout,TResult? Function( int limitKib)?  responseTooLarge,TResult? Function( int kib,  int limitKib)?  payloadTooLarge,TResult? Function()?  unreadable,TResult? Function()?  unreachable,}) {final _that = this;
 switch (_that) {
 case NetworkRefusal_NotConnected() when notConnected != null:
-return notConnected();case NetworkRefusal_InsecureUrl() when insecureUrl != null:
+return notConnected();case NetworkRefusal_VaultLocked() when vaultLocked != null:
+return vaultLocked();case NetworkRefusal_InsecureUrl() when insecureUrl != null:
 return insecureUrl();case NetworkRefusal_Redirected() when redirected != null:
 return redirected(_that.status);case NetworkRefusal_BadStatus() when badStatus != null:
 return badStatus(_that.status);case NetworkRefusal_Timeout() when timeout != null:
@@ -1877,6 +1883,38 @@ int get hashCode => runtimeType.hashCode;
 @override
 String toString() {
   return 'NetworkRefusal.notConnected()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class NetworkRefusal_VaultLocked extends NetworkRefusal {
+  const NetworkRefusal_VaultLocked(): super._();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkRefusal_VaultLocked);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'NetworkRefusal.vaultLocked()';
 }
 
 

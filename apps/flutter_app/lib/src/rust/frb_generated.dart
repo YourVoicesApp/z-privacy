@@ -5370,25 +5370,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 0:
         return NetworkRefusal_NotConnected();
       case 1:
-        return NetworkRefusal_InsecureUrl();
+        return NetworkRefusal_VaultLocked();
       case 2:
-        return NetworkRefusal_Redirected(status: dco_decode_u_32(raw[1]));
+        return NetworkRefusal_InsecureUrl();
       case 3:
-        return NetworkRefusal_BadStatus(status: dco_decode_u_32(raw[1]));
+        return NetworkRefusal_Redirected(status: dco_decode_u_32(raw[1]));
       case 4:
-        return NetworkRefusal_Timeout(millis: dco_decode_u_32(raw[1]));
+        return NetworkRefusal_BadStatus(status: dco_decode_u_32(raw[1]));
       case 5:
+        return NetworkRefusal_Timeout(millis: dco_decode_u_32(raw[1]));
+      case 6:
         return NetworkRefusal_ResponseTooLarge(
           limitKib: dco_decode_u_32(raw[1]),
         );
-      case 6:
+      case 7:
         return NetworkRefusal_PayloadTooLarge(
           kib: dco_decode_u_32(raw[1]),
           limitKib: dco_decode_u_32(raw[2]),
         );
-      case 7:
-        return NetworkRefusal_Unreadable();
       case 8:
+        return NetworkRefusal_Unreadable();
+      case 9:
         return NetworkRefusal_Unreachable();
       default:
         throw Exception("unreachable");
@@ -7448,29 +7450,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 0:
         return NetworkRefusal_NotConnected();
       case 1:
-        return NetworkRefusal_InsecureUrl();
+        return NetworkRefusal_VaultLocked();
       case 2:
-        var var_status = sse_decode_u_32(deserializer);
-        return NetworkRefusal_Redirected(status: var_status);
+        return NetworkRefusal_InsecureUrl();
       case 3:
         var var_status = sse_decode_u_32(deserializer);
-        return NetworkRefusal_BadStatus(status: var_status);
+        return NetworkRefusal_Redirected(status: var_status);
       case 4:
+        var var_status = sse_decode_u_32(deserializer);
+        return NetworkRefusal_BadStatus(status: var_status);
+      case 5:
         var var_millis = sse_decode_u_32(deserializer);
         return NetworkRefusal_Timeout(millis: var_millis);
-      case 5:
+      case 6:
         var var_limitKib = sse_decode_u_32(deserializer);
         return NetworkRefusal_ResponseTooLarge(limitKib: var_limitKib);
-      case 6:
+      case 7:
         var var_kib = sse_decode_u_32(deserializer);
         var var_limitKib = sse_decode_u_32(deserializer);
         return NetworkRefusal_PayloadTooLarge(
           kib: var_kib,
           limitKib: var_limitKib,
         );
-      case 7:
-        return NetworkRefusal_Unreadable();
       case 8:
+        return NetworkRefusal_Unreadable();
+      case 9:
         return NetworkRefusal_Unreachable();
       default:
         throw UnimplementedError('');
@@ -9525,31 +9529,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     switch (self) {
       case NetworkRefusal_NotConnected():
         sse_encode_i_32(0, serializer);
-      case NetworkRefusal_InsecureUrl():
+      case NetworkRefusal_VaultLocked():
         sse_encode_i_32(1, serializer);
-      case NetworkRefusal_Redirected(status: final status):
+      case NetworkRefusal_InsecureUrl():
         sse_encode_i_32(2, serializer);
-        sse_encode_u_32(status, serializer);
-      case NetworkRefusal_BadStatus(status: final status):
+      case NetworkRefusal_Redirected(status: final status):
         sse_encode_i_32(3, serializer);
         sse_encode_u_32(status, serializer);
-      case NetworkRefusal_Timeout(millis: final millis):
+      case NetworkRefusal_BadStatus(status: final status):
         sse_encode_i_32(4, serializer);
+        sse_encode_u_32(status, serializer);
+      case NetworkRefusal_Timeout(millis: final millis):
+        sse_encode_i_32(5, serializer);
         sse_encode_u_32(millis, serializer);
       case NetworkRefusal_ResponseTooLarge(limitKib: final limitKib):
-        sse_encode_i_32(5, serializer);
+        sse_encode_i_32(6, serializer);
         sse_encode_u_32(limitKib, serializer);
       case NetworkRefusal_PayloadTooLarge(
         kib: final kib,
         limitKib: final limitKib,
       ):
-        sse_encode_i_32(6, serializer);
+        sse_encode_i_32(7, serializer);
         sse_encode_u_32(kib, serializer);
         sse_encode_u_32(limitKib, serializer);
       case NetworkRefusal_Unreadable():
-        sse_encode_i_32(7, serializer);
-      case NetworkRefusal_Unreachable():
         sse_encode_i_32(8, serializer);
+      case NetworkRefusal_Unreachable():
+        sse_encode_i_32(9, serializer);
     }
   }
 

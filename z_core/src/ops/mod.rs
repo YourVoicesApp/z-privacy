@@ -1346,9 +1346,28 @@ pub(crate) fn login_in_vault(id: &str) -> Option<ProviderLogin> {
 }
 
 /// The credential to use: the vault's if it is open, this run's otherwise.
+///
+/// **A key the vault is holding is not a key that was never given** — 18
+/// October 2026, the owner, who read «No AI provider is connected. Add an
+/// address and a key first.» about a key sealed in his own vault. The cause
+/// was true and is above: `login_in_vault` reads through `with_open`, which
+/// fails while the vault is shut, and what is left is this run's own logins —
+/// so a sealed key is «no credential in this run». The *sentence* was the
+/// fault, and a sentence can only be as good as the reason it is given, so
+/// the reason is told apart here: with nothing found and a vault that is
+/// **shut**, the refusal names the vault. With no vault at all there is
+/// nothing to unlock and nothing could have been sealed, so that stays
+/// «nothing is connected» — the two states differ in what to do next, which
+/// is the whole of what a refusal is for.
 pub(crate) fn login_for(id: &str) -> ApiResult<ProviderLogin> {
     let found = login_in_vault(id).or_else(|| with_core(|core| core.session_logins.get(id).cloned()));
-    let login = found.ok_or_else(|| crate::providers::not_connected(id))?;
+    let Some(login) = found else {
+        return Err(if with_core(|core| core.vault.state()) == crate::api::VaultState::Locked {
+            crate::providers::vault_locked(id)
+        } else {
+            crate::providers::not_connected(id)
+        });
+    };
     let provider = crate::providers::find(id)?;
     if !login_is_usable(provider.as_ref(), &login) {
         return Err(crate::providers::not_connected(id));
