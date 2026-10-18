@@ -1434,6 +1434,19 @@ sealed class NetworkRefusal with _$NetworkRefusal {
   /// This provider has no credential in this run.
   const factory NetworkRefusal.notConnected() = NetworkRefusal_NotConnected;
 
+  /// **There may well be a key, and it cannot be reached**: it is sealed in
+  /// the vault, and the vault is shut — 18 October 2026, the owner.
+  ///
+  /// Its own reason, and not `NotConnected`, because the two differ in the
+  /// one thing a refusal is for: what to do next. «Nothing is connected»
+  /// asks for an address and a key; this asks for a passphrase, and telling
+  /// a person to add a key they gave weeks ago is the wrong advice at the
+  /// worst moment. The core cannot tell whether a key is in there — a shut
+  /// vault answers nothing about its contents — so the sentence says what is
+  /// true of the state rather than guessing at the contents, and names both
+  /// moves out of it.
+  const factory NetworkRefusal.vaultLocked() = NetworkRefusal_VaultLocked;
+
   /// The address is not `https`, and is not a machine on this computer.
   const factory NetworkRefusal.insecureUrl() = NetworkRefusal_InsecureUrl;
 

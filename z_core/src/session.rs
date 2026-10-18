@@ -676,6 +676,25 @@ pub(crate) struct Core {
     /// is the number of rows a person clicks, and a `Vec` of `u32` at that size
     /// is cheaper to read than a map is to keep.
     pub chats_opened: Vec<u32>,
+    /// **The session a lock took away, kept so the unlock can give it back** —
+    /// 18 October 2026, the owner, whose second question after an Unlock was
+    /// answered into a session born on the spot while the chat he was looking
+    /// at stayed in the one before it.
+    ///
+    /// A number, not a key: this is the one fact about an open session that the
+    /// master key has nothing to do with. `vault_lock` clears
+    /// `open_conversation` because the *way into* the file goes with the key
+    /// (064), and the number went with it as a side effect of that line rather
+    /// than as a law of its own. Kept here, the unlock can enter the session
+    /// again by the same door a person would — so «unlock plus an enter»
+    /// becomes «unlock», and no screen has to carry a number across a lock it
+    /// did not cause.
+    ///
+    /// It is taken, not read: an unlock spends it, so a second unlock with
+    /// nothing locked in between enters nothing. And it is cleared with the
+    /// data directory, for `chats_opened`'s own reason — session 1 here is not
+    /// session 1 in another folder.
+    pub conversation_before_the_lock: Option<u32>,
 }
 
 impl Core {
@@ -690,6 +709,7 @@ impl Core {
             state_revision: 1,
             open_conversation: None,
             chats_opened: Vec::new(),
+            conversation_before_the_lock: None,
         }
     }
 

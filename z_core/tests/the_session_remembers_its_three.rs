@@ -67,9 +67,22 @@ impl Drop for Bench {
 /// file from disk again. What this does *not* reset is anything else the core
 /// holds in memory, so it is a stand-in and said to be one; the measurement
 /// that justified these guards was made with two real processes.
-fn close_the_app_and_reopen(bench: SessionId) {
+/// **The application closed and opened again**, which is what every claim in
+/// this file is about: what a session remembers across a run.
+///
+/// It was a lock and an unlock until 18 October 2026, because a lock forgot
+/// which session was open and so an unlock began the next run with none — and
+/// that was a side effect of one line, not a law (the owner's second question
+/// after an Unlock was answered into a session born on the spot while the chat
+/// he was reading stayed in the one before it; see
+/// `the_lock_gives_the_session_back.rs`). An unlock gives the session back now,
+/// so a lock and an unlock are no longer a restart and this says what it means
+/// instead: pointing the core at the folder again is the one door that spells
+/// «this run has opened nothing here», which is exactly what a new process is.
+fn close_the_app_and_reopen(bench: SessionId, dir: &std::path::Path) {
     close_session(bench).ok();
     vault_lock().expect("lock");
+    set_data_dir(dir.to_string_lossy().to_string()).expect("the folder again");
     vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
 }
 
@@ -97,7 +110,7 @@ fn the_language_a_session_was_born_into_outlives_the_application() {
         "the birth did not take the language from the bench that named it"
     );
 
-    close_the_app_and_reopen(bench);
+    close_the_app_and_reopen(bench, &dir);
 
     assert_eq!(
         row(born.number).pack_id.as_deref(),
@@ -152,7 +165,7 @@ fn changing_the_language_in_the_header_reaches_the_open_session() {
         "the header changed the language and the session did not hear it"
     );
 
-    close_the_app_and_reopen(bench);
+    close_the_app_and_reopen(bench, &dir);
     assert_eq!(
         row(born.number).pack_id.as_deref(),
         Some("de"),
@@ -189,7 +202,7 @@ fn the_first_document_of_a_session_born_without_one_writes_its_language() {
         "the first document did not write the session's language"
     );
 
-    close_the_app_and_reopen(held.0);
+    close_the_app_and_reopen(held.0, &dir);
     assert_eq!(
         row(born.number).pack_id.as_deref(),
         Some("de"),
@@ -298,7 +311,7 @@ fn a_turn_remembers_which_key_and_model_answered_it() {
     ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
 
-    close_the_app_and_reopen(held.0);
+    close_the_app_and_reopen(held.0, &dir);
 
     let turns = conversation_turns(born.number, None).expect("turns");
     let turn = turns.first().expect("the session kept no turn at all");
@@ -339,7 +352,7 @@ fn an_answer_the_person_carried_says_the_person_carried_it() {
         "the control is void: no provider is connected, so «no key» proves nothing"
     );
 
-    close_the_app_and_reopen(held.0);
+    close_the_app_and_reopen(held.0, &dir);
 
     let turns = conversation_turns(born.number, None).expect("turns");
     let turn = turns.first().expect("the session kept no turn at all");
@@ -383,7 +396,7 @@ fn a_session_holding_both_kinds_of_turn_keeps_them_apart() {
     let second = build_payload(held.0).expect("payload again");
     ingest_answer(second, "brought back from a browser".to_string()).expect("paste");
 
-    close_the_app_and_reopen(held.0);
+    close_the_app_and_reopen(held.0, &dir);
 
     let turns = conversation_turns(born.number, None).expect("turns");
     assert_eq!(turns.len(), 2, "the session did not keep both exchanges");
@@ -441,7 +454,7 @@ fn a_turn_remembers_which_file_it_was_about() {
     ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
 
-    close_the_app_and_reopen(held.0);
+    close_the_app_and_reopen(held.0, &dir);
 
     let turns = conversation_turns(born.number, None).expect("turns");
     let turn = turns.first().expect("the session kept no turn at all");
@@ -473,7 +486,7 @@ fn text_the_person_typed_says_there_was_no_file() {
     ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new())
         .expect("the echo answers");
 
-    close_the_app_and_reopen(held.0);
+    close_the_app_and_reopen(held.0, &dir);
 
     let turns = conversation_turns(born.number, None).expect("turns");
     let turn = turns.first().expect("the session kept no turn at all");
@@ -705,7 +718,7 @@ fn a_token_the_payload_never_allowed_stays_a_token() {
         .expect("the echo answers");
 
     // ---- read cold: no bench at all
-    close_the_app_and_reopen(second.0);
+    close_the_app_and_reopen(second.0, &dir);
     let turns = conversation_turns(number, None).expect("turns");
     let turn = turns.first().expect("the session kept no turn");
     let text = whole_turn(turn);
@@ -768,7 +781,7 @@ fn a_reopened_session_reads_its_own_history_back() {
         assert!(whole.contains(value), "the control is void: «{value}» never reached the turn");
     }
 
-    close_the_app_and_reopen(held.0);
+    close_the_app_and_reopen(held.0, &dir);
 
     let cold = conversation_turns(number, None).expect("turns");
     let turn = cold.first().expect("the session kept no turn at all");
@@ -851,7 +864,7 @@ fn every_protected_word_comes_back_when_the_document_opens_again() {
          keep, so this test is not measuring what it says"
     );
 
-    close_the_app_and_reopen(held.0);
+    close_the_app_and_reopen(held.0, &dir);
 
     // The same file, opened again on a new bench — which is what a person does
     // the next morning.

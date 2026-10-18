@@ -308,6 +308,18 @@ pub(crate) fn not_connected(id: &str) -> ApiError {
     )
 }
 
+/// The second refusal that is not about the network: the key may be in the
+/// vault, and the vault is shut.
+///
+/// The detail names the provider and the state, never a guess about what the
+/// vault holds — a shut vault answers nothing about its contents.
+pub(crate) fn vault_locked(id: &str) -> ApiError {
+    refuse(
+        NetworkRefusal::VaultLocked,
+        format!("{id} has no credential in this run, and the vault is locked"),
+    )
+}
+
 /// A refusal with a detail built from names and numbers, never from a response.
 pub(crate) fn refuse(reason: NetworkRefusal, detail: impl Into<String>) -> ApiError {
     ApiError::NetworkRefused {

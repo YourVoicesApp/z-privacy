@@ -154,12 +154,25 @@ class _TheChatState extends State<TheChat> {
     // Who the arrow sends to. The door the chat's first question chose, named
     // by the provider list — never a model name invented here.
     final door = bench.chatProvider;
-    final name = door == null
+    final row = door == null
         ? null
-        : widget.ground.providers
-              .where((p) => p.id == door)
-              .map((p) => p.label)
-              .firstOrNull;
+        : widget.ground.providers.where((p) => p.id == door).firstOrNull;
+    final name = row?.label ?? door;
+    // **The vault's state, before the press** — the owner, 18 October 2026.
+    //
+    // His key is sealed in the vault; the vault auto-locked while he read an
+    // answer; and he found out by sending a question into a door that could
+    // not be reached. The bench knows the vault's state and the panel draws
+    // the door, so the two together can say it first — and the sentence is the
+    // one the refusal would have used, worded once in `messages.dart`.
+    //
+    // Read as «the door this chat chose is not reachable while the vault is
+    // shut», not as «a key is in there»: a locked vault answers nothing about
+    // its contents, so `connected` is false for every sealed door and the
+    // honest line is about the state, not the contents. A key given for this
+    // run only keeps the door connected, and then nothing is said.
+    final theKeyCannotBeReached =
+        widget.ground.vault == VaultState.locked && row != null && !row.connected;
     return Container(
       key: TheChat.panel,
       width: widget.width,
@@ -243,6 +256,14 @@ class _TheChatState extends State<TheChat> {
               ],
             ),
           ),
+          if (theKeyCannotBeReached)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              child: Text(
+                theKeyIsBehindTheLockedVault,
+                style: Zc.small.copyWith(color: Zc.amber, fontWeight: FontWeight.w600),
+              ),
+            ),
           if (_said != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
@@ -289,7 +310,7 @@ class _TheChatState extends State<TheChat> {
                     // Grok». With no door chosen yet the arrow says so and
                     // opens the sheet instead of sending into nothing.
                     _Arrow(
-                      name: name ?? door,
+                      name: name,
                       busy: bench.sending,
                       empty: _text.text.trim().isEmpty,
                       onSend: door == null ? null : () => unawaited(_send()),

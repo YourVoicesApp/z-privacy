@@ -3907,6 +3907,7 @@ const _: fn() = || {
     }
     match None::<crate::api::mirrors::NetworkRefusal>.unwrap() {
         crate::api::mirrors::NetworkRefusal::NotConnected => {}
+        crate::api::mirrors::NetworkRefusal::VaultLocked => {}
         crate::api::mirrors::NetworkRefusal::InsecureUrl => {}
         crate::api::mirrors::NetworkRefusal::Redirected { status } => {
             let _: u32 = status;
@@ -5531,27 +5532,30 @@ impl SseDecode for crate::api::mirrors::NetworkRefusal {
                 return crate::api::mirrors::NetworkRefusal::NotConnected;
             }
             1 => {
-                return crate::api::mirrors::NetworkRefusal::InsecureUrl;
+                return crate::api::mirrors::NetworkRefusal::VaultLocked;
             }
             2 => {
-                let mut var_status = <u32>::sse_decode(deserializer);
-                return crate::api::mirrors::NetworkRefusal::Redirected { status: var_status };
+                return crate::api::mirrors::NetworkRefusal::InsecureUrl;
             }
             3 => {
                 let mut var_status = <u32>::sse_decode(deserializer);
-                return crate::api::mirrors::NetworkRefusal::BadStatus { status: var_status };
+                return crate::api::mirrors::NetworkRefusal::Redirected { status: var_status };
             }
             4 => {
+                let mut var_status = <u32>::sse_decode(deserializer);
+                return crate::api::mirrors::NetworkRefusal::BadStatus { status: var_status };
+            }
+            5 => {
                 let mut var_millis = <u32>::sse_decode(deserializer);
                 return crate::api::mirrors::NetworkRefusal::Timeout { millis: var_millis };
             }
-            5 => {
+            6 => {
                 let mut var_limitKib = <u32>::sse_decode(deserializer);
                 return crate::api::mirrors::NetworkRefusal::ResponseTooLarge {
                     limit_kib: var_limitKib,
                 };
             }
-            6 => {
+            7 => {
                 let mut var_kib = <u32>::sse_decode(deserializer);
                 let mut var_limitKib = <u32>::sse_decode(deserializer);
                 return crate::api::mirrors::NetworkRefusal::PayloadTooLarge {
@@ -5559,10 +5563,10 @@ impl SseDecode for crate::api::mirrors::NetworkRefusal {
                     limit_kib: var_limitKib,
                 };
             }
-            7 => {
+            8 => {
                 return crate::api::mirrors::NetworkRefusal::Unreadable;
             }
-            8 => {
+            9 => {
                 return crate::api::mirrors::NetworkRefusal::Unreachable;
             }
             _ => {
@@ -7727,27 +7731,28 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::NetworkRe
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self.0 {
             crate::api::mirrors::NetworkRefusal::NotConnected => [0.into_dart()].into_dart(),
-            crate::api::mirrors::NetworkRefusal::InsecureUrl => [1.into_dart()].into_dart(),
+            crate::api::mirrors::NetworkRefusal::VaultLocked => [1.into_dart()].into_dart(),
+            crate::api::mirrors::NetworkRefusal::InsecureUrl => [2.into_dart()].into_dart(),
             crate::api::mirrors::NetworkRefusal::Redirected { status } => {
-                [2.into_dart(), status.into_into_dart().into_dart()].into_dart()
-            }
-            crate::api::mirrors::NetworkRefusal::BadStatus { status } => {
                 [3.into_dart(), status.into_into_dart().into_dart()].into_dart()
             }
+            crate::api::mirrors::NetworkRefusal::BadStatus { status } => {
+                [4.into_dart(), status.into_into_dart().into_dart()].into_dart()
+            }
             crate::api::mirrors::NetworkRefusal::Timeout { millis } => {
-                [4.into_dart(), millis.into_into_dart().into_dart()].into_dart()
+                [5.into_dart(), millis.into_into_dart().into_dart()].into_dart()
             }
             crate::api::mirrors::NetworkRefusal::ResponseTooLarge { limit_kib } => {
-                [5.into_dart(), limit_kib.into_into_dart().into_dart()].into_dart()
+                [6.into_dart(), limit_kib.into_into_dart().into_dart()].into_dart()
             }
             crate::api::mirrors::NetworkRefusal::PayloadTooLarge { kib, limit_kib } => [
-                6.into_dart(),
+                7.into_dart(),
                 kib.into_into_dart().into_dart(),
                 limit_kib.into_into_dart().into_dart(),
             ]
             .into_dart(),
-            crate::api::mirrors::NetworkRefusal::Unreadable => [7.into_dart()].into_dart(),
-            crate::api::mirrors::NetworkRefusal::Unreachable => [8.into_dart()].into_dart(),
+            crate::api::mirrors::NetworkRefusal::Unreadable => [8.into_dart()].into_dart(),
+            crate::api::mirrors::NetworkRefusal::Unreachable => [9.into_dart()].into_dart(),
             _ => {
                 unimplemented!("");
             }
@@ -9879,35 +9884,38 @@ impl SseEncode for crate::api::mirrors::NetworkRefusal {
             crate::api::mirrors::NetworkRefusal::NotConnected => {
                 <i32>::sse_encode(0, serializer);
             }
-            crate::api::mirrors::NetworkRefusal::InsecureUrl => {
+            crate::api::mirrors::NetworkRefusal::VaultLocked => {
                 <i32>::sse_encode(1, serializer);
             }
-            crate::api::mirrors::NetworkRefusal::Redirected { status } => {
+            crate::api::mirrors::NetworkRefusal::InsecureUrl => {
                 <i32>::sse_encode(2, serializer);
-                <u32>::sse_encode(status, serializer);
             }
-            crate::api::mirrors::NetworkRefusal::BadStatus { status } => {
+            crate::api::mirrors::NetworkRefusal::Redirected { status } => {
                 <i32>::sse_encode(3, serializer);
                 <u32>::sse_encode(status, serializer);
             }
-            crate::api::mirrors::NetworkRefusal::Timeout { millis } => {
+            crate::api::mirrors::NetworkRefusal::BadStatus { status } => {
                 <i32>::sse_encode(4, serializer);
+                <u32>::sse_encode(status, serializer);
+            }
+            crate::api::mirrors::NetworkRefusal::Timeout { millis } => {
+                <i32>::sse_encode(5, serializer);
                 <u32>::sse_encode(millis, serializer);
             }
             crate::api::mirrors::NetworkRefusal::ResponseTooLarge { limit_kib } => {
-                <i32>::sse_encode(5, serializer);
+                <i32>::sse_encode(6, serializer);
                 <u32>::sse_encode(limit_kib, serializer);
             }
             crate::api::mirrors::NetworkRefusal::PayloadTooLarge { kib, limit_kib } => {
-                <i32>::sse_encode(6, serializer);
+                <i32>::sse_encode(7, serializer);
                 <u32>::sse_encode(kib, serializer);
                 <u32>::sse_encode(limit_kib, serializer);
             }
             crate::api::mirrors::NetworkRefusal::Unreadable => {
-                <i32>::sse_encode(7, serializer);
+                <i32>::sse_encode(8, serializer);
             }
             crate::api::mirrors::NetworkRefusal::Unreachable => {
-                <i32>::sse_encode(8, serializer);
+                <i32>::sse_encode(9, serializer);
             }
             _ => {
                 unimplemented!("");
