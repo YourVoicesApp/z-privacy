@@ -35,6 +35,7 @@ import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/the_clipboard.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -199,12 +200,12 @@ class _TheChatState extends State<TheChat> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Eyebrow('The chat'),
+                      Eyebrow(sentences.theChatTitle),
                       const SizedBox(height: 4),
                       Text(
                         turns.length == 1
-                            ? 'One exchange, carried into the next question.'
-                            : '${turns.length} exchanges, carried into the next question.',
+                            ? sentences.oneExchangeCarriedIntoTheNext
+                            : sentences.exchangesCarriedIntoTheNext(turns.length),
                         style: Zc.small,
                       ),
                     ],
@@ -216,7 +217,7 @@ class _TheChatState extends State<TheChat> {
                 IconButton(
                   icon: const Icon(Icons.close, size: 18),
                   color: Zc.ink3,
-                  tooltip: 'Put the chat away — it is not ended',
+                  tooltip: sentences.putTheChatAwayItIsNotEnded,
                   onPressed: () => bench.closeThePanel(),
                 ),
               ],
@@ -235,8 +236,7 @@ class _TheChatState extends State<TheChat> {
                     // glass the word for a container is «session», and this
                     // part is «The chat» in the owner's own ruling. G41 reads
                     // every sentence in this app for that word.
-                    'The first answer opens the chat here. Every question after it carries '
-                    'what was already said.',
+                    sentences.theFirstAnswerOpensTheChatHere,
                     style: Zc.small.copyWith(color: Zc.ink4),
                   ),
                 for (var at = 0; at < turns.length; at++) ...[
@@ -304,7 +304,7 @@ class _TheChatState extends State<TheChat> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
-                            hintText: 'Ask something else about this…',
+                            hintText: sentences.askSomethingElseAboutThis,
                             hintStyle: Zc.body.copyWith(color: Zc.ink4),
                           ),
                           onChanged: (_) => setState(() {}),
@@ -351,7 +351,7 @@ class _TheChatState extends State<TheChat> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Zc.card,
-                      hintText: 'Paste the answer you were given…',
+                      hintText: sentences.pasteTheAnswerYouWereGiven,
                       hintStyle: Zc.body.copyWith(color: Zc.ink4),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -366,7 +366,7 @@ class _TheChatState extends State<TheChat> {
                     children: [
                       ZButton(
                         key: TheChat.addIt,
-                        label: 'Add it to the chat',
+                        label: sentences.addItToTheChat,
                         filled: true,
                         onPressed: () => unawaited(_add()),
                       ),
@@ -376,7 +376,7 @@ class _TheChatState extends State<TheChat> {
                       // as cancelling the answer rather than closing the box.
                       ZButton(
                         key: TheChat.add,
-                        label: 'Not now',
+                        label: sentences.notNow,
                         onPressed: () => unawaited(_openTheBox()),
                       ),
                     ],
@@ -388,13 +388,13 @@ class _TheChatState extends State<TheChat> {
                     children: [
                       ZButton(
                         key: TheChat.copy,
-                        label: 'Copy the chat',
+                        label: sentences.copyTheChat,
                         icon: Icons.copy_all_outlined,
                         onPressed: turns.isEmpty ? null : () => unawaited(_copy()),
                       ),
                       ZButton(
                         key: TheChat.add,
-                        label: 'Add an answer',
+                        label: sentences.addAnAnswer,
                         icon: Icons.content_paste_go,
                         // **It pastes.** The owner, 29 September, on the press
                         // this one inherits: a button called «Paste» that only
@@ -406,7 +406,7 @@ class _TheChatState extends State<TheChat> {
                       ),
                       ZButton(
                         key: TheChat.end,
-                        label: 'End the chat',
+                        label: sentences.endTheChat,
                         icon: Icons.stop_circle_outlined,
                         onPressed: turns.isEmpty ? null : () => unawaited(_end()),
                       ),
@@ -447,8 +447,7 @@ class _TheChatState extends State<TheChat> {
   Future<void> _copy() async {
     final bad = await copyTheChat(widget.ground, widget.bench);
     if (!mounted) return;
-    setState(() => _said = bad ?? 'The chat is on your clipboard, protected — '
-        'bring the answer back with «Add an answer».');
+    setState(() => _said = bad ?? sentences.theChatIsOnYourClipboard);
   }
 
   /// **Open the box, with what is on the clipboard in it** — moved here from
@@ -473,7 +472,7 @@ class _TheChatState extends State<TheChat> {
       if (!mounted) return;
       setState(() {
         _adding = true;
-        _said = 'Z Privacy could not read the clipboard.';
+        _said = sentences.couldNotReadTheClipboard;
       });
       return;
     }
@@ -482,7 +481,7 @@ class _TheChatState extends State<TheChat> {
       _adding = true;
       if (text == null || text.isEmpty) {
         // The box still opens: they may want to type the answer by hand.
-        _said = 'There is no text on the clipboard.';
+        _said = sentences.thereIsNoTextOnTheClipboard;
         return;
       }
       _said = null;
@@ -572,7 +571,7 @@ class _Turn extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: ZButton(
             key: TheChat.showTheText(at),
-            label: open ? 'Hide the text' : 'Show the text',
+            label: open ? sentences.hideTheText : sentences.showTheText,
             icon: open ? Icons.visibility_off_outlined : Icons.visibility_outlined,
             onPressed: onShow,
           ),
@@ -656,7 +655,7 @@ class _BubbleState extends State<_Bubble> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'The text, with your names back — on this device',
+            sentences.theTextWithYourNamesBack,
             style: Zc.tiny.copyWith(color: Zc.clayDeep, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
@@ -670,10 +669,8 @@ class _BubbleState extends State<_Bubble> {
                 children: [
                   Text(
                     unknown.length == 1
-                        ? 'This answer carries 1 token this session does not know — it was '
-                              'made in another session.'
-                        : 'This answer carries ${unknown.length} tokens this session does '
-                              'not know — they were made in another session.',
+                        ? sentences.thisAnswerCarriesOneUnknownToken
+                        : sentences.thisAnswerCarriesUnknownTokens(unknown.length),
                     style: Zc.small.copyWith(color: Zc.amber, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 5),
@@ -729,7 +726,7 @@ class _BubbleState extends State<_Bubble> {
           Row(
             children: [
               ZButton(
-                label: 'Copy Restored',
+                label: sentences.copyRestored,
                 icon: Icons.copy_outlined,
                 onPressed: () => unawaited(_copyRestored(
                   turn.answer.map((s) => s.text).join(),
@@ -740,10 +737,8 @@ class _BubbleState extends State<_Bubble> {
           const SizedBox(height: 6),
           Text(
             unknown.isEmpty
-                ? 'The marked words were put back here, on this device. The model never '
-                      'saw them.'
-                : 'The dotted words were put back here, on this device. The struck ones are '
-                      'tokens this session cannot put back.',
+                ? sentences.theMarkedWordsWerePutBackHere
+                : sentences.theDottedWordsWerePutBackHere,
             style: Zc.tiny.copyWith(letterSpacing: 0),
           ),
         ],
@@ -761,16 +756,15 @@ class _BubbleState extends State<_Bubble> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Zc.paper,
-        title: const Text('Copy restored text?', style: Zc.h2),
-        content: const Text(
-          'This will place the real protected values on your system clipboard. Other '
-          'applications may be able to read the clipboard.',
+        title: Text(sentences.copyRestoredTextQuestion, style: Zc.h2),
+        content: Text(
+          sentences.thisWillPlaceTheRealValues,
           style: Zc.body,
         ),
         actions: [
-          ZButton(label: 'Cancel', onPressed: () => Navigator.of(ctx).pop(false)),
+          ZButton(label: sentences.cancel, onPressed: () => Navigator.of(ctx).pop(false)),
           ZButton(
-            label: 'Copy Restored',
+            label: sentences.copyRestored,
             filled: true,
             onPressed: () => Navigator.of(ctx).pop(true),
           ),
@@ -780,7 +774,7 @@ class _BubbleState extends State<_Bubble> {
     if (sure != true || !mounted) return;
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    widget.onSaid('Restored text copied to the system clipboard.');
+    widget.onSaid(sentences.restoredTextCopied);
   }
 }
 
@@ -803,8 +797,8 @@ class _Arrow extends StatelessWidget {
     final on = onSend != null && !busy && !empty;
     return Tooltip(
       message: name == null
-          ? 'Choose who answers in the middle column first'
-          : 'Send this question to $name',
+          ? sentences.chooseWhoAnswersInTheMiddleFirst
+          : sentences.sendThisQuestionTo(name!),
       child: ConstrainedBox(
         // Bounded, because its sibling is `Expanded` and `ZButton` flexes its
         // own label — measured on the way-in strip, where an unbounded one was
@@ -812,7 +806,7 @@ class _Arrow extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 190),
         child: ZButton(
           key: TheChat.arrow,
-          label: name == null ? 'Choose who answers' : '➤ $name',
+          label: name == null ? sentences.chooseWhoAnswers : '➤ $name',
           filled: true,
           onPressed: on ? onSend : null,
         ),

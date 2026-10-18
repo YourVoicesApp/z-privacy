@@ -22,6 +22,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/document_text.dart' show rememberKinds;
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/core/messages.dart';
+import 'package:zprivacy/core/sentences.dart';
 
 /// What the app knows before any document exists: the ground the Workspace stands
 /// on, and what Home draws.
@@ -2365,13 +2366,18 @@ String? theDoorsOfAKeptDocument(KeptRow doc, List<TurnRow> turns) {
 ///      person typed is scanned where everything else is, and the middle
 ///      column draws what will leave before the arrow is pressed. No second
 ///      scanner on the glass.
-///   2. **a session is born if none is open** — the same step every exit takes
-///      (081): a person asking a question is not asking to be interviewed
-///      about what the drawer is called.
-///   3. **the handle is built after the birth**, never before it: a birth
-///      renames every token in the session, and a handle built first would
-///      carry the old names while claiming the new session. That is the trap
-///      `beginThenRead`'s own step 4 exists for.
+///   2. **the handle is built, and the birth happens inside that build** —
+///      rule 55-و, 18 October. Step 2 used to stand here: «a session is born
+///      if none is open», five lines of glass that asked `aSessionWouldBeBorn`
+///      and called `beginSessionItNames` before the build. The core's own
+///      `build_the_question_alone` now asks `a_session_for_what_leaves` in
+///      front of the build, so those lines are the same law in a second
+///      language — and the quieter copy wins the day the two disagree. They
+///      are deleted rather than kept as a belt: the order they were protecting
+///      («the handle after the birth, never before it», because a birth
+///      renames every token in the session) is the order the core's door now
+///      holds by construction, in front of its own build where nothing can get
+///      between them.
 ///   4. **the question alone goes** (A2): no document — rule 67's «الوثيقة لا
 ///      تُرسل مرة ثانية». What continues the conversation is the history the
 ///      core builds from the stored turns, not a second copy of the letter.
@@ -2385,17 +2391,12 @@ Future<String?> theChatAsks(
   required String text,
   required String providerId,
 }) async {
-  if (text.trim().isEmpty) return 'Write a question first.';
+  if (text.trim().isEmpty) return sentences.writeAQuestionFirst;
   await emptyTheClipboardFirst();
   final bad = await bench.setQuestion(text);
   if (bad != null) return bad;
-  if (ground.aSessionWouldBeBorn) {
-    final renamed = await ground.beginSessionItNames(bench: bench.session);
-    if (renamed == null) {
-      return ground.trouble ?? 'The session was not begun, so nothing was sent.';
-    }
-    await bench.refresh();
-  }
+  // And then the door — which births the session itself (55-و). Nothing
+  // between the two.
   return bench.askTheQuestionAlone(providerId);
 }
 
@@ -2410,17 +2411,20 @@ Future<String?> theChatAsks(
 /// The handle it hands back is bound as [Workbench.copied], so an answer
 /// brought back from the web restores every name this chat carried, whichever
 /// turn each was born in.
+///
+/// **It begins no session** — and that is a correction, not only a tidy. Five
+/// lines stood here that asked `aSessionWouldBeBorn` and called
+/// `beginSessionItNames` before the copy. With no session open there are no
+/// turns, so `chat_to_take_out` refuses with «nothing to send» — and the glass
+/// had by then written «Session N» into the vault. A press that takes nothing
+/// out left a session behind it, which is the one thing rule 55 forbids («no
+/// empty sessions»), and the core says so itself at `payload_to_take_out`. The
+/// birth every exit does need is the core's, in front of its own build
+/// (55-و), where a copy that refuses never reaches it.
 Future<String?> copyTheChat(Ground ground, Workbench bench) async {
   // Step 0, as at every exit — and this one really does write to the
   // clipboard, which is the case the rule was written for.
   await emptyTheClipboardFirst();
-  if (ground.aSessionWouldBeBorn) {
-    final renamed = await ground.beginSessionItNames(bench: bench.session);
-    if (renamed == null) {
-      return ground.trouble ?? 'The session was not begun, so nothing was copied.';
-    }
-    await bench.refresh();
-  }
   return bench.takeTheChatOut();
 }
 

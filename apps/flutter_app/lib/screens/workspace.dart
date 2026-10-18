@@ -22,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:zprivacy/core/going_to_a_word.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/un_protecting.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
@@ -358,7 +359,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     if (onIt.isEmpty) {
       // Nothing was found on it, so there is nothing to point at — and saying
       // so is better than a jump that does not happen.
-      setState(() => _said = 'Page $page has nothing the scanner marked.');
+      setState(() => _said = sentences.pageHasNothingMarked(page));
       return;
     }
     // The same one function the walk uses (ruling 14). A page is a word to
@@ -714,7 +715,7 @@ class _TheWayIn extends StatelessWidget {
       child: Row(
         children: [
           Tooltip(
-            message: 'Add a document — PDF, Word or text',
+            message: sentences.addADocumentPdfWordOrText,
             child: IconButton(
               key: WorkspaceScreen.addDocument,
               onPressed: busy ? null : onImport,
@@ -732,7 +733,7 @@ class _TheWayIn extends StatelessWidget {
           // here…») was the deleted box's.
           Expanded(
             child: Text(
-              'Add a document — or write to the AI in the first part, with no document at all.',
+              sentences.addADocumentOrWriteToTheAi,
               style: Zc.small.copyWith(color: Zc.ink4),
               overflow: TextOverflow.ellipsis,
             ),
@@ -768,10 +769,9 @@ class _TheThreePartsEmpty extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _part(
-          'Original — local only',
-          'Never sent to AI · Send cannot read this side',
-          'Your document arrives here, as it is written. Nothing on this side can reach '
-              'the network.',
+          sentences.originalLocalOnly,
+          sentences.neverSentToAiSendCannotRead,
+          sentences.yourDocumentArrivesHere,
           Zc.ink4,
           // Rule 72: and under that sentence, the one box — so the first thing
           // a person can do on an empty surface is write to the AI.
@@ -779,21 +779,19 @@ class _TheThreePartsEmpty extends StatelessWidget {
         ),
         Container(width: 1, color: Zc.line),
         _part(
-          'Safe — AI will receive',
-          'The request itself, not a preview of it',
-          'What an AI would receive stands here beside the original, word for word, '
-              'before anything is sent.',
+          sentences.safeAiWillReceive,
+          sentences.theRequestItselfNotAPreview,
+          sentences.whatAnAiWouldReceiveStandsHere,
           Zc.clay,
         ),
         Container(width: 1, color: Zc.line),
         _part(
-          'The chat',
-          'Your questions, and what came back',
+          sentences.theChatTitle,
+          sentences.yourQuestionsAndWhatCameBack,
           // **«Chat» and not «the conversation»** — rule 55-هـ, and G41 is what
           // said so: on the glass the word for a container is «session», and
           // this part is called «The chat» in the owner's own ruling (65).
-          'The chat opens here with the first answer, and every question after it carries '
-              'what was already said.',
+          sentences.theChatOpensHereWithTheFirstAnswer,
           Zc.river,
         ),
       ],
@@ -922,7 +920,7 @@ class _TopBar extends StatelessWidget {
             const SizedBox(width: 7),
             Flexible(
               child: Text(
-                doc.name.isEmpty ? 'Typed text' : doc.name,
+                doc.name.isEmpty ? sentences.typedText : doc.name,
                 overflow: TextOverflow.ellipsis,
                 softWrap: false,
                 style: const TextStyle(
@@ -972,7 +970,7 @@ class _TopBar extends StatelessWidget {
               const SizedBox(width: 9),
               Flexible(
                 child: Text(
-                  doc.pages == 1 ? '1 page' : '${doc.pages} pages',
+                  doc.pages == 1 ? sentences.onePage : sentences.pagesCount(doc.pages),
                   overflow: TextOverflow.ellipsis,
                   softWrap: false,
                   style: Zc.small.copyWith(color: Zc.ink4),
@@ -1012,11 +1010,11 @@ class _TopBar extends StatelessWidget {
           // while it is open, shuts it — the thing a person wants when they
           // stand up from the desk.
           _Fact(
-            label: 'Vault',
+            label: sentences.vaultLabel,
             value: switch (bench?.snap?.vault ?? ground.vault) {
-              VaultState.unlocked => 'Unlocked',
-              VaultState.locked => 'Locked',
-              VaultState.absent => 'None',
+              VaultState.unlocked => sentences.vaultIsUnlocked,
+              VaultState.locked => sentences.vaultIsLocked,
+              VaultState.absent => sentences.vaultIsNone,
             },
             tint: (bench?.snap?.vault ?? ground.vault) == VaultState.unlocked
                 ? Zc.river
@@ -1032,17 +1030,19 @@ class _TopBar extends StatelessWidget {
                 context: context,
                 position: RelativeRect.fromLTRB(1e4, 54, 12, 0),
                 color: Zc.paper,
-                items: const [
-                  PopupMenuItem(value: 'open', child: Text('Open Z Vault')),
-                  PopupMenuItem(value: 'lock', child: Text('Lock now')),
+                // **Not `const` any more** — a widget that holds a sentence
+                // reads it from the list, and the list is read at run time.
+                items: [
+                  PopupMenuItem(value: 'open', child: Text(sentences.openZVault)),
+                  PopupMenuItem(value: 'lock', child: Text(sentences.lockNow)),
                 ],
               );
               if (what == 'open') onVault();
               if (what == 'lock') onLockVault();
             },
             hint: (bench?.snap?.vault ?? ground.vault) == VaultState.unlocked
-                ? 'Open Z Vault, or lock it now'
-                : 'Open Z Vault',
+                ? sentences.openZVaultOrLockItNow
+                : sentences.openZVault,
           ),
           // **Which page.** The owner, 7 October: a page must show its
           // beginning and its end — and once it does, a person wants to go to
@@ -1051,16 +1051,17 @@ class _TopBar extends StatelessWidget {
           if (doc != null && doc.pages > 1) ...[
             const SizedBox(width: 10),
             PopupMenuButton<int>(
-              tooltip: 'Go to a page',
+              tooltip: sentences.goToAPage,
               onSelected: onPage,
               itemBuilder: (_) => [
                 for (var page = 1; page <= doc.pages; page++)
-                  PopupMenuItem<int>(value: page, child: Text('Page $page', style: Zc.small)),
+                  PopupMenuItem<int>(value: page, child: Text(sentences.pageNumber(page), style: Zc.small)),
               ],
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Page', style: Zc.small.copyWith(color: Zc.ink3, fontWeight: FontWeight.w600)),
+                  Text(sentences.pageWord,
+                      style: Zc.small.copyWith(color: Zc.ink3, fontWeight: FontWeight.w600)),
                   const Icon(Icons.arrow_drop_down, size: 18, color: Zc.ink3),
                 ],
               ),
@@ -1072,7 +1073,7 @@ class _TopBar extends StatelessWidget {
           if (doc != null) ...[
             const SizedBox(width: 14),
             Tooltip(
-              message: 'Choose the AI and what travels to it',
+              message: sentences.chooseTheAiAndWhatTravels,
               child: TextButton.icon(
                 // **A send lands in the chat, and the chat is on this screen**
                 // — rule 65. It used to answer `true` and the press took the
@@ -1168,7 +1169,7 @@ class _PackFact extends StatelessWidget {
     // «general rules» is said when **nothing** that ran has rules of its own.
     final bare = ran.every((id) => !ground.hasRules(id));
     return PopupMenuButton<String>(
-          tooltip: 'Read this document with another rule set',
+          tooltip: sentences.readThisDocumentWithAnotherRuleSet,
           enabled: !bench.busy && ground.packs.isNotEmpty,
           onSelected: (id) => bench.switchPack(id),
           itemBuilder: (_) => [
@@ -1200,7 +1201,7 @@ class _PackFact extends StatelessWidget {
             const PopupMenuDivider(),
             PopupMenuItem<String>(
               enabled: false,
-              child: Text('General rules only', style: Zc.tiny),
+              child: Text(sentences.generalRulesOnly, style: Zc.tiny),
             ),
             for (final other in ground.languages
                 .where((l) => !l.hasRules && offeredLanguages.contains(l.id)))
@@ -1226,8 +1227,8 @@ class _PackFact extends StatelessWidget {
           // the general rules. «Svenska» and «العربية · general rules» are
           // read the same way: this is what ran.
           child: _Fact(
-            label: 'Pack',
-            value: bare ? '$packLabel · general rules' : packLabel,
+            label: sentences.packLabel,
+            value: bare ? sentences.packWithGeneralRules(packLabel) : packLabel,
           ),
         );
   }
@@ -1246,7 +1247,7 @@ class _ProfileFact extends StatelessWidget {
     // was: the bar stands over a screen with no bench on it, and a local
     // computed from one cannot be computed there at all.
     final value = bench.profileId == null
-        ? 'Everywhere'
+        ? sentences.everywhere
         : ground.profiles
               .firstWhere(
                 (p) => p.id == bench.profileId,
@@ -1271,7 +1272,7 @@ class _ProfileFact extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Eyebrow('Profile'),
+              Eyebrow(sentences.profile),
               const SizedBox(height: 3),
               Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1335,18 +1336,17 @@ class _ProfileSwitcherState extends State<ProfileSwitcher> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Profiles', style: Zc.h2),
+              Text(sentences.profiles, style: Zc.h2),
               const SizedBox(height: 6),
               Text(
-                'Choose which client dictionary this session uses. The profile ID stays '
-                'inside the vault; the display name is what people see.',
+                sentences.chooseWhichClientDictionary,
                 style: Zc.small,
               ),
               const SizedBox(height: 16),
               _row(
-                title: 'Everywhere',
+                title: sentences.everywhere,
                 subtitle:
-                    'Only identities and rules that apply to every profile.',
+                    sentences.onlyIdentitiesForEveryProfile,
                 active: current == null,
                 onSwitch: current == null ? null : () => _switch(null),
               ),
@@ -1360,7 +1360,7 @@ class _ProfileSwitcherState extends State<ProfileSwitcher> {
                 ),
               const SizedBox(height: 12),
               ZButton(
-                label: 'Create profile',
+                label: sentences.createProfile,
                 icon: Icons.add,
                 onPressed: _create,
               ),
@@ -1373,7 +1373,7 @@ class _ProfileSwitcherState extends State<ProfileSwitcher> {
                 children: [
                   const Spacer(),
                   ZButton(
-                    label: 'Done',
+                    label: sentences.done,
                     filled: true,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -1424,11 +1424,11 @@ class _ProfileSwitcherState extends State<ProfileSwitcher> {
             ),
           ),
           if (onRename != null) ...[
-            ZButton(label: 'Rename', onPressed: onRename),
+            ZButton(label: sentences.rename, onPressed: onRename),
             const SizedBox(width: 8),
           ],
           ZButton(
-            label: active ? 'Active' : 'Switch',
+            label: active ? sentences.profileActive : sentences.profileSwitch,
             filled: !active,
             onPressed: onSwitch,
           ),
@@ -1568,7 +1568,7 @@ class _CameBack extends StatelessWidget {
           if (seen.broughtBack > 0) ...[
             const SizedBox(width: 12),
             ZButton(
-              label: 'Read it back',
+              label: sentences.readItBack,
               onPressed: () => showDialog<void>(
                 context: context,
                 builder: (_) => TheReading(seen: seen),
@@ -1634,13 +1634,13 @@ class _Band extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'Scanning…',
+            Text(
+              sentences.scanning,
               style: TextStyle(fontSize: 13, color: Zc.clayDeep),
             ),
           ] else if (!scanned) ...[
-            const Text(
-              'Not scanned yet',
+            Text(
+              sentences.notScannedYet,
               style: TextStyle(fontSize: 13, color: Zc.clayDeep),
             ),
           ] else ...[
@@ -1673,13 +1673,13 @@ class _Band extends StatelessWidget {
               // second opinion about protections that came from the vault,
               // which 089 rule 9 exists to avoid.
               asKept
-                  ? 'As it was kept'
+                  ? sentences.asItWasKept
                   : bench.scanNote != null
-                      ? 'Last scan: ${bench.scanNote}'
+                      ? sentences.lastScanNote(bench.scanNote!)
                       : switch (bench.scanOrigin) {
-                          ScanOrigin.onImport => 'Scanned on import',
-                          ScanOrigin.rescan => 'Last scan: manual rescan',
-                          ScanOrigin.notScanned => 'Not scanned yet',
+                          ScanOrigin.onImport => sentences.scannedOnImport,
+                          ScanOrigin.rescan => sentences.lastScanManualRescan,
+                          ScanOrigin.notScanned => sentences.notScannedYet,
                         },
               style: const TextStyle(
                 fontSize: 13,
@@ -1691,8 +1691,12 @@ class _Band extends StatelessWidget {
             Flexible(
               child: Text(
                 asKept
-                    ? '$marksOnIt already protected · nothing scanned in this run'
-                    : '${bench.snap?.autoProtected ?? 0} protected automatically · ${bench.openSuggestions} need your word · ${bench.normalCount} normal',
+                    ? sentences.alreadyProtectedNothingScanned(marksOnIt)
+                    : sentences.protectedAutomaticallyNeedYourWord(
+                        bench.snap?.autoProtected ?? 0,
+                        bench.openSuggestions,
+                        bench.normalCount,
+                      ),
                 style: const TextStyle(fontSize: 13, color: Zc.clayDeep),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1732,8 +1736,8 @@ class _Band extends StatelessWidget {
                         Flexible(
                           child: Text(
                             vault == VaultState.locked
-                                ? 'Vault locked — rules and pack ran, the vault layer did not'
-                                : 'No vault — nothing is recognised by name',
+                                ? sentences.vaultLockedRulesAndPackRan
+                                : sentences.noVaultNothingRecognisedByName,
                             style: Zc.small.copyWith(
                               color: Zc.amber,
                               fontWeight: FontWeight.w600,
@@ -1748,7 +1752,9 @@ class _Band extends StatelessWidget {
                         // one this is — the same distinction the core's two
                         // refusals make.
                         Text(
-                          vault == VaultState.locked ? 'Unlock' : 'Create a vault',
+                          vault == VaultState.locked
+                              ? sentences.unlock
+                              : sentences.createAVault,
                           style: Zc.small.copyWith(
                             color: Zc.clayDeep,
                             fontWeight: FontWeight.w700,
@@ -1997,8 +2003,8 @@ class _ColumnsState extends State<_Columns> {
               key: _ColumnsState.originalPane,
               width: left,
               child: _Side(
-                eyebrow: 'Original — local only',
-                rule: 'Never sent to AI · Send cannot read this side',
+                eyebrow: sentences.originalLocalOnly,
+                rule: sentences.neverSentToAiSendCannotRead,
                 tint: Zc.ink4,
                 controller: _left,
                 // The control sits here because this is the column a person
@@ -2059,7 +2065,7 @@ class _ColumnsState extends State<_Columns> {
                                 alignment: Alignment.centerLeft,
                                 child: ZButton(
                                   key: WorkspaceScreen.removeDocument,
-                                  label: 'Remove the document',
+                                  label: sentences.removeTheDocument,
                                   icon: Icons.close,
                                   onPressed:
                                       bench.busy ? null : widget.onRemoveDocument,
@@ -2079,7 +2085,7 @@ class _ColumnsState extends State<_Columns> {
                         ],
                       ),
                 child: doc == null
-                    ? const _Empty('Nothing is open.')
+                    ? _Empty(sentences.nothingIsOpen)
                     : Builder(
                         builder: (inner) => OriginalText(
                           text: doc.text,
@@ -2143,8 +2149,8 @@ class _ColumnsState extends State<_Columns> {
             Expanded(
               key: _ColumnsState.safePane,
               child: _Side(
-                eyebrow: 'Safe — AI will receive',
-                rule: 'The request itself, not a preview of it',
+                eyebrow: sentences.safeAiWillReceive,
+                rule: sentences.theRequestItselfNotAPreview,
                 tint: Zc.clay,
                 trailing: _SafeTrailing(bench: bench, onClose: _toggleSafe),
                 controller: _right,
@@ -2174,7 +2180,7 @@ class _ColumnsState extends State<_Columns> {
                         chips: bench.chips,
                       )
                     : bench.questionSafe.trim().isEmpty
-                        ? const _Empty('There is nothing to send yet.')
+                        ? _Empty(sentences.thereIsNothingToSendYet)
                         : SafeText(
                             text: bench.questionSafe,
                             edges: const [],
@@ -2299,23 +2305,23 @@ class _LineBand extends StatelessWidget {
                   // zero, by the same rule `kindName` follows: a number that is
                   // not known yet is not «none».
                   hold == null
-                      ? 'Reading what those lines hold…'
+                      ? sentences.readingWhatThoseLinesHold
                       : hold.lines == 1
-                            ? '1 line · ${hold.protected} protected in it · ${hold.open} open'
-                            : '${hold.lines} lines · ${hold.protected} protected in them · '
-                                  '${hold.open} open',
+                            ? sentences.oneLineProtectedOpen(hold.protected, hold.open)
+                            : sentences.linesProtectedOpen(
+                                hold.lines, hold.protected, hold.open),
                   style: Zc.small.copyWith(color: Zc.clayDeep, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Press a value to protect the same cell in every held line.',
+                  sentences.pressAValueToProtectEveryHeldLine,
                   style: Zc.tiny.copyWith(letterSpacing: 0),
                 ),
               ],
             ),
           ),
           ZButton(
-            label: 'Let the lines go',
+            label: sentences.letTheLinesGo,
             icon: Icons.close,
             onPressed: bench.releaseLines,
           ),
@@ -2428,7 +2434,7 @@ class _StepLock extends StatelessWidget {
               ),
               const SizedBox(width: 5),
               Text(
-                inStep ? 'In step' : 'Apart',
+                inStep ? sentences.inStep : sentences.apart,
                 style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
@@ -2477,9 +2483,9 @@ class _ChipSwitch extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        one('Chips', true),
+        one(sentences.drawnAsChips, true),
         const SizedBox(width: 4),
-        one('Plain', false),
+        one(sentences.drawnPlain, false),
       ],
     );
   }
@@ -2536,10 +2542,8 @@ class _SafeFooter extends StatelessWidget {
             open == 0
                 ? exactlyWhatWouldLeave(replaced)
                 : open == 1
-                ? 'One suggestion is still open. Until you answer it, it stands here as written — '
-                      'real text on this side.'
-                : '$open suggestions are still open. Until you answer them, they stand here as '
-                      'written — the only real text on this side.',
+                ? sentences.oneSuggestionStillOpen
+                : sentences.suggestionsStillOpen(open),
             style: Zc.small.copyWith(
               color: open > 0 ? Zc.amber : Zc.ink3,
               fontWeight: open > 0 ? FontWeight.w600 : FontWeight.w400,
@@ -2569,7 +2573,7 @@ class _SafeFooter extends StatelessWidget {
                 // promise we do not keep. And still not the bare «Review»,
                 // which the left column already uses for the list of
                 // suggestions.
-                label: 'Choose who answers',
+                label: sentences.chooseWhoAnswers,
                 filled: true,
                 icon: Icons.fact_check_outlined,
                 // Disabled while anything is open — and the reason is beside it,
@@ -2595,7 +2599,7 @@ class _SafeFooter extends StatelessWidget {
               // there is one and it is not already standing.
               if (bench.chatTurns.isNotEmpty && bench.panel != OpenPanel.chat)
                 ZButton(
-                  label: 'Show the chat',
+                  label: sentences.showTheChat,
                   icon: Icons.forum_outlined,
                   onPressed: bench.openTheChat,
                 ),
@@ -2708,8 +2712,8 @@ class _TheQuestionState extends State<_TheQuestion> {
           // above it, what is written here is the whole of what leaves.
           Text(
             (bench?.document?.text ?? '').isEmpty
-                ? 'What would you like to ask the AI?'
-                : 'What should the AI do with this?',
+                ? sentences.whatWouldYouLikeToAskTheAi
+                : sentences.whatShouldTheAiDoWithThis,
             style: Zc.tiny.copyWith(color: Zc.ink4),
           ),
           const SizedBox(height: 5),
@@ -2726,8 +2730,8 @@ class _TheQuestionState extends State<_TheQuestion> {
                 border: InputBorder.none,
                 isDense: true,
                 hintText: (bench?.document?.text ?? '').isEmpty
-                    ? 'Ask a question, or paste a whole letter here.'
-                    : 'Reconcile section A against section B and tell me where the difference is.',
+                    ? sentences.askAQuestionOrPasteALetter
+                    : sentences.reconcileSectionAgainstSection,
                 hintStyle: Zc.small.copyWith(color: Zc.ink4),
               ),
               onChanged: (_) => setState(() {}),
@@ -2745,17 +2749,17 @@ class _TheQuestionState extends State<_TheQuestion> {
                 // (P2-5). Not «Send»: nothing leaves until the review and the
                 // gate are satisfied, and this press does neither.
                 label: typed == attached && typed.isNotEmpty
-                    ? 'In what will leave'
-                    : 'Add it to what will leave',
+                    ? sentences.inWhatWillLeave
+                    : sentences.addItToWhatWillLeave,
                 icon: Icons.help_outline,
                 onPressed: press,
                 hint: typed.isEmpty && attached.isEmpty
-                    ? 'A document can be sent with no request, and then the model is given no instruction'
+                    ? sentences.aDocumentCanBeSentWithNoRequest
                     : null,
               ),
               if (attached.isNotEmpty && bench != null)
                 ZButton(
-                  label: 'Take it out',
+                  label: sentences.takeItOut,
                   onPressed: bench.busy
                       ? null
                       : () {
@@ -2772,10 +2776,11 @@ class _TheQuestionState extends State<_TheQuestion> {
               // question were replaced, and that the Safe column is where it
               // can be read before anything is pressed.
               (bench?.questionMarks ?? const []).isEmpty
-                  ? 'Your request is in the Safe column, with nothing in it to protect.'
+                  ? sentences.yourRequestNothingToProtect
                   : bench!.questionMarks.length == 1
-                      ? 'Your request is in the Safe column, with one value replaced.'
-                      : 'Your request is in the Safe column, with ${bench.questionMarks.length} values replaced.',
+                      ? sentences.yourRequestOneValueReplaced
+                      : sentences.yourRequestValuesReplaced(
+                          bench.questionMarks.length),
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.clayDeep),
             ),
             const SizedBox(height: 3),
@@ -2792,8 +2797,7 @@ class _TheQuestionState extends State<_TheQuestion> {
               // stands and is still the thing a person needs to know before
               // they type: this box holds one request, and the next question
               // replaces it.
-              'One request at a time — a new question replaces this one, and the chat '
-              'keeps every exchange.',
+              sentences.oneRequestAtATime,
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
             ),
             // **And the sentence that stood here is gone, because the debt was
@@ -2856,8 +2860,8 @@ class _TheWayThrough extends StatelessWidget {
               // from «Answer the review first», and it is the one a person can
               // act on.
               label: open == 1
-                  ? '1 question left — go to it'
-                  : '$open questions left — go to the first',
+                  ? sentences.oneQuestionLeftGoToIt
+                  : sentences.questionsLeftGoToTheFirst(open),
               icon: Icons.east,
               onPressed: first == null
                   ? null
@@ -2870,7 +2874,7 @@ class _TheWayThrough extends StatelessWidget {
             if (open == 1 && first != null) ...[
               ZButton(
                 key: protectKey,
-                label: 'Protect it',
+                label: sentences.protectIt,
                 icon: Icons.shield_outlined,
                 onPressed: bench.busy
                     ? null
@@ -2878,7 +2882,7 @@ class _TheWayThrough extends StatelessWidget {
               ),
               ZButton(
                 key: leaveKey,
-                label: 'Leave it in the clear',
+                label: sentences.leaveItInTheClear,
                 onPressed: bench.busy
                     ? null
                     : () => unawaited(bench.answer(first.id, FindingAnswer.notSensitive)),
@@ -2891,7 +2895,8 @@ class _TheWayThrough extends StatelessWidget {
           // What it is, so the two answers above are about something. The kind
           // is the core's own word for it.
           Text(
-            'The one left is ${ground.nameOfKind(first.kind).toLowerCase()}.',
+            sentences.theOneLeftIsKind(
+                ground.nameOfKind(first.kind).toLowerCase()),
             style: Zc.tiny.copyWith(letterSpacing: 0),
           ),
         ],
@@ -2925,7 +2930,7 @@ class _SafeRail extends StatelessWidget {
           const SizedBox(height: 10),
           IconButton(
             key: named,
-            tooltip: 'Show what the AI will receive',
+            tooltip: sentences.showWhatTheAiWillReceive,
             icon: const Icon(Icons.chevron_left, size: 18),
             color: Zc.clay,
             visualDensity: VisualDensity.compact,
@@ -2955,7 +2960,7 @@ class _SafeTrailing extends StatelessWidget {
         _ChipSwitch(bench: bench),
         IconButton(
           key: closeKey,
-          tooltip: 'Hide this column',
+          tooltip: sentences.hideThisColumn,
           icon: const Icon(Icons.chevron_right, size: 18),
           color: Zc.ink3,
           visualDensity: VisualDensity.compact,
@@ -2992,7 +2997,7 @@ class _PanelArrow extends StatelessWidget {
           IconButton(
             key: named,
             // P2-5: the name of the act carries what it does.
-            tooltip: wide ? 'Narrow this panel' : 'Widen this panel',
+            tooltip: wide ? sentences.narrowThisPanel : sentences.widenThisPanel,
             icon: Icon(wide ? Icons.chevron_right : Icons.chevron_left, size: 18),
             color: Zc.ink3,
             visualDensity: VisualDensity.compact,

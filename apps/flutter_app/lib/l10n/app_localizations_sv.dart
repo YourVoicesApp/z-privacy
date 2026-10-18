@@ -397,4 +397,477 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get andBetweenNames => ' and ';
+
+  @override
+  String get thisLanguageName => 'Svenska';
+
+  @override
+  String get languageWord => 'Language';
+
+  @override
+  String get chooseALanguage => 'Choose a language to continue.';
+
+  @override
+  String get noAccount => 'No account.';
+
+  @override
+  String get noAds => 'No ads.';
+
+  @override
+  String get noAnalytics => 'No analytics.';
+
+  @override
+  String get noZPrivacyServer => 'No Z Privacy server.';
+
+  @override
+  String get originalDataStaysHere =>
+      'Your original data stays on this device unless you explicitly copy restored content.';
+
+  @override
+  String get onlyTheProtectedVersionIsSent =>
+      'Only the protected version is sent to AI through Z Privacy.';
+
+  @override
+  String get theseRulesWillBeEnabled =>
+      'The English privacy rules will be enabled.';
+
+  @override
+  String get start => 'Start';
+
+  @override
+  String get yourVault => 'Your vault';
+
+  @override
+  String get createAVault => 'Create a vault';
+
+  @override
+  String get vaultWhy =>
+      'Every word you protect lives here, for as long as you keep this vault: the names you add, the values you teach, and the keys to any AI you connect. It stays on this computer, and nothing is written anywhere else.';
+
+  @override
+  String get onePassphrase =>
+      'One passphrase, kept on this device. Everything Z learns while you work — your names, your lists, your decisions — is kept in it.';
+
+  @override
+  String get byYourVoices => 'by YourVoices';
+
+  @override
+  String pageHasNothingMarked(int page) {
+    return 'Page $page has nothing the scanner marked.';
+  }
+
+  @override
+  String get addADocumentPdfWordOrText => 'Add a document — PDF, Word or text';
+
+  @override
+  String get addADocumentOrWriteToTheAi =>
+      'Add a document — or write to the AI in the first part, with no document at all.';
+
+  @override
+  String get originalLocalOnly => 'Original — local only';
+
+  @override
+  String get neverSentToAiSendCannotRead =>
+      'Never sent to AI · Send cannot read this side';
+
+  @override
+  String get yourDocumentArrivesHere =>
+      'Your document arrives here, as it is written. Nothing on this side can reach the network.';
+
+  @override
+  String get safeAiWillReceive => 'Safe — AI will receive';
+
+  @override
+  String get theRequestItselfNotAPreview =>
+      'The request itself, not a preview of it';
+
+  @override
+  String get whatAnAiWouldReceiveStandsHere =>
+      'What an AI would receive stands here beside the original, word for word, before anything is sent.';
+
+  @override
+  String get theChatTitle => 'The chat';
+
+  @override
+  String get yourQuestionsAndWhatCameBack =>
+      'Your questions, and what came back';
+
+  @override
+  String get theChatOpensHereWithTheFirstAnswer =>
+      'The chat opens here with the first answer, and every question after it carries what was already said.';
+
+  @override
+  String get typedText => 'Typed text';
+
+  @override
+  String get onePage => '1 page';
+
+  @override
+  String pagesCount(int pages) {
+    return '$pages pages';
+  }
+
+  @override
+  String get vaultLabel => 'Vault';
+
+  @override
+  String get vaultIsUnlocked => 'Unlocked';
+
+  @override
+  String get vaultIsLocked => 'Locked';
+
+  @override
+  String get vaultIsNone => 'None';
+
+  @override
+  String get openZVault => 'Open Z Vault';
+
+  @override
+  String get lockNow => 'Lock now';
+
+  @override
+  String get openZVaultOrLockItNow => 'Open Z Vault, or lock it now';
+
+  @override
+  String get goToAPage => 'Go to a page';
+
+  @override
+  String pageNumber(int page) {
+    return 'Page $page';
+  }
+
+  @override
+  String get pageWord => 'Page';
+
+  @override
+  String get chooseTheAiAndWhatTravels =>
+      'Choose the AI and what travels to it';
+
+  @override
+  String get readThisDocumentWithAnotherRuleSet =>
+      'Read this document with another rule set';
+
+  @override
+  String get generalRulesOnly => 'General rules only';
+
+  @override
+  String get packLabel => 'Pack';
+
+  @override
+  String packWithGeneralRules(String pack) {
+    return '$pack · general rules';
+  }
+
+  @override
+  String get everywhere => 'Everywhere';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String get profiles => 'Profiles';
+
+  @override
+  String get chooseWhichClientDictionary =>
+      'Choose which client dictionary this session uses. The profile ID stays inside the vault; the display name is what people see.';
+
+  @override
+  String get onlyIdentitiesForEveryProfile =>
+      'Only identities and rules that apply to every profile.';
+
+  @override
+  String get createProfile => 'Create profile';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get profileActive => 'Active';
+
+  @override
+  String get profileSwitch => 'Switch';
+
+  @override
+  String get readItBack => 'Read it back';
+
+  @override
+  String get scanning => 'Scanning…';
+
+  @override
+  String get notScannedYet => 'Not scanned yet';
+
+  @override
+  String get asItWasKept => 'As it was kept';
+
+  @override
+  String lastScanNote(String note) {
+    return 'Last scan: $note';
+  }
+
+  @override
+  String get scannedOnImport => 'Scanned on import';
+
+  @override
+  String get lastScanManualRescan => 'Last scan: manual rescan';
+
+  @override
+  String alreadyProtectedNothingScanned(int marks) {
+    return '$marks already protected · nothing scanned in this run';
+  }
+
+  @override
+  String protectedAutomaticallyNeedYourWord(int auto, int open, int normal) {
+    return '$auto protected automatically · $open need your word · $normal normal';
+  }
+
+  @override
+  String get vaultLockedRulesAndPackRan =>
+      'Vault locked — rules and pack ran, the vault layer did not';
+
+  @override
+  String get noVaultNothingRecognisedByName =>
+      'No vault — nothing is recognised by name';
+
+  @override
+  String get unlock => 'Unlock';
+
+  @override
+  String get removeTheDocument => 'Remove the document';
+
+  @override
+  String get nothingIsOpen => 'Nothing is open.';
+
+  @override
+  String get thereIsNothingToSendYet => 'There is nothing to send yet.';
+
+  @override
+  String get readingWhatThoseLinesHold => 'Reading what those lines hold…';
+
+  @override
+  String oneLineProtectedOpen(int protected, int open) {
+    return '1 line · $protected protected in it · $open open';
+  }
+
+  @override
+  String linesProtectedOpen(int lines, int protected, int open) {
+    return '$lines lines · $protected protected in them · $open open';
+  }
+
+  @override
+  String get pressAValueToProtectEveryHeldLine =>
+      'Press a value to protect the same cell in every held line.';
+
+  @override
+  String get letTheLinesGo => 'Let the lines go';
+
+  @override
+  String get inStep => 'In step';
+
+  @override
+  String get apart => 'Apart';
+
+  @override
+  String get drawnAsChips => 'Chips';
+
+  @override
+  String get drawnPlain => 'Plain';
+
+  @override
+  String get oneSuggestionStillOpen =>
+      'One suggestion is still open. Until you answer it, it stands here as written — real text on this side.';
+
+  @override
+  String suggestionsStillOpen(int open) {
+    return '$open suggestions are still open. Until you answer them, they stand here as written — the only real text on this side.';
+  }
+
+  @override
+  String get chooseWhoAnswers => 'Choose who answers';
+
+  @override
+  String get showTheChat => 'Show the chat';
+
+  @override
+  String get whatWouldYouLikeToAskTheAi => 'What would you like to ask the AI?';
+
+  @override
+  String get whatShouldTheAiDoWithThis => 'What should the AI do with this?';
+
+  @override
+  String get askAQuestionOrPasteALetter =>
+      'Ask a question, or paste a whole letter here.';
+
+  @override
+  String get reconcileSectionAgainstSection =>
+      'Reconcile section A against section B and tell me where the difference is.';
+
+  @override
+  String get inWhatWillLeave => 'In what will leave';
+
+  @override
+  String get addItToWhatWillLeave => 'Add it to what will leave';
+
+  @override
+  String get aDocumentCanBeSentWithNoRequest =>
+      'A document can be sent with no request, and then the model is given no instruction';
+
+  @override
+  String get takeItOut => 'Take it out';
+
+  @override
+  String get yourRequestNothingToProtect =>
+      'Your request is in the Safe column, with nothing in it to protect.';
+
+  @override
+  String get yourRequestOneValueReplaced =>
+      'Your request is in the Safe column, with one value replaced.';
+
+  @override
+  String yourRequestValuesReplaced(int count) {
+    return 'Your request is in the Safe column, with $count values replaced.';
+  }
+
+  @override
+  String get oneRequestAtATime =>
+      'One request at a time — a new question replaces this one, and the chat keeps every exchange.';
+
+  @override
+  String get oneQuestionLeftGoToIt => '1 question left — go to it';
+
+  @override
+  String questionsLeftGoToTheFirst(int open) {
+    return '$open questions left — go to the first';
+  }
+
+  @override
+  String get protectIt => 'Protect it';
+
+  @override
+  String get leaveItInTheClear => 'Leave it in the clear';
+
+  @override
+  String theOneLeftIsKind(String kind) {
+    return 'The one left is $kind.';
+  }
+
+  @override
+  String get showWhatTheAiWillReceive => 'Show what the AI will receive';
+
+  @override
+  String get hideThisColumn => 'Hide this column';
+
+  @override
+  String get narrowThisPanel => 'Narrow this panel';
+
+  @override
+  String get widenThisPanel => 'Widen this panel';
+
+  @override
+  String get oneExchangeCarriedIntoTheNext =>
+      'One exchange, carried into the next question.';
+
+  @override
+  String exchangesCarriedIntoTheNext(int count) {
+    return '$count exchanges, carried into the next question.';
+  }
+
+  @override
+  String get putTheChatAwayItIsNotEnded =>
+      'Put the chat away — it is not ended';
+
+  @override
+  String get theFirstAnswerOpensTheChatHere =>
+      'The first answer opens the chat here. Every question after it carries what was already said.';
+
+  @override
+  String get askSomethingElseAboutThis => 'Ask something else about this…';
+
+  @override
+  String get pasteTheAnswerYouWereGiven => 'Paste the answer you were given…';
+
+  @override
+  String get addItToTheChat => 'Add it to the chat';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String get copyTheChat => 'Copy the chat';
+
+  @override
+  String get addAnAnswer => 'Add an answer';
+
+  @override
+  String get endTheChat => 'End the chat';
+
+  @override
+  String get theChatIsOnYourClipboard =>
+      'The chat is on your clipboard, protected — bring the answer back with «Add an answer».';
+
+  @override
+  String get couldNotReadTheClipboard =>
+      'Z Privacy could not read the clipboard.';
+
+  @override
+  String get thereIsNoTextOnTheClipboard =>
+      'There is no text on the clipboard.';
+
+  @override
+  String get hideTheText => 'Hide the text';
+
+  @override
+  String get showTheText => 'Show the text';
+
+  @override
+  String get theTextWithYourNamesBack =>
+      'The text, with your names back — on this device';
+
+  @override
+  String get thisAnswerCarriesOneUnknownToken =>
+      'This answer carries 1 token this session does not know — it was made in another session.';
+
+  @override
+  String thisAnswerCarriesUnknownTokens(int count) {
+    return 'This answer carries $count tokens this session does not know — they were made in another session.';
+  }
+
+  @override
+  String get copyRestored => 'Copy Restored';
+
+  @override
+  String get theMarkedWordsWerePutBackHere =>
+      'The marked words were put back here, on this device. The model never saw them.';
+
+  @override
+  String get theDottedWordsWerePutBackHere =>
+      'The dotted words were put back here, on this device. The struck ones are tokens this session cannot put back.';
+
+  @override
+  String get copyRestoredTextQuestion => 'Copy restored text?';
+
+  @override
+  String get thisWillPlaceTheRealValues =>
+      'This will place the real protected values on your system clipboard. Other applications may be able to read the clipboard.';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get restoredTextCopied =>
+      'Restored text copied to the system clipboard.';
+
+  @override
+  String get chooseWhoAnswersInTheMiddleFirst =>
+      'Choose who answers in the middle column first';
+
+  @override
+  String sendThisQuestionTo(String name) {
+    return 'Send this question to $name';
+  }
+
+  @override
+  String get writeAQuestionFirst => 'Write a question first.';
 }

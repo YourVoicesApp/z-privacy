@@ -400,4 +400,478 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get andBetweenNames => ' und ';
+
+  @override
+  String get thisLanguageName => 'Deutsch';
+
+  @override
+  String get languageWord => 'Sprache';
+
+  @override
+  String get chooseALanguage => 'Wählen Sie eine Sprache, um fortzufahren.';
+
+  @override
+  String get noAccount => 'Kein Konto.';
+
+  @override
+  String get noAds => 'Keine Werbung.';
+
+  @override
+  String get noAnalytics => 'Keine Analyse- oder Tracking-Daten.';
+
+  @override
+  String get noZPrivacyServer => 'Kein Z-Privacy-Server.';
+
+  @override
+  String get originalDataStaysHere =>
+      'Ihre Originaldaten bleiben auf diesem Gerät, es sei denn, Sie kopieren ausdrücklich wiederhergestellte Inhalte.';
+
+  @override
+  String get onlyTheProtectedVersionIsSent =>
+      'Nur die geschützte Version wird über Z Privacy an die KI gesendet.';
+
+  @override
+  String get theseRulesWillBeEnabled =>
+      'Die deutschen Datenschutzregeln werden aktiviert.';
+
+  @override
+  String get start => 'Starten';
+
+  @override
+  String get yourVault => 'Ihr Tresor';
+
+  @override
+  String get createAVault => 'Tresor erstellen';
+
+  @override
+  String get vaultWhy =>
+      'Jedes Wort, das Sie schützen, lebt hier, solange Sie diesen Tresor behalten: die Namen, die Sie hinzufügen, die Werte, die Sie beibringen, und die Schlüssel zu jeder KI, die Sie verbinden. Er bleibt auf diesem Computer, und nichts wird irgendwo anders geschrieben.';
+
+  @override
+  String get onePassphrase =>
+      'Eine Passphrase, auf diesem Gerät aufbewahrt. Alles, was Z lernt, während Sie arbeiten — Ihre Namen, Ihre Listen, Ihre Entscheidungen — wird darin aufbewahrt.';
+
+  @override
+  String get byYourVoices => 'von YourVoices';
+
+  @override
+  String pageHasNothingMarked(int page) {
+    return 'Auf Seite $page hat der Scanner nichts markiert.';
+  }
+
+  @override
+  String get addADocumentPdfWordOrText =>
+      'Dokument hinzufügen — PDF, Word oder Text';
+
+  @override
+  String get addADocumentOrWriteToTheAi =>
+      'Fügen Sie ein Dokument hinzu — oder schreiben Sie im ersten Teil an die KI, ganz ohne Dokument.';
+
+  @override
+  String get originalLocalOnly => 'Original — nur lokal';
+
+  @override
+  String get neverSentToAiSendCannotRead =>
+      'Wird nie an die KI gesendet · Senden kann diese Seite nicht lesen';
+
+  @override
+  String get yourDocumentArrivesHere =>
+      'Ihr Dokument kommt hier an, so wie es geschrieben ist. Nichts auf dieser Seite kann das Netz erreichen.';
+
+  @override
+  String get safeAiWillReceive => 'Geschützt — das erhält die KI';
+
+  @override
+  String get theRequestItselfNotAPreview =>
+      'Die Anfrage selbst, keine Vorschau davon';
+
+  @override
+  String get whatAnAiWouldReceiveStandsHere =>
+      'Was eine KI erhalten würde, steht hier neben dem Original, Wort für Wort, bevor etwas gesendet wird.';
+
+  @override
+  String get theChatTitle => 'Der Chat';
+
+  @override
+  String get yourQuestionsAndWhatCameBack => 'Ihre Fragen, und was zurückkam';
+
+  @override
+  String get theChatOpensHereWithTheFirstAnswer =>
+      'Der Chat öffnet sich hier mit der ersten Antwort, und jede Frage danach trägt mit, was schon gesagt wurde.';
+
+  @override
+  String get typedText => 'Eingegebener Text';
+
+  @override
+  String get onePage => '1 Seite';
+
+  @override
+  String pagesCount(int pages) {
+    return '$pages Seiten';
+  }
+
+  @override
+  String get vaultLabel => 'Tresor';
+
+  @override
+  String get vaultIsUnlocked => 'Offen';
+
+  @override
+  String get vaultIsLocked => 'Verschlossen';
+
+  @override
+  String get vaultIsNone => 'Keiner';
+
+  @override
+  String get openZVault => 'Z-Tresor öffnen';
+
+  @override
+  String get lockNow => 'Jetzt verschließen';
+
+  @override
+  String get openZVaultOrLockItNow => 'Z-Tresor öffnen oder jetzt verschließen';
+
+  @override
+  String get goToAPage => 'Zu einer Seite springen';
+
+  @override
+  String pageNumber(int page) {
+    return 'Seite $page';
+  }
+
+  @override
+  String get pageWord => 'Seite';
+
+  @override
+  String get chooseTheAiAndWhatTravels => 'Die KI wählen und was an sie geht';
+
+  @override
+  String get readThisDocumentWithAnotherRuleSet =>
+      'Dieses Dokument mit einem anderen Regelsatz lesen';
+
+  @override
+  String get generalRulesOnly => 'Nur allgemeine Regeln';
+
+  @override
+  String get packLabel => 'Sprachpaket';
+
+  @override
+  String packWithGeneralRules(String pack) {
+    return '$pack · allgemeine Regeln';
+  }
+
+  @override
+  String get everywhere => 'Überall';
+
+  @override
+  String get profile => 'Profil';
+
+  @override
+  String get profiles => 'Profile';
+
+  @override
+  String get chooseWhichClientDictionary =>
+      'Wählen Sie, welches Kundenverzeichnis diese Sitzung verwendet. Die Profil-ID bleibt im Tresor; der Anzeigename ist, was Menschen sehen.';
+
+  @override
+  String get onlyIdentitiesForEveryProfile =>
+      'Nur Identitäten und Regeln, die für jedes Profil gelten.';
+
+  @override
+  String get createProfile => 'Profil erstellen';
+
+  @override
+  String get done => 'Fertig';
+
+  @override
+  String get rename => 'Umbenennen';
+
+  @override
+  String get profileActive => 'Aktiv';
+
+  @override
+  String get profileSwitch => 'Wechseln';
+
+  @override
+  String get readItBack => 'Zurücklesen';
+
+  @override
+  String get scanning => 'Wird geprüft…';
+
+  @override
+  String get notScannedYet => 'Noch nicht geprüft';
+
+  @override
+  String get asItWasKept => 'Wie es aufbewahrt wurde';
+
+  @override
+  String lastScanNote(String note) {
+    return 'Letzte Prüfung: $note';
+  }
+
+  @override
+  String get scannedOnImport => 'Beim Import geprüft';
+
+  @override
+  String get lastScanManualRescan => 'Letzte Prüfung: manuell erneut geprüft';
+
+  @override
+  String alreadyProtectedNothingScanned(int marks) {
+    return '$marks schon geschützt · in diesem Durchgang nichts geprüft';
+  }
+
+  @override
+  String protectedAutomaticallyNeedYourWord(int auto, int open, int normal) {
+    return '$auto automatisch geschützt · $open brauchen Ihr Wort · $normal normal';
+  }
+
+  @override
+  String get vaultLockedRulesAndPackRan =>
+      'Tresor verschlossen — Regeln und Sprachpaket liefen, die Tresor-Schicht nicht';
+
+  @override
+  String get noVaultNothingRecognisedByName =>
+      'Kein Tresor — nichts wird am Namen erkannt';
+
+  @override
+  String get unlock => 'Öffnen';
+
+  @override
+  String get removeTheDocument => 'Das Dokument entfernen';
+
+  @override
+  String get nothingIsOpen => 'Nichts ist geöffnet.';
+
+  @override
+  String get thereIsNothingToSendYet => 'Es gibt noch nichts zu senden.';
+
+  @override
+  String get readingWhatThoseLinesHold =>
+      'Was diese Zeilen enthalten, wird gelesen…';
+
+  @override
+  String oneLineProtectedOpen(int protected, int open) {
+    return '1 Zeile · $protected darin geschützt · $open offen';
+  }
+
+  @override
+  String linesProtectedOpen(int lines, int protected, int open) {
+    return '$lines Zeilen · $protected darin geschützt · $open offen';
+  }
+
+  @override
+  String get pressAValueToProtectEveryHeldLine =>
+      'Drücken Sie einen Wert, um dieselbe Zelle in jeder gehaltenen Zeile zu schützen.';
+
+  @override
+  String get letTheLinesGo => 'Die Zeilen loslassen';
+
+  @override
+  String get inStep => 'Im Gleichschritt';
+
+  @override
+  String get apart => 'Getrennt';
+
+  @override
+  String get drawnAsChips => 'Plättchen';
+
+  @override
+  String get drawnPlain => 'Einfach';
+
+  @override
+  String get oneSuggestionStillOpen =>
+      'Ein Vorschlag ist noch offen. Bis Sie ihn beantworten, steht er hier wie geschrieben — echter Text auf dieser Seite.';
+
+  @override
+  String suggestionsStillOpen(int open) {
+    return '$open Vorschläge sind noch offen. Bis Sie sie beantworten, stehen sie hier wie geschrieben — der einzige echte Text auf dieser Seite.';
+  }
+
+  @override
+  String get chooseWhoAnswers => 'Wählen, wer antwortet';
+
+  @override
+  String get showTheChat => 'Den Chat zeigen';
+
+  @override
+  String get whatWouldYouLikeToAskTheAi => 'Was möchten Sie die KI fragen?';
+
+  @override
+  String get whatShouldTheAiDoWithThis => 'Was soll die KI damit tun?';
+
+  @override
+  String get askAQuestionOrPasteALetter =>
+      'Stellen Sie eine Frage, oder fügen Sie hier einen ganzen Brief ein.';
+
+  @override
+  String get reconcileSectionAgainstSection =>
+      'Vergleichen Sie Abschnitt A mit Abschnitt B und sagen Sie mir, wo der Unterschied liegt.';
+
+  @override
+  String get inWhatWillLeave => 'In dem, was hinausgeht';
+
+  @override
+  String get addItToWhatWillLeave => 'Zu dem hinzufügen, was hinausgeht';
+
+  @override
+  String get aDocumentCanBeSentWithNoRequest =>
+      'Ein Dokument kann ohne Anfrage gesendet werden, und dann erhält das Modell keine Anweisung';
+
+  @override
+  String get takeItOut => 'Herausnehmen';
+
+  @override
+  String get yourRequestNothingToProtect =>
+      'Ihre Anfrage steht in der geschützten Spalte, mit nichts darin zu schützen.';
+
+  @override
+  String get yourRequestOneValueReplaced =>
+      'Ihre Anfrage steht in der geschützten Spalte, mit einem ersetzten Wert.';
+
+  @override
+  String yourRequestValuesReplaced(int count) {
+    return 'Ihre Anfrage steht in der geschützten Spalte, mit $count ersetzten Werten.';
+  }
+
+  @override
+  String get oneRequestAtATime =>
+      'Eine Anfrage nach der anderen — eine neue Frage ersetzt diese, und der Chat behält jeden Austausch.';
+
+  @override
+  String get oneQuestionLeftGoToIt => '1 Frage offen — dorthin gehen';
+
+  @override
+  String questionsLeftGoToTheFirst(int open) {
+    return '$open Fragen offen — zur ersten gehen';
+  }
+
+  @override
+  String get protectIt => 'Schützen';
+
+  @override
+  String get leaveItInTheClear => 'Im Klartext lassen';
+
+  @override
+  String theOneLeftIsKind(String kind) {
+    return 'Die verbleibende ist $kind.';
+  }
+
+  @override
+  String get showWhatTheAiWillReceive => 'Zeigen, was die KI erhält';
+
+  @override
+  String get hideThisColumn => 'Diese Spalte verbergen';
+
+  @override
+  String get narrowThisPanel => 'Dieses Feld schmaler machen';
+
+  @override
+  String get widenThisPanel => 'Dieses Feld breiter machen';
+
+  @override
+  String get oneExchangeCarriedIntoTheNext =>
+      'Ein Austausch, der in die nächste Frage mitgenommen wird.';
+
+  @override
+  String exchangesCarriedIntoTheNext(int count) {
+    return '$count Fragen und Antworten, die in die nächste Frage mitgenommen werden.';
+  }
+
+  @override
+  String get putTheChatAwayItIsNotEnded =>
+      'Den Chat beiseitelegen — er ist nicht beendet';
+
+  @override
+  String get theFirstAnswerOpensTheChatHere =>
+      'Die erste Antwort öffnet den Chat hier. Jede Frage danach trägt mit, was schon gesagt wurde.';
+
+  @override
+  String get askSomethingElseAboutThis => 'Fragen Sie etwas anderes dazu…';
+
+  @override
+  String get pasteTheAnswerYouWereGiven =>
+      'Fügen Sie die Antwort ein, die Sie erhalten haben…';
+
+  @override
+  String get addItToTheChat => 'Zum Chat hinzufügen';
+
+  @override
+  String get notNow => 'Jetzt nicht';
+
+  @override
+  String get copyTheChat => 'Den Chat kopieren';
+
+  @override
+  String get addAnAnswer => 'Eine Antwort hinzufügen';
+
+  @override
+  String get endTheChat => 'Den Chat beenden';
+
+  @override
+  String get theChatIsOnYourClipboard =>
+      'Der Chat liegt geschützt in Ihrer Zwischenablage — bringen Sie die Antwort mit «Eine Antwort hinzufügen» zurück.';
+
+  @override
+  String get couldNotReadTheClipboard =>
+      'Z Privacy konnte die Zwischenablage nicht lesen.';
+
+  @override
+  String get thereIsNoTextOnTheClipboard =>
+      'Es ist kein Text in der Zwischenablage.';
+
+  @override
+  String get hideTheText => 'Den Text verbergen';
+
+  @override
+  String get showTheText => 'Den Text zeigen';
+
+  @override
+  String get theTextWithYourNamesBack =>
+      'Der Text, mit Ihren Namen zurück — auf diesem Gerät';
+
+  @override
+  String get thisAnswerCarriesOneUnknownToken =>
+      'Diese Antwort enthält 1 Platzhalter, den diese Sitzung nicht kennt — er wurde in einer anderen Sitzung erzeugt.';
+
+  @override
+  String thisAnswerCarriesUnknownTokens(int count) {
+    return 'Diese Antwort enthält $count Platzhalter, die diese Sitzung nicht kennt — sie wurden in einer anderen Sitzung erzeugt.';
+  }
+
+  @override
+  String get copyRestored => 'Wiederhergestelltes kopieren';
+
+  @override
+  String get theMarkedWordsWerePutBackHere =>
+      'Die markierten Wörter wurden hier wieder eingesetzt, auf diesem Gerät. Das Modell hat sie nie gesehen.';
+
+  @override
+  String get theDottedWordsWerePutBackHere =>
+      'Die punktierten Wörter wurden hier wieder eingesetzt, auf diesem Gerät. Die durchgestrichenen sind Platzhalter, die diese Sitzung nicht zurückholen kann.';
+
+  @override
+  String get copyRestoredTextQuestion => 'Wiederhergestellten Text kopieren?';
+
+  @override
+  String get thisWillPlaceTheRealValues =>
+      'Dies legt die echten geschützten Werte in Ihre System-Zwischenablage. Andere Anwendungen können die Zwischenablage möglicherweise lesen.';
+
+  @override
+  String get cancel => 'Abbrechen';
+
+  @override
+  String get restoredTextCopied =>
+      'Wiederhergestellter Text in die System-Zwischenablage kopiert.';
+
+  @override
+  String get chooseWhoAnswersInTheMiddleFirst =>
+      'Wählen Sie zuerst in der mittleren Spalte, wer antwortet';
+
+  @override
+  String sendThisQuestionTo(String name) {
+    return 'Diese Frage an $name senden';
+  }
+
+  @override
+  String get writeAQuestionFirst => 'Schreiben Sie zuerst eine Frage.';
 }

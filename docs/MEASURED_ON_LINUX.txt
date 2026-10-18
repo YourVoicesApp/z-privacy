@@ -1,8 +1,8 @@
 What Linux measures — the line the Windows report is compared against.
 
-  commit  84f4453
+  commit  301fdd7
   rust    792
-  dart    402
+  dart    403
   gates   587 checks, 0 failed, 0 skipped
 
 `commit` names the last commit at which a full run was recorded here, which

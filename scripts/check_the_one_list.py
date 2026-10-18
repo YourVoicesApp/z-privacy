@@ -46,40 +46,48 @@ LIB = pathlib.Path('apps/flutter_app/lib')
 L10N = LIB / 'l10n'
 
 # **The migrated files**: these must hold no sentence of their own.
+#
+# `going_to_a_word.dart` is in the list and was never migrated: it holds no
+# sentence of its own at all, and a file at zero belongs where zero is the law
+# rather than in a debt list that would let one be added.
 MIGRATED = {
+    'core/going_to_a_word.dart',
     'core/messages.dart',
+    'screens/first_run.dart',
+    'screens/workspace.dart',
+    'widgets/the_chat.dart',
 }
 
 # **The debt, file by file, as it stands.** Each number is what that file still
-# holds; the gate refuses a rise. The next branch takes them to zero in the
-# order the owner reads them: the first screen, the work surface's three parts
-# and the chat, then the settings rooms, then the widgets.
+# holds; the gate refuses a rise. The owner's own order was the first screen,
+# the work surface's three parts and the chat — those are done, and the numbers
+# below were measured again against the tree rather than left as the floors
+# they were: a floor that is looser than the truth is a gate that would let a
+# sentence be added back. What is left is the settings rooms, then the widgets.
+#
+# 854 sentences stood in 27 files when this round began; 711 stand in 23 now.
 OWED = {
-    'core/going_to_a_word.dart': 1,
-    'core/protected_pdf.dart': 20,
-    'core/session_state.dart': 33,
+    'core/protected_pdf.dart': 16,
+    'core/session_state.dart': 29,
     'core/the_clipboard.dart': 1,
-    'screens/first_run.dart': 36,
-    'screens/settings.dart': 154,
-    'screens/shell.dart': 4,
-    'screens/vault.dart': 69,
-    'screens/workspace.dart': 107,
-    'widgets/acts.dart': 29,
+    'screens/settings.dart': 152,
+    'screens/shell.dart': 3,
+    'screens/vault.dart': 67,
+    'widgets/acts.dart': 28,
     'widgets/bits.dart': 13,
     'widgets/connect_form.dart': 22,
     'widgets/conversation_view.dart': 10,
-    'widgets/document_text.dart': 3,
-    'widgets/entity_detail.dart': 38,
-    'widgets/find_in_document.dart': 15,
-    'widgets/language_list.dart': 7,
+    'widgets/document_text.dart': 2,
+    'widgets/entity_detail.dart': 36,
+    'widgets/find_in_document.dart': 14,
+    'widgets/language_list.dart': 6,
     'widgets/line_gutter.dart': 2,
-    'widgets/name_review.dart': 75,
+    'widgets/name_review.dart': 73,
+    'widgets/reveal.dart': 2,
     'widgets/review.dart': 23,
-    'widgets/reveal.dart': 3,
-    'widgets/send_sheet.dart': 51,
-    'widgets/the_chat.dart': 41,
+    'widgets/send_sheet.dart': 50,
     'widgets/the_way_back.dart': 3,
-    'widgets/tokens.dart': 16,
+    'widgets/tokens.dart': 15,
     'widgets/vault_forms.dart': 79,
     'widgets/why_sheet.dart': 65,
 }
@@ -90,6 +98,12 @@ SAME_IN_EVERY_LANGUAGE = re.compile(
 )
 
 LITERAL = re.compile(r"'((?:[^'\\]|\\.){3,})'")
+
+# **Product names.** The same in every language, and the paper says so: a list
+# that held «Z Privacy» in three files would be three chances to rename the
+# product in two of them. Matched whole, never as a part — «Z Privacy keeps
+# nothing» is a sentence.
+PRODUCT_NAMES = {'Z Privacy', 'z-pdf', 'YourVoices', 'Grok', 'xAI', 'Ollama'}
 
 
 def sentences_in(path: pathlib.Path) -> list[str]:
@@ -109,11 +123,15 @@ def sentences_in(path: pathlib.Path) -> list[str]:
             v = m.group(1)
             if not re.search(r'[A-Za-z]{3,}', v):
                 continue
-            if v.startswith('package:') or v.endswith('.dart'):
+            # An import URI is not a sentence: `package:…`, `dart:async`, and
+            # any path that ends in a Dart file.
+            if v.startswith(('package:', 'dart:')) or v.endswith('.dart'):
                 continue
             if re.fullmatch(r'[a-z0-9_\-]+', v):      # keys, ids, codes
                 continue
             if v.startswith('__Z_') or v == '__Z_':   # token grammar
+                continue
+            if v.strip() in PRODUCT_NAMES:            # product names
                 continue
             if '\\u2068' in v or '\\u2069' in v:      # the isolate marks
                 continue
@@ -124,6 +142,12 @@ def sentences_in(path: pathlib.Path) -> list[str]:
             # whole job, and ICU has no placeholder for either.
             bare = re.sub(r'\$\{[^}]*\}|\$[A-Za-z_][A-Za-z_0-9]*', '', v)
             if not re.search(r'[A-Za-z]{3,}', bare):
+                continue
+            # **A key that counts is still a key.** `'the-chat-bubble-$at'` is
+            # how a test reaches the third bubble; the number in it does not
+            # make it a sentence, so the same shape as the line above is asked
+            # of what is left when the interpolations are taken out.
+            if re.fullmatch(r'[a-z0-9_\-]*', bare):
                 continue
             # **Not a fragment of Dart.** A line with two literals on it hands
             # the quote-pairing above whatever lies between them — `') ? lowered
