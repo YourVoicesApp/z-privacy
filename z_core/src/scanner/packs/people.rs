@@ -384,8 +384,15 @@ fn name_from(
         let joiner = matches!(n, "von" | "van" | "de" | "der" | "zu");
         if (name_shaped(next.text, pack) || joiner) && j - first < 3 {
             last = Some(j);
-            // A word carrying a comma, a full stop or a closing bracket ends it.
-            if next.text.ends_with([',', '.', ';', ')', ':']) {
+            // A word carrying a comma, a full stop or a closing bracket ends it
+            // — **and a question mark or an exclamation mark, which were
+            // missing from this same list** until the attacker's B1-3 (17
+            // October) reached a word past one: `Frau Beate Hoffmann?
+            // Zahlungsziel …` took «Zahlungsziel» as a third name word,
+            // because in German every noun is capitalised and the walk had no
+            // reason to stop. A name does not continue into the next sentence,
+            // whichever mark ended this one.
+            if next.text.ends_with([',', '.', ';', ')', ':', '?', '!']) {
                 break;
             }
             j += 1;

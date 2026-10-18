@@ -675,12 +675,18 @@ fn is_label(word: &str, rules: &[LabelRule]) -> bool {
 /// The same question with the colon forgiven: is this word one of the labels,
 /// however it is punctuated?
 ///
-/// Used by one boundary only — the end of a grouped value — because a word that
-/// names a field is not part of the field before it. Kept apart from
-/// [`is_label`] on purpose: a label without a colon is still **not** a form
-/// (that is the measurement behind `wrote_colon`), and only a run that is
-/// already reading groups may use it to stop.
-fn is_label_word(word: &str, rules: &[LabelRule]) -> bool {
+/// Used by two boundaries — the end of a grouped value, because a word that
+/// names a field is not part of the field before it, and the scanner's own law
+/// that **no layer's candidate may be a word that names a field** (the
+/// attacker's B1-3: «IBAN» left as a person). Kept apart from [`is_label`] on
+/// purpose: a label without a colon is still **not** a form (that is the
+/// measurement behind `wrote_colon`), and only a reader that already knows it
+/// is looking at something other than a form may use this one.
+///
+/// One function for both, so that «which words name a field» cannot have two
+/// answers: the day a set gains a label, the value it ends and the name it is
+/// not are decided by the same row.
+pub(crate) fn is_label_word(word: &str, rules: &[LabelRule]) -> bool {
     let lowered = crate::text::nfc(bare(word)).to_lowercase();
     rules.iter().any(|r| r.label == lowered)
 }
