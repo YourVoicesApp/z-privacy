@@ -2314,6 +2314,40 @@ else
   skip "G50/G51 the sentences are in one list" "no checker yet"
 fi
 
+# ------------------------------------------------------------------ G55
+# **No sentence carries a character nobody can see** — 19 October 2026.
+#
+# The lead, reading the ninety German values of 092's third sitting, found
+# `deviceBoundProtection` drafted with a **soft hyphen** inside
+# «Geräte­gebundener Schutz». Invisible in every editor, every diff and every
+# review; written by the hand that drafted the value, caught by the hand that
+# read it. One pair of eyes is not a method, so the class is refused where the
+# sentences live: format, control, private-use and surrogate code points, in
+# every value of every `lib/l10n/*.arb`.
+#
+# **The isolate marks are in that class and are not an exception.** `U+2068`
+# and `U+2069` are needed — a word the person chose, quoted inside a sentence
+# of ours, is isolated or the bidirectional algorithm takes the punctuation
+# into it (G44, the owner's «ألماني 1») — and they live at the **call site**,
+# which G44's own half over this file checks. The two gates together say the
+# law exactly: the sentence carries the quotation marks, the caller carries the
+# isolate. The other arrangement is already refused by the toolchain, because
+# `gen-l10n` writes raw code points into the generated Dart and the analyzer
+# flags each one in a file nobody can edit.
+#
+# A Python checker, because the question is about Unicode categories and a
+# shell cannot ask it.
+if [ -f scripts/check_no_invisible_sentence.py ]; then
+  if OUT=$(python3 scripts/check_no_invisible_sentence.py 2>&1); then
+    pass "G55 no sentence in the one list carries an invisible character — $OUT"
+  else
+    fail "G55 a sentence carries a character nobody can see:"
+    printf '%s\n' "$OUT" | sed 's/^/        /'
+  fi
+else
+  skip "G55 no sentence carries an invisible character" "no checker yet"
+fi
+
 # ------------------------------------------------------------------ G54
 # **G53 on this branch until 093 landed**, which took that number for the
 # Windows job — five checks of its own, and `G53_BAD` among its variables.
