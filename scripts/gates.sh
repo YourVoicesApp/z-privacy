@@ -2169,6 +2169,70 @@ else
   skip "G50/G51 the sentences are in one list" "no checker yet"
 fi
 
+# ------------------------------------------------------------------ G52
+# **The core is told where its files are, before there is a screen** — 18
+# October 2026, and the gate exists because a build shipped without it.
+#
+# `set_data_dir` is the one call that gives the core its folder: the vault, the
+# sessions and `settings.zcfg` all hang off it. It lived in the shell's
+# `_start()`, behind `if (widget.ground == null)` — a **test** door, because a
+# future created in `testWidgets`' zone never completes. 092 made the root hold
+# the `Ground` so it could read the person's language, the shipped app began
+# passing one, the condition read «a test gave me this», and the call stopped
+# happening in the product. The core then has no folder; `VaultState` answers
+# `Absent` for «no folder» exactly as for «no vault», and the owner was shown
+# the first-run page over a 7938-byte vault that nothing had read. Four hundred
+# and one Dart tests were green, because every one of them passes a folder.
+#
+# So the law is about **where the call stands**, not that it exists somewhere:
+#
+#   1. `lib/main.dart` calls it, and **before `runApp`** — there is no screen
+#      yet, so no screen's parameters can decide it.
+#   2. **Nothing branches in front of it.** An `if` between the top of `main()`
+#      and that call is the exact shape of the fault; a `try` is not, because
+#      catching the failure is how the sentence reaches the glass.
+#   3. **Two callers in `lib/`, by name**: `main.dart` for the product and the
+#      shell's own `_start()` for a test that brings its own folder. A third is
+#      a second opinion about where a person's vault lives.
+MAIN_DART=$FLUTTER_LIB/main.dart
+G52_BAD=""
+if [ ! -f "$MAIN_DART" ]; then
+  G52_BAD="there is no $MAIN_DART"
+else
+  MAIN_AT=$(grep -nE '^Future<void> main\(' "$MAIN_DART" | head -1 | cut -d: -f1)
+  RUNAPP_AT=$(grep -n 'runApp(' "$MAIN_DART" | head -1 | cut -d: -f1)
+  SETDIR_AT=$(grep -n 'setDataDir(' "$MAIN_DART" | head -1 | cut -d: -f1)
+  if [ -z "$SETDIR_AT" ]; then
+    G52_BAD="$MAIN_DART never tells the core where its files are — the vault, the sessions and settings.zcfg all hang off set_data_dir"
+  elif [ -z "$MAIN_AT" ] || [ -z "$RUNAPP_AT" ]; then
+    G52_BAD="$MAIN_DART has no «Future<void> main(» or no «runApp(» for this gate to read"
+  elif [ "$SETDIR_AT" -gt "$RUNAPP_AT" ]; then
+    G52_BAD="$MAIN_DART calls set_data_dir at line $SETDIR_AT, after runApp at line $RUNAPP_AT — the first screen is drawn over a core with no folder"
+  elif [ "$SETDIR_AT" -lt "$MAIN_AT" ]; then
+    G52_BAD="$MAIN_DART calls set_data_dir at line $SETDIR_AT, outside main() at line $MAIN_AT"
+  else
+    BRANCH=$(sed -n "$((MAIN_AT + 1)),$((SETDIR_AT - 1))p" "$MAIN_DART" | grep -nE '^[[:space:]]*(if|} else)[[:space:]]*[({]' || true)
+    if [ -n "$BRANCH" ]; then
+      G52_BAD="$MAIN_DART branches before it says where the files are, which is the 18 October fault itself:
+        $BRANCH"
+    fi
+  fi
+fi
+# The generated bridge declares the door; it decides nothing, and it is not
+# written by hand — the same exclusion G32 and G38 make of `lib/l10n/`.
+SETDIR_FILES=$(grep -rln 'setDataDir(' "$FLUTTER_LIB" 2>/dev/null | grep -v "^$FLUTTER_LIB/src/" | sort || true)
+SETDIR_EXTRA=$(printf '%s\n' "$SETDIR_FILES" | grep -v -e "^$FLUTTER_LIB/main.dart$" -e "^$FLUTTER_LIB/screens/shell.dart$" || true)
+if [ -n "$SETDIR_EXTRA" ]; then
+  G52_BAD="$G52_BAD
+        a third place says where a person's files live: $SETDIR_EXTRA"
+fi
+if [ -n "$G52_BAD" ]; then
+  fail "G52 the core is not told where its files are before the first screen:"
+  printf '        %s\n' "$G52_BAD"
+else
+  pass "G52 main.dart tells the core its folder at line $SETDIR_AT, before runApp at line $RUNAPP_AT, with nothing branching in front of it"
+fi
+
 # ---------------------------------------------------------------- G24
 # One watcher for the window, and it only reports.
 #

@@ -19,6 +19,7 @@ import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/workspace.dart';
+import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/tokens.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -271,6 +272,80 @@ void main() {
     // reach is the word as it is on the glass.
     expect(find.text('THE CHAT'), findsOneWidget);
   });
+
+  // **The folder is said before any screen, and this screen does not say it
+  // again** — 18 October 2026, the fault the owner met on `84f4453`.
+  //
+  // `set_data_dir` is the one call that gives the core its folder, and it sat
+  // inside the shell's `_start()`, which the shell runs only when it made its
+  // own `Ground`: `if (widget.ground == null) _start()`. That condition is a
+  // test door. 092 made the root hold the `Ground` so it could read the
+  // person's language from it, the shipped app began passing one, and the call
+  // stopped happening in the product — the core had no folder, `VaultState`
+  // answered `Absent`, and the first-run page came up over a vault of 7938
+  // bytes that nothing had read. **Four hundred and one tests were green,
+  // because every one of them passes a folder of its own.**
+  //
+  // So the division of labour is what is measured here, and the half a Dart
+  // test can hold is this one: a shell handed a `Ground` **touches nobody's
+  // folder**. The other half — that `main.dart` says it, before `runApp`, with
+  // nothing branching in front of it — is G52, because a widget test cannot
+  // run `main()`.
+  testWidgets('a shell given a Ground leaves the folder alone, and says what went wrong before it', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1300, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final own = Directory('${Directory.systemTemp.path}/zprivacy-folder-$pid');
+    if (own.existsSync()) own.deleteSync(recursive: true);
+    addTearDown(() {
+      if (own.existsSync()) own.deleteSync(recursive: true);
+    });
+
+    final ground = Ground();
+    await tester.runAsync(() async {
+      await z.vaultLock();
+      // The folder this run is about, with a vault open in it — so that a
+      // shell which went looking for a folder of its own would be **visibly**
+      // somewhere else: the machine's real folder holds either a sealed vault
+      // or none, and both read as «not unlocked».
+      await setDataDirForTest(own.path);
+      await z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort für den Tresor');
+      await ground.refresh();
+    });
+    expect(ground.vault, VaultState.unlocked, reason: 'the folder for this run was not opened');
+
+    // **No `dataDir`**, which is the shipped app's own shape: the folder was
+    // said before this widget existed, and the shell is handed only a Ground.
+    await tester.pumpWidget(MaterialApp(
+      home: ZShell(
+        ground: ground,
+        troubleAtTheStart: 'This folder cannot be used for Z Privacy files.',
+      ),
+    ));
+    await settle(tester);
+
+    // It is still that folder's vault that is open. A shell that had asked for
+    // a folder of its own would have re-pointed the core at the machine's
+    // default and this would be `locked` or `absent`.
+    await tester.runAsync(ground.refresh);
+    expect(ground.vault, VaultState.unlocked,
+        reason: 'the shell pointed the core at a folder of its own choosing');
+
+    // And the sentence from before the first frame is on the glass: `main.dart`
+    // has no screen to say it on, and a start-up fault that reaches nobody is
+    // how two builds stayed quiet.
+    expect(find.text('This folder cannot be used for Z Privacy files.'), findsOneWidget,
+        reason: 'what went wrong before any screen existed never reached one');
+    // In a band of its own, over whatever screen the chain chose: the band
+    // inside `_body` is past the first-run return, and the first-run page is
+    // exactly where a folder fault puts a person.
+    expect(find.byType(Trouble), findsOneWidget);
+    await tester.tap(find.byType(Trouble));
+    await settle(tester, rounds: 2);
+    expect(find.byType(Trouble), findsNothing,
+        reason: 'a press does not take the band away');
+  });
+
 }
 
 /// What the core said was revealed, carried out of a `runAsync` block.
