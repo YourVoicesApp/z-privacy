@@ -592,7 +592,11 @@ pub(crate) fn build_payload(session: SessionId) -> ApiResult<PayloadHandle> {
         // one place, whichever door asked — the model door has asked that
         // builder since rule 67, and a second one here would be two texts the
         // day either changed.
-        WhatWouldLeave::TheQuestionAlone => return build_the_question_alone(session),
+        // **The instrument, not the door**: this one is asked by the snapshot on
+        // every read, so it builds and births nothing. The exits reach the same
+        // builder through their own law (`build_the_question_alone`,
+        // `payload_to_take_out`).
+        WhatWouldLeave::TheQuestionAlone => return with_core(|core| the_question_alone(core, session)),
         WhatWouldLeave::TheDocumentAndItsRequest => {}
     }
     let whose = with_core(the_session_this_belongs_to);
@@ -650,6 +654,11 @@ fn no_word_waits(session: u32) -> ApiResult<()> {
 /// waiting, and this door decides who may take the text away.
 pub(crate) fn payload_to_take_out(session: SessionId) -> ApiResult<PayloadView> {
     no_word_waits(session.id)?;
+    // **A session for what is about to leave** — rule 55-و, asked before the
+    // mint and before the build: a birth re-derives every token of the bench,
+    // so a payload built first would wear pre-birth names while claiming the
+    // newborn session (064f).
+    a_session_for_what_leaves(session)?;
     // **The answer page's token, minted after the law and never before it** —
     // 079. A refused exit prints no page, so it mints nothing either. Minted
     // here, at the one door both manual exits ask, rather than in the PDF's
@@ -704,7 +713,27 @@ pub(crate) fn payload_to_take_out(session: SessionId) -> ApiResult<PayloadView> 
 /// send, and the refusal names what is missing rather than sending a label with
 /// no sentence under it.
 pub(crate) fn build_the_question_alone(session: SessionId) -> ApiResult<PayloadHandle> {
-    with_core(|core| {
+    // **The exit's own law, before the handle exists** — rule 55-و. This is a
+    // door text leaves by: the screen builds here and sends in the same act, so
+    // the birth belongs in front of the build and nowhere after it.
+    a_session_for_what_leaves(session)?;
+    with_core(|core| the_question_alone(core, session))
+}
+
+/// **The building itself**, with the core in hand and no law of its own.
+///
+/// Split out for one reason, and it is the distinction this file already draws
+/// at `payload_to_take_out`: the workspace snapshot asks `build_payload` on
+/// **every read** to draw the Safe column, and a birth there would make a
+/// session out of a question nobody has sent — «no empty sessions» is rule 55's
+/// own words. So the instrument the screen draws with reaches this function,
+/// and the door text leaves by reaches it through the law above. One builder
+/// either way: the text that leaves is assembled in exactly one place.
+fn the_question_alone(
+    core: &mut crate::session::Core,
+    session: SessionId,
+) -> ApiResult<PayloadHandle> {
+    {
         let whose = the_session_this_belongs_to(core);
         // **What this chat has already been allowed to carry** — G9, and the
         // reason a follow-up can be read at all. Taken before the bench is
@@ -727,6 +756,50 @@ pub(crate) fn build_the_question_alone(session: SessionId) -> ApiResult<PayloadH
         s.payloads.insert(id, payload);
         s.trim_payloads();
         Ok(handle)
+    }
+}
+
+/// **A session for what is about to leave** — rule 55-و, the owner's «نعم» of
+/// 18 October 2026.
+///
+/// The second cause of the one birth (`conversation::a_session_is_born`): a
+/// question that leaves with no document in the app is a session, because «the
+/// chat without a document is a whole session» — its turns stored, the next
+/// question carrying the earlier ones, «Copy the chat» working, and the row in
+/// the room under its name.
+///
+/// **One function, asked by every exit**, which is the shape `no_word_waits`
+/// has for the same reason: the law used to live in the *screen*, which began
+/// a session of its own whenever an exit found none open. That is one law in
+/// two languages, and the quieter copy wins the day they disagree.
+///
+/// **Nothing here births for a document**: that cause fires when the document
+/// enters the preview (rule 55c), long before any exit, and asking again at the
+/// exit would be a second answer to the same question. A session already open
+/// is left exactly as it is — which is also why ending a chat starts the
+/// surface from zero *inside* the session it belongs to (rule 71) rather than
+/// beginning a second one.
+///
+/// **A locked vault never refuses the exit.** There is no key to seal a
+/// session with, so the text still leaves and nothing is written down — the
+/// same answer `keep_the_preview` gives a document that arrives before the
+/// vault is open.
+fn a_session_for_what_leaves(session: SessionId) -> ApiResult<()> {
+    with_core(|core| {
+        if crate::ops::conversation::open_in(core).is_some() {
+            return Ok(());
+        }
+        let Some(s) = core.get(session.id) else {
+            return Err(ApiError::InvalidSession);
+        };
+        if !matches!(what_would_leave(s), WhatWouldLeave::TheQuestionAlone) {
+            return Ok(());
+        }
+        match crate::ops::conversation::a_session_is_born(core, session) {
+            Ok(_) => Ok(()),
+            Err(ApiError::VaultLocked) => Ok(()),
+            Err(other) => Err(other),
+        }
     })
 }
 
