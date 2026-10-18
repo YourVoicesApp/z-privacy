@@ -17,16 +17,52 @@ import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/l10n/app_localizations.dart';
+import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
+import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 Future<void> main() async {
   await RustLib.init();
   // One line on stdout, so a headless build can prove the bridge is live
   // without anyone having to look at a window.
   debugPrint('bridge ok — ${coreVersion()}');
-  runApp(const ZPrivacyApp());
+  // **Where this machine's files are, said here, before any screen** — and
+  // this is the third of the three things the head of this file says it does.
+  //
+  // It was said by the shell until 18 October, inside `_start()`, which the
+  // shell runs only when it made its own `Ground`: `if (widget.ground == null)
+  // _start()`. That condition is a **test** door — a future created in
+  // `testWidgets`' zone never completes, so a shell that calls into Rust from
+  // `initState` can never finish starting in a test — and 092 made the root
+  // hold the `Ground` so it could read the person's language from it. The two
+  // met: the shipped app passed a `Ground`, the condition read «a test gave me
+  // this», and `set_data_dir` was never called in the product at all. The core
+  // then has no folder, `VaultState` answers `Absent` for «there is no folder»
+  // exactly as it does for «there is no vault», and the owner was shown the
+  // first-run page over a vault of 7938 bytes that nothing had read. Nothing
+  // was written, which is the one mercy: with no folder the vault has no path
+  // and `create` writes no byte.
+  //
+  // So it is said **once, before `runApp`**, where no screen's parameters can
+  // decide it and no test door is in front of it. The shell's own `_start()`
+  // stays exactly as it is, for the tests that hand it a folder of their own.
+  String? folderTrouble;
+  try {
+    // The core answers where, as it has since `d52df12`: this file asks the
+    // question and never guesses, because `HOME` is the wrong answer on
+    // Windows and a temp folder is the wrong answer everywhere.
+    await z.setDataDir(dir: await z.defaultDataDir());
+  } on ApiError catch (e) {
+    // **And a failure reaches the glass.** The sentence used to live in the
+    // shell's `_trouble`, and losing it would be the same fault one layer
+    // along: a person whose folder cannot be used must read why, not meet a
+    // product that behaves as though they had never run it.
+    folderTrouble = humanMessage(e);
+  }
+  runApp(ZPrivacyApp(folderTrouble: folderTrouble));
 }
 
 /// The one theme, named so that a test can measure the same one the window is
@@ -64,7 +100,11 @@ ThemeData zTheme() => ThemeData(
 /// screens say. `MaterialApp.locale` is set, so Flutter never falls back to
 /// the platform.
 class ZPrivacyApp extends StatefulWidget {
-  const ZPrivacyApp({super.key});
+  const ZPrivacyApp({super.key, this.folderTrouble});
+
+  /// What went wrong saying where the files are, if anything did. Carried
+  /// through to the shell, which is the one screen that can say it.
+  final String? folderTrouble;
 
   @override
   State<ZPrivacyApp> createState() => _ZPrivacyAppState();
@@ -114,7 +154,7 @@ class _ZPrivacyAppState extends State<ZPrivacyApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       // Left to right, always: Arabic is stopped (rule 56-أ's sibling), and
       // every language this list carries is written left to right.
-      home: ZShell(ground: _ground),
+      home: ZShell(ground: _ground, troubleAtTheStart: widget.folderTrouble),
     );
   }
 }

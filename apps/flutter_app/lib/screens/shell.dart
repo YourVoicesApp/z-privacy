@@ -36,13 +36,22 @@ const _kinds = <String, DocumentKind>{
 };
 
 class ZShell extends StatefulWidget {
-  const ZShell({super.key, this.dataDir, this.ground});
+  const ZShell({super.key, this.dataDir, this.ground, this.troubleAtTheStart});
 
   /// Where the vault lives. Passed in rather than found here, so a test can
   /// point the whole shell at a folder of its own.
   /// Where the vault goes. Null means «ask the core», which is what the app
   /// does; the tests pass a folder of their own.
   final String? dataDir;
+
+  /// **What went wrong before any screen existed**, if anything did — the one
+  /// sentence `main.dart` cannot show by itself, because it has no glass.
+  ///
+  /// Today it carries exactly one thing: a folder the core would not name or
+  /// could not use. That is said before `runApp`, so there is no screen to put
+  /// it on at the moment it happens, and a start-up fault that reaches nobody
+  /// is how the whole of 18 October's fault stayed quiet for two builds.
+  final String? troubleAtTheStart;
 
   /// An already-started `Ground`, for tests.
   ///
@@ -69,6 +78,9 @@ class _ShellState extends State<ZShell> {
   // what a person is working on — so the second one is deleted rather than
   // kept for a screen nobody can reach (rule 35).
   String? _trouble;
+
+  /// What went wrong before any screen existed, until a person presses it away.
+  String? _atTheStart;
 
   /// The report the core wrote about the file it would not open. Built at the
   /// moment of the refusal, because that is when the name and the size are
@@ -145,6 +157,19 @@ class _ShellState extends State<ZShell> {
     // after the first frame, and by then nothing asked the question again. Found
     // by running the program, not by a test.
     _ground.addListener(_groundChanged);
+    // **The sentence from before the first frame**, kept apart from `_trouble`
+    // for a measured reason: `_trouble`'s band is drawn inside `_body`, past
+    // the early returns, so it is on the one screen only — and a folder that
+    // cannot be used puts a person on the **first-run** page, because with no
+    // folder the core has no settings to say the first run is done. The one
+    // sentence that explains that would have been drawn on a screen they
+    // cannot reach. It has a band of its own, over every screen.
+    _atTheStart = widget.troubleAtTheStart;
+    // **The folder is not set here any more** — 18 October. This condition is
+    // a test door (see `ground` above), and while the one call that tells the
+    // core where the files live sat behind it, a shipped app that passed a
+    // `Ground` was never told. `main.dart` says it now, before `runApp`.
+    // `_start()` stays for the tests that bring a folder of their own.
     if (widget.ground == null) _start();
   }
 
@@ -716,6 +741,35 @@ class _ShellState extends State<ZShell> {
                 setState(() => _settingsOpen = false);
                 _ground.refresh();
               },
+            ),
+          ),
+        // **What went wrong before there was a screen** — 18 October 2026.
+        //
+        // Over everything, including the settings panel and the first-run
+        // page, because the fault it carries is the one that lands a person on
+        // that page: `main.dart` says where the files live before `runApp`, and
+        // if the core will not take that folder there are no settings, so the
+        // first run reads as undone. The work band inside `_body` is past that
+        // early return and could never have shown this.
+        //
+        // A press takes it away, exactly as the other band's does — the one
+        // thing about a band that matters.
+        if (_atTheStart != null)
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 18,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => setState(() => _atTheStart = null),
+                    child: Trouble(_atTheStart!),
+                  ),
+                ),
+              ),
             ),
           ),
       ],
