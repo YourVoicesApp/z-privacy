@@ -538,12 +538,65 @@ fn the_session_this_belongs_to(
         .map(|(number, name, _)| crate::api::PayloadSession { number, name })
 }
 
+/// **What this bench would hand to a door, before any door is chosen** — 091,
+/// the owner's rules 72 and 72-أ: the chat box is there from the first moment,
+/// with no document in the app at all, and one box means a letter pasted into
+/// it leaves by the same road as anything else.
+///
+/// **One function, because the alternative was measured.** `build_payload`
+/// refused an empty *document*, and the three manual doors are its readers —
+/// «Copy Protected», «Save as PDF» and the pull all end at
+/// `payload_to_take_out`, which asks it — while the model door asks
+/// `build_the_question_alone` and therefore worked. So on the one surface the
+/// owner now starts from, one door out of four was open, and which one
+/// depended on which builder a press happened to use. That is the shape this
+/// house has paid for four times: a law written at one door out of several.
+///
+/// It answers about the **bench**, which is why it is not
+/// `payload::WhatThePayloadIs`: that one answers about a payload that exists,
+/// and its third case is a chat, which no bench ever is.
+enum WhatWouldLeave {
+    /// Nothing at all — no document, and no question with a word in it. This
+    /// is what `NothingToSend` still means, at every door.
+    Nothing,
+    /// A document, and whatever question stands beside it: `SafePayload::build`
+    /// puts the two together with `--- Request ---` between them.
+    TheDocumentAndItsRequest,
+    /// No document, and a question in the box.
+    TheQuestionAlone,
+}
+
+/// The one reading of the bench, asked by every door and by the panel.
+///
+/// The question is measured **trimmed**: a box holding two spaces and a
+/// newline is nothing to send, because the refusal is about what would leave
+/// and not about whether a field was ever touched. `build_the_question_alone`
+/// has read it that way since rule 67.
+fn what_would_leave(s: &Session) -> WhatWouldLeave {
+    if !s.original.is_empty() {
+        WhatWouldLeave::TheDocumentAndItsRequest
+    } else if !s.question_safe.trim().is_empty() {
+        WhatWouldLeave::TheQuestionAlone
+    } else {
+        WhatWouldLeave::Nothing
+    }
+}
+
 pub(crate) fn build_payload(session: SessionId) -> ApiResult<PayloadHandle> {
+    // **Asked first, and outside every borrow.** The question-alone builder
+    // takes the core whole, and the core's lock is not re-entrant: asking for
+    // it from inside a session borrow is not an error but a stop.
+    match with_session(session.id, |s| what_would_leave(s)).ok_or(ApiError::InvalidSession)? {
+        WhatWouldLeave::Nothing => return Err(ApiError::NothingToSend),
+        // **One builder for one text.** The question alone is built in exactly
+        // one place, whichever door asked — the model door has asked that
+        // builder since rule 67, and a second one here would be two texts the
+        // day either changed.
+        WhatWouldLeave::TheQuestionAlone => return build_the_question_alone(session),
+        WhatWouldLeave::TheDocumentAndItsRequest => {}
+    }
     let whose = with_core(the_session_this_belongs_to);
     with_session(session.id, |s| {
-        if s.original.is_empty() {
-            return Err(ApiError::NothingToSend);
-        }
         let id = s.take_payload_id();
         let payload = SafePayload::build(s, id, whose);
         // Invariant G3, enforced at run time and not only in the tests: a payload
@@ -607,7 +660,14 @@ pub(crate) fn payload_to_take_out(session: SessionId) -> ApiResult<PayloadView> 
     // session is open prints that session's name for the word.
     name_tokens_from_the_vault(session.id);
     with_session(session.id, |s| {
-        if !s.original.is_empty() {
+        // **Whatever would leave gets its answer page** — and the condition is
+        // the same reading of the bench the builder makes, not a second one.
+        // It used to ask for a document, so the PDF press on a question-only
+        // surface was handed a view with no token and refused in its own words
+        // («its answer page had no token»): the door was open and the press
+        // still would not write. A refused exit prints no page, so `Nothing`
+        // mints nothing (079).
+        if !matches!(what_would_leave(s), WhatWouldLeave::Nothing) {
             s.answer_page_token();
         }
     })
@@ -2745,9 +2805,35 @@ pub(crate) fn add_alias(session: SessionId, token: String, alias: String) -> Api
 
 // ---------------------------------------------------------------- tokens
 
+/// **The blocks standing on this surface** — the Tokens panel's own list, and
+/// the count beside it in the snapshot.
+///
+/// A block is in use because a protection carries it, and the protections are
+/// the document's. **When the question is all there is**, the blocks the
+/// question itself made are the blocks on the surface — measured by e2 on
+/// `8510d82` as `payload=false · tokens=0 · marks=2`, a panel with nothing in
+/// it on the one surface where those two marks were everything the person had
+/// protected, and therefore a dead press.
+///
+/// They come from the tokens `set_question` wrote when it protected the words
+/// — the same act that drew the marks — and **never from a second scan**: a
+/// list assembled by looking at the text again would be a second standard for
+/// one text, and the first time the two disagreed the quieter one would win.
+///
+/// The condition is the one reading of the bench every door makes. With a
+/// document on the bench the panel answers exactly as it did before: a
+/// question *about* a document does not change what that document's panel
+/// shows, which is what keeps this from being two panels.
 pub(crate) fn list_tokens(session: SessionId) -> ApiResult<Vec<TokenRow>> {
     with_session(session.id, |s| {
-        let in_use = s.tokens_in_use();
+        let mut in_use = s.tokens_in_use();
+        if matches!(what_would_leave(s), WhatWouldLeave::TheQuestionAlone) {
+            for token in &s.question_tokens {
+                if !in_use.iter().any(|t| t == token) {
+                    in_use.push(token.clone());
+                }
+            }
+        }
         Ok(s.tokens.rows(&in_use))
     })
     .ok_or(ApiError::InvalidSession)?
