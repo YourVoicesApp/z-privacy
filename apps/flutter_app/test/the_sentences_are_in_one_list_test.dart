@@ -246,4 +246,52 @@ void main() {
     expect(de.vaultLabel, 'Tresor');
   });
 
+  // ------------------------------------------------------------------ guard 6
+  //
+  // **A language can be a scanner language and not yet an interface language**
+  // — rule 56-أ, and the hole this closes was live on an installed build: the
+  // Language room offered «Svenska», the press wrote `ui_language = 'sv'`
+  // because one choice writes both values (080), `theLocaleOf` accepted it
+  // because `sv` is in `supportedLocales`, and the app drew `app_sv.arb` —
+  // which is the English copy. A person chose Swedish and read English, and
+  // nothing anywhere said so.
+  //
+  // One law, three readers, and this measures the law and two of the readers:
+  // `theListIsWrittenIn` is the question, `theLocaleOf` is the fallback, and
+  // the first screen's offer is guarded in `vault_screen_test`.
+  test('a language whose list is still the English source does not carry the interface', () {
+    // German is written: its promise differs from the source's in every line.
+    expect(theListIsWrittenIn('de'), isTrue,
+        reason: 'the German list reads as untranslated, so the app would draw English');
+    // English is the source and is written by definition — nothing is compared
+    // with itself.
+    expect(theListIsWrittenIn('en'), isTrue);
+    // Swedish is not, and that is 56-أ's stated state rather than an oversight.
+    expect(theListIsWrittenIn('sv'), isFalse,
+        reason: 'the Swedish values have started to differ — then 56-أ is '
+            'satisfied, Svenska carries the interface, and this guard changes');
+    // A code nobody has a file for at all.
+    expect(theListIsWrittenIn('fr'), isFalse);
+
+    // **And the fallback.** The locale the root applies is a language the glass
+    // can speak, never the one it merely has a file for.
+    expect(theLocaleOf('de'), const Locale('de'));
+    expect(theLocaleOf('sv'), const Locale('en'),
+        reason: 'the root would draw a Swedish list that is written in English');
+    expect(theLocaleOf('fr'), const Locale('en'));
+
+    // The holder, asked the same question the root asks it: a code whose list
+    // is not written reaches the English sentences and not an empty screen.
+    theSentencesAreNow(theLocaleOf('sv'));
+    addTearDown(() => theSentencesAreNow(const Locale('en')));
+    expect(sentences.noAccount, AppLocalizationsEn().noAccount);
+
+    // And the sentence the Language room draws for such a language exists in
+    // every list, naming the language it is about.
+    expect(AppLocalizationsDe().theInterfaceIsEnglishUntilTranslated('Svenska'),
+        contains('Svenska'));
+    expect(AppLocalizationsDe().theInterfaceIsEnglishUntilTranslated('Svenska'),
+        isNot(AppLocalizationsEn().theInterfaceIsEnglishUntilTranslated('Svenska')));
+  });
+
 }

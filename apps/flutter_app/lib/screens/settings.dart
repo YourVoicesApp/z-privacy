@@ -27,6 +27,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
@@ -72,7 +73,7 @@ class SettingsDoor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Settings',
+      message: sentences.settings,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
@@ -213,7 +214,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // door that shuts it is the thing they are reaching for.
                   const BrandMark(size: 20),
                   const SizedBox(width: 9),
-                  const Text('Settings', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink)),
+                  Text(sentences.settings, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink)),
                   const Spacer(),
                   // **The build stamp, which rule 70 would otherwise have
                   // taken off the glass altogether.** It stood in the head of
@@ -316,11 +317,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         spacing: 4,
         runSpacing: 4,
         children: [
-          one(SettingsRoom.ai, 'AI', Icons.hub_outlined),
-          one(SettingsRoom.privacy, 'Privacy', Icons.shield_outlined),
-          one(SettingsRoom.language, 'Language & rules', Icons.translate),
-          one(SettingsRoom.vault, 'Vault & security', Icons.lock_outline),
-          one(SettingsRoom.sessions, 'Sessions', Icons.layers_outlined),
+          one(SettingsRoom.ai, sentences.roomAi, Icons.hub_outlined),
+          one(SettingsRoom.privacy, sentences.roomPrivacy, Icons.shield_outlined),
+          one(SettingsRoom.language, sentences.roomLanguageAndRules, Icons.translate),
+          one(SettingsRoom.vault, sentences.roomVaultAndSecurity, Icons.lock_outline),
+          one(SettingsRoom.sessions, sentences.roomSessions, Icons.layers_outlined),
         ],
       ),
     );
@@ -347,14 +348,12 @@ class _AiRoom extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Title('AI', 'Three ways to ask a model. The first needs no account at all.'),
+        _Title(sentences.roomAi, sentences.aiWhat),
         _Card(
-          title: 'Manual AI',
-          what: 'Use an AI chat you already have. Copy the safe text out of the Workspace, '
-              'paste it into whatever model you use, and bring the answer back. Nothing to '
-              'set up, nothing to pay for, and the restoring works exactly the same.',
+          title: sentences.manualAi,
+          what: sentences.manualAiWhat,
           child: Text(
-            'Always available — it is the «Choose who answers» sheet, first door.',
+            sentences.alwaysAvailableFirstDoor,
             style: Zc.small.copyWith(color: Zc.ink4),
           ),
         ),
@@ -364,7 +363,7 @@ class _AiRoom extends StatelessWidget {
             // protocol is a fact about this card and is stated below, beside
             // the endpoint — which is the only place it answers a question
             // anyone actually has.
-            title: 'Direct API',
+            title: sentences.directApi,
             // **And what the vault's state means for this card** — 18
             // October 2026. A sealed login cannot be read while the vault is
             // shut, so this card reports «Not connected» about a provider the
@@ -374,14 +373,11 @@ class _AiRoom extends StatelessWidget {
             what: ground.vault == VaultState.locked && !row.connected
                 ? theKeyIsBehindTheLockedVault
                 : row.credentialRequired
-                    ? 'Connect to a remote AI provider with your API credential. The key goes in '
-                        'once and never comes back out — no screen in this app can show it to you '
-                        'again.'
-                    : 'At this address no credential is needed.',
+                    ? sentences.directApiWhat: sentences.atThisAddressNoCredential,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Spec('Protocol', row.label),
+                _Spec(sentences.protocol, row.label),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -389,9 +385,9 @@ class _AiRoom extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       switch (row.credentialState) {
-                        CredentialState.encryptedInVault => 'Connected · key sealed in the vault',
-                        CredentialState.sessionOnly => 'Connected · key kept for this run only',
-                        CredentialState.missing => row.connected ? 'Connected · no key needed' : 'Not connected',
+                        CredentialState.encryptedInVault => sentences.connectedKeySealed,
+                        CredentialState.sessionOnly => sentences.connectedKeyThisRunOnly,
+                        CredentialState.missing => row.connected ? sentences.connectedNoKeyNeeded: sentences.notConnected,
                       },
                       style: Zc.small.copyWith(
                         color: row.connected ? Zc.ink2 : Zc.ink4,
@@ -408,15 +404,12 @@ class _AiRoom extends StatelessWidget {
           ),
         if (rows.isNotEmpty)
           _Card(
-            title: 'Local AI',
-            what: 'Runs through an AI service on this computer — llama.cpp, Ollama, LM '
-                'Studio, anything that answers the same shape. No key, no account, and the '
-                'request never leaves this computer. Plain http is accepted only for a '
-                'literal loopback address.',
+            title: sentences.localAi,
+            what: sentences.localAiWhat,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _Spec('Protocol', rows.first.label),
+                _Spec(sentences.protocol, rows.first.label),
                 const SizedBox(height: 10),
                 ConnectForm(ground: ground, row: rows.first, local: true),
               ],
@@ -444,7 +437,7 @@ class _AiRoom extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Models', style: Zc.tiny.copyWith(color: Zc.ink4)),
+          Text(sentences.models, style: Zc.tiny.copyWith(color: Zc.ink4)),
           const SizedBox(height: 5),
           Wrap(
             spacing: 10,
@@ -481,42 +474,35 @@ class _PrivacyRoom extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Title('Privacy', 'What the app does by itself, and how far it goes without asking.'),
+        _Title(sentences.roomPrivacy, sentences.privacyWhat),
         if (c.sessionOnly) ...[
           Trouble(
-            'There is no vault open, so these are for this run only. The vault is the one file '
-            'this app writes — without it, nothing is remembered.',
+            sentences.noVaultSoThisRunOnly,
           ),
           const SizedBox(height: 16),
         ],
         _Switch(
           on: c.scanOnImport,
-          title: 'Scan a document the moment it arrives',
-          what: 'No dialog, no button. Turning this off means a document sits unprotected until '
-              'you press Rescan — which is exactly the moment the boards were written to avoid.',
+          title: sentences.scanOnArrival,
+          what: sentences.scanOnArrivalWhat,
           onChanged: (v) => ground.saveConfig(_with(c, scanOnImport: v)),
         ),
         _Fixed(
-          title: 'Answer every suggestion before sending',
-          what: 'Not a setting. A suggestion that has not been answered is never quietly treated '
-              'as safe, and there is no «send anyway» — not here, not in a hidden flag, not '
-              'anywhere in the code.',
+          title: sentences.answerEverySuggestion,
+          what: sentences.answerEverySuggestionWhat,
         ),
         _Number(
           value: c.revealSeconds,
-          title: 'A revealed value stays for',
+          title: sentences.aRevealedValueStaysFor,
           unit: 'seconds',
           min: 3,
           max: 300,
-          what: 'Revealing draws on the screen and never writes into what leaves. This is only '
-              'how long it stays drawn.',
+          what: sentences.aRevealedValueStaysForWhat,
           onChanged: (v) => ground.saveConfig(_with(c, revealSeconds: v)),
         ),
         _Fixed(
-          title: 'Token rotation',
-          what: 'Not built yet. When it is, it will live here: whether a permanent token keeps '
-              'its number across sessions, or is drawn again each time so two sessions '
-              'cannot be linked by it.',
+          title: sentences.tokenRotation,
+          what: sentences.tokenRotationWhat,
         ),
       ],
     );
@@ -538,58 +524,76 @@ class _LanguageRoom extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Title(
-          'Language & rules',
-          'A privacy pack is a detection engine, not the language of the interface — and more '
-          'than one pack can run in a single scan, so this is a starting point rather than the '
-          'only rules allowed. The interface itself is English.',
+        // **«The interface itself is English.» is deleted, not reworded** —
+        // 092 is what made it false. The sentence was true and honest for as
+        // long as it was true; a false sentence in a privacy product's own
+        // settings is worse than a missing one, and the same deletion was made
+        // on the first screen for the same reason.
+        _Title(
+          sentences.roomLanguageAndRules,
+          sentences.languageAndRulesWhat,
         ),
         _Card(
-          title: 'App language',
-          what: 'The language a session is read with when it has none of its own — and which '
-              'habits the scanner knows in it: salutations, company forms, the way a customer '
-              'number is written. A session created with a language of its own keeps that one; '
-              'this is what every other text is read with.',
-          child: Wrap(
-            spacing: 8,
+          title: sentences.appLanguage,
+          // **And it now says that the interface follows this choice**, which
+          // is what the card below it used to claim was not true. One choice
+          // writes both values (080), so the card that writes them is where
+          // that is said.
+          what: sentences.appLanguageWhat,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final p in ground.packs.where((p) => offeredLanguages.contains(p.id)))
-                _Pick(
-                  label: p.label,
-                  on: c.packId == p.id,
-                  // **One value, not two** — 080. The first-run screen wrote
-                  // `packId` *and* `language` from one choice; this card wrote
-                  // `packId` alone, so the two could disagree and the product
-                  // would be reading documents in one language while naming
-                  // another. The same choice writes both, here as there.
-                  onTap: () => ground.saveConfig(_with(c, packId: p.id, language: p.id)),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final p in ground.packs.where((p) => offeredLanguages.contains(p.id)))
+                    _Pick(
+                      label: p.label,
+                      on: c.packId == p.id,
+                      // **One value, not two** — 080. The first-run screen
+                      // wrote `packId` *and* `language` from one choice; this
+                      // card wrote `packId` alone, so the two could disagree
+                      // and the product would be reading documents in one
+                      // language while naming another. The same choice writes
+                      // both, here as there.
+                      onTap: () => ground.saveConfig(_with(c, packId: p.id, language: p.id)),
+                    ),
+                ],
+              ),
+              // **Which of the two a language is** — rule 56-أ, and the hole
+              // this closes was live: Svenska is a real scanner language and
+              // not yet an interface language, so pressing it wrote
+              // `ui_language = 'sv'` and the app drew `app_sv.arb`, which is
+              // the English copy. A person chose Swedish and read English,
+              // with nothing on the screen saying so. The setting still keeps
+              // their choice — `theLocaleOf` is what falls back — and this
+              // line is the screen saying both facts instead of one.
+              for (final p in ground.packs.where(
+                  (p) => offeredLanguages.contains(p.id) && !theListIsWrittenIn(p.id)))
+                Padding(
+                  padding: const EdgeInsets.only(top: 9),
+                  child: Text(
+                    sentences.theInterfaceIsEnglishUntilTranslated(p.label),
+                    style: Zc.tiny.copyWith(letterSpacing: 0),
+                  ),
                 ),
             ],
           ),
         ),
+        // **The «Interface» card is deleted** — rule 35, 19 October 2026.
+        //
+        // It held two picks whose `onTap` was `() {}` and a line reading «not
+        // translated yet», under a paragraph explaining that the German
+        // translation was not written. All of it was true when it was written
+        // and none of it is now: 092 wrote the German, and the card **above**
+        // this one changes the interface language, because one choice writes
+        // both values (080). So it was not merely dead — it was a second and
+        // false opinion about a thing that works, which is worse than a dead
+        // control. Deleted rather than disabled, and rather than reworded:
+        // what it was for is now said by the card that does the work.
         _Card(
-          title: 'Interface',
-          what: 'English today. The German translation is not written yet — and a half-German '
-              'screen in a privacy product is worse than an English one, so the switch waits '
-              'until every line is there rather than showing you a mixture.',
-          child: Row(
-            children: [
-              _Pick(label: 'English', on: true, onTap: () {}),
-              const SizedBox(width: 8),
-              Opacity(
-                opacity: 0.5,
-                child: _Pick(label: 'Deutsch', on: false, onTap: () {}),
-              ),
-              const SizedBox(width: 12),
-              Text('not translated yet', style: Zc.tiny.copyWith(letterSpacing: 0)),
-            ],
-          ),
-        ),
-        _Card(
-          title: 'My privacy rules',
-          what: 'Not built yet. Rules you write yourself — a customer number format only your '
-              'office uses, a project codename — will live here, beside the pack rather than '
-              'inside it.',
+          title: sentences.myPrivacyRules,
+          what: sentences.myPrivacyRulesWhat,
           child: const SizedBox.shrink(),
         ),
       ],
@@ -621,15 +625,13 @@ class _VaultRoom extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Title('Vault & security', 'The key, the lock, and where a credential lives.'),
+        _Title(sentences.roomVaultAndSecurity, sentences.vaultAndSecurityWhat),
         _Card(
-          title: 'Z Vault',
+          title: sentences.zVault,
           what: switch (ground.vault) {
-            VaultState.unlocked => 'Open. Your identities are loaded and the fourth detection '
-                'layer is running.',
-            VaultState.locked => 'Locked. The rules and the pack still run — an IBAN is still '
-                'caught — but not who it belongs to.',
-            VaultState.absent => 'Not created on this device. Nothing is recognised by name.',
+            VaultState.unlocked => sentences.vaultOpenWhat,
+            VaultState.locked => sentences.vaultLockedWhat,
+            VaultState.absent => sentences.vaultAbsentWhat,
           },
           child: Row(
             children: [
@@ -637,9 +639,9 @@ class _VaultRoom extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 switch (ground.vault) {
-                  VaultState.unlocked => 'Unlocked · ${ground.entityCount} identities',
-                  VaultState.locked => 'Locked',
-                  VaultState.absent => 'None',
+                  VaultState.unlocked => sentences.unlockedWithIdentities(ground.entityCount),
+                  VaultState.locked => sentences.vaultIsLocked,
+                  VaultState.absent => sentences.vaultIsNone,
                 },
                 style: Zc.small,
               ),
@@ -654,22 +656,20 @@ class _VaultRoom extends StatelessWidget {
         // carries live in the vault, and with it locked the press opens the
         // vault instead of a file (079 rule 8, held in the shell).
         _Card(
-          title: 'z-pdf — read a protected document back',
-          what: 'The reverse act. A document that left this app with tokens in it is read '
-              'back into its own names, here, from your vault — and it is never scanned, '
-              'never protected and never put on a bench. Nothing of it is sent anywhere.',
+          title: sentences.zPdfReadBack,
+          what: sentences.zPdfWhat,
           child: onReadBack == null
               // A press with no shell behind it would open nothing: the room
               // says what the door is and does not draw one.
               ? Text(
-                  'Open this panel from the app to choose a file.',
+                  sentences.openThisPanelFromTheApp,
                   style: Zc.small.copyWith(color: Zc.ink4),
                 )
               : Align(
                   alignment: Alignment.centerLeft,
                   child: ZButton(
                     key: theDoorBack,
-                    label: 'Choose a z-pdf file',
+                    label: sentences.chooseAZPdfFile,
                     icon: Icons.undo_outlined,
                     tint: Zc.river,
                     onPressed: onReadBack,
@@ -679,20 +679,16 @@ class _VaultRoom extends StatelessWidget {
         if (c != null)
           _Number(
             value: c.autoLockMinutes,
-            title: 'Lock the vault after',
-            unit: 'minutes unused · 0 = never',
+            title: sentences.lockTheVaultAfter,
+            unit: sentences.minutesUnusedZeroIsNever,
             min: 0,
             max: 240,
-            what: 'Kept by the vault itself, not by a timer in a screen: every way into it '
-                'checks the clock first, so a bug in the interface cannot leave it open.',
+            what: sentences.lockTheVaultAfterWhat,
             onChanged: (v) => ground.saveConfig(_with(c, autoLockMinutes: v)),
           ),
         _Card(
-          title: 'Encrypted local credential storage',
-          what: 'A provider key has two homes and no third: sealed inside the vault when one is '
-              'open, or in memory for this run when there is none. Never a file in the clear, '
-              'and never returned to the interface — there is no call in the whole contract '
-              'that gives one back.',
+          title: sentences.encryptedLocalCredentialStorage,
+          what: sentences.credentialHomesWhat,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -701,23 +697,21 @@ class _VaultRoom extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 5),
                   child: Text(
                     '${p.label} · ${switch (p.credentialState) {
-                      CredentialState.encryptedInVault => 'sealed in the vault',
-                      CredentialState.sessionOnly => 'in memory, gone when the app closes',
-                      CredentialState.missing => 'no key stored',
+                      CredentialState.encryptedInVault => sentences.credentialSealedInTheVault,
+                      CredentialState.sessionOnly => sentences.credentialInMemory,
+                      CredentialState.missing => sentences.credentialNoKeyStored,
                     }}',
                     style: Zc.small,
                   ),
                 ),
               if (ground.providers.every((p) => p.credentialState == CredentialState.missing))
-                Text('No provider holds a credential.', style: Zc.small.copyWith(color: Zc.ink4)),
+                Text(sentences.noProviderHoldsACredential, style: Zc.small.copyWith(color: Zc.ink4)),
             ],
           ),
         ),
         _Card(
-          title: 'Device-bound protection',
-          what: 'Not built yet. A key tied to this device’s own authentication would sit '
-              'above the layer above, without changing what is stored — the same records, one '
-              'more lock.',
+          title: sentences.deviceBoundProtection,
+          what: sentences.deviceBoundWhat,
           child: const SizedBox.shrink(),
         ),
       ],
@@ -892,12 +886,11 @@ class _SessionsRoomState extends State<_SessionsRoom> {
   Widget build(BuildContext context) {
     final g = widget.ground;
     if (g.vault != VaultState.unlocked) {
-      return const Column(
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Title('Sessions', 'A session keeps its own key, and the keys are in the vault.'),
-          Trouble('The vault is shut, so there are no sessions to show. Open it and they come back — '
-              'the conversations themselves were never in it.'),
+          _Title(sentences.roomSessions, sentences.sessionsWhat),
+          Trouble(sentences.theVaultIsShutNoSessions),
         ],
       );
     }
@@ -906,19 +899,13 @@ class _SessionsRoomState extends State<_SessionsRoom> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Title(
-          'Sessions',
-          'Each session has its own encryption. The same name in two sessions takes two different '
-          'tokens, and in one session it takes the same one wherever it appears — so a session is '
-          'how you choose what an AI can line up and what it cannot.',
+        _Title(
+          sentences.roomSessions,
+          sentences.eachSessionHasItsOwnEncryption,
         ),
         _Card(
-          title: 'New session',
-          what: 'A name and a language, both yours to choose: the language is how Z reads every '
-              'text in this session, and it is asked once here. It becomes the session you are '
-              'working in straight away. Anything already protected on the document in front of '
-              'you is renamed into it — nothing has been sent yet, so nothing that left is '
-              'affected.',
+          title: sentences.newSession,
+          what: sentences.newSessionWhat,
           // **A `Wrap`, because this row broke.** The two language picks put it
           // 66 pixels over the panel's width, measured — a `Row` with an
           // `Expanded` field looked safe and was not, because the fixed
@@ -936,9 +923,9 @@ class _SessionsRoomState extends State<_SessionsRoom> {
                   controller: _name,
                   onSubmitted: (_) => _begin(),
                   style: Zc.small,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     isDense: true,
-                    hintText: 'What is this one about?',
+                    hintText: sentences.whatIsThisOneAbout,
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -959,7 +946,7 @@ class _SessionsRoomState extends State<_SessionsRoom> {
                   onTap: () => setState(() => _packId = p.id),
                 ),
               ZButton(
-                label: 'Begin',
+                label: sentences.begin,
                 onPressed: (_busy || _packId == null) ? null : _begin,
               ),
             ],
@@ -973,10 +960,8 @@ class _SessionsRoomState extends State<_SessionsRoom> {
         ],
         if (rows.isEmpty)
           _Fixed(
-            title: 'No sessions yet',
-            what: 'One is born the first time you copy safe text or ask for a PDF — it is not '
-                'refused for want of a name, it takes its own number for one, and you can '
-                'rename it here. You never have to make one by hand first.',
+            title: sentences.noSessionsYet,
+            what: sentences.noSessionsYetWhat,
           )
         else
           for (final row in rows)
@@ -1063,8 +1048,7 @@ class _SessionRow extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   open
-                      ? '$_when · ${_exchanges(row.turns)} · the one you are in'
-                      : '$_when · ${_exchanges(row.turns)}',
+                      ? sentences.theOneYouAreIn(_when, _exchanges(row.turns)): '$_when · ${_exchanges(row.turns)}',
                   style: Zc.tiny.copyWith(color: Zc.ink4),
                 ),
                 // **089 rule 9 — what this session is holding in its preview.**
@@ -1084,10 +1068,10 @@ class _SessionRow extends StatelessWidget {
           ),
           if (!open)
             Tooltip(
-              message: 'Work in this session',
+              message: sentences.workInThisSession,
               child: TextButton(
                 onPressed: () => ground.enterSession(row.number),
-                child: const Text('Enter', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                child: Text(sentences.enter, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
               ),
             ),
           // **Rename lives here** — the owner's second ruling, 081: a session
@@ -1095,7 +1079,7 @@ class _SessionRow extends StatelessWidget {
           // gives it their own word. Beside Delete, inside the session's own
           // rectangle, because the thing being named is this row.
           Tooltip(
-            message: 'Rename this session',
+            message: sentences.renameThisSession,
             child: IconButton(
               icon: const Icon(Icons.drive_file_rename_outline, size: 17),
               color: Zc.ink3,
@@ -1103,7 +1087,7 @@ class _SessionRow extends StatelessWidget {
             ),
           ),
           Tooltip(
-            message: 'Delete this session',
+            message: sentences.deleteThisSession,
             child: IconButton(
               icon: const Icon(Icons.delete_outline, size: 17),
               color: Zc.ink3,
@@ -1116,7 +1100,7 @@ class _SessionRow extends StatelessWidget {
   }
 
   static String _exchanges(int turns) =>
-      turns == 1 ? '1 exchange' : '$turns exchanges';
+      turns == 1 ? sentences.oneExchange: sentences.exchangesCount(turns);
 
   /// **A new word for this session, and nothing else about it moves** — 081.
   ///
@@ -1136,7 +1120,7 @@ class _SessionRow extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Zc.paper,
-        title: Text('Rename session ${row.number}?', style: Zc.h2),
+        title: Text(sentences.renameSessionNumber(row.number), style: Zc.h2),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Column(
@@ -1153,7 +1137,7 @@ class _SessionRow extends StatelessWidget {
                   fillColor: Zc.card,
                   isDense: true,
                   // The room's one question, word for word, wherever it is asked.
-                  hintText: 'What is this one about?',
+                  hintText: sentences.whatIsThisOneAbout,
                   hintStyle: Zc.body.copyWith(color: Zc.ink4),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -1163,8 +1147,7 @@ class _SessionRow extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'The number stays ${row.number} — it is what this session is, and nothing '
-                'that was protected in it changes. Only the word on the row does.',
+                sentences.theNumberStaysWhatItIs(row.number),
                 style: Zc.small,
               ),
             ],
@@ -1173,11 +1156,11 @@ class _SessionRow extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Keep the name'),
+            child: Text(sentences.keepTheName),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(word),
-            child: const Text('Rename it'),
+            child: Text(sentences.renameIt),
           ),
         ],
       ),
@@ -1203,28 +1186,29 @@ class _SessionRow extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Zc.paper,
-        title: Text('Delete «${theirOwnWord(row.name)}»?', style: Zc.h2),
+        // **The person's own word, isolated** — G44. The sentence lives in the
+        // list and the isolate is applied here, which is the pair that G44's
+        // own half over `app_en.arb` now checks: a value quoting a placeholder
+        // must have a caller that wraps it.
+        title: Text(sentences.deleteNamed(theirOwnWord(row.name)), style: Zc.h2),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'This destroys the key this session was protected with.',
+              Text(
+                sentences.thisDestroysTheKey,
                 style: Zc.body,
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Every document and every message protected in it can never be unprotected '
-                'again — not by you, and not by Z Privacy. The key was the only thing that '
-                'could have done it, and it will not exist.',
+              Text(
+                sentences.everyDocumentCanNeverBeUnprotected,
                 style: Zc.small,
               ),
               const SizedBox(height: 10),
               Text(
-                'Anything you sent out of this session stays exactly as it was. What goes is '
-                'the way back from it.',
+                sentences.anythingYouSentStaysAsItWas,
                 style: Zc.small.copyWith(color: Zc.ink4),
               ),
             ],
@@ -1233,12 +1217,12 @@ class _SessionRow extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep it'),
+            child: Text(sentences.keepIt),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Zc.clayDeep),
-            child: const Text('Delete the session'),
+            child: Text(sentences.deleteTheSession),
           ),
         ],
       ),
@@ -1287,7 +1271,7 @@ class _KeptDocument extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final press = onOpen;
-    final what = doc.protected == 1 ? '1 protected place' : '${doc.protected} protected places';
+    final what = doc.protected == 1 ? sentences.oneProtectedPlace: sentences.protectedPlacesCount(doc.protected);
     // **Both doors of this document** — rule 69. Worded in
     // `session_state.dart`, where a test reads it without a panel; `null` is
     // «nothing was sent about this one», and then nothing is drawn. The turn
@@ -1329,7 +1313,7 @@ class _KeptDocument extends StatelessWidget {
             ),
           ),
           Tooltip(
-            message: 'Rename this document',
+            message: sentences.renameThisDocument,
             child: IconButton(
               icon: const Icon(Icons.drive_file_rename_outline, size: 14),
               color: Zc.ink4,
@@ -1361,7 +1345,7 @@ class _KeptDocument extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Zc.paper,
-        title: Text('Rename ${doc.handle}?', style: Zc.h2),
+        title: Text(sentences.renameHandle(doc.handle), style: Zc.h2),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Column(
@@ -1369,8 +1353,7 @@ class _KeptDocument extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'The name is what you read in this list. ${doc.handle} stays what it is: '
-                'a number is spent once and never given to another document.',
+                sentences.theNameIsWhatYouRead(doc.handle),
                 style: Zc.small.copyWith(color: Zc.ink2),
               ),
               const SizedBox(height: 12),
@@ -1378,7 +1361,7 @@ class _KeptDocument extends StatelessWidget {
                 autofocus: true,
                 onChanged: (value) => word = value,
                 onSubmitted: (value) => Navigator.of(context).pop(value),
-                decoration: const InputDecoration(hintText: 'A name for this document'),
+                decoration: InputDecoration(hintText: sentences.aNameForThisDocument),
               ),
             ],
           ),
@@ -1386,11 +1369,11 @@ class _KeptDocument extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Keep the name'),
+            child: Text(sentences.keepTheName),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(word),
-            child: const Text('Rename'),
+            child: Text(sentences.rename),
           ),
         ],
       ),

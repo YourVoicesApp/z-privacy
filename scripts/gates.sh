@@ -1308,8 +1308,17 @@ Forgot «\$name» and'
 # 1 · `list.name` and the `$name` beside it — a list **is** a language and the
 #     core refuses any name it does not know (`clean_list_name`), so the word
 #     in these three sentences is ours even though a person pressed to get it.
+#
+# **And `lib/l10n/` is not read by this half, since 092.** A sentence in the
+# one list is drawn by the generated class as `'Delete «$name»?'` — the
+# sentence and its caller are now in different files, so no line of the
+# generated Dart can ever carry `theirOwnWord`, and nobody could edit it if it
+# did. Silencing it there alone would have left the law unguarded for every
+# migrated sentence, which is why the half below this one exists: it reads the
+# **list** and the **callers**, where both parts of the pair are still visible.
 G44_DART=$(grep -RnE '«\$' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
-           | grep -v '/src/rust/' | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
+           | grep -v '/src/rust/' | grep -v '/l10n/' \
+           | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
 G44_DART_LEFT=$(printf '%s\n' "$G44_DART" | grep . | grep -v 'theirOwnWord' \
                 | grep -vE "$(printf '%s' "$G44_ALLOWED_DART" | paste -sd'|' -)" || true)
 if [ -z "$G44_DART_LEFT" ]; then
@@ -1317,6 +1326,47 @@ if [ -z "$G44_DART_LEFT" ]; then
 else
   fail "G44 these sentences quote a word of the person's own without isolating it (or it is ours, and belongs in G44's allowed list with a reason):"
   printf '%s\n' "$G44_DART_LEFT" | sed 's/^/        /'
+fi
+
+# **The same law for a sentence that has moved into the one list** — 092.
+#
+# A value in `lib/l10n/app_en.arb` that quotes a placeholder — `«{name}»` — is
+# a sentence about a word the person chose, and the isolate is applied by
+# whoever calls it. So for each such key, every call of `sentences.<key>(` in a
+# hand-written file must wrap its argument in `theirOwnWord`.
+#
+# **Why the pair is not inside the value instead**, where no caller could
+# forget it: `gen-l10n` writes the raw code points into the generated Dart and
+# the analyzer flags every one of them (`text_direction_code_point_in_literal`)
+# in a file nobody can fix — eight unfixable warnings for one sentence, which
+# would hide the next real one. Measured on 19 October, then reversed, and this
+# gate is what was bought with the reversal.
+G44_ARB=$FLUTTER_LIB/l10n/app_en.arb
+G44_LIST_BAD=""
+G44_QUOTING=""
+if [ -f "$G44_ARB" ]; then
+  # The list is one key per line, so the key of a value that quotes a
+  # placeholder is read off the same line as the quote.
+  G44_QUOTING=$(grep -oE '"[A-Za-z0-9_]+": "[^"]*«\{' "$G44_ARB" 2>/dev/null \
+                | sed -E 's/": ".*$//; s/^"//' | sort -u || true)
+  for KEY in $G44_QUOTING; do
+    CALLS=$(grep -RnE "sentences\.$KEY\(" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
+            | grep -v '/l10n/' | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
+    if [ -z "$CALLS" ]; then
+      G44_LIST_BAD="$G44_LIST_BAD«$KEY» quotes a word of the person's own and nothing calls it
+"
+      continue
+    fi
+    NAKED=$(printf '%s\n' "$CALLS" | grep -v 'theirOwnWord' || true)
+    [ -n "$NAKED" ] && G44_LIST_BAD="$G44_LIST_BAD$NAKED
+"
+  done
+fi
+if [ -z "$G44_LIST_BAD" ]; then
+  pass "G44 every sentence in the one list that quotes a person's own word is called through theirOwnWord ($(printf '%s\n' "$G44_QUOTING" | grep -c . || true) such sentence)"
+else
+  fail "G44 a sentence in the one list quotes a word of the person's own and its caller does not isolate it:"
+  printf '%s\n' "$G44_LIST_BAD" | grep . | sed 's/^/        /'
 fi
 
 # **And one function on each side, not a pair of characters written by hand.**

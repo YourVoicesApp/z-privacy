@@ -54,6 +54,7 @@ MIGRATED = {
     'core/going_to_a_word.dart',
     'core/messages.dart',
     'screens/first_run.dart',
+    'screens/settings.dart',
     'screens/workspace.dart',
     'widgets/the_chat.dart',
 }
@@ -65,12 +66,11 @@ MIGRATED = {
 # they were: a floor that is looser than the truth is a gate that would let a
 # sentence be added back. What is left is the settings rooms, then the widgets.
 #
-# 854 sentences stood in 27 files when this round began; 711 stand in 23 now.
+# 854 sentences stood in 27 files when this round began; 559 stand in 22 now.
 OWED = {
     'core/protected_pdf.dart': 16,
     'core/session_state.dart': 29,
     'core/the_clipboard.dart': 1,
-    'screens/settings.dart': 152,
     'screens/shell.dart': 3,
     'screens/vault.dart': 67,
     'widgets/acts.dart': 28,

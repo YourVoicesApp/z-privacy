@@ -56,13 +56,73 @@ AppLocalizations get sentences => _sentences;
 void theSentencesAreNow(Locale locale) =>
     _sentences = lookupAppLocalizations(locale);
 
+/// **Is this language's list written, or is it still the source's?** — rule
+/// 56-أ, 19 October 2026, as one question with three readers.
+///
+/// A language can be two different things in this product and the two do not
+/// arrive together: a **scanner** language, which is a pack of rules in the
+/// core, and an **interface** language, which is a column of values in
+/// `lib/l10n`. Swedish is the first and not yet the second — `app_sv.arb` is a
+/// copy of the English, and 56-أ says so out loud: the file exists so the gate
+/// can count it, and the values differ on the day somebody writes them.
+///
+/// The three readers, and why the law cannot live in any one of them:
+///
+///   * the **first screen** offers a language only if the promise it would
+///     draw is in that language — four «no» lines under a Swedish name, in
+///     English, is the fault P2-6 fixed there once already;
+///   * **[theLocaleOf]** answers English for such a code, so the root draws a
+///     language it can actually speak;
+///   * the **Language room** draws one line saying which of the two this
+///     language is, rather than switching the interface silently.
+///
+/// Written here because the first screen had it inline and the other two then
+/// had to agree with it by hand — one law in three languages, and the quietest
+/// copy wins the day they disagree.
+///
+/// **What it measures**: the first screen's own promise — the four «no» lines,
+/// the two paragraphs and the rule line. Not an arbitrary sample: a language
+/// that cannot say *what this product does not do* cannot carry the interface
+/// of a privacy product, whatever else is translated in it. The day a language
+/// is half-written this answers «no» until the promise is done, which is the
+/// side to be wrong on.
+bool theListIsWrittenIn(String code) {
+  // The source list is written by definition; nothing is compared with itself.
+  if (code == 'en') return true;
+  // **A code with no list at all answers «no», and does not throw.** It did:
+  // `lookupAppLocalizations` raises `FlutterError` for an unsupported locale,
+  // and this function is a question anybody in the house may ask about any
+  // code. No product caller asks about one today — both of them walk
+  // `offeredLanguages` — so the throw would have waited for the next reader.
+  // The guard asked about «fr» and found it before that reader existed.
+  if (!AppLocalizations.supportedLocales.any((l) => l.languageCode == code)) {
+    return false;
+  }
+  final t = lookupAppLocalizations(Locale(code));
+  final en = AppLocalizationsEn();
+  return t.noAccount != en.noAccount ||
+      t.noAds != en.noAds ||
+      t.noAnalytics != en.noAnalytics ||
+      t.noZPrivacyServer != en.noZPrivacyServer ||
+      t.originalDataStaysHere != en.originalDataStaysHere ||
+      t.onlyTheProtectedVersionIsSent != en.onlyTheProtectedVersionIsSent ||
+      t.theseRulesWillBeEnabled != en.theseRulesWillBeEnabled;
+}
+
 /// The locale a language code names, for the one place that applies it.
 ///
 /// The code is the core's — `settings.zcfg`'s `ui_language`, which reaches the
 /// glass as `Settings.language`. An unknown code is English, for the same
 /// reason English is the fallback above: it is the source list, and a code
 /// nobody translated is better read than refused.
+///
+/// **And a code whose list is not written yet is English too** — 19 October,
+/// and it is a fallback rather than a refusal on purpose. The setting keeps
+/// what the person chose: they picked Svenska, the scanner reads Swedish, and
+/// `ui_language` says `sv` because that is true. What the glass can speak is a
+/// different fact, and it belongs to the list's state rather than to their
+/// choice — so this answers with the language the sentences exist in, and the
+/// Language room says both out loud. Storing English instead would make the
+/// room lie about a choice the person actually made.
 Locale theLocaleOf(String code) =>
-    AppLocalizations.supportedLocales.any((l) => l.languageCode == code)
-        ? Locale(code)
-        : const Locale('en');
+    theListIsWrittenIn(code) ? Locale(code) : const Locale('en');

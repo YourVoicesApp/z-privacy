@@ -14,7 +14,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theChatKeepsNothing =>
-      'Diese Antwort steht auf Ihrem Bildschirm und nirgendwo sonst: Es ist keine Sitzung offen, die sie behalten könnte — mit dem Schließen der App endet sie zusammen mit dem Chat.';
+      'Diese Antwort steht auf Ihrem Bildschirm und nirgendwo sonst: Es ist keine Sitzung offen, die sie aufbewahren könnte — mit dem Schließen der App endet sie zusammen mit dem Chat.';
 
   @override
   String get theTokenIsAlreadyOurs =>
@@ -88,7 +88,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get troubleVaultAbsent =>
-      'Auf diesem Gerät gibt es noch keinen Tresor. Erstellen Sie einen, um etwas für morgen zu behalten.';
+      'Auf diesem Gerät gibt es noch keinen Tresor. Erstellen Sie einen, um etwas für morgen aufzubewahren.';
 
   @override
   String get troubleVaultAlreadyExists =>
@@ -204,11 +204,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get oneNameStaysATokenTwoCauses =>
-      'Ein Name bleibt ein Platzhalter, und dafür gibt es zwei verschiedene Gründe: Das Wort wurde geschützt, bevor Z Privacy begann, jedes geschützte Wort zu behalten, oder dieser Platzhalter wurde verändert, nachdem die Datei das Gerät verlassen hat. Öffnen Sie dieses Dokument in seiner Sitzung und schützen Sie den Namen erneut — kommt er von da an zurück, war es der erste Grund; kommt er nicht zurück, ist diese Datei nicht die, die Z Privacy geschrieben hat.';
+      'Ein Name bleibt ein Platzhalter, und dafür gibt es zwei verschiedene Gründe: Das Wort wurde geschützt, bevor Z Privacy begann, jedes geschützte Wort aufzubewahren, oder dieser Platzhalter wurde verändert, nachdem die Datei das Gerät verlassen hat. Öffnen Sie dieses Dokument in seiner Sitzung und schützen Sie den Namen erneut — kommt er von da an zurück, war es der erste Grund; kommt er nicht zurück, ist diese Datei nicht die, die Z Privacy geschrieben hat.';
 
   @override
   String namesStayTokensTwoCauses(int count) {
-    return '$count Namen bleiben Platzhalter, und dafür gibt es zwei verschiedene Gründe: Sie wurden geschützt, bevor Z Privacy begann, jedes geschützte Wort zu behalten, oder die Platzhalter wurden verändert, nachdem die Datei das Gerät verlassen hat. Öffnen Sie diese Dokumente in ihrer Sitzung und schützen Sie die Namen erneut — kommen sie von da an zurück, war es der erste Grund; kommen sie nicht zurück, ist diese Datei nicht die, die Z Privacy geschrieben hat.';
+    return '$count Namen bleiben Platzhalter, und dafür gibt es zwei verschiedene Gründe: Sie wurden geschützt, bevor Z Privacy begann, jedes geschützte Wort aufzubewahren, oder die Platzhalter wurden verändert, nachdem die Datei das Gerät verlassen hat. Öffnen Sie diese Dokumente in ihrer Sitzung und schützen Sie die Namen erneut — kommen sie von da an zurück, war es der erste Grund; kommen sie nicht zurück, ist diese Datei nicht die, die Z Privacy geschrieben hat.';
   }
 
   @override
@@ -286,7 +286,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String networkBadStatus(int status) {
-    return 'Der Anbieter hat die Anfrage mit Status $status abgelehnt. Z Privacy hat nichts von Ihrem Dokument behalten.';
+    return 'Der Anbieter hat die Anfrage mit Status $status abgelehnt. Z Privacy hat nichts von Ihrem Dokument aufbewahrt.';
   }
 
   @override
@@ -874,4 +874,331 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get writeAQuestionFirst => 'Schreiben Sie zuerst eine Frage.';
+
+  @override
+  String get settings => 'Einstellungen';
+
+  @override
+  String get roomPrivacy => 'Datenschutz';
+
+  @override
+  String get roomLanguageAndRules => 'Sprache & Regeln';
+
+  @override
+  String get roomVaultAndSecurity => 'Tresor & Sicherheit';
+
+  @override
+  String get roomSessions => 'Sitzungen';
+
+  @override
+  String get languageAndRulesWhat =>
+      'Ein Datenschutzpaket ist ein Erkennungsmodul, nicht die Sprache der Benutzeroberfläche — und in einem Durchgang kann mehr als ein Paket laufen, das hier ist also ein Ausgangspunkt und nicht die einzigen erlaubten Regeln.';
+
+  @override
+  String get appLanguage => 'Sprache der App';
+
+  @override
+  String get appLanguageWhat =>
+      'Die Sprache, in der eine Sitzung gelesen wird, wenn sie keine eigene hat — und welche Gewohnheiten der Scanner darin kennt: Anreden, Firmenformen, die Art, wie eine Kundennummer geschrieben wird. Eine Sitzung, die mit eigener Sprache erstellt wurde, behält diese; alles andere wird in dieser gelesen. Die Benutzeroberfläche folgt dieser Wahl.';
+
+  @override
+  String theInterfaceIsEnglishUntilTranslated(String language) {
+    return '$language: Das Erkennungspaket ist $language; die Benutzeroberfläche bleibt Englisch, bis ihre Sätze übersetzt sind.';
+  }
+
+  @override
+  String get myPrivacyRules => 'Meine Datenschutzregeln';
+
+  @override
+  String get myPrivacyRulesWhat =>
+      'Noch nicht gebaut. Regeln, die Sie selbst schreiben — ein Kundennummernformat, das nur Ihr Büro verwendet, ein Projektcodename — werden hier leben, neben dem Paket und nicht darin.';
+
+  @override
+  String get vaultAndSecurityWhat =>
+      'Der Schlüssel, das Schloss, und wo eine Zugangsberechtigung liegt.';
+
+  @override
+  String get zVault => 'Z-Tresor';
+
+  @override
+  String get vaultOpenWhat =>
+      'Offen. Ihre Identitäten sind geladen und die vierte Erkennungsschicht läuft.';
+
+  @override
+  String get vaultLockedWhat =>
+      'Verschlossen. Die Regeln und das Paket laufen weiter — eine IBAN wird weiter erkannt — aber nicht, zu wem sie gehört.';
+
+  @override
+  String get vaultAbsentWhat =>
+      'Auf diesem Gerät nicht erstellt. Nichts wird am Namen erkannt.';
+
+  @override
+  String unlockedWithIdentities(int count) {
+    return 'Offen · $count Identitäten';
+  }
+
+  @override
+  String get zPdfReadBack => 'z-pdf — ein geschütztes Dokument zurücklesen';
+
+  @override
+  String get zPdfWhat =>
+      'Die umgekehrte Handlung. Ein Dokument, das diese App mit Platzhaltern verlassen hat, wird hier aus Ihrem Tresor wieder in seine eigenen Namen zurückgelesen — und es wird nie geprüft, nie geschützt und nie auf eine Werkbank gelegt. Nichts davon wird irgendwohin gesendet.';
+
+  @override
+  String get openThisPanelFromTheApp =>
+      'Öffnen Sie dieses Feld aus der App, um eine Datei zu wählen.';
+
+  @override
+  String get chooseAZPdfFile => 'Eine z-pdf-Datei wählen';
+
+  @override
+  String get lockTheVaultAfter => 'Den Tresor verschließen nach';
+
+  @override
+  String get minutesUnusedZeroIsNever => 'Minuten ohne Nutzung · 0 = nie';
+
+  @override
+  String get lockTheVaultAfterWhat =>
+      'Vom Tresor selbst gehalten, nicht von einem Zeitgeber in einem Bildschirm: jeder Weg hinein prüft zuerst die Uhr, ein Fehler in der Benutzeroberfläche kann ihn also nicht offen lassen.';
+
+  @override
+  String get encryptedLocalCredentialStorage =>
+      'Verschlüsselte lokale Speicherung von Zugangsberechtigungen';
+
+  @override
+  String get credentialHomesWhat =>
+      'Ein Anbieterschlüssel hat zwei Orte und keinen dritten: versiegelt im Tresor, wenn einer offen ist, oder im Speicher für diesen Durchgang, wenn es keinen gibt. Nie eine Datei im Klartext, und nie zurück an die Benutzeroberfläche — es gibt im ganzen Vertrag keinen Aufruf, der einen zurückgibt.';
+
+  @override
+  String get credentialSealedInTheVault => 'versiegelt im Tresor';
+
+  @override
+  String get credentialInMemory =>
+      'im Speicher, verschwunden wenn die App schließt';
+
+  @override
+  String get credentialNoKeyStored => 'kein Schlüssel gespeichert';
+
+  @override
+  String get noProviderHoldsACredential =>
+      'Kein Anbieter hält eine Zugangsberechtigung.';
+
+  @override
+  String get deviceBoundProtection => 'Geräte­gebundener Schutz';
+
+  @override
+  String get deviceBoundWhat =>
+      'Noch nicht gebaut. Ein Schlüssel, der an die Authentifizierung dieses Geräts gebunden ist, würde über der Schicht darüber liegen, ohne zu ändern, was gespeichert wird — dieselben Aufzeichnungen, ein Schloss mehr.';
+
+  @override
+  String get sessionsWhat =>
+      'Eine Sitzung hat ihren eigenen Schlüssel, und die Schlüssel liegen im Tresor.';
+
+  @override
+  String get theVaultIsShutNoSessions =>
+      'Der Tresor ist verschlossen, es gibt also keine Sitzungen zu zeigen. Öffnen Sie ihn, und sie kommen zurück — die Gespräche selbst waren nie darin.';
+
+  @override
+  String get eachSessionHasItsOwnEncryption =>
+      'Jede Sitzung hat ihre eigene Verschlüsselung. Derselbe Name nimmt in zwei Sitzungen zwei verschiedene Platzhalter, und in einer Sitzung überall denselben — eine Sitzung ist also, wie Sie wählen, was eine KI zusammenführen kann und was nicht.';
+
+  @override
+  String get newSession => 'Neue Sitzung';
+
+  @override
+  String get newSessionWhat =>
+      'Ein Name und eine Sprache, beide Ihre Wahl: die Sprache ist, wie Z jeden Text in dieser Sitzung liest, und sie wird hier einmal gefragt. Sie wird sofort die Sitzung, in der Sie arbeiten. Was auf dem Dokument vor Ihnen schon geschützt ist, wird in sie umbenannt — gesendet wurde noch nichts, also ist nichts betroffen, was das Gerät verlassen hat.';
+
+  @override
+  String get whatIsThisOneAbout => 'Worum geht es hier?';
+
+  @override
+  String get begin => 'Beginnen';
+
+  @override
+  String get noSessionsYet => 'Noch keine Sitzungen';
+
+  @override
+  String get noSessionsYetWhat =>
+      'Eine entsteht, sobald Sie zum ersten Mal geschützten Text kopieren oder ein PDF verlangen — sie wird nicht aus Mangel an einem Namen abgelehnt, sie nimmt ihre eigene Nummer als einen, und Sie können sie hier umbenennen. Sie müssen nie zuerst eine von Hand anlegen.';
+
+  @override
+  String theOneYouAreIn(String when, String exchanges) {
+    return '$when · $exchanges · die, in der Sie sind';
+  }
+
+  @override
+  String get workInThisSession => 'In dieser Sitzung arbeiten';
+
+  @override
+  String get enter => 'Betreten';
+
+  @override
+  String get renameThisSession => 'Diese Sitzung umbenennen';
+
+  @override
+  String get deleteThisSession => 'Diese Sitzung löschen';
+
+  @override
+  String get oneExchange => '1 Austausch';
+
+  @override
+  String exchangesCount(int count) {
+    return '$count Fragen und Antworten';
+  }
+
+  @override
+  String renameSessionNumber(int number) {
+    return 'Sitzung $number umbenennen?';
+  }
+
+  @override
+  String theNumberStaysWhatItIs(int number) {
+    return 'Die Nummer bleibt $number — sie ist, was diese Sitzung ist, und nichts, was darin geschützt wurde, ändert sich. Nur das Wort in der Zeile.';
+  }
+
+  @override
+  String get keepTheName => 'Den Namen behalten';
+
+  @override
+  String get renameIt => 'Umbenennen';
+
+  @override
+  String deleteNamed(String name) {
+    return '«$name» löschen?';
+  }
+
+  @override
+  String get thisDestroysTheKey =>
+      'Dies zerstört den Schlüssel, mit dem diese Sitzung geschützt wurde.';
+
+  @override
+  String get everyDocumentCanNeverBeUnprotected =>
+      'Jedes Dokument und jede Nachricht, die darin geschützt wurde, kann nie wieder entschützt werden — nicht von Ihnen und nicht von Z Privacy. Der Schlüssel war das Einzige, was es hätte tun können, und er wird nicht mehr existieren.';
+
+  @override
+  String get anythingYouSentStaysAsItWas =>
+      'Was Sie aus dieser Sitzung gesendet haben, bleibt genau so, wie es war. Was verschwindet, ist der Weg zurück.';
+
+  @override
+  String get keepIt => 'Behalten';
+
+  @override
+  String get deleteTheSession => 'Die Sitzung löschen';
+
+  @override
+  String get oneProtectedPlace => '1 geschützte Stelle';
+
+  @override
+  String protectedPlacesCount(int count) {
+    return '$count geschützte Stellen';
+  }
+
+  @override
+  String get renameThisDocument => 'Dieses Dokument umbenennen';
+
+  @override
+  String renameHandle(String handle) {
+    return '$handle umbenennen?';
+  }
+
+  @override
+  String theNameIsWhatYouRead(String handle) {
+    return 'Der Name ist, was Sie in dieser Liste lesen. $handle bleibt, was es ist: eine Nummer wird einmal ausgegeben und nie einem anderen Dokument gegeben.';
+  }
+
+  @override
+  String get aNameForThisDocument => 'Ein Name für dieses Dokument';
+
+  @override
+  String get roomAi => 'KI';
+
+  @override
+  String get aiWhat =>
+      'Drei Wege, ein Modell zu fragen. Der erste braucht überhaupt kein Konto.';
+
+  @override
+  String get manualAi => 'KI von Hand';
+
+  @override
+  String get manualAiWhat =>
+      'Nutzen Sie einen KI-Chat, den Sie schon haben. Kopieren Sie den geschützten Text aus der Arbeitsfläche, fügen Sie ihn in das Modell ein, das Sie verwenden, und bringen Sie die Antwort zurück. Nichts einzurichten, nichts zu bezahlen, und das Zurückholen funktioniert genau gleich.';
+
+  @override
+  String get alwaysAvailableFirstDoor =>
+      'Immer verfügbar — es ist das Blatt «Wählen, wer antwortet», die erste Tür.';
+
+  @override
+  String get directApi => 'Direkte API';
+
+  @override
+  String get directApiWhat =>
+      'Verbinden Sie sich mit einem entfernten KI-Anbieter mit Ihrer API-Zugangsberechtigung. Der Schlüssel geht einmal hinein und kommt nie wieder heraus — kein Bildschirm in dieser App kann ihn Ihnen wieder zeigen.';
+
+  @override
+  String get atThisAddressNoCredential =>
+      'An dieser Adresse ist keine Zugangsberechtigung nötig.';
+
+  @override
+  String get protocol => 'Protokoll';
+
+  @override
+  String get connectedKeySealed => 'Verbunden · Schlüssel im Tresor versiegelt';
+
+  @override
+  String get connectedKeyThisRunOnly =>
+      'Verbunden · Schlüssel nur für diesen Durchgang aufbewahrt';
+
+  @override
+  String get connectedNoKeyNeeded => 'Verbunden · kein Schlüssel nötig';
+
+  @override
+  String get notConnected => 'Nicht verbunden';
+
+  @override
+  String get localAi => 'KI auf diesem Computer';
+
+  @override
+  String get localAiWhat =>
+      'Läuft über einen KI-Dienst auf diesem Computer — llama.cpp, Ollama, LM Studio, alles, was in derselben Form antwortet. Kein Schlüssel, kein Konto, und die Anfrage verlässt diesen Computer nie. Einfaches http wird nur für eine wörtliche Loopback-Adresse akzeptiert.';
+
+  @override
+  String get models => 'Modelle';
+
+  @override
+  String get privacyWhat =>
+      'Was die App von selbst tut, und wie weit sie ohne zu fragen geht.';
+
+  @override
+  String get noVaultSoThisRunOnly =>
+      'Es ist kein Tresor offen, das hier gilt also nur für diesen Durchgang. Der Tresor ist die eine Datei, die diese App schreibt — ohne ihn wird nichts erinnert.';
+
+  @override
+  String get scanOnArrival => 'Ein Dokument prüfen, sobald es ankommt';
+
+  @override
+  String get scanOnArrivalWhat =>
+      'Kein Dialog, kein Knopf. Dies auszuschalten heißt, dass ein Dokument ungeschützt daliegt, bis Sie Erneut prüfen drücken — genau der Augenblick, den die Entwürfe vermeiden sollten.';
+
+  @override
+  String get answerEverySuggestion =>
+      'Jeden Vorschlag beantworten, bevor gesendet wird';
+
+  @override
+  String get answerEverySuggestionWhat =>
+      'Keine Einstellung. Ein Vorschlag, der nicht beantwortet wurde, wird nie stillschweigend als sicher behandelt, und es gibt kein «trotzdem senden» — nicht hier, nicht in einem versteckten Schalter, nirgends im Code.';
+
+  @override
+  String get aRevealedValueStaysFor => 'Ein aufgedeckter Wert bleibt für';
+
+  @override
+  String get aRevealedValueStaysForWhat =>
+      'Aufdecken zeichnet auf den Bildschirm und schreibt nie in das, was hinausgeht. Dies ist nur, wie lange es gezeichnet bleibt.';
+
+  @override
+  String get tokenRotation => 'Platzhalter-Wechsel';
+
+  @override
+  String get tokenRotationWhat =>
+      'Noch nicht gebaut. Wenn es kommt, wird es hier leben: ob ein dauerhafter Platzhalter seine Nummer über Sitzungen hinweg behält oder jedes Mal neu gezogen wird, damit zwei Sitzungen nicht darüber verbunden werden können.';
 }

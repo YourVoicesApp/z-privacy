@@ -870,4 +870,328 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get writeAQuestionFirst => 'Write a question first.';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get roomPrivacy => 'Privacy';
+
+  @override
+  String get roomLanguageAndRules => 'Language & rules';
+
+  @override
+  String get roomVaultAndSecurity => 'Vault & security';
+
+  @override
+  String get roomSessions => 'Sessions';
+
+  @override
+  String get languageAndRulesWhat =>
+      'A privacy pack is a detection engine, not the language of the interface — and more than one pack can run in a single scan, so this is a starting point rather than the only rules allowed.';
+
+  @override
+  String get appLanguage => 'App language';
+
+  @override
+  String get appLanguageWhat =>
+      'The language a session is read with when it has none of its own — and which habits the scanner knows in it: salutations, company forms, the way a customer number is written. A session created with a language of its own keeps that one; this is what every other text is read with. The interface follows this choice.';
+
+  @override
+  String theInterfaceIsEnglishUntilTranslated(String language) {
+    return '$language: the detection pack is $language; the interface is English until its sentences are translated.';
+  }
+
+  @override
+  String get myPrivacyRules => 'My privacy rules';
+
+  @override
+  String get myPrivacyRulesWhat =>
+      'Not built yet. Rules you write yourself — a customer number format only your office uses, a project codename — will live here, beside the pack rather than inside it.';
+
+  @override
+  String get vaultAndSecurityWhat =>
+      'The key, the lock, and where a credential lives.';
+
+  @override
+  String get zVault => 'Z Vault';
+
+  @override
+  String get vaultOpenWhat =>
+      'Open. Your identities are loaded and the fourth detection layer is running.';
+
+  @override
+  String get vaultLockedWhat =>
+      'Locked. The rules and the pack still run — an IBAN is still caught — but not who it belongs to.';
+
+  @override
+  String get vaultAbsentWhat =>
+      'Not created on this device. Nothing is recognised by name.';
+
+  @override
+  String unlockedWithIdentities(int count) {
+    return 'Unlocked · $count identities';
+  }
+
+  @override
+  String get zPdfReadBack => 'z-pdf — read a protected document back';
+
+  @override
+  String get zPdfWhat =>
+      'The reverse act. A document that left this app with tokens in it is read back into its own names, here, from your vault — and it is never scanned, never protected and never put on a bench. Nothing of it is sent anywhere.';
+
+  @override
+  String get openThisPanelFromTheApp =>
+      'Open this panel from the app to choose a file.';
+
+  @override
+  String get chooseAZPdfFile => 'Choose a z-pdf file';
+
+  @override
+  String get lockTheVaultAfter => 'Lock the vault after';
+
+  @override
+  String get minutesUnusedZeroIsNever => 'minutes unused · 0 = never';
+
+  @override
+  String get lockTheVaultAfterWhat =>
+      'Kept by the vault itself, not by a timer in a screen: every way into it checks the clock first, so a bug in the interface cannot leave it open.';
+
+  @override
+  String get encryptedLocalCredentialStorage =>
+      'Encrypted local credential storage';
+
+  @override
+  String get credentialHomesWhat =>
+      'A provider key has two homes and no third: sealed inside the vault when one is open, or in memory for this run when there is none. Never a file in the clear, and never returned to the interface — there is no call in the whole contract that gives one back.';
+
+  @override
+  String get credentialSealedInTheVault => 'sealed in the vault';
+
+  @override
+  String get credentialInMemory => 'in memory, gone when the app closes';
+
+  @override
+  String get credentialNoKeyStored => 'no key stored';
+
+  @override
+  String get noProviderHoldsACredential => 'No provider holds a credential.';
+
+  @override
+  String get deviceBoundProtection => 'Device-bound protection';
+
+  @override
+  String get deviceBoundWhat =>
+      'Not built yet. A key tied to this device’s own authentication would sit above the layer above, without changing what is stored — the same records, one more lock.';
+
+  @override
+  String get sessionsWhat =>
+      'A session keeps its own key, and the keys are in the vault.';
+
+  @override
+  String get theVaultIsShutNoSessions =>
+      'The vault is shut, so there are no sessions to show. Open it and they come back — the conversations themselves were never in it.';
+
+  @override
+  String get eachSessionHasItsOwnEncryption =>
+      'Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot.';
+
+  @override
+  String get newSession => 'New session';
+
+  @override
+  String get newSessionWhat =>
+      'A name and a language, both yours to choose: the language is how Z reads every text in this session, and it is asked once here. It becomes the session you are working in straight away. Anything already protected on the document in front of you is renamed into it — nothing has been sent yet, so nothing that left is affected.';
+
+  @override
+  String get whatIsThisOneAbout => 'What is this one about?';
+
+  @override
+  String get begin => 'Begin';
+
+  @override
+  String get noSessionsYet => 'No sessions yet';
+
+  @override
+  String get noSessionsYetWhat =>
+      'One is born the first time you copy safe text or ask for a PDF — it is not refused for want of a name, it takes its own number for one, and you can rename it here. You never have to make one by hand first.';
+
+  @override
+  String theOneYouAreIn(String when, String exchanges) {
+    return '$when · $exchanges · the one you are in';
+  }
+
+  @override
+  String get workInThisSession => 'Work in this session';
+
+  @override
+  String get enter => 'Enter';
+
+  @override
+  String get renameThisSession => 'Rename this session';
+
+  @override
+  String get deleteThisSession => 'Delete this session';
+
+  @override
+  String get oneExchange => '1 exchange';
+
+  @override
+  String exchangesCount(int count) {
+    return '$count exchanges';
+  }
+
+  @override
+  String renameSessionNumber(int number) {
+    return 'Rename session $number?';
+  }
+
+  @override
+  String theNumberStaysWhatItIs(int number) {
+    return 'The number stays $number — it is what this session is, and nothing that was protected in it changes. Only the word on the row does.';
+  }
+
+  @override
+  String get keepTheName => 'Keep the name';
+
+  @override
+  String get renameIt => 'Rename it';
+
+  @override
+  String deleteNamed(String name) {
+    return 'Delete «$name»?';
+  }
+
+  @override
+  String get thisDestroysTheKey =>
+      'This destroys the key this session was protected with.';
+
+  @override
+  String get everyDocumentCanNeverBeUnprotected =>
+      'Every document and every message protected in it can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist.';
+
+  @override
+  String get anythingYouSentStaysAsItWas =>
+      'Anything you sent out of this session stays exactly as it was. What goes is the way back from it.';
+
+  @override
+  String get keepIt => 'Keep it';
+
+  @override
+  String get deleteTheSession => 'Delete the session';
+
+  @override
+  String get oneProtectedPlace => '1 protected place';
+
+  @override
+  String protectedPlacesCount(int count) {
+    return '$count protected places';
+  }
+
+  @override
+  String get renameThisDocument => 'Rename this document';
+
+  @override
+  String renameHandle(String handle) {
+    return 'Rename $handle?';
+  }
+
+  @override
+  String theNameIsWhatYouRead(String handle) {
+    return 'The name is what you read in this list. $handle stays what it is: a number is spent once and never given to another document.';
+  }
+
+  @override
+  String get aNameForThisDocument => 'A name for this document';
+
+  @override
+  String get roomAi => 'AI';
+
+  @override
+  String get aiWhat =>
+      'Three ways to ask a model. The first needs no account at all.';
+
+  @override
+  String get manualAi => 'Manual AI';
+
+  @override
+  String get manualAiWhat =>
+      'Use an AI chat you already have. Copy the safe text out of the Workspace, paste it into whatever model you use, and bring the answer back. Nothing to set up, nothing to pay for, and the restoring works exactly the same.';
+
+  @override
+  String get alwaysAvailableFirstDoor =>
+      'Always available — it is the «Choose who answers» sheet, first door.';
+
+  @override
+  String get directApi => 'Direct API';
+
+  @override
+  String get directApiWhat =>
+      'Connect to a remote AI provider with your API credential. The key goes in once and never comes back out — no screen in this app can show it to you again.';
+
+  @override
+  String get atThisAddressNoCredential =>
+      'At this address no credential is needed.';
+
+  @override
+  String get protocol => 'Protocol';
+
+  @override
+  String get connectedKeySealed => 'Connected · key sealed in the vault';
+
+  @override
+  String get connectedKeyThisRunOnly =>
+      'Connected · key kept for this run only';
+
+  @override
+  String get connectedNoKeyNeeded => 'Connected · no key needed';
+
+  @override
+  String get notConnected => 'Not connected';
+
+  @override
+  String get localAi => 'Local AI';
+
+  @override
+  String get localAiWhat =>
+      'Runs through an AI service on this computer — llama.cpp, Ollama, LM Studio, anything that answers the same shape. No key, no account, and the request never leaves this computer. Plain http is accepted only for a literal loopback address.';
+
+  @override
+  String get models => 'Models';
+
+  @override
+  String get privacyWhat =>
+      'What the app does by itself, and how far it goes without asking.';
+
+  @override
+  String get noVaultSoThisRunOnly =>
+      'There is no vault open, so these are for this run only. The vault is the one file this app writes — without it, nothing is remembered.';
+
+  @override
+  String get scanOnArrival => 'Scan a document the moment it arrives';
+
+  @override
+  String get scanOnArrivalWhat =>
+      'No dialog, no button. Turning this off means a document sits unprotected until you press Rescan — which is exactly the moment the boards were written to avoid.';
+
+  @override
+  String get answerEverySuggestion => 'Answer every suggestion before sending';
+
+  @override
+  String get answerEverySuggestionWhat =>
+      'Not a setting. A suggestion that has not been answered is never quietly treated as safe, and there is no «send anyway» — not here, not in a hidden flag, not anywhere in the code.';
+
+  @override
+  String get aRevealedValueStaysFor => 'A revealed value stays for';
+
+  @override
+  String get aRevealedValueStaysForWhat =>
+      'Revealing draws on the screen and never writes into what leaves. This is only how long it stays drawn.';
+
+  @override
+  String get tokenRotation => 'Token rotation';
+
+  @override
+  String get tokenRotationWhat =>
+      'Not built yet. When it is, it will live here: whether a permanent token keeps its number across sessions, or is drawn again each time so two sessions cannot be linked by it.';
 }
