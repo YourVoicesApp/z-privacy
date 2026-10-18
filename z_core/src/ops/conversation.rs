@@ -48,7 +48,7 @@ pub(crate) fn begin(name: String, bench: Option<SessionId>) -> ApiResult<Convers
 /// Split out of [`begin`] for rule 55: the door a document enters the preview
 /// by is already inside `with_core`, and `with_core` does not nest. The name is
 /// cleaned by its caller — the only two are [`begin`], which was handed one by
-/// a person, and [`born_at_the_first_document`], which writes the house's own.
+/// a person, and [`a_session_is_born`], which writes the house's own.
 fn begin_in(
     core: &mut crate::session::Core,
     name: String,
@@ -127,8 +127,8 @@ pub(crate) fn a_session_called(number: u32) -> String {
 
 const A_SESSION_CALLED: &str = "Session";
 
-/// **The session a first document is born into** — rule 55c, the owner's answer
-/// of 16 October 2026: «نعم».
+/// **The session the house begins for itself** — rule 55c, the owner's answer
+/// of 16 October 2026, and rule 55-و, his answer of 18 October: «نعم» twice.
 ///
 /// A *conversation* is what the person writes to a model. A **session** is the
 /// container, and a container exists the moment it holds something — so the
@@ -136,6 +136,15 @@ const A_SESSION_CALLED: &str = "Session";
 /// the first message, not at the first exit: those were the two instants this
 /// house had, and a document that arrived before either of them had nowhere to
 /// take a number from and was kept nowhere.
+///
+/// **One birth, two causes.** 55-و adds the second: a question that leaves
+/// with no document in the app at all (rule 72's surface) is a session too —
+/// «the chat without a document is a whole session». The cause is different and
+/// the birth is this one function, because a birth is a number spent, a name
+/// written, every token of the bench re-derived and the blocks written down,
+/// and a second copy of that sequence is a second answer to «what is a
+/// session» the day either changes. The second cause is wired at the exits
+/// (`ops::a_session_for_what_leaves`), not here.
 ///
 /// **The number is the vault's to hand out**, so it cannot be known before the
 /// birth — the name follows it, exactly as it has at the exit door since 081. A
@@ -145,7 +154,7 @@ const A_SESSION_CALLED: &str = "Session";
 /// It names the bench on its way through ([`take_the_names`]), which is also
 /// where the blocks are written and this very document kept: the birth is the
 /// first instant at which a word's token is this session's own.
-pub(crate) fn born_at_the_first_document(
+pub(crate) fn a_session_is_born(
     core: &mut crate::session::Core,
     bench: SessionId,
 ) -> ApiResult<u32> {
@@ -700,7 +709,7 @@ pub(crate) fn keep_the_preview(core: &mut crate::session::Core, bench: u32) -> A
         // With no vault open there is no key to seal a session with, so the
         // document waits exactly as its blocks do — and the import it arrived
         // by is never refused because a session could not be born.
-        None => match born_at_the_first_document(core, SessionId { id: bench }) {
+        None => match a_session_is_born(core, SessionId { id: bench }) {
             Ok(number) => number,
             Err(ApiError::VaultLocked) => return Ok(()),
             Err(other) => return Err(other),

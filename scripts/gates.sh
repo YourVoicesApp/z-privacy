@@ -930,10 +930,10 @@ G46_READERS=$(awk '
 # And the one place the gateway's context is filled.
 G46_FILLS=$(grep -c 'context: crate::gateway::Context {' "$OPS_C" 2>/dev/null || echo 0)
 if [ "$G46_BUILT" = "1" ] && [ "$G46_FILLS" = "1" ] \
-   && [ "$G46_READERS" = "ask_model build_the_chat build_the_question_alone" ]; then
-  pass "G46 one builder makes the chat, and its readers are the three that need it: ask_model, build_the_chat, build_the_question_alone"
+   && [ "$G46_READERS" = "ask_model build_the_chat the_question_alone" ]; then
+  pass "G46 one builder makes the chat, and its readers are the three that need it: ask_model, build_the_chat, the_question_alone"
 else
-  fail "G46 the chat is built in $G46_BUILT place(s), the context is filled in $G46_FILLS, and the readers are «$G46_READERS» — expected one, one, and «ask_model build_the_chat build_the_question_alone»"
+  fail "G46 the chat is built in $G46_BUILT place(s), the context is filled in $G46_FILLS, and the readers are «$G46_READERS» — expected one, one, and «ask_model build_the_chat the_question_alone»"
 fi
 
 # `^[^/]*` so that a line of prose about the argument that was deleted is not
@@ -981,10 +981,13 @@ fi
 #
 # Three things, each the shape of a way it comes undone:
 #
-#  1 — `what_would_leave` is written once and its readers are the three that
-#      need it, **named** so that a fourth has to say which of them it is:
+#  1 — `what_would_leave` is written once and its readers are the four that
+#      need it, **named** so that a fifth has to say which of them it is:
 #      the builder every door asks, the export door that mints the answer
-#      page, and the panel that lists the blocks standing on the surface;
+#      page, the panel that lists the blocks standing on the surface, and —
+#      since 55-و — the exit law that births a session for a question leaving
+#      with no document (the fourth seat, declared here, as G31 made the exit
+#      audit declare itself);
 #  2 — `build_payload` asks that function and asks the document nothing, read
 #      from its own body with the comment lines thrown away (G46's lesson: a
 #      sentence naming a function answered for a deleted line);
@@ -994,10 +997,20 @@ BENCH=z_core/src/ops/mod.rs
 
 G49_ONE=$(grep -c '^fn what_would_leave(s: &Session) -> WhatWouldLeave {' "$BENCH" 2>/dev/null || echo 0)
 G49_SEATS=$(grep -n 'what_would_leave(s)' "$BENCH" 2>/dev/null | wc -l | tr -d ' ')
-if [ "$G49_ONE" = "1" ] && [ "$G49_SEATS" = "3" ]; then
-  pass "G49 one function says what would leave this bench, read by the builder, the export door and the panel"
+if [ "$G49_ONE" = "1" ] && [ "$G49_SEATS" = "4" ]; then
+  pass "G49 one function says what would leave this bench, read by the builder, the export door, the panel and the exit law"
 else
-  fail "G49 «what would leave» is written in $G49_ONE place(s) and read in $G49_SEATS — expected one answer and three named readers; a fourth reader declares itself here"
+  fail "G49 «what would leave» is written in $G49_ONE place(s) and read in $G49_SEATS — expected one answer and four named readers; a fifth reader declares itself here"
+fi
+
+# **And the question alone is assembled once**, reached by the door that lets
+# text out and by the instrument that draws it, or what leaves and what is
+# drawn are two texts that agree only by luck.
+G49_BUILDER=$(grep -c 'the_question_alone(core, session)' "$BENCH" 2>/dev/null || echo 0)
+if [ "$G49_BUILDER" = "2" ]; then
+  pass "G49 one builder assembles the question alone, reached by the door and by the instrument"
+else
+  fail "G49 the question alone is assembled from $G49_BUILDER place(s) — expected the one builder, reached by both roads"
 fi
 
 G49_BUILD=$(awk '
@@ -1372,6 +1385,20 @@ fi
 # source here: **a document in the preview always has a session**, and **a
 # session never exists without a document or a conversation**. The code's word
 # for the container is still `Conversation`; 066 pays the rename.
+#
+# **55-و adds the second cause, 18 October: a question that leaves with no
+# document is a session too** — «the chat without a document is a whole
+# session». One birth, two causes, and they are enumerated here so that a third
+# has to declare itself: the document entering the preview, and the exit law
+# `ops::a_session_for_what_leaves`. Before it, that law lived in the *screen*,
+# which began a session of its own whenever an exit found none open — one law
+# in two languages, and the quieter copy wins the day they disagree.
+#
+# **And a read never births.** The workspace snapshot asks `build_payload` on
+# every read to draw the Safe column, and since 091 that answers a question-only
+# bench; a birth on that road would make a session out of a question nobody
+# sent, which is this gate's own «no empty sessions» lost to the fix meant to
+# honour it.
 BORN=z_core/src/ops/conversation.rs
 
 # One hand hands out a session's number and its key.
@@ -1386,16 +1413,30 @@ else
 fi
 
 # And a birth nobody asked for happens at one door: the preview's.
-G37_SILENT=$(grep -RlE 'born_at_the_first_document\(' z_core/src --include='*.rs' 2>/dev/null \
-             | tr '\n' ' ' | sed 's/ $//')
 G37_WHERE=$(awk '
   /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
-  /born_at_the_first_document\(/ { if (here != "" && here != "born_at_the_first_document") print here }
-' "$BORN" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ "$G37_SILENT" = "$BORN" ] && [ "$G37_WHERE" = "keep_the_preview" ]; then
-  pass "G37 a session nobody asked for is born at one door, the one a document enters by"
+  /a_session_is_born\(core/ && $0 !~ /^[[:space:]]*\/\// { if (here != "" && here != "a_session_is_born") print here }
+' $BORN z_core/src/ops/mod.rs | sort -u | tr '\n' ' ' | sed 's/ $//')
+G37_ONCE=$(grep -c '^pub(crate) fn a_session_is_born(' "$BORN" 2>/dev/null || echo 0)
+if [ "$G37_ONCE" = "1" ] && [ "$G37_WHERE" = "a_session_for_what_leaves keep_the_preview" ]; then
+  pass "G37 one silent birth, caused twice: a document entering the preview, and a question leaving with none"
 else
-  fail "G37 a silent birth is reached from «$G37_WHERE» in «$G37_SILENT» — expected keep_the_preview in $BORN alone"
+  fail "G37 the silent birth is written $G37_ONCE time(s) and caused from «$G37_WHERE» — expected one, from «a_session_for_what_leaves keep_the_preview» and nothing else"
+fi
+
+# **A read never births.** The instrument the snapshot draws the Safe column
+# with must not ask the exit law, or «no empty sessions» is lost on the one
+# surface the law was written for.
+G37_DRAWN=$(awk '
+  /^pub\(crate\) fn build_payload\(/ {inside=1}
+  inside && /^}/ {print; inside=0; next}
+  inside && $0 !~ /^[[:space:]]*\/\// {print}
+' z_core/src/ops/mod.rs 2>/dev/null | grep -c 'a_session_for_what_leaves')
+G37_LAW=$(grep -c 'a_session_for_what_leaves(' z_core/src/ops/mod.rs 2>/dev/null || echo 0)
+if [ "$G37_DRAWN" = "0" ] && [ "$G37_LAW" = "3" ]; then
+  pass "G37 the exit law is one function asked by the two exits that build, and a read births nothing"
+else
+  fail "G37 the snapshot's instrument asks the exit law $G37_DRAWN time(s) and the law is written and read $G37_LAW — expected a read that births nothing, and one definition plus two exits"
 fi
 
 # **No empty sessions.** The question «is there a document here» is asked
@@ -1404,7 +1445,7 @@ fi
 if awk '
   /^pub\(crate\) fn keep_the_preview\(/ { inside = 1 }
   inside && /trim\(\)\.is_empty\(\)/ { asked = NR }
-  inside && /born_at_the_first_document\(/ { born = NR }
+  inside && /a_session_is_born\(/ { born = NR }
   inside && /^}/ { inside = 0 }
   END { exit(asked && born && asked < born ? 0 : 1) }
 ' "$BORN"; then
@@ -3292,7 +3333,14 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_model_door_still_takes_the_question_alone \
          an_empty_box_with_no_document_still_refuses_by_name \
          the_blocks_a_question_made_are_counted_on_its_own_surface \
-         a_document_on_the_bench_still_answers_for_its_own_blocks; do
+         a_document_on_the_bench_still_answers_for_its_own_blocks \
+         a_question_taken_out_with_no_document_is_born_into_a_session \
+         a_question_sent_to_a_model_with_no_document_is_born_into_a_session \
+         the_chat_of_a_question_only_session_carries_its_earlier_turns \
+         the_room_shows_it_with_an_empty_kept_list_and_both_doors \
+         a_question_that_never_leaves_is_born_into_nothing \
+         ending_the_chat_starts_from_zero_without_a_second_birth \
+         the_screens_own_birth_still_makes_one_session_and_not_two; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
