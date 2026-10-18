@@ -982,6 +982,62 @@ else
   fail "G46 a screen hands a history to the core:"; printf '%s\n' "$G46_DART" | sed 's/^/        /'
 fi
 
+# ---------------------------------------------------------------- G49
+# **One reading of the bench, and every door asks it** — 091, rules 72 and
+# 72-أ, the owner's «the chat box is there from the first moment».
+#
+# Measured by e2 on `8510d82`: with a letter pasted into the box and no
+# document in the app, «Choose who answers» worked and «Copy Protected» and
+# «Save as PDF» were dead, because `build_payload` refused an empty *document*
+# and the manual doors are its readers while the model door asks
+# `build_the_question_alone`. One surface, one door open out of four, decided
+# by which builder a press happened to use.
+#
+# Three things, each the shape of a way it comes undone:
+#
+#  1 — `what_would_leave` is written once and its readers are the three that
+#      need it, **named** so that a fourth has to say which of them it is:
+#      the builder every door asks, the export door that mints the answer
+#      page, and the panel that lists the blocks standing on the surface;
+#  2 — `build_payload` asks that function and asks the document nothing, read
+#      from its own body with the comment lines thrown away (G46's lesson: a
+#      sentence naming a function answered for a deleted line);
+#  3 — the export door's mint is decided by the same reading, or the door is
+#      open and the PDF press still refuses in its own words.
+BENCH=z_core/src/ops/mod.rs
+
+G49_ONE=$(grep -c '^fn what_would_leave(s: &Session) -> WhatWouldLeave {' "$BENCH" 2>/dev/null || echo 0)
+G49_SEATS=$(grep -n 'what_would_leave(s)' "$BENCH" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$G49_ONE" = "1" ] && [ "$G49_SEATS" = "3" ]; then
+  pass "G49 one function says what would leave this bench, read by the builder, the export door and the panel"
+else
+  fail "G49 «what would leave» is written in $G49_ONE place(s) and read in $G49_SEATS — expected one answer and three named readers; a fourth reader declares itself here"
+fi
+
+G49_BUILD=$(awk '
+  /^pub\(crate\) fn build_payload\(/ {inside=1}
+  inside && /^}/ {print; inside=0; next}
+  inside && $0 !~ /^[[:space:]]*\/\// {print}
+' "$BENCH" 2>/dev/null)
+if printf '%s\n' "$G49_BUILD" | grep -q 'what_would_leave' \
+   && ! printf '%s\n' "$G49_BUILD" | grep -q 'original.is_empty()'; then
+  pass "G49 the builder every door asks reads the bench once, and never the document alone"
+else
+  fail "G49 build_payload decides for itself what is on the bench — an empty document closes three doors again while the fourth stays open"
+fi
+
+G49_EXPORT=$(awk '
+  /^pub\(crate\) fn payload_to_take_out\(/ {inside=1}
+  inside && /^}/ {print; inside=0; next}
+  inside && $0 !~ /^[[:space:]]*\/\// {print}
+' "$BENCH" 2>/dev/null)
+if printf '%s\n' "$G49_EXPORT" | grep -q 'what_would_leave' \
+   && ! printf '%s\n' "$G49_EXPORT" | grep -q 'original.is_empty()'; then
+  pass "G49 the answer page is minted for whatever would leave, by that same reading"
+else
+  fail "G49 the export door asks the document whether to mint an answer page — the PDF press then refuses a text the door let through («its answer page had no token»)"
+fi
+
 # ---------------------------------------------------------------- G48
 # **A word that names a field is not a value, and a value does not stand inside
 # our own token** — the attacker's B1-3 of 17 October, both halves.
@@ -3277,7 +3333,13 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_name_after_a_salutation_ends_with_the_sentence \
          the_exit_audit_does_not_count_a_value_inside_our_own_token \
          the_attackers_question_leaves_and_every_door_stays_open \
-         a_label_a_walk_may_honestly_reach_is_still_not_a_name; do
+         a_label_a_walk_may_honestly_reach_is_still_not_a_name \
+         a_pasted_letter_with_no_document_leaves_by_the_manual_door \
+         the_pdf_door_mints_its_answer_page_for_a_question_alone \
+         the_model_door_still_takes_the_question_alone \
+         an_empty_box_with_no_document_still_refuses_by_name \
+         the_blocks_a_question_made_are_counted_on_its_own_surface \
+         a_document_on_the_bench_still_answers_for_its_own_blocks; do
   if grep -Rqs "fn .*$t" z_core/tests z_core/src 2>/dev/null; then
     pass "  test present: $t"
   else
