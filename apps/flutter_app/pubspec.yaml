@@ -40,6 +40,12 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  # **The MSIX packer, and it is a tool and not a dependency** — 093 item 3.
+  # Nothing in `lib/` imports it; it is run once, in the Windows job, by
+  # `dart run msix:create`. A dev dependency because that is where a tool the
+  # build uses belongs, and pinned because a packer that moves on its own
+  # would change the package the owner installs without anybody deciding to.
+  msix: 3.16.8
   freezed: ^3.2.5
   build_runner: ^2.15.1
 
@@ -61,3 +67,29 @@ flutter:
     # packaging/linux/third-party/dejavu-LICENSE.txt and it is named in
     # NOTICES.txt beside the others.
     - assets/fonts/
+
+# **What the MSIX says about itself** — 093 item 3, and every line of it is a
+# placeholder until the Store names the product.
+#
+# `publisher` must be exactly the subject of the certificate the job signs
+# with (`CN=Z-privacy`), or Windows refuses the package without saying why;
+# `publisher_display_name` is the owner's working choice. `identity_name` is a
+# name reserved by nobody yet — the Store hands out the real one with the
+# account, and the next round pays it.
+#
+# **No capability but the network.** A packaged app gets nothing it does not
+# ask for, and this one needs exactly one thing the sandbox withholds: the
+# model it is sent to lives on the internet. It reads documents through the
+# person's own file picker, which is brokered and needs no capability, so
+# `broadFileSystemAccess` — which the Store makes you justify — is not asked
+# for. A capability nobody needs is a promise nobody should have to read.
+msix_config:
+  display_name: Z Privacy
+  publisher_display_name: Z-privacy
+  publisher: CN=Z-privacy
+  identity_name: com.zprivacy.app
+  msix_version: 1.0.0.0
+  logo_path: assets/brand/zprivacy-512.png
+  capabilities: internetClient
+  architecture: x64
+  store: false

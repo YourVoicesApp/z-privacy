@@ -51,26 +51,32 @@ jobs:
       # and something is wrong» are different answers, and the step that fails
       # says which one we got.
       #
-      # Both test-only features, not one. `test_clock` arrived in October and
-      # this file still asked for `fake_provider` alone, so six tests — the
-      # auto-lock and the Safe column's reveal, `reveal_and_the_lock.rs` and
-      # `the_safe_column_reveal.rs` — did not exist in this job and it reported
-      # green without them. `gates.sh` carries that rule written down beside its
+      # **All three test-only features, not one and not two.** `test_clock`
+      # arrived in October and this file still asked for `fake_provider`
+      # alone, so six tests — the auto-lock and the Safe column's reveal,
+      # `reveal_and_the_lock.rs` and `the_safe_column_reveal.rs` — did not
+      # exist in this job and it reported green without them. **And it had
+      # happened a second time by 093**: Linux had added `measuring` to its own
+      # `TEST_FEATURES` and this file still asked for two, so the instruments'
+      # own tests did not exist here either — the same fault, in the same file,
+      # for the third feature. G53 now holds the two lists equal, because a
+      # rule written for one platform and not applied to the second is this
+      # house's most expensive habit. `gates.sh` carries that rule written down beside its
       # own `TEST_FEATURES`: «a feature the suite forgets to ask for takes its
       # tests with it silently». It was written for one platform and never
       # applied to the second. G23 proves the feature cannot reach `default` or
       # cross the bridge, so asking for it here costs the product nothing.
       - name: Compile the core
         shell: bash
-        run: cargo build -p z_core --features fake_provider,test_clock
+        run: cargo build -p z_core --features fake_provider,test_clock,measuring
 
       - name: Compile the workspace
         shell: bash
-        run: cargo build --workspace --features fake_provider,test_clock
+        run: cargo build --workspace --features fake_provider,test_clock,measuring
 
       - name: Rust tests
         shell: bash
-        run: cargo test --workspace --features fake_provider,test_clock -- --nocapture
+        run: cargo test --workspace --features fake_provider,test_clock,measuring -- --nocapture
 
       # What build is this? The owner looked at the download page and thought
       # yesterday's installer was still live, because the screen said
@@ -87,7 +93,7 @@ jobs:
       - name: The build's own stamp
         shell: bash
         run: |
-          stamp=$(cargo run -q -p z_core --example check_document --features fake_provider,test_clock | head -1)
+          stamp=$(cargo run -q -p z_core --example check_document --features fake_provider,test_clock,measuring | head -1)
           echo "$stamp"
           short="${GITHUB_SHA:0:7}"
           case "$stamp" in
@@ -113,6 +119,51 @@ jobs:
         if: always()
         shell: bash
         run: bash scripts/check_storage_contracts.sh
+
+      # **One copy of this program writes at a time, measured where the lock is
+      # a different system call** — 093 item 4, and the attacker's م5.
+      #
+      # On Linux G43 reads the source: `with_core` takes `one_writer_at_a_time`
+      # and one place takes it. That gate is about the shape of the code and is
+      # the same on every platform; what is **not** the same is the call
+      # underneath it — `std::fs::File::lock` is `flock` there and `LockFileEx`
+      # here — so the shape being right says nothing about two copies on
+      # Windows actually taking turns.
+      #
+      # The measurement exists already and is portable (two processes, one
+      # `writing.lock`, a ready-file handshake, forty trials in
+      # `two_copies_never_lose_a_write.rs`), so the whole-workspace step above
+      # has been running it here all along. **Asked for by name anyway**, for
+      # the reason `check_storage_contracts.sh` was written: a test that
+      # becomes `#[cfg(unix)]` one day does not fail, it stops existing, and a
+      # suite that shrinks on a platform tells the truth about what it ran and
+      # a lie about what is safe.
+      - name: One writer at a time
+        if: always()
+        shell: bash
+        run: |
+          set -o pipefail
+          log=$RUNNER_TEMP/one-writer.txt
+          cargo test -p z_core --features fake_provider,test_clock,measuring \
+            --test two_copies_never_lose_a_write -- --nocapture > "$log" 2>&1 || {
+              tail -40 "$log"
+              echo "::error::two copies lost a write, or the test would not run — see the log above"
+              exit 1
+            }
+          ran=$(grep -c '^test two_copies_never_lose_a_write \.\.\. ok$' "$log" || true)
+          if [ "$ran" != "1" ]; then
+            tail -40 "$log"
+            echo "::error::the one-writer measurement did not run on this platform (it is the one guard LockFileEx is under)"
+            exit 1
+          fi
+          grep -E '^test .* ok$' "$log" | sed 's/^/  /'
+          {
+            echo "### The vault's own floor, on this machine"
+            echo ""
+            echo "- 9 storage contracts: see the step above (each asked for by name)."
+            echo "- one writer at a time: **measured on Windows** — two copies, one"
+            echo "  \`writing.lock\`, LockFileEx underneath, and no silent loss."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # Read, never typed. These three numbers sat in this file for a month
       # naming `d685d7b` — 251 tests and 108 gates — while Linux had moved to
@@ -159,6 +210,29 @@ jobs:
         run: |
           flutter --version
           rustc --version
+
+      # **The release may not carry the name of the machine that built it** —
+      # the independent attacker's خ3 and ن6, and `scripts/package_linux.sh`'s
+      # own two halves. This is the first: every dependency writes the absolute
+      # path it was compiled from into the binary, and on a runner those paths
+      # are `D:\a\…` and `C:\Users\runneradmin\.cargo\registry\src\…`.
+      #
+      # Exported **before** the build, because it is the compiler that writes
+      # them down, and through `$GITHUB_ENV` so that every later step — the
+      # release build's own cargokit, and the debug bridge the Dart half needs
+      # — is the same build. `--remap-path-prefix` and not Cargo's `trim-paths`
+      # for the reason the Linux twin gives: that one is still unstable in this
+      # cargo. The second half, the proof, is `scripts/package_windows.sh`.
+      - name: The paths this machine would otherwise write down
+        shell: bash
+        run: |
+          echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> "$GITHUB_ENV"
+          remap="--remap-path-prefix=$USERPROFILE\\.cargo\\registry\\src=/crates"
+          remap="$remap --remap-path-prefix=$USERPROFILE\\.rustup\\toolchains=/rust"
+          remap="$remap --remap-path-prefix=$USERPROFILE\\AppData\\Local\\Pub\\Cache=/pub"
+          remap="$remap --remap-path-prefix=$GITHUB_WORKSPACE=/zprivacy"
+          echo "RUSTFLAGS=${RUSTFLAGS:-} $remap" >> "$GITHUB_ENV"
+          echo "$remap"
 
       # Says out loud what is missing rather than failing later with a linker
       # error nobody can place: a Windows desktop build needs Visual Studio's
@@ -220,6 +294,17 @@ jobs:
           for f in LICENSE third-party/NOTICES.txt third-party/rust-crates.txt; do
             test -s "$dest/$f" || { echo "nothing staged at $f — the installer would ship without it"; exit 1; }
           done
+
+      # **The stamp, the proof and the archive** — 093 item 1, in one script
+      # beside its Linux twin (`scripts/package_windows.sh`). It writes
+      # `BUILD-INFO.txt` with the five lines and the two product hashes,
+      # refuses if any file still carries a path from this runner, and writes
+      # the `.zip` with its `.sha256` beside it. A refusal here fails the job
+      # by name, which is the whole point: an archive that names the builder
+      # cannot be unwritten once it is downloaded.
+      - name: Stamp it, prove it carries no runner path, and zip it
+        shell: bash
+        run: bash scripts/package_windows.sh staging/zprivacy-v1-windows-x86_64 "$GITHUB_WORKSPACE/dist"
 
       - name: What is in it, and its hashes
         if: always()
@@ -312,10 +397,105 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           sha256sum "$file"
 
+      # **An MSIX for sideloading** — 093 item 3.
+      #
+      # Beside the Inno installer, not instead of it: the `.exe` is what a
+      # person double-clicks today, and the MSIX is the shape the Microsoft
+      # Store wants — so this round makes one and the owner installs it, which
+      # is how we learn what a packaged app does differently before any Store
+      # account exists.
+      #
+      # **The certificate is made here and dies here.** A sideloaded MSIX must
+      # be signed, and the signature of a self-signed test certificate proves
+      # nothing about origin — anybody can make one. So the private key lives
+      # for the length of this step inside `RUNNER_TEMP` and is deleted with
+      # the key store entry; **only the public `.cer` travels**, because the
+      # owner has to trust it once before Windows will install the package.
+      # Nothing is committed: a key in a repository is a key everybody has.
+      # The Store's own signing is a later round (the house's note: Store +
+      # MSIX are free and need no EV certificate).
+      #
+      # **What the owner's run will tell us, and this comment will not guess:**
+      # a packaged app's `%LOCALAPPDATA%` is redirected into the package's own
+      # data folder, so the vault that `z_core/src/data_dir.rs` answers with
+      # may not be the folder an unpackaged build used. That is a measurement
+      # for his machine, named here so the difference is expected rather than
+      # discovered.
+      - name: An MSIX for sideloading
+        shell: pwsh
+        run: |
+          $password = [guid]::NewGuid().ToString()
+          $cert = New-SelfSignedCertificate `
+            -Type Custom `
+            -Subject "CN=Z-privacy" `
+            -KeyUsage DigitalSignature `
+            -FriendlyName "Z Privacy test certificate (thrown away in this job)" `
+            -CertStoreLocation "Cert:\CurrentUser\My" `
+            -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+          $thumb = $cert.Thumbprint
+          $pfx = Join-Path $env:RUNNER_TEMP "zprivacy-test.pfx"
+          $cer = Join-Path $env:GITHUB_WORKSPACE "dist\zprivacy-test-certificate.cer"
+          New-Item -ItemType Directory -Force -Path (Join-Path $env:GITHUB_WORKSPACE "dist") | Out-Null
+          $secret = ConvertTo-SecureString -String $password -Force -AsPlainText
+          Export-PfxCertificate -Cert "Cert:\CurrentUser\My\$thumb" -FilePath $pfx -Password $secret | Out-Null
+          Export-Certificate -Cert "Cert:\CurrentUser\My\$thumb" -FilePath $cer | Out-Null
+
+          Push-Location apps/flutter_app
+          dart run msix:create `
+            --certificate-path $pfx `
+            --certificate-password $password `
+            --output-path (Join-Path $env:GITHUB_WORKSPACE "dist") `
+            --output-name "zprivacy-v1-windows-x86_64"
+          $code = $LASTEXITCODE
+          Pop-Location
+
+          # The key goes whatever happened above it.
+          Remove-Item $pfx -Force -ErrorAction SilentlyContinue
+          Remove-Item "Cert:\CurrentUser\My\$thumb" -Force -ErrorAction SilentlyContinue
+          if ($code -ne 0) { throw "msix:create refused ($code)" }
+
+      - name: How to install the MSIX
+        if: always()
+        shell: bash
+        run: |
+          file=dist/zprivacy-v1-windows-x86_64.msix
+          [ -f "$file" ] || { echo "no MSIX was made"; exit 0; }
+          {
+            echo "### The MSIX, for sideloading"
+            echo ""
+            echo '```'
+            sha256sum "$file"
+            echo '```'
+            echo ""
+            echo "Two steps, once:"
+            echo ""
+            echo "1. In PowerShell **as administrator**, trust the test certificate:"
+            echo ""
+            echo '   ```powershell'
+            echo '   Import-Certificate -FilePath .\zprivacy-test-certificate.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople'
+            echo '   ```'
+            echo ""
+            echo "2. Double-click \`zprivacy-v1-windows-x86_64.msix\` and press Install."
+            echo ""
+            echo "The certificate is a test one, made in this run and thrown away with"
+            echo "its key: it says nothing about who built this. It is only what"
+            echo "Windows asks for before it will install a package at all."
+          } >> "$GITHUB_STEP_SUMMARY"
+          sha256sum "$file"
+
+      - name: Upload the archive, its hash and the MSIX
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zprivacy-v1-windows-x86_64-${{ env.SHORT_SHA }}
+          path: dist
+          retention-days: 30
+          if-no-files-found: error
+
       - name: Upload the installer
         uses: actions/upload-artifact@v4
         with:
-          name: zprivacy-v1-windows-x86_64-setup
+          name: zprivacy-v1-windows-x86_64-setup-${{ env.SHORT_SHA }}
           path: staging-installer
           retention-days: 30
           if-no-files-found: error
@@ -333,7 +513,94 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: zprivacy-v1-windows-x86_64
+          name: zprivacy-v1-windows-x86_64-folder-${{ env.SHORT_SHA }}
           path: staging
           retention-days: 30
           if-no-files-found: error
+
+      # ---------------------------------------------------------------- item 2
+      # **The Dart half runs here, and a red is the report we are asking for.**
+      #
+      # 074's desk audit found that the CI ran no Dart test on Windows at all,
+      # so every claim about the glass was a Linux claim. The suite is 400-odd
+      # tests and the things that break off Linux are exactly the things nobody
+      # writes a test for: a path separator, a CRLF in a fixture, a font that
+      # is not there, a `Platform.isWindows` branch nobody took.
+      #
+      # **Last in the job on purpose.** The release, the installer and the MSIX
+      # are uploaded above; a red here must not take them away, and an
+      # `always()` on an upload is a weaker promise than putting the fragile
+      # step after it. And **no `continue-on-error`**: if it reds, the job reds
+      # and the owner gets a list.
+      #
+      # The library the suite speaks through is built exactly as G7-build does
+      # on Linux — the three test features, renamed `z_core/<feature>` because
+      # `z_bridge` declares none of its own — because a plain
+      # `flutter build windows` produces a DLL with **no** echo provider and
+      # twenty tests then red while naming none of this
+      # (`the_bundle_library_has_no_echo_provider`).
+      #
+      # **And `PATH` is the Windows `LD_LIBRARY_PATH`.** The documented Linux
+      # recipe exports `LD_LIBRARY_PATH=…/bundle/lib`; Windows has no such
+      # variable. `LoadLibrary("z_bridge.dll")` searches the directory of the
+      # **executable** — which here is Flutter's own `flutter_tester.exe`
+      # inside the SDK cache, not ours and not ours to write into — then the
+      # system directories, then `PATH`. So the DLL is put where the Windows
+      # debug bundle keeps it and that folder is prepended to `PATH`.
+      - name: The library the Dart half speaks through
+        if: always()
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo build -p z_bridge \
+            --features z_core/fake_provider,z_core/test_clock,z_core/measuring \
+            || { echo "::error::the bridge would not build with the test features"; exit 1; }
+          test -f target/debug/z_bridge.dll || { echo "::error::no z_bridge.dll at target/debug"; exit 1; }
+          ( cd apps/flutter_app && flutter build windows --debug ) \
+            || { echo "::error::the debug build the Dart half needs would not build"; exit 1; }
+          out=apps/flutter_app/build/windows/x64/runner/Debug
+          test -d "$out" || { echo "::error::no debug runner folder at $out"; exit 1; }
+          cp -f target/debug/z_bridge.dll "$out/z_bridge.dll"
+          # **The shape, not the date** — G7-lib's own lesson: a DLL as new as
+          # the tree can still be one that cannot answer. The echo provider's
+          # label is compiled in only under `fake_provider`, so this is the one
+          # question worth asking of the bytes.
+          if LC_ALL=C grep -qa 'Echo (tests only)' "$out/z_bridge.dll"; then
+            echo "the DLL the suite will speak through carries the echo provider"
+          else
+            echo "::error::the DLL at $out has no echo provider — the Dart half would red twenty times and name none of it"
+            exit 1
+          fi
+          echo "DART_LIB_DIR=$out" >> "$GITHUB_ENV"
+
+      - name: Dart tests
+        if: always()
+        shell: bash
+        working-directory: apps/flutter_app
+        run: |
+          set -o pipefail
+          json="$RUNNER_TEMP/dart.json"
+          export PATH="$GITHUB_WORKSPACE/$DART_LIB_DIR:$PATH"
+          flutter test --concurrency=1 --reporter compact --file-reporter="json:$json" \
+            2>&1 | tail -40 && status=0 || status=$?
+          {
+            echo "### The Dart half, on Windows"
+            echo ""
+            if [ "$status" = "0" ]; then
+              echo "Green. The glass answers through a Windows DLL."
+            else
+              echo "Red — which is the report this job exists for. The tests that failed,"
+              echo "by file:"
+              echo ""
+              echo '```'
+              if [ -f "$json" ]; then
+                python ../../scripts/dart_failures.py "$json" 2>/dev/null \
+                  || python3 ../../scripts/dart_failures.py "$json" 2>/dev/null \
+                  || echo "(the JSON record is at $json; dart_failures.py would not run)"
+              else
+                echo "(no JSON record was written — the suite did not start)"
+              fi
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
