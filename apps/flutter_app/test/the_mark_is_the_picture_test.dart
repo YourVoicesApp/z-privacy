@@ -161,9 +161,9 @@ void main() {
       home: WorkspaceScreen(
         bench: g.bench,
         ground: g.ground,
-        onImport: () {}, onType: (_) {},
+        onImport: () {}, onAsk: (_) {},
         onVault: () {},
-        onSettings: () {},
+        onSettings: (_) {},
       ),
     ));
     await _settle(tester);

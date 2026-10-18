@@ -136,7 +136,7 @@ Future<void> _pumpTheWork(
       bench: g.bench,
       ground: g.ground,
       onImport: () {},
-      onType: (_) {},
+      onAsk: (_) {},
       onVault: () {},
     ),
   ));
@@ -459,7 +459,17 @@ void main() {
   // **«End the chat» ends what the next question carries** — rule 68, and
   // nothing else: the turns stay in the session, and the columns stay on the
   // glass.
-  testWidgets('ending the chat closes the panel and keeps what was said', (tester) async {
+  // **Rule 71 reversed half of this guard on 18 October.** «The work is
+  // untouched: the two columns are where they were» was the lead's B5 ruling
+  // and the owner has taken it back — ending a chat empties the whole surface
+  // now, and the emptying is the **shell's** act (`onFromZero`), which this
+  // file does not mount. So what is measured here is the half that is this
+  // panel's own: the press ends the chat in the core, asks nothing, closes the
+  // panel, and keeps every turn in the session. That the surface then empties
+  // is measured in `the_chat_from_the_first_moment_test`, against a harness
+  // that can let a bench go the way the shell does.
+  testWidgets('ending the chat asks nothing, ends it in the core, and keeps what was said',
+      (tester) async {
     final g = await _ready(tester, 'end');
     addTearDown(g.bench.dispose);
     await _askTheFirst(tester, g);
@@ -479,8 +489,8 @@ void main() {
 
     expect(find.byType(TheChat), findsNothing, reason: 'the panel stands over an ended chat');
     expect(g.bench.openChat, isNot(was), reason: 'the core still reports the same chat open');
-    // The work is untouched: the two columns are where they were.
-    expect(find.byType(WorkspaceScreen), findsOneWidget);
+    // The thread is empty on this bench, which is what the panel reads.
+    expect(g.bench.chatTurns, isEmpty, reason: 'the ended chat still has turns on the bench');
     // And the session kept every turn of it — the Sessions room draws them
     // under the document they were about (rule 69).
     await tester.runAsync(() async {

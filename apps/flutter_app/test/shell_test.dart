@@ -153,7 +153,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -211,7 +211,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -254,7 +254,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -341,7 +341,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -462,7 +462,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
         ),
       );
       await tester.pumpAndSettle();
@@ -581,7 +581,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -656,7 +656,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -725,7 +725,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -818,14 +818,14 @@ void main() {
           home: WorkspaceScreen(
             bench: bench,
             ground: ground,
-            onImport: () {}, onType: (_) {},
+            onImport: () {}, onAsk: (_) {},
             onVault: () {},
             // Given a panel to open because this test asks the sheet for its
             // way to the settings, and a surface with nowhere to send the
             // press draws no door rather than a dead one. The other fourteen
             // mounts in this file are left alone: fourteen doors that open
             // nothing would be fourteen lies the compiler was enforcing.
-            onSettings: () {},
+            onSettings: (_) {},
           ),
         ),
       );
@@ -1025,7 +1025,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
         ),
       );
       await settle(tester);
@@ -1098,7 +1098,7 @@ void main() {
     final clip = _ClipboardProbe(tester)..install();
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -1266,7 +1266,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+          home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
         ),
       );
       await settle(tester);
@@ -1504,7 +1504,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -1759,7 +1759,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester, rounds: 2);
@@ -2088,7 +2088,7 @@ Future<void> reviewJourney(
 
   await tester.pumpWidget(
     MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
     ),
   );
   await tester.pumpAndSettle();

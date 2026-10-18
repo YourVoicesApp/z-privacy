@@ -113,9 +113,9 @@ Widget _workspace(({Ground ground, Workbench bench}) g) => MaterialApp(
   home: WorkspaceScreen(
     bench: g.bench,
     ground: g.ground,
-    onImport: () {}, onType: (_) {},
+    onImport: () {}, onAsk: (_) {},
     onVault: () {},
-    onSettings: () {},
+    onSettings: (_) {},
   ),
 );
 

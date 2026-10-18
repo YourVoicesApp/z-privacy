@@ -87,7 +87,7 @@ void main() {
         home: WorkspaceScreen(
           bench: bench,
           ground: ground,
-          onImport: () {}, onType: (_) {},
+          onImport: () {}, onAsk: (_) {},
           onVault: () {},
         ),
       ),

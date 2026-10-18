@@ -48,9 +48,11 @@ class WorkspaceScreen extends StatefulWidget {
     required this.bench,
     required this.ground,
     required this.onImport,
-    required this.onType,
+    required this.onAsk,
     required this.onVault,
+    this.onRemoveDocument,
     this.onSettings,
+    this.onFromZero,
     this.settingsOpen = false,
   });
 
@@ -64,11 +66,20 @@ class WorkspaceScreen extends StatefulWidget {
   final Workbench? bench;
   final Ground ground;
 
-  /// The box a person writes or pastes into, at the top of the screen, and
-  /// the press that opens a file chooser. Named on the screen itself so a
-  /// guard can reach either without knowing which private widget draws it.
-  static const composer = ValueKey<String>('the-way-in-composer');
+  /// **The one box a person writes in, and the press that opens a file
+  /// chooser.** Named on the screen itself so a guard can reach either
+  /// without knowing which private widget draws it.
+  ///
+  /// **One box since rule 72-أ** (18 October 2026): this name pointed at the
+  /// strip's own box at the top of the screen, and that box is deleted. It
+  /// points at the request box in the first part now — the one place a person
+  /// writes, a short question or a whole letter, with a document above it or
+  /// with none at all.
+  static const composer = _TheQuestion.field;
   static const addDocument = ValueKey<String>('the-way-in-add');
+
+  /// Rule 73's own press, in the first part.
+  static const removeDocument = ValueKey<String>('workspace-remove-document');
 
   /// **The two ways in, at the top of the screen** — rule 70, the owner:
   /// «نجعل إدخال الملفات يتم أعلى الشاشة». A file to work on, and text the
@@ -76,14 +87,26 @@ class WorkspaceScreen extends StatefulWidget {
   /// bench, which is what they did from the first screen.
   ///
   /// **Required, where `onSettings` beside them is not**, and the difference is
-  /// what a test can reach. A settings door nobody wired is caught by a test
-  /// that looks for it on the glass; a «+» nobody wired opens the operating
-  /// system's file chooser, which no widget test can drive — so there is no
-  /// guard that could catch it, and the only thing left that can is the
-  /// compiler. Since rule 70 this strip is also the app's only entrance: a
-  /// screen built without it is not a state of the product.
+  /// measured: a screen with no way in is a screen a person can be stranded
+  /// on, and since rule 70 deleted the first screen these are the only two
+  /// ways anything enters. Fifty mounts passing `() {}` would be fifty doors
+  /// that open nothing; two required parameters are two compiler errors in the
+  /// one place a door is forgotten.
   final VoidCallback onImport;
-  final void Function(String text) onType;
+
+  /// **What the person wrote, with no document and no session yet** — rule 72,
+  /// 18 October 2026.
+  ///
+  /// It was `onType`, and it meant «import this text as a document»: the way
+  /// in strip's own box read a letter and the shell opened a session for it.
+  /// Rule 72-أ deleted that box, and rule 72 gave what is typed its own
+  /// meaning — it is **the request**, protected in the middle column and sent
+  /// to the chat like any question, the whole of what leaves when no document
+  /// stands above it. So this is the door for a first question asked on an
+  /// empty surface: the shell opens a session (asking its language, as rule
+  /// 57b requires) and sets the question in it. With a bench already there the
+  /// box needs no door at all — `setQuestion` is the bench's own.
+  final void Function(String text) onAsk;
 
   /// Open the vault screen over this one. Required rather than optional: a
   /// Workspace that cannot reach the vault has buttons that refuse into a
@@ -102,7 +125,39 @@ class WorkspaceScreen extends StatefulWidget {
   /// screen that could not be *given* the door — it is a screen nobody gave it
   /// to, which no signature can catch and
   /// `the_settings_cover_the_work_test.dart` does.
-  final VoidCallback? onSettings;
+  ///
+  /// **It takes a room since rule 74** (18 October 2026), and `null` means «the
+  /// room the settings open on» — which is the settings' own default and the
+  /// one place that rule lives. A door that needs a particular room names it:
+  /// every «Open Settings» that is about a key says `SettingsRoom.ai`, because
+  /// a door to a key that lands in the Sessions list is a door that does not
+  /// answer.
+  final void Function(SettingsRoom? room)? onSettings;
+
+  /// **The surface starts from zero** — rule 71, 18 October 2026. Called when
+  /// a chat ends under the thread; the shell is what lets the bench go,
+  /// because the bench **is** the surface.
+  ///
+  /// Nullable for the reason `onSettings` is: a screen mounted by a guard
+  /// about something else has nowhere to send it, and requiring it would have
+  /// put `() {}` in fifty mounts — fifty acts that do nothing, a lie the
+  /// compiler would enforce. «End the chat» still ends the chat in the core
+  /// wherever this is null; only the surface emptying is missing, and the
+  /// guard that measures *that* gives it a real one.
+  final VoidCallback? onFromZero;
+
+  /// **«Remove the document»** — rule 73, 18 October 2026: «نحتاج إلى خيار حذف
+  /// الوثيقة وإضافة وثيقة أخرى».
+  ///
+  /// It empties the first part and takes nothing out — no exit, no bubble, no
+  /// question (54-و) — and the document's kept copy stays in its session's
+  /// list (54-ز), where it can be opened again. The chat and what is typed in
+  /// the box stay: this removes a document, it does not end a chat (rule 71
+  /// is the one that does).
+  ///
+  /// The shell's, because the bench is the shell's: removing means standing on
+  /// a bench with no document, which is the state rule 72 made ordinary.
+  final VoidCallback? onRemoveDocument;
 
   /// Whether the panel is already standing over this screen, so the bar can
   /// hide its own door while the panel covers the spot that door sits in. One
@@ -341,7 +396,16 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     unawaited(goToTheWord(bench, span, anchor: _focusKey));
   }
 
-  /// The way to the settings, handed on **only while the panel is shut**.
+  /// The way to the settings, handed on **only while the panel is shut**, and
+  /// **naming the room it opens** — rule 74, 18 October 2026.
+  ///
+  /// The panel used to open on whatever its own default was, and the owner's
+  /// ruling moved that default to «Sessions»: the room he wants first is the
+  /// list of what he kept. But the send sheet's «Open Settings» is a door to
+  /// **a key**, and a door that lands a person in the wrong room is a door
+  /// that does not answer. So the room travels with the press: the gear opens
+  /// the room rule 74 names, and every door that is about a credential says
+  /// «AI» out loud.
   ///
   /// The shell's `onSettings` is a toggle — `_settingsOpen = !_settingsOpen`
   /// — and the ✨AI control stays on the bar while the panel stands, so the
@@ -351,7 +415,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   /// uncovers the panel that is already there. A surface with nowhere to send
   /// the press draws no door — 063's rule, in a case that only shows up from
   /// the sheet.
-  VoidCallback? get _toSettings => widget.settingsOpen ? null : widget.onSettings;
+  void Function(SettingsRoom? room)? get _toSettings =>
+      widget.settingsOpen ? null : widget.onSettings;
+
+  /// The gear: no room named, so the settings open on the room rule 74 names.
+  VoidCallback? get _toTheSettings {
+    final open = _toSettings;
+    return open == null ? null : () => open(null);
+  }
+
+  /// The same door for a press that is about a key: the AI room, by name.
+  VoidCallback? get _toTheKeys {
+    final open = _toSettings;
+    return open == null ? null : () => open(SettingsRoom.ai);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -401,14 +478,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onPage: _goToPage,
               onVault: widget.onVault,
               onLockVault: () => unawaited(widget.ground.lockVault()),
-              onSettings: _toSettings,
+              onSettings: _toTheSettings,
               settingsOpen: widget.settingsOpen,
             ),
-            // **The way in, at the top of the screen** — rule 70. One strip,
-            // whether or not there is a document, because with the first
-            // screen gone this is the only way a document or a written text
-            // can enter and a person must never be standing somewhere it
-            // cannot be reached.
+            // **The way in for a file, at the top of the screen** — rule 70,
+            // and one door since rule 72-أ: the box that stood beside the «+»
+            // is deleted and what is typed goes in the request box in the
+            // first part, which is the one place a person writes.
             //
             // **A strip of its own and not a part of the bar**, and the reason
             // is measured: with «Documents» on it the bar's own content came to
@@ -417,11 +493,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             // — enough for a «+», nowhere near enough for a box a person
             // writes a letter into. The bar keeps its facts; the entry gets its
             // own row, directly under it, which is «أعلى الشاشة» either way.
-            _TheWayIn(
-              onImport: widget.onImport,
-              onType: widget.onType,
-              busy: bench?.busy ?? false,
-            ),
+            _TheWayIn(onImport: widget.onImport, busy: bench?.busy ?? false),
             if (bench != null) _Band(bench: bench, onVault: widget.onVault),
             // **A document that came back says so, in its own line** — 079,
             // the import side. Under the band and not in it: that row already
@@ -440,7 +512,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             // each saying the one thing it is for, so that what arrives when a
             // document does is in the place the person was already looking at.
             if (bench == null)
-              const Expanded(child: _TheThreePartsEmpty())
+              Expanded(child: _TheThreePartsEmpty(onAsk: widget.onAsk))
             else
             Expanded(
               child: LayoutBuilder(
@@ -485,7 +557,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           ground: widget.ground,
                           said: _said,
                           focusKey: _focusKey,
-                          onSettings: _toSettings,
+                          onSettings: _toTheKeys,
+                          onRemoveDocument: widget.onRemoveDocument,
                           onSay: (line) => setState(() => _said = line),
                           onWalk: () => unawaited(_walk()),
                           onGoToSpan: _goToSpan,
@@ -549,7 +622,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           bench: bench,
                           ground: widget.ground,
                           width: panelWidth,
-                          onSettings: _toSettings,
+                          onSettings: _toTheKeys,
+                          // **Rule 71**: the chat ends and the surface starts
+                          // from zero. The panel ends the chat in the core;
+                          // what the surface then does is the shell's.
+                          onEnded: widget.onFromZero,
                         ),
                       },
                     ],
@@ -595,68 +672,41 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }
 }
 
-/// **The way in, at the top of the screen** — rule 70, 17 October 2026.
+/// **The way in for a file, at the top of the screen** — rule 70, and one box
+/// since rule 72-أ.
 ///
-/// The owner: «نلغي الشاشة الأولى ونجعل إدخال الملفات يتم أعلى الشاشة الأولى
-/// ليصبح التطبيق فقط ثلاثة أقسام في شاشة واحدة». Both doors that bring a text
-/// in used to stand on the first screen, which no longer exists — so they
-/// stand here, in one strip, drawn whether or not something is already open.
+/// The owner, 17 October: «نلغي الشاشة الأولى ونجعل إدخال الملفات يتم أعلى
+/// الشاشة» — both doors that bring a text in used to stand on a first screen
+/// that no longer exists, so the file door stands here, drawn whether or not
+/// something is already open. With no first screen and no «back», this is the
+/// only way to begin the next piece of work; the document it replaces is not
+/// lost, because a document in the preview is kept (089 rule 9) and the
+/// Sessions room opens it again.
 ///
-/// **It is drawn with a document open too, and that is the point**: with no
-/// first screen and no «back», this strip is the only way to begin the next
-/// piece of work. Both presses open a session and replace what is on the
-/// bench, exactly as they did from the first screen — and the document they
-/// replace is not lost, because a document in the preview is kept (089 rule 9)
-/// and the Sessions room opens it again.
+/// **The box that stood beside it is deleted** — rule 72-أ, the owner's «نعم»
+/// of 18 October: «صندوق واحد للكتابة لا اثنان». It was «Write or paste your
+/// text here… · Open and scan», and it was a second place to write: what is
+/// typed goes in the request box in the first part now (rule 72), where it is
+/// protected, where it leaves from, and where it becomes a z-pdf by the same
+/// road. Rule 35 is the reason it is deleted rather than hidden.
 ///
 /// **z-pdf is not here.** It was the second entry of this «+» menu until rule
 /// 70 put it in Settings: it is the reverse act, never scanned and never put
 /// on a bench, and a person who means it has already said so. One press, one
-/// meaning — so this «+» is a button now and not a menu.
-class _TheWayIn extends StatefulWidget {
-  const _TheWayIn({
-    required this.onImport,
-    required this.onType,
-    required this.busy,
-  });
+/// meaning — so this «+» is a button and not a menu.
+class _TheWayIn extends StatelessWidget {
+  const _TheWayIn({required this.onImport, required this.busy});
 
   final VoidCallback onImport;
-  final void Function(String text) onType;
 
-  /// True while the core is reading something. The presses go quiet rather
+  /// True while the core is reading something. The press goes quiet rather
   /// than queueing a second import behind the first.
   final bool busy;
 
   @override
-  State<_TheWayIn> createState() => _TheWayInState();
-}
-
-class _TheWayInState extends State<_TheWayIn> {
-  final _text = TextEditingController();
-
-  @override
-  void dispose() {
-    _text.dispose();
-    super.dispose();
-  }
-
-  /// Read what is in the box, and leave the box empty.
-  ///
-  /// Cleared **before** the call and not after it: the text is already in the
-  /// core's hands by then, and a box that still held it would invite the same
-  /// letter to be read twice.
-  void _open() {
-    final text = _text.text.trim();
-    if (text.isEmpty) return;
-    _text.clear();
-    widget.onType(text);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final empty = _text.text.trim().isEmpty;
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 8),
       decoration: const BoxDecoration(
         color: Zc.warmCard,
         border: Border(bottom: BorderSide(color: Zc.line)),
@@ -667,7 +717,7 @@ class _TheWayInState extends State<_TheWayIn> {
             message: 'Add a document — PDF, Word or text',
             child: IconButton(
               key: WorkspaceScreen.addDocument,
-              onPressed: widget.busy ? null : widget.onImport,
+              onPressed: busy ? null : onImport,
               icon: const Icon(Icons.add, size: 20),
               color: Zc.clay,
               visualDensity: VisualDensity.compact,
@@ -676,50 +726,15 @@ class _TheWayInState extends State<_TheWayIn> {
             ),
           ),
           const SizedBox(width: 10),
-          // The box, and it gives: a strip that has to hold a letter is not a
-          // strip, so it grows to three lines and scrolls inside itself.
+          // **What the «+» is for, in words** — because a bare icon at the top
+          // of an empty screen is a control nobody can be sure of, and the
+          // sentence it used to stand beside («Write or paste your text
+          // here…») was the deleted box's.
           Expanded(
-            child: Container(
-              decoration: Zc.panel(fill: Zc.card, radius: 9),
-              padding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
-              child: TextField(
-                key: WorkspaceScreen.composer,
-                controller: _text,
-                autofocus: true,
-                minLines: 1,
-                maxLines: 3,
-                style: Zc.document.copyWith(fontSize: 13.5),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  isDense: true,
-                  hintText: 'Write or paste your text here…',
-                  hintStyle: Zc.body.copyWith(color: Zc.ink4),
-                ),
-                onChanged: (_) => setState(() {}),
-                onSubmitted: (_) => _open(),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // **Bounded, because its sibling is `Expanded`** — and that is a
-          // measured fact about `ZButton`, not a precaution: it flexes its own
-          // label so that a narrow window makes it taller rather than hiding a
-          // word, and a flex child in a row whose width is unbounded is a
-          // render assertion. The first form of this strip threw exactly that,
-          // in 149 tests at once. 200 px holds «Open and scan» and its icon at
-          // 13.5 px with room over, so nothing wraps at any window the app is
-          // measured at.
-          //
-          // **And no `hint`**: a disabled `ZButton` with one draws a sentence
-          // beside itself, and the box next to it already says «Write or paste
-          // your text here…». Two sentences for one state is one too many, and
-          // the hint is the one that would be read second.
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 200),
-            child: ZButton(
-              label: 'Open and scan',
-              icon: Icons.shield_outlined,
-              onPressed: empty || widget.busy ? null : _open,
+            child: Text(
+              'Add a document — or write to the AI in the first part, with no document at all.',
+              style: Zc.small.copyWith(color: Zc.ink4),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -738,7 +753,14 @@ class _TheWayInState extends State<_TheWayIn> {
 /// The two columns' own words are the ones the `_Side` headers use, so the
 /// empty screen and the full one call the same region the same thing.
 class _TheThreePartsEmpty extends StatelessWidget {
-  const _TheThreePartsEmpty();
+  const _TheThreePartsEmpty({required this.onAsk});
+
+  /// **Rule 72: the box is here from the first moment.** The first part draws
+  /// it with no document and no session at all, and the press hands what was
+  /// written to the shell, which opens a session for it. Before this the three
+  /// parts were three sentences and a person with no document had nowhere to
+  /// write — which is the whole of what the owner met.
+  final void Function(String text) onAsk;
 
   @override
   Widget build(BuildContext context) {
@@ -751,6 +773,9 @@ class _TheThreePartsEmpty extends StatelessWidget {
           'Your document arrives here, as it is written. Nothing on this side can reach '
               'the network.',
           Zc.ink4,
+          // Rule 72: and under that sentence, the one box — so the first thing
+          // a person can do on an empty surface is write to the AI.
+          footer: _TheQuestion(onAsk: onAsk),
         ),
         Container(width: 1, color: Zc.line),
         _part(
@@ -775,18 +800,36 @@ class _TheThreePartsEmpty extends StatelessWidget {
     );
   }
 
-  Widget _part(String eyebrow, String rule, String what, Color tint) => Expanded(
+  Widget _part(
+    String eyebrow,
+    String rule,
+    String what,
+    Color tint, {
+    Widget? footer,
+  }) =>
+      Expanded(
         child: Container(
           color: Zc.paper,
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Eyebrow(eyebrow, color: tint),
-              const SizedBox(height: 4),
-              Text(rule, style: Zc.tiny.copyWith(letterSpacing: 0)),
-              const SizedBox(height: 16),
-              Text(what, style: Zc.small.copyWith(color: Zc.ink4)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Eyebrow(eyebrow, color: tint),
+                    const SizedBox(height: 4),
+                    Text(rule, style: Zc.tiny.copyWith(letterSpacing: 0)),
+                    const SizedBox(height: 16),
+                    Text(what, style: Zc.small.copyWith(color: Zc.ink4)),
+                  ],
+                ),
+              ),
+              // The box is given the rest of the part rather than a height of
+              // its own: it is a box a letter can be pasted into, and the part
+              // it stands in is as tall as the window.
+              if (footer != null) Flexible(child: SingleChildScrollView(child: footer)),
             ],
           ),
         ),
@@ -1558,6 +1601,17 @@ class _Band extends StatelessWidget {
     // already protected. The snapshot carries all of it — which scan it was,
     // the counts, and the vault's own state.
     final scanned = bench.scanOrigin != ScanOrigin.notScanned;
+    // **A document that came back from a kept copy, told apart from one this
+    // run scanned** — the owner's three zeros of 18 October.
+    //
+    // Asked of the two facts the snapshot has, because it has no third: a
+    // restored document is the one state where there are **marks and no
+    // findings at all**, and a scan that found nothing leaves no marks. The
+    // honest means would be one flag from the core — this is an inference, and
+    // it is written down as one; it is sound today and the day the core says
+    // it, this reads that instead.
+    final marksOnIt = bench.document?.marks.length ?? 0;
+    final asKept = bench.snap != null && bench.findings.isEmpty && marksOnIt > 0;
     final vault = bench.snap?.vault ?? VaultState.absent;
     final locked = vault != VaultState.unlocked;
 
@@ -1595,13 +1649,38 @@ class _Band extends StatelessWidget {
             Text(
               // A scan nobody asked for says why it happened, rather than
               // calling itself manual.
-              bench.scanNote != null
-                  ? 'Last scan: ${bench.scanNote}'
-                  : switch (bench.scanOrigin) {
-                      ScanOrigin.onImport => 'Scanned on import',
-                      ScanOrigin.rescan => 'Last scan: manual rescan',
-                      ScanOrigin.notScanned => 'Not scanned yet',
-                    },
+              //
+              // **And a document that came back from a kept copy says that
+              // instead** — the owner's screenshot of 18 October: «Scanned on
+              // import · 0 protected automatically · 0 need your word · 0
+              // normal» over a document whose first column showed seventeen
+              // names underlined.
+              //
+              // The cause is in two lines of the core, and only one of them was
+              // meant: `put_back_the_preview` clears the findings and re-applies
+              // the kept marks (`session.rs`), and the three counts are counted
+              // **from the findings** (`snapshots.rs`) — so they are all zero
+              // for a restored document, while the marks it came back with are
+              // drawn beside them. The same function sets the origin to
+              // `OnImport` on purpose, with its own reason: «not scanned yet»
+              // over a document full of marks would contradict the column
+              // beside it. True of where the marks came from — and it turned
+              // the three zeros into a sentence that reads as a measurement.
+              //
+              // So this says what is true: the document is as it was kept, and
+              // the number is the one the core has — the marks that came back
+              // with it. Re-scanning it to fill the three counts would be a
+              // second opinion about protections that came from the vault,
+              // which 089 rule 9 exists to avoid.
+              asKept
+                  ? 'As it was kept'
+                  : bench.scanNote != null
+                      ? 'Last scan: ${bench.scanNote}'
+                      : switch (bench.scanOrigin) {
+                          ScanOrigin.onImport => 'Scanned on import',
+                          ScanOrigin.rescan => 'Last scan: manual rescan',
+                          ScanOrigin.notScanned => 'Not scanned yet',
+                        },
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -1611,7 +1690,9 @@ class _Band extends StatelessWidget {
             const SizedBox(width: 12),
             Flexible(
               child: Text(
-                '${bench.snap?.autoProtected ?? 0} protected automatically · ${bench.openSuggestions} need your word · ${bench.normalCount} normal',
+                asKept
+                    ? '$marksOnIt already protected · nothing scanned in this run'
+                    : '${bench.snap?.autoProtected ?? 0} protected automatically · ${bench.openSuggestions} need your word · ${bench.normalCount} normal',
                 style: const TextStyle(fontSize: 13, color: Zc.clayDeep),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1699,6 +1780,7 @@ class _Columns extends StatefulWidget {
     required this.onGoToSpan,
     required this.lookingAt,
     this.onSettings,
+    this.onRemoveDocument,
   });
 
   final Workbench bench;
@@ -1724,6 +1806,10 @@ class _Columns extends StatefulWidget {
   /// Handed down to the Safe column's footer, which opens the send sheet —
   /// and the sheet carries the only door to where a provider's key is given.
   final VoidCallback? onSettings;
+
+  /// Rule 73: «Remove the document», in the first part, beside the acts that
+  /// are about the document.
+  final VoidCallback? onRemoveDocument;
 
   @override
   State<_Columns> createState() => _ColumnsState();
@@ -1930,22 +2016,56 @@ class _ColumnsState extends State<_Columns> {
                         onGoTo: widget.onGoToSpan,
                         onSay: widget.onSay,
                       ),
-                footer: doc == null
-                    ? null
-                    : Column(
+                // **The box is in the footer whether or not a document is
+                // in** — rule 72, 18 October 2026: «صندوق المحادثة حاضر من
+                // اللحظة الأولى، في الثلث الأول، بلا وثيقة». What the person
+                // writes is what enters — a short question or a whole letter —
+                // and with no document above it, it is the whole of what
+                // leaves. Everything else in this footer is **about** a
+                // document and is drawn only when there is one.
+                footer: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // **What a selection of lines is worth, before any
                           // press** (046/Q). Above the acts, because it is the
                           // reason one of them is about to be worth pressing.
-                          if (bench.lines != null) _LineBand(bench: bench),
-                          if (widget.said != null) _Said(widget.said!),
+                          if (doc != null && bench.lines != null) _LineBand(bench: bench),
+                          if (doc != null && widget.said != null) _Said(widget.said!),
+                          // **The acts stay with no document**, and that is
+                          // rule 72's doing rather than an oversight: a letter
+                          // written in the box is protected like any text, so
+                          // its tokens exist and «Tokens» is how a person sees
+                          // them. The presses that need a selection are dead
+                          // without one, as they always were — the bar does
+                          // not pretend otherwise.
                           ActsBar(
                             bench: bench,
                             ground: ground,
                             onSay: widget.onSay,
                             onWalk: widget.onWalk,
                           ),
+                          if (doc != null) ...[
+                          // **«Remove the document»** — rule 73, in the first
+                          // part, under the acts that are about the document
+                          // and above the box that is not. It takes nothing
+                          // out: no exit, no bubble, no question (54-و), and
+                          // the kept copy stays in the session's list (54-ز)
+                          // to be opened again. Drawn only with a document in,
+                          // because with none there is nothing to remove.
+                          if (widget.onRemoveDocument != null)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: ZButton(
+                                  key: WorkspaceScreen.removeDocument,
+                                  label: 'Remove the document',
+                                  icon: Icons.close,
+                                  onPressed:
+                                      bench.busy ? null : widget.onRemoveDocument,
+                                ),
+                              ),
+                            ),
                           // **What should the model do with this?** (046/N.)
                           //
                           // Under the document, where the person is reading
@@ -1954,6 +2074,7 @@ class _ColumnsState extends State<_Columns> {
                           // that sheet's own row of acts belongs to 046/O in
                           // another worktree, and two sessions editing one row
                           // is how a merge loses a line.
+                          ],
                           _TheQuestion(bench: bench),
                         ],
                       ),
@@ -2027,16 +2148,38 @@ class _ColumnsState extends State<_Columns> {
                 tint: Zc.clay,
                 trailing: _SafeTrailing(bench: bench, onClose: _toggleSafe),
                 controller: _right,
-                footer: safe == null
+                // **What would leave, with or without a document** — rule 72.
+                //
+                // Measured on 18 October: a bench with a question and no
+                // document has **no payload** (the core builds one from a
+                // document; `build_the_question_alone` carries a question by
+                // itself at the door), so this column said «There is nothing
+                // to send yet.» over a request that was about to leave. The
+                // owner's rule says the opposite in so many words — «يمرّ
+                // بالشاشة الوسطى محمياً» — so what is drawn is the question's
+                // own protected form, which is the core's answer from
+                // `set_question` and not a second opinion.
+                footer: safe == null && bench.questionSafe.trim().isEmpty
                     ? null
-                    : _SafeFooter(payload: safe, bench: bench, ground: ground, onSettings: widget.onSettings),
-                child: safe == null
-                    ? const _Empty('There is nothing to send yet.')
-                    : SafeText(
-                    text: safe.text,
-                    edges: safe.pageEdges,
-                    chips: bench.chips,
-                  ),
+                    : _SafeFooter(
+                        payload: safe,
+                        bench: bench,
+                        ground: ground,
+                        onSettings: widget.onSettings,
+                      ),
+                child: safe != null
+                    ? SafeText(
+                        text: safe.text,
+                        edges: safe.pageEdges,
+                        chips: bench.chips,
+                      )
+                    : bench.questionSafe.trim().isEmpty
+                        ? const _Empty('There is nothing to send yet.')
+                        : SafeText(
+                            text: bench.questionSafe,
+                            edges: const [],
+                            chips: bench.chips,
+                          ),
               ),
             ),
           ],
@@ -2345,6 +2488,13 @@ class _ChipSwitch extends StatelessWidget {
 /// The sentence under the Safe column. It is the one place the app admits that
 /// an unanswered suggestion is **still the real text** — which is what G12 is
 /// about, said in words where the consequence is visible.
+/// **The foot of the Safe column: what would leave, and the way out.**
+///
+/// **The payload is an option since rule 72** (18 October 2026). A bench with
+/// no document has none — the core builds one from a document, and
+/// `build_the_question_alone` is what carries a question by itself — and yet
+/// there **is** something to send: the question, protected. So the counts come
+/// from whichever of the two is standing, and the door is the same door.
 class _SafeFooter extends StatelessWidget {
   const _SafeFooter({
     required this.payload,
@@ -2353,7 +2503,7 @@ class _SafeFooter extends StatelessWidget {
     this.onSettings,
   });
 
-  final PayloadView payload;
+  final PayloadView? payload;
   final Workbench bench;
   final Ground ground;
 
@@ -2364,7 +2514,14 @@ class _SafeFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final open = payload.openSuggestions;
+    final view = payload;
+    // With no document, nothing is waiting: a question is scanned as it is
+    // set, and `set_question` refuses one that still has a word waiting.
+    final open = view?.openSuggestions ?? 0;
+    // How much was replaced in what would leave — the document's payload when
+    // there is one, the question's own marks when the question is all there is.
+    // Both are the core's count; neither is worked out here.
+    final replaced = view?.protectedCount ?? bench.questionMarks.length;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 11, 18, 13),
@@ -2377,7 +2534,7 @@ class _SafeFooter extends StatelessWidget {
         children: [
           Text(
             open == 0
-                ? exactlyWhatWouldLeave(payload.protectedCount)
+                ? exactlyWhatWouldLeave(replaced)
                 : open == 1
                 ? 'One suggestion is still open. Until you answer it, it stands here as written — '
                       'real text on this side.'
@@ -2484,10 +2641,30 @@ class _SafeFooter extends StatelessWidget {
 ///   * it does not promise a conversation. One question at a time replaces the
 ///     last, and the line under it says so rather than letting a person
 ///     discover it by losing something.
+/// **The one box a person writes in** — rules 72 and 72-أ, 18 October 2026.
+///
+/// It was the request box under a document («What should the AI do with
+/// this?», 046/N) and it is the only box on the screen now: the owner's «نعم»
+/// of 18 October deleted the second one at the top. Three states, one widget:
+///
+///   * **a document above it** — what is typed is the addition under the
+///     document (rule 64, the payload's `--- Request ---`);
+///   * **a bench with no document** — what is typed is the whole of what
+///     leaves, and ed's `build_the_question_alone` carries it;
+///   * **no bench at all**, on an empty surface — the press hands the text to
+///     the shell, which opens a session for it (and asks its language, rule
+///     57b) and sets it there. That is the one case this box cannot do by
+///     itself, because a question has to be protected *in* a session and
+///     there is none yet.
 class _TheQuestion extends StatefulWidget {
-  const _TheQuestion({required this.bench});
+  const _TheQuestion({this.bench, this.onAsk});
 
-  final Workbench bench;
+  /// The bench, when there is one. Null on an empty surface — rule 72: the box
+  /// is there from the first moment, with no document and no session.
+  final Workbench? bench;
+
+  /// The door for the no-bench case, handed down from the screen.
+  final void Function(String text)? onAsk;
 
   static const field = ValueKey<String>('workspace-question');
   static const attach = ValueKey<String>('workspace-question-attach');
@@ -2498,7 +2675,7 @@ class _TheQuestion extends StatefulWidget {
 
 class _TheQuestionState extends State<_TheQuestion> {
   late final TextEditingController _text =
-      TextEditingController(text: widget.bench.question);
+      TextEditingController(text: widget.bench?.question ?? '');
 
   @override
   void dispose() {
@@ -2510,14 +2687,31 @@ class _TheQuestionState extends State<_TheQuestion> {
   Widget build(BuildContext context) {
     final bench = widget.bench;
     final typed = _text.text.trim();
-    final attached = bench.question.trim();
+    final attached = bench?.question.trim() ?? '';
+    // **The one press, and what it means depends on what is standing.** With a
+    // bench it sets the question in that session; with none it hands the text
+    // to the shell, which opens a session for it. The label is the same word
+    // in both cases — nothing leaves at this press, in either.
+    final press = typed.isEmpty || typed == attached || (bench?.busy ?? false)
+        ? null
+        : bench == null
+            ? (widget.onAsk == null ? null : () => widget.onAsk!(typed))
+            : () => unawaited(bench.setQuestion(typed));
     return Container(
       padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
       color: Zc.warmCard,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('What should the AI do with this?', style: Zc.tiny.copyWith(color: Zc.ink4)),
+          // **The question above the box says what the box is for**, and with
+          // no document there is no «this» to point at — rule 72: with nothing
+          // above it, what is written here is the whole of what leaves.
+          Text(
+            (bench?.document?.text ?? '').isEmpty
+                ? 'What would you like to ask the AI?'
+                : 'What should the AI do with this?',
+            style: Zc.tiny.copyWith(color: Zc.ink4),
+          ),
           const SizedBox(height: 5),
           Container(
             decoration: Zc.panel(fill: Zc.card, radius: 9),
@@ -2531,7 +2725,9 @@ class _TheQuestionState extends State<_TheQuestion> {
               decoration: InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
-                hintText: 'Reconcile section A against section B and tell me where the difference is.',
+                hintText: (bench?.document?.text ?? '').isEmpty
+                    ? 'Ask a question, or paste a whole letter here.'
+                    : 'Reconcile section A against section B and tell me where the difference is.',
                 hintStyle: Zc.small.copyWith(color: Zc.ink4),
               ),
               onChanged: (_) => setState(() {}),
@@ -2552,14 +2748,12 @@ class _TheQuestionState extends State<_TheQuestion> {
                     ? 'In what will leave'
                     : 'Add it to what will leave',
                 icon: Icons.help_outline,
-                onPressed: bench.busy || typed == attached
-                    ? null
-                    : () => unawaited(bench.setQuestion(typed)),
+                onPressed: press,
                 hint: typed.isEmpty && attached.isEmpty
                     ? 'A document can be sent with no request, and then the model is given no instruction'
                     : null,
               ),
-              if (attached.isNotEmpty)
+              if (attached.isNotEmpty && bench != null)
                 ZButton(
                   label: 'Take it out',
                   onPressed: bench.busy
@@ -2577,9 +2771,9 @@ class _TheQuestionState extends State<_TheQuestion> {
               // Measured facts, both of them the core's: how many words of the
               // question were replaced, and that the Safe column is where it
               // can be read before anything is pressed.
-              bench.questionMarks.isEmpty
+              (bench?.questionMarks ?? const []).isEmpty
                   ? 'Your request is in the Safe column, with nothing in it to protect.'
-                  : bench.questionMarks.length == 1
+                  : bench!.questionMarks.length == 1
                       ? 'Your request is in the Safe column, with one value replaced.'
                       : 'Your request is in the Safe column, with ${bench.questionMarks.length} values replaced.',
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.clayDeep),

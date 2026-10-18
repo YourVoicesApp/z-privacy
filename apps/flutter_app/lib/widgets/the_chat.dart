@@ -48,6 +48,7 @@ class TheChat extends StatefulWidget {
     required this.ground,
     this.width,
     this.onSettings,
+    this.onEnded,
   });
 
   final Workbench bench;
@@ -60,6 +61,13 @@ class TheChat extends StatefulWidget {
   /// The way to the settings, when there is one — 063. Null while the panel is
   /// already open, and then no door is drawn rather than a dead one.
   final VoidCallback? onSettings;
+
+  /// **The chat ended, so the surface starts from zero** — rule 71, 18
+  /// October 2026. The press ends the chat in the core (that is this panel's
+  /// own act); what the surface then does is the shell's, and this is how it
+  /// is told. Null where a guard mounts the panel alone, and then only the
+  /// surface emptying is missing.
+  final VoidCallback? onEnded;
 
   /// For the guards: the panel, the box a person writes the next question in,
   /// the arrow that sends it, and the three acts under the thread.
@@ -510,6 +518,11 @@ class _TheChatState extends State<TheChat> {
   /// answers differ in nothing a person would want back. One press.
   Future<void> _end() async {
     final bad = await widget.bench.endTheChat();
+    if (!mounted) return;
+    // **Rule 71, after the core has ended it and not before**: the surface
+    // empties when there is a chat that has actually ended. A refusal leaves
+    // the surface alone and says so.
+    if (bad == null) widget.onEnded?.call();
     if (!mounted) return;
     setState(() {
       _said = bad;

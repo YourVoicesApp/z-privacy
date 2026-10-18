@@ -114,9 +114,9 @@ Future<void> _pumpTheWork(WidgetTester tester, ({Ground ground, Workbench bench}
       bench: g.bench,
       ground: g.ground,
       onImport: () {},
-      onType: (_) {},
+      onAsk: (_) {},
       onVault: () {},
-      onSettings: () {},
+      onSettings: (_) {},
     ),
   ));
   await settle(tester);

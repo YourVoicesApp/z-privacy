@@ -82,16 +82,24 @@ Future<Ground> inTheRoom(WidgetTester tester, String name) async {
   expect(find.byType(SettingsScreen), findsOneWidget, reason: 'the panel did not open');
 
   // **The room is reached by its name, and the AI room is still the default.**
-  // The send sheet's exiled key form relies on that default landing on AI, and
-  // its own guards assert the room by name rather than by position — so this
-  // asserts the same two facts from this side, where a room was added.
+  // **The panel opens on Sessions since rule 74** (the owner, 18 October 2026),
+  // so this room is where it lands and there is nothing to press to get here.
+  // The sentence that stood here said the opposite — the default was the AI
+  // room, and the send sheet's «Open Settings» relied on landing there; that
+  // reliance is gone, because every door about a key names `SettingsRoom.ai`
+  // itself now.
+  //
+  // And «Sessions» is on the glass twice while this room stands — the tab and
+  // the room's own title — so a press on the word would be ambiguous. The room
+  // is read by the sentence only it has.
   expect(
-    find.descendant(of: find.byType(SettingsScreen), matching: find.text('AI')),
-    findsWidgets,
-    reason: 'the panel no longer opens on the AI room, which is where a key is asked for',
+    find.descendant(
+      of: find.byType(SettingsScreen),
+      matching: find.textContaining('Each session has its own encryption'),
+    ),
+    findsOneWidget,
+    reason: 'the panel did not open on the Sessions room (rule 74)',
   );
-  await tester.tap(find.text('Sessions'));
-  await settle(tester);
   return ground;
 }
 
@@ -183,7 +191,10 @@ Future<Ground> withADocumentBehindThePanel(WidgetTester tester, String name) asy
     'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.',
   );
   await settle(tester, rounds: 1);
-  await tester.tap(find.text('Open and scan'));
+  // **Rule 72-أ, 18 October 2026**: the strip's box and its «Open and scan»
+  // are deleted. The one box is the request box in the first part, and its own
+  // press is what sends a text through the shell — the same act, one door on.
+  await tester.tap(find.byKey(const ValueKey<String>('workspace-question-attach')));
   await settle(tester);
   // **Rule 57b (the owner, 16 October)**: the first text of a new session is
   // asked which language it is in — once, before anything is read, because the
@@ -196,7 +207,6 @@ Future<Ground> withADocumentBehindThePanel(WidgetTester tester, String name) asy
 
   await tester.tap(find.byTooltip('Settings'));
   await settle(tester);
-  await tester.tap(find.text('Sessions'));
   await settle(tester);
   return ground;
 }

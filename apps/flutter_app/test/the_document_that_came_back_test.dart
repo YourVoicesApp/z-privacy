@@ -109,7 +109,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -219,7 +219,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -313,7 +313,7 @@ void main() {
     });
     await tester.pumpWidget(
       MaterialApp(
-        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+        home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
       ),
     );
     await settle(tester);
@@ -435,9 +435,9 @@ void main() {
         bench: null,
         ground: ground,
         onImport: () => toWorkOn += 1,
-        onType: (_) {},
+        onAsk: (_) {},
         onVault: () {},
-        onSettings: () {},
+        onSettings: (_) {},
       ),
     ));
     await settle(tester, rounds: 2);

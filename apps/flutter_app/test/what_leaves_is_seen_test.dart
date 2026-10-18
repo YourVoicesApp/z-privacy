@@ -104,7 +104,7 @@ void main() {
     final (ground, bench) = await _open(tester, 'ai-door');
 
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
     ));
     await settle(tester);
     expect(bench.payload, isNotNull, reason: 'nothing was built, so there is nothing to see');
@@ -174,7 +174,7 @@ void main() {
     final (ground, bench) = await _open(tester, 'side-door');
 
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
     ));
     await settle(tester);
 

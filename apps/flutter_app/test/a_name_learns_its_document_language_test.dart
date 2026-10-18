@@ -62,7 +62,7 @@ void main() {
     });
     await tester.binding.setSurfaceSize(const Size(1700, 1000));
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {})),
+      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {})),
     );
     await settle(tester);
     return (bench, ground);

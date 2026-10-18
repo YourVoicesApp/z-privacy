@@ -478,12 +478,20 @@ fi
 # back read with the wrong eye, for ever, and nobody was asked.
 #
 # **And `_askFromHome` left them the same day** — rule 70: it read the first
-# screen's own question into a session of its own, and that screen is gone. Two
-# doors named here by hand, and G27 enumerates them from what they do, so a
-# third one written tomorrow is caught by the gate that counts rather than by
-# the gate that remembers.
+# screen's own question into a session of its own, and that screen is gone.
+#
+# **`_askWithNoDocument` joined them on 18 October, rule 72.** The one box is
+# in the first part now and what is written in it with no document open is a
+# question that opens a session of its own — a session about to be born, which
+# is exactly the state rule 57b's one question is for. It imports nothing, and
+# that is why it is a door all the same: the scanner reads the question, and it
+# needs a language before it reads a word.
+#
+# Three doors named here by hand, and G27 enumerates them from what they do, so
+# a fourth one written tomorrow is caught by the gate that counts rather than
+# by the gate that remembers.
 G38_QUIET=""
-for door in _begin _openKept; do
+for door in _askWithNoDocument _begin _openKept; do
   if ! awk -v want="$door" '
     $0 ~ "^  [A-Za-z_][A-Za-z_<>,? ]* " want "\\(" { inside = 1 }
     inside && /_theLanguageOfTheTextToCome\(/ { found = 1 }
@@ -497,10 +505,10 @@ G38_ASKS=$(awk '
   /^  [A-Za-z_][A-Za-z_<>,? ]* _?[A-Za-z_]+\(/ { match($0, /[A-Za-z_]+\(/); here = substr($0, RSTART, RLENGTH - 1) }
   /_theLanguageOfTheTextToCome\(/ { if (here != "" && here != "_theLanguageOfTheTextToCome") print here }
 ' "$SHELL_DART" | sort -u | tr '\n' ' ' | sed 's/ $//')
-if [ -z "$G38_QUIET" ] && [ "$G38_ASKS" = "_begin _openKept" ]; then
+if [ -z "$G38_QUIET" ] && [ "$G38_ASKS" = "_askWithNoDocument _begin _openKept" ]; then
   pass "G38 both doors a text enters by ask which language before anything is read"
 else
-  fail "G38 these doors read a text without asking:$G38_QUIET (asked from «$G38_ASKS», expected «_begin _openKept»)"
+  fail "G38 these doors read a text without asking:$G38_QUIET (asked from «$G38_ASKS», expected «_askWithNoDocument _begin _openKept»)"
 fi
 
 # **And the room that begins a session by hand cannot default.** Two halves in
@@ -3300,7 +3308,7 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "two edges in both columns" "moves the other, and Apart stops it" \
          "takes the reveal with it" "takes the revealed tokens with it" \
          "hides rather than keeps" "no longer in front" "gone from the screen" \
-         "in the frame after the window does" \
+         "has no tokens to reveal, so the press is dead" \
          "drawn with a solid line" "protected on its own is drawn dashed" \
          "the line still says who decided" "stays wavy, whoever found it" \
          "put back in the answer is drawn dotted" \
@@ -3345,7 +3353,14 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
          "the writing is below the thread, and against the bottom of the panel" \
          "the thread scrolls under a writing box that stays where it is" \
          "the chat is on the glass, acts and all" \
-         "ending the chat closes the panel and keeps what was said" \
+         "ending the chat asks nothing, ends it in the core, and keeps what was said" \
+         "ending the chat empties all three parts, and keeps what was kept" \
+         "with no document the box is there, and what is typed is what leaves" \
+         "one box: a pasted letter is protected, and the second box is gone" \
+         "removing the document empties the first part and keeps the copy" \
+         "the settings open on Sessions, and a key door still opens on AI" \
+         "a press outside closes the panel, lands on nothing, and the next press works" \
+         "a kept document that comes back says «as it was kept», not three zeros" \
          "the chat shows the question above its answer, as it left" \
          "a host that answered nothing says so" \
          "the number this form promises is the number the core applies" \

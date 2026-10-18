@@ -35,7 +35,17 @@ const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 /// Carries something a general rule protects on its own — no vault needed for
 /// the finding, so this test is about the panel and nothing else.
 const _doc = 'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.';
-const _needle = 'DE02120300000000202051';
+
+/// **What «the work is on the glass» is read by** — and since rule 72-أ it is
+/// ordinary words and not the IBAN.
+///
+/// The letter used to come in through the deleted box at the top, as a
+/// *document*, and the first column drew it as it was written — IBAN and all.
+/// One box (18 October) makes what is typed the **request**: it stands in the
+/// Safe column, protected, so the IBAN is a token there and is on the glass
+/// nowhere. These guards are about the panel standing over the work, so what
+/// they need is a phrase of the person's own text that no rule replaces.
+const _needle = 'Bitte überweisen';
 
 /// **The owner's 480**, stated once in this file and asserted against the
 /// product everywhere below. Written here rather than read from the widget: a
@@ -105,6 +115,8 @@ bool pressReachesTheWork(WidgetTester tester, Offset at) {
 }
 
 /// What a person can read, out of the span tree rather than out of the state.
+/// Is the person's own text on the glass — in the first column if a document
+/// came in by the «+», in the Safe column if it was written in the one box.
 bool documentIsDrawn(WidgetTester tester, String needle) =>
     tester.widgetList<SelectableText>(find.byType(SelectableText)).any(
           (t) => (t.textSpan?.toPlainText() ?? t.data ?? '').contains(needle),
@@ -159,7 +171,9 @@ Future<Ground> aDocumentOnTheBench(WidgetTester tester, String name) async {
   // session's name field and opening nothing.
   await tester.enterText(find.byKey(WorkspaceScreen.composer), _doc);
   await settle(tester, rounds: 1);
-  await tester.tap(find.text('Open and scan'));
+  // Rule 72-أ: one box, and its own press — «Open and scan» is deleted with
+  // the box it stood beside.
+  await tester.tap(find.byKey(const ValueKey<String>('workspace-question-attach')));
   await settle(tester);
   // **Rule 57b (the owner, 16 October)**: the first text of a new session is
   // asked which language it is in — once, before anything is read, because the
