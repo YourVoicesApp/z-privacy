@@ -24,6 +24,7 @@ import 'package:zprivacy/screens/vault.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -32,7 +33,7 @@ const _pass = 'ein gutes Passwort';
 
 Directory _own(String name) {
   final dir = Directory('${Directory.systemTemp.path}/zprivacy-before-work-$name-$pid');
-  if (dir.existsSync()) dir.deleteSync(recursive: true);
+  removeWhenItLetsGo(dir);
   dir.createSync(recursive: true);
   return dir;
 }

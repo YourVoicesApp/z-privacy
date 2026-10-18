@@ -44,6 +44,7 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _doc = 'Kunde: Nordstern Consulting GmbH\nIBAN DE02120300000000202051\n';
@@ -69,10 +70,10 @@ Future<({Ground ground, Workbench bench})> _ready(WidgetTester tester, String na
   late final ({Ground ground, Workbench bench}) made;
   await tester.runAsync(() async {
     final own = Directory('${Directory.systemTemp.path}/zprivacy-mark-$name-$pid');
-    if (own.existsSync()) own.deleteSync(recursive: true);
+    removeWhenItLetsGo(own);
     own.createSync(recursive: true);
     addTearDown(() {
-      if (own.existsSync()) own.deleteSync(recursive: true);
+      removeWhenItLetsGo(own);
     });
     final ground = Ground();
     await z.vaultLock();

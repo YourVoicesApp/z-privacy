@@ -25,6 +25,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -94,13 +95,13 @@ void main() {
     final ground = Ground();
     await tester.runAsync(() async {
       final dir = Directory('${Directory.systemTemp.path}/zprivacy-rule69-$pid');
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
       addTearDown(() {
         // Best effort, for the race named in
         // `later_is_not_an_answer_test.dart`: a write that lands as the test
         // ends makes `deleteSync` throw «Directory not empty».
         try {
-          if (dir.existsSync()) dir.deleteSync(recursive: true);
+          removeWhenItLetsGo(dir);
         } on FileSystemException {
           // Left behind rather than red for something no claim is about.
         }

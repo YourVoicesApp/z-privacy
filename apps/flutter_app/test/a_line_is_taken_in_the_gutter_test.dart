@@ -91,7 +91,7 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name, {String text
   late final Workbench bench;
   await tester.runAsync(() async {
     final here = Directory('${Directory.systemTemp.path}/zprivacy-gutter-$name-$pid');
-    if (here.existsSync()) here.deleteSync(recursive: true);
+    removeWhenItLetsGo(here);
     // **Removed when the core lets go of it** — and this line is why three
     // guards in this file reddened on three full runs while each passed alone.
     // The teardown threw `ENOTEMPTY`, so the test was reported as an error

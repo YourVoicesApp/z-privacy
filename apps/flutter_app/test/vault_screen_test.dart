@@ -29,6 +29,7 @@ import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/widgets/entity_detail.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _pass = 'ein gutes Passwort für den Test';
@@ -69,12 +70,12 @@ void main() {
     }
     await RustLib.init();
     dir = Directory('${Directory.systemTemp.path}/zprivacy-vault-screen-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
   });
 
   tearDownAll(() {
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
   });
 
   testWidgets('the vault room: locked, made, filled, searched, and pruned', (tester) async {
@@ -409,9 +410,9 @@ void main() {
     late final Directory here;
     await tester.runAsync(() async {
       here = Directory('${Directory.systemTemp.path}/zprivacy-firstrun-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
     });
@@ -470,9 +471,9 @@ void main() {
     late final Explanation why;
     await tester.runAsync(() async {
       final here = Directory('${Directory.systemTemp.path}/zprivacy-why-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
       await z.vaultCreateWithPassphrase(passphrase: _pass);
@@ -608,9 +609,9 @@ void main() {
     late final String profile;
     await tester.runAsync(() async {
       final here = Directory('${Directory.systemTemp.path}/zprivacy-scope-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
       await z.vaultCreateWithPassphrase(passphrase: _pass);
@@ -726,9 +727,9 @@ void main() {
     final ground = Ground();
     await tester.runAsync(() async {
       final here = Directory('${Directory.systemTemp.path}/zprivacy-taught-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
       await z.vaultCreateWithPassphrase(passphrase: _pass);
@@ -788,9 +789,9 @@ void main() {
     final ground = Ground();
     await tester.runAsync(() async {
       final here = Directory('${Directory.systemTemp.path}/zprivacy-ask-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
       await z.vaultCreateWithPassphrase(passphrase: _pass);
@@ -855,9 +856,9 @@ void main() {
     final ground = Ground();
     await tester.runAsync(() async {
       final here = Directory('${Directory.systemTemp.path}/zprivacy-$tag-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
       await z.vaultCreateWithPassphrase(passphrase: _pass);
@@ -977,9 +978,9 @@ void main() {
     final ground = Ground();
     await tester.runAsync(() async {
       final here = Directory('${Directory.systemTemp.path}/zprivacy-tiles-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
       await z.vaultCreateWithPassphrase(passphrase: _pass);

@@ -25,7 +25,9 @@ void main() {
   test('the folder goes, and a teardown that cannot remove one still does not throw', () {
     final here = Directory('${Directory.systemTemp.path}/zprivacy-letsgo-$pid');
     addTearDown(() => removeWhenItLetsGo(here));
-    if (here.existsSync()) here.deleteSync(recursive: true);
+    // Through the helper, as everything else does: G53 allows a by-hand
+    // delete in the helper's own file and nowhere else, this one included.
+    removeWhenItLetsGo(here);
 
     // A folder with a file in it, and a folder inside that: the recursive walk
     // is the part that races, so what it walks is more than one level.

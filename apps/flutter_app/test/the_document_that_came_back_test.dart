@@ -34,6 +34,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
@@ -77,7 +78,7 @@ void main() {
     }
     await RustLib.init();
     dir = Directory('${Directory.systemTemp.path}/zprivacy-came-back-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
     // **A vault, open, for every test here but the last.** It is not scenery:
     // the app refuses to begin without one (041-N), so a returning document
@@ -88,7 +89,7 @@ void main() {
   });
 
   tearDownAll(() {
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
   });
 
   /// The workspace over one document, read through the **real** door: the core

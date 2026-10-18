@@ -14,6 +14,7 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
+import 'the_folder_lets_go.dart';
 
 /// The only way to ask «is this field hiding its text?» without reading the
 /// text out of it.
@@ -139,7 +140,7 @@ void main() {
     // passphrases it takes, on both sides of the number the form promises. The
     // day the core's minimum moves, this reds and names it.
     final dir = Directory.systemTemp.createTempSync('zprivacy-least-');
-    addTearDown(() => dir.deleteSync(recursive: true));
+    addTearDown(() => removeWhenItLetsGo(dir));
     final ground = Ground();
     await tester.runAsync(() async {
       await z.vaultLock();
@@ -254,7 +255,7 @@ void main() {
   /// vault — the form is wired to the core, not only to itself.
   testWidgets('submitting a matching pair creates the vault', (tester) async {
     final dir = Directory.systemTemp.createTempSync('zprivacy-passphrase-');
-    addTearDown(() => dir.deleteSync(recursive: true));
+    addTearDown(() => removeWhenItLetsGo(dir));
     final ground = Ground();
     await tester.runAsync(() async {
       await z.setDataDir(dir: dir.path);

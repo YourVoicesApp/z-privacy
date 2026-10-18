@@ -2314,6 +2314,38 @@ else
   skip "G50/G51 the sentences are in one list" "no checker yet"
 fi
 
+# ------------------------------------------------------------------ G53
+# **One teardown for every test folder** — 19 October 2026, after a race that
+# reddened three different guards in one file across three full runs.
+#
+# A test that gives the core a folder of its own used to delete it by hand:
+# `if (here.existsSync()) here.deleteSync(recursive: true);`. That reads the
+# folder, unlinks what it found, then removes the folder — and the core is a
+# live Rust library in the same process. A file appearing between the reading
+# and the removal (a session being sealed, `writing.lock`, the `zv.new` of an
+# atomic replace) makes the last step fail with `ENOTEMPTY`, **the teardown
+# throws**, and the test is reported as an error with its own claim already
+# proved. Green alone, red in company, and a different guard each time.
+#
+# 133 lines in 57 files did it. They go through `removeWhenItLetsGo` now, and
+# this gate is what stops the race coming back one file at a time: a new
+# `deleteSync(recursive: true)` under `test/` is refused **by name**, because a
+# sweep nobody guards is a sweep that has to be done again.
+#
+# The one place allowed is the helper itself, where the retry lives.
+G53_ALLOWED='the_folder_lets_go.dart'
+G53_BAD=$(grep -RnE 'deleteSync\(recursive: true\)' apps/flutter_app/test 2>/dev/null \
+          | grep -vE ':[0-9]+:[[:space:]]*(//|///)' \
+          | grep -v "$G53_ALLOWED" || true)
+if [ -z "$G53_BAD" ]; then
+  G53_USES=$(grep -RcE 'removeWhenItLetsGo\(' apps/flutter_app/test 2>/dev/null \
+             | awk -F: '{s+=$2} END {print s+0}')
+  pass "G53 every test folder goes through removeWhenItLetsGo ($G53_USES sites), and nothing deletes one by hand"
+else
+  fail "G53 a test folder is deleted by hand — the core can be writing into it, and the teardown reds a guard it is not about:"
+  printf '%s\n' "$G53_BAD" | sed 's/^/        /'
+fi
+
 # ------------------------------------------------------------------ G52
 # **The core is told where its files are, before there is a screen** — 18
 # October 2026, and the gate exists because a build shipped without it.

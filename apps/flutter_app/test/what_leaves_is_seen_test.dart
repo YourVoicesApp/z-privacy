@@ -33,6 +33,7 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -68,9 +69,9 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name) async {
   late final Workbench bench;
   await tester.runAsync(() async {
     final here = Directory('${Directory.systemTemp.path}/zprivacy-seen-$name-$pid');
-    if (here.existsSync()) here.deleteSync(recursive: true);
+    removeWhenItLetsGo(here);
     addTearDown(() {
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
     });
     await z.setDataDir(dir: here.path);
     await ground.refresh();

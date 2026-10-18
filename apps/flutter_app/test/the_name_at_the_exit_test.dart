@@ -47,6 +47,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _wide = Size(1200, 1000);
@@ -72,9 +73,9 @@ Future<void> _settle(WidgetTester tester, {int rounds = 6}) async {
 
 Directory _ownDir(String name) {
   final own = Directory('${Directory.systemTemp.path}/zprivacy-exit-$name-$pid');
-  if (own.existsSync()) own.deleteSync(recursive: true);
+  removeWhenItLetsGo(own);
   addTearDown(() {
-    if (own.existsSync()) own.deleteSync(recursive: true);
+    removeWhenItLetsGo(own);
   });
   return own;
 }

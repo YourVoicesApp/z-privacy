@@ -35,6 +35,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/widgets/tokens.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _doc = 'Rechnung für Herrn Thomas Müller, IBAN DE89370400440532013000.';
@@ -67,9 +68,9 @@ void main() {
     late final Workbench bench;
     await tester.runAsync(() async {
       final dir = Directory('${Directory.systemTemp.path}/zprivacy-071-$pid');
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
       addTearDown(() {
-        if (dir.existsSync()) dir.deleteSync(recursive: true);
+        removeWhenItLetsGo(dir);
       });
       await z.vaultLock();
       await z.setDataDir(dir: dir.path);

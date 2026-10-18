@@ -50,6 +50,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/send_sheet.dart';
+import 'the_folder_lets_go.dart';
 
 /// A sha256-shaped string that is not one: the control's footer must carry
 /// something of the right length without pretending to be a real digest.
@@ -136,7 +137,7 @@ void main() {
     out = Directory('${Directory.systemTemp.path}/zprivacy-pdf-out-$pid');
     arabicOut = Directory('${Directory.systemTemp.path}/zprivacy-pdf-ar-$pid');
     for (final d in [data, out, arabicOut]) {
-      if (d.existsSync()) d.deleteSync(recursive: true);
+      removeWhenItLetsGo(d);
       d.createSync(recursive: true);
     }
     await z.setDataDir(dir: data.path);
@@ -144,7 +145,7 @@ void main() {
 
   tearDownAll(() {
     for (final d in [data, out, arabicOut]) {
-      if (d.existsSync()) d.deleteSync(recursive: true);
+      removeWhenItLetsGo(d);
     }
   });
 

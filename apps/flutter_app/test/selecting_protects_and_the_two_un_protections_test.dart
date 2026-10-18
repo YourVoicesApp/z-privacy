@@ -26,6 +26,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
 
 import 'drawn_document.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
@@ -63,12 +64,12 @@ void main() {
     }
     await RustLib.init();
     dir = Directory('${Directory.systemTemp.path}/zprivacy-selection-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
   });
 
   tearDownAll(() {
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
   });
 
   Future<Workbench> ready(WidgetTester tester) async {

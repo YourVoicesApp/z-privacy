@@ -28,6 +28,7 @@ import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
@@ -45,9 +46,9 @@ Future<Ground> fresh(WidgetTester tester, String name) async {
   final ground = Ground();
   await tester.runAsync(() async {
     final dir = Directory('${Directory.systemTemp.path}/zprivacy-057-$name-$pid');
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    removeWhenItLetsGo(dir);
     addTearDown(() {
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
     });
     await z.vaultLock();
     await z.setDataDir(dir: dir.path);

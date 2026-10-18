@@ -24,6 +24,7 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/document_text.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _doc = 'Jonas Bjarne skrev avtalet.\nHälsningar, Björn Sandström\n';
@@ -69,7 +70,7 @@ void main() {
     await tester.runAsync(() async {
       await z.vaultLock();
       final dir = Directory('${Directory.systemTemp.path}/zprivacy-wholeword-$pid');
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
       await z.setDataDir(dir: dir.path);
       final session = await z.openSession(packId: 'sv');
       await z.importText(session: session, text: _doc);
@@ -101,7 +102,7 @@ void main() {
     await tester.runAsync(() async {
       await z.vaultLock();
       final dir = Directory('${Directory.systemTemp.path}/zprivacy-wordbefore-$pid');
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
       await z.setDataDir(dir: dir.path);
       final session = await z.openSession(packId: 'sv');
       await z.importText(session: session, text: _doc);

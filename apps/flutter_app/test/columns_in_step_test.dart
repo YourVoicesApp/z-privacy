@@ -22,6 +22,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 
@@ -190,9 +191,9 @@ void main() {
     late final Workbench bench;
     await tester.runAsync(() async {
       final here = Directory('${Directory.systemTemp.path}/zprivacy-step-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
       await ground.refresh();
@@ -276,9 +277,9 @@ void main() {
     late final Workbench bench;
     await tester.runAsync(() async {
       final here = Directory('${Directory.systemTemp.path}/zprivacy-scroll-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
       await ground.refresh();
@@ -360,9 +361,9 @@ void main() {
     late final Workbench bench;
     await tester.runAsync(() async {
       final here = Directory('${Directory.systemTemp.path}/zprivacy-lock-$pid');
-      if (here.existsSync()) here.deleteSync(recursive: true);
+      removeWhenItLetsGo(here);
       addTearDown(() {
-        if (here.existsSync()) here.deleteSync(recursive: true);
+        removeWhenItLetsGo(here);
       });
       await z.setDataDir(dir: here.path);
       await ground.refresh();

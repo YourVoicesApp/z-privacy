@@ -27,6 +27,7 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/core/protecting.dart';
+import 'the_folder_lets_go.dart';
 
 const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
 const _doc = 'Protokoll 2026\nBjörn Sandström ringde klockan 14 om fakturan 55123.\n';
@@ -53,7 +54,7 @@ void main() {
     await tester.runAsync(() async {
       await z.vaultLock();
       final dir = Directory('${Directory.systemTemp.path}/zprivacy-kind-$pid');
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
       await z.setDataDir(dir: dir.path);
       await ground.refresh();
       final session = await z.openSession(packId: 'sv');
@@ -122,7 +123,7 @@ void main() {
     late final Workbench bench;
     await tester.runAsync(() async {
       final dir = Directory('${Directory.systemTemp.path}/zp-both-tokens');
-      if (dir.existsSync()) dir.deleteSync(recursive: true);
+      removeWhenItLetsGo(dir);
       await z.setDataDir(dir: dir.path);
       await ground.refresh();
       final session = await z.openSession(packId: 'de');
