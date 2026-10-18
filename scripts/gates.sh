@@ -359,10 +359,19 @@ fi
 # The sentence for that state is written once: one state, one wording (046/L).
 # Comments may quote it — the doc comment above it explains the wording, and a
 # gate that could not read that would be a gate against explaining.
+# **And the generated list is not a second place** — 092. The sentence is a key
+# in `lib/l10n/*.arb` now, and `flutter gen-l10n` writes one Dart class per
+# language from it: three files that hold the same sentence by construction,
+# none of them written by hand. What this gate is about is a **second decision**
+# about the wording, so it reads the hand-written tree and the one list's key —
+# the generated classes are the list, not an opinion beside it.
 G32_SAID=$(grep -Rn "already protected — Z put it there" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
-           | grep -v '/src/rust/' | grep -vE ':[0-9]+:[[:space:]]*//' || true)
+           | grep -v '/src/rust/' | grep -v '/l10n/' | grep -vE ':[0-9]+:[[:space:]]*//' || true)
+G32_KEYED=$(grep -c 'theTokenIsAlreadyOurs' apps/flutter_app/lib/l10n/app_en.arb 2>/dev/null || echo 0)
 G32_SAID_N=$(printf '%s\n' "$G32_SAID" | grep -c . || true)
-if [ "$G32_SAID_N" = "1" ] && printf '%s' "$G32_SAID" | grep -q 'core/messages.dart'; then
+if [ "$G32_SAID_N" = "0" ] && [ "$G32_KEYED" != "0" ]; then
+  pass "G32 «this is already protected — Z put it there» is worded in one place: the one list"
+elif [ "$G32_SAID_N" = "1" ] && printf '%s' "$G32_SAID" | grep -q 'core/messages.dart'; then
   pass "G32 «this is already protected — Z put it there» is worded in one place"
 else
   fail "G32 that sentence is written in $G32_SAID_N place(s), expected one in core/messages.dart:"
@@ -437,8 +446,13 @@ fi
 
 # One list, every reader. A second literal pair is the «two copies of de, en»
 # the one constant exists to prevent.
+# **And the generated list is not one of them** — 092: `gen-l10n` writes
+# `supportedLocales` from the three ARB files themselves, so that array **is**
+# the one list in another shape, and it is not written by hand. G50/G51 are
+# what keep the three files in step; this gate stays about a second list
+# somebody typed.
 G38_LITERALS=$(grep -RnE "\['de',\s*'en'|\[\"de\",\s*\"en\"" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
-               | grep -v '/src/rust/' | grep -v "^$LANGS:" || true)
+               | grep -v '/src/rust/' | grep -v '/l10n/' | grep -v "^$LANGS:" || true)
 G38_READERS=$(grep -Rn 'offeredLanguages' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
               | grep -v "^$LANGS:" | grep -c . || true)
 if [ -z "$G38_LITERALS" ] && [ "$G38_READERS" -ge 4 ]; then
@@ -2079,6 +2093,39 @@ if [ -f scripts/check_sentences.py ]; then
   fi
 else
   skip "G25 no sentence carries a run of spaces" "no checker yet"
+fi
+
+# ------------------------------------------------------------ G50 and G51
+# **The sentences in one list** — 092, the owner, 18 October 2026: «نحتاج الآن
+# أن نعقد قوائم الجمل قائمة باللغة الإنكليزية، ثم نقوم بنسخها إلى اللغات
+# الأخرى، ثم نقوم بتفعيل الترجمة داخل التطبيق».
+#
+# Two gates in one checker, because they are two halves of one question — is
+# every sentence in the list, and does the list carry every language:
+#
+#   * **G50** no user-facing sentence outside `lib/l10n/*.arb`. A migrated file
+#     holds none; a file not yet migrated is named with the count it still
+#     holds, and a **rise** is a failure. The list of what is owed is the debt
+#     in writing — the shape G41's own allowed list has, and for the same
+#     reason: a gate that forbids everything on the day the work starts is a
+#     gate somebody turns off. The named exceptions are in the checker, each
+#     with its reason.
+#   * **G51** every key of the English file is in the German and the Swedish,
+#     and no German value is the English one — a copy is a key nobody
+#     translated. The Swedish **is** the English for now and the gate says why:
+#     56-أ, the first screen offers Svenska on the day those values differ.
+#
+# The checker is a file of its own because the question is about JSON, and the
+# reasons are prose that belongs beside the rule rather than inside a `case`.
+if [ -f scripts/check_the_one_list.py ]; then
+  if OUT=$(python3 scripts/check_the_one_list.py 2>&1); then
+    pass "G50/G51 the sentences are in one list, and the list carries every language — $OUT"
+  else
+    fail "G50/G51 a sentence is outside the one list, or a language is missing one:"
+    printf '%s\n' "$OUT" | sed 's/^/        /'
+  fi
+else
+  skip "G50/G51 the sentences are in one list" "no checker yet"
 fi
 
 # ---------------------------------------------------------------- G24

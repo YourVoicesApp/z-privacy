@@ -1,0 +1,593 @@
+{
+  "@@locale": "en",
+  "@@x-source": "092 · The one list. Every sentence the glass shows has its key here, and the key is the name the house gives the sentence — never a number. The description under each says where it stands and what it means, for the translator and for the lead's review.",
+  "theKeyIsBehindTheLockedVault": "Z Privacy cannot reach a key while the vault is locked. Unlock it, or give a key for this run.",
+  "@theKeyIsBehindTheLockedVault": {
+    "description": "The refusal a send gets back when a provider's key is sealed in a locked vault, and the same sentence the compose line and the Direct API card say before a press. Both moves are named because a shut vault answers nothing about its contents."
+  },
+  "theChatKeepsNothing": "This answer is on your screen and nowhere else: no session is open to keep it, so closing the app ends it with the chat.",
+  "@theChatKeepsNothing": {
+    "description": "Under an empty thread in the chat, when an answer came back and no session could keep it."
+  },
+  "theTokenIsAlreadyOurs": "This is already protected — Z put it there.",
+  "@theTokenIsAlreadyOurs": {
+    "description": "One press on a word Z Privacy had already protected: the Protect button over a selection, and the column press."
+  },
+  "unnamedTrouble": "Something went wrong. Z Privacy did not complete the action.",
+  "@unnamedTrouble": {
+    "description": "The last resort for an outcome no sentence names: what did not happen, never «invalid call»."
+  },
+  "exactlyWhatWouldLeave": "This is exactly what the AI will receive. {replaced} values were replaced.",
+  "@exactlyWhatWouldLeave": {
+    "description": "Beside a preview side — the work surface's Safe column and the chat's own band — about the text it draws. One sentence for both, so two screens cannot word one fact two ways.",
+    "placeholders": {
+      "replaced": {
+        "type": "int"
+      }
+    }
+  },
+  "noLanguageAndASessionIsOpen": "Nothing was read. A text is read with one language’s habits, and this session has never been given one — so Z Privacy did not choose for you. Read it again and answer, or give the session its language in Settings.",
+  "@noLanguageAndASessionIsOpen": {
+    "description": "Rule 57-د, when «Not now» answers the language question and a session is already open: what did not happen, and the two ways to make it happen."
+  },
+  "noLanguageAndNoSession": "Nothing was read. A text is read with one language’s habits, and none was chosen — so nothing was read and no session was made. Try again and choose one.",
+  "@noLanguageAndNoSession": {
+    "description": "Rule 57-د, the same answer where no session exists yet: nothing can be given a language, so the only move is to choose one."
+  },
+  "troubleNotImplemented": "This part of Z Privacy is not built yet.",
+  "@troubleNotImplemented": {
+    "description": "The sentence for ApiError.notImplemented."
+  },
+  "troubleInvalidSession": "That session is no longer open. Start a new one.",
+  "@troubleInvalidSession": {
+    "description": "ApiError.invalidSession."
+  },
+  "troubleInvalidHandle": "This request is no longer current. Review the text again before sending.",
+  "@troubleInvalidHandle": {
+    "description": "ApiError.invalidHandle — the payload a press names is not the one the session has."
+  },
+  "troubleStalePayload": "The document changed after this request was prepared. Review it again, so that what you send is what you last saw.",
+  "@troubleStalePayload": {
+    "description": "ApiError.stalePayload — the document moved under a prepared request."
+  },
+  "troubleVaultLocked": "Your vault is locked. Unlock it to use what it knows.",
+  "@troubleVaultLocked": {
+    "description": "ApiError.vaultLocked — every door that needs the vault open. Not the network refusal of the same name, which is about a key and says both moves."
+  },
+  "troubleVaultRequired": "Unlock or create your vault before saving this for future use.",
+  "@troubleVaultRequired": {
+    "description": "ApiError.vaultRequired — an act that would keep something for tomorrow, with no vault to keep it in."
+  },
+  "troubleVaultAuthenticationFailed": "Could not unlock the vault. The passphrase may be incorrect, or the vault may be corrupted or modified.",
+  "@troubleVaultAuthenticationFailed": {
+    "description": "ApiError.vaultAuthenticationFailed — both causes named, because the app cannot tell them apart and neither can the person without being told."
+  },
+  "troubleUnsupportedKdfParameters": "This vault uses unsupported security settings.",
+  "@troubleUnsupportedKdfParameters": {
+    "description": "ApiError.unsupportedKdfParameters — a vault written by another build's key derivation."
+  },
+  "troubleTrailingVaultData": "This vault file has extra data after its end and was not opened.",
+  "@troubleTrailingVaultData": {
+    "description": "ApiError.trailingVaultData — bytes after the sealed end, so the file is refused rather than half-read."
+  },
+  "troubleProviderUnavailable": "That AI provider is not available in this build.",
+  "@troubleProviderUnavailable": {
+    "description": "ApiError.providerUnavailable — the id names no provider this build carries."
+  },
+  "oneWordWaits": "One word waits for your answer — nothing left Z.",
+  "@oneWordWaits": {
+    "description": "083a — an exit refused because a suggestion is open, in the singular. «nothing left Z» is the second half a person needs at that moment."
+  },
+  "wordsWait": "{count} words wait for your answer — nothing left Z.",
+  "@wordsWait": {
+    "description": "083a — the same refusal in the plural, with the core's own count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "troubleVaultAbsent": "There is no vault on this device yet. Create one to keep anything for tomorrow.",
+  "@troubleVaultAbsent": {
+    "description": "ApiError.vaultAbsent — an empty or missing vault file, which is «there is none» and not «it is locked»."
+  },
+  "troubleVaultAlreadyExists": "A vault already exists on this device, and Z Privacy will not write over it.",
+  "@troubleVaultAlreadyExists": {
+    "description": "ApiError.vaultAlreadyExists — the one refusal that protects a person's own bytes from a second «create»."
+  },
+  "troubleStorageRefused": "Z Privacy will not use that location — {reason}",
+  "@troubleStorageRefused": {
+    "description": "ApiError.storageRefused — the place is at fault, and the core's own reason names which one and why. The reason arrives lower-cased, as the core wrote it.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "everyCellWasAlreadyProtected": "Every cell in that column was already protected.",
+  "@everyCellWasAlreadyProtected": {
+    "description": "A column press that found nothing left to do: the core answers «places: 0», which is this and not «protected in 0 places»."
+  },
+  "protectedOneCell": "Protected one cell, as {token}.",
+  "@protectedOneCell": {
+    "description": "A column press that protected a single cell. {token} is the core's own placeholder name — never translated.",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "protectedCellsDownTheColumn": "Protected {places} cells down that column, the first as {token}.",
+  "@protectedCellsDownTheColumn": {
+    "description": "A column press over several cells. The token named is the first one, as the core reports it.",
+    "placeholders": {
+      "places": {
+        "type": "int"
+      },
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "protectedAs": "Protected as {token}.",
+  "@protectedAs": {
+    "description": "One place protected by a press on a selection or on a place the bar found.",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "protectedAsInPlaces": "Protected as {token}, in {places} places.",
+  "@protectedAsInPlaces": {
+    "description": "The same press where the value stands in more than one place: one token, every place.",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      },
+      "places": {
+        "type": "int"
+      }
+    }
+  },
+  "alreadyProtectedBy": "Already protected as {token}, by {who}.",
+  "@alreadyProtectedBy": {
+    "description": "A press on a word that is protected already, with who by — a rule, a pack, the vault, or the person. {who} comes from the source names below, lower-cased by the caller.",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      },
+      "who": {
+        "type": "String"
+      }
+    }
+  },
+  "belongsToEntity": "That belongs to {entity} and keeps its token {token}.",
+  "@belongsToEntity": {
+    "description": "A press on a value the vault holds for a client: the token is that client's and does not change here.",
+    "placeholders": {
+      "entity": {
+        "type": "String"
+      },
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "pressCutsIntoProtectedTextOne": "{what} cuts into protected text, so nothing changed. It would snap to 1 whole item.",
+  "@pressCutsIntoProtectedTextOne": {
+    "description": "A press whose selection crosses a protected word, where snapping would take a single whole item. {what} is the subject below.",
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "pressCutsIntoProtectedTextMany": "{what} cuts into protected text, so nothing changed. It would snap to {items} whole items.",
+  "@pressCutsIntoProtectedTextMany": {
+    "description": "The same refusal where snapping would take several whole items, so a second press is a decision and not a surprise.",
+    "placeholders": {
+      "what": {
+        "type": "String"
+      },
+      "items": {
+        "type": "int"
+      }
+    }
+  },
+  "theSelection": "The selection",
+  "@theSelection": {
+    "description": "The subject of the sentence above, when the press was on a selection."
+  },
+  "thatCell": "That cell",
+  "@thatCell": {
+    "description": "The subject of the same sentence, when the press was on a table cell."
+  },
+  "thatPlace": "That place",
+  "@thatPlace": {
+    "description": "The subject of the same sentence, when the press came from a place the search bar found."
+  },
+  "sourceRule": "Rule",
+  "@sourceRule": {
+    "description": "Who protected a word: one of Z Privacy's own rules. Stands in «Already protected as …, by rule.» and in the review's own lines."
+  },
+  "sourcePack": "Pack",
+  "@sourcePack": {
+    "description": "Who protected a word: the language pack. «Sprachpaket» is the house's word for a pack."
+  },
+  "sourceVault": "Vault",
+  "@sourceVault": {
+    "description": "Who protected a word: the vault knew the value already."
+  },
+  "sourceYou": "You",
+  "@sourceYou": {
+    "description": "Who protected a word: the person's own hand."
+  },
+  "answeredByHand": "brought back by hand",
+  "@answeredByHand": {
+    "description": "Rule 66 — who answered one turn of a chat, where the person carried the text out and the answer back, so no key of ours answered it."
+  },
+  "answeredNotRecorded": "not recorded",
+  "@answeredNotRecorded": {
+    "description": "Who answered a turn older than this round: an absence with more than one cause, said rather than guessed."
+  },
+  "oneNameCameBack": "One name came back.",
+  "@oneNameCameBack": {
+    "description": "079, the import side — a returning document whose single name was put back, with no session to name it by."
+  },
+  "namesCameBack": "{count} names came back.",
+  "@namesCameBack": {
+    "description": "The same line for several names, with the core's own count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneNameCameBackFrom": "One name came back from {sessions}.",
+  "@oneNameCameBackFrom": {
+    "description": "The same, naming the sessions that brought something back — only those, never every session in the document. {sessions} is already isolate-marked and joined by the caller.",
+    "placeholders": {
+      "sessions": {
+        "type": "String"
+      }
+    }
+  },
+  "namesCameBackFrom": "{count} names came back from {sessions}.",
+  "@namesCameBackFrom": {
+    "description": "The plural of the line above.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "sessions": {
+        "type": "String"
+      }
+    }
+  },
+  "thisDocumentCameBackFrom": "This document came back from {sessions}.",
+  "@thisDocumentCameBackFrom": {
+    "description": "A returning document whose sessions are known but which put no name back — so it says where it came from and claims nothing else.",
+    "placeholders": {
+      "sessions": {
+        "type": "String"
+      }
+    }
+  },
+  "oneNameIsStillATokenVaultShut": "One name is still a token: unlock or create your vault and Z can look for it.",
+  "@oneNameIsStillATokenVaultShut": {
+    "description": "A returning document with one name Z could not put back, where the vault is shut or absent — both acts named, because a person with no vault cannot unlock one."
+  },
+  "namesAreStillTokensVaultShut": "{count} names are still tokens: unlock or create your vault and Z can look for them.",
+  "@namesAreStillTokensVaultShut": {
+    "description": "The plural of the line above.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneNameStaysATokenTwoCauses": "One name stays as a token, and two different things do that: the word was protected before Z Privacy began keeping every protected word, or this token was changed after the file left. Open that document in its session and protect the name again — if it comes back from then on it was the first, and if it does not, this file is not the one Z Privacy wrote.",
+  "@oneNameStaysATokenTwoCauses": {
+    "description": "089 rule 4 and the independent attacker's م4: a token with no block has no block for either reason, and this build cannot tell them apart — so both are named and the experiment that separates them is given. Do not shorten this one."
+  },
+  "namesStayTokensTwoCauses": "{count} names stay as tokens, and two different things do that: they were protected before Z Privacy began keeping every protected word, or the tokens were changed after the file left. Open those documents in their session and protect the names again — if they come back from then on it was the first, and if they do not, this file is not the one Z Privacy wrote.",
+  "@namesStayTokensTwoCauses": {
+    "description": "The plural of the line above, word for word in the same two causes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalMalformedDocument": "This document is damaged or incomplete.",
+  "@refusalMalformedDocument": {
+    "description": "A document the reader could not parse, where the core reported no detail of its own."
+  },
+  "refusalEncryptedPdf": "This PDF is password-protected. Remove the password and try again.",
+  "@refusalEncryptedPdf": {
+    "description": "A PDF with its own password: Z Privacy does not ask for one, so the next move is the person's."
+  },
+  "refusalScannedOnePage": "This PDF is a picture of a page with no text in it, so nothing could be read — and Z Privacy will not import a document it cannot see.",
+  "@refusalScannedOnePage": {
+    "description": "A one-page scan with no text layer. The second half is the law: nothing is imported half-read."
+  },
+  "refusalScannedPages": "This PDF is {pages} pages of pictures with no text in them, so nothing could be read.",
+  "@refusalScannedPages": {
+    "description": "The same refusal for a scan of several pages.",
+    "placeholders": {
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalUnsupportedEncoding": "Only {readablePercent}% of page {page} decoded into characters, so this document is refused rather than half-read. Open it and save it as text, or paste the text in.",
+  "@refusalUnsupportedEncoding": {
+    "description": "A page whose encoding this build cannot turn into characters, with the core's own percentage. Two ways out are named.",
+    "placeholders": {
+      "readablePercent": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalUnreadableStructure": "Page {page} is built in a way this build cannot read.",
+  "@refusalUnreadableStructure": {
+    "description": "A page whose structure the reader does not support — said of the page, because that is what the core named.",
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalDocumentTooLarge": "This file is about {mib} MiB, and Z Privacy opens documents up to {limitMib} MiB.",
+  "@refusalDocumentTooLarge": {
+    "description": "A file over the one-document limit, with both numbers the core's.",
+    "placeholders": {
+      "mib": {
+        "type": "int"
+      },
+      "limitMib": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalTooManyPages": "This document has {pages} pages, and Z Privacy opens up to {limit} in one document.",
+  "@refusalTooManyPages": {
+    "description": "A document over the page limit.",
+    "placeholders": {
+      "pages": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalTextTooLarge": "Unpacked, a part of this file is more than {limitMib} MiB — more than Z Privacy reads in one document, so none of it was imported.",
+  "@refusalTextTooLarge": {
+    "description": "A part inside a container that unpacks past the limit: nothing is imported, which is the half a person needs.",
+    "placeholders": {
+      "limitMib": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalCompressionBomb": "A part of this file unpacks to more than {ratio} times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.",
+  "@refusalCompressionBomb": {
+    "description": "A compression bomb, with the core's own ratio and the reason the reading stopped.",
+    "placeholders": {
+      "ratio": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalTooManyParts": "This file lists {parts} parts inside it, and a document has tens, not thousands — Z Privacy opens up to {limit}.",
+  "@refusalTooManyParts": {
+    "description": "A container listing more parts than any real document has.",
+    "placeholders": {
+      "parts": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalTookTooLong": "Reading this file was still going after {seconds} seconds, so Z Privacy stopped. Nothing of it was imported.",
+  "@refusalTookTooLong": {
+    "description": "A reading that ran past its own clock. The caller hands over whole seconds, from the core's milliseconds.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "refusalEmptyDocument": "There is no text in this file for Z Privacy to protect.",
+  "@refusalEmptyDocument": {
+    "description": "A file that read clean and held no text at all."
+  },
+  "networkNotConnected": "No AI provider is connected. Add an address and a key first.",
+  "@networkNotConnected": {
+    "description": "A send with no credential anywhere — and no vault that could be holding one, which is what tells this apart from the vault-locked refusal."
+  },
+  "networkInsecureUrl": "That address is not safe to send to.",
+  "@networkInsecureUrl": {
+    "description": "An address that is not https and not a machine on this computer, where the core reported no detail to quote."
+  },
+  "networkRedirected": "That address sent us somewhere else. Z Privacy does not follow redirects with your text, so nothing was sent.",
+  "@networkRedirected": {
+    "description": "A host that answered with a redirect: the payload and the credential were addressed to that host and go nowhere else."
+  },
+  "networkBadStatus": "The provider refused the request with status {status}. Nothing of your document was kept by Z Privacy.",
+  "@networkBadStatus": {
+    "description": "The provider's own status, and the one thing a person wants to know afterwards.",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "networkTimeout": "The provider did not answer in time. Nothing else was sent.",
+  "@networkTimeout": {
+    "description": "No answer inside the core's own window."
+  },
+  "networkResponseTooLarge": "The answer was larger than {limitKib} KiB and was not read.",
+  "@networkResponseTooLarge": {
+    "description": "An answer over the limit: it is not read at all rather than read in part.",
+    "placeholders": {
+      "limitKib": {
+        "type": "int"
+      }
+    }
+  },
+  "networkPayloadTooLarge": "This text is {kib} KiB and the provider accepts {limitKib} KiB in one request.",
+  "@networkPayloadTooLarge": {
+    "description": "Checked before a socket is opened, so a huge document is refused here rather than turned into an unreasonable request.",
+    "placeholders": {
+      "kib": {
+        "type": "int"
+      },
+      "limitKib": {
+        "type": "int"
+      }
+    }
+  },
+  "networkUnreadable": "The provider answered with something that is not an answer.",
+  "@networkUnreadable": {
+    "description": "An answer that arrived but not in the shape the provider promised."
+  },
+  "networkUnreachable": "That address could not be reached at all — nothing answered. Check that you are online and that the address is right. Nothing was sent.",
+  "@networkUnreachable": {
+    "description": "No host at the other end. Both checks are named, and the last half is the one the person needs."
+  },
+  "troubleVaultChangedElsewhere": "Another copy of Z Privacy changed this vault. Close that window, or lock and unlock here to take in its work.",
+  "@troubleVaultChangedElsewhere": {
+    "description": "050/A — two windows over one vault. The place is fine; what happened is that somebody else wrote, and both ways out are named."
+  },
+  "troubleStoragePermissionsKept": "Z Privacy will not change a permission you set, so nothing was saved — {reason}. Change the permission yourself, or choose another folder.",
+  "@troubleStoragePermissionsKept": {
+    "description": "A folder whose permissions would have to be changed to write in it: the program does not touch them, and says both ways out. The reason is the core's, lower-cased.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "troubleBadSpan": "That selection could not be read. Try selecting the words again.",
+  "@troubleBadSpan": {
+    "description": "A selection the core could not turn into a span."
+  },
+  "troubleBetweenColumns": "That press landed in the space between two columns, so it names no value — and Z Privacy will not choose a column for you.",
+  "@troubleBetweenColumns": {
+    "description": "A press in a table's gutter: the law is that the program does not guess which column was meant."
+  },
+  "troubleUnknownToken": "That protected value is not in this session.",
+  "@troubleUnknownToken": {
+    "description": "A token whose value this session's key cannot name."
+  },
+  "troubleNothingToSend": "There is nothing to send yet. Bring in a document or write some text.",
+  "@troubleNothingToSend": {
+    "description": "An exit with nothing behind it, with the two doors in named."
+  },
+  "troubleSessionWithoutItsDocument": "The session was not started, because Z Privacy could not tell which document you have open — and a session has to rename what is already protected on it. Nothing was changed. Open the document and start the session from there.",
+  "@troubleSessionWithoutItsDocument": {
+    "description": "064f — a birth that could not name the document it would rename. It says what did not happen and what to do, never «invalid call»."
+  },
+  "troublePayloadAlreadySent": "This request was already sent. Prepare it again to send once more.",
+  "@troublePayloadAlreadySent": {
+    "description": "A payload that has already left: the same one does not go twice."
+  },
+  "theReasonWasNotReported": "the reason was not reported.",
+  "@theReasonWasNotReported": {
+    "description": "The tail of a sentence that quotes the core's own reason, where the core gave none. Lower-cased because it stands inside another sentence."
+  },
+  "carriesFirst": "This document carries",
+  "@carriesFirst": {
+    "description": "079 — the first words of the «names from a session this vault does not hold» sentence, when nothing has been said yet. A piece of one sentence: the pieces are ordered «carries · names · from · (handle) · nothing-here».",
+    "x-unsure": "A piece of a composed sentence — the lead reviews the composition, not only the piece."
+  },
+  "carriesAlso": "It also carries",
+  "@carriesAlso": {
+    "description": "The same opening where a sentence has already been said about this document, so this one adds rather than repeats.",
+    "x-unsure": "A piece of a composed sentence."
+  },
+  "carriesOneNameFromElsewhere": "{also} 1 name from a session this vault does not hold ({which}). Nothing here can put it back: the key that made it is not in this vault.",
+  "@carriesOneNameFromElsewhere": {
+    "description": "079 — a returning document carrying one name whose session this vault has no key for. One sentence and not pieces, because German does not keep the English order; {also} is «This document carries» or «It also carries», and {which} is the namespace's own handle.",
+    "placeholders": {
+      "also": {
+        "type": "String"
+      },
+      "which": {
+        "type": "String"
+      }
+    }
+  },
+  "carriesNamesFromOneSessionElsewhere": "{also} {count} names from a session this vault does not hold ({which}). Nothing here can put them back: the key that made them is not in this vault.",
+  "@carriesNamesFromOneSessionElsewhere": {
+    "description": "The same, several names from one session this vault does not hold.",
+    "placeholders": {
+      "also": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "which": {
+        "type": "String"
+      }
+    }
+  },
+  "carriesNamesFromSessionsElsewhere": "{also} {count} names from sessions this vault does not hold ({which}). Nothing here can put them back: the keys that made them are not in this vault.",
+  "@carriesNamesFromSessionsElsewhere": {
+    "description": "The same, several names from more than one session this vault does not hold.",
+    "placeholders": {
+      "also": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "which": {
+        "type": "String"
+      }
+    }
+  },
+  "carriesNamesFromElsewhereWithNoCount": "{also} names from {whose} ({which}). Nothing here can put them back: {keys} not in this vault.",
+  "@carriesNamesFromElsewhereWithNoCount": {
+    "description": "079's own corner: a document whose unresolved names are all accounted for by sessions that could be named, so there is no count to give — «0 names» would be a sentence counting nothing. {whose} and {keys} are the singular or plural halves, handed over by the caller; the composition is the one place in this list where pieces remain, and it is here because the sentence says «names» with no number.",
+    "placeholders": {
+      "also": {
+        "type": "String"
+      },
+      "whose": {
+        "type": "String"
+      },
+      "which": {
+        "type": "String"
+      },
+      "keys": {
+        "type": "String"
+      }
+    }
+  },
+  "aSessionThisVaultDoesNotHold": "a session this vault does not hold",
+  "@aSessionThisVaultDoesNotHold": {
+    "description": "A piece of the one composed sentence above: whose the names are, in the singular."
+  },
+  "sessionsThisVaultDoesNotHold": "sessions this vault does not hold",
+  "@sessionsThisVaultDoesNotHold": {
+    "description": "The same piece in the plural."
+  },
+  "theKeyThatMadeThemIs": "the keys that made them are",
+  "@theKeyThatMadeThemIs": {
+    "description": "A piece of the same sentence: which keys are missing, in the plural, as the no-count case always is."
+  },
+  "andBetweenNames": " and ",
+  "@andBetweenNames": {
+    "description": "079 — the joiner between two sessions' own names in «One name came back from «A» and «B».» A word on the glass, so it is in the list: German joins with «und», and the spaces are part of it because the names are already isolate-marked and must not touch it."
+  }
+}
