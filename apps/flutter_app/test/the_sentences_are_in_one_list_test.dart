@@ -15,12 +15,19 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/messages.dart';
+import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/l10n/app_localizations_de.dart';
 import 'package:zprivacy/l10n/app_localizations_en.dart';
 import 'package:zprivacy/l10n/app_localizations_sv.dart';
+import 'package:zprivacy/screens/workspace.dart';
+import 'package:zprivacy/src/rust/frb_generated.dart';
 
 void main() {
+  // Guard 5 mounts a screen that asks the core, so the bridge is started —
+  // the other four are about the list and need nothing native.
+  setUpAll(() async => RustLib.init());
+
   // ------------------------------------------------------------------ guard 1
   //
   // **Every key in the English list is in the other two** — the gate G50 asks
@@ -163,4 +170,80 @@ void main() {
     expect(tester.takeException(), isNull,
         reason: 'laying out the German letters threw');
   });
+  // ------------------------------------------------------------------ guard 5
+  //
+  // **The three parts, on the glass, in German** — 092's second sitting, and
+  // the one measurement that crosses every layer the round touched: the ARB,
+  // the generated class, the holder, and a screen that reads it with no
+  // `Localizations` above it.
+  //
+  // Every reach is by **key**, out of the German class, for the reason at the
+  // head of this file: a guard that looked for «Geschützt — das erhält die KI»
+  // as a string of its own would be a second German list beside the one the
+  // round exists to make the only one.
+  testWidgets('the three parts speak the language the application is in', (tester) async {
+    // The size the one screen's own guard uses: tall enough for the three
+    // parts to stand, which is what `shell_route_test` measured them at.
+    await tester.binding.setSurfaceSize(const Size(1300, 1500));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final de = AppLocalizationsDe();
+    final en = AppLocalizationsEn();
+
+    // **No bench**, which is rule 70's own first state: the three parts with
+    // nothing in them yet, each saying the one thing it is for. It is also the
+    // state that needs no document and no session, so this guard measures the
+    // sentences and nothing else.
+    final ground = Ground();
+    await tester.runAsync(ground.refresh);
+
+    // The one line that turns the application German. No delegates are mounted
+    // below it and none are needed: the holder is what every sentence in the
+    // house reads, which is the whole shape of `core/sentences.dart`.
+    theSentencesAreNow(const Locale('de'));
+    addTearDown(() => theSentencesAreNow(const Locale('en')));
+
+    await tester.pumpWidget(MaterialApp(
+      home: WorkspaceScreen(
+        bench: null,
+        ground: ground,
+        onImport: () {},
+        onAsk: (_) {},
+        onVault: () {},
+      ),
+    ));
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 120)));
+    }
+    await tester.pumpAndSettle();
+
+    // The three parts' own names, upper-cased by `Eyebrow` the way the glass
+    // draws them.
+    for (final name in <String>[de.originalLocalOnly, de.safeAiWillReceive, de.theChatTitle]) {
+      expect(find.text(name.toUpperCase()), findsOneWidget,
+          reason: 'a part of the one screen is not named in the language the app is in');
+    }
+    // And the English is gone from them — the half a «does it say the German»
+    // guard cannot measure on its own, because a screen could say both.
+    expect(find.text(en.originalLocalOnly.toUpperCase()), findsNothing);
+    expect(find.text(en.safeAiWillReceive.toUpperCase()), findsNothing);
+
+    // One sentence from each part, so that the parts' bodies are measured and
+    // not only their heads: the way in, the empty middle column, and the chat's
+    // own first line.
+    expect(find.text(de.yourDocumentArrivesHere), findsOneWidget);
+    expect(find.text(de.whatAnAiWouldReceiveStandsHere), findsOneWidget);
+    expect(find.text(de.theChatOpensHereWithTheFirstAnswer), findsOneWidget);
+    // And rule 72's box is in the first part from the first moment, with its
+    // hint in the same language.
+    expect(find.text(de.askAQuestionOrPasteALetter), findsOneWidget);
+
+    // The house's vocabulary where the round fixed it: «Sprachpaket», never
+    // «Pack». Asked of the list rather than of this screen, because the field
+    // it labels is on the work bar and an empty surface has no document for
+    // the bar to be about.
+    expect(de.packLabel, 'Sprachpaket');
+    expect(de.vaultLabel, 'Tresor');
+  });
+
 }

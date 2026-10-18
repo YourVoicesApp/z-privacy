@@ -13,6 +13,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/l10n/app_localizations_de.dart';
+import 'package:zprivacy/l10n/app_localizations_en.dart';
+import 'package:zprivacy/l10n/app_localizations_sv.dart';
 import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/shell.dart';
@@ -22,6 +25,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/document_text.dart';
+import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/widgets/entity_detail.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
@@ -318,7 +322,17 @@ void main() {
     );
     // The old wording promised more than the app does.
     expect(find.text('Your original data stays on this device.'), findsNothing);
-    expect(find.text('by YourVoices'), findsOneWidget);
+    expect(find.text(AppLocalizationsEn().byYourVoices), findsOneWidget);
+    // **And Svenska is not offered here, which is rule 56-أ** — the Swedish
+    // list is still a copy of the English, so a button under that name would
+    // hand a person English promises. It is offered everywhere else a language
+    // is chosen (rule 56), and this page works it out from the list rather
+    // than holding a second opinion: the day the values differ, the button
+    // appears and this guard is the one that has to change.
+    expect(find.text(AppLocalizationsSv().thisLanguageName), findsNothing,
+        reason: 'the first page offers a language whose promises are English');
+    expect(offeredLanguages, contains('sv'),
+        reason: 'Swedish left the offered list, and then this guard measures nothing');
     // No e-mail, no sign-up, nothing to fill in.
     expect(find.byType(TextField), findsNothing);
 
@@ -337,11 +351,22 @@ void main() {
     expect(find.text('No account.'), findsNothing);
     // What the choice really does, and what it does not — before Start.
     expect(find.text('Die deutschen Datenschutzregeln werden aktiviert.'), findsOneWidget);
+    // **And the sentence that warned about the interface is gone** — 092.
+    // It read «Die übrige Benutzeroberfläche ist derzeit auf Englisch», and it
+    // was on this page for the honest reason that a person choosing Deutsch
+    // could otherwise expect a translated application. The list is what made it
+    // false: the application below this page is now in the language this page
+    // chose. So the guard turns round — a page that still warned about it
+    // would be the lie it was written to prevent.
     expect(
-      find.text('Die übrige Benutzeroberfläche ist derzeit auf Englisch.'),
-      findsOneWidget,
-      reason: 'a person could choose Deutsch expecting a translated app',
+      find.textContaining('Benutzeroberfläche ist derzeit auf Englisch'),
+      findsNothing,
+      reason: 'the page still warns that the interface is English, which 092 made false',
     );
+    // What makes that true, measured on this page rather than asserted: the
+    // second step is in German too, where it used to be English whatever was
+    // chosen.
+    expect(find.text('Starten'), findsOneWidget);
 
     // ------------------------------------------------ English, and back
     await tester.tap(find.text('English'));
@@ -356,9 +381,17 @@ void main() {
     await tester.tap(find.text('Starten'));
     await settle(tester, rounds: 1);
     // 041-N — Start opens the second step, and the vault is the only way out
-    // of it. The language is carried through it.
+    // of it. The language is carried through it, and since 092 the step itself
+    // is in that language: «Ihr Tresor», «Tresor erstellen».
     expect(find.text('Later'), findsNothing, reason: 'a way past the vault is still on the page');
-    await tester.tap(find.text('Create a vault'));
+    // By key, not by an English or a German string of our own: the claim is
+    // that the German list reaches this step. `Eyebrow` upper-cases what it is
+    // given, so the key is read the way the glass draws it.
+    final de = AppLocalizationsDe();
+    expect(find.text(de.yourVault.toUpperCase()), findsOneWidget,
+        reason: 'the vault step is still English after Deutsch was chosen');
+    expect(find.text(AppLocalizationsEn().createAVault), findsNothing);
+    await tester.tap(find.text(de.createAVault));
     await settle(tester, rounds: 1);
     expect(chosen, 'de');
   });
@@ -399,7 +432,8 @@ void main() {
     await settle(tester);
     // 041-N — the vault stands between the choice and the end of the first
     // run, and is the only way past it. What is kept must be kept through it.
-    await tester.tap(find.text('Create a vault'));
+    // In German since 092, because the choice above it was Deutsch.
+    await tester.tap(find.text(AppLocalizationsDe().createAVault));
     await settle(tester);
 
     // Written, and read back from the core rather than from the widget.

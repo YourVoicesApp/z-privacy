@@ -652,6 +652,810 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **' and '**
   String get andBetweenNames;
+
+  /// A language's own name for itself, on the first screen, in its own panel. Never translated: «Deutsch» is what German calls German.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get thisLanguageName;
+
+  /// The word «language» in each language, for the first screen's eyebrow. Before a choice is made the eyebrow carries both, joined by «·» — composed from the two lists rather than written a third time.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageWord;
+
+  /// The first screen, before a language is chosen: one line per language offered, each in its own language, because a page that asked in English only would be asking the very person who may not read it.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a language to continue.'**
+  String get chooseALanguage;
+
+  /// The first screen's promises, in the panel of the language they are about.
+  ///
+  /// In en, this message translates to:
+  /// **'No account.'**
+  String get noAccount;
+
+  /// The first screen's promises.
+  ///
+  /// In en, this message translates to:
+  /// **'No ads.'**
+  String get noAds;
+
+  /// The first screen's promises. The German says «no analytics or tracking data», which is the same promise in the words German privacy law uses.
+  ///
+  /// In en, this message translates to:
+  /// **'No analytics.'**
+  String get noAnalytics;
+
+  /// The first screen's promises: there is no server of ours anywhere in the product.
+  ///
+  /// In en, this message translates to:
+  /// **'No Z Privacy server.'**
+  String get noZPrivacyServer;
+
+  /// The first screen's own statement of the product's law, and the one sentence a person reads before anything else.
+  ///
+  /// In en, this message translates to:
+  /// **'Your original data stays on this device unless you explicitly copy restored content.'**
+  String get originalDataStaysHere;
+
+  /// Rule 62 on the first screen. The German is the wording the paper fixed and the owner has read; do not reword it.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the protected version is sent to AI through Z Privacy.'**
+  String get onlyTheProtectedVersionIsSent;
+
+  /// What choosing this language actually does, said before Start: it enables that language's rule set. Each language says it of itself, which is why one key carries «The English…» and «Die deutschen…».
+  ///
+  /// In en, this message translates to:
+  /// **'The English privacy rules will be enabled.'**
+  String get theseRulesWillBeEnabled;
+
+  /// The press that leaves the first screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get start;
+
+  /// The first screen's second panel, after a language is chosen — drawn in the language that was chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vault'**
+  String get yourVault;
+
+  /// The press that makes the vault, on the first screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a vault'**
+  String get createAVault;
+
+  /// What the vault is for, said before it is offered — not a warning and not a sales line, the reason. «Every word you protect» since 089, and that is the owner's own rule rather than a promise widened for effect: every word that takes a token becomes a block in the vault file and is never deleted, so the sentence that says what the vault is for has to say that first. It once read «the values you protect for good», which named only the «always» reach and left the person to find out that the rest was kept too. The last clause is the promise the whole product rests on.
+  ///
+  /// In en, this message translates to:
+  /// **'Every word you protect lives here, for as long as you keep this vault: the names you add, the values you teach, and the keys to any AI you connect. It stays on this computer, and nothing is written anywhere else.'**
+  String get vaultWhy;
+
+  /// Under «Create a vault»: what the passphrase is for and where it stays.
+  ///
+  /// In en, this message translates to:
+  /// **'One passphrase, kept on this device. Everything Z learns while you work — your names, your lists, your decisions — is kept in it.'**
+  String get onePassphrase;
+
+  /// The byline at the foot of the first page: who publishes Z Privacy. The publisher's name does not change; the word before it does, which is why this is a sentence and not a product name.
+  ///
+  /// In en, this message translates to:
+  /// **'by YourVoices'**
+  String get byYourVoices;
+
+  /// Said when «go to a page» lands on a page the scan found nothing on.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} has nothing the scanner marked.'**
+  String pageHasNothingMarked(int page);
+
+  /// The «+» at the top of the one screen, rule 72-أ: the way in.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a document — PDF, Word or text'**
+  String get addADocumentPdfWordOrText;
+
+  /// What the empty first part says: rule 63's second half, that a question needs no document.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a document — or write to the AI in the first part, with no document at all.'**
+  String get addADocumentOrWriteToTheAi;
+
+  /// The first column's name. «local only» is the law, not a decoration.
+  ///
+  /// In en, this message translates to:
+  /// **'Original — local only'**
+  String get originalLocalOnly;
+
+  /// The first column's rule line: rule 62, and the contract's own promise that no door reads this text.
+  ///
+  /// In en, this message translates to:
+  /// **'Never sent to AI · Send cannot read this side'**
+  String get neverSentToAiSendCannotRead;
+
+  /// The first part when it is empty, said once rather than in each half.
+  ///
+  /// In en, this message translates to:
+  /// **'Your document arrives here, as it is written. Nothing on this side can reach the network.'**
+  String get yourDocumentArrivesHere;
+
+  /// The middle column's name. The German says «das erhält die KI» because «Safe» as a noun has no German that is not a strongbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe — AI will receive'**
+  String get safeAiWillReceive;
+
+  /// The middle column's rule line: what stands there is the text that leaves, byte for byte.
+  ///
+  /// In en, this message translates to:
+  /// **'The request itself, not a preview of it'**
+  String get theRequestItselfNotAPreview;
+
+  /// The middle part when it is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'What an AI would receive stands here beside the original, word for word, before anything is sent.'**
+  String get whatAnAiWouldReceiveStandsHere;
+
+  /// The third part's name, and the head of the chat panel.
+  ///
+  /// In en, this message translates to:
+  /// **'The chat'**
+  String get theChatTitle;
+
+  /// The third part's rule line.
+  ///
+  /// In en, this message translates to:
+  /// **'Your questions, and what came back'**
+  String get yourQuestionsAndWhatCameBack;
+
+  /// The third part when it is empty — rule 68's own promise, said before it is true.
+  ///
+  /// In en, this message translates to:
+  /// **'The chat opens here with the first answer, and every question after it carries what was already said.'**
+  String get theChatOpensHereWithTheFirstAnswer;
+
+  /// The name of a document that came in through the box rather than from a file.
+  ///
+  /// In en, this message translates to:
+  /// **'Typed text'**
+  String get typedText;
+
+  /// How many pages the open document has, when it has one.
+  ///
+  /// In en, this message translates to:
+  /// **'1 page'**
+  String get onePage;
+
+  /// How many pages the open document has.
+  ///
+  /// In en, this message translates to:
+  /// **'{pages} pages'**
+  String pagesCount(int pages);
+
+  /// The work bar's vault field. Not «sourceVault», which names where a finding came from and may be worded differently.
+  ///
+  /// In en, this message translates to:
+  /// **'Vault'**
+  String get vaultLabel;
+
+  /// The vault's state in the work bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked'**
+  String get vaultIsUnlocked;
+
+  /// The vault's state in the work bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get vaultIsLocked;
+
+  /// The vault's state in the work bar when this device has none. Masculine in German, because «Tresor» is.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get vaultIsNone;
+
+  /// The press that opens the vault board.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Z Vault'**
+  String get openZVault;
+
+  /// The press that locks the vault at once.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock now'**
+  String get lockNow;
+
+  /// The tooltip over the vault field while it is unlocked, when both acts are offered.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Z Vault, or lock it now'**
+  String get openZVaultOrLockItNow;
+
+  /// The tooltip over the page chooser.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to a page'**
+  String get goToAPage;
+
+  /// One row of the page chooser.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page}'**
+  String pageNumber(int page);
+
+  /// The page chooser's own label in the work bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Page'**
+  String get pageWord;
+
+  /// The tooltip over the send door in the work bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the AI and what travels to it'**
+  String get chooseTheAiAndWhatTravels;
+
+  /// The tooltip over the pack chooser.
+  ///
+  /// In en, this message translates to:
+  /// **'Read this document with another rule set'**
+  String get readThisDocumentWithAnotherRuleSet;
+
+  /// The row that chooses no language pack: the general rules and the person's own lists, and nothing else.
+  ///
+  /// In en, this message translates to:
+  /// **'General rules only'**
+  String get generalRulesOnly;
+
+  /// The work bar's pack field. Not «sourcePack», which names where a finding came from. The German is «Sprachpaket», the word the house fixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Pack'**
+  String get packLabel;
+
+  /// The pack field when the pack carries no rules of its own.
+  ///
+  /// In en, this message translates to:
+  /// **'{pack} · general rules'**
+  String packWithGeneralRules(String pack);
+
+  /// The profile that is no profile: identities and rules that apply to every client.
+  ///
+  /// In en, this message translates to:
+  /// **'Everywhere'**
+  String get everywhere;
+
+  /// The work bar's profile field.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile;
+
+  /// The head of the profile sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Profiles'**
+  String get profiles;
+
+  /// What the profile sheet is for, and the one promise about the ID.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which client dictionary this session uses. The profile ID stays inside the vault; the display name is what people see.'**
+  String get chooseWhichClientDictionary;
+
+  /// What «Everywhere» means, under its row.
+  ///
+  /// In en, this message translates to:
+  /// **'Only identities and rules that apply to every profile.'**
+  String get onlyIdentitiesForEveryProfile;
+
+  /// The press in the profile sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Create profile'**
+  String get createProfile;
+
+  /// Closes a sheet that asked nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// Renames the profile a row names.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// The profile this session is already using.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get profileActive;
+
+  /// Moves this session to the profile a row names.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch'**
+  String get profileSwitch;
+
+  /// The door back: z-pdf reads a protected PDF and puts the names back.
+  ///
+  /// In en, this message translates to:
+  /// **'Read it back'**
+  String get readItBack;
+
+  /// While the core is reading the document.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning…'**
+  String get scanning;
+
+  /// A document in the preview that no scan has read.
+  ///
+  /// In en, this message translates to:
+  /// **'Not scanned yet'**
+  String get notScannedYet;
+
+  /// 089 rule 9: a document that came back out of a session's own file carries its decisions, so the band says that rather than three zeros.
+  ///
+  /// In en, this message translates to:
+  /// **'As it was kept'**
+  String get asItWasKept;
+
+  /// What the core itself says about the last scan.
+  ///
+  /// In en, this message translates to:
+  /// **'Last scan: {note}'**
+  String lastScanNote(String note);
+
+  /// The scan happened as the document came in.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned on import'**
+  String get scannedOnImport;
+
+  /// The person asked for the scan themselves.
+  ///
+  /// In en, this message translates to:
+  /// **'Last scan: manual rescan'**
+  String get lastScanManualRescan;
+
+  /// A document that came back with its marks, before any scan in this sitting.
+  ///
+  /// In en, this message translates to:
+  /// **'{marks} already protected · nothing scanned in this run'**
+  String alreadyProtectedNothingScanned(int marks);
+
+  /// The band over the document: the three numbers the core counted, never computed on the glass.
+  ///
+  /// In en, this message translates to:
+  /// **'{auto} protected automatically · {open} need your word · {normal} normal'**
+  String protectedAutomaticallyNeedYourWord(int auto, int open, int normal);
+
+  /// What a scan with a locked vault did and did not do. Protection never needed the vault; names do.
+  ///
+  /// In en, this message translates to:
+  /// **'Vault locked — rules and pack ran, the vault layer did not'**
+  String get vaultLockedRulesAndPackRan;
+
+  /// What a scan on a device with no vault can and cannot do.
+  ///
+  /// In en, this message translates to:
+  /// **'No vault — nothing is recognised by name'**
+  String get noVaultNothingRecognisedByName;
+
+  /// Opens a vault that exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlock;
+
+  /// Rule 71: the document goes and the session stays — 089 rule 9 keeps what was already kept.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the document'**
+  String get removeTheDocument;
+
+  /// The first column with no document in it.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is open.'**
+  String get nothingIsOpen;
+
+  /// The middle column with neither a document nor a question in it.
+  ///
+  /// In en, this message translates to:
+  /// **'There is nothing to send yet.'**
+  String get thereIsNothingToSendYet;
+
+  /// While the core reads the held lines of a table.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading what those lines hold…'**
+  String get readingWhatThoseLinesHold;
+
+  /// What one held line of a table holds.
+  ///
+  /// In en, this message translates to:
+  /// **'1 line · {protected} protected in it · {open} open'**
+  String oneLineProtectedOpen(int protected, int open);
+
+  /// What the held lines of a table hold.
+  ///
+  /// In en, this message translates to:
+  /// **'{lines} lines · {protected} protected in them · {open} open'**
+  String linesProtectedOpen(int lines, int protected, int open);
+
+  /// What holding lines of a table is for.
+  ///
+  /// In en, this message translates to:
+  /// **'Press a value to protect the same cell in every held line.'**
+  String get pressAValueToProtectEveryHeldLine;
+
+  /// Stops holding the lines of a table.
+  ///
+  /// In en, this message translates to:
+  /// **'Let the lines go'**
+  String get letTheLinesGo;
+
+  /// The two columns scroll together.
+  ///
+  /// In en, this message translates to:
+  /// **'In step'**
+  String get inStep;
+
+  /// The two columns scroll on their own.
+  ///
+  /// In en, this message translates to:
+  /// **'Apart'**
+  String get apart;
+
+  /// Tokens drawn as marked pieces.
+  ///
+  /// In en, this message translates to:
+  /// **'Chips'**
+  String get drawnAsChips;
+
+  /// Tokens drawn as the text itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain'**
+  String get drawnPlain;
+
+  /// 083 rule 4: a waiting word is real text in the middle column, and the column says so.
+  ///
+  /// In en, this message translates to:
+  /// **'One suggestion is still open. Until you answer it, it stands here as written — real text on this side.'**
+  String get oneSuggestionStillOpen;
+
+  /// 083 rule 4, for more than one waiting word.
+  ///
+  /// In en, this message translates to:
+  /// **'{open} suggestions are still open. Until you answer them, they stand here as written — the only real text on this side.'**
+  String suggestionsStillOpen(int open);
+
+  /// The send door: the AI is chosen in the middle column, where what leaves is read.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose who answers'**
+  String get chooseWhoAnswers;
+
+  /// Brings the third part back after it was put away.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the chat'**
+  String get showTheChat;
+
+  /// The box at the foot of the first part, with no document open.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to ask the AI?'**
+  String get whatWouldYouLikeToAskTheAi;
+
+  /// The box at the foot of the first part, with a document open.
+  ///
+  /// In en, this message translates to:
+  /// **'What should the AI do with this?'**
+  String get whatShouldTheAiDoWithThis;
+
+  /// The hint inside the box with no document: rule 63 — what is pasted here enters the preview like a file.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask a question, or paste a whole letter here.'**
+  String get askAQuestionOrPasteALetter;
+
+  /// The hint inside the box with a document open: an example of a request about it.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconcile section A against section B and tell me where the difference is.'**
+  String get reconcileSectionAgainstSection;
+
+  /// The question is already in the middle column.
+  ///
+  /// In en, this message translates to:
+  /// **'In what will leave'**
+  String get inWhatWillLeave;
+
+  /// Puts the typed question into the middle column.
+  ///
+  /// In en, this message translates to:
+  /// **'Add it to what will leave'**
+  String get addItToWhatWillLeave;
+
+  /// Why there is no refusal for an empty question: the document alone is a thing that may leave.
+  ///
+  /// In en, this message translates to:
+  /// **'A document can be sent with no request, and then the model is given no instruction'**
+  String get aDocumentCanBeSentWithNoRequest;
+
+  /// Takes the question back out of the middle column.
+  ///
+  /// In en, this message translates to:
+  /// **'Take it out'**
+  String get takeItOut;
+
+  /// What the core found in the question itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request is in the Safe column, with nothing in it to protect.'**
+  String get yourRequestNothingToProtect;
+
+  /// What the core found in the question itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request is in the Safe column, with one value replaced.'**
+  String get yourRequestOneValueReplaced;
+
+  /// What the core found in the question itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Your request is in the Safe column, with {count} values replaced.'**
+  String yourRequestValuesReplaced(int count);
+
+  /// Rule 67: one question stands in the middle column, and the thread is where the earlier ones are.
+  ///
+  /// In en, this message translates to:
+  /// **'One request at a time — a new question replaces this one, and the chat keeps every exchange.'**
+  String get oneRequestAtATime;
+
+  /// One waiting word in the question, and the press that lands on it.
+  ///
+  /// In en, this message translates to:
+  /// **'1 question left — go to it'**
+  String get oneQuestionLeftGoToIt;
+
+  /// Waiting words in the question, and the press that lands on the first.
+  ///
+  /// In en, this message translates to:
+  /// **'{open} questions left — go to the first'**
+  String questionsLeftGoToTheFirst(int open);
+
+  /// Answers one waiting word: protect it.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect it'**
+  String get protectIt;
+
+  /// Answers one waiting word: leave it as it is.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave it in the clear'**
+  String get leaveItInTheClear;
+
+  /// Which kind the one waiting word is, named by the core's own word for the kind.
+  ///
+  /// In en, this message translates to:
+  /// **'The one left is {kind}.'**
+  String theOneLeftIsKind(String kind);
+
+  /// Opens the middle column when it was hidden.
+  ///
+  /// In en, this message translates to:
+  /// **'Show what the AI will receive'**
+  String get showWhatTheAiWillReceive;
+
+  /// Puts the middle column away.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide this column'**
+  String get hideThisColumn;
+
+  /// Narrows the part of the screen this press sits in.
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow this panel'**
+  String get narrowThisPanel;
+
+  /// Widens the part of the screen this press sits in.
+  ///
+  /// In en, this message translates to:
+  /// **'Widen this panel'**
+  String get widenThisPanel;
+
+  /// Rule 68, under the chat's head: what the thread holds and that it travels.
+  ///
+  /// In en, this message translates to:
+  /// **'One exchange, carried into the next question.'**
+  String get oneExchangeCarriedIntoTheNext;
+
+  /// Rule 68, under the chat's head.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} exchanges, carried into the next question.'**
+  String exchangesCarriedIntoTheNext(int count);
+
+  /// Rule 71: hiding the third part is not ending the chat, and the tooltip says so rather than letting a person guess.
+  ///
+  /// In en, this message translates to:
+  /// **'Put the chat away — it is not ended'**
+  String get putTheChatAwayItIsNotEnded;
+
+  /// The chat panel with no turn in it yet.
+  ///
+  /// In en, this message translates to:
+  /// **'The first answer opens the chat here. Every question after it carries what was already said.'**
+  String get theFirstAnswerOpensTheChatHere;
+
+  /// The box at the foot of the thread: the next question of this chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask something else about this…'**
+  String get askSomethingElseAboutThis;
+
+  /// The box for an answer brought back by hand, from a model answered in a browser.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the answer you were given…'**
+  String get pasteTheAnswerYouWereGiven;
+
+  /// Takes the pasted answer into the thread, against the payload it belongs to.
+  ///
+  /// In en, this message translates to:
+  /// **'Add it to the chat'**
+  String get addItToTheChat;
+
+  /// Closes the paste box without adding anything.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// Rule 65's exit: every turn as it left, joined by the core.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the chat'**
+  String get copyTheChat;
+
+  /// Opens the box for an answer brought back by hand.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an answer'**
+  String get addAnAnswer;
+
+  /// Rule 71: the chat ends and the surface starts from zero inside the same session.
+  ///
+  /// In en, this message translates to:
+  /// **'End the chat'**
+  String get endTheChat;
+
+  /// After «Copy the chat»: what is on the clipboard and what to do next.
+  ///
+  /// In en, this message translates to:
+  /// **'The chat is on your clipboard, protected — bring the answer back with «Add an answer».'**
+  String get theChatIsOnYourClipboard;
+
+  /// The platform refused the read.
+  ///
+  /// In en, this message translates to:
+  /// **'Z Privacy could not read the clipboard.'**
+  String get couldNotReadTheClipboard;
+
+  /// Nothing to bring back.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no text on the clipboard.'**
+  String get thereIsNoTextOnTheClipboard;
+
+  /// Puts a restored answer away again.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide the text'**
+  String get hideTheText;
+
+  /// Shows a restored answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the text'**
+  String get showTheText;
+
+  /// Over a restored answer: the names are back here and the model never saw them.
+  ///
+  /// In en, this message translates to:
+  /// **'The text, with your names back — on this device'**
+  String get theTextWithYourNamesBack;
+
+  /// Rule 58: a block crosses a session, and a token from elsewhere cannot be put back here.
+  ///
+  /// In en, this message translates to:
+  /// **'This answer carries 1 token this session does not know — it was made in another session.'**
+  String get thisAnswerCarriesOneUnknownToken;
+
+  /// Rule 58, for more than one.
+  ///
+  /// In en, this message translates to:
+  /// **'This answer carries {count} tokens this session does not know — they were made in another session.'**
+  String thisAnswerCarriesUnknownTokens(int count);
+
+  /// The press that puts the real values on the system clipboard, after the question below.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Restored'**
+  String get copyRestored;
+
+  /// Under a restored answer in which every token could be put back.
+  ///
+  /// In en, this message translates to:
+  /// **'The marked words were put back here, on this device. The model never saw them.'**
+  String get theMarkedWordsWerePutBackHere;
+
+  /// Under a restored answer that carries a token from another session.
+  ///
+  /// In en, this message translates to:
+  /// **'The dotted words were put back here, on this device. The struck ones are tokens this session cannot put back.'**
+  String get theDottedWordsWerePutBackHere;
+
+  /// The head of the question asked before real values reach the system clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy restored text?'**
+  String get copyRestoredTextQuestion;
+
+  /// What «Copy Restored» does, said before it is done — the one place this app puts real values where another program can read them.
+  ///
+  /// In en, this message translates to:
+  /// **'This will place the real protected values on your system clipboard. Other applications may be able to read the clipboard.'**
+  String get thisWillPlaceTheRealValues;
+
+  /// Leaves a question without doing the thing it asked about.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// After the person confirmed it.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored text copied to the system clipboard.'**
+  String get restoredTextCopied;
+
+  /// Rule 60-أ's other half: the AI is chosen where what leaves can be read, so the arrow says why it is not live.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose who answers in the middle column first'**
+  String get chooseWhoAnswersInTheMiddleFirst;
+
+  /// The arrow at the foot of the thread, naming who will answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Send this question to {name}'**
+  String sendThisQuestionTo(String name);
+
+  /// The chat's own refusal for an empty box: said before the clipboard is touched and before any door is asked, because there is nothing to ask about.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a question first.'**
+  String get writeAQuestionFirst;
 }
 
 class _AppLocalizationsDelegate

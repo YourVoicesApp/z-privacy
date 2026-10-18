@@ -127,11 +127,12 @@ void main() {
       // door that had the payload, so this walks the manual pair a person
       // walks: the safe text is taken out, and the answer is brought back
       // against that payload.
+      // The session is the core's, born at the first document in the preview
+      // (rule 55c): the glass's own birth dance stood here and is deleted,
+      // because a second answer to that question is a second law.
       await ground.refresh();
-      if (ground.aSessionWouldBeBorn) {
-        await ground.beginSessionItNames(bench: bench.session);
-        await bench.refresh();
-      }
+      expect(ground.aSessionWouldBeBorn, isFalse,
+          reason: 'the core kept no session for the document in the preview');
       bench.rememberCopiedPayload();
       await bench.pasteAnswer('Das steht da.');
       await ground.refresh();

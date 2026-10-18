@@ -589,5 +589,636 @@
   "andBetweenNames": " and ",
   "@andBetweenNames": {
     "description": "079 — the joiner between two sessions' own names in «One name came back from «A» and «B».» A word on the glass, so it is in the list: German joins with «und», and the spaces are part of it because the names are already isolate-marked and must not touch it."
+  },
+  "thisLanguageName": "English",
+  "@thisLanguageName": {
+    "description": "A language's own name for itself, on the first screen, in its own panel. Never translated: «Deutsch» is what German calls German."
+  },
+  "languageWord": "Language",
+  "@languageWord": {
+    "description": "The word «language» in each language, for the first screen's eyebrow. Before a choice is made the eyebrow carries both, joined by «·» — composed from the two lists rather than written a third time."
+  },
+  "chooseALanguage": "Choose a language to continue.",
+  "@chooseALanguage": {
+    "description": "The first screen, before a language is chosen: one line per language offered, each in its own language, because a page that asked in English only would be asking the very person who may not read it."
+  },
+  "noAccount": "No account.",
+  "@noAccount": {
+    "description": "The first screen's promises, in the panel of the language they are about."
+  },
+  "noAds": "No ads.",
+  "@noAds": {
+    "description": "The first screen's promises."
+  },
+  "noAnalytics": "No analytics.",
+  "@noAnalytics": {
+    "description": "The first screen's promises. The German says «no analytics or tracking data», which is the same promise in the words German privacy law uses."
+  },
+  "noZPrivacyServer": "No Z Privacy server.",
+  "@noZPrivacyServer": {
+    "description": "The first screen's promises: there is no server of ours anywhere in the product."
+  },
+  "originalDataStaysHere": "Your original data stays on this device unless you explicitly copy restored content.",
+  "@originalDataStaysHere": {
+    "description": "The first screen's own statement of the product's law, and the one sentence a person reads before anything else."
+  },
+  "onlyTheProtectedVersionIsSent": "Only the protected version is sent to AI through Z Privacy.",
+  "@onlyTheProtectedVersionIsSent": {
+    "description": "Rule 62 on the first screen. The German is the wording the paper fixed and the owner has read; do not reword it."
+  },
+  "theseRulesWillBeEnabled": "The English privacy rules will be enabled.",
+  "@theseRulesWillBeEnabled": {
+    "description": "What choosing this language actually does, said before Start: it enables that language's rule set. Each language says it of itself, which is why one key carries «The English…» and «Die deutschen…»."
+  },
+  "start": "Start",
+  "@start": {
+    "description": "The press that leaves the first screen."
+  },
+  "yourVault": "Your vault",
+  "@yourVault": {
+    "description": "The first screen's second panel, after a language is chosen — drawn in the language that was chosen."
+  },
+  "createAVault": "Create a vault",
+  "@createAVault": {
+    "description": "The press that makes the vault, on the first screen."
+  },
+  "vaultWhy": "Every word you protect lives here, for as long as you keep this vault: the names you add, the values you teach, and the keys to any AI you connect. It stays on this computer, and nothing is written anywhere else.",
+  "@vaultWhy": {
+    "description": "What the vault is for, said before it is offered — not a warning and not a sales line, the reason. «Every word you protect» since 089, and that is the owner's own rule rather than a promise widened for effect: every word that takes a token becomes a block in the vault file and is never deleted, so the sentence that says what the vault is for has to say that first. It once read «the values you protect for good», which named only the «always» reach and left the person to find out that the rest was kept too. The last clause is the promise the whole product rests on."
+  },
+  "onePassphrase": "One passphrase, kept on this device. Everything Z learns while you work — your names, your lists, your decisions — is kept in it.",
+  "@onePassphrase": {
+    "description": "Under «Create a vault»: what the passphrase is for and where it stays."
+  },
+  "byYourVoices": "by YourVoices",
+  "@byYourVoices": {
+    "description": "The byline at the foot of the first page: who publishes Z Privacy. The publisher's name does not change; the word before it does, which is why this is a sentence and not a product name."
+  },
+  "pageHasNothingMarked": "Page {page} has nothing the scanner marked.",
+  "@pageHasNothingMarked": {
+    "description": "Said when «go to a page» lands on a page the scan found nothing on.",
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "addADocumentPdfWordOrText": "Add a document — PDF, Word or text",
+  "@addADocumentPdfWordOrText": {
+    "description": "The «+» at the top of the one screen, rule 72-أ: the way in."
+  },
+  "addADocumentOrWriteToTheAi": "Add a document — or write to the AI in the first part, with no document at all.",
+  "@addADocumentOrWriteToTheAi": {
+    "description": "What the empty first part says: rule 63's second half, that a question needs no document."
+  },
+  "originalLocalOnly": "Original — local only",
+  "@originalLocalOnly": {
+    "description": "The first column's name. «local only» is the law, not a decoration."
+  },
+  "neverSentToAiSendCannotRead": "Never sent to AI · Send cannot read this side",
+  "@neverSentToAiSendCannotRead": {
+    "description": "The first column's rule line: rule 62, and the contract's own promise that no door reads this text."
+  },
+  "yourDocumentArrivesHere": "Your document arrives here, as it is written. Nothing on this side can reach the network.",
+  "@yourDocumentArrivesHere": {
+    "description": "The first part when it is empty, said once rather than in each half."
+  },
+  "safeAiWillReceive": "Safe — AI will receive",
+  "@safeAiWillReceive": {
+    "description": "The middle column's name. The German says «das erhält die KI» because «Safe» as a noun has no German that is not a strongbox."
+  },
+  "theRequestItselfNotAPreview": "The request itself, not a preview of it",
+  "@theRequestItselfNotAPreview": {
+    "description": "The middle column's rule line: what stands there is the text that leaves, byte for byte."
+  },
+  "whatAnAiWouldReceiveStandsHere": "What an AI would receive stands here beside the original, word for word, before anything is sent.",
+  "@whatAnAiWouldReceiveStandsHere": {
+    "description": "The middle part when it is empty."
+  },
+  "theChatTitle": "The chat",
+  "@theChatTitle": {
+    "description": "The third part's name, and the head of the chat panel."
+  },
+  "yourQuestionsAndWhatCameBack": "Your questions, and what came back",
+  "@yourQuestionsAndWhatCameBack": {
+    "description": "The third part's rule line."
+  },
+  "theChatOpensHereWithTheFirstAnswer": "The chat opens here with the first answer, and every question after it carries what was already said.",
+  "@theChatOpensHereWithTheFirstAnswer": {
+    "description": "The third part when it is empty — rule 68's own promise, said before it is true."
+  },
+  "typedText": "Typed text",
+  "@typedText": {
+    "description": "The name of a document that came in through the box rather than from a file."
+  },
+  "onePage": "1 page",
+  "@onePage": {
+    "description": "How many pages the open document has, when it has one."
+  },
+  "pagesCount": "{pages} pages",
+  "@pagesCount": {
+    "description": "How many pages the open document has.",
+    "placeholders": {
+      "pages": {
+        "type": "int"
+      }
+    }
+  },
+  "vaultLabel": "Vault",
+  "@vaultLabel": {
+    "description": "The work bar's vault field. Not «sourceVault», which names where a finding came from and may be worded differently."
+  },
+  "vaultIsUnlocked": "Unlocked",
+  "@vaultIsUnlocked": {
+    "description": "The vault's state in the work bar."
+  },
+  "vaultIsLocked": "Locked",
+  "@vaultIsLocked": {
+    "description": "The vault's state in the work bar."
+  },
+  "vaultIsNone": "None",
+  "@vaultIsNone": {
+    "description": "The vault's state in the work bar when this device has none. Masculine in German, because «Tresor» is."
+  },
+  "openZVault": "Open Z Vault",
+  "@openZVault": {
+    "description": "The press that opens the vault board."
+  },
+  "lockNow": "Lock now",
+  "@lockNow": {
+    "description": "The press that locks the vault at once."
+  },
+  "openZVaultOrLockItNow": "Open Z Vault, or lock it now",
+  "@openZVaultOrLockItNow": {
+    "description": "The tooltip over the vault field while it is unlocked, when both acts are offered."
+  },
+  "goToAPage": "Go to a page",
+  "@goToAPage": {
+    "description": "The tooltip over the page chooser."
+  },
+  "pageNumber": "Page {page}",
+  "@pageNumber": {
+    "description": "One row of the page chooser.",
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "pageWord": "Page",
+  "@pageWord": {
+    "description": "The page chooser's own label in the work bar."
+  },
+  "chooseTheAiAndWhatTravels": "Choose the AI and what travels to it",
+  "@chooseTheAiAndWhatTravels": {
+    "description": "The tooltip over the send door in the work bar."
+  },
+  "readThisDocumentWithAnotherRuleSet": "Read this document with another rule set",
+  "@readThisDocumentWithAnotherRuleSet": {
+    "description": "The tooltip over the pack chooser."
+  },
+  "generalRulesOnly": "General rules only",
+  "@generalRulesOnly": {
+    "description": "The row that chooses no language pack: the general rules and the person's own lists, and nothing else."
+  },
+  "packLabel": "Pack",
+  "@packLabel": {
+    "description": "The work bar's pack field. Not «sourcePack», which names where a finding came from. The German is «Sprachpaket», the word the house fixed."
+  },
+  "packWithGeneralRules": "{pack} · general rules",
+  "@packWithGeneralRules": {
+    "description": "The pack field when the pack carries no rules of its own.",
+    "placeholders": {
+      "pack": {
+        "type": "String"
+      }
+    }
+  },
+  "everywhere": "Everywhere",
+  "@everywhere": {
+    "description": "The profile that is no profile: identities and rules that apply to every client."
+  },
+  "profile": "Profile",
+  "@profile": {
+    "description": "The work bar's profile field."
+  },
+  "profiles": "Profiles",
+  "@profiles": {
+    "description": "The head of the profile sheet."
+  },
+  "chooseWhichClientDictionary": "Choose which client dictionary this session uses. The profile ID stays inside the vault; the display name is what people see.",
+  "@chooseWhichClientDictionary": {
+    "description": "What the profile sheet is for, and the one promise about the ID."
+  },
+  "onlyIdentitiesForEveryProfile": "Only identities and rules that apply to every profile.",
+  "@onlyIdentitiesForEveryProfile": {
+    "description": "What «Everywhere» means, under its row."
+  },
+  "createProfile": "Create profile",
+  "@createProfile": {
+    "description": "The press in the profile sheet."
+  },
+  "done": "Done",
+  "@done": {
+    "description": "Closes a sheet that asked nothing."
+  },
+  "rename": "Rename",
+  "@rename": {
+    "description": "Renames the profile a row names."
+  },
+  "profileActive": "Active",
+  "@profileActive": {
+    "description": "The profile this session is already using."
+  },
+  "profileSwitch": "Switch",
+  "@profileSwitch": {
+    "description": "Moves this session to the profile a row names."
+  },
+  "readItBack": "Read it back",
+  "@readItBack": {
+    "description": "The door back: z-pdf reads a protected PDF and puts the names back."
+  },
+  "scanning": "Scanning…",
+  "@scanning": {
+    "description": "While the core is reading the document."
+  },
+  "notScannedYet": "Not scanned yet",
+  "@notScannedYet": {
+    "description": "A document in the preview that no scan has read."
+  },
+  "asItWasKept": "As it was kept",
+  "@asItWasKept": {
+    "description": "089 rule 9: a document that came back out of a session's own file carries its decisions, so the band says that rather than three zeros."
+  },
+  "lastScanNote": "Last scan: {note}",
+  "@lastScanNote": {
+    "description": "What the core itself says about the last scan.",
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "scannedOnImport": "Scanned on import",
+  "@scannedOnImport": {
+    "description": "The scan happened as the document came in."
+  },
+  "lastScanManualRescan": "Last scan: manual rescan",
+  "@lastScanManualRescan": {
+    "description": "The person asked for the scan themselves."
+  },
+  "alreadyProtectedNothingScanned": "{marks} already protected · nothing scanned in this run",
+  "@alreadyProtectedNothingScanned": {
+    "description": "A document that came back with its marks, before any scan in this sitting.",
+    "placeholders": {
+      "marks": {
+        "type": "int"
+      }
+    }
+  },
+  "protectedAutomaticallyNeedYourWord": "{auto} protected automatically · {open} need your word · {normal} normal",
+  "@protectedAutomaticallyNeedYourWord": {
+    "description": "The band over the document: the three numbers the core counted, never computed on the glass.",
+    "placeholders": {
+      "auto": {
+        "type": "int"
+      },
+      "open": {
+        "type": "int"
+      },
+      "normal": {
+        "type": "int"
+      }
+    }
+  },
+  "vaultLockedRulesAndPackRan": "Vault locked — rules and pack ran, the vault layer did not",
+  "@vaultLockedRulesAndPackRan": {
+    "description": "What a scan with a locked vault did and did not do. Protection never needed the vault; names do."
+  },
+  "noVaultNothingRecognisedByName": "No vault — nothing is recognised by name",
+  "@noVaultNothingRecognisedByName": {
+    "description": "What a scan on a device with no vault can and cannot do."
+  },
+  "unlock": "Unlock",
+  "@unlock": {
+    "description": "Opens a vault that exists."
+  },
+  "removeTheDocument": "Remove the document",
+  "@removeTheDocument": {
+    "description": "Rule 71: the document goes and the session stays — 089 rule 9 keeps what was already kept."
+  },
+  "nothingIsOpen": "Nothing is open.",
+  "@nothingIsOpen": {
+    "description": "The first column with no document in it."
+  },
+  "thereIsNothingToSendYet": "There is nothing to send yet.",
+  "@thereIsNothingToSendYet": {
+    "description": "The middle column with neither a document nor a question in it."
+  },
+  "readingWhatThoseLinesHold": "Reading what those lines hold…",
+  "@readingWhatThoseLinesHold": {
+    "description": "While the core reads the held lines of a table."
+  },
+  "oneLineProtectedOpen": "1 line · {protected} protected in it · {open} open",
+  "@oneLineProtectedOpen": {
+    "description": "What one held line of a table holds.",
+    "placeholders": {
+      "protected": {
+        "type": "int"
+      },
+      "open": {
+        "type": "int"
+      }
+    }
+  },
+  "linesProtectedOpen": "{lines} lines · {protected} protected in them · {open} open",
+  "@linesProtectedOpen": {
+    "description": "What the held lines of a table hold.",
+    "placeholders": {
+      "lines": {
+        "type": "int"
+      },
+      "protected": {
+        "type": "int"
+      },
+      "open": {
+        "type": "int"
+      }
+    }
+  },
+  "pressAValueToProtectEveryHeldLine": "Press a value to protect the same cell in every held line.",
+  "@pressAValueToProtectEveryHeldLine": {
+    "description": "What holding lines of a table is for."
+  },
+  "letTheLinesGo": "Let the lines go",
+  "@letTheLinesGo": {
+    "description": "Stops holding the lines of a table."
+  },
+  "inStep": "In step",
+  "@inStep": {
+    "description": "The two columns scroll together."
+  },
+  "apart": "Apart",
+  "@apart": {
+    "description": "The two columns scroll on their own."
+  },
+  "drawnAsChips": "Chips",
+  "@drawnAsChips": {
+    "description": "Tokens drawn as marked pieces."
+  },
+  "drawnPlain": "Plain",
+  "@drawnPlain": {
+    "description": "Tokens drawn as the text itself."
+  },
+  "oneSuggestionStillOpen": "One suggestion is still open. Until you answer it, it stands here as written — real text on this side.",
+  "@oneSuggestionStillOpen": {
+    "description": "083 rule 4: a waiting word is real text in the middle column, and the column says so."
+  },
+  "suggestionsStillOpen": "{open} suggestions are still open. Until you answer them, they stand here as written — the only real text on this side.",
+  "@suggestionsStillOpen": {
+    "description": "083 rule 4, for more than one waiting word.",
+    "placeholders": {
+      "open": {
+        "type": "int"
+      }
+    }
+  },
+  "chooseWhoAnswers": "Choose who answers",
+  "@chooseWhoAnswers": {
+    "description": "The send door: the AI is chosen in the middle column, where what leaves is read."
+  },
+  "showTheChat": "Show the chat",
+  "@showTheChat": {
+    "description": "Brings the third part back after it was put away."
+  },
+  "whatWouldYouLikeToAskTheAi": "What would you like to ask the AI?",
+  "@whatWouldYouLikeToAskTheAi": {
+    "description": "The box at the foot of the first part, with no document open."
+  },
+  "whatShouldTheAiDoWithThis": "What should the AI do with this?",
+  "@whatShouldTheAiDoWithThis": {
+    "description": "The box at the foot of the first part, with a document open."
+  },
+  "askAQuestionOrPasteALetter": "Ask a question, or paste a whole letter here.",
+  "@askAQuestionOrPasteALetter": {
+    "description": "The hint inside the box with no document: rule 63 — what is pasted here enters the preview like a file."
+  },
+  "reconcileSectionAgainstSection": "Reconcile section A against section B and tell me where the difference is.",
+  "@reconcileSectionAgainstSection": {
+    "description": "The hint inside the box with a document open: an example of a request about it."
+  },
+  "inWhatWillLeave": "In what will leave",
+  "@inWhatWillLeave": {
+    "description": "The question is already in the middle column."
+  },
+  "addItToWhatWillLeave": "Add it to what will leave",
+  "@addItToWhatWillLeave": {
+    "description": "Puts the typed question into the middle column."
+  },
+  "aDocumentCanBeSentWithNoRequest": "A document can be sent with no request, and then the model is given no instruction",
+  "@aDocumentCanBeSentWithNoRequest": {
+    "description": "Why there is no refusal for an empty question: the document alone is a thing that may leave."
+  },
+  "takeItOut": "Take it out",
+  "@takeItOut": {
+    "description": "Takes the question back out of the middle column."
+  },
+  "yourRequestNothingToProtect": "Your request is in the Safe column, with nothing in it to protect.",
+  "@yourRequestNothingToProtect": {
+    "description": "What the core found in the question itself."
+  },
+  "yourRequestOneValueReplaced": "Your request is in the Safe column, with one value replaced.",
+  "@yourRequestOneValueReplaced": {
+    "description": "What the core found in the question itself."
+  },
+  "yourRequestValuesReplaced": "Your request is in the Safe column, with {count} values replaced.",
+  "@yourRequestValuesReplaced": {
+    "description": "What the core found in the question itself.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneRequestAtATime": "One request at a time — a new question replaces this one, and the chat keeps every exchange.",
+  "@oneRequestAtATime": {
+    "description": "Rule 67: one question stands in the middle column, and the thread is where the earlier ones are."
+  },
+  "oneQuestionLeftGoToIt": "1 question left — go to it",
+  "@oneQuestionLeftGoToIt": {
+    "description": "One waiting word in the question, and the press that lands on it."
+  },
+  "questionsLeftGoToTheFirst": "{open} questions left — go to the first",
+  "@questionsLeftGoToTheFirst": {
+    "description": "Waiting words in the question, and the press that lands on the first.",
+    "placeholders": {
+      "open": {
+        "type": "int"
+      }
+    }
+  },
+  "protectIt": "Protect it",
+  "@protectIt": {
+    "description": "Answers one waiting word: protect it."
+  },
+  "leaveItInTheClear": "Leave it in the clear",
+  "@leaveItInTheClear": {
+    "description": "Answers one waiting word: leave it as it is."
+  },
+  "theOneLeftIsKind": "The one left is {kind}.",
+  "@theOneLeftIsKind": {
+    "description": "Which kind the one waiting word is, named by the core's own word for the kind.",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "showWhatTheAiWillReceive": "Show what the AI will receive",
+  "@showWhatTheAiWillReceive": {
+    "description": "Opens the middle column when it was hidden."
+  },
+  "hideThisColumn": "Hide this column",
+  "@hideThisColumn": {
+    "description": "Puts the middle column away."
+  },
+  "narrowThisPanel": "Narrow this panel",
+  "@narrowThisPanel": {
+    "description": "Narrows the part of the screen this press sits in."
+  },
+  "widenThisPanel": "Widen this panel",
+  "@widenThisPanel": {
+    "description": "Widens the part of the screen this press sits in."
+  },
+  "oneExchangeCarriedIntoTheNext": "One exchange, carried into the next question.",
+  "@oneExchangeCarriedIntoTheNext": {
+    "description": "Rule 68, under the chat's head: what the thread holds and that it travels."
+  },
+  "exchangesCarriedIntoTheNext": "{count} exchanges, carried into the next question.",
+  "@exchangesCarriedIntoTheNext": {
+    "description": "Rule 68, under the chat's head.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "putTheChatAwayItIsNotEnded": "Put the chat away — it is not ended",
+  "@putTheChatAwayItIsNotEnded": {
+    "description": "Rule 71: hiding the third part is not ending the chat, and the tooltip says so rather than letting a person guess."
+  },
+  "theFirstAnswerOpensTheChatHere": "The first answer opens the chat here. Every question after it carries what was already said.",
+  "@theFirstAnswerOpensTheChatHere": {
+    "description": "The chat panel with no turn in it yet."
+  },
+  "askSomethingElseAboutThis": "Ask something else about this…",
+  "@askSomethingElseAboutThis": {
+    "description": "The box at the foot of the thread: the next question of this chat."
+  },
+  "pasteTheAnswerYouWereGiven": "Paste the answer you were given…",
+  "@pasteTheAnswerYouWereGiven": {
+    "description": "The box for an answer brought back by hand, from a model answered in a browser."
+  },
+  "addItToTheChat": "Add it to the chat",
+  "@addItToTheChat": {
+    "description": "Takes the pasted answer into the thread, against the payload it belongs to."
+  },
+  "notNow": "Not now",
+  "@notNow": {
+    "description": "Closes the paste box without adding anything."
+  },
+  "copyTheChat": "Copy the chat",
+  "@copyTheChat": {
+    "description": "Rule 65's exit: every turn as it left, joined by the core."
+  },
+  "addAnAnswer": "Add an answer",
+  "@addAnAnswer": {
+    "description": "Opens the box for an answer brought back by hand."
+  },
+  "endTheChat": "End the chat",
+  "@endTheChat": {
+    "description": "Rule 71: the chat ends and the surface starts from zero inside the same session."
+  },
+  "theChatIsOnYourClipboard": "The chat is on your clipboard, protected — bring the answer back with «Add an answer».",
+  "@theChatIsOnYourClipboard": {
+    "description": "After «Copy the chat»: what is on the clipboard and what to do next."
+  },
+  "couldNotReadTheClipboard": "Z Privacy could not read the clipboard.",
+  "@couldNotReadTheClipboard": {
+    "description": "The platform refused the read."
+  },
+  "thereIsNoTextOnTheClipboard": "There is no text on the clipboard.",
+  "@thereIsNoTextOnTheClipboard": {
+    "description": "Nothing to bring back."
+  },
+  "hideTheText": "Hide the text",
+  "@hideTheText": {
+    "description": "Puts a restored answer away again."
+  },
+  "showTheText": "Show the text",
+  "@showTheText": {
+    "description": "Shows a restored answer."
+  },
+  "theTextWithYourNamesBack": "The text, with your names back — on this device",
+  "@theTextWithYourNamesBack": {
+    "description": "Over a restored answer: the names are back here and the model never saw them."
+  },
+  "thisAnswerCarriesOneUnknownToken": "This answer carries 1 token this session does not know — it was made in another session.",
+  "@thisAnswerCarriesOneUnknownToken": {
+    "description": "Rule 58: a block crosses a session, and a token from elsewhere cannot be put back here."
+  },
+  "thisAnswerCarriesUnknownTokens": "This answer carries {count} tokens this session does not know — they were made in another session.",
+  "@thisAnswerCarriesUnknownTokens": {
+    "description": "Rule 58, for more than one.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "copyRestored": "Copy Restored",
+  "@copyRestored": {
+    "description": "The press that puts the real values on the system clipboard, after the question below."
+  },
+  "theMarkedWordsWerePutBackHere": "The marked words were put back here, on this device. The model never saw them.",
+  "@theMarkedWordsWerePutBackHere": {
+    "description": "Under a restored answer in which every token could be put back."
+  },
+  "theDottedWordsWerePutBackHere": "The dotted words were put back here, on this device. The struck ones are tokens this session cannot put back.",
+  "@theDottedWordsWerePutBackHere": {
+    "description": "Under a restored answer that carries a token from another session."
+  },
+  "copyRestoredTextQuestion": "Copy restored text?",
+  "@copyRestoredTextQuestion": {
+    "description": "The head of the question asked before real values reach the system clipboard."
+  },
+  "thisWillPlaceTheRealValues": "This will place the real protected values on your system clipboard. Other applications may be able to read the clipboard.",
+  "@thisWillPlaceTheRealValues": {
+    "description": "What «Copy Restored» does, said before it is done — the one place this app puts real values where another program can read them."
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Leaves a question without doing the thing it asked about."
+  },
+  "restoredTextCopied": "Restored text copied to the system clipboard.",
+  "@restoredTextCopied": {
+    "description": "After the person confirmed it."
+  },
+  "chooseWhoAnswersInTheMiddleFirst": "Choose who answers in the middle column first",
+  "@chooseWhoAnswersInTheMiddleFirst": {
+    "description": "Rule 60-أ's other half: the AI is chosen where what leaves can be read, so the arrow says why it is not live."
+  },
+  "sendThisQuestionTo": "Send this question to {name}",
+  "@sendThisQuestionTo": {
+    "description": "The arrow at the foot of the thread, naming who will answer.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "writeAQuestionFirst": "Write a question first.",
+  "@writeAQuestionFirst": {
+    "description": "The chat's own refusal for an empty box: said before the clipboard is touched and before any door is asked, because there is nothing to ask about."
   }
 }

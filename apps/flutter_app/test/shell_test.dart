@@ -1875,10 +1875,17 @@ Future<void> freshVaultForUiTest(String name) async {
 /// honest screen, and not the one these guards are about.
 Future<void> aSessionToKeepItIn(Ground ground, Workbench bench) async {
   await ground.refresh();
-  if (ground.aSessionWouldBeBorn) {
-    await ground.beginSessionItNames(bench: bench.session);
-    await bench.refresh();
-  }
+  // **And it no longer begins one.** Five lines stood here that asked
+  // `aSessionWouldBeBorn` and called `beginSessionItNames` — the glass's own
+  // birth dance, written when the law lived in the screen. It is the core's
+  // now: a session is born as the document enters the preview (rule 55c) and
+  // again for a question that leaves with no document (rule 55-و), so by the
+  // time these guards have a document on the bench there is a session, and
+  // the dance was a second answer to a question already answered. What is
+  // left is the one thing this helper was ever for: read the ground, so the
+  // guard measures the state rather than arranging it.
+  expect(ground.aSessionWouldBeBorn, isFalse,
+      reason: 'the core did not begin a session for the document in the preview');
 }
 
 /// Captures clipboard writes. Widget tests have no system clipboard; this is

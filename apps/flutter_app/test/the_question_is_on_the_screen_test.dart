@@ -196,17 +196,19 @@ void main() {
     // An answer through the door that works offline: the safe text goes out by
     // hand and comes back. The thread then has a turn to draw.
     //
-    // **The session is begun first, because that is what keeps a turn.** The
-    // copy door begins one by itself (rule 55: a session is born at the first
-    // exit) and this walks the same step by hand: without it the answer is
-    // kept nowhere, the chat has nothing to draw, and the panel says so in
-    // `theChatKeepsNothing` — which is an honest screen and not the shape
-    // rules 65 and 66 are about.
+    // **The session is already there, and that is now measured rather than
+    // arranged.** Five lines stood here that began one by hand, because the
+    // law used to live in the screen; the core births at the first document in
+    // the preview (rule 55c) and at the first question that leaves with none
+    // (rule 55-و), so a bench with a document on it has a session. Without one
+    // the answer would be kept nowhere, the chat would have nothing to draw,
+    // and the panel would say so in `theChatKeepsNothing` — an honest screen,
+    // and not the shape rules 65 and 66 are about, which is why this asserts
+    // instead of arranging.
     await tester.runAsync(() async {
-      if (ground.aSessionWouldBeBorn) {
-        await ground.beginSessionItNames(bench: bench.session);
-        await bench.refresh();
-      }
+      await ground.refresh();
+      expect(ground.aSessionWouldBeBorn, isFalse,
+          reason: 'the core kept no session for the document in the preview');
       bench.rememberCopiedPayload();
       await bench.pasteAnswer('They earned 42 500.');
     });
