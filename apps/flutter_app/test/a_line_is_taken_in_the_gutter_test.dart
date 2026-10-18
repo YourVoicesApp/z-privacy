@@ -103,7 +103,7 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name, {String text
   });
   addTearDown(bench.dispose);
   await tester.pumpWidget(MaterialApp(
-    home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+    home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
   ));
   await settle(tester);
   return (ground, bench);

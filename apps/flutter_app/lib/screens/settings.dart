@@ -36,11 +36,16 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/conversation_view.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 
-/// **Appended, never inserted** — 064. `_SettingsScreenState` defaults to
-/// `SettingsRoom.ai` and the send sheet's own door relies on landing there,
-/// where a key is asked for. Its guards name the room rather than its position,
-/// so a room added at the end costs that door nothing and a changed default
-/// would cost it everything.
+/// **Appended, never inserted** — 064. The guards name a room rather than its
+/// position, so a room added at the end costs the doors nothing.
+///
+/// **The default is `sessions` since rule 74** (the owner, 18 October 2026:
+/// the settings open on the list of what he kept, not on the AI room). The
+/// sentence here used to warn that «a changed default would cost everything»
+/// to the send sheet's «Open Settings», which relied on landing in the room
+/// where a key is asked for — so that reliance is gone: every door that is
+/// about a credential now names `SettingsRoom.ai` itself, and the default is
+/// free to be what the owner asked for.
 enum SettingsRoom { ai, privacy, language, vault, sessions }
 
 /// **The one door to the settings, and the one way back out.**
@@ -97,6 +102,7 @@ class SettingsScreen extends StatefulWidget {
     this.bench,
     this.onOpenKept,
     this.onReadBack,
+    this.onFromZero,
   });
 
   final Ground ground;
@@ -105,6 +111,13 @@ class SettingsScreen extends StatefulWidget {
   /// no shell behind it (a test of the room itself), and the rows then say so
   /// rather than offering a press that does nothing.
   final OpenKept? onOpenKept;
+
+  /// **A new chat starts from zero** — rule 71, for the two of its three doors
+  /// that live in this panel: a session deleted from its room, and a new
+  /// session opened. The surface is the shell's bench, so the panel says one
+  /// of them happened and the shell is what empties. Null where a guard mounts
+  /// the panel with no shell behind it, as `onOpenKept` is.
+  final VoidCallback? onFromZero;
 
   /// **«z-pdf», the door back — and this is where it lives since rule 70.**
   ///
@@ -132,7 +145,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  late SettingsRoom _room = widget.room ?? SettingsRoom.ai;
+  /// **Rule 74**: the room the settings open on, when a press did not name
+  /// one. The owner's own order of what matters — what he kept comes first.
+  late SettingsRoom _room = widget.room ?? SettingsRoom.sessions;
 
   /// **The catalogue, asked for when the panel opens** — 064/C.
   ///
@@ -240,6 +255,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ground: g,
                     bench: widget.bench,
                     onOpenKept: widget.onOpenKept,
+                    onFromZero: widget.onFromZero,
                   ),
                 },
               ),
@@ -776,10 +792,19 @@ class _Title extends StatelessWidget {
 /// the lead's inference from a build where only the exit could make one, and
 /// the owner's later words supersede it.
 class _SessionsRoom extends StatefulWidget {
-  const _SessionsRoom({required this.ground, this.bench, this.onOpenKept});
+  const _SessionsRoom({
+    required this.ground,
+    this.bench,
+    this.onOpenKept,
+    this.onFromZero,
+  });
 
   final Ground ground;
   final OpenKept? onOpenKept;
+
+  /// Rule 71: a session deleted here, or a new one begun here, ends a chat —
+  /// and the surface then starts from zero.
+  final VoidCallback? onFromZero;
 
   /// The document open behind the panel. Passed to the birth so the names on it
   /// move into the new session — see [SettingsScreen.bench].
@@ -856,6 +881,11 @@ class _SessionsRoomState extends State<_SessionsRoom> {
       // `sessionBegunSaid`. The room shows the sentence; it does not write it.
       _said = sessionBegunSaid(renamed, hadDocument: widget.bench != null);
     });
+    // **Rule 71: a new session opened starts the surface from zero.** Said
+    // after the sentence above and not instead of it: the person is told what
+    // the birth did — and what it renamed, if it renamed anything — and the
+    // surface then empties under the panel they are standing in.
+    widget.onFromZero?.call();
   }
 
   @override
@@ -956,6 +986,7 @@ class _SessionsRoomState extends State<_SessionsRoom> {
               open: row.number == g.openSession,
               bench: widget.bench,
               onOpenKept: widget.onOpenKept,
+              onFromZero: widget.onFromZero,
             ),
       ],
     );
@@ -970,12 +1001,17 @@ class _SessionRow extends StatelessWidget {
     required this.open,
     this.bench,
     this.onOpenKept,
+    this.onFromZero,
   });
 
   final Ground ground;
   final ConversationRow row;
   final bool open;
   final OpenKept? onOpenKept;
+
+  /// Rule 71: deleting **this** session, when it is the open one, ends its
+  /// chat — and the surface starts from zero.
+  final VoidCallback? onFromZero;
 
   /// The document in front of the person, when there is one: the core names
   /// this session's tokens from its own key, and the reading is better with it.
@@ -1207,7 +1243,18 @@ class _SessionRow extends StatelessWidget {
         ],
       ),
     );
-    if (gone == true) await ground.forgetSession(row.number);
+    if (gone != true) return;
+    // **Was this the session the surface's work belongs to?** Asked before the
+    // delete, because afterwards the core has already let the number go — a
+    // `forget` clears `open_conversation` when it was the open one, so reading
+    // it after would answer «no» about the very session that was open.
+    final itWasTheOpenOne = ground.openSession == row.number;
+    await ground.forgetSession(row.number);
+    // **Rule 71: the session deleted ends its chat**, and the surface starts
+    // from zero. Only its own: deleting *another* session takes nothing off
+    // the glass, which is the difference between «its session» in the owner's
+    // words and «a session».
+    if (itWasTheOpenOne) onFromZero?.call();
   }
 }
 

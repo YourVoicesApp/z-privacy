@@ -62,7 +62,7 @@ void main() {
     });
 
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {})),
+      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {})),
     );
     await settle(tester);
 
@@ -112,7 +112,7 @@ void main() {
     expect(bench.payload!.openSuggestions, greaterThan(0), reason: 'this document asks nothing');
 
     await tester.pumpWidget(
-      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {})),
+      MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {})),
     );
     await settle(tester);
 
@@ -213,14 +213,14 @@ void main() {
         home: WorkspaceScreen(
           bench: bench,
           ground: ground,
-          onImport: () {}, onType: (_) {},
+          onImport: () {}, onAsk: (_) {},
           onVault: () {},
           // **Setup, changed on 8 October; the claim below did not.**
           // The way to connect an unreached provider is now the settings
           // panel, so this screen has to have one for the chooser to draw
           // the door at all — a surface with nowhere to send the press
           // draws no door rather than a dead one.
-          onSettings: () {},
+          onSettings: (_) {},
         ),
       ),
     );

@@ -79,9 +79,9 @@ void main() {
         bench: null,
         ground: ground,
         onImport: () => toWorkOn += 1,
-        onType: (text) => typed = text,
+        onAsk: (text) => typed = text,
         onVault: () {},
-        onSettings: () {},
+        onSettings: (_) {},
       ),
     ));
     await _settle(tester, rounds: 2);
@@ -91,7 +91,13 @@ void main() {
         reason: 'there is no way to add a document to the one screen');
     expect(find.byKey(WorkspaceScreen.composer), findsOneWidget,
         reason: 'there is no box to write or paste into');
-    expect(find.text('Write or paste your text here…'), findsOneWidget);
+    // **One box since rule 72-أ**: the strip's own box is deleted and the one
+    // that is left is the request box in the first part, which says what it is
+    // for with no document above it.
+    expect(find.text('Write or paste your text here…'), findsNothing,
+        reason: 'the second box is back at the top of the screen');
+    expect(find.text('What would you like to ask the AI?'), findsOneWidget,
+        reason: 'the one box does not say what it is for on an empty surface');
 
     // The three parts, each naming what it will hold. The eyebrows are drawn
     // upper-cased, so this is the word as it stands on the glass.
@@ -117,7 +123,12 @@ void main() {
     expect(toWorkOn, 1, reason: 'the «+» opened nothing');
     await tester.enterText(find.byKey(WorkspaceScreen.composer), 'Ein Satz.');
     await _settle(tester, rounds: 1);
-    await tester.tap(find.text('Open and scan'));
+    // **Rule 72-أ, 18 October 2026**: the strip's box and its «Open and scan»
+    // are deleted, and the one box is the request box in the first part. What
+    // is written there is the request — protected, and the whole of what leaves
+    // when no document stands above it — so this is the same act through the
+    // one door there is now.
+    await tester.tap(find.byKey(const ValueKey<String>('workspace-question-attach')));
     await tester.pump();
     expect(typed, 'Ein Satz.', reason: 'what was written did not open');
 
@@ -149,9 +160,9 @@ void main() {
         bench: bench,
         ground: ground,
         onImport: () {},
-        onType: (_) {},
+        onAsk: (_) {},
         onVault: () {},
-        onSettings: () {},
+        onSettings: (_) {},
       ),
     ));
     await _settle(tester);
@@ -188,9 +199,9 @@ void main() {
         bench: null,
         ground: ground,
         onImport: () {},
-        onType: (_) {},
+        onAsk: (_) {},
         onVault: () {},
-        onSettings: () {},
+        onSettings: (_) {},
       ),
     ));
     await _settle(tester, rounds: 2);

@@ -39,7 +39,7 @@ Future<(Workbench, Ground)> _open(WidgetTester tester, String text) async {
   });
   await tester.binding.setSurfaceSize(const Size(1500, 1000));
   await tester.pumpWidget(
-    MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {})),
+    MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {})),
   );
   await settle(tester);
   return (bench, ground);

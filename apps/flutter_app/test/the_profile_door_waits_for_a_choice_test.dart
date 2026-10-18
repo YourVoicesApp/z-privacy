@@ -90,7 +90,7 @@ Future<(Ground, Workbench)> _workspace(
       home: WorkspaceScreen(
         bench: bench,
         ground: ground,
-        onImport: () {}, onType: (_) {},
+        onImport: () {}, onAsk: (_) {},
         onVault: () {},
       ),
     ),

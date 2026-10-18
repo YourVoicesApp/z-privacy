@@ -105,8 +105,13 @@ void main() {
     await settle(tester);
     expect(find.byType(WorkspaceScreen), findsOneWidget,
         reason: 'an open vault did not reach the work');
-    expect(find.text('Write or paste your text here…'), findsOneWidget,
-        reason: 'the way in is not behind the vault');
+    // **The way in, since rule 72-أ**: the «+» for a file at the top, and the
+    // one box in the first part. The strip's own box and its sentence are
+    // deleted, so what is read for is the box a person writes in.
+    expect(find.byKey(WorkspaceScreen.addDocument), findsOneWidget,
+        reason: 'the way in for a file is not behind the vault');
+    expect(find.byKey(WorkspaceScreen.composer), findsOneWidget,
+        reason: 'the box a person writes in is not behind the vault');
   });
 
   testWidgets('with the vault locked, starting work opens the vault instead', (tester) async {

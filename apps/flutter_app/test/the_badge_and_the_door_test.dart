@@ -82,7 +82,7 @@ void main() {
       await bench.rescan();
     });
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
     ));
     await settle(tester);
     return (bench, ground);

@@ -347,20 +347,29 @@ void main() {
         home: Scaffold(
           body: SizedBox(
             width: 480,
-            child: SettingsScreen(ground: ground, onClose: () {}),
+            // **The room is named since rule 74** (18 October 2026): the
+            // panel opens on Sessions now, and every door that is about a key
+            // names `SettingsRoom.ai` itself — which is exactly what this
+            // guard is about, so it names it too.
+            child: SettingsScreen(
+              ground: ground,
+              room: SettingsRoom.ai,
+              onClose: () {},
+            ),
           ),
         ),
       ),
     );
     await settle(tester);
 
-    // The AI room is the room the panel opens on, so a door that only opens
-    // the panel lands where the key is asked for. If that default ever moves,
-    // this is the line that will say so.
+    // **The room a door names is the room it lands in** — which is what the
+    // send sheet's «Open Settings» relies on since rule 74 moved the panel's
+    // own default to Sessions. It used to rely on the default instead, and the
+    // sentence here said so.
     expect(
       find.text('AI'),
       findsWidgets,
-      reason: 'the panel did not open on the room the key lives in',
+      reason: 'a door that named the AI room did not land in it',
     );
 
     // **The counts come from the core, not from a literal.** The old form of
@@ -502,9 +511,9 @@ void main() {
           home: WorkspaceScreen(
             bench: bench,
             ground: ground,
-            onImport: () {}, onType: (_) {},
+            onImport: () {}, onAsk: (_) {},
             onVault: () {},
-            onSettings: () => askedForSettings++,
+            onSettings: (_) => askedForSettings++,
             settingsOpen: panelStanding,
           ),
         ),

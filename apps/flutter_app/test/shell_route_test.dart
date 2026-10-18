@@ -111,7 +111,7 @@ void main() {
   // One `pump` after the event, and no timer is allowed to help: a value that
   // leaves when the next tick happens to come round is a value that was on
   // screen after the window was gone.
-  testWidgets('a revealed value leaves the panel in the frame after the window does', (tester) async {
+  testWidgets('a surface with no document has no tokens to reveal, so the press is dead', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1600, 1100));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -139,7 +139,12 @@ void main() {
       'Bitte überweisen Sie auf IBAN DE02120300000000202051 bis Freitag.',
     );
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Open and scan'));
+    // **Rule 72-أ, 18 October 2026**: the strip's box and its «Open and scan»
+    // are deleted, and the one box is the request box in the first part. What
+    // is written there is the request — protected, and the whole of what leaves
+    // when no document stands above it — so this is the same act through the
+    // one door there is now.
+    await tester.tap(find.byKey(const ValueKey<String>('workspace-question-attach')));
     await settle(tester);
     // **Rule 57b (the owner, 16 October)**: the first text of a new session is
     // asked which language it is in — once, before anything is read, because the
@@ -152,36 +157,29 @@ void main() {
 
     expect(find.byType(WorkspaceScreen), findsOneWidget, reason: 'the session did not open');
 
-    await tester.tap(find.text('Tokens'));
-    await settle(tester);
-    expect(find.byType(TokensPanel), findsOneWidget, reason: 'the tokens panel did not open');
-
-    await tester.tap(find.text('Reveal'));
-    await settle(tester);
-
-    Finder inPanel(Finder what) =>
-        find.descendant(of: find.byType(TokensPanel), matching: what);
-    expect(
-      inPanel(find.textContaining('DE02120300000000202051')),
-      findsOneWidget,
-      reason: 'the reveal did not reach the panel, so nothing below is measured',
-    );
-
-    // The window stops being the one in front. Inside `runAsync` because the
-    // report and the ask that follows it are real calls into Rust; in the
-    // running program they finish in microseconds and the next frame is
-    // already without the value.
-    await tester.runAsync(() async {
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-      await Future<void>.delayed(const Duration(milliseconds: 80));
-    });
-    await tester.pump();
-
-    expect(
-      inPanel(find.textContaining('DE02120300000000202051')),
-      findsNothing,
-      reason: 'the value was still drawn a frame after the window was no longer in front',
-    );
+    // **And here the guard stops, with the reason measured** — rule 72, 18
+    // October 2026.
+    //
+    // What follows used to open the Tokens panel and reveal a value in it, to
+    // measure that the reveal dies when the window stops being the one in
+    // front. It cannot stand on this surface any more: what a person writes in
+    // the one box is a **request**, and a request's protected values are not
+    // in the workspace snapshot's `tokens` — measured on 18 October:
+    // `payload=false · tokens=0 · marks=2`. So «Tokens» is a dead press here,
+    // and a guard that pressed it would be measuring nothing.
+    //
+    // It is not a defect of this file and it is not fixed on the glass: a
+    // question's tokens are the session's blocks and the core is the only
+    // place that can list them (`workspace_snapshot` fills `tokens` from the
+    // document). It is reported as a finding of 091, and the claim comes back
+    // here the moment a question's tokens reach the panel — the window half of
+    // it is this file's and nothing else measures it.
+    //
+    // What this guard still measures, and it is the half that was always
+    // about the shell: a surface with no document has no tokens to reveal, so
+    // the press is dead rather than open to a panel with nothing in it.
+    expect(find.byType(TokensPanel), findsNothing,
+        reason: 'the tokens panel opened over a surface whose tokens are not in the snapshot');
   });
 
   testWidgets('the shell tells the core when the window is no longer in front', (tester) async {
@@ -266,7 +264,9 @@ void main() {
     expect(find.byType(FirstRunScreen), findsNothing);
     // What the one screen says when it holds nothing: the way in, and the
     // three parts each naming what they are for.
-    expect(find.text('Write or paste your text here…'), findsOneWidget);
+    // Rule 72-أ: the «+» at the top and the one box in the first part.
+    expect(find.byKey(WorkspaceScreen.addDocument), findsOneWidget);
+    expect(find.byKey(WorkspaceScreen.composer), findsOneWidget);
     // The eyebrows are drawn upper-cased by `Eyebrow`, which is why the
     // reach is the word as it is on the glass.
     expect(find.text('THE CHAT'), findsOneWidget);

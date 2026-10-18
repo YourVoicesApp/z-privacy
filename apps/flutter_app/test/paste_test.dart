@@ -65,7 +65,7 @@ Future<Workbench> _sheetlessWorkspace(WidgetTester tester, Ground ground) async 
     await ground.refresh();
   });
   await tester.pumpWidget(MaterialApp(
-    home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+    home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
   ));
   await settle(tester);
   return bench;
@@ -466,7 +466,7 @@ void _p27() {
     addTearDown(bench.dispose);
 
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () {}),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {}),
     ));
     await settle(tester);
 

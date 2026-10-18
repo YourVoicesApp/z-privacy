@@ -77,6 +77,13 @@ class _ShellState extends State<ZShell> {
   String? _troubleReport;
   bool _vaultOpen = false;
   bool _settingsOpen = false;
+
+  /// **Which room the panel opens on, when a press named one** — rule 74, 18
+  /// October 2026. `null` is «the room the settings open on», which is the
+  /// settings' own default and the one place that rule lives; a door that is
+  /// about a key sets this to `SettingsRoom.ai` as it opens the panel, so the
+  /// sheet's «Open Settings» still lands where a key is given.
+  SettingsRoom? _settingsRoom;
   /// Passed for this run. The lasting answer is in the settings, which live in
   /// the vault — so on a device with no vault this page comes back next time,
   /// and that is the truth rather than a bug: nothing was written down.
@@ -354,6 +361,121 @@ class _ShellState extends State<ZShell> {
     }
   }
 
+  /// **A question written with no document** — rule 72, 18 October 2026:
+  /// «نحتاجه أن يظهر من اللحظة الأولى، وبذلك يمكننا الشات مباشرة بدون أي
+  /// وثائق».
+  ///
+  /// It was `_begin(typing: true, text: …)`, which **imported** what was typed
+  /// as a document — the way-in strip's own act, and that strip's box is gone
+  /// (rule 72-أ). What is typed is the request now: protected where every
+  /// question is protected, standing in the Safe column, and with no document
+  /// above it the whole of what leaves (ed's `build_the_question_alone`).
+  ///
+  /// The vault gate and the language question are the two this shell asks at
+  /// every other door: a session is about to be born, and the scanner needs a
+  /// language before it reads a word (rule 57b).
+  Future<void> _askWithNoDocument(String text) async {
+    if (text.trim().isEmpty) return;
+    if (_ground.vault != VaultState.unlocked) {
+      setState(() => _vaultOpen = true);
+      return;
+    }
+    final packId = await _theLanguageOfTheTextToCome();
+    if (packId == null || !mounted) return;
+    try {
+      final session = await z.openSession(profileId: null, packId: packId);
+      final bench = Workbench(session: session, profileId: null, packId: packId);
+      // **Nothing is imported**: there is no document, and the question is the
+      // whole of it. `setQuestion` is what protects it, in the session it will
+      // leave from.
+      final bad = await bench.setQuestion(text);
+      _bench?.dispose();
+      if (!mounted) {
+        bench.dispose();
+        return;
+      }
+      setState(() {
+        _bench = bench;
+        _trouble = bad;
+        _troubleReport = null;
+      });
+    } on ApiError catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _trouble = humanMessage(e);
+        _troubleReport = null;
+      });
+    }
+  }
+
+  /// **«Remove the document»** — rule 73, the owner, 18 October 2026.
+  ///
+  /// The first part empties and **nothing leaves**: no exit, no bubble, no
+  /// question (54-و). The kept copy stays in its session's list (54-ز) and
+  /// opens again from there, because what is kept belongs to the session and
+  /// not to the surface.
+  ///
+  /// It is a **new bench, not an emptied one**: a bench *is* a session in the
+  /// core, and no door takes a document back out of one — nor should one,
+  /// since 089 keeps what entered. So a fresh session is opened in the same
+  /// profile and language, what was typed in the box is set in it (rule 73:
+  /// the request stays unless the chat ends), the thread is read into it, and
+  /// the old bench is let go. The chat itself is untouched: it belongs to the
+  /// session that is open, not to the bench.
+  Future<void> _removeTheDocument() async {
+    final old = _bench;
+    if (old == null) return;
+    final text = old.question;
+    try {
+      final session = await z.openSession(profileId: old.profileId, packId: old.packId);
+      final bench = Workbench(session: session, profileId: old.profileId, packId: old.packId);
+      if (text.trim().isNotEmpty) await bench.setQuestion(text);
+      await bench.readTheChat();
+      old.dispose();
+      if (!mounted) {
+        bench.dispose();
+        return;
+      }
+      setState(() {
+        _bench = bench;
+        _trouble = null;
+        _troubleReport = null;
+      });
+    } on ApiError catch (e) {
+      if (!mounted) return;
+      setState(() => _trouble = humanMessage(e));
+    }
+  }
+
+  /// **A new chat starts from zero** — rule 71, the owner, 18 October 2026:
+  /// «المفترض أن محادثة جديدة يجب أن تبدأ من الصفر».
+  ///
+  /// Three things end a chat — «End the chat» under the thread, the session
+  /// deleted from its room, and a new session opened — and after any of them
+  /// the whole surface is empty: no document in the first part, no request, no
+  /// thread in the third. This is the one place that can do it, because the
+  /// bench **is** the surface: the shell holds it, so the shell is what lets
+  /// it go.
+  ///
+  /// **It reverses the lead's B5 ruling of 090**, where «End the chat» closed
+  /// the panel and left the columns standing. The owner looked at that and
+  /// said what he expected instead.
+  ///
+  /// **What is not touched: what was kept.** The session's own list keeps the
+  /// documents it was given (54-ج/ز) and the turns it holds (rule 69); this
+  /// empties a surface, it does not forget anything. The person who wants the
+  /// same document brings it in again by its door (rule 63), or opens the kept
+  /// copy from the room.
+  void _fromZero() {
+    _bench?.dispose();
+    setState(() {
+      _bench = null;
+      _trouble = null;
+      _troubleReport = null;
+    });
+    unawaited(_ground.refresh());
+  }
+
   /// **Open a saved document in the preview, as it was left** — 089 rule 9.
   ///
   /// The same shape as `_begin` and `_readBack`, and the same vault gate at the
@@ -529,6 +651,32 @@ class _ShellState extends State<ZShell> {
     return Stack(
       children: [
         _body(context),
+        // **The panel closes on a press anywhere outside it** — rule 75, the
+        // owner, 18 October 2026.
+        //
+        // A catcher under the panel and over the work: a press on the panel
+        // hits the panel, because the panel is above this in the `Stack`, and
+        // a press anywhere else closes it.
+        //
+        // **`opaque`, and that is the whole of the trap the house knows.** «A
+        // full-screen catcher swallows the next press» was written about a
+        // barrier that let the press through to what was under it; this one
+        // absorbs it, so the press that closes the panel does **not** also
+        // reach the gear it may be sitting on (which would reopen it) nor any
+        // act on the work behind. And it is gone with the panel, so the *next*
+        // press lands on whatever it is aimed at — both halves measured in
+        // `the_settings_cover_the_work_test.dart`.
+        if (_settingsOpen)
+          Positioned.fill(
+            child: GestureDetector(
+              key: const ValueKey<String>('settings-outside'),
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                setState(() => _settingsOpen = false);
+                unawaited(_ground.refresh());
+              },
+            ),
+          ),
         if (_settingsOpen)
           Positioned(
             top: 0,
@@ -537,6 +685,8 @@ class _ShellState extends State<ZShell> {
             width: 480,
             child: SettingsScreen(
               ground: _ground,
+              // Rule 74: `null` means the room the settings open on.
+              room: _settingsRoom,
               // **The document in front of the person, handed to the panel** —
               // 064f. A session begun in the Sessions room has to re-derive the
               // names already on that document, and the panel had no way to
@@ -557,6 +707,11 @@ class _ShellState extends State<ZShell> {
               // `onOpenKept` does: only the shell may open a file chooser,
               // and the reading stands over everything.
               onReadBack: () => unawaited(_readBack()),
+              // **Rule 71's other two doors.** A session deleted from the room
+              // and a new session opened both end a chat, and the surface then
+              // starts from zero — the panel cannot do that itself, because
+              // the bench it would have to let go of is the shell's.
+              onFromZero: _fromZero,
               onClose: () {
                 setState(() => _settingsOpen = false);
                 _ground.refresh();
@@ -655,9 +810,24 @@ class _ShellState extends State<ZShell> {
           bench: _bench,
           ground: _ground,
           onImport: () => _begin(typing: false),
-          onType: (text) => _begin(typing: true, text: text),
+          // **Rule 72**: what is typed is the request, not a document. It was
+          // `_begin(typing: true, text: …)` — an import — and the box that
+          // called it that way is deleted (72-أ).
+          onAsk: (text) => unawaited(_askWithNoDocument(text)),
           onVault: () => setState(() => _vaultOpen = true),
-          onSettings: () => setState(() => _settingsOpen = !_settingsOpen),
+          onFromZero: _fromZero,
+          // Rule 73: drawn only with a document in, so the press and the
+          // control appear and disappear together.
+          // **«No document» is an empty one, not a null one**: a session
+          // that imported nothing still answers with a `DocumentView` whose
+          // text is empty, measured 18 October.
+          onRemoveDocument: (_bench?.document?.text ?? '').isEmpty
+              ? null
+              : () => unawaited(_removeTheDocument()),
+          onSettings: (room) => setState(() {
+            _settingsRoom = room;
+            _settingsOpen = !_settingsOpen;
+          }),
           settingsOpen: _settingsOpen,
         ),
         // **The refusal stands over the work, where the press was** — and it

@@ -62,7 +62,7 @@ void main() {
     });
 
     await tester.pumpWidget(MaterialApp(
-      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onType: (_) {}, onVault: () => toTheVault++),
+      home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () => toTheVault++),
     ));
     await settle(tester);
 
@@ -172,14 +172,22 @@ void main() {
     // nothing in it and the way in at the top of it.
     expect(find.byType(WorkspaceScreen), findsOneWidget,
         reason: 'the vault did not lead on to the work');
-    expect(find.text('Write or paste your text here…'), findsOneWidget,
-        reason: 'the way in is not on the screen the vault leads to');
+    // Rule 72-أ: the «+» for a file, and the one box in the first part.
+    expect(find.byKey(WorkspaceScreen.addDocument), findsOneWidget,
+        reason: 'the way in for a file is not on the screen the vault leads to');
+    expect(find.byKey(WorkspaceScreen.composer), findsOneWidget,
+        reason: 'the box a person writes in is not on the screen the vault leads to');
 
     // 041-G — the box is the way in: no sheet, no question, just the text.
     // By key, because this screen has more than one field in it.
     await tester.enterText(find.byKey(WorkspaceScreen.composer), _doc);
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Open and scan'));
+    // **Rule 72-أ, 18 October 2026**: the strip's box and its «Open and scan»
+    // are deleted, and the one box is the request box in the first part. What
+    // is written there is the request — protected, and the whole of what leaves
+    // when no document stands above it — so this is the same act through the
+    // one door there is now.
+    await tester.tap(find.byKey(const ValueKey<String>('workspace-question-attach')));
     await settle(tester);
     // **Rule 57b (the owner, 16 October)**: the first text of a new session is
     // asked which language it is in — once, before anything is read, because the
