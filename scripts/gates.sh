@@ -982,6 +982,35 @@ else
   fail "G46 a screen hands a history to the core:"; printf '%s\n' "$G46_DART" | sed 's/^/        /'
 fi
 
+# ---------------------------------------------------------------- G56
+# **Every claim this product makes is in one file, with its limit and its
+# proof** — 094, the owner's own order of 19 October 2026: «نجعل ملف مراجعة في
+# git نحدد فيه نقاط الادّعاءات التي ندّعيها في التطبيق»، then hand it to an
+# outside model to attack.
+#
+# `docs/CLAIMS.md` is that file and this is what keeps it honest between
+# reviews. The checker refuses a section missing one of its four lines — and
+# the line a hurried hand drops is **the limit**, which is the whole reason the
+# file exists; a path, gate, test or sentence key that does not exist, because a
+# proof pointing at a deleted test reads exactly like a proof; and the loss of
+# the closing «What we do not claim».
+#
+# **A claim marked `unproven —` is allowed and counted.** That is the owner's
+# instruction, not a loophole: a claim we have not measured stays in the list
+# wearing that word, because a claim removed is a claim hidden. The two numbers
+# are printed on every gate run, so «how much of what we say is measured» is on
+# the record rather than in somebody's memory.
+if [ -f scripts/check_claims.py ]; then
+  if OUT=$(python3 scripts/check_claims.py 2>&1); then
+    pass "G56 every claim has its four lines and everything it names exists —$(printf '%s' "$OUT" | tail -1)"
+  else
+    fail "G56 a claim is missing its limit, its proof, or something it names:"
+    printf '%s\n' "$OUT" | sed 's/^/        /'
+  fi
+else
+  skip "G56 every claim has its limit and its proof" "no checker yet"
+fi
+
 # ---------------------------------------------------------------- G53
 # **The second platform asks for what the first one measures** — 093, and the
 # fault this file has now watched happen twice in one workflow.
