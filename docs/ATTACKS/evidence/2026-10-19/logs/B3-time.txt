@@ -1,0 +1,145 @@
+===== pdf_flate_over_8mib.pdf bytes=9684 =====
+maxrss_kb=5688 elapsed_sec=0.00
+check_document pdf_flate_over_8mib.pdf maxrss_kb=5688 elapsed_sec=0.00
+maxrss_kb=5420 elapsed_sec=0.00
+import_document pdf_flate_over_8mib.pdf maxrss_kb=5420 elapsed_sec=0.00
+===== pdf_flate_ratio_200.pdf bytes=680 =====
+maxrss_kb=3540 elapsed_sec=0.00
+check_document pdf_flate_ratio_200.pdf maxrss_kb=3540 elapsed_sec=0.00
+maxrss_kb=3612 elapsed_sec=0.00
+import_document pdf_flate_ratio_200.pdf maxrss_kb=3612 elapsed_sec=0.00
+===== pdf_scanned_no_text.pdf bytes=866 =====
+maxrss_kb=3612 elapsed_sec=0.00
+check_document pdf_scanned_no_text.pdf maxrss_kb=3612 elapsed_sec=0.00
+maxrss_kb=3324 elapsed_sec=0.00
+import_document pdf_scanned_no_text.pdf maxrss_kb=3324 elapsed_sec=0.00
+===== pdf_objstm_bomb.pdf bytes=50767 =====
+maxrss_kb=4868 elapsed_sec=0.00
+check_document pdf_objstm_bomb.pdf maxrss_kb=4868 elapsed_sec=0.00
+maxrss_kb=4660 elapsed_sec=0.00
+import_document pdf_objstm_bomb.pdf maxrss_kb=4660 elapsed_sec=0.00
+===== pdf_over_25mib.pdf bytes=26214401 =====
+maxrss_kb=53840 elapsed_sec=0.01
+check_document pdf_over_25mib.pdf maxrss_kb=53840 elapsed_sec=0.01
+maxrss_kb=54276 elapsed_sec=0.01
+import_document pdf_over_25mib.pdf maxrss_kb=54276 elapsed_sec=0.01
+===== pdf_at_25mib.pdf bytes=26214400 =====
+maxrss_kb=58244 elapsed_sec=0.05
+check_document pdf_at_25mib.pdf maxrss_kb=58244 elapsed_sec=0.05
+maxrss_kb=57956 elapsed_sec=0.04
+import_document pdf_at_25mib.pdf maxrss_kb=57956 elapsed_sec=0.04
+===== pdf_stream_over_8mib_low_ratio.pdf bytes=8457212 =====
+maxrss_kb=36436 elapsed_sec=0.02
+check_document pdf_stream_over_8mib_low_ratio.pdf maxrss_kb=36436 elapsed_sec=0.02
+maxrss_kb=36400 elapsed_sec=0.02
+import_document pdf_stream_over_8mib_low_ratio.pdf maxrss_kb=36400 elapsed_sec=0.02
+===== pdf_nine_pages_cumul.pdf bytes=262428 =====
+maxrss_kb=10472 elapsed_sec=0.01
+check_document pdf_nine_pages_cumul.pdf maxrss_kb=10472 elapsed_sec=0.01
+maxrss_kb=10036 elapsed_sec=0.02
+import_document pdf_nine_pages_cumul.pdf maxrss_kb=10036 elapsed_sec=0.02
+===== pdf_flate_cumul_16mib.pdf bytes=16897 =====
+maxrss_kb=5640 elapsed_sec=0.00
+check_document pdf_flate_cumul_16mib.pdf maxrss_kb=5640 elapsed_sec=0.00
+maxrss_kb=5528 elapsed_sec=0.00
+import_document pdf_flate_cumul_16mib.pdf maxrss_kb=5528 elapsed_sec=0.00
+===== pdf_xref_flate.pdf bytes=533 =====
+maxrss_kb=7416 elapsed_sec=0.00
+check_document pdf_xref_flate.pdf maxrss_kb=7416 elapsed_sec=0.00
+maxrss_kb=7300 elapsed_sec=0.00
+import_document pdf_xref_flate.pdf maxrss_kb=7300 elapsed_sec=0.00
+===== pdf_xref_named_objstm.pdf bytes=1051 =====
+maxrss_kb=3656 elapsed_sec=0.00
+check_document pdf_xref_named_objstm.pdf maxrss_kb=3656 elapsed_sec=0.00
+maxrss_kb=3716 elapsed_sec=0.00
+import_document pdf_xref_named_objstm.pdf maxrss_kb=3716 elapsed_sec=0.00
+===== pdf_cumul_budget_16mib.pdf bytes=62131 =====
+maxrss_kb=4888 elapsed_sec=0.00
+check_document pdf_cumul_budget_16mib.pdf maxrss_kb=4888 elapsed_sec=0.00
+maxrss_kb=4684 elapsed_sec=0.00
+import_document pdf_cumul_budget_16mib.pdf maxrss_kb=4684 elapsed_sec=0.00
+===== pdf_cumul_under_ratio.pdf bytes=1616559 =====
+maxrss_kb=37572 elapsed_sec=0.02
+check_document pdf_cumul_under_ratio.pdf maxrss_kb=37572 elapsed_sec=0.02
+maxrss_kb=37656 elapsed_sec=0.02
+import_document pdf_cumul_under_ratio.pdf maxrss_kb=37656 elapsed_sec=0.02
+===== docx_xxe.docx bytes=445 =====
+maxrss_kb=3128 elapsed_sec=0.00
+check_document docx_xxe.docx maxrss_kb=3128 elapsed_sec=0.00
+maxrss_kb=3112 elapsed_sec=0.00
+import_document docx_xxe.docx maxrss_kb=3112 elapsed_sec=0.00
+===== docx_xxe_listener.docx bytes=399 =====
+maxrss_kb=3216 elapsed_sec=0.00
+check_document docx_xxe_listener.docx maxrss_kb=3216 elapsed_sec=0.00
+maxrss_kb=3120 elapsed_sec=0.00
+import_document docx_xxe_listener.docx maxrss_kb=3120 elapsed_sec=0.00
+===== docx_macros.docx bytes=676 =====
+maxrss_kb=7160 elapsed_sec=0.00
+check_document docx_macros.docx maxrss_kb=7160 elapsed_sec=0.00
+maxrss_kb=7196 elapsed_sec=0.00
+import_document docx_macros.docx maxrss_kb=7196 elapsed_sec=0.00
+===== docx_zip_bomb_header.docx bytes=547 =====
+maxrss_kb=3104 elapsed_sec=0.00
+check_document docx_zip_bomb_header.docx maxrss_kb=3104 elapsed_sec=0.00
+maxrss_kb=3080 elapsed_sec=0.00
+import_document docx_zip_bomb_header.docx maxrss_kb=3080 elapsed_sec=0.00
+===== docx_zip_bomb_lie.docx bytes=2377 =====
+maxrss_kb=7232 elapsed_sec=0.00
+check_document docx_zip_bomb_lie.docx maxrss_kb=7232 elapsed_sec=0.00
+maxrss_kb=7480 elapsed_sec=0.00
+import_document docx_zip_bomb_lie.docx maxrss_kb=7480 elapsed_sec=0.00
+===== docx_entry_over_8mib.docx bytes=358 =====
+maxrss_kb=3220 elapsed_sec=0.00
+check_document docx_entry_over_8mib.docx maxrss_kb=3220 elapsed_sec=0.00
+maxrss_kb=3080 elapsed_sec=0.00
+import_document docx_entry_over_8mib.docx maxrss_kb=3080 elapsed_sec=0.00
+===== docx_entry_over_8mib_store.docx bytes=8388741 =====
+maxrss_kb=18928 elapsed_sec=0.00
+check_document docx_entry_over_8mib_store.docx maxrss_kb=18928 elapsed_sec=0.00
+maxrss_kb=19512 elapsed_sec=0.00
+import_document docx_entry_over_8mib_store.docx maxrss_kb=19512 elapsed_sec=0.00
+===== docx_entry_at_8mib.docx bytes=8503 =====
+maxrss_kb=3132 elapsed_sec=0.00
+check_document docx_entry_at_8mib.docx maxrss_kb=3132 elapsed_sec=0.00
+maxrss_kb=3136 elapsed_sec=0.00
+import_document docx_entry_at_8mib.docx maxrss_kb=3136 elapsed_sec=0.00
+===== docx_entry_at_8mib_store.docx bytes=8388740 =====
+maxrss_kb=27556 elapsed_sec=0.00
+check_document docx_entry_at_8mib_store.docx maxrss_kb=27556 elapsed_sec=0.00
+maxrss_kb=27688 elapsed_sec=0.00
+import_document docx_entry_at_8mib_store.docx maxrss_kb=27688 elapsed_sec=0.00
+===== docx_too_many_parts.docx bytes=53116 =====
+maxrss_kb=3392 elapsed_sec=0.00
+check_document docx_too_many_parts.docx maxrss_kb=3392 elapsed_sec=0.00
+maxrss_kb=3336 elapsed_sec=0.00
+import_document docx_too_many_parts.docx maxrss_kb=3336 elapsed_sec=0.00
+===== docx_billion_laughs.docx bytes=490 =====
+maxrss_kb=3076 elapsed_sec=0.00
+check_document docx_billion_laughs.docx maxrss_kb=3076 elapsed_sec=0.00
+maxrss_kb=3080 elapsed_sec=0.00
+import_document docx_billion_laughs.docx maxrss_kb=3080 elapsed_sec=0.00
+===== docx_external_rels.docx bytes=1124 =====
+maxrss_kb=7472 elapsed_sec=0.00
+check_document docx_external_rels.docx maxrss_kb=7472 elapsed_sec=0.00
+maxrss_kb=7464 elapsed_sec=0.00
+import_document docx_external_rels.docx maxrss_kb=7464 elapsed_sec=0.00
+===== docx_ok.docx bytes=310 =====
+maxrss_kb=7224 elapsed_sec=0.00
+check_document docx_ok.docx maxrss_kb=7224 elapsed_sec=0.00
+maxrss_kb=7204 elapsed_sec=0.00
+import_document docx_ok.docx maxrss_kb=7204 elapsed_sec=0.00
+===== txt_at_4mib.txt bytes=4194304 =====
+maxrss_kb=31572 elapsed_sec=0.21
+check_document txt_at_4mib.txt maxrss_kb=31572 elapsed_sec=0.21
+maxrss_kb=26820 elapsed_sec=0.06
+import_document txt_at_4mib.txt maxrss_kb=26820 elapsed_sec=0.06
+===== txt_over_4mib.txt bytes=4194305 =====
+maxrss_kb=11020 elapsed_sec=0.00
+check_document txt_over_4mib.txt maxrss_kb=11020 elapsed_sec=0.00
+maxrss_kb=11336 elapsed_sec=0.00
+import_document txt_over_4mib.txt maxrss_kb=11336 elapsed_sec=0.00
+===== txt_over_25mib.txt bytes=26214401 =====
+maxrss_kb=53828 elapsed_sec=0.01
+check_document txt_over_25mib.txt maxrss_kb=53828 elapsed_sec=0.01
+maxrss_kb=54324 elapsed_sec=0.01
+import_document txt_over_25mib.txt maxrss_kb=54324 elapsed_sec=0.01

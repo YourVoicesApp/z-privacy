@@ -1,0 +1,24 @@
+commit=2b4fad93cc26b282e6fa9773ad2275544dcc7ee8
+date=2026-10-19T06:46:31+02:00
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   Compiling z_core v0.1.0 (/home/monopeaks/z-attack-2b4fad9/z_core)
+    Finished `release` profile [optimized] target(s) in 7.46s
+     Running tests/a_block_is_never_deleted.rs (/home/monopeaks/z-attack-2b4fad9-evidence/target-b2/release/deps/a_block_is_never_deleted-5e8005fa03e49fe4)
+
+running 10 tests
+test a_block_is_protected_in_another_conversation ... ok
+test a_block_of_two_words_stays_one_token_elsewhere ... ok
+test an_exemption_belongs_to_one_conversation ... ok
+test every_name_comes_back_after_a_restart ... ok
+test here_uncovers_every_place_the_selection_spans ... ok
+test leave_it_makes_no_block ... ok
+test nothing_deletes_a_block ... ok
+test one_press_exempts_every_block_the_selection_spans ... ok
+test the_blocks_are_counted_and_never_valued ... ok
+test the_door_back_makes_no_block ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.30s
+

@@ -1,0 +1,137 @@
+===== pdf_flate_over_8mib.pdf bytes=9684 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                     pdf_flate_over_8mib.pdf         9 KiB  refused: CompressionBomb { ratio: 201 }
+                                              a page's content unpacks to more than 201× the bytes it is written in, which no document does
+maxrss_kb=5688 elapsed_sec=0.00
+===== pdf_flate_ratio_200.pdf bytes=680 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                     pdf_flate_ratio_200.pdf         0 KiB  refused: CompressionBomb { ratio: 201 }
+                                              a page's content unpacks to more than 201× the bytes it is written in, which no document does
+maxrss_kb=3540 elapsed_sec=0.00
+===== pdf_scanned_no_text.pdf bytes=866 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                     pdf_scanned_no_text.pdf         0 KiB  refused: ScannedPdfNoTextLayer { pages: 3 }
+                                              all 3 pages are images with no text layer — this looks like a scan, and we will not send it anywhere to be read
+maxrss_kb=3612 elapsed_sec=0.00
+===== pdf_objstm_bomb.pdf bytes=50767 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                         pdf_objstm_bomb.pdf        49 KiB  refused: CompressionBomb { ratio: 201 }
+                                              an object stream unpacks to more than 201× the bytes it is written in, which no document does
+maxrss_kb=4868 elapsed_sec=0.00
+===== pdf_over_25mib.pdf bytes=26214401 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                          pdf_over_25mib.pdf     25600 KiB  refused: DocumentTooLarge { mib: 26, limit_mib: 25 }
+                                              26214401 bytes is past the 25 MiB limit for one document (26214400 bytes)
+maxrss_kb=53840 elapsed_sec=0.01
+===== pdf_at_25mib.pdf bytes=26214400 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                            pdf_at_25mib.pdf     25600 KiB     1 pages        1 words         7 chars  100% readable     0 protected     0 waiting       0 tokens  read     39 ms  scan      0 ms
+maxrss_kb=58244 elapsed_sec=0.05
+===== pdf_stream_over_8mib_low_ratio.pdf bytes=8457212 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+          pdf_stream_over_8mib_low_ratio.pdf      8258 KiB  refused: TextTooLarge { limit_mib: 8 }
+                                              a page's content in this PDF unpacks to more than 8 MiB, and no part of a document is that big
+maxrss_kb=36436 elapsed_sec=0.02
+===== pdf_nine_pages_cumul.pdf bytes=262428 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                    pdf_nine_pages_cumul.pdf       256 KiB  refused: CompressionBomb { ratio: 64 }
+                                              the parts of this PDF unpack to more than 17 MiB in all — 64× the file's own size, past the 16 MiB a file of 256 KiB may ask for
+maxrss_kb=10472 elapsed_sec=0.01
+===== pdf_flate_cumul_16mib.pdf bytes=16897 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                   pdf_flate_cumul_16mib.pdf        16 KiB  refused: CompressionBomb { ratio: 201 }
+                                              a page's content unpacks to more than 201× the bytes it is written in, which no document does
+maxrss_kb=5640 elapsed_sec=0.00
+===== pdf_xref_flate.pdf bytes=533 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                          pdf_xref_flate.pdf         0 KiB     1 pages        1 words         7 chars  100% readable     0 protected     0 waiting       0 tokens  read      1 ms  scan      0 ms
+maxrss_kb=7416 elapsed_sec=0.00
+===== pdf_xref_named_objstm.pdf bytes=1051 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                   pdf_xref_named_objstm.pdf         1 KiB  refused: CompressionBomb { ratio: 201 }
+                                              an object stream unpacks to more than 201× the bytes it is written in, which no document does
+maxrss_kb=3656 elapsed_sec=0.00
+===== pdf_cumul_budget_16mib.pdf bytes=62131 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                  pdf_cumul_budget_16mib.pdf        60 KiB  refused: CompressionBomb { ratio: 201 }
+                                              an object stream unpacks to more than 201× the bytes it is written in, which no document does
+maxrss_kb=4888 elapsed_sec=0.00
+===== pdf_cumul_under_ratio.pdf bytes=1616559 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                   pdf_cumul_under_ratio.pdf      1578 KiB     1 pages        1 words         7 chars  100% readable     0 protected     0 waiting       0 tokens  read     27 ms  scan      0 ms
+maxrss_kb=37572 elapsed_sec=0.02
+===== docx_xxe.docx bytes=445 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                               docx_xxe.docx         0 KiB  refused: MalformedDocument
+                                              word/document.xml is not well-formed XML: unknown entity &xxe;
+maxrss_kb=3128 elapsed_sec=0.00
+===== docx_xxe_listener.docx bytes=399 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                      docx_xxe_listener.docx         0 KiB  refused: MalformedDocument
+                                              word/document.xml is not well-formed XML: unknown entity &xxe;
+maxrss_kb=3216 elapsed_sec=0.00
+===== docx_macros.docx bytes=676 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                            docx_macros.docx         0 KiB     1 pages        2 words        17 chars  100% readable     0 protected     0 waiting       0 tokens  read      1 ms  scan      0 ms
+maxrss_kb=7160 elapsed_sec=0.00
+===== docx_zip_bomb_header.docx bytes=547 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                   docx_zip_bomb_header.docx         0 KiB  refused: CompressionBomb { ratio: 986 }
+                                              «⁨word/document.xml⁩» claims to unpack 986× its size, which no document does
+maxrss_kb=3104 elapsed_sec=0.00
+===== docx_zip_bomb_lie.docx bytes=2377 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                      docx_zip_bomb_lie.docx         2 KiB  refused: CompressionBomb { ratio: 934 }
+                                              a part of this file unpacked to 934× its size, which no document does
+maxrss_kb=7232 elapsed_sec=0.00
+===== docx_entry_over_8mib.docx bytes=358 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                   docx_entry_over_8mib.docx         0 KiB  refused: TextTooLarge { limit_mib: 8 }
+                                              «⁨word/document.xml⁩» would be 8 MiB once unpacked, past the 8 MiB limit
+maxrss_kb=3220 elapsed_sec=0.00
+===== docx_entry_over_8mib_store.docx bytes=8388741 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+             docx_entry_over_8mib_store.docx      8192 KiB  refused: TextTooLarge { limit_mib: 8 }
+                                              «⁨word/document.xml⁩» would be 8 MiB once unpacked, past the 8 MiB limit
+maxrss_kb=18928 elapsed_sec=0.00
+===== docx_entry_at_8mib.docx bytes=8503 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                     docx_entry_at_8mib.docx         8 KiB  refused: CompressionBomb { ratio: 1002 }
+                                              «⁨word/document.xml⁩» claims to unpack 1002× its size, which no document does
+maxrss_kb=3132 elapsed_sec=0.00
+===== docx_entry_at_8mib_store.docx bytes=8388740 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+               docx_entry_at_8mib_store.docx      8192 KiB     1 pages        1 words         6 chars  100% readable     0 protected     0 waiting       0 tokens  read      4 ms  scan      0 ms
+maxrss_kb=27556 elapsed_sec=0.00
+===== docx_too_many_parts.docx bytes=53116 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                    docx_too_many_parts.docx        51 KiB  refused: TooManyParts { parts: 521, limit: 512 }
+                                              this file lists 521 parts; a document has tens, not that many
+maxrss_kb=3392 elapsed_sec=0.00
+===== docx_billion_laughs.docx bytes=490 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                    docx_billion_laughs.docx         0 KiB  refused: MalformedDocument
+                                              word/document.xml is not well-formed XML: unknown entity &d;
+maxrss_kb=3076 elapsed_sec=0.00
+===== docx_external_rels.docx bytes=1124 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                     docx_external_rels.docx         1 KiB     1 pages        2 words        19 chars  100% readable     0 protected     0 waiting       0 tokens  read      1 ms  scan      0 ms
+maxrss_kb=7472 elapsed_sec=0.00
+===== docx_ok.docx bytes=310 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                                docx_ok.docx         0 KiB     1 pages        3 words        19 chars  100% readable     2 protected     0 waiting       2 tokens  read      1 ms  scan      0 ms
+maxrss_kb=7224 elapsed_sec=0.00
+===== txt_at_4mib.txt bytes=4194304 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                             txt_at_4mib.txt      4096 KiB     1 pages        1 words   4194304 chars  100% readable     0 protected     0 waiting       0 tokens  read     75 ms  scan    129 ms
+maxrss_kb=31572 elapsed_sec=0.21
+===== txt_over_4mib.txt bytes=4194305 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                           txt_over_4mib.txt      4096 KiB  refused: TextTooLarge { limit_mib: 4 }
+                                              the text passed 4 MiB while being read
+maxrss_kb=11020 elapsed_sec=0.00
+===== txt_over_25mib.txt bytes=26214401 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+                          txt_over_25mib.txt     25600 KiB  refused: DocumentTooLarge { mib: 26, limit_mib: 25 }
+                                              26214401 bytes is past the 25 MiB limit for one document (26214400 bytes)
+maxrss_kb=53828 elapsed_sec=0.01

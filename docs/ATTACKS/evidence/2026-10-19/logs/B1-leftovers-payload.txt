@@ -1,0 +1,25 @@
+== leftovers in payload_to_take_out ==
+chars=1082 clear_chars=650
+needle="Markus" raw=false in_the_clear=false
+needle="Feldmann" raw=false in_the_clear=false
+needle="Katrin" raw=false in_the_clear=false
+needle="Sommer" raw=false in_the_clear=false
+needle="DE89" raw=false in_the_clear=false
+needle="3704 0044" raw=false in_the_clear=false
+needle="k.sommer@stadtwerke-lindenau.example" raw=false in_the_clear=false
+needle="0341 2208 4417" raw=false in_the_clear=false
+needle="Gartenstraße 17" raw=false in_the_clear=false
+needle="04155 Leipzig" raw=false in_the_clear=false
+needle="04179 Leipzig" raw=false in_the_clear=false
+needle="Stadtwerke Lindenau" raw=false in_the_clear=false
+needle="Sparkasse Leipzig" raw=true in_the_clear=true
+needle="Sparkasse" raw=true in_the_clear=true
+needle="Postfach 4410" raw=true in_the_clear=true
+needle="Postfach" raw=true in_the_clear=true
+needle="184,60" raw=true in_the_clear=true
+needle="7731-0458" raw=false in_the_clear=false
+needle="RE-2026-118734" raw=false in_the_clear=false
+needle="COBADEFFXXX" raw=false in_the_clear=false
+needle="Lindenau" raw=false in_the_clear=false
+needle="Kundenservice" raw=true in_the_clear=true
+needle="Zweite Mahnung" raw=true in_the_clear=true

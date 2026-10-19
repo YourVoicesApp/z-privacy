@@ -1,0 +1,15 @@
+   Compiling version_check v0.9.5
+   Compiling typenum v1.20.1
+   Compiling subtle v2.6.1
+   Compiling rand_core v0.6.4
+   Compiling base64ct v1.8.3
+   Compiling cpufeatures v0.2.17
+   Compiling generic-array v0.14.7
+   Compiling password-hash v0.5.0
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling digest v0.10.7
+   Compiling blake2 v0.10.6
+   Compiling argon2 v0.5.3
+   Compiling argon_bench v0.1.0 (/home/monopeaks/z-attack-2b4fad9-evidence/harnesses/argon_bench)
+    Finished `release` profile [optimized] target(s) in 0.90s

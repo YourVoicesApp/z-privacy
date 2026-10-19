@@ -1,0 +1,54 @@
+core z_core 0.1.0 · 2026-10-19 · 2b4fad9
+data dir = /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/data
+core reports default_data_dir = Ok("/home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/xdg/zprivacy")
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/core-version.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/data-dir.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/original.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/import-meta.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/imported-text.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/conversation.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/findings-before-answer.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/findings-after-answer.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/disk-before.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-view.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-meta.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-take-out.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-take-out-clear.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/answer-page-token.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/leftovers-payload.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/after-takeout-tokens.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/after-takeout-tokens-revealed.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/after-takeout-extra-tokens.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/question-chat-safe.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/question-chat-marks.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/leftovers-question-chat.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/chat-before-ask-err.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/connect-fake.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/ask-model-chat.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/ask-model-chat-usage.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/leftovers-ask-model-chat.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/chat-to-take-out.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/chat-to-take-out-clear.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/chat-to-take-out-meta.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/leftovers-chat.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/question-iban-safe.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/question-iban-marks.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/leftovers-question-iban.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/question-iban-token-values.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/question-iban-reread.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/build-iban-ok.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-after-iban-question.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/leftovers-payload-after-iban.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/take-out-after-iban.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/ask-model-iban.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/after-iban-tokens.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/after-iban-tokens-revealed.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/after-iban-extra-tokens.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/protect-iban-word.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-after-hand-iban.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/leftovers-hand-iban.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/save-settings.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/connect-openai.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/disk-after.txt
+WROTE /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/settings.zcfg.txt
+DONE

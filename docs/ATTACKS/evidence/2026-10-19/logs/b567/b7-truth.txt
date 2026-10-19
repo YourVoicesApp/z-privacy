@@ -1,0 +1,33 @@
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+N1 band autoProtected     report.auto=6    findings.Protected=6    snap.auto_protected=6    derived=6
+N2 band openSuggestions   report.suggested=1    findings.Suggested=1    payload.open=1    snap.open=1    marks.sugg=1    send=Some(1) derived=1
+N3 band normal            report.normal=8    snap.normal=8   
+N4 safe protectedCount    payload.protected=6    marks.Protected=6    snap.auto+user=6+0 tokens=6
+N5 home identityCount     home=0    vault_snap=0    entities().len=0   
+N6 home valueCount        home=0    vault_snap=0    taught_values=0   
+N7 profiles.length        home.profiles=0    profiles()=0   
+N8 tokenCount             list_tokens=6    snap.token_count=6   
+N9 payload.by_kind        [KindTally { kind: Person, count: 4 }, KindTally { kind: Email, count: 1 }, KindTally { kind: Iban, count: 1 }]
+N10 core_version          z_core 0.1.0 · 2026-10-19 · 2b4fad9
+N10b pages                document_view.pages=1
+N10c vault state          report.vault=Unlocked vault_state()=Unlocked home.vault=Unlocked snap.vault=Unlocked
+PAIR N1 report.auto vs findings.Protected: 6 == 6 ? true
+PAIR N1b snap.auto_protected vs derived !decided: 6 == 6 ? true
+PAIR N2 report.suggested vs payload.open vs send: 1 == 1 == Some(1) ?
+PAIR N3 report.normal vs snap.normal: 8 == 8 ? true
+PAIR N4 payload.protected vs marks.Protected: 6 == 6 ? true
+PAIR N5 home vs vault vs entities: 0 == 0 == 0 ?
+PAIR N6 home vs vault vs taught: 0 == 0 == 0 ?
+PAIR N7 home.profiles vs profiles(): 0 == 0 ?
+PAIR N8 tokens vs snap.token_count: 6 == 6 ?
+PAIR N10 vault: report=Unlocked vault_state=Unlocked home=Unlocked snap=Unlocked
+
+after answers:
+  report.auto=7 suggested=0  snap.auto=6 user=1 open=0  payload.protected=7 open=0
+  findings Protected=7 Suggested=0
+  BAND would say: '6 protected automatically · 0 need your word · 8 normal'
+  FOOTER would say: '7 values were replaced'
+  WHERE_EVERY_NUMBER says band from ScanReport.auto (= 7)
+  workspace.dart draws snap.autoProtected (= 6)
+  band auto vs footer replaced: 6 vs 7  (user_protected=1)
+ok

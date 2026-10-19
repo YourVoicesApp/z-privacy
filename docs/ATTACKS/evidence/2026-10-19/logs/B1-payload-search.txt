@@ -1,0 +1,6 @@
+HITS:
+/home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-take-out.txt	utf8	'184,60'	offsets=[418]	len=1082
+/home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-take-out.txt	utf8	'Sparkasse Leipzig'	offsets=[1004]	len=1082
+/home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-take-out.txt	utf8	'Sparkasse'	offsets=[1004]	len=1082
+/home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-take-out.txt	utf8	'Postfach 4410'	offsets=[45]	len=1082
+/home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-take-out.txt	utf8	'Postfach'	offsets=[45]	len=1082

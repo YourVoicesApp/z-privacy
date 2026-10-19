@@ -1,0 +1,13 @@
+key	en==sv	de==en	sv	de
+noAccount	True	False	'No account.'	'Kein Konto.'
+noAds	True	False	'No ads.'	'Keine Werbung.'
+noAnalytics	True	False	'No analytics.'	'Keine Analyse- oder Tracking-Daten.'
+noZPrivacyServer	True	False	'No Z Privacy server.'	'Kein Z-Privacy-Server.'
+originalDataStaysHere	True	False	'Your original data stays on this device unless you explicitly copy restored content.'	'Ihre Originaldaten bleiben auf diesem Gerät, es sei denn, Sie kopieren ausdrücklich wiederhergestellte Inhalte.'
+onlyTheProtectedVersionIsSent	True	False	'Only the protected version is sent to AI through Z Privacy.'	'Nur die geschützte Version wird über Z Privacy an die KI gesendet.'
+theseRulesWillBeEnabled	True	False	'The English privacy rules will be enabled.'	'Die deutschen Datenschutzregeln werden aktiviert.'
+thisLanguageName	False	False	'Svenska'	'Deutsch'
+start	True	False	'Start'	'Starten'
+--- sv keys that differ from en ---
+DIFF thisLanguageName: en='English' sv='Svenska'
+total differing values (non-@): 1; identical: 313

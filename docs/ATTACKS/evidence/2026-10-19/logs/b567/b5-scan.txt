@@ -1,0 +1,849 @@
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+
+======== Vertrag_Nordstern.txt  pack=de  auto=11  suggested=1  normal=426  tokens=14 ========
+  [ASK ] Company «Nordstern Consulting GmbH»
+         a name ending in «⁨GmbH⁩», which is a legal form in German — probably this client's company
+  [AUTO] Person «Thomas»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well · de:de-22 agreed as well
+  [AUTO] Person «Müller»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well · de:de-22 agreed as well
+  [AUTO] Phone «+49 171 2345678»
+         a telephone number in international form (+…), which nothing else looks like · de:de-01 agreed as well
+  [AUTO] Email «t.mueller@nordstern-consulting.de»
+         an e-mail address: a local part, an @, and a domain with a real ending · de:de-07 agreed as well
+  [AUTO] Iban «DE89 3704 0044 0532 0130 00»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · de:de-10 agreed as well
+  [AUTO] Bic «COBADEFFXXX»
+         the value written after «⁨BIC⁩:», which says what it is
+  [AUTO] CustomerNo «41-88203»
+         the value written after «⁨Kundennummer⁩:», which says what it is
+  [AUTO] TaxId «DE811728394»
+         the value written after «⁨USt-IdNr.⁩:», which says what it is
+  [AUTO] TaxId «27/123/45678»
+         the value written after «⁨Steuernummer⁩:», which says what it is
+  [AUTO] Person «Abteilung»
+         a name on its own line under a closing formula — that is a signature
+  [AUTO] Person «Vertragswesen»
+         a name on its own line under a closing formula — that is a signature
+  -- by kind (auto / asked) --
+     Bic                   auto=1  asked=0
+     Company               auto=0  asked=1
+     CustomerNo            auto=1  asked=0
+     Email                 auto=1  asked=0
+     Iban                  auto=1  asked=0
+     Person                auto=4  asked=0
+     Phone                 auto=1  asked=0
+     TaxId                 auto=2  asked=0
+  -- expected values still in payload after answering every question --
+     hid   Person:Thomas
+     hid   Person:Müller
+     hid   Company:Nordstern Consulting GmbH
+     hid   Phone:+49 171 2345678
+     hid   Email:t.mueller@nordstern-consulting.de
+     hid   Iban:DE89 3704 0044 0532 0130 00
+     hid   Bic:COBADEFFXXX
+     hid   CustomerNo:41-88203
+     hid   TaxId:DE811728394
+     hid   TaxId:27/123/45678
+  hidden=10  missed=0
+
+======== Brief_Weber.txt  pack=de  auto=29  suggested=8  normal=160  tokens=38 ========
+  [ASK ] Contract «2026-04471»
+         the value written after «⁨Rechnung⁩:», which says what it is
+  [AUTO] Person «Katharina»
+         a name after «⁨Frau⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Lindemann»
+         a name after «⁨Frau⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] CustomerNo «7733-9120»
+         the value written after «⁨Kundennummer⁩:», which says what it is
+  [AUTO] Person «Tobias»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Reinhardt»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [ASK ] Address «Bahnhofstraße 27, 80335 München»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] Person «Amira»
+         a name after «⁨Frau Dr.⁩» — in German a salutation names the person who follows it
+  [AUTO] Person «Haddad»
+         a name after «⁨Frau Dr.⁩» — in German a salutation names the person who follows it
+  [ASK ] Company «Lindemann & Partner GmbH»
+         a name ending in «⁨GmbH⁩», which is a legal form in German — probably this client's company
+  [AUTO] Iban «DE89 3704 0044 0532 0130 00»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · de:de-10 agreed as well
+  [AUTO] Bic «COBADEFFXXX»
+         the value written after «⁨BIC⁩:», which says what it is
+  [ASK ] Contract «2026-04471»
+         the value written after «⁨Rechnung⁩:», which says what it is
+  [AUTO] Phone «+49 89 1234 5678»
+         a telephone number in international form (+…), which nothing else looks like
+  [AUTO] Phone «0171 9876543»
+         a local telephone number, written after a word that names one · phone-local agreed as well
+  [AUTO] Email «m.weber@beispiel-firma.de»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] Person «Jonas»
+         a name after «⁨Herrn⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Petersen»
+         a name after «⁨Herrn⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Email «jonas.petersen@kanzlei-petersen.de»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] TaxId «143/815/08154»
+         the value written after «⁨Steuernummer⁩:», which says what it is
+  [ASK ] Address «Berliner Allee 112, 40212 Düsseldorf»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] Person «Markus»
+         «⁨Markus⁩» is one of the 5712 given names and «⁨Weber⁩» one of the 3246 surnames in the German name dictionary — two names in a row, offered for your word
+  [AUTO] Person «Weber»
+         «⁨Markus⁩» is one of the 5712 given names and «⁨Weber⁩» one of the 3246 surnames in the German name dictionary — two names in a row, offered for your word
+  [AUTO] Birthdate «27.11.1979»
+         the value written after «⁨geboren am⁩:», which says what it is
+  [AUTO] IdCard «L01X00T47»
+         the value written after «⁨Personalausweisnummer⁩:», which says what it is
+  [ASK ] Address «Lindenstraße 8, 86150 Augsburg»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] Vehicle «A-MW 2041»
+         the shape of a German registration plate
+  [AUTO] Person «Sophie»
+         a name after «⁨Frau⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Brandt»
+         a name after «⁨Frau⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Phone «089 1234 5699»
+         a local telephone number, written after a word that names one · phone-local agreed as well
+  [AUTO] Person «Yusuf»
+         a name after «⁨Herrn⁩» — in German a salutation names the person who follows it
+  [AUTO] Person «Demir»
+         a name after «⁨Herrn⁩» — in German a salutation names the person who follows it
+  [AUTO] Person «Markus»
+         a name on its own line under a closing formula — that is a signature · de:name-dictionary agreed as well
+  [AUTO] Person «Weber»
+         a name on its own line under a closing formula — that is a signature · de:name-dictionary agreed as well
+  [ASK ] Company «Weber Elektrotechnik GmbH»
+         a name ending in «⁨GmbH⁩», which is a legal form in German — probably this client's company
+  [ASK ] Address «Lindenstraße 8, 86150 Augsburg»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] TaxId «DE123456789»
+         the value written after «⁨USt-IdNr.⁩:», which says what it is
+  -- by kind (auto / asked) --
+     Address               auto=0  asked=4
+     Bic                   auto=1  asked=0
+     Birthdate             auto=1  asked=0
+     Company               auto=0  asked=2
+     Contract              auto=0  asked=2
+     CustomerNo            auto=1  asked=0
+     Email                 auto=2  asked=0
+     Iban                  auto=1  asked=0
+     IdCard                auto=1  asked=0
+     Person                auto=16  asked=0
+     Phone                 auto=3  asked=0
+     TaxId                 auto=2  asked=0
+     Vehicle               auto=1  asked=0
+  -- expected values still in payload after answering every question --
+     hid   Person:Katharina Lindemann
+     hid   Person:Lindemann
+     hid   Person:Tobias Reinhardt
+     hid   Person:Reinhardt
+     hid   Person:Amira Haddad
+     hid   Person:Haddad
+     hid   Person:Jonas Petersen
+     hid   Person:Petersen
+     hid   Person:Sophie Brandt
+     hid   Person:Brandt
+     hid   Person:Yusuf Demir
+     hid   Person:Demir
+     hid   Person:Markus Weber
+     hid   Person:Weber-as-person
+     hid   Company:Lindemann & Partner GmbH
+     hid   Company:Weber Elektrotechnik GmbH
+     hid   Iban:DE89 3704 0044 0532 0130 00
+     hid   Bic:COBADEFFXXX
+     hid   CustomerNo:7733-9120
+     hid   Email:m.weber@beispiel-firma.de
+     hid   Email:jonas.petersen@kanzlei-petersen.de
+     hid   Phone:+49 89 1234 5678
+     hid   Phone:0171 9876543
+     hid   Phone:089 1234 5699
+     hid   Birthdate:27.11.1979
+     hid   IdCard:L01X00T47
+     hid   Vehicle:A-MW 2041
+     hid   TaxId:143/815/08154
+     hid   TaxId:DE123456789
+     hid   Address:Bahnhofstraße 27
+     hid   Address:Lindenstraße 8
+     hid   Address:Berliner Allee 112
+  hidden=32  missed=0
+
+======== Lohnabrechnung_Weber.txt  pack=de  auto=34  suggested=5  normal=88  tokens=39 ========
+  [ASK ] Company «Weber Elektrotechnik GmbH»
+         a name ending in «⁨GmbH⁩», which is a legal form in German — probably this client's company
+  [ASK ] Address «86150 Augsburg»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] EmployeeNo «004711»
+         the value written after «⁨Personal-Nr.⁩:», which says what it is
+  [AUTO] Person «Lindemann»
+         the value written after «⁨Name⁩:», which says what it is · de:name-reversed-pair agreed as well
+  [AUTO] Person «Katharina»
+         the value written after «⁨Name⁩:», which says what it is · de:name-reversed-pair agreed as well
+  [AUTO] Birthdate «14.03.1988»
+         the value written after «⁨Geburtsdatum⁩:», which says what it is
+  [ASK ] Address «Bahnhofstraße 27, 80335 München»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] TaxId «86 095 742 719»
+         an eleven-digit tax identification number: its check digit comes out and its digits have the shape the office gives them · de:de-38 agreed as well
+  [AUTO] SocialInsuranceNo «65 140388 L 516»
+         a social-insurance number: an area number, a birth date, the first letter of a birth name and a check digit that comes out · de:de-35 agreed as well
+  [AUTO] Iban «DE89 3704 0044 0532 0130 00»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · de:de-10 agreed as well
+  [AUTO] Bic «COBADEFFXXX»
+         the value written after «⁨BIC⁩:», which says what it is
+  [AUTO] EmployeeNo «004711»
+         under «⁨Personal-Nr.⁩» in a table, and that column's own header says what stands in it
+  [AUTO] Person «Lindemann»
+         under «⁨Name⁩» in a table, and that column's own header says what stands in it · de:name-reversed-pair agreed as well
+  [AUTO] Person «Katharina»
+         under «⁨Name⁩» in a table, and that column's own header says what stands in it · de:name-reversed-pair agreed as well
+  [AUTO] Birthdate «14.03.1988»
+         under «⁨Geburtsdatum⁩» in a table, and that column's own header says what stands in it
+  [AUTO] SocialInsuranceNo «65 140388 L 516»
+         a social-insurance number: an area number, a birth date, the first letter of a birth name and a check digit that comes out · de:de-36 agreed as well
+  [AUTO] TaxId «86 095 742 719»
+         an eleven-digit tax identification number: its check digit comes out and its digits have the shape the office gives them · de:de-38 agreed as well
+  [AUTO] EmployeeNo «004712»
+         under «⁨Personal-Nr.⁩» in a table, and that column's own header says what stands in it
+  [AUTO] Person «Reinhardt»
+         under «⁨Name⁩» in a table, and that column's own header says what stands in it · de:name-reversed-pair agreed as well
+  [AUTO] Person «Tobias»
+         under «⁨Name⁩» in a table, and that column's own header says what stands in it · de:name-reversed-pair agreed as well
+  [AUTO] Birthdate «02.11.1979»
+         under «⁨Geburtsdatum⁩» in a table, and that column's own header says what stands in it
+  [AUTO] SocialInsuranceNo «12 021179 R 201»
+         a social-insurance number: an area number, a birth date, the first letter of a birth name and a check digit that comes out · de:de-36 agreed as well
+  [AUTO] TaxId «47 321 668 908»
+         an eleven-digit tax identification number: its check digit comes out and its digits have the shape the office gives them · de:de-38 agreed as well
+  [AUTO] EmployeeNo «004713»
+         under «⁨Personal-Nr.⁩» in a table, and that column's own header says what stands in it
+  [AUTO] Person «Haddad»
+         under «⁨Name⁩» in a table, and that column's own header says what stands in it · de:name-reversed-pair agreed as well
+  [AUTO] Person «Amira»
+         under «⁨Name⁩» in a table, and that column's own header says what stands in it · de:name-reversed-pair agreed as well
+  [AUTO] Birthdate «23.07.1991»
+         under «⁨Geburtsdatum⁩» in a table, and that column's own header says what stands in it
+  [AUTO] SocialInsuranceNo «33 230791 H 048»
+         a social-insurance number: an area number, a birth date, the first letter of a birth name and a check digit that comes out · de:de-36 agreed as well
+  [AUTO] TaxId «59 870 213 403»
+         an eleven-digit tax identification number: its check digit comes out and its digits have the shape the office gives them · de:de-38 agreed as well
+  [AUTO] EmployeeNo «004714»
+         under «⁨Personal-Nr.⁩» in a table, and that column's own header says what stands in it
+  [AUTO] Person «Demir»
+         under «⁨Name⁩» in a table, and that column's own header says what stands in it · de:name-reversed-pair agreed as well
+  [AUTO] Person «Yusuf»
+         under «⁨Name⁩» in a table, and that column's own header says what stands in it · de:name-reversed-pair agreed as well
+  [AUTO] Birthdate «09.05.1985»
+         under «⁨Geburtsdatum⁩» in a table, and that column's own header says what stands in it
+  [AUTO] SocialInsuranceNo «54 090585 D 312»
+         a social-insurance number: an area number, a birth date, the first letter of a birth name and a check digit that comes out · de:de-36 agreed as well
+  [AUTO] TaxId «21 456 009 876»
+         an eleven-digit tax identification number: its check digit comes out and its digits have the shape the office gives them · de:de-38 agreed as well
+  [ASK ] Person «Sophie»
+         «⁨Sophie⁩» is one of the 5712 given names and «⁨Brandt⁩» one of the 3246 surnames in the German name dictionary — two names in a row, offered for your word
+  [ASK ] Person «Brandt»
+         «⁨Sophie⁩» is one of the 5712 given names and «⁨Brandt⁩» one of the 3246 surnames in the German name dictionary — two names in a row, offered for your word
+  [AUTO] Phone «089 1234 5699»
+         a local telephone number, written after a word that names one · de:de-30 agreed as well · phone-local agreed as well
+  [AUTO] Email «s.brandt@weber-elektrotechnik.de»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  -- by kind (auto / asked) --
+     Address               auto=0  asked=2
+     Bic                   auto=1  asked=0
+     Birthdate             auto=5  asked=0
+     Company               auto=0  asked=1
+     Email                 auto=1  asked=0
+     EmployeeNo            auto=5  asked=0
+     Iban                  auto=1  asked=0
+     Person                auto=10  asked=2
+     Phone                 auto=1  asked=0
+     SocialInsuranceNo     auto=5  asked=0
+     TaxId                 auto=5  asked=0
+  -- expected values still in payload after answering every question --
+     hid   Person:Katharina
+     hid   Person:Lindemann
+     hid   Person:Tobias
+     hid   Person:Reinhardt
+     hid   Person:Amira
+     hid   Person:Haddad
+     hid   Person:Yusuf
+     hid   Person:Demir
+     hid   Person:Sophie
+     hid   Person:Brandt
+     hid   Company:Weber Elektrotechnik GmbH
+     hid   EmployeeNo:004711
+     hid   EmployeeNo:004712
+     hid   EmployeeNo:004713
+     hid   EmployeeNo:004714
+     hid   Birthdate:14.03.1988
+     hid   Birthdate:02.11.1979
+     hid   Birthdate:23.07.1991
+     hid   Birthdate:09.05.1985
+     hid   TaxId:86 095 742 719
+     hid   TaxId:47 321 668 908
+     hid   TaxId:59 870 213 403
+     hid   TaxId:21 456 009 876
+     hid   SV:65 140388 L 516
+     hid   SV:12 021179 R 201
+     hid   SV:33 230791 H 048
+     hid   SV:54 090585 D 312
+     hid   Iban:DE89 3704 0044 0532 0130 00
+     hid   Bic:COBADEFFXXX
+     hid   Email:s.brandt@weber-elektrotechnik.de
+     hid   Phone:089 1234 5699
+     hid   Address:Bahnhofstraße 27
+     MISS  Address:Lindenstraße 8
+  hidden=32  missed=1
+
+======== Brev_Lindqvist.txt  pack=sv  auto=14  suggested=6  normal=170  tokens=23 ========
+  [ASK ] Person «Katarina»
+         a name after «⁨Hej⁩» — in Swedish a greeting is often followed by a name, which is not the same as naming one — offered for your word · sv:name-dictionary agreed as well
+  [AUTO] Person «Lindqvist»
+         a name after «⁨Hej⁩» — in Swedish a greeting is often followed by a name, which is not the same as naming one — offered for your word · sv:name-dictionary agreed as well
+  [AUTO] CustomerNo «7733-9120»
+         the value written after «⁨kundnummer⁩:», which says what it is
+  [AUTO] Person «Amira»
+         a name after «⁨dr⁩» — a title introduces the person who follows it
+  [AUTO] Person «Haddad»
+         a name after «⁨dr⁩» — a title introduces the person who follows it
+  [ASK ] Company «Lindqvist & Partner AB»
+         a name ending in «⁨AB⁩», which is a legal form in Swedish — probably this client's company
+  [AUTO] TaxId «556123-4567»
+         the value written after «⁨Org.nr⁩:», which says what it is
+  [AUTO] Iban «SE35 5000 0000 0549 1000 0003»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · zz:zz-03 agreed as well
+  [AUTO] Bic «ESSESESS»
+         the value written after «⁨BIC⁩:», which says what it is
+  [AUTO] Phone «+46 8 123 456 78»
+         a telephone number in international form (+…), which nothing else looks like · sv:sv-01 agreed as well
+  [AUTO] Phone «070-123 45 67»
+         the value written after «⁨mobil⁩:», which says what it is · phone-local agreed as well
+  [AUTO] Email «m.lindqvist@exempel-bolag.se»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [ASK ] Person «Jonas»
+         «⁨Jonas⁩» is one of the 150 given names and «⁨Pettersson⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Person «Pettersson»
+         «⁨Jonas⁩» is one of the 150 given names and «⁨Pettersson⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [AUTO] Email «jonas.pettersson@revision-pettersson.se»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] TaxId «791127-1234»
+         a national identity number: a real date and four digits. Its check digit does not come out, which changes nothing about hiding it · sv:sv-05 agreed as well
+  [ASK ] Phone «08-123 45 99»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [AUTO] Person «Markus»
+         a name on its own line under a closing formula — that is a signature
+  [AUTO] Person «Lindqvist»
+         a name on its own line under a closing formula — that is a signature
+  [ASK ] Company «Lindqvist Elteknik AB»
+         a name ending in «⁨AB⁩», which is a legal form in Swedish — probably this client's company
+  -- by kind (auto / asked) --
+     Bic                   auto=1  asked=0
+     Company               auto=0  asked=2
+     CustomerNo            auto=1  asked=0
+     Email                 auto=2  asked=0
+     Iban                  auto=1  asked=0
+     Person                auto=5  asked=3
+     Phone                 auto=2  asked=1
+     TaxId                 auto=2  asked=0
+  -- expected values still in payload after answering every question --
+     hid   Person:Katarina Lindqvist
+     hid   Person:Lindqvist
+     MISS  Person:Tobias Reinholdsson
+     MISS  Person:Reinholdsson
+     hid   Person:Amira Haddad
+     hid   Person:Haddad
+     hid   Person:Jonas Pettersson
+     hid   Person:Pettersson
+     MISS  Person:Sofia Brandt
+     MISS  Person:Brandt
+     MISS  Person:Yusuf Demir
+     MISS  Person:Demir
+     hid   Person:Markus Lindqvist
+     hid   Company:Lindqvist & Partner AB
+     hid   Company:Lindqvist Elteknik AB
+     hid   Iban:SE35 5000 0000 0549 1000 0003
+     hid   Bic:ESSESESS
+     hid   OrgNr:556123-4567
+     MISS  Bankgiro:5555-5555
+     hid   CustomerNo:7733-9120
+     hid   Personnummer:791127-1234
+     hid   Email:m.lindqvist@exempel-bolag.se
+     hid   Email:jonas.pettersson@revision-pettersson.se
+     hid   Phone:+46 8 123 456 78
+     hid   Phone:070-123 45 67
+     hid   Phone:08-123 45 99
+     MISS  Vehicle:ABC 123
+     MISS  Address:Storgatan 27
+     MISS  Address:Lindvägen 8
+     MISS  Address:Birger Jarlsgatan 112
+     MISS  Moms:SE556123456701
+  hidden=19  missed=12
+
+======== Risala_Alharbi.txt  pack=de (no ar pack)  auto=5  suggested=2  normal=213  tokens=7 ========
+  [AUTO] Iban «SA03 8000 0000 6080 1016 7519»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · de:de-10 agreed as well
+  [AUTO] Bic «RJHISARI»
+         the value written after «⁨BIC⁩:», which says what it is
+  [ASK ] Phone «012 123 4567»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [ASK ] Phone «0501234567»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [AUTO] Phone «+966 55 987 6543»
+         a telephone number in international form (+…), which nothing else looks like
+  [AUTO] Email «m.alharbi@sharika-mithal.sa»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] Email «yousef.alomari@maktab-alomari.sa»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  -- by kind (auto / asked) --
+     Bic                   auto=1  asked=0
+     Email                 auto=2  asked=0
+     Iban                  auto=1  asked=0
+     Phone                 auto=1  asked=2
+  -- expected values still in payload after answering every question --
+     MISS  Person:كاترين لندمان
+     MISS  Person:طارق بن سعود الريحاني
+     MISS  Person:أميرة الحداد
+     MISS  Person:يوسف العمري
+     MISS  Person:محمد بن عبدالله الحربي
+     MISS  Person:سارة البراك
+     MISS  Person:يونس دمير
+     hid   Iban:SA03 8000 0000 6080 1016 7519
+     hid   Bic:RJHISARI
+     MISS  CustomerNo:7733-9120
+     MISS  CR:4030123456
+     hid   Email:m.alharbi@sharika-mithal.sa
+     hid   Email:yousef.alomari@maktab-alomari.sa
+     hid   Phone:012 123 4567
+     hid   Phone:0501234567
+     hid   Phone:+966 55 987 6543
+     MISS  IdCard:1012345678
+     MISS  TaxId:300012345600003
+     MISS  TaxId:300098765400003
+     MISS  Birthdate:27/11/1979
+     MISS  Plate:أ ب ج 2041
+  hidden=7  missed=14
+
+======== Risala_Alharbi.txt  pack=ar (unknown pack → general rules only)  auto=5  suggested=2  normal=213  tokens=7 ========
+  [AUTO] Iban «SA03 8000 0000 6080 1016 7519»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · zz:zz-03 agreed as well
+  [AUTO] Bic «RJHISARI»
+         the value written after «⁨BIC⁩:», which says what it is
+  [ASK ] Phone «012 123 4567»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [ASK ] Phone «0501234567»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [AUTO] Phone «+966 55 987 6543»
+         a telephone number in international form (+…), which nothing else looks like
+  [AUTO] Email «m.alharbi@sharika-mithal.sa»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] Email «yousef.alomari@maktab-alomari.sa»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  -- by kind (auto / asked) --
+     Bic                   auto=1  asked=0
+     Email                 auto=2  asked=0
+     Iban                  auto=1  asked=0
+     Phone                 auto=1  asked=2
+  -- expected values still in payload after answering every question --
+     hid   Iban:SA03 8000 0000 6080 1016 7519
+     hid   Bic:RJHISARI
+     hid   Email:m.alharbi@sharika-mithal.sa
+     hid   Phone:+966 55 987 6543
+     MISS  Person:الحربي
+     MISS  IdCard:1012345678
+  hidden=4  missed=2
+
+======== ألماني 1.txt  pack=de  auto=12  suggested=5  normal=87  tokens=17 ========
+  [ASK ] Company «Stadtwerke Lindenau GmbH»
+         a name ending in «⁨GmbH⁩», which is a legal form in German — probably this client's company
+  [ASK ] Address «04179 Leipzig»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] Person «Markus»
+         a name after «⁨Herrn⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Feldmann»
+         a name after «⁨Herrn⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [ASK ] Address «Gartenstraße 17
+04155 Leipzig»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] CustomerNo «7731-0458»
+         the value written after «⁨Kundennummer⁩:», which says what it is
+  [ASK ] Contract «RE-2026-118734»
+         the value written after «⁨Rechnungsnummer⁩:», which says what it is
+  [AUTO] Person «Feldmann»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it
+  [AUTO] Iban «DE89 3704 0044 0532 0130 00»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · de:de-10 agreed as well
+  [AUTO] Person «Katrin»
+         a name after «⁨Frau⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Sommer»
+         a name after «⁨Frau⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [ASK ] Phone «0341 2208 4417»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [AUTO] Email «k.sommer@stadtwerke-lindenau.example»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] Person «Katrin»
+         a name on its own line under a closing formula — that is a signature · de:name-dictionary agreed as well
+  [AUTO] Person «Sommer»
+         a name on its own line under a closing formula — that is a signature · de:name-dictionary agreed as well
+  [AUTO] Iban «DE89 3704 0044 0532 0130 00»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · de:de-10 agreed as well
+  [AUTO] Bic «COBADEFFXXX»
+         the value written after «⁨BIC⁩:», which says what it is
+  -- by kind (auto / asked) --
+     Address               auto=0  asked=2
+     Bic                   auto=1  asked=0
+     Company               auto=0  asked=1
+     Contract              auto=0  asked=1
+     CustomerNo            auto=1  asked=0
+     Email                 auto=1  asked=0
+     Iban                  auto=2  asked=0
+     Person                auto=7  asked=0
+     Phone                 auto=0  asked=1
+  -- expected values still in payload after answering every question --
+     hid   Person:Markus Feldmann
+     hid   Person:Markus
+     hid   Person:Katrin Sommer
+     hid   Person:Sommer
+     hid   Company:Stadtwerke Lindenau GmbH
+     hid   CustomerNo:7731-0458
+     hid   Invoice:RE-2026-118734
+     hid   Iban:DE89 3704 0044 0532 0130 00
+     hid   Bic:COBADEFFXXX
+     hid   Email:k.sommer@stadtwerke-lindenau.example
+     hid   Phone:0341 2208 4417
+     hid   Address:Gartenstraße 17
+     MISS  Address:Postfach 4410
+     MISS  Company:Sparkasse Leipzig
+  hidden=12  missed=2
+
+======== ألماني 2.txt  pack=de  auto=15  suggested=3  normal=111  tokens=18 ========
+  [AUTO] Person «Heike»
+         a name after «⁨Dr. med.⁩» — a title introduces the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Brandt»
+         a name after «⁨Dr. med.⁩» — a title introduces the person who follows it · de:name-dictionary agreed as well
+  [ASK ] Address «10969 Berlin»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] Phone «030 7781 2290»
+         a local telephone number, written after a word that names one · de:de-01 agreed as well · phone-local agreed as well
+  [AUTO] Person «Thomas»
+         a name after «⁨Herrn Dr. med.⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Albrecht»
+         a name after «⁨Herrn Dr. med.⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [ASK ] Address «Friedrichstraße 112
+10117 Berlin»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] Person «Jonas»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Weidemann»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Birthdate «03.07.1968»
+         the value written after «⁨Geboren am⁩:», which says what it is
+  [ASK ] Address «Lindenallee 41, 10789 Berlin»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] Phone «0176 4419 2836»
+         the value written after «⁨Telefon⁩:», which says what it is · phone-local agreed as well
+  [AUTO] Person «Kollege»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it
+  [AUTO] Person «Albrecht»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it
+  [AUTO] Person «Weidemann»
+         a name after «⁨Herrn⁩» — in German a salutation names the person who follows it
+  [AUTO] Email «praxis.brandt@arztpraxis.example»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] Person «Heike»
+         a name after «⁨Dr. med.⁩» — a title introduces the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Brandt»
+         a name after «⁨Dr. med.⁩» — a title introduces the person who follows it · de:name-dictionary agreed as well
+  -- by kind (auto / asked) --
+     Address               auto=0  asked=3
+     Birthdate             auto=1  asked=0
+     Email                 auto=1  asked=0
+     Person                auto=11  asked=0
+     Phone                 auto=2  asked=0
+  -- expected values still in payload after answering every question --
+     hid   Person:Heike Brandt
+     hid   Person:Brandt
+     hid   Person:Thomas Albrecht
+     hid   Person:Jonas Weidemann
+     hid   Person:Jonas
+     hid   Birthdate:03.07.1968
+     MISS  Insurance:A123456780
+     hid   Phone:030 7781 2290
+     hid   Phone:0176 4419 2836
+     hid   Email:praxis.brandt@arztpraxis.example
+     MISS  Address:Rosenweg 3
+     hid   Address:Lindenallee 41
+     hid   Address:Friedrichstraße 112
+  hidden=11  missed=2
+
+======== ألماني 3.txt  pack=de  auto=11  suggested=1  normal=28  tokens=12 ========
+  [AUTO] Person «Heike»
+         a name after «⁨Dr. med.⁩» — a title introduces the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Brandt»
+         a name after «⁨Dr. med.⁩» — a title introduces the person who follows it · de:name-dictionary agreed as well
+  [ASK ] Address «10969 Berlin»
+         a postcode and a town, with a street before them — an address, if this one is a person's
+  [AUTO] Person «Kollege»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it
+  [AUTO] Person «Albrecht»
+         a name after «⁨Herr⁩» — in German a salutation names the person who follows it
+  [AUTO] Person «Jonas»
+         a name after «⁨Herrn⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Weidemann»
+         a name after «⁨Herrn⁩» — in German a salutation names the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Birthdate «03.07.1968»
+         the value written after «⁨geboren am⁩:», which says what it is
+  [AUTO] Phone «0176 4419 2836»
+         a local telephone number, written after a word that names one · de:de-01 agreed as well · phone-local agreed as well
+  [AUTO] Email «praxis.brandt@arztpraxis.example»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] Person «Heike»
+         a name after «⁨Dr. med.⁩» — a title introduces the person who follows it · de:name-dictionary agreed as well
+  [AUTO] Person «Brandt»
+         a name after «⁨Dr. med.⁩» — a title introduces the person who follows it · de:name-dictionary agreed as well
+  -- by kind (auto / asked) --
+     Address               auto=0  asked=1
+     Birthdate             auto=1  asked=0
+     Email                 auto=1  asked=0
+     Person                auto=8  asked=0
+     Phone                 auto=1  asked=0
+  -- expected values still in payload after answering every question --
+     hid   Person:Heike Brandt
+     hid   Person:Albrecht
+     hid   Person:Jonas Weidemann
+     hid   Birthdate:03.07.1968
+     hid   Phone:0176 4419 2836
+     hid   Email:praxis.brandt@arztpraxis.example
+  hidden=6  missed=0
+
+======== إنجليزي 1.txt  pack=en  auto=7  suggested=3  normal=109  tokens=11 ========
+  [ASK ] Company «Harbourview Supplies Ltd»
+         a name ending in «⁨Ltd⁩», which is a legal form in English — probably this client's company
+  [AUTO] Person «Rachel»
+         a name after «⁨Ms⁩» — in English a salutation names the person who follows it
+  [AUTO] Person «Thornton»
+         a name after «⁨Ms⁩» — in English a salutation names the person who follows it
+  [ASK ] Company «Hale Design Ltd»
+         a name ending in «⁨Ltd⁩», which is a legal form in English — probably this client's company
+  [AUTO] Person «Thornton»
+         a name after «⁨Ms⁩» — in English a salutation names the person who follows it
+  [AUTO] Iban «GB29 NWBK 6016 1331 9268 19»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · en:en-09 agreed as well
+  [ASK ] Phone «07700 900461»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [AUTO] Email «d.okafor@harbourview.example»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] Person «Peter»
+         a name on its own line under a closing formula — that is a signature
+  [AUTO] Person «Walsh»
+         a name on its own line under a closing formula — that is a signature
+  -- by kind (auto / asked) --
+     Company               auto=0  asked=2
+     Email                 auto=1  asked=0
+     Iban                  auto=1  asked=0
+     Person                auto=5  asked=0
+     Phone                 auto=0  asked=1
+  -- expected values still in payload after answering every question --
+     hid   Person:Rachel Thornton
+     hid   Person:Thornton
+     MISS  Person:Daniel Okafor
+     MISS  Person:Okafor
+     hid   Person:Peter Walsh
+     hid   Person:Walsh
+     hid   Company:Harbourview Supplies Ltd
+     hid   Company:Thornton & Hale Design Ltd
+     hid   Iban:GB29 NWBK 6016 1331 9268 19
+     MISS  CustomerRef:HVS-55120
+     hid   Phone:07700 900461
+     hid   Email:d.okafor@harbourview.example
+     MISS  Address:22 Clifton Road
+  hidden=9  missed=4
+
+======== إنجليزي 2.txt  pack=en  auto=9  suggested=1  normal=120  tokens=13 ========
+  [AUTO] Person «Laura»
+         a name after «⁨Ms⁩» — in English a salutation names the person who follows it
+  [AUTO] Person «Fenwick»
+         a name after «⁨Ms⁩» — in English a salutation names the person who follows it
+  [ASK ] Company «Northgate Engineering Ltd»
+         a name ending in «⁨Ltd⁩», which is a legal form in English — probably this client's company
+  [AUTO] Phone «07700 900184»
+         the value written after «⁨Mobile⁩:», which says what it is · phone-local agreed as well
+  [AUTO] Email «j.whitaker@mailbox.example»
+         an e-mail address: a local part, an @, and a domain with a real ending · en:en-08 agreed as well
+  [AUTO] Person «Whitaker»
+         a name after «⁨Mr⁩» — in English a salutation names the person who follows it
+  [AUTO] Person «Simon»
+         a name after «⁨Mr⁩» — in English a salutation names the person who follows it · en:name-dictionary agreed as well
+  [AUTO] Person «Barker»
+         a name after «⁨Mr⁩» — in English a salutation names the person who follows it · en:name-dictionary agreed as well
+  [AUTO] Person «Helen»
+         a name on its own line under a closing formula — that is a signature · en:name-dictionary agreed as well
+  [AUTO] Person «Price»
+         a name on its own line under a closing formula — that is a signature · en:name-dictionary agreed as well
+  -- by kind (auto / asked) --
+     Company               auto=0  asked=1
+     Email                 auto=1  asked=0
+     Person                auto=7  asked=0
+     Phone                 auto=1  asked=0
+  -- expected values still in payload after answering every question --
+     hid   Person:James Whitaker
+     MISS  Person:James
+     hid   Person:Laura Fenwick
+     hid   Person:Simon Barker
+     hid   Person:Helen Price
+     MISS  Birthdate:12/04/1985
+     MISS  EmployeeNo:NGE-20417
+     MISS  NI:QQ 12 34 56 C
+     hid   Phone:07700 900184
+     hid   Email:j.whitaker@mailbox.example
+     MISS  Card:4111 1111 1111 1111
+     MISS  Address:7 Elm Terrace
+     hid   Company:Fenwick & Marsh
+     hid   Company:Northgate Engineering Ltd
+  hidden=8  missed=6
+
+======== سويدي 1.txt  pack=sv  auto=6  suggested=6  normal=98  tokens=12 ========
+  [ASK ] Company «Bostadsbolaget Ekhagen AB»
+         a name ending in «⁨AB⁩», which is a legal form in Swedish — probably this client's company
+  [AUTO] TaxId «556677-8899»
+         the value written after «⁨Org.nr⁩:», which says what it is
+  [ASK ] Person «Anna»
+         a name after «⁨Hej⁩» — in Swedish a greeting is often followed by a name, which is not the same as naming one — offered for your word
+  [ASK ] Person «Johan»
+         «⁨Johan⁩» is one of the 150 given names and «⁨Bergström⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Person «Bergström»
+         «⁨Johan⁩» is one of the 150 given names and «⁨Bergström⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Phone «070-174 06 12»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [AUTO] Email «johan.bergstrom@ekhagen.example»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] TaxId «811218-9876»
+         a national identity number: a real date, four digits, and the published check digit comes out
+  [AUTO] Person «Maria»
+         a name on its own line under a closing formula — that is a signature · sv:name-dictionary agreed as well
+  [AUTO] Person «Lindqvist»
+         a name on its own line under a closing formula — that is a signature · sv:name-dictionary agreed as well
+  [ASK ] Company «Bostadsbolaget Ekhagen AB»
+         a name ending in «⁨AB⁩», which is a legal form in Swedish — probably this client's company
+  [AUTO] Phone «035-17 40 618»
+         the value written after «⁨Telefon⁩:», which says what it is · phone-local agreed as well
+  -- by kind (auto / asked) --
+     Company               auto=0  asked=2
+     Email                 auto=1  asked=0
+     Person                auto=2  asked=3
+     Phone                 auto=1  asked=1
+     TaxId                 auto=2  asked=0
+  -- expected values still in payload after answering every question --
+     hid   Person:Anna
+     hid   Person:Johan Bergström
+     hid   Person:Bergström
+     hid   Person:Maria Lindqvist
+     hid   Person:Lindqvist
+     hid   Company:Bostadsbolaget Ekhagen AB
+     hid   OrgNr:556677-8899
+     hid   Personnummer:811218-9876
+     hid   Phone:070-174 06 12
+     hid   Phone:035-17 40 618
+     hid   Email:johan.bergstrom@ekhagen.example
+     MISS  Bankgiro:5050-1055
+     MISS  Address:Storgatan 12 B
+  hidden=11  missed=2
+
+======== سويدي 2.txt  pack=sv  auto=5  suggested=11  normal=100  tokens=16 ========
+  [ASK ] Company «Advokatfirman Holm & Sandberg KB»
+         a name ending in «⁨KB⁩», which is a legal form in Swedish — probably this client's company
+  [ASK ] Person «Erik»
+         «⁨Erik⁩» is one of the 150 given names and «⁨Johansson⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Person «Johansson»
+         «⁨Erik⁩» is one of the 150 given names and «⁨Johansson⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Person «Erik»
+         «⁨Erik⁩» is one of the 150 given names and «⁨Johansson⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Person «Johansson»
+         «⁨Erik⁩» is one of the 150 given names and «⁨Johansson⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [AUTO] TaxId «811218-9876»
+         a national identity number: a real date, four digits, and the published check digit comes out · sv:sv-05 agreed as well
+  [ASK ] Person «Sara»
+         «⁨Sara⁩» is one of the 150 given names and «⁨Nyström⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Person «Nyström»
+         «⁨Sara⁩» is one of the 150 given names and «⁨Nyström⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Person «Erik»
+         «⁨Erik⁩» is one of the 150 given names and «⁨Johansson⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Person «Johansson»
+         «⁨Erik⁩» is one of the 150 given names and «⁨Johansson⁩» one of the 150 surnames in the Swedish name dictionary — two names in a row, offered for your word
+  [ASK ] Company «Nordström Logistik AB»
+         a name ending in «⁨AB⁩», which is a legal form in Swedish — probably this client's company
+  [AUTO] Iban «SE45 5000 0000 0583 9825 7466»
+         an IBAN: the country, the length and its own mod-97 checksum all agree · zz:zz-03 agreed as well
+  [ASK ] Phone «031-17 40 622»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [AUTO] Email «l.sandberg@holmsandberg.example»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  [AUTO] Person «Lena»
+         a name on its own line under a closing formula — that is a signature · sv:name-dictionary agreed as well
+  [AUTO] Person «Sandberg»
+         a name on its own line under a closing formula — that is a signature · sv:name-dictionary agreed as well
+  -- by kind (auto / asked) --
+     Company               auto=0  asked=2
+     Email                 auto=1  asked=0
+     Iban                  auto=1  asked=0
+     Person                auto=2  asked=8
+     Phone                 auto=0  asked=1
+     TaxId                 auto=1  asked=0
+  -- expected values still in payload after answering every question --
+     hid   Person:Erik Johansson
+     hid   Person:Johansson
+     hid   Person:Sara Nyström
+     hid   Person:Nyström
+     hid   Person:Lena Sandberg
+     hid   Person:Sandberg
+     hid   Personnummer:811218-9876
+     hid   Iban:SE45 5000 0000 0583 9825 7466
+     hid   Phone:031-17 40 622
+     hid   Email:l.sandberg@holmsandberg.example
+     MISS  Address:Kungsgatan 44
+     hid   Company:Nordström Logistik AB
+     hid   Company:Advokatfirman Holm & Sandberg KB
+  hidden=12  missed=1
+
+======== عربي 1.txt  pack=de (no ar pack)  auto=2  suggested=1  normal=86  tokens=3 ========
+  [AUTO] Iban «SA03 8000 0000 6080 1016 7519»
+         an IBAN: the country, the length and its own mod-97 checksum all agree
+  [ASK ] Phone «0501234567»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [AUTO] Email «khalid.alotaibi@alnakheel.example»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  -- by kind (auto / asked) --
+     Email                 auto=1  asked=0
+     Iban                  auto=1  asked=0
+     Phone                 auto=0  asked=1
+  -- expected values still in payload after answering every question --
+     MISS  Person:محمد الدوسري
+     MISS  Person:خالد العتيبي
+     MISS  Person:فاطمة الشمري
+     hid   Iban:SA03 8000 0000 6080 1016 7519
+     hid   Phone:0501234567
+     hid   Email:khalid.alotaibi@alnakheel.example
+     MISS  Company:شركة النخيل
+  hidden=3  missed=4
+
+======== عربي 2.txt  pack=de (no ar pack)  auto=1  suggested=1  normal=116  tokens=2 ========
+  [ASK ] Phone «0556677889»
+         a number in local telephone form — but an order or invoice number can look the same, so your word decides
+  [AUTO] Email «saad.alqahtani@lawoffice.example»
+         an e-mail address: a local part, an @, and a domain with a real ending
+  -- by kind (auto / asked) --
+     Email                 auto=1  asked=0
+     Phone                 auto=0  asked=1
+  -- expected values still in payload after answering every question --
+     MISS  Person:نورة الزهراني
+     MISS  Person:سعد القحطاني
+     MISS  Person:عبدالله المالكي
+     MISS  Person:يوسف الغامدي
+     MISS  IdCard:1023456789
+     hid   Phone:0556677889
+     hid   Email:saad.alqahtani@lawoffice.example
+  hidden=2  missed=5
+
+done

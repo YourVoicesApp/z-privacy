@@ -1,0 +1,600 @@
+Z Privacy gates
+
+  [32mPASS[0m  G1a no HTTP client other than ureq
+  [32mPASS[0m  G1b ureq is declared once, in z_core/Cargo.toml
+  [32mPASS[0m  G1c ureq is named in 1 file(s), all under z_core/src/providers
+  [32mPASS[0m  G1d the echo provider is not in z_core's default features
+  [32mPASS[0m  G27 the app's language is read in one place, and it is the ground's own function
+  [32mPASS[0m  G27 all 2 doors that read a text in a session take its language from one hand
+  [32mPASS[0m  G27 the language of the next text can answer «nobody has said»
+  [32mPASS[0m  G27 one reader asks for the language of the next text, and it is the hand that also asks the person
+  [32mPASS[0m  G27 the door back reads a file with no language asked of anybody
+  [32mPASS[0m  G30 the shared pack rules name no language in their code — the pack does
+  [32mPASS[0m  G30 every pack says what its language is called in English
+  [32mPASS[0m  G31 where the tokens stand is asked in four named places, once each
+  [32mPASS[0m  G31 the shape of a token is written in one place: tokens.rs
+  [32mPASS[0m  G32 all three protect doors ask whether a token stands there first
+  [32mPASS[0m  G32 the law a hand meets is written in one function
+  [32mPASS[0m  G32 the token is asked about before the vault is taught the value
+  [32mPASS[0m  G32 one surface asks whether a document came back, and it is the bench
+  [32mPASS[0m  G32 «this is already protected — Z put it there» is worded in one place: the one list
+  [32mPASS[0m  G33 a protect outcome becomes a sentence in core/messages.dart and nowhere else
+  [32mPASS[0m  G38 the languages offered are the measured three: de en sv (Arabic unoffered, both packs kept)
+  [32mPASS[0m  G38 one list decides what is offered, and 9 places read it
+  [32mPASS[0m  G38 the application's language is read in one place, and nowhere a session is born
+  [32mPASS[0m  G38 both doors a text enters by ask which language before anything is read
+  [32mPASS[0m  G38 a session begun by hand waits for its language, and the press says so
+  [32mPASS[0m  G39 whether a block works is asked in one place, and it is the one that knows the profile
+  [32mPASS[0m  G39 a block is not filtered by a client anywhere but the one exemption question
+  [32mPASS[0m  G39 when a block was made reaches the vault file and no sentence
+  [32mPASS[0m  G39 the Why card says «kept since» only for knowledge it found first, never for a block
+  [32mPASS[0m  G39 the glass draws «Taught on» only where there is something to draw
+  [32mPASS[0m  G39 a block's stand-in name is in no sentence the glass draws
+  [32mPASS[0m  G40 one function writes an exemption, for «in this conversation» and for «Forget» alike
+  [32mPASS[0m  G40 nothing in the core takes an exemption back, so a rescan cannot undo a «Forget»
+  [32mPASS[0m  G40 all 10 places that take knowledge out of the vault answer for their blocks: delete_entity delete_value forget_exception forget_label_rule forget_name forget_user_list forget_user_name move_user_list plan remove_value_alias
+  [32mPASS[0m  G40 no door exempts a word and can then refuse the act, so a refused press writes nothing
+  [32mPASS[0m  G40 the door back looks a token up without asking whether the block still works
+  [32mPASS[0m  G41 every sentence on the glass calls the container a session (7 mentions, all of them allowed by name)
+  [32mPASS[0m  G41 every line of the allowed list still answers for a sentence that exists
+  [32mPASS[0m  G46 no door on either contract surface takes a history: the core builds it
+  [32mPASS[0m  G46 ask_model's own body builds the chat it carries
+  [32mPASS[0m  G46 one builder makes the chat, and its readers are the three that need it: ask_model, build_the_chat, the_question_alone
+  [32mPASS[0m  G46 the document a turn names is the one its payload carried, not whatever the bench holds when the answer lands
+  [32mPASS[0m  G46 no screen assembles a history
+  [32mPASS[0m  G53 the Windows job asks for the test features Linux measures with (fake_provider,measuring,test_clock), for the core and for the bridge
+  [32mPASS[0m  G53 the Dart half runs on Windows, once, and is not allowed to fail quietly
+  [32mPASS[0m  G53 the Windows release is stamped and proved by one script, and it looks for the runner's own paths as well as «/home/»
+  [32mPASS[0m  G53 the one-writer measurement is asked for by name on Windows, where the lock is LockFileEx
+  [32mPASS[0m  G49 one function says what would leave this bench, read by the builder, the export door, the panel and the exit law
+  [32mPASS[0m  G49 one builder assembles the question alone, reached by the door and by the instrument
+  [32mPASS[0m  G49 the builder every door asks reads the bench once, and never the document alone
+  [32mPASS[0m  G49 the answer page is minted for whatever would leave, by that same reading
+  [32mPASS[0m  G48 no layer's candidate may be a word that names a field, asked once over the text
+  [32mPASS[0m  G48 one function says which words name a field, and both readers ask it
+  [32mPASS[0m  G48 the audit asks once where our own tokens stand, counts both sides of its bound by it, and hands neither an empty list
+  [32mPASS[0m  G45 every attribute stands immediately above the item it is about, so no doc comment belongs to the wrong one
+  [32mPASS[0m  G44 every word of the person's own that the core quotes is isolated (3 quoted, all of them ours by name)
+  [32mPASS[0m  G44 every word of the person's own that a screen quotes goes through theirOwnWord
+  [32mPASS[0m  G44 every sentence in the one list that quotes a person's own word is called through theirOwnWord (1 such sentence)
+  [32mPASS[0m  G44 the isolate is one function on each side, and nothing writes the pair by hand
+  [32mPASS[0m  G43 every core call holds the one-writer lock, so a read and its write cannot be split
+  [32mPASS[0m  G43 one place takes the lock, and it is the boundary every write is inside
+  [32mPASS[0m  G47 the restored answer is drawn in one class, and it is the bubble a press opens
+  [32mPASS[0m  G47 the thread draws what travelled with the Safe column's own painter
+  [32mPASS[0m  G42 every door to the three exits is built by the one hand, in send_sheet.dart
+  [32mPASS[0m  G42 the work surface's hand opens the preview side before the exits
+  [32mPASS[0m  G37 one function in the core begins a session, and every door goes through it
+  [32mPASS[0m  G37 one silent birth, caused twice: a document entering the preview, and a question leaving with none
+  [32mPASS[0m  G37 the exit law is one function asked by the two exits that build, and a read births nothing
+  [32mPASS[0m  G37 nothing is born before the preview is asked whether it holds a document
+  [32mPASS[0m  G37 the core and the glass spell a session nobody named the same: «Session N»
+  [32mPASS[0m  G37 every door a document enters the preview by tells the list it was kept
+  [32mPASS[0m  G36 four doors take text out of this machine, and the list is the measured one
+  [32mPASS[0m  G36 every door that takes text out takes the preview's copy with it, and the chat door says why it does not
+  [32mPASS[0m  G36 the one door that keeps the preview's copy says so in its own words
+  [32mPASS[0m  G36 both doors a document arrives by keep it in the preview
+  [32mPASS[0m  G36 a saved document is taken out of a list in one place, reached by the door it left by and by the bench that moved
+  [32mPASS[0m  G36 the session file is at format 6, and the fence table names it
+  [32mPASS[0m  G36 one call writes both the blocks and the preview's copy, so a door cannot write half
+  [32mPASS[0m  G36 every act that adds or takes away a protection writes the copy and the blocks
+  [32mPASS[0m  G36 one surface opens a saved document, and it is the shell
+  [32mPASS[0m  G35 nothing in the core removes a block: it can be exempted from work, never deleted
+  [32mPASS[0m  G35 the block table is written by remember_block and exempt_block, and by nothing else
+  [32mPASS[0m  G35 the minting functions are called from seven doors, and the list is the measured one
+  [32mPASS[0m  G35 every door that gives a word a token writes its block (the_decisions_are_written)
+  [32mPASS[0m  G35 the settle is reached by scan and rescan_keeping, and both write the blocks
+  [32mPASS[0m  G35 the answer page's own word is dropped where the words a bench named are listed
+  [32mPASS[0m  G35 the allowed list is read before a value is looked up, so the blocks cannot widen it
+  [32mPASS[0m  G35 no screen says a protection is kept only while a conversation is open
+  [32mPASS[0m  G35 the fence table names the numbers the constants hold: model 15, session 6
+  [32mPASS[0m  G34 the door back takes no session: there is no bench to protect on
+  [32mPASS[0m  G34 the door back only reads: it neither scans nor protects
+  [32mPASS[0m  G34 a document is installed on a bench by the two import doors only, and both scan (G29)
+  [32mPASS[0m  G34 one surface opens the door back, and it is the shell's «z-pdf» entry
+  [32mPASS[0m  G29 the scan a document arrives with is built in one function
+  [32mPASS[0m  G29 both import doors scan what they have just read: import_text, import_document
+  [32mPASS[0m  G29 one surface asks for a scan, and it is the bench's rescan
+  [32mPASS[0m  G28 the refusal «a word is waiting» is built in one function in the core
+  [32mPASS[0m  G28 every exit asks the one law: ask_model chat_to_take_out payload_to_take_out send
+  [32mPASS[0m  G28 one surface asks the core what may leave, and it is the order's own helper
+  [32mPASS[0m  G26 the clipboard is emptied in one place, and it is the rule's own file
+  [32mPASS[0m  G26 every surface that writes the clipboard empties it first (6 seat(s))
+  [32mPASS[0m  G25 no screen sentence carries a run of spaces
+  [32mPASS[0m  G50/G51 the sentences are in one list, and the list carries every language — 314 sentences in the one list · 6 file(s) migrated · 559 sentences owed in 22 files
+  [32mPASS[0m  G55 no sentence in the one list carries an invisible character — 942 values in 3 lists, and not one invisible character in any of them
+  [32mPASS[0m  G54 every test folder goes through removeWhenItLetsGo (138 sites), and nothing deletes one by hand
+  [32mPASS[0m  G52 main.dart tells the core its folder at line 57, before runApp at line 65, with nothing branching in front of it
+  [32mPASS[0m  G24 one place watches the window, and it is the shell
+  [32mPASS[0m  G24 the window doors are called from that one place and no other
+  [32mPASS[0m  G23 the test clock is a declared feature, not a default
+  [32mPASS[0m  G23 the test clock does not cross the bridge or reach the interface
+  [32mPASS[0m  G23 the suite runs with the clock, so its tests cannot vanish silently
+  [32mPASS[0m  G21 the captured harness is unchanged (10 files, 1 run)
+  [32mPASS[0m  G20 every typed error is worded in one place
+  [32mPASS[0m  G19 no nested lock in z_core, and no call back into the public surface
+  [32mPASS[0m  G18a the settings allowlist is one list of 8 names
+  [32mPASS[0m  G18b the settings are four struct fields, not a map
+  [32mPASS[0m  G18c the 7 settings fields name nothing of the user's work
+  [32mPASS[0m  G17 the Dart contract test calls all 123 functions
+  [32mPASS[0m  G16 wire_text() is defined in payload.rs and read only in providers (2 place(s))
+  [32mPASS[0m  G13 z_core/src/api.rs: every signature is one line
+  [32mPASS[0m  G2 z_core/src/api.rs: send takes a handle, never text
+  [32mPASS[0m  G2b z_core/src/api.rs: every door that reaches a model names its text by a handle
+  [32mPASS[0m  G7 z_core/src/api.rs: every function returns ApiResult
+  [32mPASS[0m  G8 z_core/src/api.rs: no key or secret in any signature
+  [32mPASS[0m  G13 bridges/native/z_bridge/src/api/core.rs: every signature is one line
+  [32mPASS[0m  G2 bridges/native/z_bridge/src/api/core.rs: send takes a handle, never text
+  [32mPASS[0m  G2b bridges/native/z_bridge/src/api/core.rs: every door that reaches a model names its text by a handle
+  [32mPASS[0m  G7 bridges/native/z_bridge/src/api/core.rs: every function returns ApiResult
+  [32mPASS[0m  G8 bridges/native/z_bridge/src/api/core.rs: no key or secret in any signature
+  [32mPASS[0m  G14 bridge mirrors match the contract
+  [32mPASS[0m  G11 nothing in z_core/src prints
+  [32mPASS[0m  G11 every type holding the user's words redacts its own Debug
+  [32mPASS[0m  G11 originals, token values and vault values are Secret, not String
+  [32mPASS[0m  G5a no network package in pubspec.yaml
+  [32mPASS[0m  G5b no network API in apps/flutter_app/lib
+  [32mPASS[0m  G15 no filesystem in z_core/src except 48 lines for vault.zv, sessions/*.zs and writing.lock, and 0 for settings.zcfg
+  [32mPASS[0m  G15b the settings file is touched in config.rs only
+  [32mPASS[0m  G4a unsafe_code = deny in the workspace lints
+  [32mPASS[0m  G4a-one the single unsafe allowance is z_core/src/secure_file/windows.rs
+  [32mPASS[0m  G4a-only no unsafe outside that one file
+  [32mPASS[0m  G4a-why every unsafe block in it carries a SAFETY note (12 blocks, 12 notes)
+  [32mPASS[0m  G4b clippy clean on z_core with -D warnings
+  [32mPASS[0m  G4c the Windows half compiles and lints clean, tests included
+  [32mPASS[0m  G3/G6/G9/G10/G11/G12 cargo test
+  [32mPASS[0m  G22 all 9 storage contracts are measured on Linux
+  ----  G7-build the library the Dart half speaks through (skipped: no apps/flutter_app/build/linux/x64/debug/bundle/lib yet — run: cd apps/flutter_app && flutter build linux --debug)
+  ----  G7-dart contract callable from Dart (skipped: run: cd apps/flutter_app && flutter build linux --debug)
+  [32mPASS[0m  the mark: 13 files, byte for byte from brand/source.png (zprivacy-1024.png 895K, zprivacy-512.png 283K, zprivacy-256.png 75K, …)
+  [32mPASS[0m    the Linux window takes its icon from the bundle, relative to the executable
+  [32mPASS[0m  rule 62: no direct door in this tree — only the protected version is sent, whichever door it leaves by
+  [32mPASS[0m    the gateway's one request names its text by a handle, and holds no text of its own
+  [32mPASS[0m    the gateway knows no language
+  [32mPASS[0m    the gateway names no provider: 7 listed in the registry
+  [32mPASS[0m  the shared rules name no language of their own
+  [32mPASS[0m    the second pack is data: 1 function in sv.rs
+  [32mPASS[0m    the release README names every pack the registry offers
+  [32mPASS[0m  candidate discovery protects nothing by itself
+  [32mPASS[0m    a taught name is knowledge in the vault, beside the taught label rules
+  [32mPASS[0m  the name bank: 12732 names — 9486 given, 3246 family; tier 1 8958, tier 2 3774
+  [32mPASS[0m    the bank is byte for byte what the sources and this script make
+  [32mPASS[0m    the name dictionary never protects by itself
+  [32mPASS[0m  the Windows build prints its own stamp, and checks it names the commit
+  [32mPASS[0m    the site offers no file, so there is no build for it to name
+  [32mPASS[0m  the packaging script takes this machine out of the binaries
+  ----    no «/home/» anywhere in the archive (skipped: no archive in dist/ on this machine)
+  [32mPASS[0m  the third golden: the team page is protected, the code tables are not
+  [32mPASS[0m  the second golden: a public book keeps its own words
+  [32mPASS[0m  the Swedish supplement: the credits are protected, the captions are not
+  [32mPASS[0m    test present: no_leak
+  [32mPASS[0m    test present: stale_payload
+  [32mPASS[0m    test present: round_trip
+  [32mPASS[0m    test present: session_namespace
+  [32mPASS[0m    test present: g11_
+  [32mPASS[0m    test present: g12_
+  [32mPASS[0m    test present: golden_
+  [32mPASS[0m    test present: rule_one
+  [32mPASS[0m    test present: rule_two
+  [32mPASS[0m    test present: rule_three
+  [32mPASS[0m    test present: rule_four
+  [32mPASS[0m    test present: twenty_
+  [32mPASS[0m    test present: a_twenty
+  [32mPASS[0m    test present: the_server_receives
+  [32mPASS[0m    test present: the_whole_path
+  [32mPASS[0m    test present: a_redirect_is_refused
+  [32mPASS[0m    test present: never_by_its_body
+  [32mPASS[0m    test present: longer_than_the_limit
+  [32mPASS[0m    test present: each_purpose_gets_its_own
+  [32mPASS[0m    test present: a_format_one_vault
+  [32mPASS[0m    test present: a_literal_loopback
+  [32mPASS[0m    test present: ciphertext_even_inside
+  [32mPASS[0m    test present: renamed_moved_and_pruned
+  [32mPASS[0m    test present: says_nothing_about_why
+  [32mPASS[0m    test present: not_a_set_the_screen_knows
+  [32mPASS[0m    test present: reaches_the_settings_file
+  [32mPASS[0m    test present: could_name_a_client
+  [32mPASS[0m    test present: remembers_the_first_run
+  [32mPASS[0m    test present: two_places_report_agrees
+  [32mPASS[0m    test present: the_string_that_would_be_sent
+  [32mPASS[0m    test present: is_a_constant
+  [32mPASS[0m    test present: three_windows_on_one_truth
+  [32mPASS[0m    test present: not_sensitive_is_an_answer
+  [32mPASS[0m    test present: actually_reach_the_vault
+  [32mPASS[0m    test present: can_say_where_it_came_from
+  [32mPASS[0m    test present: shows_what_it_will_take
+  [32mPASS[0m    test present: leaves_another_client_alone
+  [32mPASS[0m    test present: does_not_unprotect_the_document
+  [32mPASS[0m    test present: a_different_act_from_forget
+  [32mPASS[0m    test present: tomorrow_not_today
+  [32mPASS[0m    test present: this_conversation_means_every_place
+  [32mPASS[0m    test present: need_the_vault_and_say_so
+  [32mPASS[0m    test present: reports_nothing_it_does_not_know
+  [32mPASS[0m    test present: take_back_an_answer
+  [32mPASS[0m    test present: lie_always_without_vault
+  [32mPASS[0m    test present: lie_missing_credential
+  [32mPASS[0m    test present: lie_rescan_is_named
+  [32mPASS[0m    test present: keyless_login_claims_a_key
+  [32mPASS[0m    test present: a_three_page_document_hands_over_two_edges
+  [32mPASS[0m    test present: a_token_moves_every_edge_after_it
+  [32mPASS[0m    test present: a_swallowed_break_does_not_renumber_the_pages
+  [32mPASS[0m    test present: the_payload_is_what_it_was_before
+  [32mPASS[0m    test present: a_taught_name_is_found_in_every_case
+  [32mPASS[0m    test present: a_longer_lowercase_does_not_move_the_span
+  [32mPASS[0m    test present: protecting_every_place_is_case_blind_too
+  [32mPASS[0m    test present: a_lowercase_word_is_still_not_a_name
+  [32mPASS[0m    test present: full_case_folding_is_not_claimed
+  [32mPASS[0m    test present: a_surname_broken_at_a_line_end_is_one_name
+  [32mPASS[0m    test present: what_it_finds_it_can_find_again
+  [32mPASS[0m    test present: a_value_without_a_hyphen_is_not_found_across_a_real_one
+  [32mPASS[0m    test present: the_pair_rule_reads_across_a_wrapped_line
+  [32mPASS[0m    test present: the_pair_rule_does_not_read_across_a_page
+  [32mPASS[0m    test present: two_words_on_two_lines_are_still_two_words
+  [32mPASS[0m    test present: a_photo_credit_is_a_person_without_being_asked
+  [32mPASS[0m    test present: a_caption_is_not_a_credit
+  [32mPASS[0m    test present: a_role_beside_a_name_is_offered_not_decided
+  [32mPASS[0m    test present: the_column_shows_what_the_page_did_to_the_names
+  [32mPASS[0m    test present: discovery_is_still_blind_to_a_break
+  [32mPASS[0m    test present: the_german_pack_reads_none_of_this
+  [32mPASS[0m    test present: the_credits_are_protected_and_the_captions_are_not
+  [32mPASS[0m    test present: remove_protection_here_leaves
+  [32mPASS[0m    test present: forget_from_this_profile_keeps
+  [32mPASS[0m    test present: forget_everywhere_reaches
+  [32mPASS[0m    test present: nothing_taught_reports_no_reach
+  [32mPASS[0m    test present: locked_by_hand
+  [32mPASS[0m    test present: locks_itself
+  [32mPASS[0m    test present: does_not_postpone_the_lock
+  [32mPASS[0m    test present: tell_one_story
+  [32mPASS[0m    test present: opened_again
+  [32mPASS[0m    test present: the_lock_closer
+  [32mPASS[0m    test present: no_error_and_no_trace
+  [32mPASS[0m    test present: losing_the_window
+  [32mPASS[0m    test present: covering_nothing
+  [32mPASS[0m    test present: from_the_vault_goes_when
+  [32mPASS[0m    test present: by_hand_goes_when
+  [32mPASS[0m    test present: revealed_while_the_vault_is_locked
+  [32mPASS[0m    test present: takes_the_tokens_too
+  [32mPASS[0m    test present: postpone_the_vault_lock
+  [32mPASS[0m    test present: one_door_covers
+  [32mPASS[0m    test present: closing_the_conversation_ends
+  [32mPASS[0m    test present: drawn_through_a_form
+  [32mPASS[0m    test present: draws_itself_stops
+  [32mPASS[0m    test present: image_xobject_is_still_a_scan
+  [32mPASS[0m    test present: long_bfrange_maps_all
+  [32mPASS[0m    test present: several_entries_on_one_line
+  [32mPASS[0m    test present: list_of_destinations
+  [32mPASS[0m    test present: literal_string_in_a_two_byte_font
+  [32mPASS[0m    test present: maps_to_nothing_never_reaches
+  [32mPASS[0m    test present: nothing_of_his_own_is_left
+  [32mPASS[0m    test present: protected_without_being_asked
+  [32mPASS[0m    test present: remapped_font_is_read_by_its_own
+  [32mPASS[0m    test present: remapped_font_with_no_table
+  [32mPASS[0m    test present: raw_bytes_survives_the_way_in
+  [32mPASS[0m    test present: plain_text_is_not_touched
+  [32mPASS[0m    test present: a_string_drawn_before_a_font_is_chosen_is_counted_not_invented
+  [32mPASS[0m    test present: simple_font_with_a_table_is_read
+  [32mPASS[0m    test present: cmap_behind_a_reference
+  [32mPASS[0m    test present: name_with_an_underscore
+  [32mPASS[0m    test present: a_label_in_a_sentence_takes_no_ordinary_word
+  [32mPASS[0m    test present: a_run_of_zeros_is_not_a_telephone
+  [32mPASS[0m    test present: a_label_without_a_colon_still_takes_a_value
+  [32mPASS[0m    test present: a_protected_word_does_not_spread
+  [32mPASS[0m    test present: the_book_of_tax_terms_is_left_alone
+  [32mPASS[0m    test present: a_line_that_moves_down_separates
+  [32mPASS[0m    test present: the_other_ways_of_asking_for_a_new_line
+  [32mPASS[0m    test present: an_object_stream_is_cut_in_bytes
+  [32mPASS[0m    test present: a_refusal_counts_the_pages
+  [32mPASS[0m    test present: carries_the_numbers_and_none_of_the_words
+  [32mPASS[0m    test present: a_refused_file_still_has_a_report
+  [32mPASS[0m    test present: the_team_page_is_protected_and_the_code_tables_are_not
+  [32mPASS[0m    test present: an_icd_code_after_frau_is_not_a_person
+  [32mPASS[0m    test present: a_title_at_the_start_of_a_name
+  [32mPASS[0m    test present: the_dictionary_loads_the_names_it_ships_with
+  [32mPASS[0m    test present: german_letters_survive_the_way_in
+  [32mPASS[0m    test present: a_given_name_and_a_surname_in_a_row_are_offered
+  [32mPASS[0m    test present: a_single_name_on_its_own_is_never
+  [32mPASS[0m    test present: the_dictionary_never_protects_anything_by_itself
+  [32mPASS[0m    test present: a_german_word_that_is_also_a_name
+  [32mPASS[0m    test present: a_function_word_does_not_open_a_name
+  [32mPASS[0m    test present: the_surnames_of_a_real_letter_are_in_the_list
+  [32mPASS[0m    test present: offers_its_unknown_names_once_each
+  [32mPASS[0m    test present: a_candidate_protects_nothing_until_it_is_taught
+  [32mPASS[0m    test present: a_name_whose_given_half_was_unknown_is_found_now
+  [32mPASS[0m    test present: a_person_answers_twice_and_a_whole_document_is_understood
+  [32mPASS[0m    test present: a_swedish_letter_is_read_by_a_pack_that_is_only_data
+  [32mPASS[0m    test present: english_is_installed_and_carries_its_names
+  [32mPASS[0m    test present: the_films_english_letter_is_read_by_a_pack_of_english_words
+  [32mPASS[0m    test present: an_english_company_ends_in_its_legal_form
+  [32mPASS[0m    test present: a_document_with_no_names_offers_nobody
+  [32mPASS[0m    test present: an_english_surname_that_ends_in_son_is_offered
+  [32mPASS[0m    test present: the_other_two_packs_did_not_move
+  [32mPASS[0m    test present: a_swedish_word_that_is_also_a_name_opens_nothing
+  [32mPASS[0m    test present: swedish_labels_are_rows_like_every_other_language
+  [32mPASS[0m    test present: german_reads_exactly_what_it_read_before
+  [32mPASS[0m    test present: what_each_pack_needs_beyond_the_shared_rules_is_declared
+  [32mPASS[0m    test present: the_pack_is_what_was_asked_for_and_not_what_the_machine_is
+  [32mPASS[0m    test present: the_matrix
+  [32mPASS[0m    test present: the_catalogue_is_what_the_providers_say
+  [32mPASS[0m    test present: a_small_german_set_positive_and_negative
+  [32mPASS[0m    test present: the_rules_that_were_there_before_still_hold
+  [32mPASS[0m    test present: a_title_with_no_name_after_it_is_nothing
+  [32mPASS[0m    test present: a_degree_after_the_name_is_left
+  [32mPASS[0m    test present: frau_as_an_ordinary_noun_names_nobody
+  [32mPASS[0m    test present: a_word_like_den_in_front_of_a_salutation
+  [32mPASS[0m    test present: an_austrian_title_is_stepped_over
+  [32mPASS[0m    test present: replaces_what_was_selected
+  [32mPASS[0m    test present: salutation_stays_and_the_company
+  [32mPASS[0m    test present: never_mentions_are_counted
+  [32mPASS[0m    test present: codes_with_no_characters
+  [32mPASS[0m    test present: the_same_value_now_keeps_its_token_the_next_day
+  [32mPASS[0m    test present: an_answer_from_another_conversation_is_reported_and_not_passed_through
+  [32mPASS[0m    test present: something_that_is_not_a_token_is_not_reported
+  [32mPASS[0m    test present: the_same_session_gives_the_same_token_days_apart
+  [32mPASS[0m    test present: two_sessions_do_not_share_a_name_for_the_same_value
+  [32mPASS[0m    test present: two_clients_in_one_session_now_share_a_name
+  [32mPASS[0m    test present: another_document_in_the_same_session_keeps_the_name
+  [32mPASS[0m    test present: an_edited_document_keeps_its_name_inside_the_session
+  [32mPASS[0m    test present: without_a_vault_the_name_is_random_again
+  [32mPASS[0m    test present: an_answer_from_monday_restores_on_friday
+  [32mPASS[0m    test present: the_same_name_in_two_sessions_takes_two_tokens
+  [32mPASS[0m    test present: the_same_name_in_two_documents_of_one_session_takes_one_token
+  [32mPASS[0m    test present: an_answer_from_a_deleted_session_refuses_and_names_it
+  [32mPASS[0m    test present: a_session_survives_the_vault_being_locked
+  [32mPASS[0m    test present: a_long_conversation_does_not_grow_the_vault
+  [32mPASS[0m    test present: every_token_that_leaves_belongs_to_the_session
+  [32mPASS[0m    test present: the_reader_sees_a_turn_the_old_door_wrote
+  [32mPASS[0m    test present: a_question_sent_through_the_key_is_written_into_the_session
+  [32mPASS[0m    test present: a_document_sent_with_no_question_still_leaves_a_turn
+  [32mPASS[0m    test present: an_answer_brought_back_from_outside_is_written_too
+  [32mPASS[0m    test present: a_stored_turn_restores_only_what_its_payload_carried
+  [32mPASS[0m    test present: a_session_read_without_a_bench_reads_itself_back
+  [32mPASS[0m    test present: a_send_with_no_session_open_is_not_refused_today
+  [32mPASS[0m    test present: a_version_one_file_reads_with_no_allowed_list
+  [32mPASS[0m    test present: the_saved_files_and_the_vault_do_not_share_a_folder
+  [32mPASS[0m    test present: each_fence_falls_when_a_value_is_planted_in_it
+  [32mPASS[0m    test present: the_language_a_session_was_born_into_outlives_the_application
+  [32mPASS[0m    test present: a_session_born_with_no_document_has_never_been_asked
+  [32mPASS[0m    test present: changing_the_language_in_the_header_reaches_the_open_session
+  [32mPASS[0m    test present: a_session_from_model_twelve_has_never_been_asked_its_language
+  [32mPASS[0m    test present: the_first_document_of_a_session_born_without_one_writes_its_language
+  [32mPASS[0m    test present: switching_to_the_language_a_bench_already_has_still_writes_it
+  [32mPASS[0m    test present: a_format_two_turn_names_no_key_and_says_so
+  [32mPASS[0m    test present: a_turn_remembers_which_key_and_model_answered_it
+  [32mPASS[0m    test present: an_answer_the_person_carried_says_the_person_carried_it
+  [32mPASS[0m    test present: a_session_holding_both_kinds_of_turn_keeps_them_apart
+  [32mPASS[0m    test present: a_format_three_turn_was_about_a_file_it_cannot_name
+  [32mPASS[0m    test present: a_turn_remembers_which_file_it_was_about
+  [32mPASS[0m    test present: text_the_person_typed_says_there_was_no_file
+  [32mPASS[0m    test present: the_report_still_names_no_file_though_the_session_knows_it
+  [32mPASS[0m    test present: a_reopened_session_reads_its_own_history_back
+  [32mPASS[0m    test present: a_token_the_payload_never_allowed_stays_a_token
+  [32mPASS[0m    test present: every_protected_word_comes_back_when_the_document_opens_again
+  [32mPASS[0m    test present: a_language_written_with_no_document_open_is_the_one_the_document_is_read_with
+  [32mPASS[0m    test present: a_language_this_build_does_not_know_is_refused_by_name
+  [32mPASS[0m    test present: an_answer_from_another_session_names_every_token_and_restores_none
+  [32mPASS[0m    test present: a_handle_or_an_answer_of_another_session_is_refused
+  [32mPASS[0m    test present: a_token_this_payload_did_not_allow_stays_unknown_in_its_own_session
+  [32mPASS[0m    test present: no_text_leaves_while_a_word_waits
+  [32mPASS[0m    test present: every_door_that_takes_text_out_refuses_with_the_same_number
+  [32mPASS[0m    test present: the_refusal_carries_the_number_of_words_waiting
+  [32mPASS[0m    test present: the_word_answered_the_exit_opens
+  [32mPASS[0m    test present: the_column_the_person_reads_while_answering_still_builds
+  [32mPASS[0m    test present: an_iban_is_the_number_and_not_the_words_after_it
+  [32mPASS[0m    test present: a_bank_value_carries_no_word_of_prose
+  [32mPASS[0m    test present: an_iban_in_a_footer_line_stops_before_the_next_label
+  [32mPASS[0m    test present: the_bic_in_a_footer_line_is_read_as_a_bic
+  [32mPASS[0m    test present: the_rest_of_the_letter_did_not_move
+  [32mPASS[0m    test present: a_swedish_letter_is_never_told_its_words_are_german
+  [32mPASS[0m    test present: a_company_form_belongs_to_the_language_that_lists_it
+  [32mPASS[0m    test present: a_salutation_belongs_to_the_language_that_lists_it
+  [32mPASS[0m    test present: the_name_dictionary_counts_the_names_it_actually_holds
+  [32mPASS[0m    test present: no_reason_names_a_language_the_document_is_not_read_with
+  [32mPASS[0m    test present: ltd_is_called_an_english_legal_form
+  [32mPASS[0m    test present: text_typed_in_arrives_scanned
+  [32mPASS[0m    test present: a_text_file_arrives_scanned
+  [32mPASS[0m    test present: a_word_file_arrives_scanned
+  [32mPASS[0m    test present: a_pdf_arrives_scanned
+  [32mPASS[0m    test present: a_second_document_in_the_same_session_arrives_scanned_too
+  [32mPASS[0m    test present: a_value_the_vault_knows_comes_back_protected_and_is_never_asked_about
+  [32mPASS[0m    test present: an_empty_import_is_not_a_refusal
+  [32mPASS[0m    test present: a_pdf_whose_headers_stand_on_their_own_lines_is_read
+  [32mPASS[0m    test present: the_object_keyword_is_never_found_inside_endobj
+  [32mPASS[0m    test present: a_page_tree_packed_in_an_object_stream_is_read_whatever_its_spacing
+  [32mPASS[0m    test present: a_document_typed_or_pasted_back_keeps_its_tokens
+  [32mPASS[0m    test present: a_text_file_coming_back_keeps_its_tokens
+  [32mPASS[0m    test present: a_word_file_coming_back_keeps_its_tokens
+  [32mPASS[0m    test present: a_pdf_coming_back_keeps_its_tokens
+  [32mPASS[0m    test present: a_rescan_does_not_find_a_token_either
+  [32mPASS[0m    test present: a_hand_over_a_token_is_told_it_is_already_protected
+  [32mPASS[0m    test present: the_same_conversation_reads_every_name_back
+  [32mPASS[0m    test present: every_protected_name_comes_back_after_the_bench_is_gone
+  [32mPASS[0m    test present: the_answer_page_proves_the_origin_on_its_own
+  [32mPASS[0m    test present: with_the_vault_shut_nothing_is_named_and_nothing_is_called_unknown
+  [32mPASS[0m    test present: a_document_from_another_machine_says_so
+  [32mPASS[0m    test present: two_namespaces_are_two_conversations
+  [32mPASS[0m    test present: the_door_only_reads
+  [32mPASS[0m    test present: an_ordinary_document_is_not_one
+  [32mPASS[0m    test present: the_door_back_reads_a_file_with_no_bench_of_its_own
+  [32mPASS[0m    test present: the_door_back_brings_a_taught_value_back_after_the_bench_is_gone
+  [32mPASS[0m    test present: the_door_back_reads_a_pdf_and_a_text_file_the_same_way
+  [32mPASS[0m    test present: the_door_back_leaves_the_bench_and_the_vault_untouched
+  [32mPASS[0m    test present: a_locked_vault_leaves_the_door_back_standing
+  [32mPASS[0m    test present: a_file_the_door_back_cannot_read_is_refused_by_name
+  [32mPASS[0m    test present: every_name_comes_back_after_a_restart
+  [32mPASS[0m    test present: nothing_deletes_a_block
+  [32mPASS[0m    test present: leave_it_makes_no_block
+  [32mPASS[0m    test present: a_block_is_protected_in_another_conversation
+  [32mPASS[0m    test present: an_exemption_belongs_to_one_conversation
+  [32mPASS[0m    test present: the_blocks_are_counted_and_never_valued
+  [32mPASS[0m    test present: the_door_back_makes_no_block
+  [32mPASS[0m    test present: one_press_exempts_every_block_the_selection_spans
+  [32mPASS[0m    test present: here_uncovers_every_place_the_selection_spans
+  [32mPASS[0m    test present: a_block_of_two_words_stays_one_token_elsewhere
+  [32mPASS[0m    test present: the_preview_survives_a_restart_with_its_decisions
+  [32mPASS[0m    test present: the_copy_follows_every_decision
+  [32mPASS[0m    test present: a_second_document_takes_the_next_number
+  [32mPASS[0m    test present: going_back_keeps_it
+  [32mPASS[0m    test present: the_manual_door_takes_it_out
+  [32mPASS[0m    test present: the_send_door_takes_it_out
+  [32mPASS[0m    test present: the_model_door_takes_it_out
+  [32mPASS[0m    test present: rename_changes_the_name_and_not_the_number
+  [32mPASS[0m    test present: a_session_begun_by_hand_keeps_the_open_document
+  [32mPASS[0m    test present: an_older_session_holds_none
+  [32mPASS[0m    test present: the_first_document_of_a_new_session_is_kept_and_listed
+  [32mPASS[0m    test present: a_chat_in_a_new_session_is_kept_as_chat1
+  [32mPASS[0m    test present: a_session_of_documents_only_is_named_by_its_number
+  [32mPASS[0m    test present: the_first_number_is_retired_at_every_door
+  [32mPASS[0m    test present: nothing_is_born_without_a_document
+  [32mPASS[0m    test present: a_document_is_in_one_session_at_a_time
+  [32mPASS[0m    test present: a_saved_document_keeps_its_decisions
+  [32mPASS[0m    test present: a_format_four_file_holds_no_saved_document
+  [32mPASS[0m    test present: a_block_keeps_its_tokens_and_its_exemptions
+  [32mPASS[0m    test present: a_block_crosses_from_one_client_to_another
+  [32mPASS[0m    test present: a_blocks_card_says_no_where_and_no_when
+  [32mPASS[0m    test present: forget_everywhere_exempts_every_profile_and_keeps_the_block
+  [32mPASS[0m    test present: forget_from_this_profile_exempts_that_client_only
+  [32mPASS[0m    test present: a_forgotten_word_still_comes_back_from_an_old_document
+  [32mPASS[0m    test present: every_door_that_forgets_a_word_exempts_its_blocks
+  [32mPASS[0m    test present: nothing_short_of_teaching_it_again_undoes_a_forget
+  [32mPASS[0m    test present: a_hand_protection_after_forget_does_not_restore_the_automatic_one
+  [32mPASS[0m    test present: an_empty_vault_file_is_not_a_vault_and_a_damaged_one_is_never_written_over
+  [32mPASS[0m    test present: two_copies_never_lose_a_write
+  [32mPASS[0m    test present: two_copies_never_lose_a_turn
+  [32mPASS[0m    test present: a_reason_that_quotes_a_persons_word_isolates_it
+  [32mPASS[0m    test present: a_document_that_arrives_with_the_vault_shut_has_no_session
+  [32mPASS[0m    test present: a_refused_press_leaves_the_blocks_working
+  [32mPASS[0m    test present: a_second_question_carries_the_first_turn_as_it_left
+  [32mPASS[0m    test present: a_follow_up_question_leaves_without_the_document
+  [32mPASS[0m    test present: a_follow_up_with_no_question_in_it_is_refused
+  [32mPASS[0m    test present: a_chat_that_ended_is_not_carried_into_the_next_one
+  [32mPASS[0m    test present: a_new_run_does_not_continue_the_chat_it_finds
+  [32mPASS[0m    test present: entering_the_same_session_again_in_one_run_keeps_its_chat
+  [32mPASS[0m    test present: the_chat_a_person_takes_away_is_the_text_the_model_was_shown
+  [32mPASS[0m    test present: copying_the_chat_leaves_a_document_that_never_left_in_the_preview
+  [32mPASS[0m    test present: the_chat_does_not_leave_while_a_word_waits
+  [32mPASS[0m    test present: a_session_with_no_chat_in_it_has_nothing_to_take_out
+  [32mPASS[0m    test present: a_format_five_file_reads_and_its_turns_belong_to_no_chat
+  [32mPASS[0m    test present: an_answer_brought_back_by_hand_joins_the_open_chat
+  [32mPASS[0m    test present: a_turn_carries_both_sides_coded_and_restored
+  [32mPASS[0m    test present: a_turn_names_the_document_it_carried_after_the_copy_is_gone
+  [32mPASS[0m    test present: an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name
+  [32mPASS[0m    test present: the_word_that_names_a_field_is_not_a_person
+  [32mPASS[0m    test present: a_name_after_a_salutation_ends_with_the_sentence
+  [32mPASS[0m    test present: the_exit_audit_does_not_count_a_value_inside_our_own_token
+  [32mPASS[0m    test present: the_attackers_question_leaves_and_every_door_stays_open
+  [32mPASS[0m    test present: a_label_a_walk_may_honestly_reach_is_still_not_a_name
+  [32mPASS[0m    test present: a_pasted_letter_with_no_document_leaves_by_the_manual_door
+  [32mPASS[0m    test present: the_pdf_door_mints_its_answer_page_for_a_question_alone
+  [32mPASS[0m    test present: the_model_door_still_takes_the_question_alone
+  [32mPASS[0m    test present: an_empty_box_with_no_document_still_refuses_by_name
+  [32mPASS[0m    test present: the_blocks_a_question_made_are_counted_on_its_own_surface
+  [32mPASS[0m    test present: a_document_on_the_bench_still_answers_for_its_own_blocks
+  [32mPASS[0m    test present: a_question_taken_out_with_no_document_is_born_into_a_session
+  [32mPASS[0m    test present: a_question_sent_to_a_model_with_no_document_is_born_into_a_session
+  [32mPASS[0m    test present: the_chat_of_a_question_only_session_carries_its_earlier_turns
+  [32mPASS[0m    test present: the_room_shows_it_with_an_empty_kept_list_and_both_doors
+  [32mPASS[0m    test present: a_question_that_never_leaves_is_born_into_nothing
+  [32mPASS[0m    test present: ending_the_chat_starts_from_zero_without_a_second_birth
+  [32mPASS[0m    test present: the_screens_own_birth_still_makes_one_session_and_not_two
+  [32mPASS[0m    screen test present: the core reports it
+  [32mPASS[0m    screen test present: the scan the core ran
+  [32mPASS[0m    screen test present: own two strings
+  [32mPASS[0m    screen test present: never the credential
+  [32mPASS[0m    screen test present: not one Dart worked out
+  [32mPASS[0m    screen test present: Skip decides nothing
+  [32mPASS[0m    screen test present: does not touch what leaves
+  [32mPASS[0m    screen test present: the manual door needs no key
+  [32mPASS[0m    screen test present: only the safe text arrives
+  [32mPASS[0m    screen test present: the vault room
+  [32mPASS[0m    screen test present: say where they live
+  [32mPASS[0m    screen test present: in the language it is offering
+  [32mPASS[0m    screen test present: not on the three parts
+  [32mPASS[0m    screen test present: word for word
+  [32mPASS[0m    screen test present: forgetting shows its cost first
+  [32mPASS[0m    screen test present: clipboard untouched until confirmed
+  [32mPASS[0m    screen test present: named a rescan, not scanned on import
+  [32mPASS[0m    screen test present: offers Disconnect, not
+  [32mPASS[0m    screen test present: names both acts by their reach
+  [32mPASS[0m    screen test present: says how much, and what to do
+  [32mPASS[0m    screen test present: name the reach they would forget
+  [32mPASS[0m    screen test present: is the pack that is kept
+  [32mPASS[0m    screen test present: display only, and Why lives
+  [32mPASS[0m    screen test present: its own next move
+  [32mPASS[0m    screen test present: two edges in both columns
+  [32mPASS[0m    screen test present: moves the other, and Apart stops it
+  [32mPASS[0m    screen test present: takes the reveal with it
+  [32mPASS[0m    screen test present: takes the revealed tokens with it
+  [32mPASS[0m    screen test present: hides rather than keeps
+  [32mPASS[0m    screen test present: no longer in front
+  [32mPASS[0m    screen test present: gone from the screen
+  [32mPASS[0m    screen test present: has no tokens to reveal, so the press is dead
+  [32mPASS[0m    screen test present: drawn with a solid line
+  [32mPASS[0m    screen test present: protected on its own is drawn dashed
+  [32mPASS[0m    screen test present: the line still says who decided
+  [32mPASS[0m    screen test present: stays wavy, whoever found it
+  [32mPASS[0m    screen test present: put back in the answer is drawn dotted
+  [32mPASS[0m    screen test present: own report, and none of the words
+  [32mPASS[0m    screen test present: selection in blue, not in nothing
+  [32mPASS[0m    screen test present: reads through a mark
+  [32mPASS[0m    screen test present: survives the rebuild the Workspace does
+  [32mPASS[0m    screen test present: a tap still asks
+  [32mPASS[0m    screen test present: a name is two presses
+  [32mPASS[0m    screen test present: a list is read and counted
+  [32mPASS[0m    screen test present: both acts say what they need
+  [32mPASS[0m    screen test present: the rule set in the top bar is a choice
+  [32mPASS[0m    screen test present: the band
+  [32mPASS[0m    screen test present: read again once there is one
+  [32mPASS[0m    screen test present: never insists
+  [32mPASS[0m    screen test present: asks once per name, with what the decision is worth
+  [32mPASS[0m    screen test present: no model is named in Dart
+  [32mPASS[0m    screen test present: there is nothing else to choose
+  [32mPASS[0m    screen test present: what it sends is the payload
+  [32mPASS[0m    screen test present: offers no way to send the original
+  [32mPASS[0m    screen test present: no door in this app carries a document to a model
+  [32mPASS[0m    screen test present: takes that line, and the core says what is in it
+  [32mPASS[0m    screen test present: protects that cell in every held line
+  [32mPASS[0m    screen test present: between two columns says why
+  [32mPASS[0m    screen test present: a wrapped row still presses the cell
+  [32mPASS[0m    screen test present: carries the column act, so no press is wasted
+  [32mPASS[0m    screen test present: another conversation says so, by name, above the answer
+  [32mPASS[0m    screen test present: own answer restores with nothing said
+  [32mPASS[0m    screen test present: puts nothing out while a word waits
+  [32mPASS[0m    screen test present: every exit on the sheet is pressable while a word waits
+  [32mPASS[0m    screen test present: the first waiting word in reading order
+  [32mPASS[0m    screen test present: closes the sheet and says it where the word is
+  [32mPASS[0m    screen test present: the AI door opens the preview side
+  [32mPASS[0m    screen test present: a press on the AI door opens the Safe column
+  [32mPASS[0m    screen test present: the side’s own door needs no opening
+  [32mPASS[0m    screen test present: a session from before 080 is asked once
+  [32mPASS[0m    screen test present: the way in at the top, and the three parts named
+  [32mPASS[0m    screen test present: the way in is still at the top of the same screen
+  [32mPASS[0m    screen test present: no way back is drawn, because there is nowhere to go back to
+  [32mPASS[0m    screen test present: the way in and the way back are two presses, in two places
+  [32mPASS[0m    screen test present: says a kept document was sent to AI and answered
+  [32mPASS[0m    screen test present: the handle is the anchor, so two documents of one name are told apart
+  [32mPASS[0m    screen test present: a follow-up question answers for the document its chat began with
+  [32mPASS[0m    screen test present: opens the chat, coded, with the name only in the bubble
+  [32mPASS[0m    screen test present: coded in the thread, and the names come back in its bubble
+  [32mPASS[0m    screen test present: makes a second turn, to the same door
+  [32mPASS[0m    screen test present: drawn with no question above it
+  [32mPASS[0m    screen test present: the writing is below the thread, and against the bottom of the panel
+  [32mPASS[0m    screen test present: the thread scrolls under a writing box that stays where it is
+  [32mPASS[0m    screen test present: the chat is on the glass, acts and all
+  [32mPASS[0m    screen test present: ending the chat asks nothing, ends it in the core, and keeps what was said
+  [32mPASS[0m    screen test present: ending the chat empties all three parts, and keeps what was kept
+  [32mPASS[0m    screen test present: with no document the box is there, and what is typed is what leaves
+  [32mPASS[0m    screen test present: one box: a pasted letter is protected, and the second box is gone
+  [32mPASS[0m    screen test present: removing the document empties the first part and keeps the copy
+  [32mPASS[0m    screen test present: the settings open on Sessions, and a key door still opens on AI
+  [32mPASS[0m    screen test present: a press outside closes the panel, lands on nothing, and the next press works
+  [32mPASS[0m    screen test present: a kept document that comes back says «as it was kept», not three zeros
+  [32mPASS[0m    screen test present: the chat shows the question above its answer, as it left
+  [32mPASS[0m    screen test present: a host that answered nothing says so
+  [32mPASS[0m    screen test present: the number this form promises is the number the core applies
+  [32mPASS[0m    screen test present: no longer says that each question is asked alone
+  [32mPASS[0m  the numbers Windows is compared against: Rust 792 as written
+  ----    and the Dart half (skipped: the suite did not run here, so its number was not checked)
+
+594 checks, 0 failed, 4 skipped
+all gates passed
+GATES_EXIT=0

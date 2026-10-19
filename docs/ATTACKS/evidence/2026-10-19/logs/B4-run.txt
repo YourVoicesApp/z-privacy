@@ -1,0 +1,41 @@
+B4 token/restore attack log
+PASS=29 FAIL=0
+
+INFO  commit 2b4fad93cc26b282e6fa9773ad2275544dcc7ee8
+INFO  core z_core 0.1.0 · 2026-10-19 · 2b4fad9
+INFO  real vault sha256 before=Some("760da2625e3b23e02a24509326af5c6c2c5e9257c25ff66359153c3b725bc203")
+INFO  vault A block_count=2 (blocks exist before mutated-tail read-back)
+INFO  A Thomas token __Z_EE64_PERSON_371E1E6C__
+INFO  A Anna   token __Z_EE64_PERSON_09AFD4B2__
+INFO  A payload "__Z_EE64_PERSON_371E1E6C__ arbeitet mit __Z_EE64_PERSON_09AFD4B2__." page=Some("__Z_EE64_CUSTOM_3DB94715__")
+PASS  unknown namespace: no wrong owner. restored=["Thomas"] leaked_names=["Thomas"] thomas_restored=true text="call __Z_FFFF_PERSON_91C7ABCD__ not Thomas"
+PASS  truncated tail (2 hex): no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_FFFF_PERSON_91__"
+PASS  truncated tail (no close): no wrong owner. restored=["Thomas"] leaked_names=["Thomas"] thomas_restored=true text="Thomas cut as __Z_AAAA_PERSON_91C7"
+PASS  token-in-token wrapping real: no wrong owner. restored=["Thomas"] leaked_names=["Thomas"] thomas_restored=true text="wrap __Z_FAKE_PERSON___Thomas____"
+PASS  token-in-token missing close of outer: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_AAAA_PERSON___Z_EE64_PERSON_371E1E6C___ZZZZ__"
+PASS  token-in-token swallows inner close: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_AAAA_PERSON___Z_EE64_PERSON_371E1E6CZZZZ__"
+PASS  lookalike Latin/Cyrillic A in namespace: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_АBCD_PERSON_91C7ABCD__"
+PASS  lookalike Latin/Cyrillic A in kind: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_ABCD_АERSON_91C7ABCD__"
+PASS  lookalike Latin/Cyrillic A in tail of real: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_EE64_PERSON_371E1E6С__"
+PASS  zero-width inside namespace: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_AB\u{200b}CD_PERSON_91C7ABCD__"
+PASS  zero-width inside real token before close: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_EE64_PERSON_371E1E6C\u{200b}__"
+PASS  zero-width between Z_ and rest: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_\u{200b}ABCD_PERSON_91C7ABCD__"
+PASS  ZWSP inside real tail: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_EE64_PERSON_371E\u{200b}1E6C__"
+PASS  real token then forged with same shape other tail: no wrong owner. restored=["Thomas"] leaked_names=["Thomas"] thomas_restored=true text="Thomas and __Z_FFFF_PERSON_DEADBEEF__"
+PASS  kind swapped same tail as real: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_EE64_IBAN_371E1E6C__"
+PASS  lowercase namespace lookalike: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_ee64_PERSON_371E1E6C__"
+PASS  lowercase tail lookalike: no wrong owner. restored=[] leaked_names=[] thomas_restored=false text="__Z_EE64_PERSON_371e1e6c__"
+PASS  letter O for hex 0 in tail: no wrong owner. restored=["Thomas"] leaked_names=["Thomas"] thomas_restored=true text="Thomas"
+PASS  repeat 100: thomas_places=100 anna_wrong=false panic_like=false text_len=700
+PASS  cut in middle restored nobody. owners=[] still_has_pieces="begin __Z_EE64_PERS CUT ON_371E1E6C__ end"
+PASS  half token restored nobody. text="__Z_EE64_PERS"
+PASS  same-vault z-txt: tokens=3 names=2 brought_back=2 unresolved=[] unknown_ns=[] conversations=["#2 session-a back=2 unresolved=0 answer_page=true"] vault=Unlocked branches=["brought_back>0"] screen=Some("2 names came back from «\u{2068}session-a\u{2069}».") text="Thomas arbeitet mit Anna.\nZ-pdf : Zprivacy-svara\n"
+PASS  same-vault z-pdf: tokens=3 names=2 brought_back=2 unresolved=[] unknown_ns=[] conversations=["#2 session-a back=2 unresolved=0 answer_page=true"] vault=Unlocked branches=["brought_back>0"] screen=Some("2 names came back from «\u{2068}session-a\u{2069}».") text="Thomas arbeitet mit Anna. Z-pdf : Zprivacy-svara\n\n"
+INFO  modified Thomas-token: thomas_back=false anna_back=true wrong=[] names_old_build_cause=true names_changed_cause=true branches=["brought_back>0", "unresolved + here>0 → two-causes"] screen=Some("One name came back from «\u{2068}session-a\u{2069}». One name stays as a token, and two different things do that: the word was protected before Z Privacy began keeping every protected word, or this token was changed after the file left. Open that document in its session and protect the name again — if it comes back from then on it was the first, and if it does not, this file is not the one Z Privacy wrote.") tokens=2 names=2 brought_back=1 unresolved=["__Z_EE64_PERSON_371E1E60__"] unknown_ns=[] conversations=["#2 session-a back=1 unresolved=1 answer_page=false"] vault=Unlocked branches=["brought_back>0", "unresolved + here>0 → two-causes"] screen=Some("One name came back from «\u{2068}session-a\u{2069}». One name stays as a token, and two different things do that: the word was protected before Z Privacy began keeping every protected word, or this token was changed after the file left. Open that document in its session and protect the name again — if it comes back from then on it was the first, and if it does not, this file is not the one Z Privacy wrote.") text="__Z_EE64_PERSON_371E1E60__ arbeitet mit Anna."
+PASS  modified Thomas token: Anna still restored, Thomas not restored from the mutated spelling
+INFO  whatCameBack still names «protected before Z Privacy began keeping every protected word» as one of two causes on a token minted in THIS build after blocks exist
+PASS  kind-swapped returning-doc: Thomas not restored from IBAN-kind. anna_back=true tokens=2 names=2 brought_back=1 unresolved=["__Z_EE64_IBAN_371E1E6C__"] unknown_ns=[] conversations=["#2 session-a back=1 unresolved=1 answer_page=false"] vault=Unlocked branches=["brought_back>0", "unresolved + here>0 → two-causes"] screen=Some("One name came back from «\u{2068}session-a\u{2069}». One name stays as a token, and two different things do that: the word was protected before Z Privacy began keeping every protected word, or this token was changed after the file left. Open that document in its session and protect the name again — if it comes back from then on it was the first, and if it does not, this file is not the one Z Privacy wrote.") text="__Z_EE64_IBAN_371E1E6C__ arbeitet mit Anna."
+PASS  prose-modified z-txt still restores names: tokens=2 names=2 brought_back=2 unresolved=[] unknown_ns=[] conversations=["#2 session-a back=2 unresolved=0 answer_page=false"] vault=Unlocked branches=["brought_back>0"] screen=Some("2 names came back from «\u{2068}session-a\u{2069}».") text="Thomas ARBEITET mit Anna."
+PASS  foreign vault: nothing of A restored. tokens=3 names=3 brought_back=0 unresolved=["__Z_EE64_PERSON_371E1E6C__", "__Z_EE64_PERSON_09AFD4B2__", "__Z_EE64_CUSTOM_3DB94715__"] unknown_ns=["EE64"] conversations=[] vault=Unlocked branches=["unresolved + here==0 (no two-causes)", "unknown_namespaces"] screen=Some("This document carries 3 names from a session this vault does not hold (EE64). Nothing here can put them back: the key that made them is not in this vault.") text="__Z_EE64_PERSON_371E1E6C__ arbeitet mit __Z_EE64_PERSON_09AFD4B2__.\nZ-pdf : __Z_EE64_CUSTOM_3DB94715__\n"
+PASS  foreign vault z-pdf: nothing restored. tokens=3 names=3 brought_back=0 unresolved=["__Z_EE64_PERSON_371E1E6C__", "__Z_EE64_PERSON_09AFD4B2__", "__Z_EE64_CUSTOM_3DB94715__"] unknown_ns=["EE64"] conversations=[] vault=Unlocked branches=["unresolved + here==0 (no two-causes)", "unknown_namespaces"] screen=Some("This document carries 3 names from a session this vault does not hold (EE64). Nothing here can put them back: the key that made them is not in this vault.") text="__Z_EE64_PERSON_371E1E6C__ arbeitet mit __Z_EE64_PERSON_09AFD4B2__. Z-pdf : __Z_EE64_CUSTOM_3DB94715__\n\n"
+PASS  real vault untouched sha256=Some("760da2625e3b23e02a24509326af5c6c2c5e9257c25ff66359153c3b725bc203")

@@ -1,0 +1,6 @@
+ring 0.17.14
+rustls 0.23.45
+rustls-webpki 0.103.15
+ureq 3.4.2
+README.md packs: ['**V1.** Linux x86_64 desktop. The interface is English; the detection packs are', 'core says when asked directly — because the rule for the interface is that no']
+packaging README: ['The interface is English. The detection packs are German, Swedish and English.', 'yourvoices.app@mono-peak.com']

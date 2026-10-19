@@ -1,0 +1,25 @@
+# B3 XXE — listener 127.0.0.1:17931, count must be 0
+
+stamp: z_core 0.1.0 · 2026-10-19 · 2b4fad9
+listener: python3 scratch/b3/xxe_listen.py logs/B3-xxe-listener.txt 17931
+ss: LISTEN 127.0.0.1:17931 pid=2190560 during the whole fixture run
+fixture: fixtures/docx_xxe_listener.docx
+  word/document.xml DTD: <!ENTITY xxe SYSTEM "http://127.0.0.1:17931/xxe-probe">
+fixture: fixtures/docx_xxe.docx
+  word/document.xml DTD: <!ENTITY xxe SYSTEM "file:///etc/passwd">
+                     and <!ENTITY xxe2 SYSTEM "http://127.0.0.1:9/no-network">
+
+--- listener log (whole run, then a dedicated re-import) ---
+listening 127.0.0.1:17931 at 2026-10-19T06:43:30.010930
+(no ACCEPT lines)
+
+--- import_document / check_document ---
+REFUSED docx_xxe_listener.docx bytes=399 reason=MalformedDocument
+  DETAIL word/document.xml is not well-formed XML: unknown entity &xxe;
+  GLASS  Word/document.xml is not well-formed XML: unknown entity &xxe;.
+                               docx_xxe.docx         0 KiB  refused: MalformedDocument
+                                              word/document.xml is not well-formed XML: unknown entity &xxe;
+
+xxe_connections_before=0 after=0
+count file: logs/B3-xxe-listener.count = 0
+---

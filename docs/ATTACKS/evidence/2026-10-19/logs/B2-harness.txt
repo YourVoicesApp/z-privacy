@@ -1,0 +1,118 @@
+date_start=2026-10-19T06:45:18+02:00
+date_end=2026-10-19T06:45:39+02:00
+commit=2b4fad93cc26b282e6fa9773ad2275544dcc7ee8
+CARGO_TARGET_DIR=/home/monopeaks/z-attack-2b4fad9-evidence/target-b2
+ROOT=/home/monopeaks/z-attack-2b4fad9-evidence/scratch/b2
+binary=/home/monopeaks/z-attack-2b4fad9-evidence/target-b2/release/b2-harness
+real_vault_mtime_untouched=2026-10-19 06:17:31.351386339 +0200
+
+== B2 harness on commit 2b4fad93cc26b282e6fa9773ad2275544dcc7ee8 ==
+core z_core 0.1.0 · 2026-10-19 · 2b4fad9
+
+-- 1. truncated / one-byte mutated / empty vault --
+  intact vault 265 bytes, magic=[90, 86, 76, 84], writing.lock=true
+  EMPTY file: state=Absent
+    unlock => PayloadRefused { reason: "this vault file holds no bytes at all, so there is nothing in it to open" } | display=this payload was refused by its own audit: this vault file holds no bytes at all, so there is nothing in it to open
+    create => created
+    wiped_to_empty? false (before 0B after 235B, bytes_equal=false)
+  TRUNCATED to 132B: state=Locked
+    unlock => PayloadRefused { reason: "this vault file is truncated" } | display=this payload was refused by its own audit: this vault file is truncated
+    create => VaultAlreadyExists | display=a vault already exists on this device
+    wiped? bytes_equal=true
+  ONE-BYTE (last xor 1): state=Locked
+    unlock => VaultAuthenticationFailed | display=could not unlock the vault; the passphrase may be incorrect, or the vault may be corrupted or modified
+    wiped? bytes_equal=true
+  ONE-BYTE (magic xor 1):
+    unlock => PayloadRefused { reason: "this is not a Z Privacy vault file" } | display=this payload was refused by its own audit: this is not a Z Privacy vault file
+    wiped? bytes_equal=true
+  TRAILING byte:
+    unlock => TrailingVaultData | display=the vault file has data after the end of the ZVLT structure
+    wiped? bytes_equal=true
+
+-- 2. older app (model 14) opening a model-15 body --
+  source check format.rs:484-488 MODEL_VERSION=15 vs reader 14: refused=true
+  sentence: this vault's contents were written by a newer version (model 15, this build knows 14)
+  contains 'written by a newer version': true
+
+-- 3. model-14 exemption upgrade --
+  model-14 bytes parsed: count=1, reaches=["Conversation(7)"]
+  same exemption as model 15: count=1, reaches=["Conversation(7)"]
+  upgrade preserves conversation 7: true
+
+-- 4. Argon2id cost --
+  new vault: m=65536 KiB t=3 p=1 hash=32 (vault/crypto.rs DEFAULT_*)
+  release measurement is logs/argon-bench.log
+
+-- two processes writing the vault together --
+  trial 0: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 1: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 2: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 3: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 4: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 5: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 6: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 7: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 8: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 9: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 10: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 11: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 12: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 13: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 14: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 15: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 16: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 17: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 18: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 19: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 20: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 21: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 22: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 23: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 24: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 25: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 26: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 27: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 28: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 29: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 30: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 31: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 32: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 33: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 34: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 35: childA="ok 41" childB="err VaultChangedElsewhere" disk A=true B=false
+  trial 36: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 37: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 38: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trial 39: childA="err VaultChangedElsewhere" childB="ok 41" disk A=false B=true
+  trials=40 both=0 a_only=15 b_only=25 neither=0
+  honest VaultChangedElsewhere refusals: 40
+  SILENT lost writes (both children said ok, disk has one): 0
+
+-- two processes appending a session turn --
+  trial 0: childA="ok 3" childB="ok 2" asked=["erste", "turn-B-0", "turn-A-0"]
+  turn trials=20 both_on_disk=20 silent_lost=0
+
+-- 5c. writing.lock is a directory (lock open fails → None) --
+  bypass 0: A="err VaultChangedElsewhere" B="ok 21" disk A=false B=true
+  lock-bypass trials=8 silent_lost=0
+
+-- 6. forgotten session leftovers, and retired document numbers --
+  before forget, files: ["1.zs", "2.zs", "vault.zv", "writing.lock"]
+  sessions/ before: ["1.zs", "2.zs"]
+  forget returned name="ATTACK_SESSION_NEEDLE"
+  conversations() after forget: 1 rows
+  sessions/ after: ["1.zs"]
+  plaintext needle "ATTACK_SESSION_NEEDLE" in 0 files: []
+  plaintext needle "ATTACK_QUESTION_NEEDLE_SECRET" in 0 files: []
+  plaintext needle "ATTACK_ANSWER_NEEDLE" in 0 files: []
+  plaintext needle "ZxqvSessionNeedle" in 0 files: []
+  first kept: ["chat1"]
+  after leave: []
+  next kept: ["chat2"]
+  exited number reused? false
+
+-- 7. delete_entity vs rule 59 (next document after Forget) --
+  after import with identity: protected_findings=1 blocks=1
+  after delete_entity: entities=0 blocks=1 (block deleted? false)
+  new document after deleting the identity: protected_findings=0 suggested=0 (block still working if protected>0)
+== harness finished ==

@@ -1,0 +1,2 @@
+argon2id m=65536 KiB t=3 p=1 hash=32 release: 0.0679 s/try ; 14.72 tries/sec (n=8, wall=543.300778ms)
+brute-force 8-digit PIN at this rate: 6791260 seconds (78.6 days)

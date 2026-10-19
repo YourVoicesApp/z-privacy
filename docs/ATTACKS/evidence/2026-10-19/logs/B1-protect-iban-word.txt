@@ -1,0 +1,1 @@
+Applied { token: "__Z_94D9_IBAN_C0566972__", places: 2 }

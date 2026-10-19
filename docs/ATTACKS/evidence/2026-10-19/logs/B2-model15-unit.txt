@@ -1,0 +1,97 @@
+commit=2b4fad93cc26b282e6fa9773ad2275544dcc7ee8
+date=2026-10-19T06:45:18+02:00
+
+=== MODEL_VERSION ===
+91:pub(crate) const MODEL_VERSION: u16 = 15;
+
+=== cargo test lib (future model / settings / exemptions) ===
+   Compiling libc v0.2.189
+   Compiling cfg-if v1.0.5
+   Compiling version_check v0.9.5
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.26
+   Compiling typenum v1.20.1
+   Compiling quote v1.0.47
+   Compiling subtle v2.6.1
+   Compiling shlex v2.0.1
+   Compiling find-msvc-tools v0.1.14
+   Compiling httparse v1.10.1
+   Compiling cpufeatures v0.2.17
+   Compiling untrusted v0.9.0
+   Compiling itoa v1.0.18
+   Compiling log v0.4.34
+   Compiling zmij v1.0.23
+   Compiling serde_core v1.0.229
+   Compiling bytes v1.12.1
+   Compiling rustls v0.23.45
+   Compiling crc32fast v1.5.2
+   Compiling opaque-debug v0.3.1
+   Compiling adler2 v2.0.1
+   Compiling getrandom v0.3.4
+   Compiling memchr v2.8.3
+   Compiling serde_json v1.0.151
+   Compiling base64 v0.23.1
+   Compiling once_cell v1.21.4
+   Compiling simd-adler32 v0.3.10
+   Compiling base64ct v1.8.3
+   Compiling percent-encoding v2.3.2
+   Compiling z_core v0.1.0 (/home/monopeaks/z-attack-2b4fad9/z_core)
+   Compiling tinyvec v1.13.3
+   Compiling utf8-zero v0.8.1
+   Compiling miniz_oxide v0.9.1
+   Compiling cc v1.5.1
+   Compiling generic-array v0.14.7
+   Compiling quick-xml v0.38.4
+   Compiling flate2 v1.1.10
+   Compiling unicode-normalization v0.1.25
+   Compiling http v1.5.0
+   Compiling syn v2.0.119
+   Compiling getrandom v0.2.17
+   Compiling rand_core v0.6.4
+   Compiling inout v0.1.4
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling password-hash v0.5.0
+   Compiling universal-hash v0.5.1
+   Compiling aead v0.5.2
+   Compiling digest v0.10.7
+   Compiling ring v0.17.14
+   Compiling poly1305 v0.8.0
+   Compiling blake2 v0.10.6
+   Compiling ureq-proto v0.6.4
+   Compiling argon2 v0.5.3
+   Compiling zeroize_derive v1.5.0
+   Compiling zeroize v1.9.0
+   Compiling rustls-pki-types v1.15.1
+   Compiling cipher v0.4.4
+   Compiling chacha20 v0.9.1
+   Compiling chacha20poly1305 v0.10.1
+   Compiling webpki-roots v1.0.9
+   Compiling rustls-webpki v0.103.15
+   Compiling ureq v3.4.2
+    Finished `release` profile [optimized] target(s) in 10.99s
+     Running unittests src/lib.rs (/home/monopeaks/z-attack-2b4fad9-evidence/target-b2/release/deps/z_core-01a8b5a53fa98830)
+
+running 1 test
+test vault::format::tests::truncated_or_future_contents_are_refused ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 176 filtered out; finished in 0.00s
+
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+     Running unittests src/lib.rs (/home/monopeaks/z-attack-2b4fad9-evidence/target-b2/release/deps/z_core-01a8b5a53fa98830)
+
+running 1 test
+test vault::format::tests::the_settings_survive_and_an_older_vault_takes_the_defaults ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 176 filtered out; finished in 0.00s
+
+
+    Finished `release` profile [optimized] target(s) in 0.02s
+     Running unittests src/lib.rs (/home/monopeaks/z-attack-2b4fad9-evidence/target-b2/release/deps/z_core-01a8b5a53fa98830)
+
+running 1 test
+test vault::format::tests::a_block_keeps_its_tokens_and_its_exemptions ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 176 filtered out; finished in 0.00s
+

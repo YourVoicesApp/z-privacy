@@ -1,0 +1,7 @@
+wrote 6675 bytes to /home/monopeaks/z-attack-2b4fad9-evidence/scratch/b1/run/payload-as-simple.pdf
+readback chars=1106 pages=28
+contains Postfach 4410: true
+contains Sparkasse Leipzig: true
+contains Markus: false
+contains DE89: false
+contains 184,60: true

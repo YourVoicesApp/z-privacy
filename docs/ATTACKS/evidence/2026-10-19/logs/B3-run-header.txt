@@ -1,0 +1,8 @@
+=== B3 check_document / import_document on 2b4fad9 ===
+date=2026-10-19T06:43:30+02:00
+check=/home/monopeaks/z-attack-2b4fad9-evidence/target-b3/release/examples/check_document
+b3=/home/monopeaks/z-attack-2b4fad9-evidence/target-b3/release/b3
+XDG_DATA_HOME=/home/monopeaks/z-attack-2b4fad9-evidence/scratch/b3/xdg
+CARGO_TARGET_DIR=/home/monopeaks/z-attack-2b4fad9-evidence/target-b3
+xxe_listener_pid=2190560
+

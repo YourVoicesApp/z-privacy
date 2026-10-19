@@ -1,0 +1,53 @@
+HEAD=2b4fad93cc26b282e6fa9773ad2275544dcc7ee8
+date=2026-10-19T06:46:28+02:00
+
+=== Direct Mode / G2 / G62 names ===
+-- ask_model_directly|ask_direct|Body::Direct|askModelDirectly|sendOriginal|askModelWithTheOriginal|chooseOriginal --
+scripts/gates.sh:2645:  # owner deleted was called `ask_model_directly`, so the name never matched —
+scripts/gates.sh:3137:  G62_LEFT=$(grep -nHE 'ask_model_directly|ask_direct|Body::Direct|askModelDirectly' $G62_FILES 2>/dev/null \
+apps/flutter_app/test/only_the_protected_version_is_sent_test.dart:124:      'askModelDirectly',
+apps/flutter_app/test/only_the_protected_version_is_sent_test.dart:125:      'askModelWithTheOriginal',
+apps/flutter_app/test/only_the_protected_version_is_sent_test.dart:126:      'sendOriginal',
+apps/flutter_app/test/only_the_protected_version_is_sent_test.dart:127:      'chooseOriginal',
+
+-- The original text --
+z_core/src/session.rs:479:    /// The original text. Reading it is a deliberate act, by name.
+z_core/src/ops/mod.rs:456:/// The original text with a mark for everything the scanner has to say about
+z_core/src/api.rs:1171:/// The original text and its marks. Local only; this never leaves the device.
+z_core/src/api.rs:2362:/// The original text with its marks, for the left-hand column.
+apps/flutter_app/lib/widgets/send_sheet.dart:917:          // text» and «The original text», with an amber sentence under the
+apps/flutter_app/test/the_model_that_answers_test.dart:293:    expect(find.text('The original text'), findsNothing, reason: 'the deleted mode is still drawn as a chip');
+apps/flutter_app/test/only_the_protected_version_is_sent_test.dart:95:      'The original text',
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart:231:/// The original text with its marks, for the left-hand column.
+
+-- pub fn send/ask in rust --
+z_core/src/api.rs:2525:pub fn send(handle: PayloadHandle, provider: ProviderId) -> ApiResult<AnswerId> {
+z_core/src/api.rs:2547:pub fn ask_model(handle: PayloadHandle, provider: ProviderId, model: Option<String>, workspace: Vec<String>) -> ApiResult<ModelAnswer> {
+
+-- dart send/askModel signatures --
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart:410:Future<AnswerId> send({
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-411-  required PayloadHandle handle,
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-412-  required ProviderId provider,
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-413-}) => RustLib.instance.api.zCoreApiSend(handle: handle, provider: provider);
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-414-
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-415-/// Ask a model, with a workspace's instructions. **The chat's history is the
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-416-/// core's own** — rule 67.
+--
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart:433:Future<ModelAnswer> askModel({
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-434-  required PayloadHandle handle,
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-435-  required ProviderId provider,
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-436-  String? model,
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-437-  required List<String> workspace,
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-438-}) => RustLib.instance.api.zCoreApiAskModel(
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart-439-  handle: handle,
+
+-- gateway Request.payload --
+84:    pub payload: PayloadHandle,
+85-}
+86-
+87-/// What came back, and what it cost.
+88-pub(crate) struct Answer {
+
+-- chat_to_take_out public --
+z_core/src/api.rs:2590:pub fn chat_to_take_out(session: SessionId) -> ApiResult<ChatToTakeOut> {
+apps/flutter_app/lib/src/rust/third_party/z_core/api.dart:466:Future<ChatToTakeOut> chatToTakeOut({required SessionId session}) =>

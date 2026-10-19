@@ -1,0 +1,22 @@
+commit=2b4fad93cc26b282e6fa9773ad2275544dcc7ee8
+date=2026-10-19T06:46:31+02:00
+CARGO_TARGET_DIR=/home/monopeaks/z-attack-2b4fad9-evidence/target-b2
+
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+   Compiling z_core v0.1.0 (/home/monopeaks/z-attack-2b4fad9/z_core)
+    Finished `release` profile [optimized] target(s) in 7.83s
+     Running tests/two_copies_never_lose_a_write.rs (/home/monopeaks/z-attack-2b4fad9-evidence/target-b2/release/deps/two_copies_never_lose_a_write-c71f0a66e7240d51)
+
+running 3 tests
+test a_copy_that_adds_one_identity ... ok
+test two_copies_never_lose_a_turn ... ok
+test two_copies_never_lose_a_write ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.73s
+
+
+date_after=2026-10-19T06:46:45+02:00

@@ -1,0 +1,79 @@
+commit=2b4fad93cc26b282e6fa9773ad2275544dcc7ee8
+date=2026-10-19T06:44:09+02:00
+
+=== G35-style: .blocks.(remove|retain|clear|pop|drain|truncate|swap_remove|dedup|split_off) and .blocks = ===
+/home/monopeaks/z-attack-2b4fad9/z_core/src/providers/anthropic.rs:181:    let blocks = value.get("content").and_then(Value::as_array).ok_or_else(unreadable)?;
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:806:    let mut blocks = Vec::new();
+
+=== extra: mem::take / splice / resize / shrink_to / swap on blocks ===
+(no matches)
+
+=== writers: blocks.push / remember_block / exempt.push / forget_the_blocks_of ===
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/mod.rs:518:    pub(crate) fn remember_blocks(&mut self, words: &[(Kind, String, String)]) -> u32 {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/mod.rs:539:                if vault.remember_block(*kind, value, token) {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/mod.rs:554:    /// `Vault::forget_the_blocks_of` directly and this hand stays what the
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/mod.rs:556:    pub(crate) fn exempt_block(&mut self, value: &str, conversation: u32) -> bool {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/mod.rs:572:        self.with_open_mut(|vault| Ok(vault.exempt_block(value, reach.clone())))
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/mod.rs:2784:                core.vault.exempt_block(word, number);
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/mod.rs:3322:    core.vault.remember_blocks(&words)
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:520:    pub(crate) fn remember_block(&mut self, kind: Kind, value: &str, token: &str) -> bool {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:539:        self.blocks.push(Block {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:557:    pub(crate) fn exempt_block(&mut self, value: &str, reach: Exemption) -> bool {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:564:        block.exempt.push(reach);
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:579:    pub(crate) fn forget_the_blocks_of(&mut self, spellings: &[String], reach: &Exemption) -> u32 {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:582:            if self.exempt_block(spelling, reach.clone()) {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:829:                    exempt.push(match r.array::<1>()?[0] {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:842:                    exempt.push(Exemption::Conversation(u32::from_be_bytes(r.array::<4>()?)));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:845:            blocks.push(crate::vault::model::Block {
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1290:        assert!(before.remember_block(Kind::Person, "Markus Feldmann", "__Z_F610_PERSON_343AD503__"));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1291:        assert!(before.remember_block(Kind::Iban, "DE89 3704 0044 0532 0130 00", "__Z_F610_IBAN_874FECB2__"));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1294:        assert!(before.remember_block(Kind::Custom, "Markus Feldmann", "__Z_A001_CUSTOM_41AC03BD__"));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1295:        assert!(!before.remember_block(Kind::Custom, "Markus Feldmann", "__Z_A001_CUSTOM_41AC03BD__"),
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1297:        assert!(before.exempt_block("Markus Feldmann", Exemption::Conversation(7)));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1300:        assert!(before.exempt_block("DE89 3704 0044 0532 0130 00", Exemption::Profile("p-nordstern".to_string())));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1301:        assert!(before.exempt_block("DE89 3704 0044 0532 0130 00", Exemption::Everywhere));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1303:            !before.exempt_block("DE89 3704 0044 0532 0130 00", Exemption::Everywhere),
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1355:        assert!(third.remember_block(Kind::Person, "Anna Weber", "__Z_F610_PERSON_11112222__"));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/format.rs:1356:        assert!(third.exempt_block("Anna Weber", Exemption::Profile("p-a".to_string())));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:238:            vault.forget_the_blocks_of(&spellings, &reach);
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:448:            vault.forget_the_blocks_of(&spellings, &as_far_as_the_knowledge(home.as_deref()));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:484:            vault.forget_the_blocks_of(
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:875:                vault.forget_the_blocks_of(&spellings, &reach);
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:1195:                vault.forget_the_blocks_of(&[text], &as_far_as_the_knowledge(home.as_deref()));
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:2010:                vault.forget_the_blocks_of(&[text], &as_far_as_the_knowledge(home.as_deref()));
+
+=== delete_entity body ===
+224:pub(crate) fn delete_entity(entity_id: u32) -> ApiResult<()> {
+225-    with_core(|core| {
+226-        core.vault.with_open_mut(|vault| {
+227-            let Some(entity) = vault.entities.iter().find(|e| e.id == entity_id) else {
+228-                return Err(ApiError::UnknownToken);
+229-            };
+230-            // Read before the identity is gone, and as far as the identity's
+231-            // own knowledge reached: a client's identity forgets its words for
+232-            // that client, and one that belongs to no profile forgets them
+233-            // everywhere.
+234-            let reach = as_far_as_the_knowledge(entity.profile_id.as_deref());
+235-            let spellings: Vec<String> =
+236-                entity.values.iter().flat_map(|v| v.spellings()).collect();
+237-            vault.entities.retain(|e| e.id != entity_id);
+238-            vault.forget_the_blocks_of(&spellings, &reach);
+239-            Ok(())
+240-        })
+241-    })
+242-}
+243-
+244-pub(crate) fn set_value(
+
+=== rule 50 comments ===
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/mod.rs:1898:        // A word the person once protected is a block (rule 50), and from then
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/mod.rs:2694:    // block is never deleted — and the copy in the preview now has one fewer
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:361:    /// state of a block and never the absence of one (rule 50), so this list
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:516:    /// the only writer, and it never removes anything.
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:552:    /// for «Forget» (rule 59) alike. It deletes nothing: that is rule 50.
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:568:    /// **Forgetting a word exempts its blocks and deletes none of them** —
+/home/monopeaks/z-attack-2b4fad9/z_core/src/vault/model.rs:702:            // found here, and it is still a block: rule 50.
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:430:/// **And its word's blocks are exempted, never deleted** — rule 59, through
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:457:/// **And that spelling's block is exempted, never deleted** — rule 59. A
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:868:                // lived in. Nothing is deleted: rule 50, and G35 reads the
+/home/monopeaks/z-attack-2b4fad9/z_core/src/ops/vault.rs:1176:/// **And the name's blocks are exempted, never deleted** — rule 59. A taught

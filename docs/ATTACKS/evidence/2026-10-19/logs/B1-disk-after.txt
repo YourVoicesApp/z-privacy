@@ -1,0 +1,5 @@
+AFTER sessions/1.zs 50 bytes
+AFTER sessions/2.zs 10882 bytes
+AFTER settings.zcfg 179 bytes
+AFTER vault.zv 1941 bytes
+AFTER writing.lock 0 bytes

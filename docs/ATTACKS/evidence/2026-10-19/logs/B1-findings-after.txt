@@ -1,0 +1,18 @@
+scan auto=17 suggested=0 normal=87
+id=18 state=Protected kind=Company span=0..24 occ=1 source=LanguagePack text="Stadtwerke Lindenau GmbH" reason=a name ending in «⁨GmbH⁩», which is a legal form in German — probably this client's company · confirmed by you
+id=19 state=Protected kind=Address span=57..70 occ=1 source=LanguagePack text="04179 Leipzig" reason=a postcode and a town, with a street before them — an address, if this one is a person's · confirmed by you
+id=22 state=Protected kind=Address span=94..123 occ=1 source=LanguagePack text="Gartenstraße 17\n04155 Leipzig" reason=a postcode and a town, with a street before them — an address, if this one is a person's · confirmed by you
+id=24 state=Protected kind=Contract span=193..207 occ=1 source=LanguagePack text="RE-2026-118734" reason=the value written after «⁨Rechnungsnummer⁩:», which says what it is · confirmed by you
+id=29 state=Protected kind=Phone span=570..584 occ=1 source=GeneralRule text="0341 2208 4417" reason=a number in local telephone form — but an order or invoice number can look the same, so your word decides · confirmed by you
+id=35 state=Protected kind=Person span=78..84 occ=1 source=Vault text="Markus" reason=your vault knows this value · de:salutation agreed as well · de:name-dictionary agreed as well
+id=36 state=Protected kind=Person span=85..93 occ=2 source=Vault text="Feldmann" reason=your vault knows this value · de:salutation agreed as well · de:name-dictionary agreed as well
+id=37 state=Protected kind=CustomerNo span=166..175 occ=1 source=Vault text="7731-0458" reason=your vault knows this value · de:de-14 agreed as well
+id=38 state=Protected kind=Person span=244..252 occ=2 source=Vault text="Feldmann" reason=your vault knows this value · de:salutation agreed as well
+id=39 state=Protected kind=Iban span=441..468 occ=2 source=GeneralRule text="DE89 3704 0044 0532 0130 00" reason=an IBAN: the country, the length and its own mod-97 checksum all agree · vault:a word you protected agreed as well · de:de-10 agreed as well
+id=40 state=Protected kind=Person span=550..556 occ=2 source=Vault text="Katrin" reason=your vault knows this value · de:salutation agreed as well · de:name-dictionary agreed as well
+id=41 state=Protected kind=Person span=557..563 occ=2 source=Vault text="Sommer" reason=your vault knows this value · de:salutation agreed as well · de:name-dictionary agreed as well
+id=42 state=Protected kind=Email span=604..640 occ=1 source=GeneralRule text="k.sommer@stadtwerke-lindenau.example" reason=an e-mail address: a local part, an @, and a domain with a real ending · vault:a word you protected agreed as well
+id=43 state=Protected kind=Person span=777..783 occ=2 source=Vault text="Katrin" reason=your vault knows this value · de:signature agreed as well · de:name-dictionary agreed as well
+id=44 state=Protected kind=Person span=784..790 occ=2 source=Vault text="Sommer" reason=your vault knows this value · de:signature agreed as well · de:name-dictionary agreed as well
+id=45 state=Protected kind=Iban span=846..873 occ=2 source=GeneralRule text="DE89 3704 0044 0532 0130 00" reason=an IBAN: the country, the length and its own mod-97 checksum all agree · vault:a word you protected agreed as well · de:de-10 agreed as well
+id=46 state=Protected kind=Bic span=879..890 occ=1 source=Vault text="COBADEFFXXX" reason=your vault knows this value · de:de-11 agreed as well

@@ -1,0 +1,32 @@
+__Z_94D9_COMPANY_282F6FA8__
+Kundenservice · Postfach 4410 · __Z_94D9_ADDR_F0AC9F77__
+
+Herrn
+__Z_94D9_PERSON_7633AAA3__ __Z_94D9_PERSON_C9D04E02__
+__Z_94D9_ADDR_5E46EC8A__
+
+Leipzig, 14. Oktober 2026
+
+Kundennummer: __Z_94D9_CUSTNO_D908C564__
+Rechnungsnummer: __Z_94D9_CONTRACT_71EF2967__
+
+Zweite Mahnung
+
+Sehr geehrter Herr __Z_94D9_PERSON_C9D04E02__,
+
+leider konnten wir für die Rechnung vom 2. September 2026 über 184,60 € noch keinen Zahlungseingang feststellen. Wir bitten Sie, den offenen Betrag bis zum 28. Oktober 2026 auf die IBAN __Z_94D9_IBAN_AB9C5536__ zu überweisen.
+
+Falls Sie Fragen haben, erreichen Sie Ihre Sachbearbeiterin Frau __Z_94D9_PERSON_89EB24A7__ __Z_94D9_PERSON_52B464C5__ unter __Z_94D9_PHONE_08A25B1E__ oder per E-Mail an __Z_94D9_EMAIL_7EB5EA86__.
+
+Sollten Sie die Zahlung bereits veranlasst haben, betrachten Sie dieses Schreiben bitte als gegenstandslos.
+
+Mit freundlichen Grüßen
+
+__Z_94D9_PERSON_89EB24A7__ __Z_94D9_PERSON_52B464C5__
+Kundenservice
+
+Bankverbindung: Sparkasse Leipzig, IBAN __Z_94D9_IBAN_AB9C5536__, BIC __Z_94D9_BIC_DC2758DD__
+
+
+--- Request ---
+Was schuldet __Z_94D9_PERSON_7633AAA3__ __Z_94D9_PERSON_C9D04E02__ Frau __Z_94D9_PERSON_89EB24A7__ __Z_94D9_PERSON_52B464C5__? IBAN __Z_94D9_IBAN_AB9C5536__

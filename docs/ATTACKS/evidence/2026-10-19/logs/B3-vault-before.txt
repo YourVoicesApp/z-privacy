@@ -1,0 +1,11 @@
+=== BEFORE 2026-10-19T06:41:54+02:00 ===
+760da2625e3b23e02a24509326af5c6c2c5e9257c25ff66359153c3b725bc203  /home/monopeaks/.local/share/zprivacy/vault.zv
+d685ad41cb251a046843ff5ff1a1cd6436cc7aea046db51326419f53bbdd09b0  /home/monopeaks/.local/share/zprivacy/settings.zcfg
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /home/monopeaks/.local/share/zprivacy/writing.lock
+1792242079.4459588650 600 0 /home/monopeaks/.local/share/zprivacy/writing.lock
+1792329871.8002553070 600 7821 /home/monopeaks/.local/share/zprivacy/sessions/10.zs
+1792352526.3065960950 600 4399 /home/monopeaks/.local/share/zprivacy/sessions/11.zs
+1792352526.3065960950 700 4096 /home/monopeaks/.local/share/zprivacy/sessions
+1792383451.3488186560 600 179 /home/monopeaks/.local/share/zprivacy/settings.zcfg
+1792383451.3513863390 600 8840 /home/monopeaks/.local/share/zprivacy/vault.zv
+1792383451.3513863390 700 4096 /home/monopeaks/.local/share/zprivacy

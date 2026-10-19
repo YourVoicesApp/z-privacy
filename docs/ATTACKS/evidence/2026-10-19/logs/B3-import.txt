@@ -1,0 +1,158 @@
+===== pdf_flate_over_8mib.pdf bytes=9684 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_flate_over_8mib.pdf bytes=9684 rss_hwm_kb=5420 (was 3120) reason=CompressionBomb { ratio: 201 } eq25=false
+  DETAIL a page's content unpacks to more than 201× the bytes it is written in, which no document does
+  GLASS  A part of this file unpacks to more than 201 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=5420 elapsed_sec=0.00
+===== pdf_flate_ratio_200.pdf bytes=680 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_flate_ratio_200.pdf bytes=680 rss_hwm_kb=3720 (was 3128) reason=CompressionBomb { ratio: 201 } eq25=false
+  DETAIL a page's content unpacks to more than 201× the bytes it is written in, which no document does
+  GLASS  A part of this file unpacks to more than 201 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=3612 elapsed_sec=0.00
+===== pdf_scanned_no_text.pdf bytes=866 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_scanned_no_text.pdf bytes=866 rss_hwm_kb=3428 (was 3228) reason=ScannedPdfNoTextLayer { pages: 3 } eq25=false
+  DETAIL all 3 pages are images with no text layer — this looks like a scan, and we will not send it anywhere to be read
+  GLASS  This PDF is 3 pages of pictures with no text in them, so nothing could be read.
+maxrss_kb=3324 elapsed_sec=0.00
+===== pdf_objstm_bomb.pdf bytes=50767 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_objstm_bomb.pdf bytes=50767 rss_hwm_kb=4660 (was 3168) reason=CompressionBomb { ratio: 201 } eq25=false
+  DETAIL an object stream unpacks to more than 201× the bytes it is written in, which no document does
+  GLASS  A part of this file unpacks to more than 201 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=4660 elapsed_sec=0.00
+===== pdf_over_25mib.pdf bytes=26214401 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_over_25mib.pdf bytes=26214401 rss_hwm_kb=54276 (was 28708) reason=DocumentTooLarge { mib: 26, limit_mib: 25 } eq25=false
+  DETAIL 26214401 bytes is past the 25 MiB limit for one document (26214400 bytes)
+  GLASS  This file is about 26 MiB, and Z Privacy opens documents up to 25 MiB.
+maxrss_kb=54276 elapsed_sec=0.01
+===== pdf_at_25mib.pdf bytes=26214400 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+OK pdf_at_25mib.pdf bytes=26214400 pages=1 chars=7 rss_hwm_kb=57956 (was 28720) start=false end=false cumul=false hello=true preview="Hello\n\n"
+maxrss_kb=57956 elapsed_sec=0.04
+===== pdf_stream_over_8mib_low_ratio.pdf bytes=8457212 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_stream_over_8mib_low_ratio.pdf bytes=8457212 rss_hwm_kb=36400 (was 11372) reason=TextTooLarge { limit_mib: 8 } eq25=false
+  DETAIL a page's content in this PDF unpacks to more than 8 MiB, and no part of a document is that big
+  GLASS  Unpacked, a part of this file is more than 8 MiB — more than Z Privacy reads in one document, so none of it was imported.
+maxrss_kb=36400 elapsed_sec=0.02
+===== pdf_nine_pages_cumul.pdf bytes=262428 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_nine_pages_cumul.pdf bytes=262428 rss_hwm_kb=10036 (was 3368) reason=CompressionBomb { ratio: 64 } eq25=false
+  DETAIL the parts of this PDF unpack to more than 17 MiB in all — 64× the file's own size, past the 16 MiB a file of 256 KiB may ask for
+  GLASS  A part of this file unpacks to more than 64 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=10036 elapsed_sec=0.02
+===== pdf_flate_cumul_16mib.pdf bytes=16897 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_flate_cumul_16mib.pdf bytes=16897 rss_hwm_kb=5528 (was 3204) reason=CompressionBomb { ratio: 201 } eq25=false
+  DETAIL a page's content unpacks to more than 201× the bytes it is written in, which no document does
+  GLASS  A part of this file unpacks to more than 201 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=5528 elapsed_sec=0.00
+===== pdf_xref_flate.pdf bytes=533 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+OK pdf_xref_flate.pdf bytes=533 pages=1 chars=7 rss_hwm_kb=7420 (was 3236) start=false end=false cumul=false hello=true preview="Hello\n\n"
+maxrss_kb=7300 elapsed_sec=0.00
+===== pdf_xref_named_objstm.pdf bytes=1051 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_xref_named_objstm.pdf bytes=1051 rss_hwm_kb=3696 (was 3236) reason=CompressionBomb { ratio: 201 } eq25=false
+  DETAIL an object stream unpacks to more than 201× the bytes it is written in, which no document does
+  GLASS  A part of this file unpacks to more than 201 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=3716 elapsed_sec=0.00
+===== pdf_cumul_budget_16mib.pdf bytes=62131 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED pdf_cumul_budget_16mib.pdf bytes=62131 rss_hwm_kb=4684 (was 3172) reason=CompressionBomb { ratio: 201 } eq25=false
+  DETAIL an object stream unpacks to more than 201× the bytes it is written in, which no document does
+  GLASS  A part of this file unpacks to more than 201 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=4684 elapsed_sec=0.00
+===== pdf_cumul_under_ratio.pdf bytes=1616559 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+OK pdf_cumul_under_ratio.pdf bytes=1616559 pages=1 chars=7 rss_hwm_kb=37656 (was 4708) start=false end=false cumul=false hello=true preview="Hello\n\n"
+maxrss_kb=37656 elapsed_sec=0.02
+===== docx_xxe.docx bytes=445 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED docx_xxe.docx bytes=445 rss_hwm_kb=3300 (was 3144) reason=MalformedDocument eq25=false
+  DETAIL word/document.xml is not well-formed XML: unknown entity &xxe;
+  GLASS  Word/document.xml is not well-formed XML: unknown entity &xxe;.
+maxrss_kb=3112 elapsed_sec=0.00
+===== docx_xxe_listener.docx bytes=399 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED docx_xxe_listener.docx bytes=399 rss_hwm_kb=3288 (was 3116) reason=MalformedDocument eq25=false
+  DETAIL word/document.xml is not well-formed XML: unknown entity &xxe;
+  GLASS  Word/document.xml is not well-formed XML: unknown entity &xxe;.
+maxrss_kb=3120 elapsed_sec=0.00
+===== docx_macros.docx bytes=676 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+OK docx_macros.docx bytes=676 pages=1 chars=17 rss_hwm_kb=7500 (was 3168) start=false end=false cumul=false hello=false preview="macro-host Thomas"
+maxrss_kb=7196 elapsed_sec=0.00
+===== docx_zip_bomb_header.docx bytes=547 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED docx_zip_bomb_header.docx bytes=547 rss_hwm_kb=3344 (was 3108) reason=CompressionBomb { ratio: 986 } eq25=false
+  DETAIL «⁨word/document.xml⁩» claims to unpack 986× its size, which no document does
+  GLASS  A part of this file unpacks to more than 986 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=3080 elapsed_sec=0.00
+===== docx_zip_bomb_lie.docx bytes=2377 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED docx_zip_bomb_lie.docx bytes=2377 rss_hwm_kb=7480 (was 3072) reason=CompressionBomb { ratio: 934 } eq25=false
+  DETAIL a part of this file unpacked to 934× its size, which no document does
+  GLASS  A part of this file unpacks to more than 934 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=7480 elapsed_sec=0.00
+===== docx_entry_over_8mib.docx bytes=358 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED docx_entry_over_8mib.docx bytes=358 rss_hwm_kb=3340 (was 3104) reason=TextTooLarge { limit_mib: 8 } eq25=false
+  DETAIL «⁨word/document.xml⁩» would be 8 MiB once unpacked, past the 8 MiB limit
+  GLASS  Unpacked, a part of this file is more than 8 MiB — more than Z Privacy reads in one document, so none of it was imported.
+maxrss_kb=3080 elapsed_sec=0.00
+===== docx_entry_over_8mib_store.docx bytes=8388741 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED docx_entry_over_8mib_store.docx bytes=8388741 rss_hwm_kb=19512 (was 11268) reason=TextTooLarge { limit_mib: 8 } eq25=false
+  DETAIL «⁨word/document.xml⁩» would be 8 MiB once unpacked, past the 8 MiB limit
+  GLASS  Unpacked, a part of this file is more than 8 MiB — more than Z Privacy reads in one document, so none of it was imported.
+maxrss_kb=19512 elapsed_sec=0.00
+===== docx_entry_at_8mib.docx bytes=8503 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED docx_entry_at_8mib.docx bytes=8503 rss_hwm_kb=3312 (was 3168) reason=CompressionBomb { ratio: 1002 } eq25=false
+  DETAIL «⁨word/document.xml⁩» claims to unpack 1002× its size, which no document does
+  GLASS  A part of this file unpacks to more than 1002 times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.
+maxrss_kb=3136 elapsed_sec=0.00
+===== docx_entry_at_8mib_store.docx bytes=8388740 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+OK docx_entry_at_8mib_store.docx bytes=8388740 pages=1 chars=6 rss_hwm_kb=27688 (was 11268) start=false end=false cumul=false hello=false preview="AT8MIB"
+maxrss_kb=27688 elapsed_sec=0.00
+===== docx_too_many_parts.docx bytes=53116 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED docx_too_many_parts.docx bytes=53116 rss_hwm_kb=3448 (was 3160) reason=TooManyParts { parts: 521, limit: 512 } eq25=false
+  DETAIL this file lists 521 parts; a document has tens, not that many
+  GLASS  This file lists 521 parts inside it, and a document has tens, not thousands — Z Privacy opens up to 512.
+maxrss_kb=3336 elapsed_sec=0.00
+===== docx_billion_laughs.docx bytes=490 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED docx_billion_laughs.docx bytes=490 rss_hwm_kb=3288 (was 3112) reason=MalformedDocument eq25=false
+  DETAIL word/document.xml is not well-formed XML: unknown entity &d;
+  GLASS  Word/document.xml is not well-formed XML: unknown entity &d;.
+maxrss_kb=3080 elapsed_sec=0.00
+===== docx_external_rels.docx bytes=1124 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+OK docx_external_rels.docx bytes=1124 pages=1 chars=19 rss_hwm_kb=7504 (was 3144) start=false end=false cumul=false hello=false preview="external-ref\n\nclick"
+maxrss_kb=7464 elapsed_sec=0.00
+===== docx_ok.docx bytes=310 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+OK docx_ok.docx bytes=310 pages=1 chars=19 rss_hwm_kb=7504 (was 3200) start=false end=false cumul=false hello=false preview="Herr Thomas Mueller"
+maxrss_kb=7204 elapsed_sec=0.00
+===== txt_at_4mib.txt bytes=4194304 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+OK txt_at_4mib.txt bytes=4194304 pages=1 chars=4194304 rss_hwm_kb=26820 (was 7236) start=false end=false cumul=false hello=false preview="TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+maxrss_kb=26820 elapsed_sec=0.06
+===== txt_over_4mib.txt bytes=4194305 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED txt_over_4mib.txt bytes=4194305 rss_hwm_kb=11336 (was 7332) reason=TextTooLarge { limit_mib: 4 } eq25=false
+  DETAIL the text passed 4 MiB while being read
+  GLASS  Unpacked, a part of this file is more than 4 MiB — more than Z Privacy reads in one document, so none of it was imported.
+maxrss_kb=11336 elapsed_sec=0.00
+===== txt_over_25mib.txt bytes=26214401 =====
+z_core 0.1.0 · 2026-10-19 · 2b4fad9
+REFUSED txt_over_25mib.txt bytes=26214401 rss_hwm_kb=54324 (was 28720) reason=DocumentTooLarge { mib: 26, limit_mib: 25 } eq25=false
+  DETAIL 26214401 bytes is past the 25 MiB limit for one document (26214400 bytes)
+  GLASS  This file is about 26 MiB, and Z Privacy opens documents up to 25 MiB.
+maxrss_kb=54324 elapsed_sec=0.01
