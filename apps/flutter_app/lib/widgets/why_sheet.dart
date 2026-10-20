@@ -67,6 +67,18 @@ String columnActLabel(int lines) => lines == 1
     ? sentences.protectThisColumnInTheLineHeld
     : sentences.protectThisColumnInLinesHeld(lines);
 
+/// **The act's own name on the glass**, so that a guard can wait for the button
+/// to exist and then read the sentence it carries, instead of searching for a
+/// sentence it typed out.
+///
+/// The gutter guard did the second thing, and it cost a red nobody could
+/// explain: the sentence moved into the one list in 092's fourth sitting, it
+/// has a **singular** form for a hold of one line, and a finder that matches
+/// its English reads nothing the day the count is not the count it expected —
+/// and nothing at all the day the test is read in German. A key is one name
+/// with two readers; a sentence in two places is two sentences.
+const Key columnActKey = Key('why.column.act');
+
 /// What the card may do about the lines held behind it.
 class ColumnOffer {
   const ColumnOffer({required this.lines, required this.act});
@@ -193,6 +205,7 @@ class _WhySheetState extends State<WhySheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ZButton(
+                        key: columnActKey,
                         label: columnActLabel(widget.column!.lines),
                         tint: Zc.clay,
                         onPressed: () async {
