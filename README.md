@@ -33,11 +33,18 @@ Import → Scan → Review → Protect → Choose who answers → AI → Restore
 
 ## Status
 
-**V1.** Linux x86_64 desktop. The interface is English; the detection packs are
-German and English. Private beta.
+**V1.** Linux x86_64 desktop. The interface is English, German and Swedish for
+the 314 sentences gathered in the one list; 559 sentences in 22 screens are
+still written in place and show in English whatever is chosen — the count is
+`python3 scripts/check_the_one_list.py`, not a promise. The detection packs are
+German, English and Swedish. Private beta.
 
-There is no Windows or macOS build: the app has only a `linux/` runner, and no
-gate has ever run on another platform. A port is a platform, not a repackaging.
+Windows is built from git by `.github/workflows/windows-core.yml`, by hand from
+the Actions tab: the core's tests, the nine storage contracts, the one-writer
+measurement and the whole Dart suite run there, and the job writes a zip, an
+installer and an MSIX. **No run of it has been measured into `docs/` yet**, so
+Linux is still the only platform with numbers. There is no macOS, iOS or
+Android build. A port is a platform, not a repackaging.
 
 The site that carries the release is built in `site/` and is served at
 z-privacy.com — one static page in English, German and Arabic, no JavaScript,
@@ -131,6 +138,6 @@ under the SIL Open Font License 1.1. Every one is listed with its notice in
 
 Faruk AB — Aktiebolag (AB), Sweden. Org.nr 559473-3494.
 Hotellgatan 3, 311 31 Falkenberg, Sweden.
-Contact: yourvoices.app@mono-peak.com
+Contact: zprivacy@mono-peak.com
 
 © 2026 Faruk AB. Licensed under the Apache License 2.0.

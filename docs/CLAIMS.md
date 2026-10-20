@@ -1,0 +1,161 @@
+# What Z Privacy claims, what each claim does not cover, and how to check it
+
+The owner, 19 October 2026: «نجعل ملف مراجعة في git نحدد فيه نقاط الادّعاءات
+التي ندّعيها في التطبيق» — a file in git naming the claims the product makes,
+so that an outside reader can attack each one through its own proof.
+
+**How to read a section.** Four lines, always the same four:
+
+- **We say** — the sentence the app or the site actually shows, quoted, with
+  the key it is stored under (`apps/flutter_app/lib/l10n/app_en.arb`) or the
+  page it is on. Not a paraphrase of what we mean.
+- **The limit** — what the claim does *not* cover. It is a line of its own, in
+  the same type size as the claim, because a limit in a footnote is a limit
+  nobody read.
+- **The proof** — a test file, a gate number or a source line **that exists in
+  this tree at this commit**. A proof that begins with **unproven —** is a
+  claim we have not measured; it stays in this file with that word on it,
+  because a claim removed from a list is a claim hidden rather than dropped.
+- **Measure it yourself** — the command a stranger runs, from the root of this
+  repository, with nothing installed that the repository does not name.
+
+`scripts/check_claims.py` (gate **G56**) reads this file on every gate run: it
+refuses a section that is missing one of the four lines, refuses a path, gate,
+test or sentence key that does not exist, and prints how many claims are proven
+and how many are not. So this file cannot quietly rot, and it cannot quietly
+grow a claim with no proof.
+
+**What this file is not.** It is not a security audit; nobody independent has
+audited this code (C-16). It is the list of things we say, with our own
+measurements beside them, offered so that somebody else can try to break them.
+
+---
+
+## C-01 · Only the protected version is sent to AI through Z Privacy
+
+**We say:** «Only the protected version is sent to AI through Z Privacy.» (key `onlyTheProtectedVersionIsSent`, the first screen; rule 62, after which the «original text» choice was deleted rather than greyed)
+**The limit:** the protected text itself travels, and with it the request's own envelope — the provider's address, the time, the model's name and the size of what was sent. Z Privacy hides the values inside the text; it does not hide that you asked, or whom you asked. And a person may copy restored text themselves (C-02): nothing stops a hand.
+**The proof:** `z_core/tests/wire_capture.rs` records the request byte for byte on a local server and asserts the body's `content` **is** the safe payload character for character, with no original or vault value anywhere in body, headers or URL; the contract has no door that takes text (gate `G2`, every `send*`/`ask*` signature names `PayloadHandle`); `z_core/src/gateway.rs` carries a `PayloadHandle` and never a string.
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test wire_capture -- --nocapture`
+
+## C-02 · Your original stays on this device unless you copy restored content yourself
+
+**We say:** «Your original data stays on this device unless you explicitly copy restored content.» (key `originalDataStaysHere`) — and the press that does it asks first: «Copy restored text?» … «This will place the real protected values on your system clipboard.» (keys `copyRestoredTextQuestion`, `thisWillPlaceTheRealValues`)
+**The limit:** the clipboard is the operating system's, and any program on the machine may read it after you have put something there. We empty it before an exit press and we ask before restoring into it; we cannot take it back afterwards.
+**The proof:** every manual exit ends at one door, `payload_to_take_out` in `z_core/src/ops/mod.rs`, which runs the audit and the waiting-word law before handing text out (gates `G28`, `G31`); on the glass the press empties the clipboard first — `emptyTheClipboardFirst` in `apps/flutter_app/lib/screens/shell.dart` — and `apps/flutter_app/test/copy_report_test.dart` fails if it does not.
+**Measure it yourself:** `cd apps/flutter_app && flutter test test/copy_report_test.dart`
+
+## C-03 · No account, no analytics, and no Z Privacy server
+
+**We say:** «No account.» «No analytics.» (keys `noAccount`, `noAnalytics`) — and of the three ways to ask a model: «The first needs no account at all.» (key `aiWhat`)
+**The limit:** the app does talk to the provider **you** choose, with the key you gave it, and that provider has its own terms and its own logs. «No analytics» is about us, not about them. A local model (llama.cpp, Ollama, LM Studio) is the one path where nothing leaves the machine at all.
+**The proof:** one HTTP client, declared in one crate and named in one folder (gate `G1`); the interface cannot reach the network at all — no network package and no socket class in `apps/flutter_app/lib` (gate `G5`); the outgoing text has a single reader behind the gateway (gate `G16`); there is no Z Privacy account, server or endpoint in the tree — `z_core/src/providers/` holds the list and every base address comes from the person's own login.
+**Measure it yourself:** `bash scripts/gates.sh 2>&1 | grep -E "G1[a-d]?|G5[ab]?|G16"`
+
+## C-04 · Nothing goes out before you connect a provider
+
+**We say:** «No analytics.» (key `noAnalytics`) and «The first needs no account at all.» (key `aiWhat`) together say that a first run is silent.
+**The limit:** this is about Z Privacy's own code. The desktop toolkit, the operating system and the graphics stack may do what they do; we have not measured them.
+**The proof:** unproven — the gates prove there is only one send path and that the glass cannot open a socket (`G1`, `G5`, `G16`), and the independent attacker measured a silent first run with `tcpdump` on 17 October, but **that measurement was taken on a desk and is not reproducible from this tree**: nothing here runs the app and watches the interface. Until a test does that, this claim rests on a reading of the code and one outside measurement.
+**Measure it yourself:** `grep -rn "crate::providers::ask\|gateway::send" z_core/src --include=*.rs | grep -v "^z_core/src/providers/"`
+
+## C-05 · Protection is permanent: a protected word keeps its token for ever
+
+**We say:** «Every document and every message protected in it can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could.» (key `everyDocumentCanNeverBeUnprotected`, the Sessions room; rules 49–51, 58, 59 and 089)
+**The limit:** permanent means *we* cannot undo it — the vault keeps the block and the key for the conversation is gone. It does not mean the model you already sent the protected text to has forgotten it, and it does not mean a copy you made yourself is protected.
+**The proof:** `z_core/tests/a_block_is_never_deleted.rs` and `z_core/tests/a_block_crosses_a_profile_and_forget_exempts_it.rs` measure that «Forget» writes an exemption and never erases a block, and that a block crosses a client profile; one function writes every exemption, which gate `G40` reads from the source.
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test a_block_is_never_deleted --test a_block_crosses_a_profile_and_forget_exempts_it`
+
+## C-06 · The vault is one encrypted file, and the passphrase is never stored
+
+**We say:** «One passphrase, kept on this device. Everything Z learns while you work — your names, your lists, your decisions — is kept in it.» (key `onePassphrase`) and the site's own sentence «even the vault file on disk contains no readable name» (`site/en/index.html`)
+**The limit:** the encryption is only as strong as the passphrase a person chooses, and an unlocked vault is readable by anything running as that user on that machine. We protect a file at rest, not a machine already taken.
+**The proof:** `z_core/tests/the_vault_file_says_nothing.rs` searches the written file for the names it was taught and finds none; `z_core/tests/zcfg_leak.rs` does the same for the one file that is **not** encrypted; the core writes two kinds of file and no third, which gate `G15` counts from the source; and no function in the whole contract returns a key or a passphrase (gate `G8`).
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test the_vault_file_says_nothing --test zcfg_leak`
+
+## C-07 · Two copies of Z Privacy never lose a write
+
+**We say:** «Another copy of Z Privacy changed this vault. Close that window, or lock and unlock here to take in its work.» (key `troubleVaultChangedElsewhere`)
+**The limit:** one machine and one data directory. Two machines sharing a folder over a network file system are **not** measured, and the lock we take (`LockFileEx` on Windows, `flock` on Linux) is not a promise across such a share.
+**The proof:** `z_core/tests/two_copies_never_lose_a_write.rs` runs two processes against one vault — a ready-file handshake, forty trials — and asserts no write is lost silently; the lock is taken for the whole of a core call in `z_core/src/session.rs`, which gate `G43` reads, and the Windows job asks for this test by name (gate `G53`).
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test two_copies_never_lose_a_write -- --nocapture`
+
+## C-08 · Z Privacy keeps no document but the one in front of you
+
+**We say:** «Every document and every message protected in it can never be unprotected again…» (key `everyDocumentCanNeverBeUnprotected`) — and the Sessions room lists what a session is holding, which is the one document in the preview that has not left it (rules 54, 55, 089 rule 9)
+**The limit:** what has **left** is not kept — so a document you sent is gone from here and lives wherever you sent it. And the one kept copy is kept: it is in the session's own file, sealed under the session's key, until the document leaves or the session is deleted.
+**The proof:** `z_core/tests/the_preview_keeps_what_it_holds.rs` and `z_core/tests/the_session_is_born_at_the_first_document.rs` measure what is kept and when; `z_core/src/ops/conversation.rs`'s `the_preview_has_left` takes the copy out at every door that takes text out, which gate `G36` reads as a census of four doors.
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test the_preview_keeps_what_it_holds --test the_session_is_born_at_the_first_document`
+
+## C-09 · Sessions are isolated: the same name takes a different token in each
+
+**We say:** «Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears» (key `eachSessionHasItsOwnEncryption`)
+**The limit:** the *kinds* leak on purpose — a token says `PERSON` or `IBAN`, because a model that cannot tell a person from an account cannot answer. And this is about linking across sessions, not about a provider: one provider sees everything you send it.
+**The proof:** `z_core/tests/a_token_does_not_cross_a_session.rs` measures that a token minted in one session comes back unknown in another and is never restored; `z_core/tests/a_session_carries_its_own_key.rs` measures the key; every token carries a namespace drawn from the operating system every time, with no weaker interim stage — `os_hex4` in `z_core/src/tokens.rs`, which asks `getrandom` and whose fallback mixes the clock rather than panicking. The library's own vectors (C1–C7) live in a different repository (`ZPrivacy-lib`, sealed), so from **this** tree the app side is what is measured.
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test a_token_does_not_cross_a_session --test a_session_carries_its_own_key`
+
+## C-10 · The reader's limits are named numbers, not «too large»
+
+**We say:** the sentences the reader refuses with name the number, e.g. «{size} MiB is past the {limit} MiB limit for one document» (`z_core/src/documents/mod.rs`)
+**The limit:** these are **this** reader's numbers and they are smaller than the library's: a file of 25 MiB, 4 MiB of text after decompression, 8 MiB for one entry inside a zip, 512 entries, 2000 pages, and a swell of at most 200× (measured worst case in the owner's own documents: 95.7×). A document inside those numbers is read; one outside them is refused by name rather than read half-way.
+**The proof:** the numbers are one `limits` module in `z_core/src/documents/mod.rs`; `z_core/tests/a_cut_stream_is_never_a_read_document.rs` measures that a stream cut by a limit is never imported as a whole document; the zip and PDF readers hold their own refusals in `z_core/src/documents/zip.rs` and `z_core/src/documents/pdf.rs`.
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test a_cut_stream_is_never_a_read_document && cargo test -p z_core --features fake_provider,test_clock,measuring --lib documents`
+
+## C-11 · The scanner is rules, packs and your vault — no model, and review is explicit
+
+**We say:** «A privacy pack is a detection engine, not the language of the interface — and more than one pack can run in a single scan, so this is a starting point» (key `languageAndRulesWhat`) and «A suggestion that has not been answered is never quietly treated as safe, and there is no «send anyway» — not here, not in a hidden flag.» (key `answerEverySuggestionWhat`)
+**The limit:** a rules engine finds what its rules describe. What it misses is listed in «What we do not claim» below, by name, including the three defects the independent attacker measured on 17 October that are still open.
+**The proof:** `z_core/tests/nothing_leaves_while_a_word_waits.rs` measures that every door refuses while a suggestion is unanswered; the refusal is built in one function, which gate `G28` reads, and the four doors are a census, which gate `G36` reads; there is no model in the tree — `z_core/src/scanner/` is rules, packs and the vault's own values.
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test nothing_leaves_while_a_word_waits`
+
+## C-12 · A z-pdf comes back into its names, and a token no key can restore stays literal
+
+**We say:** the door back is a row in Settings, and what it writes is «Z-pdf : Zprivacy-svara» on its own answer page (`z_core/src/tokens.rs`, `ANSWER_PAGE_WORD`)
+**The limit:** the names come back only where **this** vault holds the key — a z-pdf read on another machine, or after the session was deleted, keeps its tokens as text and says so. A document that comes back is never scanned and never protected again, which also means it is never a bench you can edit.
+**The proof:** `z_core/tests/the_door_back.rs` and `z_core/tests/the_answer_page_finds_its_way_back.rs` measure the round trip and the refusal; `z_core/tests/a_z_pdf_reads_back_its_lines.rs` measures that our own writer's lines are read back as lines; `z_core/tests/a_returning_document_is_not_protected_again.rs` measures 079 rule 5.
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test the_door_back --test the_answer_page_finds_its_way_back --test a_returning_document_is_not_protected_again`
+
+## C-13 · The chat carries only protected exchanges, and the core builds its history itself
+
+**We say:** «The chat is on your clipboard, protected — bring the answer back with «Add an answer».» (key `theChatIsOnYourClipboard`; rules 65–69, and 55-و)
+**The limit:** every later question carries the earlier turns **with it** to the model, in the protected form they left in — so a long chat sends more, not less. The document itself is sent once; the history is not a second copy of it.
+**The proof:** `z_core/tests/the_chat_remembers.rs` measures that a second question carries the first turn as it left, that a follow-up leaves without the document, and that what a person copies out is what the model was shown; `z_core/tests/the_lock_gives_the_session_back.rs` measures that a lock does not end a chat; `z_core/tests/a_session_is_born_at_the_first_question.rs` measures the chat that has no document at all; gate `G46` holds the history to one builder, with no door on either contract surface taking one.
+**Measure it yourself:** `cargo test -p z_core --features fake_provider,test_clock,measuring --test the_chat_remembers --test the_lock_gives_the_session_back --test a_session_is_born_at_the_first_question`
+
+## C-14 · A release says nothing about the machine that built it
+
+**We say:** the build's own stamp, printed in the window and written into `BUILD-INFO.txt`: «core stamp … product commit … the two files that are the product» (`scripts/package_linux.sh`, `scripts/package_windows.sh`)
+**The limit:** this is about paths and symbols, not about anonymity of the publisher: the archive names the commit it was built from on purpose, so that a person can tell one build from another. And it is measured on the archive this tree builds — a rebuild by somebody else is their archive, not ours.
+**The proof:** `scripts/package_linux.sh` and `scripts/package_windows.sh` remap every compiler path, strip what they can, and then **refuse to write** if any file still holds `/home/`, `D:\a\` or `C:\Users\runneradmin`; `z_core/tests/the_stamp_names_this_commit.rs` measures that the stamp names the commit being built; gate `G53` holds the Windows job to the same shape as the Linux one.
+**Measure it yourself:** `bash scripts/package_linux.sh && ! grep -rlI "/home/" dist/ && echo "no path from this machine in the archive"`
+
+## C-15 · Every sentence this product shows is checked against the tree it ships in
+
+**We say:** this is the promise behind every other claim in this file: the app's words are gathered in one list and checked, not written per screen (`apps/flutter_app/lib/core/sentences.dart`, `apps/flutter_app/lib/l10n/app_en.arb`)
+**The limit:** **the migration is not finished.** At this commit the one list holds 314 sentences across 6 files, and `scripts/check_the_one_list.py` counts **559 sentences still owed in 22 files** — those are written in their screens and are not yet checked by the list's own gates. The claim is true of what is in the list; it is not yet true of the whole glass.
+**The proof:** unproven — gates `G41`, `G50`/`G51` and `G55` measure the sentences that **are** in the list (no sentence outside it in a migrated file, every language present, no invisible character in it) and `z_core/tests/truthfulness.rs` measures that what a report says matches what was measured; but with 559 sentences still outside the list, nothing yet proves the claim for the whole product.
+**Measure it yourself:** `python3 scripts/check_the_one_list.py`
+
+## C-16 · The measurement is public and anyone can run it
+
+**We say:** the gates are in the repository and the numbers are in `docs/MEASURED_ON_LINUX.txt`, written by the hand that merges, and compared against every run.
+**The limit:** no security firm has audited this code. An **outside model** attacked the claims and the tree on 19 October 2026 and graded each one — 0 blockers, 3 serious, 16 notes, its report in the papers repository — and that is a review, not an audit: it is one reader, on one day, with no access to a running installation. And the numbers are Linux numbers until the Windows job's own report is written into `docs/` from a run.
+**The proof:** `scripts/gates.sh` runs every gate from a plain debug build and prints «N checks, M failed, K skipped»; `docs/MEASURED_ON_LINUX.txt` holds the last numbers and the stamp gate refuses a tree whose test count has moved away from them; `.github/workflows/windows-core.yml` is the second platform's own report.
+**Measure it yourself:** `bash scripts/gates.sh; tail -2 docs/MEASURED_ON_LINUX.txt`
+
+---
+
+## What we do not claim
+
+- **Anonymity from the provider.** Address, time, model, size and the protected text itself travel. A provider knows that you asked and what the shape of it was. Z Privacy removes the values; it does not remove you.
+- **Anonymisation.** This is **pseudonymisation**: a token stands for a value and the mapping lives in your vault. A protected text plus knowledge of the world can still narrow down who it is about — a single-patient clinic letter is still about that patient with every name removed.
+- **Detection of everything.** The scanner is rules and lists, not a model. **Three faults are open at this commit**, in the words of the outside model that measured them on 19 October 2026 (Grok 4.7, graded SERIOUS, deterministic, its report in the papers repository):
+  - **خ3 — «Zero-width and NFD still blind the German salutation.»** `Sehr geehrter Herr Mar<U+200B>kus Weber,` and `Herr` + NFD `Müller` are not protected where the same letter in NFC is. One value in two spellings is one value everywhere else in this product (`text::nfc`), and not here.
+  - **خ4 — «English pack still drops values after the person has answered.»** On an English letter with the single suggestion answered, values still leave: payment card numbers, National Insurance numbers, a date of birth, an employee number — `en-34` is a bare number validator and the card has no detector at all.
+  - **خ5 — «Postfach and Sparkasse still leave after a finished review.»** With Protect pressed on every suggestion, `Postfach 4410` still stands beside the protected address, and the bank's own name on a `Bankverbindung:` line is never offered although the IBAN and BIC on that same line are cut out of it.
+  These three are paper 095 and are being built; until they are, they are what this product does not catch, written here rather than left for a reader to find.
+- **That review is optional.** Everything the scanner is unsure of is a suggestion, and no door opens while one is unanswered. We do not claim the scanner's first pass is complete — we claim nothing leaves while a word waits.
+- **An independent audit.** None by a security firm. One outside model's review exists (19 October 2026) and its three serious findings are named above — a review by one reader is not an audit, and we do not present it as one.
+- **Every platform.** Linux is measured; Windows is built and measured by the workflow, and its numbers are the ones a run writes into `docs/`. macOS, iOS and Android are not built.
+- **That a long chat sends less.** Every later question carries the earlier turns, protected. A chat is cheaper in names, not in bytes.
+- **Protection of what you copy yourself.** «Copy Restored» puts real values on the clipboard, after asking. After that it is the operating system's clipboard and other programs may read it.

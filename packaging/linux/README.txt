@@ -47,7 +47,9 @@ launcher and the icons back as well.
   BUILD-INFO.txt   which commit this was built from, and its hashes
   third-party/     everything else in here, and the licence it travels under
 
-The interface is English. The detection packs are German, Swedish and English.
+The interface is English, German and Swedish for the sentences gathered in the
+one list; the screens not yet gathered show in English whatever is chosen.
+The detection packs are German, English and Swedish.
 
 Faruk AB — Aktiebolag (AB), Sweden. Org.nr 559473-3494.
-yourvoices.app@mono-peak.com
+zprivacy@mono-peak.com
