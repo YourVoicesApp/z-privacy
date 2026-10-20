@@ -249,6 +249,84 @@ jobs:
       # The whole folder, never the .exe alone. A Flutter application on Windows
       # is the executable plus flutter_windows.dll, z_bridge.dll, the plugin
       # DLLs and `data/` beside it; the .exe on its own does not start.
+      # ---------------------------------------------------------------- 098
+      # **The runtime ships beside the application** — 098, after the owner
+      # met a clean Windows machine on 20 October where `VCRUNTIME140.dll` was
+      # missing: Node's own installer had failed on it, and a Flutter
+      # application needs the same three libraries. `flutter build windows`
+      # does not copy them, so the person who double-clicks our installer
+      # there gets Windows' own dialogue about a missing DLL — the silence
+      # `zprivacy.iss` was written to remove.
+      #
+      # **App-local, which is Microsoft's own name for it**, and the only shape
+      # that keeps this installer's promise: `vc_redist.x64.exe` installs
+      # machine-wide and asks for an administrator, which breaks
+      # `PrivilegesRequired=lowest` and the per-user install the owner chose.
+      # Copied beside `zprivacy.exe`, the loader finds them first and nothing
+      # is installed at all.
+      #
+      # **Into the runner's own Release folder, which is the one place both
+      # packages read:** «Stage the folder» below copies that folder into the
+      # staging the zip and Inno use, and `msix:create` packages the very same
+      # folder. One copy, two packages — the alternative was copying twice and
+      # the day they disagreed the MSIX would ship without a runtime.
+      #
+      # **The path comes from the variable, never typed:** `VCToolsRedistDir`
+      # is what the runner's own Visual Studio says, so a toolset bump moves
+      # with it. It is read through `vswhere` when the variable is not in this
+      # shell, because a developer command prompt sets it and a workflow step
+      # does not inherit one.
+      - name: The runtime the application needs, beside the application
+        shell: pwsh
+        working-directory: apps/flutter_app
+        run: |
+          $out = "build/windows/x64/runner/Release"
+          if (-not (Test-Path $out)) { throw "no Release folder at $out" }
+
+          $redist = $env:VCToolsRedistDir
+          if (-not $redist) {
+            $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+            if (-not (Test-Path $vswhere)) { throw "no VCToolsRedistDir and no vswhere to ask" }
+            $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+            if (-not $vs) { throw "vswhere found no Visual Studio with the C++ tools" }
+            $version = (Get-Content (Join-Path $vs "VC\Auxiliary\Build\Microsoft.VCRedistVersion.default.txt")).Trim()
+            $redist = Join-Path $vs "VC\Redist\MSVC\$version"
+          }
+          Write-Host "redistributable folder: $redist"
+          $crt = Join-Path $redist "x64\Microsoft.VC143.CRT"
+          if (-not (Test-Path $crt)) { throw "no CRT folder at $crt" }
+
+          foreach ($dll in @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
+            $from = Join-Path $crt $dll
+            if (-not (Test-Path $from)) { throw "the runner's redistributable has no $dll at $from" }
+            Copy-Item $from (Join-Path $out $dll) -Force
+          }
+
+      # **And the three are asserted where they will ship**, with the version
+      # each one carries printed into the log: a copy nobody checked is a copy
+      # nobody knows happened, and this job's own rule is that a missing file
+      # fails it out loud rather than later on somebody's desk.
+      - name: The three are in the bundle, and these are their versions
+        shell: pwsh
+        working-directory: apps/flutter_app
+        run: |
+          $out = "build/windows/x64/runner/Release"
+          $missing = @()
+          foreach ($dll in @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
+            $path = Join-Path $out $dll
+            if (Test-Path $path) {
+              $v = (Get-Item $path).VersionInfo.FileVersion
+              Write-Host "$dll $v"
+              "RUNTIME_$($dll -replace '[.]','_')=$v" >> $env:GITHUB_ENV
+            } else {
+              $missing += $dll
+            }
+          }
+          if ($missing.Count -gt 0) {
+            Write-Host "::error::the bundle is missing $($missing -join ', ') — the application would not start on a machine without the Visual C++ runtime"
+            exit 1
+          }
+
       - name: Stage the folder
         shell: bash
         working-directory: apps/flutter_app
@@ -271,9 +349,13 @@ jobs:
           # no longer under `packaging/linux/`.
           dest=../../staging/zprivacy-v1-windows-x86_64
           cp -f ../../LICENSE "$dest/LICENSE"
+          # **And the folder says what is in it** — 098: the three Microsoft
+          # libraries are new in this release and a person who unzips it has a
+          # right to know why a Microsoft DLL sits beside our program.
+          cp -f ../../packaging/windows/README.txt "$dest/README.txt"
           mkdir -p "$dest/third-party"
           for f in NOTICES.txt flutter-sdk-LICENSE.txt material-icons-LICENSE.txt \
-                   dejavu-LICENSE.txt dart-pdf-LICENSE.txt; do
+                   dejavu-LICENSE.txt dart-pdf-LICENSE.txt msvc-runtime-NOTICE.txt; do
             cp -f "../../packaging/third-party/$f" "$dest/third-party/$f"
           done
           cp -f ../../site/third-party/flutter-engine-LICENSE.txt "$dest/third-party/"

@@ -4196,6 +4196,7 @@ const _: fn() = || {
         let _: String = Settings.language;
         let _: bool = Settings.first_run_done;
         let _: bool = Settings.session_only;
+        let _: Option<String> = Settings.data_dir;
     }
     {
         let Span = None::<crate::api::mirrors::Span>.unwrap();
@@ -6354,6 +6355,7 @@ impl SseDecode for crate::api::mirrors::Settings {
         let mut var_language = <String>::sse_decode(deserializer);
         let mut var_firstRunDone = <bool>::sse_decode(deserializer);
         let mut var_sessionOnly = <bool>::sse_decode(deserializer);
+        let mut var_dataDir = <Option<String>>::sse_decode(deserializer);
         return crate::api::mirrors::Settings {
             original_pane_percent: var_originalPanePercent,
             columns_in_step: var_columnsInStep,
@@ -6366,6 +6368,7 @@ impl SseDecode for crate::api::mirrors::Settings {
             language: var_language,
             first_run_done: var_firstRunDone,
             session_only: var_sessionOnly,
+            data_dir: var_dataDir,
         };
     }
 }
@@ -8513,6 +8516,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Settings>
             self.0.language.into_into_dart().into_dart(),
             self.0.first_run_done.into_into_dart().into_dart(),
             self.0.session_only.into_into_dart().into_dart(),
+            self.0.data_dir.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -10562,6 +10566,7 @@ impl SseEncode for crate::api::mirrors::Settings {
         <String>::sse_encode(self.language, serializer);
         <bool>::sse_encode(self.first_run_done, serializer);
         <bool>::sse_encode(self.session_only, serializer);
+        <Option<String>>::sse_encode(self.data_dir, serializer);
     }
 }
 

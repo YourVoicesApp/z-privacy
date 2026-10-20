@@ -1052,6 +1052,66 @@ else
   skip "G58 the paper counts the ZCFG names the code allows" "no config.rs or no paper"
 fi
 
+# ---------------------------------------------------------------- G60
+# **The Windows release carries the runtime it needs** — 098, after the owner
+# met a clean Windows machine on 20 October where `VCRUNTIME140.dll` was
+# missing and Node's own installer had failed on it.
+#
+# A Flutter application on Windows needs `vcruntime140.dll`,
+# `vcruntime140_1.dll` and `msvcp140.dll`, and `flutter build windows` copies
+# none of them. The shape chosen is Microsoft's «app-local deployment» — the
+# three beside `zprivacy.exe` — because the other shape runs
+# `vc_redist.x64.exe`, which installs machine-wide and asks for an
+# administrator, and this installer promises neither
+# (`PrivilegesRequired=lowest`, per-user).
+#
+# **This is a check on the text, and it says so.** Linux cannot run the
+# Windows job, install the package or load a DLL; what a gate here can do is
+# refuse a workflow that has stopped naming the three files in the step that
+# copies them and in the step that asserts them — which is how this round
+# would quietly come undone, since the copy is one `foreach` away from being
+# edited to two names. The measurement itself lives where the files are made:
+# the assert step prints each version into the run's log, and a missing one
+# fails that job.
+#
+# Three checks: the copy names the three, the assert names the three, and the
+# obligation travels — Microsoft's redistribution notice is in the folder the
+# job copies into every release.
+WINJOB=.github/workflows/windows-core.yml
+RUNTIME_NOTICE=packaging/third-party/msvc-runtime-NOTICE.txt
+G60_DLLS="vcruntime140.dll vcruntime140_1.dll msvcp140.dll"
+
+if [ -f "$WINJOB" ]; then
+  G60_COPY=$(awk '
+    /^      - name: The runtime the application needs/ {inside=1}
+    inside && /^      - name: The three are in the bundle/ {inside=0}
+    inside && $0 !~ /^[[:space:]]*#/ {print}
+  ' "$WINJOB")
+  G60_ASSERT=$(awk '
+    /^      - name: The three are in the bundle/ {inside=1}
+    inside && /^      - name: Stage the folder/ {inside=0}
+    inside && $0 !~ /^[[:space:]]*#/ {print}
+  ' "$WINJOB")
+  G60_MISSING=""
+  for dll in $G60_DLLS; do
+    printf '%s\n' "$G60_COPY" | grep -qF "$dll" || G60_MISSING="$G60_MISSING copy:$dll"
+    printf '%s\n' "$G60_ASSERT" | grep -qF "$dll" || G60_MISSING="$G60_MISSING assert:$dll"
+  done
+  if [ -n "$G60_COPY" ] && [ -n "$G60_ASSERT" ] && [ -z "$G60_MISSING" ]; then
+    pass "G60 the Windows job copies the three runtime libraries beside the application and asserts them (read as text: Linux cannot run that job)"
+  else
+    fail "G60 the Windows job no longer names$G60_MISSING — a release that is missing one of them stops on a clean machine with Windows' own dialogue"
+  fi
+else
+  skip "G60 the Windows job carries the runtime" "no $WINJOB in this tree"
+fi
+
+if [ -f "$RUNTIME_NOTICE" ] && grep -q "msvc-runtime-NOTICE.txt" "$WINJOB" 2>/dev/null; then
+  pass "G60 Microsoft's redistribution notice is in the tree and travels with every Windows release"
+else
+  fail "G60 the runtime ships and its notice does not travel: $RUNTIME_NOTICE must exist and the job must copy it"
+fi
+
 # ---------------------------------------------------------------- G56
 # **Every claim this product makes is in one file, with its limit and its
 # proof** — 094, the owner's own order of 19 October 2026: «نجعل ملف مراجعة في

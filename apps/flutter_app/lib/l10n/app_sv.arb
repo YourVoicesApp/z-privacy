@@ -125,6 +125,8 @@
   "vaultIsUnlocked": "Unlocked",
   "vaultIsLocked": "Locked",
   "vaultIsNone": "None",
+  "yourVaultIsIn": "Your vault is in",
+  "aVaultHereWouldBeIn": "A vault here would be in",
   "openZVault": "Open Z Vault",
   "lockNow": "Lock now",
   "openZVaultOrLockItNow": "Open Z Vault, or lock it now",

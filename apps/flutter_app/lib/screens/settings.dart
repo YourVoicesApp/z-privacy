@@ -633,18 +633,53 @@ class _VaultRoom extends StatelessWidget {
             VaultState.locked => sentences.vaultLockedWhat,
             VaultState.absent => sentences.vaultAbsentWhat,
           },
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Dot(on: ground.vault == VaultState.unlocked),
-              const SizedBox(width: 8),
-              Text(
-                switch (ground.vault) {
-                  VaultState.unlocked => sentences.unlockedWithIdentities(ground.entityCount),
-                  VaultState.locked => sentences.vaultIsLocked,
-                  VaultState.absent => sentences.vaultIsNone,
-                },
-                style: Zc.small,
+              Row(
+                children: [
+                  _Dot(on: ground.vault == VaultState.unlocked),
+                  const SizedBox(width: 8),
+                  Text(
+                    switch (ground.vault) {
+                      VaultState.unlocked => sentences.unlockedWithIdentities(ground.entityCount),
+                      VaultState.locked => sentences.vaultIsLocked,
+                      VaultState.absent => sentences.vaultIsNone,
+                    },
+                    style: Zc.small,
+                  ),
+                ],
               ),
+              // **And which folder it is in** — 098 item 2, from the owner's
+              // own Windows machine on 20 October: the installed build asked
+              // him to create a new vault with his own vault on the same disc,
+              // and no screen in this product named a folder. A package
+              // installed from the `.msix` has its `%LOCALAPPDATA%` redirected
+              // into the package's own data folder, so one answer in
+              // `data_dir.rs` becomes two paths on one machine — and a person
+              // who cannot read the folder cannot tell «a second vault» from
+              // «my vault is gone».
+              //
+              // **The folder comes from the core**, through the one list this
+              // room already reads (092), and it is the folder the application
+              // is *using* rather than the one it would have chosen: the
+              // default is right on Linux and right on the installer build, and
+              // wrong on exactly the install that needs it.
+              //
+              // **Two sentences, because one would be false.** With no vault in
+              // that folder — the owner's own screen — «your vault is in» would
+              // name a file that does not exist, so the label says what the
+              // folder is *for* instead. Nothing is pressable: a folder is a
+              // fact to read, and moving a vault is its own paper.
+              if (c?.dataDir case final folder?) ...[
+                const SizedBox(height: 8),
+                _Spec(
+                  ground.vault == VaultState.absent
+                      ? sentences.aVaultHereWouldBeIn
+                      : sentences.yourVaultIsIn,
+                  folder,
+                ),
+              ],
             ],
           ),
         ),

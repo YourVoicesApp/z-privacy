@@ -14,7 +14,7 @@ use crate::api::{
     ValueRow,
 };
 use crate::secret::Secret;
-use crate::session::with_core;
+use crate::session::{with_core, Core};
 use crate::vault::model::{Entity, Exemption, StoredSettings, ValueRecord};
 
 pub(crate) fn set_data_dir(dir: String) -> ApiResult<()> {
@@ -573,6 +573,16 @@ pub(crate) fn kinds() -> ApiResult<Vec<KindRow>> {
 /// From the vault when one is open, from this run's memory otherwise — and the
 /// answer always says which, so a screen can tell the user that a setting will
 /// not survive the app closing.
+/// **Where the two files are, as one answer** — 098 item 2.
+///
+/// Both doors below report the folder through this and nothing else: the read
+/// and the save would otherwise be two sources for one fact, and a room that
+/// showed one path after a press and another after a reload would be telling a
+/// person they had moved their vault.
+fn the_folder_in_use(core: &Core) -> Option<String> {
+    core.vault.dir().map(|p| p.to_string_lossy().to_string())
+}
+
 pub(crate) fn settings() -> ApiResult<Settings> {
     with_core(|core| {
         let file = core.config.get();
@@ -601,6 +611,9 @@ pub(crate) fn settings() -> ApiResult<Settings> {
             // Says only what it has always said: whether the settings that need
             // a vault will survive the app closing. The three above always do.
             session_only: kept_for_this_run,
+            // And neither from the vault nor from ZCFG: the folder is what both
+            // of those were read *out of*.
+            data_dir: the_folder_in_use(core),
         })
     })
 }
@@ -665,6 +678,7 @@ pub(crate) fn save_settings(settings: Settings) -> ApiResult<Settings> {
         safe_column_open: written.safe_column_open,
         review_panel_wide: written.review_panel_wide,
         session_only: !sealed,
+        data_dir: with_core(|core| the_folder_in_use(core)),
     })
 }
 

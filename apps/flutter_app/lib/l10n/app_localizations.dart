@@ -863,6 +863,18 @@ abstract class AppLocalizations {
   /// **'None'**
   String get vaultIsNone;
 
+  /// The label before the folder the vault file is in. 098: the Windows MSIX install has its own data folder, so the folder is read from the core rather than guessed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vault is in'**
+  String get yourVaultIsIn;
+
+  /// The same label when no vault exists in that folder yet — the screen where the owner was asked to create a new vault, with his own vault on the same disc.
+  ///
+  /// In en, this message translates to:
+  /// **'A vault here would be in'**
+  String get aVaultHereWouldBeIn;
+
   /// The press that opens the vault board.
   ///
   /// In en, this message translates to:

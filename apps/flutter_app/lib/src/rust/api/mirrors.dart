@@ -2743,6 +2743,24 @@ class Settings {
   /// there is no vault to keep them in.
   final bool sessionOnly;
 
+  /// **The folder the two files are in** — 098 item 2 — or `None` before the
+  /// application has set one.
+  ///
+  /// Not a setting: nothing saves it and nobody may change it here, exactly
+  /// as `session_only` is a fact about the settings rather than one of them.
+  /// It rides this list because the list is the one the Settings room already
+  /// reads (092), and a second door for one sentence would be a second
+  /// opinion about where the vault is.
+  ///
+  /// **Why it is the folder in use and not `default_data_dir()`.** A packaged
+  /// Windows application has its `%LOCALAPPDATA%` redirected into the
+  /// package's own data folder, so one answer in `data_dir.rs` becomes two
+  /// paths on one machine, and two installs hold two vaults. The default is
+  /// what this machine's variables say; this is what `set_data_dir` was
+  /// actually called with. On Linux they are the same, which is precisely why
+  /// a screen reading the default would look right here and be wrong there.
+  final String? dataDir;
+
   const Settings({
     required this.originalPanePercent,
     required this.columnsInStep,
@@ -2755,6 +2773,7 @@ class Settings {
     required this.language,
     required this.firstRunDone,
     required this.sessionOnly,
+    this.dataDir,
   });
 
   @override
@@ -2769,7 +2788,8 @@ class Settings {
       packId.hashCode ^
       language.hashCode ^
       firstRunDone.hashCode ^
-      sessionOnly.hashCode;
+      sessionOnly.hashCode ^
+      dataDir.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -2786,7 +2806,8 @@ class Settings {
           packId == other.packId &&
           language == other.language &&
           firstRunDone == other.firstRunDone &&
-          sessionOnly == other.sessionOnly;
+          sessionOnly == other.sessionOnly &&
+          dataDir == other.dataDir;
 }
 
 enum Source {

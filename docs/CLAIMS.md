@@ -132,7 +132,7 @@ measurements beside them, offered so that somebody else can try to break them.
 ## C-15 · Every sentence this product shows is checked against the tree it ships in
 
 **We say:** this is the promise behind every other claim in this file: the app's words are gathered in one list and checked, not written per screen (`apps/flutter_app/lib/core/sentences.dart`, `apps/flutter_app/lib/l10n/app_en.arb`)
-**The limit:** **the migration is not finished.** At this commit the one list holds 556 sentences across 12 files, and `scripts/check_the_one_list.py` counts **185 sentences still owed in 16 files** — those are written in their screens and are not yet checked by the list's own gates. The claim is true of what is in the list; it is not yet true of the whole glass.
+**The limit:** **the migration is not finished.** At this commit the one list holds 558 sentences across 12 files, and `scripts/check_the_one_list.py` counts **185 sentences still owed in 16 files** — those are written in their screens and are not yet checked by the list's own gates. The claim is true of what is in the list; it is not yet true of the whole glass.
 **The proof:** unproven — gates `G41`, `G50`/`G51` and `G55` measure the sentences that **are** in the list (no sentence outside it in a migrated file, every language present, no invisible character in it) and `z_core/tests/truthfulness.rs` measures that what a report says matches what was measured; but with 185 sentences still outside the list, nothing yet proves the claim for the whole product.
 **Measure it yourself:** `python3 scripts/check_the_one_list.py`
 

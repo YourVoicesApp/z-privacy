@@ -737,6 +737,14 @@
     "description": "The vault's state in the work bar."
   },
   "vaultIsNone": "None",
+  "yourVaultIsIn": "Your vault is in",
+  "@yourVaultIsIn": {
+    "description": "The label before the folder the vault file is in. 098: the Windows MSIX install has its own data folder, so the folder is read from the core rather than guessed."
+  },
+  "aVaultHereWouldBeIn": "A vault here would be in",
+  "@aVaultHereWouldBeIn": {
+    "description": "The same label when no vault exists in that folder yet — the screen where the owner was asked to create a new vault, with his own vault on the same disc."
+  },
   "@vaultIsNone": {
     "description": "The vault's state in the work bar when this device has none. Masculine in German, because «Tresor» is."
   },
