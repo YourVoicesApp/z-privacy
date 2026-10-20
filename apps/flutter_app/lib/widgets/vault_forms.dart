@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -35,9 +36,7 @@ import 'package:zprivacy/core/messages.dart';
 String vaultKeyTroubleFor(ApiError e) {
   final said = humanMessage(e);
   if (e is! ApiError_PayloadRefused) return said;
-  return '$said Z Privacy has not changed the file. If you have a backup of '
-      'the vault, put it back in place; otherwise move this file somewhere else '
-      'and a new vault can be made here.';
+  return sentences.vaultFileNotChanged(said);
 }
 
 /// Making a vault, opening one, or changing its passphrase.
@@ -164,17 +163,16 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.changing) ...[
-          const Text('Change the passphrase', style: Zc.h2),
+          Text(sentences.changeThePassphrase, style: Zc.h2),
           const SizedBox(height: 6),
           Text(
-            'Only 32 bytes are re-wrapped — the vault itself is not decrypted and not '
-            'rewritten. Everything in it stays exactly where it is.',
+            sentences.onlyThirtyTwoBytes,
             style: Zc.small,
           ),
           const SizedBox(height: 16),
         ],
         _field(
-          widget.changing ? 'Current passphrase' : 'Passphrase',
+          widget.changing ? sentences.currentPassphrase: sentences.passphrase,
           _one,
           shown: _showOne,
           onToggle: () => setState(() => _showOne = !_showOne),
@@ -182,7 +180,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
         if (needsTwo) ...[
           const SizedBox(height: 10),
           _field(
-            widget.changing ? 'New passphrase' : 'Confirm passphrase',
+            widget.changing ? sentences.newPassphrase: sentences.confirmPassphrase,
             _two,
             shown: _showTwo,
             onToggle: () => setState(() => _showTwo = !_showTwo),
@@ -194,7 +192,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
         if (widget.changing) ...[
           const SizedBox(height: 10),
           _field(
-            'Confirm new passphrase',
+            sentences.confirmNewPassphrase,
             _three,
             shown: _showThree,
             onToggle: () => setState(() => _showThree = !_showThree),
@@ -203,7 +201,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
         if (_confirms && _pair.$1.isNotEmpty && _pair.$2.isNotEmpty) ...[
           const SizedBox(height: 7),
           Text(
-            _agree ? 'Passphrases match' : 'Passphrases do not match',
+            _agree ? sentences.passphrasesMatch: sentences.passphrasesDoNotMatch,
             key: const Key('passphrase-match'),
             style: Zc.tiny.copyWith(
               letterSpacing: 0,
@@ -217,8 +215,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
         if (_needsTwo && _pair.$1.isNotEmpty && !_longEnough) ...[
           const SizedBox(height: 7),
           Text(
-            'At least ${VaultKeyForm.leastCharacters} characters — the vault '
-            'will not be made with fewer.',
+            sentences.atLeastCharacters(VaultKeyForm.leastCharacters),
             key: const Key('passphrase-length'),
             style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.amber),
           ),
@@ -226,9 +223,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
         if (widget.creating) ...[
           const SizedBox(height: 7),
           Text(
-            'There is no way back. Nobody holds a copy of this, and no reset exists — '
-            'the passphrase never leaves this device and nothing on our side could '
-            'recover the vault without it.',
+            sentences.thereIsNoWayBack,
             style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.amber),
           ),
         ],
@@ -239,12 +234,9 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
         const SizedBox(height: 14),
         ZButton(
           label: _busy
-              ? 'Working…'
-              : widget.changing
-              ? 'Change it'
-              : widget.creating
-              ? 'Create the vault'
-              : 'Unlock',
+              ? sentences.working: widget.changing
+              ? sentences.changeIt: widget.creating
+              ? sentences.createTheVault: sentences.unlockTheVault,
           filled: true,
           onPressed: _canSubmit ? _go : null,
         ),
@@ -261,7 +253,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
     try {
       if (widget.changing) {
         if (_two.text != _three.text) {
-          bad = 'Passphrases do not match';
+          bad = sentences.passphrasesDoNotMatch;
         } else {
           await z.vaultChangePassphrase(old: _one.text, replacement: _two.text);
         }
@@ -277,7 +269,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
         // still made only when they agree, so a mismatch cannot slip through
         // if the button's state is ever wrong.
         if (_one.text != _two.text) {
-          bad = 'Passphrases do not match';
+          bad = sentences.passphrasesDoNotMatch;
         } else {
           await z.vaultCreateWithPassphrase(passphrase: _one.text);
         }
@@ -337,7 +329,7 @@ class _VaultKeyFormState extends State<VaultKeyForm> {
             borderSide: const BorderSide(color: Zc.line),
           ),
           suffixIcon: IconButton(
-            tooltip: shown ? 'Hide $label' : 'Show $label',
+            tooltip: shown ? sentences.hideNamed(label) : sentences.showNamed(label),
             icon: Icon(
               shown ? Icons.visibility_off_outlined : Icons.visibility_outlined,
               size: 17,
@@ -385,23 +377,22 @@ class _EntityFormState extends State<EntityForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('A new identity', style: Zc.h2),
+              Text(sentences.aNewIdentity, style: Zc.h2),
               const SizedBox(height: 6),
               Text(
-                'An identity is how a person thinks — «Client Nordstern» — and the values '
-                'inside it are what the scanner matches.',
+                sentences.anIdentityIsHowAPersonThinks,
                 style: Zc.small,
               ),
               const SizedBox(height: 18),
-              const Eyebrow('Name'),
+              Eyebrow(sentences.nameField),
               const SizedBox(height: 6),
               TextField(
                 controller: _label,
                 autofocus: true,
-                decoration: _box('Client Nordstern'),
+                decoration: _box(sentences.exampleClientNordstern),
               ),
               const SizedBox(height: 16),
-              const Eyebrow('Sort'),
+              Eyebrow(sentences.sortField),
               const SizedBox(height: 7),
               Wrap(
                 spacing: 7,
@@ -416,14 +407,14 @@ class _EntityFormState extends State<EntityForm> {
                 ],
               ),
               const SizedBox(height: 16),
-              const Eyebrow('Loaded in'),
+              Eyebrow(sentences.loadedIn),
               const SizedBox(height: 7),
               Wrap(
                 spacing: 7,
                 runSpacing: 7,
                 children: [
                   _Pick(
-                    label: 'Everywhere',
+                    label: sentences.everywhere,
                     on: _profile == null,
                     onTap: () => setState(() => _profile = null),
                   ),
@@ -443,12 +434,12 @@ class _EntityFormState extends State<EntityForm> {
               Row(
                 children: [
                   ZButton(
-                    label: 'Cancel',
+                    label: sentences.cancelForm,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const Spacer(),
                   ZButton(
-                    label: 'Create',
+                    label: sentences.createIt,
                     filled: true,
                     onPressed: () async {
                       try {
@@ -546,11 +537,11 @@ class _ValueFormState extends State<ValueForm> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                widget.existing == null ? 'A new value' : 'Edit this value',
+                widget.existing == null ? sentences.aNewValue: sentences.editThisValue,
                 style: Zc.h2,
               ),
               const SizedBox(height: 16),
-              const Eyebrow('The value'),
+              Eyebrow(sentences.theValue),
               const SizedBox(height: 6),
               TextField(
                 controller: _text,
@@ -559,12 +550,11 @@ class _ValueFormState extends State<ValueForm> {
                 style: Zc.document.copyWith(fontSize: 14),
                 decoration: _box(
                   _loading
-                      ? 'reading it from the vault…'
-                      : 'Nordstern Consulting GmbH',
+                      ? sentences.readingItFromTheVault: sentences.exampleCompanyName,
                 ),
               ),
               const SizedBox(height: 16),
-              const Eyebrow('What it is'),
+              Eyebrow(sentences.whatItIs),
               const SizedBox(height: 7),
               // From the core's list, never from a switch here.
               Wrap(
@@ -580,28 +570,28 @@ class _ValueFormState extends State<ValueForm> {
                 ],
               ),
               const SizedBox(height: 16),
-              const Eyebrow('How to treat it'),
+              Eyebrow(sentences.howToTreatIt),
               const SizedBox(height: 7),
               _PolicyRow(
                 policy: Policy.always,
                 chosen: _policy,
-                title: 'Always protect',
-                what: 'Found by itself and replaced, with no question.',
+                title: sentences.alwaysProtect,
+                what: sentences.alwaysProtectWhat,
                 onTap: (p) => setState(() => _policy = p),
               ),
               _PolicyRow(
                 policy: Policy.suggest,
                 chosen: _policy,
-                title: 'Suggest',
-                what: 'Found, and put to you before anything is sent.',
+                title: sentences.suggestPolicy,
+                what: sentences.suggestPolicyWhat,
                 onTap: (p) => setState(() => _policy = p),
               ),
               _PolicyRow(
                 policy: Policy.manual,
                 chosen: _policy,
-                title: 'Keep, do not hunt',
+                title: sentences.keepDoNotHunt,
                 what:
-                    'Kept so its spellings and its token stay stable — but not looked for.',
+                    sentences.keepDoNotHuntWhat,
                 onTap: (p) => setState(() => _policy = p),
               ),
               if (_trouble != null) ...[
@@ -612,12 +602,12 @@ class _ValueFormState extends State<ValueForm> {
               Row(
                 children: [
                   ZButton(
-                    label: 'Cancel',
+                    label: sentences.cancelForm,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const Spacer(),
                   ZButton(
-                    label: 'Save',
+                    label: sentences.saveIt,
                     filled: true,
                     onPressed: _loading
                         ? null
@@ -702,31 +692,28 @@ class _ProfileFormState extends State<ProfileForm> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                widget.profile == null ? 'A new profile' : 'Rename profile',
+                widget.profile == null ? sentences.aNewProfile: sentences.renameProfile,
                 style: Zc.h2,
               ),
               const SizedBox(height: 6),
               Text(
                 widget.profile == null
-                    ? 'One dictionary per client. Only the identities of the profile you open are '
-                          'loaded — opening the vault is not a blank cheque.'
-                    : 'The profile ID stays the same. Only the name a person reads changes.',
+                    ? sentences.oneDictionaryPerClient: sentences.theProfileIdStaysTheSame,
                 style: Zc.small,
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _name,
                 autofocus: true,
-                decoration: _box('Client Nordstern'),
+                decoration: _box(sentences.exampleClientNordstern),
                 onSubmitted: (_) => _save(),
               ),
               if (widget.ground != null) ...[
                 const SizedBox(height: 16),
-                const Eyebrow('Languages used in documents'),
+                Eyebrow(sentences.languagesUsedInDocuments),
                 const SizedBox(height: 4),
                 Text(
-                  'More than one may be on. A document with a German label and an '
-                  'English one is read by both in a single scan.',
+                  sentences.moreThanOneMayBeOn,
                   style: Zc.tiny.copyWith(color: Zc.ink4),
                 ),
                 const SizedBox(height: 7),
@@ -755,12 +742,14 @@ class _ProfileFormState extends State<ProfileForm> {
               Row(
                 children: [
                   ZButton(
-                    label: 'Cancel',
+                    label: sentences.cancelForm,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   const Spacer(),
                   ZButton(
-                    label: widget.profile == null ? 'Create' : 'Rename',
+                    label: widget.profile == null
+                        ? sentences.createIt
+                        : sentences.renameIt2,
                     filled: true,
                     onPressed: _save,
                   ),
@@ -820,12 +809,15 @@ InputDecoration _box(String hint) => InputDecoration(
   ),
 );
 
+/// **The one word for what an identity is** — 092, and the one place it is
+/// said: `vault.dart`'s chip upper-cases what this returns rather than keeping
+/// a second switch of its own.
 String entityKindLabel(EntityKind k) => switch (k) {
-  EntityKind.client => 'Client',
-  EntityKind.person => 'Person',
-  EntityKind.company => 'Company',
-  EntityKind.project => 'Project',
-  EntityKind.custom => 'Something else',
+  EntityKind.client => sentences.kindClient,
+  EntityKind.person => sentences.kindPerson,
+  EntityKind.company => sentences.kindCompany,
+  EntityKind.project => sentences.kindProject,
+  EntityKind.custom => sentences.kindSomethingElse,
 };
 
 class _Pick extends StatelessWidget {
@@ -996,24 +988,23 @@ class _TeachRuleSheetState extends State<TeachRuleSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Teach a rule', style: Zc.h2),
+              Text(sentences.teachARuleHead, style: Zc.h2),
               const SizedBox(height: 6),
               Text(
-                'A rule is a word and what comes after it. Z Privacy protects the '
-                'value that follows and stops at the end of that field.',
+                sentences.aRuleIsAWordAndWhatComesAfter,
                 style: Zc.small,
               ),
               const SizedBox(height: 18),
-              const Eyebrow('When Z Privacy sees'),
+              Eyebrow(sentences.whenZPrivacySees),
               const SizedBox(height: 6),
               TextField(
                 controller: _label,
                 autofocus: true,
-                decoration: _box('Mandantenkennung'),
+                decoration: _box(sentences.exampleMandantenkennung),
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 16),
-              const Eyebrow('Protect the value after it as'),
+              Eyebrow(sentences.protectTheValueAfterItAs),
               const SizedBox(height: 7),
               Wrap(
                 spacing: 7,
@@ -1030,20 +1021,20 @@ class _TeachRuleSheetState extends State<TeachRuleSheet> {
                 ],
               ),
               const SizedBox(height: 16),
-              const Eyebrow('Where'),
+              Eyebrow(sentences.whereField),
               const SizedBox(height: 7),
               Wrap(
                 spacing: 7,
                 runSpacing: 7,
                 children: [
                   _Pick(
-                    label: 'Everywhere',
+                    label: sentences.everywhere,
                     on: _profile == null,
                     onTap: () => setState(() => _profile = null),
                   ),
                   for (final p in g.profiles)
                     _Pick(
-                      label: 'Profile — ${theirOwnWord(p.name)}',
+                      label: sentences.profileNamedDash(theirOwnWord(p.name)),
                       on: _profile == p.id,
                       onTap: () => setState(() => _profile = p.id),
                     ),
@@ -1058,11 +1049,11 @@ class _TeachRuleSheetState extends State<TeachRuleSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ZButton(
-                    label: 'Cancel',
+                    label: sentences.cancelForm,
                     onPressed: () => Navigator.of(context).pop(false),
                   ),
                   ZButton(
-                    label: 'Save rule',
+                    label: sentences.saveRule,
                     filled: true,
                     onPressed: _saving || _label.text.trim().isEmpty ? null : _save,
                   ),

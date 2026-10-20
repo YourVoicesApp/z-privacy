@@ -55,8 +55,14 @@ MIGRATED = {
     'core/messages.dart',
     'screens/first_run.dart',
     'screens/settings.dart',
+    'screens/vault.dart',
     'screens/workspace.dart',
+    'widgets/entity_detail.dart',
+    'widgets/name_review.dart',
+    'widgets/send_sheet.dart',
     'widgets/the_chat.dart',
+    'widgets/vault_forms.dart',
+    'widgets/why_sheet.dart',
 }
 
 # **The debt, file by file, as it stands.** Each number is what that file still
@@ -66,44 +72,105 @@ MIGRATED = {
 # they were: a floor that is looser than the truth is a gate that would let a
 # sentence be added back. What is left is the settings rooms, then the widgets.
 #
-# 854 sentences stood in 27 files when this round began; 559 stand in 22 now.
+# 854 sentences stood in 27 files when this round began; 185 stand in 16 now.
 OWED = {
-    'core/protected_pdf.dart': 16,
+    'core/protected_pdf.dart': 13,
     'core/session_state.dart': 29,
     'core/the_clipboard.dart': 1,
     'screens/shell.dart': 3,
-    'screens/vault.dart': 67,
     'widgets/acts.dart': 28,
-    'widgets/bits.dart': 13,
+    'widgets/bits.dart': 12,
     'widgets/connect_form.dart': 22,
     'widgets/conversation_view.dart': 10,
     'widgets/document_text.dart': 2,
-    'widgets/entity_detail.dart': 36,
     'widgets/find_in_document.dart': 14,
     'widgets/language_list.dart': 6,
     'widgets/line_gutter.dart': 2,
-    'widgets/name_review.dart': 73,
     'widgets/reveal.dart': 2,
     'widgets/review.dart': 23,
-    'widgets/send_sheet.dart': 50,
     'widgets/the_way_back.dart': 3,
     'widgets/tokens.dart': 15,
-    'widgets/vault_forms.dart': 79,
-    'widgets/why_sheet.dart': 65,
 }
 
-# Values the German is allowed to share with the English, by name.
+# **Values the German is allowed to share with the English, by name** — each
+# with its reason, because «the translator skipped it» and «German says the
+# same» are the same bytes and only one of them is honest.
+#
+#   * `OK`, the product names, a bare number, a dash or a middle dot — nothing
+#     to translate.
+#   * **`Person`** — German spells it the same, capital and all. It is the one
+#     kind word of the five that does not move.
+#   * **`Passphrase`** — the loan word German uses for it; «Kennwort» is a
+#     password, and this is deliberately not one.
+#   * **`Name`** — the same word, same case.
+#   * **`Nordstern Consulting GmbH`** — a greyed example *of a name*, and a
+#     name does not translate (the lead's ruling, 19 October).
+#   * **`Mandantenkennung`** — a greyed example of a real German field name. It
+#     stands in the **English** screen *because* it is German: that is what it
+#     demonstrates, and an English example would stop demonstrating it.
+#   * **`Herr Müller`** and **`Lindqvist`** — greyed examples of a spelling and
+#     of a surname. Names, and a name does not translate.
+#   * **`{act} · {needs}`** — not a sentence at all: a frame that joins two
+#     keys on one button («Add a name · Needs a vault»), and both halves are
+#     their own keys with their own German.
 SAME_IN_EVERY_LANGUAGE = re.compile(
-    r'^(?:OK|Z Privacy|z-pdf|Grok|xAI|\d+|[-—·]|)$'
+    r'^(?:OK|Z Privacy|z-pdf|Grok|xAI|Person|Passphrase|Name'
+    r'|Nordstern Consulting GmbH|Mandantenkennung|Herr Müller|Lindqvist'
+    r'|\{act\} · \{needs\}|\d+|[-—·]|)$'
 )
 
-LITERAL = re.compile(r"'((?:[^'\\]|\\.){3,})'")
+# **Both of Dart's quotes**, and the honest account of why.
+#
+# This read only `'…'` until 19 October, and fourteen double-quoted literals
+# with words in them were found outside it — «One place is», «value stands»,
+# «Local AI», the ` and ` that joins two names. It looked like fourteen
+# sentences the gate had never seen. **It was not**: every one of them sits
+# *inside* an interpolation of a single-quoted string
+# (`'${n == 1 ? "value stands" : "values stand"}'`), so each was already
+# counted as part of that sentence, and the measurement said so — the totals
+# before and after this change are the same 559 in 22 files, to the digit.
+#
+# The alternative is kept anyway, because the gap it closes is real even
+# though nothing has fallen into it: the day somebody writes `Text("Hello")`
+# this sees it. A census that matches a quoting style is not a census of
+# sentences, which was the right thought about the wrong evidence.
+LITERAL = re.compile(
+    r"'((?:[^'\\\n]|\\.){3,})'"
+    r'|"((?:[^"\\\n]|\\.){3,})"')
 
 # **Product names.** The same in every language, and the paper says so: a list
 # that held «Z Privacy» in three files would be three chances to rename the
 # product in two of them. Matched whole, never as a part — «Z Privacy keeps
 # nothing» is a sentence.
 PRODUCT_NAMES = {'Z Privacy', 'z-pdf', 'YourVoices', 'Grok', 'xAI', 'Ollama'}
+
+# Phrases the glass looks for **inside a sentence the core wrote**. Each is a
+# match and never a thing drawn — see the exception that reads this.
+READ_FROM_THE_CORE = {
+    # `why_sheet.dart`: a taught *rule* carries no entity and no value, so the
+    # sheet asks the core's headline whether the person taught it.
+    'taught Z Privacy this rule',
+}
+
+# What a file holds, by shape: a MIME type, anything that ends in an
+# extension, and a comma-separated row of lowercase field names.
+A_FILES_OWN_WORDS = (
+    re.compile(r'[a-z]+/[a-z0-9.+-]+'),                    # text/csv
+    # **No white space**, because a name is one word. This was `.*\.[a-z]{2,4}`
+    # for an afternoon, and `.*` crosses spaces: every one of «Saved to
+    # Downloads/report.pdf», «Gespeichert als bericht.pdf» and «The list was
+    # written to names.csv» was exempt under it, measured. The first of those
+    # is this app's own `savedToWhere`, so the hole was one sentence wide and
+    # that sentence exists. An exception that can swallow a sentence is the
+    # same fault as a gate that reads a sentence's English, which is the fault
+    # this round is about. The four it is here for hold no space: two asset
+    # paths, the built `$stem.pdf`, and `${list.name}.csv`.
+    re.compile(r'\S*\.[a-z]{2,4}'),                        # «…».csv
+    re.compile(r'[a-z_]+(?:,[a-z_]*)+\\n?'),                # name,type,source,licence
+)
+
+# An `intl` date pattern: only pattern letters, spaces and date punctuation.
+DATE_PATTERN = re.compile(r'[yMdEHhmsaz., /:-]+')
 
 
 def sentences_in(path: pathlib.Path) -> list[str]:
@@ -120,7 +187,7 @@ def sentences_in(path: pathlib.Path) -> list[str]:
         if stripped.startswith('//'):
             continue
         for m in LITERAL.finditer(line):
-            v = m.group(1)
+            v = m.group(1) if m.group(1) is not None else m.group(2)
             if not re.search(r'[A-Za-z]{3,}', v):
                 continue
             # An import URI is not a sentence: `package:…`, `dart:async`, and
@@ -132,6 +199,28 @@ def sentences_in(path: pathlib.Path) -> list[str]:
             if v.startswith('__Z_') or v == '__Z_':   # token grammar
                 continue
             if v.strip() in PRODUCT_NAMES:            # product names
+                continue
+            # **A date pattern is not a sentence.** `'d MMM y'` is what `intl`
+            # is asked for, and the words it puts in it come from the locale's
+            # own table — so the pattern is the shape and the sentence is
+            # `intl`'s. Twelve month names used to be written out here instead.
+            if DATE_PATTERN.fullmatch(v):
+                continue
+            # **The core's own English, matched and not shown.** The glass asks
+            # whether a sentence the *core* wrote contains a phrase — it draws
+            # nothing, so there is nothing to translate, and translating it
+            # would break the match. Listed one by one, because each is a seam
+            # worth seeing: a `.contains` over a core sentence fails silently
+            # the day the core rewords it, and that is a debt of its own.
+            if v in READ_FROM_THE_CORE:
+                continue
+            # **What a file holds is not what a person reads.** A CSV header
+            # row, a MIME type, a name built from an extension: translating any
+            # of them would write a file this app cannot read back. The same
+            # decision as `name_review.dart`'s `_kindIdForAFile`, which exists
+            # because the export wrote the *glass's* word into the `type`
+            # column — «Vorname» the day the glass spoke German.
+            if any(r.fullmatch(v) for r in A_FILES_OWN_WORDS):
                 continue
             if '\\u2068' in v or '\\u2069' in v:      # the isolate marks
                 continue

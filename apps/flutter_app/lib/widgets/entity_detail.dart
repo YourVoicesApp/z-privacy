@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/messages.dart' show theirOwnWord;
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -74,27 +75,24 @@ class _EntityDetailState extends State<EntityDetail>
                   const SizedBox(height: 5),
                   Text(
                     card.values.isEmpty
-                        ? 'No values yet. A value is what the scanner matches — a name, a company, '
-                            'an IBAN.'
-                        : '${plural(card.values.length, "value")}, each with its own spellings '
-                            'and its own policy.',
+                        ? sentences.noValuesYet: sentences.valuesEachWithItsOwnPolicy(card.values.length),
                     style: Zc.small,
                   ),
                 ],
               ),
             ),
-            ZButton(label: 'Rename', onPressed: () => _rename(card)),
+            ZButton(label: sentences.renameHead, onPressed: () => _rename(card)),
             const SizedBox(width: 8),
-            ZButton(label: 'Move', onPressed: () => _move(card)),
+            ZButton(label: sentences.moveIt, onPressed: () => _move(card)),
             const SizedBox(width: 8),
-            ZButton(label: 'Delete', tint: Zc.amber, onPressed: () => _deleteEntity(card)),
+            ZButton(label: sentences.deleteIt, tint: Zc.amber, onPressed: () => _deleteEntity(card)),
           ],
         ),
         const SizedBox(height: 18),
         for (final v in card.values) _value(card, v),
         const SizedBox(height: 6),
         ZButton(
-          label: 'Add a value',
+          label: sentences.addAValue,
           filled: true,
           icon: Icons.add,
           onPressed: () async {
@@ -131,15 +129,15 @@ class _EntityDetailState extends State<EntityDetail>
               const SizedBox(width: 9),
               Text(
                 switch (v.policy) {
-                  Policy.always => 'Always protect',
-                  Policy.suggest => 'Suggest',
-                  Policy.manual => 'Kept, not hunted',
+                  Policy.always => sentences.alwaysProtect,
+                  Policy.suggest => sentences.suggestPolicy,
+                  Policy.manual => sentences.policyKeptNotHunted,
                 },
                 style: Zc.small.copyWith(color: Zc.ink4),
               ),
               const Spacer(),
               Text(
-                plural(v.aliases, 'spelling'),
+                sentences.spellingsCount(v.aliases),
                 style: Zc.small.copyWith(color: Zc.ink4),
               ),
             ],
@@ -199,7 +197,7 @@ class _EntityDetailState extends State<EntityDetail>
                 // person.
                 width: 142,
                 child: ZButton(
-                  label: shown == null ? 'Reveal' : 'Hide',
+                  label: shown == null ? sentences.reveal: sentences.hide,
                   icon: shown == null ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                   onPressed: shown == null
                       ? () => reveal(
@@ -212,11 +210,11 @@ class _EntityDetailState extends State<EntityDetail>
                 ),
               ),
               ZButton(
-                label: 'Add a spelling',
+                label: sentences.addASpelling,
                 onPressed: () => _addAlias(card, v),
               ),
               ZButton(
-                label: 'Edit',
+                label: sentences.editIt,
                 onPressed: () async {
                   final saved = await showDialog<bool>(
                     context: context,
@@ -229,7 +227,7 @@ class _EntityDetailState extends State<EntityDetail>
                 },
               ),
               ZButton(
-                label: 'Delete',
+                label: sentences.deleteIt,
                 tint: Zc.amber,
                 onPressed: () => _run(() => z.deleteValue(entity: card.id, valueId: v.id)),
               ),
@@ -239,7 +237,7 @@ class _EntityDetailState extends State<EntityDetail>
           // disappearing cannot move a button either.
           if (shown != null && shown.aliases.isNotEmpty) ...[
             const SizedBox(height: 10),
-            const Eyebrow('Also written'),
+            Eyebrow(sentences.alsoWritten),
             const SizedBox(height: 6),
             Wrap(
               spacing: 7,
@@ -273,17 +271,20 @@ class _EntityDetailState extends State<EntityDetail>
 
   Future<void> _addAlias(EntityCard card, ValueRow v) async {
     final text = await _ask(
-      title: 'Another spelling',
-      what: 'The same value written differently — «Herr Müller», «T. Müller». Every spelling '
-          'keeps the same token, so the model reads one person and not three.',
-      hint: 'Herr Müller',
+      title: sentences.anotherSpelling,
+      what: sentences.anotherSpellingWhat,
+      hint: sentences.exampleSpelling,
     );
     if (text == null || text.trim().isEmpty) return;
     await _run(() => z.addValueAlias(entity: card.id, valueId: v.id, alias: text));
   }
 
   Future<void> _rename(EntityCard card) async {
-    final text = await _ask(title: 'Rename', what: 'What to call this identity.', hint: card.label);
+    final text = await _ask(
+      title: sentences.renameHead,
+      what: sentences.whatToCallThisIdentity,
+      hint: card.label,
+    );
     if (text == null || text.trim().isEmpty) return;
     await _run(() => z.renameEntity(entityId: card.id, label: text));
   }
@@ -301,11 +302,10 @@ class _EntityDetailState extends State<EntityDetail>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Move this identity', style: Zc.h2),
+                Text(sentences.moveThisIdentity, style: Zc.h2),
                 const SizedBox(height: 6),
                 Text(
-                  'An identity in a profile is loaded only when that profile is open. One that '
-                  'belongs everywhere is always loaded.',
+                  sentences.anIdentityInAProfile,
                   style: Zc.small,
                 ),
                 const SizedBox(height: 16),
@@ -314,7 +314,7 @@ class _EntityDetailState extends State<EntityDetail>
                   runSpacing: 7,
                   children: [
                     ActionChip(
-                      label: const Text('Everywhere'),
+                      label: Text(sentences.everywhere),
                       onPressed: () => Navigator.of(context).pop(const _Move(null)),
                     ),
                     for (final p in widget.ground.profiles)
@@ -339,17 +339,17 @@ class _EntityDetailState extends State<EntityDetail>
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: Zc.paper,
-        title: const Text('Delete this identity?', style: Zc.h2),
+        title: Text(sentences.deleteThisIdentity, style: Zc.h2),
         content: Text(
-          '«${theirOwnWord(card.label)}» and its '
-          '${plural(card.values.length, "value")} are removed from the vault. '
-          'Documents already protected keep their tokens; the next document will not '
-          'recognise these values again.',
+          sentences.identityAndItsValuesAreRemoved(
+            theirOwnWord(card.label),
+            sentences.valuesCount(card.values.length),
+          ),
           style: Zc.body,
         ),
         actions: [
-          ZButton(label: 'Keep it', onPressed: () => Navigator.of(context).pop(false)),
-          ZButton(label: 'Delete', filled: true, tint: Zc.amber, onPressed: () => Navigator.of(context).pop(true)),
+          ZButton(label: sentences.keepItIdentity, onPressed: () => Navigator.of(context).pop(false)),
+          ZButton(label: sentences.deleteIt, filled: true, tint: Zc.amber, onPressed: () => Navigator.of(context).pop(true)),
         ],
       ),
     );
@@ -396,9 +396,9 @@ class _EntityDetailState extends State<EntityDetail>
                 const SizedBox(height: 18),
                 Row(
                   children: [
-                    ZButton(label: 'Cancel', onPressed: () => Navigator.of(context).pop()),
+                    ZButton(label: sentences.cancel, onPressed: () => Navigator.of(context).pop()),
                     const Spacer(),
-                    ZButton(label: 'Save', filled: true, onPressed: () => Navigator.of(context).pop(c.text)),
+                    ZButton(label: sentences.saveIt, filled: true, onPressed: () => Navigator.of(context).pop(c.text)),
                   ],
                 ),
               ],

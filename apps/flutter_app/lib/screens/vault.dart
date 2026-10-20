@@ -13,7 +13,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/a_date_in_words.dart';
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -137,7 +139,7 @@ class _VaultScreenState extends State<VaultScreen> {
                   const Icon(Icons.chevron_left, size: 18, color: Zc.ink3),
                   const SizedBox(width: 4),
                   Text(
-                    _open == null ? 'Back' : 'All identities',
+                    _open == null ? sentences.back: sentences.allIdentities,
                     style: Zc.small,
                   ),
                 ],
@@ -147,8 +149,8 @@ class _VaultScreenState extends State<VaultScreen> {
           const SizedBox(width: 16),
           const Icon(Icons.lock_outline, size: 17, color: Zc.river),
           const SizedBox(width: 8),
-          const Text(
-            'Z Vault',
+          Text(
+            sentences.zVault,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -166,23 +168,23 @@ class _VaultScreenState extends State<VaultScreen> {
           // document that asks for it by its own token.
           Text(switch (g.vaultSnap?.vault ?? g.vault) {
             VaultState.unlocked => [
-              plural(g.vaultSnap?.identityCount ?? g.entityCount, 'identity', 'identities'),
-              plural(g.vaultSnap?.valueCount ?? g.valueCount, 'value'),
+              sentences.identitiesCount(g.vaultSnap?.identityCount ?? g.entityCount),
+              sentences.valuesCount(g.vaultSnap?.valueCount ?? g.valueCount),
               if ((g.vaultSnap?.blockCount ?? 0) > 0)
-                plural(g.vaultSnap!.blockCount, 'protected word'),
+                sentences.protectedWordsCount(g.vaultSnap!.blockCount),
             ].join(' · '),
-            VaultState.locked => 'Locked',
-            VaultState.absent => 'Not created on this device',
+            VaultState.locked => sentences.vaultIsLocked,
+            VaultState.absent => sentences.notCreatedOnThisDevice,
           }, style: Zc.small.copyWith(color: Zc.ink4)),
           const Spacer(),
           if (g.vault == VaultState.unlocked) ...[
             ZButton(
-              label: 'Change passphrase',
+              label: sentences.changePassphrase,
               onPressed: () => _passphrase(g),
             ),
             const SizedBox(width: 9),
             ZButton(
-              label: 'Lock',
+              label: sentences.lockTheVault,
               icon: Icons.lock,
               onPressed: () async {
                 await z.vaultLock();
@@ -209,18 +211,13 @@ class _VaultScreenState extends State<VaultScreen> {
           children: [
             Text(
               g.vault == VaultState.locked
-                  ? 'The vault is locked'
-                  : 'There is no vault yet',
+                  ? sentences.theVaultIsLocked: sentences.thereIsNoVaultYet,
               style: Zc.h2,
             ),
             const SizedBox(height: 8),
             Text(
               g.vault == VaultState.locked
-                  ? 'Your identities are on this device, sealed. Until it is open the scanner '
-                        'still runs its rules and its pack — an IBAN is still caught — but not who.'
-                  : 'A vault is the only file this app writes. It holds your people and their '
-                        'values, encrypted with a passphrase that never leaves this device. '
-                        'Without one, nothing is recognised by name.',
+                  ? sentences.yourIdentitiesAreSealed: sentences.aVaultIsTheOnlyFile,
               style: Zc.body,
             ),
             const SizedBox(height: 18),
@@ -259,7 +256,7 @@ class _VaultScreenState extends State<VaultScreen> {
                       size: 17,
                       color: Zc.ink4,
                     ),
-                    hintText: 'Search this device — names, values, spellings',
+                    hintText: sentences.searchThisDevice,
                     hintStyle: Zc.small.copyWith(color: Zc.ink4),
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     border: OutlineInputBorder(
@@ -280,7 +277,7 @@ class _VaultScreenState extends State<VaultScreen> {
               ),
               const SizedBox(width: 10),
               ZButton(
-                label: 'New identity',
+                label: sentences.newIdentity,
                 filled: true,
                 icon: Icons.add,
                 onPressed: () async {
@@ -300,7 +297,7 @@ class _VaultScreenState extends State<VaultScreen> {
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
             child: Row(
               children: [
-                const Eyebrow('Profile'),
+                Eyebrow(sentences.profile),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Wrap(
@@ -308,7 +305,7 @@ class _VaultScreenState extends State<VaultScreen> {
                     runSpacing: 7,
                     children: [
                       _Chip(
-                        label: 'All',
+                        label: sentences.filterAll,
                         on: _profileFilter == null,
                         onTap: () => setState(() => _profileFilter = null),
                       ),
@@ -334,7 +331,7 @@ class _VaultScreenState extends State<VaultScreen> {
                 if (widget.bench != null) ...[
                   ZButton(
                     key: ProfileSwitcher.door,
-                    label: 'Session profile',
+                    label: sentences.sessionProfile,
                     onPressed: () async {
                       await showDialog<void>(
                         context: context,
@@ -348,7 +345,7 @@ class _VaultScreenState extends State<VaultScreen> {
                   const SizedBox(width: 8),
                 ],
                 ZButton(
-                  label: 'New profile',
+                  label: sentences.newProfile,
                   onPressed: () async {
                     final made = await showDialog<ProfileRow>(
                       context: context,
@@ -368,11 +365,9 @@ class _VaultScreenState extends State<VaultScreen> {
               ? Center(
                   child: Text(
                     g.vaultQuery.isEmpty
-                        ? 'No identities yet. The first one is usually the client whose documents '
-                              'you work on.'
-                        // What they typed, isolated: the sentence keeps its
+                        ? sentences.noIdentitiesYet// What they typed, isolated: the sentence keeps its
                         // order whatever language they searched in.
-                        : 'Nothing on this device matches «${theirOwnWord(g.vaultQuery)}».',
+                        : sentences.nothingMatchesQuery(theirOwnWord(g.vaultQuery)),
                     style: Zc.small,
                     textAlign: TextAlign.center,
                   ),
@@ -406,37 +401,39 @@ class _VaultScreenState extends State<VaultScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Eyebrow('My Privacy Rules'),
+          // The settings room's own key, because `Eyebrow` upper-cases what
+          // it is given and the two spellings were one word.
+          Eyebrow(sentences.myPrivacyRules),
           const SizedBox(height: 8),
           Wrap(
             spacing: 22,
             runSpacing: 8,
             children: [
               _Learned(
-                title: 'Values I taught',
+                title: sentences.valuesITaught,
                 count: '${values.length}',
                 what:
-                    'names, companies, numbers — found by themselves from now on',
+                    sentences.valuesITaughtWhat,
                 live: true,
               ),
               _Learned(
-                title: 'Rules I taught',
+                title: sentences.rulesITaught,
                 count: '${labelRules.length}',
-                what: 'words that say what follows them — «after Mandantenkennung → customer number»',
+                what: sentences.rulesITaughtWhat,
                 live: true,
               ),
               _Learned(
-                title: 'Exceptions I taught',
+                title: sentences.exceptionsITaught,
                 count: '${exceptions.length}',
-                what: 'values you explicitly excluded from protection',
+                what: sentences.exceptionsITaughtWhat,
                 live: true,
               ),
             ],
           ),
           const SizedBox(height: 12),
           _RuleSection(
-            title: 'Values I taught',
-            empty: 'No taught values yet.',
+            title: sentences.valuesITaught,
+            empty: sentences.noTaughtValuesYet,
             children: [
               for (final row in values.take(5))
                 _TaughtValueTile(
@@ -460,8 +457,8 @@ class _VaultScreenState extends State<VaultScreen> {
           ),
           const SizedBox(height: 10),
           _RuleSection(
-            title: 'Rules I taught',
-            empty: 'No rules taught yet.',
+            title: sentences.rulesITaught,
+            empty: sentences.noRulesTaughtYet,
             children: [
               for (final row in labelRules.take(5))
                 _TaughtRuleTile(
@@ -474,8 +471,8 @@ class _VaultScreenState extends State<VaultScreen> {
           ),
           const SizedBox(height: 10),
           _RuleSection(
-            title: 'Exceptions I taught',
-            empty: 'No saved exceptions yet.',
+            title: sentences.exceptionsITaught,
+            empty: sentences.noSavedExceptionsYet,
             children: [
               for (final row in exceptions.take(5))
                 _TaughtExceptionTile(
@@ -650,14 +647,14 @@ class _TaughtValueTileState extends State<_TaughtValueTile>
         ),
       ),
       subtitle:
-          '${widget.kind} · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
+          sentences.kindScopeTaughtOn(widget.kind, _scope(row.profileName), theDayItWas(row.taughtAt.toInt())),
       why: row.why,
       forgetLabel: forgetLabelFor(row.profileId),
       leading: SizedBox(
         // One width for both words, so «Hide» does not shift what follows it.
         width: 142,
         child: ZButton(
-          label: shown == null ? 'Reveal' : 'Hide',
+          label: shown == null ? sentences.reveal: sentences.hide,
           icon: shown == null
               ? Icons.visibility_outlined
               : Icons.visibility_off_outlined,
@@ -710,14 +707,14 @@ class _TaughtExceptionTile extends StatelessWidget {
       // list exists so that declaration can be read back. It stays legible.
       title: _PlainTitle(row.value),
       subtitle:
-          'Do not protect as $kind · ${_scope(row.profileName)} · Taught: ${_taughtOn(row.taughtAt)}',
+          sentences.doNotProtectAsKindScopeTaughtOn(kind, _scope(row.profileName), theDayItWas(row.taughtAt.toInt())),
       why: row.why,
       forgetLabel: forgetLabelFor(row.profileId),
       onForget: () async {
         final sure = await confirmForgetPlainly(
           context,
           what: row.value,
-          goes: 'the exception — this value will be offered for protection again',
+          goes: sentences.theExceptionGoes,
           action: forgetLabelFor(row.profileId),
         );
         if (!sure) return null;
@@ -777,7 +774,7 @@ class _RuleTile extends StatelessWidget {
             runSpacing: 8,
             children: [
               ?leading,
-              if (onOpen != null) ZButton(label: 'Open', onPressed: onOpen),
+              if (onOpen != null) ZButton(label: sentences.openIdentity, onPressed: onOpen),
               ZButton(label: forgetLabel, onPressed: () async => onForget()),
             ],
           ),
@@ -810,8 +807,7 @@ class _PlainTitle extends StatelessWidget {
 /// one place for both callers: a profile named «ألماني» in an English line
 /// pulls what follows it into its own direction without the pair.
 String _scope(String? profile) => profile == null
-    ? 'Everywhere'
-    : 'Profile: ${theirOwnWord(profile)}';
+    ? sentences.everywhere: sentences.profileNamed(theirOwnWord(profile));
 
 /// The name of the forget act for knowledge with this reach.
 ///
@@ -821,25 +817,10 @@ String _scope(String? profile) => profile == null
 String forgetLabelFor(String? profileId) =>
     profileId == null ? kForgetEverywhere : kForgetThisProfile;
 
-String _taughtOn(BigInt seconds) {
-  if (seconds == BigInt.zero) return 'unknown';
-  final date = DateTime.fromMillisecondsSinceEpoch(seconds.toInt() * 1000);
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return '${date.day} ${months[date.month - 1]} ${date.year}';
-}
+// **The date this screen used to format itself** is `theDayItWas` now, in
+// `core/a_date_in_words.dart` — there were two copies of it with two `const
+// months` lists, here and in `why_sheet.dart`, and twenty-four hand-written
+// English words between them.
 
 class _Chip extends StatelessWidget {
   const _Chip({required this.label, required this.on, required this.onTap});
@@ -892,8 +873,7 @@ class _EntityRowTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = row.profileId == null
-        ? 'Everywhere'
-        : profiles
+        ? sentences.everywhere: profiles
               .firstWhere(
                 (p) => p.id == row.profileId,
                 orElse: () =>
@@ -940,7 +920,10 @@ class _EntityRowTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    '${plural(row.values, "value")} · ${row.policySummary} · '
+                    // Three facts the core counted, joined by a middle dot:
+                    // the count is a sentence of its own now, because German
+                    // cannot take a number with a noun handed to it.
+                    '${sentences.valuesCount(row.values)} · ${row.policySummary} · '
                     '${theirOwnWord(profile)}',
                     style: Zc.small.copyWith(color: Zc.ink4),
                   ),
@@ -955,13 +938,14 @@ class _EntityRowTile extends StatelessWidget {
   }
 }
 
-String entityKindName(EntityKind k) => switch (k) {
-  EntityKind.client => 'CLIENT',
-  EntityKind.person => 'PERSON',
-  EntityKind.company => 'COMPANY',
-  EntityKind.project => 'PROJECT',
-  EntityKind.custom => 'OTHER',
-};
+/// **The chip's word, which is the form's word upper-cased** — 092.
+///
+/// There were two switches over `EntityKind`, this one in capitals for the chip
+/// on an identity row and `entityKindLabel` in title case for the forms: one
+/// word in two places, and two German values waiting to disagree. The chip
+/// shouts the same word the form says, exactly as `Eyebrow` does with every
+/// label it is given.
+String entityKindName(EntityKind k) => entityKindLabel(k).toUpperCase();
 
 /// One group of what the app has learned. A group that does not exist yet says
 /// so rather than being left out.
@@ -1037,13 +1021,13 @@ class _TaughtRuleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scope = row.profileName ?? 'Everywhere';
+    final scope = row.profileName ?? sentences.everywhere;
     // The rule above its action, rather than beside it: the act's name now
     // carries its scope, and a name that long beside an `Expanded` label
     // squeezed the button until its own text overflowed by 58 px.
     // The label is the person's own word — «Kundennummer:», «المرجع:» — so it
     // is isolated and the arrow stays on the right side of it.
-    final line = 'After «${theirOwnWord(row.label)}:» → $kind';
+    final line = sentences.afterLabelProtectAs(theirOwnWord(row.label), kind);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
@@ -1059,7 +1043,7 @@ class _TaughtRuleTile extends StatelessWidget {
               final sure = await confirmForgetPlainly(
                 context,
                 what: line,
-                goes: 'the rule — Z Privacy will stop protecting what follows that word',
+                goes: sentences.theRuleGoes,
                 action: forgetLabelFor(row.profileId),
               );
               if (sure) onForget();
@@ -1092,7 +1076,7 @@ class _TeachRuleButton extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.only(top: 8),
         child: ZButton(
-          label: 'Teach a rule',
+          label: sentences.teachARule,
           icon: Icons.add,
           onPressed: () async {
             final taught = await showDialog<bool>(

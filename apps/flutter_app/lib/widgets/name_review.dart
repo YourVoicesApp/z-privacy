@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/messages.dart' show theirOwnWord;
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
@@ -70,24 +71,22 @@ class NameReviewPanel extends StatelessWidget {
                     children: [
                       Text(
                         open.isEmpty
-                            ? 'No names to look at'
-                            : open.length == 1
-                            ? '1 name to look at'
-                            : '${open.length} names to look at',
+                            ? sentences.noNamesToLookAt: open.length == 1
+                            ? sentences.namesToLookAtCount(1)
+                            : sentences.namesToLookAtCount(open.length),
                         style: Zc.h2,
                       ),
                       const SizedBox(height: 3),
                       Text(
                         open.isEmpty
-                            ? 'Z knows every name this document uses.'
-                            : 'Words this document uses as names, that Z does not know yet.',
+                            ? sentences.zKnowsEveryName: sentences.wordsThisDocumentUsesAsNames,
                         style: Zc.small.copyWith(color: Zc.ink3),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Close',
+                  tooltip: sentences.close,
                   icon: const Icon(Icons.close, size: 18),
                   color: Zc.ink3,
                   onPressed: bench.closeNameReview,
@@ -122,8 +121,8 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final places = candidate.occurrences == 1 ? '1 place' : '${candidate.occurrences} places';
-    final pages = candidate.pages == 1 ? '1 page' : '${candidate.pages} pages';
+    final places = sentences.placesCount(candidate.occurrences);
+    final pages = sentences.pagesCountShort(candidate.pages);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 14, 14),
       child: Column(
@@ -140,7 +139,7 @@ class _Row extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               // What the decision is worth, from the core and not worked out here.
-              Text('$places · $pages', style: Zc.tiny.copyWith(color: Zc.ink4)),
+              Text(sentences.actNeedsTheVault(places, pages), style: Zc.tiny.copyWith(color: Zc.ink4)),
             ],
           ),
           const SizedBox(height: 4),
@@ -163,14 +162,16 @@ class _Row extends StatelessWidget {
             runSpacing: 6,
             children: [
               _Act(
-                label: candidate.family ? 'Add as family name' : 'Add as given name',
+                label: candidate.family
+                    ? sentences.addAsFamilyName
+                    : sentences.addAsGivenName,
                 primary: true,
                 onPressed: bench.busy
                     ? null
                     : () => bench.teachName(candidate.text, family: candidate.family),
               ),
               _Act(
-                label: 'Ignore',
+                label: sentences.ignoreIt,
                 onPressed: bench.busy ? null : () => bench.ignoreCandidate(candidate.text),
               ),
             ],
@@ -267,8 +268,8 @@ class _YourNamesState extends State<YourNames> {
 
   String get _needs =>
       (widget.bench.snap?.vault ?? VaultState.absent) == VaultState.locked
-          ? 'Unlock the vault'
-          : 'Needs a vault';
+          ? sentences.unlockTheVaultAct
+          : sentences.needsAVault;
 
   /// Fire the act and let the bench say what happened. Nothing here awaits the
   /// core: the bench owns the act, the sentence and the busy flag, and this
@@ -282,8 +283,8 @@ class _YourNamesState extends State<YourNames> {
 
   Future<void> _import() async {
     final file = await openFile(
-      acceptedTypeGroups: const [
-        XTypeGroup(label: 'Name lists', extensions: ['csv', 'txt']),
+      acceptedTypeGroups: [
+        XTypeGroup(label: sentences.nameListsFileType, extensions: ['csv', 'txt']),
       ],
     );
     if (file == null || !mounted) return;
@@ -295,7 +296,7 @@ class _YourNamesState extends State<YourNames> {
       context,
       ground: widget.ground,
       chosen: widget.bench.packId,
-      title: 'Which language are these names?',
+      title: sentences.whichLanguageAreTheseNames,
     );
     if (into == null || !mounted) return;
     // And how far they reach. One question for the whole file, because that is
@@ -320,7 +321,7 @@ class _YourNamesState extends State<YourNames> {
           const SizedBox(height: 14),
           Row(
             children: [
-              const Expanded(child: Text('Your names', style: Zc.h2)),
+              Expanded(child: Text(sentences.yourNames, style: Zc.h2)),
               Text(
                 rows.isEmpty ? '' : '${rows.length}',
                 style: Zc.tiny.copyWith(color: Zc.ink4),
@@ -329,8 +330,7 @@ class _YourNamesState extends State<YourNames> {
           ),
           const SizedBox(height: 3),
           Text(
-            'Names this device knows because you said so. They are kept in your '
-            'vault, on this computer.',
+            sentences.namesThisDeviceKnows,
             style: Zc.small.copyWith(color: Zc.ink3),
           ),
           const SizedBox(height: 10),
@@ -339,7 +339,9 @@ class _YourNamesState extends State<YourNames> {
             runSpacing: 6,
             children: [
               _Act(
-                label: _vaultOpen ? 'Add a name' : 'Add a name · $_needs',
+                label: _vaultOpen
+                    ? sentences.addAName
+                    : sentences.actNeedsTheVault(sentences.addAName, _needs),
                 primary: _vaultOpen,
                 onPressed: widget.bench.busy
                     ? null
@@ -348,7 +350,9 @@ class _YourNamesState extends State<YourNames> {
                         : widget.onVault,
               ),
               _Act(
-                label: _vaultOpen ? 'Import a list' : 'Import a list · $_needs',
+                label: _vaultOpen
+                    ? sentences.importAList
+                    : sentences.actNeedsTheVault(sentences.importAList, _needs),
                 onPressed: widget.bench.busy ? null : (_vaultOpen ? _import : widget.onVault),
               ),
 
@@ -357,8 +361,7 @@ class _YourNamesState extends State<YourNames> {
           const SizedBox(height: 6),
           Text(
             _vaultOpen
-                ? 'A list is a CSV with a «name» and a «type» column: given, family, person or company.'
-                : 'Your names live in the vault, so adding one needs it open.',
+                ? sentences.aListIsACsv: sentences.yourNamesLiveInTheVault,
             style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
           ),
           if (_adding && _vaultOpen) ...[
@@ -371,7 +374,7 @@ class _YourNamesState extends State<YourNames> {
                 isDense: true,
                 filled: true,
                 fillColor: Zc.paper,
-                hintText: 'Lindqvist',
+                hintText: sentences.exampleSurname,
                 hintStyle: Zc.body.copyWith(color: Zc.ink4),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -398,19 +401,18 @@ class _YourNamesState extends State<YourNames> {
               spacing: 6,
               runSpacing: 6,
               children: [
-                _Pick(label: 'Suggest', on: !_always, onTap: () => setState(() => _always = false)),
-                _Pick(label: 'Always', on: _always, onTap: () => setState(() => _always = true)),
+                _Pick(label: sentences.pickSuggest, on: !_always, onTap: () => setState(() => _always = false)),
+                _Pick(label: sentences.pickAlways, on: _always, onTap: () => setState(() => _always = true)),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               _always
-                  ? 'Always: protected the moment it appears, in every document.'
-                  : 'Suggest: Z marks it and waits for your word.',
+                  ? sentences.alwaysProtectedTheMoment: sentences.suggestMarksAndWaits,
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
             ),
             const SizedBox(height: 8),
-            _Act(label: 'Add', primary: true, onPressed: widget.bench.busy ? null : _add),
+            _Act(label: sentences.addAct, primary: true, onPressed: widget.bench.busy ? null : _add),
           ],
           if (widget.bench.namesSaid != null) ...[
             const SizedBox(height: 10),
@@ -420,7 +422,7 @@ class _YourNamesState extends State<YourNames> {
           if (rows.isEmpty &&
               widget.bench.userLists.every((l) => l.names == 0 && l.values == 0))
             Text(
-              _vaultOpen ? 'Nothing yet.' : '',
+              _vaultOpen ? sentences.nothingYet: '',
               style: Zc.small.copyWith(color: Zc.ink4),
             )
           else
@@ -446,12 +448,10 @@ class _YourNamesState extends State<YourNames> {
             // the scan protected them, and the screen showed nothing.
             if (rows.any(inNoList)) ...[
               const SizedBox(height: 4),
-              const Eyebrow('Whole names, kept in the vault'),
+              Eyebrow(sentences.wholeNamesKeptInTheVault),
               const SizedBox(height: 2),
               Text(
-                'A whole person or company is a value, not a dictionary word, '
-                'so it is in no language list. Z Vault is where each one is '
-                'managed.',
+                sentences.aWholePersonIsAValue,
                 style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
               ),
               const SizedBox(height: 6),
@@ -495,8 +495,9 @@ class _NameRow extends StatelessWidget {
     final reach = here == null
         ? ''
         : row.profileId == null
-            ? ' · everywhere'
-            : ' · this client';
+            // The middle dot is the frame; the word is the sentence.
+            ? ' · ${sentences.reachEverywhere}'
+            : ' · ${sentences.reachThisClient}';
     return Padding(
       padding: const EdgeInsets.only(left: 6, bottom: 6),
       child: Opacity(
@@ -519,7 +520,7 @@ class _NameRow extends StatelessWidget {
               ),
             ),
             IconButton(
-              tooltip: 'Forget «${theirOwnWord(row.text)}»',
+              tooltip: sentences.forgetNamedShort(theirOwnWord(row.text)),
               icon: const Icon(Icons.close, size: 15),
               color: Zc.ink4,
               visualDensity: VisualDensity.compact,
@@ -532,11 +533,27 @@ class _NameRow extends StatelessWidget {
   }
 }
 
+/// **The word a person reads**, in the language the glass is in.
 String _kindWord(UserNameKind k) => switch (k) {
-      UserNameKind.given => 'given name',
-      UserNameKind.family => 'family name',
-      UserNameKind.person => 'person',
-      UserNameKind.company => 'company',
+      UserNameKind.given => sentences.kindGivenName,
+      UserNameKind.family => sentences.kindFamilyName,
+      UserNameKind.person => sentences.kindPersonName,
+      UserNameKind.company => sentences.kindCompanyName,
+    };
+
+/// **The id a file holds**, which is not a sentence and is never translated.
+///
+/// The `type` column of the CSV this panel exports and imports — «given,
+/// family, person or company», as the import's own line says. The export wrote
+/// `_kindWord(row.kind).split(' ').first`, so the day the glass spoke German
+/// it would have written «Vorname» into that column and the app could not have
+/// read its own file back. One word for the person, one id for the file, and
+/// `split(' ')` on a sentence is gone with them.
+String _kindIdForAFile(UserNameKind k) => switch (k) {
+      UserNameKind.given => 'given',
+      UserNameKind.family => 'family',
+      UserNameKind.person => sentences.kindPersonName,
+      UserNameKind.company => sentences.kindCompanyName,
     };
 
 /// A one-of-these chip, the same shape the send sheet uses for its choices.
@@ -611,18 +628,22 @@ class _ListHead extends StatelessWidget {
                     // place: «21» where the file taught 2 names and 4 numbers.
                     text: list.values == 0
                         ? '  ${list.names}'
-                        : '  ${list.names} · ${list.values} values',
+                        : '  ${sentences.namesAndValuesInAList(list.names.toString(), list.values)}',
                     style: Zc.tiny.copyWith(color: Zc.ink4),
                   ),
                   if (!list.enabled)
-                    TextSpan(text: '  off', style: Zc.tiny.copyWith(color: Zc.amber)),
+                    TextSpan(
+                        text: '  ${sentences.listIsOff}',
+                        style: Zc.tiny.copyWith(color: Zc.amber)),
                 ],
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Tooltip(
-            message: list.enabled ? 'Stop using these names' : 'Use these names again',
+            message: list.enabled
+                ? sentences.stopUsingTheseNames
+                : sentences.useTheseNamesAgain,
             child: Switch(
               value: list.enabled,
               onChanged: bench.busy
@@ -631,13 +652,13 @@ class _ListHead extends StatelessWidget {
             ),
           ),
           PopupMenuButton<String>(
-            tooltip: 'What to do with «${list.name}»',
+            tooltip: sentences.whatToDoWithList(theirOwnWord(list.name)),
             icon: const Icon(Icons.more_horiz, size: 18, color: Zc.ink4),
             onSelected: (what) => unawaited(_act(context, what)),
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'move', child: Text('Move to…')),
-              PopupMenuItem(value: 'export', child: Text('Export CSV')),
-              PopupMenuItem(value: 'remove', child: Text('Remove list')),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'move', child: Text(sentences.moveToDots)),
+              PopupMenuItem(value: 'export', child: Text(sentences.exportCsv)),
+              PopupMenuItem(value: 'remove', child: Text(sentences.removeList)),
             ],
           ),
         ],
@@ -660,16 +681,17 @@ class _ListHead extends StatelessWidget {
           context: context,
           builder: (inner) => AlertDialog(
             backgroundColor: Zc.paper,
-            title: Text('Remove «${list.name}»?', style: Zc.h2),
+            title: Text(sentences.removeNamedList(theirOwnWord(list.name)),
+                style: Zc.h2),
             content: Text(
               cost == 1
-                  ? 'One name goes with it. Nothing else is touched.'
-                  : '$cost names go with it. Nothing else is touched.',
+                  ? sentences.namesGoWithItCount(1)
+                  : sentences.namesGoWithItCount(cost),
               style: Zc.body,
             ),
             actions: [
-              ZButton(label: 'Keep it', onPressed: () => Navigator.of(inner).pop(false)),
-              ZButton(label: 'Remove', filled: true, onPressed: () => Navigator.of(inner).pop(true)),
+              ZButton(label: sentences.keepIt, onPressed: () => Navigator.of(inner).pop(false)),
+              ZButton(label: sentences.removeAct, filled: true, onPressed: () => Navigator.of(inner).pop(true)),
             ],
           ),
         );
@@ -690,8 +712,8 @@ class _ListHead extends StatelessWidget {
       ground: ground,
       chosen: bench.packId,
       title: list.names == 1
-          ? 'Move one name from ${languageName(ground, list.name)} to…'
-          : 'Move ${list.names} names from ${languageName(ground, list.name)} to…',
+          ? sentences.moveNamesFromTo(1, languageName(ground, list.name))
+          : sentences.moveNamesFromTo(list.names, languageName(ground, list.name)),
     );
     if (into == null || into == list.name) return;
     unawaited(bench.moveList(list.name, into));
@@ -702,7 +724,7 @@ class _ListHead extends StatelessWidget {
     final rows = bench.userNames.where((r) => r.list == list.name);
     final csv = StringBuffer('name,type,source,licence\n');
     for (final row in rows) {
-      csv.writeln('${_csv(row.text)},${_kindWord(row.kind).split(' ').first},,');
+      csv.writeln('${_csv(row.text)},${_kindIdForAFile(row.kind)},,');
     }
     final where = await getSaveLocation(suggestedName: '${list.name}.csv');
     if (where == null) return;
@@ -742,9 +764,9 @@ Future<String?> askForAName(
         onSubmitted: (value) => Navigator.of(inner).pop(value.trim()),
       ),
       actions: [
-        ZButton(label: 'Cancel', onPressed: () => Navigator.of(inner).pop()),
+        ZButton(label: sentences.cancel, onPressed: () => Navigator.of(inner).pop()),
         ZButton(
-          label: 'Save',
+          label: sentences.saveIt,
           filled: true,
           onPressed: () => Navigator.of(inner).pop(field.text.trim()),
         ),
@@ -796,7 +818,7 @@ Future<ListReach?> askHowFarAListReaches(BuildContext context, {String? client})
     context: context,
     builder: (inner) => AlertDialog(
       backgroundColor: Zc.paper,
-      title: const Text('How far do these names reach?', style: Zc.h2),
+      title: Text(sentences.howFarDoTheseNamesReach, style: Zc.h2),
       content: SizedBox(
         width: 460,
         child: Column(
@@ -804,14 +826,12 @@ Future<ListReach?> askHowFarAListReaches(BuildContext context, {String? client})
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Protecting them means Z blackens them the moment they appear, '
-              'with no question. Offering them means Z marks them and waits '
-              'for you.',
+              sentences.protectingThemMeans,
               style: Zc.small.copyWith(color: Zc.ink3),
             ),
             const SizedBox(height: 10),
             Text(
-              'You can change any one of them afterwards, name by name.',
+              sentences.youCanChangeAnyOneAfterwards,
               style: Zc.tiny.copyWith(color: Zc.ink4),
             ),
           ],
@@ -819,7 +839,7 @@ Future<ListReach?> askHowFarAListReaches(BuildContext context, {String? client})
       ),
       actions: [
         ZButton(
-          label: 'Offer them and I decide',
+          label: sentences.offerThemAndIDecide,
           onPressed: () => Navigator.of(inner).pop(ListReach.offer),
         ),
         // Filled when it is the only protection offered, so the row always has
@@ -829,7 +849,7 @@ Future<ListReach?> askHowFarAListReaches(BuildContext context, {String? client})
         // protect, and the consequence lived in the paragraph above rather
         // than on the button he pressed.
         ZButton(
-          label: 'Protect them everywhere',
+          label: sentences.protectThemEverywhere,
           filled: client == null,
           onPressed: () => Navigator.of(inner).pop(ListReach.everywhere),
         ),
@@ -839,7 +859,7 @@ Future<ListReach?> askHowFarAListReaches(BuildContext context, {String? client})
         // sentence, so the button is not drawn rather than drawn to fail.
         if (client != null)
           ZButton(
-            label: 'Protect them for $client',
+            label: sentences.protectThemForClient(client),
             filled: true,
             onPressed: () => Navigator.of(inner).pop(ListReach.thisClient),
           ),
@@ -875,8 +895,8 @@ Future<String?> askForALanguage(
           ),
         ),
         actions: [
-          ZButton(label: 'Cancel', onPressed: () => Navigator.of(inner).pop()),
-          ZButton(label: 'Save', filled: true, onPressed: () => Navigator.of(inner).pop(picked)),
+          ZButton(label: sentences.cancel, onPressed: () => Navigator.of(inner).pop()),
+          ZButton(label: sentences.saveIt, filled: true, onPressed: () => Navigator.of(inner).pop(picked)),
         ],
       ),
     ),

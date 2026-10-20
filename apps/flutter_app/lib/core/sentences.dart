@@ -56,6 +56,23 @@ AppLocalizations get sentences => _sentences;
 void theSentencesAreNow(Locale locale) =>
     _sentences = lookupAppLocalizations(locale);
 
+/// **And one more reader asks a locale directly, for a different reason** —
+/// the lead, 19 October 2026, for the sentences `protected_pdf.dart` writes.
+///
+/// What the z-pdf footer puts **into a file** is in that session's language
+/// (rule 33), not the interface's: the file travels, the interface does not,
+/// and a person who reads German documents in an English interface must not
+/// receive a PDF whose footer is English. So those sentences are read with
+/// `lookupAppLocalizations(Locale(sessionLanguage))` and **never through the
+/// holder above**, which is «what the glass is showing now».
+///
+/// The rule, stated once for whoever migrates the next file: **the holder is
+/// for the interface.** Wherever a sentence belongs to something other than
+/// the interface — a file that leaves, a page that is choosing the language
+/// itself — the locale is asked for directly. Migrating such a file through
+/// the holder by habit would write German words into an English session's
+/// document, and nothing on any screen would say so.
+
 /// **Is this language's list written, or is it still the source's?** — rule
 /// 56-أ, 19 October 2026, as one question with three readers.
 ///

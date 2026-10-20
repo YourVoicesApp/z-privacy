@@ -612,9 +612,14 @@ else
 fi
 
 # The glass draws that row only when there is a date, and a block's is zero.
+# **By the key and not by the English** — 092. This read `/Taught on/`, and
+# the day that sentence moved into the one list the gate stopped finding
+# anything and reddened on a claim that was still true. The claim is about the
+# **order** — the condition before the row — so the key is as good a name for
+# the row as its wording was, and it is one that survives being read in German.
 if awk '
   /learnedAt > BigInt.zero/ { asked = NR }
-  /Taught on/ { said = NR }
+  /sentences\.taughtOnRow/ { said = NR }
   END { exit(asked && said && asked < said ? 0 : 1) }
 ' apps/flutter_app/lib/widgets/why_sheet.dart; then
   pass "G39 the glass draws «Taught on» only where there is something to draw"
@@ -624,7 +629,10 @@ fi
 
 # **No where.** A block's claimant is a stand-in the core writes where an
 # identity would stand; it reaches the glass as a count and never as a word.
-G39_HANDLE=$(grep -Rn "a word you protected" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null | tr '\n' ' ')
+# **And the `.arb` files with them** — 092: a sentence's home is the one list,
+# so a check that a phrase is in **no** sentence has to read the list or it is
+# looking where sentences used to be.
+G39_HANDLE=$(grep -Rn "a word you protected" "$FLUTTER_LIB" --include='*.dart' --include='*.arb' 2>/dev/null | tr '\n' ' ')
 if [ -z "$G39_HANDLE" ]; then
   pass "G39 a block's stand-in name is in no sentence the glass draws"
 else
@@ -1357,9 +1365,24 @@ if [ -f "$G44_ARB" ]; then
 "
       continue
     fi
-    NAKED=$(printf '%s\n' "$CALLS" | grep -v 'theirOwnWord' || true)
-    [ -n "$NAKED" ] && G44_LIST_BAD="$G44_LIST_BAD$NAKED
+    # **The call, and the three lines under it.** A call with two arguments is
+    # written over several lines by `dart format`, and the isolate was on the
+    # line *after* the call — so a one-line look refused a caller that does
+    # isolate its word. Measured on
+    # `entity_detail.dart`'s `identityAndItsValuesAreRemoved`.
+    while IFS= read -r SITE; do
+      [ -z "$SITE" ] && continue
+      SITE_FILE=${SITE%%:*}
+      SITE_REST=${SITE#*:}
+      SITE_LINE=${SITE_REST%%:*}
+      if ! sed -n "${SITE_LINE},$((SITE_LINE + 3))p" "$SITE_FILE" 2>/dev/null \
+           | grep -q 'theirOwnWord'; then
+        G44_LIST_BAD="$G44_LIST_BAD$SITE
 "
+      fi
+    done <<EOF
+$CALLS
+EOF
   done
 fi
 if [ -z "$G44_LIST_BAD" ]; then

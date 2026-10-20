@@ -1194,4 +1194,954 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get tokenRotationWhat =>
       'Not built yet. When it is, it will live here: whether a permanent token keeps its number across sessions, or is drawn again each time so two sessions cannot be linked by it.';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get allIdentities => 'All identities';
+
+  @override
+  String identitiesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count identities',
+      one: '1 identity',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String valuesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count values',
+      one: '1 value',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String protectedWordsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count protected words',
+      one: '1 protected word',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notCreatedOnThisDevice => 'Not created on this device';
+
+  @override
+  String get changePassphrase => 'Change passphrase';
+
+  @override
+  String get lockTheVault => 'Lock';
+
+  @override
+  String get theVaultIsLocked => 'The vault is locked';
+
+  @override
+  String get thereIsNoVaultYet => 'There is no vault yet';
+
+  @override
+  String get yourIdentitiesAreSealed =>
+      'Your identities are on this device, sealed. Until it is open the scanner still runs its rules and its pack — an IBAN is still caught — but not who.';
+
+  @override
+  String get aVaultIsTheOnlyFile =>
+      'A vault is the only file this app writes. It holds your people and their values, encrypted with a passphrase that never leaves this device. Without one, nothing is recognised by name.';
+
+  @override
+  String get searchThisDevice =>
+      'Search this device — names, values, spellings';
+
+  @override
+  String get newIdentity => 'New identity';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get sessionProfile => 'Session profile';
+
+  @override
+  String get newProfile => 'New profile';
+
+  @override
+  String get noIdentitiesYet =>
+      'No identities yet. The first one is usually the client whose documents you work on.';
+
+  @override
+  String nothingMatchesQuery(String query) {
+    return 'Nothing on this device matches «$query».';
+  }
+
+  @override
+  String get valuesITaught => 'Values I taught';
+
+  @override
+  String get valuesITaughtWhat =>
+      'names, companies, numbers — found by themselves from now on';
+
+  @override
+  String get rulesITaught => 'Rules I taught';
+
+  @override
+  String get rulesITaughtWhat =>
+      'words that say what follows them — «after Mandantenkennung → customer number»';
+
+  @override
+  String get exceptionsITaught => 'Exceptions I taught';
+
+  @override
+  String get exceptionsITaughtWhat =>
+      'values you explicitly excluded from protection';
+
+  @override
+  String get noTaughtValuesYet => 'No taught values yet.';
+
+  @override
+  String get noRulesTaughtYet => 'No rules taught yet.';
+
+  @override
+  String get noSavedExceptionsYet => 'No saved exceptions yet.';
+
+  @override
+  String kindScopeTaughtOn(String kind, String scope, String date) {
+    return '$kind · $scope · Taught: $date';
+  }
+
+  @override
+  String doNotProtectAsKindScopeTaughtOn(
+    String kind,
+    String scope,
+    String date,
+  ) {
+    return 'Do not protect as $kind · $scope · Taught: $date';
+  }
+
+  @override
+  String get reveal => 'Reveal';
+
+  @override
+  String get hide => 'Hide';
+
+  @override
+  String get theExceptionGoes =>
+      'the exception — this value will be offered for protection again';
+
+  @override
+  String get theRuleGoes =>
+      'the rule — Z Privacy will stop protecting what follows that word';
+
+  @override
+  String get openIdentity => 'Open';
+
+  @override
+  String profileNamed(String name) {
+    return 'Profile: $name';
+  }
+
+  @override
+  String get taughtOnUnknown => 'unknown';
+
+  @override
+  String afterLabelProtectAs(String label, String kind) {
+    return 'After «$label:» → $kind';
+  }
+
+  @override
+  String get teachARule => 'Teach a rule';
+
+  @override
+  String get kindClient => 'Client';
+
+  @override
+  String get kindPerson => 'Person';
+
+  @override
+  String get kindCompany => 'Company';
+
+  @override
+  String get kindProject => 'Project';
+
+  @override
+  String get kindSomethingElse => 'Something else';
+
+  @override
+  String vaultFileNotChanged(String said) {
+    return '$said Z Privacy has not changed the file. If you have a backup of the vault, put it back in place; otherwise move this file somewhere else and a new vault can be made here.';
+  }
+
+  @override
+  String get changeThePassphrase => 'Change the passphrase';
+
+  @override
+  String get onlyThirtyTwoBytes =>
+      'Only 32 bytes are re-wrapped — the vault itself is not decrypted and not rewritten. Everything in it stays exactly where it is.';
+
+  @override
+  String get currentPassphrase => 'Current passphrase';
+
+  @override
+  String get passphrase => 'Passphrase';
+
+  @override
+  String get newPassphrase => 'New passphrase';
+
+  @override
+  String get confirmPassphrase => 'Confirm passphrase';
+
+  @override
+  String get confirmNewPassphrase => 'Confirm new passphrase';
+
+  @override
+  String get passphrasesMatch => 'Passphrases match';
+
+  @override
+  String get passphrasesDoNotMatch => 'Passphrases do not match';
+
+  @override
+  String atLeastCharacters(int count) {
+    return 'At least $count characters — the vault will not be made with fewer.';
+  }
+
+  @override
+  String get thereIsNoWayBack =>
+      'There is no way back. Nobody holds a copy of this, and no reset exists — the passphrase never leaves this device and nothing on our side could recover the vault without it.';
+
+  @override
+  String get working => 'Working…';
+
+  @override
+  String get changeIt => 'Change it';
+
+  @override
+  String get createTheVault => 'Create the vault';
+
+  @override
+  String get unlockTheVault => 'Unlock';
+
+  @override
+  String hideNamed(String label) {
+    return 'Hide $label';
+  }
+
+  @override
+  String showNamed(String label) {
+    return 'Show $label';
+  }
+
+  @override
+  String get aNewIdentity => 'A new identity';
+
+  @override
+  String get anIdentityIsHowAPersonThinks =>
+      'An identity is how a person thinks — «Client Nordstern» — and the values inside it are what the scanner matches.';
+
+  @override
+  String get nameField => 'Name';
+
+  @override
+  String get sortField => 'Sort';
+
+  @override
+  String get loadedIn => 'Loaded in';
+
+  @override
+  String get exampleClientNordstern => 'Client Nordstern';
+
+  @override
+  String get exampleCompanyName => 'Nordstern Consulting GmbH';
+
+  @override
+  String get cancelForm => 'Cancel';
+
+  @override
+  String get createIt => 'Create';
+
+  @override
+  String get aNewValue => 'A new value';
+
+  @override
+  String get editThisValue => 'Edit this value';
+
+  @override
+  String get theValue => 'The value';
+
+  @override
+  String get readingItFromTheVault => 'reading it from the vault…';
+
+  @override
+  String get whatItIs => 'What it is';
+
+  @override
+  String get howToTreatIt => 'How to treat it';
+
+  @override
+  String get alwaysProtect => 'Always protect';
+
+  @override
+  String get alwaysProtectWhat =>
+      'Found by itself and replaced, with no question.';
+
+  @override
+  String get suggestPolicy => 'Suggest';
+
+  @override
+  String get suggestPolicyWhat =>
+      'Found, and put to you before anything is sent.';
+
+  @override
+  String get keepDoNotHunt => 'Keep, do not hunt';
+
+  @override
+  String get keepDoNotHuntWhat =>
+      'Kept so its spellings and its token stay stable — but not looked for.';
+
+  @override
+  String get saveIt => 'Save';
+
+  @override
+  String get aNewProfile => 'A new profile';
+
+  @override
+  String get renameProfile => 'Rename profile';
+
+  @override
+  String get oneDictionaryPerClient =>
+      'One dictionary per client. Only the identities of the profile you open are loaded — opening the vault is not a blank cheque.';
+
+  @override
+  String get theProfileIdStaysTheSame =>
+      'The profile ID stays the same. Only the name a person reads changes.';
+
+  @override
+  String get languagesUsedInDocuments => 'Languages used in documents';
+
+  @override
+  String get moreThanOneMayBeOn =>
+      'More than one may be on. A document with a German label and an English one is read by both in a single scan.';
+
+  @override
+  String get renameIt2 => 'Rename';
+
+  @override
+  String get teachARuleHead => 'Teach a rule';
+
+  @override
+  String get aRuleIsAWordAndWhatComesAfter =>
+      'A rule is a word and what comes after it. Z Privacy protects the value that follows and stops at the end of that field.';
+
+  @override
+  String get whenZPrivacySees => 'When Z Privacy sees';
+
+  @override
+  String get exampleMandantenkennung => 'Mandantenkennung';
+
+  @override
+  String get protectTheValueAfterItAs => 'Protect the value after it as';
+
+  @override
+  String get whereField => 'Where';
+
+  @override
+  String profileNamedDash(String name) {
+    return 'Profile — $name';
+  }
+
+  @override
+  String get saveRule => 'Save rule';
+
+  @override
+  String get removeProtectionHere => 'Remove protection here';
+
+  @override
+  String removeItInThisSession(int places) {
+    return 'Remove it in this session ($places places)';
+  }
+
+  @override
+  String get forgetFromThisProfile => 'Forget from this profile';
+
+  @override
+  String get forgetEverywhere => 'Forget everywhere';
+
+  @override
+  String get protectThisColumnInTheLineHeld =>
+      'Protect this column in the line held';
+
+  @override
+  String protectThisColumnInLinesHeld(int lines) {
+    return 'Protect this column in the $lines held lines';
+  }
+
+  @override
+  String get whyIsThisProtected => 'Why is this protected?';
+
+  @override
+  String get theSameCellOfEveryHeldLine =>
+      'The same cell of every held line, each value its own token. This one is protected already and stays as it is.';
+
+  @override
+  String get whatItIsRow => 'What it is';
+
+  @override
+  String get whereItApplies => 'Where it applies';
+
+  @override
+  String get decidedBy => 'Decided by';
+
+  @override
+  String get decidedByYou => 'You';
+
+  @override
+  String get decidedByZPrivacy => 'Z Privacy, on its own';
+
+  @override
+  String get taughtOnRow => 'Taught on';
+
+  @override
+  String get tokenRow => 'Token';
+
+  @override
+  String otherSpellingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count other spellings',
+      one: '1 other spelling',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get uncoversThisOnePlace =>
+      'Uncovers this one place. Every other place keeps its protection, and its token.';
+
+  @override
+  String get theValueStaysInYourRules =>
+      'The value stays in your privacy rules and may be protected again later.';
+
+  @override
+  String get uncoversEveryPlaceInThisSession =>
+      'Uncovers every place this token stands in, in this session.';
+
+  @override
+  String get thereIsNoEverywhere =>
+      'There is no «everywhere»: un-protection reaches no further than one session.';
+
+  @override
+  String get removesWhatZLearnedForThisProfile =>
+      'Removes what Z Privacy learned for this profile.';
+
+  @override
+  String get protectionAlreadyAppliedStays =>
+      'Protection already applied in this document stays in place.';
+
+  @override
+  String get removesWhatZLearnedEverywhere =>
+      'Removes what Z Privacy learned, in every profile.';
+
+  @override
+  String get forgetThisRule => 'Forget this rule';
+
+  @override
+  String get theRuleItselfIsKept => 'The rule itself is kept in your vault.';
+
+  @override
+  String get forgetItInZVaultRules =>
+      'Forget it in Z Vault → My Privacy Rules → Rules I taught.';
+
+  @override
+  String get nothingWasLearnedYouProtectedIt =>
+      'Nothing was learned from this — you protected it here, and Undo takes it back.';
+
+  @override
+  String get nothingWasLearnedARuleSawIt =>
+      'Nothing was learned from this. A rule recognised the shape, and no record of it was kept.';
+
+  @override
+  String forgottenButStillKnownBy(String who) {
+    return 'Forgotten, but $who still recognises it. Please tell us — this should not be possible.';
+  }
+
+  @override
+  String forgetNamed(String what) {
+    return 'Forget «$what»?';
+  }
+
+  @override
+  String get thisWillRemove => 'This will remove';
+
+  @override
+  String protectedValuesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count protected values',
+      one: '1 protected value',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String spellingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count spellings',
+      one: '1 spelling',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String identitiesLeftHoldingNothing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count identities',
+      one: '1 identity',
+    );
+    return '$_temp0 left holding nothing';
+  }
+
+  @override
+  String itsPlaceIn(String profile) {
+    return 'its place in $profile';
+  }
+
+  @override
+  String get itWillNotChange => 'It will NOT change';
+
+  @override
+  String get forgetRemovesFromThisVault =>
+      'Forget removes this value from the current vault and from future recognition by that vault. It does not remove protection already applied in this document, and an older valid copy of the vault may restore the value later.';
+
+  @override
+  String wouldStillRecogniseIt(String who) {
+    return '$who would still recognise it — forgetting here does not reach into another client’s records.';
+  }
+
+  @override
+  String get thisCannotBeUndone => 'This cannot be undone.';
+
+  @override
+  String get noValuesYet =>
+      'No values yet. A value is what the scanner matches — a name, a company, an IBAN.';
+
+  @override
+  String valuesEachWithItsOwnPolicy(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count values',
+      one: '1 value',
+    );
+    return '$_temp0, each with its own spellings and its own policy.';
+  }
+
+  @override
+  String get moveIt => 'Move';
+
+  @override
+  String get deleteIt => 'Delete';
+
+  @override
+  String get addAValue => 'Add a value';
+
+  @override
+  String get policyKeptNotHunted => 'Kept, not hunted';
+
+  @override
+  String get addASpelling => 'Add a spelling';
+
+  @override
+  String get editIt => 'Edit';
+
+  @override
+  String get alsoWritten => 'Also written';
+
+  @override
+  String get anotherSpelling => 'Another spelling';
+
+  @override
+  String get anotherSpellingWhat =>
+      'The same value written differently — «Herr Müller», «T. Müller». Every spelling keeps the same token, so the model reads one person and not three.';
+
+  @override
+  String get exampleSpelling => 'Herr Müller';
+
+  @override
+  String get renameHead => 'Rename';
+
+  @override
+  String get whatToCallThisIdentity => 'What to call this identity.';
+
+  @override
+  String get moveThisIdentity => 'Move this identity';
+
+  @override
+  String get anIdentityInAProfile =>
+      'An identity in a profile is loaded only when that profile is open. One that belongs everywhere is always loaded.';
+
+  @override
+  String get deleteThisIdentity => 'Delete this identity?';
+
+  @override
+  String identityAndItsValuesAreRemoved(String name, String values) {
+    return '«$name» and its $values are removed from the vault. Documents already protected keep their tokens; the next document will not recognise these values again.';
+  }
+
+  @override
+  String get keepItIdentity => 'Keep it';
+
+  @override
+  String get noNamesToLookAt => 'No names to look at';
+
+  @override
+  String namesToLookAtCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count names to look at',
+      one: '1 name to look at',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get zKnowsEveryName => 'Z knows every name this document uses.';
+
+  @override
+  String get wordsThisDocumentUsesAsNames =>
+      'Words this document uses as names, that Z does not know yet.';
+
+  @override
+  String placesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count places',
+      one: '1 place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pagesCountShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages',
+      one: '1 page',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addAsFamilyName => 'Add as family name';
+
+  @override
+  String get addAsGivenName => 'Add as given name';
+
+  @override
+  String get ignoreIt => 'Ignore';
+
+  @override
+  String get unlockTheVaultAct => 'Unlock the vault';
+
+  @override
+  String get needsAVault => 'Needs a vault';
+
+  @override
+  String get nameListsFileType => 'Name lists';
+
+  @override
+  String get whichLanguageAreTheseNames => 'Which language are these names?';
+
+  @override
+  String get yourNames => 'Your names';
+
+  @override
+  String get namesThisDeviceKnows =>
+      'Names this device knows because you said so. They are kept in your vault, on this computer.';
+
+  @override
+  String get addAName => 'Add a name';
+
+  @override
+  String get importAList => 'Import a list';
+
+  @override
+  String actNeedsTheVault(String act, String needs) {
+    return '$act · $needs';
+  }
+
+  @override
+  String get aListIsACsv =>
+      'A list is a CSV with a «name» and a «type» column: given, family, person or company.';
+
+  @override
+  String get yourNamesLiveInTheVault =>
+      'Your names live in the vault, so adding one needs it open.';
+
+  @override
+  String get exampleSurname => 'Lindqvist';
+
+  @override
+  String get pickSuggest => 'Suggest';
+
+  @override
+  String get pickAlways => 'Always';
+
+  @override
+  String get alwaysProtectedTheMoment =>
+      'Always: protected the moment it appears, in every document.';
+
+  @override
+  String get suggestMarksAndWaits =>
+      'Suggest: Z marks it and waits for your word.';
+
+  @override
+  String get addAct => 'Add';
+
+  @override
+  String get nothingYet => 'Nothing yet.';
+
+  @override
+  String get wholeNamesKeptInTheVault => 'Whole names, kept in the vault';
+
+  @override
+  String get aWholePersonIsAValue =>
+      'A whole person or company is a value, not a dictionary word, so it is in no language list. Z Vault is where each one is managed.';
+
+  @override
+  String get reachEverywhere => 'everywhere';
+
+  @override
+  String get reachThisClient => 'this client';
+
+  @override
+  String forgetNamedShort(String what) {
+    return 'Forget «$what»';
+  }
+
+  @override
+  String get kindGivenName => 'given name';
+
+  @override
+  String get kindFamilyName => 'family name';
+
+  @override
+  String get kindPersonName => 'person';
+
+  @override
+  String get kindCompanyName => 'company';
+
+  @override
+  String namesAndValuesInAList(String names, int values) {
+    return '$names · $values values';
+  }
+
+  @override
+  String get listIsOff => 'off';
+
+  @override
+  String get stopUsingTheseNames => 'Stop using these names';
+
+  @override
+  String get useTheseNamesAgain => 'Use these names again';
+
+  @override
+  String whatToDoWithList(String name) {
+    return 'What to do with «$name»';
+  }
+
+  @override
+  String get moveToDots => 'Move to…';
+
+  @override
+  String get exportCsv => 'Export CSV';
+
+  @override
+  String get removeList => 'Remove list';
+
+  @override
+  String removeNamedList(String name) {
+    return 'Remove «$name»?';
+  }
+
+  @override
+  String namesGoWithItCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count names go with it. Nothing else is touched.',
+      one: 'One name goes with it. Nothing else is touched.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get removeAct => 'Remove';
+
+  @override
+  String moveNamesFromTo(int count, String from) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Move $count names from $from to…',
+      one: 'Move one name from $from to…',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get howFarDoTheseNamesReach => 'How far do these names reach?';
+
+  @override
+  String get protectingThemMeans =>
+      'Protecting them means Z blackens them the moment they appear, with no question. Offering them means Z marks them and waits for you.';
+
+  @override
+  String get youCanChangeAnyOneAfterwards =>
+      'You can change any one of them afterwards, name by name.';
+
+  @override
+  String get offerThemAndIDecide => 'Offer them and I decide';
+
+  @override
+  String get protectThemEverywhere => 'Protect them everywhere';
+
+  @override
+  String protectThemForClient(String client) {
+    return 'Protect them for $client';
+  }
+
+  @override
+  String get couldNotBuildThePdf =>
+      'Z Privacy could not build the PDF — its answer page had no token. Nothing was written.';
+
+  @override
+  String get whoAnswers => 'Who answers';
+
+  @override
+  String get thereIsNothingToSend => 'There is nothing to send.';
+
+  @override
+  String valuesReplacedCharacters(int values, int characters) {
+    return '$values values replaced · $characters characters would leave this device.';
+  }
+
+  @override
+  String sessionNumber(int number) {
+    return 'Session $number';
+  }
+
+  @override
+  String sessionNumberNamed(int number, String name) {
+    return 'Session $number «$name»';
+  }
+
+  @override
+  String theseNamesAreThisSessions(String named) {
+    return '$named · these names are this session’s';
+  }
+
+  @override
+  String get noSessionNamesForThisDocument =>
+      'No session — these names were made for this document alone.';
+
+  @override
+  String get noSessionYetAnyDoorBeginsOne =>
+      'No session yet — any door here begins one.';
+
+  @override
+  String get nothingLeftTheMachine => 'Nothing left the machine.';
+
+  @override
+  String get oneSuggestionStillOpenSend =>
+      'One suggestion is still open. It stands in the text as written, and nothing can be sent until you answer it. There is no «send anyway».';
+
+  @override
+  String suggestionsStillOpenSend(int open) {
+    return '$open suggestions are still open. They stand in the text as written, and nothing can be sent until you answer them. There is no «send anyway».';
+  }
+
+  @override
+  String get manualAiSheetWhat =>
+      'Use an AI chat you already have. Take the text above — to the clipboard, or as a PDF saved on this machine — paste it into any model you like, and bring the answer back with «Add an answer» under the chat. Restoring works the same either way — no account, no key. Neither way sends anything from here.';
+
+  @override
+  String get copied => 'Copied';
+
+  @override
+  String get copyProtected => 'Copy Protected';
+
+  @override
+  String get saving => 'Saving…';
+
+  @override
+  String get saveAsPdf => 'Save as PDF';
+
+  @override
+  String savedToWhere(String where) {
+    return 'Saved to $where';
+  }
+
+  @override
+  String get whatThePdfHolds =>
+      'The protected text, with the build stamp, the counts and a sha256 of that text in the footer, and a last page for the answer. Nothing was sent.';
+
+  @override
+  String get directApiSheetWhatRemote =>
+      'Connect to a remote AI provider with your API credential. Only the text above would travel; the provider still sees the ordinary facts of a connection — your address, the time, the model.';
+
+  @override
+  String get directApiSheetWhatConnected =>
+      'The request goes from this app. Only the text above travels; the provider still sees the ordinary facts of a connection — your address, the time, the model.';
+
+  @override
+  String get noProviderIsConnected =>
+      'No provider is connected. The address and the key are given once, in Settings — this screen never asks for them.';
+
+  @override
+  String get sending => 'Sending…';
+
+  @override
+  String sendToNamed(String where) {
+    return 'Send to $where';
+  }
+
+  @override
+  String get providerKeyThisRunOnly => '  (key kept for this run only)';
+
+  @override
+  String get theAddressTheModelTheKey =>
+      'The address, the model and the key are changed in Settings.';
+
+  @override
+  String get localAiSheetWhat =>
+      'Use an AI service running on this computer — llama.cpp, Ollama, LM Studio, anything that answers the same shape. No key, no account, and the request never leaves this computer. It is the only route that sees none of the ordinary facts above.';
+
+  @override
+  String get aModelOnThisComputer =>
+      'A model on this computer is set up in Settings — there is no key to give.';
+
+  @override
+  String get openSettings => 'Open Settings';
+
+  @override
+  String get modelLabel => 'Model';
 }
