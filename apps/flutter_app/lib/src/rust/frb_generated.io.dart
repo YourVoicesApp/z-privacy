@@ -108,6 +108,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   DocumentView dco_decode_document_view(dynamic raw);
 
   @protected
+  EnteredText dco_decode_entered_text(dynamic raw);
+
+  @protected
   EntityCard dco_decode_entity_card(dynamic raw);
 
   @protected
@@ -608,6 +611,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   DocumentView sse_decode_document_view(SseDeserializer deserializer);
+
+  @protected
+  EnteredText sse_decode_entered_text(SseDeserializer deserializer);
 
   @protected
   EntityCard sse_decode_entity_card(SseDeserializer deserializer);
@@ -1180,6 +1186,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_document_view(DocumentView self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_entered_text(EnteredText self, SseSerializer serializer);
 
   @protected
   void sse_encode_entity_card(EntityCard self, SseSerializer serializer);

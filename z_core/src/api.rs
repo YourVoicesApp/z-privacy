@@ -760,6 +760,50 @@ pub struct Span {
     pub end: u32,
 }
 
+/// **The one text the person entered, and where the request begins in it** —
+/// 096, rule 72-ب, the owner's «هذا النص يجب أن يظهر في القسم الأول من الشاشة
+/// حتى يتمكن المستخدم من تغطية الأمور الخاصة».
+///
+/// What is written in the box is a thing that **enters**, like the document:
+/// with a document above it, it is the addition under the document after
+/// `--- Request ---`; with none, it is the whole original. So the first part of
+/// the screen draws one text, and the person's hand reaches a word in the
+/// request through the doors it reaches a word in the document by.
+///
+/// **One text, one offset space, no second claim.** Every span in the contract
+/// — a finding's, a mark's, a selection's — is UTF-16 units over `text`. The
+/// document comes first, so a document span's offsets are exactly what they
+/// always were; where a span lands is **arithmetic** against `request_begins`
+/// and never a field a caller could fill in wrongly. That is why `Span` gained
+/// nothing: a span that said «the request» while pointing into the document
+/// would be a state this shape cannot express.
+#[derive(Clone, PartialEq, Eq)]
+pub struct EnteredText {
+    /// The document, the `--- Request ---` line, then the request — or the
+    /// request alone when no document stands, or the document alone when
+    /// nothing has been asked yet.
+    pub text: String,
+    /// Where the request begins, in UTF-16 units. `0` when the request is the
+    /// whole of it; equal to `text`'s length when there is no request.
+    pub request_begins: u32,
+    /// Every mark over that one text: the document's covers and the request's,
+    /// in the one space, so the screen draws them with one arithmetic.
+    pub marks: Vec<Mark>,
+}
+
+impl fmt::Debug for EnteredText {
+    /// G11: this is the person's own writing — the document **and** what they
+    /// typed about it. A derived `Debug` would print both into whatever read
+    /// it.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EnteredText")
+            .field("text", &format_args!("[REDACTED {} units]", self.text.encode_utf16().count()))
+            .field("request_begins", &self.request_begins)
+            .field("marks", &self.marks.len())
+            .finish()
+    }
+}
+
 // ---------------------------------------------------------------- vocabulary
 
 /// How far a protection reaches. Four steps, each one wider than the last, and
@@ -1670,6 +1714,12 @@ pub struct WorkspaceSnapshot {
     pub handle: Option<PayloadHandle>,
     pub vault: VaultState,
     pub answers: Vec<AnswerId>,
+    /// **The one text the person entered, with the request's own start** —
+    /// 096, rule 72-ب. The first part of the screen draws this and nothing
+    /// else: the document, the `--- Request ---` line and the request, with
+    /// every mark in one offset space. One read per screen, so no screen works
+    /// out where the request begins for itself.
+    pub entered: EnteredText,
 }
 
 /// Vault room: header and body draw from this one object.

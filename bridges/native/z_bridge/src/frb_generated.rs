@@ -3729,6 +3729,12 @@ const _: fn() = || {
         let _: u32 = DocumentView.pages;
     }
     {
+        let EnteredText = None::<crate::api::mirrors::EnteredText>.unwrap();
+        let _: String = EnteredText.text;
+        let _: u32 = EnteredText.request_begins;
+        let _: Vec<crate::api::mirrors::Mark> = EnteredText.marks;
+    }
+    {
         let EntityCard = None::<crate::api::mirrors::EntityCard>.unwrap();
         let _: u32 = EntityCard.id;
         let _: crate::api::mirrors::EntityKind = EntityCard.kind;
@@ -4344,6 +4350,7 @@ const _: fn() = || {
         let _: Option<crate::api::mirrors::PayloadHandle> = WorkspaceSnapshot.handle;
         let _: crate::api::mirrors::VaultState = WorkspaceSnapshot.vault;
         let _: Vec<crate::api::mirrors::AnswerId> = WorkspaceSnapshot.answers;
+        let _: crate::api::mirrors::EnteredText = WorkspaceSnapshot.entered;
     }
 };
 
@@ -4588,6 +4595,20 @@ impl SseDecode for crate::api::mirrors::DocumentView {
             name: var_name,
             kind: var_kind,
             pages: var_pages,
+        };
+    }
+}
+
+impl SseDecode for crate::api::mirrors::EnteredText {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_text = <String>::sse_decode(deserializer);
+        let mut var_requestBegins = <u32>::sse_decode(deserializer);
+        let mut var_marks = <Vec<crate::api::mirrors::Mark>>::sse_decode(deserializer);
+        return crate::api::mirrors::EnteredText {
+            text: var_text,
+            request_begins: var_requestBegins,
+            marks: var_marks,
         };
     }
 }
@@ -6764,6 +6785,7 @@ impl SseDecode for crate::api::mirrors::WorkspaceSnapshot {
         let mut var_handle = <Option<crate::api::mirrors::PayloadHandle>>::sse_decode(deserializer);
         let mut var_vault = <crate::api::mirrors::VaultState>::sse_decode(deserializer);
         let mut var_answers = <Vec<crate::api::mirrors::AnswerId>>::sse_decode(deserializer);
+        let mut var_entered = <crate::api::mirrors::EnteredText>::sse_decode(deserializer);
         return crate::api::mirrors::WorkspaceSnapshot {
             state_revision: var_stateRevision,
             session: var_session,
@@ -6783,6 +6805,7 @@ impl SseDecode for crate::api::mirrors::WorkspaceSnapshot {
             handle: var_handle,
             vault: var_vault,
             answers: var_answers,
+            entered: var_entered,
         };
     }
 }
@@ -7150,6 +7173,25 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::DocumentV
     for crate::api::mirrors::DocumentView
 {
     fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::DocumentView> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::EnteredText> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.text.into_into_dart().into_dart(),
+            self.0.request_begins.into_into_dart().into_dart(),
+            self.0.marks.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for FrbWrapper<crate::api::mirrors::EnteredText> {}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::api::mirrors::EnteredText>>
+    for crate::api::mirrors::EnteredText
+{
+    fn into_into_dart(self) -> FrbWrapper<crate::api::mirrors::EnteredText> {
         self.into()
     }
 }
@@ -8920,6 +8962,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::api::mirrors::Workspace
             self.0.handle.into_into_dart().into_dart(),
             self.0.vault.into_into_dart().into_dart(),
             self.0.answers.into_into_dart().into_dart(),
+            self.0.entered.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -9142,6 +9185,15 @@ impl SseEncode for crate::api::mirrors::DocumentView {
         <String>::sse_encode(self.name, serializer);
         <crate::api::mirrors::DocumentKind>::sse_encode(self.kind, serializer);
         <u32>::sse_encode(self.pages, serializer);
+    }
+}
+
+impl SseEncode for crate::api::mirrors::EnteredText {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.text, serializer);
+        <u32>::sse_encode(self.request_begins, serializer);
+        <Vec<crate::api::mirrors::Mark>>::sse_encode(self.marks, serializer);
     }
 }
 
@@ -10845,6 +10897,7 @@ impl SseEncode for crate::api::mirrors::WorkspaceSnapshot {
         <Option<crate::api::mirrors::PayloadHandle>>::sse_encode(self.handle, serializer);
         <crate::api::mirrors::VaultState>::sse_encode(self.vault, serializer);
         <Vec<crate::api::mirrors::AnswerId>>::sse_encode(self.answers, serializer);
+        <crate::api::mirrors::EnteredText>::sse_encode(self.entered, serializer);
     }
 }
 

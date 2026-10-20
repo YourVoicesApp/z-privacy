@@ -4783,6 +4783,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  EnteredText dco_decode_entered_text(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return EnteredText(
+      text: dco_decode_String(arr[0]),
+      requestBegins: dco_decode_u_32(arr[1]),
+      marks: dco_decode_list_mark(arr[2]),
+    );
+  }
+
+  @protected
   EntityCard dco_decode_entity_card(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -6247,8 +6260,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   WorkspaceSnapshot dco_decode_workspace_snapshot(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 18)
-      throw Exception('unexpected arr length: expect 18 but see ${arr.length}');
+    if (arr.length != 19)
+      throw Exception('unexpected arr length: expect 19 but see ${arr.length}');
     return WorkspaceSnapshot(
       stateRevision: dco_decode_u_32(arr[0]),
       session: dco_decode_session_id(arr[1]),
@@ -6268,6 +6281,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       handle: dco_decode_opt_box_autoadd_payload_handle(arr[15]),
       vault: dco_decode_vault_state(arr[16]),
       answers: dco_decode_list_answer_id(arr[17]),
+      entered: dco_decode_entered_text(arr[18]),
     );
   }
 
@@ -6580,6 +6594,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       name: var_name,
       kind: var_kind,
       pages: var_pages,
+    );
+  }
+
+  @protected
+  EnteredText sse_decode_entered_text(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_text = sse_decode_String(deserializer);
+    var var_requestBegins = sse_decode_u_32(deserializer);
+    var var_marks = sse_decode_list_mark(deserializer);
+    return EnteredText(
+      text: var_text,
+      requestBegins: var_requestBegins,
+      marks: var_marks,
     );
   }
 
@@ -8513,6 +8540,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_handle = sse_decode_opt_box_autoadd_payload_handle(deserializer);
     var var_vault = sse_decode_vault_state(deserializer);
     var var_answers = sse_decode_list_answer_id(deserializer);
+    var var_entered = sse_decode_entered_text(deserializer);
     return WorkspaceSnapshot(
       stateRevision: var_stateRevision,
       session: var_session,
@@ -8532,6 +8560,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       handle: var_handle,
       vault: var_vault,
       answers: var_answers,
+      entered: var_entered,
     );
   }
 
@@ -8841,6 +8870,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.name, serializer);
     sse_encode_document_kind(self.kind, serializer);
     sse_encode_u_32(self.pages, serializer);
+  }
+
+  @protected
+  void sse_encode_entered_text(EnteredText self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.text, serializer);
+    sse_encode_u_32(self.requestBegins, serializer);
+    sse_encode_list_mark(self.marks, serializer);
   }
 
   @protected
@@ -10358,5 +10395,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_payload_handle(self.handle, serializer);
     sse_encode_vault_state(self.vault, serializer);
     sse_encode_list_answer_id(self.answers, serializer);
+    sse_encode_entered_text(self.entered, serializer);
   }
 }

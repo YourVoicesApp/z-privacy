@@ -582,6 +582,20 @@ pub struct _Span {
     pub end: u32,
 }
 
+#[frb(mirror(EnteredText))]
+pub struct _EnteredText {
+    /// The document, the `--- Request ---` line, then the request — or the
+    /// request alone when no document stands, or the document alone when
+    /// nothing has been asked yet.
+    pub text: String,
+    /// Where the request begins, in UTF-16 units. `0` when the request is the
+    /// whole of it; equal to `text`'s length when there is no request.
+    pub request_begins: u32,
+    /// Every mark over that one text: the document's covers and the request's,
+    /// in the one space, so the screen draws them with one arithmetic.
+    pub marks: Vec<Mark>,
+}
+
 #[frb(mirror(Scope))]
 pub enum _Scope {
     /// This one place, and nothing else.
@@ -1249,6 +1263,12 @@ pub struct _WorkspaceSnapshot {
     pub handle: Option<PayloadHandle>,
     pub vault: VaultState,
     pub answers: Vec<AnswerId>,
+    /// **The one text the person entered, with the request's own start** —
+    /// 096, rule 72-ب. The first part of the screen draws this and nothing
+    /// else: the document, the `--- Request ---` line and the request, with
+    /// every mark in one offset space. One read per screen, so no screen works
+    /// out where the request begins for itself.
+    pub entered: EnteredText,
 }
 
 #[frb(mirror(VaultSnapshot))]

@@ -443,7 +443,19 @@ impl SafePayload {
     /// refuse an honest build, which is what makes it safe to run in production.
     pub(crate) fn audit(&self, session: &Session) -> ApiResult<()> {
         let payload_nfc = nfc(&self.text);
-        let original_nfc = nfc(session.original_str());
+        // **The original is everything that entered** — 096, rule 72-ب, and a
+        // seam this round had to close: the payload is built from the document
+        // **and** the request, so a bound measured against the document alone
+        // counts a word the person typed as a word that was never there.
+        //
+        // Measured: a hand covers «Rückruf» in the request and takes the cover
+        // back. The token stays in the store (089: protection is permanent),
+        // the word stands in the request again, and the old bound said «a
+        // protected value still stands 1 time where at most 0 was expected» —
+        // the exits closed on a word the person had deliberately uncovered.
+        // Both sides of the bound are the one entered text now.
+        let entered = session.entered_text();
+        let original_nfc = nfc(&entered);
         // **Our own tokens are not places a value stands** — the attacker's
         // B1-3 of 17 October, the second half.
         //

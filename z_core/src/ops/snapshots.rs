@@ -58,6 +58,49 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
     let user_protected = count_findings(&findings, |f| f.state == MarkState::Protected && f.decided);
     let open_suggestions = count_findings(&findings, |f| f.state == MarkState::Suggested);
 
+    // **The one text the person entered** — 096, rule 72-ب. Built here, where
+    // every other fact the screen draws is built, so the first part has one
+    // read and no arithmetic of its own.
+    let entered = with_core(|core| {
+        let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
+        let text = s.entered_text();
+        let begins = s.request_begins_at().unwrap_or(text.len());
+        // One mark per cover, in the one offset space: the document's at their
+        // own offsets (which the entered text does not move) and the request's
+        // shifted by where the request begins. The same five fields
+        // `document_view` draws, so the screen cannot tell one half's mark
+        // from the other's — which is the whole of rule 72-ب.
+        let mut marks: Vec<crate::api::Mark> = Vec::new();
+        let of = |p: &crate::session::Protection, span| crate::api::Mark {
+            span,
+            state: MarkState::Protected,
+            token: Some(p.token.clone()),
+            kind: p.kind,
+            source: p.source,
+            decided: p.decided,
+            source_detail: p.source_detail.clone(),
+            place: None,
+        };
+        for p in &s.protections {
+            let span = crate::text::bytes_to_span(s.original_str(), p.start, p.end)?;
+            marks.push(of(p, span));
+        }
+        let raw_request = s.question.expose().to_string();
+        for p in &s.question_protections {
+            let local = crate::text::bytes_to_span(&raw_request, p.start, p.end)?;
+            let shift = crate::text::byte_to_utf16(&text, begins)? as u32;
+            marks.push(of(
+                p,
+                crate::api::Span { start: local.start + shift, end: local.end + shift },
+            ));
+        }
+        Ok(crate::api::EnteredText {
+            text: text.clone(),
+            request_begins: crate::text::byte_to_utf16(&text, begins)? as u32,
+            marks,
+        })
+    })?;
+
     let (handle, payload) = match build_payload(session) {
         Ok(h) => {
             let view = payload_view(h)?;
@@ -86,6 +129,7 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
         handle,
         vault,
         answers,
+        entered,
     })
 }
 
