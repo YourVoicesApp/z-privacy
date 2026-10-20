@@ -124,7 +124,7 @@ the teardown above — and since 092 the label is drawn from the one list, so a
 guard that reaches for its English text would also break the day it is read in
 German.
 
-### Closed, 20 October 2026 — and which of the two it was could not be summoned
+### Closed, 20 October 2026 — the gates summoned the red, in the test beside it
 
 **The red was reproduced — by the gates, in a sibling test.** It could not be
 summoned by hand: the old guard stayed green against twelve busy processes on
