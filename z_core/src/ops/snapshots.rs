@@ -85,14 +85,13 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
             let span = crate::text::bytes_to_span(s.original_str(), p.start, p.end)?;
             marks.push(of(p, span));
         }
-        let raw_request = s.question.expose().to_string();
+        // **The same law the view asks for by name.** This arithmetic was
+        // right and spelled its own way — the request's span counted in the
+        // request, then moved by the prefix's own length in units — and one law
+        // in two spellings is how `inspect_selection` came to carry four
+        // places that forgot it. One name now, asked here too.
         for p in &s.question_protections {
-            let local = crate::text::bytes_to_span(&raw_request, p.start, p.end)?;
-            let shift = crate::text::byte_to_utf16(&text, begins)? as u32;
-            marks.push(of(
-                p,
-                crate::api::Span { start: local.start + shift, end: local.end + shift },
-            ));
+            marks.push(of(p, super::span_in_the_entered(&text, begins, p.start, p.end)?));
         }
         Ok(crate::api::EnteredText {
             text: text.clone(),
