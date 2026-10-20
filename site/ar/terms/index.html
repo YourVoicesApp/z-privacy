@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>شروط الاستخدام — Z Privacy</title>
+<meta name="description" content="من ينشر Z Privacy، وما يدّعيه وما لا يدّعيه، ودورك في المراجعة، ورخصة Apache-2.0 التي يُعطى بها.">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="../../assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="../../assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="../../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/fonts.css">
+<link rel="stylesheet" href="../../assets/site.css">
+<link rel="canonical" href="https://z-privacy.com/ar/terms/">
+<link rel="alternate" hreflang="en" href="/en/terms/">
+<link rel="alternate" hreflang="de" href="/de/terms/">
+<link rel="alternate" hreflang="ar" href="/ar/terms/">
+</head>
+<body>
+<header class="top">
+  <a class="mark" href="/ar/"><img class="z" src="../../assets/logo-512.png" width="30" height="30" alt="" aria-hidden="true"><span class="wm" lang="en" dir="ltr">Z Privacy</span></a>
+  <nav class="menus" aria-label="Language and help">
+    <details class="menu" name="topmenu">
+      <summary lang="ar" dir="rtl">العربية</summary>
+      <div class="menu-panel"><a class="menu-item" href="/en/terms/" lang="en" hreflang="en">English</a><a class="menu-item" href="/de/terms/" lang="de" hreflang="de">Deutsch</a><a class="menu-item on" href="/ar/terms/" lang="ar" dir="rtl" hreflang="ar" aria-current="page">العربية</a></div>
+    </details>
+    <details class="menu" name="topmenu">
+      <summary lang="ar">مساعدة</summary>
+      <div class="menu-panel"><a class="menu-item" href="/ar/">Z Privacy — الصفحة الأولى</a><a class="menu-item" href="/ar/privacy/">الخصوصية وحماية البيانات</a><a class="menu-item" href="/ar/terms/">شروط الاستخدام</a><a class="menu-item" href="/license/">الترخيص</a><a class="menu-item" href="/third-party/">إسنادات الأطراف الثالثة</a></div>
+    </details>
+  </nav>
+</header>
+<main>
+  <h1 class="doc-h">شروط الاستخدام</h1>
+  <p class="hero-word">تقول هذه الشروط من ينشر Z Privacy، وما يدّعيه وما لا يدّعيه، وما دورك أنت، وبأيّ رخصةٍ تأخذه. وكلُّ دعوى هنا منقولةٌ من ملفٍّ واحدٍ في مستودع المصدر — <code>docs/CLAIMS.md</code> — وهذه الصفحة لا تقول أكثر منه.</p>
+
+  <section aria-labelledby="h-who">
+    <h2 id="h-who">من ينشر هذا</h2>
+    <p class="lead">تنشر Faruk AB تطبيقَ Z Privacy وهذا الموقع، وهي المسؤولة عن أيّ بيانات شخصية يتعلّق بها الأمر هنا. والقانون المطبَّق هو القانون السويدي واللائحة العامة لحماية البيانات (GDPR)، والجهة الرقابية هي IMY (Integritetsskyddsmyndigheten). واسم الشركة ورقمُ تسجيلها وعنوانُها المسجَّل في تذييل هذه الصفحة، والعنوان الذي تكتب إليه هو zprivacy@mono-peak.com. وما يفعله هذا الموقع نفسُه بالبيانات الشخصية ففي <a href="/ar/privacy/">صفحة الخصوصية</a>.</p>
+  </section>
+
+  <section aria-labelledby="h-claims">
+    <h2 id="h-claims">ما يدّعيه Z Privacy</h2>
+    <p class="lead">ستّ عشرة دعوى مكتوبةٌ في <code>docs/CLAIMS.md</code>، كلُّ واحدةٍ مع الحدّ الذي يلزمها والاختبارِ أو البوّابةِ التي تبرهنها؛ واثنتان موسومتان في الملفّ نفسِه بأنّهما بلا برهان، والملفُّ كلُّه يُقاس في كلّ جولةٍ بـ<code>scripts/gates.sh</code>. وهذه الخمسُ هي التي تحدّد معنى استخدام هذا المنتج. والحدُّ جزءٌ من الدعوى لا حاشيةٌ لها.</p>
+    <ul class="promises">
+      <li class="promise">لا يُرسَل إلى الذكاء الاصطناعي عبر Z Privacy إلّا النسخةُ المحميّة، والأصلُ ليس قطُّ ما يغادر.<span class="proof"><code>z_core/tests/wire_capture.rs</code> يسجّل الطلب بايتاً ببايت على سيرفرٍ على حاسوبك نفسِه، ويتحقّق أنّ الجسمَ هو النصُّ المحميُّ حرفاً بحرف، ولا أصلَ ولا قيمةَ من خزنتك في الجسم ولا في الرؤوس ولا في العنوان.</span></li>
+      <li class="promise">يبقى أصلُك على هذا الجهاز، إلّا أن تنسخ أنت النصَّ المستعاد بنفسك.<span class="proof"><code>apps/flutter_app/test/copy_report_test.dart</code> يقيس ما يضعه كلُّ نسخٍ في الحافظة، و«نسخ النص المستعاد» يسأل قبل أن يفعل.</span></li>
+      <li class="promise">لا حسابَ ولا تحليلاتِ ولا سيرفرَ لنا: بينك وبين المزوّد الذي تختاره لا شيءَ منّا أصلاً.<span class="proof"><code>z_core/src/providers/</code> يحمل كلَّ عنوانٍ يستطيع المنتجُ الوصولَ إليه — خدماتُ الذكاء الاصطناعي التي تختار منها، وعنوانٌ محليٌّ لنموذجٍ على حاسوبك — والبوّابتان <code>G1</code> و<code>G5</code> تُثبتان أنّ عميل HTTP واحدٌ وأنّ الواجهة لا تستطيع الوصول إلى الشبكة أصلاً.</span></li>
+      <li class="promise">الحمايةُ دائمة: كلمةٌ حمَيْتَها تحتفظ بنائبها إلى الأبد، ولا خطوةَ لاحقةَ تستردّه.<span class="proof"><code>z_core/tests/a_block_is_never_deleted.rs</code> يقيس أنّ لا شيءَ في النواة يحذف كتلةَ كلمةٍ محميّة، وأنّ «نسيان في كل مكان» يستثني قيمةً دون أن يمحو ما كُتب.</span></li>
+      <li class="promise">لا شيءَ يغادر وكلمةٌ تنتظر: اقتراحٌ لم تجب عنه يُغلق كلَّ بابٍ إلى الخارج.<span class="proof"><code>z_core/tests/nothing_leaves_while_a_word_waits.rs</code> يقيس كلَّ باب، والرفضُ مبنيٌّ في دالّةٍ واحدةٍ كي لا ينساه بابٌ جديد.</span></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-not">
+    <h2 id="h-not">ما لا ندّعيه</h2>
+    <p class="lead">منقولٌ من <code>docs/CLAIMS.md</code> كاملاً، لأنّ دعوى لا تصمد لأوّل سؤالٍ أقلُّ قيمةً من النسخة الصادقة.</p>
+    <ul class="promises">
+      <li class="promise"><b>إخفاءَ هويّتك عن المزوّد.</b> العنوانُ والوقتُ والنموذجُ والحجمُ والنصُّ المحميُّ نفسُه كلُّها تغادر. والمزوّد يعلم أنّك سألت، وما شكلُ سؤالك. يُزيل Z Privacy القيمَ، ولا يزيلك أنت.</li>
+      <li class="promise"><b>إخفاءَ الهويّة.</b> هذا <b>استعارةُ أسماء</b> (pseudonymisation): نائبٌ يقوم مقام القيمة، والرابطُ بينهما في خزنتك. ونصٌّ محميٌّ مع معرفةٍ بالعالم يستطيع أن يضيّق على من يتحدّث — رسالةُ عيادةٍ عن مريضةٍ واحدةٍ تظلّ عنها بعد حذف كلّ اسم.</li>
+      <li class="promise"><b>كشفَ كلّ شيء.</b> الماسحُ قواعدُ وقوائمُ لا نموذج. والأعطالُ الثلاثة التي صنّفها نموذجٌ خارجيٌّ خطيرةً في 19 أكتوبر 2026 مُغلقة، وما بقي مفتوحاً مكتوبٌ هنا لا متروكاً لقارئٍ يجده: الرباطُ الطباعيُّ يُفوَّت، فـ«ﬁscher» لا تُقرأ «fischer» إلّا تحت NFKC، وNFKC ممنوعٌ في هذا المنتج لأنّه يُدخل فراغاً على أشكال الحروف العربية فيقطع الكلماتِ نصفين؛ وتاريخُ ميلادٍ مكتوبٌ بالحروف يُفوَّت، لأنّ قائمةَ أسماء الشهور بياناتُ لغةٍ ولم تُضَف واحدة؛ والمبلغُ والمدينةُ في سطر التاريخ سياقٌ لا هويّة، وذاك قرارٌ مكتوبٌ لا فجوة؛ وبطاقةٌ من شبكةٍ ليست بادئتُها في الجدول المنشور لا تُؤخَذ، لأنّ القاعدة تسأل المجموعَ التحقّقيَّ وبادئةَ المُصدِر معاً — فواحدٌ من كلّ عشرة أرقامٍ طويلةٍ يجتاز المجموعَ التحقّقيَّ بالمصادفة.</li>
+      <li class="promise"><b>أنّ المراجعة اختياريّة.</b> كلُّ ما لا يتيقّنه الماسحُ اقتراح، ولا بابَ يُفتَح واقتراحٌ بلا جواب. لا ندّعي أنّ أوّلَ مرورٍ للماسح تامٌّ — ندّعي أنّ لا شيءَ يغادر وكلمةٌ تنتظر.</li>
+      <li class="promise"><b>تدقيقاً مستقلّاً.</b> لا تدقيقَ من شركة أمن. توجد مراجعةُ نموذجٍ خارجيٍّ واحدةٌ بتاريخ 19 أكتوبر 2026، وأعطالُها الثلاثة الخطيرة مسمّاةٌ في الملفّ أعلاه. ومراجعةُ قارئٍ واحدٍ ليست تدقيقاً، ولا نقدّمها على أنّها تدقيق.</li>
+      <li class="promise"><b>كلَّ المنصّات.</b> لينكس مقيس؛ وويندوز يُبنى ويُقاس بمسار العمل. وmacOS وiOS وأندرويد لا تُبنى.</li>
+      <li class="promise"><b>أنّ محادثةً طويلةً تُرسل أقلّ.</b> كلُّ سؤالٍ لاحقٍ يحمل الأدوارَ السابقةَ معه، محميّةً. المحادثةُ أرخصُ في الأسماء لا في البايتات.</li>
+      <li class="promise"><b>حمايةَ ما تنسخه بيدك.</b> «نسخ النص المستعاد» يضع قيماً حقيقيّةً في الحافظة، بعد أن يسأل. وبعد ذلك هي حافظةُ نظام التشغيل، وبرامجُ أخرى قد تقرؤها.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-your">
+    <h2 id="h-your">دورك أنت</h2>
+    <p class="lead">المراجعةُ لك. يجد Z Privacy نقطةَ بداية — ماسحُه قواعدُ وقوائمُ وما علّمتَه، لا نموذج — وما لا يتيقّنه يعرضه عليك. واقتراحٌ لا تجيب عنه يوقف الخروج، وكلمةٌ لم يجدها Z Privacy كلمةٌ تغطّيها بيدك. وما تُفرج عنه يغادر هذا الجهاز لأنّك أنت أفرجت عنه.</p>
+    <p class="honest">وهذا أثقلُ ما يكون حين يكون النصُّ عن شخصٍ آخر. فإن كنت تعمل على بيانات شخصٍ آخر فالواجبُ نحوه واجبُك أنت: Z Privacy أداةٌ تستخدمها، واستخدامُها ليس مشورةً قانونيّةً ولا شهادةَ امتثال.</p>
+  </section>
+
+  <section aria-labelledby="h-where">
+    <h2 id="h-where">إلى أين يذهب</h2>
+    <p class="lead">إلى مزوّد الذكاء الاصطناعي الذي اخترته، بمفتاح الوصول الخاصّ بك، وتحت شروط ذلك المزوّد — ولا إلى أحدٍ غيره. ولا سيرفرَ لـZ Privacy ولا حسابَ لك عندنا. والمزوّد يرى النصَّ المحميَّ وعنوانَك والوقت: وهذا هو النصفُ الصادق من «لا حساب ولا تحليلات»، فهي عنّا لا عنه. ونموذجٌ على حاسوبك هو الطريقُ الوحيد الذي لا يغادر فيه شيءٌ الحاسوبَ أصلاً.</p>
+  </section>
+
+  <section class="card soft" aria-labelledby="h-licence">
+    <h2 id="h-licence">الرخصة، ولا ضمان</h2>
+    <p class="lead">Z Privacy برمجيّةٌ حرّةٌ تحت رخصة Apache 2.0. ونصُّها الكامل في <a href="/license/">صفحة الترخيص</a> وفي <code>LICENSE</code> في مستودع المصدر، والمصدرُ نفسُه هو المستودعُ الموصولُ من الصفحة الأولى. والرخصةُ لا تعطي ضماناً، وتقول ذلك بكلماتها لا بكلماتنا — المادّة 7، «Disclaimer of Warranty». ويبقى الاقتباسُ إنجليزيّاً لأنّ الرخصةَ إنجليزيّة، وترجمتُه لن تكون النصَّ الذي يسري:</p>
+    <p class="honest">«Unless required by applicable law or agreed to in writing, Licensor provides the Work (and each Contributor provides its Contributions) on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including, without limitation, any warranties or conditions of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE.»</p>
+    <p class="note">والمادّة 8 تحدُّ المسؤوليّةَ على النحو نفسِه. والمادّتان للرخصة، منقولتان هنا لا مُعادتان صياغةً.</p>
+  </section>
+
+  <section aria-labelledby="h-changes">
+    <h2 id="h-changes">تغييرات هذه الصفحة</h2>
+    <p class="lead">كُتبت هذه الصفحة في 20 أكتوبر 2026، مقابل الإيداع <code>d21c82a</code> من مستودع المصدر — الإيداعُ الذي تنقل عنه <code>docs/CLAIMS.md</code>. وتغييرُ هذه الشروط إيداعٌ جديد: الصفحةُ تحمل تاريخَها والإيداعَ الذي كُتبت مقابله، والمستودعُ يحمل تاريخَ الاثنين.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-grid">
+    <div>
+      <h2 class="fh">الملاحظات</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">الملاحظات بالبريد وحده. لا نموذج، ولا خادم، ولا شيء يُجمع في هذه الصفحة.</p>
+      <h2 class="fh">أن تُخبَر عند خروج إصدار جديد</h2>
+      <p class="mail"><a href="mailto:zprivacy@mono-peak.com?subject=Updates" dir="ltr">zprivacy@mono-peak.com</a></p>
+      <p class="note">اكتب والموضوع «Updates». لا نكتب إلّا عند خروج إصدار، ونحذف عنوانك حين تجيب «stop». لا نموذجَ ولا خدمةَ قوائمَ ولا طرفاً ثالثاً: العنوان يبقى في ذلك الصندوق لا في غيره.</p>
+    </div>
+    <div>
+      <h2 class="fh">معلومات الناشر القانونية</h2>
+      <div class="legal"><div>Faruk AB</div><div>الشكل القانوني: شركة مساهمة (Aktiebolag — AB)، السويد</div><div>رقم تسجيل الشركة (Org.nr) 559473-3494</div><div>Hotellgatan 3, 311 31 Falkenberg, Sweden</div></div>
+      <p class="legal-contact"><a href="/ar/privacy/">الخصوصية وحماية البيانات</a></p>
+      <p class="legal-contact"><a href="/ar/terms/">شروط الاستخدام</a></p>
+      <p class="legal-contact">التواصل والدعم: <a href="mailto:zprivacy@mono-peak.com" dir="ltr">zprivacy@mono-peak.com</a></p>
+    </div>
+  </div>
+  <p class="copy">© 2026 Faruk AB. مرخَّص بموجب Apache License 2.0.</p>
+  <p class="colophon" lang="en">Z Privacy &#183; A mono-peak project by Faruk AB &#183; Apache-2.0</p>
+</footer>
+</body>
+</html>
