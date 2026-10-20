@@ -3745,6 +3745,17 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_exit_audit_does_not_count_a_value_inside_our_own_token \
          the_attackers_question_leaves_and_every_door_stays_open \
          a_label_a_walk_may_honestly_reach_is_still_not_a_name \
+         a_zero_width_space_inside_a_name_does_not_hide_it \
+         a_name_spelled_in_nfd_is_the_name \
+         a_ligature_is_still_missed_and_that_is_written_down \
+         the_post_office_box_is_a_finding \
+         the_banks_own_name_is_offered_as_the_letterhead_company_is \
+         nothing_the_model_found_is_still_in_the_clear \
+         a_national_insurance_number_admits_its_letters \
+         a_payment_card_is_found_by_its_own_arithmetic \
+         sixteen_digits_that_fail_luhn_are_not_a_card \
+         the_given_name_beside_a_protected_surname_is_taken_too \
+         a_uk_address_line_is_an_address \
          a_pasted_letter_with_no_document_leaves_by_the_manual_door \
          the_pdf_door_mints_its_answer_page_for_a_question_alone \
          the_model_door_still_takes_the_question_alone \

@@ -46,6 +46,9 @@ pub(crate) fn scan_with(
     signatures(&words, pack, &mut out);
     roles_beside_a_name(&words, pack, taught, &mut out);
     companies(&words, pack, &mut out);
+    // **Half a name is not a name** — 095, خ4. Last of the people rules,
+    // because it reads what the others found.
+    a_given_name_before_a_surname(&words, pack, &mut out);
     // And what this language needs that no other can use, each named in its
     // pack so the list can be counted.
     for (_, rule) in pack.extra {
@@ -300,8 +303,14 @@ fn pair_at(
         return Some((a.start, trimmed_end(b)));
     }
     let names = de_names::dictionary_of(pack.locale, pack.names);
-    let given = bare(a.text).trim_end_matches(['.', ',', ';', ':']);
-    let family = bare(b.text).trim_end_matches(['.', ',', ';', ':']);
+    // The dictionary is written in NFC and holds no invisible character, so the
+    // word it is asked about is read the same way the shape test reads it —
+    // or «Thomas<U+200C>Müller» is two words the dictionary has never heard of
+    // (095, خ3).
+    let given_read = crate::text::as_a_person_reads_it(bare(a.text));
+    let family_read = crate::text::as_a_person_reads_it(bare(b.text));
+    let given = given_read.trim_end_matches(['.', ',', ';', ':']);
+    let family = family_read.trim_end_matches(['.', ',', ';', ':']);
     let known_given = names.given(given) || taught.iter().any(|(t, f)| !f && t.eq_ignore_ascii_case(given));
     let known_family = names.family(family)
         || taught.iter().any(|(t, f)| *f && t.eq_ignore_ascii_case(family))
@@ -313,7 +322,14 @@ fn pair_at(
 /// or an apostrophe is a name («Müller-Lüdenscheidt», «O\'Brien»); a digit or a
 /// bracket is not. This is the whole of what «(N95.1» failed to be.
 fn name_shaped(word: &str, pack: &LanguagePack) -> bool {
-    let n = bare(word).trim_end_matches(['.', ',', ';', ':']);
+    // **Read as a person reads it, decided on that reading, and reported by
+    // nobody** — 095, خ3. The one folding (`text::as_a_person_reads_it`) puts
+    // the word in NFC and drops the characters nobody can see, so
+    // `Mar<U+200B>kus` and `Mu<U+0308>ller` are the names they look like. The
+    // caller's span is untouched: this function answers a question and hands
+    // back no text.
+    let read = crate::text::as_a_person_reads_it(bare(word));
+    let n = read.trim_end_matches(['.', ',', ';', ':']);
     // Two letters at least. A single capital is an initial, and in the owner's
     // ICD-10 document the chapter letters — G, K, N, P, W — stand alone on
     // their own lines near a «DI» or a «Dr»: the rule protected 28,853 of them
@@ -333,6 +349,25 @@ fn name_shaped(word: &str, pack: &LanguagePack) -> bool {
         // asks what a name looks like gets the same answer — the walk, the
         // pair, the reversed pair and the role.
         && !pack.salutations.iter().any(|t| t.eq_ignore_ascii_case(n))
+        // **And a greeting is never part of a name either** — 095, the second
+        // case of the sentence above it, found by this house's own suite the
+        // hour the given-name pass was written: «Hallo Markus Feldmann» offered
+        // **«Hallo»** as the given name of the person whose surname follows.
+        //
+        // The salutation exclusion was written when the salutation list was
+        // the only list of form words; the greeting list arrived beside it on
+        // 15 October and nothing extended the rule to it. Same reason, word
+        // for word: a greeting is in a list of form words and not in a name
+        // bank, which is why it is in that list at all.
+        && !pack.greetings.iter().any(|t| t.eq_ignore_ascii_case(n))
+        // **And a title is never part of a name**, which this file says in
+        // prose three rules above («Herr Dr. Schneider → the name, the title
+        // stays in the clear») and had never said to the shape test. Found by
+        // the suite: «DI Bernhard Pesec» offered **«DI»** as the given name of
+        // the person whose surname follows. Same class as the two lists above
+        // it, same reason: a form word lives in a list of form words.
+        && !pack.titles.iter().any(|t| t.eq_ignore_ascii_case(n))
+        && !pack.title_parts.iter().any(|t| t.eq_ignore_ascii_case(n))
 }
 
 /// Step over a chain of titles: «Dr.», «Prim. Dr.», «Univ.-Prof. Dr. med.».
@@ -1009,4 +1044,88 @@ fn reversed_pairs(
         ));
         i += 2;
     }
+}
+
+/// **The given name beside a surname somebody already found** — 095, خ4.
+///
+/// The outside model's letter opens «Dear Mr Whitaker», so the salutation
+/// protects the surname; the same letter writes «James Whitaker» three times
+/// and `James` left the machine in the clear after a finished review. The
+/// house's «a name is one word» is about **tokens** — one word, one token —
+/// and was never about leaving half a person behind.
+///
+/// It reads what the other rules found and adds nothing to a word they did not
+/// reach: for every person already named, the word immediately before it on
+/// the same line, if that word is shaped like a name and is not a form word.
+/// `Suggest`, because this one is an inference about a neighbour and not a
+/// shape of its own — the person answers it, as they answer the dictionary's
+/// pairs.
+///
+/// **One pass, never a chain.** It reads the candidates present when it runs
+/// and appends to a separate list, so a name it offers cannot become the
+/// surname that offers the next word: «A B C D» would otherwise walk a line
+/// backwards for ever.
+fn a_given_name_before_a_surname(
+    words: &[Word<'_>],
+    pack: &LanguagePack,
+    out: &mut Vec<Candidate>,
+) {
+    // **Which spellings this document has already named a person**, read as a
+    // person reads them — the identity is the word, not the place, which is
+    // how the vault's own pass has always matched a known value. The model's
+    // letter protects «Whitaker» after «Mr» three times and writes «James
+    // Whitaker» in its subject line, where no rule reaches it: matching by
+    // place would have left that line exactly as it was.
+    let already: Vec<(usize, usize)> = out
+        .iter()
+        .filter(|c| c.kind == Kind::Person)
+        .map(|c| (c.start, c.end))
+        .collect();
+    let named: Vec<String> = out
+        .iter()
+        .filter(|c| c.kind == Kind::Person)
+        .filter_map(|c| words.iter().find(|w| w.start == c.start))
+        .map(|w| crate::text::as_a_person_reads_it(bare(w.text)).to_lowercase())
+        .collect();
+    if named.is_empty() {
+        return;
+    }
+    let mut found: Vec<Candidate> = Vec::new();
+    for (i, word) in words.iter().enumerate() {
+        let reading = crate::text::as_a_person_reads_it(bare(word.text)).to_lowercase();
+        if !named.contains(&reading) {
+            continue;
+        }
+        if word.newline_before {
+            continue;
+        }
+        let Some(before) = i.checked_sub(1).and_then(|k| words.get(k)) else { continue };
+        // A word carrying its own punctuation ends a sentence or a field; the
+        // given name before a surname carries none.
+        if before.text.ends_with([',', '.', ';', ':', '!', '?']) || is_label(before.text) {
+            continue;
+        }
+        if !name_shaped(before.text, pack) {
+            continue;
+        }
+        // Not if somebody already found it — including this pass, so one name
+        // cannot pull a whole line in behind it.
+        if already.iter().any(|(start, end)| *start <= before.start && before.start < *end)
+            || found.iter().any(|c| c.start == before.start)
+        {
+            continue;
+        }
+        found.push(candidate(
+            pack,
+            before.start,
+            trimmed_end(before),
+            Kind::Person,
+            Confidence::Suggest,
+            "given-name",
+            "the word before a name this document already names — a given name \
+             belongs to the person whose surname follows it, offered for your word"
+                .to_string(),
+        ));
+    }
+    out.append(&mut found);
 }

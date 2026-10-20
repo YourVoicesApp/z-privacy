@@ -63,12 +63,21 @@ fn the_credits_are_protected_and_the_captions_are_not() {
     let report = scan(s).expect("scan");
     assert_eq!(
         (report.auto, report.suggested),
+        // **(27, 52) since 095 خ4** (20 October), from (27, 51): the given-name
+        // pass offers the word before a surname this document already names,
+        // and the credits list is exactly that shape — «Peter Johansson, Eva
+        // Nordin, Joakim Rådström, Göran Ekeberg». One of those given names
+        // was reached by no other rule, so the count moved by one and **every
+        // word it added is a person's name in a byline**, which is what this
+        // test is about. Measured, not assumed: the offer was read back out of
+        // the document before this number was changed.
+        //
         // **(27, 51) since 085 ruling 1** (15 October), from (13, 27): a name
         // the app read for itself is one finding per word, and this supplement
         // is a magazine full of credits and bylines. What 038-B/2 measured is
         // unchanged in substance — the credits are protected and the captions
         // are not — and it is the same people, counted by word.
-        (27, 51),
+        (27, 52),
         "038-B/2 measured 13 and 27 here, from 3 and 28: {report:?}"
     );
 
@@ -89,9 +98,14 @@ fn the_credits_are_protected_and_the_captions_are_not() {
         .collect();
     // `MarkState` is not ordered, so sort by what a person reads.
     people.sort_by(|a, b| a.1.cmp(&b.1));
+    // 75 since 095 خ4 (20 October), from 74: the given-name pass offers the
+    // word before a surname this document already names, and one given name in
+    // the credits list was reached by no other rule. The same sentence as the
+    // pair above, and the same measurement behind it.
+    //
     // 74 since 085 ruling 1 (15 October), from 36: the same people, one
     // finding per word of each name.
-    assert_eq!(people.len(), 74, "27 people were found before 038-B/2, 36 after, 74 by word");
+    assert_eq!(people.len(), 75, "27 people were found before 038-B/2, 36 after, 74 by word, 75 with the given-name pass");
 
     // The three the owner's own reading found in the clear.
     for who in ["Gonzalo", "Irigoyen", "Anja", "Callius"] {

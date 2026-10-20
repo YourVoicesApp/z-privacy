@@ -74,7 +74,15 @@ const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
     ("en-31", "national id", Kind::TaxId, Validator::Number, Confidence::Auto),
     ("en-32", "national id number", Kind::TaxId, Validator::Number, Confidence::Auto),
     ("en-33", "national identity number", Kind::TaxId, Validator::Number, Confidence::Auto),
-    ("en-34", "national insurance number", Kind::TaxId, Validator::Number, Confidence::Auto),
+    // **The one row that existed for this field could never fire** — 095, خ4:
+    // `Number` rejects letters and a National Insurance number is
+    // `AA 99 99 99 A`. The kind moves with it: a National Insurance number is
+    // the United Kingdom's social-insurance number, and this product already
+    // has that kind for the German one. `TaxId` was the nearest word in the
+    // list when the row was written and it is not what the number is.
+    ("en-34", "national insurance number", Kind::SocialInsuranceNo, Validator::NationalInsurance, Confidence::Auto),
+    ("en-42", "national insurance", Kind::SocialInsuranceNo, Validator::NationalInsurance, Confidence::Auto),
+    ("en-43", "ni number", Kind::SocialInsuranceNo, Validator::NationalInsurance, Confidence::Auto),
     ("en-35", "personal id", Kind::TaxId, Validator::Number, Confidence::Auto),
     ("en-36", "personal identity number", Kind::TaxId, Validator::Number, Confidence::Auto),
     ("en-37", "social security number", Kind::TaxId, Validator::Number, Confidence::Auto),
@@ -83,6 +91,27 @@ const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
     // the number, so this is `Contract` — the kind this build already uses for
     // «a reference a document is filed under», which is what a registration
     // number is to the letter that quotes it.
+    // **A date of birth under its English labels** — 095, خ4. The German pack
+    // has had `geboren am` and `Geburtsdatum` for a month; the English one had
+    // nothing, and the model found `12/04/1985` under «Date of birth:» in the
+    // text that leaves.
+    //
+    // `Date`: three numbers and two separators, so `12/04/1985` and
+    // `1985-04-12` are taken, «unknown» is not, and «12 April 1985» does not
+    // leave a protected «12» behind pretending to be a date. **A date
+    // written out in words is not taken**, because a month-name list is
+    // language data this round did not add; the limit is measured in
+    // `a_date_of_birth_written_out_in_words_is_still_missed`.
+    ("en-44", "date of birth", Kind::Birthdate, Validator::Date, Confidence::Auto),
+    ("en-45", "dob", Kind::Birthdate, Validator::Date, Confidence::Auto),
+    ("en-46", "born", Kind::Birthdate, Validator::Date, Confidence::Auto),
+    // **An employee number, in the kind that exists for it** — 095, خ4.
+    // `Reference` is the shape between `Number`, which rejects `NGE-20417` for
+    // its letters, and `Word`, which would take «pending».
+    ("en-47", "employee number", Kind::EmployeeNo, Validator::Reference, Confidence::Auto),
+    ("en-48", "employee no.", Kind::EmployeeNo, Validator::Reference, Confidence::Auto),
+    ("en-49", "employee no", Kind::EmployeeNo, Validator::Reference, Confidence::Auto),
+    ("en-50", "staff id", Kind::EmployeeNo, Validator::Reference, Confidence::Auto),
     ("en-39", "registration number", Kind::Contract, Validator::Number, Confidence::Auto),
     ("en-40", "company number", Kind::Contract, Validator::Number, Confidence::Auto),
     ("en-41", "company registration number", Kind::Contract, Validator::Number, Confidence::Auto),

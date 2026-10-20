@@ -53,6 +53,37 @@ const ROWS: &[(&str, &str, Kind, Validator, Confidence)] = &[
     ("de-11", "bic", Kind::Bic, Validator::Grouped, Confidence::Auto),
     ("de-12", "kontonummer", Kind::Account, Validator::Number, Confidence::Auto),
     ("de-13", "konto", Kind::Account, Validator::Number, Confidence::Auto),
+    // **The box is the address a letter is answered to** — 095, خ5, measured
+    // twice on the owner's own letter: `Kundenservice · Postfach 4410 · 04179
+    // Leipzig`, where the address finding covered the postcode and town and
+    // stopped. A PO box identifies where to write as much as a street does.
+    //
+    // `Number`, and that is the shape this label is paid for (the house's «a
+    // label at Auto is paid for with its own shape»): the engine already
+    // requires a value carrying a digit for a label written without a colon,
+    // so «Unser Postfach wurde geschlossen» takes nothing, and the control for
+    // that is in `the_box_and_the_bank_are_findings_too.rs`.
+    //
+    // **Auto, not Ask, and the reason is the word.** The paper asked for Auto
+    // on an address line and Ask elsewhere; a row's decision in this engine is
+    // per row, and «Postfach» followed by a number means one thing in German
+    // wherever it stands. Building an «address line» test would be new
+    // machinery for a distinction with no measured counterexample — and if the
+    // lead wants Ask, it is this one word.
+    ("de-40", "postfach", Kind::Address, Validator::Number, Confidence::Auto),
+    // **The bank's own name, offered as the letterhead's GmbH is offered** —
+    // 095, خ5. The same footer line whose IBAN and BIC this product cuts out
+    // of the middle of a sentence carries the institution's name, and it was
+    // never a finding: `Bankverbindung: Sparkasse Leipzig, IBAN …`.
+    //
+    // `Suggest`, because that is what a company name is in this product
+    // everywhere else — the GmbH on the letterhead of this very letter is
+    // offered and not protected, and one kind of thing may not be two kinds of
+    // claim. The siblings are the two other ways a German letter writes the
+    // field.
+    ("de-41", "bankverbindung", Kind::Company, Validator::Name, Confidence::Suggest),
+    ("de-42", "bank", Kind::Company, Validator::Name, Confidence::Suggest),
+    ("de-43", "kreditinstitut", Kind::Company, Validator::Name, Confidence::Suggest),
     ("de-14", "kundennummer", Kind::CustomerNo, Validator::Number, Confidence::Auto),
     ("de-15", "kunden-nr.", Kind::CustomerNo, Validator::Number, Confidence::Auto),
     ("de-16", "kundennr.", Kind::CustomerNo, Validator::Number, Confidence::Auto),

@@ -15,6 +15,63 @@ pub(crate) fn nfc(s: &str) -> String {
     s.nfc().collect()
 }
 
+/// **The characters a reader cannot see** — 095, خ3.
+///
+/// Unicode's `Cf` (format) class, as much of it as a document this product
+/// reads can carry. A list and not a category test, for the reason this house
+/// enumerates everything else: there is no category API in the standard
+/// library, and a list can be **counted** rather than found by reading.
+///
+/// Every one of these was measured in a document, not imagined: Word writes a
+/// soft hyphen where it un-breaks a line, PDF extraction leaves zero-width
+/// spaces, a copy from a web page carries joiners, and the bidi marks arrive
+/// with any text that has ever been near an Arabic or Hebrew paragraph — ours
+/// included, since `their_own_word` writes the isolates itself.
+const INVISIBLE: [char; 13] = [
+    '\u{00AD}', // soft hyphen
+    '\u{200B}', // zero-width space
+    '\u{200C}', // zero-width non-joiner
+    '\u{200D}', // zero-width joiner
+    '\u{200E}', // left-to-right mark
+    '\u{200F}', // right-to-left mark
+    '\u{202A}', // left-to-right embedding
+    '\u{202B}', // right-to-left embedding
+    '\u{202C}', // pop directional formatting
+    '\u{202D}', // left-to-right override
+    '\u{202E}', // right-to-left override
+    '\u{2060}', // word joiner
+    '\u{FEFF}', // zero-width no-break space (a byte-order mark in the middle)
+];
+
+/// **How a person reads a word** — one folding, asked by every rule that wants
+/// to know what a word *is* rather than where it stands.
+///
+/// NFC, so that «Müller» written as `u` + combining diaeresis is the same word
+/// as «Müller» — which G3 has always held of a value and the scanner did not
+/// hold of a name (خ3: NFD found one of two names in the owner's own
+/// salutation). And the invisible characters dropped, so that
+/// `Mar<U+200B>kus` is «Markus» to a shape test as it is to an eye.
+///
+/// **This is a reading, never a replacement.** What comes back is used to
+/// decide — is this a name, is it in the dictionary — and never to build the
+/// text that leaves or the span that is protected: the span stays the
+/// original's, byte for byte, because «protection may not change how a
+/// document reads» and a token over a shortened stretch would change it.
+///
+/// **Never NFKC**, and that is a rule of this house with its own measurement:
+/// NFKC decomposes the Arabic isolated mark forms into space + mark and cuts
+/// words in two (`nfkc_inserts_a_space_on_arabic_mark_forms`). So the
+/// typographic ligature «ﬁscher» stays a known miss, written down in
+/// `a_name_is_read_as_a_person_reads_it.rs` rather than hoped about.
+pub(crate) fn as_a_person_reads_it(word: &str) -> String {
+    if word.is_ascii() {
+        // The common case, and it cannot hold either fault: ASCII has no
+        // combining marks and no format characters.
+        return word.to_string();
+    }
+    nfc(&word.chars().filter(|c| !INVISIBLE.contains(c)).collect::<String>())
+}
+
 /// **A word of the person's own, isolated so the sentence keeps its order** —
 /// the owner's test of 16 October 2026, and the same pair of characters the
 /// glass uses (`theirOwnWord` in `messages.dart`).

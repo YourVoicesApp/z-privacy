@@ -21,8 +21,118 @@ pub(crate) fn scan(text: &str) -> Vec<Candidate> {
     social_insurance(text, &mut out);
     national_identity(text, &mut out);
     tax_identification(text, &mut out);
+    payment_cards(text, &mut out);
     phones(text, &mut out);
     out
+}
+
+/// **Is this a payment card number?** — Luhn **and** a published prefix with
+/// the length that goes with it.
+///
+/// Luhn alone is not enough and this house measured why, on the Arabic letter
+/// in its own fixtures: `300012345600003` is fifteen digits that pass the
+/// checksum by chance — one number in ten does, at any length — and it is an
+/// account number, not a card. A card's first digits say which network issued
+/// it, and each network issues one or two lengths; the pair is the shape.
+///
+/// The table is the published one (the issuer identification numbers), and it
+/// is a list so that it can be counted rather than found by reading. A number
+/// whose prefix is not here is not protected as a card, which is the right
+/// direction for a rule at `Auto`: it may miss a card from a network nobody
+/// has heard of, and it may not protect a meter reading.
+fn is_a_card_number(digits: &str) -> bool {
+    let n = digits.len();
+    if !(13..=19).contains(&n) || !luhn_ok(digits) {
+        return false;
+    }
+    let starts = |p: &str| digits.starts_with(p);
+    let two: u32 = digits.get(0..2).and_then(|s| s.parse().ok()).unwrap_or(0);
+    let four: u32 = digits.get(0..4).and_then(|s| s.parse().ok()).unwrap_or(0);
+    // network            prefix                      lengths
+    (starts("4") && matches!(n, 13 | 16 | 19))                      // Visa
+        || ((51..=55).contains(&two) && n == 16)                    // Mastercard
+        || ((2221..=2720).contains(&four) && n == 16)               // Mastercard, the 2-series
+        || ((starts("34") || starts("37")) && n == 15)              // American Express
+        || ((starts("6011") || starts("65")) && n == 16)            // Discover
+        || ((644..=649).contains(&(four / 10)) && n == 16)            // Discover, the 64x block
+        || ((3528..=3589).contains(&four) && n == 16)               // JCB
+        || ((300..=305).contains(&(four / 10)) && n == 14)            // Diners Club
+        || (starts("3095") && n == 14)                              // Diners Club
+        || ((starts("36") || starts("38") || starts("39")) && n == 14)
+        || (starts("62") && (16..=19).contains(&n))                 // UnionPay
+}
+
+/// **A payment card number, proven by its own checksum** — 095, خ4.
+///
+/// The English rules carried the word «card» in a comment and no detector
+/// behind it for a month; the outside model put `4111 1111 1111 1111` in the
+/// body of a letter and watched it leave after a finished review.
+///
+/// **The arithmetic and the issuer's own prefix together earn `Auto`** —
+/// `is_a_card_number` above says why neither is enough alone:
+/// `4111 1111 1111 1112` fails the checksum, and `300012345600003` passes it
+/// and is not a card.
+///
+/// **A general rule and not an English one**, like the IBAN beside it: the
+/// shape belongs to no language, and a German letter writes a card number the
+/// same way.
+///
+/// **`Kind::Account`, with the reason written down.** A card is an account
+/// addressed by a number, and this product's contract has a kind for that. A
+/// kind of its own would mean a new variant on the contract, the bridge, the
+/// mirrors and every exhaustive reader of `Kind` on both sides of the seam —
+/// paid for one label, while the token the model reads would say the same
+/// thing either way. If the owner wants «card» on the glass it is a contract
+/// round of its own.
+fn payment_cards(text: &str, out: &mut Vec<Candidate>) {
+    let bytes = text.as_bytes();
+    let mut i = 0usize;
+    while i < bytes.len() {
+        if !(bytes.get(i).is_some_and(u8::is_ascii_digit) && boundary_before(bytes, i)) {
+            i += 1;
+            continue;
+        }
+        // The run: digit groups joined by one space or one hyphen, which is
+        // how a card is written on a form, in a letter and on the card itself.
+        let mut at = i;
+        let mut digits = String::new();
+        let mut end = i;
+        loop {
+            let group_start = at;
+            while bytes.get(at).is_some_and(u8::is_ascii_digit) {
+                if let Some(b) = bytes.get(at) {
+                    digits.push(char::from(*b));
+                }
+                at += 1;
+            }
+            if at == group_start {
+                break;
+            }
+            end = at;
+            let joined = matches!(bytes.get(at), Some(b' ') | Some(b'-'))
+                && bytes.get(at + 1).is_some_and(u8::is_ascii_digit);
+            if joined {
+                at += 1;
+            } else {
+                break;
+            }
+        }
+        if boundary_after(bytes, end) && is_a_card_number(&digits) {
+            out.push(candidate(
+                i,
+                end,
+                Kind::Account,
+                Confidence::Auto,
+                "payment-card",
+                "a payment card number: thirteen to nineteen digits that pass the card checksum",
+            ));
+            i = end;
+            continue;
+        }
+        // Past this run, never one digit along: a number that is not a card
+        // does not become one by being read from its second digit.
+        i = end.max(i + 1);
+    }
 }
 
 fn candidate(
@@ -453,19 +563,26 @@ fn is_a_long_date(eight: &str) -> bool {
 }
 
 /// The published Luhn, over exactly ten digits: nine and the check.
-fn luhn_ok(ten: &str) -> bool {
-    if ten.len() != 10 {
+/// **Luhn, for every length that asks for it** — one function because there is
+/// one arithmetic.
+///
+/// It was written for the Swedish ten-digit form and doubled «every second
+/// digit from the left», which is the same thing as every second digit from
+/// the right **only when the length is even**. A payment card is thirteen to
+/// nineteen digits, so the standard reading is the one written here, and the
+/// ten-digit caller gets the identical answer it got before (its callers keep
+/// their own length checks).
+fn luhn_ok(digits: &str) -> bool {
+    if digits.len() < 2 {
         return false;
     }
     let mut total = 0u32;
-    for (i, b) in ten.bytes().enumerate() {
+    for (from_right, b) in digits.bytes().rev().enumerate() {
         if !b.is_ascii_digit() {
             return false;
         }
         let d = u32::from(b - b'0');
-        // Every second digit from the left is doubled, which is where the
-        // Swedish form starts.
-        let p = if i % 2 == 0 { d * 2 } else { d };
+        let p = if from_right % 2 == 1 { d * 2 } else { d };
         total += p / 10 + p % 10;
     }
     total.is_multiple_of(10)
