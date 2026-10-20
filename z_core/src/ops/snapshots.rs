@@ -85,6 +85,51 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
             let span = crate::text::bytes_to_span(s.original_str(), p.start, p.end)?;
             marks.push(of(p, span));
         }
+        // **And what is still waiting** — the second seam of 096, measured A/B
+        // by e2 on `072ab1f`. The two lists above hold covers, and every cover
+        // is `Protected`; `document_view` draws the protections **and** the
+        // findings, where a `Suggested` one lives. So when rule 72-ب moved the
+        // first part from `document.marks` to these marks, every open
+        // suggestion fell off the screen: no word waiting to be pressed and no
+        // line under anything the scan had offered. The first part is one read
+        // with no arithmetic of its own, so this contract has to carry
+        // everything it draws.
+        //
+        // **The document's half only, and that is measured rather than
+        // assumed:** a request produces no suggestion at all today —
+        // `protect_lines` pushes the one state it can push and mints a token
+        // for every cover it makes, `set_question` drops a mark without one,
+        // and there is no findings list for a request. Whether a request
+        // should be offered anything is the owner's question, not a line in a
+        // fix.
+        //
+        // The two rules are `document_view`'s own, for its own reasons: only
+        // what is open, and never over a protection — two marks on one stretch
+        // would be the screen telling a person that a protected word is
+        // waiting for them.
+        for f in &s.findings {
+            if f.state != MarkState::Suggested {
+                continue;
+            }
+            if s.protections.iter().any(|p| p.start < f.end && f.start < p.end) {
+                continue;
+            }
+            marks.push(crate::api::Mark {
+                // The document is the prefix of the entered text, so its own
+                // offsets need no shift — the same reason the loop above gives.
+                span: crate::text::bytes_to_span(s.original_str(), f.start, f.end)?,
+                state: MarkState::Suggested,
+                // No token: nothing has been minted for a word nobody has
+                // answered, and saying otherwise is the untruth `document_view`
+                // names in its own comment.
+                token: None,
+                kind: f.kind,
+                source: f.source,
+                decided: false,
+                source_detail: f.source_detail.clone(),
+                place: None,
+            });
+        }
         // **The same law the view asks for by name.** This arithmetic was
         // right and spelled its own way — the request's span counted in the
         // request, then moved by the prefix's own length in units — and one law
@@ -93,6 +138,9 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
         for p in &s.question_protections {
             marks.push(of(p, super::span_in_the_entered(&text, begins, p.start, p.end)?));
         }
+        // In reading order, as the column hands its own: the glass draws a
+        // list, and «the same marks in another order» is not the same answer.
+        marks.sort_by_key(|m| m.span.start);
         Ok(crate::api::EnteredText {
             text: text.clone(),
             request_begins: crate::text::byte_to_utf16(&text, begins)? as u32,

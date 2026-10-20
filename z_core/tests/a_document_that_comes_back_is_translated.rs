@@ -434,8 +434,34 @@ fn two_namespaces_are_two_conversations() {
     let seen = returning_document(second.0).expect("read it back");
 
     assert_eq!(seen.conversations.len(), 2, "{:?}", seen.conversations);
-    let open = seen.conversations.iter().find(|c| c.name == "die zweite").expect("the second");
-    let shut = seen.conversations.iter().find(|c| c.name == "die erste").expect("the first");
+    // **A missing conversation names what came back instead** — this guard
+    // reddened once inside a `cargo test --workspace` run (20 October) with two
+    // conversations seen, «die zweite» found and «die erste» not, and
+    // `expect("the first")` could say nothing about which conversation stood in
+    // its place. It has been green alone ever since, so the next red is the
+    // only measurement there will be: it must carry the names, the counts and
+    // the namespaces, or the run after it starts from nothing again.
+    let named = |want: &str| {
+        seen.conversations.iter().find(|c| c.name == want).unwrap_or_else(|| {
+            let names: Vec<&str> = seen.conversations.iter().map(|c| c.name.as_str()).collect();
+            // **And the namespaces nothing could name**, because that field is
+            // what tells the two shapes apart: a row missing with a namespace
+            // in `unknown_namespaces` means the vault could not match that
+            // namespace to a conversation (`returning.rs`'s own loop over
+            // `conversations()` and `naming_of`), while a row missing with
+            // nothing unknown means two groups resolved to the **same**
+            // conversation and one name is simply not here. The blocks are not
+            // the suspect either way: they fill the counts, not the name.
+            panic!(
+                "no conversation «{want}» came back. The names are {names:?}; the \
+                 namespaces nothing could name are {:?}; the vault was {:?}; and in \
+                 full: {:#?}",
+                seen.unknown_namespaces, seen.vault, seen.conversations
+            )
+        })
+    };
+    let open = named("die zweite");
+    let shut = named("die erste");
     assert_eq!(open.brought_back, our_names.len() as u32, "the open conversation read nothing");
     assert_eq!(open.unresolved, 0);
     // **The closed conversation reads too, and from its blocks.** It did until
