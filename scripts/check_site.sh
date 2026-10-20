@@ -8,6 +8,15 @@ cd "$(dirname "$0")/../site" || exit 2
 FAIL=0
 say() { printf '  %-6s %s\n' "$1" "$2"; }
 
+# **`--tree-only`: everything but the network.** The gates run this on every
+# measurement (G59), and a gate that goes red because the machine is offline
+# teaches nothing — it is the same lesson as a gate that reds because one of
+# the owner's golden documents is on another laptop. The outward links are
+# therefore asked of the network only when a person runs this script to
+# publish, which is also the moment the answer matters.
+TREE_ONLY=0
+[ "${1:-}" = "--tree-only" ] && TREE_ONLY=1
+
 LEFT=$(grep -rlE '\{\{[A-Z0-9_]+\}\}' --include='*.html' . 2>/dev/null || true)
 if [ -n "$LEFT" ]; then
   say FAIL "build values still unfilled:"
@@ -69,7 +78,9 @@ DESTS=$(grep -rhoE '(href)="https?://[^"]+"' --include='*.html' . 2>/dev/null \
         | grep -vE '^https://z-privacy\.com/' | sort -u)
 MINE=$(grep -rhoE 'href="https://z-privacy\.com/[^"]*"' --include='*.html' . 2>/dev/null | sort -u | wc -l)
 say PASS "$MINE of our own addresses are checked against the tree, not asked of the network"
-if ! command -v curl >/dev/null 2>&1; then
+if [ "$TREE_ONLY" = 1 ]; then
+  say SKIP "the outward links are not asked of the network, because --tree-only"
+elif ! command -v curl >/dev/null 2>&1; then
   say FAIL "curl is missing, so no destination could be checked"; FAIL=1
 else
   for u in $DESTS; do
@@ -214,6 +225,7 @@ done
 MENUS=0
 for pair in "index.html:" "en/index.html:Help" "de/index.html:Hilfe" "ar/index.html:مساعدة" \
             "en/privacy/index.html:Help" "de/privacy/index.html:Hilfe" "ar/privacy/index.html:مساعدة" \
+            "en/terms/index.html:Help" "de/terms/index.html:Hilfe" "ar/terms/index.html:مساعدة" \
             "license/index.html:Help" "third-party/index.html:Help"
 do
   f="${pair%%:*}"; help="${pair##*:}"
@@ -238,7 +250,7 @@ for f in en/index.html de/index.html ar/index.html; do
   [ "$n" = 1 ] || { say FAIL "$f holds $n vocabulary tables, and there should be one"; FAIL=1; MENUS=1; }
   grep -q '<div class="menu-panel wide">' "$f" || { say FAIL "$f does not keep its vocabulary under Help"; FAIL=1; MENUS=1; }
 done
-for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html license/index.html third-party/index.html; do
+for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html license/index.html third-party/index.html; do
   grep -q '<div class="vocab">' "$f" && { say FAIL "$f carries a second copy of the vocabulary"; FAIL=1; MENUS=1; }
 done
 [ "$MENUS" = 0 ] && say PASS "two menus on every page but the chooser, and one vocabulary, under Help"
@@ -298,6 +310,115 @@ if [ "$PRIV" = 0 ]; then
 fi
 [ "$PRIV" = 0 ] && say PASS "three privacy pages, reachable, saying the same things and naming the same files — and every file is there"
 
+# ---------------------------------------------------------------- the terms page
+#
+# 097, rule 78. Three pages under the same rule as the privacy page's — every
+# promise names the file where it can be checked, and the three languages name
+# one set — plus the one thing the privacy page does not do: this page **quotes
+# another file**, `docs/CLAIMS.md`, and may never say more than it.
+#
+# A gate cannot read for sense, so it holds what it can be sure of: the file is
+# named, the file is there, the three languages name one set of proofs and say
+# the same number of things, every page of the set is reachable, and the commit
+# the page says it was written against is a commit this repository holds. That
+# last one is the page's own promise — «a change to these terms is a new
+# commit» — and a page naming a commit that was rebased away sends a reader to
+# nothing.
+TERMS=0
+for f in en/terms/index.html de/terms/index.html ar/terms/index.html; do
+  if [ ! -f "$f" ]; then
+    say FAIL "there is no $f"; FAIL=1; TERMS=1; continue
+  fi
+  for path in $(grep -oE '<code>[A-Za-z0-9_./-]+</code>' "$f" | sed -E 's|</?code>||g' | grep '/' | sort -u); do
+    [ -e "../$path" ] || { say FAIL "$f names $path, and there is no such file"; FAIL=1; TERMS=1; }
+  done
+  grep -qF '<code>docs/CLAIMS.md</code>' "$f" \
+    || { say FAIL "$f does not name docs/CLAIMS.md, the file it quotes"; FAIL=1; TERMS=1; }
+  for sha in $(grep -oE '<code>[0-9a-f]{7,40}</code>' "$f" | sed -E 's|</?code>||g' | sort -u); do
+    git -C .. cat-file -e "$sha^{commit}" 2>/dev/null \
+      || { say FAIL "$f says it was written against $sha, and this repository has no such commit"; FAIL=1; TERMS=1; }
+  done
+done
+if [ "$TERMS" = 0 ]; then
+  for f in de/terms/index.html ar/terms/index.html; do
+    if ! diff -q \
+         <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' en/terms/index.html | sort -u) \
+         <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' "$f" | sort -u) >/dev/null; then
+      say FAIL "$f does not name the same proving files as the English terms page"
+      diff <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' en/terms/index.html | sort -u) \
+           <(grep -oE '<code>[A-Za-z0-9_./-]+</code>' "$f" | sort -u) | sed 's/^/           /'
+      FAIL=1; TERMS=1
+    fi
+  done
+  n_en=$(grep -c '<li class="promise">' en/terms/index.html)
+  for f in de/terms/index.html ar/terms/index.html; do
+    n=$(grep -c '<li class="promise">' "$f")
+    [ "$n" = "$n_en" ] || { say FAIL "$f says $n things where the English terms page says $n_en"; FAIL=1; TERMS=1; }
+  done
+fi
+for page in en de ar; do
+  for f in "$page/index.html" "$page/privacy/index.html" "$page/terms/index.html"; do
+    grep -q "href=\"/$page/terms/\"" "$f" \
+      || { say FAIL "$f does not link the $page terms page"; FAIL=1; TERMS=1; }
+  done
+done
+[ "$TERMS" = 0 ] && say PASS "three terms pages, reachable, naming one set of proofs and the commit they were written against"
+
+# ------------------------------------------------- being told of a new release
+#
+# 097, rule 79. **No form, and not because we chose not to build one**: this
+# site's own policy refuses one — `site/_headers` carries `form-action 'none'`,
+# so a form here would be blocked by the browser we told to block it. The way
+# to ask is therefore a `mailto:` with the subject already in it, and the way
+# off it is a word a person can send back.
+#
+# Read from the **tree** and never from the wire. Cloudflare rewrites a mailto
+# into its own obfuscated form on the way out — measured on yourvoicesapp.com —
+# so a `curl` of the live page cannot see the address, and a guard that fetched
+# the page would go red on a link that works.
+UPD=0
+for f in en/index.html de/index.html ar/index.html \
+         en/terms/index.html de/terms/index.html ar/terms/index.html; do
+  grep -qF 'mailto:zprivacy@mono-peak.com?subject=Updates' "$f" \
+    || { say FAIL "$f offers no way to be told of a new release"; FAIL=1; UPD=1; }
+  grep -qF '«stop»' "$f" \
+    || { say FAIL "$f does not say how to be taken off it, which is the word «stop»"; FAIL=1; UPD=1; }
+done
+# A language's two copies are one block, byte for byte, like the publisher's.
+for page in en de ar; do
+  a=$(grep -oE '<p class="note">[^<]*«stop»[^<]*</p>' "$page/index.html" | head -1)
+  b=$(grep -oE '<p class="note">[^<]*«stop»[^<]*</p>' "$page/terms/index.html" | head -1)
+  if [ -z "$a" ] || [ "$a" != "$b" ]; then
+    say FAIL "the release block differs between $page/index.html and $page/terms/index.html"
+    FAIL=1; UPD=1
+  fi
+done
+FORMS=$(grep -rniE '<form|<input|<textarea|<button' --include='*.html' . 2>/dev/null || true)
+if [ -n "$(printf '%s' "$FORMS" | tr -d '[:space:]')" ]; then
+  say FAIL "a form control is on this site, and site/_headers says form-action 'none':"
+  printf '%s\n' "$FORMS" | cut -c1-120 | sed 's/^/           /'
+  FAIL=1; UPD=1
+fi
+[ "$UPD" = 0 ] && say PASS "one way to be told of a release — a mailto with its subject, the same block on six pages — and no form on this site"
+
+# ------------------------------------------------- no character nobody can see
+#
+# G55's law, over the pages instead of over the one list, through **the same
+# script**: the categories are the point, and a second copy of them is a copy
+# that can fall behind. The site is where a sentence of ours is read by
+# somebody who cannot ask us what it says, so an invisible character matters
+# more here than in the app, not less.
+if command -v python3 >/dev/null 2>&1; then
+  if OUT=$(cd .. && python3 scripts/check_no_invisible_sentence.py --served site 2>&1); then
+    say PASS "$(printf '%s' "$OUT" | tail -1)"
+    printf '%s\n' "$OUT" | grep 'directional mark:' | sed 's/^/         /' || true
+  else
+    say FAIL "a served page carries a character nobody can see:"
+    printf '%s\n' "$OUT" | sed 's/^/           /'
+    FAIL=1
+  fi
+fi
+
 # ---------------------------------------------------------------- the publisher
 #
 # The same four facts, in every place that states them, with no place able to
@@ -313,7 +434,7 @@ LEGAL=0
 if grep -rn 'yourvoices.app@mono-peak.com' --include='*.html' . 2>/dev/null; then
   say FAIL "the platform's mailbox is still on a Z page (above)"; FAIL=1; LEGAL=1
 fi
-for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html; do
+for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html; do
   [ -f "$f" ] || continue
   # The country's name is translated on purpose — «Schweden» on the German page —
   # so the guarded part of the address is the street, the postcode and the city,
@@ -324,14 +445,23 @@ for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/priv
 done
 # A language's two pages carry one block, byte for byte. The block is
 # translated, so the comparison is within a language and not across the three.
+# Three pages a language now, since 097's terms page: the block is one block
+# wherever a language states it, and the comparison is against that language's
+# first page in every case — so a drift names the two pages that disagree and
+# not a chain.
 for page in en de ar; do
-  [ -f "$page/privacy/index.html" ] || continue
   a=$(grep -oE '<div class="legal">.*</div>' "$page/index.html" | head -1)
-  b=$(grep -oE '<div class="legal">.*</div>' "$page/privacy/index.html" | head -1)
-  if [ -z "$a" ] || [ "$a" != "$b" ]; then
-    say FAIL "the publisher block differs between $page/index.html and $page/privacy/index.html"
-    FAIL=1; LEGAL=1
+  if [ -z "$a" ]; then
+    say FAIL "$page/index.html carries no publisher block at all"; FAIL=1; LEGAL=1; continue
   fi
+  for other in privacy terms; do
+    [ -f "$page/$other/index.html" ] || continue
+    b=$(grep -oE '<div class="legal">.*</div>' "$page/$other/index.html" | head -1)
+    if [ "$a" != "$b" ]; then
+      say FAIL "the publisher block differs between $page/index.html and $page/$other/index.html"
+      FAIL=1; LEGAL=1
+    fi
+  done
 done
 [ "$LEGAL" = 0 ] && say PASS "one publisher block, four facts, the same in every place that states them"
 

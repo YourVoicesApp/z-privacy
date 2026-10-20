@@ -32,6 +32,7 @@ this page has to account for.
 """
 import io
 import os
+import pathlib
 import re
 import sys
 
@@ -151,12 +152,97 @@ def path(lits):
     return bad
 
 
+# **What the interface really speaks, and what it still owes** — 097.
+#
+# The site said «the interface is English today» for two days after it stopped
+# being true, in five sentences on three pages, and nothing went red: a
+# sentence is not a number, so no guard was reading it. The lead's ruling is
+# that a number written in two places needs a gate that compares them, which
+# is the same defect as C-15 in `docs/CLAIMS.md` one floor up.
+#
+# So the pages carry the two numbers in a span each, this reads them, and the
+# answer comes from the **one** place the app measures them: the floor table in
+# `scripts/check_the_one_list.py`, which the app's own `G50`/`G51` holds equal
+# to the tree on every run. One source, two readers.
+#
+# The third number is the claim itself. A list whose values are still the
+# English source is not a language the interface speaks — measured, not
+# declared: `sv` differs from English in exactly one value, `thisLanguageName`,
+# which is the language's own name. So the languages a page may name are the
+# ones whose list differs from the English in more values than it matches, and
+# a page naming one it does not have, or missing one it does, is a red.
+SPEAKS = {
+    'en': ('English', 'German'),
+    'de': ('Englisch', 'Deutsch'),
+    'ar': ('الإنجليزيّة', 'الألمانيّة'),
+}
+NOT_SPOKEN = {'en': ('Swedish',), 'de': ('Schwedisch',), 'ar': ('السويديّة',)}
+TRANSLATED = {'de': 'German'}   # what the measurement must come back with
+
+
+def the_interface():
+    import importlib.util
+    import json
+
+    bad = 0
+    l10n = pathlib.Path(ROOT, 'apps/flutter_app/lib/l10n')
+    en = json.loads((l10n / 'app_en.arb').read_text(encoding='utf-8'))
+    keys = [k for k in en if not k.startswith('@') and isinstance(en[k], str)]
+    speaks = {}
+    for arb in sorted(l10n.glob('app_*.arb')):
+        code = arb.stem.replace('app_', '')
+        if code == 'en':
+            continue
+        other = json.loads(arb.read_text(encoding='utf-8'))
+        differ = sum(1 for k in keys if k in other and other[k] != en[k])
+        if differ * 2 > len(keys):
+            speaks[code] = differ
+    if sorted(speaks) != sorted(TRANSLATED):
+        say('FAIL', 'the lists that are really translated are %s, and the site is written for %s'
+            % (sorted(speaks) or ['none'], sorted(TRANSLATED)))
+        bad = 1
+
+    spec = importlib.util.spec_from_file_location(
+        'one_list', pathlib.Path(ROOT, 'scripts/check_the_one_list.py'))
+    one = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(one)
+    owed, owed_files = sum(one.OWED.values()), len(one.OWED)
+
+    for lang in ('en', 'de', 'ar'):
+        page = read('site', lang, 'index.html')
+        for cls, want, what in (('owed', owed, 'sentences still owed'),
+                                ('owed-files', owed_files, 'screens they are in')):
+            found = re.findall(r'<span class="%s">([0-9]+)</span>' % cls, page)
+            if not found:
+                say('FAIL', 'site/%s/index.html states no «%s», so the %s is on no page a guard reads'
+                    % (lang, cls, what))
+                bad = 1
+            elif any(int(x) != want for x in found):
+                say('FAIL', 'site/%s/index.html says %s where the one list owes %d (%s)'
+                    % (lang, ' and '.join(found), want, what))
+                bad = 1
+        for word in SPEAKS[lang]:
+            if word not in page:
+                say('FAIL', 'site/%s/index.html does not name «%s» among the languages the interface speaks'
+                    % (lang, word))
+                bad = 1
+        for word in NOT_SPOKEN[lang]:
+            if word in page:
+                say('FAIL', 'site/%s/index.html names «%s», and that list is still the English source'
+                    % (lang, word))
+                bad = 1
+    if not bad:
+        say('PASS', 'the interface speaks what the lists really hold (%s), and the three pages owe the one list\u2019s own numbers: %d sentences in %d screens'
+            % (', '.join('%s %d values' % (c, n) for c, n in sorted(speaks.items())), owed, owed_files))
+    return bad
+
+
 def main():
     lits = dart_strings()
     if len(lits) < 200:
         say('FAIL', 'only %d strings were read out of the app, so nothing was really compared' % len(lits))
         return 1
-    bad = crates() | fonts() | glossary(lits) | path(lits)
+    bad = crates() | fonts() | glossary(lits) | path(lits) | the_interface()
     print()
     print('every number on the site has a deed behind it' if not bad
           else 'A NUMBER ON THE SITE HAS NO DEED BEHIND IT')

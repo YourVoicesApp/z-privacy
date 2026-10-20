@@ -50,7 +50,71 @@ L10N = pathlib.Path('apps/flutter_app/lib/l10n')
 REFUSED = ('Cc', 'Cf', 'Co', 'Cs')
 
 
+# **The ordinary line endings and the tab**, which an `.arb` value may not
+# carry (a sentence needing two lines is two sentences) and an HTML file must:
+# the law is the same law, and the one difference is written here rather than
+# in a second copy of the categories.
+LAYOUT = '\n\r\t'
+
+# **The two directional marks, allowed on a served page by name — and counted.**
+#
+# `U+200F` stands once on the Arabic privacy page, before a Latin product name
+# inside an Arabic sentence. It is the same job the app does with an isolate
+# (`a_name_in_a_sentence_needs_an_isolate`), and on a page HTML could do it
+# instead, with `<bdi>` or a `dir` attribute, which a reviewer can see.
+#
+# So it is not refused and not waved through either: the run prints every one
+# it found with its place, because the whole argument of this gate is that an
+# invisible character nobody counted is one nobody reviewed. A new one appears
+# in the output the day it is added, under a PASS, where a reader meets it.
+MARKS = {'\u200e': 'a Latin run inside an Arabic sentence',
+         '\u200f': 'an Arabic sentence around a Latin run'}
+
+
+def served(root: pathlib.Path) -> int:
+    """The same refusal over the pages a visitor is served — 097.
+
+    The site is where a sentence of ours is read by somebody who cannot ask
+    us what it says, so an invisible character matters more there than in the
+    app, not less. It is checked here rather than in a second script because
+    the categories are the point: a copy of this list is a copy that can fall
+    behind the one the app is held to.
+    """
+    files = sorted(root.rglob('*.html'))
+    if not files:
+        print(f'G55 there is nothing served to read at {root}')
+        return 1
+    bad = []
+    marks = []
+    for path in files:
+        for line_no, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+            for i, ch in enumerate(line):
+                if unicodedata.category(ch) not in REFUSED or ch in LAYOUT:
+                    continue
+                around = line[max(0, i - 20):i] + '\u27e8here\u27e9' + line[i + 1:i + 20]
+                if ch in MARKS:
+                    marks.append(
+                        f'{path} line {line_no}: U+{ord(ch):04X} '
+                        f'{unicodedata.name(ch)} for {MARKS[ch]} \u2014 \u2026{around}\u2026')
+                    continue
+                bad.append(
+                    f'{path} line {line_no} carries '
+                    f'U+{ord(ch):04X} {unicodedata.name(ch, "an unnamed code point")} '
+                    f'at character {i}: \u2026{around}\u2026')
+    for line in bad:
+        print(f'G55 {line}')
+    if bad:
+        return 1
+    for line in marks:
+        print(f'  and a directional mark: {line}')
+    print(f'{len(files)} served pages, and not one invisible character in any of them '
+          f'but {len(marks)} directional mark(s), each printed above')
+    return 0
+
+
 def main() -> int:
+    if len(sys.argv) > 2 and sys.argv[1] == '--served':
+        return served(pathlib.Path(sys.argv[2]))
     files = sorted(L10N.glob('*.arb'))
     if not files:
         print(f'G55 there is no list to read at {L10N}')
