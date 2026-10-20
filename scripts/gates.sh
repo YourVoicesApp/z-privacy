@@ -982,6 +982,68 @@ else
   fail "G46 a screen hands a history to the core:"; printf '%s\n' "$G46_DART" | sed 's/^/        /'
 fi
 
+# ---------------------------------------------------------------- G57
+# **One mailbox, and the public pages agree on it** — the outside model's ن8,
+# 19 October 2026.
+#
+# It measured three public sentences for one fact: `README.md` and
+# `packaging/linux/README.txt` printed `yourvoices.app@mono-peak.com` — the
+# other product's address — while the site and the privacy pages printed
+# `zprivacy@mono-peak.com`. A person who downloaded the archive wrote to a
+# mailbox that is not this product's. The site's address is the one kept,
+# because that is the one a stranger reaches first and the one the privacy
+# pages name as the contact for a GDPR request.
+#
+# Read from the site rather than written here: the gate has no address of its
+# own, so there is nothing for it to disagree with. Whatever the site says is
+# what the two READMEs must say.
+SITE_PAGE=site/en/index.html
+G57_FILES="README.md packaging/linux/README.txt"
+if [ -f "$SITE_PAGE" ]; then
+  G57_SITE=$(grep -oE '[a-zA-Z0-9._%-]+@mono-peak\.com' "$SITE_PAGE" | sort -u | head -1)
+  G57_WRONG=""
+  for f in $G57_FILES; do
+    [ -f "$f" ] || continue
+    for found in $(grep -oE '[a-zA-Z0-9._%-]+@mono-peak\.com' "$f" | sort -u); do
+      [ "$found" = "$G57_SITE" ] || G57_WRONG="$G57_WRONG $f:«$found»"
+    done
+  done
+  if [ -n "$G57_SITE" ] && [ -z "$G57_WRONG" ]; then
+    pass "G57 one mailbox on every public page: «$G57_SITE»"
+  else
+    fail "G57 the site says «$G57_SITE» and these say something else:$G57_WRONG — a person writes to whichever page they read"
+  fi
+else
+  skip "G57 one mailbox on every public page" "no $SITE_PAGE in this tree"
+fi
+
+# ---------------------------------------------------------------- G58
+# **The contract paper counts the ZCFG names that the code allows** — the
+# outside model's N-ZCFG-DOC.
+#
+# `docs/SECURITY_INVARIANTS.md` said «four names» for a year after `config.rs`
+# grew to eight (the four layout bits of the work surface). Not a leak — the
+# model graded it a stale contract — but the paper is the thing an auditor
+# reads, and a paper that undercounts the file it describes is the quiet half
+# of G18: the allowlist is the promise, and the promise is published here.
+#
+# So the number in the paper is read from the array in the code. A ninth name
+# reds this gate until somebody writes down what it is and why it is allowed.
+G58_CONFIG=z_core/src/config.rs
+G58_PAPER=docs/SECURITY_INVARIANTS.md
+if [ -f "$G58_CONFIG" ] && [ -f "$G58_PAPER" ]; then
+  G58_N=$(grep -oP 'const ALLOWED: \[&str; \K[0-9]+' "$G58_CONFIG" | head -1)
+  G58_WORDS="? واحد اثنان ثلاثة أربعة خمسة ستّة سبعة ثمانية تسعة عشرة"
+  G58_WORD=$(printf '%s' "$G58_WORDS" | cut -d' ' -f$((G58_N + 1)))
+  if [ -n "$G58_N" ] && grep -q "$G58_WORD أسماء" "$G58_PAPER"; then
+    pass "G58 the contract paper says «$G58_WORD أسماء» and config.rs allows $G58_N"
+  else
+    fail "G58 config.rs allows $G58_N ZCFG names and the paper does not say «$G58_WORD أسماء» — the published promise undercounts the file it describes"
+  fi
+else
+  skip "G58 the paper counts the ZCFG names the code allows" "no config.rs or no paper"
+fi
+
 # ---------------------------------------------------------------- G56
 # **Every claim this product makes is in one file, with its limit and its
 # proof** — 094, the owner's own order of 19 October 2026: «نجعل ملف مراجعة في
