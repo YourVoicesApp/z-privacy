@@ -223,12 +223,30 @@ jobs:
       # — is the same build. `--remap-path-prefix` and not Cargo's `trim-paths`
       # for the reason the Linux twin gives: that one is still unstable in this
       # cargo. The second half, the proof, is `scripts/package_windows.sh`.
+      #
+      # **And the folders are read from their own variables** — 098 item 3,
+      # after the Windows session measured `.cargo\registry\src\…` **242
+      # times** in an installed `z_bridge.dll` on 20 October. A typed
+      # `$USERPROFILE\.cargo` is right only while nobody moves the registry:
+      # `CARGO_HOME` and `RUSTUP_HOME` exist for exactly that, a runner image
+      # may set either, and a prefix that does not match the path the compiler
+      # recorded removes **nothing at all** — silently, because
+      # `--remap-path-prefix` has no way to say «that prefix was never there».
+      # The same rule item 1 follows for the redistributable folder, and the
+      # homes are printed so the run says which it used.
       - name: The paths this machine would otherwise write down
         shell: bash
         run: |
           echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> "$GITHUB_ENV"
-          remap="--remap-path-prefix=$USERPROFILE\\.cargo\\registry\\src=/crates"
-          remap="$remap --remap-path-prefix=$USERPROFILE\\.rustup\\toolchains=/rust"
+          cargo_home="$CARGO_HOME"
+          if [ -z "$cargo_home" ]; then cargo_home="$USERPROFILE\\.cargo"; fi
+          rustup_home="$RUSTUP_HOME"
+          if [ -z "$rustup_home" ]; then rustup_home="$USERPROFILE\\.rustup"; fi
+          echo "cargo home:  $cargo_home"
+          echo "rustup home: $rustup_home"
+          remap="--remap-path-prefix=$cargo_home\\registry\\src=/crates"
+          remap="$remap --remap-path-prefix=$cargo_home\\git\\checkouts=/git"
+          remap="$remap --remap-path-prefix=$rustup_home\\toolchains=/rust"
           remap="$remap --remap-path-prefix=$USERPROFILE\\AppData\\Local\\Pub\\Cache=/pub"
           remap="$remap --remap-path-prefix=$GITHUB_WORKSPACE=/zprivacy"
           echo "RUSTFLAGS=${RUSTFLAGS:-} $remap" >> "$GITHUB_ENV"
@@ -326,6 +344,57 @@ jobs:
             Write-Host "::error::the bundle is missing $($missing -join ', ') — the application would not start on a machine without the Visual C++ runtime"
             exit 1
           }
+
+      # **And nothing in the three files we built says who built them** — 098
+      # item 3, G53's twin, run here because this is where the files are and
+      # Linux cannot read them.
+      #
+      # The Windows session measured `C:\Users\runneradmin\.cargo\registry\src\index.crates.io-…`
+      # **242 times** in an installed `z_bridge.dll` on 20 October. What it
+      # measured was not this job's output — that file carried no BUILD-INFO
+      # and no hash beside it — so this step proves the job rather than
+      # explaining that file: the remap above is told where cargo is, and this
+      # says what it did.
+      #
+      # **Three files, because they are the three we write**: the runner, the
+      # core, and the Dart snapshot. The Microsoft runtime item 1 put beside
+      # them is **not** searched, and that is a statement rather than an
+      # omission — a file we did not compile cannot be remapped by us, what it
+      # records about its own builder is its builder's business, and
+      # `third-party/msvc-runtime-NOTICE.txt` says whose it is. The promise
+      # this keeps is about the name of **our** machine.
+      #
+      # Read as bytes and compared as ASCII, because a path inside a binary is
+      # not a line of text: Rust writes them as UTF-8 and `Select-String` over
+      # a DLL reports nothing useful.
+      - name: Nothing in the three files we built says who built them
+        shell: pwsh
+        working-directory: apps/flutter_app
+        run: |
+          $out = "build/windows/x64/runner/Release"
+          $ours = @("zprivacy.exe", "z_bridge.dll", "data/app.so")
+          $needles = @("runneradmin", "D:\a\", "\.cargo\registry", "/home/")
+          $left = @()
+          foreach ($name in $ours) {
+            $path = Join-Path $out $name
+            if (-not (Test-Path $path)) {
+              Write-Host "::error::$path is not in the build, so nothing was searched"
+              exit 1
+            }
+            $bytes = [System.IO.File]::ReadAllBytes($path)
+            $text = [System.Text.Encoding]::ASCII.GetString($bytes)
+            foreach ($n in $needles) {
+              $count = [regex]::Matches($text, [regex]::Escape($n)).Count
+              if ($count -gt 0) { $left += "$name carries ${n} $count time(s)" }
+            }
+            Write-Host ("{0,-14} {1,12} bytes searched" -f $name, $bytes.Length)
+          }
+          if ($left.Count -gt 0) {
+            $left | ForEach-Object { Write-Host "::error::$_" }
+            Write-Host "::error::the remap did not reach those paths - read the cargo home printed earlier in this run"
+            exit 1
+          }
+          Write-Host "no path from this machine in any of the three"
 
       - name: Stage the folder
         shell: bash

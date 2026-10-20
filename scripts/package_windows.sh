@@ -125,15 +125,32 @@ printf '  %s\n' "z_bridge.dll  $BRIDGE_SHA"
 #     cache live;
 #   * `/home/` — because the Dart snapshot and the crate list are built from
 #     text that may have crossed from a Linux desk, and a needle that costs
-#     nothing to ask for is one nobody has to remember.
+#     nothing to ask for is one nobody has to remember;
+#   * `\.cargo\registry` — 098 item 3, the fourth: the Windows session found
+#     `C:\Users\runneradmin\.cargo\registry\src\index.crates.io-…` 242
+#     times in an installed `z_bridge.dll`, and the needle above it only
+#     catches that path while the runner's user is named `runneradmin`. A
+#     registry path with any other name in it is the same leak, so the needle
+#     is the part that does not change. One list with the job's own, because
+#     they are one list.
+#
+# **And the three files we did not write are not searched** — 098 item 1 put
+# Microsoft's C++ runtime in this folder, and a binary from Microsoft's own
+# build agents may well record `D:\a\…` of its own. We cannot remap a file we
+# did not compile; what it says about its builder is its builder's business,
+# and `third-party/msvc-runtime-NOTICE.txt` names whose it is. The promise is
+# about the name of **our** machine, so the exclusion is by name and is
+# printed, never a quiet `|| true`.
 #
 # Searched with `grep -a`, so a DLL is read as text rather than skipped: the
 # Linux twin learned that from 195 strings nobody had looked inside a binary
 # for.
 step "checking that no path from the builder is left"
 LEFT=""
-for needle in 'D:\a\' 'C:\Users\runneradmin' '/home/'; do
-  found=$(LC_ALL=C grep -rla --binary-files=binary -F "$needle" "$STAGE" 2>/dev/null)
+THEIRS="--exclude=vcruntime140.dll --exclude=vcruntime140_1.dll --exclude=msvcp140.dll"
+for needle in 'D:\a\' 'C:\Users\runneradmin' '/home/' '\.cargo\registry'; do
+  # shellcheck disable=SC2086 # three separate --exclude words, on purpose
+  found=$(LC_ALL=C grep -rla --binary-files=binary $THEIRS -F "$needle" "$STAGE" 2>/dev/null)
   if [ -n "$found" ]; then
     LEFT="$LEFT
     «$needle»:
@@ -144,7 +161,10 @@ if [ -n "$LEFT" ]; then
   printf '%s\n' "$LEFT"
   die "the archive would carry paths from the machine that built it. Nothing was written."
 fi
-printf '  no builder path in any of the %s files\n' "$(find "$STAGE" -type f | wc -l)"
+printf '  no builder path in any of the %s files searched\n' \
+  "$(($(find "$STAGE" -type f | wc -l) - 3))"
+printf '  %s\n' "3 files not searched, because we did not compile them:" \
+  "    vcruntime140.dll, vcruntime140_1.dll, msvcp140.dll (see third-party/)"
 
 # ---------------------------------------------------------------- the archive
 # A zip, because this is Windows and a `.tar.gz` is a second program to install

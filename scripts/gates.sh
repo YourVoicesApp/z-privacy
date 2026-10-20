@@ -1082,14 +1082,18 @@ RUNTIME_NOTICE=packaging/third-party/msvc-runtime-NOTICE.txt
 G60_DLLS="vcruntime140.dll vcruntime140_1.dll msvcp140.dll"
 
 if [ -f "$WINJOB" ]; then
+  # **Each window ends at the next step, not at a step named here.** Item 3
+  # inserted a step between the assert and the staging, and a boundary spelled
+  # by name had quietly widened the assert's window to include it — a gate
+  # green because it was reading somebody else's lines.
   G60_COPY=$(awk '
-    /^      - name: The runtime the application needs/ {inside=1}
-    inside && /^      - name: The three are in the bundle/ {inside=0}
+    /^      - name: The runtime the application needs/ {inside=1; next}
+    inside && /^      - name: / {inside=0}
     inside && $0 !~ /^[[:space:]]*#/ {print}
   ' "$WINJOB")
   G60_ASSERT=$(awk '
-    /^      - name: The three are in the bundle/ {inside=1}
-    inside && /^      - name: Stage the folder/ {inside=0}
+    /^      - name: The three are in the bundle/ {inside=1; next}
+    inside && /^      - name: / {inside=0}
     inside && $0 !~ /^[[:space:]]*#/ {print}
   ' "$WINJOB")
   G60_MISSING=""
@@ -1110,6 +1114,79 @@ if [ -f "$RUNTIME_NOTICE" ] && grep -q "msvc-runtime-NOTICE.txt" "$WINJOB" 2>/de
   pass "G60 Microsoft's redistribution notice is in the tree and travels with every Windows release"
 else
   fail "G60 the runtime ships and its notice does not travel: $RUNTIME_NOTICE must exist and the job must copy it"
+fi
+
+# ---------------------------------------------------------------- G61
+# **A release says nothing about its builder, on Windows too** — 098 item 3,
+# from the Windows session's measurement of 20 October: the `z_bridge.dll`
+# installed on the owner's machine carries
+# `C:\Users\runneradmin\.cargo\registry\src\index.crates.io-…` **242
+# times**. The file measured was not that job's output, so this proves the job
+# rather than that file.
+#
+# Two halves, as on Linux: the compiler is told to write relative-looking paths
+# (`--remap-path-prefix`, from `CARGO_HOME` and `RUSTUP_HOME` rather than a
+# typed `$USERPROFILE\.cargo`, because a prefix that does not match removes
+# nothing and says nothing), and then what was built is **searched**. The
+# search runs in the job, on the three files we write, because the artefact is
+# there and not here.
+#
+# **This is a check on the text, and it says so** — the same sentence G60
+# carries. What it can refuse is a job that has stopped naming a needle or a
+# file, and a packaging script whose list has drifted from the job's. They are
+# one list, so they are read as one.
+G61_NEEDLES='runneradmin
+D:\a\
+\.cargo\registry
+/home/'
+G61_OURS="zprivacy.exe z_bridge.dll data/app.so"
+G61_MISSING=""
+
+if [ -f "$WINJOB" ]; then
+  G61_STEP=$(awk '
+    /^      - name: Nothing in the three files we built/ {inside=1; next}
+    inside && /^      - name: / {inside=0}
+    inside && $0 !~ /^[[:space:]]*#/ {print}
+  ' "$WINJOB")
+  printf '%s\n' "$G61_NEEDLES" | while IFS= read -r n; do
+    [ -n "$n" ] || continue
+    printf '%s\n' "$G61_STEP" | grep -qF -- "$n" || printf 'job:%s\n' "$n"
+  done > /tmp/g61.$$
+  for f in $G61_OURS; do
+    printf '%s\n' "$G61_STEP" | grep -qF -- "$f" || printf 'job:%s\n' "$f" >> /tmp/g61.$$
+  done
+  # The remap's own half: read from the variables, not from a typed home.
+  if ! grep -q 'cargo_home="$CARGO_HOME"' "$WINJOB"; then
+    printf 'job:CARGO_HOME\n' >> /tmp/g61.$$
+  fi
+  G61_MISSING=$(tr '\n' ' ' < /tmp/g61.$$)
+  rm -f /tmp/g61.$$
+  if [ -n "$G61_STEP" ] && [ -z "$G61_MISSING" ]; then
+    pass "G61 the Windows job searches the three files it builds for the four paths of the machine that built them (read as text: Linux cannot read that artefact)"
+  else
+    fail "G61 the Windows job no longer names: $G61_MISSING — 242 of one of these needles were measured in an installed library"
+  fi
+else
+  skip "G61 the Windows job proves its own paths" "no $WINJOB in this tree"
+fi
+
+G61_SCRIPT=scripts/package_windows.sh
+if [ -f "$G61_SCRIPT" ]; then
+  G61_LIST=$(grep -n 'for needle in' "$G61_SCRIPT" | head -1)
+  G61_LEFT=""
+  printf '%s\n' "$G61_NEEDLES" | while IFS= read -r n; do
+    [ -n "$n" ] || continue
+    printf '%s\n' "$G61_LIST" | grep -qF -- "$n" || printf 'script:%s\n' "$n"
+  done > /tmp/g61s.$$
+  G61_LEFT=$(tr '\n' ' ' < /tmp/g61s.$$)
+  rm -f /tmp/g61s.$$
+  # `runneradmin` is in the script as the whole home it belongs to, which is
+  # the same needle with its own prefix; asked for by the part that matters.
+  if [ -z "$G61_LEFT" ]; then
+    pass "G61 the packaging script and the job search for the same four paths — one list"
+  else
+    fail "G61 the packaging script's list has drifted from the job's: $G61_LEFT"
+  fi
 fi
 
 # ---------------------------------------------------------------- G56
