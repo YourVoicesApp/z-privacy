@@ -1,0 +1,37 @@
+# 096 — What is typed lands in the first part as original; the middle shows only what leaves
+
+**Owner, 20 October (rule 72-ب, «نعم»):** «هذا النص يجب أن يظهر في القسم الأول من الشاشة حتى يتمكن المستخدم من تغطية الأمور الخاصة… حتى الرسالة التي ترسل إلى النموذج مع الوثيقة يجب أن تظهر في الشاشة الأولى.» The rule, as written in `docs/RULES_AR.md` 72-ب: what is written in the chat box is an *entering* thing like the document. With a document above it, it is the addition under the document after `--- Request ---`; with none, it is the whole original. In the first part the person covers by hand what is private in it, exactly as in the document. The middle part shows nothing but what will leave, protected: document and request together after tokenisation. Rule 64's sentence «يظهر كما هو في الشاشة الوسطى» is corrected: as written in the first part, protected in the middle. **No unprotected text in the middle part, ever.**
+
+**Base:** lead line at `2b4fad9` or later. e2's branch `fix/what-is-typed-is-original`, from the lead line's head after sitting four merges (it touches `workspace.dart`, which sitting four does not). ed's half, if the core needs one (below), on `fix/a-span-can-land-in-the-request` first; e2 waits for it or works against the contract this paper fixes.
+**Builders:** ed (core), e2 (glass). Before publishing, with 095.
+**Law:** rules 64, 72, 72-أ, 72-ب, 73; 085 (one token = one word binds only what the app extracts); «protection may not change how a document reads»; «one answer may not answer another kind's question»; «a test door may not gate a product act»; «make the wrong state unrepresentable».
+
+## What stands today (measured by the lead on `2b4fad9`)
+
+- The one box (`_TheQuestion`, key `workspace-question`) sits in the first part under the document. What is typed stays **in the box**; `setQuestion` hands it to the core and `questionSafe` comes back.
+- The middle column draws `bench.questionSafe` as a footer under the protected document (`workspace.dart` ~2168–2185) — so the middle shows the request **protected**, which is right, and the first part shows it only as the raw text of a `TextField`, which is the fault: a word in it cannot be covered by hand, a suggestion in it (`QuestionView.marks`) is not reviewed where the document's are, and the person's eye finds «what entered» in two shapes.
+- The core: `set_question(session, text) -> QuestionView { text, marks }` — the question has its own marks, but every hand door (`inspect_selection`, `protect_all_matches`, `unprotect`, `protect_cell_in_lines`, `unprotect_every_place`) takes a `Span` over the **document's** offsets. There is no door for a hand selection inside the request.
+
+## Build
+
+### ed · a span can land in the request (the core half)
+
+The person's hand must reach a word in the request through the same doors it reaches a word in the document, with the same outcomes and the same audit, so that the first part is one original and not two. The lead names the law and leaves the shape to you, with one preference: **one text, one offset space**. The first part draws document + `--- Request ---` + request as one text today in the payload; if the session can hold the entered original as one text with the request's range known (`where the request begins` as `PayloadView` already knows where pages begin), every existing door works unchanged and the wrong state (a span that says «request» pointing into the document) cannot be written. If the document's immutability (it is a reading; the request is edited) makes that wrong, then a `Span` that names its place (`Document | Request`) is the second shape — say which and why in the commit. Either way:
+
+- `set_question` keeps its contract; a new question still makes the payload stale on purpose.
+- The request's marks are reviewed by the same acts as the document's (answer, take by hand, undo, undo every place); «one answer may not answer another kind's question» holds across the seam (a name answered in the document is answered in the request too, because it is the same block — rule 49, and the vault is one).
+- Audit: `payload_to_take_out`'s exits see no new door; the question alone still leaves by `build_the_question_alone`.
+- Tests: a hand selection in the request takes the word; the same word in document and request takes one token; undo in the request; a span that crosses the `--- Request ---` line is refused (it is a line, so «protection may not change how a document reads» already says so — pin it); the empty-document case (request is the whole original).
+
+### e2 · the first part is the original, the middle is what leaves (the glass half)
+
+- **The first part draws the request as original text**, the way `DocumentText` draws the document: under the document after a drawn `--- Request ---` line (rule 64's line stays), or alone when there is no document. Marks from the core show there, as the document's do; the hand selection protects there, as in the document; tapping a protected word there asks the same question. The same column, the same gutter, the same page arithmetic.
+- **The box is where the request is edited**, not where it is shown: the person types, and on the press (the arrow) the text is set and **appears in the first part**; editing again (the box keeps the text until it goes — the_chat's own rule) rewrites the request in the first part. One text in one place; the box is its editor, not a second copy on the glass. Say in the commit which of the two you chose: the box stays under the first part with the request drawn above it, or the request's rendered text *is* editable in place (rule 76 later wants the first part editable; do not build 76 now, but do not build against it).
+- **The middle shows only what leaves**: the protected document and the protected request as one payload (`PayloadView.text`), which it already does for the document; the `questionSafe` footer is no longer a second drawing — delete it (rule 35), the payload carries the request.
+- **An empty surface** (rule 72): the box alone in the first part; after the first press the request stands in the first part as the whole original, protected in the middle, and goes to the chat.
+- **Sentences**: the first part's eyebrow stays «Original · local only»; the middle's stays «Safe · what the AI will receive». Any new sentence goes through the one list (092) with its German.
+- **Guards** (English suite): `a name typed into the request is a token in the Safe column` stays and gains: the same name is **drawn in the first part as a mark**, and a hand selection on a word in the request protects it (the Safe column shows the token, the first part shows the cover); «72 · with no document the box is there, and what is typed is what leaves» gains: what is typed is drawn in the first part before it leaves; a new guard: **no unprotected text in the middle part** — with a request holding a name, the middle's text contains the token and not the name, before and after the press.
+
+## Measurement
+
+Rust: `cargo test`, clippy, the span tests above. Dart: the guards above; `scripts/gates.sh` green from a plain debug build; the three numbers. The lead smokes on a scratch `XDG_DATA_HOME`: type «Herr Thomas Müller, bitte um Rückruf» on an empty surface → the sentence stands in the first part, Müller marked; cover «Rückruf» by hand → a token in the middle; press → the chat shows the question as it left; then with ألماني 1 above it, the same under the line.
