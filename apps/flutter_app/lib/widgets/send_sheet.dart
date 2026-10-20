@@ -44,6 +44,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/protected_pdf.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -246,7 +247,7 @@ class _SendSheetState extends State<SendSheet> {
     if (answerToken == null) {
       setState(() {
         _saving = false;
-        _trouble = 'Z Privacy could not build the PDF — its answer page had no token. Nothing was written.';
+        _trouble = sentences.couldNotBuildThePdf;
       });
       return;
     }
@@ -354,13 +355,12 @@ class _SendSheetState extends State<SendSheet> {
                 // reviewing is done on the work surface; what happens here is
                 // choosing who answers. The counts line below it is unchanged,
                 // and it is the only place the character count is said.
-                const Text('Who answers', style: Zc.h2),
+                Text(sentences.whoAnswers, style: Zc.h2),
                 const SizedBox(height: 4),
                 Text(
                   payload == null
-                      ? 'There is nothing to send.'
-                      : '${payload.protectedCount} values replaced · '
-                            '${payload.text.length} characters would leave this device.',
+                      ? sentences.thereIsNothingToSend: sentences.valuesReplacedCharacters(
+                          payload.protectedCount, payload.text.length),
                   style: Zc.small,
                 ),
               ],
@@ -396,13 +396,13 @@ class _SendSheetState extends State<SendSheet> {
       // A session nobody named is already «Session N», and «Session 3 «Session
       // 3»» is the app reading its own placeholder back to the person (081).
       final named = whose.name == nameForSession(whose.number)
-          ? 'Session ${whose.number}'
+          ? sentences.sessionNumber(whose.number)
           // **Isolated** — the owner's test of 16 October: an Arabic name in
           // an English line pulls the number and the quotes into its own
           // direction. One pair of characters, one function, every sentence.
-          : 'Session ${whose.number} «${theirOwnWord(whose.name)}»';
+          : sentences.sessionNumberNamed(whose.number, theirOwnWord(whose.name));
       return Text(
-        '$named · these names are this session’s',
+        sentences.theseNamesAreThisSessions(named),
         style: Zc.small.copyWith(color: Zc.ink4),
       );
     }
@@ -411,7 +411,7 @@ class _SendSheetState extends State<SendSheet> {
       // and it is shut. Not a fault and not a warning: a true sentence about
       // this text, and the only thing in this state that would go unsaid.
       return Text(
-        'No session — these names were made for this document alone.',
+        sentences.noSessionNamesForThisDocument,
         style: Zc.small.copyWith(color: Zc.ink4),
       );
     }
@@ -422,7 +422,7 @@ class _SendSheetState extends State<SendSheet> {
     // sentence a person could check — and since 081 it names no name, because
     // there is none to name until the door is pressed.
     return Text(
-      'No session yet — any door here begins one.',
+      sentences.noSessionYetAnyDoorBeginsOne,
       style: Zc.small.copyWith(color: Zc.ink4),
     );
   }
@@ -444,7 +444,7 @@ class _SendSheetState extends State<SendSheet> {
       // broken application unless somebody said so first — «المستخدم لا يدرك
       // أنه نفس النسخ القديم», which was the owner's own first reading of it.
       _trouble = andTheClipboardIsEmpty(
-        out.refused ?? 'Nothing left the machine.',
+        out.refused ?? sentences.nothingLeftTheMachine,
       );
     });
   }
@@ -496,11 +496,8 @@ class _SendSheetState extends State<SendSheet> {
           if (open > 0) ...[
             Trouble(
               open == 1
-                  ? 'One suggestion is still open. It stands in the text as written, '
-                        'and nothing can be sent until you answer it. There is no «send anyway».'
-                  : '$open suggestions are still open. They stand in the text as '
-                        'written, and nothing can be sent until you answer them. There is no '
-                        '«send anyway».',
+                  ? sentences.oneSuggestionStillOpenSend
+                  : sentences.suggestionsStillOpenSend(open),
             ),
             const SizedBox(height: 16),
           ],
@@ -522,13 +519,9 @@ class _SendSheetState extends State<SendSheet> {
             // «OpenAI-compatible» answers neither of those questions — it is
             // how Z Privacy speaks, and it belongs in the settings beside the
             // endpoint (the owner, 30 September).
-            title: 'Manual AI',
+            title: sentences.manualAi,
             what:
-                'Use an AI chat you already have. Take the text above — to the clipboard, '
-                'or as a PDF saved on this machine — paste it into any model you like, and '
-                'bring the answer back with «Add an answer» under the chat. Restoring works '
-                'the same either way — no account, no key. Neither way sends anything from '
-                'here.',
+                sentences.manualAiSheetWhat,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -537,7 +530,7 @@ class _SendSheetState extends State<SendSheet> {
                   runSpacing: 8,
                   children: [
                     ZButton(
-                      label: _copied ? 'Copied' : 'Copy Protected',
+                      label: _copied ? sentences.copied : sentences.copyProtected,
                       icon: _copied ? Icons.check : Icons.copy_all_outlined,
                       // **The order is not written here.** `beginThenRead`
                       // holds it, where a guard can drive it; this press reads
@@ -571,7 +564,7 @@ class _SendSheetState extends State<SendSheet> {
                     // first is where the text lands. It writes a file on this
                     // machine; it opens nothing and sends nothing.
                     ZButton(
-                      label: _saving ? 'Saving…' : 'Save as PDF',
+                      label: _saving ? sentences.saving : sentences.saveAsPdf,
                       icon: Icons.picture_as_pdf_outlined,
                       onPressed: payload == null || _saving
                           ? null
@@ -610,9 +603,11 @@ class _SendSheetState extends State<SendSheet> {
                   // «where», and a person who cannot find the file has to
                   // trust us that there is one.
                   Text(
-                    'Saved to ${_savedTo!}\n'
-                    'The protected text, with the build stamp, the counts and a sha256 of '
-                    'that text in the footer, and a last page for the answer. Nothing was sent.',
+                    // Two sentences, joined by the screen: G55 refuses a
+                    // newline inside a value, and this was the sentence that
+                    // taught the gate's own author so.
+                    '${sentences.savedToWhere(_savedTo!)}\n'
+                    '${sentences.whatThePdfHolds}',
                     style: Zc.small.copyWith(color: Zc.ink2),
                   ),
                 ],
@@ -621,19 +616,13 @@ class _SendSheetState extends State<SendSheet> {
           ),
           const SizedBox(height: 14),
           _door(
-            title: 'Direct API',
+            title: sentences.directApi,
             what: connected.isEmpty
-                ? 'Connect to a remote AI provider with your API credential. Only the text '
-                      'above would travel; the provider still sees the ordinary facts of a '
-                      'connection — your address, the time, the model.'
-                : 'The request goes from this app. Only the text above travels; the '
-                      'provider still sees the ordinary facts of a connection — your address, '
-                      'the time, the model.',
+                ? sentences.directApiSheetWhatRemote: sentences.directApiSheetWhatConnected,
             child: connected.isEmpty
                 ? _toTheSettings(
                     context,
-                    'No provider is connected. The address and the key are given once, in '
-                    'Settings — this screen never asks for them.',
+                    sentences.noProviderIsConnected,
                   )
                 : Wrap(
                     spacing: 9,
@@ -642,12 +631,13 @@ class _SendSheetState extends State<SendSheet> {
                       for (final p in connected)
                         ZButton(
                           label: widget.bench.sending
-                              ? 'Sending…'
-                              // The route, not the protocol. And «Local AI»
+                              ? sentences.sending// The route, not the protocol. And «Local AI»
                               // only when the core says the endpoint really
                               // is on this computer — the word is a promise
                               // about where the text goes.
-                              : 'Send to ${p.onThisComputer ? "Local AI" : "Direct API"}',
+                              : sentences.sendToNamed(p.onThisComputer
+                                  ? sentences.localAi
+                                  : sentences.directApi),
                           filled: true,
                           icon: Icons.send_outlined,
                           // **A guide, not a wall** — 083 rule 12. The count
@@ -723,26 +713,23 @@ class _SendSheetState extends State<SendSheet> {
             for (final p in connected)
               Text(
                 '${p.label} · ${p.model} · ${p.endpoint}'
-                '${p.credentialState == CredentialState.sessionOnly ? "  (key kept for this run only)" : ""}',
+                '${p.credentialState == CredentialState.sessionOnly ? sentences.providerKeyThisRunOnly : ""}',
                 style: Zc.tiny.copyWith(letterSpacing: 0),
               ),
             const SizedBox(height: 10),
             _toTheSettings(
               context,
-              'The address, the model and the key are changed in Settings.',
+              sentences.theAddressTheModelTheKey,
             ),
           ],
           const SizedBox(height: 14),
           _door(
-            title: 'Local AI',
+            title: sentences.localAi,
             what:
-                'Use an AI service running on this computer — llama.cpp, Ollama, LM '
-                'Studio, anything that answers the same shape. No key, no account, and '
-                'the request never leaves this computer. It is the only route that sees '
-                'none of the ordinary facts above.',
+                sentences.localAiSheetWhat,
             child: _toTheSettings(
               context,
-              'A model on this computer is set up in Settings — there is no key to give.',
+              sentences.aModelOnThisComputer,
             ),
           ),
         ],
@@ -764,7 +751,7 @@ class _SendSheetState extends State<SendSheet> {
       child: Row(
         children: [
           ZButton(
-            label: 'Cancel',
+            label: sentences.cancel,
             onPressed: () => Navigator.of(context).pop(),
           ),
           const Spacer(),
@@ -798,7 +785,7 @@ class _SendSheetState extends State<SendSheet> {
         if (widget.onSettings != null) ...[
           const SizedBox(height: 10),
           ZButton(
-            label: 'Open Settings',
+            label: sentences.openSettings,
             icon: Icons.tune,
             onPressed: () {
               Navigator.of(context).pop();
@@ -888,7 +875,7 @@ class _WhichModelState extends State<_WhichModel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Model', style: Zc.tiny.copyWith(color: Zc.ink4)),
+          Text(sentences.modelLabel, style: Zc.tiny.copyWith(color: Zc.ink4)),
           const SizedBox(height: 6),
           // **The catalogue moved; the control stayed** — 064/C, the owner's
           // own hand on this page: six grey company groups and six «Connect in

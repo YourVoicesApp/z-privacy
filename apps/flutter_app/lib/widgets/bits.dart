@@ -63,9 +63,14 @@ class ZMark extends StatelessWidget {
   }
 }
 
-/// «1 value» and «2 values». Small, and the first thing a person notices when
-/// it is wrong — a test caught «1 values» in the vault bar before anyone saw it.
-String plural(int n, String one, [String? many]) => '$n ${n == 1 ? one : (many ?? "${one}s")}';
+// **`plural(n, one, many)` is deleted** — 092, 20 October.
+//
+// «1 value» and «2 values», built from a number and the English noun handed to
+// it. A test caught «1 values» in the vault bar once, which is what it was
+// written for; what no test could catch is that German cannot be made this
+// way. Every one of its nine call sites is an ICU plural in the one list now,
+// one key per sentence, and the noun is inside the sentence where a translator
+// can reach it.
 
 /// A small caps label, the boards' section marker.
 class Eyebrow extends StatelessWidget {

@@ -14,6 +14,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/a_date_in_words.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/sentences.dart';
@@ -292,6 +293,46 @@ void main() {
         contains('Svenska'));
     expect(AppLocalizationsDe().theInterfaceIsEnglishUntilTranslated('Svenska'),
         isNot(AppLocalizationsEn().theInterfaceIsEnglishUntilTranslated('Svenska')));
+  });
+
+  // ------------------------------------------------------------------ guard 7
+  //
+  // **A date reads in the words of the language the glass is in** — 092's
+  // fourth sitting, and the guard that would have caught the fault the vault
+  // board's own test found: `DateFormat('d MMM y', 'de')` **throws**
+  // `LocaleDataException` until `intl`'s locale data has been loaded, and the
+  // load now happens inside `theDayItWas` on the first date any screen draws.
+  //
+  // Two hand-written `const months` lists stood where this function is, one in
+  // `vault.dart` and one in `why_sheet.dart` — twenty-four English
+  // abbreviations between them, and the lead's ruling was to ask `intl` with
+  // the locale rather than key twelve words.
+  test('a date reads in the words of the language the glass is in', () {
+    // A fixed instant, so the guard says the same thing in every month:
+    // 9 October 2025, 00:00 UTC.
+    const when = 1759968000;
+
+    theSentencesAreNow(const Locale('de'));
+    addTearDown(() => theSentencesAreNow(const Locale('en')));
+    final german = theDayItWas(when);
+    expect(german, contains('Okt'),
+        reason: 'the German date does not carry a German month — $german');
+
+    theSentencesAreNow(const Locale('en'));
+    final english = theDayItWas(when);
+    expect(english, contains('Oct'),
+        reason: 'the English date does not carry an English month — $english');
+
+    // **The order is the house's own**, which is why the English line reads as
+    // it always did: the day first, then the month, then the year.
+    expect(english.startsWith('9 '), isTrue, reason: english);
+
+    // A zero is not a date, and says so in the language of the glass.
+    expect(theDayItWas(0), AppLocalizationsEn().taughtOnUnknown);
+    theSentencesAreNow(const Locale('de'));
+    expect(theDayItWas(0), AppLocalizationsDe().taughtOnUnknown);
+    expect(AppLocalizationsDe().taughtOnUnknown,
+        isNot(AppLocalizationsEn().taughtOnUnknown));
   });
 
 }

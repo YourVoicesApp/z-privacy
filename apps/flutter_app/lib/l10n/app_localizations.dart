@@ -1996,6 +1996,1462 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not built yet. When it is, it will live here: whether a permanent token keeps its number across sessions, or is drawn again each time so two sessions cannot be linked by it.'**
   String get tokenRotationWhat;
+
+  /// Leaves the vault board, or the identity it is showing.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// Leaves one identity for the list of them.
+  ///
+  /// In en, this message translates to:
+  /// **'All identities'**
+  String get allIdentities;
+
+  /// How many identities the vault holds. The house's own `plural()` built this from a number and a noun, which German cannot take: one key per count instead.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 identity} other{{count} identities}}'**
+  String identitiesCount(int count);
+
+  /// How many values an identity or the vault holds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 value} other{{count} values}}'**
+  String valuesCount(int count);
+
+  /// 089 rule 1: how many words this vault keeps as blocks, counted and never named.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 protected word} other{{count} protected words}}'**
+  String protectedWordsCount(int count);
+
+  /// The vault's state in the board's head.
+  ///
+  /// In en, this message translates to:
+  /// **'Not created on this device'**
+  String get notCreatedOnThisDevice;
+
+  /// Opens the form that re-wraps the key.
+  ///
+  /// In en, this message translates to:
+  /// **'Change passphrase'**
+  String get changePassphrase;
+
+  /// Locks the vault at once, from its own board.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock'**
+  String get lockTheVault;
+
+  /// The head of the board when it is shut.
+  ///
+  /// In en, this message translates to:
+  /// **'The vault is locked'**
+  String get theVaultIsLocked;
+
+  /// The head of the board on a device with none.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no vault yet'**
+  String get thereIsNoVaultYet;
+
+  /// What a locked vault does and does not stop. The fourth layer is the names; the first three run without it.
+  ///
+  /// In en, this message translates to:
+  /// **'Your identities are on this device, sealed. Until it is open the scanner still runs its rules and its pack — an IBAN is still caught — but not who.'**
+  String get yourIdentitiesAreSealed;
+
+  /// G15's own promise, said to the person who has no vault yet.
+  ///
+  /// In en, this message translates to:
+  /// **'A vault is the only file this app writes. It holds your people and their values, encrypted with a passphrase that never leaves this device. Without one, nothing is recognised by name.'**
+  String get aVaultIsTheOnlyFile;
+
+  /// The box over the identity list. «this device», because nothing is asked of the network.
+  ///
+  /// In en, this message translates to:
+  /// **'Search this device — names, values, spellings'**
+  String get searchThisDevice;
+
+  /// Opens the form for one.
+  ///
+  /// In en, this message translates to:
+  /// **'New identity'**
+  String get newIdentity;
+
+  /// The chip that filters the list by no profile at all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// 075a: the door that switches the open session's profile, from the board the control receded to.
+  ///
+  /// In en, this message translates to:
+  /// **'Session profile'**
+  String get sessionProfile;
+
+  /// Opens the form for one.
+  ///
+  /// In en, this message translates to:
+  /// **'New profile'**
+  String get newProfile;
+
+  /// The empty list, with the one thing that helps rather than a dash.
+  ///
+  /// In en, this message translates to:
+  /// **'No identities yet. The first one is usually the client whose documents you work on.'**
+  String get noIdentitiesYet;
+
+  /// A search that found nothing, around the word they typed. The isolate is applied by the caller through `theirOwnWord` — G44's half over this file checks it.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on this device matches «{query}».'**
+  String nothingMatchesQuery(String query);
+
+  /// One of the three things the app has learned.
+  ///
+  /// In en, this message translates to:
+  /// **'Values I taught'**
+  String get valuesITaught;
+
+  /// What a taught value does.
+  ///
+  /// In en, this message translates to:
+  /// **'names, companies, numbers — found by themselves from now on'**
+  String get valuesITaughtWhat;
+
+  /// One of the three things the app has learned.
+  ///
+  /// In en, this message translates to:
+  /// **'Rules I taught'**
+  String get rulesITaught;
+
+  /// What a taught rule does, with a real German label as the example. «Mandantenkennung» is the same word in both lists on purpose: it is an example of a word a German document carries, and that is what it demonstrates.
+  ///
+  /// In en, this message translates to:
+  /// **'words that say what follows them — «after Mandantenkennung → customer number»'**
+  String get rulesITaughtWhat;
+
+  /// One of the three things the app has learned.
+  ///
+  /// In en, this message translates to:
+  /// **'Exceptions I taught'**
+  String get exceptionsITaught;
+
+  /// What a taught exception does.
+  ///
+  /// In en, this message translates to:
+  /// **'values you explicitly excluded from protection'**
+  String get exceptionsITaughtWhat;
+
+  /// A group that does not exist yet says so rather than being left out.
+  ///
+  /// In en, this message translates to:
+  /// **'No taught values yet.'**
+  String get noTaughtValuesYet;
+
+  /// As above.
+  ///
+  /// In en, this message translates to:
+  /// **'No rules taught yet.'**
+  String get noRulesTaughtYet;
+
+  /// As above.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved exceptions yet.'**
+  String get noSavedExceptionsYet;
+
+  /// The line under a taught value: what it is, how far it reaches, and when it was taught.
+  ///
+  /// In en, this message translates to:
+  /// **'{kind} · {scope} · Taught: {date}'**
+  String kindScopeTaughtOn(String kind, String scope, String date);
+
+  /// The same line for an exception, which is a decision not to protect.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not protect as {kind} · {scope} · Taught: {date}'**
+  String doNotProtectAsKindScopeTaughtOn(
+    String kind,
+    String scope,
+    String date,
+  );
+
+  /// Draws a taught value on the screen for as long as the Privacy room allows.
+  ///
+  /// In en, this message translates to:
+  /// **'Reveal'**
+  String get reveal;
+
+  /// Takes a revealed value off the screen at once.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get hide;
+
+  /// What forgetting an exception costs, said before it is done.
+  ///
+  /// In en, this message translates to:
+  /// **'the exception — this value will be offered for protection again'**
+  String get theExceptionGoes;
+
+  /// What forgetting a rule costs, said before it is done.
+  ///
+  /// In en, this message translates to:
+  /// **'the rule — Z Privacy will stop protecting what follows that word'**
+  String get theRuleGoes;
+
+  /// Opens the identity a row names.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get openIdentity;
+
+  /// How far a taught value reaches, when it reaches one client. The caller isolates the name.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile: {name}'**
+  String profileNamed(String name);
+
+  /// When the core gives no date for a taught value — zero seconds, which is not a date.
+  ///
+  /// In en, this message translates to:
+  /// **'unknown'**
+  String get taughtOnUnknown;
+
+  /// A taught rule, as the person taught it: the word, and what the value after it becomes. The caller isolates the label.
+  ///
+  /// In en, this message translates to:
+  /// **'After «{label}:» → {kind}'**
+  String afterLabelProtectAs(String label, String kind);
+
+  /// Opens the form for one.
+  ///
+  /// In en, this message translates to:
+  /// **'Teach a rule'**
+  String get teachARule;
+
+  /// What an identity is: a client. The chip on an identity row draws the same word upper-cased.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
+  String get kindClient;
+
+  /// What an identity is: a person.
+  ///
+  /// In en, this message translates to:
+  /// **'Person'**
+  String get kindPerson;
+
+  /// What an identity is: a company.
+  ///
+  /// In en, this message translates to:
+  /// **'Company'**
+  String get kindCompany;
+
+  /// What an identity is: a project.
+  ///
+  /// In en, this message translates to:
+  /// **'Project'**
+  String get kindProject;
+
+  /// What an identity is, when none of the four names it.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get kindSomethingElse;
+
+  /// After the core refused a vault file: the core states the fault, and the screen names the two moves that are the person's. {said} is the core's own sentence.
+  ///
+  /// In en, this message translates to:
+  /// **'{said} Z Privacy has not changed the file. If you have a backup of the vault, put it back in place; otherwise move this file somewhere else and a new vault can be made here.'**
+  String vaultFileNotChanged(String said);
+
+  /// The head of the form that re-wraps the key.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the passphrase'**
+  String get changeThePassphrase;
+
+  /// What changing a passphrase does and does not touch.
+  ///
+  /// In en, this message translates to:
+  /// **'Only 32 bytes are re-wrapped — the vault itself is not decrypted and not rewritten. Everything in it stays exactly where it is.'**
+  String get onlyThirtyTwoBytes;
+
+  /// The first field when the passphrase is being changed.
+  ///
+  /// In en, this message translates to:
+  /// **'Current passphrase'**
+  String get currentPassphrase;
+
+  /// The one field when a vault is being opened. The same word in German, which is why it is in G51's allowed list.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrase'**
+  String get passphrase;
+
+  /// The second field when the passphrase is being changed.
+  ///
+  /// In en, this message translates to:
+  /// **'New passphrase'**
+  String get newPassphrase;
+
+  /// The second field when a vault is being made.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm passphrase'**
+  String get confirmPassphrase;
+
+  /// The third field: the pair that must agree is the new one and its confirmation, never current against new.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm new passphrase'**
+  String get confirmNewPassphrase;
+
+  /// Said while the pair agrees.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrases match'**
+  String get passphrasesMatch;
+
+  /// Said while the pair does not, and as the refusal when it is submitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Passphrases do not match'**
+  String get passphrasesDoNotMatch;
+
+  /// The core's own minimum, named by the number the form promises rather than by a word.
+  ///
+  /// In en, this message translates to:
+  /// **'At least {count} characters — the vault will not be made with fewer.'**
+  String atLeastCharacters(int count);
+
+  /// The one promise that cannot be softened: said before the vault is made, not after.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no way back. Nobody holds a copy of this, and no reset exists — the passphrase never leaves this device and nothing on our side could recover the vault without it.'**
+  String get thereIsNoWayBack;
+
+  /// While the core is deriving a key, which is deliberately slow.
+  ///
+  /// In en, this message translates to:
+  /// **'Working…'**
+  String get working;
+
+  /// Submits a passphrase change.
+  ///
+  /// In en, this message translates to:
+  /// **'Change it'**
+  String get changeIt;
+
+  /// Submits a new vault.
+  ///
+  /// In en, this message translates to:
+  /// **'Create the vault'**
+  String get createTheVault;
+
+  /// Submits a passphrase for an existing vault.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock'**
+  String get unlockTheVault;
+
+  /// The eye over a passphrase field, named by the field it hides.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide {label}'**
+  String hideNamed(String label);
+
+  /// The eye over a passphrase field, named by the field it shows.
+  ///
+  /// In en, this message translates to:
+  /// **'Show {label}'**
+  String showNamed(String label);
+
+  /// The head of the identity form.
+  ///
+  /// In en, this message translates to:
+  /// **'A new identity'**
+  String get aNewIdentity;
+
+  /// What an identity is for, with an example of one.
+  ///
+  /// In en, this message translates to:
+  /// **'An identity is how a person thinks — «Client Nordstern» — and the values inside it are what the scanner matches.'**
+  String get anIdentityIsHowAPersonThinks;
+
+  /// The identity's own name. The same word in German, which is why it is in G51's allowed list.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get nameField;
+
+  /// Which kind of thing this identity is.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sortField;
+
+  /// Which profiles this identity is loaded with.
+  ///
+  /// In en, this message translates to:
+  /// **'Loaded in'**
+  String get loadedIn;
+
+  /// The greyed example inside the name box — what a person would type, in their own language.
+  ///
+  /// In en, this message translates to:
+  /// **'Client Nordstern'**
+  String get exampleClientNordstern;
+
+  /// The greyed example of a value: a company's name, which is the same in every language because it is a name. Allowed by name in G51.
+  ///
+  /// In en, this message translates to:
+  /// **'Nordstern Consulting GmbH'**
+  String get exampleCompanyName;
+
+  /// Leaves a form without doing what it was for.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelForm;
+
+  /// Submits a new identity or profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get createIt;
+
+  /// The head of the value form.
+  ///
+  /// In en, this message translates to:
+  /// **'A new value'**
+  String get aNewValue;
+
+  /// The head of the same form over a value that exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit this value'**
+  String get editThisValue;
+
+  /// The field that holds what the scanner will match.
+  ///
+  /// In en, this message translates to:
+  /// **'The value'**
+  String get theValue;
+
+  /// While the value is being read back for editing — it is in the vault, not on the glass.
+  ///
+  /// In en, this message translates to:
+  /// **'reading it from the vault…'**
+  String get readingItFromTheVault;
+
+  /// Which kind the value is.
+  ///
+  /// In en, this message translates to:
+  /// **'What it is'**
+  String get whatItIs;
+
+  /// The policy for this value: always, suggest, or keep.
+  ///
+  /// In en, this message translates to:
+  /// **'How to treat it'**
+  String get howToTreatIt;
+
+  /// The policy: found and replaced with no question.
+  ///
+  /// In en, this message translates to:
+  /// **'Always protect'**
+  String get alwaysProtect;
+
+  /// What «always» does.
+  ///
+  /// In en, this message translates to:
+  /// **'Found by itself and replaced, with no question.'**
+  String get alwaysProtectWhat;
+
+  /// The policy: found, and put to the person.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest'**
+  String get suggestPolicy;
+
+  /// What «suggest» does.
+  ///
+  /// In en, this message translates to:
+  /// **'Found, and put to you before anything is sent.'**
+  String get suggestPolicyWhat;
+
+  /// The policy: kept for its spellings and its token, not looked for.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep, do not hunt'**
+  String get keepDoNotHunt;
+
+  /// What «keep» does. «behalten» and not «aufbewahren»: the value is retained as it is, and the sentence is about its stability rather than about storing it.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept so its spellings and its token stay stable — but not looked for.'**
+  String get keepDoNotHuntWhat;
+
+  /// Submits the value.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveIt;
+
+  /// The head of the profile form.
+  ///
+  /// In en, this message translates to:
+  /// **'A new profile'**
+  String get aNewProfile;
+
+  /// The head of the same form over a profile that exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename profile'**
+  String get renameProfile;
+
+  /// What a profile is for, and the reach it does not give.
+  ///
+  /// In en, this message translates to:
+  /// **'One dictionary per client. Only the identities of the profile you open are loaded — opening the vault is not a blank cheque.'**
+  String get oneDictionaryPerClient;
+
+  /// A rename touches the word and nothing a token depends on.
+  ///
+  /// In en, this message translates to:
+  /// **'The profile ID stays the same. Only the name a person reads changes.'**
+  String get theProfileIdStaysTheSame;
+
+  /// Which packs this profile's documents are read with.
+  ///
+  /// In en, this message translates to:
+  /// **'Languages used in documents'**
+  String get languagesUsedInDocuments;
+
+  /// M7.10A: more than one pack runs in one scan, so this is not a single choice.
+  ///
+  /// In en, this message translates to:
+  /// **'More than one may be on. A document with a German label and an English one is read by both in a single scan.'**
+  String get moreThanOneMayBeOn;
+
+  /// Submits a profile rename. The identical English of `rename` is deliberate — a second key, because this one submits a form and that one opens it; one key for both would be one German word for two acts.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get renameIt2;
+
+  /// The head of the rule form.
+  ///
+  /// In en, this message translates to:
+  /// **'Teach a rule'**
+  String get teachARuleHead;
+
+  /// What a taught rule is, and where it stops — which is the half a person needs in order to trust it.
+  ///
+  /// In en, this message translates to:
+  /// **'A rule is a word and what comes after it. Z Privacy protects the value that follows and stops at the end of that field.'**
+  String get aRuleIsAWordAndWhatComesAfter;
+
+  /// The field that holds the label a rule watches for.
+  ///
+  /// In en, this message translates to:
+  /// **'When Z Privacy sees'**
+  String get whenZPrivacySees;
+
+  /// The greyed example of a label: a real German field name, the same in both lists on purpose — it is in the English screen *because* it is German, and an English example would stop demonstrating the feature. Allowed by name in G51.
+  ///
+  /// In en, this message translates to:
+  /// **'Mandantenkennung'**
+  String get exampleMandantenkennung;
+
+  /// Which kind the value after the label becomes.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect the value after it as'**
+  String get protectTheValueAfterItAs;
+
+  /// How far the rule reaches.
+  ///
+  /// In en, this message translates to:
+  /// **'Where'**
+  String get whereField;
+
+  /// The chip that scopes a rule to one client. The caller isolates the name.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile — {name}'**
+  String profileNamedDash(String name);
+
+  /// Submits the rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Save rule'**
+  String get saveRule;
+
+  /// Un-protects this one place and leaves every other.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove protection here'**
+  String get removeProtectionHere;
+
+  /// Un-protects every place this token stands in, inside one session — which is as far as un-protection reaches.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove it in this session ({places} places)'**
+  String removeItInThisSession(int places);
+
+  /// Removes what Z Privacy learned, for one client.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget from this profile'**
+  String get forgetFromThisProfile;
+
+  /// Removes what Z Privacy learned, in every profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget everywhere'**
+  String get forgetEverywhere;
+
+  /// One held line, so the act names one.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect this column in the line held'**
+  String get protectThisColumnInTheLineHeld;
+
+  /// The same cell of every held line, each value its own token.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect this column in the {lines} held lines'**
+  String protectThisColumnInLinesHeld(int lines);
+
+  /// The head of the sheet that answers for one protected word.
+  ///
+  /// In en, this message translates to:
+  /// **'Why is this protected?'**
+  String get whyIsThisProtected;
+
+  /// The lead's case of 7 October: the pressed cell is already protected, and the card says what the column act will do about it.
+  ///
+  /// In en, this message translates to:
+  /// **'The same cell of every held line, each value its own token. This one is protected already and stays as it is.'**
+  String get theSameCellOfEveryHeldLine;
+
+  /// Which kind the protected word is, named by the core.
+  ///
+  /// In en, this message translates to:
+  /// **'What it is'**
+  String get whatItIsRow;
+
+  /// How far this protection reaches, in the core's own words.
+  ///
+  /// In en, this message translates to:
+  /// **'Where it applies'**
+  String get whereItApplies;
+
+  /// Who decided this word is protected.
+  ///
+  /// In en, this message translates to:
+  /// **'Decided by'**
+  String get decidedBy;
+
+  /// The person protected it by hand.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get decidedByYou;
+
+  /// A rule or the vault found it with nobody asked.
+  ///
+  /// In en, this message translates to:
+  /// **'Z Privacy, on its own'**
+  String get decidedByZPrivacy;
+
+  /// When the value was taught.
+  ///
+  /// In en, this message translates to:
+  /// **'Taught on'**
+  String get taughtOnRow;
+
+  /// The token this word is replaced by, drawn as it leaves.
+  ///
+  /// In en, this message translates to:
+  /// **'Token'**
+  String get tokenRow;
+
+  /// How many other spellings this value is also found by.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 other spelling} other{{count} other spellings}}'**
+  String otherSpellingsCount(int count);
+
+  /// Closes the sheet without doing anything.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// What «remove here» does.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncovers this one place. Every other place keeps its protection, and its token.'**
+  String get uncoversThisOnePlace;
+
+  /// What «remove here» does not do.
+  ///
+  /// In en, this message translates to:
+  /// **'The value stays in your privacy rules and may be protected again later.'**
+  String get theValueStaysInYourRules;
+
+  /// What «remove in this session» does.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncovers every place this token stands in, in this session.'**
+  String get uncoversEveryPlaceInThisSession;
+
+  /// Why the un-protection acts stop at a session, said where a person would look for a third.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no «everywhere»: un-protection reaches no further than one session.'**
+  String get thereIsNoEverywhere;
+
+  /// What «forget from this profile» does.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes what Z Privacy learned for this profile.'**
+  String get removesWhatZLearnedForThisProfile;
+
+  /// What forgetting does not reach.
+  ///
+  /// In en, this message translates to:
+  /// **'Protection already applied in this document stays in place.'**
+  String get protectionAlreadyAppliedStays;
+
+  /// What «forget everywhere» does.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes what Z Privacy learned, in every profile.'**
+  String get removesWhatZLearnedEverywhere;
+
+  /// The act for a word-rule rather than a value.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget this rule'**
+  String get forgetThisRule;
+
+  /// Where a forgotten rule still lives. «behalten»: it is retained where it was, not stored anew.
+  ///
+  /// In en, this message translates to:
+  /// **'The rule itself is kept in your vault.'**
+  String get theRuleItselfIsKept;
+
+  /// Where the act for it lives, named as a path a person can walk.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget it in Z Vault → My Privacy Rules → Rules I taught.'**
+  String get forgetItInZVaultRules;
+
+  /// A hand protection taught the vault nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was learned from this — you protected it here, and Undo takes it back.'**
+  String get nothingWasLearnedYouProtectedIt;
+
+  /// A rule match taught the vault nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was learned from this. A rule recognised the shape, and no record of it was kept.'**
+  String get nothingWasLearnedARuleSawIt;
+
+  /// The one sentence in the house that asks to be told: a forget that did not reach is a fault, not a state.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgotten, but {who} still recognises it. Please tell us — this should not be possible.'**
+  String forgottenButStillKnownBy(String who);
+
+  /// The head of the forget question, around the word the person chose. The caller isolates it — G44's half over the list checks that.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget «{what}»?'**
+  String forgetNamed(String what);
+
+  /// What the forget takes, listed under it.
+  ///
+  /// In en, this message translates to:
+  /// **'This will remove'**
+  String get thisWillRemove;
+
+  /// How many values a forget would take.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 protected value} other{{count} protected values}}'**
+  String protectedValuesCount(int count);
+
+  /// How many spellings a forget would take.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 spelling} other{{count} spellings}}'**
+  String spellingsCount(int count);
+
+  /// How many identities a forget would empty.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 identity} other{{count} identities}} left holding nothing'**
+  String identitiesLeftHoldingNothing(int count);
+
+  /// One profile a forget would take the value out of.
+  ///
+  /// In en, this message translates to:
+  /// **'its place in {profile}'**
+  String itsPlaceIn(String profile);
+
+  /// What a forget leaves alone, listed under it.
+  ///
+  /// In en, this message translates to:
+  /// **'It will NOT change'**
+  String get itWillNotChange;
+
+  /// The whole truth about a forget, including the backup nobody can reach into.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget removes this value from the current vault and from future recognition by that vault. It does not remove protection already applied in this document, and an older valid copy of the vault may restore the value later.'**
+  String get forgetRemovesFromThisVault;
+
+  /// Rule 58: a block crosses a client profile, and this says which ones keep it.
+  ///
+  /// In en, this message translates to:
+  /// **'{who} would still recognise it — forgetting here does not reach into another client’s records.'**
+  String wouldStillRecogniseIt(String who);
+
+  /// Said once, plainly, over an act that is one-way.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone.'**
+  String get thisCannotBeUndone;
+
+  /// An identity with nothing in it yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No values yet. A value is what the scanner matches — a name, a company, an IBAN.'**
+  String get noValuesYet;
+
+  /// What an identity holds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 value} other{{count} values}}, each with its own spellings and its own policy.'**
+  String valuesEachWithItsOwnPolicy(int count);
+
+  /// Moves this identity to another profile, or to everywhere.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get moveIt;
+
+  /// Deletes the identity, or the value, or the spelling a row names.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteIt;
+
+  /// Opens the value form for this identity.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a value'**
+  String get addAValue;
+
+  /// The policy on a value's own row. The form words the same policy «Keep, do not hunt» — two wordings for one thing, which is a finding of its own and not this round's to settle.
+  ///
+  /// In en, this message translates to:
+  /// **'Kept, not hunted'**
+  String get policyKeptNotHunted;
+
+  /// Opens the form for another way the same value is written.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a spelling'**
+  String get addASpelling;
+
+  /// Opens the form over a value that exists.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editIt;
+
+  /// The spellings a value is also found by.
+  ///
+  /// In en, this message translates to:
+  /// **'Also written'**
+  String get alsoWritten;
+
+  /// The head of the spelling form.
+  ///
+  /// In en, this message translates to:
+  /// **'Another spelling'**
+  String get anotherSpelling;
+
+  /// What a spelling is for, and the one reason it matters: one token, one person.
+  ///
+  /// In en, this message translates to:
+  /// **'The same value written differently — «Herr Müller», «T. Müller». Every spelling keeps the same token, so the model reads one person and not three.'**
+  String get anotherSpellingWhat;
+
+  /// The greyed example of a spelling: a German name, the same in both lists because it is a name. Allowed by name in G51.
+  ///
+  /// In en, this message translates to:
+  /// **'Herr Müller'**
+  String get exampleSpelling;
+
+  /// The head of the form that asks for a new name. The same English as the press that opens it, and a key of its own: one word for the act, one for the head.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get renameHead;
+
+  /// What the rename form is asking for.
+  ///
+  /// In en, this message translates to:
+  /// **'What to call this identity.'**
+  String get whatToCallThisIdentity;
+
+  /// The head of the move form.
+  ///
+  /// In en, this message translates to:
+  /// **'Move this identity'**
+  String get moveThisIdentity;
+
+  /// What moving an identity changes: when it is in memory at all.
+  ///
+  /// In en, this message translates to:
+  /// **'An identity in a profile is loaded only when that profile is open. One that belongs everywhere is always loaded.'**
+  String get anIdentityInAProfile;
+
+  /// The head of the delete question.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this identity?'**
+  String get deleteThisIdentity;
+
+  /// What deleting an identity takes and what it leaves. The caller isolates the name — G44's half over the list checks it.
+  ///
+  /// In en, this message translates to:
+  /// **'«{name}» and its {values} are removed from the vault. Documents already protected keep their tokens; the next document will not recognise these values again.'**
+  String identityAndItsValuesAreRemoved(String name, String values);
+
+  /// Leaves the delete question without deleting.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it'**
+  String get keepItIdentity;
+
+  /// The head of the names panel with nothing open in it.
+  ///
+  /// In en, this message translates to:
+  /// **'No names to look at'**
+  String get noNamesToLookAt;
+
+  /// How many words this document uses as names that Z does not know.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 name to look at} other{{count} names to look at}}'**
+  String namesToLookAtCount(int count);
+
+  /// Said when the panel is empty for the good reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Z knows every name this document uses.'**
+  String get zKnowsEveryName;
+
+  /// What the panel is for.
+  ///
+  /// In en, this message translates to:
+  /// **'Words this document uses as names, that Z does not know yet.'**
+  String get wordsThisDocumentUsesAsNames;
+
+  /// In how many places a candidate name stands.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 place} other{{count} places}}'**
+  String placesCount(int count);
+
+  /// On how many pages a candidate name stands.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 page} other{{count} pages}}'**
+  String pagesCountShort(int count);
+
+  /// Takes the candidate into the vault as a family name.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as family name'**
+  String get addAsFamilyName;
+
+  /// Takes the candidate into the vault as a given name.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as given name'**
+  String get addAsGivenName;
+
+  /// Leaves the candidate alone, this time.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore'**
+  String get ignoreIt;
+
+  /// The act when a name cannot be kept because the vault is shut.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock the vault'**
+  String get unlockTheVaultAct;
+
+  /// Why the act is not live on a device with no vault.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs a vault'**
+  String get needsAVault;
+
+  /// The file chooser's own name for what it will open.
+  ///
+  /// In en, this message translates to:
+  /// **'Name lists'**
+  String get nameListsFileType;
+
+  /// Asked once, as a list is imported: a list is a language's list.
+  ///
+  /// In en, this message translates to:
+  /// **'Which language are these names?'**
+  String get whichLanguageAreTheseNames;
+
+  /// The head of the panel that holds what this device knows because the person said so.
+  ///
+  /// In en, this message translates to:
+  /// **'Your names'**
+  String get yourNames;
+
+  /// What the panel holds and where it lives. «aufbewahrt»: the vault stores them.
+  ///
+  /// In en, this message translates to:
+  /// **'Names this device knows because you said so. They are kept in your vault, on this computer.'**
+  String get namesThisDeviceKnows;
+
+  /// Opens the one-name form.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a name'**
+  String get addAName;
+
+  /// Opens the file chooser for a CSV of names.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a list'**
+  String get importAList;
+
+  /// An act and why it is not live, joined on one button: «Add a name · Needs a vault». A frame, not a sentence — the two halves are their own keys.
+  ///
+  /// In en, this message translates to:
+  /// **'{act} · {needs}'**
+  String actNeedsTheVault(String act, String needs);
+
+  /// What an importable list looks like. **The four type words stay English in every language**: they are what the file holds, not what a person reads — the same decision as `_kindIdForAFile`.
+  ///
+  /// In en, this message translates to:
+  /// **'A list is a CSV with a «name» and a «type» column: given, family, person or company.'**
+  String get aListIsACsv;
+
+  /// Why the two acts are not live.
+  ///
+  /// In en, this message translates to:
+  /// **'Your names live in the vault, so adding one needs it open.'**
+  String get yourNamesLiveInTheVault;
+
+  /// The greyed example in the name box: a surname, the same in both lists because it is a name. Allowed by name in G51.
+  ///
+  /// In en, this message translates to:
+  /// **'Lindqvist'**
+  String get exampleSurname;
+
+  /// The policy chip: Z marks the name and waits.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest'**
+  String get pickSuggest;
+
+  /// The policy chip: Z protects the name the moment it appears.
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get pickAlways;
+
+  /// What «always» means for a name.
+  ///
+  /// In en, this message translates to:
+  /// **'Always: protected the moment it appears, in every document.'**
+  String get alwaysProtectedTheMoment;
+
+  /// What «suggest» means for a name.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest: Z marks it and waits for your word.'**
+  String get suggestMarksAndWaits;
+
+  /// Submits the one-name form.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get addAct;
+
+  /// The list of the person's own names, when it is empty and the vault is open.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing yet.'**
+  String get nothingYet;
+
+  /// The section for whole people and companies.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole names, kept in the vault'**
+  String get wholeNamesKeptInTheVault;
+
+  /// Why a whole name is not in a language's list, and where it is instead.
+  ///
+  /// In en, this message translates to:
+  /// **'A whole person or company is a value, not a dictionary word, so it is in no language list. Z Vault is where each one is managed.'**
+  String get aWholePersonIsAValue;
+
+  /// How far a name reaches: every client. Joined after a middle dot, which is the frame and not a sentence.
+  ///
+  /// In en, this message translates to:
+  /// **'everywhere'**
+  String get reachEverywhere;
+
+  /// How far a name reaches: the client that is open.
+  ///
+  /// In en, this message translates to:
+  /// **'this client'**
+  String get reachThisClient;
+
+  /// The tooltip over a name's own forget. The caller isolates the word — G44's half over the list checks it.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget «{what}»'**
+  String forgetNamedShort(String what);
+
+  /// What a name is, on the glass. The **file's** word for the same thing is a fixed English id and never this.
+  ///
+  /// In en, this message translates to:
+  /// **'given name'**
+  String get kindGivenName;
+
+  /// What a name is, on the glass.
+  ///
+  /// In en, this message translates to:
+  /// **'family name'**
+  String get kindFamilyName;
+
+  /// What a name is, on the glass: a whole person.
+  ///
+  /// In en, this message translates to:
+  /// **'person'**
+  String get kindPersonName;
+
+  /// What a name is, on the glass: a whole company.
+  ///
+  /// In en, this message translates to:
+  /// **'company'**
+  String get kindCompanyName;
+
+  /// What an imported list holds, the two apart: 056's own lesson — one count over names and numbers together was «21» where the file taught 2 names and 4 numbers.
+  ///
+  /// In en, this message translates to:
+  /// **'{names} · {values} values'**
+  String namesAndValuesInAList(String names, int values);
+
+  /// A list that is in the vault and not in use.
+  ///
+  /// In en, this message translates to:
+  /// **'off'**
+  String get listIsOff;
+
+  /// Turns a list off without removing it.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop using these names'**
+  String get stopUsingTheseNames;
+
+  /// Turns a list back on.
+  ///
+  /// In en, this message translates to:
+  /// **'Use these names again'**
+  String get useTheseNamesAgain;
+
+  /// The tooltip over a list's own menu. The caller isolates the name.
+  ///
+  /// In en, this message translates to:
+  /// **'What to do with «{name}»'**
+  String whatToDoWithList(String name);
+
+  /// Moves a list's names into another language's list.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to…'**
+  String get moveToDots;
+
+  /// Writes the list out as the file it could have come from.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV'**
+  String get exportCsv;
+
+  /// Takes the list and its names out of the vault.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove list'**
+  String get removeList;
+
+  /// The head of the question. The caller isolates the name.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove «{name}»?'**
+  String removeNamedList(String name);
+
+  /// What removing a list costs.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One name goes with it. Nothing else is touched.} other{{count} names go with it. Nothing else is touched.}}'**
+  String namesGoWithItCount(int count);
+
+  /// Confirms the removal.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeAct;
+
+  /// The head of the move sheet, naming the language they are in now.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Move one name from {from} to…} other{Move {count} names from {from} to…}}'**
+  String moveNamesFromTo(int count, String from);
+
+  /// Asked once, after a list is imported: the one decision that matters about it.
+  ///
+  /// In en, this message translates to:
+  /// **'How far do these names reach?'**
+  String get howFarDoTheseNamesReach;
+
+  /// The two answers, said in full before either is pressed.
+  ///
+  /// In en, this message translates to:
+  /// **'Protecting them means Z blackens them the moment they appear, with no question. Offering them means Z marks them and waits for you.'**
+  String get protectingThemMeans;
+
+  /// The half that makes the choice safe to make.
+  ///
+  /// In en, this message translates to:
+  /// **'You can change any one of them afterwards, name by name.'**
+  String get youCanChangeAnyOneAfterwards;
+
+  /// The answer that marks and waits.
+  ///
+  /// In en, this message translates to:
+  /// **'Offer them and I decide'**
+  String get offerThemAndIDecide;
+
+  /// The answer that protects in every profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect them everywhere'**
+  String get protectThemEverywhere;
+
+  /// The answer that protects for the one client that is open.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect them for {client}'**
+  String protectThemForClient(String client);
+
+  /// 079: a refused exit prints no page, so it mints nothing either — and the refusal says that nothing was written.
+  ///
+  /// In en, this message translates to:
+  /// **'Z Privacy could not build the PDF — its answer page had no token. Nothing was written.'**
+  String get couldNotBuildThePdf;
+
+  /// The head of the sheet that chooses the model and shows what would leave.
+  ///
+  /// In en, this message translates to:
+  /// **'Who answers'**
+  String get whoAnswers;
+
+  /// Said over an empty payload.
+  ///
+  /// In en, this message translates to:
+  /// **'There is nothing to send.'**
+  String get thereIsNothingToSend;
+
+  /// The two facts about what would leave, both counted by the core.
+  ///
+  /// In en, this message translates to:
+  /// **'{values} values replaced · {characters} characters would leave this device.'**
+  String valuesReplacedCharacters(int values, int characters);
+
+  /// A session with no name of its own, named by its number — 081.
+  ///
+  /// In en, this message translates to:
+  /// **'Session {number}'**
+  String sessionNumber(int number);
+
+  /// A session the person named. The caller isolates the name — G44's half over the list checks it.
+  ///
+  /// In en, this message translates to:
+  /// **'Session {number} «{name}»'**
+  String sessionNumberNamed(int number, String name);
+
+  /// Which session the tokens in this payload belong to.
+  ///
+  /// In en, this message translates to:
+  /// **'{named} · these names are this session’s'**
+  String theseNamesAreThisSessions(String named);
+
+  /// What the tokens mean with no session open.
+  ///
+  /// In en, this message translates to:
+  /// **'No session — these names were made for this document alone.'**
+  String get noSessionNamesForThisDocument;
+
+  /// Rule 55-و: an exit births a session, and the sheet says so before one is pressed.
+  ///
+  /// In en, this message translates to:
+  /// **'No session yet — any door here begins one.'**
+  String get noSessionYetAnyDoorBeginsOne;
+
+  /// The refusal when the core gives none of its own.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing left the machine.'**
+  String get nothingLeftTheMachine;
+
+  /// The law, said where a person would look for a way round it.
+  ///
+  /// In en, this message translates to:
+  /// **'One suggestion is still open. It stands in the text as written, and nothing can be sent until you answer it. There is no «send anyway».'**
+  String get oneSuggestionStillOpenSend;
+
+  /// The same law for more than one.
+  ///
+  /// In en, this message translates to:
+  /// **'{open} suggestions are still open. They stand in the text as written, and nothing can be sent until you answer them. There is no «send anyway».'**
+  String suggestionsStillOpenSend(int open);
+
+  /// The first door, in the sheet where it is pressed.
+  ///
+  /// In en, this message translates to:
+  /// **'Use an AI chat you already have. Take the text above — to the clipboard, or as a PDF saved on this machine — paste it into any model you like, and bring the answer back with «Add an answer» under the chat. Restoring works the same either way — no account, no key. Neither way sends anything from here.'**
+  String get manualAiSheetWhat;
+
+  /// Said after the protected text went to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get copied;
+
+  /// Takes the protected text to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Protected'**
+  String get copyProtected;
+
+  /// While the PDF is being written.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get saving;
+
+  /// Writes the protected text as a document, with its answer page.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as PDF'**
+  String get saveAsPdf;
+
+  /// Where the PDF was written, after it was written. **Two keys and not one**: it carried a newline until G55 refused it — my own rule, measured on my own sentence — and a value that needs two lines is two sentences the screen joins.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to {where}'**
+  String savedToWhere(String where);
+
+  /// What the PDF holds: the protected text, the build stamp, the counts, a sha256 of that text in the footer, and a last page for the answer. The second line under «Saved to …».
+  ///
+  /// In en, this message translates to:
+  /// **'The protected text, with the build stamp, the counts and a sha256 of that text in the footer, and a last page for the answer. Nothing was sent.'**
+  String get whatThePdfHolds;
+
+  /// The second door, before it is connected, and the one thing a protected text cannot hide.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to a remote AI provider with your API credential. Only the text above would travel; the provider still sees the ordinary facts of a connection — your address, the time, the model.'**
+  String get directApiSheetWhatRemote;
+
+  /// The second door once it is connected.
+  ///
+  /// In en, this message translates to:
+  /// **'The request goes from this app. Only the text above travels; the provider still sees the ordinary facts of a connection — your address, the time, the model.'**
+  String get directApiSheetWhatConnected;
+
+  /// Why the door is not live, and the promise that it is not this screen that takes a key.
+  ///
+  /// In en, this message translates to:
+  /// **'No provider is connected. The address and the key are given once, in Settings — this screen never asks for them.'**
+  String get noProviderIsConnected;
+
+  /// While the request is in flight.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending…'**
+  String get sending;
+
+  /// The act, naming which of the two remote routes it is.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to {where}'**
+  String sendToNamed(String where);
+
+  /// Appended to a connected provider's line when there is no vault to seal its key in. The two leading spaces are the frame's.
+  ///
+  /// In en, this message translates to:
+  /// **'  (key kept for this run only)'**
+  String get providerKeyThisRunOnly;
+
+  /// Where a connected provider is changed, said where a person looks for it.
+  ///
+  /// In en, this message translates to:
+  /// **'The address, the model and the key are changed in Settings.'**
+  String get theAddressTheModelTheKey;
+
+  /// The third door, and the one claim only it can make.
+  ///
+  /// In en, this message translates to:
+  /// **'Use an AI service running on this computer — llama.cpp, Ollama, LM Studio, anything that answers the same shape. No key, no account, and the request never leaves this computer. It is the only route that sees none of the ordinary facts above.'**
+  String get localAiSheetWhat;
+
+  /// Why the third door is not live.
+  ///
+  /// In en, this message translates to:
+  /// **'A model on this computer is set up in Settings — there is no key to give.'**
+  String get aModelOnThisComputer;
+
+  /// Leaves this sheet for the room where a key is given.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get openSettings;
+
+  /// Which model a connected provider will answer with.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get modelLabel;
 }
 
 class _AppLocalizationsDelegate

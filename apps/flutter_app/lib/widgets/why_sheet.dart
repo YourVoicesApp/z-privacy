@@ -12,6 +12,8 @@
 // «forget» has to be trusted, and trust needs a number.
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/a_date_in_words.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -25,7 +27,10 @@ import 'package:zprivacy/core/messages.dart';
 /// the act itself.** Helper text may explain a consequence; it may not be the
 /// only place the scope is written, because then the decision is being made
 /// from the smallest line on the card.
-const kRemoveHere = 'Remove protection here';
+/// **A getter, not a `const`** — a sentence is read from the one list now, and
+/// the list is read at run time. The tests reach these by name, which is why
+/// they keep their names.
+String get kRemoveHere => sentences.removeProtectionHere;
 
 /// **The second of the two choices un-protection has** — 083, ruling 3.
 ///
@@ -43,9 +48,9 @@ const kRemoveHere = 'Remove protection here';
 /// stands in more than one place — with one place it would be a second name for
 /// «here», and two names for one act is a defect this app has already paid for.
 String removeInThisConversation(int places) =>
-    'Remove it in this session ($places places)';
-const kForgetThisProfile = 'Forget from this profile';
-const kForgetEverywhere = 'Forget everywhere';
+    sentences.removeItInThisSession(places);
+String get kForgetThisProfile => sentences.forgetFromThisProfile;
+String get kForgetEverywhere => sentences.forgetEverywhere;
 
 /// 046/Q — **the act a press on an already-protected cell also meant.**
 ///
@@ -59,8 +64,8 @@ const kForgetEverywhere = 'Forget everywhere';
 /// The count is in the name, by the same rule the three acts above follow:
 /// action and scope must be readable from the act itself.
 String columnActLabel(int lines) => lines == 1
-    ? 'Protect this column in the line held'
-    : 'Protect this column in the $lines held lines';
+    ? sentences.protectThisColumnInTheLineHeld
+    : sentences.protectThisColumnInLinesHeld(lines);
 
 /// What the card may do about the lines held behind it.
 class ColumnOffer {
@@ -139,7 +144,7 @@ class _WhySheetState extends State<WhySheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Why is this protected?', style: Zc.h2),
+              Text(sentences.whyIsThisProtected, style: Zc.h2),
               const SizedBox(height: 12),
               Container(
                 width: double.infinity,
@@ -197,8 +202,7 @@ class _WhySheetState extends State<WhySheet> {
                       ),
                       const SizedBox(height: 7),
                       Text(
-                        'The same cell of every held line, each value its own token. This one '
-                        'is protected already and stays as it is.',
+                        sentences.theSameCellOfEveryHeldLine,
                         style: Zc.tiny.copyWith(letterSpacing: 0),
                       ),
                     ],
@@ -207,12 +211,13 @@ class _WhySheetState extends State<WhySheet> {
               ],
 
               const SizedBox(height: 18),
-              _Row('What it is', kindName(why.kind)),
-              _Row('Where it applies', why.applies),
-              _Row('Decided by', why.decided ? 'You' : 'Z Privacy, on its own'),
+              _Row(sentences.whatItIsRow, kindName(why.kind)),
+              _Row(sentences.whereItApplies, why.applies),
+              _Row(sentences.decidedBy,
+                  why.decided ? sentences.decidedByYou : sentences.decidedByZPrivacy),
               if (why.learnedAt > BigInt.zero)
-                _Row('Taught on', _day(why.learnedAt.toInt())),
-              _Row('Token', why.token, mono: true),
+                _Row(sentences.taughtOnRow, theDayItWas(why.learnedAt.toInt())),
+              _Row(sentences.tokenRow, why.token, mono: true),
 
               if (why.aliases.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -229,7 +234,7 @@ class _WhySheetState extends State<WhySheet> {
                             size: 16, color: Zc.river),
                         const SizedBox(width: 5),
                         Text(
-                          plural(why.aliases.length, 'other spelling'),
+                          sentences.otherSpellingsCount(why.aliases.length),
                           style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Zc.river),
                         ),
                       ],
@@ -266,7 +271,7 @@ class _WhySheetState extends State<WhySheet> {
                 runSpacing: 8,
                 alignment: WrapAlignment.end,
                 children: [
-                  ZButton(label: 'Close', onPressed: () => Navigator.of(context).pop()),
+                  ZButton(label: sentences.close, onPressed: () => Navigator.of(context).pop()),
                   ZButton(
                     label: kRemoveHere,
                     onPressed: () async {
@@ -303,37 +308,34 @@ class _WhySheetState extends State<WhySheet> {
               // The acts, named apart and explained one by one. The name above
               // each explanation is the **same string** as the button's, so a
               // rename cannot leave the two disagreeing.
-              _Note(kRemoveHere, const [
-                'Uncovers this one place. Every other place keeps its protection, and its token.',
-                'The value stays in your privacy rules and may be protected again later.',
+              _Note(kRemoveHere, [
+                sentences.uncoversThisOnePlace,
+                sentences.theValueStaysInYourRules,
               ]),
               if (why.places > 1)
-                _Note(removeInThisConversation(why.places), const [
-                  'Uncovers every place this token stands in, in this session.',
-                  'There is no «everywhere»: un-protection reaches no further than one session.',
+                _Note(removeInThisConversation(why.places), [
+                  sentences.uncoversEveryPlaceInThisSession,
+                  sentences.thereIsNoEverywhere,
                 ]),
               if (scopedForget != null)
-                _Note(scopedForget, const [
-                  'Removes what Z Privacy learned for this profile.',
-                  'Protection already applied in this document stays in place.',
+                _Note(scopedForget, [
+                  sentences.removesWhatZLearnedForThisProfile,
+                  sentences.protectionAlreadyAppliedStays,
                 ]),
               if (taught)
-                _Note(kForgetEverywhere, const [
-                  'Removes what Z Privacy learned, in every profile.',
-                  'Protection already applied in this document stays in place.',
+                _Note(kForgetEverywhere, [
+                  sentences.removesWhatZLearnedEverywhere,
+                  sentences.protectionAlreadyAppliedStays,
                 ]),
               if (taughtRule)
-                _Note('Forget this rule', const [
-                  'The rule itself is kept in your vault.',
-                  'Forget it in Z Vault → My Privacy Rules → Rules I taught.',
+                _Note(sentences.forgetThisRule, [
+                  sentences.theRuleItselfIsKept,
+                  sentences.forgetItInZVaultRules,
                 ]),
               if (!taught && !taughtRule)
                 Text(
                   why.decided
-                      ? 'Nothing was learned from this — you protected it here, and Undo takes '
-                          'it back.'
-                      : 'Nothing was learned from this. A rule recognised the shape, and no '
-                          'record of it was kept.',
+                      ? sentences.nothingWasLearnedYouProtectedIt: sentences.nothingWasLearnedARuleSawIt,
                   style: Zc.small,
                 ),
             ],
@@ -368,8 +370,7 @@ class _WhySheetState extends State<WhySheet> {
       // another profile legitimately might, and the preview already said so.
       if (everywhere && done.stillKnownBy.isNotEmpty && mounted) {
         setState(() => _trouble =
-            'Forgotten, but ${done.stillKnownBy.join(", ")} still recognises it. '
-            'Please tell us — this should not be possible.');
+            sentences.forgottenButStillKnownBy(done.stillKnownBy.join(', ')));
         return;
       }
       // `onChanged` looks again; it does **not** take anything back. A rescan
@@ -382,15 +383,6 @@ class _WhySheetState extends State<WhySheet> {
     }
   }
 
-  /// A date from seconds. The fact is the timestamp; this is only how it reads.
-  String _day(int seconds) {
-    final d = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${d.day} ${months[d.month - 1]} ${d.year}';
-  }
 }
 
 /// Ask before forgetting: read the plan from the core, show what it would take
@@ -483,14 +475,14 @@ class _PlainForgetSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Forget «${theirOwnWord(what)}»?', style: Zc.h2),
+              Text(sentences.forgetNamed(theirOwnWord(what)), style: Zc.h2),
               const SizedBox(height: 14),
-              const Eyebrow('This will remove'),
+              Eyebrow(sentences.thisWillRemove),
               const SizedBox(height: 7),
               _Line(goes),
               const SizedBox(height: 14),
               Text(
-                'This cannot be undone.',
+                sentences.thisCannotBeUndone,
                 style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
               ),
               const SizedBox(height: 20),
@@ -500,7 +492,7 @@ class _PlainForgetSheet extends StatelessWidget {
                 alignment: WrapAlignment.end,
                 children: [
                   ZButton(
-                    label: 'Cancel',
+                    label: sentences.cancel,
                     onPressed: () => Navigator.of(context).pop(false),
                   ),
                   ZButton(
@@ -541,17 +533,17 @@ class _ForgetSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Forget «${theirOwnWord(plan.what)}»?', style: Zc.h2),
+              Text(sentences.forgetNamed(theirOwnWord(plan.what)), style: Zc.h2),
               const SizedBox(height: 14),
-              const Eyebrow('This will remove'),
+              Eyebrow(sentences.thisWillRemove),
               const SizedBox(height: 7),
-              _Line(plural(plan.values, 'protected value')),
-              if (plan.aliases > 0) _Line(plural(plan.aliases, 'spelling')),
+              _Line(sentences.protectedValuesCount(plan.values)),
+              if (plan.aliases > 0) _Line(sentences.spellingsCount(plan.aliases)),
               if (plan.identities > 0)
-                _Line('${plural(plan.identities, "identity", "identities")} left holding nothing'),
-              for (final p in plan.profiles) _Line('its place in $p'),
+                _Line(sentences.identitiesLeftHoldingNothing(plan.identities)),
+              for (final p in plan.profiles) _Line(sentences.itsPlaceIn(p)),
               const SizedBox(height: 16),
-              const Eyebrow('It will NOT change'),
+              Eyebrow(sentences.itWillNotChange),
               const SizedBox(height: 7),
               for (final k in plan.keeps) _Line(k, keeps: true),
               const SizedBox(height: 10),
@@ -564,12 +556,7 @@ class _ForgetSheet extends StatelessWidget {
               // promises what we do not hold.
               Text(
                 plan.stillKnownBy.isEmpty
-                    ? 'Forget removes this value from the current vault and from future '
-                        'recognition by that vault. It does not remove protection already '
-                        'applied in this document, and an older valid copy of the vault may '
-                        'restore the value later.'
-                    : '${plan.stillKnownBy.join(", ")} would still recognise it — forgetting here '
-                        'does not reach into another client\u2019s records.',
+                    ? sentences.forgetRemovesFromThisVault: sentences.wouldStillRecogniseIt(plan.stillKnownBy.join(', ')),
                 style: Zc.tiny.copyWith(
                   letterSpacing: 0,
                   color: plan.stillKnownBy.isEmpty ? Zc.ink4 : Zc.amber,
@@ -584,7 +571,7 @@ class _ForgetSheet extends StatelessWidget {
                 runSpacing: 8,
                 alignment: WrapAlignment.end,
                 children: [
-                  ZButton(label: 'Cancel', onPressed: () => Navigator.of(context).pop(false)),
+                  ZButton(label: sentences.cancel, onPressed: () => Navigator.of(context).pop(false)),
                   ZButton(
                     label: action,
                     filled: true,

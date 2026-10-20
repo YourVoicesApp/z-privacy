@@ -1199,4 +1199,958 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get tokenRotationWhat =>
       'Noch nicht gebaut. Wenn es kommt, wird es hier leben: ob ein dauerhafter Platzhalter seine Nummer über Sitzungen hinweg behält oder jedes Mal neu gezogen wird, damit zwei Sitzungen nicht darüber verbunden werden können.';
+
+  @override
+  String get back => 'Zurück';
+
+  @override
+  String get allIdentities => 'Alle Identitäten';
+
+  @override
+  String identitiesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Identitäten',
+      one: '1 Identität',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String valuesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Werte',
+      one: '1 Wert',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String protectedWordsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count geschützte Wörter',
+      one: '1 geschütztes Wort',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notCreatedOnThisDevice => 'Auf diesem Gerät nicht erstellt';
+
+  @override
+  String get changePassphrase => 'Passphrase ändern';
+
+  @override
+  String get lockTheVault => 'Verschließen';
+
+  @override
+  String get theVaultIsLocked => 'Der Tresor ist verschlossen';
+
+  @override
+  String get thereIsNoVaultYet => 'Es gibt noch keinen Tresor';
+
+  @override
+  String get yourIdentitiesAreSealed =>
+      'Ihre Identitäten sind auf diesem Gerät, versiegelt. Bis er offen ist, laufen die Regeln und das Sprachpaket weiter — eine IBAN wird weiter erkannt — aber nicht, zu wem sie gehört.';
+
+  @override
+  String get aVaultIsTheOnlyFile =>
+      'Ein Tresor ist die einzige Datei, die diese App schreibt. Er enthält Ihre Menschen und ihre Werte, verschlüsselt mit einer Passphrase, die dieses Gerät nie verlässt. Ohne ihn wird nichts am Namen erkannt.';
+
+  @override
+  String get searchThisDevice =>
+      'Dieses Gerät durchsuchen — Namen, Werte, Schreibweisen';
+
+  @override
+  String get newIdentity => 'Neue Identität';
+
+  @override
+  String get filterAll => 'Alle';
+
+  @override
+  String get sessionProfile => 'Profil der Sitzung';
+
+  @override
+  String get newProfile => 'Neues Profil';
+
+  @override
+  String get noIdentitiesYet =>
+      'Noch keine Identitäten. Die erste ist meist der Kunde, an dessen Dokumenten Sie arbeiten.';
+
+  @override
+  String nothingMatchesQuery(String query) {
+    return 'Nichts auf diesem Gerät passt zu «$query».';
+  }
+
+  @override
+  String get valuesITaught => 'Werte, die ich beigebracht habe';
+
+  @override
+  String get valuesITaughtWhat =>
+      'Namen, Firmen, Nummern — von jetzt an von selbst gefunden';
+
+  @override
+  String get rulesITaught => 'Regeln, die ich beigebracht habe';
+
+  @override
+  String get rulesITaughtWhat =>
+      'Wörter, die sagen, was nach ihnen kommt — «nach Mandantenkennung → Kundennummer»';
+
+  @override
+  String get exceptionsITaught => 'Ausnahmen, die ich beigebracht habe';
+
+  @override
+  String get exceptionsITaughtWhat =>
+      'Werte, die Sie ausdrücklich vom Schutz ausgenommen haben';
+
+  @override
+  String get noTaughtValuesYet => 'Noch keine beigebrachten Werte.';
+
+  @override
+  String get noRulesTaughtYet => 'Noch keine beigebrachten Regeln.';
+
+  @override
+  String get noSavedExceptionsYet => 'Noch keine gespeicherten Ausnahmen.';
+
+  @override
+  String kindScopeTaughtOn(String kind, String scope, String date) {
+    return '$kind · $scope · Beigebracht: $date';
+  }
+
+  @override
+  String doNotProtectAsKindScopeTaughtOn(
+    String kind,
+    String scope,
+    String date,
+  ) {
+    return 'Nicht als $kind schützen · $scope · Beigebracht: $date';
+  }
+
+  @override
+  String get reveal => 'Aufdecken';
+
+  @override
+  String get hide => 'Verbergen';
+
+  @override
+  String get theExceptionGoes =>
+      'die Ausnahme — dieser Wert wird wieder zum Schutz angeboten';
+
+  @override
+  String get theRuleGoes =>
+      'die Regel — Z Privacy schützt nicht mehr, was nach diesem Wort kommt';
+
+  @override
+  String get openIdentity => 'Öffnen';
+
+  @override
+  String profileNamed(String name) {
+    return 'Profil: $name';
+  }
+
+  @override
+  String get taughtOnUnknown => 'unbekannt';
+
+  @override
+  String afterLabelProtectAs(String label, String kind) {
+    return 'Nach «$label:» → $kind';
+  }
+
+  @override
+  String get teachARule => 'Eine Regel beibringen';
+
+  @override
+  String get kindClient => 'Kunde';
+
+  @override
+  String get kindPerson => 'Person';
+
+  @override
+  String get kindCompany => 'Firma';
+
+  @override
+  String get kindProject => 'Projekt';
+
+  @override
+  String get kindSomethingElse => 'Etwas anderes';
+
+  @override
+  String vaultFileNotChanged(String said) {
+    return '$said Z Privacy hat die Datei nicht verändert. Wenn Sie eine Sicherung des Tresors haben, legen Sie sie zurück; andernfalls verschieben Sie diese Datei woandershin, und hier kann ein neuer Tresor entstehen.';
+  }
+
+  @override
+  String get changeThePassphrase => 'Die Passphrase ändern';
+
+  @override
+  String get onlyThirtyTwoBytes =>
+      'Nur 32 Bytes werden neu verpackt — der Tresor selbst wird nicht entschlüsselt und nicht neu geschrieben. Alles darin bleibt genau, wo es ist.';
+
+  @override
+  String get currentPassphrase => 'Aktuelle Passphrase';
+
+  @override
+  String get passphrase => 'Passphrase';
+
+  @override
+  String get newPassphrase => 'Neue Passphrase';
+
+  @override
+  String get confirmPassphrase => 'Passphrase bestätigen';
+
+  @override
+  String get confirmNewPassphrase => 'Neue Passphrase bestätigen';
+
+  @override
+  String get passphrasesMatch => 'Die Passphrasen stimmen überein';
+
+  @override
+  String get passphrasesDoNotMatch => 'Die Passphrasen stimmen nicht überein';
+
+  @override
+  String atLeastCharacters(int count) {
+    return 'Mindestens $count Zeichen — mit weniger wird der Tresor nicht erstellt.';
+  }
+
+  @override
+  String get thereIsNoWayBack =>
+      'Es gibt keinen Weg zurück. Niemand hat eine Kopie davon, und es gibt kein Zurücksetzen — die Passphrase verlässt dieses Gerät nie, und auf unserer Seite könnte nichts den Tresor ohne sie wiederherstellen.';
+
+  @override
+  String get working => 'Arbeitet…';
+
+  @override
+  String get changeIt => 'Ändern';
+
+  @override
+  String get createTheVault => 'Den Tresor erstellen';
+
+  @override
+  String get unlockTheVault => 'Öffnen';
+
+  @override
+  String hideNamed(String label) {
+    return '$label verbergen';
+  }
+
+  @override
+  String showNamed(String label) {
+    return '$label zeigen';
+  }
+
+  @override
+  String get aNewIdentity => 'Eine neue Identität';
+
+  @override
+  String get anIdentityIsHowAPersonThinks =>
+      'Eine Identität ist, wie ein Mensch denkt — «Kunde Nordstern» — und die Werte darin sind, was der Scanner erkennt.';
+
+  @override
+  String get nameField => 'Name';
+
+  @override
+  String get sortField => 'Art';
+
+  @override
+  String get loadedIn => 'Geladen in';
+
+  @override
+  String get exampleClientNordstern => 'Kunde Nordstern';
+
+  @override
+  String get exampleCompanyName => 'Nordstern Consulting GmbH';
+
+  @override
+  String get cancelForm => 'Abbrechen';
+
+  @override
+  String get createIt => 'Erstellen';
+
+  @override
+  String get aNewValue => 'Ein neuer Wert';
+
+  @override
+  String get editThisValue => 'Diesen Wert bearbeiten';
+
+  @override
+  String get theValue => 'Der Wert';
+
+  @override
+  String get readingItFromTheVault => 'wird aus dem Tresor gelesen…';
+
+  @override
+  String get whatItIs => 'Was es ist';
+
+  @override
+  String get howToTreatIt => 'Wie damit umzugehen ist';
+
+  @override
+  String get alwaysProtect => 'Immer schützen';
+
+  @override
+  String get alwaysProtectWhat =>
+      'Wird von selbst gefunden und ersetzt, ohne Frage.';
+
+  @override
+  String get suggestPolicy => 'Vorschlagen';
+
+  @override
+  String get suggestPolicyWhat =>
+      'Wird gefunden und Ihnen vorgelegt, bevor etwas gesendet wird.';
+
+  @override
+  String get keepDoNotHunt => 'Behalten, nicht suchen';
+
+  @override
+  String get keepDoNotHuntWhat =>
+      'Wird behalten, damit seine Schreibweisen und sein Platzhalter stabil bleiben — aber nicht gesucht.';
+
+  @override
+  String get saveIt => 'Speichern';
+
+  @override
+  String get aNewProfile => 'Ein neues Profil';
+
+  @override
+  String get renameProfile => 'Profil umbenennen';
+
+  @override
+  String get oneDictionaryPerClient =>
+      'Ein Verzeichnis pro Kunde. Nur die Identitäten des Profils, das Sie öffnen, werden geladen — den Tresor zu öffnen ist kein Blankoscheck.';
+
+  @override
+  String get theProfileIdStaysTheSame =>
+      'Die Profil-ID bleibt dieselbe. Nur der Name, den ein Mensch liest, ändert sich.';
+
+  @override
+  String get languagesUsedInDocuments => 'Sprachen in den Dokumenten';
+
+  @override
+  String get moreThanOneMayBeOn =>
+      'Mehr als eine kann an sein. Ein Dokument mit einem deutschen und einem englischen Feldnamen wird in einem Durchgang von beiden gelesen.';
+
+  @override
+  String get renameIt2 => 'Umbenennen';
+
+  @override
+  String get teachARuleHead => 'Eine Regel beibringen';
+
+  @override
+  String get aRuleIsAWordAndWhatComesAfter =>
+      'Eine Regel ist ein Wort und was nach ihm kommt. Z Privacy schützt den Wert, der folgt, und hört am Ende dieses Feldes auf.';
+
+  @override
+  String get whenZPrivacySees => 'Wenn Z Privacy sieht';
+
+  @override
+  String get exampleMandantenkennung => 'Mandantenkennung';
+
+  @override
+  String get protectTheValueAfterItAs => 'Den Wert danach schützen als';
+
+  @override
+  String get whereField => 'Wo';
+
+  @override
+  String profileNamedDash(String name) {
+    return 'Profil — $name';
+  }
+
+  @override
+  String get saveRule => 'Regel speichern';
+
+  @override
+  String get removeProtectionHere => 'Schutz hier entfernen';
+
+  @override
+  String removeItInThisSession(int places) {
+    return 'In dieser Sitzung entfernen ($places Stellen)';
+  }
+
+  @override
+  String get forgetFromThisProfile => 'Aus diesem Profil vergessen';
+
+  @override
+  String get forgetEverywhere => 'Überall vergessen';
+
+  @override
+  String get protectThisColumnInTheLineHeld =>
+      'Diese Spalte in der gehaltenen Zeile schützen';
+
+  @override
+  String protectThisColumnInLinesHeld(int lines) {
+    return 'Diese Spalte in den $lines gehaltenen Zeilen schützen';
+  }
+
+  @override
+  String get whyIsThisProtected => 'Warum ist das geschützt?';
+
+  @override
+  String get theSameCellOfEveryHeldLine =>
+      'Dieselbe Zelle jeder gehaltenen Zeile, jeder Wert mit eigenem Platzhalter. Dieser ist schon geschützt und bleibt, wie er ist.';
+
+  @override
+  String get whatItIsRow => 'Was es ist';
+
+  @override
+  String get whereItApplies => 'Wo es gilt';
+
+  @override
+  String get decidedBy => 'Entschieden von';
+
+  @override
+  String get decidedByYou => 'Sie';
+
+  @override
+  String get decidedByZPrivacy => 'Z Privacy, von selbst';
+
+  @override
+  String get taughtOnRow => 'Beigebracht am';
+
+  @override
+  String get tokenRow => 'Platzhalter';
+
+  @override
+  String otherSpellingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count andere Schreibweisen',
+      one: '1 andere Schreibweise',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get close => 'Schließen';
+
+  @override
+  String get uncoversThisOnePlace =>
+      'Deckt diese eine Stelle auf. Jede andere Stelle behält ihren Schutz und ihren Platzhalter.';
+
+  @override
+  String get theValueStaysInYourRules =>
+      'Der Wert bleibt in Ihren Datenschutzregeln und kann später wieder geschützt werden.';
+
+  @override
+  String get uncoversEveryPlaceInThisSession =>
+      'Deckt jede Stelle auf, an der dieser Platzhalter in dieser Sitzung steht.';
+
+  @override
+  String get thereIsNoEverywhere =>
+      'Es gibt kein «überall»: Das Aufheben des Schutzes reicht nicht weiter als eine Sitzung.';
+
+  @override
+  String get removesWhatZLearnedForThisProfile =>
+      'Entfernt, was Z Privacy für dieses Profil gelernt hat.';
+
+  @override
+  String get protectionAlreadyAppliedStays =>
+      'Schutz, der in diesem Dokument schon angewendet wurde, bleibt bestehen.';
+
+  @override
+  String get removesWhatZLearnedEverywhere =>
+      'Entfernt, was Z Privacy gelernt hat, in jedem Profil.';
+
+  @override
+  String get forgetThisRule => 'Diese Regel vergessen';
+
+  @override
+  String get theRuleItselfIsKept =>
+      'Die Regel selbst wird in Ihrem Tresor behalten.';
+
+  @override
+  String get forgetItInZVaultRules =>
+      'Vergessen Sie sie im Z-Tresor → Meine Datenschutzregeln → Regeln, die ich beigebracht habe.';
+
+  @override
+  String get nothingWasLearnedYouProtectedIt =>
+      'Daraus wurde nichts gelernt — Sie haben es hier geschützt, und Rückgängig nimmt es zurück.';
+
+  @override
+  String get nothingWasLearnedARuleSawIt =>
+      'Daraus wurde nichts gelernt. Eine Regel hat die Form erkannt, und nichts davon wurde aufbewahrt.';
+
+  @override
+  String forgottenButStillKnownBy(String who) {
+    return 'Vergessen, aber $who erkennt es weiterhin. Bitte sagen Sie es uns — das sollte nicht möglich sein.';
+  }
+
+  @override
+  String forgetNamed(String what) {
+    return '«$what» vergessen?';
+  }
+
+  @override
+  String get thisWillRemove => 'Dies entfernt';
+
+  @override
+  String protectedValuesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count geschützte Werte',
+      one: '1 geschützter Wert',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String spellingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Schreibweisen',
+      one: '1 Schreibweise',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String identitiesLeftHoldingNothing(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Identitäten',
+      one: '1 Identität',
+    );
+    return '$_temp0, die dann nichts mehr enthalten';
+  }
+
+  @override
+  String itsPlaceIn(String profile) {
+    return 'seinen Platz in $profile';
+  }
+
+  @override
+  String get itWillNotChange => 'Dies ändert es NICHT';
+
+  @override
+  String get forgetRemovesFromThisVault =>
+      'Vergessen entfernt diesen Wert aus dem aktuellen Tresor und aus der künftigen Erkennung durch diesen Tresor. Es entfernt nicht den Schutz, der in diesem Dokument schon angewendet wurde, und eine ältere gültige Kopie des Tresors kann den Wert später wiederherstellen.';
+
+  @override
+  String wouldStillRecogniseIt(String who) {
+    return '$who würde es weiterhin erkennen — hier zu vergessen reicht nicht in die Aufzeichnungen eines anderen Kunden.';
+  }
+
+  @override
+  String get thisCannotBeUndone => 'Dies kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get noValuesYet =>
+      'Noch keine Werte. Ein Wert ist, was der Scanner erkennt — ein Name, eine Firma, eine IBAN.';
+
+  @override
+  String valuesEachWithItsOwnPolicy(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Werte',
+      one: '1 Wert',
+    );
+    return '$_temp0, jeder mit eigenen Schreibweisen und eigener Regel.';
+  }
+
+  @override
+  String get moveIt => 'Verschieben';
+
+  @override
+  String get deleteIt => 'Löschen';
+
+  @override
+  String get addAValue => 'Einen Wert hinzufügen';
+
+  @override
+  String get policyKeptNotHunted => 'Behalten, nicht gesucht';
+
+  @override
+  String get addASpelling => 'Eine Schreibweise hinzufügen';
+
+  @override
+  String get editIt => 'Bearbeiten';
+
+  @override
+  String get alsoWritten => 'Auch geschrieben';
+
+  @override
+  String get anotherSpelling => 'Eine andere Schreibweise';
+
+  @override
+  String get anotherSpellingWhat =>
+      'Derselbe Wert, anders geschrieben — «Herr Müller», «T. Müller». Jede Schreibweise behält denselben Platzhalter, damit das Modell eine Person liest und nicht drei.';
+
+  @override
+  String get exampleSpelling => 'Herr Müller';
+
+  @override
+  String get renameHead => 'Umbenennen';
+
+  @override
+  String get whatToCallThisIdentity => 'Wie diese Identität heißen soll.';
+
+  @override
+  String get moveThisIdentity => 'Diese Identität verschieben';
+
+  @override
+  String get anIdentityInAProfile =>
+      'Eine Identität in einem Profil wird nur geladen, wenn dieses Profil offen ist. Eine, die überall gehört, wird immer geladen.';
+
+  @override
+  String get deleteThisIdentity => 'Diese Identität löschen?';
+
+  @override
+  String identityAndItsValuesAreRemoved(String name, String values) {
+    return '«$name» und $values werden aus dem Tresor entfernt. Schon geschützte Dokumente behalten ihre Platzhalter; das nächste Dokument erkennt diese Werte nicht wieder.';
+  }
+
+  @override
+  String get keepItIdentity => 'Behalten';
+
+  @override
+  String get noNamesToLookAt => 'Keine Namen zu prüfen';
+
+  @override
+  String namesToLookAtCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Namen zu prüfen',
+      one: '1 Name zu prüfen',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get zKnowsEveryName =>
+      'Z kennt jeden Namen, den dieses Dokument verwendet.';
+
+  @override
+  String get wordsThisDocumentUsesAsNames =>
+      'Wörter, die dieses Dokument als Namen verwendet und die Z noch nicht kennt.';
+
+  @override
+  String placesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Stellen',
+      one: '1 Stelle',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pagesCountShort(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Seiten',
+      one: '1 Seite',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addAsFamilyName => 'Als Nachnamen hinzufügen';
+
+  @override
+  String get addAsGivenName => 'Als Vornamen hinzufügen';
+
+  @override
+  String get ignoreIt => 'Übergehen';
+
+  @override
+  String get unlockTheVaultAct => 'Den Tresor öffnen';
+
+  @override
+  String get needsAVault => 'Braucht einen Tresor';
+
+  @override
+  String get nameListsFileType => 'Namenslisten';
+
+  @override
+  String get whichLanguageAreTheseNames =>
+      'In welcher Sprache sind diese Namen?';
+
+  @override
+  String get yourNames => 'Ihre Namen';
+
+  @override
+  String get namesThisDeviceKnows =>
+      'Namen, die dieses Gerät kennt, weil Sie es gesagt haben. Sie werden in Ihrem Tresor aufbewahrt, auf diesem Computer.';
+
+  @override
+  String get addAName => 'Einen Namen hinzufügen';
+
+  @override
+  String get importAList => 'Eine Liste importieren';
+
+  @override
+  String actNeedsTheVault(String act, String needs) {
+    return '$act · $needs';
+  }
+
+  @override
+  String get aListIsACsv =>
+      'Eine Liste ist eine CSV mit einer Spalte «name» und einer Spalte «type»: given, family, person oder company.';
+
+  @override
+  String get yourNamesLiveInTheVault =>
+      'Ihre Namen leben im Tresor, das Hinzufügen braucht ihn also offen.';
+
+  @override
+  String get exampleSurname => 'Lindqvist';
+
+  @override
+  String get pickSuggest => 'Vorschlagen';
+
+  @override
+  String get pickAlways => 'Immer';
+
+  @override
+  String get alwaysProtectedTheMoment =>
+      'Immer: geschützt, sobald er auftaucht, in jedem Dokument.';
+
+  @override
+  String get suggestMarksAndWaits =>
+      'Vorschlagen: Z markiert ihn und wartet auf Ihr Wort.';
+
+  @override
+  String get addAct => 'Hinzufügen';
+
+  @override
+  String get nothingYet => 'Noch nichts.';
+
+  @override
+  String get wholeNamesKeptInTheVault => 'Ganze Namen, im Tresor aufbewahrt';
+
+  @override
+  String get aWholePersonIsAValue =>
+      'Eine ganze Person oder Firma ist ein Wert, kein Wörterbucheintrag, also steht sie in keiner Sprachliste. Der Z-Tresor ist, wo jede verwaltet wird.';
+
+  @override
+  String get reachEverywhere => 'überall';
+
+  @override
+  String get reachThisClient => 'dieser Kunde';
+
+  @override
+  String forgetNamedShort(String what) {
+    return '«$what» vergessen';
+  }
+
+  @override
+  String get kindGivenName => 'Vorname';
+
+  @override
+  String get kindFamilyName => 'Nachname';
+
+  @override
+  String get kindPersonName => 'Person';
+
+  @override
+  String get kindCompanyName => 'Firma';
+
+  @override
+  String namesAndValuesInAList(String names, int values) {
+    return '$names · $values Werte';
+  }
+
+  @override
+  String get listIsOff => 'aus';
+
+  @override
+  String get stopUsingTheseNames => 'Diese Namen nicht mehr verwenden';
+
+  @override
+  String get useTheseNamesAgain => 'Diese Namen wieder verwenden';
+
+  @override
+  String whatToDoWithList(String name) {
+    return 'Was mit «$name» zu tun ist';
+  }
+
+  @override
+  String get moveToDots => 'Verschieben nach…';
+
+  @override
+  String get exportCsv => 'CSV exportieren';
+
+  @override
+  String get removeList => 'Liste entfernen';
+
+  @override
+  String removeNamedList(String name) {
+    return '«$name» entfernen?';
+  }
+
+  @override
+  String namesGoWithItCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Namen gehen mit. Nichts anderes wird berührt.',
+      one: 'Ein Name geht mit. Nichts anderes wird berührt.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get removeAct => 'Entfernen';
+
+  @override
+  String moveNamesFromTo(int count, String from) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Namen von $from nach… verschieben',
+      one: 'Einen Namen von $from nach… verschieben',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get howFarDoTheseNamesReach => 'Wie weit reichen diese Namen?';
+
+  @override
+  String get protectingThemMeans =>
+      'Sie zu schützen heißt, dass Z sie schwärzt, sobald sie auftauchen, ohne Frage. Sie anzubieten heißt, dass Z sie markiert und auf Sie wartet.';
+
+  @override
+  String get youCanChangeAnyOneAfterwards =>
+      'Sie können jeden davon später ändern, Name für Name.';
+
+  @override
+  String get offerThemAndIDecide => 'Anbieten, und ich entscheide';
+
+  @override
+  String get protectThemEverywhere => 'Sie überall schützen';
+
+  @override
+  String protectThemForClient(String client) {
+    return 'Sie für $client schützen';
+  }
+
+  @override
+  String get couldNotBuildThePdf =>
+      'Z Privacy konnte das PDF nicht erstellen — seine Antwortseite hatte keinen Platzhalter. Es wurde nichts geschrieben.';
+
+  @override
+  String get whoAnswers => 'Wer antwortet';
+
+  @override
+  String get thereIsNothingToSend => 'Es gibt nichts zu senden.';
+
+  @override
+  String valuesReplacedCharacters(int values, int characters) {
+    return '$values Werte ersetzt · $characters Zeichen würden dieses Gerät verlassen.';
+  }
+
+  @override
+  String sessionNumber(int number) {
+    return 'Sitzung $number';
+  }
+
+  @override
+  String sessionNumberNamed(int number, String name) {
+    return 'Sitzung $number «$name»';
+  }
+
+  @override
+  String theseNamesAreThisSessions(String named) {
+    return '$named · diese Namen gehören zu dieser Sitzung';
+  }
+
+  @override
+  String get noSessionNamesForThisDocument =>
+      'Keine Sitzung — diese Namen wurden nur für dieses Dokument erzeugt.';
+
+  @override
+  String get noSessionYetAnyDoorBeginsOne =>
+      'Noch keine Sitzung — jede Tür hier beginnt eine.';
+
+  @override
+  String get nothingLeftTheMachine => 'Nichts hat das Gerät verlassen.';
+
+  @override
+  String get oneSuggestionStillOpenSend =>
+      'Ein Vorschlag ist noch offen. Er steht im Text wie geschrieben, und es kann nichts gesendet werden, bis Sie ihn beantworten. Es gibt kein «trotzdem senden».';
+
+  @override
+  String suggestionsStillOpenSend(int open) {
+    return '$open Vorschläge sind noch offen. Sie stehen im Text wie geschrieben, und es kann nichts gesendet werden, bis Sie sie beantworten. Es gibt kein «trotzdem senden».';
+  }
+
+  @override
+  String get manualAiSheetWhat =>
+      'Nutzen Sie einen KI-Chat, den Sie schon haben. Nehmen Sie den Text oben — in die Zwischenablage oder als PDF auf diesem Gerät — fügen Sie ihn in ein Modell Ihrer Wahl ein und bringen Sie die Antwort mit «Eine Antwort hinzufügen» unter dem Chat zurück. Das Zurückholen funktioniert beide Wege gleich — kein Konto, kein Schlüssel. Keiner der beiden Wege sendet etwas von hier.';
+
+  @override
+  String get copied => 'Kopiert';
+
+  @override
+  String get copyProtected => 'Geschützten Text kopieren';
+
+  @override
+  String get saving => 'Wird gespeichert…';
+
+  @override
+  String get saveAsPdf => 'Als PDF speichern';
+
+  @override
+  String savedToWhere(String where) {
+    return 'Gespeichert unter $where';
+  }
+
+  @override
+  String get whatThePdfHolds =>
+      'Der geschützte Text, mit dem Build-Stempel, den Zahlen und einem sha256 dieses Textes in der Fußzeile, und einer letzten Seite für die Antwort. Es wurde nichts gesendet.';
+
+  @override
+  String get directApiSheetWhatRemote =>
+      'Verbinden Sie sich mit einem entfernten KI-Anbieter mit Ihren API-Zugangsdaten. Nur der Text oben würde reisen; der Anbieter sieht weiterhin die gewöhnlichen Tatsachen einer Verbindung — Ihre Adresse, die Zeit, das Modell.';
+
+  @override
+  String get directApiSheetWhatConnected =>
+      'Die Anfrage geht von dieser App aus. Nur der Text oben reist; der Anbieter sieht weiterhin die gewöhnlichen Tatsachen einer Verbindung — Ihre Adresse, die Zeit, das Modell.';
+
+  @override
+  String get noProviderIsConnected =>
+      'Kein Anbieter ist verbunden. Adresse und Schlüssel werden einmal in den Einstellungen angegeben — dieser Bildschirm fragt nie danach.';
+
+  @override
+  String get sending => 'Wird gesendet…';
+
+  @override
+  String sendToNamed(String where) {
+    return 'An $where senden';
+  }
+
+  @override
+  String get providerKeyThisRunOnly =>
+      '  (Schlüssel nur, solange die App offen ist)';
+
+  @override
+  String get theAddressTheModelTheKey =>
+      'Adresse, Modell und Schlüssel werden in den Einstellungen geändert.';
+
+  @override
+  String get localAiSheetWhat =>
+      'Nutzen Sie einen KI-Dienst auf diesem Computer — llama.cpp, Ollama, LM Studio, alles, was in derselben Form antwortet. Kein Schlüssel, kein Konto, und die Anfrage verlässt diesen Computer nie. Es ist der einzige Weg, der keine der gewöhnlichen Tatsachen oben sieht.';
+
+  @override
+  String get aModelOnThisComputer =>
+      'Ein Modell auf diesem Computer wird in den Einstellungen eingerichtet — es gibt keinen Schlüssel anzugeben.';
+
+  @override
+  String get openSettings => 'Einstellungen öffnen';
+
+  @override
+  String get modelLabel => 'Modell';
 }
