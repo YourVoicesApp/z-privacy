@@ -84,6 +84,48 @@ in a commit of its own rather than inside a round about sentences. Until it is
 done, a red in a full run whose message is `errno = 39` is this, and not the
 guard it is reported against.
 
+## And a second cause in the same file, still open
+
+**Measured 20 October 2026 by the lead**, in a full gates run over a merge that
+touched **no Dart at all** (094, docs and scripts only) — so it is not anything
+a round changed:
+
+```text
+a_line_is_taken_in_the_gutter_test.dart
+  «the explain card carries the column act, so no press is wasted»
+  line 374  the WhySheet was found
+  line 378  0 ZButton with text «Protect this column in the 4 held lines»
+```
+
+The file alone, run the gates' own way
+(`LD_LIBRARY_PATH=…/bundle/lib flutter test --concurrency=1`), is green 10 of
+10. The teardown race is **not** this one: that one throws `errno = 39` out of
+a `tearDown`, and this is a finder returning nothing inside the test's own
+body.
+
+Two possibilities, and which one it is has to be pinned before anything is
+changed:
+
+1. the card's act button was not built yet when the finder ran — `settle(…,
+   rounds: 16)` is a count of pumps, not a wait for a thing to exist;
+2. the drag held fewer than four lines, so the button that *was* built carried
+   another number in its label and the finder was looking for the wrong
+   sentence.
+
+**How to tell them apart, on the red:** print every `ZButton` label present at
+that moment. One of them reading «…in the 3 held lines» says (2); none of them
+being an act of the card says (1).
+
+**Then the fix, whichever it is**: the guard waits for the button **by a key**
+rather than by counting rounds, and reads the number off the bench rather than
+out of a sentence. A guard that waits a fixed number of pumps for a widget
+another process's load decides the timing of is the same instrument fault as
+the teardown above — and since 092 the label is drawn from the one list, so a
+guard that reaches for its English text would also break the day it is read in
+German.
+
+Queued after sitting four of 092 and after 097, by the lead's own order.
+
 Related: `the_debug_bridge_has_no_test_features.md` (the same errno, the other
 cause) · `a_guard_green_for_the_wrong_reason.md` ·
 `flutter_an_instrument_that_speaks_once.md`.
