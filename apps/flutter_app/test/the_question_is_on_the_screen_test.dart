@@ -152,6 +152,89 @@ void main() {
 
   });
 
+  /// **A hand reaches a word in the request through the same door** — 096,
+  /// rule 72-ب, and the one part of this half that does not stand yet.
+  ///
+  /// **It is red on purpose, and the lead's ruling is that it stays red** until
+  /// the core half is fixed: this is the guard that crosses the seam, and a
+  /// seam with a green guard on each side and nothing across it is how two
+  /// finished halves make one broken product.
+  /// `z_core/src/ops/mod.rs:1747` builds `word_span` from `s.original_str()`
+  /// — the document's text — out of offsets that are the **request's** own
+  /// when the hand landed in the request. So the span comes back pointing into
+  /// the document, and because `select()` replaces what the person drew with
+  /// `view.wordSpan` (041-K, «what the core will take is what the screen
+  /// shows»), the next press protects a word nobody pointed at. Measured on
+  /// `e610c63`:
+  ///
+  /// ```text
+  /// requestBegins 69 · the text at 92 is «earn»
+  /// select(Span(92, 96))  →  selection 22..28  =  «Thomas», in the document
+  /// protectSelection(…)   →  alreadyProtected(__Z_…_PERSON_…, de:salutation)
+  /// ```
+  ///
+  /// `the_hand_lands` does the right arithmetic (`begins + x`) three hundred
+  /// lines above, so the two disagree about one thing. ed's own Rust guards
+  /// call `protect` directly with an entered-space span and never pass through
+  /// `inspect_selection`, which is why both halves are green and the product
+  /// is not — the seam this house already has a lesson about.
+  ///
+  /// ed fixes the line in its own file on
+  /// `fix/the-hand-in-the-request-inspects-the-request`, with a Rust guard that
+  /// asks `inspect_selection` itself rather than `protect` — the guard that was
+  /// missing, and the reason both halves could be green. This one goes green on
+  /// that commit and nothing here changes.
+  testWidgets('a hand selection in the request covers that word, and not 22..28 in the document', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (_, bench) = await _open(tester, 'byhand');
+
+    await tester.enterText(find.byKey(_field), 'What did Thomas Müller earn?');
+    await settle(tester, rounds: 2);
+    await tester.tap(find.byKey(_attach));
+    await settle(tester, rounds: 16);
+
+    final entered = bench.entered!;
+    // «earn»
+    // is nobody's name and no rule finds it, so a cover over it can only be
+    // the person's own — and it has to work in the request as it does in the
+    // document.
+    final earn = entered.text.indexOf('earn', entered.requestBegins);
+    expect(earn, greaterThan(entered.requestBegins), reason: 'the word is not in the request');
+    ProtectOutcome? said;
+    Span? snapped;
+    await tester.runAsync(() async {
+      await bench.select(Span(start: earn, end: earn + 'earn'.length));
+      snapped = bench.selection;
+      said = await bench.protectSelection(
+          scope: Scope.once, kind: Kind.project, allMatches: false);
+      await bench.select(null);
+    });
+    expect(snapped, isNotNull, reason: 'the core refused to inspect the selection');
+    expect(snapped!.start, earn,
+        reason: 'the core snapped a selection at $earn «earn» out to '
+            '${snapped!.start}..${snapped!.end} '
+            '«${entered.text.substring(snapped!.start, snapped!.end)}»');
+    expect(said, isNotNull, reason: 'the door answered nothing at all');
+    await settle(tester, rounds: 12);
+
+    final covered = bench.entered!;
+    // The reason names what it saw: a cover that landed on another offset and
+    // a cover that never happened are two different faults, and a bare «false»
+    // tells them apart for nobody.
+    final inRequest = covered.marks
+        .map((m) => '${m.span.start}..${m.span.end} '
+            '«${covered.text.substring(m.span.start, m.span.end)}» ${m.token}')
+        .join(' | ');
+    expect(covered.marks.any((m) => m.span.start == earn), isTrue,
+        reason: 'a hand selection at $earn covered nothing. The door answered '
+            '${said.runtimeType}. requestBegins=${covered.requestBegins}, '
+            'the slice at $earn is «${covered.text.substring(earn, earn + 4)}», '
+            'every cover is [$inRequest], and the app said «${bench.trouble ?? ''}»');
+    expect(bench.payload!.text, isNot(contains('earn')),
+        reason: 'the word covered by hand in the request still leaves in the clear');
+  });
+
   /// **No unprotected text in the middle part** — 096's new guard, rule 35 and
   /// rule 72-ب together.
   ///

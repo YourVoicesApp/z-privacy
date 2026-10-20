@@ -204,6 +204,47 @@ the one place. A sitting of 092's own, with a number to measure it against.
 
 Queued after sitting four of 092 and after 097, by the lead's own order.
 
+## A guard that crosses the seam — 096, 20 October 2026
+
+Not a flake, and in this file because it is the same shape of mistake: **a
+measurement that cannot see the thing it is about.**
+
+096 was built in two halves. ed's core half let a hand selection land in the
+request, with its own Rust guards; this half drew the request in the first part
+so a hand could reach it. Both were green. The product was broken: a selection
+on a word in the request came back as a span pointing **into the document**, so
+the next press protected a word nobody had pointed at — in a tool whose whole
+promise is about which words leave.
+
+Measured on `e610c63`:
+
+```text
+requestBegins 69 · the entered text at 92 is «earn»
+bench.select(Span(92, 96))  →  bench.selection 22..28  =  «Thomas», in the document
+protectSelection(…)         →  alreadyProtected(__Z_…_PERSON_…, de:salutation)
+```
+
+The cause is one line — `z_core/src/ops/mod.rs:1747` builds `word_span` from
+`s.original_str()` out of offsets that are the request's own — and ed fixes it
+in its own file.
+
+**Why two green halves could not see it.** The core's guards call `protect`
+directly with an entered-space span. The glass never does: `select()` replaces
+what the person drew with `view.wordSpan` from `inspect_selection` (041-K,
+«what the core will take is what the screen shows»). So the door the glass
+always passes through was the one door no guard asked about, and each half
+measured its own side of the seam.
+
+The guard that found it — «a hand selection in the request covers that word,
+and not 22..28 in the document», in
+`apps/flutter_app/test/the_question_is_on_the_screen_test.dart` — is **red on
+purpose** by the lead's ruling until the line is fixed. It crosses the seam: it
+drives the glass's own path and asks the core's own answer, which is the only
+kind of guard that can fail when two halves are each correct alone.
+
+Related: `a_split_item_needs_a_guard_that_crosses_the_seam.md` ·
+`a_control_that_fails_to_bite_is_a_finding.md`
+
 Related: `the_debug_bridge_has_no_test_features.md` (the same errno, the other
 cause) · `a_guard_green_for_the_wrong_reason.md` ·
 `flutter_an_instrument_that_speaks_once.md`.
