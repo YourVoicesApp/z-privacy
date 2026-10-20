@@ -82,6 +82,78 @@ pub(crate) enum Validator {
     /// Whatever follows, as one word. Used by rules a person teaches, who
     /// should not have to describe a shape to be understood.
     Any,
+    /// **A National Insurance number, by its own shape** — 095, خ4.
+    ///
+    /// `AA 99 99 99 A`, written with spaces on a form and without them in a
+    /// field, and `en-34` asked for `Number` until the outside model put
+    /// `QQ 12 34 56 C` under that very label and watched it leave. A number
+    /// validator rejects letters, so the one English row that existed for this
+    /// field could never have fired.
+    ///
+    /// The run is taken group by group like a bank value and the **assembled**
+    /// value is then held to the shape, which is what makes the label at `Auto`
+    /// paid for: «National Insurance number: not on file» takes nothing.
+    NationalInsurance,
+    /// **An identifier of letters and digits** — 095, خ4, for the employee
+    /// number (`NGE-20417`) and the fields shaped like it.
+    ///
+    /// One word, at least one digit, at least one letter, hyphens allowed.
+    /// `Number` rejects it for its letters and `Word` would take «pending»;
+    /// this is the shape between them, and the control for it is in
+    /// `the_english_letter_after_the_review.rs`.
+    Reference,
+    /// **A date written in numbers** — 095, خ4.
+    ///
+    /// `Number` alone took «12» out of «Date of birth: 12 April 1985» and
+    /// protected the day, which hides nothing and reads as a mistake. A date
+    /// of birth is a date: three numbers and two separators, in any order a
+    /// form writes them. The written-out month stays a known miss, measured
+    /// in `a_date_of_birth_written_out_in_words_is_still_missed`, because a
+    /// month-name list is language data and this round added none.
+    Date,
+}
+
+/// Is this a date written in numbers — `12/04/1985`, `1985-04-12`, `12.04.85`?
+pub(crate) fn is_a_numeric_date(value: &str) -> bool {
+    let v = value.trim();
+    let parts: Vec<&str> = v.split(['/', '-', '.']).collect();
+    parts.len() == 3
+        && parts.iter().all(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()))
+        && parts.iter().all(|p| p.len() <= 4)
+        && parts.iter().any(|p| p.len() >= 2)
+}
+
+/// Is this the shape of a National Insurance number? — `AA 99 99 99 A`, with
+/// or without its spaces.
+///
+/// The letters are not checked against the issuing prefixes: the published
+/// list changes, a document may hold an old one, and a shape that refuses a
+/// real number is worse here than one that accepts a shape nobody uses.
+pub(crate) fn is_a_national_insurance_number(value: &str) -> bool {
+    // Read as a run, never by index: the core denies `clippy::indexing_slicing`
+    // and this file is the core.
+    let compact: Vec<char> =
+        value.chars().filter(|c| !c.is_whitespace() && *c != '-').collect();
+    if compact.len() != 9 {
+        return false;
+    }
+    let mut chars = compact.into_iter();
+    let two_letters = chars
+        .by_ref()
+        .take(2)
+        .all(|c| c.is_ascii_alphabetic());
+    let six_digits = chars.by_ref().take(6).all(|c| c.is_ascii_digit());
+    let last_letter = chars.next().is_some_and(|c| c.is_ascii_alphabetic());
+    two_letters && six_digits && last_letter
+}
+
+/// Is this an identifier of letters and digits — `NGE-20417`, `A1`, `X-99`?
+pub(crate) fn is_a_reference(value: &str) -> bool {
+    let v = value.trim();
+    !v.is_empty()
+        && v.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '/')
+        && v.chars().any(|c| c.is_ascii_digit())
+        && v.chars().any(|c| c.is_ascii_alphabetic())
 }
 
 /// One label rule. Built in, or taught by the person using the program.
@@ -387,11 +459,23 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             // itself — 17 characters past the end of the number, measured on
             // `Mahnung_Keller`.
             //
-            // Only for a grouped value, and only once it has one group: a
-            // label standing where a value is expected is another rule's
-            // business, and a name or a number is a run this engine already
-            // ends at a comma or at a word of the wrong shape.
-            if rule.validator == Validator::Grouped && j > value_start && is_label_word(next.text, rules) {
+            // Only once the value has something in it: a label standing where
+            // a value is expected is another rule's business.
+            //
+            // **For a name as well as for a grouped number** — 095, خ5, and
+            // the second case of a rule written for the first. It was written
+            // for `Grouped` so that «…0130 00, BIC COBADEFFXXX» did not
+            // swallow the next field; the German footer writes
+            // «Bankverbindung: Sparkasse Leipzig, IBAN DE89 …» and a `Name`
+            // run walked straight through «IBAN» into the account, because a
+            // comma ends a name only after two words and «IBAN» is
+            // capitalised. One vocabulary, one boundary, every run that can
+            // reach a field name: `is_label_word` is the function the
+            // arithmetic rule asks and the scanner's own law asks (G48).
+            if matches!(rule.validator, Validator::Grouped | Validator::Name | Validator::NamePair)
+                && j > value_start
+                && is_label_word(next.text, rules)
+            {
                 break;
             }
             // **And a number ends at a column boundary** (046/M). Only for the
@@ -409,7 +493,10 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
                 Validator::Number => is_numberish(n) || (j == value_start && n.starts_with('+') && n.len() > 1),
                 Validator::Word | Validator::Any => j == value_start && !n.is_empty(),
                 Validator::Mail => j == value_start && crate::scanner::general_rules::is_an_email(n),
-                Validator::Grouped => is_a_group(n),
+                Validator::Grouped | Validator::NationalInsurance => is_a_group(n),
+                // One word, and its shape is checked once the run has it.
+                Validator::Reference => j == value_start && is_a_reference(n),
+                Validator::Date => j == value_start && is_numberish(n),
                 Validator::Name | Validator::NamePair => starts_upper(n) && j - value_start < 4,
             };
             if fits && j - value_start < 8 {
@@ -474,6 +561,25 @@ pub(crate) fn scan_with(text: &str, rules: &[LabelRule], honorifics: &[String]) 
             continue;
         }
         let Some(end_word) = words.get(last) else { continue };
+        // **A shaped validator is checked on what the run assembled**, not word
+        // by word — 095, خ4. `QQ 12 34 56 C` is five groups and one shape, and
+        // the shape is the whole of what earns this label its `Auto`.
+        if matches!(
+            rule.validator,
+            Validator::NationalInsurance | Validator::Reference | Validator::Date
+        ) {
+            let assembled = text
+                .get(start_word.start..trimmed_end(end_word))
+                .unwrap_or_default();
+            let fits = match rule.validator {
+                Validator::NationalInsurance => is_a_national_insurance_number(assembled),
+                Validator::Date => is_a_numeric_date(assembled),
+                _ => is_a_reference(assembled),
+            };
+            if !fits {
+                continue;
+            }
+        }
         out.push(Candidate {
             start: start_word.start,
             end: trimmed_end(end_word),
@@ -560,6 +666,14 @@ fn table_columns(text: &str, rules: &[LabelRule]) -> Vec<Candidate> {
                         Validator::Mail => crate::scanner::general_rules::is_an_email(value),
                         Validator::Grouped => value.chars().all(|c| c.is_ascii_alphanumeric() || c == ' '),
                         Validator::Name => starts_upper(value),
+                        // **A column has the same shapes a line has** — the
+                        // house's «a variant answers for every reader», and
+                        // the compiler asked for this one by name the moment
+                        // the two shapes existed. A cell under «National
+                        // Insurance number» is one if it is shaped like one.
+                        Validator::NationalInsurance => is_a_national_insurance_number(value),
+                        Validator::Reference => is_a_reference(value),
+                        Validator::Date => is_a_numeric_date(value),
                         // In a table a cell is one value, so the pair has to be
                         // inside the cell.
                         Validator::NamePair => {

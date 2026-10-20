@@ -21,7 +21,10 @@
 //! German needs that nothing else can use have no English counterpart, and
 //! inventing one would be inventing a rule nobody measured.
 
-use super::pack::{LanguagePack, NameOrder};
+use crate::api::Kind;
+use crate::scanner::{Candidate, Confidence};
+
+use super::pack::{bare, is_label, is_numberish, starts_upper, trimmed_end, LanguagePack, NameOrder, Word};
 
 /// The names, as the build ships them.
 pub(crate) const CSV: &str =
@@ -196,6 +199,109 @@ pub(crate) fn pack() -> LanguagePack {
         order: NameOrder::GivenThenFamily,
         names: CSV,
         provenance: "Wikidata (CC0) — given and family names of people recorded as British citizens; see z_core/assets/licenses/english_names_sources.md",
-        extra: &[],
+        extra: &[
+            // The one shape an English letter has that no other language's
+            // reader can use: a postcode written at the **end** of the
+            // address, in two words, where a German one writes five digits
+            // before the town.
+            ("uk addresses", addresses),
+        ],
     }
+}
+
+/// **A United Kingdom address, read from its postcode backwards** — 095, خ4.
+///
+/// The outside model's letter wrote `7 Elm Terrace, Leeds LS6 2PQ` under «Home
+/// address:» and again as an address block, and this pack had no address rule
+/// at all: `extra` was empty and the comment above it said so.
+///
+/// The postcode is the anchor because it is the one part of a British address
+/// that cannot be anything else: an outward code (one or two letters, one or
+/// two digits, sometimes a letter) and an inward code (a digit and two
+/// letters). From it the rule walks **left**, through the town and the street,
+/// to the house number — and stops at a label, so «Home address:» stays in the
+/// clear beside its value as every label in this product does.
+///
+/// `Suggest`, exactly as the German address rule offers rather than protects:
+/// an address may be the person's or the company's, and that is the person's
+/// to answer. Measured in `the_english_letter_after_the_review.rs`.
+fn addresses(words: &[Word<'_>], out: &mut Vec<Candidate>) {
+    for (i, word) in words.iter().enumerate() {
+        if !is_an_inward_code(bare(word.text)) {
+            continue;
+        }
+        let Some(outward) = i.checked_sub(1).and_then(|k| words.get(k)) else { continue };
+        if !is_an_outward_code(bare(outward.text)) {
+            continue;
+        }
+        // Walk left for the **house number**, through at most six words — a
+        // town, a street of two or three words, the number. A label ends the
+        // walk rather than being swallowed by it.
+        //
+        // **And without a house number the address is the town and the
+        // postcode, nothing more** — this house's own suite found that one the
+        // hour the rule was written: «Harrow Lane Logistics Ltd⏎Leeds LS11
+        // 9QT» is a company above a town, and a walk that took every
+        // capitalised word on its way left swallowed the company's name into
+        // an address, where it won the overlap and the company stopped being a
+        // finding at all. The German rule beside this one has always required
+        // its house number before it reaches left; this one does now.
+        let town = i - 1;
+        let mut house = None;
+        let mut at = i - 1;
+        let mut steps = 0;
+        while let Some(back) = at.checked_sub(1).and_then(|k| words.get(k)) {
+            if steps >= 6 || is_label(back.text) || back.text.ends_with(':') {
+                break;
+            }
+            if !(starts_upper(bare(back.text)) || is_numberish(bare(back.text))) {
+                break;
+            }
+            at -= 1;
+            steps += 1;
+            if is_numberish(bare(back.text)) {
+                house = Some(at);
+                break;
+            }
+        }
+        let first = house.unwrap_or(town);
+        let Some(start_word) = words.get(first) else { continue };
+        out.push(super::people::candidate(
+            &pack(),
+            start_word.start,
+            trimmed_end(word),
+            Kind::Address,
+            Confidence::Suggest,
+            "address",
+            "a postcode at the end of a line, with a town and a street before it — \
+             an address, if this one is a person's".to_string(),
+        ));
+    }
+}
+
+/// The outward half of a postcode: `LS6`, `NG1`, `SW1A`, `M1`.
+fn is_an_outward_code(word: &str) -> bool {
+    let chars: Vec<char> = word.chars().collect();
+    if !(2..=4).contains(&chars.len()) {
+        return false;
+    }
+    let letters = chars.iter().take_while(|c| c.is_ascii_alphabetic()).count();
+    if !(1..=2).contains(&letters) {
+        return false;
+    }
+    let digits = chars.iter().skip(letters).take_while(|c| c.is_ascii_digit()).count();
+    if !(1..=2).contains(&digits) {
+        return false;
+    }
+    let rest = chars.len() - letters - digits;
+    // A trailing letter is allowed («SW1A») and nothing else is.
+    rest == 0 || (rest == 1 && chars.last().is_some_and(|c| c.is_ascii_alphabetic()))
+}
+
+/// The inward half: a digit and two letters, always three characters.
+fn is_an_inward_code(word: &str) -> bool {
+    let mut chars = word.chars();
+    let digit = chars.next().is_some_and(|c| c.is_ascii_digit());
+    let letters: Vec<char> = chars.collect();
+    digit && letters.len() == 2 && letters.iter().all(|c| c.is_ascii_alphabetic())
 }
