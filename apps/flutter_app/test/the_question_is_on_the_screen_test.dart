@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/the_chat.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -124,6 +125,75 @@ void main() {
     // Two values since 085 ruling 1 (15 October): the name he typed is a given
     // name and a surname, and each is a token of its own.
     expect(find.textContaining('2 values replaced'), findsOneWidget);
+
+    // ----------------------------------------------------------- 096, 72-ب
+    //
+    // **And the first part draws that request as original text.** Until now
+    // the request lived in the box and nowhere else, so a word in it could not
+    // be covered by hand and a suggestion in it was reviewed nowhere. The core
+    // hands one text with one offset space; this measures that the glass draws
+    // *that* text and those marks, and not a second copy of its own.
+    final entered = bench.entered!;
+    final original = tester.widget<OriginalText>(find.byType(OriginalText));
+    expect(original.text, entered.text,
+        reason: 'the first part draws something other than the one entered text');
+    expect(original.marks, entered.marks,
+        reason: 'the first part draws its own marks instead of the core\'s');
+
+    // The request is in that text, in the clear, after where the core says it
+    // begins — `requestBegins` is **read** and never counted here.
+    final typedAt = entered.text.indexOf('Thomas Müller', entered.requestBegins);
+    expect(typedAt, greaterThanOrEqualTo(entered.requestBegins),
+        reason: 'the name typed into the request is not in the request half');
+    expect(entered.marks.any((m) => m.span.start <= typedAt && m.span.end > typedAt),
+        isTrue,
+        reason: 'the name in the request is drawn without the cover the same '
+            'name has in the document');
+
+  });
+
+  /// **No unprotected text in the middle part** — 096's new guard, rule 35 and
+  /// rule 72-ب together.
+  ///
+  /// The middle column had two drawings: the payload, and a footer carrying
+  /// `questionSafe` for the case where a request stood with no document. Two
+  /// drawings of what leaves are two things to keep true, and the day one of
+  /// them is built from something other than the payload is the day the middle
+  /// shows a person text that is not what the AI receives. So the law is the
+  /// strongest form of it: **the middle draws the payload's own text, and
+  /// nothing else.**
+  testWidgets('no unprotected text stands in the middle part', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (_, bench) = await _open(tester, 'middle');
+
+    String middleNow() => tester.widget<SafeText>(find.byType(SafeText)).text;
+
+    // Before anything is asked: one drawing, and it is the payload's.
+    expect(middleNow(), bench.payload!.text,
+        reason: 'the middle draws something other than what leaves');
+    expect(middleNow(), isNot(contains('Thomas Müller')),
+        reason: 'the document\'s own name stands in the middle in the clear');
+
+    await tester.enterText(find.byKey(_field), 'What did Thomas Müller earn?');
+    await settle(tester, rounds: 2);
+    // **Typed and not yet sent**: the box holds it, and the middle may not
+    // have grown a second drawing of it in the clear.
+    expect(middleNow(), isNot(contains('Thomas Müller')),
+        reason: 'a name typed into the box reached the middle before it was protected');
+
+    await tester.tap(find.byKey(_attach));
+    await settle(tester, rounds: 16);
+
+    // And after: still one drawing, still the payload's, the name replaced.
+    expect(middleNow(), bench.payload!.text,
+        reason: 'the middle grew a second drawing of what leaves');
+    expect(middleNow(), isNot(contains('Thomas Müller')),
+        reason: 'the name a person typed stands in the middle in the clear');
+    expect(middleNow(), contains('__Z_'),
+        reason: 'nothing in the middle is a token, so this proves nothing');
+    expect(find.byType(SafeText), findsOneWidget,
+        reason: 'the middle draws what leaves in two places');
   });
 
   /// **The sentence that is gone, because it became false** — rule 67.

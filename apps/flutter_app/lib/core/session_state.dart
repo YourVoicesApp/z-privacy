@@ -535,6 +535,19 @@ class Workbench extends ChangeNotifier {
   Revision get revision => Revision(n: snap?.revision ?? 0);
   PayloadHandle? get handle => snap?.handle;
   PayloadView? get payload => snap?.payload;
+
+  /// **The one text the person entered** — 096, rule 72-ب.
+  ///
+  /// The document, the `--- Request ---` line and the request, in one string
+  /// with one offset space, and every cover over either half as a mark in that
+  /// space. The first part draws this and not `document`, so a word typed into
+  /// the request is covered by the same hand, through the same doors, as a
+  /// word in the document.
+  ///
+  /// `requestBegins` is **read** and never worked out here: the core writes
+  /// two blank lines before the separator, and a screen that counted the
+  /// characters itself would be a second opinion about one number.
+  EnteredText? get entered => snap?.entered;
   // **`answers` is gone with the panel that navigated them** (rule 65): the
   // snapshot still lists them — the core keeps every answer of a session — and
   // nothing on the glass asks «which of them», because the thread holds them
