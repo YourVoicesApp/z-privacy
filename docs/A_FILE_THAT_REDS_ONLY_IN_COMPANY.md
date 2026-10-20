@@ -126,11 +126,18 @@ German.
 
 ### Closed, 20 October 2026 — and which of the two it was could not be summoned
 
-**The red was not reproduced.** The old guard, with its fixed budgets, was run
-against twelve busy processes on this machine and stayed green; the file is
-green ten of ten alone, and it was green inside the full run at `88d1afb`. A
-flake that cannot be summoned cannot be pinned by reproduction, so the two
-explanations were separated by **measurement instead**:
+**The red was reproduced — by the gates, in a sibling test.** It could not be
+summoned by hand: the old guard stayed green against twelve busy processes on
+this machine, green ten of ten alone, and green inside the full run at
+`88d1afb`. But the full run over the fixed guard, at `772fad4`, reddened
+**«a wrapped row still presses the cell a person pointed at»** in the same
+file, on `expect(bench.linesHold!.lines, 3)` after `settle(tester, rounds: 12)`
+— a different test, the same fault, and this time the suite produced it by
+itself while the converted guard beside it passed in that same run. That is as
+close to a pinned cause as this class allows: a fixed number of pumps waiting
+for the core's answer, on a machine the rest of the suite is loading.
+
+The two explanations for the original red were separated by **measurement**:
 
   * **(2) is ruled out for the healthy path.** On the deliberate red, every
     `ZButton` label on the glass was printed — the lead's own instruction — and
@@ -152,11 +159,34 @@ sentence nor the number is typed in the test, and `actsOnTheGlass(tester)`
 enumerates every act in the failure reason — kept for good, not used once,
 because the next red will arrive when nobody is watching.
 
-Measured: the file green 10/10 three times over, green under six busy
-processes, and green with the fixed budget before the card **reduced to zero**,
-which is the direct proof that the waits do the work the budget was guessing
-at. The file also runs about a fifth faster, because a wait returns when its
-condition holds instead of always spending its rounds.
+Measured: the file green 10/10 three times over, green under six and then
+twelve busy processes, and green with the fixed budget before the card
+**reduced to zero**, which is the direct proof that the waits do the work the
+budget was guessing at. The file also runs about a fifth faster, because a wait
+returns when its condition holds instead of always spending its rounds.
+
+### Why the other budgets in that file were left alone
+
+All sixteen were converted first, and **three tests went red** — so the sweep
+was reverted and only the two measured sites keep a wait. What the three reds
+taught is worth more than the sweep:
+
+  * **A wait must be for the last thing the assertions need, not the first.**
+    `bench.lines` is the screen's own range and arrives first; `linesHold` is
+    the core's answer about those lines and arrives after it. A wait for the
+    range let the next line read a `linesHold` that was still null — an
+    ordering the twelve-round budget had been hiding rather than passing.
+  * **A wait that returns early removes slack a later step was living on.**
+    Three assertions downstream had been riding on the rounds an earlier
+    budget spent after its own condition was already true. A budget is
+    therefore not only a guess: where it sits in front of a claim that
+    *nothing* happens, it is the only instrument that can give the absence time
+    to fail, and the honest form is to wait for the observable thing the act
+    does produce — a refusal sentence, a card opening — and assert the absence
+    under that.
+
+So this file now has waits where an arrival was measured to be late, and
+budgets where the claim is an absence, each with the argument written at it.
 
 ### The debt this uncovered: 284 finders type a sentence the one list owns
 

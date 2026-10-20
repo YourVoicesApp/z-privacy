@@ -491,7 +491,16 @@ void main() {
       _gutterAt(tester, 1, text: _wide),
       _gutterAt(tester, 3, text: _wide) - _gutterAt(tester, 1, text: _wide),
     );
-    await settle(tester, rounds: 12);
+    // **The red the gates found on 20 October**, in the full run over
+    // `772fad4`: twelve rounds were not enough for the core's answer about the
+    // hold to reach the bench on a loaded machine, and the line below failed
+    // about the number when the truth was that nobody had waited for it. The
+    // same instrument fault as the act above, in the same file, and this one
+    // the suite produced by itself.
+    //
+    // `linesHold` and not `lines`: the screen's own range arrives first and the
+    // core's answer about it after, so the wait is for the second.
+    await settleUntil(tester, () => bench.linesHold?.lines == 3);
     expect(bench.linesHold!.lines, 3, reason: 'the drag did not hold three wrapped rows');
 
     final before = _protectedNow(bench);
