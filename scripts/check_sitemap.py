@@ -68,10 +68,21 @@ def head_alternates(path):
     return found
 
 
-def verdict(bad):
+def verdict(bad, pages=None):
+    """The closing line, with the number **counted** and not written down.
+
+    It said «the same nine pages» for as long as there were nine. 097 added
+    three and the sentence went on saying nine while every check under it
+    passed — the same defect this file exists to catch, one floor up: a
+    number a person typed, beside a measurement nobody compares it with.
+    """
     print()
-    print('the sitemap and the tree are the same nine pages' if not bad
-          else 'THE SITEMAP AND THE TREE DISAGREE')
+    if bad:
+        print('THE SITEMAP AND THE TREE DISAGREE')
+    elif pages is None:
+        print('the sitemap and the tree agree')
+    else:
+        print('the sitemap and the tree are the same %d pages' % pages)
     return bad
 
 
@@ -152,7 +163,7 @@ def main():
     if not bad:
         say('PASS', 'the list offers all %d pages of the tree and nothing else, each at the address it claims for itself'
             % len(tree))
-    return verdict(bad)
+    return verdict(bad, len(tree))
 
 
 if __name__ == '__main__':

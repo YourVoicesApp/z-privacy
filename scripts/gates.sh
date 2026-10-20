@@ -3933,6 +3933,39 @@ for t in "the core reports it" "the scan the core ran" "own two strings" "never 
   fi
 done
 
+# ---------------------------------------------------------------- G59
+# **The site is measured with the product** — the lead's ruling of 20 October
+# 2026, and the argument for it is six days long.
+#
+# `scripts/check_site.sh` is thorough and it was green the last time a person
+# ran it. Two rounds then walked past it:
+#
+#   * **092** moved three sentences out of the app — «Not sensitive» on 14
+#     October, «Review what will leave» on 17, «As the model wrote it» on 18 —
+#     and the site went on teaching all three to visitors as the app's own
+#     words, in three languages, plus one as a step of the path diagram.
+#   * **094** moved `rustls` to 0.23.46 in `Cargo.lock` and corrected the two
+#     READMEs, while the notices page went on naming 0.23.45.
+#
+# Six published claims about this product, false, each caught in a second by a
+# script nobody ran. A guard that is not in the one command is a guard that is
+# not in the round.
+#
+# `--tree-only`, so the outward links are not asked of the network here: an
+# offline machine is not a fault in the tree, and the links are asked when a
+# person runs the script to publish, which is the moment the answer matters.
+if [ -f scripts/check_site.sh ]; then
+  if SITE_OUT=$(bash scripts/check_site.sh --tree-only 2>&1); then
+    SITE_PAGES=$(printf '%s' "$SITE_OUT" | grep -oE 'the same [0-9]+ pages' | grep -oE '[0-9]+' | head -1)
+    pass "G59 the site says nothing about this product that the tree does not — ${SITE_PAGES:-?} pages"
+  else
+    fail "G59 the site says something this tree does not:"
+    printf '%s\n' "$SITE_OUT" | grep -E '^  FAIL' | cut -c1-150 | sed 's/^/      /'
+  fi
+else
+  skip "G59 the site is measured with the product" "no scripts/check_site.sh in this tree"
+fi
+
 # ------------------------------------------------- the line Windows is compared against
 # `docs/MEASURED_ON_LINUX.txt` is what the Windows job prints as «what Linux
 # says». Three numbers used to be typed into the workflow itself, where they sat
