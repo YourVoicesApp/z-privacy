@@ -155,7 +155,7 @@ measurements beside them, offered so that somebody else can try to break them.
   - **An amount and the city on a date line are context, not identities** — the review's own ن14, and a written decision rather than a gap.
   - **A card from a network whose prefix is not in the published table is not taken.** The rule asks the checksum **and** the issuer prefix, because one long number in ten passes Luhn by chance — the Arabic letter in this tree holds one that does and is an account number.
 - **That review is optional.** Everything the scanner is unsure of is a suggestion, and no door opens while one is unanswered. We do not claim the scanner's first pass is complete — we claim nothing leaves while a word waits.
-- **An independent audit.** None by a security firm. One outside model's review exists (19 October 2026) and its three serious findings are named above — a review by one reader is not an audit, and we do not present it as one.
+- **An independent audit.** None by a security firm. One outside model's review exists (19 October 2026); its three serious findings are **closed**, with the proof in C-11, and what it left open is the list above. A review by one reader on one day is not an audit, and we do not present it as one.
 - **Every platform.** Linux is measured; Windows is built and measured by the workflow, and its numbers are the ones a run writes into `docs/`. macOS, iOS and Android are not built.
 - **That a long chat sends less.** Every later question carries the earlier turns, protected. A chat is cheaper in names, not in bytes.
 - **Protection of what you copy yourself.** «Copy Restored» puts real values on the clipboard, after asking. After that it is the operating system's clipboard and other programs may read it.

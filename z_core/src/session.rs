@@ -219,6 +219,21 @@ pub(crate) struct Session {
     pub question: Secret,
     pub question_safe: String,
     pub question_tokens: Vec<String>,
+    /// **What is protected inside the request, as records** — 096, rule 72-ب.
+    ///
+    /// `question_safe` used to be the only trace of the request's protections:
+    /// a string with the tokens already substituted, built once. A hand cannot
+    /// undo a substitution, so the request's covers are kept the way the
+    /// document's are — as records, with byte offsets into `question` — and
+    /// **`question_safe` is derived from them** (`the_request_as_it_leaves`).
+    /// One fact, one source: the records are the fact and the safe text is a
+    /// view of it, so a hand protecting or undoing in the request rebuilds the
+    /// one string rather than patching it.
+    ///
+    /// They go when the request goes: a new question is new text, and a record
+    /// over text nobody wrote any more would move a token onto a word the
+    /// person never covered.
+    pub question_protections: Vec<Protection>,
     /// **The token the answer page of a z-pdf prints** — 079. `None` until an
     /// exit mints it; see [`Session::answer_page_token`].
     pub answer_page: Option<String>,
@@ -260,6 +275,7 @@ impl Session {
             question: Secret::new(String::new()),
             question_safe: String::new(),
             question_tokens: Vec::new(),
+            question_protections: Vec::new(),
             answer_page: None,
         }
     }
@@ -479,6 +495,71 @@ impl Session {
     /// The original text. Reading it is a deliberate act, by name.
     pub(crate) fn original_str(&self) -> &str {
         self.original.expose()
+    }
+
+    /// **The one line between what entered and what was asked about it** —
+    /// spelled once, read by the payload that sends it and by the entered text
+    /// the person's hand addresses.
+    pub(crate) const THE_REQUEST_LINE: &'static str = "\n\n--- Request ---\n";
+
+    /// **The one text the person entered** — 096, rule 72-ب: what is written
+    /// in the box is a thing that enters, like the document.
+    ///
+    /// The document, the line, then the request — and the request alone when
+    /// there is no document (rule 72's surface). Every hand door addresses
+    /// **this** text, which is why the document comes first: its offsets are
+    /// unchanged, so no protection, finding or page edge moves, and where a
+    /// span lands is arithmetic rather than a claim a caller could get wrong.
+    pub(crate) fn entered_text(&self) -> String {
+        let document = self.original_str();
+        let request = self.question.expose();
+        if document.is_empty() {
+            return request.to_string();
+        }
+        if request.trim().is_empty() {
+            return document.to_string();
+        }
+        format!("{document}{}{request}", Self::THE_REQUEST_LINE)
+    }
+
+    /// Where the request begins in the entered text, in **bytes**. `None` when
+    /// there is no request in it at all.
+    pub(crate) fn request_begins_at(&self) -> Option<usize> {
+        if self.question.expose().trim().is_empty() {
+            return None;
+        }
+        let document = self.original_str();
+        if document.is_empty() {
+            return Some(0);
+        }
+        Some(document.len() + Self::THE_REQUEST_LINE.len())
+    }
+
+    /// **The request as it leaves** — the raw request with every record's own
+    /// stretch replaced by its token, which is what `question_safe` holds.
+    ///
+    /// Walked from the start, records sorted, so a token never lands inside the
+    /// text another record covers.
+    pub(crate) fn the_request_as_it_leaves(&self) -> String {
+        let raw = self.question.expose();
+        let mut records: Vec<&Protection> = self.question_protections.iter().collect();
+        records.sort_by_key(|p| p.start);
+        let mut out = String::with_capacity(raw.len());
+        let mut cursor = 0usize;
+        for record in records {
+            if record.start < cursor || record.end > raw.len() || record.start >= record.end {
+                continue;
+            }
+            if let Some(before) = raw.get(cursor..record.start) {
+                out.push_str(before);
+            }
+            out.push_str(&record.token);
+            cursor = record.end;
+        }
+        if let Some(rest) = raw.get(cursor..) {
+            out.push_str(rest);
+        }
+        out
     }
 
     /// Where a byte offset in the text sits in the document it came from.

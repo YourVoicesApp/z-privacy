@@ -1012,12 +1012,39 @@ pub(crate) fn ask_model(
 pub(crate) fn set_question(session: SessionId, text: String) -> ApiResult<QuestionView> {
     let safe = protect_lines(session.id, vec![text.clone()])?;
     with_core(|core| the_decisions_are_written(core, session.id));
-    let question_safe = safe.text.first().cloned().unwrap_or_default();
     let tokens = safe.tokens.clone();
+    let marks = safe.marks.first().cloned().unwrap_or_default();
     with_session(session.id, |s| {
         s.question = crate::secret::Secret::new(text.clone());
-        s.question_safe = question_safe.clone();
         s.question_tokens = tokens.clone();
+        // **The scan's own covers, kept as records** — 096. They used to exist
+        // only as a substituted string, and a hand cannot undo a substitution.
+        // The records are the fact; `question_safe` is derived from them a line
+        // below, by the one function that derives it.
+        //
+        // The old records go with the old text: a record over words nobody
+        // wrote any more would move a token onto a place the person never
+        // covered.
+        s.question_protections = marks
+            .iter()
+            .filter_map(|mark| {
+                let token = mark.token.clone()?;
+                let (start, end) = crate::text::span_to_bytes(&text, mark.span).ok()?;
+                Some(crate::session::Protection {
+                    start,
+                    end,
+                    token,
+                    act: 0,
+                    kind: mark.kind,
+                    scope: Scope::Conversation,
+                    source: mark.source,
+                    source_detail: mark.source_detail.clone(),
+                    decided: false,
+                    orphaned: false,
+                })
+            })
+            .collect();
+        s.question_safe = s.the_request_as_it_leaves();
     })
     .ok_or(ApiError::InvalidSession)?;
     // A new question is a new thing that would leave, so a payload built
@@ -1026,6 +1053,10 @@ pub(crate) fn set_question(session: SessionId, text: String) -> ApiResult<Questi
     // call every act that changes the document makes.
     with_session(session.id, |s| s.bump()).ok_or(ApiError::InvalidSession)?;
     crate::session::bump_truth();
+    // **Read back rather than remembered**: the safe text is derived from the
+    // records now, so the one that is handed out is the one the session holds.
+    let question_safe =
+        with_session(session.id, |s| s.question_safe.clone()).ok_or(ApiError::InvalidSession)?;
     Ok(QuestionView {
         text: question_safe,
         marks: safe.marks.first().cloned().unwrap_or_default(),
@@ -1654,9 +1685,34 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
         // claims this value», which is a fact the vault holds and not a guess
         // about what the value is.
         let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
-        let (start, end) = text::span_to_bytes(s.original_str(), span)?;
-        let selected = s
-            .original_str()
+        // **096: the half, once, at the top.** A selection in the request is
+        // answered from the request's own text and its own records — the same
+        // questions, asked of the half the hand is in. Everything below reads
+        // `half` and `records` rather than the document, so there is one
+        // answer and not two implementations of it.
+        let lands = where_it_lands(s, span)?;
+        let half = match lands {
+            WhereItLands::InTheRequest { .. } => s.question.expose().to_string(),
+            WhereItLands::InTheDocument { .. } => s.original_str().to_string(),
+        };
+        let records: Vec<Protection> = match lands {
+            WhereItLands::InTheRequest { .. } => s.question_protections.clone(),
+            WhereItLands::InTheDocument { .. } => s.protections.clone(),
+        };
+        let findings: Vec<(usize, usize, Kind)> = match lands {
+            // A request has no findings list of its own: what the scan found
+            // in it became a record the moment it was set, so the records are
+            // the whole answer there.
+            WhereItLands::InTheRequest { .. } => Vec::new(),
+            WhereItLands::InTheDocument { .. } => {
+                s.findings.iter().map(|f| (f.start, f.end, f.kind)).collect()
+            }
+        };
+        let (start, end) = match lands {
+            WhereItLands::InTheRequest { start, end } => (start, end),
+            WhereItLands::InTheDocument { start, end } => (start, end),
+        };
+        let selected = half
             .get(start..end)
             .ok_or_else(|| ApiError::BadSpan {
                 reason: "the selection is not on a character boundary".to_string(),
@@ -1703,15 +1759,14 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
         // value entirely ours. The lead's ruling of the same day: the view
         // answers at the same finer grain, and it **lists** the tokens rather
         // than growing a sixth state on the button.
-        let mut touched: Vec<Protection> = s
-            .protections
+        let mut touched: Vec<Protection> = records
             .iter()
             .filter(|p| p.start < end && start < p.end)
             .cloned()
             .collect();
         touched.sort_by_key(|p| p.start);
         let ours = they_tile(
-            s.original_str(),
+            half.as_str(),
             touched.iter().map(|p| (p.start, p.end)).collect(),
             start,
             end,
@@ -1720,7 +1775,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
         let mut snaps_to = Vec::new();
         if !ours {
             for p in &touched {
-                snaps_to.push(text::bytes_to_span(s.original_str(), p.start, p.end)?);
+                snaps_to.push(text::bytes_to_span(half.as_str(), p.start, p.end)?);
             }
         }
 
@@ -1765,7 +1820,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
         // That is still the scan's own answer and still no second classifier —
         // a click *inside* a word is unchanged, because the finding there
         // reaches past the selection.
-        let whole = s.original_str();
+        let whole = half.as_str();
         let covering = |items: Vec<(usize, usize, Kind)>| -> Option<Kind> {
             let mut here: Vec<(usize, usize, Kind)> =
                 items.into_iter().filter(|(from, to, _)| *from < end && start < *to).collect();
@@ -1777,8 +1832,8 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             they_tile(whole, here.iter().map(|(from, to, _)| (*from, *to)).collect(), start, end)
                 .then_some(kind)
         };
-        let exact_kind = covering(s.protections.iter().map(|p| (p.start, p.end, p.kind)).collect())
-            .or_else(|| covering(s.findings.iter().map(|f| (f.start, f.end, f.kind)).collect()));
+        let exact_kind = covering(records.iter().map(|p| (p.start, p.end, p.kind)).collect())
+            .or_else(|| covering(findings.clone()));
 
         let entities: Vec<String> = vault_hints
             .iter()
@@ -1789,7 +1844,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
         Ok(SelectionView {
             empty: false,
             kind: exact_kind.unwrap_or(Kind::Custom),
-            matches: text::occurrences(s.original_str(), &selected).len() as u32,
+            matches: text::occurrences(half.as_str(), &selected).len() as u32,
             // Every token standing in this selection, in reading order, and
             // empty when the selection is not ours. One token for one word, so
             // a two-word name says both — `acts.dart` prints them as they
@@ -2105,9 +2160,108 @@ fn day_of(seconds: u64) -> String {
 /// letter — `J__Z_…`, with the J still in the text. Every path that turns a
 /// selection into an act goes through here first, so the rule is one rule and
 /// not three, and a caller that is already exact gets its own span back.
+/// **Which half of the entered text a span lands in** — 096, rule 72-ب.
+///
+/// One text, one offset space: the document, the `--- Request ---` line, then
+/// the request. The document comes first, so a document span's offsets are
+/// exactly what they always were, and **where a span lands is arithmetic**
+/// rather than a field a caller could fill in wrongly.
+///
+/// The offsets that come back are local to the half they are in — bytes into
+/// `original` for the document, bytes into `question` for the request — so
+/// every act below works on one string and never on a join.
+pub(crate) enum WhereItLands {
+    InTheDocument { start: usize, end: usize },
+    InTheRequest { start: usize, end: usize },
+}
+
+/// **Judge the half on the span the person drew, then snap to whole words
+/// inside that half** — and in that order, which is a measurement and not a
+/// preference.
+///
+/// Pinned: a selection drawn across the `--- Request ---` line was snapped
+/// first, and snapping moved its start forward past the line — so the span
+/// that had to be refused for crossing arrived inside the request and
+/// protected two words there. A refusal about what somebody drew may not be
+/// decided on a span nobody drew.
+fn the_hand_lands(
+    session: SessionId,
+    span: Span,
+) -> ApiResult<(Option<(usize, usize)>, Span)> {
+    with_session(session.id, |s| {
+        let lands = where_it_lands(s, span)?;
+        let entered = s.entered_text();
+        let (from, to) = text::span_to_bytes(&entered, span)?;
+        let begins = s.request_begins_at().unwrap_or(0);
+        let (lo, hi, local) = match lands {
+            WhereItLands::InTheRequest { .. } => {
+                let raw = s.question.expose();
+                let (x, y) = text::whole_words(raw, from - begins, to.saturating_sub(begins));
+                if x >= y {
+                    (from, to, Some((from - begins, to.saturating_sub(begins))))
+                } else {
+                    (begins + x, begins + y, Some((x, y)))
+                }
+            }
+            WhereItLands::InTheDocument { .. } => {
+                let document = s.original_str();
+                let (x, y) = text::whole_words(document, from, to);
+                if x >= y {
+                    (from, to, None)
+                } else {
+                    (x, y, None)
+                }
+            }
+        };
+        Ok((local, text::bytes_to_span(&entered, lo, hi)?))
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+/// The request's own offsets, or `None` when the span is the document's — the
+/// one question every routed door asks, so that none of them repeats the
+/// arithmetic.
+fn lands_in_the_request(session: SessionId, span: Span) -> ApiResult<Option<(usize, usize)>> {
+    with_session(session.id, |s| match where_it_lands(s, span)? {
+        WhereItLands::InTheRequest { start, end } => Ok(Some((start, end))),
+        WhereItLands::InTheDocument { .. } => Ok(None),
+    })
+    .ok_or(ApiError::InvalidSession)?
+}
+
+/// A selection may not cross the line between them, which is not a new law:
+/// «protection may not change how a document reads» already forbids a
+/// selection that crosses a line break, and this is a line.
+fn where_it_lands(s: &Session, span: Span) -> ApiResult<WhereItLands> {
+    let entered = s.entered_text();
+    let (start, end) = text::span_to_bytes(&entered, span)?;
+    let Some(begins) = s.request_begins_at() else {
+        return Ok(WhereItLands::InTheDocument { start, end });
+    };
+    let document_ends = s.original_str().len();
+    if start >= begins {
+        return Ok(WhereItLands::InTheRequest {
+            start: start - begins,
+            end: end.saturating_sub(begins),
+        });
+    }
+    if end > document_ends {
+        return Err(ApiError::BadSpan {
+            reason: "a selection may not cross the «--- Request ---» line: the document and \
+                     the request are one text and two things, and a token over the line would \
+                     change how both of them read"
+                .to_string(),
+        });
+    }
+    Ok(WhereItLands::InTheDocument { start, end })
+}
+
 pub(crate) fn as_whole_words(session: SessionId, span: Span) -> ApiResult<Span> {
     with_session(session.id, |s| {
-        let text = s.original_str();
+        // **The entered text, not the document** — a selection in the request
+        // snaps to its words as a selection in the document does.
+        let entered = s.entered_text();
+        let text = entered.as_str();
         let (start, end) = text::span_to_bytes(text, span)?;
         let (start, end) = text::whole_words(text, start, end);
         if start >= end {
@@ -2146,9 +2300,11 @@ pub(crate) fn as_whole_words(session: SessionId, span: Span) -> ApiResult<Span> 
 /// Returns the token standing there, which is a name and never a value.
 fn a_token_already_stands_there(session: SessionId, span: Span) -> ApiResult<Option<String>> {
     with_session(session.id, |s| {
-        let text = s.original_str();
-        let (start, end) = text::span_to_bytes(text, span)?;
-        Ok(the_token_standing_in(text, start, end))
+        // The entered text: a token the person pasted into the request is as
+        // much a token of ours as one in a document that came back (079 rule 5).
+        let entered = s.entered_text();
+        let (start, end) = text::span_to_bytes(&entered, span)?;
+        Ok(the_token_standing_in(&entered, start, end))
     })
     .ok_or(ApiError::InvalidSession)?
 }
@@ -2170,7 +2326,14 @@ fn the_token_standing_in(text: &str, start: usize, end: usize) -> Option<String>
 }
 
 pub(crate) fn protect(session: SessionId, span: Span, scope: Scope, kind: Kind) -> ApiResult<ProtectOutcome> {
-    let span = as_whole_words(session, span)?;
+    // **096: the hand reaches the request through this very door.** The half
+    // is judged on the span the person drew and the words are snapped inside
+    // that half; the request's path is below and the document's is the rest of
+    // this function, unchanged.
+    let (in_the_request, span) = the_hand_lands(session, span)?;
+    if let Some((start, end)) = in_the_request {
+        return protect_in_the_request(session, start, end, scope, kind);
+    }
     // 079 rule 5, before the vault is taught anything.
     if let Some(token) = a_token_already_stands_there(session, span)? {
         return Ok(ProtectOutcome::StandsOnAToken { token });
@@ -2362,6 +2525,16 @@ pub(crate) fn protect_cell_in_lines(
     scope: Scope,
     kind: Kind,
 ) -> ApiResult<ProtectOutcome> {
+    // **A request has no columns** — 096, and «one answer may not answer
+    // another kind's question»: doing the document's thing to a span in the
+    // request would protect a cell of a table nobody wrote.
+    if lands_in_the_request(session, span)?.is_some() {
+        return Err(ApiError::BadSpan {
+            reason: "a column act asks about a table, and the request is not one: \
+                     the selection lands in the request"
+                .to_string(),
+        });
+    }
     if matches!(scope, Scope::Always | Scope::Profile) {
         require_open_vault()?;
     }
@@ -2465,6 +2638,167 @@ pub(crate) fn protect_cell_in_lines(
         return Ok(ProtectOutcome::StandsOnAToken { token });
     }
     Ok(ProtectOutcome::Applied { token, places })
+}
+
+/// **A hand protection inside the request** — 096, rule 72-ب.
+///
+/// The same door, the same store and the same mint as the document's path, so
+/// **the same word takes the same token on both sides of the line** (rule 49:
+/// one value, one token, because it is one block in one vault). What differs
+/// is only where the record is written and that the safe request is derived
+/// again afterwards.
+fn protect_in_the_request(
+    session: SessionId,
+    start: usize,
+    end: usize,
+    scope: Scope,
+    kind: Kind,
+) -> ApiResult<ProtectOutcome> {
+    // Before the session lock, as the document's path does it: this takes the
+    // core lock itself.
+    name_tokens_from_the_vault(session.id);
+    let outcome = with_session(session.id, |s| {
+        let raw = s.question.expose().to_string();
+        let Some(selected) = raw.get(start..end).map(str::to_string) else {
+            return Err(ApiError::BadSpan {
+                reason: "the selection is not on a character boundary".to_string(),
+            });
+        };
+        if selected.trim().is_empty() {
+            return Err(ApiError::BadSpan {
+                reason: "nothing but space was selected".to_string(),
+            });
+        }
+        // Already covered? Say by whom and change nothing — the document's own
+        // answer to the same question.
+        if let Some(already) = s
+            .question_protections
+            .iter()
+            .find(|p| p.start < end && start < p.end)
+        {
+            if already.start == start && already.end == end {
+                return Ok(ProtectOutcome::AlreadyProtected {
+                    token: already.token.clone(),
+                    source: already.source,
+                    source_detail: already.source_detail.clone(),
+                });
+            }
+            // The selection cut into a cover or spanned several: hand the whole
+            // items back and do nothing, as the document's path does.
+            let mut spans = Vec::new();
+            let begins = s.request_begins_at().unwrap_or(0);
+            let entered = s.entered_text();
+            for p in s.question_protections.iter().filter(|p| p.start < end && start < p.end) {
+                spans.push(text::bytes_to_span(&entered, begins + p.start, begins + p.end)?);
+            }
+            return Ok(ProtectOutcome::Snapped { spans });
+        }
+        // One value, one token — the store is the session's, so a name the
+        // document already covers keeps its token here.
+        let token = match s.tokens.token_for(&selected) {
+            Some(existing) => existing.to_string(),
+            None => {
+                let minted = s.mint.mint(kind, &selected, &s.tokens);
+                s.tokens.insert(
+                    minted.clone(),
+                    TokenEntry {
+                        value: crate::secret::Secret::new(selected.clone()),
+                        aliases: Vec::new(),
+                        kind,
+                        scope,
+                        source: Source::Hand,
+                        decided: true,
+                        source_detail: "selected by you".to_string(),
+                    },
+                );
+                minted
+            }
+        };
+        let act = s.take_act_id();
+        // **Every place of it in the request** unless the person asked for this
+        // one only — the same ladder `Scope` means on the document's side.
+        let places: Vec<(usize, usize)> = if matches!(scope, Scope::Once) {
+            vec![(start, end)]
+        } else {
+            text::occurrences(&raw, &selected)
+        };
+        let mut applied = 0u32;
+        for (from, to) in places {
+            if s.question_protections.iter().any(|p| p.start < to && from < p.end) {
+                continue;
+            }
+            s.question_protections.push(Protection {
+                start: from,
+                end: to,
+                token: token.clone(),
+                act,
+                kind,
+                scope,
+                source: Source::Hand,
+                source_detail: "selected by you".to_string(),
+                decided: true,
+                orphaned: false,
+            });
+            applied = applied.saturating_add(1);
+        }
+        s.question_protections.sort_by_key(|p| p.start);
+        if applied == 0 {
+            return Err(ApiError::BadSpan {
+                reason: "nothing was protected: the selection is already covered".to_string(),
+            });
+        }
+        // The safe request is a view of the records, so it is derived again
+        // rather than patched — one fact, one source.
+        s.question_safe = s.the_request_as_it_leaves();
+        if !s.question_tokens.contains(&token) {
+            s.question_tokens.push(token.clone());
+        }
+        // A new thing would leave, so a payload built before it is stale —
+        // exactly as a new question makes one stale.
+        s.bump();
+        Ok(ProtectOutcome::Applied { token, places: applied })
+    })
+    .ok_or(ApiError::InvalidSession)??;
+    with_core(|core| the_decisions_are_written(core, session.id));
+    crate::session::bump_truth();
+    Ok(outcome)
+}
+
+/// **Taking a cover back inside the request** — 096, the undo half.
+fn unprotect_in_the_request(
+    session: SessionId,
+    start: usize,
+    end: usize,
+) -> ApiResult<UndoOutcome> {
+    let outcome = with_session(session.id, |s| {
+        let touched: Vec<(usize, usize, String)> = s
+            .question_protections
+            .iter()
+            .filter(|p| p.start < end && start < p.end)
+            .map(|p| (p.start, p.end, p.token.clone()))
+            .collect();
+        if touched.is_empty() {
+            return UndoOutcome::NothingToUndo;
+        }
+        let mut tokens: Vec<String> = Vec::new();
+        for (_, _, token) in &touched {
+            if !tokens.iter().any(|t| t == token) {
+                tokens.push(token.clone());
+            }
+        }
+        s.question_protections
+            .retain(|p| !touched.iter().any(|(a, b, _)| p.start == *a && p.end == *b));
+        s.question_safe = s.the_request_as_it_leaves();
+        s.bump();
+        // **No entity is created or destroyed by an undo in the request**: the
+        // block stays in the vault (089, protection is permanent), and what
+        // this takes back is the cover on these places.
+        UndoOutcome::Undone { tokens, places: touched.len() as u32, created_entity: None }
+    })
+    .ok_or(ApiError::InvalidSession)?;
+    with_core(|core| the_decisions_are_written(core, session.id));
+    crate::session::bump_truth();
+    Ok(outcome)
 }
 
 fn protect_inner(
@@ -2645,6 +2979,10 @@ fn protect_range(
 /// tells the glass that the selection spans two protected items — so the act
 /// follows the selection. One mark is one item, so a click is unchanged.
 pub(crate) fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome> {
+    // 096: the same door reaches the request.
+    if let Some((start, end)) = lands_in_the_request(session, span)? {
+        return unprotect_in_the_request(session, start, end);
+    }
     let outcome = with_session(session.id, |s| {
         let (start, end) = text::span_to_bytes(s.original_str(), span)?;
         let touched: Vec<(usize, usize, String)> = s
@@ -2712,6 +3050,14 @@ pub(crate) fn unprotect(session: SessionId, span: Span) -> ApiResult<UndoOutcome
 /// in this one conversation. A word with no block — every document protected
 /// before 15 October 2026 — has nothing to exempt and that is not an error.
 pub(crate) fn unprotect_every_place(session: SessionId, span: Span) -> ApiResult<UndoOutcome> {
+    // **096: «every place» now has two halves.** A span in the request takes
+    // its own covers back; a span in the document takes the document's, and
+    // the request's records carrying the same token go with them — or the
+    // person would see a word uncovered in one half and covered in the other,
+    // which is the shape 049 forbids.
+    if let Some((start, end)) = lands_in_the_request(session, span)? {
+        return unprotect_in_the_request(session, start, end);
+    }
     // The word is read before the protection is taken off, because afterwards
     // nothing on the bench says which word it was. Read under the session lock
     // and the vault written after it: the core's mutex is not re-entrant.

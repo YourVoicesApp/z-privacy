@@ -33,6 +33,7 @@ exists.
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -63,6 +64,40 @@ GATE = re.compile(r"`(G\d+[a-z]?(?:/G\d+[a-z]?)*)`")
 KEY = re.compile(r"key `([A-Za-z][A-Za-z0-9_]*)`")
 TEST_FLAG = re.compile(r"--test\s+([a-z0-9_]+)")
 SECTION = re.compile(r"^## (C-\d+) · (.+)$")
+
+# **The one-list debt is a number in two places** — the lead's own finding at
+# the 095 merge, and the shape of the fault MEASURED_ON_LINUX.txt taught this
+# house: he wrote 556 and 185 into C-15 by hand because nothing compared them
+# with the checker that produces them. A number nobody compares is a number
+# that is already wrong.
+#
+# So the claim's own limit is held to `scripts/check_the_one_list.py`'s last
+# line — the same output e2's site reader reads in 097. One source, two
+# readers, and a gate between each reader and the source.
+ONE_LIST = ROOT / "scripts" / "check_the_one_list.py"
+ONE_LIST_LINE = re.compile(
+    r"(\d+)\s+sentences in the one list\D+(\d+)\s+file\(s\) migrated\D+(\d+)\s+sentences owed in\s+(\d+)\s+files"
+)
+
+
+def the_one_list_now() -> tuple[int, int, int, int] | None:
+    """What the checker counts right now: in the list, migrated, owed, files."""
+    if not ONE_LIST.is_file():
+        return None
+    try:
+        out = subprocess.run(
+            [sys.executable, str(ONE_LIST)],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            cwd=ROOT,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    m = ONE_LIST_LINE.search(out)
+    if not m:
+        return None
+    return (int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4)))
 
 
 def gate_exists(gates_text: str, number: str) -> bool:
@@ -161,6 +196,54 @@ def main() -> int:
         for test in TEST_FLAG.findall(measure):
             if not (ROOT / "z_core" / "tests" / f"{test}.rs").is_file():
                 problems.append(f"{where}: the command runs --test {test}, and z_core/tests/{test}.rs does not exist")
+
+    # **C-15's numbers are the checker's own**, or this file is the second
+    # place a number lives — which is the fault this gate exists to refuse.
+    counted = the_one_list_now()
+    if counted is None:
+        problems.append(
+            "scripts/check_the_one_list.py would not run, so C-15's numbers are nobody's"
+        )
+    else:
+        limit = next(
+            (
+                body
+                for number, _, body in (
+                    (n, t_, "\n".join(b)) for n, t_, b in sections
+                )
+                if number == "C-15"
+            ),
+            "",
+        )
+        in_list, migrated, owed, files = counted
+        missing = [
+            str(n)
+            for n in (in_list, migrated, owed, files)
+            if not re.search(rf"(?<![0-9]){n}(?![0-9])", limit)
+        ]
+        # **And no number the checker does not count** — pinned, because the
+        # first draft of this check searched the section and `559` was written
+        # in it twice: one copy went stale, the other answered for it, and the
+        # gate stayed green. A stale number beside a true one is the whole
+        # fault, so every figure of two digits or more in the section has to be
+        # one the checker produced.
+        #
+        # Gate numbers («G41», «G50/G51») are excluded by the boundary before
+        # the digits, and single digits are not policed: the migrated count is
+        # checked for presence above, and one-digit prose would be noise.
+        written = {int(m) for m in re.findall(r"(?<![A-Za-z0-9])(\d{2,4})(?![0-9])", limit)}
+        strangers = sorted(written - {in_list, migrated, owed, files})
+        if missing or strangers:
+            problems.append(
+                "C-15's numbers are not the one-list checker's "
+                f"({in_list} in the list · {migrated} migrated · {owed} owed in {files} files)"
+                + (f" — missing {', '.join(missing)}" if missing else "")
+                + (
+                    f" — and it carries {', '.join(str(n) for n in strangers)}, which nobody counted"
+                    if strangers
+                    else ""
+                )
+            )
 
     if "## What we do not claim" not in text:
         problems.append("the closing «What we do not claim» section is gone")

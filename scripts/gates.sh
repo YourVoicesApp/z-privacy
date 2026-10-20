@@ -3779,6 +3779,13 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          sixteen_digits_that_fail_luhn_are_not_a_card \
          the_given_name_beside_a_protected_surname_is_taken_too \
          a_uk_address_line_is_an_address \
+         a_hand_selection_in_the_request_takes_the_word \
+         the_same_word_in_the_document_and_the_request_takes_one_token \
+         a_hand_protection_in_the_request_can_be_undone \
+         a_span_that_crosses_the_request_line_is_refused \
+         a_column_act_in_the_request_is_refused_by_name \
+         with_no_document_the_request_is_the_whole_original \
+         the_snapshot_hands_the_one_text_with_the_requests_own_start \
          a_pasted_letter_with_no_document_leaves_by_the_manual_door \
          the_pdf_door_mints_its_answer_page_for_a_question_alone \
          the_model_door_still_takes_the_question_alone \

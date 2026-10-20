@@ -412,6 +412,39 @@ class DocumentView {
           pages == other.pages;
 }
 
+class EnteredText {
+  /// The document, the `--- Request ---` line, then the request — or the
+  /// request alone when no document stands, or the document alone when
+  /// nothing has been asked yet.
+  final String text;
+
+  /// Where the request begins, in UTF-16 units. `0` when the request is the
+  /// whole of it; equal to `text`'s length when there is no request.
+  final int requestBegins;
+
+  /// Every mark over that one text: the document's covers and the request's,
+  /// in the one space, so the screen draws them with one arithmetic.
+  final List<Mark> marks;
+
+  const EnteredText({
+    required this.text,
+    required this.requestBegins,
+    required this.marks,
+  });
+
+  @override
+  int get hashCode => text.hashCode ^ requestBegins.hashCode ^ marks.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EnteredText &&
+          runtimeType == other.runtimeType &&
+          text == other.text &&
+          requestBegins == other.requestBegins &&
+          marks == other.marks;
+}
+
 class EntityCard {
   final int id;
   final EntityKind kind;
@@ -3385,6 +3418,13 @@ class WorkspaceSnapshot {
   final VaultState vault;
   final List<AnswerId> answers;
 
+  /// **The one text the person entered, with the request's own start** —
+  /// 096, rule 72-ب. The first part of the screen draws this and nothing
+  /// else: the document, the `--- Request ---` line and the request, with
+  /// every mark in one offset space. One read per screen, so no screen works
+  /// out where the request begins for itself.
+  final EnteredText entered;
+
   const WorkspaceSnapshot({
     required this.stateRevision,
     required this.session,
@@ -3404,6 +3444,7 @@ class WorkspaceSnapshot {
     this.handle,
     required this.vault,
     required this.answers,
+    required this.entered,
   });
 
   @override
@@ -3425,7 +3466,8 @@ class WorkspaceSnapshot {
       payload.hashCode ^
       handle.hashCode ^
       vault.hashCode ^
-      answers.hashCode;
+      answers.hashCode ^
+      entered.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -3449,5 +3491,6 @@ class WorkspaceSnapshot {
           payload == other.payload &&
           handle == other.handle &&
           vault == other.vault &&
-          answers == other.answers;
+          answers == other.answers &&
+          entered == other.entered;
 }
