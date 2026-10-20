@@ -39,3 +39,49 @@ Each section is dated and is never rewritten; a later measurement is a new secti
 - **Step 6**: `winver`, VC++ and window size are above. Fonts and overflow wait for a window that draws.
 
 Glass debts noticed: title «zprivacy», not «Z Privacy».
+
+## 21 October 2026 — second report: the workflow on the lead head, run 39508181140
+
+**Why the first build had no stamp.** Every earlier «windows» run was on `main` at `c6cab87`: 2026-10-20 05:27Z, 05:34Z (the one the owner installed) and 22:11Z. None ran on the lead line. At the owner's request this session dispatched the workflow on `lead/the-day-of-the-attack`, using his GitHub login: run `39508181140`, head `4bb202f`.
+
+**Result: the run is red.** Job «build and test z_core on Windows» is green. Job «build the desktop app on Windows» is red in two steps:
+
+1. **Step 9, «Stamp it, prove it carries no runner path, and zip it», refuses on its own staging folder:**
+   ```
+   ?? staging/
+   the tree is not clean. Commit, or set ALLOW_DIRTY=1 and the archive will say so.
+   ```
+   The workflow stages into `staging/` inside the checkout, and `scripts/package_windows.sh`'s clean-tree check sees that untracked folder. So no `BUILD-INFO.txt`, no zip, no `.sha256`. «Package an installer» and «An MSIX for sideloading» were **skipped**, and «Upload the archive, its hash and the MSIX» failed with `No files were found with the provided path: dist`. **Still no MSIX and no installer exist.** Steps 1 and 2 of the order remain blocked.
+2. **Step 19, «Dart tests»: `+112 -71`, «Some tests failed».** The step prints only the last 40 lines, and the JSON record stays on the runner. In those 40 lines the visible cause is the test harness looking for the Linux bridge on Windows, in `setUpAll`, five times:
+   ```
+   Bad state: no build/linux/x64/debug/bundle/lib/libz_bridge.so — run `flutter build linux --debug` first
+   ```
+   Seen in `the_vault_before_the_work_test.dart:44`, `the_way_in_is_at_the_top_test.dart:68` and others, plus one `LateInitializationError: Local 'dir' has not been initialized.` (the teardown of a setUpAll that never set it). The bridge itself built with the test features, and the step confirmed «the DLL the suite will speak through carries the echo provider». The full list by file needs the JSON uploaded as an artefact, or more than `tail -40`.
+
+**What did arrive:** the artefact `zprivacy-v1-windows-x86_64-folder-4bb202f` (the staged folder, 30 files), unpacked under `C:\Users\anash\z\artefacts\4bb202f\folder\`. Hashes match the run's own log:
+- `zprivacy.exe` `d62b0459f2ab16ce218b8954d6f7933e88e8cad0dfbbeb03c97917ce249dad24`
+- `z_bridge.dll` `8568a6b27619ba0bfa83518f2957f18bc5feb03aa1f04f29a4262118a442b366`
+
+The folder now carries `LICENSE` and `third-party\` (eight notices). It carries no VC++ runtime DLLs: the app-local runtime of 098 would ride in the installer, which was not built.
+
+### Red 1 of the first report — closed in the binaries, one line left in a notice
+
+The four needles (`runneradmin`, `D:\a\`, `\.cargo\registry`, `/home/`), searched in ASCII and UTF-16 across all 30 files: **zero** in `zprivacy.exe`, `z_bridge.dll`, `app.so` and every DLL. The job's `RUSTFLAGS` now remaps `C:\Users\runneradmin\.cargo\registry\src=/crates`, `.rustup\toolchains=/rust`, `AppData\Local\Pub\Cache=/pub` and `D:\a\z-privacy\z-privacy=/zprivacy`. **One hit remains**, in a text file:
+```
+third-party\rust-crates.txt:62: z_core v0.1.0 (D:\a\z-privacy\z-privacy\z_core)
+```
+That is `cargo tree`'s own path for the workspace crate, written into the crate notice.
+
+### Red 2 of the first report — the core now opens its folder; the window still captures white
+
+- Launched `zprivacy.exe` from the unpacked folder. After 15 s the process was alive and responding (CPU 0.6 s), title still «zprivacy».
+- **`%LOCALAPPDATA%\ZPrivacy` now holds `settings.zcfg` (179 bytes) and `writing.lock` (0 bytes).** The core was handed its folder and opened it, unlike the `main` build of the first report.
+- Window at open: **1044×720** at (10,10). The first build opened at 1280×720.
+- `PrintWindow(PW_RENDERFULLCONTENT)` still returns a pure white client area. A screen copy was not possible: the owner's screen was locked during this measurement (the screen reported 1024×768 and showed the lock image, against 1920×1080 in the first report). So **white by `PrintWindow` alone is not proof.** Flutter draws through D3D11/DirectComposition, which `PrintWindow` may not see. The owner's eye on the unlocked screen decides it.
+- Loaded modules: `d3d11.dll`, `dxgi.dll`, `d3dcompiler_47.dll` and `OPENGL32.dll`, with VC++ from `System32` (`VCRUNTIME140.dll`, `VCRUNTIME140_1.dll`, `MSVCP140.dll`). `z_bridge.dll` comes from the app's own folder, so guess (b), a different DLL resolved, is excluded for this build.
+- GPU: AMD Radeon Vega 8 (driver 31.0.21918.2005), HP EliteDesk 705 G5 Desktop Mini.
+
+### Still owed
+
+- A green app job (the dirty-tree refusal) and then the MSIX and the installer. Only then come steps 1–2 and the MSIX data-path question of step 3.
+- The owner's eye on the window. If it draws, steps 3–5 follow with his clicks.
