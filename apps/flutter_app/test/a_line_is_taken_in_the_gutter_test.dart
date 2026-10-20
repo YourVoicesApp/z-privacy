@@ -67,6 +67,48 @@ Future<void> settle(WidgetTester tester, {int rounds = 6}) async {
   }
 }
 
+/// **Wait for a thing to be there, rather than count pumps at it.**
+///
+/// `settle` is a budget of rounds, and a budget is a guess about how long
+/// another process's load leaves this machine busy. The guess held for two
+/// weeks and then did not: «the explain card carries the column act» reddened
+/// in a full run over a merge that touched no Dart at all, and was green ten
+/// times out of ten when the file ran alone. A fixed number of pumps waiting
+/// for a widget whose timing another process decides is the same instrument
+/// fault as a teardown that throws because a live core is still writing under
+/// it.
+///
+/// It does **not** throw when the thing never arrives: an instrument that can
+/// fail on its own reports its own failure instead of the test's. The caller's
+/// `expect` says what was missing, and says what was there instead.
+Future<void> settleUntil(
+  WidgetTester tester,
+  bool Function() ready, {
+  int rounds = 60,
+}) async {
+  for (var i = 0; i < rounds; i++) {
+    if (ready()) return;
+    await tester.pump();
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 120)));
+  }
+}
+
+/// Every act on the glass right now, by the words it carries.
+///
+/// The lead's instruction for this red: on the failure, print the `ZButton`
+/// labels present. It is kept in the reason for good rather than used once,
+/// because this red cannot be summoned on demand — one label reading a number
+/// nobody expected says the hold was not what the guard assumed, and no label
+/// belonging to the card says the card had not been built when the finder
+/// looked.
+String actsOnTheGlass(WidgetTester tester) {
+  final labels = tester
+      .widgetList<ZButton>(find.byType(ZButton))
+      .map((b) => '«${b.label}»')
+      .toList();
+  return labels.isEmpty ? 'no ZButton at all' : labels.join(', ');
+}
+
 /// The same sheet with long rows, so that **every row wraps** in the column.
 ///
 /// This is the document that makes the width matter. With rows that fit on one
@@ -361,25 +403,50 @@ void main() {
       await bench.protectSelection(scope: Scope.once, kind: Kind.account, allMatches: false);
       await bench.select(null);
     });
-    await settle(tester, rounds: 10);
+    await settleUntil(tester, () => _protectedNow(bench) == 1);
     expect(_protectedNow(bench), 1, reason: 'the one value was not protected first');
 
     await tester.dragFrom(_gutterAt(tester, 1), _gutterAt(tester, 4) - _gutterAt(tester, 1));
-    await settle(tester, rounds: 12);
+    await settleUntil(tester, () => bench.linesHold != null);
+
+    // **The case is four lines, so the case says so.** This was never asserted:
+    // the guard went straight to looking for a sentence with a 4 in it, so a
+    // drag that held three would fail as «0 ZButton found» — a message about
+    // the wrong thing entirely. The hold is the core's own number.
+    expect(bench.linesHold?.lines, 4,
+        reason: 'the drag did not hold the four lines this case is about');
 
     // He presses the cell that is already protected.
     await tester.tapAt(_whereIs(tester, at + 2));
-    await settle(tester, rounds: 16);
 
+    // **Both waits are for a thing, not for a number of pumps.** The card
+    // arrives first and the act inside it a moment later — which is exactly
+    // what the lead's red said: the sheet was found, and no act with it. Two
+    // waits, so a slow machine delays the guard and never fails it.
+    await settleUntil(tester, () => find.byType(WhySheet).evaluate().isNotEmpty);
     expect(find.byType(WhySheet), findsOneWidget, reason: 'the question was not answered');
     expect(_protectedNow(bench), 1, reason: 'the press acted instead of asking');
     // And the card carries the act, named with the number of lines held.
-    final act = find.widgetWithText(ZButton, 'Protect this column in the 4 held lines');
+    //
+    // **By the key, and the sentence read rather than typed.** This waited a
+    // fixed sixteen pumps and then searched for «Protect this column in the 4
+    // held lines» — a sentence that moved into the one list in 092's fourth
+    // sitting and that has a singular form of its own. So the wait is for the
+    // button to exist, the number comes off the bench (`linesHold.lines` is
+    // the core's own count, which is the number the card is given), and the
+    // words come out of the list through the same function the glass calls.
+    // Nothing here is a copy of anything.
+    final act = find.byKey(columnActKey);
+    await settleUntil(tester, () => act.evaluate().isNotEmpty);
     expect(act, findsOneWidget,
-        reason: 'the card answers the question and loses the instruction');
+        reason: 'the card answers the question and loses the instruction — '
+            'the acts on the glass are ${actsOnTheGlass(tester)}');
+    expect(tester.widget<ZButton>(act).label, columnActLabel(bench.linesHold!.lines),
+        reason: 'the act does not name the hold it acts on');
 
     await tester.tap(act);
-    await settle(tester, rounds: 20);
+    await settleUntil(tester,
+        () => find.byType(WhySheet).evaluate().isEmpty && _protectedNow(bench) == 4);
 
     expect(find.byType(WhySheet), findsNothing, reason: 'the card stayed over a changed document');
     expect(_protectedNow(bench), 4, reason: 'the act on the card reached the other three');
@@ -394,13 +461,14 @@ void main() {
     // hold would offer to protect a column he never pointed at. Hold the last
     // line alone and ask about the first one.
     await tester.tapAt(_gutterAt(tester, 4));
-    await settle(tester, rounds: 12);
+    await settleUntil(tester, () => bench.linesHold?.lines == 1);
     expect(bench.linesHold!.lines, 1, reason: 'the hold is not one line');
     await tester.tapAt(_whereIs(tester, at + 2));
-    await settle(tester, rounds: 16);
+    await settleUntil(tester, () => find.byType(WhySheet).evaluate().isNotEmpty);
     expect(find.byType(WhySheet), findsOneWidget, reason: 'the question went unanswered');
-    expect(find.widgetWithText(ZButton, 'Protect this column in the line held'), findsNothing,
-        reason: 'the card offered an act about a line this word is not on');
+    expect(find.byKey(columnActKey), findsNothing,
+        reason: 'the card offered an act about a line this word is not on — '
+            'the acts on the glass are ${actsOnTheGlass(tester)}');
   });
 
   // --------------------------------------------- 7 · a row that wraps

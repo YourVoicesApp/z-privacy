@@ -124,6 +124,54 @@ the teardown above — and since 092 the label is drawn from the one list, so a
 guard that reaches for its English text would also break the day it is read in
 German.
 
+### Closed, 20 October 2026 — and which of the two it was could not be summoned
+
+**The red was not reproduced.** The old guard, with its fixed budgets, was run
+against twelve busy processes on this machine and stayed green; the file is
+green ten of ten alone, and it was green inside the full run at `88d1afb`. A
+flake that cannot be summoned cannot be pinned by reproduction, so the two
+explanations were separated by **measurement instead**:
+
+  * **(2) is ruled out for the healthy path.** On the deliberate red, every
+    `ZButton` label on the glass was printed — the lead's own instruction — and
+    the list holds «Protect this column in the 4 held lines», with the four.
+    The hold is the number the card is given, `linesHold.lines`, and the guard
+    now **asserts it is 4** before it looks for anything: a drag that held
+    three used to fail as «0 ZButton found», which is a message about the wrong
+    thing.
+  * **(1) stands as the explanation** — the card arrives and the act inside it
+    a moment later, which is exactly the shape of the red the lead saw (line
+    374 found the `WhySheet`, line 378 found no act). It is now impossible for
+    it to make a red: nothing in this guard counts pumps.
+
+**What changed.** `columnActKey` in `why_sheet.dart` — one name with two
+readers — and `settleUntil(tester, () => …)` beside `settle`: five fixed
+budgets in this guard became five waits for the thing itself. The act's words
+are compared against `columnActLabel(bench.linesHold!.lines)`, so neither the
+sentence nor the number is typed in the test, and `actsOnTheGlass(tester)`
+enumerates every act in the failure reason — kept for good, not used once,
+because the next red will arrive when nobody is watching.
+
+Measured: the file green 10/10 three times over, green under six busy
+processes, and green with the fixed budget before the card **reduced to zero**,
+which is the direct proof that the waits do the work the budget was guessing
+at. The file also runs about a fifth faster, because a wait returns when its
+condition holds instead of always spending its rounds.
+
+### The debt this uncovered: 284 finders type a sentence the one list owns
+
+Measured over `apps/flutter_app/test` on 20 October 2026: **458** finders reach
+for a typed sentence, and **284** of them name a value that now lives in
+`lib/l10n/app_en.arb` — by its exact text, or by the shape of a placeholder
+sentence like «Page 2» for `pageNumber`.
+
+While the suite reads English they are correct. They are a debt anyway, and the
+same debt as this file's: each is a second copy of a sentence whose home is the
+list, so a reworded value turns a guard red for the wrong reason — or, where
+the assertion is `findsNothing`, leaves it **green** for the wrong reason, which
+is worse. The form that does not rot is `find.text(sentences.theKey)`, reading
+the one place. A sitting of 092's own, with a number to measure it against.
+
 Queued after sitting four of 092 and after 097, by the lead's own order.
 
 Related: `the_debug_bridge_has_no_test_features.md` (the same errno, the other
