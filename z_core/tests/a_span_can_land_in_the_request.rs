@@ -329,3 +329,150 @@ fn the_snapshot_hands_the_one_text_with_the_requests_own_start() {
         "no mark of the request's half: {words:?}"
     );
 }
+
+// -------------------------- 6 · the view the glass asks before it presses
+
+/// The characters a span covers, read by the span's own UTF-16 units — the
+/// only honest way to read an answer that is given in them.
+fn at(whole: &str, span: Span) -> String {
+    let units: Vec<u16> = whole.encode_utf16().collect();
+    String::from_utf16_lossy(units.get(span.start as usize..span.end as usize).unwrap_or_default())
+}
+
+/// A span over any text, by the characters of something in it.
+fn span_in(whole: &str, needle: &str) -> Span {
+    let found = whole.find(needle).expect("the needle is in the text");
+    let start = whole[..found].encode_utf16().count() as u32;
+    Span { start, end: start + needle.encode_utf16().count() as u32 }
+}
+
+/// **The view of a request selection reads the request** — the fault e2
+/// measured on `e610c63`, and the seam the tests above walk straight past.
+///
+/// `inspect_selection` resolves the half at the top and writes the law in a
+/// comment — «everything below reads `half` and `records` rather than the
+/// document» — and then hands `s.original_str()` **the request's own
+/// offsets**. The document is read at an offset that means nothing in it and
+/// the answer comes back naming whatever word happens to stand there.
+///
+/// It never reached the tests above because every one of them calls `protect`,
+/// which routes by `where_it_lands` and is right. **The glass never does:**
+/// `select()` replaces the drawn span with `view.wordSpan` (041-K) and presses
+/// that. Two green halves and a broken product — so these ask the function the
+/// glass asks, in the coordinates the glass draws in.
+#[test]
+fn the_word_a_request_selection_takes_stands_in_the_request() {
+    let _g = serial();
+    fresh_vault("view-word");
+    let s = ready(true);
+    let whole = entered(true);
+
+    let view = inspect_selection(s, span_of("Rückruf", true)).expect("the view");
+    assert!(!view.empty, "the view calls a selection over a word empty");
+    assert_eq!(
+        at(&whole, view.word_span),
+        "Rückruf",
+        "the view says Protect would take «{}» — a word the hand never touched",
+        at(&whole, view.word_span)
+    );
+}
+
+/// **And the word offered beside it is the one in front of it, there.**
+/// `also_before` is 076's second click: «Thomas» stands in front of «Müller»
+/// in the request, and the document holds a name of its own for a wrong read
+/// to land on.
+#[test]
+fn the_offer_beside_a_request_selection_is_the_word_before_it_there() {
+    let _g = serial();
+    fresh_vault("view-before");
+    let s = ready(true);
+    let whole = entered(true);
+
+    let view = inspect_selection(s, span_of("Müller", true)).expect("the view");
+    let before = view
+        .also_before
+        .expect("the view offers no word before «Müller», and «Thomas» stands in front of it");
+    assert_eq!(
+        at(&whole, before),
+        "Thomas",
+        "the offer beside the selection is «{}»",
+        at(&whole, before)
+    );
+}
+
+/// **079 rule 5 is asked of the half the hand is in.** A token standing in the
+/// request is a token, and the view is what tells the glass so before anything
+/// is pressed — a press over one would mint a second token over the first.
+#[test]
+fn a_token_standing_in_the_request_is_seen_by_the_view() {
+    let _g = serial();
+    fresh_vault("view-token");
+    let s = ready(true);
+    // A request a person pasted a protected word into. The document under it
+    // carries no token at all, so a view that reads the document can only
+    // answer «no token here».
+    const TOKEN: &str = "__Z_7f3a_PERSON_9b21__";
+    let typed = format!("Was verdient {TOKEN} heute?");
+    set_question(s, typed.clone()).expect("the request");
+    let whole = format!("{DOC}{THE_LINE}{typed}");
+
+    let view = inspect_selection(s, span_in(&whole, TOKEN)).expect("the view");
+    assert!(
+        view.on_a_token,
+        "the view says no token stands under a selection drawn over «{TOKEN}» — \
+         079 rule 5 asked of the document, about a press in the request"
+    );
+}
+
+/// **What it would snap to stands where the glass draws.** Every span leaving
+/// this core is in the entered text's own units (096); one built from the
+/// request's text and handed over unshifted points into the document by
+/// exactly the length of it.
+#[test]
+fn what_a_request_selection_would_snap_to_stands_in_the_request() {
+    let _g = serial();
+    fresh_vault("view-snap");
+    let s = ready(true);
+    let whole = entered(true);
+
+    protect(s, span_of("Rückruf", true), Scope::Conversation, Kind::Person).expect("the hand");
+    // «um Rückruf» holds the covered word and a word nobody named, so nothing
+    // tiles the selection and the view lists what Protect would snap to.
+    let view = inspect_selection(s, span_in(&whole, "um Rückruf")).expect("the view");
+    assert_eq!(view.snaps_to.len(), 1, "the view offers {} snaps", view.snaps_to.len());
+    assert_eq!(
+        at(&whole, view.snaps_to[0]),
+        "Rückruf",
+        "it would snap to «{}» — the request's own offsets left this core unshifted",
+        at(&whole, view.snaps_to[0])
+    );
+}
+
+/// **And the two steps the glass really takes, in order** — the shape e2
+/// measured, where the press answered «already protected» about a word in the
+/// document and no sentence said so. One guard across the seam, because two
+/// halves were green while this was broken.
+#[test]
+fn the_two_steps_the_glass_takes_protect_the_word_the_hand_drew() {
+    let _g = serial();
+    fresh_vault("view-press");
+    let s = ready(true);
+
+    let view = inspect_selection(s, span_of("Rückruf", true)).expect("the view");
+    // The glass presses what the view answered, never the drawn span (041-K).
+    let outcome = protect(s, view.word_span, Scope::Conversation, Kind::Person)
+        .expect("the press the glass makes");
+    assert!(
+        matches!(outcome, ProtectOutcome::Applied { .. }),
+        "the press on what the view answered came back {outcome:?}"
+    );
+    let left = what_leaves(s);
+    assert!(
+        !left.contains("Rückruf"),
+        "the word the hand drew is still in the clear: the press went elsewhere\n{left}"
+    );
+    assert!(
+        left.contains("Prepared by:"),
+        "a press in the request took a word out of the document\n{left}"
+    );
+}

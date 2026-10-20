@@ -1672,6 +1672,31 @@ pub(crate) fn find_in_document(session: SessionId, word: String) -> ApiResult<Ve
     .ok_or(ApiError::InvalidSession)?
 }
 
+/// **A span in the one space every span leaving this core is in** — the
+/// entered text's own UTF-16 units, counted from its first character.
+///
+/// `where_it_lands` answers in the **half's** byte offsets, because that is
+/// what the half's text and the half's records are indexed by; everything the
+/// glass draws is indexed from the start of the entered text. The distance
+/// between the two is one number, and the day it is left out the answer is not
+/// wrong by a little: it names a different word, in the other half, with no
+/// refusal and no sentence. e2 measured exactly that on `e610c63` — a hand
+/// drawn over a word in the request was answered with a word out of the
+/// document, and the press that followed said «already protected» about it.
+///
+/// So the shift has a name and is asked for by it. Five places needed it and
+/// four of them had written the document's name instead; the fifth, the
+/// snapshot's, had the arithmetic right in its own spelling — and one law in
+/// two spellings is how the first four came to be wrong.
+pub(crate) fn span_in_the_entered(
+    entered: &str,
+    begins: usize,
+    from: usize,
+    to: usize,
+) -> ApiResult<Span> {
+    text::bytes_to_span(entered, begins + from, begins + to)
+}
+
 pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<SelectionView> {
     with_core(|core| {
         let vault_hints = {
@@ -1712,6 +1737,23 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             WhereItLands::InTheRequest { start, end } => (start, end),
             WhereItLands::InTheDocument { start, end } => (start, end),
         };
+        // **And the distance from the half's offsets to the one the glass
+        // draws in**, resolved here beside the half for the same reason the
+        // half is resolved here: so that nothing below asks the question twice
+        // and nothing below answers it with the document's name.
+        //
+        // The request's own start, and not `unwrap_or(0)`: a zero would mean
+        // «the document» and would be this fault again, in a quieter voice.
+        let begins = match lands {
+            WhereItLands::InTheRequest { .. } => {
+                s.request_begins_at().ok_or_else(|| ApiError::BadSpan {
+                    reason: "that selection lands in a request this session does not have"
+                        .to_string(),
+                })?
+            }
+            WhereItLands::InTheDocument { .. } => 0,
+        };
+        let entered = s.entered_text();
         let selected = half
             .get(start..end)
             .ok_or_else(|| ApiError::BadSpan {
@@ -1738,15 +1780,15 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
 
         // What Protect will really take, and the offer beside it. Worked out
         // here so the bubble can draw the truth before anything is pressed.
-        let (word_start, word_end) = text::whole_words(s.original_str(), start, end);
+        let (word_start, word_end) = text::whole_words(half.as_str(), start, end);
         let (word_start, word_end) = if word_start < word_end {
             (word_start, word_end)
         } else {
             (start, end)
         };
-        let word_span = text::bytes_to_span(s.original_str(), word_start, word_end)?;
-        let also_before = text::capitalised_word_before(s.original_str(), word_start)
-            .map(|(b, e)| text::bytes_to_span(s.original_str(), b, e))
+        let word_span = span_in_the_entered(&entered, begins, word_start, word_end)?;
+        let also_before = text::capitalised_word_before(half.as_str(), word_start)
+            .map(|(b, e)| span_in_the_entered(&entered, begins, b, e))
             .transpose()?;
 
         // What it touches. **Protections that tile the selection** are «already
@@ -1775,7 +1817,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
         let mut snaps_to = Vec::new();
         if !ours {
             for p in &touched {
-                snaps_to.push(text::bytes_to_span(half.as_str(), p.start, p.end)?);
+                snaps_to.push(span_in_the_entered(&entered, begins, p.start, p.end)?);
             }
         }
 
@@ -1866,7 +1908,7 @@ pub(crate) fn inspect_selection(session: SessionId, span: Span) -> ApiResult<Sel
             // would really take (041-K) — a drag that stops one character short
             // of a token's closing `__` would otherwise be offered a press that
             // the door then refuses, which is a button that lies.
-            on_a_token: the_token_standing_in(s.original_str(), word_start, word_end).is_some(),
+            on_a_token: the_token_standing_in(half.as_str(), word_start, word_end).is_some(),
         })
     })
 }
