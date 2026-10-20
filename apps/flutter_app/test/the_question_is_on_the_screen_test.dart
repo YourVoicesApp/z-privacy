@@ -153,19 +153,16 @@ void main() {
   });
 
   /// **A hand reaches a word in the request through the same door** — 096,
-  /// rule 72-ب, and the one part of this half that does not stand yet.
+  /// rule 72-ب, and the guard that crosses the seam.
   ///
-  /// **It is red on purpose, and the lead's ruling is that it stays red** until
-  /// the core half is fixed: this is the guard that crosses the seam, and a
-  /// seam with a green guard on each side and nothing across it is how two
-  /// finished halves make one broken product.
-  /// `z_core/src/ops/mod.rs:1747` builds `word_span` from `s.original_str()`
-  /// — the document's text — out of offsets that are the **request's** own
-  /// when the hand landed in the request. So the span comes back pointing into
-  /// the document, and because `select()` replaces what the person drew with
-  /// `view.wordSpan` (041-K, «what the core will take is what the screen
-  /// shows»), the next press protects a word nobody pointed at. Measured on
-  /// `e610c63`:
+  /// **This one was red on purpose for a day**, by the lead's ruling, because
+  /// it is the only guard in either half that can fail while both halves are
+  /// green: a seam with a sound guard on each side and nothing across it is
+  /// how two finished halves make one broken product. It drives the glass's
+  /// own path — `select()` replaces what the person drew with `view.wordSpan`
+  /// from `inspect_selection` (041-K, «what the core will take is what the
+  /// screen shows») — and asks the core's own answer back. Measured on
+  /// `e610c63`, before the fix:
   ///
   /// ```text
   /// requestBegins 69 · the text at 92 is «earn»
@@ -173,17 +170,22 @@ void main() {
   /// protectSelection(…)   →  alreadyProtected(__Z_…_PERSON_…, de:salutation)
   /// ```
   ///
-  /// `the_hand_lands` does the right arithmetic (`begins + x`) three hundred
-  /// lines above, so the two disagree about one thing. ed's own Rust guards
-  /// call `protect` directly with an entered-space span and never pass through
-  /// `inspect_selection`, which is why both halves are green and the product
-  /// is not — the seam this house already has a lesson about.
+  /// A hand drawn over a word in the request protected a word in the document
+  /// that nobody had pointed at, with no refusal and no sentence — in a tool
+  /// whose whole promise is about which words leave.
   ///
-  /// ed fixes the line in its own file on
-  /// `fix/the-hand-in-the-request-inspects-the-request`, with a Rust guard that
-  /// asks `inspect_selection` itself rather than `protect` — the guard that was
-  /// missing, and the reason both halves could be green. This one goes green on
-  /// that commit and nothing here changes.
+  /// **It went green at `072ab1f` with nothing here changed**, which is the
+  /// claim this file is allowed to make about the core. The cause was not the
+  /// one line reported from the glass: `inspect_selection` needed the shift in
+  /// **five** places and four of them had written the document's name instead,
+  /// while the fifth — the snapshot's — had the arithmetic right in its own
+  /// spelling, and one law in two spellings is how the other four came to be
+  /// wrong. The shift now has a name and is asked for by it,
+  /// `span_in_the_entered` in `z_core/src/ops/mod.rs`. ed's own Rust guards had
+  /// called `protect` directly with an entered-space span and never passed
+  /// through `inspect_selection`, which is why both halves could be green: the
+  /// one door the glass always goes through was the one door no guard asked
+  /// about.
   testWidgets('a hand selection in the request covers that word, and not 22..28 in the document', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1500, 1100));
     addTearDown(() => tester.binding.setSurfaceSize(null));

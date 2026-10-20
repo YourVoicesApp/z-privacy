@@ -224,9 +224,14 @@ bench.select(Span(92, 96))  →  bench.selection 22..28  =  «Thomas», in the d
 protectSelection(…)         →  alreadyProtected(__Z_…_PERSON_…, de:salutation)
 ```
 
-The cause is one line — `z_core/src/ops/mod.rs:1747` builds `word_span` from
-`s.original_str()` out of offsets that are the request's own — and ed fixes it
-in its own file.
+The cause was reported from the glass as one line — `ops/mod.rs:1747` builds
+`word_span` from `s.original_str()` out of offsets that are the request's own.
+It was **five**: `inspect_selection` needs that shift in five places, and four
+of them had written the document's name, while the fifth — the snapshot's — had
+the arithmetic right **in its own spelling**. One law in two spellings is how
+the other four came to be wrong, which is a finding the glass could not have
+made: from here one wrong answer is one wrong answer, and only the file's owner
+can count how many places it is written in.
 
 **Why two green halves could not see it.** The core's guards call `protect`
 directly with an entered-space span. The glass never does: `select()` replaces
@@ -237,10 +242,26 @@ measured its own side of the seam.
 
 The guard that found it — «a hand selection in the request covers that word,
 and not 22..28 in the document», in
-`apps/flutter_app/test/the_question_is_on_the_screen_test.dart` — is **red on
-purpose** by the lead's ruling until the line is fixed. It crosses the seam: it
-drives the glass's own path and asks the core's own answer, which is the only
-kind of guard that can fail when two halves are each correct alone.
+`apps/flutter_app/test/the_question_is_on_the_screen_test.dart` — was **red on
+purpose** for a day by the lead's ruling, and that is the point of it: it
+crosses the seam, driving the glass's own path and asking the core's own answer
+back, which is the only kind of guard that can fail when two halves are each
+correct alone.
+
+### Closed, 21 October 2026 — green with nothing changed on this side
+
+ed's fix merged at `072ab1f`, and the shift now has a name asked for by name:
+`span_in_the_entered(entered, begins, from, to)`. The guard **went green with
+no touch from this half** — which is the whole claim such a guard is for. Had
+it needed a touch here to pass, the touch would have been the news, not the
+pass: a guard that is edited to agree with the code it measures has stopped
+measuring it.
+
+What stays written down is the shape, not the bug: the door the glass always
+passes through — `select()` → `inspect_selection` → `view.wordSpan` — was the
+one door neither half's guards asked about, because ed's called `protect`
+directly with a span already in the entered space. Each half tested the inside
+of its own side of the seam.
 
 Related: `a_split_item_needs_a_guard_that_crosses_the_seam.md` ·
 `a_control_that_fails_to_bite_is_a_finding.md`
