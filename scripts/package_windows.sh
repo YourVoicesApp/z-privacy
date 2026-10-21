@@ -181,8 +181,31 @@ if command -v zip >/dev/null 2>&1; then
 else
   # Git Bash on a runner has no `zip`; PowerShell is always there. Same
   # archive, one folder inside it.
+  #
+  # **And the two paths are converted here, where they cross, and nowhere
+  # else.** This file runs under bash and spells its paths bash's way —
+  # `$(cd "$STAGE/.." && pwd)` answers `/d/a/_temp/staging` on the runner —
+  # while PowerShell reads Windows' spelling and cannot see such a path at all:
+  #
+  #   Compress-Archive : The path '/d/a/_temp/staging/zprivacy-v1-windows-x86_64'
+  #   either does not exist or is not a valid file system path.
+  #
+  # That was run 39586867441, step 13: the first run to reach the stamp with the
+  # runtime beside the application, the commit named in `BUILD-INFO.txt` and the
+  # four needles at zero — and no zip, so no `.sha256`, no installer, no MSIX
+  # and nothing uploaded. One seam, the whole release.
+  #
+  # Converted at the seam and only at the seam, because a path converted twice
+  # is a path broken twice; every other line in this file belongs to bash and
+  # keeps bash's spelling. `scripts/check_powershell_paths.py` (gate `G68`)
+  # holds that rule for every crossing this folder ever grows.
+  command -v cygpath >/dev/null 2>&1 \
+    || die "no zip and no cygpath: a path this shell spelled cannot be handed to PowerShell"
+  WIN_FOLDER=$(cygpath -w "$PARENT/$FOLDER")
+  WIN_ZIP=$(cygpath -w "$OUT/$NAME.zip")
+  printf '  the folder, as Windows spells it: %s\n' "$WIN_FOLDER"
   powershell -NoProfile -NonInteractive -Command \
-    "Compress-Archive -Path '$PARENT/$FOLDER' -DestinationPath '$OUT/$NAME.zip' -Force" \
+    "Compress-Archive -Path '$WIN_FOLDER' -DestinationPath '$WIN_ZIP' -Force" \
     || die "Compress-Archive failed"
 fi
 [ -s "$OUT/$NAME.zip" ] || die "the archive was not written"
