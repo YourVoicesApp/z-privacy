@@ -53,6 +53,14 @@ z-d3's fifth report (`docs/INBOX/to-linux.md`, papers 8d545fa). Still no artefac
 
 The Inno install, step 4 and the German walk wait for an artefact from the next run.
 
+## 6 · The run at `268b964` (39586867441, 21 October) — green through the stamp, red at the zip
+
+z-d3's sixth report (papers 4df52b1). Green for the first time: the glob found `Microsoft.VC145.CRT` (VS 18, MSVC 14.51.36231) and the three runtime libraries sit beside the exe at 14.51.36247.0, Authenticode-valid (item 1); `BUILD-INFO.txt` exists — «z_core 0.1.0 · 2026-10-21 · 268b964», clean tree, hashes matching the files (item 4a); the four needles are zero in all 36 files we compile and in the text notices, the only hits being Microsoft's own pdb path inside the three runtime DLLs, which the job excludes by name (item 3); the Dart suite reads 414 · 0 (item 5).
+
+- **One red, step 13:** `package_windows.sh` hands `Compress-Archive` an MSYS path — «The path '/d/a/_temp/staging/zprivacy-v1-windows-x86_64' either does not exist or is not a valid file system path». The script runs under bash on the runner and builds its paths in bash's spelling; the PowerShell it calls reads Windows' spelling. The shape: convert with `cygpath -w` at the one place a bash path crosses into PowerShell (and nowhere else — a path converted twice is a path broken twice), pinned red by the message above. Fourth attempt at a zip, `.sha256`, installer and MSIX.
+
+The folder artefact is the same binaries the installer would ship, so step 4 and the German walk run on it now in the test data folder, with the owner's clicks, rather than wait a fifth run.
+
 ## Measurement
 
 Rust: `cargo test`, clippy, both targets (G4c). `scripts/gates.sh` green from a plain debug build; the three numbers written by the merging hand. The workflow run (owner's hand, Actions → windows → Run workflow) shows the assert step green with three versions; the installed `.exe` on the clean machine starts without a DLL dialogue — the owner's measurement, written into `docs/INBOX/to-linux.md`.
