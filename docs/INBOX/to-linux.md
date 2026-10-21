@@ -102,3 +102,31 @@ That is `cargo tree`'s own path for the workspace crate, written into the crate 
 **Glass debts, unchanged:** title «zprivacy»; window opens at 1280×720 (1044×720 once).
 
 **Not asked yet:** whether `vault.zv` is a test vault or the owner's real one. It is not touched either way.
+
+## 21 October 2026 (morning) — fourth report: step 3 measured, step 4 cannot be run on this build
+
+**The 235-byte `vault.zv` in the real data folder is a test vault** (the owner, asked directly: «خزنة تجربة»). It stays untouched. Every step below ran in a separate data folder. The app was started with `LOCALAPPDATA=C:\Users\anash\z\testdata\LocalAppData`, and the core followed it to `…\testdata\LocalAppData\ZPrivacy`, so the owner's folder was not read or written. Build: the 4bb202f staged folder (no installer or MSIX exists yet, see the second report).
+
+### Step 3 — where the vault lives (folder build; the MSIX half waits for an MSIX)
+
+The owner, in the test instance: created a vault with the test passphrase `test-zd3-2026`, brought in `z_core\tests\fixtures\Brief_Weber.txt`, protected, and closed the window. Afterwards the data folder holds:
+
+| file | bytes | written |
+|---|---|---|
+| `writing.lock` | 0 | 05:57:29 (at launch) |
+| `settings.zcfg` | 179 | 05:58:26 |
+| `vault.zv` | 364 | 06:00:06 |
+| `sessions\1.zs` | 8163 | 06:00:06 |
+
+- Path: `%LOCALAPPDATA%\ZPrivacy`, as `z_core\src\data_dir.rs` says, with no roaming. `%USERPROFILE%\Documents\ZPrivacy` was not created.
+- Disk scan after close, UTF-8 and UTF-16, every file: none of 15 words from the fixture is in the clear (Betreff, Nachfrage, Rechnung, Katharina, Lindemann, Schreiben, September, Vertrag, Kundennummer, Tobias, Reinhardt, Filiale, Bahnhofstraße, München, Ihrer). The test passphrase is not on disk either.
+- `writing.lock` stays at 0 bytes after close. The file remains, and the lock is the OS lock on it.
+- The MSIX half of step 3 (is a packaged app's `%LOCALAPPDATA%` redirected under `Packages\<id>\LocalCache\Local\`?) cannot be measured until the job builds an MSIX.
+
+### Step 4 — the lock: not run
+
+Two instances started on the same test folder (A pid 13964, B pid 11044), side by side. **Both open and run together.** That is expected: the lock guards a write, not a launch. `vault.zv` (`CD451D7C38512B79…`, 364 bytes) and `sessions\1.zs` stayed unchanged while both were open.
+
+The protect-in-A-then-in-B sequence was **not performed**. The owner, in his words: «هذه الحالة لم يتم إصلاحها بعد ولا يمكنني تجربة الحماية», this case has not been fixed yet and I cannot try the protection. So whether the second copy refuses with «Another copy of Z Privacy changed this vault…» on Windows is **not measured**. The `core` job's «One writer at a time» step (run 39508181140, green) remains the only Windows measurement of the lock.
+
+### Step 5 — the German walk: not yet started
