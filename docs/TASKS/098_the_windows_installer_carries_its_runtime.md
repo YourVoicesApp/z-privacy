@@ -40,6 +40,19 @@ z-d3's second report (`docs/INBOX/to-linux.md`). The core job is green; the app 
 
 What the run measured green, so it is not rebuilt: the four needles are zero in all 30 binaries (the `RUSTFLAGS` remaps work); the core opens its folder on Windows (`settings.zcfg` and `writing.lock` after 15 s — the first report's empty folder was the `main` build's); `z_bridge.dll` loads from the app folder. Open and not ours to guess: the window reads white by `PrintWindow` while the owner's screen was locked — Flutter draws through D3D11, which `PrintWindow` may not see; his eye decides.
 
+## 5 · The run at `17109b5` (39548354872, 21 October) — a typed toolset name, and four Dart reds on Windows
+
+z-d3's fifth report (`docs/INBOX/to-linux.md`, papers 8d545fa). Still no artefact.
+
+- **Item 1's copy step types the toolset.** It looks for `…\VC\Redist\MSVC\<ver>\x64\Microsoft.VC143.CRT`; the runner image now carries Visual Studio 18 with MSVC 14.51 and the folder is not VC143. Every later step is skipped (versions, needles, stage, BUILD-INFO, zip, installer, MSIX) and the uploads fail. The rule is item 1's own: read what is there, never a typed name — glob `x64\Microsoft.VC14*.CRT` under `$env:VCToolsRedistDir`, require **exactly one** match, print it, and fail by name otherwise. Pinned red the same way the gate's text check is: a second case of «a path that has a variable».
+- **Item 4b works** — `dart-tests-windows-17109b5` uploaded; `dart.json` reads 405 passed · 4 failed (was +112 −71). The four, by name:
+  - `a_pdf_keeps_the_promise` «the stated folder…»: expected `C:\Users\runneradmin/Documents/zprivacy`, actual `…\Documents\ZPrivacy` — the test builds the Linux shape (slash, lowercase); the core is right per `data_dir.rs`. The test asks the core (or `path.join`) instead of spelling the path.
+  - `a_pdf_keeps_the_promise` «the saved file carries the tokens…»: the expected path mixes `/` and `\`; same cure.
+  - `messages_test` «no widget interprets an ApiError»: the exemption for `messages.dart` is written with `/`, so `lib\core\messages.dart` reports against itself — compare normalised paths.
+  - `contract_test` «a document protects itself, driven from Dart»: expected `NetworkRefusal_NotConnected`, got `NetworkRefusal_VaultLocked`. **Not a path.** Diagnose before touching: the order the two refusals are asked in, or a vault state the Windows harness leaves locked (the shared bridge-path file of item 4b chose the DLL; does it also choose the data folder?). Say which in the commit; if it is a product difference between the platforms, that is a finding for C-11, not a test to bend.
+
+The Inno install, step 4 and the German walk wait for an artefact from the next run.
+
 ## Measurement
 
 Rust: `cargo test`, clippy, both targets (G4c). `scripts/gates.sh` green from a plain debug build; the three numbers written by the merging hand. The workflow run (owner's hand, Actions → windows → Run workflow) shows the assert step green with three versions; the installed `.exe` on the clean machine starts without a DLL dialogue — the owner's measurement, written into `docs/INBOX/to-linux.md`.
