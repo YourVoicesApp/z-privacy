@@ -142,3 +142,38 @@ Reading, not a measurement: 093 says the lock is `std::fs::File::lock` taken in 
 *Amended (the lead, from `z_core/src/secure_file.rs:224–247`):* the lock is held for one core call and released after it, on Linux too, so both facts above are the design and not a W4c red. What stands between two copies is `Vault::ensure_disk_unchanged` at the next write (`VaultChangedElsewhere`). Step 4 on the new head is therefore: protect in A, then in B. B's disk-changed sentence is the pass, a silent success in B is the red, and A must keep working after.
 
 ### Step 5 — the German walk: waits for the next head (the lead: 096 and 680 sentences against 556 here)
+
+## 21 October 2026 — fifth report: run 39548354872 on 17109b5
+
+Dispatched by this session on `lead/the-day-of-the-attack` at `17109b5eab17b3cedccd79edd53b436075d126c5`, with the owner's GitHub login. **Red.** Job «build and test z_core on Windows» is green. Job «build the desktop app on Windows» is red.
+
+### Item 1 (the runtime beside the exe): the new step fails on the runner's newer Visual Studio, and every artefact step after it is skipped
+
+Step 9, «The runtime the application needs, beside the application»:
+```
+redistributable folder: C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Redist\MSVC\14.51.36231
+Exception: no CRT folder at C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Redist\MSVC\14.51.36231\x64\Microsoft.VC143.CRT
+```
+The runner image now carries **Visual Studio 18 with MSVC 14.51**. The step hard-codes the folder name `Microsoft.VC143.CRT`, which is the VS 2022 toolset's name. Under a newer toolset the folder carries a newer number. (Not checked on the runner; this machine has VS 2022 17.14 Build Tools only.) Smallest fix: find the folder by pattern (`x64\Microsoft.VC14*.CRT`, exactly one match, else fail by name) instead of naming it.
+
+Because step 9 threw, steps 10–13, 15 and 17 were **skipped**: the three DLLs and their versions, the needle search on the three built files, staging, BUILD-INFO and the zip, the installer, the MSIX. The uploads «archive, hash and MSIX» and «the folder» **failed** for lack of files. So:
+- **Step 1 of the order (098 item 4's first red): still no artefact.** No zip, `.sha256`, BUILD-INFO, installer or MSIX.
+- **Item 3 (the four needles, text notices included): not measurable.** Nothing staged was uploaded.
+- **Item 1 (three runtime DLLs beside the exe, versions in the log): red at its first line**, as above.
+
+### Item 4b (the Dart half, with its JSON): uploaded, and it reads 405 passed · 4 failed
+
+The artefact `dart-tests-windows-17109b5` arrived. The JSON `dart.json` has 409 tests: **405 passed, 4 failed** (at 4bb202f the log showed +112 −71). The four, from the JSON:
+
+1. `a_pdf_keeps_the_promise_test.dart` :: «the stated folder is the core's answer, and on Linux it is this one»
+   `Expected: 'C:\Users\runneradmin/Documents/zprivacy'` · `Actual: 'C:\Users\runneradmin\Documents\ZPrivacy'`. The test builds the Linux shape (forward slash, lowercase). The core answers the Windows shape that `data_dir.rs` documents (`%USERPROFILE%\Documents\ZPrivacy`). The test's expectation is wrong on Windows, not the core.
+2. `a_pdf_keeps_the_promise_test.dart` :: «the saved file carries the tokens and no original value»
+   `Found 0 widgets with text containing C:\Users\RUNNER~1\AppData\Local\Temp/zprivacy-pdf-out-8708\text-protected-2026-10-21.pdf` — «the file was written without a word about where». The expected string mixes `/` and `\` (joined with `/` in the test), so it cannot match the glass's path. Same family as 1. Whether the glass names the folder at all is not proven either way by this test on Windows.
+3. `messages_test.dart` :: «no widget interprets an ApiError by itself»
+   `Expected: empty`, actual lists `lib\core\messages.dart: ApiError_OpenSuggestions(…)`, `…InputRefused…`, `…NotFound…`, `…StorageRefused…`. The guard exempts `messages.dart` by a forward-slash path, so on Windows the one sanctioned file is reported against itself. Same family: path separator in a test.
+4. `contract_test.dart` :: «a document protects itself, driven from Dart»
+   `Expected: <Instance of 'NetworkRefusal_NotConnected'>` · `Actual: NetworkRefusal_VaultLocked`. **Not a path.** On Windows the refusal comes back as «vault locked» where Linux answers «not connected». Either the order of the refusals differs, or the vault is locked at that moment on Windows (auto-lock clock, or a vault left by an earlier test). Not diagnosed further.
+
+### Not done on this head
+
+The Inno install in the test folder, step 4 as amended, and the German walk all wait for an artefact. None exists from this run.
