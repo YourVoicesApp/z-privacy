@@ -186,13 +186,21 @@ Future<File?> _pressSave(
 /// exactly one token, and this hands that token back.
 String _answerToken(List<String> pages) {
   final last = pages.last;
-  expect(last, startsWith('Z-pdf : '),
-      reason: 'the last page does not open with «Z-pdf :» — it opens with '
-          '«${last.length > 60 ? last.substring(0, 60) : last}»');
+  // **The line is the one list's since rule 80**, so it is read and not typed
+  // here: `zPdfAnswerLine` with no token is the opening this looks for, and
+  // with the token it is the whole line. A **file** reaches the list through
+  // `theSentencesAFileCarries`, which is what these pages are — and `null` is
+  // the English of a page that left no session, which is every page this
+  // fixture builds.
+  final t = theSentencesAFileCarries(null);
+  expect(last, startsWith(t.zPdfAnswerLine('')),
+      reason: 'the last page does not open with «${t.zPdfAnswerLine('')}» — it '
+          'opens with «${last.length > 60 ? last.substring(0, 60) : last}»');
   final tokens = _tokenShape.allMatches(last).map((m) => m.group(0)!).toList();
   expect(tokens, hasLength(1), reason: 'the answer page carries ${tokens.length} tokens: $tokens');
-  expect(last, startsWith('Z-pdf : ${tokens.single} '),
-      reason: 'the token on the answer page is not the word after «Z-pdf :»');
+  expect(last, startsWith('${t.zPdfAnswerLine(tokens.single)} '),
+      reason: 'the token on the answer page is not the word after '
+          '«${t.zPdfAnswerLine('')}»');
   return tokens.single;
 }
 

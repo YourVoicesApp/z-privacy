@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/line_gutter.dart';
 
@@ -1317,7 +1318,15 @@ class PageEdgePainter extends CustomPainter {
       final y = ys[i];
       if (y.isNaN) continue;
       final label = TextPainter(
-        text: TextSpan(text: 'Page ${edges[i].page}', style: Zc.tiny.copyWith(color: Zc.ink4)),
+        // **The one sentence this file ever owed the list, by the owner's word
+        // of 21 October 2026** (rule 80, the second half): the page marker is
+        // read in the interface's language through the holder, because it is
+        // drawn on the glass and not into a file. `pageNumber` was already in
+        // the list for the page chooser — one key, two readers, and the two
+        // cannot label a page differently any more.
+        text: TextSpan(
+            text: sentences.pageNumber(edges[i].page),
+            style: Zc.tiny.copyWith(color: Zc.ink4)),
         textDirection: TextDirection.ltr,
       )..layout();
       const gap = 10.0;

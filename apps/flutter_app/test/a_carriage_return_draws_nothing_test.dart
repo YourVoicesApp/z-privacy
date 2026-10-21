@@ -813,12 +813,17 @@ void main() {
           text: _lf,
           stamp: stamp(),
         answerToken: answer,
+        // Null is «this file left no session», which is English — rule 80, and
+        // required at the signature rather than defaulted. The language is not
+        // what W8 is about, and it is the same in both files compared here.
+        sessionLanguage: null,
           compress: false,
         );
         final twice = await buildProtectedPdf(
           text: _lf,
           stamp: stamp(),
         answerToken: answer,
+        sessionLanguage: null,
           compress: false,
         );
         expect(
@@ -848,12 +853,14 @@ void main() {
           text: _lf,
           stamp: stamp(),
         answerToken: answer,
+        sessionLanguage: null,
           compress: false,
         );
         final crlf = await buildProtectedPdf(
           text: _crlf,
           stamp: stamp(),
         answerToken: answer,
+        sessionLanguage: null,
           compress: false,
         );
         expect(
@@ -878,8 +885,10 @@ void main() {
     );
 
     test('and at the setting the product actually writes with', () async {
-      final lf = await buildProtectedPdf(text: _lf, stamp: stamp(), answerToken: answer);
-      final crlf = await buildProtectedPdf(text: _crlf, stamp: stamp(), answerToken: answer);
+      final lf = await buildProtectedPdf(
+          text: _lf, stamp: stamp(), answerToken: answer, sessionLanguage: null);
+      final crlf = await buildProtectedPdf(
+          text: _crlf, stamp: stamp(), answerToken: answer, sessionLanguage: null);
       expect(
         _withoutTheDocumentId(crlf),
         _withoutTheDocumentId(lf),
@@ -894,12 +903,14 @@ void main() {
         text: _lf,
         stamp: stamp(),
         answerToken: answer,
+        sessionLanguage: null,
         compress: false,
       );
       final changed = await buildProtectedPdf(
         text: _lf.replaceFirst('Hedvig', 'Hedvigg'),
         stamp: stamp(),
         answerToken: answer,
+        sessionLanguage: null,
         compress: false,
       );
       expect(

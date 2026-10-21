@@ -158,6 +158,12 @@ void main() {
   test('the control: an original written in the clear is found by our own reader', () async {
     final bytes = await buildProtectedPdf(
       answerToken: _answer,
+      // **`sessionLanguage: null` is «this file left no session»**, which means
+      // English — rule 80, and required at the signature so that no caller
+      // leaves a file's language to a default. What the footer says in each
+      // case is measured in `a_file_carries_its_sessions_language_test.dart`;
+      // here it is only part of the bytes.
+      sessionLanguage: null,
       text: 'Sehr geehrter Herr Markus Weber,\nIBAN: DE89370400440532013000\n',
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -178,6 +184,7 @@ void main() {
     // removing the Flate layer does not make it letters.
     final bytes = await buildProtectedPdf(
       answerToken: _answer,
+      sessionLanguage: null,
       text: 'Sehr geehrter Herr Markus Weber,\n',
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -275,6 +282,7 @@ void main() {
     final digest = sha256OfText(line * 120);
     final bytes = await buildProtectedPdf(
       answerToken: _answer,
+      sessionLanguage: null,
       text: line * 120,
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -398,6 +406,7 @@ void main() {
   test('an Arabic paragraph is shaped and laid out right to left', () async {
     final bytes = await buildProtectedPdf(
       answerToken: _answer,
+      sessionLanguage: null,
       text: arabicLine,
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -417,6 +426,7 @@ void main() {
   test('a Latin run inside an Arabic line is not reversed', () async {
     final bytes = await buildProtectedPdf(
       answerToken: _answer,
+      sessionLanguage: null,
       text: arabicLine,
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -440,6 +450,7 @@ void main() {
   test('a Latin-only page is untouched by the Arabic work', () async {
     final bytes = await buildProtectedPdf(
       answerToken: _answer,
+      sessionLanguage: null,
       text: 'Sehr geehrter Herr __Z_0001_PERSON_0002__,\n$germanLine\nRäksmörgås å ä ö.',
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -462,6 +473,7 @@ void main() {
     // a German line again. One setting for the file gets one of them wrong.
     final bytes = await buildProtectedPdf(
       answerToken: _answer,
+      sessionLanguage: null,
       text: '$germanLine\n$arabicLine\nMit freundlichen Grüßen',
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',
@@ -545,6 +557,7 @@ void main() {
     final digest = sha256OfText(line * 120);
     final bytes = await buildProtectedPdf(
       answerToken: _answer,
+      sessionLanguage: null,
       text: line * 120,
       stamp: PdfStamp(
         build: 'z_core 0.0.0 · 0000-00-00 · control',

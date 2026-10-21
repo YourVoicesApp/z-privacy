@@ -259,6 +259,14 @@ class _SendSheetState extends State<SendSheet> {
       // from this text. And never `bench.document.name`, which is the person's
       // own file name (081).
       sessionName: payload.session?.name ?? '',
+      // **And the language the file carries, from the same session** — rule
+      // 80, the owner, 21 October 2026. The sentences that go *into* a z-pdf
+      // are in the language of the session it left, so the one place that
+      // knows which session that was says it here; `saveProtectedPdf` reads
+      // the list and the glass's own holder is not consulted at all. Null is
+      // «no session, or no language» and means English, which is the law's
+      // other half and lives with it in `theLanguageAFileCarries`.
+      sessionLanguage: theLanguageAFileCarries(widget.ground, payload.session),
       folder: widget.saveFolder,
       stamp: PdfStamp(
         build: coreVersion(),
