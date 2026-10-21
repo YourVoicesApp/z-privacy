@@ -177,3 +177,39 @@ The artefact `dart-tests-windows-17109b5` arrived. The JSON `dart.json` has 409 
 ### Not done on this head
 
 The Inno install in the test folder, step 4 as amended, and the German walk all wait for an artefact. None exists from this run.
+
+## 21 October 2026 — sixth report: run 39586867441 on 268b964
+
+Dispatched by this session on `lead/the-day-of-the-attack` at `268b96402be3df3b8d935e5eec764aaeb437e945`. **Red, one step from green.** Job «build and test z_core on Windows» is green. Job «build the desktop app on Windows» is red at step 13.
+
+### Item 1 (the runtime beside the exe): green
+
+The glob found exactly one folder: `C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Redist\MSVC\14.51.36231\x64\Microsoft.VC145.CRT`, the toolset VS 18 carries. The three DLLs are beside the exe, their versions in the log and confirmed on the files: `vcruntime140.dll`, `vcruntime140_1.dll`, `msvcp140.dll`, all **14.51.36247.0**, Authenticode-valid (Microsoft Windows Software Compatibility Publisher).
+
+### Step 1 (the three artefacts): BUILD-INFO exists, the archive does not
+
+`package_windows.sh` got through the stamp, BUILD-INFO and the needle check, then failed on the zip:
+```
+== writing the archive
+Compress-Archive : The path '/d/a/_temp/staging/zprivacy-v1-windows-x86_64' either does not exist or is not a valid file system path.
+Compress-Archive failed
+```
+The script hands PowerShell's `Compress-Archive` an MSYS path (`/d/a/...`) from Git Bash. PowerShell needs `D:\a\...`. Smallest fix: convert with `cygpath -w` (or `pwd -W`) before the call. So again **no zip, no `.sha256`, no installer, no MSIX**: «Package an installer» and «An MSIX for sideloading» were skipped, and «Upload the archive, its hash and the MSIX» failed. **Step 1 is still blocked**, on its fourth attempt.
+
+What did arrive is the folder artefact `zprivacy-v1-windows-x86_64-folder-268b964` (36 files), and it now carries **`BUILD-INFO.txt`** for the first time:
+- `core stamp       z_core 0.1.0 · 2026-10-21 · 268b964`
+- `product commit   268b96402be3df3b8d935e5eec764aaeb437e945`, «The tree was clean when these binaries were built.»
+- built 2026-10-21T10:55:15Z, rustc 1.99.1, Flutter 3.44.2
+- `zprivacy.exe` `e972f9ee0916c7e2dbc4ebbb3fa187477d0b161c220cfdbf7b8ef5502ecc4ec0` and `z_bridge.dll` `d988135e55fc5fd6c8da95d2aa5296b580e2462276e88c3c43690ff0ff3a37e5`. **Both hashes match the files in the folder.**
+
+### Item 3 (the four needles over every file, text notices included)
+
+The job's own check reports «no builder path in any of the 33 files searched» and names the three runtime DLLs as not searched («we did not compile them»). Searched here over all 36 files, ASCII and UTF-16: **zero** in every file we build and in every text notice. `rust-crates.txt` no longer carries `D:\a\`. The only hits are `D:\a\` once in each Microsoft runtime DLL, and they are Microsoft's own build path, not ours: `D:\a\_work\1\s\binaries\amd64ret\bin\amd64\\vcruntime140.amd64.pdb` (and `msvcp140.amd64.pdb`). That reading is right; the claim should keep saying «the files we compile».
+
+### Item 4b (the Dart half): 414 passed, 0 failed
+
+`dart-tests-windows-268b964/dart.json`: **414 passed · 0 failed**. The four reds of the fifth report (three path shapes, one VaultLocked for NotConnected) are gone.
+
+### Not done on this head
+
+The Inno install and the MSIX wait for the archive step. Step 4 (protect in A, then in B) and the German walk could run on the folder build in the test data folder now, with the owner's clicks, if the lead prefers not to wait for the installer.
