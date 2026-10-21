@@ -3651,12 +3651,6 @@ abstract class AppLocalizations {
   /// **'Already protected as {tokens}.'**
   String alreadyProtectedAsTokens(String tokens);
 
-  /// The joiner between the last two of a short list of tokens, as a sentence reads them: «T1 and T2». It is language and not punctuation — German joins with « und » — so it is a key and not a literal in the file that joins.
-  ///
-  /// In en, this message translates to:
-  /// **' and '**
-  String get andJoin;
-
   /// The same card where the vault or a rule is what protected the value: the whole line, so a translator can move «from …» where their language puts it. `{detail}` is the vault's own detail with its separator, or empty.
   ///
   /// In en, this message translates to:
@@ -3932,6 +3926,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose which model answers'**
   String get chooseWhichModelAnswers;
+
+  /// The record panel's empty state: not only that there is nothing, but where it will be kept when there is — the session's own sealed file and nowhere else.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has been sent from this session yet. What goes to a model and what comes back are written here, in this session’s own sealed file.'**
+  String get nothingSentFromThisSessionYet;
+
+  /// Above one turn's question in the session record.
+  ///
+  /// In en, this message translates to:
+  /// **'You asked'**
+  String get youAsked;
+
+  /// A turn whose request carried a document and no question of its own.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was asked — the document went on its own.'**
+  String get nothingWasAskedDocumentWentAlone;
+
+  /// Above one turn's answer in the session record. «It» is the model, which the record does not name, because a name guessed from today's provider may not be the one that answered.
+  ///
+  /// In en, this message translates to:
+  /// **'It answered'**
+  String get itAnswered;
+
+  /// Rule 58: a token minted in another session cannot be read back here, and the record says which ones rather than leaving them looking like words.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One name in this exchange belongs to another session and could not be restored: {list}.} other{{count} names in this exchange belong to another session and could not be restored: {list}.}}'**
+  String namesBelongToAnotherSession(int count, String list);
+
+  /// Added under a refusal that stopped a copy: a paste that gives back nothing reads as a broken application unless somebody said so first (the owner, 12 October). The refusal and the line break between them belong to the caller — a break is layout, and G55 is right to refuse an invisible character inside a sentence.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was copied — the clipboard is empty.'**
+  String get andTheClipboardIsEmptySentence;
+
+  /// A paste that brought nothing — the clipboard was empty, or held only space.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was pasted.'**
+  String get nothingWasPasted;
+
+  /// A pasted answer with no payload copied before it: the names in an answer can only be put back against the payload they left in.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the safe text first, so the answer can be tied to that payload.'**
+  String get copyTheSafeTextFirst;
+
+  /// A client profile switched back on. The caller isolates the profile's own name.
+  ///
+  /// In en, this message translates to:
+  /// **'«{name}» is in use again.'**
+  String profileIsInUseAgain(String name);
+
+  /// A client profile switched off. Rule 59: switching off exempts, it never erases, and the sentence says so rather than letting «off» read as «gone».
+  ///
+  /// In en, this message translates to:
+  /// **'«{name}» is off — its names are still here.'**
+  String profileIsOffNamesRemain(String name);
+
+  /// Names moved from one language's list to another's. `{to}` is the language code in capitals, which is a code and not a word.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Moved one name to {to}.} other{Moved {count} names to {to}.}}'**
+  String movedNamesToLanguage(int count, String to);
+
+  /// A client profile forgotten, with how many of its names went with it.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot «{name}» and {count, plural, =1{1 name} other{{count} names}}.'**
+  String forgotProfileAndItsNames(String name, int count);
+
+  /// One value taught to the vault by hand. The caller isolates the person's own word.
+  ///
+  /// In en, this message translates to:
+  /// **'Added «{value}».'**
+  String addedValueNamed(String value);
+
+  /// One value forgotten from the vault by hand. The caller isolates the person's own word.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot «{value}».'**
+  String forgotValueNamed(String value);
+
+  /// A note on a scan that ran once the vault was unlocked, so its findings could use what the vault knows.
+  ///
+  /// In en, this message translates to:
+  /// **'after the vault opened'**
+  String get afterTheVaultOpened;
+
+  /// Part of what a name import did, joined with the others by « · ». One part per fact, because German orders them its own way.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} added'**
+  String importAddedCount(int count);
+
+  /// Part of a name import's report: values the vault already held.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} already known'**
+  String importAlreadyKnownCount(int count);
+
+  /// Part of a name import's report: rows this build would not take.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} refused'**
+  String importRefusedCount(int count);
+
+  /// Part of a name import's report: the values a table taught beyond its names.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} values'**
+  String importValuesCount(int count);
+
+  /// A session begun where every name in the open document already belonged to it.
+  ///
+  /// In en, this message translates to:
+  /// **'Begun. No name on this document needed renaming.'**
+  String get begunNoNameNeededRenaming;
+
+  /// A session begun with nothing open — said plainly, because «nothing was renamed» alone would read as a failure.
+  ///
+  /// In en, this message translates to:
+  /// **'Begun. No document is open, so there was nothing to rename.'**
+  String get begunNoDocumentOpen;
+
+  /// A session begun that took the open document's names with it (081).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Begun, and one name on this document moved into it.} other{Begun, and {count} names on this document moved into it.}}'**
+  String begunAndNamesMovedIn(int count);
+
+  /// A take-out asked for where no session had been begun — nothing was written and nothing left.
+  ///
+  /// In en, this message translates to:
+  /// **'The session was not begun, so nothing was taken out.'**
+  String get theSessionWasNotBegun;
+
+  /// The core refused an act because the thing under it moved while the panel was open. The way out is a reopen, and the sentence names it.
+  ///
+  /// In en, this message translates to:
+  /// **'Close this and open it again — something changed while it was open.'**
+  String get closeAndOpenAgain;
+
+  /// The state of one turn in the session list: it left and something came back.
+  ///
+  /// In en, this message translates to:
+  /// **'sent to AI · answered'**
+  String get sentToAiAnswered;
+
+  /// The state of one turn that left and has not been answered — «we do not know» is not «there was none».
+  ///
+  /// In en, this message translates to:
+  /// **'sent to AI · no answer yet'**
+  String get sentToAiNoAnswerYet;
+
+  /// An imported table whose other columns were dropped. A person who imports a client book and is told nothing was refused has been told something untrue about their own protection.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One column was not used: {which} — name the kind for it, or it stays out.} other{{count} columns were not used: {which} — name the kind for each, or they stay out.}}'**
+  String columnsNotUsedSaid(int count, String which);
+
+  /// The field that holds where a provider is reached.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get addressLabel;
+
+  /// Why an address without TLS is refused unless it is literally this machine. The addresses, «localhost» and «hosts» are names and stay as they are in every language.
+  ///
+  /// In en, this message translates to:
+  /// **'Plain http is accepted only for a literal loopback address — 127.0.0.1 or ::1. A name like «localhost» is refused, because then a hosts file would be deciding whether plain text is safe.'**
+  String get plainHttpOnlyLoopback;
+
+  /// The hint under the model field — what the name in it is for.
+  ///
+  /// In en, this message translates to:
+  /// **'the model to ask'**
+  String get theModelToAsk;
+
+  /// The field that holds a provider's key. «API» is the same in German.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get apiKeyLabel;
+
+  /// The hint under the key field: this app does not read a key back onto the screen once it has it.
+  ///
+  /// In en, this message translates to:
+  /// **'pasted once, never shown again'**
+  String get pastedOnceNeverShownAgain;
+
+  /// A key that is kept — sealed, so it survives a restart and is readable only with the vault open.
+  ///
+  /// In en, this message translates to:
+  /// **'This key is sealed in the vault.'**
+  String get thisKeyIsSealedInTheVault;
+
+  /// A key the person chose not to seal. Said plainly, because «kept» without «for this run» would be a promise this build does not make.
+  ///
+  /// In en, this message translates to:
+  /// **'This key is kept in memory for this run only — it is gone when the app closes.'**
+  String get thisKeyIsInMemoryOnly;
+
+  /// A local provider that asks for no credential at all.
+  ///
+  /// In en, this message translates to:
+  /// **'No key is needed at this address.'**
+  String get noKeyIsNeededHere;
+
+  /// What the next press will do with the key that is typed in — said before it happens.
+  ///
+  /// In en, this message translates to:
+  /// **'No key is stored yet. Connecting will seal it in the vault.'**
+  String get noKeyYetWillSeal;
+
+  /// The same, where the vault is not there to seal it into.
+  ///
+  /// In en, this message translates to:
+  /// **'No key is stored yet. Connecting will keep it in memory for this run only.'**
+  String get noKeyYetMemoryOnly;
+
+  /// The act's own words while it is reaching the provider.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get connectingNow;
+
+  /// The act that reaches a provider for the first time and keeps what it needs to reach it again.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get connectAct;
+
+  /// Takes the provider's key out of the vault and out of memory.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget the key'**
+  String get forgetTheKey;
+
+  /// Stops using a provider that needed no key, so there is none to forget.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get disconnectAct;
+
+  /// A save that found no folder to write into. It says it did not guess, because a guessed folder is a protected copy somewhere the person does not know about.
+  ///
+  /// In en, this message translates to:
+  /// **'Z Privacy could not tell where your documents folder is, so it has not guessed. Nothing was written.'**
+  String get couldNotTellWhereDocumentsFolderIs;
+
+  /// The save walks up a number until it finds a free name, and stops at two hundred rather than filling a folder. `{stem}` is the file's own name and `{into}` the folder's path — both the person's own, and neither is translated.
+  ///
+  /// In en, this message translates to:
+  /// **'There are already 200 files called {stem} in {into}.'**
+  String thereAreAlready200Files(String stem, String into);
+
+  /// The folder was there and the write was refused. `{why}` is the operating system's own message, in whatever language it speaks.
+  ///
+  /// In en, this message translates to:
+  /// **'Z Privacy could not write into {into} — {why}.'**
+  String couldNotWriteInto(String into, String why);
+
+  /// The PDF itself could not be laid out. «Nothing was written» is the part that matters: a half-written protected copy would be the worst of the three outcomes.
+  ///
+  /// In en, this message translates to:
+  /// **'Z Privacy could not build the PDF — {why}. Nothing was written.'**
+  String couldNotBuildThePdfBecause(String why);
 }
 
 class _AppLocalizationsDelegate

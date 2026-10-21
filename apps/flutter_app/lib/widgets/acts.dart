@@ -240,10 +240,10 @@ class ActsBar extends StatelessWidget {
       // sentence true of one.
       UndoOutcome_Undone(:final tokens, :final places, :final createdEntity) => createdEntity == null
           ? (places == 1
-              ? sentences.tookBackTokens(tokens.join(sentences.andJoin))
-              : sentences.tookBackTokensInPlaces(tokens.join(sentences.andJoin), places))
+              ? sentences.tookBackTokens(tokens.join(sentences.andBetweenNames))
+              : sentences.tookBackTokensInPlaces(tokens.join(sentences.andBetweenNames), places))
           : sentences.tookBackTokensIdentityStays(
-              tokens.join(sentences.andJoin), createdEntity),
+              tokens.join(sentences.andBetweenNames), createdEntity),
     });
   }
 

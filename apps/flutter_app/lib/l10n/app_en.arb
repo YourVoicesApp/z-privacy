@@ -3050,10 +3050,6 @@
       }
     }
   },
-  "andJoin": " and ",
-  "@andJoin": {
-    "description": "The joiner between the last two of a short list of tokens, as a sentence reads them: «T1 and T2». It is language and not punctuation — German joins with « und » — so it is a key and not a literal in the file that joins."
-  },
   "alreadyProtectedAsFrom": "Already protected as {tokens}, from {source}{detail}.",
   "@alreadyProtectedAsFrom": {
     "description": "The same card where the vault or a rule is what protected the value: the whole line, so a translator can move «from …» where their language puts it. `{detail}` is the vault's own detail with its separator, or empty.",
@@ -3324,5 +3320,283 @@
   "chooseWhichModelAnswers": "Choose which model answers",
   "@chooseWhichModelAnswers": {
     "description": "The tooltip on the model chip when a choice is there to be made."
+  },
+  "nothingSentFromThisSessionYet": "Nothing has been sent from this session yet. What goes to a model and what comes back are written here, in this session’s own sealed file.",
+  "@nothingSentFromThisSessionYet": {
+    "description": "The record panel's empty state: not only that there is nothing, but where it will be kept when there is — the session's own sealed file and nowhere else."
+  },
+  "youAsked": "You asked",
+  "@youAsked": {
+    "description": "Above one turn's question in the session record."
+  },
+  "nothingWasAskedDocumentWentAlone": "Nothing was asked — the document went on its own.",
+  "@nothingWasAskedDocumentWentAlone": {
+    "description": "A turn whose request carried a document and no question of its own."
+  },
+  "itAnswered": "It answered",
+  "@itAnswered": {
+    "description": "Above one turn's answer in the session record. «It» is the model, which the record does not name, because a name guessed from today's provider may not be the one that answered."
+  },
+  "namesBelongToAnotherSession": "{count, plural, =1{One name in this exchange belongs to another session and could not be restored: {list}.} other{{count} names in this exchange belong to another session and could not be restored: {list}.}}",
+  "@namesBelongToAnotherSession": {
+    "description": "Rule 58: a token minted in another session cannot be read back here, and the record says which ones rather than leaving them looking like words.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "list": {
+        "type": "String"
+      }
+    }
+  },
+  "andTheClipboardIsEmptySentence": "Nothing was copied — the clipboard is empty.",
+  "@andTheClipboardIsEmptySentence": {
+    "description": "Added under a refusal that stopped a copy: a paste that gives back nothing reads as a broken application unless somebody said so first (the owner, 12 October). The refusal and the line break between them belong to the caller — a break is layout, and G55 is right to refuse an invisible character inside a sentence."
+  },
+  "nothingWasPasted": "Nothing was pasted.",
+  "@nothingWasPasted": {
+    "description": "A paste that brought nothing — the clipboard was empty, or held only space."
+  },
+  "copyTheSafeTextFirst": "Copy the safe text first, so the answer can be tied to that payload.",
+  "@copyTheSafeTextFirst": {
+    "description": "A pasted answer with no payload copied before it: the names in an answer can only be put back against the payload they left in."
+  },
+  "profileIsInUseAgain": "«{name}» is in use again.",
+  "@profileIsInUseAgain": {
+    "description": "A client profile switched back on. The caller isolates the profile's own name.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileIsOffNamesRemain": "«{name}» is off — its names are still here.",
+  "@profileIsOffNamesRemain": {
+    "description": "A client profile switched off. Rule 59: switching off exempts, it never erases, and the sentence says so rather than letting «off» read as «gone».",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "movedNamesToLanguage": "{count, plural, =1{Moved one name to {to}.} other{Moved {count} names to {to}.}}",
+  "@movedNamesToLanguage": {
+    "description": "Names moved from one language's list to another's. `{to}` is the language code in capitals, which is a code and not a word.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "forgotProfileAndItsNames": "Forgot «{name}» and {count, plural, =1{1 name} other{{count} names}}.",
+  "@forgotProfileAndItsNames": {
+    "description": "A client profile forgotten, with how many of its names went with it.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addedValueNamed": "Added «{value}».",
+  "@addedValueNamed": {
+    "description": "One value taught to the vault by hand. The caller isolates the person's own word.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "forgotValueNamed": "Forgot «{value}».",
+  "@forgotValueNamed": {
+    "description": "One value forgotten from the vault by hand. The caller isolates the person's own word.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "afterTheVaultOpened": "after the vault opened",
+  "@afterTheVaultOpened": {
+    "description": "A note on a scan that ran once the vault was unlocked, so its findings could use what the vault knows."
+  },
+  "importAddedCount": "{count} added",
+  "@importAddedCount": {
+    "description": "Part of what a name import did, joined with the others by « · ». One part per fact, because German orders them its own way.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importAlreadyKnownCount": "{count} already known",
+  "@importAlreadyKnownCount": {
+    "description": "Part of a name import's report: values the vault already held.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importRefusedCount": "{count} refused",
+  "@importRefusedCount": {
+    "description": "Part of a name import's report: rows this build would not take.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importValuesCount": "{count} values",
+  "@importValuesCount": {
+    "description": "Part of a name import's report: the values a table taught beyond its names.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "begunNoNameNeededRenaming": "Begun. No name on this document needed renaming.",
+  "@begunNoNameNeededRenaming": {
+    "description": "A session begun where every name in the open document already belonged to it."
+  },
+  "begunNoDocumentOpen": "Begun. No document is open, so there was nothing to rename.",
+  "@begunNoDocumentOpen": {
+    "description": "A session begun with nothing open — said plainly, because «nothing was renamed» alone would read as a failure."
+  },
+  "begunAndNamesMovedIn": "{count, plural, =1{Begun, and one name on this document moved into it.} other{Begun, and {count} names on this document moved into it.}}",
+  "@begunAndNamesMovedIn": {
+    "description": "A session begun that took the open document's names with it (081).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "theSessionWasNotBegun": "The session was not begun, so nothing was taken out.",
+  "@theSessionWasNotBegun": {
+    "description": "A take-out asked for where no session had been begun — nothing was written and nothing left."
+  },
+  "closeAndOpenAgain": "Close this and open it again — something changed while it was open.",
+  "@closeAndOpenAgain": {
+    "description": "The core refused an act because the thing under it moved while the panel was open. The way out is a reopen, and the sentence names it."
+  },
+  "sentToAiAnswered": "sent to AI · answered",
+  "@sentToAiAnswered": {
+    "description": "The state of one turn in the session list: it left and something came back."
+  },
+  "sentToAiNoAnswerYet": "sent to AI · no answer yet",
+  "@sentToAiNoAnswerYet": {
+    "description": "The state of one turn that left and has not been answered — «we do not know» is not «there was none»."
+  },
+  "columnsNotUsedSaid": "{count, plural, =1{One column was not used: {which} — name the kind for it, or it stays out.} other{{count} columns were not used: {which} — name the kind for each, or they stay out.}}",
+  "@columnsNotUsedSaid": {
+    "description": "An imported table whose other columns were dropped. A person who imports a client book and is told nothing was refused has been told something untrue about their own protection.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "which": {
+        "type": "String"
+      }
+    }
+  },
+  "addressLabel": "Address",
+  "@addressLabel": {
+    "description": "The field that holds where a provider is reached."
+  },
+  "plainHttpOnlyLoopback": "Plain http is accepted only for a literal loopback address — 127.0.0.1 or ::1. A name like «localhost» is refused, because then a hosts file would be deciding whether plain text is safe.",
+  "@plainHttpOnlyLoopback": {
+    "description": "Why an address without TLS is refused unless it is literally this machine. The addresses, «localhost» and «hosts» are names and stay as they are in every language."
+  },
+  "theModelToAsk": "the model to ask",
+  "@theModelToAsk": {
+    "description": "The hint under the model field — what the name in it is for."
+  },
+  "apiKeyLabel": "API key",
+  "@apiKeyLabel": {
+    "description": "The field that holds a provider's key. «API» is the same in German."
+  },
+  "pastedOnceNeverShownAgain": "pasted once, never shown again",
+  "@pastedOnceNeverShownAgain": {
+    "description": "The hint under the key field: this app does not read a key back onto the screen once it has it."
+  },
+  "thisKeyIsSealedInTheVault": "This key is sealed in the vault.",
+  "@thisKeyIsSealedInTheVault": {
+    "description": "A key that is kept — sealed, so it survives a restart and is readable only with the vault open."
+  },
+  "thisKeyIsInMemoryOnly": "This key is kept in memory for this run only — it is gone when the app closes.",
+  "@thisKeyIsInMemoryOnly": {
+    "description": "A key the person chose not to seal. Said plainly, because «kept» without «for this run» would be a promise this build does not make."
+  },
+  "noKeyIsNeededHere": "No key is needed at this address.",
+  "@noKeyIsNeededHere": {
+    "description": "A local provider that asks for no credential at all."
+  },
+  "noKeyYetWillSeal": "No key is stored yet. Connecting will seal it in the vault.",
+  "@noKeyYetWillSeal": {
+    "description": "What the next press will do with the key that is typed in — said before it happens."
+  },
+  "noKeyYetMemoryOnly": "No key is stored yet. Connecting will keep it in memory for this run only.",
+  "@noKeyYetMemoryOnly": {
+    "description": "The same, where the vault is not there to seal it into."
+  },
+  "connectingNow": "Connecting…",
+  "@connectingNow": {
+    "description": "The act's own words while it is reaching the provider."
+  },
+  "connectAct": "Connect",
+  "@connectAct": {
+    "description": "The act that reaches a provider for the first time and keeps what it needs to reach it again."
+  },
+  "forgetTheKey": "Forget the key",
+  "@forgetTheKey": {
+    "description": "Takes the provider's key out of the vault and out of memory."
+  },
+  "disconnectAct": "Disconnect",
+  "@disconnectAct": {
+    "description": "Stops using a provider that needed no key, so there is none to forget."
+  },
+  "couldNotTellWhereDocumentsFolderIs": "Z Privacy could not tell where your documents folder is, so it has not guessed. Nothing was written.",
+  "@couldNotTellWhereDocumentsFolderIs": {
+    "description": "A save that found no folder to write into. It says it did not guess, because a guessed folder is a protected copy somewhere the person does not know about."
+  },
+  "thereAreAlready200Files": "There are already 200 files called {stem} in {into}.",
+  "@thereAreAlready200Files": {
+    "description": "The save walks up a number until it finds a free name, and stops at two hundred rather than filling a folder. `{stem}` is the file's own name and `{into}` the folder's path — both the person's own, and neither is translated.",
+    "placeholders": {
+      "stem": {
+        "type": "String"
+      },
+      "into": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotWriteInto": "Z Privacy could not write into {into} — {why}.",
+  "@couldNotWriteInto": {
+    "description": "The folder was there and the write was refused. `{why}` is the operating system's own message, in whatever language it speaks.",
+    "placeholders": {
+      "into": {
+        "type": "String"
+      },
+      "why": {
+        "type": "String"
+      }
+    }
+  },
+  "couldNotBuildThePdfBecause": "Z Privacy could not build the PDF — {why}. Nothing was written.",
+  "@couldNotBuildThePdfBecause": {
+    "description": "The PDF itself could not be laid out. «Nothing was written» is the part that matters: a half-written protected copy would be the worst of the three outcomes.",
+    "placeholders": {
+      "why": {
+        "type": "String"
+      }
+    }
   }
 }

@@ -53,6 +53,8 @@ L10N = LIB / 'l10n'
 MIGRATED = {
     'core/going_to_a_word.dart',
     'core/messages.dart',
+    'core/session_state.dart',
+    'core/the_clipboard.dart',
     'screens/first_run.dart',
     'screens/settings.dart',
     'screens/shell.dart',
@@ -60,6 +62,8 @@ MIGRATED = {
     'screens/workspace.dart',
     'widgets/acts.dart',
     'widgets/bits.dart',
+    'widgets/connect_form.dart',
+    'widgets/conversation_view.dart',
     'widgets/entity_detail.dart',
     'widgets/find_in_document.dart',
     'widgets/language_list.dart',
@@ -82,7 +86,24 @@ MIGRATED = {
 # they were: a floor that is looser than the truth is a gate that would let a
 # sentence be added back.
 #
-# 854 sentences stood in 27 files when this round began; 72 stand in 6 now.
+# 854 sentences stood in 27 files when this round began; 5 stand in 2 now, and
+# **both are waiting on a word rather than on work.**
+#
+#   * `core/protected_pdf.dart` holds **4**, and all four go *into the file*:
+#     the footer's one line, the `z-pdf · protected copy` mark, and the answer
+#     page's label. Rule 33 and the note at `theSentencesAreNow`'s second
+#     reader say those are read in the **session's** language and never through
+#     the holder — the holder is «what the glass is showing now», and a person
+#     who reads German documents in an English interface must not be handed a
+#     PDF with an English footer. `saveProtectedPdf` is given no language
+#     today, so doing this is a signature and a thread from the send sheet, and
+#     the question «which language does a file carry when its session has none»
+#     is the owner's. Its five refusals *are* migrated: they are shown on the
+#     glass, so they are the interface's.
+#   * `widgets/document_text.dart` holds **1** — `'Page ${edges[i].page}'`, the
+#     page marker in the Original column, whose key `pageNumber` is already in
+#     the list. One line, and not touched: the Original column and this file
+#     are the owner's to open.
 #
 # **Five of the 185 were never sentences**, and finding that out was the
 # first act of sitting five rather than a tidy-up: the literal *pattern*
@@ -141,11 +162,7 @@ MIGRATED = {
 #
 # Both are done; they are written down here because the sitting is the ledger.
 OWED = {
-    'core/protected_pdf.dart': 9,
-    'core/session_state.dart': 29,
-    'core/the_clipboard.dart': 1,
-    'widgets/connect_form.dart': 22,
-    'widgets/conversation_view.dart': 10,
+    'core/protected_pdf.dart': 4,
     'widgets/document_text.dart': 1,
 }
 
@@ -272,7 +289,28 @@ def strings_on(line: str) -> list[str]:
 # that held «Z Privacy» in three files would be three chances to rename the
 # product in two of them. Matched whole, never as a part — «Z Privacy keeps
 # nothing» is a sentence.
-PRODUCT_NAMES = {'Z Privacy', 'z-pdf', 'YourVoices', 'Grok', 'xAI', 'Ollama'}
+PRODUCT_NAMES = {'Z Privacy', 'z-pdf', 'YourVoices', 'Grok', 'xAI', 'Ollama',
+                 # A model's own name, which is the same in every language and is
+                 # typed into a field rather than read as a sentence.
+                 'llama3.2'}
+
+# **A name the core and the glass must spell the same is not a sentence.**
+# `session_state.dart`'s «Session» is *written into the core* as the name of a
+# session nobody named, and `conversation.rs` spells it too — G37 measures the
+# two against each other. Translating it on one side would name a German
+# person's sessions «Sitzung 3» while the core wrote «Session 3», and the name
+# is **stored**, so the halves would disagree about which sessions are unnamed.
+# A name is data, and data does not cross a language seam. It was in the list
+# for one afternoon of sitting five and G37 reddened, which is the gate doing
+# exactly what it was written for.
+A_NAME_BOTH_HALVES_SPELL = {'Session'}
+
+# **An address is not a sentence.** `connect_form.dart` puts
+# `http://127.0.0.1:11434` into the field as a default and shows `https://…`
+# as the shape of one — a German reader sees the same characters, because an
+# address is what it is. Matched whole and only with a scheme in front, so no
+# sentence can fall in here: none of them is a bare URL.
+AN_ADDRESS = re.compile(r'https?://\S*')
 
 # Phrases the glass looks for **inside a sentence the core wrote**. Each is a
 # match and never a thing drawn — see the exception that reads this.
@@ -329,7 +367,11 @@ def sentences_in(path: pathlib.Path) -> list[str]:
                 continue
             if v.strip() in PRODUCT_NAMES:            # product names
                 continue
-            # **A date pattern is not a sentence.** `'d MMM y'` is what `intl`
+
+            if AN_ADDRESS.fullmatch(v):               # an address, with its scheme
+                continue
+            if v in A_NAME_BOTH_HALVES_SPELL:         # one name, two halves
+                continue            # **A date pattern is not a sentence.** `'d MMM y'` is what `intl`
             # is asked for, and the words it puts in it come from the locale's
             # own table — so the pattern is the shape and the sentence is
             # `intl`'s. Twelve month names used to be written out here instead.

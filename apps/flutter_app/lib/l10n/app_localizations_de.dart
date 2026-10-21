@@ -2285,9 +2285,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get andJoin => ' und ';
-
-  @override
   String alreadyProtectedAsFrom(String tokens, String source, String detail) {
     return 'Bereits geschützt als $tokens, aus $source$detail.';
   }
@@ -2489,4 +2486,221 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get chooseWhichModelAnswers => 'Wählen, welches Modell antwortet';
+
+  @override
+  String get nothingSentFromThisSessionYet =>
+      'Aus dieser Sitzung wurde noch nichts gesendet. Was an ein Modell geht und was zurückkommt, steht hier, in der eigenen versiegelten Datei dieser Sitzung.';
+
+  @override
+  String get youAsked => 'Sie haben gefragt';
+
+  @override
+  String get nothingWasAskedDocumentWentAlone =>
+      'Es wurde nichts gefragt — das Dokument ging allein.';
+
+  @override
+  String get itAnswered => 'Es hat geantwortet';
+
+  @override
+  String namesBelongToAnotherSession(int count, String list) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count Namen in diesem Austausch gehören einer anderen Sitzung und konnten nicht zurückgesetzt werden: $list.',
+      one:
+          'Ein Name in diesem Austausch gehört einer anderen Sitzung und konnte nicht zurückgesetzt werden: $list.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get andTheClipboardIsEmptySentence =>
+      'Es wurde nichts kopiert — die Ablage ist leer.';
+
+  @override
+  String get nothingWasPasted => 'Es wurde nichts eingefügt.';
+
+  @override
+  String get copyTheSafeTextFirst =>
+      'Kopieren Sie zuerst den sicheren Text, damit die Antwort dieser Sendung zugeordnet werden kann.';
+
+  @override
+  String profileIsInUseAgain(String name) {
+    return '«$name» ist wieder in Gebrauch.';
+  }
+
+  @override
+  String profileIsOffNamesRemain(String name) {
+    return '«$name» ist aus — seine Namen sind weiterhin hier.';
+  }
+
+  @override
+  String movedNamesToLanguage(int count, String to) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Namen nach $to verschoben.',
+      one: 'Ein Name nach $to verschoben.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String forgotProfileAndItsNames(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Namen',
+      one: '1 Name',
+    );
+    return '«$name» und $_temp0 vergessen.';
+  }
+
+  @override
+  String addedValueNamed(String value) {
+    return '«$value» hinzugefügt.';
+  }
+
+  @override
+  String forgotValueNamed(String value) {
+    return '«$value» vergessen.';
+  }
+
+  @override
+  String get afterTheVaultOpened => 'nachdem der Tresor geöffnet wurde';
+
+  @override
+  String importAddedCount(int count) {
+    return '$count hinzugefügt';
+  }
+
+  @override
+  String importAlreadyKnownCount(int count) {
+    return '$count schon bekannt';
+  }
+
+  @override
+  String importRefusedCount(int count) {
+    return '$count abgelehnt';
+  }
+
+  @override
+  String importValuesCount(int count) {
+    return '$count Werte';
+  }
+
+  @override
+  String get begunNoNameNeededRenaming =>
+      'Begonnen. Kein Name in diesem Dokument musste umbenannt werden.';
+
+  @override
+  String get begunNoDocumentOpen =>
+      'Begonnen. Es ist kein Dokument offen, also war nichts umzubenennen.';
+
+  @override
+  String begunAndNamesMovedIn(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Begonnen, und $count Namen in diesem Dokument sind hineingewandert.',
+      one: 'Begonnen, und ein Name in diesem Dokument ist hineingewandert.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get theSessionWasNotBegun =>
+      'Die Sitzung wurde nicht begonnen, also wurde nichts entnommen.';
+
+  @override
+  String get closeAndOpenAgain =>
+      'Schließen Sie dies und öffnen Sie es erneut — während es offen war, hat sich etwas geändert.';
+
+  @override
+  String get sentToAiAnswered => 'an die KI gesendet · beantwortet';
+
+  @override
+  String get sentToAiNoAnswerYet => 'an die KI gesendet · noch keine Antwort';
+
+  @override
+  String columnsNotUsedSaid(int count, String which) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count Spalten wurden nicht verwendet: $which — benennen Sie die Art für jede, sonst bleiben sie draußen.',
+      one:
+          'Eine Spalte wurde nicht verwendet: $which — benennen Sie ihre Art, sonst bleibt sie draußen.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addressLabel => 'Adresse';
+
+  @override
+  String get plainHttpOnlyLoopback =>
+      'Einfaches http wird nur für eine wörtliche Loopback-Adresse akzeptiert — 127.0.0.1 oder ::1. Ein Name wie «localhost» wird abgelehnt, denn dann würde eine hosts-Datei entscheiden, ob Klartext sicher ist.';
+
+  @override
+  String get theModelToAsk => 'das Modell, das gefragt wird';
+
+  @override
+  String get apiKeyLabel => 'API-Schlüssel';
+
+  @override
+  String get pastedOnceNeverShownAgain =>
+      'einmal eingefügt, danach nie wieder gezeigt';
+
+  @override
+  String get thisKeyIsSealedInTheVault =>
+      'Dieser Schlüssel ist im Tresor versiegelt.';
+
+  @override
+  String get thisKeyIsInMemoryOnly =>
+      'Dieser Schlüssel wird nur für diesen Lauf im Speicher gehalten — beim Schließen der Anwendung ist er weg.';
+
+  @override
+  String get noKeyIsNeededHere => 'Für diese Adresse ist kein Schlüssel nötig.';
+
+  @override
+  String get noKeyYetWillSeal =>
+      'Es ist noch kein Schlüssel gespeichert. Beim Verbinden wird er im Tresor versiegelt.';
+
+  @override
+  String get noKeyYetMemoryOnly =>
+      'Es ist noch kein Schlüssel gespeichert. Beim Verbinden wird er nur für diesen Lauf im Speicher gehalten.';
+
+  @override
+  String get connectingNow => 'Verbinden…';
+
+  @override
+  String get connectAct => 'Verbinden';
+
+  @override
+  String get forgetTheKey => 'Schlüssel vergessen';
+
+  @override
+  String get disconnectAct => 'Trennen';
+
+  @override
+  String get couldNotTellWhereDocumentsFolderIs =>
+      'Z Privacy konnte nicht feststellen, wo Ihr Dokumentenordner liegt, und hat nicht geraten. Es wurde nichts geschrieben.';
+
+  @override
+  String thereAreAlready200Files(String stem, String into) {
+    return 'In $into gibt es bereits 200 Dateien mit dem Namen $stem.';
+  }
+
+  @override
+  String couldNotWriteInto(String into, String why) {
+    return 'Z Privacy konnte nicht in $into schreiben — $why.';
+  }
+
+  @override
+  String couldNotBuildThePdfBecause(String why) {
+    return 'Z Privacy konnte das PDF nicht erstellen — $why. Es wurde nichts geschrieben.';
+  }
 }

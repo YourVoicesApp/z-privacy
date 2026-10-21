@@ -1053,7 +1053,7 @@ class Workbench extends ChangeNotifier {
   /// again.
   Future<String?> askModelProtected(String providerId) async {
     final h = handle;
-    if (h == null) return 'There is nothing to send yet.';
+    if (h == null) return sentences.thereIsNothingToSendYet;
     return _ask(() async {
       final said = await z.askModel(
         handle: h,
@@ -1313,7 +1313,7 @@ class Workbench extends ChangeNotifier {
 
   Future<String?> send(String providerId) async {
     final h = handle;
-    if (h == null) return 'There is nothing to send yet.';
+    if (h == null) return sentences.thereIsNothingToSendYet;
     sending = true;
     notifyListeners();
     try {
@@ -1339,14 +1339,14 @@ class Workbench extends ChangeNotifier {
   /// bringing the answer back. Restoring works exactly the same way — the token
   /// store does not care how the answer travelled.
   Future<String?> pasteAnswer(String raw) async {
-    if (raw.trim().isEmpty) return 'Nothing was pasted.';
+    if (raw.trim().isEmpty) return sentences.nothingWasPasted;
     // **Whatever was copied last.** An answer brought back to a copied chat
     // answers the chat — its allowed list covers every turn — and an answer
     // brought back to a copied document answers the document. One field holds
     // which, so there is no precedence here to get the wrong way round.
     final bound = copied;
     if (bound == null) {
-      return 'Copy the safe text first, so the answer can be tied to that payload.';
+      return sentences.copyTheSafeTextFirst;
     }
     try {
       await z.ingestAnswer(payload: bound.handle, raw: raw);
@@ -1512,7 +1512,9 @@ class Workbench extends ChangeNotifier {
   Future<String?> setListEnabled(String name, bool enabled) =>
       _aboutNames(() async {
         await z.setUserListEnabled(name: name, enabled: enabled);
-        return enabled ? '«$name» is in use again.' : '«$name» is off — its names are still here.';
+        return enabled
+            ? sentences.profileIsInUseAgain(theirOwnWord(name))
+            : sentences.profileIsOffNamesRemain(theirOwnWord(name));
       });
 
   /// How many names forgetting this list would take — asked before it is done.
@@ -1532,29 +1534,27 @@ class Workbench extends ChangeNotifier {
   Future<String?> moveList(String from, String to) => _aboutNames(() async {
         final moved = await z.moveUserList(from: from, to: to);
         if (intoList == from) intoList = to;
-        return moved == 1
-            ? 'Moved one name to ${to.toUpperCase()}.'
-            : 'Moved $moved names to ${to.toUpperCase()}.';
+        return sentences.movedNamesToLanguage(moved, to.toUpperCase());
       });
 
   Future<String?> forgetList(String name) =>
       _aboutNames(() async {
         final gone = await z.forgetUserList(name: name);
-        return 'Forgot «$name» and ${gone == 1 ? "1 name" : "$gone names"}.';
+        return sentences.forgotProfileAndItsNames(theirOwnWord(name), gone);
       });
 
   /// Add one name a person typed. The core decides where it is kept.
   Future<String?> addUserName(String text, {required UserNameKind kind, required bool always}) async {
     return _aboutNames(() async {
       await z.addUserName(text: text, kind: kind, always: always, list: intoList);
-      return 'Added «${theirOwnWord(text)}».';
+      return sentences.addedValueNamed(theirOwnWord(text));
     });
   }
 
   Future<String?> forgetUserName(UserNameRow row) async {
     return _aboutNames(() async {
       await z.forgetUserName(id: row.id, entityId: row.entityId);
-      return 'Forgot «${theirOwnWord(row.text)}».';
+      return sentences.forgotValueNamed(theirOwnWord(row.text));
     });
   }
 
@@ -1617,7 +1617,7 @@ class Workbench extends ChangeNotifier {
   /// longer the best one this build can give.
   Future<void> rescanAfterVault() async {
     await rescan();
-    scanNote = 'after the vault opened';
+    scanNote = sentences.afterTheVaultOpened;
     notifyListeners();
   }
 
@@ -1910,10 +1910,10 @@ class Workbench extends ChangeNotifier {
 /// the columns this build could not place. Worded here and nowhere else.
 String importSaid(NameImport report) {
   final parts = <String>[
-    '${report.added} added',
-    '${report.alreadyKnown} already known',
-    '${report.refused} refused',
-    if (report.values > 0) '${report.values} values',
+    sentences.importAddedCount(report.added),
+    sentences.importAlreadyKnownCount(report.alreadyKnown),
+    sentences.importRefusedCount(report.refused),
+    if (report.values > 0) sentences.importValuesCount(report.values),
   ];
   final said = parts.join(' · ');
   if (report.columnsNotUsed.isEmpty) return said;
@@ -1966,6 +1966,13 @@ String? packForTheNextText(Ground ground) {
 /// The provisional name a nameless birth is begun with, before the core's
 /// number is known. One word, and never left behind as a lie: the rename that
 /// follows it turns it into [nameForSession].
+/// **Not a sentence, and deliberately not in the one list** — 092, sitting
+/// five. This word is *written into the core* as a session's name, and the core
+/// spells it too (`A_SESSION_CALLED`); G37 measures the two spellings against
+/// each other. Translating it on this side alone would name a German person's
+/// sessions «Sitzung 3» while the core wrote «Session 3» — and the name is
+/// stored, so the two halves would then disagree about which sessions nobody
+/// has named. A name is data, and data does not cross a language seam.
 const _aSessionCalled = 'Session';
 
 /// **The name a session nobody named carries** — «الجلسة 1، الجلسة 2…», 081.
@@ -1989,12 +1996,10 @@ String nameForSession(int number) => '$_aSessionCalled $number';
 String sessionBegunSaid(int renamed, {required bool hadDocument}) {
   if (renamed == 0) {
     return hadDocument
-        ? 'Begun. No name on this document needed renaming.'
-        : 'Begun. No document is open, so there was nothing to rename.';
+        ? sentences.begunNoNameNeededRenaming
+        : sentences.begunNoDocumentOpen;
   }
-  return renamed == 1
-      ? 'Begun, and one name on this document moved into it.'
-      : 'Begun, and $renamed names on this document moved into it.';
+  return sentences.begunAndNamesMovedIn(renamed);
 }
 
 // **«Where a request has got to» is gone, and the chat is what answers it now**
@@ -2023,9 +2028,10 @@ enum WhatWasCopied { theDocument, theChat }
 /// the core refuses to write a turn it has no key to seal, and the answer is on
 /// the glass with nothing holding it. Said in the chat, under the thread,
 /// because that is where a person is looking for what was kept.
-const theChatKeepsNothing =
-    'This answer is on your screen and nowhere else: no session is open to keep '
-    'it, so closing the app ends it with the chat.';
+/// **A getter and no longer a `const`** — 092: a list that answers in the
+/// language the app is in cannot be a compile-time constant. The name is the
+/// one three readers already use.
+String get theChatKeepsNothing => sentences.theChatKeepsNothing;
 
 /// **What an exit may take out, once the session question is settled** — 064.
 ///
@@ -2185,7 +2191,7 @@ Future<WhatMayLeave> beginThenRead(Ground ground, Workbench bench) async {
     if (renamed == null) {
       return WhatMayLeave(
         refused: ground.trouble ??
-            'The session was not begun, so nothing was taken out.',
+            sentences.theSessionWasNotBegun,
       );
     }
     said = sessionBegunSaid(renamed, hadDocument: bench.document != null);
@@ -2225,7 +2231,7 @@ Future<WhatMayLeave> beginThenRead(Ground ground, Workbench bench) async {
     return WhatMayLeave(
       said: said,
       renamed: renamed,
-      refused: 'Close this and open it again — something changed while it was open.',
+      refused: sentences.closeAndOpenAgain,
     );
   }
   return WhatMayLeave(view: view, said: said, renamed: renamed);
@@ -2358,8 +2364,8 @@ String? theDoorsOfAKeptDocument(KeptRow doc, List<TurnRow> turns) {
   // answer is the test, because that is what the session stored — an empty one
   // is a real state: a question copied out and not yet answered.
   return its.any((turn) => turn.answerAsWritten.isNotEmpty)
-      ? 'sent to AI · answered'
-      : 'sent to AI · no answer yet';
+      ? sentences.sentToAiAnswered
+      : sentences.sentToAiNoAnswerYet;
 }
 
 /// **The chat asks the next question** — rules 65 and 67, 17 October 2026.
@@ -2448,7 +2454,5 @@ Future<String?> copyTheChat(Ground ground, Workbench bench) async {
 /// because a column is a word in their own file and they can change it.
 String columnsNotUsedSaid(List<String> columns) {
   final which = columns.join(', ');
-  return columns.length == 1
-      ? 'One column was not used: $which — name the kind for it, or it stays out.'
-      : '${columns.length} columns were not used: $which — name the kind for each, or they stay out.';
+  return sentences.columnsNotUsedSaid(columns.length, which);
 }
