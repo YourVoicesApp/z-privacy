@@ -2690,6 +2690,33 @@ else
   skip "G65 no guard types a sentence the one list owns" "no checker yet"
 fi
 
+# ------------------------------------------------------------------ G66
+# **And a sentence a claim leans on may not be reworded quietly** — item 2-ب,
+# the other half of G65. Turning 347 finders into keys removed the noise of a
+# guard reddening because a word changed; it also removed the only thing that
+# noticed a word changing. G50/G51 measure the list's **shape** and nothing
+# measured its **meaning**.
+#
+# So the few sentences a claim in `docs/CLAIMS.md` actually depends on are
+# pinned by their exact English, with the claim named beside each. The pairs are
+# read out of the claims file itself, so a claim that starts naming a new key
+# brings it in or reddens — a pin nobody can forget to add. A reword anywhere
+# else stays quiet, which is the point.
+#
+# Measured when it was written: all five of its reds bite — a reworded claim
+# sentence, a pin no claim names, a claim naming an unpinned key, a pinned key
+# gone from the list — and a reword of a sentence no claim leans on does not.
+if [ -f scripts/check_claimed_sentences.py ]; then
+  if OUT=$(python3 scripts/check_claimed_sentences.py 2>&1); then
+    pass "G66 every sentence a claim leans on still says what the claim says — $OUT"
+  else
+    fail "G66 a sentence a claim in docs/CLAIMS.md leans on was reworded:"
+    printf '%s\n' "$OUT" | sed 's/^/        /'
+  fi
+else
+  skip "G66 every sentence a claim leans on still says what the claim says" "no checker yet"
+fi
+
 # ------------------------------------------------------------------ G55
 # **No sentence carries a character nobody can see** — 19 October 2026.
 #
