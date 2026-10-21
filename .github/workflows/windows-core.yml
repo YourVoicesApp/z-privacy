@@ -344,8 +344,31 @@ jobs:
             $redist = Join-Path $vs "VC\Redist\MSVC\$version"
           }
           Write-Host "redistributable folder: $redist"
-          $crt = Join-Path $redist "x64\Microsoft.VC143.CRT"
-          if (-not (Test-Path $crt)) { throw "no CRT folder at $crt" }
+
+          # **And the toolset's number is read too, not typed.** `VC143` is
+          # Visual Studio 2022's toolset; the runner image moved to Visual
+          # Studio 18 with MSVC 14.51 on 21 October and that folder was simply
+          # not there — «no CRT folder at …\MSVC\14.51.36231\x64\Microsoft.VC143.CRT».
+          # The copy threw, every step after it was skipped (the versions, the
+          # needles, the staging, BUILD-INFO, the zip, the installer, the MSIX)
+          # and run 39548354872 handed over nothing at all. The variable was
+          # already read for the folder above; the number inside it was still
+          # typed, which is this step's own rule left unapplied to its second
+          # case. So the folder is asked for by its shape, exactly one match is
+          # required, and anything else fails by name rather than guessing
+          # which one is right.
+          $here = Join-Path $redist "x64"
+          $found = @(Get-ChildItem -LiteralPath $here -Directory -Filter "Microsoft.VC14*.CRT" -ErrorAction SilentlyContinue)
+          if ($found.Count -ne 1) {
+            # **And the refusal names what is actually there**, so a toolset
+            # renamed past `VC14…` is read from this log in one run instead of
+            # costing another round to find.
+            $all = @(Get-ChildItem -LiteralPath $here -Directory -ErrorAction SilentlyContinue).Name
+            $what = if ($all.Count -eq 0) { "nothing" } else { $all -join ', ' }
+            throw "expected exactly one Microsoft.VC14*.CRT folder under $here; found $($found.Count). That folder holds: $what"
+          }
+          $crt = $found[0].FullName
+          Write-Host "CRT folder: $crt"
 
           foreach ($dll in @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
             $from = Join-Path $crt $dll

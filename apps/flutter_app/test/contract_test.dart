@@ -39,6 +39,12 @@ void main() {
   });
 
   test('every call on the contract answers; none of them crashes', () async {
+    // **A folder of this walk's own**, because two of the calls below make a
+    // real vault and change its passphrase.
+    final own = Directory.systemTemp.createTempSync('zprivacy-contract-walk-$pid-');
+    addTearDown(() {
+      removeWhenItLetsGo(own);
+    });
     final session = const SessionId(id: 1);
     final handle = const PayloadHandle(id: 1, session: 1, revision: 1);
     final answer = const AnswerId(id: 1);
@@ -355,9 +361,19 @@ void main() {
       'inspectSelection': () => inspectSelection(session: session, span: span),
       'disconnectProvider': () => disconnectProvider(provider: provider),
       'testProvider': () => testProvider(provider: provider),
-      // The vault (M4). Called against a locked, absent vault here: the answers
-      // must still be answers.
-      'setDataDir': () => setDataDir(dir: Directory.systemTemp.path),
+      // The vault (M4). Called against this walk's own folder: the answers must
+      // still be answers, and the two calls below really write a vault.
+      //
+      // `Directory.systemTemp.path` stood here — the machine's shared temp
+      // folder — and the two platforms did not agree about it. On Unix
+      // `secure_file::secure_dir` refuses a folder it cannot narrow to 0700,
+      // which nobody but its owner can do to `/tmp`, so this call was refused,
+      // the core kept no folder at all and `vaultCreateWithPassphrase` below
+      // was refused with it. Off Unix there is no such law — the folder is only
+      // created — so on Windows the walk really made a `vault.zv` in `%TEMP%`,
+      // left it there, and the next test in this file read it as «a vault is
+      // here and it is locked». 098 item 5, run 39548354872.
+      'setDataDir': () => setDataDir(dir: own.path),
       // The core's own answer for where the vault belongs. Called here so the
       // contract stays whole; what it must *say* is checked in Rust, on every
       // platform the suite runs on.
@@ -421,6 +437,29 @@ void main() {
   });
 
   test('a document protects itself, driven from Dart', () async {
+    // **This test's own folder, because its last claim is about a state.**
+    //
+    // The core is one library in one process, so whatever the walk above left
+    // standing is standing here — and the walk makes a vault and locks it. The
+    // send at the end of this test then met «the vault is shut», which is a
+    // true answer to a different question: `NetworkRefusal_VaultLocked`, where
+    // this test says «nothing is connected». That is the Windows suite's own
+    // red of 21 October (run 39548354872, `dart.json`), and it reproduced here
+    // the moment the walk's folder was left standing the way Windows leaves a
+    // folder whose files are still open. Nothing about the two refusals or the
+    // order they are asked in differs between the platforms: what differed was
+    // the state each platform's temp folder left behind.
+    //
+    // So this test makes the state it is about — an empty folder, no vault, no
+    // credential — rather than inheriting one.
+    final mine = Directory.systemTemp.createTempSync('zprivacy-contract-protect-$pid-');
+    addTearDown(() {
+      removeWhenItLetsGo(mine);
+    });
+    await setDataDir(dir: mine.path);
+    expect(await vaultState(), VaultState.absent,
+        reason: 'a claim about «nothing is connected» needs a folder with nothing in it');
+
     // The M3 turn, through the bridge: nothing is selected by hand.
     const doc =
         'Kunde: Nordstern Consulting GmbH\n'
