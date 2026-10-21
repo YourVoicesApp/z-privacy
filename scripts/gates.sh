@@ -3397,11 +3397,39 @@ else
   # hand. `--file-reporter` writes every event beside it, and the log is kept
   # rather than deleted, because the evidence of a red is worth more than a
   # tidy /tmp.
-  DART_LOG=/tmp/gd.$$
-  DART_JSON=/tmp/gd-$$.json
+  # **And the record stays on green too** — sitting five, item 4. Until today
+  # the two files above were deleted the moment the suite passed, and the
+  # argument written here for keeping a red's evidence is the same argument on
+  # green: the number read out of this log is the number `MEASURED_ON_LINUX.txt`
+  # is compared against, and a count nobody can re-examine is a claim, not a
+  # measurement. 21 Oct a green round of mine reported «dart 408» with nothing
+  # left on disk to check it by, in the same session in which the *kept* log of
+  # a red had been the one thing that named a cause («errno = 39», an error and
+  # not a failure).
+  #
+  # **A fixed place, and named in the PASS line.** `/tmp/gd-$$.json` moved with
+  # every run: four rounds left four records and none of them said which tree or
+  # which round it came from, so even a kept red was hunted for by date. One
+  # place per worktree — `basename "$PWD"`, because two checkouts measuring at
+  # once must not overwrite one another's evidence — and the gate prints the
+  # path, so the next reader is told where it is instead of inferring it.
+  DART_RECORD="${TMPDIR:-/tmp}/zprivacy-gates/$(basename "$PWD")"
+  mkdir -p "$DART_RECORD" 2>/dev/null
+  DART_LOG="$DART_RECORD/dart.log"
+  DART_JSON="$DART_RECORD/dart-events.json"
+  # Last round's record is replaced, not appended to: what is wanted is the
+  # record **of this run**, and a file holding two runs answers neither.
+  rm -f "$DART_LOG" "$DART_JSON"
   if (cd apps/flutter_app && LD_LIBRARY_PATH="$PWD/build/linux/x64/debug/bundle/lib" flutter test --concurrency=1 --reporter compact --file-reporter="json:$DART_JSON" >"$DART_LOG" 2>&1); then
-    pass "G7-dart the whole contract answers from Dart without a panic"
     DART_GREEN=1
+  else
+    DART_GREEN=
+  fi
+  # The compact reporter's own running total, last word it says — read out of
+  # the log itself, which is why the log is read before anything else is said.
+  DART_PASSED=$(grep -oE '\+[0-9]+' "$DART_LOG" 2>/dev/null | tail -1 | tr -d '+')
+  if [ -n "$DART_GREEN" ]; then
+    pass "G7-dart the whole contract answers from Dart without a panic — ${DART_PASSED:-?} tests, and this run's own record is kept: $DART_JSON"
   else
     fail "G7-dart flutter test:"
     if [ -f scripts/dart_failures.py ] && [ -f "$DART_JSON" ]; then
@@ -3409,12 +3437,27 @@ else
     fi
     tail -20 "$DART_LOG" | sed 's/^/        /'
     printf '        the whole log: %s · every event: %s\n' "$DART_LOG" "$DART_JSON"
-    DART_GREEN=
   fi
-  # The compact reporter's own running total, last word it says — read before
-  # anything is removed, because it is read out of the log itself.
-  DART_PASSED=$(grep -oE '\+[0-9]+' "$DART_LOG" 2>/dev/null | tail -1 | tr -d '+')
-  if [ -n "$DART_GREEN" ]; then rm -f "$DART_LOG" "$DART_JSON"; fi
+fi
+
+# ---------------------------------------------------------------- G7-record
+# **The guard on the line above**, because an item that says «the record is
+# kept» and has nothing asking the question is a comment, not a measurement —
+# and this one would go quiet in exactly the way its own subject describes: a
+# `rm` added back anywhere below would leave every other gate green.
+#
+# It asks for both files, non-empty, after the suite has run, and prints the
+# event file's size so that «kept» is a number and not an adjective. It is a
+# skip and not a pass where the Dart suite never ran, because then there is
+# honestly nothing to keep.
+if [ -n "${DART_JSON:-}" ]; then
+  if [ -s "$DART_JSON" ] && [ -s "$DART_LOG" ]; then
+    pass "G7-record the Dart run's own record outlives the run, green or red — $(wc -c <"$DART_JSON" | tr -d ' ') bytes of events at $DART_JSON"
+  else
+    fail "G7-record the Dart suite ran but its record is gone or empty — $DART_JSON. The count this round reports is then unre-examinable, and it is the count MEASURED_ON_LINUX.txt is compared against"
+  fi
+else
+  skip "G7-record the Dart run's own record" "the Dart suite did not run here, so there is nothing to keep"
 fi
 
 # ------------------------------------------------- the mark
