@@ -158,9 +158,20 @@ class Ground extends ChangeNotifier {
   /// number with the key rather than leaving one no key opens.
   int? openSession;
 
+  /// **One session's row, by its number**, or null where this vault has no
+  /// such session — which is also the state a **shut** vault is in, because
+  /// the rows come out of it with the keys.
+  ///
+  /// One place, because two readers ask: the bar that names the open session,
+  /// and the language a file carries as it leaves ([theLanguageAFileCarries]).
+  /// A second copy of this lookup is a second chance to answer «no row» and
+  /// «no language» differently.
+  ConversationRow? rowOfSession(int number) =>
+      sessions.where((s) => s.number == number).firstOrNull;
+
   /// The open session's row, for a bar or a heading to name it.
   ConversationRow? get openSessionRow =>
-      sessions.where((s) => s.number == openSession).firstOrNull;
+      openSession == null ? null : rowOfSession(openSession!);
 
   /// **Does the session question still stand?** — 064.
   ///
@@ -1962,6 +1973,35 @@ String? packForTheNextText(Ground ground) {
   if (ground.aSessionWouldBeBorn) return null;
   return appLanguage(ground);
 }
+
+/// **Which language a file carries as it leaves** — rule 80, the owner, 21
+/// October 2026: «تذييل z-pdf … بلغة الجلسة التي خرج منها الملف، والإنجليزية
+/// حين لا لغة للجلسة».
+///
+/// The **payload's** session, not the application's open one and not the
+/// bench's pack: a payload is a snapshot of what would leave, and the session
+/// it belonged to is a fact about that snapshot. The same rule `_whoseNames`
+/// follows at the same door.
+///
+/// `null` means «English», and it means it for three different reasons that
+/// are deliberately not told apart here, because the file's answer is the same
+/// in all three:
+///
+///   * the payload belongs to **no session** — the ordinary state of a
+///     protected copy taken before any session was born;
+///   * the session exists and **nobody asked it** its language, which is the
+///     state 075c keeps distinct from «no language» (`packId == null`);
+///   * the vault is **shut**, so [Ground.sessions] is empty and the language
+///     is not knowable at all — the language lives in the vault. Said out loud
+///     rather than hidden: a protected copy saved after an auto-lock carries
+///     the source's words, and no screen says so. The alternative is refusing
+///     to write the file, which is worse for the person holding it.
+///
+/// The answer is a **language code**, not a locale and not a list: what to do
+/// with an unwritten list is [theSentencesAFileCarries]'s question, asked once
+/// there.
+String? theLanguageAFileCarries(Ground ground, PayloadSession? session) =>
+    session == null ? null : ground.rowOfSession(session.number)?.packId;
 
 /// The provisional name a nameless birth is begun with, before the core's
 /// number is known. One word, and never left behind as a lie: the rename that

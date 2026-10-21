@@ -2703,4 +2703,42 @@ class AppLocalizationsDe extends AppLocalizations {
   String couldNotBuildThePdfBecause(String why) {
     return 'Z Privacy konnte das PDF nicht erstellen — $why. Es wurde nichts geschrieben.';
   }
+
+  @override
+  String get zPdfProtectedCopy => 'z-pdf · geschützte Kopie';
+
+  @override
+  String placesReplaced(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Stellen ersetzt',
+      one: '1 Stelle ersetzt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String valuesOfTheseKinds(int count, String kinds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Werte ($kinds)',
+      one: '1 Wert ($kinds)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get noKindsAtAll => 'keine';
+
+  @override
+  String sha256OfTheProtectedText(String digest) {
+    return 'sha256 des geschützten Textes $digest';
+  }
+
+  @override
+  String zPdfAnswerLine(String token) {
+    return 'Z-pdf : $token';
+  }
 }

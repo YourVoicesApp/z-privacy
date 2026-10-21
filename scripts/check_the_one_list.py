@@ -53,6 +53,7 @@ L10N = LIB / 'l10n'
 MIGRATED = {
     'core/going_to_a_word.dart',
     'core/messages.dart',
+    'core/protected_pdf.dart',
     'core/session_state.dart',
     'core/the_clipboard.dart',
     'screens/first_run.dart',
@@ -64,6 +65,7 @@ MIGRATED = {
     'widgets/bits.dart',
     'widgets/connect_form.dart',
     'widgets/conversation_view.dart',
+    'widgets/document_text.dart',
     'widgets/entity_detail.dart',
     'widgets/find_in_document.dart',
     'widgets/language_list.dart',
@@ -79,83 +81,68 @@ MIGRATED = {
     'widgets/why_sheet.dart',
 }
 
-# **The debt, file by file, as it stands.** Each number is what that file still
-# holds; the gate refuses a rise. The owner's own order was the first screen,
-# the work surface's three parts and the chat — those are done, and the numbers
-# below were measured again against the tree rather than left as the floors
-# they were: a floor that is looser than the truth is a gate that would let a
-# sentence be added back.
+# **The debt is empty, and it was emptied by a word rather than by work** —
+# 21 October 2026, the owner, law 80 in `docs/RULES_AR.md`.
 #
-# 854 sentences stood in 27 files when this round began; 5 stand in 2 now, and
-# **both are waiting on a word rather than on work.**
+# 854 sentences stood in 27 files when this round began. The table below held
+# the five that were left when sitting five's work was done, and both entries
+# said «waiting on a word» rather than «waiting on a hand»:
 #
-#   * `core/protected_pdf.dart` holds **4**, and all four go *into the file*:
-#     the footer's one line, the `z-pdf · protected copy` mark, and the answer
-#     page's label. Rule 33 and the note at `theSentencesAreNow`'s second
-#     reader say those are read in the **session's** language and never through
-#     the holder — the holder is «what the glass is showing now», and a person
-#     who reads German documents in an English interface must not be handed a
-#     PDF with an English footer. `saveProtectedPdf` is given no language
-#     today, so doing this is a signature and a thread from the send sheet, and
-#     the question «which language does a file carry when its session has none»
-#     is the owner's. Its five refusals *are* migrated: they are shown on the
-#     glass, so they are the interface's.
-#   * `widgets/document_text.dart` holds **1** — `'Page ${edges[i].page}'`, the
-#     page marker in the Original column, whose key `pageNumber` is already in
-#     the list. One line, and not touched: the Original column and this file
-#     are the owner's to open.
+#   * `core/protected_pdf.dart`'s **4** all go *into the file* — the footer's
+#     one line, the `z-pdf · protected copy` mark, and the answer page's top
+#     line. Rule 33 and the note at `theSentencesAreNow`'s second reader said
+#     those are read in the **session's** language and never through the
+#     holder, and the question nobody but the owner could answer was which
+#     language a file carries when its session has none.
+#   * `widgets/document_text.dart`'s **1** was `'Page ${edges[i].page}'`, the
+#     page marker in the Original column — one line in a file that is not
+#     opened without his word.
 #
-# **Five of the 185 were never sentences**, and finding that out was the
-# first act of sitting five rather than a tidy-up: the literal *pattern*
-# mis-paired quotes, so four fragments in `protected_pdf.dart` and one in
-# `document_text.dart` were counted as sentences a translator owed, while the
-# real sentences they were cut out of were counted as their own fragments.
-# `strings_on` replaced the pattern and the numbers below are its
-# measurement. No migrated file gained a sentence by the change, which is
-# the result that had to be checked: a mis-pairing can hide a real sentence
-# as easily as invent one, and a file claimed empty is where that would have
-# mattered.
+# **His answer, both halves of it:** the footer, the mark and the added page's
+# title are in the language of the session the file left, and English where
+# that session has none; the added page may carry any *fact* about the file and
+# never a real value, and no new fact was added — only the language. And «Page
+# N» joins the list under the key `pageNumber` it already had.
 #
-# **Sitting five, the two items.** The first is the rest of this table: the
-# eleven small files, `core/session_state.dart`'s 29, and
-# `core/protected_pdf.dart`'s 13 — those last drawn with the **session's**
-# locale and never the interface's, because a z-pdf footer is a file that
-# leaves (rule 33) and what a file holds is not what the person at the screen
-# reads.
+# So the table is empty. What that is worth saying out loud: a floor of zero in
+# `MIGRATED` is a stronger statement than a floor in a debt list, because a
+# file in `MIGRATED` may not hold **one** sentence, while a file in the table
+# below was only forbidden to hold **more**. Every file the glass draws from is
+# now in the first kind.
 #
-# The second is **«a guard may not type a sentence this list owns»** — **done,
-# 21 October, and its own gate is G65 in `scripts/check_no_typed_sentence.py`,
-# which allows nothing by a floor and two things by name.** Measured on 20
-# October 2026 over `apps/flutter_app/test`, before item one moved eighteen
-# more files into the list:
+# **Five of the 185 this table once held were never sentences**, and finding
+# that out was the first act of sitting five rather than a tidy-up: the literal
+# *pattern* mis-paired quotes, so four fragments in `protected_pdf.dart` and
+# one in `document_text.dart` were counted as sentences a translator owed,
+# while the real sentences they were cut out of were counted as their own
+# fragments. `strings_on` replaced the pattern. No migrated file gained a
+# sentence by the change, which is the result that had to be checked: a
+# mis-pairing can hide a real sentence as easily as invent one, and a file
+# claimed empty is where that would have mattered.
 #
-#     458 finders reach for a typed sentence
-#     284 of them name a value that now lives in lib/l10n/app_en.arb
-#         — by its exact text, or by the shape of a placeholder sentence
-#           («Page 2» for `pageNumber`)
+# **What is still owed is not a sentence outside the list — it is this
+# census's own reach**, and it is written down where it was found
+# (`scripts/check_no_typed_sentence.py`): a sentence with no three-letter word
+# is invisible here, because `[A-Za-z]{3,}` is what tells a sentence from a
+# key. «Go to it» would pass this gate today. Widening the test changes what
+# every file owes, so it is a named debt and not a quiet edit.
 #
-# They are correct while the suite reads English, and they are second copies of
-# sentences whose home is this list: a reworded value turns a guard red for the
-# wrong reason, and where the assertion is `findsNothing` it leaves the guard
-# **green** for the wrong reason, which is the half that teaches nothing until
-# something has already shipped. The form that does not rot is
-# `find.text(sentences.theKey)` — the guard reading the one place instead of
-# remembering it.
+# **Sitting five's four items, as they were numbered and as they ended.**
 #
-# Found by the gutter guard, which typed «Protect this column in the 4 held
-# lines» and could not find it: `docs/A_FILE_THAT_REDS_ONLY_IN_COMPANY.md`
-# holds that measurement. Not before 096's glass half, by the lead's order.
-#
-# **Two more items, three and four, added 21 October after 096 stood.** Neither
-# is about this list; they are here because this is where the sitting is
-# counted, and an item nobody numbered is an item nobody does.
-#
+#   one   — the rest of this table: eighteen files and 183 literals, the one
+#           list 558 → 680, the debt 185 → 5. Done.
+#   two   — «a guard may not type a sentence this list owns». Done, with its
+#           own gate G65 in `scripts/check_no_typed_sentence.py`, which allows
+#           nothing by a floor and eight things by name. Its own cost is
+#           written in that file: a finder that reads a key cannot notice a
+#           **reworded** value, which is why item 2-ب pins the sentences a
+#           claim in `docs/CLAIMS.md` leans on (G66).
 #   three — «a source that changed is measured by the one command». The lesson
 #           of 096's own regression: the first part moved from `doc.marks` to
 #           `entered.marks`, every `MarkState::Suggested` fell off the screen,
 #           and five guards reddened in three files that were never opened. The
 #           measurement, the A/B that named its owner and the order to follow
-#           next time are written in `A_FILE_THAT_REDS_ONLY_IN_COMPANY.md`.
+#           next time are in `A_FILE_THAT_REDS_ONLY_IN_COMPANY.md`.
 #   four  — «the Dart record stays on green too». `gates.sh` deleted its log
 #           and its event file the moment the suite passed, so the count a
 #           green round reports — the one `MEASURED_ON_LINUX.txt` is compared
@@ -163,11 +150,9 @@ MIGRATED = {
 #           worktree, named in the PASS line, with `G7-record` asking that the
 #           file is really there.
 #
-# Both are done; they are written down here because the sitting is the ledger.
-OWED = {
-    'core/protected_pdf.dart': 4,
-    'widgets/document_text.dart': 1,
-}
+# They are written here because the sitting is the ledger, and an item nobody
+# numbered is an item nobody does.
+OWED: dict[str, int] = {}
 
 # **Values the German is allowed to share with the English, by name** — each
 # with its reason, because «the translator skipped it» and «German says the
@@ -190,10 +175,15 @@ OWED = {
 #   * **`{act} · {needs}`** — not a sentence at all: a frame that joins two
 #     keys on one button («Add a name · Needs a vault»), and both halves are
 #     their own keys with their own German.
+#   * **`Z-pdf : {token}`** — the answer page's own top line, and there is no
+#     word in it: a product name, a colon and the token of «Zprivacy-svara».
+#     It is in the list because it is written **into a file** and the owner's
+#     law names the added page's title beside the footer, so one place words
+#     all three. The day it gains a word, that word is German here.
 SAME_IN_EVERY_LANGUAGE = re.compile(
     r'^(?:OK|Z Privacy|z-pdf|Grok|xAI|Person|Passphrase|Name'
     r'|Nordstern Consulting GmbH|Mandantenkennung|Herr Müller|Lindqvist'
-    r'|\{act\} · \{needs\}|\d+|[-—·]|)$'
+    r'|\{act\} · \{needs\}|Z-pdf : \{token\}|\d+|[-—·]|)$'
 )
 
 # **Both of Dart's quotes**, and the honest account of why.

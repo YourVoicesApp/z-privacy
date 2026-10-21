@@ -679,5 +679,11 @@
   "couldNotTellWhereDocumentsFolderIs": "Z Privacy konnte nicht feststellen, wo Ihr Dokumentenordner liegt, und hat nicht geraten. Es wurde nichts geschrieben.",
   "thereAreAlready200Files": "In {into} gibt es bereits 200 Dateien mit dem Namen {stem}.",
   "couldNotWriteInto": "Z Privacy konnte nicht in {into} schreiben — {why}.",
-  "couldNotBuildThePdfBecause": "Z Privacy konnte das PDF nicht erstellen — {why}. Es wurde nichts geschrieben."
+  "couldNotBuildThePdfBecause": "Z Privacy konnte das PDF nicht erstellen — {why}. Es wurde nichts geschrieben.",
+  "zPdfProtectedCopy": "z-pdf · geschützte Kopie",
+  "placesReplaced": "{count, plural, =1{1 Stelle ersetzt} other{{count} Stellen ersetzt}}",
+  "valuesOfTheseKinds": "{count, plural, =1{1 Wert ({kinds})} other{{count} Werte ({kinds})}}",
+  "noKindsAtAll": "keine",
+  "sha256OfTheProtectedText": "sha256 des geschützten Textes {digest}",
+  "zPdfAnswerLine": "Z-pdf : {token}"
 }

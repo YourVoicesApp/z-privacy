@@ -4196,6 +4196,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Z Privacy could not build the PDF — {why}. Nothing was written.'**
   String couldNotBuildThePdfBecause(String why);
+
+  /// The mark every page of an export carries beside its stamp — 079. A statement about what the page is, never about who made it. It goes **into a file**, so it is read in the language of the session the file left (rule 80) and never through the holder.
+  ///
+  /// In en, this message translates to:
+  /// **'z-pdf · protected copy'**
+  String get zPdfProtectedCopy;
+
+  /// How many places in the document were replaced, in the z-pdf footer. The count is the core's; the words are the session's language (rule 80).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 place replaced} other{{count} places replaced}}'**
+  String placesReplaced(int count);
+
+  /// How many distinct values stand behind those places, with the kinds beside them. A value protected in four places is one value and four places, and the footer states both because they are different facts. `{kinds}` is the core's own wording of each kind and its count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 value ({kinds})} other{{count} values ({kinds})}}'**
+  String valuesOfTheseKinds(int count, String kinds);
+
+  /// What stands where the kinds would, in the z-pdf footer of a file in which nothing was protected. A word rather than an empty bracket, so a reader can tell «none» from «the footer forgot».
+  ///
+  /// In en, this message translates to:
+  /// **'none'**
+  String get noKindsAtAll;
+
+  /// The last part of the z-pdf footer. The digest is of the same string Copy Protected puts on the clipboard, so the claim is checkable with `sha256sum` and nothing of ours.
+  ///
+  /// In en, this message translates to:
+  /// **'sha256 of the protected text {digest}'**
+  String sha256OfTheProtectedText(String digest);
+
+  /// The answer page's own top line — 079. A product name, a colon and the token of «Zprivacy-svara», so **the German is the English**: there is no word in it to translate. It is in the list because it goes into a file and the owner's rule 80 names the added page's title with the footer, and because one place is one place.
+  ///
+  /// In en, this message translates to:
+  /// **'Z-pdf : {token}'**
+  String zPdfAnswerLine(String token);
 }
 
 class _AppLocalizationsDelegate

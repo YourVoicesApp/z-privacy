@@ -34,6 +34,15 @@
 // evidence; a footer stating a brand is decoration, and decoration that looks
 // like proof is the one kind this product may not ship.
 //
+// **And every word of it is in the language of the session this file left** —
+// rule 80, the owner, 21 October 2026, and English where that session has no
+// language of its own. The footer, the mark and the answer page's top line go
+// *into a file*: the interface stays on this machine and the file travels, so
+// what travels is worded for the person who reads the document rather than for
+// the person at the screen. Nothing in this file reads `sentences`, the
+// interface's holder, for anything that is written into the PDF — the five
+// refusals below it do, and they are right to: those are on the glass.
+//
 // **One mark beside it, and it is a claim about what the page is, not about
 // who made it** — 079, the owner, 13 Oct: a hard line between a pdf and a
 // z-pdf, so that the protected copy is never mistaken by its own owner for an
@@ -76,6 +85,7 @@ import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:zprivacy/core/sentences.dart';
+import 'package:zprivacy/l10n/app_localizations.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
@@ -275,8 +285,17 @@ class PdfStamp {
   /// own words as the core gives them. No pluralising: a rule that guesses at
   /// English grammar would guess wrong in the next language, and `×6` is read
   /// the same in all of them.
-  String get kinds => byKind.isEmpty
-      ? 'none'
+  ///
+  /// **The kind's name is the core's word and not this list's** — `KindRow`
+  /// says so at the field: «What to call it. The core's word, not the
+  /// screen's». So the one word this house owns here is what stands in place
+  /// of the kinds when there are none, and that one is read from the list like
+  /// every other. Whether the core answers `kinds` in the session's language
+  /// is the core's own question and is not settled by rule 80; it is named
+  /// here rather than assumed, because a German footer stating English kind
+  /// names would be this seam and nothing else.
+  String kindsIn(AppLocalizations t) => byKind.isEmpty
+      ? t.noKindsAtAll
       : (byKind.entries.map((e) => '${e.key} ×${e.value}').toList()..sort()).join(', ');
 
   /// The one line. Long on purpose — a sha256 is sixty-four characters and
@@ -286,24 +305,31 @@ class PdfStamp {
   /// a run of spaces inside a sentence, and it is right to — the gate exists
   /// because the owner read a refusal with nineteen spaces in the middle of it.
   /// This is also the separator `core_version()` already uses.
-  String get line =>
-      '$build · $places ${places == 1 ? 'place' : 'places'} replaced, '
-      '$values ${values == 1 ? 'value' : 'values'} ($kinds) · '
-      'sha256 of the protected text $sha256';
+  ///
+  /// **A reader rather than a getter, since rule 80.** The words are the
+  /// session's and the holder is the interface's, so the list this line is
+  /// worded from arrives from the door that is writing the file. The two
+  /// counts and the digest are unchanged — they are the caller's facts, and
+  /// `×6` reads the same in every language.
+  String lineIn(AppLocalizations t) =>
+      '$build · ${t.placesReplaced(places)}, '
+      '${t.valuesOfTheseKinds(values, kindsIn(t))} · '
+      '${t.sha256OfTheProtectedText(sha256)}';
 }
-
-/// The mark every page of an export carries beside its stamp — 079. Small and
-/// plain, and a statement about the page: this is the protected copy.
-const zPdfMark = 'z-pdf · protected copy';
 
 /// The footer of one export: the mark, then the stamp of this one request.
 ///
 /// **One function for every page, the answer page included**, so «the same
 /// footer» is not two widgets that happen to agree today. The owner: «في الأسفل
 /// نفس الترويسة التي تخرج من جميع الأوراق الأخرى في نفس الطلب».
-pw.Widget _footer(PdfStamp stamp, pw.TextStyle style) => pw.Padding(
+///
+/// The mark — «z-pdf · protected copy» — was a `const` in this file until rule
+/// 80 and is `t.zPdfProtectedCopy` now, for the same reason as everything else
+/// the footer says: it goes into a file, and the file's language is the
+/// session's.
+pw.Widget _footer(PdfStamp stamp, pw.TextStyle style, AppLocalizations t) => pw.Padding(
       padding: const pw.EdgeInsets.only(top: 10),
-      child: pw.Text('$zPdfMark · ${stamp.line}', style: style),
+      child: pw.Text('${t.zPdfProtectedCopy} · ${stamp.lineIn(t)}', style: style),
     );
 
 /// Read once per process. The font is 759,720 bytes and the bytes do not change.
@@ -324,12 +350,22 @@ Future<pw.Font> _embeddedFont() async {
 /// [answerToken] is the core's token for the answer page's word, and it is
 /// **required**: an export without its answer page is not a z-pdf, and a
 /// parameter that could be left out is a page somebody will one day leave out.
+///
+/// [sessionLanguage] is **required and nullable**, by the same argument one
+/// paragraph up: `null` is a real answer — «this file left no session, or one
+/// nobody asked» — and English is what it means (rule 80). A default would
+/// make that answer the silent one, and a file whose language nobody decided
+/// is exactly the state this parameter exists to make impossible to reach by
+/// accident. `theSentencesAFileCarries` turns the code into the list, in one
+/// place, so nothing here knows what an unwritten list is.
 Future<Uint8List> buildProtectedPdf({
   required String text,
   required PdfStamp stamp,
   required String answerToken,
+  required String? sessionLanguage,
   bool compress = true,
 }) async {
+  final t = theSentencesAFileCarries(sessionLanguage);
   final font = await _embeddedFont();
   // No title, no author, no producer, no creation date — see the head of this
   // file. `pdf` writes an /Info dictionary only when one of them is given.
@@ -345,7 +381,7 @@ Future<Uint8List> buildProtectedPdf({
     pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: margin,
-      footer: (_) => _footer(stamp, footer),
+      footer: (_) => _footer(stamp, footer, t),
       build: (_) => [
         // One Text per run of paragraphs that share a direction, each flowing
         // across pages. `TextOverflow.span` is what makes a Text a spanning
@@ -419,7 +455,8 @@ Future<Uint8List> buildProtectedPdf({
       build: (_) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
-          pw.Text('Z-pdf : $answerToken', style: body, textDirection: pw.TextDirection.ltr),
+          pw.Text(t.zPdfAnswerLine(answerToken),
+              style: body, textDirection: pw.TextDirection.ltr),
           pw.Expanded(
             child: pw.Center(
               child: pw.Container(
@@ -432,7 +469,7 @@ Future<Uint8List> buildProtectedPdf({
               ),
             ),
           ),
-          _footer(stamp, footer),
+          _footer(stamp, footer, t),
         ],
       ),
     ),
@@ -467,6 +504,18 @@ Future<PdfSaved> saveProtectedPdf({
   /// a session nobody named is «Session N», which says everything a file name
   /// needs to and nothing about anybody.
   required String sessionName,
+  /// **The language of the session this file left**, or null where it left
+  /// none — rule 80, the owner, 21 October 2026: «بلغة الجلسة التي خرج منها
+  /// الملف، والإنجليزية حين لا لغة للجلسة».
+  ///
+  /// The language of the **file**, never of the glass. A person who reads
+  /// German documents in an English interface must not be handed a protected
+  /// copy whose footer is English: the interface stays here and the file
+  /// travels, and what travels carries the session's words. It is the send
+  /// sheet that knows which session a payload belonged to, so the answer
+  /// comes down from there — `theLanguageAFileCarries`, one law — and is not
+  /// worked out again here.
+  required String? sessionLanguage,
   /// Null means the product's own place. A test gives a temporary folder, so a
   /// test run never writes into the person's documents.
   String? folder,
@@ -491,7 +540,12 @@ Future<PdfSaved> saveProtectedPdf({
         return PdfSaved.trouble(sentences.thereAreAlready200Files(stem, into));
       }
     }
-    final bytes = await buildProtectedPdf(text: text, stamp: stamp, answerToken: answerToken);
+    final bytes = await buildProtectedPdf(
+      text: text,
+      stamp: stamp,
+      answerToken: answerToken,
+      sessionLanguage: sessionLanguage,
+    );
     await File(path).writeAsBytes(bytes, flush: true);
     return PdfSaved.at(path);
   } on FileSystemException catch (e) {

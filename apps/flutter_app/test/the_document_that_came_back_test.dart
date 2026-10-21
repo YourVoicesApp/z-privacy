@@ -215,7 +215,24 @@ void main() {
       await z.conversationBegin(name: 'die Mahnung', bench: session);
       final taken = await z.payloadToTakeOut(session: session);
       // The answer: the protected pages, a reply, and the answer page's line.
-      final back = '${taken.text}\n\nVielen Dank.\n\nZ-pdf : ${taken.answerPageToken}\n';
+      //
+      // **The line is read from the one list, not typed** — it became a
+      // sentence of the list's on 21 October (rule 80), and a fixture that
+      // spells a sentence for itself is the same debt as a guard that does:
+      // the day the line is reworded this document stops being one that came
+      // back, and nothing here would say why. `theSentencesAFileCarries` is
+      // how a **file** reaches the list, which is what this text is.
+      //
+      // And the token is asserted rather than interpolated: this read
+      // `'Z-pdf : ${taken.answerPageToken}'`, which writes «Z-pdf : null» into
+      // the fixture when the exit mints none, and a document that came back
+      // without its token would then be measured as one that came back.
+      final token = taken.answerPageToken;
+      expect(token, isNotNull,
+          reason: 'the exit minted no answer-page token, so this text is not a '
+              'z-pdf and nothing below is about one that came back');
+      final line = theSentencesAFileCarries(null).zPdfAnswerLine(token!);
+      final back = '${taken.text}\n\nVielen Dank.\n\n$line\n';
       await z.importText(session: session, text: back);
       bench = Workbench(session: session, profileId: null, packId: 'de');
       await bench.readTheScanThatArrivedWithIt();
@@ -260,7 +277,9 @@ void main() {
         .join('\n');
     expect(shown, contains('Stefan Keller'), reason: 'the name did not come back on the glass');
     expect(shown, contains('Vielen Dank'), reason: 'the reply was dropped');
-    expect(shown, contains('Z-pdf : Zprivacy-svara'),
+    expect(
+        shown,
+        contains(theSentencesAFileCarries(null).zPdfAnswerLine('Zprivacy-svara')),
         reason: 'the answer page read as a token instead of its own word');
     expect(shown.contains('__Z_'), isFalse, reason: 'a token is still standing in the reading');
 
@@ -296,7 +315,12 @@ void main() {
       await z.conversationBegin(name: 'die zweite Mahnung', bench: session);
       number = (await z.conversationOpen())!;
       final taken = await z.payloadToTakeOut(session: session);
-      back = '${taken.text}\n\nZ-pdf : ${taken.answerPageToken}\n';
+      final token = taken.answerPageToken;
+      expect(token, isNotNull,
+          reason: 'the exit minted no answer-page token, so this text is not a '
+              'z-pdf and nothing below is about one that came back');
+      back = '${taken.text}\n\n'
+          '${theSentencesAFileCarries(null).zPdfAnswerLine(token!)}\n';
       sender = Workbench(session: session, profileId: null, packId: 'de');
     });
     // The bench that minted the names is closed — which is what opening a

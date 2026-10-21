@@ -206,6 +206,18 @@ the one place. A sitting of 092's own, with a number to measure it against.
 
 Queued after sitting four of 092 and after 097, by the lead's own order.
 
+**Closed, 21 October 2026** — sitting five's item two. 347 finders were
+converted to `find.text(sentences.theKey)` and the gate that keeps them that
+way is `G65` in `scripts/check_no_typed_sentence.py`: no floor, and the
+survivors allowed by name with a reason at each. **Nineteen of the automatic
+pass's 323 rewrites were wrong**, and the reason is worth more than the count —
+a string that *equals* a value in the list is not necessarily *drawn from* it.
+«English» is the core's language table, a form's greyed example is not a value
+the person was taught, and four of the nineteen sat under `findsNothing`, where
+being wrong is silent. What the item costs is written in the checker: a finder
+reading a key cannot notice a **reworded** value, so the sentences a claim in
+`docs/CLAIMS.md` leans on are pinned by their English in `G66`.
+
 ## A guard that crosses the seam — 096, 20 October 2026
 
 Not a flake, and in this file because it is the same shape of mistake: **a

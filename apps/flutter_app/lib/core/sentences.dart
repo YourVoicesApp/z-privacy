@@ -72,6 +72,21 @@ void theSentencesAreNow(Locale locale) =>
 /// itself — the locale is asked for directly. Migrating such a file through
 /// the holder by habit would write German words into an English session's
 /// document, and nothing on any screen would say so.
+///
+/// **Built on 21 October 2026, when the owner ruled it** — rule 80,
+/// `docs/RULES_AR.md`: the z-pdf footer, the «protected copy» mark and the
+/// added page's title are in the language of the session the file left, and
+/// English where that session has none.
+///
+/// `null` is «this file left no session, or a session nobody asked» — the
+/// third state 075c is careful about, and English is the answer to it because
+/// English is the list's own source. A code whose list is **not written yet**
+/// is English too, by [theLocaleOf] and not by a second rule: Swedish is a
+/// scanner pack and not an interface, so a file from a Swedish session carries
+/// the source's words rather than a column of English values pretending to be
+/// Swedish. One law, read in two places.
+AppLocalizations theSentencesAFileCarries(String? sessionLanguage) =>
+    lookupAppLocalizations(theLocaleOf(sessionLanguage ?? 'en'));
 
 /// **Is this language's list written, or is it still the source's?** — rule
 /// 56-أ, 19 October 2026, as one question with three readers.

@@ -679,5 +679,11 @@
   "couldNotTellWhereDocumentsFolderIs": "Z Privacy could not tell where your documents folder is, so it has not guessed. Nothing was written.",
   "thereAreAlready200Files": "There are already 200 files called {stem} in {into}.",
   "couldNotWriteInto": "Z Privacy could not write into {into} — {why}.",
-  "couldNotBuildThePdfBecause": "Z Privacy could not build the PDF — {why}. Nothing was written."
+  "couldNotBuildThePdfBecause": "Z Privacy could not build the PDF — {why}. Nothing was written.",
+  "zPdfProtectedCopy": "z-pdf · protected copy",
+  "placesReplaced": "{count, plural, =1{1 place replaced} other{{count} places replaced}}",
+  "valuesOfTheseKinds": "{count, plural, =1{1 value ({kinds})} other{{count} values ({kinds})}}",
+  "noKindsAtAll": "none",
+  "sha256OfTheProtectedText": "sha256 of the protected text {digest}",
+  "zPdfAnswerLine": "Z-pdf : {token}"
 }
