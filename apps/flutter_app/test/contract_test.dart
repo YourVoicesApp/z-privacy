@@ -17,15 +17,16 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 
 void main() {
   setUpAll(() async {
     final lib = File(_libPath);
     if (!lib.existsSync()) {
       throw StateError(
-        'no $_libPath — run `flutter build linux --debug` first',
+        buildTheBridgeFirst,
       );
     }
     // The default loader finds libz_bridge.so on the library path; the test

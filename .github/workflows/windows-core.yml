@@ -223,16 +223,67 @@ jobs:
       # — is the same build. `--remap-path-prefix` and not Cargo's `trim-paths`
       # for the reason the Linux twin gives: that one is still unstable in this
       # cargo. The second half, the proof, is `scripts/package_windows.sh`.
+      #
+      # **And the folders are read from their own variables** — 098 item 3,
+      # after the Windows session measured `.cargo\registry\src\…` **242
+      # times** in an installed `z_bridge.dll` on 20 October. A typed
+      # `$USERPROFILE\.cargo` is right only while nobody moves the registry:
+      # `CARGO_HOME` and `RUSTUP_HOME` exist for exactly that, a runner image
+      # may set either, and a prefix that does not match the path the compiler
+      # recorded removes **nothing at all** — silently, because
+      # `--remap-path-prefix` has no way to say «that prefix was never there».
+      # The same rule item 1 follows for the redistributable folder, and the
+      # homes are printed so the run says which it used.
       - name: The paths this machine would otherwise write down
         shell: bash
         run: |
           echo "SHORT_SHA=${GITHUB_SHA:0:7}" >> "$GITHUB_ENV"
-          remap="--remap-path-prefix=$USERPROFILE\\.cargo\\registry\\src=/crates"
-          remap="$remap --remap-path-prefix=$USERPROFILE\\.rustup\\toolchains=/rust"
+          cargo_home="$CARGO_HOME"
+          if [ -z "$cargo_home" ]; then cargo_home="$USERPROFILE\\.cargo"; fi
+          rustup_home="$RUSTUP_HOME"
+          if [ -z "$rustup_home" ]; then rustup_home="$USERPROFILE\\.rustup"; fi
+          echo "cargo home:  $cargo_home"
+          echo "rustup home: $rustup_home"
+          remap="--remap-path-prefix=$cargo_home\\registry\\src=/crates"
+          remap="$remap --remap-path-prefix=$cargo_home\\git\\checkouts=/git"
+          remap="$remap --remap-path-prefix=$rustup_home\\toolchains=/rust"
           remap="$remap --remap-path-prefix=$USERPROFILE\\AppData\\Local\\Pub\\Cache=/pub"
           remap="$remap --remap-path-prefix=$GITHUB_WORKSPACE=/zprivacy"
           echo "RUSTFLAGS=${RUSTFLAGS:-} $remap" >> "$GITHUB_ENV"
           echo "$remap"
+
+      # **Where this run stages, and it is not in the checkout** — 098 item 4(أ),
+      # from the real run (39508181140): step 9 made `staging/` **inside** the
+      # checkout, so `scripts/package_windows.sh` met «?? staging/ — the tree is
+      # not clean» and refused by its own law. Nothing was stamped, no zip, no
+      # `.sha256`, the installer and the MSIX were skipped and the uploads
+      # failed. The release that items 1–3 are about never existed.
+      #
+      # The fix is **not** `ALLOW_DIRTY` and **not** a `.gitignore` line: both
+      # teach the check to look away, and that check is the only thing standing
+      # between a person and an archive nobody can rebuild. The staging folder
+      # simply does not belong in the tree it is made from. `$RUNNER_TEMP` is
+      # the runner's own scratch, emptied between jobs.
+      #
+      # Defined **here**, before the build, so that the uploads at the end —
+      # which run `if: always()` — have a path even when a step in the middle
+      # failed. And the backslashes are turned round because these names are
+      # read by Git Bash as well as by PowerShell: `D:\a\_temp` is one word to
+      # bash, where `D:/a/_temp` is a path.
+      - name: Where this run stages
+        shell: bash
+        run: |
+          if [ -z "${RUNNER_TEMP:-}" ]; then
+            echo "RUNNER_TEMP is not set, and staging inside the checkout is what this fixes"
+            exit 1
+          fi
+          temp=${RUNNER_TEMP//\\//}
+          {
+            echo "STAGE_ROOT=$temp/staging"
+            echo "STAGE=$temp/staging/zprivacy-v1-windows-x86_64"
+            echo "INSTALLER_OUT=$temp/staging-installer"
+          } >> "$GITHUB_ENV"
+          echo "staging under $temp/staging"
 
       # Says out loud what is missing rather than failing later with a linker
       # error nobody can place: a Windows desktop build needs Visual Studio's
@@ -249,14 +300,143 @@ jobs:
       # The whole folder, never the .exe alone. A Flutter application on Windows
       # is the executable plus flutter_windows.dll, z_bridge.dll, the plugin
       # DLLs and `data/` beside it; the .exe on its own does not start.
+      # ---------------------------------------------------------------- 098
+      # **The runtime ships beside the application** — 098, after the owner
+      # met a clean Windows machine on 20 October where `VCRUNTIME140.dll` was
+      # missing: Node's own installer had failed on it, and a Flutter
+      # application needs the same three libraries. `flutter build windows`
+      # does not copy them, so the person who double-clicks our installer
+      # there gets Windows' own dialogue about a missing DLL — the silence
+      # `zprivacy.iss` was written to remove.
+      #
+      # **App-local, which is Microsoft's own name for it**, and the only shape
+      # that keeps this installer's promise: `vc_redist.x64.exe` installs
+      # machine-wide and asks for an administrator, which breaks
+      # `PrivilegesRequired=lowest` and the per-user install the owner chose.
+      # Copied beside `zprivacy.exe`, the loader finds them first and nothing
+      # is installed at all.
+      #
+      # **Into the runner's own Release folder, which is the one place both
+      # packages read:** «Stage the folder» below copies that folder into the
+      # staging the zip and Inno use, and `msix:create` packages the very same
+      # folder. One copy, two packages — the alternative was copying twice and
+      # the day they disagreed the MSIX would ship without a runtime.
+      #
+      # **The path comes from the variable, never typed:** `VCToolsRedistDir`
+      # is what the runner's own Visual Studio says, so a toolset bump moves
+      # with it. It is read through `vswhere` when the variable is not in this
+      # shell, because a developer command prompt sets it and a workflow step
+      # does not inherit one.
+      - name: The runtime the application needs, beside the application
+        shell: pwsh
+        working-directory: apps/flutter_app
+        run: |
+          $out = "build/windows/x64/runner/Release"
+          if (-not (Test-Path $out)) { throw "no Release folder at $out" }
+
+          $redist = $env:VCToolsRedistDir
+          if (-not $redist) {
+            $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+            if (-not (Test-Path $vswhere)) { throw "no VCToolsRedistDir and no vswhere to ask" }
+            $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+            if (-not $vs) { throw "vswhere found no Visual Studio with the C++ tools" }
+            $version = (Get-Content (Join-Path $vs "VC\Auxiliary\Build\Microsoft.VCRedistVersion.default.txt")).Trim()
+            $redist = Join-Path $vs "VC\Redist\MSVC\$version"
+          }
+          Write-Host "redistributable folder: $redist"
+          $crt = Join-Path $redist "x64\Microsoft.VC143.CRT"
+          if (-not (Test-Path $crt)) { throw "no CRT folder at $crt" }
+
+          foreach ($dll in @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
+            $from = Join-Path $crt $dll
+            if (-not (Test-Path $from)) { throw "the runner's redistributable has no $dll at $from" }
+            Copy-Item $from (Join-Path $out $dll) -Force
+          }
+
+      # **And the three are asserted where they will ship**, with the version
+      # each one carries printed into the log: a copy nobody checked is a copy
+      # nobody knows happened, and this job's own rule is that a missing file
+      # fails it out loud rather than later on somebody's desk.
+      - name: The three are in the bundle, and these are their versions
+        shell: pwsh
+        working-directory: apps/flutter_app
+        run: |
+          $out = "build/windows/x64/runner/Release"
+          $missing = @()
+          foreach ($dll in @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
+            $path = Join-Path $out $dll
+            if (Test-Path $path) {
+              $v = (Get-Item $path).VersionInfo.FileVersion
+              Write-Host "$dll $v"
+              "RUNTIME_$($dll -replace '[.]','_')=$v" >> $env:GITHUB_ENV
+            } else {
+              $missing += $dll
+            }
+          }
+          if ($missing.Count -gt 0) {
+            Write-Host "::error::the bundle is missing $($missing -join ', ') — the application would not start on a machine without the Visual C++ runtime"
+            exit 1
+          }
+
+      # **And nothing in the three files we built says who built them** — 098
+      # item 3, G53's twin, run here because this is where the files are and
+      # Linux cannot read them.
+      #
+      # The Windows session measured `C:\Users\runneradmin\.cargo\registry\src\index.crates.io-…`
+      # **242 times** in an installed `z_bridge.dll` on 20 October. What it
+      # measured was not this job's output — that file carried no BUILD-INFO
+      # and no hash beside it — so this step proves the job rather than
+      # explaining that file: the remap above is told where cargo is, and this
+      # says what it did.
+      #
+      # **Three files, because they are the three we write**: the runner, the
+      # core, and the Dart snapshot. The Microsoft runtime item 1 put beside
+      # them is **not** searched, and that is a statement rather than an
+      # omission — a file we did not compile cannot be remapped by us, what it
+      # records about its own builder is its builder's business, and
+      # `third-party/msvc-runtime-NOTICE.txt` says whose it is. The promise
+      # this keeps is about the name of **our** machine.
+      #
+      # Read as bytes and compared as ASCII, because a path inside a binary is
+      # not a line of text: Rust writes them as UTF-8 and `Select-String` over
+      # a DLL reports nothing useful.
+      - name: Nothing in the three files we built says who built them
+        shell: pwsh
+        working-directory: apps/flutter_app
+        run: |
+          $out = "build/windows/x64/runner/Release"
+          $ours = @("zprivacy.exe", "z_bridge.dll", "data/app.so")
+          $needles = @("runneradmin", "D:\a\", "\.cargo\registry", "/home/")
+          $left = @()
+          foreach ($name in $ours) {
+            $path = Join-Path $out $name
+            if (-not (Test-Path $path)) {
+              Write-Host "::error::$path is not in the build, so nothing was searched"
+              exit 1
+            }
+            $bytes = [System.IO.File]::ReadAllBytes($path)
+            $text = [System.Text.Encoding]::ASCII.GetString($bytes)
+            foreach ($n in $needles) {
+              $count = [regex]::Matches($text, [regex]::Escape($n)).Count
+              if ($count -gt 0) { $left += "$name carries ${n} $count time(s)" }
+            }
+            Write-Host ("{0,-14} {1,12} bytes searched" -f $name, $bytes.Length)
+          }
+          if ($left.Count -gt 0) {
+            $left | ForEach-Object { Write-Host "::error::$_" }
+            Write-Host "::error::the remap did not reach those paths - read the cargo home printed earlier in this run"
+            exit 1
+          }
+          Write-Host "no path from this machine in any of the three"
+
       - name: Stage the folder
         shell: bash
         working-directory: apps/flutter_app
         run: |
           out=build/windows/x64/runner/Release
           test -f "$out/zprivacy.exe" || { echo "no zprivacy.exe at $out"; exit 1; }
-          mkdir -p ../../staging/zprivacy-v1-windows-x86_64
-          cp -a "$out/." ../../staging/zprivacy-v1-windows-x86_64/
+          mkdir -p "$STAGE"
+          cp -a "$out/." "$STAGE/"
 
           # The licences travel with the files they are about.
           #
@@ -269,11 +449,15 @@ jobs:
           # text to travel. Same five files, same names, from the same folder
           # as the Linux package — `packaging/third-party/`, which is why it is
           # no longer under `packaging/linux/`.
-          dest=../../staging/zprivacy-v1-windows-x86_64
+          dest="$STAGE"
           cp -f ../../LICENSE "$dest/LICENSE"
+          # **And the folder says what is in it** — 098: the three Microsoft
+          # libraries are new in this release and a person who unzips it has a
+          # right to know why a Microsoft DLL sits beside our program.
+          cp -f ../../packaging/windows/README.txt "$dest/README.txt"
           mkdir -p "$dest/third-party"
           for f in NOTICES.txt flutter-sdk-LICENSE.txt material-icons-LICENSE.txt \
-                   dejavu-LICENSE.txt dart-pdf-LICENSE.txt; do
+                   dejavu-LICENSE.txt dart-pdf-LICENSE.txt msvc-runtime-NOTICE.txt; do
             cp -f "../../packaging/third-party/$f" "$dest/third-party/$f"
           done
           cp -f ../../site/third-party/flutter-engine-LICENSE.txt "$dest/third-party/"
@@ -285,8 +469,17 @@ jobs:
             echo "The Rust crates this build links, from the tree at ${GITHUB_SHA:0:7}."
             echo "Generated in .github/workflows/windows-core.yml with cargo tree; no new tool."
             echo
+            # **And not where the crate sat on this disk** — 098 item 4(ج).
+            # `cargo tree` writes a workspace crate as «z_core v0.1.0 (…)», and
+            # the Windows session found `D:\a\z-privacy\z-privacy\z_core` in
+            # `third-party/rust-crates.txt` line 62 of the installed build. The
+            # Linux script has stripped that since the attacker found it there
+            # — with `s| \(/[^)]*\)$||`, which needs a leading `/` and so could
+            # never match a drive letter: the rule written in place, not applied
+            # to its second case. The general form takes both, and nothing else
+            # is parenthesised at the end of these lines once ` (*)` is gone.
             (cd ../.. && cargo tree -p z_core --edges normal --prefix none 2>/dev/null \
-               | sed 's/ (\*)$//' | sort -u | grep -vE '^$')
+               | sed 's/ (\*)$//' | sed -E 's| \([^)]*\)$||' | sort -u | grep -vE '^$')
           } > "$dest/third-party/rust-crates.txt"
 
           # Asked for by name, like the .exe above it. `set -e` would already
@@ -304,13 +497,13 @@ jobs:
       # cannot be unwritten once it is downloaded.
       - name: Stamp it, prove it carries no runner path, and zip it
         shell: bash
-        run: bash scripts/package_windows.sh staging/zprivacy-v1-windows-x86_64 "$GITHUB_WORKSPACE/dist"
+        run: bash scripts/package_windows.sh "$STAGE" "$GITHUB_WORKSPACE/dist"
 
       - name: What is in it, and its hashes
         if: always()
         shell: bash
         run: |
-          dir=staging/zprivacy-v1-windows-x86_64
+          dir="$STAGE"
           [ -d "$dir" ] || { echo "nothing staged"; exit 0; }
           {
             echo "### Z Privacy for Windows — not a release yet"
@@ -358,11 +551,15 @@ jobs:
           Write-Host "version from pubspec.yaml: $version"
 
           $root = (Get-Location).Path
-          New-Item -ItemType Directory -Force -Path staging-installer | Out-Null
+          # The two folders are the job's own, outside the checkout (item 4أ),
+          # and Inno is given them in the spelling Windows writes.
+          $source = $env:STAGE -replace '/', '\'
+          $outDir = $env:INSTALLER_OUT -replace '/', '\'
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
-            "/DSourceDir=$root\staging\zprivacy-v1-windows-x86_64" `
-            "/DOutDir=$root\staging-installer" `
+            "/DSourceDir=$source" `
+            "/DOutDir=$outDir" `
             "/DAppVersion=$version" `
             "/DIconFile=$root\apps\flutter_app\windows\runner\resources\app_icon.ico" `
             "packaging\windows\zprivacy.iss"
@@ -372,7 +569,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          file=staging-installer/zprivacy-v1-windows-x86_64-setup.exe
+          file="$INSTALLER_OUT/zprivacy-v1-windows-x86_64-setup.exe"
           [ -f "$file" ] || { echo "no installer was made"; exit 0; }
           {
             echo "### The installer"
@@ -496,7 +693,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zprivacy-v1-windows-x86_64-setup-${{ env.SHORT_SHA }}
-          path: staging-installer
+          path: ${{ env.INSTALLER_OUT }}
           retention-days: 30
           if-no-files-found: error
 
@@ -514,7 +711,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zprivacy-v1-windows-x86_64-folder-${{ env.SHORT_SHA }}
-          path: staging
+          path: ${{ env.STAGE_ROOT }}
           retention-days: 30
           if-no-files-found: error
 
@@ -604,3 +801,22 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+
+      # **The suite's own record travels, not forty lines of it** — 098 item
+      # 4(ب). The step above pipes through `tail -40`, and in the real run that
+      # tail hid sixty-six of seventy-one failures: the summary named the files
+      # it could and the rest was gone with the log's scroll. The JSON is the
+      # whole suite's answer, and it is written to the runner's temp already —
+      # this only hands it over.
+      #
+      # `warn` and not `error`, because a suite that never started writes no
+      # record, and an upload turning that into a second failure would hide the
+      # first — which is the whole fault being fixed here.
+      - name: Upload the Dart suite's own record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dart-tests-windows-${{ env.SHORT_SHA }}
+          path: ${{ runner.temp }}/dart.json
+          retention-days: 30
+          if-no-files-found: warn

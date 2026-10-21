@@ -35,8 +35,9 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 
 const _doc = 'Kunde: Nordstern Consulting GmbH\n'
     'Ansprechpartner: Herr Thomas Müller\n'
@@ -91,7 +92,7 @@ Future<(Ground, Workbench)> _open(WidgetTester tester, String name) async {
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
   });

@@ -61,3 +61,11 @@ protocol. Two of them — posix and ffi — call libc, and they arrive under
 deflates with dart:io's own zlib, so nothing in the saving path reaches
 either one. They are listed because they are in the dependency tree, not
 because they run.
+
+Microsoft Visual C++ Runtime (Windows releases only)
+----------------------------------------------------
+vcruntime140.dll · vcruntime140_1.dll · msvcp140.dll travel beside
+zprivacy.exe in the Windows release, so that the application starts on a
+machine that does not already have the runtime, and nothing is installed
+system-wide. Microsoft's redistribution terms and the reason for the shape are
+in msvc-runtime-NOTICE.txt in this folder.

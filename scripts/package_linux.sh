@@ -155,8 +155,14 @@ done
   # and that parenthesis is this machine again — in a text file this time,
   # which is how the step below found it. The version is the news; where the
   # crate sat on the builder's disk is not.
+  #
+  # **The pattern is any parenthesis at the end, not a Unix one** — 098 item
+  # 4(ج): this read `s| \(/[^)]*\)$||` until the Windows session found
+  # `(D:\a\…)` sitting in the installed build's own copy of this file, which a
+  # leading `/` can never match. One spelling, both platforms, and nothing else
+  # is parenthesised there once ` (*)` has gone.
   ( cd "$ROOT" && cargo tree -p z_core --edges normal --prefix none 2>/dev/null \
-      | sed 's/ (\*)$//' | sed -E 's| \(/[^)]*\)$||' | sort -u | grep -vE '^$' )
+      | sed 's/ (\*)$//' | sed -E 's| \([^)]*\)$||' | sort -u | grep -vE '^$' )
 } > "$STAGE/third-party/rust-crates.txt"
 
 # ---------------------------------------------------------------- build info

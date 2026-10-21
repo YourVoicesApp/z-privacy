@@ -1052,6 +1052,242 @@ else
   skip "G58 the paper counts the ZCFG names the code allows" "no config.rs or no paper"
 fi
 
+# ---------------------------------------------------------------- G60
+# **The Windows release carries the runtime it needs** — 098, after the owner
+# met a clean Windows machine on 20 October where `VCRUNTIME140.dll` was
+# missing and Node's own installer had failed on it.
+#
+# A Flutter application on Windows needs `vcruntime140.dll`,
+# `vcruntime140_1.dll` and `msvcp140.dll`, and `flutter build windows` copies
+# none of them. The shape chosen is Microsoft's «app-local deployment» — the
+# three beside `zprivacy.exe` — because the other shape runs
+# `vc_redist.x64.exe`, which installs machine-wide and asks for an
+# administrator, and this installer promises neither
+# (`PrivilegesRequired=lowest`, per-user).
+#
+# **This is a check on the text, and it says so.** Linux cannot run the
+# Windows job, install the package or load a DLL; what a gate here can do is
+# refuse a workflow that has stopped naming the three files in the step that
+# copies them and in the step that asserts them — which is how this round
+# would quietly come undone, since the copy is one `foreach` away from being
+# edited to two names. The measurement itself lives where the files are made:
+# the assert step prints each version into the run's log, and a missing one
+# fails that job.
+#
+# Three checks: the copy names the three, the assert names the three, and the
+# obligation travels — Microsoft's redistribution notice is in the folder the
+# job copies into every release.
+WINJOB=.github/workflows/windows-core.yml
+RUNTIME_NOTICE=packaging/third-party/msvc-runtime-NOTICE.txt
+G60_DLLS="vcruntime140.dll vcruntime140_1.dll msvcp140.dll"
+
+if [ -f "$WINJOB" ]; then
+  # **Each window ends at the next step, not at a step named here.** Item 3
+  # inserted a step between the assert and the staging, and a boundary spelled
+  # by name had quietly widened the assert's window to include it — a gate
+  # green because it was reading somebody else's lines.
+  G60_COPY=$(awk '
+    /^      - name: The runtime the application needs/ {inside=1; next}
+    inside && /^      - name: / {inside=0}
+    inside && $0 !~ /^[[:space:]]*#/ {print}
+  ' "$WINJOB")
+  G60_ASSERT=$(awk '
+    /^      - name: The three are in the bundle/ {inside=1; next}
+    inside && /^      - name: / {inside=0}
+    inside && $0 !~ /^[[:space:]]*#/ {print}
+  ' "$WINJOB")
+  G60_MISSING=""
+  for dll in $G60_DLLS; do
+    printf '%s\n' "$G60_COPY" | grep -qF "$dll" || G60_MISSING="$G60_MISSING copy:$dll"
+    printf '%s\n' "$G60_ASSERT" | grep -qF "$dll" || G60_MISSING="$G60_MISSING assert:$dll"
+  done
+  if [ -n "$G60_COPY" ] && [ -n "$G60_ASSERT" ] && [ -z "$G60_MISSING" ]; then
+    pass "G60 the Windows job copies the three runtime libraries beside the application and asserts them (read as text: Linux cannot run that job)"
+  else
+    fail "G60 the Windows job no longer names$G60_MISSING — a release that is missing one of them stops on a clean machine with Windows' own dialogue"
+  fi
+else
+  skip "G60 the Windows job carries the runtime" "no $WINJOB in this tree"
+fi
+
+if [ -f "$RUNTIME_NOTICE" ] && grep -q "msvc-runtime-NOTICE.txt" "$WINJOB" 2>/dev/null; then
+  pass "G60 Microsoft's redistribution notice is in the tree and travels with every Windows release"
+else
+  fail "G60 the runtime ships and its notice does not travel: $RUNTIME_NOTICE must exist and the job must copy it"
+fi
+
+# ---------------------------------------------------------------- G61
+# **A release says nothing about its builder, on Windows too** — 098 item 3,
+# from the Windows session's measurement of 20 October: the `z_bridge.dll`
+# installed on the owner's machine carries
+# `C:\Users\runneradmin\.cargo\registry\src\index.crates.io-…` **242
+# times**. The file measured was not that job's output, so this proves the job
+# rather than that file.
+#
+# Two halves, as on Linux: the compiler is told to write relative-looking paths
+# (`--remap-path-prefix`, from `CARGO_HOME` and `RUSTUP_HOME` rather than a
+# typed `$USERPROFILE\.cargo`, because a prefix that does not match removes
+# nothing and says nothing), and then what was built is **searched**. The
+# search runs in the job, on the three files we write, because the artefact is
+# there and not here.
+#
+# **This is a check on the text, and it says so** — the same sentence G60
+# carries. What it can refuse is a job that has stopped naming a needle or a
+# file, and a packaging script whose list has drifted from the job's. They are
+# one list, so they are read as one.
+G61_NEEDLES='runneradmin
+D:\a\
+\.cargo\registry
+/home/'
+G61_OURS="zprivacy.exe z_bridge.dll data/app.so"
+G61_MISSING=""
+
+if [ -f "$WINJOB" ]; then
+  G61_STEP=$(awk '
+    /^      - name: Nothing in the three files we built/ {inside=1; next}
+    inside && /^      - name: / {inside=0}
+    inside && $0 !~ /^[[:space:]]*#/ {print}
+  ' "$WINJOB")
+  printf '%s\n' "$G61_NEEDLES" | while IFS= read -r n; do
+    [ -n "$n" ] || continue
+    printf '%s\n' "$G61_STEP" | grep -qF -- "$n" || printf 'job:%s\n' "$n"
+  done > /tmp/g61.$$
+  for f in $G61_OURS; do
+    printf '%s\n' "$G61_STEP" | grep -qF -- "$f" || printf 'job:%s\n' "$f" >> /tmp/g61.$$
+  done
+  # The remap's own half: read from the variables, not from a typed home.
+  if ! grep -q 'cargo_home="$CARGO_HOME"' "$WINJOB"; then
+    printf 'job:CARGO_HOME\n' >> /tmp/g61.$$
+  fi
+  G61_MISSING=$(tr '\n' ' ' < /tmp/g61.$$)
+  rm -f /tmp/g61.$$
+  if [ -n "$G61_STEP" ] && [ -z "$G61_MISSING" ]; then
+    pass "G61 the Windows job searches the three files it builds for the four paths of the machine that built them (read as text: Linux cannot read that artefact)"
+  else
+    fail "G61 the Windows job no longer names: $G61_MISSING — 242 of one of these needles were measured in an installed library"
+  fi
+else
+  skip "G61 the Windows job proves its own paths" "no $WINJOB in this tree"
+fi
+
+G61_SCRIPT=scripts/package_windows.sh
+if [ -f "$G61_SCRIPT" ]; then
+  G61_LIST=$(grep -n 'for needle in' "$G61_SCRIPT" | head -1)
+  G61_LEFT=""
+  printf '%s\n' "$G61_NEEDLES" | while IFS= read -r n; do
+    [ -n "$n" ] || continue
+    printf '%s\n' "$G61_LIST" | grep -qF -- "$n" || printf 'script:%s\n' "$n"
+  done > /tmp/g61s.$$
+  G61_LEFT=$(tr '\n' ' ' < /tmp/g61s.$$)
+  rm -f /tmp/g61s.$$
+  # `runneradmin` is in the script as the whole home it belongs to, which is
+  # the same needle with its own prefix; asked for by the part that matters.
+  if [ -z "$G61_LEFT" ]; then
+    pass "G61 the packaging script and the job search for the same four paths — one list"
+  else
+    fail "G61 the packaging script's list has drifted from the job's: $G61_LEFT"
+  fi
+fi
+
+# **And the crate list names the crate, not the builder's disk** — 098 item
+# 4(ج). `cargo tree` writes a workspace crate as «z_core v0.1.0 (…)». The Linux
+# script stripped that with `s| \(/[^)]*\)$||`, which needs a leading `/` and
+# therefore could never match `(D:\a\…)` — and the Windows session found
+# exactly that in line 62 of an installed build's own notice. Both generators
+# carry the general form now, and this refuses either of them going back to the
+# Unix-only one: a rule in two spellings is how the second case gets forgotten.
+G61_STRIP='s| \([^)]*\)$||'
+G61_UNIX='s| \(/[^)]*\)$||'
+G61_NOTICE=""
+for f in scripts/package_linux.sh "$WINJOB"; do
+  [ -f "$f" ] || continue
+  # **Comment lines first**: both files now explain the old pattern in prose,
+  # and the first run of this gate dutifully found it there and failed. A
+  # census of what a file *does* may not read what it *says* — G53 and G60
+  # learned the same lesson in this round.
+  G61_DOES=$(grep -vE '^[[:space:]]*#' "$f")
+  printf '%s\n' "$G61_DOES" | grep -qF -- "$G61_STRIP" || G61_NOTICE="$G61_NOTICE $f:no-strip"
+  printf '%s\n' "$G61_DOES" | grep -qF -- "$G61_UNIX" && G61_NOTICE="$G61_NOTICE $f:unix-only"
+done
+if [ -z "$G61_NOTICE" ]; then
+  pass "G61 both crate lists name the crate and not the folder it was built in, in one spelling"
+else
+  fail "G61 a crate list would carry the builder's own path:$G61_NOTICE"
+fi
+
+# ---------------------------------------------------------------- G63
+# **The job stages outside the tree it was built from** — 098 item 4(أ), from
+# the real run 39508181140 on `4bb202f`.
+#
+# `scripts/package_windows.sh` refuses a dirty tree, because an archive built
+# from one cannot be rebuilt by anybody. The staging step made `staging/`
+# **inside** the checkout, so the script met «?? staging/» and refused: no
+# stamp, no zip, no `.sha256`, the installer and the MSIX skipped, the uploads
+# failed. Items 1–3 all ride a release that this red prevented from existing.
+#
+# Neither `ALLOW_DIRTY` nor a `.gitignore` line is the answer — both teach the
+# check to look away from the one thing it is for. So this reads that the
+# staging folders are the runner's own, and that no step builds one inside the
+# workspace again. A check on the text, said so in its sentence, as its two
+# neighbours are.
+if [ -f "$WINJOB" ]; then
+  G63_DOING=$(grep -vE '^[[:space:]]*#' "$WINJOB")
+  # The forms a path **relative to the checkout** takes in this file, named one
+  # by one rather than by a pattern loose enough to catch the definition of the
+  # right answer — which is what the first run of this gate did
+  # (`STAGE=$temp/staging/…` is the fix, not the fault).
+  G63_WRONG=$(printf '%s\n' "$G63_DOING" \
+    | grep -nE '(\.\./\.\./staging|-Path staging|path: staging|=staging[-/]|\$root\\staging)' || true)
+  G63_MISSING=""
+  printf '%s\n' "$G63_DOING" | grep -q 'temp=${RUNNER_TEMP' || G63_MISSING="$G63_MISSING RUNNER_TEMP"
+  printf '%s\n' "$G63_DOING" | grep -q 'STAGE=\$temp/staging' || G63_MISSING="$G63_MISSING STAGE"
+  printf '%s\n' "$G63_DOING" | grep -q 'INSTALLER_OUT=\$temp/staging-installer' \
+    || G63_MISSING="$G63_MISSING INSTALLER_OUT"
+  printf '%s\n' "$G63_DOING" | grep -q 'package_windows.sh "\$STAGE"' \
+    || G63_MISSING="$G63_MISSING the-packaging-call"
+  if [ -z "$G63_WRONG" ] && [ -z "$G63_MISSING" ]; then
+    pass "G63 the Windows job stages under the runner's own temp, so the packaging script's clean-tree law cannot fire on the job's own folder"
+  else
+    [ -n "$G63_MISSING" ] && fail "G63 the Windows job no longer names:$G63_MISSING"
+    [ -n "$G63_WRONG" ] && { fail "G63 a step would stage inside the checkout again:"; printf '        %s\n' "$G63_WRONG"; }
+  fi
+else
+  skip "G63 the Windows job stages outside the tree" "no $WINJOB in this tree"
+fi
+
+# ---------------------------------------------------------------- G64
+# **The Dart suite names the library it speaks through in one place** — 098
+# item 4(ب). Fifty-nine test files each held
+# `const _libPath = 'build/linux/…/libz_bridge.so'`, and on Windows every one
+# of them threw out of its `setUpAll`: seventy-one failures, sixty-six of them
+# hidden behind a `tail -40`, and five more from a `tearDownAll` whose `late`
+# folder was never set because the setUpAll above it had thrown first.
+#
+# One helper chooses by platform now, and this refuses the sixtieth file that
+# would write a path of its own. Comment lines are dropped before counting,
+# because a comment naming the library is prose and this measures what runs.
+DART_TESTS=apps/flutter_app/test
+G64_HELPER=$DART_TESTS/the_bridge_the_tests_speak_through.dart
+if [ -d "$DART_TESTS" ] && [ -f "$G64_HELPER" ]; then
+  G64_OTHERS=$(grep -rn -- 'libz_bridge\.so\|runner/Debug/z_bridge\.dll' "$DART_TESTS" \
+    --include='*.dart' 2>/dev/null \
+    | grep -v "^$G64_HELPER:" \
+    | grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|\*|/\*)' || true)
+  if [ -z "$G64_OTHERS" ]; then
+    pass "G64 the Dart suite asks one place where its bridge is, so the platform is chosen once"
+  else
+    fail "G64 a test names a platform's own library path instead of the one place:"
+    printf '        %s\n' "$G64_OTHERS"
+  fi
+  if grep -q "dart-tests-windows" "$WINJOB" 2>/dev/null; then
+    pass "G64 the Windows job hands over the Dart suite's own record, not forty lines of it"
+  else
+    fail "G64 the Windows job tails the Dart log and uploads no record: sixty-six failures of seventy-one were lost that way"
+  fi
+else
+  skip "G64 the Dart suite names its bridge once" "no $G64_HELPER in this tree"
+fi
+
 # ---------------------------------------------------------------- G56
 # **Every claim this product makes is in one file, with its limit and its
 # proof** — 094, the owner's own order of 19 October 2026: «نجعل ملف مراجعة في

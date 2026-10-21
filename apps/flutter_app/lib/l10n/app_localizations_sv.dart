@@ -520,6 +520,12 @@ class AppLocalizationsSv extends AppLocalizations {
   String get vaultIsNone => 'None';
 
   @override
+  String get yourVaultIsIn => 'Your vault is in';
+
+  @override
+  String get aVaultHereWouldBeIn => 'A vault here would be in';
+
+  @override
   String get openZVault => 'Open Z Vault';
 
   @override

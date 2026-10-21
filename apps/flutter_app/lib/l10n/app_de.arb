@@ -125,6 +125,8 @@
   "vaultIsUnlocked": "Offen",
   "vaultIsLocked": "Verschlossen",
   "vaultIsNone": "Keiner",
+  "yourVaultIsIn": "Ihr Tresor liegt in",
+  "aVaultHereWouldBeIn": "Ein Tresor läge hier in",
   "openZVault": "Z-Tresor öffnen",
   "lockNow": "Jetzt verschließen",
   "openZVaultOrLockItNow": "Z-Tresor öffnen oder jetzt verschließen",

@@ -30,8 +30,9 @@ import 'package:zprivacy/widgets/entity_detail.dart';
 import 'package:zprivacy/widgets/vault_forms.dart';
 import 'package:zprivacy/widgets/why_sheet.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 const _pass = 'ein gutes Passwort für den Test';
 
 /// Real futures do not complete inside `testWidgets`' fake-async zone, and a
@@ -66,7 +67,7 @@ void main() {
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
     dir = Directory('${Directory.systemTemp.path}/zprivacy-vault-screen-$pid');

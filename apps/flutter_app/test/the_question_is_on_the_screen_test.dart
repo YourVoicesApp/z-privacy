@@ -26,8 +26,9 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 
 /// A German letter with a person the salutation proves, so the document has a
 /// token to lend the question.
@@ -87,7 +88,7 @@ Future<(Ground, Workbench)> _open(
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
   });

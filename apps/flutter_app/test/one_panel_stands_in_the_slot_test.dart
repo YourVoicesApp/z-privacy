@@ -36,8 +36,9 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/review.dart';
 import 'package:zprivacy/widgets/tokens.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 const _doc = 'Rechnung für Herrn Thomas Müller, IBAN DE89370400440532013000.';
 
 Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
@@ -53,7 +54,7 @@ Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
   });

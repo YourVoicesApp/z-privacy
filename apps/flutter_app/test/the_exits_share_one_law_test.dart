@@ -49,8 +49,9 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 const _wide = Size(1200, 1000);
 
 /// A letter this build reads as **one** waiting word and two values protected
@@ -175,7 +176,7 @@ Future<({Workbench bench, Ground ground, List<String> bodies, Directory out})> _
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
   });

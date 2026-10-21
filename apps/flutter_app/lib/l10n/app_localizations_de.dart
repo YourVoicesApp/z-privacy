@@ -523,6 +523,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get vaultIsNone => 'Keiner';
 
   @override
+  String get yourVaultIsIn => 'Ihr Tresor liegt in';
+
+  @override
+  String get aVaultHereWouldBeIn => 'Ein Tresor läge hier in';
+
+  @override
   String get openZVault => 'Z-Tresor öffnen';
 
   @override

@@ -1,0 +1,38 @@
+Microsoft Visual C++ Runtime — redistributed with Z Privacy for Windows
+=======================================================================
+
+Three files in this folder beside zprivacy.exe are Microsoft's, not ours:
+
+  vcruntime140.dll
+  vcruntime140_1.dll
+  msvcp140.dll
+
+They are the Visual C++ runtime that any program built with Microsoft's C++
+compiler needs in order to start — and a Windows machine does not always have
+it. On a clean installation, Z Privacy would otherwise stop with Windows' own
+dialogue about a missing DLL before it drew anything.
+
+**Why they travel with the application rather than being installed.** The
+other way is to run Microsoft's `vc_redist.x64.exe`, which installs the
+runtime for the whole machine and asks for an administrator. Z Privacy's
+installer promises neither: it installs for one person, into that person's own
+folder, with no administrator prompt. So the three files are copied beside the
+application — Microsoft calls this «app-local deployment» — and the Windows
+loader finds them there. **Nothing is installed system-wide, and nothing on
+the machine changes outside the application's own folder.**
+
+**The permission.** Microsoft's Visual Studio redistribution terms allow these
+files to be distributed with an application built with their tools; the list of
+redistributable files is published by Microsoft with the toolset (`redist.txt`
+in the Visual C++ redistributable folder of the build machine). The copies in
+this release come from the build machine's own Visual Studio installation, from
+the folder its `VCToolsRedistDir` names, so they are the versions that compiler
+expects.
+
+The file version each copy carries is printed in the build log of the run that
+made this release, and `BUILD-INFO.txt` beside this folder names that run's
+commit.
+
+These three files are redistributed unmodified. Everything about Z Privacy
+itself — its licence, its source, its obligations — is in the files beside this
+one.

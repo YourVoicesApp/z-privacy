@@ -5953,8 +5953,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Settings dco_decode_settings(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 11)
-      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 12)
+      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return Settings(
       originalPanePercent: dco_decode_u_32(arr[0]),
       columnsInStep: dco_decode_bool(arr[1]),
@@ -5967,6 +5967,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       language: dco_decode_String(arr[8]),
       firstRunDone: dco_decode_bool(arr[9]),
       sessionOnly: dco_decode_bool(arr[10]),
+      dataDir: dco_decode_opt_String(arr[11]),
     );
   }
 
@@ -8165,6 +8166,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_language = sse_decode_String(deserializer);
     var var_firstRunDone = sse_decode_bool(deserializer);
     var var_sessionOnly = sse_decode_bool(deserializer);
+    var var_dataDir = sse_decode_opt_String(deserializer);
     return Settings(
       originalPanePercent: var_originalPanePercent,
       columnsInStep: var_columnsInStep,
@@ -8177,6 +8179,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       language: var_language,
       firstRunDone: var_firstRunDone,
       sessionOnly: var_sessionOnly,
+      dataDir: var_dataDir,
     );
   }
 
@@ -10127,6 +10130,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.language, serializer);
     sse_encode_bool(self.firstRunDone, serializer);
     sse_encode_bool(self.sessionOnly, serializer);
+    sse_encode_opt_String(self.dataDir, serializer);
   }
 
   @protected

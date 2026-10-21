@@ -35,8 +35,9 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 
 /// A document with something for each layer to find, so the band's numbers are
 /// not all zero — a screen that only ever shows 0 proves nothing.
@@ -50,7 +51,7 @@ void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
       throw StateError(
-        'no $_libPath — run `flutter build linux --debug` first',
+        buildTheBridgeFirst,
       );
     }
     // The runner is started with LD_LIBRARY_PATH pointing at the built bundle.

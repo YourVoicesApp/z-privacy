@@ -27,8 +27,9 @@ import 'package:zprivacy/widgets/why_sheet.dart';
 
 import 'drawn_document.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 
 /// One name in three places, and a telephone number the Swedish pack proves
 /// from its label — so the document holds both a value a person must take by
@@ -60,7 +61,7 @@ void main() {
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
     dir = Directory('${Directory.systemTemp.path}/zprivacy-selection-$pid');

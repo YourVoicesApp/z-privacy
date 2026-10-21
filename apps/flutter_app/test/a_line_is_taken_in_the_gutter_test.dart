@@ -46,8 +46,9 @@ import 'package:zprivacy/widgets/why_sheet.dart';
 import 'the_folder_lets_go.dart';
 
 import 'drawn_document.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 
 const _band = ValueKey<String>('held-lines-band');
 
@@ -201,7 +202,7 @@ String _bandSays(WidgetTester tester) {
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
   });

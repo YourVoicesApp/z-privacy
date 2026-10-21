@@ -62,8 +62,9 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/connect_form.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 const _pass = 'ein gutes Passwort für die Einstellungen';
 const _doc = 'E-Mail: a.weber@nordstern.de';
 
@@ -145,7 +146,7 @@ Future<Workbench> _openSheet(
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
   });
