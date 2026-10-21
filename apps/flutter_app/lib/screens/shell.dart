@@ -12,6 +12,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/the_clipboard.dart';
 import 'package:zprivacy/screens/first_run.dart';
@@ -591,16 +592,17 @@ class _ShellState extends State<ZShell> {
   /// case the sentence is already on the screen when this returns.
   Future<({XFile file, DocumentKind kind})?> _aFileToRead() async {
     final file = await openFile(
-      acceptedTypeGroups: const [
-        XTypeGroup(label: 'Documents', extensions: ['pdf', 'docx', 'txt', 'md', 'csv']),
+      acceptedTypeGroups: [
+        XTypeGroup(
+            label: sentences.fileKindDocuments,
+            extensions: const ['pdf', 'docx', 'txt', 'md', 'csv']),
       ],
     );
     if (file == null || !mounted) return null;
     final kind = _kinds[file.name.split('.').last.toLowerCase()];
     if (kind == null) {
       setState(() {
-        _trouble = 'This build reads PDF, Word and text files. '
-            '«${theirOwnWord(file.name)}» is none of those.';
+        _trouble = sentences.onlyTheseKindsAreRead(theirOwnWord(file.name));
         // Nothing was read, so the core has nothing to report about it.
         _troubleReport = null;
       });

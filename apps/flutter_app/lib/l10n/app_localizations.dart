@@ -3464,6 +3464,474 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Model'**
   String get modelLabel;
+
+  /// The label of the file chooser's type group — the word the operating system's own dialog shows above «pdf, docx, txt, md, csv». It is a sentence the person reads, in a window this app does not draw.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get fileKindDocuments;
+
+  /// A file of a kind no reader here has. The guillemets are the sentence's; the caller isolates the file name with `theirOwnWord`, because a right-to-left name must not reorder the words around it.
+  ///
+  /// In en, this message translates to:
+  /// **'This build reads PDF, Word and text files. «{name}» is none of those.'**
+  String onlyTheseKindsAreRead(String name);
+
+  /// Above the languages Z can read with general rules but has no name list for yet. It stands under a divider in the language list, and it is the row's own promise about how little it knows.
+  ///
+  /// In en, this message translates to:
+  /// **'General rules only — no dictionary yet'**
+  String get generalRulesOnlyNoDictionary;
+
+  /// The head of the question asked once in a session's life, when a document is opened and the session has no language yet (rule 57c).
+  ///
+  /// In en, this message translates to:
+  /// **'Which language is this text in?'**
+  String get whichLanguageIsThisText;
+
+  /// Under the language question: what choosing a language decides, and that the choice is the session's and is asked only once.
+  ///
+  /// In en, this message translates to:
+  /// **'Z reads it with that language’s habits: how people are greeted, how a company is written, how a customer number looks. This is the session’s language from now on, and you will not be asked again in it.'**
+  String get theSessionLanguageExplained;
+
+  /// The head control of the line gutter, which takes every line of the document. The number is the core's own count of lines, and the plural is ICU's because German declines the noun.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{All 1 line} other{All {count} lines}}'**
+  String allLinesHeld(int count);
+
+  /// The state of a value that is behind its token on this screen — the resting state of the reveal control.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden'**
+  String get revealHidden;
+
+  /// A value shown on the screen for a moment, with the seconds left before it hides itself again. Revealing changes nothing in the Safe column — what leaves the device is the same string before and after.
+  ///
+  /// In en, this message translates to:
+  /// **'Revealed · {seconds}s'**
+  String revealedForSeconds(int seconds);
+
+  /// 076 — the act that takes the capitalised word in front of the selection as well, for a first name standing before a surname.
+  ///
+  /// In en, this message translates to:
+  /// **'Also the word before'**
+  String get alsoTheWordBefore;
+
+  /// The hint under «Also the word before», saying what the press would add.
+  ///
+  /// In en, this message translates to:
+  /// **'Takes the capitalised word in front of the selection too'**
+  String get alsoTheWordBeforeHint;
+
+  /// Takes back the last protection act, with every token that act minted.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo protection'**
+  String get undoProtection;
+
+  /// The hint on «Undo protection» when no act of this session can be taken back.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to undo'**
+  String get nothingToUndoHint;
+
+  /// Reads the document again with what the vault has learned since it was opened.
+  ///
+  /// In en, this message translates to:
+  /// **'Rescan'**
+  String get rescanAct;
+
+  /// Walking through the things that wait for a word, or the places a search found: which one of how many. Drawn on the act itself, so the number is where the press is.
+  ///
+  /// In en, this message translates to:
+  /// **'Next {at}/{total}'**
+  String nextOfWaitingCount(int at, int total);
+
+  /// Opens the review of everything the scan found and left waiting. Also the head of that sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get reviewAct;
+
+  /// Opens the review of names this document uses that Z does not know yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Names'**
+  String get namesAct;
+
+  /// The hint on «Names» when no name in this document is waiting for a decision.
+  ///
+  /// In en, this message translates to:
+  /// **'Z knows every name this document uses'**
+  String get zKnowsEveryNameHere;
+
+  /// Opens the list of tokens standing in this session's text. «Token» is the same word in German.
+  ///
+  /// In en, this message translates to:
+  /// **'Tokens'**
+  String get tokensAct;
+
+  /// The hint on «Tokens» while the session has minted none. The sheet's own empty line is a sentence of its own, with a full stop, because it stands alone on a panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is protected yet'**
+  String get nothingIsProtectedYetHint;
+
+  /// 085 — a hand selection that ends inside one protected item. Said before the press, so the person knows what the act would really take.
+  ///
+  /// In en, this message translates to:
+  /// **'That selection cuts into something already protected. Protect would take the whole item instead.'**
+  String get selectionCutsIntoProtected;
+
+  /// The same warning across more than one protected item.
+  ///
+  /// In en, this message translates to:
+  /// **'That selection spans {count} protected items. Protect would take each of them whole, under its own token.'**
+  String selectionSpansProtectedItems(int count);
+
+  /// The one act that replaces a value with a token. 083 ruling 1: one press and it is done, in every state of the button.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect'**
+  String get protectAct;
+
+  /// The hint on «Protect» while nothing is selected — what to do, not what is wrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Select text, then Protect'**
+  String get selectTextThenProtect;
+
+  /// The hint on «Protect» when the selection is already protected; the card under it says as what.
+  ///
+  /// In en, this message translates to:
+  /// **'Already protected — see below'**
+  String get alreadyProtectedSeeBelow;
+
+  /// The act's own words when the selection snaps out to whole protected items — the label says what the press will do rather than what was asked for.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect whole items'**
+  String get protectWholeItems;
+
+  /// The answer to an undo the core refused because no act was open.
+  ///
+  /// In en, this message translates to:
+  /// **'There was nothing to undo.'**
+  String get thereWasNothingToUndo;
+
+  /// One undo, with every token that act had minted, named. The core hands back the list and not the first of them.
+  ///
+  /// In en, this message translates to:
+  /// **'Took back {tokens}.'**
+  String tookBackTokens(String tokens);
+
+  /// An undo of an act that had protected a value everywhere it stood.
+  ///
+  /// In en, this message translates to:
+  /// **'Took back {tokens}, in all {places} places — it went in as one act, so it came out as one.'**
+  String tookBackTokensInPlaces(String tokens, int places);
+
+  /// An undo of a protection that had also created an identity: the token goes, the identity stays, and the sentence says so rather than leaving it to be discovered.
+  ///
+  /// In en, this message translates to:
+  /// **'Took back {tokens}. The identity {identity} is still in the vault.'**
+  String tookBackTokensIdentityStays(String tokens, String identity);
+
+  /// What a rescan found, in the core's own four numbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned again: {auto} protected automatically · {byYou} by you · {waiting} need your word · {normal} normal.'**
+  String scannedAgainReport(int auto, int byYou, int waiting, int normal);
+
+  /// The card under «Protect» when the selection is already protected. The tokens stay in the mono face, so the sentence is asked for with a mark where they go and drawn in two runs — see `aroundTheValue`.
+  ///
+  /// In en, this message translates to:
+  /// **'Already protected as {tokens}.'**
+  String alreadyProtectedAsTokens(String tokens);
+
+  /// The joiner between the last two of a short list of tokens, as a sentence reads them: «T1 and T2». It is language and not punctuation — German joins with « und » — so it is a key and not a literal in the file that joins.
+  ///
+  /// In en, this message translates to:
+  /// **' and '**
+  String get andJoin;
+
+  /// The same card where the vault or a rule is what protected the value: the whole line, so a translator can move «from …» where their language puts it. `{detail}` is the vault's own detail with its separator, or empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Already protected as {tokens}, from {source}{detail}.'**
+  String alreadyProtectedAsFrom(String tokens, String source, String detail);
+
+  /// The head of the panel that shows a document which has come back from a model: which of its tokens were put back, and which stayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Read back'**
+  String get readBackPanel;
+
+  /// Above the list of tokens the read-back could not resolve — they belong to another session, so they stay as they are.
+  ///
+  /// In en, this message translates to:
+  /// **'What stayed a token'**
+  String get whatStayedAToken;
+
+  /// The core refused a search. `{why}` is the core's own reason, in the core's English — 092 does not move the core's language into this list.
+  ///
+  /// In en, this message translates to:
+  /// **'The search was refused: {why}'**
+  String theSearchWasRefused(String why);
+
+  /// The placeholder inside the find field, saying what the field is for.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a word in this document'**
+  String get findAWordInThisDocument;
+
+  /// Beside the word the field is offering to complete: the Tab key accepts it. «Tab» is the key's own name and stays.
+  ///
+  /// In en, this message translates to:
+  /// **'Tab takes it'**
+  String get tabTakesIt;
+
+  /// The act that runs the search over the open document.
+  ///
+  /// In en, this message translates to:
+  /// **'Find'**
+  String get findAct;
+
+  /// A search that found nothing. The caller isolates the searched word with `theirOwnWord`.
+  ///
+  /// In en, this message translates to:
+  /// **'«{word}» is not in this document'**
+  String notInThisDocument(String word);
+
+  /// How many of the places a search found are already protected. A tally beside the other two, so the three read as one line.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} protected'**
+  String countProtected(Object count);
+
+  /// How many of the places a search found are waiting for the person's word.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} waiting'**
+  String countWaiting(Object count);
+
+  /// How many of the places a search found stand in the clear — nothing protects them and nothing has offered to.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} in the clear'**
+  String countInTheClear(Object count);
+
+  /// A search whose places fall inside words the scan has offered but nobody has answered. Protect does not take them — the review does — and the sentence says so before the press.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One place is} other{{count} places are}} inside words that still wait for your word: {list}. Protect leaves those to the review.'**
+  String placesInsideWaitingWords(int count, String list);
+
+  /// Walks the screen to the first place the search found. **Not one word of it has three letters**, which is why the census could not see it as a literal — it is a sentence all the same.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to it'**
+  String get goToIt;
+
+  /// Takes the protection off this one place, leaving every other place of the same value as it is.
+  ///
+  /// In en, this message translates to:
+  /// **'Un-protect here'**
+  String get unProtectHere;
+
+  /// Takes the protection off every place of this value in the open session, with the count of what that means.
+  ///
+  /// In en, this message translates to:
+  /// **'Un-protect in this session ({places} places)'**
+  String unProtectInThisSession(int places);
+
+  /// Under the review's head when the scan left nothing open.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is waiting for you.'**
+  String get nothingIsWaitingForYou;
+
+  /// How many findings the review still has to be answered. The house's own `plural()` built this from a number and an English noun, which German cannot take.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One thing is waiting for your word.} other{{count} things are waiting for your word.}}'**
+  String thingsWaitingForYourWord(int count);
+
+  /// The review's empty state when the scan found nothing at all — which is not the same as having found things and had them all answered.
+  ///
+  /// In en, this message translates to:
+  /// **'The scan found nothing in this document.'**
+  String get theScanFoundNothingHere;
+
+  /// The review's empty state when everything the scan found has been answered: it points back at the text rather than leaving an empty panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is waiting. What is protected is in the text, marked where it stands.'**
+  String get nothingIsWaitingWhatIsProtected;
+
+  /// Which of the four sources found this value. `{source}` is itself a sentence from this list, so it arrives already in the reader's language and with its own capital — it is **not** lowercased by the caller any more, because a German noun that loses its capital is misspelt.
+  ///
+  /// In en, this message translates to:
+  /// **'found by {source}'**
+  String foundBySource(String source);
+
+  /// The tag on a finding or a token whose state a person chose, as against one a rule or the vault decided.
+  ///
+  /// In en, this message translates to:
+  /// **'you decided'**
+  String get youDecided;
+
+  /// Where in the document a finding stands. The pilcrow is a symbol and the same in every language.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} · ¶{paragraph}'**
+  String pageAndParagraph(int page, int paragraph);
+
+  /// How many places in the document hold this same value — what one press would settle.
+  ///
+  /// In en, this message translates to:
+  /// **'in {count} places'**
+  String inPlacesCount(int count);
+
+  /// More than one identity in the vault holds this value, so the review says so rather than choosing one.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{One identity claims it} other{{count} identities claim it}}'**
+  String identitiesClaimIt(int count);
+
+  /// The head of the question asked before «Skip all» — the one act in the review that sends words as they are written.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave {count} words in the clear?'**
+  String leaveWordsInTheClearQuestion(int count);
+
+  /// What «leave them in the clear» really means, said before the press and not after it.
+  ///
+  /// In en, this message translates to:
+  /// **'All {count} of them will be sent exactly as they are written. Z will not replace any of them, in this document or in the request that leaves this computer.'**
+  String leaveAllInTheClearExplained(int count);
+
+  /// The act that confirms the question above. It repeats the number, because this is the press that cannot be taken back by itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes — leave all {count} in the clear'**
+  String yesLeaveAllInTheClear(int count);
+
+  /// Answers every open finding in the review with «protect», in one act.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect all'**
+  String get protectAll;
+
+  /// Leaves every open finding in the clear, after the question that says what that means.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip all'**
+  String get skipAll;
+
+  /// Answers one finding with «this is not a value to hide» — the other half of the pair beside «Protect».
+  ///
+  /// In en, this message translates to:
+  /// **'Leave it'**
+  String get leaveIt;
+
+  /// The head of the panel listing the tokens standing in this session's text.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Z tokens'**
+  String get activeZTokens;
+
+  /// The token panel's own empty line. It carries a full stop because it stands alone on the panel, where the hint on the act that opens it does not.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is protected yet.'**
+  String get nothingIsProtectedYetSentence;
+
+  /// How much this session has protected, counted in values and not in places.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 value stands} other{{count} values stand}} behind a token in this session.'**
+  String valuesStandBehindTokens(int count);
+
+  /// Under the token panel's empty line: what will fill it, so the panel is not a dead end.
+  ///
+  /// In en, this message translates to:
+  /// **'A token appears here the moment something is protected.'**
+  String get aTokenAppearsWhenProtected;
+
+  /// The promise above the reveal controls: looking at a value is not the same as sending it. The one sentence in this panel a person might otherwise have to guess at.
+  ///
+  /// In en, this message translates to:
+  /// **'Revealing shows a value on this screen for a moment. It changes nothing in the Safe column — what leaves the device is the same string before and after.'**
+  String get revealingChangesNothing;
+
+  /// Puts the token itself on the clipboard — the token, never the value behind it.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the token'**
+  String get copyTheToken;
+
+  /// A protection that holds for this one place and nothing else (Scope.once).
+  ///
+  /// In en, this message translates to:
+  /// **'Just here'**
+  String get scopeJustHere;
+
+  /// A protection that holds everywhere in the open session (Scope.conversation).
+  ///
+  /// In en, this message translates to:
+  /// **'This session'**
+  String get scopeThisSession;
+
+  /// A protection the vault keeps under one client profile (Scope.profile).
+  ///
+  /// In en, this message translates to:
+  /// **'Remembered for this client'**
+  String get scopeRememberedForClient;
+
+  /// A protection the vault keeps for every session and every client (Scope.always).
+  ///
+  /// In en, this message translates to:
+  /// **'Remembered everywhere'**
+  String get scopeRememberedEverywhere;
+
+  /// The default label of the act that copies a report — what the scan found, what a read-back resolved — as text.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy report'**
+  String get copyReport;
+
+  /// The tooltip on the session chip: which session is open, and the rule that its names belong to it alone (rule 58).
+  ///
+  /// In en, this message translates to:
+  /// **'Session {number} · the names in this work are this session’s'**
+  String sessionNamesAreThisSessions(int number);
+
+  /// Where more than one provider is connected and each has its own model: the chip says the choice is per provider rather than naming one.
+  ///
+  /// In en, this message translates to:
+  /// **'As each provider is configured'**
+  String get asEachProviderIsConfigured;
+
+  /// The model chip when nothing is connected to answer.
+  ///
+  /// In en, this message translates to:
+  /// **'No AI connected'**
+  String get noAiConnected;
+
+  /// Where to go to connect one — the tooltip says the way rather than only the state.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect an AI in Settings'**
+  String get connectAnAiInSettings;
+
+  /// The tooltip on the model chip when a choice is there to be made.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which model answers'**
+  String get chooseWhichModelAnswers;
 }
 
 class _AppLocalizationsDelegate

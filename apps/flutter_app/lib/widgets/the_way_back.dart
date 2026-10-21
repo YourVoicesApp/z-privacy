@@ -15,6 +15,7 @@
 
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -48,7 +49,7 @@ class TheReading extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Read back', style: Zc.h2),
+              Text(sentences.readBackPanel, style: Zc.h2),
               const SizedBox(height: 6),
               Text(whatCameBack(seen) ?? '', style: Zc.small),
               const SizedBox(height: 14),
@@ -94,7 +95,7 @@ class TheReading extends StatelessWidget {
                       // second count is a second thing to keep true.
                       if (seen.unresolved.isNotEmpty) ...[
                         const SizedBox(height: 14),
-                        const Text('What stayed a token', style: Zc.tiny),
+                        Text(sentences.whatStayedAToken, style: Zc.tiny),
                         const SizedBox(height: 6),
                         Wrap(
                           spacing: 8,
@@ -121,7 +122,7 @@ class TheReading extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   ZButton(
-                    label: 'Close',
+                    label: sentences.close,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],

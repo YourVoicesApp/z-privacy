@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/widgets/conversation_view.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -271,7 +272,8 @@ class Trouble extends StatelessWidget {
 /// the clipboard cannot differ from what the core would say. The button only
 /// says whether it has been pressed.
 class CopyReportButton extends StatefulWidget {
-  const CopyReportButton({super.key, required this.onCopy, this.label = 'Copy report', this.compact = false});
+  CopyReportButton({super.key, required this.onCopy, String? label, this.compact = false})
+      : label = label ?? sentences.copyReport;
 
   final VoidCallback onCopy;
   final String label;
@@ -303,14 +305,14 @@ class _CopyReportButtonState extends State<CopyReportButton> {
 
     if (widget.compact) {
       return Tooltip(
-        message: _done ? 'Copied' : widget.label,
+        message: _done ? sentences.copied : widget.label,
         child: TextButton(onPressed: press, style: style, child: icon),
       );
     }
     return TextButton.icon(
       onPressed: press,
       icon: icon,
-      label: Text(_done ? 'Copied' : widget.label, style: Zc.small),
+      label: Text(_done ? sentences.copied : widget.label, style: Zc.small),
       style: style,
     );
   }
@@ -408,7 +410,7 @@ class ChoiceBubble extends StatelessWidget {
                   const Spacer(),
                   // What one press settles, from the core. 041-B counts it.
                   if (finding.occurrences > 1)
-                    Text('in ${finding.occurrences} places', style: Zc.tiny.copyWith(color: Zc.clay)),
+                    Text(sentences.inPlacesCount(finding.occurrences), style: Zc.tiny.copyWith(color: Zc.clay)),
                 ],
               ),
               const SizedBox(height: 5),
@@ -420,7 +422,7 @@ class ChoiceBubble extends StatelessWidget {
                 children: [
                   _BubbleAct(
                     key: protectKey,
-                    label: 'Protect',
+                    label: sentences.protectAct,
                     primary: true,
                     onPressed: () => onAnswer(FindingAnswer.protect),
                   ),
@@ -431,7 +433,7 @@ class ChoiceBubble extends StatelessWidget {
                   // «Lindqvist» is one stop and not twelve (ruling 7).
                   _BubbleAct(
                     key: leaveKey,
-                    label: 'Leave it',
+                    label: sentences.leaveIt,
                     onPressed: () => onAnswer(FindingAnswer.notSensitive),
                   ),
                 ],
@@ -527,7 +529,7 @@ class TheOpenSession extends StatelessWidget {
     return Tooltip(
       // The number is the identity and never moves; the name is the handle a
       // person chose. Both, because a renamed session is still that one.
-      message: 'Session ${row.number} · the names in this work are this session’s',
+      message: sentences.sessionNamesAreThisSessions(row.number),
       child: InkWell(
         key: ConversationView.door,
         onTap: () => showConversation(context, row, bench: bench),
@@ -624,8 +626,8 @@ class TheModelThatAnswers extends StatelessWidget {
         : connected.length == 1
             ? _nameOf(connected.single.model)
             : connected.length > 1
-                ? 'As each provider is configured'
-                : 'No AI connected';
+                ? sentences.asEachProviderIsConfigured
+                : sentences.noAiConnected;
     final face = Container(
       padding: const EdgeInsets.fromLTRB(10, 5, 8, 5),
       decoration: Zc.panel(fill: Zc.card, edge: Zc.line, radius: 20),
@@ -664,8 +666,8 @@ class TheModelThatAnswers extends StatelessWidget {
       // a single way in is the opposite of that.
       return Tooltip(
         message: onSettings == null
-            ? 'No provider is connected'
-            : 'Connect an AI in Settings',
+            ? sentences.noProviderIsConnected
+            : sentences.connectAnAiInSettings,
         child: InkWell(
           key: mark,
           borderRadius: BorderRadius.circular(20),
@@ -676,7 +678,7 @@ class TheModelThatAnswers extends StatelessWidget {
     }
     return PopupMenuButton<String>(
       key: mark,
-      tooltip: 'Choose which model answers',
+      tooltip: sentences.chooseWhichModelAnswers,
       onSelected: bench.chooseModel,
       itemBuilder: (_) => [
         for (final m in reachable)

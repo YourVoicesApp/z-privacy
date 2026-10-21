@@ -9,6 +9,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/the_clipboard.dart';
 
 import 'package:zprivacy/core/messages.dart';
@@ -73,20 +74,19 @@ class _TokensPanelState extends State<TokensPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Eyebrow('Active Z tokens'),
+                      Eyebrow(sentences.activeZTokens),
                       const SizedBox(height: 4),
                       Text(
                         tokens.isEmpty
-                            ? 'Nothing is protected yet.'
-                            : '${tokens.length} ${tokens.length == 1 ? "value stands" : "values stand"} '
-                                'behind a token in this session.',
+                            ? sentences.nothingIsProtectedYetSentence
+                            : sentences.valuesStandBehindTokens(tokens.length),
                         style: Zc.small,
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Close',
+                  tooltip: sentences.close,
                   icon: const Icon(Icons.close, size: 18),
                   color: Zc.ink3,
                   onPressed: () => bench.openTokens(false),
@@ -97,10 +97,10 @@ class _TokensPanelState extends State<TokensPanel> {
           Container(height: 1, color: Zc.lineSoft),
           Expanded(
             child: tokens.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(20),
+                ? Padding(
+                    padding: const EdgeInsets.all(20),
                     child: Text(
-                      'A token appears here the moment something is protected.',
+                      sentences.aTokenAppearsWhenProtected,
                       style: Zc.small,
                     ),
                   )
@@ -117,8 +117,7 @@ class _TokensPanelState extends State<TokensPanel> {
               border: Border(top: BorderSide(color: Zc.lineSoft)),
             ),
             child: Text(
-              'Revealing shows a value on this screen for a moment. It changes nothing in '
-              'the Safe column — what leaves the device is the same string before and after.',
+              sentences.revealingChangesNothing,
               style: Zc.tiny.copyWith(letterSpacing: 0),
             ),
           ),
@@ -155,7 +154,7 @@ class _TokenRow extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Copy the token',
+                tooltip: sentences.copyTheToken,
                 icon: const Icon(Icons.copy_all_outlined, size: 15),
                 color: Zc.ink4,
                 visualDensity: VisualDensity.compact,
@@ -177,13 +176,13 @@ class _TokenRow extends StatelessWidget {
               _Tag(sourceName(row.source), tint),
               // Who found it and who decided it are two facts, and the panel
               // shows both rather than letting one stand for the other.
-              if (row.decided) _Tag('you decided', Zc.clay),
+              if (row.decided) _Tag(sentences.youDecided, Zc.clay),
               _Tag(
                 switch (row.scope) {
-                  Scope.once => 'Just here',
-                  Scope.conversation => 'This session',
-                  Scope.profile => 'Remembered for this client',
-                  Scope.always => 'Remembered everywhere',
+                  Scope.once => sentences.scopeJustHere,
+                  Scope.conversation => sentences.scopeThisSession,
+                  Scope.profile => sentences.scopeRememberedForClient,
+                  Scope.always => sentences.scopeRememberedEverywhere,
                 },
                 Zc.ink4,
               ),
@@ -196,7 +195,7 @@ class _TokenRow extends StatelessWidget {
           const SizedBox(height: 9),
           if (shown == null)
             ZButton(
-              label: 'Reveal',
+              label: sentences.reveal,
               icon: Icons.visibility_outlined,
               onPressed: () => bench.reveal(row.token),
             )
@@ -212,7 +211,7 @@ class _TokenRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 ZButton(
-                  label: 'Hide',
+                  label: sentences.hide,
                   icon: Icons.visibility_off_outlined,
                   onPressed: () => bench.hideToken(row.token),
                 ),

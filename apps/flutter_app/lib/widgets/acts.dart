@@ -10,6 +10,7 @@ import 'package:zprivacy/core/going_to_a_word.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/protecting.dart';
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
@@ -81,19 +82,19 @@ class ActsBar extends StatelessWidget {
                   state != ProtectState.known &&
                   state != ProtectState.alreadyOurs)
                 ZButton(
-                  label: 'Also the word before',
+                  label: sentences.alsoTheWordBefore,
                   icon: Icons.chevron_left,
                   onPressed: bench.busy ? null : () => unawaited(bench.alsoTakeTheWordBefore()),
-                  hint: 'Takes the capitalised word in front of the selection too',
+                  hint: sentences.alsoTheWordBeforeHint,
                 ),
               ZButton(
-                label: 'Undo protection',
+                label: sentences.undoProtection,
                 icon: Icons.undo,
                 onPressed: bench.canUndo ? () => _undo(context) : null,
-                hint: bench.canUndo ? null : 'Nothing to undo',
+                hint: bench.canUndo ? null : sentences.nothingToUndoHint,
               ),
               ZButton(
-                label: 'Rescan',
+                label: sentences.rescanAct,
                 icon: Icons.refresh,
                 onPressed: bench.busy ? null : () => _rescan(context),
               ),
@@ -113,7 +114,7 @@ class ActsBar extends StatelessWidget {
               // nothing is waiting still looks like something is.
               if (waiting.isNotEmpty)
                 ZButton(
-                  label: walking ? 'Next ${at + 1}/${waiting.length}' : 'Review',
+                  label: walking ? sentences.nextOfWaitingCount(at + 1, waiting.length) : sentences.reviewAct,
                   icon: walking ? Icons.east : Icons.fact_check_outlined,
                   tint: Zc.amber,
                   badge: walking ? null : waiting.length,
@@ -123,7 +124,7 @@ class ActsBar extends StatelessWidget {
               // how many decisions are waiting — and with none waiting it is
               // gone, not zero, like the one beside it.
               ZButton(
-                label: 'Names',
+                label: sentences.namesAct,
                 icon: Icons.person_search_outlined,
                 tint: bench.openCandidates.isNotEmpty ? Zc.river : null,
                 badge: bench.openCandidates.isEmpty ? null : bench.openCandidates.length,
@@ -133,15 +134,15 @@ class ActsBar extends StatelessWidget {
                         ? bench.closeNameReview()
                         : bench.openNameReview(),
                 hint: bench.openCandidates.isEmpty
-                    ? 'Z knows every name this document uses'
+                    ? sentences.zKnowsEveryNameHere
                     : null,
               ),
               ZButton(
-                label: 'Tokens',
+                label: sentences.tokensAct,
                 icon: Icons.key_outlined,
                 badge: bench.tokens.isEmpty ? null : bench.tokens.length,
                 onPressed: bench.tokens.isEmpty ? null : () => bench.openTokens(bench.panel != OpenPanel.tokens),
-                hint: bench.tokens.isEmpty ? 'Nothing is protected yet' : null,
+                hint: bench.tokens.isEmpty ? sentences.nothingIsProtectedYetHint : null,
               ),
             ],
           ),
@@ -153,10 +154,8 @@ class ActsBar extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               v!.snapsTo.length == 1
-                  ? 'That selection cuts into something already protected. Protect would take the '
-                      'whole item instead.'
-                  : 'That selection spans ${v.snapsTo.length} protected items. Protect would take '
-                      'each of them whole, under its own token.',
+                  ? sentences.selectionCutsIntoProtected
+                  : sentences.selectionSpansProtectedItems(v.snapsTo.length),
               style: Zc.small.copyWith(color: Zc.amber, fontWeight: FontWeight.w600),
             ),
           ],
@@ -169,16 +168,16 @@ class ActsBar extends StatelessWidget {
   Widget _protect(BuildContext context, ProtectState state, SelectionView? v) {
     return switch (state) {
       // DISABLED — and the hint says what to do about it.
-      ProtectState.disabled => const ZButton(
-          label: 'Protect',
+      ProtectState.disabled => ZButton(
+          label: sentences.protectAct,
           filled: true,
-          hint: 'Select text, then Protect',
+          hint: sentences.selectTextThenProtect,
         ),
       // KNOWN — no dialog. The only act offered is Undo, above.
-      ProtectState.known => const ZButton(
-          label: 'Protect',
+      ProtectState.known => ZButton(
+          label: sentences.protectAct,
           filled: true,
-          hint: 'Already protected — see below',
+          hint: sentences.alreadyProtectedSeeBelow,
         ),
       // ALREADY OURS — **079 rule 5**. The selection is standing on a token
       // this program put there, in a document that has come back. A press would
@@ -192,13 +191,13 @@ class ActsBar extends StatelessWidget {
       // now, and a list that answers in the language the app is in cannot be
       // a compile-time constant. The widget is the same widget.
       ProtectState.alreadyOurs => ZButton(
-          label: 'Protect',
+          label: sentences.protectAct,
           filled: true,
           hint: theTokenIsAlreadyOurs,
         ),
       // SNAPS — it will act, but on whole items, and it says so first.
       ProtectState.snaps => ZButton(
-          label: 'Protect whole items',
+          label: sentences.protectWholeItems,
           filled: true,
           badge: v!.snapsTo.length,
           onPressed: () => _press(context),
@@ -207,7 +206,7 @@ class ActsBar extends StatelessWidget {
       // opens; the badge says how many places this one press settles, which is
       // what «Protect all matches» used to be a second button for.
       _ => ZButton(
-          label: 'Protect',
+          label: sentences.protectAct,
           filled: true,
           badge: (v?.matches ?? 0) > 1 ? v!.matches : null,
           onPressed: () => _press(context),
@@ -233,7 +232,7 @@ class ActsBar extends StatelessWidget {
     final outcome = await bench.undo();
     if (outcome == null) return;
     onSay(switch (outcome) {
-      UndoOutcome_NothingToUndo() => 'There was nothing to undo.',
+      UndoOutcome_NothingToUndo() => sentences.thereWasNothingToUndo,
       // **Every token the act uncovered, named** — since 15 October the core
       // hands back the list rather than the first of them: one act can hold
       // several (a column takes one cell per held line, and «Stefan Keller» is
@@ -241,9 +240,10 @@ class ActsBar extends StatelessWidget {
       // sentence true of one.
       UndoOutcome_Undone(:final tokens, :final places, :final createdEntity) => createdEntity == null
           ? (places == 1
-              ? 'Took back ${tokens.join(" and ")}.'
-              : 'Took back ${tokens.join(" and ")}, in all $places places — it went in as one act, so it came out as one.')
-          : 'Took back ${tokens.join(" and ")}. The identity $createdEntity is still in the vault.',
+              ? sentences.tookBackTokens(tokens.join(sentences.andJoin))
+              : sentences.tookBackTokensInPlaces(tokens.join(sentences.andJoin), places))
+          : sentences.tookBackTokensIdentityStays(
+              tokens.join(sentences.andJoin), createdEntity),
     });
   }
 
@@ -252,7 +252,8 @@ class ActsBar extends StatelessWidget {
     final snap = bench.snap;
     if (snap == null) return;
     onSay(
-      'Scanned again: ${snap.autoProtected} protected automatically · ${snap.userProtected} by you · ${snap.openSuggestions} need your word · ${snap.normal} normal.',
+      sentences.scannedAgainReport(
+          snap.autoProtected, snap.userProtected, snap.openSuggestions, snap.normal),
     );
   }
 }
@@ -266,6 +267,15 @@ class _Known extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final source = view.protectedBy;
+    // **One sentence, two faces.** The tokens stay in the mono face, so the
+    // sentence is asked for with a mark where they go and drawn in two runs;
+    // the tail that names the source is part of the same line in the list.
+    final around = aroundTheValue((mark) => source == null
+        ? sentences.alreadyProtectedAsTokens(mark)
+        : sentences.alreadyProtectedAsFrom(
+            mark,
+            sourceName(source),
+            view.protectedDetail.isEmpty ? '' : ' · ${view.protectedDetail}'));
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -283,18 +293,14 @@ class _Known extends StatelessWidget {
               TextSpan(
                 style: Zc.small.copyWith(color: source == Source.vault ? Zc.river : Zc.clayDeep),
                 children: [
-                  const TextSpan(text: 'Already protected as '),
+                  TextSpan(text: around.before),
                   TextSpan(
                     // The tokens as they stand in the text — one per word of
                     // what the app read for itself (085 ruling 1).
                     text: view.protectedAs.join(' '),
                     style: const TextStyle(fontFamily: Zc.mono, fontWeight: FontWeight.w600),
                   ),
-                  if (source != null)
-                    TextSpan(
-                      text: ', from ${sourceName(source)}'
-                          '${view.protectedDetail.isEmpty ? "" : " · ${view.protectedDetail}"}.',
-                    ),
+                  TextSpan(text: around.after),
                 ],
               ),
             ),

@@ -55,12 +55,22 @@ MIGRATED = {
     'core/messages.dart',
     'screens/first_run.dart',
     'screens/settings.dart',
+    'screens/shell.dart',
     'screens/vault.dart',
     'screens/workspace.dart',
+    'widgets/acts.dart',
+    'widgets/bits.dart',
     'widgets/entity_detail.dart',
+    'widgets/find_in_document.dart',
+    'widgets/language_list.dart',
+    'widgets/line_gutter.dart',
     'widgets/name_review.dart',
+    'widgets/reveal.dart',
+    'widgets/review.dart',
     'widgets/send_sheet.dart',
     'widgets/the_chat.dart',
+    'widgets/the_way_back.dart',
+    'widgets/tokens.dart',
     'widgets/vault_forms.dart',
     'widgets/why_sheet.dart',
 }
@@ -72,7 +82,7 @@ MIGRATED = {
 # they were: a floor that is looser than the truth is a gate that would let a
 # sentence be added back.
 #
-# 854 sentences stood in 27 files when this round began; 180 stand in 16 now.
+# 854 sentences stood in 27 files when this round began; 72 stand in 6 now.
 #
 # **Five of the 185 were never sentences**, and finding that out was the
 # first act of sitting five rather than a tidy-up: the literal *pattern*
@@ -134,19 +144,9 @@ OWED = {
     'core/protected_pdf.dart': 9,
     'core/session_state.dart': 29,
     'core/the_clipboard.dart': 1,
-    'screens/shell.dart': 3,
-    'widgets/acts.dart': 28,
-    'widgets/bits.dart': 12,
     'widgets/connect_form.dart': 22,
     'widgets/conversation_view.dart': 10,
     'widgets/document_text.dart': 1,
-    'widgets/find_in_document.dart': 14,
-    'widgets/language_list.dart': 6,
-    'widgets/line_gutter.dart': 2,
-    'widgets/reveal.dart': 2,
-    'widgets/review.dart': 23,
-    'widgets/the_way_back.dart': 3,
-    'widgets/tokens.dart': 15,
 }
 
 # **Values the German is allowed to share with the English, by name** — each

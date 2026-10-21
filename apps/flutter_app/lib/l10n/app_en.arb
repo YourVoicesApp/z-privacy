@@ -2857,5 +2857,472 @@
   "modelLabel": "Model",
   "@modelLabel": {
     "description": "Which model a connected provider will answer with."
+  },
+  "fileKindDocuments": "Documents",
+  "@fileKindDocuments": {
+    "description": "The label of the file chooser's type group — the word the operating system's own dialog shows above «pdf, docx, txt, md, csv». It is a sentence the person reads, in a window this app does not draw."
+  },
+  "onlyTheseKindsAreRead": "This build reads PDF, Word and text files. «{name}» is none of those.",
+  "@onlyTheseKindsAreRead": {
+    "description": "A file of a kind no reader here has. The guillemets are the sentence's; the caller isolates the file name with `theirOwnWord`, because a right-to-left name must not reorder the words around it.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "generalRulesOnlyNoDictionary": "General rules only — no dictionary yet",
+  "@generalRulesOnlyNoDictionary": {
+    "description": "Above the languages Z can read with general rules but has no name list for yet. It stands under a divider in the language list, and it is the row's own promise about how little it knows."
+  },
+  "whichLanguageIsThisText": "Which language is this text in?",
+  "@whichLanguageIsThisText": {
+    "description": "The head of the question asked once in a session's life, when a document is opened and the session has no language yet (rule 57c)."
+  },
+  "theSessionLanguageExplained": "Z reads it with that language’s habits: how people are greeted, how a company is written, how a customer number looks. This is the session’s language from now on, and you will not be asked again in it.",
+  "@theSessionLanguageExplained": {
+    "description": "Under the language question: what choosing a language decides, and that the choice is the session's and is asked only once."
+  },
+  "allLinesHeld": "{count, plural, =1{All 1 line} other{All {count} lines}}",
+  "@allLinesHeld": {
+    "description": "The head control of the line gutter, which takes every line of the document. The number is the core's own count of lines, and the plural is ICU's because German declines the noun.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "revealHidden": "Hidden",
+  "@revealHidden": {
+    "description": "The state of a value that is behind its token on this screen — the resting state of the reveal control."
+  },
+  "revealedForSeconds": "Revealed · {seconds}s",
+  "@revealedForSeconds": {
+    "description": "A value shown on the screen for a moment, with the seconds left before it hides itself again. Revealing changes nothing in the Safe column — what leaves the device is the same string before and after.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "alsoTheWordBefore": "Also the word before",
+  "@alsoTheWordBefore": {
+    "description": "076 — the act that takes the capitalised word in front of the selection as well, for a first name standing before a surname."
+  },
+  "alsoTheWordBeforeHint": "Takes the capitalised word in front of the selection too",
+  "@alsoTheWordBeforeHint": {
+    "description": "The hint under «Also the word before», saying what the press would add."
+  },
+  "undoProtection": "Undo protection",
+  "@undoProtection": {
+    "description": "Takes back the last protection act, with every token that act minted."
+  },
+  "nothingToUndoHint": "Nothing to undo",
+  "@nothingToUndoHint": {
+    "description": "The hint on «Undo protection» when no act of this session can be taken back."
+  },
+  "rescanAct": "Rescan",
+  "@rescanAct": {
+    "description": "Reads the document again with what the vault has learned since it was opened."
+  },
+  "nextOfWaitingCount": "Next {at}/{total}",
+  "@nextOfWaitingCount": {
+    "description": "Walking through the things that wait for a word, or the places a search found: which one of how many. Drawn on the act itself, so the number is where the press is.",
+    "placeholders": {
+      "at": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "reviewAct": "Review",
+  "@reviewAct": {
+    "description": "Opens the review of everything the scan found and left waiting. Also the head of that sheet."
+  },
+  "namesAct": "Names",
+  "@namesAct": {
+    "description": "Opens the review of names this document uses that Z does not know yet."
+  },
+  "zKnowsEveryNameHere": "Z knows every name this document uses",
+  "@zKnowsEveryNameHere": {
+    "description": "The hint on «Names» when no name in this document is waiting for a decision."
+  },
+  "tokensAct": "Tokens",
+  "@tokensAct": {
+    "description": "Opens the list of tokens standing in this session's text. «Token» is the same word in German."
+  },
+  "nothingIsProtectedYetHint": "Nothing is protected yet",
+  "@nothingIsProtectedYetHint": {
+    "description": "The hint on «Tokens» while the session has minted none. The sheet's own empty line is a sentence of its own, with a full stop, because it stands alone on a panel."
+  },
+  "selectionCutsIntoProtected": "That selection cuts into something already protected. Protect would take the whole item instead.",
+  "@selectionCutsIntoProtected": {
+    "description": "085 — a hand selection that ends inside one protected item. Said before the press, so the person knows what the act would really take."
+  },
+  "selectionSpansProtectedItems": "That selection spans {count} protected items. Protect would take each of them whole, under its own token.",
+  "@selectionSpansProtectedItems": {
+    "description": "The same warning across more than one protected item.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "protectAct": "Protect",
+  "@protectAct": {
+    "description": "The one act that replaces a value with a token. 083 ruling 1: one press and it is done, in every state of the button."
+  },
+  "selectTextThenProtect": "Select text, then Protect",
+  "@selectTextThenProtect": {
+    "description": "The hint on «Protect» while nothing is selected — what to do, not what is wrong."
+  },
+  "alreadyProtectedSeeBelow": "Already protected — see below",
+  "@alreadyProtectedSeeBelow": {
+    "description": "The hint on «Protect» when the selection is already protected; the card under it says as what."
+  },
+  "protectWholeItems": "Protect whole items",
+  "@protectWholeItems": {
+    "description": "The act's own words when the selection snaps out to whole protected items — the label says what the press will do rather than what was asked for."
+  },
+  "thereWasNothingToUndo": "There was nothing to undo.",
+  "@thereWasNothingToUndo": {
+    "description": "The answer to an undo the core refused because no act was open."
+  },
+  "tookBackTokens": "Took back {tokens}.",
+  "@tookBackTokens": {
+    "description": "One undo, with every token that act had minted, named. The core hands back the list and not the first of them.",
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      }
+    }
+  },
+  "tookBackTokensInPlaces": "Took back {tokens}, in all {places} places — it went in as one act, so it came out as one.",
+  "@tookBackTokensInPlaces": {
+    "description": "An undo of an act that had protected a value everywhere it stood.",
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      },
+      "places": {
+        "type": "int"
+      }
+    }
+  },
+  "tookBackTokensIdentityStays": "Took back {tokens}. The identity {identity} is still in the vault.",
+  "@tookBackTokensIdentityStays": {
+    "description": "An undo of a protection that had also created an identity: the token goes, the identity stays, and the sentence says so rather than leaving it to be discovered.",
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      },
+      "identity": {
+        "type": "String"
+      }
+    }
+  },
+  "scannedAgainReport": "Scanned again: {auto} protected automatically · {byYou} by you · {waiting} need your word · {normal} normal.",
+  "@scannedAgainReport": {
+    "description": "What a rescan found, in the core's own four numbers.",
+    "placeholders": {
+      "auto": {
+        "type": "int"
+      },
+      "byYou": {
+        "type": "int"
+      },
+      "waiting": {
+        "type": "int"
+      },
+      "normal": {
+        "type": "int"
+      }
+    }
+  },
+  "alreadyProtectedAsTokens": "Already protected as {tokens}.",
+  "@alreadyProtectedAsTokens": {
+    "description": "The card under «Protect» when the selection is already protected. The tokens stay in the mono face, so the sentence is asked for with a mark where they go and drawn in two runs — see `aroundTheValue`.",
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      }
+    }
+  },
+  "andJoin": " and ",
+  "@andJoin": {
+    "description": "The joiner between the last two of a short list of tokens, as a sentence reads them: «T1 and T2». It is language and not punctuation — German joins with « und » — so it is a key and not a literal in the file that joins."
+  },
+  "alreadyProtectedAsFrom": "Already protected as {tokens}, from {source}{detail}.",
+  "@alreadyProtectedAsFrom": {
+    "description": "The same card where the vault or a rule is what protected the value: the whole line, so a translator can move «from …» where their language puts it. `{detail}` is the vault's own detail with its separator, or empty.",
+    "placeholders": {
+      "tokens": {
+        "type": "String"
+      },
+      "source": {
+        "type": "String"
+      },
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "readBackPanel": "Read back",
+  "@readBackPanel": {
+    "description": "The head of the panel that shows a document which has come back from a model: which of its tokens were put back, and which stayed."
+  },
+  "whatStayedAToken": "What stayed a token",
+  "@whatStayedAToken": {
+    "description": "Above the list of tokens the read-back could not resolve — they belong to another session, so they stay as they are."
+  },
+  "theSearchWasRefused": "The search was refused: {why}",
+  "@theSearchWasRefused": {
+    "description": "The core refused a search. `{why}` is the core's own reason, in the core's English — 092 does not move the core's language into this list.",
+    "placeholders": {
+      "why": {
+        "type": "String"
+      }
+    }
+  },
+  "findAWordInThisDocument": "Find a word in this document",
+  "@findAWordInThisDocument": {
+    "description": "The placeholder inside the find field, saying what the field is for."
+  },
+  "tabTakesIt": "Tab takes it",
+  "@tabTakesIt": {
+    "description": "Beside the word the field is offering to complete: the Tab key accepts it. «Tab» is the key's own name and stays."
+  },
+  "findAct": "Find",
+  "@findAct": {
+    "description": "The act that runs the search over the open document."
+  },
+  "notInThisDocument": "«{word}» is not in this document",
+  "@notInThisDocument": {
+    "description": "A search that found nothing. The caller isolates the searched word with `theirOwnWord`.",
+    "placeholders": {
+      "word": {
+        "type": "String"
+      }
+    }
+  },
+  "countProtected": "{count} protected",
+  "@countProtected": {
+    "description": "How many of the places a search found are already protected. A tally beside the other two, so the three read as one line."
+  },
+  "countWaiting": "{count} waiting",
+  "@countWaiting": {
+    "description": "How many of the places a search found are waiting for the person's word."
+  },
+  "countInTheClear": "{count} in the clear",
+  "@countInTheClear": {
+    "description": "How many of the places a search found stand in the clear — nothing protects them and nothing has offered to."
+  },
+  "placesInsideWaitingWords": "{count, plural, =1{One place is} other{{count} places are}} inside words that still wait for your word: {list}. Protect leaves those to the review.",
+  "@placesInsideWaitingWords": {
+    "description": "A search whose places fall inside words the scan has offered but nobody has answered. Protect does not take them — the review does — and the sentence says so before the press.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "list": {
+        "type": "String"
+      }
+    }
+  },
+  "goToIt": "Go to it",
+  "@goToIt": {
+    "description": "Walks the screen to the first place the search found. **Not one word of it has three letters**, which is why the census could not see it as a literal — it is a sentence all the same."
+  },
+  "unProtectHere": "Un-protect here",
+  "@unProtectHere": {
+    "description": "Takes the protection off this one place, leaving every other place of the same value as it is."
+  },
+  "unProtectInThisSession": "Un-protect in this session ({places} places)",
+  "@unProtectInThisSession": {
+    "description": "Takes the protection off every place of this value in the open session, with the count of what that means.",
+    "placeholders": {
+      "places": {
+        "type": "int"
+      }
+    }
+  },
+  "nothingIsWaitingForYou": "Nothing is waiting for you.",
+  "@nothingIsWaitingForYou": {
+    "description": "Under the review's head when the scan left nothing open."
+  },
+  "thingsWaitingForYourWord": "{count, plural, =1{One thing is waiting for your word.} other{{count} things are waiting for your word.}}",
+  "@thingsWaitingForYourWord": {
+    "description": "How many findings the review still has to be answered. The house's own `plural()` built this from a number and an English noun, which German cannot take.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "theScanFoundNothingHere": "The scan found nothing in this document.",
+  "@theScanFoundNothingHere": {
+    "description": "The review's empty state when the scan found nothing at all — which is not the same as having found things and had them all answered."
+  },
+  "nothingIsWaitingWhatIsProtected": "Nothing is waiting. What is protected is in the text, marked where it stands.",
+  "@nothingIsWaitingWhatIsProtected": {
+    "description": "The review's empty state when everything the scan found has been answered: it points back at the text rather than leaving an empty panel."
+  },
+  "foundBySource": "found by {source}",
+  "@foundBySource": {
+    "description": "Which of the four sources found this value. `{source}` is itself a sentence from this list, so it arrives already in the reader's language and with its own capital — it is **not** lowercased by the caller any more, because a German noun that loses its capital is misspelt.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "youDecided": "you decided",
+  "@youDecided": {
+    "description": "The tag on a finding or a token whose state a person chose, as against one a rule or the vault decided."
+  },
+  "pageAndParagraph": "Page {page} · ¶{paragraph}",
+  "@pageAndParagraph": {
+    "description": "Where in the document a finding stands. The pilcrow is a symbol and the same in every language.",
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "paragraph": {
+        "type": "int"
+      }
+    }
+  },
+  "inPlacesCount": "in {count} places",
+  "@inPlacesCount": {
+    "description": "How many places in the document hold this same value — what one press would settle.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "identitiesClaimIt": "{count, plural, =1{One identity claims it} other{{count} identities claim it}}",
+  "@identitiesClaimIt": {
+    "description": "More than one identity in the vault holds this value, so the review says so rather than choosing one.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "leaveWordsInTheClearQuestion": "Leave {count} words in the clear?",
+  "@leaveWordsInTheClearQuestion": {
+    "description": "The head of the question asked before «Skip all» — the one act in the review that sends words as they are written.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "leaveAllInTheClearExplained": "All {count} of them will be sent exactly as they are written. Z will not replace any of them, in this document or in the request that leaves this computer.",
+  "@leaveAllInTheClearExplained": {
+    "description": "What «leave them in the clear» really means, said before the press and not after it.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yesLeaveAllInTheClear": "Yes — leave all {count} in the clear",
+  "@yesLeaveAllInTheClear": {
+    "description": "The act that confirms the question above. It repeats the number, because this is the press that cannot be taken back by itself.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "protectAll": "Protect all",
+  "@protectAll": {
+    "description": "Answers every open finding in the review with «protect», in one act."
+  },
+  "skipAll": "Skip all",
+  "@skipAll": {
+    "description": "Leaves every open finding in the clear, after the question that says what that means."
+  },
+  "leaveIt": "Leave it",
+  "@leaveIt": {
+    "description": "Answers one finding with «this is not a value to hide» — the other half of the pair beside «Protect»."
+  },
+  "activeZTokens": "Active Z tokens",
+  "@activeZTokens": {
+    "description": "The head of the panel listing the tokens standing in this session's text."
+  },
+  "nothingIsProtectedYetSentence": "Nothing is protected yet.",
+  "@nothingIsProtectedYetSentence": {
+    "description": "The token panel's own empty line. It carries a full stop because it stands alone on the panel, where the hint on the act that opens it does not."
+  },
+  "valuesStandBehindTokens": "{count, plural, =1{1 value stands} other{{count} values stand}} behind a token in this session.",
+  "@valuesStandBehindTokens": {
+    "description": "How much this session has protected, counted in values and not in places.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "aTokenAppearsWhenProtected": "A token appears here the moment something is protected.",
+  "@aTokenAppearsWhenProtected": {
+    "description": "Under the token panel's empty line: what will fill it, so the panel is not a dead end."
+  },
+  "revealingChangesNothing": "Revealing shows a value on this screen for a moment. It changes nothing in the Safe column — what leaves the device is the same string before and after.",
+  "@revealingChangesNothing": {
+    "description": "The promise above the reveal controls: looking at a value is not the same as sending it. The one sentence in this panel a person might otherwise have to guess at."
+  },
+  "copyTheToken": "Copy the token",
+  "@copyTheToken": {
+    "description": "Puts the token itself on the clipboard — the token, never the value behind it."
+  },
+  "scopeJustHere": "Just here",
+  "@scopeJustHere": {
+    "description": "A protection that holds for this one place and nothing else (Scope.once)."
+  },
+  "scopeThisSession": "This session",
+  "@scopeThisSession": {
+    "description": "A protection that holds everywhere in the open session (Scope.conversation)."
+  },
+  "scopeRememberedForClient": "Remembered for this client",
+  "@scopeRememberedForClient": {
+    "description": "A protection the vault keeps under one client profile (Scope.profile)."
+  },
+  "scopeRememberedEverywhere": "Remembered everywhere",
+  "@scopeRememberedEverywhere": {
+    "description": "A protection the vault keeps for every session and every client (Scope.always)."
+  },
+  "copyReport": "Copy report",
+  "@copyReport": {
+    "description": "The default label of the act that copies a report — what the scan found, what a read-back resolved — as text."
+  },
+  "sessionNamesAreThisSessions": "Session {number} · the names in this work are this session’s",
+  "@sessionNamesAreThisSessions": {
+    "description": "The tooltip on the session chip: which session is open, and the rule that its names belong to it alone (rule 58).",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "asEachProviderIsConfigured": "As each provider is configured",
+  "@asEachProviderIsConfigured": {
+    "description": "Where more than one provider is connected and each has its own model: the chip says the choice is per provider rather than naming one."
+  },
+  "noAiConnected": "No AI connected",
+  "@noAiConnected": {
+    "description": "The model chip when nothing is connected to answer."
+  },
+  "connectAnAiInSettings": "Connect an AI in Settings",
+  "@connectAnAiInSettings": {
+    "description": "Where to go to connect one — the tooltip says the way rather than only the state."
+  },
+  "chooseWhichModelAnswers": "Choose which model answers",
+  "@chooseWhichModelAnswers": {
+    "description": "The tooltip on the model chip when a choice is there to be made."
   }
 }
