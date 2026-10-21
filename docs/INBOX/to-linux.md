@@ -85,3 +85,20 @@ That is `cargo tree`'s own path for the workspace crate, written into the crate 
 
 - A green app job (the dirty-tree refusal) and then the MSIX and the installer. Only then come steps 1–2 and the MSIX data-path question of step 3.
 - The owner's eye on the window. If it draws, steps 3–5 follow with his clicks.
+
+## 21 October 2026 (morning) — third report: the 4bb202f window paints; the white was the first minutes, not the build
+
+**The owner's eye.** Asked on waking, he answered «الشاشة بيضاء» («the screen is white»). Then, asked which window and when: the window he had used was «ممتازة ولكنها كانت مفتوحة من البارحة», excellent, but open since last night. That was the instance started at ~01:16 (when `writing.lock` was written). In it he created a vault: `vault.zv`, 235 bytes, 05:50:34. That instance was killed by this session's `Stop-Process` seconds later, while preparing a relaunch. I did not know he was using it.
+
+**Console.** Started from Git Bash, the build prints one line in 20 s and nothing after: `bridge ok — z_core 0.1.0 · 2026-10-20 · 4bb202f`. No exception and no FlutterError.
+
+**A fresh launch, measured by screen copy on the unlocked screen (1920×1080).**
+- About 10 s after launch, before any resize: **painted**. «Z Vault · Locked», «The vault is locked», a PASSPHRASE field and «Unlock». The owner was typing his passphrase into it at that moment.
+- After a resize to 1200×760, minimize and restore, maximize (1936×1048) and restore: painted every time. The main surface shows «Z Privacy», VAULT «Unlocked», «+ Add a document — or write to the AI in the first part, with no document at all.», and the three parts ORIGINAL — LOCAL ONLY / SAFE — AI WILL RECEIVE / THE CHAT, with «What would you like to ask the AI?».
+- UI Automation reports a single `Pane 'FLUTTERVIEW'` **while painting too**. The absence of a semantics tree is not evidence of no frame. Strike that inference from the morning's message.
+
+**Reading.** The white of the first report (the `main` build) and of last night's 4bb202f captures was measured by `PrintWindow`, which does not see this window's content. For the second capture the screen was locked. The owner's own window from last night drew well. So **no white window is proven on 4bb202f.** What stays unexplained is the owner's «white» on waking. I did not ask which window that was, and I will not guess.
+
+**Glass debts, unchanged:** title «zprivacy»; window opens at 1280×720 (1044×720 once).
+
+**Not asked yet:** whether `vault.zv` is a test vault or the owner's real one. It is not touched either way.
