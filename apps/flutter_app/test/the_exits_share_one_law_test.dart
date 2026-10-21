@@ -42,6 +42,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -283,7 +284,7 @@ void main() {
     await _settle(tester);
     expect(find.byType(SendSheet), findsOneWidget, reason: 'the sheet never opened');
 
-    await tester.tap(find.text('Copy Protected'));
+    await tester.tap(find.text(sentences.copyProtected));
     await _settle(tester, rounds: 16);
 
     expect(find.byType(SendSheet), findsNothing,

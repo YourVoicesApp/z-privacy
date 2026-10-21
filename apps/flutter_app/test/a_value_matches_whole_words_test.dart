@@ -20,6 +20,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -78,7 +79,7 @@ void main() {
     // The name, drawn by hand.
     await tester.runAsync(() => bench.select(spanOf('Björn Sandström')));
     await settle(tester, rounds: 2);
-    await tester.tap(find.widgetWithText(ZButton, 'Protect'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.protectAct));
     await settle(tester, rounds: 3);
 
     // **No dialog, and it is already done** — 083, ruling 1.

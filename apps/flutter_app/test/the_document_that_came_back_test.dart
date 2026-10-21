@@ -24,6 +24,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/protecting.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -174,14 +175,14 @@ void main() {
     expect(bench.selected!.onAToken, isTrue);
     expect(protectStateOf(bench.selected), ProtectState.alreadyOurs);
 
-    final button = tester.widget<ZButton>(find.widgetWithText(ZButton, 'Protect'));
+    final button = tester.widget<ZButton>(find.widgetWithText(ZButton, sentences.protectAct));
     expect(button.onPressed, isNull, reason: 'Protect can be pressed over a token');
     expect(button.hint, theTokenIsAlreadyOurs,
         reason: 'the disabled press does not say why — «${button.hint}»');
     // And no second press beside it that would reach across the token: «also
     // the word before» widens the selection and protects it, so over
     // «Telefon: __Z_…__» it is the same act by another name.
-    expect(find.widgetWithText(ZButton, 'Also the word before'), findsNothing,
+    expect(find.widgetWithText(ZButton, sentences.alsoTheWordBefore), findsNothing,
         reason: 'a press is offered that would protect across the token');
 
     // Nothing was minted by looking at it.
@@ -247,10 +248,10 @@ void main() {
     expect(find.textContaining('stay as tokens'), findsNothing);
 
     // **A press, not a side effect**: the reading opens because a person asked.
-    expect(find.widgetWithText(ZButton, 'Read it back'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ZButton, 'Read it back'));
+    expect(find.widgetWithText(ZButton, sentences.readItBack), findsOneWidget);
+    await tester.tap(find.widgetWithText(ZButton, sentences.readItBack));
     await settle(tester, rounds: 4);
-    expect(find.text('Read back'), findsOneWidget, reason: 'the reading did not open');
+    expect(find.text(sentences.readBackPanel), findsOneWidget, reason: 'the reading did not open');
 
     // The value is on the glass, and no token is.
     final shown = tester
@@ -328,7 +329,7 @@ void main() {
     expect(find.textContaining('stay as tokens'), findsNothing);
     expect(find.textContaining('unlock or create your vault'), findsOneWidget,
         reason: 'the line does not say which act would answer it');
-    expect(find.widgetWithText(ZButton, 'Read it back'), findsNothing,
+    expect(find.widgetWithText(ZButton, sentences.readItBack), findsNothing,
         reason: 'a reading was offered when nothing could be read');
 
     // Open the vault and rescan — which is what a person does, and what the
@@ -368,9 +369,9 @@ void main() {
 
     // And the reading opens — the press that was not offered while the vault
     // was shut, a few lines above, because then there was nothing to read.
-    expect(find.widgetWithText(ZButton, 'Read it back'), findsOneWidget,
+    expect(find.widgetWithText(ZButton, sentences.readItBack), findsOneWidget,
         reason: 'the reading was not offered once the blocks could answer');
-    await tester.tap(find.widgetWithText(ZButton, 'Read it back'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.readItBack));
     await settle(tester, rounds: 4);
     final shown = tester
         .widgetList<Text>(find.byType(Text))
@@ -451,7 +452,7 @@ void main() {
     await tester.tap(plus);
     await tester.pumpAndSettle();
     expect(toWorkOn, 1, reason: 'the + did not open the way in');
-    expect(find.text('z-pdf — read a protected document back'), findsNothing,
+    expect(find.text(sentences.zPdfReadBack), findsNothing,
         reason: 'the way back is still offered at the way in');
 
     // And the way back is a press of its own, in the room that holds the key
@@ -467,9 +468,9 @@ void main() {
       ),
     ));
     await settle(tester, rounds: 2);
-    expect(find.text('z-pdf — read a protected document back'), findsOneWidget,
+    expect(find.text(sentences.zPdfReadBack), findsOneWidget,
         reason: 'the vault room does not offer the way back');
-    await tester.tap(find.text('Choose a z-pdf file'));
+    await tester.tap(find.text(sentences.chooseAZPdfFile));
     await tester.pumpAndSettle();
     expect(cameBack, 1, reason: 'the press in the settings opened nothing');
     expect(toWorkOn, 1, reason: 'the way back went through the way in');
@@ -519,7 +520,7 @@ void main() {
     // And it is **named**, one by one, beside the reading — 079 rule 7: never
     // silently dropped. This is a plain `Text`, which is why `find.text` sees
     // exactly one of them and not the one standing in the rich text above.
-    expect(find.text('What stayed a token'), findsOneWidget,
+    expect(find.text(sentences.whatStayedAToken), findsOneWidget,
         reason: 'the reading does not name what stayed a token');
     expect(find.text('__Z_7f3a_IBAN_4c18__'), findsOneWidget,
         reason: 'the token was marked in place and never named on its own');

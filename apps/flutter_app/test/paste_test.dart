@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'drawn_document.dart';
 import 'package:flutter/material.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -126,7 +127,7 @@ void main() {
 
     const answer = 'Hello __Z_1234_PERSON_ABCD__, your note is ready.';
     _clipboard = answer;
-    await tester.tap(find.text('Add an answer'));
+    await tester.tap(find.text(sentences.addAnAnswer));
     await settle(tester);
 
     // **By key**: this panel's compose box comes first in the tree, and «the
@@ -150,7 +151,7 @@ void main() {
     // box open the three acts give way to it and that press reads «Not now» —
     // one place, one toggle, two words for the two directions. The key is the
     // thing that does not move.
-    expect(find.text('Not now'), findsOneWidget,
+    expect(find.text(sentences.notNow), findsOneWidget,
         reason: 'the press that closes the box does not say so');
 
     // A second press shuts the box; the third opens it with the new clipboard
@@ -158,7 +159,7 @@ void main() {
     _clipboard = 'second answer';
     await tester.tap(find.byKey(TheChat.add));
     await settle(tester);
-    expect(find.text('Add an answer'), findsOneWidget,
+    expect(find.text(sentences.addAnAnswer), findsOneWidget,
         reason: 'the box shut and the acts did not come back');
     await tester.tap(find.byKey(TheChat.add));
     await settle(tester);
@@ -176,10 +177,10 @@ void main() {
     await _chat(tester, ground);
 
     _clipboard = null;
-    await tester.tap(find.text('Add an answer'));
+    await tester.tap(find.text(sentences.addAnAnswer));
     await settle(tester);
 
-    expect(find.textContaining('There is no text on the clipboard.'), findsOneWidget);
+    expect(find.textContaining(sentences.thereIsNoTextOnTheClipboard), findsOneWidget);
     // The box still opens: they may want to type the answer by hand.
     expect(find.byKey(TheChat.pasted), findsOneWidget);
   });
@@ -193,10 +194,10 @@ void main() {
     await _chat(tester, ground);
 
     _clipboardThrows = true;
-    await tester.tap(find.text('Add an answer'));
+    await tester.tap(find.text(sentences.addAnAnswer));
     await settle(tester);
 
-    expect(find.textContaining('Z Privacy could not read the clipboard.'), findsOneWidget);
+    expect(find.textContaining(sentences.couldNotReadTheClipboard), findsOneWidget);
     expect(find.textContaining('PlatformException'), findsNothing);
   });
 
@@ -223,7 +224,7 @@ void main() {
         reason: 'the document’s own copy bound something else');
 
     _clipboard = 'an answer from some model';
-    await tester.tap(find.text('Add an answer'));
+    await tester.tap(find.text(sentences.addAnAnswer));
     await settle(tester);
 
     expect(bench.copied, bound, reason: 'Paste re-aimed the answer at another payload');
@@ -247,7 +248,7 @@ void _p22() {
     final bench = await _sheetlessWorkspace(tester, ground);
 
     // The door is named for what the press does.
-    expect(find.text('Choose who answers'), findsOneWidget);
+    expect(find.text(sentences.chooseWhoAnswers), findsOneWidget);
     expect(find.text('Send safe version'), findsNothing);
     // «Send» belongs only where a request really leaves. The rule is about
     // **controls**: the left column's caption «Send cannot read this side» is
@@ -267,15 +268,15 @@ void _p22() {
     // that button away rather than greying it. So the exact word «Review»
     // belongs to no control here, and P2-2's distinction is measured by its
     // absence.
-    expect(find.text('Review'), findsNothing);
+    expect(find.text(sentences.reviewAct), findsNothing);
 
-    await tester.tap(find.text('Choose who answers'));
+    await tester.tap(find.text(sentences.chooseWhoAnswers));
     await settle(tester);
 
     // It opened the sheet — and did nothing else. The heading it opens on is
     // «Who answers» since rule 60; the outgoing text it used to show on a page
     // of its own is read in the preview side, which this press did not touch.
-    expect(find.text('Who answers'), findsOneWidget);
+    expect(find.text(sentences.whoAnswers), findsOneWidget);
     expect(bench.chatTurns, isEmpty, reason: 'Review created an answer');
     expect(bench.copied, isNull, reason: 'Review bound a payload');
     final still = await Clipboard.getData(Clipboard.kTextPlain);
@@ -292,9 +293,9 @@ void _p23() {
     final ground = Ground();
     await _sheet(tester, ground);
 
-    expect(find.text('Manual AI'), findsOneWidget);
-    expect(find.text('Direct API'), findsOneWidget);
-    expect(find.text('Local AI'), findsOneWidget);
+    expect(find.text(sentences.manualAi), findsOneWidget);
+    expect(find.text(sentences.directApi), findsOneWidget);
+    expect(find.text(sentences.localAi), findsOneWidget);
     expect(find.textContaining('Use an AI chat you already have'), findsOneWidget);
     expect(find.textContaining('Runs through an AI service on this computer'), findsNothing);
     expect(find.textContaining('Use an AI service running on this computer'), findsOneWidget);
@@ -370,19 +371,19 @@ void _p24() {
         reason: 'a login with an empty credential claimed a home for a key');
 
     await showForm(tester, row, local: true);
-    expect(find.text('Forget the key'), findsNothing,
+    expect(find.text(sentences.forgetTheKey), findsNothing,
         reason: 'the «No key, no account» door offered to forget a key');
-    expect(find.text('Disconnect'), findsOneWidget,
+    expect(find.text(sentences.disconnectAct), findsOneWidget,
         reason: 'a local connection could no longer be taken away');
 
     // The same address seen through the Direct API card — one provider, two
     // doors. Neither of them may promise to seal a key at an address that
     // needs none.
     await showForm(tester, row, local: false);
-    expect(find.text('No key is needed at this address.'), findsOneWidget);
-    expect(find.textContaining('sealed in the vault'), findsNothing,
+    expect(find.text(sentences.noKeyIsNeededHere), findsOneWidget);
+    expect(find.textContaining(sentences.credentialSealedInTheVault), findsNothing,
         reason: 'the vault was said to hold a key that was never given');
-    expect(find.text('Forget the key'), findsNothing);
+    expect(find.text(sentences.forgetTheKey), findsNothing);
   });
 
   testWidgets('a key that is held is still offered to be forgotten', (tester) async {
@@ -405,9 +406,9 @@ void _p24() {
     expect(row.credentialState, isNot(CredentialState.missing));
 
     await showForm(tester, row, local: false);
-    expect(find.text('Forget the key'), findsOneWidget,
+    expect(find.text(sentences.forgetTheKey), findsOneWidget,
         reason: 'a stored key cannot be taken away');
-    expect(find.text('Disconnect'), findsNothing,
+    expect(find.text(sentences.disconnectAct), findsNothing,
         reason: 'two words for one act, drawn at once');
   });
 
@@ -423,9 +424,9 @@ void _p24() {
 
     expect(row.connected, isFalse);
     await showForm(tester, row, local: false);
-    expect(find.text('Forget the key'), findsNothing);
-    expect(find.text('Disconnect'), findsNothing);
-    expect(find.text('Connect'), findsOneWidget);
+    expect(find.text(sentences.forgetTheKey), findsNothing);
+    expect(find.text(sentences.disconnectAct), findsNothing);
+    expect(find.text(sentences.connectAct), findsOneWidget);
   });
 }
 
@@ -549,7 +550,7 @@ void _p27() {
     await tester.tapAt(whereItIs, kind: PointerDeviceKind.mouse);
     await settle(tester);
     expect(find.byType(WhySheet), findsOneWidget, reason: 'the Original mark did not open Why');
-    expect(find.text('Why is this protected?'), findsOneWidget);
+    expect(find.text(sentences.whyIsThisProtected), findsOneWidget);
     expect(find.text(word), findsWidgets, reason: 'Why opened on the wrong word');
   });
 }

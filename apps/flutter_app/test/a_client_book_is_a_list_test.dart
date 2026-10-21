@@ -16,6 +16,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -137,6 +138,6 @@ void main() {
     // The switch is the point of a list, and it is on the screen for this one.
     expect(find.byType(Switch), findsWidgets);
     // And the panel does not call this «nothing yet» while it holds a book.
-    expect(find.text('Nothing yet.'), findsNothing);
+    expect(find.text(sentences.nothingYet), findsNothing);
   });
 }

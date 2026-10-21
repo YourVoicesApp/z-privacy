@@ -17,6 +17,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'drawn_document.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/bits.dart';
@@ -117,7 +118,7 @@ void main() {
     await tester.tapAt(_atSuggestion(tester, bench), kind: PointerDeviceKind.mouse);
     await settle(tester);
     await tester.tap(
-      find.descendant(of: find.byType(ChoiceBubble), matching: find.text('Protect')),
+      find.descendant(of: find.byType(ChoiceBubble), matching: find.text(sentences.protectAct)),
     );
     await settle(tester, rounds: 8);
 

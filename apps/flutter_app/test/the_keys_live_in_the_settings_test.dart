@@ -52,6 +52,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -222,7 +223,7 @@ void main() {
       findsNothing,
       reason: 'the key form is still standing in the send flow, where the owner said it never appears',
     );
-    final door = find.widgetWithText(ZButton, 'Open Settings');
+    final door = find.widgetWithText(ZButton, sentences.openSettings);
     expect(
       door,
       findsWidgets,
@@ -369,7 +370,7 @@ void main() {
     // own default to Sessions. It used to rely on the default instead, and the
     // sentence here said so.
     expect(
-      find.text('AI'),
+      find.text(sentences.roomAi),
       findsWidgets,
       reason: 'a door that named the AI room did not land in it',
     );
@@ -528,7 +529,7 @@ void main() {
     // The control first: with the panel shut, the door is drawn.
     await openTheSheet(panelStanding: false);
     expect(
-      find.text('Open Settings'),
+      find.text(sentences.openSettings),
       findsWidgets,
       reason: 'the sheet draws no door even with the panel shut, so the absence below proves nothing',
     );
@@ -538,7 +539,7 @@ void main() {
     // And with it standing, no door — because pressing one would have closed it.
     await openTheSheet(panelStanding: true);
     expect(
-      find.text('Open Settings'),
+      find.text(sentences.openSettings),
       findsNothing,
       reason: 'a door labelled «Open Settings» is offered over an already-open panel, and the '
           'shell\'s callback is a toggle — pressing it would shut them',
@@ -575,9 +576,9 @@ void main() {
     for (final door in ['Manual AI', 'Direct API', 'Local AI']) {
       expect(find.text(door), findsWidgets, reason: 'the «$door» door is gone from the sheet');
     }
-    expect(find.text('Copy Protected'), findsOneWidget, reason: 'the door that needs no account is gone');
+    expect(find.text(sentences.copyProtected), findsOneWidget, reason: 'the door that needs no account is gone');
 
-    final send = find.widgetWithText(ZButton, 'Send to Direct API');
+    final send = find.widgetWithText(ZButton, sentences.sendToNamed(sentences.directApi));
     expect(send, findsWidgets, reason: 'a connected provider offers no send button');
     // **083a, the owner's ruling of 14 Oct: the promise moved, it did not go.**
     //

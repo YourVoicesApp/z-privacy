@@ -3105,15 +3105,30 @@
   },
   "countProtected": "{count} protected",
   "@countProtected": {
-    "description": "How many of the places a search found are already protected. A tally beside the other two, so the three read as one line."
+    "description": "How many of the places a search found are already protected. A tally beside the other two, so the three read as one line.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "countWaiting": "{count} waiting",
   "@countWaiting": {
-    "description": "How many of the places a search found are waiting for the person's word."
+    "description": "How many of the places a search found are waiting for the person's word.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "countInTheClear": "{count} in the clear",
   "@countInTheClear": {
-    "description": "How many of the places a search found stand in the clear — nothing protects them and nothing has offered to."
+    "description": "How many of the places a search found stand in the clear — nothing protects them and nothing has offered to.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "placesInsideWaitingWords": "{count, plural, =1{One place is} other{{count} places are}} inside words that still wait for your word: {list}. Protect leaves those to the review.",
   "@placesInsideWaitingWords": {

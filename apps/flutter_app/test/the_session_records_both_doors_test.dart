@@ -21,6 +21,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -147,7 +148,7 @@ void main() {
 
     expect(find.textContaining('chat1'), findsOneWidget,
         reason: 'the room lists no kept document, so nothing below is measured');
-    expect(find.text('sent to AI · answered'), findsOneWidget,
+    expect(find.text(sentences.sentToAiAnswered), findsOneWidget,
         reason: 'the session does not record that the document was sent and answered');
   });
 

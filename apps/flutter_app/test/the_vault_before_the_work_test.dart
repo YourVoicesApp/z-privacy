@@ -17,6 +17,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/shell.dart';
@@ -70,7 +71,7 @@ void main() {
 
     // The sentence is still said — and now it can be pressed.
     expect(find.textContaining('No vault'), findsOneWidget);
-    final make = find.text('Create a vault');
+    final make = find.text(sentences.createAVault);
     expect(make, findsOneWidget, reason: 'the band says what is wrong and offers nothing');
     await tester.tap(make);
     await settle(tester);
@@ -85,7 +86,7 @@ void main() {
     });
     await settle(tester);
     expect(find.textContaining('Vault locked'), findsOneWidget);
-    expect(find.text('Create a vault'), findsNothing, reason: 'it offers to make a vault that exists');
+    expect(find.text(sentences.createAVault), findsNothing, reason: 'it offers to make a vault that exists');
     expect(find.text('Unlock'), findsOneWidget);
 
     bench.dispose();
@@ -159,13 +160,13 @@ void main() {
     // in this app presses «Create the vault» itself.
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Start'));
+    await tester.tap(find.text(sentences.start));
     await settle(tester);
-    await tester.tap(find.text('Create a vault'));
+    await tester.tap(find.text(sentences.createAVault));
     await settle(tester);
     await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: _pass));
     await settle(tester);
-    await tester.tap(find.text('Back'));
+    await tester.tap(find.text(sentences.back));
     // The way back runs through the core: close, refresh, and a frame for the
     // shell to notice.
     await settle(tester, rounds: 8);
@@ -206,12 +207,12 @@ void main() {
     // the vault is behind them before the first word is typed, so the band has
     // nothing to ask for and the sentences that asked are gone.
     expect(find.textContaining('No vault'), findsNothing, reason: 'the band asks for a vault that is open');
-    expect(find.text('Create a vault'), findsNothing, reason: 'the band offers a vault that exists');
+    expect(find.text(sentences.createAVault), findsNothing, reason: 'the band offers a vault that exists');
     expect(find.textContaining('Vault locked'), findsNothing, reason: 'the band says a shut vault is shut');
 
     // What the top bar says instead, which is the whole of what is left to
     // say about it: the vault is open.
-    expect(find.text('Unlocked'), findsOneWidget, reason: 'the bar does not say the vault is open');
+    expect(find.text(sentences.vaultIsUnlocked), findsOneWidget, reason: 'the bar does not say the vault is open');
   });
 
   testWidgets('the first page offers the vault and explains it, and never insists', (tester) async {
@@ -229,7 +230,7 @@ void main() {
 
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Start'));
+    await tester.tap(find.text(sentences.start));
     await settle(tester);
 
     // One sentence saying why, and one way on. 041-E offered the vault with a
@@ -245,11 +246,11 @@ void main() {
       findsOneWidget,
       reason: 'the page asks for a vault without saying what it keeps',
     );
-    expect(find.text('Create a vault'), findsOneWidget);
+    expect(find.text(sentences.createAVault), findsOneWidget);
     expect(find.text('Later'), findsNothing, reason: 'there is still a way past the vault');
 
     // And it goes straight there.
-    await tester.tap(find.text('Create a vault'));
+    await tester.tap(find.text(sentences.createAVault));
     await settle(tester);
     expect(find.byType(VaultScreen), findsOneWidget, reason: '«Create a vault» went nowhere');
   });

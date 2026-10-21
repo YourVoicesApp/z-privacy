@@ -24,6 +24,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/widgets/language_list.dart';
@@ -114,7 +115,7 @@ void main() {
     // person and taken from them.
     await tester.enterText(find.byType(TextField).first, 'Faruk AB');
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Begin'), warnIfMissed: false);
+    await tester.tap(find.text(sentences.begin), warnIfMissed: false);
     await settle(tester, rounds: 3);
     expect(
       ground.sessions,
@@ -127,7 +128,7 @@ void main() {
     final swedish = ground.packs.firstWhere((p) => p.id == 'sv');
     await tester.tap(find.text(swedish.label));
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Begin'));
+    await tester.tap(find.text(sentences.begin));
     // The birth is three core calls deep (begin, the language, the bench's own
     // rescan) and each needs a real turn of the loop: `testWidgets` runs in a
     // fake-async zone, where an FFI future resumes only inside `runAsync`.

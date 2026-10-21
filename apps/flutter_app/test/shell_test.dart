@@ -19,6 +19,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/widgets/the_chat.dart';
@@ -103,9 +104,9 @@ void main() {
         expect(find.text('Unlocked · $identities identities'), findsOneWidget,
             reason: 'the room does not say the count the core reports');
       case VaultState.locked:
-        expect(find.text('Locked'), findsOneWidget);
+        expect(find.text(sentences.vaultIsLocked), findsOneWidget);
       case VaultState.absent:
-        expect(find.text('None'), findsOneWidget);
+        expect(find.text(sentences.vaultIsNone), findsOneWidget);
     }
 
     // **The build stamp, verbatim.** It is the core's own line and the one
@@ -160,7 +161,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Scanned on import'), findsOneWidget);
+    expect(find.text(sentences.scannedOnImport), findsOneWidget);
     expect(
       find.text(
         '${bench.snap!.autoProtected} protected automatically · ${bench.snap!.openSuggestions} need your word · '
@@ -174,13 +175,13 @@ void main() {
     expect(find.text('ORIGINAL — LOCAL ONLY'), findsOneWidget);
     expect(find.text('SAFE — AI WILL RECEIVE'), findsOneWidget);
     expect(
-      find.text('Never sent to AI · Send cannot read this side'),
+      find.text(sentences.neverSentToAiSendCannotRead),
       findsOneWidget,
     );
 
     // Typed text has no file name, and the bar says so rather than inventing one.
-    expect(find.text('Typed text'), findsOneWidget);
-    expect(find.text('1 page'), findsOneWidget);
+    expect(find.text(sentences.typedText), findsOneWidget);
+    expect(find.text(sentences.onePage), findsOneWidget);
 
     // The vault's state is on the bar, and it is the state inside the snapshot —
     // one source, so the bar and the band can never contradict each other.
@@ -218,8 +219,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(bench.scanOrigin, ScanOrigin.rescan);
-    expect(find.text('Last scan: manual rescan'), findsOneWidget);
-    expect(find.text('Scanned on import'), findsNothing);
+    expect(find.text(sentences.lastScanManualRescan), findsOneWidget);
+    expect(find.text(sentences.scannedOnImport), findsNothing);
     bench.dispose();
   });
 
@@ -350,7 +351,7 @@ void main() {
 
       // DISABLED — nothing selected, and the hint says what to do about it.
       expect(protectStateOf(bench.selected), ProtectState.disabled);
-      expect(find.text('Select text, then Protect'), findsOneWidget);
+      expect(find.text(sentences.selectTextThenProtect), findsOneWidget);
       expect(
         bench.canUndo,
         isTrue,
@@ -377,7 +378,7 @@ void main() {
         Kind.company,
         reason: 'the pack guessed, not the screen',
       );
-      expect(find.text('Select text, then Protect'), findsNothing);
+      expect(find.text(sentences.selectTextThenProtect), findsNothing);
 
       // Protect it, and the state the button reports changes to KNOWN — because
       // the core now says so, not because a flag was set here.
@@ -868,7 +869,7 @@ void main() {
       // surface, which says so in its own subtitle: «The request itself, not a
       // preview of it». Read through «Plain», the side's own control, because
       // «Chips» draws each token as a widget and a widget is not a character.
-      await tester.tap(find.text('Plain'));
+      await tester.tap(find.text(sentences.drawnPlain));
       await tester.pumpAndSettle();
       final shown = tester
           .widget<SelectableText>(
@@ -885,17 +886,17 @@ void main() {
 
       // The sheet offers the door that needs no account at all, first — and it
       // offers it on the only page it has.
-      await tester.tap(find.text('Choose who answers'));
+      await tester.tap(find.text(sentences.chooseWhoAnswers));
       await tester.pumpAndSettle();
       expect(find.byType(SendSheet), findsOneWidget);
-      expect(find.text('Manual AI'), findsOneWidget);
-      expect(find.text('Copy Protected'), findsOneWidget);
+      expect(find.text(sentences.manualAi), findsOneWidget);
+      expect(find.text(sentences.copyProtected), findsOneWidget);
       expect(find.textContaining('no account, no key'), findsOneWidget);
 
       // Copy Protected is the first door's act — take it while it is on screen,
       // before the local fold is scrolled into view.
       final clip = _ClipboardProbe(tester)..install();
-      await tester.tap(find.text('Copy Protected'));
+      await tester.tap(find.text(sentences.copyProtected));
       await settle(tester, rounds: 8);
       final safe = bench.payload!.text;
       expect(
@@ -917,8 +918,8 @@ void main() {
 
       // And the other two doors are reachable from here without leaving: one for
       // a provider on the internet, one for a model on this machine.
-      expect(find.text('Direct API'), findsOneWidget);
-      expect(find.text('Local AI'), findsOneWidget);
+      expect(find.text(sentences.directApi), findsOneWidget);
+      expect(find.text(sentences.localAi), findsOneWidget);
 
       // **The setup changed on 8 October; the claim above did not.** Both doors
       // used to show their own `ConnectForm` here — address, model, key — and
@@ -938,7 +939,7 @@ void main() {
         reason: 'a key form stands in the send flow, where the owner said it never appears',
       );
       expect(
-        find.text('Open Settings'),
+        find.text(sentences.openSettings),
         findsWidgets,
         reason: 'no form and no way to reach the place a key is given',
       );
@@ -1112,7 +1113,7 @@ void main() {
     // the way to copy it are one thing, opened together.
     await tester.tap(find.byKey(TheChat.showTheText(0)));
     await settle(tester);
-    expect(inPanel(find.text('Copy Restored')), findsOneWidget);
+    expect(inPanel(find.text(sentences.copyRestored)), findsOneWidget);
     expect(find.text('Copy'), findsNothing);
     expect(restored, contains('Thomas Müller'));
 
@@ -1121,12 +1122,12 @@ void main() {
     // the first turn is the whole payload the model saw — so «Copy Restored»
     // stood 33 px under a 1100-tall window and `tap` derived an offset outside
     // the render tree. Only a press sees a scroller's clip.
-    await tester.ensureVisible(inPanel(find.text('Copy Restored')));
+    await tester.ensureVisible(inPanel(find.text(sentences.copyRestored)));
     await settle(tester, rounds: 2);
-    await tester.tap(inPanel(find.text('Copy Restored')));
+    await tester.tap(inPanel(find.text(sentences.copyRestored)));
     await tester.pumpAndSettle();
 
-    expect(find.text('Copy restored text?'), findsOneWidget);
+    expect(find.text(sentences.copyRestoredTextQuestion), findsOneWidget);
     expect(find.textContaining('real protected values'), findsOneWidget);
     expect(find.textContaining('system clipboard'), findsOneWidget);
     expect(
@@ -1160,16 +1161,16 @@ void main() {
     expect(clip.wrote, [''], reason: 'Cancel wrote something: ${clip.wrote}');
     expect(clip.text, '', reason: 'Cancel left the clipboard holding something');
     expect(
-      find.text('Restored text copied to the system clipboard.'),
+      find.text(sentences.restoredTextCopied),
       findsNothing,
     );
 
-    await tester.tap(inPanel(find.text('Copy Restored')));
+    await tester.tap(inPanel(find.text(sentences.copyRestored)));
     await tester.pumpAndSettle();
     await tester.tap(
       find.descendant(
         of: find.byType(AlertDialog),
-        matching: find.text('Copy Restored'),
+        matching: find.text(sentences.copyRestored),
       ),
     );
     await tester.pumpAndSettle();
@@ -1180,15 +1181,15 @@ void main() {
         reason: 'the confirmed press did not empty and then copy: ${clip.wrote}');
     expect(clip.text, restored);
     expect(
-      find.text('Restored text copied to the system clipboard.'),
+      find.text(sentences.restoredTextCopied),
       findsOneWidget,
     );
     expect(find.textContaining('Copied securely'), findsNothing);
 
     // The warning is not a one-time tutorial: the next press asks again.
-    await tester.tap(inPanel(find.text('Copy Restored')));
+    await tester.tap(inPanel(find.text(sentences.copyRestored)));
     await tester.pumpAndSettle();
-    expect(find.text('Copy restored text?'), findsOneWidget);
+    expect(find.text(sentences.copyRestoredTextQuestion), findsOneWidget);
     // And the third press emptied it again before asking — so the values the
     // person copied a moment ago are **gone** while the question stands.
     expect(clip.wrote, ['', '', restored, ''],
@@ -1219,7 +1220,7 @@ void main() {
     // that door.
     expect(find.text('As the model wrote it'), findsNothing,
         reason: 'the tab rule 66 deleted is back over the answer');
-    await tester.tap(inPanel(find.text('Copy the chat')));
+    await tester.tap(inPanel(find.text(sentences.copyTheChat)));
     await settle(tester, rounds: 4);
     expect(find.byType(AlertDialog), findsNothing,
         reason: 'taking the coded chat out asked a question it does not need to ask');
@@ -1287,9 +1288,9 @@ void main() {
           find.descendant(of: find.byType(ProfileSwitcher), matching: of);
 
       expect(inDialog(find.text('Client A')), findsOneWidget);
-      expect(inDialog(find.text('Active')), findsOneWidget);
+      expect(inDialog(find.text(sentences.profileActive)), findsOneWidget);
 
-      await tester.tap(find.text('Create profile'));
+      await tester.tap(find.text(sentences.createProfile));
       await settle(tester);
       expect(find.byType(ProfileForm), findsOneWidget);
       await tester.enterText(
@@ -1303,7 +1304,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: find.byType(ProfileForm),
-          matching: find.text('Create'),
+          matching: find.text(sentences.createIt),
         ),
       );
       await settle(tester);
@@ -1332,9 +1333,9 @@ void main() {
 
       // Client B is active after it was created. Switch back to the renamed
       // profile from the UI; the top bar must show the human name, not the ID.
-      await tester.tap(find.text('Switch').at(1));
+      await tester.tap(find.text(sentences.profileSwitch).at(1));
       await settle(tester);
-      await tester.tap(find.text('Done'));
+      await tester.tap(find.text(sentences.done));
       await settle(tester);
       expect(find.text('Nordstern'), findsOneWidget);
       expect(bench.profileId, isNotNull);
@@ -1342,9 +1343,9 @@ void main() {
       // And switching can go the other way from the same top-bar entry.
       await tester.tap(find.text('Nordstern').first);
       await settle(tester);
-      await tester.tap(find.text('Switch').last);
+      await tester.tap(find.text(sentences.profileSwitch).last);
       await settle(tester);
-      await tester.tap(find.text('Done'));
+      await tester.tap(find.text(sentences.done));
       await settle(tester);
       expect(find.text('Client B'), findsOneWidget);
 
@@ -1352,9 +1353,9 @@ void main() {
       // value, then prove another profile does not inherit it.
       await tester.tap(find.text('Client B').first);
       await settle(tester);
-      await tester.tap(find.text('Switch').last);
+      await tester.tap(find.text(sentences.profileSwitch).last);
       await settle(tester);
-      await tester.tap(find.text('Done'));
+      await tester.tap(find.text(sentences.done));
       await settle(tester);
       expect(find.text('Nordstern'), findsOneWidget);
 
@@ -1511,7 +1512,7 @@ void main() {
     );
     await settle(tester);
 
-    await tester.tap(find.text('Choose who answers'));
+    await tester.tap(find.text(sentences.chooseWhoAnswers));
     await settle(tester);
     expect(find.byType(SendSheet), findsOneWidget);
     // The connected provider is offered, with the model it was configured
@@ -1712,12 +1713,12 @@ void main() {
     // doors; rule 60 deleted that page, so it is measured on the door itself.
     expectOnScreen(
       tester,
-      find.text('Copy Protected'),
+      find.text(sentences.copyProtected),
       because: 'the doors are not on the glass while suggestions are open',
     );
     final manual = tester.widget<InkWell>(
       find
-          .ancestor(of: find.text('Copy Protected'), matching: find.byType(InkWell))
+          .ancestor(of: find.text(sentences.copyProtected), matching: find.byType(InkWell))
           .first,
     );
     expect(
@@ -2131,7 +2132,7 @@ Future<void> reviewJourney(
   // scrolls; the door in its footer does not travel with it.
   expectOnScreen(
     tester,
-    find.text('Choose who answers'),
+    find.text(sentences.chooseWhoAnswers),
     because: 'the door into the three exits must be reachable at this size',
   );
   final payload = find.descendant(
@@ -2140,7 +2141,7 @@ Future<void> reviewJourney(
   );
   expect(payload, findsOneWidget, reason: 'the preview side is not drawing the payload');
   final textBefore = tester.getRect(payload);
-  final doorBefore = tester.getRect(find.text('Choose who answers'));
+  final doorBefore = tester.getRect(find.text(sentences.chooseWhoAnswers));
   // 120 pixels below the side's own top: past its header, inside the scroller,
   // and on the window whatever the payload's height is.
   final side = tester.getRect(find.byKey(const ValueKey<String>('workspace-safe-pane')));
@@ -2152,22 +2153,22 @@ Future<void> reviewJourney(
         'the wheel over the payload must move the payload, not vanish into SelectableText',
   );
   expect(
-    tester.getRect(find.text('Choose who answers')),
+    tester.getRect(find.text(sentences.chooseWhoAnswers)),
     doorBefore,
     reason: 'wheeling the payload moved the door it is read beside',
   );
   expectOnScreen(
     tester,
-    find.text('Choose who answers'),
+    find.text(sentences.chooseWhoAnswers),
     because: 'the door remains clickable after the wheel',
   );
   expect(tester.takeException(), isNull);
 
   // **2 · the sheet, which has one page.**
-  await tester.tap(find.text('Choose who answers'));
+  await tester.tap(find.text(sentences.chooseWhoAnswers));
   await tester.pumpAndSettle();
   expect(find.byType(SendSheet), findsOneWidget);
-  expect(find.text('Who answers'), findsOneWidget);
+  expect(find.text(sentences.whoAnswers), findsOneWidget);
   expect(
     find.text('Continue'),
     findsNothing,
@@ -2236,11 +2237,11 @@ Future<void> reviewJourney(
   // Brought back into view on purpose: step 2 wheeled this page 800 pixels to
   // measure that the footer stays put, so the door is where that wheel left it.
   // A `tap` on an off-stage control hits nothing and says nothing.
-  await tester.ensureVisible(find.text('Copy Protected'));
+  await tester.ensureVisible(find.text(sentences.copyProtected));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Copy Protected'));
+  await tester.tap(find.text(sentences.copyProtected));
   await settle(tester, rounds: 1);
-  expect(find.text('Copied'), findsOneWidget);
+  expect(find.text(sentences.copied), findsOneWidget);
   expect(
     clip.text,
     bench.payload!.text,

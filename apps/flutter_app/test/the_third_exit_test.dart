@@ -90,6 +90,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -343,9 +344,9 @@ void main() {
 
     // The label is the route and not the protocol, and loopback is «on this
     // computer», so the door is found by what every one of them starts with.
-    final door = find.widgetWithText(ZButton, 'Send to Local AI');
+    final door = find.widgetWithText(ZButton, sentences.sendToNamed(sentences.localAi));
     final anySend = door.evaluate().isEmpty
-        ? find.widgetWithText(ZButton, 'Send to Direct API')
+        ? find.widgetWithText(ZButton, sentences.sendToNamed(sentences.directApi))
         : door;
     expect(anySend, findsOneWidget, reason: 'no send door on the page with a provider connected');
     // **It asks, it does not gate** — the same property the other two doors

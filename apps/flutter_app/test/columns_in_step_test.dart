@@ -15,6 +15,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -386,13 +387,13 @@ void main() {
     await settle(tester);
 
     // It says what is true now, not what pressing it will do.
-    expect(find.text('In step'), findsOneWidget);
-    expect(find.text('Apart'), findsNothing);
+    expect(find.text(sentences.inStep), findsOneWidget);
+    expect(find.text(sentences.apart), findsNothing);
 
     await tester.tap(find.byKey(_ColumnsStateKeys.stepLock));
     await settle(tester);
-    expect(find.text('Apart'), findsOneWidget);
-    expect(find.text('In step'), findsNothing);
+    expect(find.text(sentences.apart), findsOneWidget);
+    expect(find.text(sentences.inStep), findsNothing);
 
     // And it is kept, beside the handle's position, in the one durable store
     // this app has before a vault exists.
@@ -402,7 +403,7 @@ void main() {
 
     await tester.tap(find.byKey(_ColumnsStateKeys.stepLock));
     await settle(tester);
-    expect(find.text('In step'), findsOneWidget);
+    expect(find.text(sentences.inStep), findsOneWidget);
     await tester.runAsync(ground.refresh);
     expect(ground.config!.columnsInStep, isTrue);
   });

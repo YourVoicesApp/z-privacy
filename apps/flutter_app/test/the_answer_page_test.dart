@@ -38,6 +38,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -162,7 +163,7 @@ Future<File?> _pressSave(
   ));
   await tester.tap(find.text('Open the sheet'));
   await _settle(tester);
-  await tester.tap(find.text('Save as PDF'));
+  await tester.tap(find.text(sentences.saveAsPdf));
   // **Until the press has finished, not until the file exists.** The bytes
   // reach the disk one step before the press binds the payload an answer is
   // tied to — measured: a file on the disk and `copiedPayload` still null —

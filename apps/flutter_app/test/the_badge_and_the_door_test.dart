@@ -15,6 +15,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -102,7 +103,7 @@ void main() {
       reason: 'this document must leave questions open, or the badge means nothing',
     );
 
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
 
     expect(find.byType(ReviewPanel), findsOneWidget);
@@ -124,13 +125,13 @@ void main() {
     final waiting = bench.openSuggestions;
     expect(waiting > 0, isTrue, reason: 'the badge must be promising something');
 
-    await tester.tap(find.text('Names'));
+    await tester.tap(find.text(sentences.namesAct));
     await settle(tester);
     expect(find.byType(NameReviewPanel), findsOneWidget, reason: 'the names panel is what was asked for');
 
     // Now the act the owner performed: press Review, whose badge is the count
     // of questions still open.
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
 
     expect(
@@ -144,7 +145,7 @@ void main() {
       reason: 'and it must not be the names panel, which is what the owner met',
     );
     expect(
-      find.text('No names to look at'),
+      find.text(sentences.noNamesToLookAt),
       findsNothing,
       reason: 'the owner pressed a button promising $waiting answers and read this sentence',
     );

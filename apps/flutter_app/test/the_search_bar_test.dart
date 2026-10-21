@@ -16,6 +16,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -182,8 +183,8 @@ void main() {
     expect(inTheBar('${quoted("Lindqvist")} — 4 places'), findsOneWidget);
     // One place inside the company the pack still asks about, one inside the
     // name it asks about, and two alone.
-    expect(find.text('2 waiting'), findsOneWidget);
-    expect(find.text('2 in the clear'), findsOneWidget);
+    expect(find.text(sentences.countWaiting(2)), findsOneWidget);
+    expect(find.text(sentences.countInTheClear(2)), findsOneWidget);
     // And the ruling (c) sentence, where the act is: Protect will not answer a
     // suggestion wider than the typed word.
     expect(inTheBar('still wait for your word'), findsOneWidget);
@@ -259,11 +260,11 @@ void main() {
     await settle(tester, rounds: 14);
 
     // The two clear places are protected, under one token…
-    expect(find.text('2 protected'), findsOneWidget);
-    expect(find.text('2 in the clear'), findsNothing);
+    expect(find.text(sentences.countProtected(2)), findsOneWidget);
+    expect(find.text(sentences.countInTheClear(2)), findsNothing);
     // …and the suggestions are untouched: «Lindqvist AB» is more than what was
     // typed, and the review is where it is answered (084, ruling (c)).
-    expect(find.text('2 waiting'), findsOneWidget);
+    expect(find.text(sentences.countWaiting(2)), findsOneWidget);
     expect(bench.openSuggestions, waiting, reason: 'the bar answered a suggestion');
   });
 
@@ -272,7 +273,7 @@ void main() {
     await searchFor(tester, 'Lindqvist');
     await tester.tap(find.byKey(FindInDocument.protectKey));
     await settle(tester, rounds: 14);
-    expect(find.text('2 protected'), findsOneWidget);
+    expect(find.text(sentences.countProtected(2)), findsOneWidget);
 
     // Stand on a protected place: the walk's first press goes to the first
     // place, which is inside the name the pack asks about — so walk to the one
@@ -288,8 +289,8 @@ void main() {
 
     await tester.tap(find.byKey(FindInDocument.everyKey));
     await settle(tester, rounds: 14);
-    expect(find.text('2 protected'), findsNothing, reason: 'the token kept a place');
-    expect(find.text('2 in the clear'), findsOneWidget);
+    expect(find.text(sentences.countProtected(2)), findsNothing, reason: 'the token kept a place');
+    expect(find.text(sentences.countInTheClear(2)), findsOneWidget);
     expect(bench.payload!.text.split('Lindqvist').length - 1, greaterThan(1));
   });
 
@@ -302,7 +303,7 @@ void main() {
   testWidgets('one press over two places in the clear says both of them', (tester) async {
     await ready(tester);
     await searchFor(tester, 'Lindqvist');
-    expect(find.text('2 in the clear'), findsOneWidget, reason: 'the fixture moved');
+    expect(find.text(sentences.countInTheClear(2)), findsOneWidget, reason: 'the fixture moved');
 
     await tester.tap(find.byKey(FindInDocument.protectKey));
     await settle(tester, rounds: 14);
@@ -328,7 +329,7 @@ void main() {
   testWidgets('a token of ours among the places protects the others and keeps itself', (tester) async {
     final bench = await ready(tester, text: _cameBack);
     await searchFor(tester, 'person');
-    expect(find.text('2 in the clear'), findsOneWidget,
+    expect(find.text(sentences.countInTheClear(2)), findsOneWidget,
         reason: 'the token place is not among the places offered: ${_everyLine(tester)}');
     final before = bench.tokens.length;
 
@@ -337,7 +338,7 @@ void main() {
 
     // The plain place is protected, under one new token…
     expect(bench.tokens.length, before + 1, reason: 'the press minted ${bench.tokens.length - before} tokens');
-    expect(find.text('1 protected'), findsOneWidget, reason: 'the clear place was not protected');
+    expect(find.text(sentences.countProtected(1)), findsOneWidget, reason: 'the clear place was not protected');
     // …the token that arrived stands exactly as it arrived, in the text that
     // would leave the machine…
     expect(bench.payload!.text, contains(_ourToken), reason: 'a second token was minted over the first');
@@ -355,7 +356,7 @@ void main() {
   testWidgets('after a search, no file the app writes holds the typed word', (tester) async {
     await ready(tester);
     await searchFor(tester, 'Lindqvist');
-    expect(find.textContaining('4 places'), findsOneWidget, reason: 'the search did not run');
+    expect(find.textContaining(sentences.placesCount(4)), findsOneWidget, reason: 'the search did not run');
 
     final holding = <String>[];
     for (final f in dir.listSync(recursive: true).whereType<File>()) {

@@ -17,6 +17,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -63,7 +64,7 @@ void main() {
       MaterialApp(home: WorkspaceScreen(bench: bench, ground: ground, onImport: () {}, onAsk: (_) {}, onVault: () {})),
     );
     await settle(tester);
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
 
     expect(
@@ -72,7 +73,7 @@ void main() {
       reason: 'the card does not say how many places the press will clear',
     );
     // And a value that stands once says nothing of the sort.
-    expect(find.textContaining('in 1 places'), findsNothing);
+    expect(find.textContaining(sentences.inPlacesCount(1)), findsNothing);
 
     bench.dispose();
   });
@@ -115,7 +116,7 @@ void main() {
       ),
     );
     await settle(tester);
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
 
     for (final gone in [

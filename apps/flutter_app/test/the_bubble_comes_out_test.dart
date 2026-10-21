@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'drawn_document.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -165,8 +166,8 @@ void main() {
     await settle(tester);
 
     // With no vault, the fact says so and the press goes straight there.
-    expect(find.text('None'), findsOneWidget, reason: 'the bar does not say the vault is missing');
-    await tester.tap(find.text('None'));
+    expect(find.text(sentences.vaultIsNone), findsOneWidget, reason: 'the bar does not say the vault is missing');
+    await tester.tap(find.text(sentences.vaultIsNone));
     await settle(tester, rounds: 2);
     expect(toTheVault, 1, reason: 'the bar\'s «Vault» is still only a sentence');
 
@@ -178,13 +179,13 @@ void main() {
       await bench.rescan();
     });
     await settle(tester);
-    expect(find.text('Unlocked'), findsOneWidget);
+    expect(find.text(sentences.vaultIsUnlocked), findsOneWidget);
 
-    await tester.tap(find.text('Unlocked'));
+    await tester.tap(find.text(sentences.vaultIsUnlocked));
     await settle(tester, rounds: 3);
-    expect(find.text('Lock now'), findsOneWidget, reason: 'an open vault offers no way to shut it');
+    expect(find.text(sentences.lockNow), findsOneWidget, reason: 'an open vault offers no way to shut it');
 
-    await tester.tap(find.text('Lock now'));
+    await tester.tap(find.text(sentences.lockNow));
     await settle(tester, rounds: 6);
     expect(ground.vault, VaultState.locked, reason: '«Lock now» did not lock it');
     expect(toTheVault, 1, reason: 'locking went to the vault screen as well');

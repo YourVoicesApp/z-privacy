@@ -28,6 +28,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
@@ -117,7 +118,7 @@ void main() {
     // controls lands on the barrier and is swallowed, which is how this guard
     // first measured chips it had asked to be turned off. «Chips» draws each
     // token as a widget, and a widget is not a character.
-    await tester.tap(find.text('Plain'));
+    await tester.tap(find.text(sentences.drawnPlain));
     await settle(tester, rounds: 3);
 
     // The person's own press, once: the side is shut and stays shut.
@@ -137,7 +138,7 @@ void main() {
     await tester.tap(find.byTooltip('Choose the AI and what travels to it'));
     await settle(tester);
 
-    expect(find.text('Who answers'), findsOneWidget, reason: 'the AI door opened nothing');
+    expect(find.text(sentences.whoAnswers), findsOneWidget, reason: 'the AI door opened nothing');
     expect(
       ground.config!.safeColumnOpen,
       isTrue,
@@ -185,9 +186,9 @@ void main() {
     // measured here is that going through the hand costs this door nothing: the
     // side it is standing in is not closed, re-opened or scrolled by the press.
     expect(ground.config!.safeColumnOpen, isTrue, reason: 'the side is shut on a fresh data directory');
-    await tester.tap(find.text('Choose who answers'));
+    await tester.tap(find.text(sentences.chooseWhoAnswers));
     await settle(tester, rounds: 6);
-    expect(find.text('Who answers'), findsOneWidget, reason: 'the side’s door opened nothing');
+    expect(find.text(sentences.whoAnswers), findsOneWidget, reason: 'the side’s door opened nothing');
     expect(ground.config!.safeColumnOpen, isTrue, reason: 'the hand closed the side it was asked to open');
   });
 

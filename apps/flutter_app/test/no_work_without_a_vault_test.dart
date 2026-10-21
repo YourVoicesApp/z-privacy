@@ -16,6 +16,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -67,14 +68,14 @@ void main() {
     expect(find.byType(FirstRunScreen), findsOneWidget);
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Start'));
+    await tester.tap(find.text(sentences.start));
     await settle(tester);
 
-    expect(find.text('Create a vault'), findsOneWidget, reason: 'the vault step is not on the first run');
+    expect(find.text(sentences.createAVault), findsOneWidget, reason: 'the vault step is not on the first run');
     expect(find.text('Later'), findsNothing, reason: '«Later» is still a way past the vault');
 
     // And the only button there leads to the vault, not to the home.
-    await tester.tap(find.text('Create a vault'));
+    await tester.tap(find.text(sentences.createAVault));
     await settle(tester);
     expect(find.byType(VaultScreen), findsOneWidget, reason: 'the first run did not end at the vault');
     expect(find.byType(WorkspaceScreen), findsNothing, reason: 'the work was reached with no vault');

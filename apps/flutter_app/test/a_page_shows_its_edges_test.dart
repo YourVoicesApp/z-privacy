@@ -8,6 +8,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/document_text.dart';
@@ -98,7 +99,7 @@ void main() {
     final (bench, _) = await _open(tester, _three);
     await tester.tap(find.byTooltip('Go to a page'));
     await settle(tester);
-    await tester.tap(find.text('Page 2').last);
+    await tester.tap(find.text(sentences.pageNumber(2)).last);
     await settle(tester);
 
     final focused = bench.focusedFinding;

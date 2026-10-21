@@ -26,6 +26,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -97,7 +98,7 @@ void main() {
     // for with no document above it.
     expect(find.text('Write or paste your text here…'), findsNothing,
         reason: 'the second box is back at the top of the screen');
-    expect(find.text('What would you like to ask the AI?'), findsOneWidget,
+    expect(find.text(sentences.whatWouldYouLikeToAskTheAi), findsOneWidget,
         reason: 'the one box does not say what it is for on an empty surface');
 
     // The three parts, each naming what it will hold. The eyebrows are drawn
@@ -110,11 +111,11 @@ void main() {
     // **The first screen is gone, not hidden** — rule 35.
     expect(find.text('Documents'), findsNothing, reason: 'the arrow back is still drawn');
     expect(find.byIcon(Icons.arrow_back), findsNothing);
-    expect(find.text('Open Z Vault'), findsNothing,
+    expect(find.text(sentences.openZVault), findsNothing,
         reason: 'the first screen’s own vault button is still on the glass');
     expect(find.textContaining('identities the app knows'), findsNothing,
         reason: 'the first screen’s tallies are still drawn');
-    expect(find.text('z-pdf — read a protected document back'), findsNothing,
+    expect(find.text(sentences.zPdfReadBack), findsNothing,
         reason: 'the door back is still offered at the way in — it is in Settings now');
 
     // Both presses reach the shell, which is the only thing that can open a

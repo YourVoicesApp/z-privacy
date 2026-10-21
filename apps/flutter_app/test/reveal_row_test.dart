@@ -10,6 +10,7 @@ import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -94,15 +95,15 @@ void main() {
     await tester.pump();
 
     // ------------------------------------------------- hidden to begin with
-    expect(find.text('Hidden'), findsOneWidget);
-    expect(find.text('Reveal'), findsOneWidget);
+    expect(find.text(sentences.revealHidden), findsOneWidget);
+    expect(find.text(sentences.reveal), findsOneWidget);
     // Edit and Delete exist **while hidden** — they used to appear only after
     // a reveal, which is what made the row change shape.
-    expect(find.text('Edit'), findsOneWidget);
+    expect(find.text(sentences.editIt), findsOneWidget);
     // Two «Delete»s on this screen: the identity's and the value's. What
     // matters is that the value's exists while hidden.
-    expect(find.text('Delete'), findsNWidgets(2));
-    final editWhenHidden = tester.getRect(find.text('Edit'));
+    expect(find.text(sentences.deleteIt), findsNWidgets(2));
+    final editWhenHidden = tester.getRect(find.text(sentences.editIt));
 
     // ------------------------------------------------- revealed
     // Pressed inside `runAsync` on purpose: `_reveal` starts the ticker, and
@@ -110,22 +111,22 @@ void main() {
     // future inside its own callback. Started here it is a real timer, so the
     // path under test is the real one.
     await tester.runAsync(() async {
-      await tester.tap(find.text('Reveal'));
+      await tester.tap(find.text(sentences.reveal));
       await Future<void>.delayed(const Duration(milliseconds: 300));
     });
     await tester.pump();
     expect(find.text('Nordstern Consulting GmbH'), findsOneWidget);
     expect(find.textContaining('Revealed · '), findsOneWidget);
-    expect(find.text('Hide'), findsOneWidget);
+    expect(find.text(sentences.hide), findsOneWidget);
     expect(
-      tester.getRect(find.text('Edit')),
+      tester.getRect(find.text(sentences.editIt)),
       editWhenHidden,
       reason: 'revealing moved Edit',
     );
 
     // ------------------------------------------------- the pointer stays put
     // Rest on Edit and do not move it again for the rest of the test.
-    final onEdit = tester.getCenter(find.text('Edit'));
+    final onEdit = tester.getCenter(find.text(sentences.editIt));
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await mouse.addPointer(location: onEdit);
     addTearDown(mouse.removePointer);
@@ -136,15 +137,15 @@ void main() {
     for (var i = 0; i < 20; i++) {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
       await tester.pump();
-      if (find.text('Hidden').evaluate().isNotEmpty) break;
+      if (find.text(sentences.revealHidden).evaluate().isNotEmpty) break;
     }
 
     expect(find.text('Nordstern Consulting GmbH'), findsNothing,
         reason: 'the value outlived the core window');
-    expect(find.text('Hidden'), findsOneWidget);
-    expect(find.text('Reveal'), findsOneWidget, reason: 'the control did not turn back');
+    expect(find.text(sentences.revealHidden), findsOneWidget);
+    expect(find.text(sentences.reveal), findsOneWidget, reason: 'the control did not turn back');
     expect(
-      tester.getRect(find.text('Edit')),
+      tester.getRect(find.text(sentences.editIt)),
       editWhenHidden,
       reason: 'the expiry moved Edit out from under the pointer',
     );
@@ -153,7 +154,7 @@ void main() {
     await tester.tapAt(onEdit);
     await settle(tester, rounds: 4);
     // The Edit dialog is a value form; its title proves the press landed.
-    expect(find.text('Edit this value'), findsOneWidget,
+    expect(find.text(sentences.editThisValue), findsOneWidget,
         reason: 'the press did not reach Edit');
   });
 
@@ -216,7 +217,7 @@ void main() {
     await tester.pump();
 
     await tester.runAsync(() async {
-      await tester.tap(find.text('Reveal'));
+      await tester.tap(find.text(sentences.reveal));
       await Future<void>.delayed(const Duration(milliseconds: 300));
     });
     await tester.pump();
@@ -229,11 +230,11 @@ void main() {
     for (var i = 0; i < 20; i++) {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
       await tester.pump();
-      if (find.text('Hidden').evaluate().isNotEmpty) break;
+      if (find.text(sentences.revealHidden).evaluate().isNotEmpty) break;
     }
 
     expect(find.text('Nordstern Consulting GmbH'), findsNothing,
         reason: 'the value stayed on screen after the vault was locked');
-    expect(find.text('Hidden'), findsOneWidget);
+    expect(find.text(sentences.revealHidden), findsOneWidget);
   });
 }

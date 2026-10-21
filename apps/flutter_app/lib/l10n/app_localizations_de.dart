@@ -2315,17 +2315,17 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String countProtected(Object count) {
+  String countProtected(int count) {
     return '$count geschützt';
   }
 
   @override
-  String countWaiting(Object count) {
+  String countWaiting(int count) {
     return '$count warten';
   }
 
   @override
-  String countInTheClear(Object count) {
+  String countInTheClear(int count) {
     return '$count im Klartext';
   }
 

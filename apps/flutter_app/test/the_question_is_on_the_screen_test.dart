@@ -17,6 +17,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/the_chat.dart';
@@ -98,7 +99,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final (_, bench) = await _open(tester, 'token');
 
-    expect(find.text('What should the AI do with this?'), findsOneWidget,
+    expect(find.text(sentences.whatShouldTheAiDoWithThis), findsOneWidget,
         reason: 'there is no door to a model from the document');
     final before = bench.payload!.text;
     expect(before.contains('--- Request ---'), isFalse);
@@ -428,7 +429,7 @@ void main() {
     await settle(tester, rounds: 16);
     expect(bench.payload!.text, isNot(bare));
 
-    await tester.tap(find.widgetWithText(ZButton, 'Take it out'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.takeItOut));
     await settle(tester, rounds: 16);
     expect(bench.payload!.text, bare,
         reason: 'taking the request out left something behind in what leaves');
@@ -442,7 +443,7 @@ void main() {
     // Empty: the act is shut and says what an empty request means, because a
     // document may be sent with no instruction and that is not a failure.
     expect(
-      tester.widget<ZButton>(find.widgetWithText(ZButton, 'Add it to what will leave')).onPressed,
+      tester.widget<ZButton>(find.widgetWithText(ZButton, sentences.addItToWhatWillLeave)).onPressed,
       isNull,
     );
     expect(find.textContaining('no request'), findsOneWidget);
@@ -453,7 +454,7 @@ void main() {
     await settle(tester, rounds: 16);
 
     // Once it is in, the act says so rather than offering to do it again.
-    expect(find.text('In what will leave'), findsOneWidget);
+    expect(find.text(sentences.inWhatWillLeave), findsOneWidget);
     // **This press never sends.** The word is not on this control, because the
     // gate and the review are still the only way out.
     expect(find.widgetWithText(ZButton, 'Send'), findsNothing);

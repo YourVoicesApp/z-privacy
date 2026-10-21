@@ -37,6 +37,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/shell.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -125,13 +126,13 @@ void main() {
     // in this app presses «Create the vault» itself.
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Start'));
+    await tester.tap(find.text(sentences.start));
     await settle(tester);
-    await tester.tap(find.text('Create a vault'));
+    await tester.tap(find.text(sentences.createAVault));
     await settle(tester);
     await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: _pass));
     await settle(tester);
-    await tester.tap(find.text('Back'));
+    await tester.tap(find.text(sentences.back));
     // The way back runs through the core: close, refresh, and a frame for the
     // shell to notice. Measured at five rounds; eight is room to breathe.
     await settle(tester, rounds: 8);
@@ -210,13 +211,13 @@ void main() {
     // cannot be the application's own.
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Start'));
+    await tester.tap(find.text(sentences.start));
     await settle(tester);
-    await tester.tap(find.text('Create a vault'));
+    await tester.tap(find.text(sentences.createAVault));
     await settle(tester);
     await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: _pass));
     await settle(tester);
-    await tester.tap(find.text('Back'));
+    await tester.tap(find.text(sentences.back));
     await settle(tester, rounds: 8);
     expect(find.byType(WorkspaceScreen), findsOneWidget);
 
@@ -243,7 +244,7 @@ void main() {
     await settle(tester, rounds: 4);
     expect(find.text(TheLanguageOfANewSession.title), findsOneWidget,
         reason: 'the text was about to be read in a language nobody chose');
-    await tester.tap(find.text('Not now'));
+    await tester.tap(find.text(sentences.notNow));
     await settle(tester, rounds: 8);
     // **What says «nothing was read» after «Not now»** — and since rule 72-أ
     // it is not «nothing of the text is drawn»: the text is in the one box,
@@ -313,7 +314,7 @@ void main() {
     }
     // The line itself, and what it is for.
     expect(find.byKey(LanguageChoices.divider), findsOneWidget, reason: 'there is no line');
-    expect(find.textContaining('General rules only'), findsOneWidget,
+    expect(find.textContaining(sentences.generalRulesOnly), findsOneWidget,
         reason: 'the line does not say what is under it');
 
     // A language with rules answers, as it always did.
