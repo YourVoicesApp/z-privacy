@@ -626,17 +626,31 @@ void main() {
         reason: 'the IBAN is readable in the PDF');
   });
 
-  test('the stated folder is the core\'s answer, and on Linux it is this one', () async {
+  test('the stated folder is the core\'s answer, and this is that answer here', () async {
     final said = await protectedPdfFolder();
     // Two assertions, because there are two claims. The first is the one
     // 074/W1 is about: the screen has no answer of its own any more, so a
     // platform where `HOME` means nothing is answered by the core instead of
-    // being refused. The second is what that answer is here — if the core's
-    // Linux path ever moves, the person's saved files move with it, and this
-    // is what notices.
+    // being refused. The second is what that answer *is* — if the core's path
+    // ever moves, the person's saved files move with it, and this is what
+    // notices.
     expect(said, await z.defaultDocumentsDir(),
         reason: 'the screen must not have an answer of its own');
-    expect(said, '${Platform.environment['HOME']}/Documents/zprivacy',
-        reason: 'and on Linux the core\'s answer is the folder people already have');
+    // **And it is read per platform**, because three things in the one string
+    // that stood here — `$HOME/Documents/zprivacy` — belong to the platform
+    // and not to us: the home variable, which Windows does not set; the
+    // separator; and the name, which `data_dir.rs` capitalises there to match
+    // the folders Windows itself writes. The Windows suite read that string as
+    // `C:\Users\runneradmin/Documents/zprivacy` against the core's own
+    // `…\Documents\ZPrivacy` and was red for it (098 item 5, run
+    // 39548354872). Each piece is asked for now, so this reads the core on
+    // either platform instead of spelling one platform's path for both.
+    final home = Platform.isWindows
+        ? Platform.environment['USERPROFILE']
+        : Platform.environment['HOME'];
+    final sep = Platform.pathSeparator;
+    final ours = Platform.isWindows ? 'ZPrivacy' : 'zprivacy';
+    expect(said, '$home${sep}Documents$sep$ours',
+        reason: 'the core\'s answer is the folder people already have, spelled the way this system spells it');
   });
 }

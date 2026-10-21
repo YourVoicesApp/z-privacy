@@ -486,6 +486,27 @@ class PdfSaved {
   final String? trouble;
 }
 
+/// A name inside a folder, spelled the way this system spells a path.
+///
+/// `'$folder/$name'` stood at the two places below. The file landed in the
+/// right place on Windows — it takes either separator — and then the one
+/// sentence a person reads after a save said «Saved to
+/// C:\Users\…\Documents\ZPrivacy/Brief-protected-21-10.pdf», which is not a
+/// path any folder window of theirs prints. The suite said the same thing in
+/// its own way on 21 October (run 39548354872): «the saved file carries the
+/// tokens» looks for the path on the glass, the folder listing hands back
+/// `…\Brief-protected-21-10.pdf`, and two spellings of one file do not match.
+///
+/// The separator is asked of the platform. Gate `G67` refuses the next glued
+/// one.
+String _inside(String folder, String name) {
+  final sep = Platform.pathSeparator;
+  // A folder that already ends in a separator — `C:\` is one, and so is a
+  // path a person typed with a trailing slash — takes the name as it is.
+  if (folder.endsWith(sep) || folder.endsWith('/')) return '$folder$name';
+  return '$folder$sep$name';
+}
+
 /// Write the protected text to a file and answer where it went.
 ///
 /// It never overwrites: a second save of the same document on the same day
@@ -531,10 +552,10 @@ Future<PdfSaved> saveProtectedPdf({
   try {
     final dir = Directory(into);
     if (!dir.existsSync()) dir.createSync(recursive: true);
-    var path = '$into/$stem.pdf';
+    var path = _inside(into, '$stem.pdf');
     var n = 2;
     while (File(path).existsSync()) {
-      path = '$into/$stem-$n.pdf';
+      path = _inside(into, '$stem-$n.pdf');
       n += 1;
       if (n > 200) {
         return PdfSaved.trouble(sentences.thereAreAlready200Files(stem, into));

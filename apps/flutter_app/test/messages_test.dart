@@ -10,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 
+import 'a_path_in_one_spelling.dart';
+
 /// One of every variant the contract carries today. When the core gains one,
 /// this list fails to compile or the count assertion below fails — either way
 /// somebody has to write the sentence rather than ship the enum.
@@ -341,11 +343,23 @@ void main() {
   test('no widget interprets an ApiError by itself', () {
     // The rule that keeps the mapper the only mapper. Without it, one error
     // says three things on three screens within a month.
+    //
+    // **The names are compared in one spelling** — `oneSpelling`, and the
+    // reason is in that file: on Windows this listing says
+    // `lib\core\messages.dart`, both exemptions below missed, and the mapper
+    // was reported as its own offender along with every generated file (the
+    // Windows suite's red of 21 October, run 39548354872). The file itself is
+    // still read through the entry the platform handed over.
     final offenders = <String>[];
+    var sawTheMapper = false;
     for (final file in Directory('lib').listSync(recursive: true).whereType<File>()) {
-      if (!file.path.endsWith('.dart')) continue;
-      if (file.path.contains('lib/src/rust/')) continue;
-      if (file.path.endsWith('core/messages.dart')) continue;
+      final name = oneSpelling(file.path);
+      if (!name.endsWith('.dart')) continue;
+      if (name.contains('lib/src/rust/')) continue;
+      if (name.endsWith('core/messages.dart')) {
+        sawTheMapper = true;
+        continue;
+      }
       final text = file.readAsStringSync();
       for (final line in text.split('\n')) {
         final code = line.trim();
@@ -358,6 +372,20 @@ void main() {
       }
     }
     expect(offenders, isEmpty, reason: 'these read an ApiError outside the mapper');
+    // **And the exemption bit.** A census that exempts a file it never reached
+    // is a census of nothing, and both of these exemptions were exactly that on
+    // Windows.
+    expect(
+      sawTheMapper,
+      isTrue,
+      reason: 'the walk never reached core/messages.dart, so its exemption proves nothing',
+    );
+    // The other platform's spelling, measured here, because this is the only
+    // platform that runs this line on every round.
+    expect(oneSpelling(r'lib\core\messages.dart').endsWith('core/messages.dart'), isTrue,
+        reason: 'the mapper is exempt on Windows too, or it is its own offender there');
+    expect(oneSpelling(r'lib\src\rust\api\mirrors.freezed.dart').contains('lib/src/rust/'), isTrue,
+        reason: 'the generated files are out of this census on Windows too');
   });
 
   /// **One outcome, one sentence** — the fold of 15 October, and the table

@@ -1106,6 +1106,25 @@ if [ -f "$WINJOB" ]; then
   else
     fail "G60 the Windows job no longer names$G60_MISSING — a release that is missing one of them stops on a clean machine with Windows' own dialogue"
   fi
+
+  # **And the folder they are copied from is asked for, never typed** — 098
+  # item 5. The step read `VCToolsRedistDir` for the redistributable folder and
+  # then typed the toolset's own number inside it, which is this step's rule
+  # left unapplied to its second case: the runner image moved to Visual Studio
+  # 18 with MSVC 14.51 on 21 October, that folder does not exist there, the copy
+  # threw, and every step after it — the versions, the needles, the staging, the
+  # zip, the installer, the MSIX, the uploads — was skipped. A whole run, no
+  # release.
+  #
+  # Two things, because either alone is a half: the glob is there, and no
+  # number is typed anywhere in the step. Comment lines are already dropped
+  # above, which is what lets this paragraph name what it forbids.
+  G60_TOOLSET=$(printf '%s\n' "$G60_COPY" | grep -cE 'Microsoft\.VC[0-9][0-9]*\.CRT' || true)
+  if printf '%s\n' "$G60_COPY" | grep -qF 'Microsoft.VC14*.CRT' && [ "$G60_TOOLSET" -eq 0 ]; then
+    pass "G60 the copy step asks the runner which CRT folder it has — one match by shape, and no toolset number typed"
+  else
+    fail "G60 the copy step names a toolset folder by hand ($G60_TOOLSET typed): the next runner image with a newer MSVC stops the release at the copy"
+  fi
 else
   skip "G60 the Windows job carries the runtime" "no $WINJOB in this tree"
 fi
@@ -1286,6 +1305,61 @@ if [ -d "$DART_TESTS" ] && [ -f "$G64_HELPER" ]; then
   fi
 else
   skip "G64 the Dart suite names its bridge once" "no $G64_HELPER in this tree"
+fi
+
+# ---------------------------------------------------------------- G67
+# **A path is spelled the way the system spells it** — 098 item 5, from the
+# Windows suite's own record (`dart.json`, run 39548354872, 21 October).
+#
+# Two of the four reds that record carried were one fault wearing two coats:
+# a path separator typed into our own text instead of asked of the platform.
+#
+#  1 — **The one place the app writes a file joined it with a `/`.**
+#      `'$into/$stem.pdf'` writes the file in the right place on Windows, which
+#      takes either separator, and then the screen says «Saved to
+#      C:\Users\…\ZPrivacy/Brief-protected-21.pdf» — a path no folder window of
+#      theirs prints, in the one sentence a person checks after a save. The
+#      suite said it its own way: «the saved file carries the tokens» looks for
+#      the path on the glass while the listing hands back `…\Brief…pdf`, so two
+#      spellings of one file did not match.
+#  2 — **A census compared path names in two spellings.** `messages_test`'s
+#      exemptions were typed with `/`, `Directory.listSync` on Windows hands
+#      back `\`, and the mapper was reported as its own offender along with
+#      every generated file. `test/a_path_in_one_spelling.dart` is the one
+#      translation, and this refuses a path fragment typed into a comparison
+#      against a `.path` without it.
+#
+# Read as text, on Linux, about Windows — the same sentence G60 and G64 carry,
+# and for the same reason: nothing here can run that suite. Comment lines are
+# dropped before both searches, because the paragraphs above quote exactly what
+# the checks forbid, and a gate that reads its own prose reds on itself.
+G67_LIB_FILES=$(find "$FLUTTER_LIB" -name '*.dart' -not -path '*/lib/src/rust/*' -not -path '*/lib/l10n/*' 2>/dev/null | sort)
+G67_SPELLING=$DART_TESTS/a_path_in_one_spelling.dart
+if [ -n "$G67_LIB_FILES" ]; then
+  # shellcheck disable=SC2086
+  G67_GLUED=$(grep -nE '\$[A-Za-z_][A-Za-z0-9_.]*/' $G67_LIB_FILES 2>/dev/null \
+    | grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|\*|/\*)' || true)
+  if [ -z "$G67_GLUED" ]; then
+    pass "G67 the app builds no path by gluing a separator into its own text: the folder and the name are joined"
+  else
+    fail "G67 a path is spelled here instead of joined, and Windows shows that spelling to the person:"
+    printf '        %s\n' "$G67_GLUED"
+  fi
+else
+  skip "G67 the app joins a folder and a name" "no $FLUTTER_LIB in this tree"
+fi
+
+if [ -f "$G67_SPELLING" ]; then
+  G67_TYPED=$(grep -rnE "\.path\.(contains|endsWith|startsWith)\('[^']*/" "$DART_TESTS" --include='*.dart' 2>/dev/null \
+    | grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|\*|/\*)' || true)
+  if [ -z "$G67_TYPED" ]; then
+    pass "G67 every census over a listing compares the names in one spelling, so it measures both platforms"
+  else
+    fail "G67 a census compares a typed path fragment against what the platform spelled — green on Linux, red or blind on Windows:"
+    printf '        %s\n' "$G67_TYPED"
+  fi
+else
+  skip "G67 a census compares one spelling" "no $G67_SPELLING in this tree"
 fi
 
 # ---------------------------------------------------------------- G56
