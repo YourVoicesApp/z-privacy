@@ -252,6 +252,39 @@ jobs:
           echo "RUSTFLAGS=${RUSTFLAGS:-} $remap" >> "$GITHUB_ENV"
           echo "$remap"
 
+      # **Where this run stages, and it is not in the checkout** — 098 item 4(أ),
+      # from the real run (39508181140): step 9 made `staging/` **inside** the
+      # checkout, so `scripts/package_windows.sh` met «?? staging/ — the tree is
+      # not clean» and refused by its own law. Nothing was stamped, no zip, no
+      # `.sha256`, the installer and the MSIX were skipped and the uploads
+      # failed. The release that items 1–3 are about never existed.
+      #
+      # The fix is **not** `ALLOW_DIRTY` and **not** a `.gitignore` line: both
+      # teach the check to look away, and that check is the only thing standing
+      # between a person and an archive nobody can rebuild. The staging folder
+      # simply does not belong in the tree it is made from. `$RUNNER_TEMP` is
+      # the runner's own scratch, emptied between jobs.
+      #
+      # Defined **here**, before the build, so that the uploads at the end —
+      # which run `if: always()` — have a path even when a step in the middle
+      # failed. And the backslashes are turned round because these names are
+      # read by Git Bash as well as by PowerShell: `D:\a\_temp` is one word to
+      # bash, where `D:/a/_temp` is a path.
+      - name: Where this run stages
+        shell: bash
+        run: |
+          if [ -z "${RUNNER_TEMP:-}" ]; then
+            echo "RUNNER_TEMP is not set, and staging inside the checkout is what this fixes"
+            exit 1
+          fi
+          temp=${RUNNER_TEMP//\\//}
+          {
+            echo "STAGE_ROOT=$temp/staging"
+            echo "STAGE=$temp/staging/zprivacy-v1-windows-x86_64"
+            echo "INSTALLER_OUT=$temp/staging-installer"
+          } >> "$GITHUB_ENV"
+          echo "staging under $temp/staging"
+
       # Says out loud what is missing rather than failing later with a linker
       # error nobody can place: a Windows desktop build needs Visual Studio's
       # C++ workload, and the runner image is supposed to carry it.
@@ -402,8 +435,8 @@ jobs:
         run: |
           out=build/windows/x64/runner/Release
           test -f "$out/zprivacy.exe" || { echo "no zprivacy.exe at $out"; exit 1; }
-          mkdir -p ../../staging/zprivacy-v1-windows-x86_64
-          cp -a "$out/." ../../staging/zprivacy-v1-windows-x86_64/
+          mkdir -p "$STAGE"
+          cp -a "$out/." "$STAGE/"
 
           # The licences travel with the files they are about.
           #
@@ -416,7 +449,7 @@ jobs:
           # text to travel. Same five files, same names, from the same folder
           # as the Linux package — `packaging/third-party/`, which is why it is
           # no longer under `packaging/linux/`.
-          dest=../../staging/zprivacy-v1-windows-x86_64
+          dest="$STAGE"
           cp -f ../../LICENSE "$dest/LICENSE"
           # **And the folder says what is in it** — 098: the three Microsoft
           # libraries are new in this release and a person who unzips it has a
@@ -436,8 +469,17 @@ jobs:
             echo "The Rust crates this build links, from the tree at ${GITHUB_SHA:0:7}."
             echo "Generated in .github/workflows/windows-core.yml with cargo tree; no new tool."
             echo
+            # **And not where the crate sat on this disk** — 098 item 4(ج).
+            # `cargo tree` writes a workspace crate as «z_core v0.1.0 (…)», and
+            # the Windows session found `D:\a\z-privacy\z-privacy\z_core` in
+            # `third-party/rust-crates.txt` line 62 of the installed build. The
+            # Linux script has stripped that since the attacker found it there
+            # — with `s| \(/[^)]*\)$||`, which needs a leading `/` and so could
+            # never match a drive letter: the rule written in place, not applied
+            # to its second case. The general form takes both, and nothing else
+            # is parenthesised at the end of these lines once ` (*)` is gone.
             (cd ../.. && cargo tree -p z_core --edges normal --prefix none 2>/dev/null \
-               | sed 's/ (\*)$//' | sort -u | grep -vE '^$')
+               | sed 's/ (\*)$//' | sed -E 's| \([^)]*\)$||' | sort -u | grep -vE '^$')
           } > "$dest/third-party/rust-crates.txt"
 
           # Asked for by name, like the .exe above it. `set -e` would already
@@ -455,13 +497,13 @@ jobs:
       # cannot be unwritten once it is downloaded.
       - name: Stamp it, prove it carries no runner path, and zip it
         shell: bash
-        run: bash scripts/package_windows.sh staging/zprivacy-v1-windows-x86_64 "$GITHUB_WORKSPACE/dist"
+        run: bash scripts/package_windows.sh "$STAGE" "$GITHUB_WORKSPACE/dist"
 
       - name: What is in it, and its hashes
         if: always()
         shell: bash
         run: |
-          dir=staging/zprivacy-v1-windows-x86_64
+          dir="$STAGE"
           [ -d "$dir" ] || { echo "nothing staged"; exit 0; }
           {
             echo "### Z Privacy for Windows — not a release yet"
@@ -509,11 +551,15 @@ jobs:
           Write-Host "version from pubspec.yaml: $version"
 
           $root = (Get-Location).Path
-          New-Item -ItemType Directory -Force -Path staging-installer | Out-Null
+          # The two folders are the job's own, outside the checkout (item 4أ),
+          # and Inno is given them in the spelling Windows writes.
+          $source = $env:STAGE -replace '/', '\'
+          $outDir = $env:INSTALLER_OUT -replace '/', '\'
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
-            "/DSourceDir=$root\staging\zprivacy-v1-windows-x86_64" `
-            "/DOutDir=$root\staging-installer" `
+            "/DSourceDir=$source" `
+            "/DOutDir=$outDir" `
             "/DAppVersion=$version" `
             "/DIconFile=$root\apps\flutter_app\windows\runner\resources\app_icon.ico" `
             "packaging\windows\zprivacy.iss"
@@ -523,7 +569,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          file=staging-installer/zprivacy-v1-windows-x86_64-setup.exe
+          file="$INSTALLER_OUT/zprivacy-v1-windows-x86_64-setup.exe"
           [ -f "$file" ] || { echo "no installer was made"; exit 0; }
           {
             echo "### The installer"
@@ -647,7 +693,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zprivacy-v1-windows-x86_64-setup-${{ env.SHORT_SHA }}
-          path: staging-installer
+          path: ${{ env.INSTALLER_OUT }}
           retention-days: 30
           if-no-files-found: error
 
@@ -665,7 +711,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zprivacy-v1-windows-x86_64-folder-${{ env.SHORT_SHA }}
-          path: staging
+          path: ${{ env.STAGE_ROOT }}
           retention-days: 30
           if-no-files-found: error
 
@@ -755,3 +801,22 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+
+      # **The suite's own record travels, not forty lines of it** — 098 item
+      # 4(ب). The step above pipes through `tail -40`, and in the real run that
+      # tail hid sixty-six of seventy-one failures: the summary named the files
+      # it could and the rest was gone with the log's scroll. The JSON is the
+      # whole suite's answer, and it is written to the runner's temp already —
+      # this only hands it over.
+      #
+      # `warn` and not `error`, because a suite that never started writes no
+      # record, and an upload turning that into a second failure would hide the
+      # first — which is the whole fault being fixed here.
+      - name: Upload the Dart suite's own record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dart-tests-windows-${{ env.SHORT_SHA }}
+          path: ${{ runner.temp }}/dart.json
+          retention-days: 30
+          if-no-files-found: warn

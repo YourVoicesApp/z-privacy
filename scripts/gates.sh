@@ -1189,6 +1189,105 @@ if [ -f "$G61_SCRIPT" ]; then
   fi
 fi
 
+# **And the crate list names the crate, not the builder's disk** — 098 item
+# 4(ج). `cargo tree` writes a workspace crate as «z_core v0.1.0 (…)». The Linux
+# script stripped that with `s| \(/[^)]*\)$||`, which needs a leading `/` and
+# therefore could never match `(D:\a\…)` — and the Windows session found
+# exactly that in line 62 of an installed build's own notice. Both generators
+# carry the general form now, and this refuses either of them going back to the
+# Unix-only one: a rule in two spellings is how the second case gets forgotten.
+G61_STRIP='s| \([^)]*\)$||'
+G61_UNIX='s| \(/[^)]*\)$||'
+G61_NOTICE=""
+for f in scripts/package_linux.sh "$WINJOB"; do
+  [ -f "$f" ] || continue
+  # **Comment lines first**: both files now explain the old pattern in prose,
+  # and the first run of this gate dutifully found it there and failed. A
+  # census of what a file *does* may not read what it *says* — G53 and G60
+  # learned the same lesson in this round.
+  G61_DOES=$(grep -vE '^[[:space:]]*#' "$f")
+  printf '%s\n' "$G61_DOES" | grep -qF -- "$G61_STRIP" || G61_NOTICE="$G61_NOTICE $f:no-strip"
+  printf '%s\n' "$G61_DOES" | grep -qF -- "$G61_UNIX" && G61_NOTICE="$G61_NOTICE $f:unix-only"
+done
+if [ -z "$G61_NOTICE" ]; then
+  pass "G61 both crate lists name the crate and not the folder it was built in, in one spelling"
+else
+  fail "G61 a crate list would carry the builder's own path:$G61_NOTICE"
+fi
+
+# ---------------------------------------------------------------- G63
+# **The job stages outside the tree it was built from** — 098 item 4(أ), from
+# the real run 39508181140 on `4bb202f`.
+#
+# `scripts/package_windows.sh` refuses a dirty tree, because an archive built
+# from one cannot be rebuilt by anybody. The staging step made `staging/`
+# **inside** the checkout, so the script met «?? staging/» and refused: no
+# stamp, no zip, no `.sha256`, the installer and the MSIX skipped, the uploads
+# failed. Items 1–3 all ride a release that this red prevented from existing.
+#
+# Neither `ALLOW_DIRTY` nor a `.gitignore` line is the answer — both teach the
+# check to look away from the one thing it is for. So this reads that the
+# staging folders are the runner's own, and that no step builds one inside the
+# workspace again. A check on the text, said so in its sentence, as its two
+# neighbours are.
+if [ -f "$WINJOB" ]; then
+  G63_DOING=$(grep -vE '^[[:space:]]*#' "$WINJOB")
+  # The forms a path **relative to the checkout** takes in this file, named one
+  # by one rather than by a pattern loose enough to catch the definition of the
+  # right answer — which is what the first run of this gate did
+  # (`STAGE=$temp/staging/…` is the fix, not the fault).
+  G63_WRONG=$(printf '%s\n' "$G63_DOING" \
+    | grep -nE '(\.\./\.\./staging|-Path staging|path: staging|=staging[-/]|\$root\\staging)' || true)
+  G63_MISSING=""
+  printf '%s\n' "$G63_DOING" | grep -q 'temp=${RUNNER_TEMP' || G63_MISSING="$G63_MISSING RUNNER_TEMP"
+  printf '%s\n' "$G63_DOING" | grep -q 'STAGE=\$temp/staging' || G63_MISSING="$G63_MISSING STAGE"
+  printf '%s\n' "$G63_DOING" | grep -q 'INSTALLER_OUT=\$temp/staging-installer' \
+    || G63_MISSING="$G63_MISSING INSTALLER_OUT"
+  printf '%s\n' "$G63_DOING" | grep -q 'package_windows.sh "\$STAGE"' \
+    || G63_MISSING="$G63_MISSING the-packaging-call"
+  if [ -z "$G63_WRONG" ] && [ -z "$G63_MISSING" ]; then
+    pass "G63 the Windows job stages under the runner's own temp, so the packaging script's clean-tree law cannot fire on the job's own folder"
+  else
+    [ -n "$G63_MISSING" ] && fail "G63 the Windows job no longer names:$G63_MISSING"
+    [ -n "$G63_WRONG" ] && { fail "G63 a step would stage inside the checkout again:"; printf '        %s\n' "$G63_WRONG"; }
+  fi
+else
+  skip "G63 the Windows job stages outside the tree" "no $WINJOB in this tree"
+fi
+
+# ---------------------------------------------------------------- G64
+# **The Dart suite names the library it speaks through in one place** — 098
+# item 4(ب). Fifty-nine test files each held
+# `const _libPath = 'build/linux/…/libz_bridge.so'`, and on Windows every one
+# of them threw out of its `setUpAll`: seventy-one failures, sixty-six of them
+# hidden behind a `tail -40`, and five more from a `tearDownAll` whose `late`
+# folder was never set because the setUpAll above it had thrown first.
+#
+# One helper chooses by platform now, and this refuses the sixtieth file that
+# would write a path of its own. Comment lines are dropped before counting,
+# because a comment naming the library is prose and this measures what runs.
+DART_TESTS=apps/flutter_app/test
+G64_HELPER=$DART_TESTS/the_bridge_the_tests_speak_through.dart
+if [ -d "$DART_TESTS" ] && [ -f "$G64_HELPER" ]; then
+  G64_OTHERS=$(grep -rn -- 'libz_bridge\.so\|runner/Debug/z_bridge\.dll' "$DART_TESTS" \
+    --include='*.dart' 2>/dev/null \
+    | grep -v "^$G64_HELPER:" \
+    | grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|\*|/\*)' || true)
+  if [ -z "$G64_OTHERS" ]; then
+    pass "G64 the Dart suite asks one place where its bridge is, so the platform is chosen once"
+  else
+    fail "G64 a test names a platform's own library path instead of the one place:"
+    printf '        %s\n' "$G64_OTHERS"
+  fi
+  if grep -q "dart-tests-windows" "$WINJOB" 2>/dev/null; then
+    pass "G64 the Windows job hands over the Dart suite's own record, not forty lines of it"
+  else
+    fail "G64 the Windows job tails the Dart log and uploads no record: sixty-six failures of seventy-one were lost that way"
+  fi
+else
+  skip "G64 the Dart suite names its bridge once" "no $G64_HELPER in this tree"
+fi
+
 # ---------------------------------------------------------------- G56
 # **Every claim this product makes is in one file, with its limit and its
 # proof** — 094, the owner's own order of 19 October 2026: «نجعل ملف مراجعة في

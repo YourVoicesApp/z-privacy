@@ -30,8 +30,9 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 const wide = Size(1500, 1200);
 
 Future<void> settle(WidgetTester tester, {int rounds = 5}) async {
@@ -215,7 +216,7 @@ Future<Ground> withADocumentBehindThePanel(WidgetTester tester, String name) asy
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
   });

@@ -51,6 +51,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
 /// A sha256-shaped string that is not one: the control's footer must carry
 /// something of the right length without pretending to be a real digest.
@@ -60,7 +61,7 @@ final _zeroes = '0' * 64;
 /// with that page (079); its own guards are in `the_answer_page_test.dart`.
 const _answer = '__Z_0000_CUSTOM_00000000__';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 
 /// A German letter whose findings are every one of them automatic. No `GmbH`
 /// line: a company by its legal form is **offered**, and an open suggestion
@@ -127,7 +128,7 @@ void main() {
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     // The asset bundle and the platform channels, before anything asks for
     // them: the embedded font is read through `rootBundle`.

@@ -28,8 +28,9 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/core/protecting.dart';
 import 'the_folder_lets_go.dart';
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 const _doc = 'Protokoll 2026\nBjörn Sandström ringde klockan 14 om fakturan 55123.\n';
 
 Future<void> settle(WidgetTester tester, {int rounds = 5}) async {
@@ -42,7 +43,7 @@ Future<void> settle(WidgetTester tester, {int rounds = 5}) async {
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
   });

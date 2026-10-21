@@ -39,8 +39,9 @@ import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 
 /// Real futures do not complete inside `testWidgets`' fake-async zone — the
 /// reason is written at the head of `shell_test.dart`.
@@ -104,7 +105,7 @@ void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
       throw StateError(
-        'no $_libPath — run `flutter build linux --debug` first',
+        buildTheBridgeFirst,
       );
     }
     await RustLib.init();

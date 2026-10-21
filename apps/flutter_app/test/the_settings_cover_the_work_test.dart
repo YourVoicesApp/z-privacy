@@ -30,8 +30,9 @@ import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'the_folder_lets_go.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
+import 'the_bridge_the_tests_speak_through.dart';
 
-const _libPath = 'build/linux/x64/debug/bundle/lib/libz_bridge.so';
+final _libPath = theBridgeTheTestsSpeakThrough;
 
 /// Carries something a general rule protects on its own — no vault needed for
 /// the finding, so this test is about the panel and nothing else.
@@ -195,7 +196,7 @@ Future<Ground> aDocumentOnTheBench(WidgetTester tester, String name) async {
 void main() {
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
-      throw StateError('no $_libPath — run `flutter build linux --debug` first');
+      throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
   });
