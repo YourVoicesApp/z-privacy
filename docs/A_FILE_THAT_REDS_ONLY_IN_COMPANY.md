@@ -16,7 +16,9 @@ Three different guards, three runs, **one file**, each green on its own.
 ## The cause, out of the gate's own report and not out of a hypothesis
 
 `scripts/gates.sh` runs the suite with `--file-reporter="json:$DART_JSON"`, and
-that file survives the run in `/tmp`. Reading it rather than guessing gave the
+that file survives the run — since sitting five's item 4 at one fixed place per
+worktree, `/tmp/zprivacy-gates/<worktree>/dart-events.json`, named in the gate's
+own PASS line, and kept on green as well as on red. Reading it rather than guessing gave the
 answer in one line — the reddening test was reported as an **error**, not a
 failure, and the error is:
 
@@ -265,6 +267,60 @@ of its own side of the seam.
 
 Related: `a_split_item_needs_a_guard_that_crosses_the_seam.md` ·
 `a_control_that_fails_to_bite_is_a_finding.md`
+
+## A source that changed is measured by the one command — 096, 21 October 2026
+
+Sitting five, item 3. In this file because it is the same fault once more: **a
+measurement that cannot see the thing it is about.**
+
+096's glass half moved the first part from `doc.marks` to `entered.marks` — not
+the widget, not its callers, the **source** of what it draws. I measured the
+six files I had touched (45 green, 1 red by the lead's own ruling) and reported
+that. The full gates then reddened **five guards in three files I had never
+opened**:
+
+```text
+the_bubble_comes_out_test.dart    a press on a waiting word opens the bubble …
+marks_test.dart                   a suggestion stays wavy, whoever found it
+the_choice_at_the_word_test.dart  … offers the two answers · pressing an answer
+                                  applies it · Escape closes it
+```
+
+The cause was one kind of value, not one line. `EnteredText.marks` was built
+from `protections` and `question_protections`, every one of them
+`MarkState::Protected`; `document_view` builds its marks from `findings`, where
+a `MarkState::Suggested` one lives. So the first part silently lost **every open
+suggestion**: no word left waiting to be pressed, no line under anything the
+scan had offered — the product's discovery door, in a round whose subject was
+the request.
+
+**Why a narrower run could not see it.** A widget's own tests pass whenever its
+props are well-formed, and they were. What breaks is every *other* guard that
+relied on a **kind** the new source cannot carry, and those live in files whose
+names have nothing to do with the change. A subset run can see a missing value;
+only the whole suite can see a missing kind.
+
+**What the next change of a source does instead**, in order:
+
+1. diff the two producers for the **set of states or kinds** each can emit —
+   `grep` both for the enum — and say in the commit which kinds the new one
+   cannot express;
+2. run the one command, `bash scripts/gates.sh`, and nothing narrower;
+3. settle ownership by **A/B at the base commit** rather than by reading the
+   diff: `git checkout <base>` with the same `.so`, run the reddened files.
+   Here that was 11/11 green at `072ab1f` and red on my head, which named the
+   owner in one measurement and ended the question of whether ed's five edits
+   to `inspect_selection` were in it.
+
+The fix was one loop in the core's own file, so it went to the half that owned
+it: `EnteredText.marks` now carries the document's open suggestions too, at
+their own offsets, never over a protection. The five went green **with nothing
+touched on this side**, measured at `af64baa` — `git diff` over those three
+files and over all of `z_core` was empty — which is the same claim, and the same
+discipline, as the seam guard above.
+
+Related: `a_variant_answers_for_every_reader.md` (a new case breaks another
+round's reader) · `a_split_item_needs_a_guard_that_crosses_the_seam.md`
 
 Related: `the_debug_bridge_has_no_test_features.md` (the same errno, the other
 cause) · `a_guard_green_for_the_wrong_reason.md` ·

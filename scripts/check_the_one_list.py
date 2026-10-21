@@ -100,6 +100,25 @@ MIGRATED = {
 # Found by the gutter guard, which typed «Protect this column in the 4 held
 # lines» and could not find it: `docs/A_FILE_THAT_REDS_ONLY_IN_COMPANY.md`
 # holds that measurement. Not before 096's glass half, by the lead's order.
+#
+# **Two more items, three and four, added 21 October after 096 stood.** Neither
+# is about this list; they are here because this is where the sitting is
+# counted, and an item nobody numbered is an item nobody does.
+#
+#   three — «a source that changed is measured by the one command». The lesson
+#           of 096's own regression: the first part moved from `doc.marks` to
+#           `entered.marks`, every `MarkState::Suggested` fell off the screen,
+#           and five guards reddened in three files that were never opened. The
+#           measurement, the A/B that named its owner and the order to follow
+#           next time are written in `A_FILE_THAT_REDS_ONLY_IN_COMPANY.md`.
+#   four  — «the Dart record stays on green too». `gates.sh` deleted its log
+#           and its event file the moment the suite passed, so the count a
+#           green round reports — the one `MEASURED_ON_LINUX.txt` is compared
+#           against — could not be re-examined afterwards. One fixed place per
+#           worktree, named in the PASS line, with `G7-record` asking that the
+#           file is really there.
+#
+# Both are done; they are written down here because the sitting is the ledger.
 OWED = {
     'core/protected_pdf.dart': 13,
     'core/session_state.dart': 29,
