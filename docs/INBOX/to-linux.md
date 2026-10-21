@@ -129,4 +129,14 @@ Two instances started on the same test folder (A pid 13964, B pid 11044), side b
 
 The protect-in-A-then-in-B sequence was **not performed**. The owner, in his words: «هذه الحالة لم يتم إصلاحها بعد ولا يمكنني تجربة الحماية», this case has not been fixed yet and I cannot try the protection. So whether the second copy refuses with «Another copy of Z Privacy changed this vault…» on Windows is **not measured**. The `core` job's «One writer at a time» step (run 39508181140, green) remains the only Windows measurement of the lock.
 
-### Step 5 — the German walk: not yet started
+**The lead's correction, recorded:** two instances opening together is not «expected». It is the finding step 4 exists for: paper 074's debt W4c, the Windows halves of the vault-file contracts, never measured. The two facts it asks for:
+
+1. **What the second window showed: a normal surface, no refusal and no error.** The owner, with both open: «النافذتان تعملان معاً» (the two windows work together). My own screen copies of A and B could not be taken, because Windows kept the owner's browser in front and refused `SetForegroundWindow`.
+2. **`writing.lock` while both ran, and after closing A then B.** Probed from PowerShell with `File.Open(…, ReadWrite, FileShare.None)` and then `FileStream.Lock(0,1)`:
+   - with A and B both open: the exclusive open **succeeds** and the range lock **succeeds**. **Neither instance holds `writing.lock` open, let alone locked, while idle.**
+   - A closed by `CloseMainWindow`: the same, free.
+   - B closed the same way: the same, free. The file stays behind (0 bytes, unchanged since 05:57:29). `vault.zv` and `1.zs` are unchanged.
+
+Reading, not a measurement: 093 says the lock is `std::fs::File::lock` taken in `session::with_core`, which would be per write, not held while open. If so, an idle second copy is not refused by design, and the refusal can only show at a write. That write the owner could not perform on 4bb202f.
+
+### Step 5 — the German walk: waits for the next head (the lead: 096 and 680 sentences against 556 here)
