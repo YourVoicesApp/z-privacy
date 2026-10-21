@@ -3723,7 +3723,7 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{One place is} other{{count} places are}} inside words that still wait for your word: {list}. Protect leaves those to the review.'**
   String placesInsideWaitingWords(int count, String list);
 
-  /// Walks the screen to the first place the search found. **Not one word of it has three letters**, which is why the census could not see it as a literal — it is a sentence all the same.
+  /// Walks the screen to the first place the search found. **Not one word of it has three letters**, so the census could not see it as a literal at all until the test was widened to read a sentence in a space between two words as well (item 2-ج) — it reached this list in sitting five's first item only because the file happened to be open. It is the example the ruling was made on.
   ///
   /// In en, this message translates to:
   /// **'Go to it'**

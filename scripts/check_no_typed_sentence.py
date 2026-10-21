@@ -69,16 +69,38 @@ the literal they replaced, checked against the ARB by rendering each one and
 comparing with the line the diff took out. So no guard in the English suite
 changed what it asserts.
 
-## The debt this item leaves behind, by name
+## The debt this item left behind, and the ruling that closed it
 
-**A sentence with no word of three letters is invisible to the census.**
-`check_the_one_list.py` tells a sentence from a key by `[A-Za-z]{3,}`, so
+**A sentence with no word of three letters was invisible to the census.**
+`check_the_one_list.py` told a sentence from a key by `[A-Za-z]{3,}`, so
 `find_in_document.dart`'s «Go to it» was never in any count of what the screens
-owed — it was migrated in sitting five's first item only because the file was
-open. Widening that test changes what every file owes, so it is written here
-rather than decided here.
+owed — it reached the list in sitting five's first item only because the file
+happened to be open. Widening that test changes what every file owes, so it was
+written down here rather than decided here.
+
+**Closed on 21 October 2026, item 2-ج, by the lead's ruling:** a literal reads
+as a sentence when it has a **space between two runs of letters** *or* a word
+of three letters or more — «Go to it» by the space, and a key or an id, having
+no space, stays out. The definition is `it_reads_as_a_sentence` in
+`check_the_one_list.py`, **one test in one place**, and this file imports it
+rather than keeping a second opinion about what a sentence is: two gates about
+the same list that disagreed on that would be the quietest possible fault.
+
+Measured when it was widened, over the whole tree: **it newly admits nothing.**
+Zero literals in `lib` (before any of the shape filters, so this is not «zero
+after the exceptions»), and zero of the finder strings below. The hole was real
+and had already been paid by hand. The control is in `the_test_itself`, which
+reds if the definition is ever narrowed back or widened past the ruling.
+
+**What it still cannot see, named with the list's own example:** a **single**
+word shorter than three letters and no space — `roomAi`, «AI», a room's name on
+the glass. It cannot be closed by this rule without admitting every two-letter
+code (`de`, `en`, `sv`, `ar`), which is what the no-space half is there to keep
+out. So it is this gate's named edge, and `docs/CLAIMS.md` C-15 says so where
+the claim is made.
 """
 import collections
+import importlib.util
 import json
 import pathlib
 import re
@@ -86,6 +108,24 @@ import sys
 
 TEST = pathlib.Path('apps/flutter_app/test')
 L10N = pathlib.Path('apps/flutter_app/lib/l10n')
+ONE_LIST = pathlib.Path('scripts/check_the_one_list.py')
+
+
+def it_reads_as_a_sentence():
+    """**The one definition of a sentence, borrowed from the gate that owns it.**
+
+    Loaded by path rather than imported by name, which is how
+    `scripts/check_site_claims.py` already reads this same file: these scripts
+    are run as `python3 scripts/<name>.py` from the repository root, and a
+    plain `import` would depend on which directory the caller happened to be
+    in. A missing or broken `check_the_one_list.py` throws here on purpose —
+    this gate must not fall back to an opinion of its own about what a
+    sentence is.
+    """
+    spec = importlib.util.spec_from_file_location('one_list', ONE_LIST)
+    one = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(one)
+    return one.it_reads_as_a_sentence
 
 DRAWN_ELSEWHERE = {
     'English': "the first-run picker labels its rows from the core's language table",
@@ -107,10 +147,11 @@ FINDER = re.compile(
 
 
 def main() -> int:
+    reads_as_a_sentence = it_reads_as_a_sentence()
     en = json.loads((L10N / 'app_en.arb').read_text(encoding='utf-8'))
     owned = {v for k, v in en.items()
              if not k.startswith('@') and isinstance(v, str)}
-    typed = 0
+    typed = prose = 0
     allowed = collections.Counter()
     bad = []
     for path in sorted(TEST.rglob('*.dart')):
@@ -120,6 +161,16 @@ def main() -> int:
             for m in FINDER.finditer(line):
                 s = m.group(2)
                 typed += 1
+                # **Said with the same test the census uses**, so «what a
+                # sentence is» has one answer in both gates. It is a count and
+                # not a floor: a finder may type prose the list does not own —
+                # a seeded document's own words, a model's answer, a German
+                # fixture — and that is not this gate's business. What the
+                # number is for is the shape of the debt: nearly every string
+                # a finder types is something a person could read, which is
+                # why reading the key instead was the whole item.
+                if reads_as_a_sentence(s):
+                    prose += 1
                 if s not in owned:
                     continue
                 if s in DRAWN_ELSEWHERE or s in ONE_ENGLISH_TWO_KEYS:
@@ -130,9 +181,9 @@ def main() -> int:
     for line in bad:
         print(f'G65 {line}')
     if not bad:
-        print(f'{typed} finders type a string · {sum(allowed.values())} of them name a '
-              f'value in the list, all {len(allowed)} allowed by name · '
-              f'0 unexplained')
+        print(f'{typed} finders type a string · {prose} of them type something a '
+              f'person could read · {sum(allowed.values())} name a value in the '
+              f'list, all {len(allowed)} allowed by name · 0 unexplained')
     return 1 if bad else 0
 
 

@@ -215,7 +215,7 @@ def strings_on(line: str) -> list[str]:
         was counted as a sentence owed by `protected_pdf.dart`, and
         `' || text[k] == '` as one owed by `document_text.dart`, out of
         `text[k] == '\n' || text[k] == '\r'`. The `{3,}` was never a rule about
-        sentences anyway — the `[A-Za-z]{3,}` test below is — it only stopped
+        sentences anyway — [it_reads_as_a_sentence] below is — it only stopped
         the pairing from working.
       * **a literal inside an interpolation.** `'… ${turn.unresolved.join(', ')}.'`
         is one sentence holding one expression; the pattern saw a string ending
@@ -334,6 +334,52 @@ A_FILES_OWN_WORDS = (
 DATE_PATTERN = re.compile(r'[yMdEHhmsaz., /:-]+')
 
 
+# **What makes a literal a sentence** — the lead's ruling of 21 October 2026,
+# sitting five's item 2-ج, and the one place both gates ask.
+#
+# It was `[A-Za-z]{3,}` alone, and that is a rule about *word length* standing
+# in for a rule about *sentences*. It worked because almost every sentence has
+# a long word in it, and it has one named hole: **«Go to it»**, which
+# `find_in_document.dart` really draws. Three words, no word of three letters,
+# and so it was never in any count of what the screens owed — it reached the
+# list in sitting five's first item only because the file happened to be open.
+# A census that cannot see a sentence is worse than a census that counts a key:
+# the first is silent.
+#
+# So a literal reads as a sentence when **either** holds:
+#
+#   * it has a **space between two runs of letters** — «Go to it», «OK then»,
+#     «No ads». Two words are a sentence whatever their length, and this is
+#     what the old test could not see;
+#   * or it has a **word of three letters or more** — which keeps every
+#     single-word sentence the old test caught («Protect», «Cancel»).
+#
+# And what it still refuses, which is the half that makes it usable: a key, an
+# id, a code and a file name hold **no space**, so the first test cannot reach
+# them, and the filters below take them out by their own shapes anyway. The
+# ruling's own words: «فـ«Go to it» تُرى بالفراغ، والمفتاح والمعرّف بلا فراغ
+# يبقيان خارجها».
+#
+# **An escaped newline is not a space here.** `strings_on` keeps an escape as
+# the two characters it is written with, so `'Go\nto'` holds a backslash and an
+# «n» rather than a break — and a literal whose only gap is an escape is a
+# sentence by neither test. Measured when this was widened: no literal in the
+# tree is in that state, so the question is written down rather than answered
+# by a rule nothing needs.
+A_WORD_OF_THREE_LETTERS = re.compile(r'[A-Za-z]{3,}')
+A_SPACE_BETWEEN_TWO_WORDS = re.compile(r'[A-Za-z]\s+[A-Za-z]')
+
+
+def it_reads_as_a_sentence(v: str) -> bool:
+    """Is this literal something a person could read as a sentence?
+
+    The one test, asked in two places by this file and by G65's checker, so
+    that «what a sentence is» cannot be two answers in two gates.
+    """
+    return bool(A_SPACE_BETWEEN_TWO_WORDS.search(v)
+                or A_WORD_OF_THREE_LETTERS.search(v))
+
+
 def sentences_in(path: pathlib.Path) -> list[str]:
     """Every literal in one file that a person could read.
 
@@ -348,7 +394,7 @@ def sentences_in(path: pathlib.Path) -> list[str]:
         if stripped.startswith('//'):
             continue
         for v in strings_on(line):
-            if not re.search(r'[A-Za-z]{3,}', v):
+            if not it_reads_as_a_sentence(v):
                 continue
             # An import URI is not a sentence: `package:…`, `dart:async`, and
             # any path that ends in a Dart file.
@@ -389,12 +435,12 @@ def sentences_in(path: pathlib.Path) -> list[str]:
             if '\\u2068' in v or '\\u2069' in v:      # the isolate marks
                 continue
             # **A frame is not a sentence.** `«${theirOwnWord(c.name)}»` holds
-            # no word of its own: take the interpolations out and nothing with
-            # three letters is left. The guillemets and the isolate marks are
+            # no word of its own: take the interpolations out and the one test
+            # reads nothing in what is left. The guillemets and the isolate marks are
             # grammar around a person's own word, which is `theirOwnWord`'s
             # whole job, and ICU has no placeholder for either.
             bare = re.sub(r'\$\{[^}]*\}|\$[A-Za-z_][A-Za-z_0-9]*', '', v)
-            if not re.search(r'[A-Za-z]{3,}', bare):
+            if not it_reads_as_a_sentence(bare):
                 continue
             # **A key that counts is still a key.** `'the-chat-bubble-$at'` is
             # how a test reaches the third bubble; the number in it does not
@@ -461,19 +507,59 @@ def g50() -> list[str]:
     return bad
 
 
+def the_test_itself() -> list[str]:
+    """**Before the subject, the instrument.**
+
+    What a sentence is was one regular expression for three weeks and it had a
+    hole the size of a sentence in it. The hole is closed by a ruling now, and
+    a ruling that nothing measures is a comment: narrowing
+    [it_reads_as_a_sentence] back would make every count below smaller and
+    every gate greener, which is the direction a quiet regression always goes.
+
+    So the definition answers for itself here, on the two sides it has to get
+    right at once — the sentence with no long word in it, and the short code
+    that is neither.
+
+    **And on what this test is not responsible for**, which the first draft of
+    this control got wrong and is worth keeping: `workspace-question` and
+    `the-chat-bubble-3` *do* read as sentences here, because «workspace» and
+    «chat» are words. They are taken out by the **shape** filters in
+    `sentences_in` — a key fullmatches `[a-z0-9_-]+` — and not by this test.
+    One test says «could a person read words in this»; the filters say «and is
+    it nevertheless a key, an address, a file's own name». Asserting the keys
+    here would have been asserting the wrong mechanism, and it would have gone
+    red on a correct tree.
+    """
+    bad = []
+    for v in ('Go to it', 'No ads', 'OK then', 'Protect', 'Add a name'):
+        if not it_reads_as_a_sentence(v):
+            bad.append(f'«{v}» is a sentence and the test does not see one — '
+                       f'every count in this file is smaller than the truth')
+    # Neither a space between two runs of letters nor a word of three: a
+    # language code, a number, a bare escape, a version.
+    for v in ('de', 'ar', '0', '\\n', 'x.y', '1.2'):
+        if it_reads_as_a_sentence(v):
+            bad.append(f'«{v}» has no word and no space, and the test reads a '
+                       f'sentence in it — the widening took in more than the ruling')
+    return bad
+
+
 def main() -> int:
+    instrument = the_test_itself()
+    for line in instrument:
+        print(f'G50 the test itself: {line}')
     nine, fifty = g49(), g50()
     for line in nine:
         print(f'G50 {line}')
     for line in fifty:
         print(f'G51 {line}')
-    if not nine and not fifty:
+    if not instrument and not nine and not fifty:
         keys = [k for k in json.loads((L10N / 'app_en.arb').read_text(encoding='utf-8'))
                 if not k.startswith('@')]
         owed = sum(OWED.values())
         print(f'{len(keys)} sentences in the one list · {len(MIGRATED)} file(s) '
               f'migrated · {owed} sentences owed in {len(OWED)} files')
-    return 1 if (nine or fifty) else 0
+    return 1 if (instrument or nine or fifty) else 0
 
 
 if __name__ == '__main__':
