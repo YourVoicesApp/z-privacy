@@ -71,7 +71,15 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
         // `document_view` draws, so the screen cannot tell one half's mark
         // from the other's — which is the whole of rule 72-ب.
         let mut marks: Vec<crate::api::Mark> = Vec::new();
-        let of = |p: &crate::session::Protection, span| crate::api::Mark {
+        // **And where it sits** — the `place` debt of 096, paid here. Review
+        // says «page 17» from this field, `document_view` fills it from
+        // `s.place_of(..)`, and this builder carried `None` for every mark —
+        // so a screen reading the one text (rule 72-ب) could not say where
+        // anything was. The place is a parameter rather than worked out inside,
+        // because the two halves answer it differently and the difference is
+        // the point: the document's offsets are the page table's own, and a
+        // request has no pages at all.
+        let of = |p: &crate::session::Protection, span, place| crate::api::Mark {
             span,
             state: MarkState::Protected,
             token: Some(p.token.clone()),
@@ -79,11 +87,14 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
             source: p.source,
             decided: p.decided,
             source_detail: p.source_detail.clone(),
-            place: None,
+            place,
         };
         for p in &s.protections {
             let span = crate::text::bytes_to_span(s.original_str(), p.start, p.end)?;
-            marks.push(of(p, span));
+            // The same source `document_view` asks, with the same offset: the
+            // document is the prefix of the entered text, so its own offsets
+            // are what the page table is indexed by.
+            marks.push(of(p, span, s.place_of(p.start)));
         }
         // **And what is still waiting** — the second seam of 096, measured A/B
         // by e2 on `072ab1f`. The two lists above hold covers, and every cover
@@ -127,7 +138,7 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
                 source: f.source,
                 decided: false,
                 source_detail: f.source_detail.clone(),
-                place: None,
+                place: s.place_of(f.start),
             });
         }
         // **The same law the view asks for by name.** This arithmetic was
@@ -136,7 +147,14 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
         // in two spellings is how `inspect_selection` came to carry four
         // places that forgot it. One name now, asked here too.
         for p in &s.question_protections {
-            marks.push(of(p, super::span_in_the_entered(&text, begins, p.start, p.end)?));
+            // **No place, and that is an answer rather than an omission.**
+            // `place_of` reads the document's page and paragraph table, and the
+            // request was typed into a box: it has no page. Asking the table
+            // with a request-local offset would hand back whatever page sits
+            // at that offset **of the document** — the shape of the fault e2
+            // measured in `inspect_selection`, in a field a person reads as
+            // «page 1».
+            marks.push(of(p, super::span_in_the_entered(&text, begins, p.start, p.end)?, None));
         }
         // In reading order, as the column hands its own: the glass draws a
         // list, and «the same marks in another order» is not the same answer.

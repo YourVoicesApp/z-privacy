@@ -75,10 +75,17 @@ fn word(text: &str, span: Span) -> String {
     String::from_utf16_lossy(units.get(span.start as usize..span.end as usize).unwrap_or_default())
 }
 
-/// (the characters, the state, whether it carries a token) — the three things
-/// a mark says that the glass acts on.
-fn said(text: &str, m: &Mark) -> (String, MarkState, bool) {
-    (word(text, m.span), m.state, m.token.is_some())
+/// (the characters, the state, whether it carries a token, where it sits) —
+/// everything a mark says that the glass acts on.
+///
+/// **The place is in here since the `place` debt was paid.** It was left out
+/// when this file was written — `document_view` filled `place` from
+/// `s.place_of(..)` and the one text carried `None` for every mark — and a
+/// parity guard that compares three of four fields is a parity guard for three
+/// fields. Review says «page 17» from this, so a screen reading the one text
+/// could not say where anything was.
+fn said(text: &str, m: &Mark) -> (String, MarkState, bool, Option<Place>) {
+    (word(text, m.span), m.state, m.token.is_some(), m.place)
 }
 
 #[test]
@@ -92,10 +99,17 @@ fn the_one_text_says_everything_the_document_column_said() {
         "nothing is waiting in this document, so this file measures nothing"
     );
 
-    let column: Vec<(String, MarkState, bool)> =
+    let column: Vec<(String, MarkState, bool, Option<Place>)> =
         snap.document.marks.iter().map(|m| said(&snap.document.text, m)).collect();
+    // **And the places exist to be compared.** Without this the comparison
+    // below passes with `None` on both sides and proves nothing — the shape
+    // that made the first draft of this file red for the wrong reason.
+    assert!(
+        column.iter().any(|(_, _, _, place)| place.is_some()),
+        "no mark in the document column sits anywhere, so comparing places measures nothing: {column:?}"
+    );
     let begins = snap.entered.request_begins;
-    let one_text: Vec<(String, MarkState, bool)> = snap
+    let one_text: Vec<(String, MarkState, bool, Option<Place>)> = snap
         .entered
         .marks
         .iter()
@@ -159,7 +173,7 @@ fn a_cover_in_the_request_is_still_in_the_one_text() {
     let snap = workspace_snapshot(s).expect("snapshot");
 
     let begins = snap.entered.request_begins;
-    let in_the_request: Vec<(String, MarkState, bool)> = snap
+    let in_the_request: Vec<(String, MarkState, bool, Option<Place>)> = snap
         .entered
         .marks
         .iter()
@@ -171,8 +185,17 @@ fn a_cover_in_the_request_is_still_in_the_one_text() {
         "the request holds a name the scan covers and the one text says nothing about it"
     );
     assert!(
-        in_the_request.iter().all(|(_, state, token)| *state == MarkState::Protected && *token),
+        in_the_request.iter().all(|(_, state, token, _)| *state == MarkState::Protected && *token),
         "a cover in the request is not protected with a token: {in_the_request:?}"
+    );
+    // **And it sits nowhere, because a request has no pages.** `place_of`
+    // answers from the document's own page and paragraph table, and the
+    // request was typed into a box — so `None` here is the truth and not a
+    // field nobody filled. Held so that filling the document's places does not
+    // quietly give the request a page it does not have.
+    assert!(
+        in_the_request.iter().all(|(_, _, _, place)| place.is_none()),
+        "a cover in the request claims a page: {in_the_request:?}"
     );
 }
 
