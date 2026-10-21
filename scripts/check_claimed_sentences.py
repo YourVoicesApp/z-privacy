@@ -56,6 +56,14 @@ PINNED: dict[str, tuple[str, str]] = {
         'C-02',
         'This will place the real protected values on your system clipboard. Other applications may be able to read the clipboard.',
     ),
+    # **Named by C-15 as the one sentence its own census cannot see**, which
+    # is why it is pinned: the claim's example is the value itself, and a
+    # reword — «AI room», «Models» — would leave the claim naming a shape that
+    # is no longer the shape it is about.
+    'roomAi': (
+        'C-15',
+        'AI',
+    ),
     'noAccount': (
         'C-03',
         'No account.',
