@@ -19,6 +19,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/widgets/bits.dart';
@@ -90,9 +91,9 @@ class LanguageChoices extends StatelessWidget {
             if (rest.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(key: divider, height: 1, color: Zc.line),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(6, 8, 6, 4),
-                child: Text('General rules only — no dictionary yet', style: Zc.tiny),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(6, 8, 6, 4),
+                child: Text(sentences.generalRulesOnlyNoDictionary, style: Zc.tiny),
               ),
               for (final language in rest)
                 _Choice(language: language, chosen: chosen, onChoose: plannedChoosable ? onChoose : null),
@@ -173,26 +174,24 @@ class TheLanguageOfANewSession extends StatelessWidget {
   /// For the guard, and for the shell: one key per offered language.
   static ValueKey<String> keyFor(String id) => ValueKey<String>('new-session-language-$id');
 
-  static const title = 'Which language is this text in?';
+  /// **A getter and no longer a `const`** — 092. Two readers reach this by
+  /// name (the shell, and the guard that presses it), so the name stays and
+  /// only where the words come from changes.
+  static String get title => sentences.whichLanguageIsThisText;
 
   @override
   Widget build(BuildContext context) {
     final offered = ground.packs.where((p) => offeredLanguages.contains(p.id)).toList();
     return AlertDialog(
       backgroundColor: Zc.paper,
-      title: const Text(title, style: Zc.h2),
+      title: Text(title, style: Zc.h2),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Z reads it with that language’s habits: how people are greeted, how a '
-              'company is written, how a customer number looks. This is the session’s '
-              'language from now on, and you will not be asked again in it.',
-              style: Zc.small,
-            ),
+            Text(sentences.theSessionLanguageExplained, style: Zc.small),
             const SizedBox(height: 14),
             Wrap(
               spacing: 8,
@@ -210,7 +209,7 @@ class TheLanguageOfANewSession extends StatelessWidget {
         ),
       ),
       actions: [
-        ZButton(label: 'Not now', onPressed: () => Navigator.of(context).pop()),
+        ZButton(label: sentences.notNow, onPressed: () => Navigator.of(context).pop()),
       ],
     );
   }

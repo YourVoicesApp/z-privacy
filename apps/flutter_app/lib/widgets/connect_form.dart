@@ -12,6 +12,7 @@
 // being closed.
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -60,39 +61,39 @@ class _ConnectFormState extends State<ConnectForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _field('Address', _base, hint: widget.local ? 'http://127.0.0.1:11434' : 'https://…'),
+        _field(sentences.addressLabel, _base,
+            hint: widget.local ? 'http://127.0.0.1:11434' : 'https://…'),
         if (widget.local)
           Padding(
             padding: const EdgeInsets.only(top: 5, bottom: 4),
             child: Text(
-              'Plain http is accepted only for a literal loopback address — 127.0.0.1 or ::1. '
-              'A name like «localhost» is refused, because then a hosts file would be deciding '
-              'whether plain text is safe.',
+              sentences.plainHttpOnlyLoopback,
               style: Zc.tiny.copyWith(letterSpacing: 0),
             ),
           ),
         const SizedBox(height: 10),
-        _field('Model', _model, hint: 'the model to ask'),
+        _field(sentences.modelLabel, _model, hint: sentences.theModelToAsk),
         if (!widget.local) ...[
           const SizedBox(height: 10),
-          _field('API key', _credential, hint: 'pasted once, never shown again', obscure: true),
+          _field(sentences.apiKeyLabel, _credential,
+              hint: sentences.pastedOnceNeverShownAgain, obscure: true),
           Padding(
             padding: const EdgeInsets.only(top: 5),
             child: Text(
               switch (widget.row.credentialState) {
                 CredentialState.encryptedInVault =>
-                  'This key is sealed in the vault.',
+                  sentences.thisKeyIsSealedInTheVault,
                 CredentialState.sessionOnly =>
-                  'This key is kept in memory for this run only — it is gone when the app closes.',
+                  sentences.thisKeyIsInMemoryOnly,
                 // The same question the button above asks, in the other
                 // direction: where a key is not needed at all, promising to
                 // seal one is the previous world's sentence.
                 CredentialState.missing when !widget.row.credentialRequired =>
-                  'No key is needed at this address.',
+                  sentences.noKeyIsNeededHere,
                 CredentialState.missing =>
                   widget.ground.vault == VaultState.unlocked
-                      ? 'No key is stored yet. Connecting will seal it in the vault.'
-                      : 'No key is stored yet. Connecting will keep it in memory for this run only.',
+                      ? sentences.noKeyYetWillSeal
+                      : sentences.noKeyYetMemoryOnly,
               },
               style: Zc.tiny.copyWith(letterSpacing: 0),
             ),
@@ -103,7 +104,9 @@ class _ConnectFormState extends State<ConnectForm> {
         Row(
           children: [
             ZButton(
-              label: _busy ? 'Connecting…' : (widget.row.connected ? 'Save' : 'Connect'),
+              label: _busy
+                  ? sentences.connectingNow
+                  : (widget.row.connected ? sentences.saveIt : sentences.connectAct),
               filled: true,
               onPressed: _busy ? null : _connect,
             ),
@@ -115,10 +118,10 @@ class _ConnectFormState extends State<ConnectForm> {
             // the status line already uses.
             if (widget.row.credentialState != CredentialState.missing) ...[
               const SizedBox(width: 9),
-              ZButton(label: 'Forget the key', onPressed: _busy ? null : _forget),
+              ZButton(label: sentences.forgetTheKey, onPressed: _busy ? null : _forget),
             ] else if (widget.row.connected) ...[
               const SizedBox(width: 9),
-              ZButton(label: 'Disconnect', onPressed: _busy ? null : _forget),
+              ZButton(label: sentences.disconnectAct, onPressed: _busy ? null : _forget),
             ],
           ],
         ),

@@ -45,6 +45,26 @@ import 'package:zprivacy/src/rust/api/mirrors.dart';
 /// first person whose language is not ours.
 String theirOwnWord(String name) => '\u2068$name\u2069';
 
+/// **One sentence, drawn in two faces** — 092, sitting five.
+///
+/// A sentence that carries a token has to stay **one** sentence in the list:
+/// German puts «Bereits geschützt als …» in its own order, and a list holding
+/// the halves separately would be a sentence no translator can move. But the
+/// token itself has to stay in the mono face, as every token in this
+/// application is, so one `Text` cannot draw it.
+///
+/// So the sentence is asked for with a mark where the value goes, and split at
+/// the mark. The caller draws `before`, then the value in whatever face it
+/// belongs in, then `after` — and the translator still sees, and can reorder,
+/// the whole line.
+///
+/// The mark is U+0000, which no sentence in any language contains.
+({String before, String after}) aroundTheValue(String Function(String) sentence) {
+  const mark = '\u0000';
+  final parts = sentence(mark).split(mark);
+  return (before: parts.first, after: parts.length > 1 ? parts.last : '');
+}
+
 /// What a person is told when something the app cannot name goes wrong.
 ///
 /// A new variant added to the contract lands here rather than leaking its debug

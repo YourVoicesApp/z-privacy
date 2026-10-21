@@ -75,6 +75,7 @@ import 'package:crypto/crypto.dart' as c;
 import 'package:flutter/services.dart' show ByteData, rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 
@@ -473,10 +474,7 @@ Future<PdfSaved> saveProtectedPdf({
 }) async {
   final into = folder ?? await protectedPdfFolder();
   if (into.isEmpty) {
-    return const PdfSaved.trouble(
-      'Z Privacy could not tell where your documents folder is, so it has not '
-      'guessed. Nothing was written.',
-    );
+    return PdfSaved.trouble(sentences.couldNotTellWhereDocumentsFolderIs);
   }
   final day = _day(now ?? DateTime.now());
   final stem = '${_fileStem(sessionName)}-protected-$day';
@@ -490,21 +488,22 @@ Future<PdfSaved> saveProtectedPdf({
       path = '$into/$stem-$n.pdf';
       n += 1;
       if (n > 200) {
-        return PdfSaved.trouble('There are already 200 files called $stem in $into.');
+        return PdfSaved.trouble(sentences.thereAreAlready200Files(stem, into));
       }
     }
     final bytes = await buildProtectedPdf(text: text, stamp: stamp, answerToken: answerToken);
     await File(path).writeAsBytes(bytes, flush: true);
     return PdfSaved.at(path);
   } on FileSystemException catch (e) {
-    return PdfSaved.trouble('Z Privacy could not write into $into — ${e.osError?.message ?? e.message}.');
+    return PdfSaved.trouble(
+        sentences.couldNotWriteInto(into, e.osError?.message ?? e.message));
   } catch (e) {
     // **Anything else still has to come back as a sentence.** A missing font
     // asset throws from `buildProtectedPdf`, not from the disk; if that escaped
     // here the button would sit on «Saving…» for the rest of the session with
     // nothing on the screen to say why. A person is told what happened to
     // them, not what happened to a library.
-    return PdfSaved.trouble('Z Privacy could not build the PDF — $e. Nothing was written.');
+    return PdfSaved.trouble(sentences.couldNotBuildThePdfBecause('$e'));
   }
 }
 

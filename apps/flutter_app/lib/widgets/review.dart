@@ -18,6 +18,7 @@
 // after everything has been replaced.
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/going_to_a_word.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
@@ -75,14 +76,12 @@ class ReviewPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Eyebrow('Review'),
+                Eyebrow(sentences.reviewAct),
                 const SizedBox(height: 4),
                 Text(
                   open == 0
-                      ? 'Nothing is waiting for you.'
-                      : open == 1
-                      ? 'One thing is waiting for your word.'
-                      : '$open things are waiting for your word.',
+                      ? sentences.nothingIsWaitingForYou
+                      : sentences.thingsWaitingForYourWord(open),
                   style: Zc.small.copyWith(
                     color: open == 0 ? Zc.ink3 : Zc.amber,
                     fontWeight: open == 0 ? FontWeight.w400 : FontWeight.w600,
@@ -92,7 +91,7 @@ class ReviewPanel extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Close',
+            tooltip: sentences.close,
             icon: const Icon(Icons.close, size: 18),
             color: Zc.ink3,
             onPressed: bench.closeReview,
@@ -117,11 +116,10 @@ class _List extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Text(
           bench.findings.isEmpty
-              ? 'The scan found nothing in this document.'
+              ? sentences.theScanFoundNothingHere
               // Not «the list is empty»: what the app protected and what you
               // decided are in the text, and this is where to look for them.
-              : 'Nothing is waiting. What is protected is in the text, marked '
-                    'where it stands.',
+              : sentences.nothingIsWaitingWhatIsProtected,
           style: Zc.small,
         ),
       );
@@ -194,23 +192,24 @@ class _Row extends StatelessWidget {
               runSpacing: 5,
               children: [
                 _Tag(
-                  'found by ${sourceName(finding.source).toLowerCase()}',
+                  sentences.foundBySource(sourceName(finding.source)),
                   sourceTint(finding.source),
                 ),
-                if (finding.decided) _Tag('you decided', Zc.clay),
+                if (finding.decided) _Tag(sentences.youDecided, Zc.clay),
                 if (finding.place != null)
                   _Tag(
-                    'Page ${finding.place!.page} · ¶${finding.place!.paragraph}',
+                    sentences.pageAndParagraph(
+                        finding.place!.page, finding.place!.paragraph),
                     Zc.ink4,
                   ),
                 // What one press will settle. The core counts the places; this
                 // line only reads the number, and says nothing when a value
                 // stands once — «in 1 places» is noise, and wrong English.
                 if (finding.occurrences > 1)
-                  _Tag('in ${finding.occurrences} places', Zc.clay),
+                  _Tag(sentences.inPlacesCount(finding.occurrences), Zc.clay),
                 if (finding.entities.length > 1)
                   _Tag(
-                    '${finding.entities.length} identities claim it',
+                    sentences.identitiesClaimIt(finding.entities.length),
                     Zc.river,
                   ),
               ],
@@ -285,15 +284,13 @@ class _AllOfThem extends StatelessWidget {
       context: context,
       builder: (inner) => AlertDialog(
         backgroundColor: Zc.paper,
-        title: Text('Leave ${open.length} words in the clear?', style: Zc.h2),
+        title: Text(sentences.leaveWordsInTheClearQuestion(open.length), style: Zc.h2),
         content: Text(
-          'All ${open.length} of them will be sent exactly as they are written. '
-          'Z will not replace any of them, in this document or in the request '
-          'that leaves this computer.',
+          sentences.leaveAllInTheClearExplained(open.length),
           style: Zc.body,
         ),
         actions: [
-          ZButton(label: 'Cancel', onPressed: () => Navigator.of(inner).pop(false)),
+          ZButton(label: sentences.cancel, onPressed: () => Navigator.of(inner).pop(false)),
           ZButton(
             // The number is in the act's own name, which is P2-5's rule and
             // the reason this dialog exists at all — **and «Yes» in front of
@@ -302,7 +299,7 @@ class _AllOfThem extends StatelessWidget {
             // screen at the same time is the same family of defect as a chip
             // that looks pressable: found here by a test that could not tell
             // which of the two to press.
-            label: 'Yes — leave all ${open.length} in the clear',
+            label: sentences.yesLeaveAllInTheClear(open.length),
             filled: true,
             onPressed: () => Navigator.of(inner).pop(true),
           ),
@@ -325,7 +322,7 @@ class _AllOfThem extends StatelessWidget {
         children: [
           ZButton(
             key: protectKey,
-            label: 'Protect all',
+            label: sentences.protectAll,
             icon: Icons.shield_outlined,
             badge: open.length,
             onPressed: bench.busy
@@ -342,7 +339,7 @@ class _AllOfThem extends StatelessWidget {
           ),
           ZButton(
             key: leaveKey,
-            label: 'Skip all',
+            label: sentences.skipAll,
             badge: open.length,
             onPressed: bench.busy ? null : () => _leaveThemAll(context),
           ),
@@ -419,8 +416,8 @@ class _Answers extends StatelessWidget {
       spacing: 6,
       runSpacing: 6,
       children: [
-        one(protectKey, 'Protect', FindingAnswer.protect, Zc.clay, filled: true),
-        one(leaveKey, 'Leave it', FindingAnswer.notSensitive, Zc.ink3),
+        one(protectKey, sentences.protectAct, FindingAnswer.protect, Zc.clay, filled: true),
+        one(leaveKey, sentences.leaveIt, FindingAnswer.notSensitive, Zc.ink3),
       ],
     );
   }

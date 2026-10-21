@@ -2150,4 +2150,543 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get modelLabel => 'Model';
+
+  @override
+  String get fileKindDocuments => 'Documents';
+
+  @override
+  String onlyTheseKindsAreRead(String name) {
+    return 'This build reads PDF, Word and text files. «$name» is none of those.';
+  }
+
+  @override
+  String get generalRulesOnlyNoDictionary =>
+      'General rules only — no dictionary yet';
+
+  @override
+  String get whichLanguageIsThisText => 'Which language is this text in?';
+
+  @override
+  String get theSessionLanguageExplained =>
+      'Z reads it with that language’s habits: how people are greeted, how a company is written, how a customer number looks. This is the session’s language from now on, and you will not be asked again in it.';
+
+  @override
+  String allLinesHeld(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'All $count lines',
+      one: 'All 1 line',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get revealHidden => 'Hidden';
+
+  @override
+  String revealedForSeconds(int seconds) {
+    return 'Revealed · ${seconds}s';
+  }
+
+  @override
+  String get alsoTheWordBefore => 'Also the word before';
+
+  @override
+  String get alsoTheWordBeforeHint =>
+      'Takes the capitalised word in front of the selection too';
+
+  @override
+  String get undoProtection => 'Undo protection';
+
+  @override
+  String get nothingToUndoHint => 'Nothing to undo';
+
+  @override
+  String get rescanAct => 'Rescan';
+
+  @override
+  String nextOfWaitingCount(int at, int total) {
+    return 'Next $at/$total';
+  }
+
+  @override
+  String get reviewAct => 'Review';
+
+  @override
+  String get namesAct => 'Names';
+
+  @override
+  String get zKnowsEveryNameHere => 'Z knows every name this document uses';
+
+  @override
+  String get tokensAct => 'Tokens';
+
+  @override
+  String get nothingIsProtectedYetHint => 'Nothing is protected yet';
+
+  @override
+  String get selectionCutsIntoProtected =>
+      'That selection cuts into something already protected. Protect would take the whole item instead.';
+
+  @override
+  String selectionSpansProtectedItems(int count) {
+    return 'That selection spans $count protected items. Protect would take each of them whole, under its own token.';
+  }
+
+  @override
+  String get protectAct => 'Protect';
+
+  @override
+  String get selectTextThenProtect => 'Select text, then Protect';
+
+  @override
+  String get alreadyProtectedSeeBelow => 'Already protected — see below';
+
+  @override
+  String get protectWholeItems => 'Protect whole items';
+
+  @override
+  String get thereWasNothingToUndo => 'There was nothing to undo.';
+
+  @override
+  String tookBackTokens(String tokens) {
+    return 'Took back $tokens.';
+  }
+
+  @override
+  String tookBackTokensInPlaces(String tokens, int places) {
+    return 'Took back $tokens, in all $places places — it went in as one act, so it came out as one.';
+  }
+
+  @override
+  String tookBackTokensIdentityStays(String tokens, String identity) {
+    return 'Took back $tokens. The identity $identity is still in the vault.';
+  }
+
+  @override
+  String scannedAgainReport(int auto, int byYou, int waiting, int normal) {
+    return 'Scanned again: $auto protected automatically · $byYou by you · $waiting need your word · $normal normal.';
+  }
+
+  @override
+  String alreadyProtectedAsTokens(String tokens) {
+    return 'Already protected as $tokens.';
+  }
+
+  @override
+  String alreadyProtectedAsFrom(String tokens, String source, String detail) {
+    return 'Already protected as $tokens, from $source$detail.';
+  }
+
+  @override
+  String get readBackPanel => 'Read back';
+
+  @override
+  String get whatStayedAToken => 'What stayed a token';
+
+  @override
+  String theSearchWasRefused(String why) {
+    return 'The search was refused: $why';
+  }
+
+  @override
+  String get findAWordInThisDocument => 'Find a word in this document';
+
+  @override
+  String get tabTakesIt => 'Tab takes it';
+
+  @override
+  String get findAct => 'Find';
+
+  @override
+  String notInThisDocument(String word) {
+    return '«$word» is not in this document';
+  }
+
+  @override
+  String countProtected(Object count) {
+    return '$count protected';
+  }
+
+  @override
+  String countWaiting(Object count) {
+    return '$count waiting';
+  }
+
+  @override
+  String countInTheClear(Object count) {
+    return '$count in the clear';
+  }
+
+  @override
+  String placesInsideWaitingWords(int count, String list) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count places are',
+      one: 'One place is',
+    );
+    return '$_temp0 inside words that still wait for your word: $list. Protect leaves those to the review.';
+  }
+
+  @override
+  String get goToIt => 'Go to it';
+
+  @override
+  String get unProtectHere => 'Un-protect here';
+
+  @override
+  String unProtectInThisSession(int places) {
+    return 'Un-protect in this session ($places places)';
+  }
+
+  @override
+  String get nothingIsWaitingForYou => 'Nothing is waiting for you.';
+
+  @override
+  String thingsWaitingForYourWord(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count things are waiting for your word.',
+      one: 'One thing is waiting for your word.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get theScanFoundNothingHere =>
+      'The scan found nothing in this document.';
+
+  @override
+  String get nothingIsWaitingWhatIsProtected =>
+      'Nothing is waiting. What is protected is in the text, marked where it stands.';
+
+  @override
+  String foundBySource(String source) {
+    return 'found by $source';
+  }
+
+  @override
+  String get youDecided => 'you decided';
+
+  @override
+  String pageAndParagraph(int page, int paragraph) {
+    return 'Page $page · ¶$paragraph';
+  }
+
+  @override
+  String inPlacesCount(int count) {
+    return 'in $count places';
+  }
+
+  @override
+  String identitiesClaimIt(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count identities claim it',
+      one: 'One identity claims it',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String leaveWordsInTheClearQuestion(int count) {
+    return 'Leave $count words in the clear?';
+  }
+
+  @override
+  String leaveAllInTheClearExplained(int count) {
+    return 'All $count of them will be sent exactly as they are written. Z will not replace any of them, in this document or in the request that leaves this computer.';
+  }
+
+  @override
+  String yesLeaveAllInTheClear(int count) {
+    return 'Yes — leave all $count in the clear';
+  }
+
+  @override
+  String get protectAll => 'Protect all';
+
+  @override
+  String get skipAll => 'Skip all';
+
+  @override
+  String get leaveIt => 'Leave it';
+
+  @override
+  String get activeZTokens => 'Active Z tokens';
+
+  @override
+  String get nothingIsProtectedYetSentence => 'Nothing is protected yet.';
+
+  @override
+  String valuesStandBehindTokens(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count values stand',
+      one: '1 value stands',
+    );
+    return '$_temp0 behind a token in this session.';
+  }
+
+  @override
+  String get aTokenAppearsWhenProtected =>
+      'A token appears here the moment something is protected.';
+
+  @override
+  String get revealingChangesNothing =>
+      'Revealing shows a value on this screen for a moment. It changes nothing in the Safe column — what leaves the device is the same string before and after.';
+
+  @override
+  String get copyTheToken => 'Copy the token';
+
+  @override
+  String get scopeJustHere => 'Just here';
+
+  @override
+  String get scopeThisSession => 'This session';
+
+  @override
+  String get scopeRememberedForClient => 'Remembered for this client';
+
+  @override
+  String get scopeRememberedEverywhere => 'Remembered everywhere';
+
+  @override
+  String get copyReport => 'Copy report';
+
+  @override
+  String sessionNamesAreThisSessions(int number) {
+    return 'Session $number · the names in this work are this session’s';
+  }
+
+  @override
+  String get asEachProviderIsConfigured => 'As each provider is configured';
+
+  @override
+  String get noAiConnected => 'No AI connected';
+
+  @override
+  String get connectAnAiInSettings => 'Connect an AI in Settings';
+
+  @override
+  String get chooseWhichModelAnswers => 'Choose which model answers';
+
+  @override
+  String get nothingSentFromThisSessionYet =>
+      'Nothing has been sent from this session yet. What goes to a model and what comes back are written here, in this session’s own sealed file.';
+
+  @override
+  String get youAsked => 'You asked';
+
+  @override
+  String get nothingWasAskedDocumentWentAlone =>
+      'Nothing was asked — the document went on its own.';
+
+  @override
+  String get itAnswered => 'It answered';
+
+  @override
+  String namesBelongToAnotherSession(int count, String list) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count names in this exchange belong to another session and could not be restored: $list.',
+      one:
+          'One name in this exchange belongs to another session and could not be restored: $list.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get andTheClipboardIsEmptySentence =>
+      'Nothing was copied — the clipboard is empty.';
+
+  @override
+  String get nothingWasPasted => 'Nothing was pasted.';
+
+  @override
+  String get copyTheSafeTextFirst =>
+      'Copy the safe text first, so the answer can be tied to that payload.';
+
+  @override
+  String profileIsInUseAgain(String name) {
+    return '«$name» is in use again.';
+  }
+
+  @override
+  String profileIsOffNamesRemain(String name) {
+    return '«$name» is off — its names are still here.';
+  }
+
+  @override
+  String movedNamesToLanguage(int count, String to) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Moved $count names to $to.',
+      one: 'Moved one name to $to.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String forgotProfileAndItsNames(String name, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count names',
+      one: '1 name',
+    );
+    return 'Forgot «$name» and $_temp0.';
+  }
+
+  @override
+  String addedValueNamed(String value) {
+    return 'Added «$value».';
+  }
+
+  @override
+  String forgotValueNamed(String value) {
+    return 'Forgot «$value».';
+  }
+
+  @override
+  String get afterTheVaultOpened => 'after the vault opened';
+
+  @override
+  String importAddedCount(int count) {
+    return '$count added';
+  }
+
+  @override
+  String importAlreadyKnownCount(int count) {
+    return '$count already known';
+  }
+
+  @override
+  String importRefusedCount(int count) {
+    return '$count refused';
+  }
+
+  @override
+  String importValuesCount(int count) {
+    return '$count values';
+  }
+
+  @override
+  String get begunNoNameNeededRenaming =>
+      'Begun. No name on this document needed renaming.';
+
+  @override
+  String get begunNoDocumentOpen =>
+      'Begun. No document is open, so there was nothing to rename.';
+
+  @override
+  String begunAndNamesMovedIn(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Begun, and $count names on this document moved into it.',
+      one: 'Begun, and one name on this document moved into it.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get theSessionWasNotBegun =>
+      'The session was not begun, so nothing was taken out.';
+
+  @override
+  String get closeAndOpenAgain =>
+      'Close this and open it again — something changed while it was open.';
+
+  @override
+  String get sentToAiAnswered => 'sent to AI · answered';
+
+  @override
+  String get sentToAiNoAnswerYet => 'sent to AI · no answer yet';
+
+  @override
+  String columnsNotUsedSaid(int count, String which) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count columns were not used: $which — name the kind for each, or they stay out.',
+      one:
+          'One column was not used: $which — name the kind for it, or it stays out.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get addressLabel => 'Address';
+
+  @override
+  String get plainHttpOnlyLoopback =>
+      'Plain http is accepted only for a literal loopback address — 127.0.0.1 or ::1. A name like «localhost» is refused, because then a hosts file would be deciding whether plain text is safe.';
+
+  @override
+  String get theModelToAsk => 'the model to ask';
+
+  @override
+  String get apiKeyLabel => 'API key';
+
+  @override
+  String get pastedOnceNeverShownAgain => 'pasted once, never shown again';
+
+  @override
+  String get thisKeyIsSealedInTheVault => 'This key is sealed in the vault.';
+
+  @override
+  String get thisKeyIsInMemoryOnly =>
+      'This key is kept in memory for this run only — it is gone when the app closes.';
+
+  @override
+  String get noKeyIsNeededHere => 'No key is needed at this address.';
+
+  @override
+  String get noKeyYetWillSeal =>
+      'No key is stored yet. Connecting will seal it in the vault.';
+
+  @override
+  String get noKeyYetMemoryOnly =>
+      'No key is stored yet. Connecting will keep it in memory for this run only.';
+
+  @override
+  String get connectingNow => 'Connecting…';
+
+  @override
+  String get connectAct => 'Connect';
+
+  @override
+  String get forgetTheKey => 'Forget the key';
+
+  @override
+  String get disconnectAct => 'Disconnect';
+
+  @override
+  String get couldNotTellWhereDocumentsFolderIs =>
+      'Z Privacy could not tell where your documents folder is, so it has not guessed. Nothing was written.';
+
+  @override
+  String thereAreAlready200Files(String stem, String into) {
+    return 'There are already 200 files called $stem in $into.';
+  }
+
+  @override
+  String couldNotWriteInto(String into, String why) {
+    return 'Z Privacy could not write into $into — $why.';
+  }
+
+  @override
+  String couldNotBuildThePdfBecause(String why) {
+    return 'Z Privacy could not build the PDF — $why. Nothing was written.';
+  }
 }

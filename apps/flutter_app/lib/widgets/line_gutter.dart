@@ -18,6 +18,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/palette.dart';
 
 /// Where each logical line of `text` begins, in UTF-16 code units.
@@ -307,7 +308,7 @@ class AllLinesBand extends StatelessWidget {
               const Icon(Icons.format_line_spacing, size: 13, color: Zc.ink4),
               const SizedBox(width: 6),
               Text(
-                lines == 1 ? 'All 1 line' : 'All $lines lines',
+                sentences.allLinesHeld(lines),
                 style: Zc.tiny.copyWith(letterSpacing: 0),
               ),
             ],

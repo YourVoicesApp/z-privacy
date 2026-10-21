@@ -27,6 +27,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/completing.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
@@ -155,7 +156,7 @@ class _FindInDocumentState extends State<FindInDocument> {
     } on ApiError catch (e) {
       if (!mounted) return;
       setState(() => _places = const []);
-      widget.onSay('The search was refused: $e');
+      widget.onSay(sentences.theSearchWasRefused('$e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -236,7 +237,7 @@ class _FindInDocumentState extends State<FindInDocument> {
                           filled: true,
                           fillColor: Zc.paper,
                           prefixIcon: const Icon(Icons.search, size: 17, color: Zc.river),
-                          hintText: 'Find a word in this document',
+                          hintText: sentences.findAWordInThisDocument,
                           hintStyle: Zc.small.copyWith(color: Zc.ink4),
                           contentPadding: const EdgeInsets.symmetric(vertical: 11),
                           border: OutlineInputBorder(
@@ -269,7 +270,7 @@ class _FindInDocumentState extends State<FindInDocument> {
                             ),
                             const SizedBox(width: 14),
                             Text(
-                              'Tab takes it',
+                              sentences.tabTakesIt,
                               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink4),
                             ),
                           ],
@@ -280,7 +281,7 @@ class _FindInDocumentState extends State<FindInDocument> {
               ),
               const SizedBox(width: 10),
               ZButton(
-                label: 'Find',
+                label: sentences.findAct,
                 filled: true,
                 onPressed: _busy ? null : () => unawaited(_search()),
               ),
@@ -299,14 +300,14 @@ class _FindInDocumentState extends State<FindInDocument> {
                   places.isEmpty
                       // The word they searched for, isolated: the count after
                       // it is ours and must stay after it.
-                      ? '«${theirOwnWord(_searched)}» is not in this document'
+                      ? sentences.notInThisDocument(theirOwnWord(_searched))
                       : '«${theirOwnWord(_searched)}» — ${places.length} '
                             '${places.length == 1 ? "place" : "places"}:',
                   style: Zc.small.copyWith(fontWeight: FontWeight.w600),
                 ),
-                if (protected > 0) _Count('$protected protected', Zc.clay, Zc.clayWash),
-                if (waiting > 0) _Count('$waiting waiting', Zc.river, Zc.riverWash),
-                if (clear > 0) _Count('$clear in the clear', Zc.ink3, null),
+                if (protected > 0) _Count(sentences.countProtected(protected), Zc.clay, Zc.clayWash),
+                if (waiting > 0) _Count(sentences.countWaiting(waiting), Zc.river, Zc.riverWash),
+                if (clear > 0) _Count(sentences.countInTheClear(clear), Zc.ink3, null),
               ],
             ),
             if (wider.isNotEmpty) ...[
@@ -314,8 +315,7 @@ class _FindInDocumentState extends State<FindInDocument> {
               Text(
                 // Ruling (c), said where the act is: Protect will not answer
                 // these, because they are more than what was typed.
-                '${wider.length == 1 ? "One place is" : "${wider.length} places are"} inside words that '
-                'still wait for your word: ${wider.join(" · ")}. Protect leaves those to the review.',
+                sentences.placesInsideWaitingWords(wider.length, wider.join(' · ')),
                 style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.ink3),
               ),
             ],
@@ -327,14 +327,14 @@ class _FindInDocumentState extends State<FindInDocument> {
                 children: [
                   ZButton(
                     key: FindInDocument.goKey,
-                    label: _at < 0 ? 'Go to it' : 'Next ${_at + 1}/${places.length}',
+                    label: _at < 0 ? sentences.goToIt : sentences.nextOfWaitingCount(_at + 1, places.length),
                     icon: Icons.east,
                     onPressed: _busy ? null : () => unawaited(_go()),
                   ),
                   if (clear > 0)
                     ZButton(
                       key: FindInDocument.protectKey,
-                      label: 'Protect',
+                      label: sentences.protectAct,
                       filled: true,
                       badge: clear,
                       onPressed: _busy
@@ -359,7 +359,7 @@ class _FindInDocumentState extends State<FindInDocument> {
                   if (here != null && here.state == FoundState.protected) ...[
                     ZButton(
                       key: FindInDocument.hereKey,
-                      label: 'Un-protect here',
+                      label: sentences.unProtectHere,
                       onPressed: _busy
                           ? null
                           : () => unawaited(_act(() async {
@@ -369,7 +369,7 @@ class _FindInDocumentState extends State<FindInDocument> {
                     if (protected > 1)
                       ZButton(
                         key: FindInDocument.everyKey,
-                        label: 'Un-protect in this session ($protected places)',
+                        label: sentences.unProtectInThisSession(protected),
                         onPressed: _busy
                             ? null
                             : () => unawaited(_act(() async {

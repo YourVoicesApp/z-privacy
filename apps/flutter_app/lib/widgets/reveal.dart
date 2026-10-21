@@ -16,6 +16,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/core/messages.dart';
@@ -34,8 +35,8 @@ mixin RevealHold<T extends StatefulWidget> on State<T> {
 
   /// The line beside the value: what it is, in the core's time.
   String revealLabel(int valueId) => shownFor(valueId) == null
-      ? 'Hidden'
-      : 'Revealed · ${(_remaining / 1000).ceil()}s';
+      ? sentences.revealHidden
+      : sentences.revealedForSeconds((_remaining / 1000).ceil());
 
   /// Ask for one value. Any trouble is handed back as a sentence; this decides
   /// nothing about where it is shown.

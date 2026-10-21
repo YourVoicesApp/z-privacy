@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:zprivacy/core/sentences.dart';
 
 /// **The first act of every press that puts something on the clipboard** — 081.
 ///
@@ -43,4 +44,4 @@ Future<void> emptyTheClipboardFirst() =>
 /// leak). Two surfaces say it now — the sheet, and the workspace the sheet gets
 /// out of the way for (083 rule 12) — so it is worded once.
 String andTheClipboardIsEmpty(String refusal) =>
-    '$refusal\nNothing was copied — the clipboard is empty.';
+    '$refusal\n${sentences.andTheClipboardIsEmptySentence}';

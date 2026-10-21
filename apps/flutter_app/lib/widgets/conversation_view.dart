@@ -21,6 +21,7 @@
 // carries one, it belongs in the head below.
 import 'package:flutter/material.dart';
 
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -101,7 +102,7 @@ class ConversationView extends StatelessWidget {
                 children: [
                   const Spacer(),
                   ZButton(
-                    label: 'Close',
+                    label: sentences.close,
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -120,8 +121,7 @@ class ConversationView extends StatelessWidget {
       // empty» and neither is «it could not be read»; a screen that spelt them
       // the same would report a lost conversation as a quiet one.
       return Text(
-        'Nothing has been sent from this session yet. What goes to a model and '
-        'what comes back are written here, in this session\'s own sealed file.',
+        sentences.nothingSentFromThisSessionYet,
         style: Zc.small.copyWith(color: Zc.ink3),
       );
     }
@@ -141,28 +141,25 @@ class ConversationView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Eyebrow('You asked'),
+          Eyebrow(sentences.youAsked),
           const SizedBox(height: 4),
           // An empty question is a real state and 046/N's whole finding: a
           // document may be sent with nothing asked of it.
           turn.question.isEmpty
               ? Text(
-                  'Nothing was asked — the document went on its own.',
+                  sentences.nothingWasAskedDocumentWentAlone,
                   style: Zc.small.copyWith(color: Zc.ink4),
                 )
               : _pieces(turn.question),
           const SizedBox(height: 10),
-          const Eyebrow('It answered'),
+          Eyebrow(sentences.itAnswered),
           const SizedBox(height: 4),
           _pieces(turn.answer, boxed: true),
           if (turn.unresolved.isNotEmpty) ...[
             const SizedBox(height: 7),
             Text(
-              turn.unresolved.length == 1
-                  ? 'One name in this exchange belongs to another session and could '
-                        'not be restored: ${turn.unresolved.single}.'
-                  : '${turn.unresolved.length} names in this exchange belong to another '
-                        'session and could not be restored: ${turn.unresolved.join(', ')}.',
+              sentences.namesBelongToAnotherSession(
+                  turn.unresolved.length, turn.unresolved.join(', ')),
               style: Zc.tiny.copyWith(letterSpacing: 0, color: Zc.amber),
             ),
           ],
