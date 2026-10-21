@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/widgets/the_chat.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -124,6 +125,160 @@ void main() {
     // Two values since 085 ruling 1 (15 October): the name he typed is a given
     // name and a surname, and each is a token of its own.
     expect(find.textContaining('2 values replaced'), findsOneWidget);
+
+    // ----------------------------------------------------------- 096, 72-ب
+    //
+    // **And the first part draws that request as original text.** Until now
+    // the request lived in the box and nowhere else, so a word in it could not
+    // be covered by hand and a suggestion in it was reviewed nowhere. The core
+    // hands one text with one offset space; this measures that the glass draws
+    // *that* text and those marks, and not a second copy of its own.
+    final entered = bench.entered!;
+    final original = tester.widget<OriginalText>(find.byType(OriginalText));
+    expect(original.text, entered.text,
+        reason: 'the first part draws something other than the one entered text');
+    expect(original.marks, entered.marks,
+        reason: 'the first part draws its own marks instead of the core\'s');
+
+    // The request is in that text, in the clear, after where the core says it
+    // begins — `requestBegins` is **read** and never counted here.
+    final typedAt = entered.text.indexOf('Thomas Müller', entered.requestBegins);
+    expect(typedAt, greaterThanOrEqualTo(entered.requestBegins),
+        reason: 'the name typed into the request is not in the request half');
+    expect(entered.marks.any((m) => m.span.start <= typedAt && m.span.end > typedAt),
+        isTrue,
+        reason: 'the name in the request is drawn without the cover the same '
+            'name has in the document');
+
+  });
+
+  /// **A hand reaches a word in the request through the same door** — 096,
+  /// rule 72-ب, and the guard that crosses the seam.
+  ///
+  /// **This one was red on purpose for a day**, by the lead's ruling, because
+  /// it is the only guard in either half that can fail while both halves are
+  /// green: a seam with a sound guard on each side and nothing across it is
+  /// how two finished halves make one broken product. It drives the glass's
+  /// own path — `select()` replaces what the person drew with `view.wordSpan`
+  /// from `inspect_selection` (041-K, «what the core will take is what the
+  /// screen shows») — and asks the core's own answer back. Measured on
+  /// `e610c63`, before the fix:
+  ///
+  /// ```text
+  /// requestBegins 69 · the text at 92 is «earn»
+  /// select(Span(92, 96))  →  selection 22..28  =  «Thomas», in the document
+  /// protectSelection(…)   →  alreadyProtected(__Z_…_PERSON_…, de:salutation)
+  /// ```
+  ///
+  /// A hand drawn over a word in the request protected a word in the document
+  /// that nobody had pointed at, with no refusal and no sentence — in a tool
+  /// whose whole promise is about which words leave.
+  ///
+  /// **It went green at `072ab1f` with nothing here changed**, which is the
+  /// claim this file is allowed to make about the core. The cause was not the
+  /// one line reported from the glass: `inspect_selection` needed the shift in
+  /// **five** places and four of them had written the document's name instead,
+  /// while the fifth — the snapshot's — had the arithmetic right in its own
+  /// spelling, and one law in two spellings is how the other four came to be
+  /// wrong. The shift now has a name and is asked for by it,
+  /// `span_in_the_entered` in `z_core/src/ops/mod.rs`. ed's own Rust guards had
+  /// called `protect` directly with an entered-space span and never passed
+  /// through `inspect_selection`, which is why both halves could be green: the
+  /// one door the glass always goes through was the one door no guard asked
+  /// about.
+  testWidgets('a hand selection in the request covers that word, and not 22..28 in the document', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (_, bench) = await _open(tester, 'byhand');
+
+    await tester.enterText(find.byKey(_field), 'What did Thomas Müller earn?');
+    await settle(tester, rounds: 2);
+    await tester.tap(find.byKey(_attach));
+    await settle(tester, rounds: 16);
+
+    final entered = bench.entered!;
+    // «earn»
+    // is nobody's name and no rule finds it, so a cover over it can only be
+    // the person's own — and it has to work in the request as it does in the
+    // document.
+    final earn = entered.text.indexOf('earn', entered.requestBegins);
+    expect(earn, greaterThan(entered.requestBegins), reason: 'the word is not in the request');
+    ProtectOutcome? said;
+    Span? snapped;
+    await tester.runAsync(() async {
+      await bench.select(Span(start: earn, end: earn + 'earn'.length));
+      snapped = bench.selection;
+      said = await bench.protectSelection(
+          scope: Scope.once, kind: Kind.project, allMatches: false);
+      await bench.select(null);
+    });
+    expect(snapped, isNotNull, reason: 'the core refused to inspect the selection');
+    expect(snapped!.start, earn,
+        reason: 'the core snapped a selection at $earn «earn» out to '
+            '${snapped!.start}..${snapped!.end} '
+            '«${entered.text.substring(snapped!.start, snapped!.end)}»');
+    expect(said, isNotNull, reason: 'the door answered nothing at all');
+    await settle(tester, rounds: 12);
+
+    final covered = bench.entered!;
+    // The reason names what it saw: a cover that landed on another offset and
+    // a cover that never happened are two different faults, and a bare «false»
+    // tells them apart for nobody.
+    final inRequest = covered.marks
+        .map((m) => '${m.span.start}..${m.span.end} '
+            '«${covered.text.substring(m.span.start, m.span.end)}» ${m.token}')
+        .join(' | ');
+    expect(covered.marks.any((m) => m.span.start == earn), isTrue,
+        reason: 'a hand selection at $earn covered nothing. The door answered '
+            '${said.runtimeType}. requestBegins=${covered.requestBegins}, '
+            'the slice at $earn is «${covered.text.substring(earn, earn + 4)}», '
+            'every cover is [$inRequest], and the app said «${bench.trouble ?? ''}»');
+    expect(bench.payload!.text, isNot(contains('earn')),
+        reason: 'the word covered by hand in the request still leaves in the clear');
+  });
+
+  /// **No unprotected text in the middle part** — 096's new guard, rule 35 and
+  /// rule 72-ب together.
+  ///
+  /// The middle column had two drawings: the payload, and a footer carrying
+  /// `questionSafe` for the case where a request stood with no document. Two
+  /// drawings of what leaves are two things to keep true, and the day one of
+  /// them is built from something other than the payload is the day the middle
+  /// shows a person text that is not what the AI receives. So the law is the
+  /// strongest form of it: **the middle draws the payload's own text, and
+  /// nothing else.**
+  testWidgets('no unprotected text stands in the middle part', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1500, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final (_, bench) = await _open(tester, 'middle');
+
+    String middleNow() => tester.widget<SafeText>(find.byType(SafeText)).text;
+
+    // Before anything is asked: one drawing, and it is the payload's.
+    expect(middleNow(), bench.payload!.text,
+        reason: 'the middle draws something other than what leaves');
+    expect(middleNow(), isNot(contains('Thomas Müller')),
+        reason: 'the document\'s own name stands in the middle in the clear');
+
+    await tester.enterText(find.byKey(_field), 'What did Thomas Müller earn?');
+    await settle(tester, rounds: 2);
+    // **Typed and not yet sent**: the box holds it, and the middle may not
+    // have grown a second drawing of it in the clear.
+    expect(middleNow(), isNot(contains('Thomas Müller')),
+        reason: 'a name typed into the box reached the middle before it was protected');
+
+    await tester.tap(find.byKey(_attach));
+    await settle(tester, rounds: 16);
+
+    // And after: still one drawing, still the payload's, the name replaced.
+    expect(middleNow(), bench.payload!.text,
+        reason: 'the middle grew a second drawing of what leaves');
+    expect(middleNow(), isNot(contains('Thomas Müller')),
+        reason: 'the name a person typed stands in the middle in the clear');
+    expect(middleNow(), contains('__Z_'),
+        reason: 'nothing in the middle is a token, so this proves nothing');
+    expect(find.byType(SafeText), findsOneWidget,
+        reason: 'the middle draws what leaves in two places');
   });
 
   /// **The sentence that is gone, because it became false** — rule 67.

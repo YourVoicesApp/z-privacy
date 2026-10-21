@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/workspace.dart';
+import 'package:zprivacy/widgets/document_text.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
@@ -291,12 +292,40 @@ void main() {
         reason: 'the name in the question is in the clear in what would leave');
     expect(bench.questionSafe, contains('__Z_'),
         reason: 'nothing in the question was protected');
-    // ignore: avoid_print
-    print('PROBE payload=${bench.payload != null} · tokens=${bench.tokens.length} '
-        '· marks=${bench.questionMarks.length} · snap=${bench.snap != null}');
+    // **The probe became an assertion** — 096. It printed whether a request
+    // standing alone has a payload, because on 18 October it did not and the
+    // middle column had to draw `questionSafe` instead. `build_payload` sends
+    // `WhatWouldLeave::TheQuestionAlone` to the one builder now, so the fact
+    // the probe was watching is a fact the middle part depends on, and a fact
+    // a round depends on is asserted and not printed.
+    expect(bench.payload, isNotNull,
+        reason: 'a request standing with no document has no payload, so the '
+            'middle part would have nothing to draw');
 
     await tester.pumpWidget(_Surface(ground: ground, bench: bench));
     await settle(tester);
+
+    // **096, rule 72-ب: it is drawn in the first part before it leaves.**
+    // With no document the request is the whole of the original, so this is
+    // the case that says the first part draws what the person entered and not
+    // what a document gave it.
+    final entered = bench.entered!;
+    expect(entered.requestBegins, 0,
+        reason: 'with no document the request is not the whole of the entered text');
+    expect(entered.text, contains('Thomas Müller'),
+        reason: 'what was typed is not in the one entered text, where a hand reaches it');
+    expect(tester.widget<OriginalText>(find.byType(OriginalText)).text, entered.text,
+        reason: 'the first part draws something other than what was typed');
+    expect(entered.marks, isNotEmpty,
+        reason: 'the name typed with no document carries no cover in the first part');
+
+    // And the middle draws only what leaves — the same law as the other half
+    // of this round, measured here on the case that has no document at all.
+    final middle = tester.widget<SafeText>(find.byType(SafeText)).text;
+    expect(middle, bench.payload!.text,
+        reason: 'the middle draws something other than what leaves');
+    expect(middle, isNot(contains('Thomas Müller')),
+        reason: 'the name stands in the middle part in the clear');
 
     await tester.runAsync(() async {
       final refused = await theChatAsks(

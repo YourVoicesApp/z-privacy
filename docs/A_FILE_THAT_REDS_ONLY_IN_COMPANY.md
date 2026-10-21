@@ -124,7 +124,7 @@ the teardown above — and since 092 the label is drawn from the one list, so a
 guard that reaches for its English text would also break the day it is read in
 German.
 
-### Closed, 20 October 2026 — and which of the two it was could not be summoned
+### Closed, 20 October 2026 — the gates summoned the red, in the test beside it
 
 **The red was reproduced — by the gates, in a sibling test.** It could not be
 summoned by hand: the old guard stayed green against twelve busy processes on
@@ -203,6 +203,68 @@ is worse. The form that does not rot is `find.text(sentences.theKey)`, reading
 the one place. A sitting of 092's own, with a number to measure it against.
 
 Queued after sitting four of 092 and after 097, by the lead's own order.
+
+## A guard that crosses the seam — 096, 20 October 2026
+
+Not a flake, and in this file because it is the same shape of mistake: **a
+measurement that cannot see the thing it is about.**
+
+096 was built in two halves. ed's core half let a hand selection land in the
+request, with its own Rust guards; this half drew the request in the first part
+so a hand could reach it. Both were green. The product was broken: a selection
+on a word in the request came back as a span pointing **into the document**, so
+the next press protected a word nobody had pointed at — in a tool whose whole
+promise is about which words leave.
+
+Measured on `e610c63`:
+
+```text
+requestBegins 69 · the entered text at 92 is «earn»
+bench.select(Span(92, 96))  →  bench.selection 22..28  =  «Thomas», in the document
+protectSelection(…)         →  alreadyProtected(__Z_…_PERSON_…, de:salutation)
+```
+
+The cause was reported from the glass as one line — `ops/mod.rs:1747` builds
+`word_span` from `s.original_str()` out of offsets that are the request's own.
+It was **five**: `inspect_selection` needs that shift in five places, and four
+of them had written the document's name, while the fifth — the snapshot's — had
+the arithmetic right **in its own spelling**. One law in two spellings is how
+the other four came to be wrong, which is a finding the glass could not have
+made: from here one wrong answer is one wrong answer, and only the file's owner
+can count how many places it is written in.
+
+**Why two green halves could not see it.** The core's guards call `protect`
+directly with an entered-space span. The glass never does: `select()` replaces
+what the person drew with `view.wordSpan` from `inspect_selection` (041-K,
+«what the core will take is what the screen shows»). So the door the glass
+always passes through was the one door no guard asked about, and each half
+measured its own side of the seam.
+
+The guard that found it — «a hand selection in the request covers that word,
+and not 22..28 in the document», in
+`apps/flutter_app/test/the_question_is_on_the_screen_test.dart` — was **red on
+purpose** for a day by the lead's ruling, and that is the point of it: it
+crosses the seam, driving the glass's own path and asking the core's own answer
+back, which is the only kind of guard that can fail when two halves are each
+correct alone.
+
+### Closed, 21 October 2026 — green with nothing changed on this side
+
+ed's fix merged at `072ab1f`, and the shift now has a name asked for by name:
+`span_in_the_entered(entered, begins, from, to)`. The guard **went green with
+no touch from this half** — which is the whole claim such a guard is for. Had
+it needed a touch here to pass, the touch would have been the news, not the
+pass: a guard that is edited to agree with the code it measures has stopped
+measuring it.
+
+What stays written down is the shape, not the bug: the door the glass always
+passes through — `select()` → `inspect_selection` → `view.wordSpan` — was the
+one door neither half's guards asked about, because ed's called `protect`
+directly with a span already in the entered space. Each half tested the inside
+of its own side of the seam.
+
+Related: `a_split_item_needs_a_guard_that_crosses_the_seam.md` ·
+`a_control_that_fails_to_bite_is_a_finding.md`
 
 Related: `the_debug_bridge_has_no_test_features.md` (the same errno, the other
 cause) · `a_guard_green_for_the_wrong_reason.md` ·

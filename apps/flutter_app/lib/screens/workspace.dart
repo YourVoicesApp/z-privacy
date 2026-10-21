@@ -1964,6 +1964,10 @@ class _ColumnsState extends State<_Columns> {
     final bench = widget.bench;
     final ground = widget.ground;
     final doc = bench.document;
+    // **096, rule 72-ب** — what the person entered, as one text. The first
+    // part draws this; `doc` is still read for everything that is *about* a
+    // document (the search bar, «Remove the document», the acts that need one).
+    final entered = bench.entered;
     final safe = bench.payload;
     final kept = (ground.config?.originalPanePercent ?? 50).toDouble();
     final percent = _percent ?? kept;
@@ -2084,12 +2088,21 @@ class _ColumnsState extends State<_Columns> {
                           _TheQuestion(bench: bench),
                         ],
                       ),
-                child: doc == null
+                // **The request is original text, like the document** — rule
+                // 72-ب. One text from the core, one offset space, so the
+                // marks, the hand selection, the question a tap asks and the
+                // page arithmetic are the ones the document already had: a
+                // word typed into the request is covered by the same hand
+                // through the same doors. The `--- Request ---` line is in the
+                // text the core built, so it is drawn by being there (rule
+                // 64's line stays) and not by a second widget that would have
+                // to agree with it.
+                child: entered == null || entered.text.isEmpty
                     ? _Empty(sentences.nothingIsOpen)
                     : Builder(
                         builder: (inner) => OriginalText(
-                          text: doc.text,
-                          marks: doc.marks,
+                          text: entered.text,
+                          marks: entered.marks,
                           // **One slot for «where we are looking»**: it
                           // follows the focused finding, and the search bar can
                           // put a span in it that no finding covers.
@@ -2100,8 +2113,8 @@ class _ColumnsState extends State<_Columns> {
                           ),
                           // Tapping a protected word asks the question this
                           // whole layer exists to answer.
-                          onAsk: (mark) =>
-                              _ask(inner, bench, doc, mark, column: _offerFor(bench, doc, mark)),
+                          onAsk: (mark) => _ask(inner, bench, entered.text, mark,
+                              column: _offerFor(bench, entered.text, mark)),
                           // And tapping one that is still waiting answers it.
                           onChoose: widget.onChoose,
                           // 046/Q — lines are taken in the gutter, words in
@@ -2154,18 +2167,20 @@ class _ColumnsState extends State<_Columns> {
                 tint: Zc.clay,
                 trailing: _SafeTrailing(bench: bench, onClose: _toggleSafe),
                 controller: _right,
-                // **What would leave, with or without a document** — rule 72.
+                // **Only what leaves, and one drawing of it** — rule 35 and
+                // 096, rule 72-ب.
                 //
-                // Measured on 18 October: a bench with a question and no
-                // document has **no payload** (the core builds one from a
-                // document; `build_the_question_alone` carries a question by
-                // itself at the door), so this column said «There is nothing
-                // to send yet.» over a request that was about to leave. The
-                // owner's rule says the opposite in so many words — «يمرّ
-                // بالشاشة الوسطى محمياً» — so what is drawn is the question's
-                // own protected form, which is the core's answer from
-                // `set_question` and not a second opinion.
-                footer: safe == null && bench.questionSafe.trim().isEmpty
+                // This had a second drawing under it: `questionSafe`, the
+                // question's own protected form, drawn as a footer because on
+                // 18 October a bench with a request and no document had no
+                // payload and this column said «There is nothing to send
+                // yet.» over a request that was about to leave. The core
+                // answers that case itself now — `build_payload` sends
+                // `WhatWouldLeave::TheQuestionAlone` to the one builder, so
+                // the snapshot carries a payload for a request standing by
+                // itself — and a second drawing of what leaves is a second
+                // thing to keep true. The payload carries the request.
+                footer: safe == null
                     ? null
                     : _SafeFooter(
                         payload: safe,
@@ -2173,19 +2188,13 @@ class _ColumnsState extends State<_Columns> {
                         ground: ground,
                         onSettings: widget.onSettings,
                       ),
-                child: safe != null
-                    ? SafeText(
+                child: safe == null
+                    ? _Empty(sentences.thereIsNothingToSendYet)
+                    : SafeText(
                         text: safe.text,
                         edges: safe.pageEdges,
                         chips: bench.chips,
-                      )
-                    : bench.questionSafe.trim().isEmpty
-                        ? _Empty(sentences.thereIsNothingToSendYet)
-                        : SafeText(
-                            text: bench.questionSafe,
-                            edges: const [],
-                            chips: bench.chips,
-                          ),
+                      ),
               ),
             ),
           ],
@@ -2206,13 +2215,15 @@ class _ColumnsState extends State<_Columns> {
   /// `null` when the word is outside the held lines, because the cell's order
   /// is read from **its own** line: offering the act for a word on another line
   /// would protect a column he never pointed at.
-  ColumnOffer? _offerFor(Workbench bench, DocumentView doc, Mark mark) {
+  ColumnOffer? _offerFor(Workbench bench, String entered, Mark mark) {
     final held = bench.lines;
     final hold = bench.linesHold;
     if (held == null || hold == null) return null;
     final lo = held.from < held.to ? held.from : held.to;
     final hi = held.from < held.to ? held.to : held.from;
-    final line = lineOfOffset(doc.text, mark.span.start);
+    // The entered text and not the document: one offset space since 096, and
+    // a line number counted in the other text would point at another row.
+    final line = lineOfOffset(entered, mark.span.start);
     if (line < lo || line > hi) return null;
     return ColumnOffer(
       lines: hold.lines,
@@ -2365,7 +2376,7 @@ class _Said extends StatelessWidget {
 Future<void> _ask(
   BuildContext context,
   Workbench bench,
-  DocumentView doc,
+  String entered,
   Mark mark, {
   ColumnOffer? column,
 }) async {
@@ -2375,7 +2386,7 @@ Future<void> _ask(
     context: context,
     builder: (_) => WhySheet(
       why: why,
-      word: doc.text.substring(mark.span.start, mark.span.end),
+      word: entered.substring(mark.span.start, mark.span.end),
       span: mark.span,
       onChanged: bench.rescan,
       // The two choices the owner allows, each through the one function 084

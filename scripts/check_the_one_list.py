@@ -70,9 +70,36 @@ MIGRATED = {
 # the work surface's three parts and the chat — those are done, and the numbers
 # below were measured again against the tree rather than left as the floors
 # they were: a floor that is looser than the truth is a gate that would let a
-# sentence be added back. What is left is the settings rooms, then the widgets.
+# sentence be added back.
 #
 # 854 sentences stood in 27 files when this round began; 185 stand in 16 now.
+#
+# **Sitting five, the two items.** The first is the rest of this table: the
+# eleven small files, `core/session_state.dart`'s 29, and
+# `core/protected_pdf.dart`'s 13 — those last drawn with the **session's**
+# locale and never the interface's, because a z-pdf footer is a file that
+# leaves (rule 33) and what a file holds is not what the person at the screen
+# reads.
+#
+# The second is **«a guard may not type a sentence this list owns»**, measured
+# on 20 October 2026 over `apps/flutter_app/test`:
+#
+#     458 finders reach for a typed sentence
+#     284 of them name a value that now lives in lib/l10n/app_en.arb
+#         — by its exact text, or by the shape of a placeholder sentence
+#           («Page 2» for `pageNumber`)
+#
+# They are correct while the suite reads English, and they are second copies of
+# sentences whose home is this list: a reworded value turns a guard red for the
+# wrong reason, and where the assertion is `findsNothing` it leaves the guard
+# **green** for the wrong reason, which is the half that teaches nothing until
+# something has already shipped. The form that does not rot is
+# `find.text(sentences.theKey)` — the guard reading the one place instead of
+# remembering it.
+#
+# Found by the gutter guard, which typed «Protect this column in the 4 held
+# lines» and could not find it: `docs/A_FILE_THAT_REDS_ONLY_IN_COMPANY.md`
+# holds that measurement. Not before 096's glass half, by the lead's order.
 OWED = {
     'core/protected_pdf.dart': 13,
     'core/session_state.dart': 29,
