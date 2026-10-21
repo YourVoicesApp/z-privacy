@@ -3703,19 +3703,19 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{count} protected'**
-  String countProtected(Object count);
+  String countProtected(int count);
 
   /// How many of the places a search found are waiting for the person's word.
   ///
   /// In en, this message translates to:
   /// **'{count} waiting'**
-  String countWaiting(Object count);
+  String countWaiting(int count);
 
   /// How many of the places a search found stand in the clear — nothing protects them and nothing has offered to.
   ///
   /// In en, this message translates to:
   /// **'{count} in the clear'**
-  String countInTheClear(Object count);
+  String countInTheClear(int count);
 
   /// A search whose places fall inside words the scan has offered but nobody has answered. Protect does not take them — the review does — and the sentence says so before the press.
   ///

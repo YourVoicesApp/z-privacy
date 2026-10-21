@@ -14,6 +14,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/first_run.dart';
@@ -253,7 +254,7 @@ void main() {
     expect(find.byType(FirstRunScreen), findsOneWidget,
         reason: 'the shell must show the first-run page while the core says it is due');
     expect(find.byType(WorkspaceScreen), findsNothing);
-    expect(find.text('No Z Privacy server.'), findsOneWidget);
+    expect(find.text(sentences.noZPrivacyServer), findsOneWidget);
 
     // **Passing it leaves for the one screen** — rule 70, in this run at
     // least: the lasting answer needs a vault to be written into, and this
@@ -365,7 +366,7 @@ Future<void> pastTheFirstRun(WidgetTester tester, {String language = 'English', 
   await settle(tester, rounds: 1);
   await tester.tap(find.text(start));
   await settle(tester);
-  await tester.tap(find.text('Create a vault'));
+  await tester.tap(find.text(sentences.createAVault));
   await settle(tester);
   // The passphrase goes in through the core rather than through the two
   // fields: a widget that awaits the core does not resume under `testWidgets`,
@@ -374,7 +375,7 @@ Future<void> pastTheFirstRun(WidgetTester tester, {String language = 'English', 
   await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort für den Tresor'));
   await settle(tester);
   // The vault screen is a door, not a room: «Back» is what reaches Home.
-  final back = find.text('Back');
+  final back = find.text(sentences.back);
   if (back.evaluate().isNotEmpty) {
     await tester.tap(back.first);
     await settle(tester, rounds: 8);

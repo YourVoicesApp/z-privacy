@@ -41,6 +41,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -202,10 +203,10 @@ Future<({Workbench bench, Ground ground, Directory out})> _atTheDoors(
   // one page, so the doors are standing the moment it opens. «Copy Protected»
   // is dead when there is no payload, which is exactly what «Continue» used to
   // prove here before the page it belonged to was deleted.
-  expect(find.text('Copy Protected'), findsOneWidget,
+  expect(find.text(sentences.copyProtected), findsOneWidget,
       reason: 'the sheet did not open on its doors');
   expect(
-    tester.widget<ZButton>(find.widgetWithText(ZButton, 'Copy Protected')).onPressed,
+    tester.widget<ZButton>(find.widgetWithText(ZButton, sentences.copyProtected)).onPressed,
     isNotNull,
     reason: 'the manual door is dead, so there is no payload and this fixture proves nothing',
   );
@@ -338,7 +339,7 @@ void main() {
     // **The control: the press itself still copies.** With the session now
     // open no core call is awaited, so a real tap resumes — and the clipboard
     // is emptied again before it is written.
-    await tester.tap(find.text('Copy Protected'));
+    await tester.tap(find.text(sentences.copyProtected));
     await _settle(tester);
     expect(probe.wrote, ['', '', g.bench.payload!.text],
         reason: 'the press did not empty the clipboard and then copy: ${probe.wrote}');
@@ -383,7 +384,7 @@ void main() {
     expect(out!.refused, isNull, reason: 'the nameless exit was refused: ${out.refused}');
     await tester.runAsync(() => g.bench.refresh());
     await _settle(tester);
-    await tester.tap(find.text('Save as PDF'));
+    await tester.tap(find.text(sentences.saveAsPdf));
     await _settle(tester, rounds: 16);
 
     final born = g.ground.openSession;
@@ -439,7 +440,7 @@ void main() {
     final held = g.bench.payload!.text;
     expect(held, isNot(captured), reason: 'the fixture did not change the payload');
 
-    await tester.tap(find.text('Copy Protected'));
+    await tester.tap(find.text(sentences.copyProtected));
     await _settle(tester);
 
     // **The order, as a sequence and not a count** — empty first, then copy.
@@ -605,7 +606,7 @@ void main() {
     expect(made.ground.aSessionWouldBeBorn, isFalse,
         reason: 'the document in the preview brought no session (rule 55)');
 
-    final door = find.widgetWithText(ZButton, 'Open Settings');
+    final door = find.widgetWithText(ZButton, sentences.openSettings);
     expect(door, findsWidgets, reason: 'no way to reach the one place a key is given');
     // Scrolled to first: the choice stands at the head of the sheet's one page
     // since rule 60, and a `tap` on an off-stage control hits nothing.
@@ -631,7 +632,7 @@ void main() {
         reason: 'nothing says these names belong to no session');
 
     // And the door still works, because protection never needed the vault.
-    await tester.tap(find.text('Copy Protected'));
+    await tester.tap(find.text(sentences.copyProtected));
     await _settle(tester);
     expect(probe.wrote, ['', g.bench.payload!.text],
         reason: 'a shut vault stopped a copy that sends nothing, or the emptying that '

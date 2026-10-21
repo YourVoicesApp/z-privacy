@@ -16,6 +16,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -122,7 +123,7 @@ void main() {
     await tester.tap(door);
     await settle(tester);
 
-    expect(find.text('Who answers'), findsOneWidget, reason: 'the AI button opened nothing');
+    expect(find.text(sentences.whoAnswers), findsOneWidget, reason: 'the AI button opened nothing');
 
     // **Provider and model are not behind a page** — the owner's own ruling,
     // read against what the sheet is since rule 60. It used to be measured as
@@ -136,8 +137,8 @@ void main() {
     // travels» here. Rule 62 deleted the mode, so what the sheet puts above
     // its doors is the one choice left — and the absence of the other is
     // measured in `only_the_protected_version_is_sent_test.dart`.
-    final choice = tester.getTopLeft(find.text('Model')).dy;
-    final doors = tester.getTopLeft(find.text('Manual AI')).dy;
+    final choice = tester.getTopLeft(find.text(sentences.modelLabel)).dy;
+    final doors = tester.getTopLeft(find.text(sentences.manualAi)).dy;
     expect(choice, lessThan(doors), reason: 'the choice is below the doors it chooses for');
     expect(find.text('Continue'), findsNothing,
         reason: 'the sheet still pages, so rule 60 left a page behind');

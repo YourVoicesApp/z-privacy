@@ -27,6 +27,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -86,7 +87,7 @@ void main() {
 
     // The page is the right one, so «findsNothing» below is about this page
     // and not about a sheet that failed to open.
-    expect(find.text('Who answers'), findsOneWidget, reason: 'the sheet did not open');
+    expect(find.text(sentences.whoAnswers), findsOneWidget, reason: 'the sheet did not open');
 
     // The section, its two chips and the sentence that warned about one of
     // them. Each named separately: a guard that asked only about the chip

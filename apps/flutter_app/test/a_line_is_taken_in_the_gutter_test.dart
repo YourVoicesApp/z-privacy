@@ -33,6 +33,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -354,7 +355,7 @@ void main() {
     expect(bench.lines, isNotNull, reason: 'a rescan released the lines');
 
     // And one press lets them go.
-    await tester.tap(find.widgetWithText(ZButton, 'Let the lines go'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.letTheLinesGo));
     await settle(tester, rounds: 8);
     expect(bench.lines, isNull, reason: 'the press did not release the lines');
     expect(find.byKey(_band), findsNothing, reason: 'the band outlived its selection');

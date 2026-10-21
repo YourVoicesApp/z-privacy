@@ -17,6 +17,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -248,7 +249,7 @@ void main() {
     await settle(tester);
     expect(find.byKey(WorkspaceScreen.composer), findsOneWidget,
         reason: 'there is nowhere to write to the AI with no document');
-    expect(find.text('What would you like to ask the AI?'), findsOneWidget,
+    expect(find.text(sentences.whatWouldYouLikeToAskTheAi), findsOneWidget,
         reason: 'the box does not say what it is for when nothing stands above it');
 
     // The press hands what was written to the shell, which opens a session for
@@ -497,7 +498,7 @@ void main() {
       findsOneWidget,
       reason: 'the settings did not open on Sessions',
     );
-    expect(find.text('Three ways to ask a model. The first needs no account at all.'),
+    expect(find.text(sentences.aiWhat),
         findsNothing,
         reason: 'the settings opened on the AI room');
 
@@ -512,7 +513,7 @@ void main() {
       ),
     ));
     await settle(tester);
-    expect(find.text('Three ways to ask a model. The first needs no account at all.'),
+    expect(find.text(sentences.aiWhat),
         findsOneWidget,
         reason: 'a door that named the AI room did not land in it');
   });
@@ -646,7 +647,7 @@ void main() {
     await tester.pumpWidget(_Surface(ground: ground, bench: back));
     await settle(tester);
 
-    expect(find.text('As it was kept'), findsOneWidget,
+    expect(find.text(sentences.asItWasKept), findsOneWidget,
         reason: 'the band claims a scan that did not happen in this run');
     expect(find.textContaining('already protected · nothing scanned in this run'),
         findsOneWidget,

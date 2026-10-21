@@ -23,6 +23,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -132,8 +133,8 @@ void main() {
     }
     expect(find.byKey(_laterKey), findsNothing);
     // And the two that are left are the two the owner named.
-    expect(find.text('Protect'), findsWidgets);
-    expect(find.text('Leave it'), findsWidgets);
+    expect(find.text(sentences.protectAct), findsWidgets);
+    expect(find.text(sentences.leaveIt), findsWidgets);
     expect(bench.openSuggestions, before, reason: 'drawing the panel answered something');
   });
 
@@ -147,12 +148,12 @@ void main() {
 
     // The old line said «Answer the review first» and named nothing.
     expect(find.text('Answer the review first'), findsNothing);
-    expect(find.text('1 question left — go to it'), findsOneWidget,
+    expect(find.text(sentences.oneQuestionLeftGoToIt), findsOneWidget,
         reason: 'the gate does not say how many are left');
 
     // Send is still shut. The rule is not loosened.
     final send = tester.widget<ZButton>(
-      find.widgetWithText(ZButton, 'Choose who answers'),
+      find.widgetWithText(ZButton, sentences.chooseWhoAnswers),
     );
     expect(send.onPressed, isNull, reason: 'the door opened with a question still open');
 
@@ -184,7 +185,7 @@ void main() {
 
     // The door is open now, and the way-through line is gone with the question.
     final send = tester.widget<ZButton>(
-      find.widgetWithText(ZButton, 'Choose who answers'),
+      find.widgetWithText(ZButton, sentences.chooseWhoAnswers),
     );
     expect(send.onPressed, isNotNull, reason: 'the door stayed shut with nothing open');
     expect(find.byKey(_goKey), findsNothing);
@@ -212,8 +213,8 @@ void main() {
     // sentence, which is where P2-5 needs it — a count inside a label that
     // also has to fit a narrow panel was the thing that made «Leave all 3 in
     // the clear» as long as the panel is wide.
-    expect(find.text('Protect all'), findsOneWidget);
-    expect(find.text('Skip all'), findsOneWidget);
+    expect(find.text(sentences.protectAll), findsOneWidget);
+    expect(find.text(sentences.skipAll), findsOneWidget);
     expect(find.text('Protect all $count'), findsNothing,
         reason: 'the old name is still drawn');
 

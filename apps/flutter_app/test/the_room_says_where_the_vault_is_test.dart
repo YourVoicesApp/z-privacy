@@ -32,6 +32,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -89,9 +90,9 @@ void main() {
     expect(find.text(dir.path), findsOneWidget,
         reason: 'the room does not say which folder it looked in — which is the '
             'screen the owner was asked to create a new vault on');
-    expect(find.text('A vault here would be in'), findsOneWidget,
+    expect(find.text(sentences.aVaultHereWouldBeIn), findsOneWidget,
         reason: 'the label promises a vault in a folder that holds none');
-    expect(find.text('Your vault is in'), findsNothing,
+    expect(find.text(sentences.yourVaultIsIn), findsNothing,
         reason: 'there is no vault, and «your vault is in» would be a sentence '
             'about a file that does not exist');
 
@@ -106,7 +107,7 @@ void main() {
       ),
     ));
     await settle(tester);
-    expect(find.text('Your vault is in'), findsOneWidget,
+    expect(find.text(sentences.yourVaultIsIn), findsOneWidget,
         reason: 'the vault is open in that folder and the room still will not say so');
     expect(find.text(dir.path), findsOneWidget,
         reason: 'the folder went quiet as soon as there was a vault in it');

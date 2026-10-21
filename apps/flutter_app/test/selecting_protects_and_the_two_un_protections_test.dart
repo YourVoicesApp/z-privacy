@@ -17,6 +17,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -104,11 +105,11 @@ void main() {
     // The badge says what one press settles — the second button it replaces
     // («Protect all matches») is gone, because there is nothing left for it to
     // mean.
-    final button = tester.widget<ZButton>(find.widgetWithText(ZButton, 'Protect'));
+    final button = tester.widget<ZButton>(find.widgetWithText(ZButton, sentences.protectAct));
     expect(button.badge, 3);
     expect(find.text('Protect all matches'), findsNothing);
 
-    await tester.tap(find.widgetWithText(ZButton, 'Protect'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.protectAct));
     await settle(tester, rounds: 10);
 
     // **No dialog stood in the way** — ruling 1. The dialog's own words are
@@ -129,7 +130,7 @@ void main() {
     final bench = await ready(tester);
     await tester.runAsync(() => bench.select(_spanOf('Lindqvist')));
     await settle(tester, rounds: 2);
-    await tester.tap(find.widgetWithText(ZButton, 'Protect'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.protectAct));
     await settle(tester, rounds: 10);
 
     // Open the card on the middle place, the way a person does: a press on the
@@ -177,7 +178,7 @@ void main() {
     final bench = await ready(tester);
     await tester.runAsync(() => bench.select(_spanOf('Lindqvist')));
     await settle(tester, rounds: 2);
-    await tester.tap(find.widgetWithText(ZButton, 'Protect'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.protectAct));
     await settle(tester, rounds: 10);
     final token = bench.tokens.where((t) => t.kind == Kind.custom).first.token;
 
@@ -195,7 +196,7 @@ void main() {
     final bench = await ready(tester);
     await tester.runAsync(() => bench.select(_spanOf('Lindqvist')));
     await settle(tester, rounds: 2);
-    await tester.tap(find.widgetWithText(ZButton, 'Protect'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.protectAct));
     await settle(tester, rounds: 10);
     final before = bench.tokens.length;
 

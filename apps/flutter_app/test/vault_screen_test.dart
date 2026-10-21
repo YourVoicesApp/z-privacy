@@ -12,6 +12,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/l10n/app_localizations_de.dart';
 import 'package:zprivacy/l10n/app_localizations_en.dart';
@@ -92,9 +93,9 @@ void main() {
     // ---------------------------------------------------------- absent
     // It does not pretend to be an empty list. It says what is missing.
     expect(ground.vault, VaultState.absent);
-    expect(find.text('There is no vault yet'), findsOneWidget);
+    expect(find.text(sentences.thereIsNoVaultYet), findsOneWidget);
     expect(find.textContaining('the only file this app writes'), findsOneWidget);
-    expect(find.text('Create the vault'), findsOneWidget);
+    expect(find.text(sentences.createTheVault), findsOneWidget);
 
     // ---------------------------------------------------------- made
     late final int entityId;
@@ -180,13 +181,13 @@ void main() {
     expect(find.textContaining('Nordstern Consulting GmbH'), findsNothing);
     // «Show» became «Reveal» when the row was made stable: the control keeps
     // its place and only its word changes as the reveal comes and goes.
-    expect(find.text('Reveal'), findsOneWidget);
-    expect(find.text('Hidden'), findsOneWidget);
+    expect(find.text(sentences.reveal), findsOneWidget);
+    expect(find.text(sentences.revealHidden), findsOneWidget);
     // And the kind's name came from the core's list, not a switch in Dart.
     expect(kindRows, isNotEmpty);
     expect(find.text(kindName(Kind.company)), findsOneWidget);
 
-    await tester.tap(find.text('Reveal'));
+    await tester.tap(find.text(sentences.reveal));
     await settle(tester);
     expect(find.text('Nordstern Consulting GmbH'), findsOneWidget);
     // Its spellings come with it: they are the same secret.
@@ -218,7 +219,7 @@ void main() {
     await settle(tester);
     expect(ground.vault, VaultState.locked);
     expect(ground.vaultRows, isEmpty, reason: 'a locked vault lists nothing');
-    expect(find.text('The vault is locked'), findsOneWidget);
+    expect(find.text(sentences.theVaultIsLocked), findsOneWidget);
     expect(find.byType(TextField), findsOneWidget);
 
     final unlockTrouble = vaultKeyTroubleFor(const ApiError.vaultAuthenticationFailed());
@@ -246,11 +247,11 @@ void main() {
 
     expect(ground.config, isNotNull);
     expect(ground.config!.sessionOnly, isFalse, reason: 'an open vault keeps them');
-    expect(find.text('Scan a document the moment it arrives'), findsOneWidget);
+    expect(find.text(sentences.scanOnArrival), findsOneWidget);
 
     // «Answer every suggestion before sending» is not a switch, and the room
     // says why. There is no «send anyway» to find anywhere in Settings.
-    expect(find.text('Answer every suggestion before sending'), findsOneWidget);
+    expect(find.text(sentences.answerEverySuggestion), findsOneWidget);
     expect(find.textContaining('there is no «send anyway»'), findsOneWidget);
     expect(find.byType(Switch), findsOneWidget, reason: 'exactly one thing here is a switch');
 
@@ -304,7 +305,7 @@ void main() {
       expect(find.text(line), findsOneWidget, reason: 'the German promise is not on a fresh page');
     }
     // No Start until a language is chosen, and the page says why — in both.
-    expect(find.widgetWithText(ZButton, 'Start'), findsNothing);
+    expect(find.widgetWithText(ZButton, sentences.start), findsNothing);
     expect(find.widgetWithText(ZButton, 'Starten'), findsNothing);
     expect(find.textContaining('Wählen Sie eine Sprache'), findsOneWidget);
     expect(find.textContaining('Choose a language to continue'), findsOneWidget);
@@ -350,7 +351,7 @@ void main() {
     expect(find.text('Keine Werbung.'), findsOneWidget);
     expect(find.widgetWithText(ZButton, 'Starten'), findsOneWidget);
     // The page is now in one language, not two.
-    expect(find.text('No account.'), findsNothing);
+    expect(find.text(sentences.noAccount), findsNothing);
     // What the choice really does, and what it does not — before Start.
     expect(find.text('Die deutschen Datenschutzregeln werden aktiviert.'), findsOneWidget);
     // **And the sentence that warned about the interface is gone** — 092.
@@ -373,10 +374,10 @@ void main() {
     // ------------------------------------------------ English, and back
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
-    expect(find.text('No account.'), findsOneWidget);
+    expect(find.text(sentences.noAccount), findsOneWidget);
     expect(find.text('Kein Konto.'), findsNothing);
-    expect(find.text('The English privacy rules will be enabled.'), findsOneWidget);
-    expect(find.widgetWithText(ZButton, 'Start'), findsOneWidget);
+    expect(find.text(sentences.theseRulesWillBeEnabled), findsOneWidget);
+    expect(find.widgetWithText(ZButton, sentences.start), findsOneWidget);
 
     await tester.tap(find.text('Deutsch'));
     await settle(tester, rounds: 1);
@@ -519,15 +520,15 @@ void main() {
     ));
     await settle(tester, rounds: 1);
 
-    expect(find.text('Why is this protected?'), findsOneWidget);
+    expect(find.text(sentences.whyIsThisProtected), findsOneWidget);
     expect(find.text('You taught Z Privacy this value'), findsOneWidget);
-    expect(find.text('Forget everywhere'), findsWidgets);
+    expect(find.text(sentences.forgetEverywhere), findsWidgets);
 
     // The two acts are offered under their own names, and the sheet says which
     // is which — «forget» must never be a gentle word for «unprotect».
     // P2-5: and each name carries its own scope, so «Remove protection» alone
     // is no longer a button anybody can press.
-    expect(find.text('Remove protection here'), findsWidgets);
+    expect(find.text(sentences.removeProtectionHere), findsWidgets);
     expect(find.widgetWithText(ZButton, 'Remove protection'), findsNothing,
         reason: 'an action without its scope is back on the sheet');
     expect(
@@ -537,7 +538,7 @@ void main() {
 
     // This value was taught to no profile, so «from this profile» would be a
     // lie about it and is not offered at all.
-    expect(find.text('Forget from this profile'), findsNothing,
+    expect(find.text(sentences.forgetFromThisProfile), findsNothing,
         reason: 'knowledge that belongs to every profile was called scoped');
 
     // **His size rule.** Every action a decision is made from is at the
@@ -558,7 +559,7 @@ void main() {
     expect(find.text('Nordstern Consulting'), findsNothing);
 
     // Forgetting shows what it costs **before** it happens, with numbers.
-    await tester.tap(find.text('Forget everywhere').first);
+    await tester.tap(find.text(sentences.forgetEverywhere).first);
     await settle(tester, rounds: 2);
     expect(find.textContaining('Forget ${quoted("Nordstern Consulting GmbH")}?'), findsOneWidget);
     expect(find.text('THIS WILL REMOVE'), findsOneWidget);
@@ -584,7 +585,7 @@ void main() {
     );
 
     // And Cancel means nothing happened.
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(find.text(sentences.cancelForm));
     await settle(tester, rounds: 2);
     await tester.runAsync(() async {
       expect(
@@ -689,7 +690,7 @@ void main() {
     // The confirmation repeats the words that were pressed, not a shortening.
     // Looked for **inside the confirmation**, since the sheet behind it still
     // carries the same button.
-    await tester.tap(find.widgetWithText(ZButton, 'Forget from this profile'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.forgetFromThisProfile));
     await settle(tester, rounds: 2);
     final confirmation = find.ancestor(
       of: find.textContaining('Forget ${quoted("Nordstern Consulting GmbH")}?'),
@@ -699,14 +700,14 @@ void main() {
     expect(
       find.descendant(
         of: confirmation,
-        matching: find.widgetWithText(ZButton, 'Forget from this profile'),
+        matching: find.widgetWithText(ZButton, sentences.forgetFromThisProfile),
       ),
       findsOneWidget,
       reason: 'the confirmation renamed the act it was opened by',
     );
     expect(find.descendant(of: confirmation, matching: find.widgetWithText(ZButton, 'Forget')),
         findsNothing);
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(find.text(sentences.cancelForm));
     await settle(tester, rounds: 2);
 
     bench.dispose();
@@ -754,7 +755,7 @@ void main() {
     await settle(tester);
 
     expect(
-      find.textContaining('Values I taught'),
+      find.textContaining(sentences.valuesITaught),
       findsWidgets,
       reason: 'the list under test is on screen',
     );
@@ -764,13 +765,13 @@ void main() {
       reason: 'the vault list drew the value it exists to protect',
     );
     expect(
-      find.text('Hidden'),
+      find.text(sentences.revealHidden),
       findsWidgets,
       reason: 'the list says the value is there and not shown',
     );
 
     // The same door as the card, and the same clock on it.
-    await tester.tap(find.widgetWithText(ZButton, 'Reveal').first);
+    await tester.tap(find.widgetWithText(ZButton, sentences.reveal).first);
     await settle(tester);
     expect(find.text(secret), findsOneWidget);
     expect(find.textContaining('Revealed · '), findsWidgets);
@@ -825,7 +826,7 @@ void main() {
     await settle(tester);
     expect(await stillTaught(), 1);
 
-    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').first);
+    await tester.tap(find.widgetWithText(ZButton, sentences.forgetEverywhere).first);
     await settle(tester);
 
     // It asks, it names what it would take, and it has taken nothing yet.
@@ -837,15 +838,15 @@ void main() {
       reason: 'the press alone must not forget anything',
     );
 
-    await tester.tap(find.widgetWithText(ZButton, 'Cancel'));
+    await tester.tap(find.widgetWithText(ZButton, sentences.cancelForm));
     await settle(tester);
     expect(await stillTaught(), 1, reason: 'Cancel keeps it');
 
     // And saying yes does forget it — the confirmation carries the act's own
     // name, so the word pressed twice is the same word.
-    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').first);
+    await tester.tap(find.widgetWithText(ZButton, sentences.forgetEverywhere).first);
     await settle(tester);
-    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').last);
+    await tester.tap(find.widgetWithText(ZButton, sentences.forgetEverywhere).last);
     await settle(tester);
     expect(await stillTaught(), 0);
   });
@@ -917,11 +918,11 @@ void main() {
     );
     await settle(tester);
 
-    final buttons = find.widgetWithText(ZButton, 'Forget everywhere');
+    final buttons = find.widgetWithText(ZButton, sentences.forgetEverywhere);
     expect(buttons, findsNWidgets(2), reason: 'the rule and the exception');
 
     for (var i = 0; i < 2; i++) {
-      await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').at(i));
+      await tester.tap(find.widgetWithText(ZButton, sentences.forgetEverywhere).at(i));
       await settle(tester);
       expect(
         find.textContaining('Forget «'),
@@ -934,7 +935,7 @@ void main() {
         reason: 'and says the price of yes',
       );
       expect(await counts(tester), (1, 1), reason: 'nothing is gone yet');
-      await tester.tap(find.widgetWithText(ZButton, 'Cancel'));
+      await tester.tap(find.widgetWithText(ZButton, sentences.cancelForm));
       await settle(tester);
       expect(await counts(tester), (1, 1), reason: 'Cancel keeps both');
     }
@@ -952,7 +953,7 @@ void main() {
     );
     await settle(tester);
 
-    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').first);
+    await tester.tap(find.widgetWithText(ZButton, sentences.forgetEverywhere).first);
     await settle(tester);
 
     // The dialog says which one it is about, so the test does not have to
@@ -962,7 +963,7 @@ void main() {
         .evaluate()
         .isNotEmpty;
 
-    await tester.tap(find.widgetWithText(ZButton, 'Forget everywhere').last);
+    await tester.tap(find.widgetWithText(ZButton, sentences.forgetEverywhere).last);
     await settle(tester);
 
     expect(
@@ -1016,7 +1017,7 @@ void main() {
 
     expect(find.widgetWithText(ZButton, 'Forget'), findsNothing,
         reason: 'a bare «Forget» is back in the vault');
-    expect(find.widgetWithText(ZButton, 'Forget from this profile'), findsWidgets);
-    expect(find.widgetWithText(ZButton, 'Forget everywhere'), findsWidgets);
+    expect(find.widgetWithText(ZButton, sentences.forgetFromThisProfile), findsWidgets);
+    expect(find.widgetWithText(ZButton, sentences.forgetEverywhere), findsWidgets);
   });
 }

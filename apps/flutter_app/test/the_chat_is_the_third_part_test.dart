@@ -29,6 +29,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -302,7 +303,7 @@ void main() {
     await settle(tester, rounds: 2);
     await tester.enterText(find.byKey(TheChat.pasted), 'Es geht um die Rechnung.');
     await settle(tester, rounds: 2);
-    await tester.tap(find.text('Add it to the chat'));
+    await tester.tap(find.text(sentences.addItToTheChat));
     await settle(tester, rounds: 20);
 
     expect(g.bench.chatTurns, hasLength(2), reason: 'the added answer wrote no turn');
@@ -319,7 +320,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byType(TheChat),
-        matching: find.textContaining('brought back by hand'),
+        matching: find.textContaining(sentences.answeredByHand),
       ),
       findsOneWidget,
       reason: 'the thread claims a key answered what a person carried',

@@ -8,6 +8,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -79,20 +80,20 @@ void main() {
 
     // The badge knows before the panel is opened, because a scan produced it.
     expect(bench.openCandidates.length, 2, reason: 'the core found no names to ask about');
-    expect(find.text('Names'), findsOneWidget);
+    expect(find.text(sentences.namesAct), findsOneWidget);
     expect(find.text('2'), findsWidgets, reason: 'the badge says how many decisions wait');
 
-    await tester.tap(find.text('Names'));
+    await tester.tap(find.text(sentences.namesAct));
     await settle(tester);
 
     expect(find.byType(NameReviewPanel), findsOneWidget);
-    expect(find.text('2 names to look at'), findsOneWidget);
+    expect(find.text(sentences.namesToLookAtCount(2)), findsOneWidget);
     // One row per name — never one per occurrence.
     expect(find.text('Al-Hassan'), findsOneWidget);
     expect(find.text('Okonkwo'), findsOneWidget);
     // What the decision is worth, as the core counted it.
     expect(find.text('2 places · 1 page'), findsNWidgets(2));
-    expect(find.text('Add as family name'), findsNWidgets(2));
+    expect(find.text(sentences.addAsFamilyName), findsNWidgets(2));
     // And a line of context, as the document writes it.
     expect(
       find.textContaining('Al-Hassan, Mahmoud', findRichText: true),
@@ -101,7 +102,7 @@ void main() {
     );
 
     // Ignore asks no more about that one, and writes nothing.
-    await tester.tap(find.text('Ignore').first);
+    await tester.tap(find.text(sentences.ignoreIt).first);
     await settle(tester);
     expect(find.text('1 name to look at'), findsOneWidget);
     expect(bench.ignored.length, 1);

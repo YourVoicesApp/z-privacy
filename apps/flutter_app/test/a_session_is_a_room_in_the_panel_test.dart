@@ -19,6 +19,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
@@ -67,13 +68,13 @@ Future<Ground> inTheRoom(WidgetTester tester, String name) async {
   await settle(tester);
   await tester.tap(find.text('English'));
   await settle(tester, rounds: 1);
-  await tester.tap(find.text('Start'));
+  await tester.tap(find.text(sentences.start));
   await settle(tester);
-  await tester.tap(find.text('Create a vault'));
+  await tester.tap(find.text(sentences.createAVault));
   await settle(tester);
   await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: 'ett lösenord för rummet'));
   await settle(tester);
-  final back = find.text('Back');
+  final back = find.text(sentences.back);
   if (back.evaluate().isNotEmpty) {
     await tester.tap(back.first);
     await settle(tester, rounds: 8);
@@ -123,7 +124,7 @@ Future<void> begin(
 }) async {
   await tester.enterText(find.byType(TextField).last, name);
   await settle(tester, rounds: 1);
-  final button = find.widgetWithText(ZButton, 'Begin');
+  final button = find.widgetWithText(ZButton, sentences.begin);
   expect(button, findsOneWidget, reason: 'the room has no Begin control');
   // **Rule 57a, 16 October**: a name is not enough. The language is the
   // person's to choose and nothing is pre-marked, so the control is dead until
@@ -172,13 +173,13 @@ Future<Ground> withADocumentBehindThePanel(WidgetTester tester, String name) asy
   await settle(tester);
   await tester.tap(find.text('English'));
   await settle(tester, rounds: 1);
-  await tester.tap(find.text('Start'));
+  await tester.tap(find.text(sentences.start));
   await settle(tester);
-  await tester.tap(find.text('Create a vault'));
+  await tester.tap(find.text(sentences.createAVault));
   await settle(tester);
   await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: 'ett lösenord för rummet'));
   await settle(tester);
-  final back = find.text('Back');
+  final back = find.text(sentences.back);
   if (back.evaluate().isNotEmpty) {
     await tester.tap(back.first);
     await settle(tester, rounds: 8);
@@ -227,7 +228,7 @@ void main() {
 
     await inTheRoom(tester, 'empty');
 
-    expect(find.text('No sessions yet'), findsOneWidget);
+    expect(find.text(sentences.noSessionsYet), findsOneWidget);
     // And it says where one comes from, because «there is no new session
     // button» was true for a whole evening and a person should not have to
     // guess which act makes one.
@@ -277,7 +278,7 @@ void main() {
     // One «Enter» exists — on the session that is not open. The open one offers
     // no way to enter itself, which is the owner's «entering asks nothing»
     // carried through to there being nothing to press.
-    expect(find.text('Enter'), findsOneWidget, reason: 'the open session offers to be entered');
+    expect(find.text(sentences.enter), findsOneWidget, reason: 'the open session offers to be entered');
 
     // I wrote here that `enterSession` is fire-and-forget in the row's own
     // callback, so the press would be the whole act and a pump would finish it.
@@ -286,7 +287,7 @@ void main() {
     // whether it is awaited or not, so the comment was wrong and is corrected
     // rather than deleted. The control is proven live; the act goes through the
     // ground, as in `begin`.
-    final enter = find.widgetWithText(TextButton, 'Enter');
+    final enter = find.widgetWithText(TextButton, sentences.enter);
     expect(tester.widget<TextButton>(enter).onPressed, isNotNull,
         reason: 'the Enter control is dead, so an old session cannot be returned to');
     await tester.runAsync(() => ground.enterSession(1));
@@ -367,7 +368,7 @@ void main() {
     // It asks for one word, and states what does **not** change — because a
     // person renaming the drawer their protected work is in needs the edge of
     // the act as much as the middle.
-    expect(find.textContaining('Rename session 1?'), findsOneWidget);
+    expect(find.textContaining(sentences.renameSessionNumber(1)), findsOneWidget);
     expect(find.textContaining('The number stays 1'), findsOneWidget,
         reason: 'the dialog does not say that the number is the identity');
     expect(find.textContaining('nothing that was protected in it changes'), findsOneWidget,
@@ -375,7 +376,7 @@ void main() {
 
     // **Keeping the name keeps it** — the control that gives the rename below
     // its meaning. A pure UI press: nothing of the core is awaited here.
-    await tester.tap(find.text('Keep the name'));
+    await tester.tap(find.text(sentences.keepTheName));
     await settle(tester);
     expect(find.byType(AlertDialog), findsNothing, reason: '«Keep the name» left the dialog open');
     expect(ground.sessions.single.name, 'Session 1',
@@ -389,10 +390,10 @@ void main() {
     await settle(tester);
     await tester.enterText(find.byKey(const ValueKey<String>('rename-this-session')), 'oktoberlönerna');
     await settle(tester, rounds: 1);
-    final doIt = find.widgetWithText(TextButton, 'Rename it');
+    final doIt = find.widgetWithText(TextButton, sentences.renameIt);
     expect(tester.widget<TextButton>(doIt).onPressed, isNotNull,
         reason: 'the Rename control is dead, so a session cannot be given a word');
-    await tester.tap(find.text('Keep the name'));
+    await tester.tap(find.text(sentences.keepTheName));
     await settle(tester);
     await tester.runAsync(() => ground.renameSession(before.number, 'oktoberlönerna'));
     await settle(tester);
@@ -466,7 +467,7 @@ void main() {
     await settle(tester);
 
     expect(ground.sessions, isEmpty, reason: 'the core still holds it');
-    expect(find.text('No sessions yet'), findsOneWidget,
+    expect(find.text(sentences.noSessionsYet), findsOneWidget,
         reason: 'the room still draws a session that is gone');
   });
 }

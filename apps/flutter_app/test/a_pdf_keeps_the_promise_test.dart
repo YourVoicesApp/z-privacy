@@ -44,6 +44,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/protected_pdf.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -224,8 +225,8 @@ void main() {
     final tokens = bench.tokens.map((t) => t.token).toList();
     expect(tokens, isNotEmpty);
 
-    expect(find.text('Save as PDF'), findsOneWidget, reason: 'there is no second act');
-    await tester.tap(find.text('Save as PDF'));
+    expect(find.text(sentences.saveAsPdf), findsOneWidget, reason: 'there is no second act');
+    await tester.tap(find.text(sentences.saveAsPdf));
     await settle(tester, rounds: 16);
 
     final written = out.listSync().whereType<File>().toList();
@@ -320,7 +321,7 @@ void main() {
     await settle(tester);
 
     // Save, and **do not** copy.
-    await tester.tap(find.text('Save as PDF'));
+    await tester.tap(find.text(sentences.saveAsPdf));
     await settle(tester, rounds: 16);
     expect(find.textContaining('Saved to'), findsOneWidget);
 
@@ -363,13 +364,13 @@ void main() {
     ));
     await settle(tester);
 
-    await tester.tap(find.text('Save as PDF'));
+    await tester.tap(find.text(sentences.saveAsPdf));
     await settle(tester, rounds: 16);
 
     expect(find.textContaining('Saved to'), findsNothing, reason: 'it claims a file it has not got');
     expect(find.textContaining('could not write into $_libPath/nowhere'), findsOneWidget,
         reason: 'the refusal does not name the folder, so it cannot be acted on');
-    expect(find.text('Save as PDF'), findsOneWidget, reason: 'the button is still «Saving…»');
+    expect(find.text(sentences.saveAsPdf), findsOneWidget, reason: 'the button is still «Saving…»');
     expect(bench.copied, isNull, reason: 'a refusal bound a payload nothing took');
   });
 
@@ -596,7 +597,7 @@ void main() {
       home: Scaffold(body: SendSheet(bench: bench, ground: ground, saveFolder: arabicOut.path)),
     ));
     await settle(tester);
-    await tester.tap(find.text('Save as PDF'));
+    await tester.tap(find.text(sentences.saveAsPdf));
     await settle(tester, rounds: 16);
 
     expect(find.textContaining('backwards'), findsNothing, reason: 'it still refuses');

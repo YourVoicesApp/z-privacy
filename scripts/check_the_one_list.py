@@ -123,8 +123,11 @@ MIGRATED = {
 # leaves (rule 33) and what a file holds is not what the person at the screen
 # reads.
 #
-# The second is **«a guard may not type a sentence this list owns»**, measured
-# on 20 October 2026 over `apps/flutter_app/test`:
+# The second is **«a guard may not type a sentence this list owns»** — **done,
+# 21 October, and its own gate is G65 in `scripts/check_no_typed_sentence.py`,
+# which allows nothing by a floor and two things by name.** Measured on 20
+# October 2026 over `apps/flutter_app/test`, before item one moved eighteen
+# more files into the list:
 #
 #     458 finders reach for a typed sentence
 #     284 of them name a value that now lives in lib/l10n/app_en.arb

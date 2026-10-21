@@ -29,6 +29,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/settings.dart';
@@ -257,7 +258,7 @@ void main() {
     final control = find.byKey(TheModelThatAnswers.mark);
     expect(control, findsOneWidget,
         reason: 'with no key the sheet says nothing at all about the AI that would answer');
-    expect(find.descendant(of: control, matching: find.textContaining('No AI connected')), findsOneWidget,
+    expect(find.descendant(of: control, matching: find.textContaining(sentences.noAiConnected)), findsOneWidget,
         reason: 'the control does not say that nothing can answer yet');
     // Not a catalogue: no company name and no model name is drawn on this
     // screen when none of them can answer.

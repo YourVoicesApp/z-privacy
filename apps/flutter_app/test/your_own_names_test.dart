@@ -12,6 +12,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -84,19 +85,19 @@ void main() {
     final bench = await _bench(tester, ground, vault: true);
     await _openNames(tester, bench, ground);
 
-    expect(find.text('Your names'), findsOneWidget, reason: 'the panel does not show what you taught it');
-    expect(find.text('Nothing yet.'), findsOneWidget);
+    expect(find.text(sentences.yourNames), findsOneWidget, reason: 'the panel does not show what you taught it');
+    expect(find.text(sentences.nothingYet), findsOneWidget);
 
     // One: open the form. Two: type and add.
-    await tester.tap(find.text('Add a name'));
+    await tester.tap(find.text(sentences.addAName));
     await settle(tester);
     await tester.enterText(find.byType(TextField).last, 'Lindqvist');
-    await tester.tap(find.widgetWithText(FilledButton, 'Add'));
+    await tester.tap(find.widgetWithText(FilledButton, sentences.addAct));
     await settle(tester);
 
     expect(bench.userNames.map((r) => r.text), contains('Lindqvist'));
     expect(find.text('Lindqvist'), findsWidgets, reason: 'the name is not in the list on screen');
-    expect(find.textContaining('family name'), findsWidgets, reason: 'the row does not say what it is');
+    expect(find.textContaining(sentences.kindFamilyName), findsWidgets, reason: 'the row does not say what it is');
 
     // And one press takes it back.
     await tester.tap(find.byTooltip('Forget ${quoted("Lindqvist")}'));
@@ -152,7 +153,7 @@ void main() {
     await _openNames(tester, bench, ground, onVault: () => toTheVault++);
 
     expect(ground.vault, VaultState.absent, reason: 'this case is the one without a vault');
-    expect(find.text('Add a name'), findsNothing, reason: 'the button promises what it cannot do');
+    expect(find.text(sentences.addAName), findsNothing, reason: 'the button promises what it cannot do');
     final add = find.text('Add a name · Needs a vault');
     expect(add, findsOneWidget);
     expect(find.text('Import a list · Needs a vault'), findsOneWidget);
@@ -295,7 +296,7 @@ void main() {
       reason: 'the names of an off list vanished',
     );
     expect(
-      find.textContaining('off', findRichText: true),
+      find.textContaining(sentences.listIsOff, findRichText: true),
       findsWidgets,
       reason: 'nothing says the list is off',
     );
@@ -327,19 +328,19 @@ void main() {
     // named in the act itself rather than in a line under it.
     var answer = askHowFarAListReaches(held, client: 'Faruk AB');
     await tester.pump();
-    expect(find.text('Protect them for Faruk AB'), findsOneWidget,
+    expect(find.text(sentences.protectThemForClient('Faruk AB')), findsOneWidget,
         reason: 'the act does not name the client it would protect for');
-    expect(find.text('Protect them everywhere'), findsOneWidget);
-    expect(find.text('Offer them and I decide'), findsOneWidget);
+    expect(find.text(sentences.protectThemEverywhere), findsOneWidget);
+    expect(find.text(sentences.offerThemAndIDecide), findsOneWidget);
     expect(find.text('OK'), findsNothing, reason: 'a reach was asked as a yes/no');
-    await tester.tap(find.text('Protect them for Faruk AB'));
+    await tester.tap(find.text(sentences.protectThemForClient('Faruk AB')));
     await tester.pumpAndSettle();
     expect((await answer)?.scope, Scope.profile);
 
     // Two · everywhere is the other protection, and it is the core's own word.
     answer = askHowFarAListReaches(held, client: 'Faruk AB');
     await tester.pump();
-    await tester.tap(find.text('Protect them everywhere'));
+    await tester.tap(find.text(sentences.protectThemEverywhere));
     await tester.pumpAndSettle();
     expect((await answer)?.scope, Scope.always);
 
@@ -347,7 +348,7 @@ void main() {
     // question and not a formality.
     answer = askHowFarAListReaches(held, client: 'Faruk AB');
     await tester.pump();
-    await tester.tap(find.text('Offer them and I decide'));
+    await tester.tap(find.text(sentences.offerThemAndIDecide));
     await tester.pumpAndSettle();
     final offered = await answer;
     expect(offered, ListReach.offer);
@@ -359,7 +360,7 @@ void main() {
     answer = askHowFarAListReaches(held);
     await tester.pump();
     expect(find.textContaining('Protect them for'), findsNothing);
-    expect(find.text('Protect them everywhere'), findsOneWidget);
+    expect(find.text(sentences.protectThemEverywhere), findsOneWidget);
     Navigator.of(held).pop();
     await tester.pumpAndSettle();
     expect(await answer, isNull, reason: 'closing the question answered it');
@@ -407,15 +408,15 @@ void main() {
         reason: "the client's own name is not drawn");
     expect(find.textContaining('Pellbrook & Vance', findRichText: true), findsWidgets,
         reason: 'the global name is not drawn');
-    expect(find.text('Nothing yet.'), findsNothing);
+    expect(find.text(sentences.nothingYet), findsNothing);
     // And each row says which of the two it is, in 046/E's words.
     expect(
-      find.textContaining('this client', findRichText: true),
+      find.textContaining(sentences.reachThisClient, findRichText: true),
       findsWidgets,
       reason: "a row does not say it is kept for this client",
     );
     expect(
-      find.textContaining('everywhere', findRichText: true),
+      find.textContaining(sentences.reachEverywhere, findRichText: true),
       findsWidgets,
       reason: 'a row does not say it is kept for every client',
     );

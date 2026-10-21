@@ -20,6 +20,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/going_to_a_word.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
@@ -194,7 +195,7 @@ void main() {
     );
     expect(_theWalkButton(tester), 'Review');
 
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
 
     expect(bench.focused, first.id, reason: 'the walk did not start at the first waiting word');
@@ -221,11 +222,11 @@ void main() {
 
   testWidgets('Next leaves the word for later: the walk moves, the count does not', (tester) async {
     final bench = await ready(tester);
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
     final waiting = theWaitingWordsInReadingOrder(bench.findings);
 
-    await tester.tap(find.text('Next 1/5'));
+    await tester.tap(find.text(sentences.nextOfWaitingCount(1, 5)));
     await settle(tester);
 
     expect(bench.focused, waiting[1].id);
@@ -240,7 +241,7 @@ void main() {
 
   testWidgets('answering moves the walk on by itself, in reading order', (tester) async {
     final bench = await ready(tester);
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
     final waiting = theWaitingWordsInReadingOrder(bench.findings);
     expect(_wordOf(bench, waiting[1]), 'Anna');
@@ -260,12 +261,12 @@ void main() {
 
   testWidgets('two buttons at the word, and the deleted five are nowhere', (tester) async {
     final bench = await ready(tester);
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
     expect(bench.focused, isNotNull);
 
-    expect(find.text('Protect'), findsWidgets);
-    expect(find.text('Leave it'), findsWidgets);
+    expect(find.text(sentences.protectAct), findsWidgets);
+    expect(find.text(sentences.leaveIt), findsWidgets);
     for (final gone in [
       'Always',
       'Always · needs a vault',
@@ -282,7 +283,7 @@ void main() {
 
   testWidgets('the list holds only what waits, and says where the rest is', (tester) async {
     final bench = await ready(tester);
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
     expect(find.byType(ReviewPanel), findsOneWidget);
 
@@ -318,7 +319,7 @@ void main() {
 
   testWidgets('Skip all asks first: Cancel changes nothing, Yes leaves them all', (tester) async {
     final bench = await ready(tester);
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
 
     // What the app protected by itself, before any of this: «Skip all» must not
@@ -327,18 +328,18 @@ void main() {
     final already = bench.tokens.length;
     expect(already, 2, reason: 'the measured document changed');
 
-    await tester.tap(find.text('Skip all'));
+    await tester.tap(find.text(sentences.skipAll));
     await settle(tester);
-    expect(find.text('Leave 5 words in the clear?'), findsOneWidget,
+    expect(find.text(sentences.leaveWordsInTheClearQuestion(5)), findsOneWidget,
         reason: 'the one door that uncovers words in a batch asked nothing — ruling 9');
 
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(find.text(sentences.cancel));
     await settle(tester);
     expect(bench.openSuggestions, 5, reason: 'Cancel changed something');
 
-    await tester.tap(find.text('Skip all'));
+    await tester.tap(find.text(sentences.skipAll));
     await settle(tester);
-    await tester.tap(find.text('Yes — leave all 5 in the clear'));
+    await tester.tap(find.text(sentences.yesLeaveAllInTheClear(5)));
     // **Four answers, one after the other, each through the bridge.** Measured:
     // with the four pumps every other guard uses, three had landed and the
     // fourth had not — a red that says «Skip all left one word waiting» about a
@@ -383,10 +384,10 @@ void main() {
 
   testWidgets('with nothing waiting the button is gone, and the list says where to look', (tester) async {
     final bench = await ready(tester);
-    await tester.tap(find.text('Review'));
+    await tester.tap(find.text(sentences.reviewAct));
     await settle(tester);
 
-    await tester.tap(find.text('Protect all'));
+    await tester.tap(find.text(sentences.protectAll));
     await settle(tester, rounds: 12);
 
     expect(bench.openSuggestions, 0);

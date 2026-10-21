@@ -2664,6 +2664,32 @@ else
   skip "G50/G51 the sentences are in one list" "no checker yet"
 fi
 
+# ------------------------------------------------------------------ G65
+# **And a guard may not type a sentence the list owns** — 092, sitting five,
+# item 2. The screens were the first half of the debt; the guards were the
+# other. 284 finders of 458 typed a value out of `app_en.arb` when this was
+# measured, 342 of 646 after the first item moved eighteen files in — the debt
+# grew because the list did.
+#
+# While the suite reads English each of them is correct, and that is the trap:
+# a reworded value reddens a guard for the wrong reason, and where the
+# assertion is `findsNothing` it leaves one **green** for the wrong reason.
+#
+# There is no floor here, unlike the one list's own table: the thirty-three
+# that remain are each in one of two classes the checker names — a text the
+# glass draws from somewhere that is **not** this list, and an English that two
+# keys share on purpose. A thirty-fourth is somebody typing a sentence again.
+if [ -f scripts/check_no_typed_sentence.py ]; then
+  if OUT=$(python3 scripts/check_no_typed_sentence.py 2>&1); then
+    pass "G65 no guard types a sentence the one list owns — $OUT"
+  else
+    fail "G65 a guard types a sentence the one list owns:"
+    printf '%s\n' "$OUT" | sed 's/^/        /'
+  fi
+else
+  skip "G65 no guard types a sentence the one list owns" "no checker yet"
+fi
+
 # ------------------------------------------------------------------ G55
 # **No sentence carries a character nobody can see** — 19 October 2026.
 #

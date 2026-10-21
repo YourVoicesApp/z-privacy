@@ -19,6 +19,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/screens/settings.dart';
@@ -152,16 +153,16 @@ Future<Ground> aDocumentOnTheBench(WidgetTester tester, String name) async {
   // way in.
   await tester.tap(find.text('English'));
   await settle(tester, rounds: 1);
-  await tester.tap(find.text('Start'));
+  await tester.tap(find.text(sentences.start));
   await settle(tester);
-  await tester.tap(find.text('Create a vault'));
+  await tester.tap(find.text(sentences.createAVault));
   await settle(tester);
   // Through the core, not the two fields: a widget that awaits the core does
   // not resume under `testWidgets`, which is why no test in this app presses
   // «Create the vault» itself.
   await tester.runAsync(() => z.vaultCreateWithPassphrase(passphrase: 'ein gutes Passwort für den Tresor'));
   await settle(tester);
-  final back = find.text('Back');
+  final back = find.text(sentences.back);
   if (back.evaluate().isNotEmpty) {
     await tester.tap(back.first);
     await settle(tester, rounds: 8);
@@ -457,9 +458,9 @@ void main() {
     await settle(tester);
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('Start'));
+    await tester.tap(find.text(sentences.start));
     await settle(tester);
-    await tester.tap(find.text('Create a vault'));
+    await tester.tap(find.text(sentences.createAVault));
     await settle(tester);
 
     // No bench and no open vault: the shell stands the vault screen in front,

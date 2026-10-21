@@ -43,6 +43,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
@@ -155,7 +156,7 @@ void main() {
     // **Beside the file's name, and both on the glass.** The two facts are one
     // statement — this document, in this session — so a guard that found the
     // name anywhere on the screen would not be measuring the owner's claim.
-    final doc = find.text('Typed text');
+    final doc = find.text(sentences.typedText);
     expect(doc, findsOneWidget, reason: 'the document’s own name left the bar');
     final r = tester.getRect(mark);
     final d = tester.getRect(doc);
@@ -269,7 +270,7 @@ void main() {
 
     expect(find.byKey(TheOpenSession.mark), findsNothing, reason: 'something is drawn for no session');
     // The count is the thing that only steps aside **for** the session.
-    expect(find.text('1 page'), findsOneWidget,
+    expect(find.text(sentences.onePage), findsOneWidget,
         reason: 'the page count went away with no session to make room for');
     expect(_overflows(tester), isEmpty,
         reason: 'the bar overflows at 900 with nothing of this round on it');

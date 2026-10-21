@@ -6,6 +6,7 @@
 // owns the decision when the call is made.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'dart:io';
 
@@ -85,7 +86,7 @@ void main() {
     await _form(tester, ground);
 
     ZButton button() => tester.widget<ZButton>(
-          find.ancestor(of: find.text('Create the vault'), matching: find.byType(ZButton)),
+          find.ancestor(of: find.text(sentences.createTheVault), matching: find.byType(ZButton)),
         );
 
     // empty + empty → nothing said, nothing enabled
@@ -96,7 +97,7 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), 'abc');
     await tester.enterText(find.byType(TextField).at(1), 'abd');
     await tester.pump();
-    expect(find.text('Passphrases do not match'), findsOneWidget);
+    expect(find.text(sentences.passphrasesDoNotMatch), findsOneWidget);
     expect(button().onPressed, isNull, reason: 'a mismatched pair can be submitted');
 
     // "abc" + "abc" → they match, and the button is **still** shut, because
@@ -111,7 +112,7 @@ void main() {
     // press, not after.
     await tester.enterText(find.byType(TextField).at(1), 'abc');
     await tester.pump();
-    expect(find.text('Passphrases match'), findsOneWidget);
+    expect(find.text(sentences.passphrasesMatch), findsOneWidget);
     expect(
       find.byKey(const Key('passphrase-length')),
       findsOneWidget,
@@ -182,7 +183,7 @@ void main() {
     await _form(tester, ground);
 
     ZButton button() => tester.widget<ZButton>(
-          find.ancestor(of: find.text('Create the vault'), matching: find.byType(ZButton)),
+          find.ancestor(of: find.text(sentences.createTheVault), matching: find.byType(ZButton)),
         );
 
     const seven = '🜚🜚🜚🜚🜚🜚🜚';
@@ -210,7 +211,7 @@ void main() {
     // `enterText` replaces the whole value in one go — a paste, not typing.
     await tester.enterText(find.byType(TextField).at(1), 'a good long passphrase');
     await tester.pump();
-    expect(find.text('Passphrases match'), findsOneWidget,
+    expect(find.text(sentences.passphrasesMatch), findsOneWidget,
         reason: 'the match line only follows keystrokes');
   });
 
@@ -226,7 +227,7 @@ void main() {
     expect(find.byTooltip('Show Confirm new passphrase'), findsOneWidget);
 
     ZButton button() => tester.widget<ZButton>(
-          find.ancestor(of: find.text('Change it'), matching: find.byType(ZButton)),
+          find.ancestor(of: find.text(sentences.changeIt), matching: find.byType(ZButton)),
         );
 
     await tester.enterText(find.byType(TextField).at(0), 'the old one');
@@ -236,18 +237,18 @@ void main() {
 
     await tester.enterText(find.byType(TextField).at(2), 'the new ONE');
     await tester.pump();
-    expect(find.text('Passphrases do not match'), findsOneWidget);
+    expect(find.text(sentences.passphrasesDoNotMatch), findsOneWidget);
     expect(button().onPressed, isNull);
 
     await tester.enterText(find.byType(TextField).at(2), 'the new one');
     await tester.pump();
-    expect(find.text('Passphrases match'), findsOneWidget);
+    expect(find.text(sentences.passphrasesMatch), findsOneWidget);
     expect(button().onPressed, isNotNull);
 
     // And the line never compares current with new — those are meant to differ.
     await tester.enterText(find.byType(TextField).at(0), 'the new one');
     await tester.pump();
-    expect(find.text('Passphrases match'), findsOneWidget,
+    expect(find.text(sentences.passphrasesMatch), findsOneWidget,
         reason: 'the line is comparing the current passphrase with the new one');
   });
 
@@ -272,7 +273,7 @@ void main() {
     // Rust never completes inside the fake-async zone, and Argon2 at 64 MiB
     // takes real wall-clock time. So the press is made and then real time is
     // allowed to pass, in rounds, until the core has answered.
-    await tester.tap(find.text('Create the vault'));
+    await tester.tap(find.text(sentences.createTheVault));
     for (var i = 0; i < 40 && ground.vault != VaultState.unlocked; i++) {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
       await tester.pump();
