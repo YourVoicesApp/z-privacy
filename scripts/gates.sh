@@ -1362,6 +1362,64 @@ else
   skip "G67 a census compares one spelling" "no $G67_SPELLING in this tree"
 fi
 
+# ---------------------------------------------------------------- G68
+# **A path crosses into PowerShell once, and is converted where it crosses** —
+# 098 item 6, measured on run 39586867441.
+#
+# That run was the first ever to reach the stamp on Windows: the three runtime
+# libraries beside the application at 14.51.36247.0, `BUILD-INFO.txt` naming
+# the commit with a clean tree, the four builder needles zero in all 36 files
+# we compile. Then step 13:
+#
+#     Compress-Archive : The path '/d/a/_temp/staging/zprivacy-v1-windows-x86_64'
+#     either does not exist or is not a valid file system path.
+#
+# `package_windows.sh` runs under bash and spells its paths bash's way;
+# PowerShell reads Windows' spelling and cannot see such a path at all. Neither
+# half is wrong — the translation at the seam was missing — and because the
+# `.sha256`, the installer, the MSIX and every upload hang on that zip, one
+# unconverted path cost the fourth run in a row with no release.
+#
+# The rule the checker holds is deliberately strict: **no variable reaches a
+# `powershell` or `pwsh` command unless `cygpath` produced it**, because
+# guessing which interpolation is a path is exactly how this one was missed. A
+# value that honestly is not a path is allowed by name, in the file, with its
+# reason («# not-a-path: NAME»). And a variable already converted may not be
+# converted again: a path converted twice is a path broken twice.
+#
+# **And the job has the same seam**: a `shell: bash` step writes a name into
+# `$GITHUB_ENV`, a `shell: pwsh` step reads it as `$env:NAME`. Today those names
+# are built from `$RUNNER_TEMP` with the backslashes turned round — `D:/a/_temp`,
+# which both shells read — and the Inno step turns them back. That is correct
+# and one `pwd` away from not being, so the checker holds it too.
+#
+# Measured in five shapes on temp copies before it was trusted: a raw
+# interpolation (the fault itself, which it names variable by variable), a
+# `WIN_`-looking name that `cygpath` never touched, a double conversion, the
+# by-name allowance, and a `$GITHUB_ENV` name written from `pwd` and read by a
+# pwsh step. Read as text, on Linux, about Windows — nothing here can
+# run PowerShell; what this measures is not «the zip works» but «no path
+# reaches it in the wrong spelling», which is the fault that happened.
+#
+# A tree with no crossing at all is a **skip** and not a pass: zero crossings
+# is honestly nothing to check, and a gate that says «pass» about nothing is
+# how a check stops measuring in silence.
+if [ -f scripts/check_powershell_paths.py ]; then
+  if G68_OUT=$(python3 scripts/check_powershell_paths.py 2>&1); then
+    G68_N=$(printf '%s' "$G68_OUT" | tail -1 | grep -oE '[0-9]+' | head -1)
+    if [ "${G68_N:-0}" -gt 0 ]; then
+      pass "G68 every path a script hands to PowerShell is converted where it crosses —$(printf '%s' "$G68_OUT" | tail -1)"
+    else
+      skip "G68 a path crosses into PowerShell converted" "no script here calls PowerShell, so there is nothing to convert"
+    fi
+  else
+    fail "G68 a path reaches PowerShell in this shell's spelling, which Windows cannot see — the zip, its hash, the installer and the MSIX all hang on it:"
+    printf '%s\n' "$G68_OUT" | sed 's/^/        /'
+  fi
+else
+  skip "G68 a path crosses into PowerShell converted" "no checker yet"
+fi
+
 # ---------------------------------------------------------------- G56
 # **Every claim this product makes is in one file, with its limit and its
 # proof** — 094, the owner's own order of 19 October 2026: «نجعل ملف مراجعة في
