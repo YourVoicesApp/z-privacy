@@ -72,7 +72,18 @@ MIGRATED = {
 # they were: a floor that is looser than the truth is a gate that would let a
 # sentence be added back.
 #
-# 854 sentences stood in 27 files when this round began; 185 stand in 16 now.
+# 854 sentences stood in 27 files when this round began; 180 stand in 16 now.
+#
+# **Five of the 185 were never sentences**, and finding that out was the
+# first act of sitting five rather than a tidy-up: the literal *pattern*
+# mis-paired quotes, so four fragments in `protected_pdf.dart` and one in
+# `document_text.dart` were counted as sentences a translator owed, while the
+# real sentences they were cut out of were counted as their own fragments.
+# `strings_on` replaced the pattern and the numbers below are its
+# measurement. No migrated file gained a sentence by the change, which is
+# the result that had to be checked: a mis-pairing can hide a real sentence
+# as easily as invent one, and a file claimed empty is where that would have
+# mattered.
 #
 # **Sitting five, the two items.** The first is the rest of this table: the
 # eleven small files, `core/session_state.dart`'s 29, and
@@ -120,7 +131,7 @@ MIGRATED = {
 #
 # Both are done; they are written down here because the sitting is the ledger.
 OWED = {
-    'core/protected_pdf.dart': 13,
+    'core/protected_pdf.dart': 9,
     'core/session_state.dart': 29,
     'core/the_clipboard.dart': 1,
     'screens/shell.dart': 3,
@@ -128,7 +139,7 @@ OWED = {
     'widgets/bits.dart': 12,
     'widgets/connect_form.dart': 22,
     'widgets/conversation_view.dart': 10,
-    'widgets/document_text.dart': 2,
+    'widgets/document_text.dart': 1,
     'widgets/find_in_document.dart': 14,
     'widgets/language_list.dart': 6,
     'widgets/line_gutter.dart': 2,
@@ -180,9 +191,82 @@ SAME_IN_EVERY_LANGUAGE = re.compile(
 # though nothing has fallen into it: the day somebody writes `Text("Hello")`
 # this sees it. A census that matches a quoting style is not a census of
 # sentences, which was the right thought about the wrong evidence.
-LITERAL = re.compile(
-    r"'((?:[^'\\\n]|\\.){3,})'"
-    r'|"((?:[^"\\\n]|\\.){3,})"')
+def strings_on(line: str) -> list[str]:
+    """Every Dart string literal on one line, interpolations blanked.
+
+    **Why this is a scanner and not a pattern.** It was
+    `'((?:[^'\\\n]|\\.){3,})'`, and a regex cannot pair quotes it is not
+    allowed to see. Two kinds of literal were invisible to it, and both donated
+    their closing quote to whatever came next:
+
+      * **a literal shorter than three characters.** `padLeft(2, '0')` — the
+        `'0'` never matched, so the quote that closes it opened a match that ran
+        to the next quote on the line. `'${d.year.toString().padLeft(4, '`
+        was counted as a sentence owed by `protected_pdf.dart`, and
+        `' || text[k] == '` as one owed by `document_text.dart`, out of
+        `text[k] == '\n' || text[k] == '\r'`. The `{3,}` was never a rule about
+        sentences anyway — the `[A-Za-z]{3,}` test below is — it only stopped
+        the pairing from working.
+      * **a literal inside an interpolation.** `'… ${turn.unresolved.join(', ')}.'`
+        is one sentence holding one expression; the pattern saw a string ending
+        at `join(`.
+
+    So the three fragments were counted as three sentences a translator owed,
+    and the real sentences around them were counted as their own fragments. A
+    census that mis-pairs quotes measures its own punctuation — the fault this
+    house already wrote down once, over a door census that stopped seeing a
+    door when one statement became two.
+
+    `${…}` becomes the marker `${}`: an expression is code, and the filters
+    below already strip it to ask whether any words are left. A `$name` without
+    braces is kept as it stands, because the exceptions that read a filename
+    (`'$into/$stem.pdf'`) are written against that spelling.
+    """
+    out: list[str] = []
+    i, n = 0, len(line)
+    while i < n:
+        c = line[i]
+        # A raw string takes no escapes and no interpolation.
+        if c == 'r' and i + 1 < n and line[i + 1] in "'\"":
+            q, j = line[i + 1], i + 2
+            while j < n and line[j] != q:
+                j += 1
+            out.append(line[i + 2:j])
+            i = j + 1
+            continue
+        if c not in "'\"":
+            i += 1
+            continue
+        q, j, buf = c, i + 1, []
+        while j < n:
+            d = line[j]
+            if d == '\\':                      # an escape, two characters
+                buf.append(line[j:j + 2])
+                j += 2
+                continue
+            if d == q:
+                break
+            if d == '$' and j + 1 < n and line[j + 1] == '{':
+                depth, k = 1, j + 2
+                while k < n and depth:
+                    e = line[k]
+                    if e == '{':
+                        depth += 1
+                    elif e == '}':
+                        depth -= 1
+                    elif e in "'\"":          # a literal inside the expression
+                        qq, k = e, k + 1
+                        while k < n and line[k] != qq:
+                            k += 2 if line[k] == '\\' else 1
+                    k += 1
+                buf.append('${}')
+                j = k
+                continue
+            buf.append(d)
+            j += 1
+        out.append(''.join(buf))
+        i = j + 1
+    return out
 
 # **Product names.** The same in every language, and the paper says so: a list
 # that held «Z Privacy» in three files would be three chances to rename the
@@ -232,8 +316,7 @@ def sentences_in(path: pathlib.Path) -> list[str]:
         # its screens do, and none of it is on anybody's glass.
         if stripped.startswith('//'):
             continue
-        for m in LITERAL.finditer(line):
-            v = m.group(1) if m.group(1) is not None else m.group(2)
+        for v in strings_on(line):
             if not re.search(r'[A-Za-z]{3,}', v):
                 continue
             # An import URI is not a sentence: `package:…`, `dart:async`, and
