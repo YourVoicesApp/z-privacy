@@ -139,4 +139,6 @@ The protect-in-A-then-in-B sequence was **not performed**. The owner, in his wor
 
 Reading, not a measurement: 093 says the lock is `std::fs::File::lock` taken in `session::with_core`, which would be per write, not held while open. If so, an idle second copy is not refused by design, and the refusal can only show at a write. That write the owner could not perform on 4bb202f.
 
+*Amended (the lead, from `z_core/src/secure_file.rs:224–247`):* the lock is held for one core call and released after it, on Linux too, so both facts above are the design and not a W4c red. What stands between two copies is `Vault::ensure_disk_unchanged` at the next write (`VaultChangedElsewhere`). Step 4 on the new head is therefore: protect in A, then in B. B's disk-changed sentence is the pass, a silent success in B is the red, and A must keep working after.
+
 ### Step 5 — the German walk: waits for the next head (the lead: 096 and 680 sentences against 556 here)
