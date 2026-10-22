@@ -685,5 +685,8 @@
   "valuesOfTheseKinds": "{count, plural, =1{1 value ({kinds})} other{{count} values ({kinds})}}",
   "noKindsAtAll": "none",
   "sha256OfTheProtectedText": "sha256 of the protected text {digest}",
-  "zPdfAnswerLine": "Z-pdf : {token}"
+  "zPdfAnswerLine": "Z-pdf : {token}",
+  "howToUseZPrivacy": "How to use Z Privacy",
+  "theGuideOpensInYourBrowser": "The page opens in your browser, in the language this interface is in. Nothing of your document or your vault goes with the press: your browser asks the site for a page, like any other visit.",
+  "couldNotOpenYourBrowser": "Z Privacy could not open your browser. The address on the press opens in any browser by hand."
 }

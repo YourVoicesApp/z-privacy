@@ -2727,4 +2727,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String zPdfAnswerLine(String token) {
     return 'Z-pdf : $token';
   }
+
+  @override
+  String get howToUseZPrivacy => 'How to use Z Privacy';
+
+  @override
+  String get theGuideOpensInYourBrowser =>
+      'The page opens in your browser, in the language this interface is in. Nothing of your document or your vault goes with the press: your browser asks the site for a page, like any other visit.';
+
+  @override
+  String get couldNotOpenYourBrowser =>
+      'Z Privacy could not open your browser. The address on the press opens in any browser by hand.';
 }

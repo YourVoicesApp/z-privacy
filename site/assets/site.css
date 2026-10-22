@@ -379,6 +379,25 @@ footer { margin-top: clamp(46px, 6vw, 70px); padding-bottom: 56px; }
   .cv, .cl { display: inline; }
 }
 
+/* ---------------------------------------------------------------- the guide's pictures */
+/* The four screenshots on the guide page (paper 100). Each is a picture of a
+   1200-wide window, and the `width`/`height` attributes on the tag are there so
+   that the page does not jump while they load — so the rule that matters is the
+   one that takes the attribute back: a picture laid out at its own 1200 pixels
+   would give the whole page a horizontal scroll on every screen narrower than
+   that, which is most of them.
+
+   Written before the pictures are taken, so that showing them is one change and
+   not two: the figures stand commented in the three pages with their alt
+   sentences, and `check_site_claims.py` refuses a file in the tree that the page
+   still hides. */
+.shot { margin: 18px 0 22px; }
+.shot img {
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--line); border-radius: 10px;
+}
+.shot figcaption { margin-top: 8px; }
+
 @media (max-width: 560px) {
   body { font-size: 16px; }
   .vrow.vhead { display: none; }

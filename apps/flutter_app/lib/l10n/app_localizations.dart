@@ -4232,6 +4232,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Z-pdf : {token}'**
   String zPdfAnswerLine(String token);
+
+  /// The card in Language & rules that opens the guide page on the site — paper 100, rule 83. One text in one place: the page is on z-privacy.com and the app carries the line that opens it, so there is no second copy of it to keep in step.
+  ///
+  /// In en, this message translates to:
+  /// **'How to use Z Privacy'**
+  String get howToUseZPrivacy;
+
+  /// What the guide card says before the press. The second half is a claim and is meant as one: the only thing that leaves is a request for a page, which is why the address itself is the press's label.
+  ///
+  /// In en, this message translates to:
+  /// **'The page opens in your browser, in the language this interface is in. Nothing of your document or your vault goes with the press: your browser asks the site for a page, like any other visit.'**
+  String get theGuideOpensInYourBrowser;
+
+  /// The opener could not be started — no desktop opener on this machine, or the platform is one this build does not know. A press that does nothing and says nothing is a dead control (rule 35), and the address is on the press for exactly this case.
+  ///
+  /// In en, this message translates to:
+  /// **'Z Privacy could not open your browser. The address on the press opens in any browser by hand.'**
+  String get couldNotOpenYourBrowser;
 }
 
 class _AppLocalizationsDelegate

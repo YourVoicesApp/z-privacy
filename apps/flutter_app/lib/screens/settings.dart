@@ -29,6 +29,7 @@ import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/core/the_system_browser.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -591,12 +592,95 @@ class _LanguageRoom extends StatelessWidget {
         // false opinion about a thing that works, which is worse than a dead
         // control. Deleted rather than disabled, and rather than reworded:
         // what it was for is now said by the card that does the work.
+        // **The guide, in the room whose subject is the language it is in** —
+        // paper 100, rule 83, and the paper left the room to this seat.
+        //
+        // Here and not beside the build stamp: the stamp's strip is the head
+        // of the panel, and rule 70 put it there as the one thing a person
+        // *sends with a report* — a press does not belong in a strip whose
+        // other control is the door that shuts the panel. And here rather
+        // than in Privacy because the address itself carries a language: the
+        // card above this one is what changes it, so the two stand together
+        // and a reader can see that the page follows the choice.
+        _GuideCard(ground: ground),
         _Card(
           title: sentences.myPrivacyRules,
           what: sentences.myPrivacyRulesWhat,
           child: const SizedBox.shrink(),
         ),
       ],
+    );
+  }
+}
+
+/// **One line that opens the guide page on the site** — paper 100, rule 83.
+///
+/// The owner's law is «one text in one place»: the page is on the site and the
+/// application carries the press, so there is no second copy of the text in
+/// here to fall out of step with it.
+///
+/// **The press's label is the address.** Not «Open» and not «Read the guide»:
+/// a press that starts another program should say where it is going before it
+/// is pressed, and the address is also what is left to the person by hand if
+/// no opener can be started on this machine. It is built by
+/// `theGuideAddress`, which spells it once for the whole application.
+///
+/// Stateful for one bool, which is the refusal. A press that does nothing and
+/// says nothing is a dead control (rule 35), and «the opener could not be
+/// started» is a real outcome on a machine with no desktop opener — so it has
+/// a sentence rather than a silence.
+class _GuideCard extends StatefulWidget {
+  const _GuideCard({required this.ground});
+
+  final Ground ground;
+
+  /// The press, so a guard reaches it by name and not by its sentence — the
+  /// same reason `_VaultRoom.theDoorBack` has one.
+  static const thePress = ValueKey<String>('settings-the-guide');
+
+  @override
+  State<_GuideCard> createState() => _GuideCardState();
+}
+
+class _GuideCardState extends State<_GuideCard> {
+  bool _refused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // **The language the glass is in**, read the way `main.dart` reads it —
+    // `theLocaleOf` of the person's choice, so a language whose list is not
+    // written answers English here exactly as the interface does. The guide
+    // page is about the controls in front of the person, so it is in the
+    // language those controls are in; a **file** that leaves takes the
+    // session's language instead, which is rule 80 and a different law.
+    final address = theGuideAddress(
+        theLocaleOf(widget.ground.config?.language ?? 'en').languageCode);
+    return _Card(
+      title: sentences.howToUseZPrivacy,
+      what: sentences.theGuideOpensInYourBrowser,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ZButton(
+              key: _GuideCard.thePress,
+              label: address,
+              icon: Icons.open_in_new,
+              tint: Zc.river,
+              onPressed: () async {
+                final opened = await openInTheBrowser(address);
+                if (!mounted) return;
+                setState(() => _refused = !opened);
+              },
+            ),
+          ),
+          if (_refused) ...[
+            const SizedBox(height: 10),
+            Trouble(sentences.couldNotOpenYourBrowser),
+          ],
+        ],
+      ),
     );
   }
 }

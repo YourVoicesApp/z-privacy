@@ -237,12 +237,169 @@ def the_interface():
     return bad
 
 
+# **The guide page** — paper 100, rule 83, 22 October 2026.
+#
+# One text in one place: the page lives here and the application carries a
+# single line that opens it. A gate cannot read a page of prose for sense, so it
+# holds the two things that can be known for certain and that would go wrong
+# silently:
+#
+#   1. **every control the page names exists in the application.** The page
+#      teaches a stranger where to press, quoting the program's own sentences —
+#      «Original — local only», «Undo protection», «Save as PDF». A quoted
+#      control that has been renamed or removed is a page teaching somebody
+#      about a program that does not exist, and no visitor can tell. The keys
+#      are read from a comment block rather than from the prose, because the
+#      prose is translated three ways and the key is not: one block answers for
+#      three pages.
+#   2. **the address is one spelling.** The site's own «How it works» button and
+#      the application's one address literal must be the same path, down to the
+#      closing slash the pages call canonical. A link in two places is a link
+#      one of the two places has already got wrong — the same defect this file
+#      exists for, one floor down.
+#
+# And the pictures: the four are the open half of the item, so this does not ask
+# for them. What it does ask is that no `<img>` on a guide page points at a file
+# that is not in the tree, which is what turns the day they arrive from a hope
+# into a measurement.
+THE_GUIDE_SPEAKS = ('en', 'de', 'ar')
+HOST = 'https://z-privacy.com'
+
+
+def the_guide():
+    import json
+
+    bad = 0
+    sets = {}
+    shots = {}
+    en_list = json.loads(read('apps/flutter_app/lib/l10n/app_en.arb'))
+    for lang in THE_GUIDE_SPEAKS:
+        rel = 'site/%s/guide/index.html' % lang
+        if not os.path.exists(os.path.join(ROOT, rel)):
+            say('FAIL', 'there is no %s, and the first page offers it' % rel)
+            bad = 1
+            continue
+        page = read(rel)
+        keys = re.findall(r'one-list-key:\s*([A-Za-z0-9_]+)', page)
+        if not keys:
+            say('FAIL', '%s names no control by its key, so nothing on it is '
+                        'checked against the application' % rel)
+            bad = 1
+            continue
+        doubled = sorted({k for k in keys if keys.count(k) > 1})
+        if doubled:
+            say('FAIL', '%s names %s twice, so the sets below are counted wrong'
+                % (rel, ', '.join(doubled)))
+            bad = 1
+        for key in sorted(set(keys)):
+            if key not in en_list:
+                say('FAIL', '%s teaches the control «%s», and the application\u2019s '
+                            'one list has no such sentence' % (rel, key))
+                bad = 1
+        sets[lang] = set(keys)
+        # **The four pictures, and the state each of them is in.**
+        #
+        # They are named on all three pages whether they have been taken or
+        # not, and a comment is not served — so the rule is about the pairing
+        # rather than about either half alone:
+        #
+        #   * a file an `<img>` asks for and that is not in the tree is a
+        #     broken image for every visitor;
+        #   * a file that **is** in the tree and is only named inside a comment
+        #     is a picture somebody took and nobody shows, which is how the
+        #     open half of this item would quietly stay open.
+        #
+        # So the day the pictures arrive, uncommenting the block is not
+        # optional — this says so.
+        served = re.sub(r'<!--.*?-->', '', page, flags=re.S)
+        drawn = {src for src in re.findall(r'<img[^>]+src="([^"]+)"', served)
+                 if 'assets/guide/' in src}
+        named = set(re.findall(r'(\.\./\.\./assets/guide/[0-9A-Za-z._-]+)', page))
+        shots[lang] = {os.path.basename(x) for x in named}
+        for src in sorted(named):
+            there = os.path.exists(
+                os.path.normpath(os.path.join(ROOT, 'site', lang, 'guide', src)))
+            if src in drawn and not there:
+                say('FAIL', '%s draws %s, and there is no such file' % (rel, src))
+                bad = 1
+            if there and src not in drawn:
+                say('FAIL', '%s has %s in the tree and does not show it — the picture '
+                            'was taken and the page still hides it in a comment'
+                    % (rel, src))
+                bad = 1
+    if len(sets) == len(THE_GUIDE_SPEAKS) and len(set(map(frozenset, sets.values()))) != 1:
+        for lang in THE_GUIDE_SPEAKS[1:]:
+            short = sets[THE_GUIDE_SPEAKS[0]] - sets[lang]
+            extra = sets[lang] - sets[THE_GUIDE_SPEAKS[0]]
+            if short or extra:
+                say('FAIL', 'site/%s/guide/ names a different set of controls than the '
+                            'English page: missing %s, extra %s'
+                    % (lang, sorted(short) or 'none', sorted(extra) or 'none'))
+        bad = 1
+
+    # The same four pictures asked for by all three, taken or not.
+    if len(shots) == len(THE_GUIDE_SPEAKS):
+        if len(set(map(frozenset, shots.values()))) != 1:
+            say('FAIL', 'the three guide pages do not name the same pictures: %s'
+                % ' / '.join('%s %s' % (l, sorted(shots[l])) for l in THE_GUIDE_SPEAKS))
+            bad = 1
+        elif len(shots[THE_GUIDE_SPEAKS[0]]) != 4:
+            say('FAIL', 'the guide names %d pictures and paper 100 asks for four'
+                % len(shots[THE_GUIDE_SPEAKS[0]]))
+            bad = 1
+
+    # One spelling, read from both places that hold it.
+    dart = read('apps/flutter_app/lib/core/the_system_browser.dart')
+    # Read **loosely on purpose**, so that a changed host or a changed path is
+    # compared and named rather than making the literal unfindable: a gate whose
+    # only answer to a drift is «I cannot see it» has one branch that bites and
+    # one that never can.
+    literal = re.search(
+        r"String theGuideAddress\(String code\) =>\s*'([^']*)\$\{[^}]*\}([^']*)'", dart)
+    if not literal:
+        say('FAIL', 'the application no longer builds the guide\u2019s address from one '
+                    'literal, so there is no single spelling to compare')
+        bad = 1
+    speaks = re.search(r'const theGuideSpeaks = \{([^}]*)\}', dart)
+    app_langs = tuple(sorted(re.findall(r"'([a-z]{2})'", speaks.group(1)))) if speaks else ()
+    if app_langs != tuple(sorted(THE_GUIDE_SPEAKS)):
+        say('FAIL', 'the application opens the guide in %s and the site serves it in %s'
+            % (list(app_langs) or 'nothing', sorted(THE_GUIDE_SPEAKS)))
+        bad = 1
+    for lang in THE_GUIDE_SPEAKS:
+        want = '/%s/guide/' % lang
+        front = read('site/%s/index.html' % lang)
+        if 'href="%s"' % want not in front:
+            say('FAIL', 'site/%s/index.html does not send anybody to %s' % (lang, want))
+            bad = 1
+        if literal:
+            app = literal.group(1) + lang + literal.group(2)
+            if app != HOST + want:
+                say('FAIL', 'the application opens «%s» for %s, and the site\u2019s own '
+                            'address for that page is «%s»' % (app, lang, HOST + want))
+                bad = 1
+    if not bad:
+        # Counted once over the four files and not once per language: the
+        # three pages ask for the same four, from one folder.
+        every = set().union(*shots.values())
+        waiting = sum(1 for shot in every
+                      if not os.path.exists(os.path.join(
+                          ROOT, 'site', 'assets', 'guide', shot)))
+        say('PASS', 'the guide is one text in one place: %d controls named by key on three '
+                    'pages, every one of them a sentence the application has, one spelling '
+                    'of the address in the app and on the site, and %d of %d pictures '
+                    'still to be taken'
+            % (len(sets[THE_GUIDE_SPEAKS[0]]), waiting, len(every)))
+    return bad
+
+
 def main():
     lits = dart_strings()
     if len(lits) < 200:
         say('FAIL', 'only %d strings were read out of the app, so nothing was really compared' % len(lits))
         return 1
-    bad = crates() | fonts() | glossary(lits) | path(lits) | the_interface()
+    bad = (crates() | fonts() | glossary(lits) | path(lits) | the_interface()
+           | the_guide())
     print()
     print('every number on the site has a deed behind it' if not bad
           else 'A NUMBER ON THE SITE HAS NO DEED BEHIND IT')
