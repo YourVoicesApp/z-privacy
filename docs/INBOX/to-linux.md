@@ -619,3 +619,33 @@ The owner's account of round 1, as he gave it: he opened session 1 in A, protect
 5. **A document path writes at the press**: 11 hand-protects in 70 s, each 61–67 B on vault.zv and 57–62 B on the session file, every one within 2 s.
 
 Owner's wish, repeated tonight as in the morning: the session's name should stand in the window's title bar; in round 2 he noted that when he picked session 1 the name did not show at the top until a document was brought in.
+
+## 22 October 2026, 22:50 — addendum for paper 102 §6: the round-2 folder listed with `dir /a`, no leftover temp file
+
+Exact lines, hidden and system entries included (`dir /a`):
+
+```
+ Directory of C:\Users\anash\z\testdata\78988fd\LocalAppData-lock-r2\ZPrivacy\sessions
+
+2026-10-22  21:59    <DIR>          .
+2026-10-22  21:35    <DIR>          ..
+2026-10-22  21:59             3 164 1.zs
+2026-10-22  21:29                50 2.zs
+               2 File(s)          3 214 bytes
+
+ Directory of C:\Users\anash\z\testdata\78988fd\LocalAppData-lock-r2\ZPrivacy
+
+2026-10-22  21:35    <DIR>          .
+2026-10-22  21:33    <DIR>          ..
+2026-10-22  21:59    <DIR>          sessions
+2026-10-22  21:29               179 settings.zcfg
+2026-10-22  21:35             1 743 vault.zv
+2026-10-22  21:29                 0 writing.lock
+               3 File(s)          1 922 bytes
+```
+
+And the round-1 folder (the one the force-kills hit), for completeness: `sessions\` holds only `1.zs` 50 and `2.zs` 50 (both 21:16); `ZPrivacy\` holds `settings.zcfg` 179 (21:13), `vault.zv` 526 (21:16), `writing.lock` 0 (21:12).
+
+- **No `*.new`, no other temp file, nothing hidden** in either folder. The create-new-and-refuse-forever candidate is out for this folder.
+- Directory mtimes: `sessions\` 21:59 (its last entry change, the 21:59:20 write of `1.zs`); `ZPrivacy\` 21:35 (its last entry change — consistent with `vault.zv` being replaced through a rename at 21:35:03, A's last protect). Whether the 21:35:11 50-byte `1.zs` arrived by rename or by in-place truncate the listing cannot say now, since the 21:59 write refreshed the directory time.
+- Writers outside our code, named so they can be weighed: the folder lives under `C:\Users\anash\z\testdata\` — not under OneDrive, no sync client on it; Microsoft Defender real-time protection is on (default), no exclusions were set; the folder itself was made by my `cp -r` of the round-1 folder at 21:29:07, *before* the timeline, and `1.zs` was already 50 bytes in the source then. Nothing of mine wrote into it after 21:29:07; the watcher only read.
