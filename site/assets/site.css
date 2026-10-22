@@ -297,15 +297,36 @@ html[lang="ar"] .proof { font-family: var(--arab); font-size: 13px; }
 .promises li { margin: 0 0 9px; font-size: 15px; line-height: 1.55; color: var(--ink2); }
 
 /* ---------------------------------------------------------------- panels */
-/* What is left of the download section's styles. The cards themselves went on
-   9 October — «الموقعُ للتعريف ... لا تنزيلَ فقط تعريفٌ بالمنتج» — and with
-   them `.dlt`, `.file`, `.shalab`, `.sha` and the rules that marked an unfilled
-   build value. A card and a `pre` are general: the licence pages use both. */
+/* The download section's styles, back where they were. They went on 9 October
+   with the section itself — «الموقعُ للتعريف ... لا تنزيلَ فقط تعريفٌ
+   بالمنتج» — and rule 81 brings the section back on its own three pages, so
+   `.dlt`, `.file`, `.shalab` and `.sha` are the same four rules again and look
+   the way they looked. A card and a `pre` stayed because they are general: the
+   licence pages use both.
+
+   `.provisional` is the one that is new, and it is deliberately loud. It marks
+   a name or a fingerprint that comes from a development build and not from the
+   build being published; `scripts/check_site_claims.py` counts these marks and
+   refuses to call the site ready to publish while one of them stands. A marker
+   nobody can see is a marker that gets published. */
 .card {
   background: var(--white); border: 1px solid var(--line);
   border-radius: 12px; padding: clamp(20px, 3vw, 28px);
 }
 .card.soft { background: var(--card); margin-top: 22px; }
+.dlt { margin: 0; font-family: var(--disp); font-size: clamp(22px, 3vw, 27px); font-weight: 600; }
+.file { margin: 12px 0 0; font-family: var(--mono); font-size: 15px; }
+.file a { color: var(--clay); word-break: break-all; }
+.file a:hover { color: #8F4519; }
+.shalab {
+  margin: 14px 0 0; font-family: var(--sans); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted);
+}
+.sha { margin: 5px 0 0; font-family: var(--mono); font-size: 13px; line-height: 1.5; word-break: break-all; }
+.provisional {
+  margin: 14px 0 0; border-inline-start: 3px solid var(--clay);
+  padding-inline-start: 11px; color: var(--ink2);
+}
 pre {
   margin: 11px 0 0; font-family: var(--mono); font-size: 13.5px;
   background: var(--ground); border: 1px solid var(--line);

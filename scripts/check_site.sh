@@ -183,18 +183,21 @@ fi
 #
 # The idea sentence and the honest beta line are the owner's approved words;
 # the beta line is quoted here in full because a sentence that drifts by one
-# word stops being the one he approved. And the first screen offers no
-# download: his ruling, and the reason the four buttons that stood here are
-# gone.
+# word stops being the one he approved.
+#
+# Until rule 81 this also refused an `href="#download"` on the first screen,
+# because the download was a card on it and his ruling of 9 October took the
+# card away. The download is a **page** from 103, so there is no card to refuse
+# and that branch is gone rather than left standing over nothing: what it
+# guarded — a file, a fingerprint or a verify command on this screen — is
+# refused for every page but the three download pages further down this file,
+# and the link to the page is required by `check_site_claims.py`.
 SAID=0
 grep -q 'class="beta"' index.html || { say FAIL "the chooser says nothing about the state of the build"; FAIL=1; SAID=1; }
 for f in en/index.html de/index.html ar/index.html; do
   grep -q 'class="hero-idea"' "$f" || { say FAIL "$f has no idea sentence on its first screen"; FAIL=1; SAID=1; }
   grep -q 'class="hero-word"' "$f" || { say FAIL "$f does not say that nothing leaves without the reader's word"; FAIL=1; SAID=1; }
   grep -q 'class="beta"' "$f" || { say FAIL "$f says nothing about the state of the build"; FAIL=1; SAID=1; }
-  if sed -n '/<div class="hero">/,/<section id="idea"/p' "$f" | grep -q 'href="#download'; then
-    say FAIL "$f offers a download on the first screen"; FAIL=1; SAID=1
-  fi
 done
 if ! grep -q 'Linux build, in beta — not yet released' en/index.html 2>/dev/null; then
   say FAIL "the English beta line is not the sentence that was approved"; FAIL=1; SAID=1
@@ -214,7 +217,8 @@ fi
 JUMPS=0
 WALKED=0
 for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html \
-         en/guide/index.html de/guide/index.html ar/guide/index.html; do
+         en/guide/index.html de/guide/index.html ar/guide/index.html \
+         en/download/index.html de/download/index.html ar/download/index.html; do
   for a in $(grep -o 'href="#[A-Za-z0-9_-]*"' "$f" 2>/dev/null | sed -E 's/href="#//; s/"//' | sort -u); do
     WALKED=$((WALKED + 1))
     grep -q "id=\"$a\"" "$f" || { say FAIL "$f jumps to #$a, and nothing on that page has that id"; FAIL=1; JUMPS=1; }
@@ -241,6 +245,7 @@ for pair in "index.html:" "en/index.html:Help" "de/index.html:Hilfe" "ar/index.h
             "en/privacy/index.html:Help" "de/privacy/index.html:Hilfe" "ar/privacy/index.html:مساعدة" \
             "en/terms/index.html:Help" "de/terms/index.html:Hilfe" "ar/terms/index.html:مساعدة" \
             "en/guide/index.html:Help" "de/guide/index.html:Hilfe" "ar/guide/index.html:مساعدة" \
+            "en/download/index.html:Help" "de/download/index.html:Hilfe" "ar/download/index.html:مساعدة" \
             "license/index.html:Help" "third-party/index.html:Help"
 do
   f="${pair%%:*}"; help="${pair##*:}"
@@ -265,7 +270,7 @@ for f in en/index.html de/index.html ar/index.html; do
   [ "$n" = 1 ] || { say FAIL "$f holds $n vocabulary tables, and there should be one"; FAIL=1; MENUS=1; }
   grep -q '<div class="menu-panel wide">' "$f" || { say FAIL "$f does not keep its vocabulary under Help"; FAIL=1; MENUS=1; }
 done
-for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html license/index.html third-party/index.html; do
+for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html en/download/index.html de/download/index.html ar/download/index.html license/index.html third-party/index.html; do
   grep -q '<div class="vocab">' "$f" && { say FAIL "$f carries a second copy of the vocabulary"; FAIL=1; MENUS=1; }
 done
 [ "$MENUS" = 0 ] && say PASS "two menus on every page but the chooser, and one vocabulary, under Help"
@@ -449,7 +454,7 @@ LEGAL=0
 if grep -rn 'yourvoices.app@mono-peak.com' --include='*.html' . 2>/dev/null; then
   say FAIL "the platform's mailbox is still on a Z page (above)"; FAIL=1; LEGAL=1
 fi
-for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html; do
+for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html en/download/index.html de/download/index.html ar/download/index.html; do
   [ -f "$f" ] || continue
   # The country's name is translated on purpose — «Schweden» on the German page —
   # so the guarded part of the address is the street, the postcode and the city,
@@ -460,16 +465,16 @@ for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/priv
 done
 # A language's two pages carry one block, byte for byte. The block is
 # translated, so the comparison is within a language and not across the three.
-# Four pages a language now — 097's terms page and 100's guide: the block is one
-# block wherever a language states it, and the comparison is against that
-# language's first page in every case, so a drift names the two pages that
-# disagree and not a chain.
+# Five pages a language now — 097's terms page, 100's guide and 103's download:
+# the block is one block wherever a language states it, and the comparison is
+# against that language's first page in every case, so a drift names the two
+# pages that disagree and not a chain.
 for page in en de ar; do
   a=$(grep -oE '<div class="legal">.*</div>' "$page/index.html" | head -1)
   if [ -z "$a" ]; then
     say FAIL "$page/index.html carries no publisher block at all"; FAIL=1; LEGAL=1; continue
   fi
-  for other in privacy terms guide; do
+  for other in privacy terms guide download; do
     [ -f "$page/$other/index.html" ] || continue
     b=$(grep -oE '<div class="legal">.*</div>' "$page/$other/index.html" | head -1)
     if [ "$a" != "$b" ]; then
@@ -513,30 +518,44 @@ else
   say PASS "one colophon, the same on every page, spelling the company as its domain does"
 fi
 
-# ---------------------------------------------------------------- no download
+# ------------------------------------------- the download, and everywhere it is not
 #
-# The owner's ruling of 9 October: «نحذف الحزمَ القديمة جميعَها ونوقف وضعَ أي
-# حزمٍ جديدة — الموقعُ للتعريف حتى نرى أين نصل مع كارلوس، لا تنزيلَ فقط تعريفٌ
-# بالمنتج.» We delete every old package and stop putting up new ones; the site
-# introduces the product and offers nothing to download.
+# **Rule 81, and 81-أ of 22 October: the download comes back.** From 9 October
+# this section refused a download anywhere on the site — «نحذف الحزمَ القديمة
+# جميعَها ونوقف وضعَ أي حزمٍ جديدة — الموقعُ للتعريف حتى نرى أين نصل مع
+# كارلوس، لا تنزيلَ فقط تعريفٌ بالمنتج» — and the owner's word of the 21st
+# ended that rule for publishing day: z-privacy.com carries the two files
+# itself, each with its fingerprint beside it.
 #
-# Watched red against the site as it stood: two cards with live files behind
-# them, their fingerprints, and a section teaching a stranger how to verify
-# what they had downloaded.
+# So the refusal is **narrowed rather than deleted**. A file link, a
+# fingerprint or a verify command belongs on the three download pages and
+# nowhere else on this site: the first screen, the privacy page and the terms
+# page may not grow a second copy of it, and two places printing two
+# fingerprints for one file is the defect this whole file exists for.
+# `beta.z-privacy.com` stays in the pattern because that host is dead, and an
+# `href="#download"` stays because the download is a page now and a jump to a
+# card that no longer exists lands nowhere.
 #
-# It does not search for the **word** «download». That lesson cost a red build
-# an hour earlier: a guard that searched for «analytics» went red when the
-# privacy page honestly said there was none. A download is a link to a file, a
-# fingerprint beside it, or a command for checking one — so those are what this
-# asks for, in any language, including the ones nobody has written yet.
+# It still does not search for the **word** «download» — that lesson cost a red
+# build on 9 October, when a guard looking for «analytics» went red on a
+# privacy page honestly saying there was none. And now that the word is a
+# heading on three pages and a button on three more, searching for it would be
+# a guard that cannot be green.
+#
+# What the three pages must themselves carry — both artefacts, a
+# 64-character fingerprint for each, measured against the real file in the
+# deploy tree, and the same honest sentences in all three languages — is
+# `check_site_claims.py`'s half, because it hashes files and that is more than
+# a shell script should do.
 GONE=$(grep -rniE 'zprivacy-v1-|href="[^"]*\.(tar\.gz|tgz|zip|exe|deb|rpm|AppImage|dmg|msi)"|class="sha"|class="dlt"|href="#download|sha256sum|Get-FileHash|beta\.z-privacy\.com' \
-       --include='*.html' . 2>/dev/null || true)
+       --include='*.html' . 2>/dev/null \
+       | grep -vE '^\./(en|de|ar)/download/index\.html:' || true)
 if [ -n "$(printf '%s' "$GONE" | tr -d '[:space:]')" ]; then
-  say FAIL "the site offers something to download:"
+  say FAIL "a page that is not one of the three download pages offers something to download:"
   printf '%s\n' "$GONE" | cut -c1-120 | sed 's/^/           /'
   FAIL=1
 else
-  say PASS "nothing on this site is offered for download"
+  say PASS "no file, no fingerprint and no verify command outside the three download pages"
 fi
 
 [ "$FAIL" = 0 ] && say PASS "all pages present"
@@ -670,7 +689,14 @@ fi
 # the app's Dart and the served stylesheets, which is more than a shell script
 # should do — but the verdict belongs here, so one command still answers.
 if command -v python3 >/dev/null 2>&1; then
-  if python3 ../scripts/check_site_claims.py; then
+  # The mode travels, and it is written out rather than expanded cleverly:
+  # `${TREE_ONLY:+--tree-only}` reads as «if it is set», and TREE_ONLY is set
+  # to the string «0» on a publishing run, so that form would have handed the
+  # python half --tree-only on every run and quietly switched off the two
+  # checks that only a publishing run makes.
+  MODE=""
+  [ "$TREE_ONLY" = 1 ] && MODE="--tree-only"
+  if python3 ../scripts/check_site_claims.py $MODE; then
     :
   else
     FAIL=1
@@ -688,6 +714,19 @@ else
   say FAIL "no python3, so the list of pages was never compared with the pages"; FAIL=1
 fi
 
+# The closing line says which question was answered. «site ready to publish»
+# was printed by `--tree-only` too until 103, and from 103 that would be a
+# sentence claiming a measurement this mode deliberately did not make: the
+# outward links are not asked of the network here, and neither is the download
+# section's own bar — whether the two real files are in the deploy tree with
+# the fingerprints the pages print. A round on a workstation answers the first
+# question; only the hand that publishes answers the second.
 echo
-[ "$FAIL" = 0 ] && echo "site ready to publish" || echo "SITE NOT READY"
+if [ "$FAIL" != 0 ]; then
+  echo "SITE NOT READY"
+elif [ "$TREE_ONLY" = 1 ]; then
+  echo "the tree says nothing false — the publishing questions were not asked, because --tree-only"
+else
+  echo "site ready to publish"
+fi
 exit "$FAIL"

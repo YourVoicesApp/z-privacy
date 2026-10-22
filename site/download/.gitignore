@@ -1,0 +1,17 @@
+# What the three download pages name, and the one folder a deploy serves it
+# from: `https://z-privacy.com/download/<file>`. Rule 81 — «يوم النشر يكون
+# التنزيل من الموقع نفسه».
+#
+# Nothing in here is committed, and the reason is `dist/`'s reason one floor
+# up: an archive is the output of a script run against a commit, and storing
+# it beside the script stores the output of a function next to the function.
+# The two files land here by hand on publishing day — the Linux bundle from
+# `scripts/package_linux.sh` and the Windows installer from the Windows job —
+# and `scripts/check_site_claims.py` then hashes each one and compares it with
+# the fingerprint the pages print. Until they are here, the pages carry their
+# «(final hashes on publishing day)» marker and the publishing run is red.
+#
+# The folder itself is tracked, by this file, so the deploy has somewhere to
+# put them and nobody has to remember the path.
+*
+!.gitignore

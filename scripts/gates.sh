@@ -4047,16 +4047,39 @@ else
 fi
 # 9 October: the owner took the downloads off the site altogether — «الموقعُ
 # للتعريف ... لا تنزيلَ فقط تعريفٌ بالمنتج» — so the question this gate asks
-# has a third honest answer: no file is offered at all. It still catches what it
-# was written for, because it only asks about a page that offers a file.
-if grep -rqE 'zprivacy-v1-[a-z0-9_.-]+\.(tar\.gz|exe)' site/*/index.html 2>/dev/null; then
-  if grep -rq '{{WINDOWS_BUILD}}' site/*/index.html 2>/dev/null; then
-    pass "  the download page names the build it is offering (unfilled, so unpublishable)"
-  elif grep -rqE '>Build</p>' site/*/index.html 2>/dev/null; then
-    pass "  the download page names the build it is offering"
+# had a third honest answer: no file is offered at all. Rule 81 of 22 October
+# ends that, and 103 puts the two files on three pages of their own.
+#
+# **The question does not change; where it is asked does.** It was asked of
+# `site/*/index.html`, and that glob does not reach `site/en/download/` — so
+# from the moment the section existed this read «the site offers no file»
+# about a site offering two, and said PASS. A control that cannot bite is a
+# finding in this house, so it now reads the pages the files are on.
+#
+# What it holds is the old intent: a page that offers a file says which build
+# the file is, because «which build is this?» is the first thing a person who
+# downloaded it cannot answer from the file's name — and no first screen
+# offers a file, because the download has a page now. The per-artefact half —
+# the build line is a commit this repository holds, the same one in all three
+# languages — is `check_site_claims.py`'s, inside G59.
+#
+# The old «unfilled, so unpublishable» branch is gone with the `{{…}}` build
+# values it read: a page with one of those in it is refused outright by
+# `check_site.sh`'s first check, and the thing that branch was for — a section
+# half-filled with values from the wrong build — is now the provisional
+# markers, which keep the publishing run red until the real ones land.
+if ls site/*/download/index.html >/dev/null 2>&1; then
+  DL_NO_BUILD=$(grep -L 'data-built-from=' site/*/download/index.html 2>/dev/null | tr '\n' ' ')
+  DL_ON_FRONT=$(grep -lE 'zprivacy-v1-[a-z0-9_.-]+\.(tar\.gz|exe)' site/*/index.html 2>/dev/null | tr '\n' ' ')
+  if [ -n "$DL_NO_BUILD" ]; then
+    fail "  a download page offers a file without naming the build it came from: $DL_NO_BUILD"
+  elif [ -n "$DL_ON_FRONT" ]; then
+    fail "  a first screen offers a file, and the download has a page of its own: $DL_ON_FRONT"
   else
-    fail "  the download page offers a file without naming the build it came from"
+    pass "  every download page names the build its files came from, and no first screen offers a file"
   fi
+elif grep -rqE 'zprivacy-v1-[a-z0-9_.-]+\.(tar\.gz|exe)' site/*/index.html 2>/dev/null; then
+  fail "  a page offers a file and there is no download page to name its build"
 else
   pass "  the site offers no file, so there is no build for it to name"
 fi
