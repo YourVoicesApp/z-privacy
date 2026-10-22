@@ -98,6 +98,18 @@ SignTool Error: An unexpected internal error has occurred.
 
 Seventh attempt at a signed MSIX. The installer from this run is the first one the owner installs (SmartScreen sentences, no administrator prompt, the vault folder); the Windows session walks him through it now.
 
+## 9 · The run at `78988fd` (39761244511, 22 October) — the app job is wholly green; the core job finishes every step and is marked cancelled by its own clock
+
+Read by the lead from the job logs and the API. **The app job is green from the first step to the last, for the first time:** the MSIX was signed (`UnknownError, signed by CN=Z-privacy` — the expected reading of a signature whose root is not installed on the runner, item 7's «not Valid is not NotSigned»), the six files inside it hash the same as the staged copies («the same file» six times), the archive carries zip + `.sha256` + BUILD-INFO + MSIX (`febe746a…2299`) + `.cer`, the installer and the folder are their own artefacts, Dart 414 · 0. The seventh attempt is the one.
+
+**The core job is marked `cancelled` with every step green.** Its clock: `timeout-minutes: 30`; its measured duration on this runner across the three runs of today: 28:30, 29:28, 31:18 — the Rust test step alone 23:24, 25:33, 26:51. The run that crossed the line finished «One writer at a time» green at 31:13 and was then stamped cancelled; nothing failed, the number was wrong. The same defect as the typed test counts this file was born from: a limit typed from a guess, not from a measurement.
+
+- **The clock reads the measurement.** `timeout-minutes: 60` on the core job, as the app job already has; the comment names the three durations above so the next hand knows what the number was measured from.
+- **Named, not fixed here — why 832 tests take 26 minutes on a 2-core runner:** 1537 s of pure test time across the binaries, run binary after binary; the slowest are `two_copies_never_lose_a_write` (160 s), `vault_layer` (139 s), `the_session_remembers_its_three` (95 s) — the vault's key derivation at its real parameters on every open, paid once per test. The test clock and the fake provider exist as features; a test-profile derivation cost does not. Whether it should is its own paper (it changes what the contract tests prove), not a timeout's business.
+- **The tree gate:** G60's family already reads the workflow's text; one check that the core job's `timeout-minutes` is not below the app job's measured Rust step would be a check on a guess. None. The measurement is the run.
+
+The signed MSIX from this run is the one the owner installs (which certificate store lets it sideload is the Windows session's measurement, item 7). A green re-run of the core job on this head is not needed: the ten steps are green in this run and the stamp step names 78988fd.
+
 ## Measurement
 
 Rust: `cargo test`, clippy, both targets (G4c). `scripts/gates.sh` green from a plain debug build; the three numbers written by the merging hand. The workflow run (owner's hand, Actions → windows → Run workflow) shows the assert step green with three versions; the installed `.exe` on the clean machine starts without a DLL dialogue — the owner's measurement, written into `docs/INBOX/to-linux.md`.
