@@ -1469,6 +1469,39 @@ if [ -f "$WINJOB" ]; then
     fail "G69 the MSIX call no longer carries$G69_MISSING — without the first the tool asks a console that is not there and exits 255, without the second it packs a build nobody searched"
   fi
 
+  # **And the signature it makes asks nothing of anybody else.** 098 item 8,
+  # from run 39734294387: `msix` 3.16.8 appends
+  # `/tr http://timestamp.digicert.com` to every pfx signing of its own accord
+  # (`sign_tool.dart:234`) and never `/td sha256`, so signtool asks that server
+  # for a SHA-1-digest timestamp, which it has stopped answering, and the
+  # signing dies whole on «SignerSign() failed» (0x80096005) — after the
+  # certificate was chosen and the store added, which is why the log reads like
+  # the certificate's fault.
+  #
+  # A timestamp exists so a signature can outlive the certificate that made
+  # it. This certificate is made and deleted inside one step, so the job wants
+  # none. `--signtool-options` is the tool's own door: when the options name a
+  # certificate file with `/f`, `sign_tool.dart:26-34` and `:210` take them as
+  # the whole command and add no `/tr`. So the call must carry those options,
+  # they must name `/fd SHA256`, and `/tr` must appear nowhere in the step.
+  #
+  # The window is the step's lines with every comment dropped — the paragraph
+  # above the call quotes the switch this check forbids, and a gate that reds
+  # on its own explanation measures nothing.
+  G69_UNTIMED=""
+  printf '%s\n' "$G69_MSIX" | grep -qF -- '--signtool-options' \
+    || G69_UNTIMED="$G69_UNTIMED «--signtool-options, or the tool writes the signing command itself and timestamps it»"
+  printf '%s\n' "$G69_MSIX" | grep -qF -- '/fd SHA256' \
+    || G69_UNTIMED="$G69_UNTIMED «/fd SHA256 inside those options»"
+  if printf '%s\n' "$G69_MSIX" | grep -qE '(^|[[:space:]"])/tr([[:space:]]|$)'; then
+    G69_UNTIMED="$G69_UNTIMED «no /tr at all: a timestamp asked for a certificate that dies with this run»"
+  fi
+  if [ -n "$G69_MSIX" ] && [ -z "$G69_UNTIMED" ]; then
+    pass "G69 the MSIX is signed by a command this job wrote: SHA-256, and no timestamp asked of a server, because the certificate dies with the run"
+  else
+    fail "G69 the signing command is no longer the one item 8 measured; it has to carry:$G69_UNTIMED"
+  fi
+
   # The window is the comparison step's own lines, so a gate that asks «is the
   # package read and compared» cannot be answered by a comment that says so.
   G69_CMP=$(awk '
