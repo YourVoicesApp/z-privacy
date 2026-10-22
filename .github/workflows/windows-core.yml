@@ -734,6 +734,28 @@ jobs:
             }
           }
 
+          # **And the signature asks no timestamp.** 098 item 8: run
+          # 39734294387 died here with «Error: SignerSign() failed»
+          # (0x80096005) one line after «Done Adding Additional Store», and the
+          # cause is in the tool's own source — `msix` 3.16.8's
+          # `sign_tool.dart:234` appends `/tr http://timestamp.digicert.com` to
+          # every `.pfx` signing and never `/td sha256`, so the request carries
+          # a SHA-1 digest that that server no longer answers.
+          #
+          # A timestamp is what lets a signature outlive the certificate that
+          # made it. This certificate is made at the top of this step and
+          # deleted at its foot, so a timestamp on it asks a third party for
+          # nothing this job will ever read. The cure is the tool's own door:
+          # when `--signtool-options` names a certificate with `/f`,
+          # `sign_tool.dart:26-34` and `:210` take the options as the whole
+          # command and add no `/tr` of their own. The password stays a
+          # variable here, as it is on the two switches above it — the tool
+          # prints these options nowhere, and signtool's `/v` names the
+          # certificate and the file, never the key.
+          #
+          # The day a real certificate signs this package, a timestamp is worth
+          # asking for and comes back with `/td sha256` beside it. That is its
+          # own item, and it is not this run.
           Push-Location apps/flutter_app
           dart run msix:create `
             --certificate-path $pfx `
@@ -741,7 +763,8 @@ jobs:
             --output-path (Join-Path $env:GITHUB_WORKSPACE "dist") `
             --output-name "zprivacy-v1-windows-x86_64" `
             --install-certificate false `
-            --build-windows false
+            --build-windows false `
+            --signtool-options "/fd SHA256 /f $pfx /p $password /v"
           $code = $LASTEXITCODE
           Pop-Location
 
@@ -893,8 +916,10 @@ jobs:
             echo "2. Double-click \`zprivacy-v1-windows-x86_64.msix\` and press Install."
             echo ""
             echo "The certificate is a test one, made in this run and thrown away with"
-            echo "its key: it says nothing about who built this. It is only what"
-            echo "Windows asks for before it will install a package at all."
+            echo "its key: it says nothing about who built this, and the signature"
+            echo "carries no timestamp, so it is valid only while the certificate is,"
+            echo "which is this run. It is only what Windows asks for before it will"
+            echo "install a package at all."
           } >> "$GITHUB_STEP_SUMMARY"
           sha256sum "$file"
 
