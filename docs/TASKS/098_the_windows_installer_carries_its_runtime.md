@@ -71,6 +71,12 @@ Read by the lead from the job log through `gh` (the new Windows session cannot r
 - **The tree gate** reads that the workflow's `msix:create` call carries both switches and that every `upload-artifact` step in the app job carries `if: always()`; pinned red by removing one. Linux cannot run the job; the gate reads the text and says so.
 - **Not decided here, measured on the owner's machine:** the summary text says «Import-Certificate … Cert:\LocalMachine\TrustedPeople as administrator», the lead's order to the Windows session said `certutil -addstore -user Root` with no administrator. Which store Windows actually consults before sideloading a package is the Windows session's measurement: try the per-user store first, then the machine store, and write which one let the MSIX install. The summary text follows the measurement, not the other way round.
 
+**Two more facts from the new Windows session's measurement of the artefact (22 October):**
+
+- **An unsigned MSIX was uploaded.** The tool packs before it signs, and died at the certificate question after packing, so `dist/` held a `.msix` that `Get-AuthenticodeSignature` reads as `NotSigned`, beside the `.cer`; step 19's `if: always()` uploaded both. A package that cannot install, in an artefact named like a release. The step before the upload (or «How to install the MSIX») asks the signature of the MSIX it finds and deletes an unsigned one out loud — a measurement, not an `if` on step 17's colour — so what is uploaded either installs or is absent. Second half of the same item, for ed after the merge.
+- **`z_bridge.dll` inside that MSIX differs from the staged one by 23 bytes** (the rebuild's PE timestamp): the rebuild is not byte-identical, which is why `--build-windows false` and the hash comparison are the cure and «same sources, same bytes» would not have been.
+- **Named debt, not this round:** `Compress-Archive` writes the zip's entry names with `\`, which `unzip` on Linux reads as one flat folder of long names. The zip is for Windows hands; the day the site offers it (rule 81) the entries are written with `/` by a zip writer that does, and the debt is closed in the same breath.
+
 Sixth attempt at an MSIX and an uploaded installer. The zip, the folder and the Dart record are already in hand, so step 2 of the Windows order (sha256 and BUILD-INFO) and steps 4–6 on the folder build do not wait for it.
 
 ## Measurement
