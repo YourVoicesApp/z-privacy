@@ -32,7 +32,28 @@ jobs:
   core:
     name: build and test z_core on Windows
     runs-on: windows-latest
-    timeout-minutes: 30
+    # **Sixty minutes, because thirty was a guess.** 098 item 9: run
+    # 39761244511 finished every step of this job green and was then stamped
+    # `cancelled` — «One writer at a time» came back green at 31:13 against a
+    # thirty-minute clock. Measured on this runner across the three runs of
+    # 22 October 2026: 28:30, 29:28 and 31:18, of which the Rust test step
+    # alone is 23:24, 25:33 and 26:51. Nothing failed; the number was wrong,
+    # typed from a guess rather than from a measurement — the same defect this
+    # tree's typed test counts were born from.
+    #
+    # Where those minutes go, named rather than buried under a larger number:
+    # 1537 s of test time, binary after binary, the slowest being
+    # `two_copies_never_lose_a_write` (160 s), `vault_layer` (139 s) and
+    # `the_session_remembers_its_three` (95 s) — the vault's key derivation at
+    # its real parameters, paid on every open and therefore once per test. A
+    # test-profile derivation cost does not exist in this tree; whether it
+    # should is its own paper, because it changes what the contract tests
+    # prove, and it is not a clock's business.
+    #
+    # No gate stands over this line. A check that one typed limit sits above
+    # another typed limit measures a guess against a guess; what measures this
+    # number is a run.
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
