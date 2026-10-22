@@ -1420,6 +1420,103 @@ else
   skip "G68 a path crosses into PowerShell converted" "no checker yet"
 fi
 
+# ---------------------------------------------------------------- G69
+# **A tool on a runner may not ask a question, and may not build what nobody
+# measured** — 098 item 7, from run 39719891044.
+#
+# That run is the first that reached the end with something to hand over: the
+# zip and its `.sha256`, the folder, the installer with its hash, and 414 Dart
+# tests green on Windows. One step was red and one was skipped, and the two are
+# the same mistake twice.
+#
+#   * `msix:create` looked for the publisher's certificate in
+#     `CurrentUser\Root`, did not find the throw-away one, and asked the
+#     console «Do you want to install the certificate … ? (y/N)». No console
+#     answers on a runner: the prompt's own timer completed with `null`, the
+#     tool died on `type 'Null' is not a subtype of type 'FutureOr<String>'`,
+#     exit 255. `--install-certificate false` is the tool's own switch for it,
+#     and a runner must never install anything anyway.
+#   * The same call ran `flutter build windows` again, **after** the needle
+#     search and the staging, so the package held a folder nobody had searched
+#     or hashed. `--build-windows false`, and the step after it opens the
+#     package and compares the six files with the staged ones.
+#   * «Upload the installer» was the one upload of the three without
+#     `if: always()`, so a built and hashed installer was thrown away by a red
+#     four steps later. The comment above «Upload the folder» already states
+#     that law; this is it applied to its sibling.
+#
+# **This is a check on the text, and it says so** — the same sentence G60, G64
+# and G68 carry. Linux cannot run that job, install a package or answer a
+# console prompt; what a gate here can do is refuse a workflow that has
+# stopped carrying the two switches, stopped comparing what the package holds,
+# or grown an upload that a red above it can throw away.
+if [ -f "$WINJOB" ]; then
+  G69_MSIX=$(awk '
+    /^      - name: An MSIX for sideloading/ {inside=1; next}
+    inside && /^      - name: / {inside=0}
+    inside && $0 !~ /^[[:space:]]*#/ {print}
+  ' "$WINJOB")
+  G69_MISSING=""
+  # `--` before the pattern: a switch is what is being looked for, and grep
+  # would otherwise read `--install-certificate false` as an option of its own.
+  for switch in --install-certificate --build-windows; do
+    printf '%s\n' "$G69_MSIX" | grep -qF -- "$switch false" \
+      || G69_MISSING="$G69_MISSING «$switch false»"
+  done
+  if [ -n "$G69_MSIX" ] && [ -z "$G69_MISSING" ]; then
+    pass "G69 the MSIX call tells the tool to ask nothing and build nothing: it packs the folder this run measured (read as text: Linux cannot run that job)"
+  else
+    fail "G69 the MSIX call no longer carries$G69_MISSING — without the first the tool asks a console that is not there and exits 255, without the second it packs a build nobody searched"
+  fi
+
+  # The window is the comparison step's own lines, so a gate that asks «is the
+  # package read and compared» cannot be answered by a comment that says so.
+  G69_CMP=$(awk '
+    /^      - name: What the MSIX packed is what was measured/ {inside=1; next}
+    inside && /^      - name: / {inside=0}
+    inside && $0 !~ /^[[:space:]]*#/ {print}
+  ' "$WINJOB")
+  G69_UNREAD=""
+  for want in zprivacy.exe z_bridge.dll data/app.so vcruntime140.dll vcruntime140_1.dll msvcp140.dll ZipFile Get-FileHash 'env:STAGE'; do
+    printf '%s\n' "$G69_CMP" | grep -qF "$want" || G69_UNREAD="$G69_UNREAD $want"
+  done
+  if [ -n "$G69_CMP" ] && [ -z "$G69_UNREAD" ]; then
+    pass "G69 the step after the MSIX opens the package as a zip and compares its six files with the staged copies, hash for hash"
+  else
+    fail "G69 the package is no longer compared with the folder that was measured — missing:$G69_UNREAD"
+  fi
+
+  # **And no upload in that job can be thrown away by a red above it.** A step
+  # is read whole and comment lines are dropped, because the paragraph that
+  # explains `always()` sits between two steps and would otherwise answer for
+  # the one it is written above.
+  G69_NAKED=$(awk '
+    function flush() {
+      if (body ~ /uses: actions\/upload-artifact/ && body !~ /if: always\(\)/) print name
+    }
+    /^  [a-zA-Z_-]+:/ { flush(); job=$0; sub(/^  /,"",job); sub(/:.*/,"",job); name=""; body=""; next }
+    job != "app" { next }
+    /^[[:space:]]*#/ { next }
+    /^      - / {
+      flush()
+      body=$0
+      name="(a step with no name)"
+      if ($0 ~ /^      - name: /) { name=$0; sub(/^      - name: /,"",name) }
+      next
+    }
+    { body = body "\n" $0 }
+    END { flush() }
+  ' "$WINJOB")
+  if [ -z "$G69_NAKED" ]; then
+    pass "G69 every upload in the Windows app job runs if: always(), so a red step cannot throw away what was already built and hashed"
+  else
+    fail "G69 an upload in the Windows app job waits on the steps above it, and a red there throws the file away:"
+    printf '%s\n' "$G69_NAKED" | sed 's/^/        /'
+  fi
+else
+  skip "G69 the MSIX asks nobody and packs what was measured" "no $WINJOB in this tree"
+fi
+
 # ---------------------------------------------------------------- G56
 # **Every claim this product makes is in one file, with its limit and its
 # proof** — 094, the owner's own order of 19 October 2026: «نجعل ملف مراجعة في

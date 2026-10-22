@@ -316,11 +316,23 @@ jobs:
       # Copied beside `zprivacy.exe`, the loader finds them first and nothing
       # is installed at all.
       #
-      # **Into the runner's own Release folder, which is the one place both
-      # packages read:** «Stage the folder» below copies that folder into the
+      # **Into the runner's own Release folder, which is the one place every
+      # package reads:** «Stage the folder» below copies that folder into the
       # staging the zip and Inno use, and `msix:create` packages the very same
-      # folder. One copy, two packages — the alternative was copying twice and
-      # the day they disagreed the MSIX would ship without a runtime.
+      # folder. One copy, three packages — the alternative was copying three
+      # times and the day they disagreed one of them would ship without a
+      # runtime.
+      #
+      # **And the MSIX is the one where they did disagree** — 098 item 7. The
+      # `msix` package carries three libraries of its own and copies them over
+      # this folder before it packs, then deletes them again, so «the very
+      # same folder» was true of the zip and the installer and not of the
+      # MSIX. The step that makes it hands the tool the staged copies through
+      # that same door, and the step after it compares the hashes inside the
+      # package with the staged ones. Which matters because this runner's
+      # toolset is 14.51 and the package's own libraries are 14.40: a
+      # redistributable older than the toolset an application was compiled
+      # with is the dialogue this item exists to remove.
       #
       # **The path comes from the variable, never typed:** `VCToolsRedistDir`
       # is what the runner's own Visual Studio says, so a toolset bump moves
@@ -641,6 +653,35 @@ jobs:
       # may not be the folder an unpackaged build used. That is a measurement
       # for his machine, named here so the difference is expected rather than
       # discovered.
+      #
+      # ---------------------------------------------------------------- item 7
+      # **And the tool is told not to ask, and not to build** — from run
+      # 39719891044, where this step was the one red in an otherwise green job:
+      #
+      #     Do you want to install the certificate: "zprivacy-test.pfx" ? (y/N)
+      #     type 'Null' is not a subtype of type 'FutureOr<String>'   → exit 255
+      #
+      # `msix` looks for the publisher's certificate in `CurrentUser\Root`,
+      # does not find the throw-away one (it is in `CurrentUser\My`, on
+      # purpose), and asks the console whether to install it. On a runner no
+      # console answers, the prompt's own timer completes with `null`, and the
+      # tool dies on its own answer. **A runner must never install anything**,
+      # and this certificate is deleted four lines below, so the switch says
+      # so: `--install-certificate false`.
+      #
+      # **And `--build-windows false`, because the measurement lives where the
+      # files are made.** The same call ran `flutter build windows` again
+      # (42.9 s in that log) — *after* the needle search and the staging — so
+      # the MSIX packed a Release folder nobody had searched or hashed. Same
+      # sources and very probably the same bytes, but «very probably» is not a
+      # measurement: the folder this job measured is the folder that must be
+      # packed, and the step after this one proves it was.
+      #
+      # Both switches on the call, beside the four it already carries, because
+      # that is where a reader of this job looks for how the tool was invoked.
+      # `msix_config` in `pubspec.yaml` would take `install_certificate:` and
+      # `build_windows:` too, and says what the *package* is — its name, its
+      # version, its logo — not how one run of this job calls the tool.
       - name: An MSIX for sideloading
         shell: pwsh
         run: |
@@ -660,12 +701,47 @@ jobs:
           Export-PfxCertificate -Cert "Cert:\CurrentUser\My\$thumb" -FilePath $pfx -Password $secret | Out-Null
           Export-Certificate -Cert "Cert:\CurrentUser\My\$thumb" -FilePath $cer | Out-Null
 
+          # **The runtime the MSIX packs is the runtime that was staged.**
+          # Read out of the tool's own source, not guessed: `msix` 3.16.8's
+          # `Assets.copyVCLibsFiles()` copies `lib/assets/VCLibs/<arch>` from
+          # the package in the pub cache into the build folder, which lands on
+          # top of the three libraries this job copied from the runner's own
+          # redistributable; `cleanTemporaryFiles()` then deletes all three
+          # from that folder again. Its copies are 14.40.33810.0 and this
+          # runner's toolset is 14.51, so the package would ship a runtime
+          # older than the compiler that built what it packs.
+          #
+          # So the tool is handed the staged files through its own door. A
+          # warning and not a refusal, because the control is the comparison
+          # after the MSIX: if this folder ever moves, that step reads what was
+          # actually packed and fails there, which is a measurement rather than
+          # a guess about where a third-party package keeps its assets.
+          $staged = $env:STAGE -replace '/', '\'
+          $cache = if ($env:PUB_CACHE) { $env:PUB_CACHE } else { Join-Path $env:LOCALAPPDATA "Pub\Cache" }
+          $hosted = Join-Path $cache "hosted\pub.dev"
+          $pkg = @(Get-ChildItem -LiteralPath $hosted -Directory -Filter "msix-*" -ErrorAction SilentlyContinue)
+          if ($pkg.Count -ne 1) {
+            Write-Host "::warning::expected exactly one msix-* package under $hosted; found $($pkg.Count) — the tool's own runtime will be packed instead, and the comparison after this step will say so"
+          } else {
+            $vclibs = Join-Path $pkg[0].FullName "lib\assets\VCLibs\x64"
+            if (-not (Test-Path $vclibs)) {
+              Write-Host "::warning::$vclibs is not where this msix keeps its own runtime any more — the comparison after this step reads what was packed"
+            } else {
+              foreach ($dll in @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
+                Copy-Item (Join-Path $staged $dll) (Join-Path $vclibs $dll) -Force
+              }
+              Write-Host "the three the tool copies in are now the three that were staged: $vclibs"
+            }
+          }
+
           Push-Location apps/flutter_app
           dart run msix:create `
             --certificate-path $pfx `
             --certificate-password $password `
             --output-path (Join-Path $env:GITHUB_WORKSPACE "dist") `
-            --output-name "zprivacy-v1-windows-x86_64"
+            --output-name "zprivacy-v1-windows-x86_64" `
+            --install-certificate false `
+            --build-windows false
           $code = $LASTEXITCODE
           Pop-Location
 
@@ -673,6 +749,67 @@ jobs:
           Remove-Item $pfx -Force -ErrorAction SilentlyContinue
           Remove-Item "Cert:\CurrentUser\My\$thumb" -Force -ErrorAction SilentlyContinue
           if ($code -ne 0) { throw "msix:create refused ($code)" }
+
+      # **And what the MSIX packed is what this run measured** — 098 item 7,
+      # the other half of `--build-windows false`. An MSIX is a zip, so this
+      # opens it and compares, file by file, with the folder step «Stage the
+      # folder» copied: the two we build (`zprivacy.exe`, `z_bridge.dll`), the
+      # Dart snapshot beside them (`data/app.so`) — the three the needle search
+      # read — and the three Microsoft libraries item 1 put there.
+      #
+      # Each one is asked for by shape and must be in the package exactly
+      # once, because «found nothing» and «found two» are both answers a
+      # hard-coded path inside a package would have hidden. A difference fails
+      # the job and names the file: the zip, the installer and the MSIX are
+      # three shapes of one measured folder, and a package whose bytes nobody
+      # compared is a package nobody measured.
+      - name: What the MSIX packed is what was measured
+        shell: pwsh
+        run: |
+          if (-not ("System.IO.Compression.ZipFile" -as [type])) {
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+          }
+          $msix = Join-Path $env:GITHUB_WORKSPACE "dist\zprivacy-v1-windows-x86_64.msix"
+          if (-not (Test-Path $msix)) { throw "no MSIX at $msix, so nothing was compared" }
+          $staged = $env:STAGE -replace '/', '\'
+          if (-not (Test-Path $staged)) { throw "no staged folder at $staged to compare the package with" }
+
+          $wrong = @()
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($msix)
+          try {
+            foreach ($name in @("zprivacy.exe", "z_bridge.dll", "data/app.so",
+                                "vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
+              $here = Join-Path $staged ($name -replace '/', '\')
+              if (-not (Test-Path $here)) {
+                $wrong += "$name is not in the staged folder, so the package was compared with nothing"
+                continue
+              }
+              $hits = @($zip.Entries | Where-Object { ($_.FullName -replace '\\', '/') -ieq $name })
+              if ($hits.Count -ne 1) {
+                $wrong += "$name is in the MSIX $($hits.Count) time(s), not once"
+                continue
+              }
+              $mem = New-Object System.IO.MemoryStream
+              $entry = $hits[0].Open()
+              try { $entry.CopyTo($mem) } finally { $entry.Dispose() }
+              $mem.Position = 0
+              $packed = (Get-FileHash -InputStream $mem -Algorithm SHA256).Hash
+              $mem.Dispose()
+              $measured = (Get-FileHash -LiteralPath $here -Algorithm SHA256).Hash
+              if ($packed -eq $measured) {
+                Write-Host ("{0,-20} {1}  the same file" -f $name, $measured.Substring(0, 16))
+              } else {
+                Write-Host ("{0,-20} {1}  the MSIX holds {2}" -f $name, $measured.Substring(0, 16), $packed.Substring(0, 16))
+                $wrong += "$name in the MSIX is not the file that was staged, searched and hashed"
+              }
+            }
+          } finally { $zip.Dispose() }
+
+          if ($wrong.Count -gt 0) {
+            $wrong | ForEach-Object { Write-Host "::error::$_" }
+            throw "the MSIX does not carry the folder this run measured"
+          }
+          Write-Host "the six files in the package are the six that were staged, hash for hash"
 
       - name: How to install the MSIX
         if: always()
@@ -712,7 +849,14 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+      # `always()`, for the reason the comment below «Upload the folder»
+      # already gives — 098 item 7, that law's second case, written in place
+      # and not applied to the sibling. Run 39719891044 built the installer,
+      # hashed it, printed the two lines the download page needs, and then
+      # threw the file away because the MSIX four steps later asked a console
+      # a question: the one upload of the three without this line.
       - name: Upload the installer
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zprivacy-v1-windows-x86_64-setup-${{ env.SHORT_SHA }}
