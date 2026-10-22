@@ -1,0 +1,9 @@
+ZCFG1
+schema_version=1
+first_run_completed=true
+ui_language=en
+default_privacy_pack=en
+original_pane_percent=50
+columns_in_step=true
+safe_column_open=true
+review_panel_wide=false
