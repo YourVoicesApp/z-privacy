@@ -4563,44 +4563,46 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 12:
         return ApiError_VaultChangedElsewhere();
       case 13:
+        return ApiError_SessionChangedElsewhere();
+      case 14:
         return ApiError_StoragePermissionsKept(
           reason: dco_decode_String(raw[1]),
         );
-      case 14:
+      case 15:
         return ApiError_DocumentRefused(
           reason: dco_decode_box_autoadd_refusal(raw[1]),
           detail: dco_decode_String(raw[2]),
         );
-      case 15:
-        return ApiError_BadSpan(reason: dco_decode_String(raw[1]));
       case 16:
-        return ApiError_UnknownToken();
+        return ApiError_BadSpan(reason: dco_decode_String(raw[1]));
       case 17:
-        return ApiError_NothingToSend();
+        return ApiError_UnknownToken();
       case 18:
-        return ApiError_PayloadRefused(reason: dco_decode_String(raw[1]));
+        return ApiError_NothingToSend();
       case 19:
+        return ApiError_PayloadRefused(reason: dco_decode_String(raw[1]));
+      case 20:
         return ApiError_SessionWithoutItsDocument(
           reason: dco_decode_String(raw[1]),
         );
-      case 20:
+      case 21:
         return ApiError_NetworkRefused(
           reason: dco_decode_box_autoadd_network_refusal(raw[1]),
           detail: dco_decode_String(raw[2]),
         );
-      case 21:
+      case 22:
         return ApiError_UnsupportedKdfParameters(
           reason: dco_decode_String(raw[1]),
         );
-      case 22:
-        return ApiError_TrailingVaultData();
       case 23:
-        return ApiError_VaultAuthenticationFailed();
+        return ApiError_TrailingVaultData();
       case 24:
-        return ApiError_PayloadAlreadySent();
+        return ApiError_VaultAuthenticationFailed();
       case 25:
-        return ApiError_VaultRequired();
+        return ApiError_PayloadAlreadySent();
       case 26:
+        return ApiError_VaultRequired();
+      case 27:
         return ApiError_BetweenColumns();
       default:
         throw Exception("unreachable");
@@ -4617,6 +4619,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AnswerId dco_decode_box_autoadd_answer_id(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_answer_id(raw);
+  }
+
+  @protected
+  ApiError dco_decode_box_autoadd_api_error(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_api_error(raw);
   }
 
   @protected
@@ -5420,6 +5428,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AnswerId? dco_decode_opt_box_autoadd_answer_id(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_answer_id(raw);
+  }
+
+  @protected
+  ApiError? dco_decode_opt_box_autoadd_api_error(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_api_error(raw);
   }
 
   @protected
@@ -6261,8 +6275,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   WorkspaceSnapshot dco_decode_workspace_snapshot(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 19)
-      throw Exception('unexpected arr length: expect 19 but see ${arr.length}');
+    if (arr.length != 20)
+      throw Exception('unexpected arr length: expect 20 but see ${arr.length}');
     return WorkspaceSnapshot(
       stateRevision: dco_decode_u_32(arr[0]),
       session: dco_decode_session_id(arr[1]),
@@ -6283,6 +6297,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       vault: dco_decode_vault_state(arr[16]),
       answers: dco_decode_list_answer_id(arr[17]),
       entered: dco_decode_entered_text(arr[18]),
+      theDiskRefused: dco_decode_opt_box_autoadd_api_error(arr[19]),
     );
   }
 
@@ -6365,41 +6380,43 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       case 12:
         return ApiError_VaultChangedElsewhere();
       case 13:
+        return ApiError_SessionChangedElsewhere();
+      case 14:
         var var_reason = sse_decode_String(deserializer);
         return ApiError_StoragePermissionsKept(reason: var_reason);
-      case 14:
+      case 15:
         var var_reason = sse_decode_box_autoadd_refusal(deserializer);
         var var_detail = sse_decode_String(deserializer);
         return ApiError_DocumentRefused(reason: var_reason, detail: var_detail);
-      case 15:
+      case 16:
         var var_reason = sse_decode_String(deserializer);
         return ApiError_BadSpan(reason: var_reason);
-      case 16:
-        return ApiError_UnknownToken();
       case 17:
-        return ApiError_NothingToSend();
+        return ApiError_UnknownToken();
       case 18:
-        var var_reason = sse_decode_String(deserializer);
-        return ApiError_PayloadRefused(reason: var_reason);
+        return ApiError_NothingToSend();
       case 19:
         var var_reason = sse_decode_String(deserializer);
-        return ApiError_SessionWithoutItsDocument(reason: var_reason);
+        return ApiError_PayloadRefused(reason: var_reason);
       case 20:
+        var var_reason = sse_decode_String(deserializer);
+        return ApiError_SessionWithoutItsDocument(reason: var_reason);
+      case 21:
         var var_reason = sse_decode_box_autoadd_network_refusal(deserializer);
         var var_detail = sse_decode_String(deserializer);
         return ApiError_NetworkRefused(reason: var_reason, detail: var_detail);
-      case 21:
+      case 22:
         var var_reason = sse_decode_String(deserializer);
         return ApiError_UnsupportedKdfParameters(reason: var_reason);
-      case 22:
-        return ApiError_TrailingVaultData();
       case 23:
-        return ApiError_VaultAuthenticationFailed();
+        return ApiError_TrailingVaultData();
       case 24:
-        return ApiError_PayloadAlreadySent();
+        return ApiError_VaultAuthenticationFailed();
       case 25:
-        return ApiError_VaultRequired();
+        return ApiError_PayloadAlreadySent();
       case 26:
+        return ApiError_VaultRequired();
+      case 27:
         return ApiError_BetweenColumns();
       default:
         throw UnimplementedError('');
@@ -6416,6 +6433,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AnswerId sse_decode_box_autoadd_answer_id(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_answer_id(deserializer));
+  }
+
+  @protected
+  ApiError sse_decode_box_autoadd_api_error(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_api_error(deserializer));
   }
 
   @protected
@@ -7532,6 +7555,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ApiError? sse_decode_opt_box_autoadd_api_error(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_api_error(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -8544,6 +8578,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_vault = sse_decode_vault_state(deserializer);
     var var_answers = sse_decode_list_answer_id(deserializer);
     var var_entered = sse_decode_entered_text(deserializer);
+    var var_theDiskRefused = sse_decode_opt_box_autoadd_api_error(deserializer);
     return WorkspaceSnapshot(
       stateRevision: var_stateRevision,
       session: var_session,
@@ -8564,6 +8599,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       vault: var_vault,
       answers: var_answers,
       entered: var_entered,
+      theDiskRefused: var_theDiskRefused,
     );
   }
 
@@ -8633,43 +8669,45 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_String(reason, serializer);
       case ApiError_VaultChangedElsewhere():
         sse_encode_i_32(12, serializer);
-      case ApiError_StoragePermissionsKept(reason: final reason):
+      case ApiError_SessionChangedElsewhere():
         sse_encode_i_32(13, serializer);
+      case ApiError_StoragePermissionsKept(reason: final reason):
+        sse_encode_i_32(14, serializer);
         sse_encode_String(reason, serializer);
       case ApiError_DocumentRefused(reason: final reason, detail: final detail):
-        sse_encode_i_32(14, serializer);
+        sse_encode_i_32(15, serializer);
         sse_encode_box_autoadd_refusal(reason, serializer);
         sse_encode_String(detail, serializer);
       case ApiError_BadSpan(reason: final reason):
-        sse_encode_i_32(15, serializer);
+        sse_encode_i_32(16, serializer);
         sse_encode_String(reason, serializer);
       case ApiError_UnknownToken():
-        sse_encode_i_32(16, serializer);
-      case ApiError_NothingToSend():
         sse_encode_i_32(17, serializer);
-      case ApiError_PayloadRefused(reason: final reason):
+      case ApiError_NothingToSend():
         sse_encode_i_32(18, serializer);
-        sse_encode_String(reason, serializer);
-      case ApiError_SessionWithoutItsDocument(reason: final reason):
+      case ApiError_PayloadRefused(reason: final reason):
         sse_encode_i_32(19, serializer);
         sse_encode_String(reason, serializer);
-      case ApiError_NetworkRefused(reason: final reason, detail: final detail):
+      case ApiError_SessionWithoutItsDocument(reason: final reason):
         sse_encode_i_32(20, serializer);
+        sse_encode_String(reason, serializer);
+      case ApiError_NetworkRefused(reason: final reason, detail: final detail):
+        sse_encode_i_32(21, serializer);
         sse_encode_box_autoadd_network_refusal(reason, serializer);
         sse_encode_String(detail, serializer);
       case ApiError_UnsupportedKdfParameters(reason: final reason):
-        sse_encode_i_32(21, serializer);
+        sse_encode_i_32(22, serializer);
         sse_encode_String(reason, serializer);
       case ApiError_TrailingVaultData():
-        sse_encode_i_32(22, serializer);
-      case ApiError_VaultAuthenticationFailed():
         sse_encode_i_32(23, serializer);
-      case ApiError_PayloadAlreadySent():
+      case ApiError_VaultAuthenticationFailed():
         sse_encode_i_32(24, serializer);
-      case ApiError_VaultRequired():
+      case ApiError_PayloadAlreadySent():
         sse_encode_i_32(25, serializer);
-      case ApiError_BetweenColumns():
+      case ApiError_VaultRequired():
         sse_encode_i_32(26, serializer);
+      case ApiError_BetweenColumns():
+        sse_encode_i_32(27, serializer);
     }
   }
 
@@ -8686,6 +8724,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_answer_id(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_api_error(
+    ApiError self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_api_error(self, serializer);
   }
 
   @protected
@@ -9623,6 +9670,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_api_error(
+    ApiError? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_api_error(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -10400,5 +10460,6 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_vault_state(self.vault, serializer);
     sse_encode_list_answer_id(self.answers, serializer);
     sse_encode_entered_text(self.entered, serializer);
+    sse_encode_opt_box_autoadd_api_error(self.theDiskRefused, serializer);
   }
 }

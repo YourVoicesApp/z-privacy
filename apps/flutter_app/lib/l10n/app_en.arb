@@ -467,6 +467,10 @@
   "@troubleVaultChangedElsewhere": {
     "description": "050/A — two windows over one vault. The place is fine; what happened is that somebody else wrote, and both ways out are named."
   },
+  "troubleSessionChangedElsewhere": "This session's file on your disk was not written by this window, so Z Privacy did not write over it. Close the other copy, or lock and unlock here to read what it wrote.",
+  "@troubleSessionChangedElsewhere": {
+    "description": "Paper 102 §3 — the session file's own «changed elsewhere». Two causes, one next move: another copy of Z Privacy wrote the file, or an older vault left a file at this session's number. The place is fine, so this must not read like a storage refusal."
+  },
   "troubleStoragePermissionsKept": "Z Privacy will not change a permission you set, so nothing was saved — {reason}. Change the permission yourself, or choose another folder.",
   "@troubleStoragePermissionsKept": {
     "description": "A folder whose permissions would have to be changed to write in it: the program does not touch them, and says both ways out. The reason is the core's, lower-cased.",
@@ -866,6 +870,10 @@
         "type": "String"
       }
     }
+  },
+  "scannedAsYouTyped": "Scanned as you typed",
+  "@scannedAsYouTyped": {
+    "description": "Paper 102 §4 — the badge over a request with no document above it. The scanner does run on what is typed (set_question reads it with the same packs and the vault), and the badge used to say «Not scanned yet» for ever because it read the document's scan origin and there was no document."
   },
   "scannedOnImport": "Scanned on import",
   "@scannedOnImport": {

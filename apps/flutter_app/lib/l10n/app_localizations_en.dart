@@ -314,6 +314,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Another copy of Z Privacy changed this vault. Close that window, or lock and unlock here to take in its work.';
 
   @override
+  String get troubleSessionChangedElsewhere =>
+      'This session\'s file on your disk was not written by this window, so Z Privacy did not write over it. Close the other copy, or lock and unlock here to read what it wrote.';
+
+  @override
   String troubleStoragePermissionsKept(String reason) {
     return 'Z Privacy will not change a permission you set, so nothing was saved — $reason. Change the permission yourself, or choose another folder.';
   }
@@ -612,6 +616,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String lastScanNote(String note) {
     return 'Last scan: $note';
   }
+
+  @override
+  String get scannedAsYouTyped => 'Scanned as you typed';
 
   @override
   String get scannedOnImport => 'Scanned on import';

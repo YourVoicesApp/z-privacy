@@ -175,6 +175,11 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
         Err(e) => return Err(e),
     };
 
+    // **What the disk said about the last act that wrote** — paper 102 §2.
+    // Read here, with every other displayed fact, so the one read a screen
+    // makes carries it and no door has to hand a refusal along a second path.
+    let the_disk_refused = crate::session::with_core(|core| core.the_disk_refused.clone());
+
     Ok(WorkspaceSnapshot {
         state_revision: truth_revision(),
         session,
@@ -195,6 +200,7 @@ pub(crate) fn workspace_snapshot(session: SessionId) -> ApiResult<WorkspaceSnaps
         vault,
         answers,
         entered,
+        the_disk_refused,
     })
 }
 

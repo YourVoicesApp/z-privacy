@@ -2449,9 +2449,14 @@ fi
 # **The session file's own version moved, and the table says so.** The third of
 # the three numbers, and the one rule 9 spends: a saved document is in the
 # conversation's file, not in the vault's body.
+# **The number is written here on purpose**, so that moving the format reds
+# this check and a person has to come and say «yes, 7» — the table beside the
+# constant is compared by G35, and a check that only compared the two would
+# have let both move in one commit with nobody told. 7 since rule 55-ز
+# (22 October 2026): the request the person typed, with the covers on it.
 G36_FMT=$(grep -oE 'SESSION_FORMAT_VERSION: u16 = [0-9]+' z_core/src/conversation.rs | grep -oE '[0-9]+$')
-if [ "$G36_FMT" = "6" ] && grep -q "SESSION_FORMAT_VERSION\` = 6 |" z_core/src/vault/format.rs; then
-  pass "G36 the session file is at format 6, and the fence table names it"
+if [ "$G36_FMT" = "7" ] && grep -q "SESSION_FORMAT_VERSION\` = 7 |" z_core/src/vault/format.rs; then
+  pass "G36 the session file is at format 7, and the fence table names it"
 else
   fail "G36 the session format is $G36_FMT and the fence table in vault/format.rs does not say so"
 fi

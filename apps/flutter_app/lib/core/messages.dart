@@ -141,6 +141,14 @@ String humanMessage(Object error) {
     // take in its work — because a refusal without a next move leaves the
     // person holding an open vault they cannot save.
     ApiError_VaultChangedElsewhere() => sentences.troubleVaultChangedElsewhere,
+    // Paper 102 §3. **Its own sentence, and not the vault's**: the file is a
+    // different file, the cause is a different cause, and the one thing a
+    // borrowed sentence would get wrong is the thing the person acts on. Two
+    // paths raise it and they are one next move — another copy of Z Privacy
+    // wrote this session's file, or an older vault left a file at this
+    // session's number — so one sentence serves both, and neither of them is
+    // «Z Privacy will not use that location».
+    ApiError_SessionChangedElsewhere() => sentences.troubleSessionChangedElsewhere,
     // 058. **The promise, and not only the cause.** Z could write here; it is
     // declining to, because the person took a permission off the folder. So
     // this does not say «will not use that location» — the location is the one

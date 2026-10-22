@@ -79,6 +79,28 @@ fn begin_in(
     // two doors in the screen and two chances to forget. With no bench
     // there is nothing to take and the row stays «never asked».
     let born_with = bench.and_then(|b| core.get(b.id)).map(|s| s.pack_id.clone());
+    // **The floor is looked at before the number is spent** — paper 102 §3.
+    //
+    // The number comes from the vault model's own counter, so a **new** vault
+    // in a folder an older one left files in counts from 1 and this function
+    // used to write its empty body straight over `sessions/1.zs`. That file
+    // cannot be opened with this vault's keys and it is not this window's to
+    // destroy: the birth refuses by name instead, and the person's next move
+    // is to move the folder or open the vault the file belongs to.
+    //
+    // Asked here rather than at the write below, because `begin_conversation`
+    // spends a number and reseals the vault: a refusal after it would leave a
+    // session record whose file was never written, which is the one state
+    // «a session that exists in the vault also exists on disk» forbids.
+    if let (Some(dir), Some(next)) =
+        (core.vault.dir().map(|d| d.to_path_buf()), core.vault.the_next_conversation_number())
+    {
+        if crate::conversation::bytes_on_disk(&dir, next)?.is_some()
+            && !core.session_as_read.contains_key(&next)
+        {
+            return Err(ApiError::SessionChangedElsewhere);
+        }
+    }
     let number =
         core.vault
             .begin_conversation(&name, document.as_deref(), born_with.as_deref())?;
@@ -684,18 +706,60 @@ pub(crate) fn set_pack(number: u32, pack_id: String) -> ApiResult<()> {
 /// name on the bench and `import_text` leaves it empty, so an empty name is a
 /// text that was written or pasted into the preview and a name is a file pulled
 /// from the computer. Two sequences, as the owner wrote them.
+/// **A cover the person's own hand put on the request** — rule 55-ز's half of
+/// «an act worth keeping», asked in one place so the birth and the write
+/// cannot disagree about what one is.
+fn the_hand_covered_the_request(s: &crate::session::Session) -> bool {
+    s.question_protections.iter().any(|p| p.source == crate::api::Source::Hand)
+}
+
+/// One protection, as the session file keeps it. The document's covers and the
+/// request's are the same shape in two different strings' offsets, so they are
+/// written by one hand here as they are encoded by one layout there.
+fn a_kept_cover(p: &crate::session::Protection) -> crate::conversation::KeptMark {
+    crate::conversation::KeptMark {
+        start: p.start.min(u32::MAX as usize) as u32,
+        end: p.end.min(u32::MAX as usize) as u32,
+        token: p.token.clone(),
+        kind: p.kind,
+        scope: p.scope,
+        source: p.source,
+        detail: p.source_detail.clone(),
+        decided: p.decided,
+        orphaned: p.orphaned,
+    }
+}
+
 pub(crate) fn keep_the_preview(core: &mut crate::session::Core, bench: u32) -> ApiResult<()> {
-    // **Nothing in the preview, nothing to keep — and nothing to be born
+    // **Nothing worth keeping, nothing to keep — and nothing to be born
     // either.** One question for both facts, asked once: «no empty sessions»
     // (rule 55) and «nothing to save» are the same question, and a second copy
     // of it is a second chance for the list to hold a session holding nothing.
     //
+    // **Two acts are worth keeping, since rule 55-ز** (the owner's «نعم» of
+    // 22 October 2026): a document in the preview, **or** a cover the person's
+    // own hand put on the request. Until then this asked only about the
+    // document's text — a condition that named one concrete thing where the
+    // rule means «anything the person has done here» — and a bench whose whole
+    // work was a typed request wrote nothing at all: not the blocks, because
+    // the bench never took a session's naming, and not the file, because this
+    // returned above. Thirteen minutes of the owner's own work, twice, with
+    // «Protected as …» on both glasses.
+    //
+    // **The hand's covers and not the scan's**, and that boundary is pinned:
+    // `set_question` protects what the scan finds the instant a sentence is
+    // typed, so a session born of *that* would be a session born of typing —
+    // which is the one thing rule 55 forbids, and what
+    // `a_question_that_never_leaves_is_born_into_nothing` has measured since
+    // rule 55-و. A hand is a decision; a scan is a reading.
+    //
     // Trimmed, because `import_text` itself reads a preview of white space as
     // no text at all — a person who opened an empty preview has not started
     // anything.
-    let holds_a_document =
-        core.sessions_get(bench).is_some_and(|s| !s.original_str().trim().is_empty());
-    if !holds_a_document {
+    let worth_keeping = core
+        .sessions_get(bench)
+        .is_some_and(|s| !s.original_str().trim().is_empty() || the_hand_covered_the_request(s));
+    if !worth_keeping {
         return Ok(());
     }
     let number = match open_in(core) {
@@ -750,23 +814,15 @@ pub(crate) fn keep_the_preview(core: &mut crate::session::Core, bench: u32) -> A
         pages: s.pages,
         bytes: s.doc_bytes,
         readable: s.readable,
-        marks: s
-            .protections
-            .iter()
-            .map(|p| crate::conversation::KeptMark {
-                start: p.start.min(u32::MAX as usize) as u32,
-                end: p.end.min(u32::MAX as usize) as u32,
-                token: p.token.clone(),
-                kind: p.kind,
-                scope: p.scope,
-                source: p.source,
-                detail: p.source_detail.clone(),
-                decided: p.decided,
-                orphaned: p.orphaned,
-            })
-            .collect(),
+        marks: s.protections.iter().map(a_kept_cover).collect(),
         dismissed: s.dismissed.iter().map(|d| d.value.expose().to_string()).collect(),
         at: crate::vault::model::now_seconds(),
+        // **And the request, with its own covers** — rule 55-ز, format 7. It
+        // is kept whether or not there is a document above it: the two are one
+        // bench and one act, and a record that held only the document would
+        // lose the hand's work in the box the moment the window closed.
+        request: s.question.expose().to_string(),
+        request_marks: s.question_protections.iter().map(a_kept_cover).collect(),
     };
     let mut body = body(core, number)?.unwrap_or_default();
     let given = match already {
@@ -862,7 +918,17 @@ pub(crate) fn kept_documents(number: u32) -> ApiResult<Vec<crate::api::KeptRow>>
                 handle: crate::conversation::Body::handle_of(k),
                 name: k.name.clone(),
                 at: k.at,
-                protected: k.marks.len().min(u32::MAX as usize) as u32,
+                // **The document's covers and the request's both** — rule
+                // 55-ز. The row exists so a person choosing between two saved
+                // copies is choosing between two states of *work*, and a
+                // typed-only copy's whole work is in its request: counting the
+                // document's marks alone said «0 protected places» about the
+                // one the person had just protected by hand.
+                protected: k
+                    .marks
+                    .len()
+                    .saturating_add(k.request_marks.len())
+                    .min(u32::MAX as usize) as u32,
             })
             .collect();
         rows.sort_by(|a, b| b.at.cmp(&a.at).then(b.number.cmp(&a.number)));
@@ -953,6 +1019,27 @@ fn take_the_names(
     moved
 }
 
+/// **Replace this session's file, and only what this run has read** — paper
+/// 102 §3, the session file's own `ensure_disk_unchanged`.
+///
+/// The vault has refused to write over bytes it had not read since 050/A; this
+/// file was replaced whatever was there, and the two-window round of
+/// 22 October measured the price: `sessions/1.zs` held a document and eleven
+/// decisions at 21:35:03 and held an empty body at 21:35:11, while `vault.zv`
+/// did not move at all. One of the two windows wrote a body it had not read.
+///
+/// So a write is allowed in exactly two states, and in no third:
+///
+///   * the bytes on the disk are the bytes this run last read for this number
+///     — the ordinary act, where `body()` read a moment ago inside this very
+///     lock;
+///   * there is **nothing** on the disk and this run has read nothing either —
+///     a birth, which creates and destroys nothing.
+///
+/// Anything else is another owner's file: another copy of Z Privacy that wrote
+/// in between, or a file an older vault left at this number in this folder. It
+/// is refused by name (`SessionChangedElsewhere`), and the refusal reaches the
+/// glass — §2 — rather than being swallowed by the one caller that discards it.
 fn write_body(
     core: &mut crate::session::Core,
     number: u32,
@@ -966,9 +1053,26 @@ fn write_body(
     let Some(key) = core.vault.conversation_key(number) else {
         return Err(ApiError::VaultLocked);
     };
-    crate::conversation::write(&dir, number, &key, body)
+    let on_disk = crate::conversation::bytes_on_disk(&dir, number)?;
+    match core.session_as_read.get(&number) {
+        // Read, and nothing has moved since: this body is built on what is
+        // there. (`None` as a value is «there was no file», which is a read
+        // too — a birth that read an empty floor may write it.)
+        Some(as_read) if *as_read == on_disk => {}
+        // Nothing read, nothing there: a birth writes its first body.
+        None if on_disk.is_none() => {}
+        _ => return Err(ApiError::SessionChangedElsewhere),
+    }
+    let sealed = crate::conversation::write(&dir, number, &key, body)?;
+    // What this run has read of that file is now what it just wrote, so the
+    // next act compares against the truth and not against a stale read.
+    core.session_as_read.insert(number, Some(sealed));
+    Ok(())
 }
 
+/// **Read this session's file, and remember what was there** — the other half
+/// of the guard above: a body is handed to a caller together with the fact
+/// that these were the bytes it came from.
 fn body(
     core: &mut crate::session::Core,
     number: u32,
@@ -979,5 +1083,14 @@ fn body(
     let Some(key) = core.vault.conversation_key(number) else {
         return Ok(None);
     };
-    crate::conversation::read(&dir, number, &key)
+    match crate::conversation::read(&dir, number, &key)? {
+        Some((body, sealed)) => {
+            core.session_as_read.insert(number, Some(sealed));
+            Ok(Some(body))
+        }
+        None => {
+            core.session_as_read.insert(number, None);
+            Ok(None)
+        }
+    }
 }

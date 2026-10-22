@@ -316,6 +316,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Eine andere Kopie von Z Privacy hat diesen Tresor geändert. Schließen Sie jenes Fenster, oder verschließen und öffnen Sie den Tresor hier, um dessen Arbeit zu übernehmen.';
 
   @override
+  String get troubleSessionChangedElsewhere =>
+      'Die Datei dieser Sitzung auf Ihrer Festplatte wurde nicht von diesem Fenster geschrieben, deshalb hat Z Privacy sie nicht überschrieben. Schließen Sie die andere Kopie, oder verschließen und öffnen Sie den Tresor hier, um zu lesen, was sie geschrieben hat.';
+
+  @override
   String troubleStoragePermissionsKept(String reason) {
     return 'Z Privacy ändert keine von Ihnen gesetzte Berechtigung, es wurde deshalb nichts gespeichert — $reason. Ändern Sie die Berechtigung selbst, oder wählen Sie einen anderen Ordner.';
   }
@@ -614,6 +618,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String lastScanNote(String note) {
     return 'Letzte Prüfung: $note';
   }
+
+  @override
+  String get scannedAsYouTyped => 'Beim Tippen geprüft';
 
   @override
   String get scannedOnImport => 'Beim Import geprüft';

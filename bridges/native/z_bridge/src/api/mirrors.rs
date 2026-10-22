@@ -64,6 +64,24 @@ pub enum _ApiError {
     /// carries no reason because there is only one: a person does not need a
     /// byte count to be told to close the other window.
     VaultChangedElsewhere,
+    /// **This session's file on disk was not written by this window, so
+    /// nothing was written over it** — paper 102 §3, 22 October 2026.
+    ///
+    /// The vault has had `ensure_disk_unchanged` since 050/A; the session file
+    /// had nothing of the kind, and `conversation::write` replaced whatever
+    /// was there. Two paths raise this one refusal, and they are one cause at
+    /// the level a person acts on — another owner holds the file:
+    ///
+    ///   * a write whose body was read from bytes that are no longer the bytes
+    ///     on the disk (another copy of Z Privacy wrote in between);
+    ///   * a **birth** that finds a file already sitting at its number, which
+    ///     happens when a new vault counts from 1 in a folder an older vault
+    ///     left files in. That file cannot be read with this vault's keys and
+    ///     it is not this window's to destroy.
+    ///
+    /// It carries no reason, for the reason `VaultChangedElsewhere` carries
+    /// none (050/A): a byte count does not help anybody close a window.
+    SessionChangedElsewhere,
     /// **Z Privacy could write here and is declining to, because the person
     /// said otherwise.**
     ///
@@ -1286,6 +1304,30 @@ pub struct _WorkspaceSnapshot {
     /// every mark in one offset space. One read per screen, so no screen works
     /// out where the request begins for itself.
     pub entered: EnteredText,
+    /// **What the disk said about the last act that tried to write** — paper
+    /// 102 §2, 22 October 2026. `None` is «everything landed».
+    ///
+    /// Every door that writes a decision goes through one function
+    /// (`the_decisions_are_written`), and both of its halves used to throw
+    /// their refusals away: the blocks answered a count whose `0` also meant
+    /// «the disk refused me», and the session copy's error was discarded by
+    /// name. So a copy whose vault another window had changed answered
+    /// «Protected as …, in 5 places» for twenty-four minutes and wrote
+    /// nothing — measured on the owner's own machine, in two windows, the
+    /// night before publishing week.
+    ///
+    /// **A state and not an event**, because the fault is a state: a copy that
+    /// has fallen behind refuses every later write until it is healed by a
+    /// lock and an unlock, so a refusal that was returned once would be gone
+    /// by the next press. It clears when a write lands, which is the heal
+    /// measured rather than assumed.
+    ///
+    /// **The refusal itself and not a flag**, because a sentence that names
+    /// must ask what it names: a vault another copy changed, a session file
+    /// this window does not own, a shut vault and a folder that refused are
+    /// four different next moves, and the glass renders each through the one
+    /// mapping it already has for an `ApiError`.
+    pub the_disk_refused: Option<ApiError>,
 }
 
 #[frb(mirror(VaultSnapshot))]

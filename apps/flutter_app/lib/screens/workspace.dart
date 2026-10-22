@@ -503,10 +503,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             // (14 October, item 3). This one is about the document rather than
             // about the scan, and it is drawn only when there is a token in it.
             if (bench != null) _CameBack(bench: bench),
-            if (bench?.trouble != null)
+            // **And what the disk said, if the act itself said nothing** —
+            // paper 102 §2. `troubleToShow` is the act's own refusal or the
+            // standing verdict, because the fault this band was reddened for
+            // is one a press cannot report: the press *did* protect, in
+            // memory, and only the disk refused.
+            if (bench?.troubleToShow != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
-                child: Trouble(bench!.trouble!),
+                child: Trouble(bench!.troubleToShow!),
               ),
             // **The three parts, with nothing in them yet** — rule 70. Not a
             // second screen and not a page of prose: the same three regions,
@@ -899,15 +904,34 @@ class _TopBar extends StatelessWidget {
             padding: EdgeInsets.all(3),
             child: BrandMark(size: 28),
           ),
-          if (doc == null) ...[
+          // **A document is a document when it has text in it** — paper 102
+          // §4. `WorkspaceSnapshot.document` is not an `Option`, so a bench
+          // with nothing on it hands the glass an **empty** `DocumentView`
+          // whose name is empty too — and this row then drew the notes icon
+          // and «Typed text» over a surface that held no document at all. The
+          // owner read that label beside «Not scanned yet» on the night of the
+          // two windows. (Making the field an `Option` is the one-screen
+          // round's, named in the paper: it is a change every reader of the
+          // snapshot pays for, and this reads the text it already has.)
+          if (doc == null || doc.text.isEmpty) ...[
             const SizedBox(width: 10),
             const Text(
               'Z Privacy',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Zc.ink),
             ),
+            // **And the session's name stands as soon as a session is open** —
+            // the owner's wish, twice on 22 October: he picked session 1 from
+            // the room and the top of the screen said nothing of it until a
+            // document was brought in, because the only place the session's
+            // name was drawn sat inside the branch below. A session is what
+            // the work belongs to, document or no document.
+            if (ground.openSessionRow != null) ...[
+              const SizedBox(width: 9),
+              Flexible(child: TheOpenSession(ground: ground, compact: true)),
+            ],
           ],
           const SizedBox(width: 14),
-          if (doc != null) ...[
+          if (doc != null && doc.text.isNotEmpty) ...[
             Icon(
               doc.kind == DocumentKind.pdf
                   ? Icons.picture_as_pdf_outlined
@@ -1600,7 +1624,22 @@ class _Band extends StatelessWidget {
     // would have said «Not scanned yet» over a document whose every name was
     // already protected. The snapshot carries all of it — which scan it was,
     // the counts, and the vault's own state.
-    final scanned = bench.scanOrigin != ScanOrigin.notScanned;
+    // **And the request is read the moment it is typed** — paper 102 §4.
+    //
+    // `scanOrigin` is the **document's**: `mark_scanned` sets it in the scan
+    // door and at the import doors. A bench with no document therefore kept it
+    // at `notScanned` for ever, and this band said «Not scanned yet» beside a
+    // Safe column that was showing tokens — over a request `set_question` had
+    // just read with the same packs, the same vault and the same lists a
+    // document is read with («1 values were replaced» is that reading saying
+    // so). A badge that reads one fact and reports another is the shape this
+    // band was rebuilt for in the first place.
+    //
+    // So: with nothing above it, what was read is the request, and the band
+    // says that instead of the document's silence.
+    final noDocument = (bench.document?.text ?? '').isEmpty;
+    final theRequestWasRead = noDocument && bench.question.trim().isNotEmpty;
+    final scanned = bench.scanOrigin != ScanOrigin.notScanned || theRequestWasRead;
     // **A document that came back from a kept copy, told apart from one this
     // run scanned** — the owner's three zeros of 18 October.
     //
@@ -1672,35 +1711,51 @@ class _Band extends StatelessWidget {
               // with it. Re-scanning it to fill the three counts would be a
               // second opinion about protections that came from the vault,
               // which 089 rule 9 exists to avoid.
-              asKept
-                  ? sentences.asItWasKept
-                  : bench.scanNote != null
-                      ? sentences.lastScanNote(bench.scanNote!)
-                      : switch (bench.scanOrigin) {
-                          ScanOrigin.onImport => sentences.scannedOnImport,
-                          ScanOrigin.rescan => sentences.lastScanManualRescan,
-                          ScanOrigin.notScanned => sentences.notScannedYet,
-                        },
+              // The request's own reading comes first when there is nothing
+              // above it: every other case here is a sentence about a
+              // document, and this surface has none.
+              theRequestWasRead
+                  ? sentences.scannedAsYouTyped
+                  : asKept
+                      ? sentences.asItWasKept
+                      : bench.scanNote != null
+                          ? sentences.lastScanNote(bench.scanNote!)
+                          : switch (bench.scanOrigin) {
+                              ScanOrigin.onImport => sentences.scannedOnImport,
+                              ScanOrigin.rescan => sentences.lastScanManualRescan,
+                              ScanOrigin.notScanned => sentences.notScannedYet,
+                            },
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Zc.clayDeep,
               ),
             ),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                asKept
-                    ? sentences.alreadyProtectedNothingScanned(marksOnIt)
-                    : sentences.protectedAutomaticallyNeedYourWord(
-                        bench.snap?.autoProtected ?? 0,
-                        bench.openSuggestions,
-                        bench.normalCount,
-                      ),
-                style: const TextStyle(fontSize: 13, color: Zc.clayDeep),
-                overflow: TextOverflow.ellipsis,
+            // **And the three counts are the document's, so they are drawn
+            // where there is one** — paper 102 §4. They are counted from the
+            // scan's findings, which a request has none of: over a
+            // documentless bench this line read «0 protected automatically ·
+            // 0 need your word · 0 normal» beside a request whose tokens were
+            // on the glass. What the request replaced is said under the box
+            // the person typed it in, by the one sentence that counts the
+            // request's own marks — so this is one false line removed and no
+            // true one hidden.
+            if (!noDocument) ...[
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  asKept
+                      ? sentences.alreadyProtectedNothingScanned(marksOnIt)
+                      : sentences.protectedAutomaticallyNeedYourWord(
+                          bench.snap?.autoProtected ?? 0,
+                          bench.openSuggestions,
+                          bench.normalCount,
+                        ),
+                  style: const TextStyle(fontSize: 13, color: Zc.clayDeep),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
+            ],
           ],
           // **No `Spacer` here** (14 October, item 3). A spacer is a third
           // flexible child, and it took a third of the band's free width for

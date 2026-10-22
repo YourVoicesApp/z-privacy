@@ -3655,7 +3655,17 @@ fn name_tokens_from_the_vault(session: u32) {
     with_core(|core| {
         let Some(number) = core.open_conversation else { return };
         let Some((s, _)) = core.session_and_vault(session) else { return };
-        if s.mint.names_from_the_vault() || s.original.is_empty() {
+        // **Asked of the bench, not of its document** — rule 55-ز. This read
+        // `|| s.original.is_empty()` until 22 October, so a bench whose only
+        // work was a typed request never took the open session's naming: its
+        // tokens kept the random names a shut vault gives, and
+        // `blocks_from_this_bench` — which asks `names_from_the_vault` before
+        // it writes anything — therefore wrote **no block at all**, on any
+        // act, for as long as that bench lived. A naming is about the session,
+        // not about what happens to be on the bench (064, `Naming::of_session`
+        // has no document in its input), so there was nothing for the document
+        // to decide here.
+        if s.mint.names_from_the_vault() {
             return;
         }
         if let Some(naming) = core.vault.naming_of(number) {
@@ -3702,10 +3712,17 @@ fn name_tokens_from_the_vault(session: u32) {
 /// under us, `ensure_disk_unchanged`), the words are still in the bench's
 /// store, so the next act writes them. A queue of its own would have had to be
 /// replayed by somebody.
-pub(crate) fn blocks_from_this_bench(core: &mut crate::session::Core, session: u32) -> u32 {
+pub(crate) fn blocks_from_this_bench(
+    core: &mut crate::session::Core,
+    session: u32,
+) -> ApiResult<u32> {
     let words = match core.get(session) {
         Some(s) if s.mint.names_from_the_vault() => s.tokens.words_it_named(),
-        _ => return 0,
+        // Not a refusal: a bench that does not yet name from a session's key
+        // has nothing a block could belong to, and the birth that gives it one
+        // writes them all (rule 55-ز moved that birth to the first act worth
+        // keeping, so the wait is now one act long at most).
+        _ => return Ok(0),
     };
     core.vault.remember_blocks(&words)
 }
@@ -3724,11 +3741,36 @@ pub(crate) fn blocks_from_this_bench(core: &mut crate::session::Core, session: u
 /// name in every door's body, and G36 reads that this is where both are
 /// written.
 pub(crate) fn the_decisions_are_written(core: &mut crate::session::Core, session: u32) {
-    blocks_from_this_bench(core, session);
+    let blocks = blocks_from_this_bench(core, session);
     // The copy is replaced, never added to: the bench holds the number of the
     // document it is working on. A failure to write it leaves the copy as it
     // was — older, never wrong — and the next act writes it again.
-    let _ = conversation::keep_the_preview(core, session);
+    //
+    // **And it is not written at all beside a refused block** — paper 102 §3,
+    // the sharpest of the three faults the two-window round measured, because
+    // the glass stays green through it: `sessions/1.zs` was written while
+    // `vault.zv` was refused, so the disk held a document naming twenty-three
+    // protected places whose blocks were in no vault — and `open_kept`
+    // rebuilds the token store from the marks and the text, so that document
+    // re-opens **showing them protected**. A copy older than the vault is
+    // never wrong; a copy ahead of it is a promise the vault cannot keep.
+    let refused = match blocks {
+        Ok(_) => conversation::keep_the_preview(core, session).err(),
+        Err(refusal) => Some(refusal),
+    };
+    // **And what the disk said is recorded, not discarded** — paper 102 §2.
+    //
+    // Both halves were thrown away here: the blocks' answer was a count whose
+    // `0` also meant «refused», and the copy's error was discarded by name
+    // with `let _ =`. A write that fails still heals itself — the words stay in
+    // the bench's store and the next act writes them — but **only if a later
+    // write can succeed**, and a copy whose vault fell behind refuses every
+    // one of them until it is healed. So the verdict is a state the glass can
+    // read, and the person is told the one thing they can act on.
+    //
+    // The blocks' refusal is the one reported when both could fail: it is the
+    // one that breaks 089 rule 1, and it is also the one that stops the copy.
+    core.the_disk_said(refused);
 }
 
 pub(crate) fn scan(session: SessionId) -> ApiResult<ScanReport> {
