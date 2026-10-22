@@ -79,6 +79,25 @@ Read by the lead from the job log through `gh` (the new Windows session cannot r
 
 Sixth attempt at an MSIX and an uploaded installer. The zip, the folder and the Dart record are already in hand, so step 2 of the Windows order (sha256 and BUILD-INFO) and steps 4–6 on the folder build do not wait for it.
 
+## 8 · The run at `8eb7fc8` (39734294387, 22 October) — the installer is uploaded; the signing asks a timestamp server for a certificate that dies in the job
+
+Read by the lead from the job log. Green through step 16 and the installer artefact `zprivacy-v1-windows-x86_64-setup-8eb7fc8` exists for the first time; the archive carries zip + `.sha256` + BUILD-INFO and **no** MSIX, so item 7's deletion did its work (step 19 red by its purpose, step 18 skipped). Core job green. Step 17 red again, for a new reason, after the question was silenced:
+
+```
+The following certificate was selected:
+    Issued to: Z-privacy  ·  Issued by: Z-privacy
+Done Adding Additional Store
+Error information: "Error: SignerSign() failed." (-2146869243/0x80096005)
+SignTool Error: An unexpected internal error has occurred.
+```
+
+- **The tool timestamps every signature.** `msix-3.16.8/lib/src/sign_tool.dart:234` appends `/tr http://timestamp.digicert.com` to its own signtool call whenever a `.pfx` is given, with no `/td sha256`, so the timestamp request carries a SHA-1 digest, which that server no longer answers — the same `0x80096005` others met when a timestamp server stopped answering, cured by `/td sha256` or by another server. A timestamp exists to let a signature outlive its certificate's expiry; **this certificate is made in the job and deleted four lines later**, so a timestamp on it is a request to a third party for nothing. The job does not want one.
+- **The cure is the tool's own door:** `--signtool-options` (`configuration.dart:122–127`; when the options carry `/f`, `sign_tool.dart:26–34` and `:210` take them as the whole command and add no `/tr`). The call passes `/fd SHA256 /f <pfx> /p <password> /v` — the password is a variable in the script, never a value in the log, as today — and the summary's «says nothing about who built this» sentence gains «and is not timestamped: it is valid only while the certificate is, which is this run». The day a real certificate signs (the owner's Microsoft application), the timestamp returns with `/td sha256` and that is its own item.
+- **The tree gate** (G69, fifth check): the `msix:create` call carries `--signtool-options` naming `/fd SHA256` and no `/tr`; pinned red by removing the option and by writing `/tr` into it.
+- **Also measured by that run, written into C-14:** the installer artefact exists and its hash is in step 16's log; the Dart suite 414 · 0 again.
+
+Seventh attempt at a signed MSIX. The installer from this run is the first one the owner installs (SmartScreen sentences, no administrator prompt, the vault folder); the Windows session walks him through it now.
+
 ## Measurement
 
 Rust: `cargo test`, clippy, both targets (G4c). `scripts/gates.sh` green from a plain debug build; the three numbers written by the merging hand. The workflow run (owner's hand, Actions → windows → Run workflow) shows the assert step green with three versions; the installed `.exe` on the clean machine starts without a DLL dialogue — the owner's measurement, written into `docs/INBOX/to-linux.md`.
