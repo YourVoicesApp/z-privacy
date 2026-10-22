@@ -13,10 +13,18 @@ What it asserts, per page and per width:
 
   * every part of the first screen is inside the viewport — the mark, the title,
     the idea, the sentence about whose word it is, the state of the build, and
-    both buttons. Not «present in the document»: `bottom <= viewport height`.
+    all three buttons. Not «present in the document»: `bottom <= viewport
+    height`.
   * nothing overflows sideways: `scrollWidth <= innerWidth + 1`.
-  * the two buttons sit on the glass with a real height, so neither is a
+  * the three buttons sit on the glass with a real height, so none is a
     zero-size element a finder would still report as found.
+  * **every selector names one element.** 103 put a third button in the row —
+    the way to the download page — and `.cta .btn:not(.primary)` went from
+    matching the address to matching two things, of which `querySelector`
+    measures the first. One of the three buttons would have stopped being
+    measured, and this script would have gone on printing PASS. So a selector
+    that matches twice is now a fault of its own: the thing it is supposed to
+    name has a second one.
 
 How, and why it is safe: the pages are copied to a temporary folder and the
 probe is injected into the COPY. `site/` is never written to — the promise that
@@ -38,8 +46,19 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = os.path.join(ROOT, 'site')
 
-# The widths: a common laptop, a small laptop, and a phone. The phone is the one
-# that matters — it is where a hero built at 1440 falls apart.
+# The widths asked for: a common laptop, a small laptop, and a phone. The
+# narrow one is the one that matters — it is where a hero built at 1440 falls
+# apart.
+#
+# **Asked for, and not always given.** Measured on 23 October: headless Chrome
+# will not make a window narrower than 500 CSS pixels, so `--window-size=390`
+# comes back reporting `innerWidth` 500 and this script measured a 500-wide
+# screen while printing «390x844». A number a person reads off a gate must be
+# the number that was measured, so every line now prints the width the browser
+# answered with, and a real phone width is not something this instrument can
+# reach — it would need DevTools device metrics over a socket rather than
+# `--dump-dom`. 500 is still the narrowest column there is, and it is still
+# where a hero falls apart first.
 WIDTHS = [(1366, 768), (1280, 800), (390, 844)]
 
 # page : the parts its first screen must hold
@@ -57,7 +76,8 @@ PAGES = {
         'word': '.hero-word',
         'state': '.beta',
         'button': '.cta .btn.primary',
-        'address': '.cta .btn:not(.primary)',
+        'download': '.cta .btn[href$="/download/"]',
+        'address': '.cta .btn[href^="mailto:"]',
     },
 }
 PAGES['de/index.html'] = PAGES['en/index.html']
@@ -67,16 +87,34 @@ PROBE = """
 <script>
 (function () {
   var want = %s;
+  // **Wait for the fonts, then measure.** Watched on 23 October: the same page
+  // at the same width answered «the word sits at y=368» in one run and
+  // «y=402» in the next, and the menu comparison — which is two runs of the
+  // browser, one closed and one open — reported a 34px move that was really
+  // one line of text. A fallback font had been measured in one of the two.
+  //
+  // 34px is one line: until Newsreader arrives the slogan wraps to two, and
+  // everything under it stands a line lower. An instrument whose numbers
+  // change between runs reports faults that are not there and hides the ones
+  // that are, so nothing is measured until the page is wearing its own type.
+  var start = function (fn) {
+    if (document.fonts && document.fonts.ready) { document.fonts.ready.then(fn); }
+    else { fn(); }
+  };
   // Which menu to open, if any. The two <details> carry the same `name`, so a
   // browser that knows exclusive accordions will only ever hold one open —
   // which is also what a person gets, so they are measured one at a time.
   var pick = location.search.match(/menu=(\\d+)/);
   var menus = document.querySelectorAll('details.menu');
   if (pick && menus[+pick[1]]) { menus[+pick[1]].open = true; }
+  start(function () {
   var out = {vw: window.innerWidth, vh: window.innerHeight,
-             sw: document.documentElement.scrollWidth, items: {}, panels: [], menus: menus.length};
+             sw: document.documentElement.scrollWidth, items: {}, panels: [],
+             doubled: [], menus: menus.length};
   for (var k in want) {
-    var e = document.querySelector(want[k]);
+    var all = document.querySelectorAll(want[k]);
+    var e = all[0];
+    if (all.length > 1) { out.doubled.push(k + ' \u00d7' + all.length); }
     if (!e) { out.items[k] = null; continue; }
     var r = e.getBoundingClientRect();
     out.items[k] = {top: Math.round(r.top), bottom: Math.round(r.bottom),
@@ -94,6 +132,7 @@ PROBE = """
   pre.id = 'z-measure';
   pre.textContent = '@@' + JSON.stringify(out) + '@@';
   document.body.appendChild(pre);
+  });
 })();
 </script>
 </body>"""
@@ -144,30 +183,40 @@ def main():
             for w, h in WIDTHS:
                 got = measure(binary, os.path.join(copy, page), w, h)
                 if got is None:
-                    print('  FAIL   %s at %dx%d: the browser said nothing' % (page, w, h))
+                    # The only line that names the width that was *asked* for:
+                    # there is no measurement to name when nothing came back.
+                    print('  FAIL   %s at %dx%d (asked): the browser said nothing'
+                          % (page, w, h))
                     bad += 1
                     continue
                 vh, vw = got['vh'], got['vw']
+                # A selector that matches twice measures the first and leaves
+                # the other where no ruler reaches it.
+                for doubled in got.get('doubled') or []:
+                    print('  FAIL   %s at %dx%d: the selector for %s matches more than one '
+                          'element (%s), so one of them is measured and the rest are not'
+                          % (page, vw, vh, doubled.split(' ')[0], doubled))
+                    bad += 1
                 for name in sorted(want):
                     box = got['items'].get(name)
                     if box is None:
-                        print('  FAIL   %s at %dx%d: no %s on the page at all' % (page, w, h, name))
+                        print('  FAIL   %s at %dx%d: no %s on the page at all' % (page, vw, vh, name))
                         bad += 1
                     elif box['h'] <= 0 or box['w'] <= 0:
                         print('  FAIL   %s at %dx%d: %s is %dx%d, so it is found but not drawn'
-                              % (page, w, h, name, box['w'], box['h']))
+                              % (page, vw, vh, name, box['w'], box['h']))
                         bad += 1
                     elif box['bottom'] > vh:
                         print('  FAIL   %s at %dx%d: %s ends at y=%d, below the first screen (%d)'
-                              % (page, w, h, name, box['bottom'], vh))
+                              % (page, vw, vh, name, box['bottom'], vh))
                         bad += 1
                     elif box['left'] < 0 or box['right'] > vw:
                         print('  FAIL   %s at %dx%d: %s runs from x=%d to x=%d, off a %d-wide screen'
-                              % (page, w, h, name, box['left'], box['right'], vw))
+                              % (page, vw, vh, name, box['left'], box['right'], vw))
                         bad += 1
                 if got['sw'] > vw + 1:
                     print('  FAIL   %s at %dx%d: the page is %dpx wide and the screen is %d'
-                          % (page, w, h, got['sw'], vw))
+                          % (page, vw, vh, got['sw'], vw))
                     bad += 1
 
                 # The menus, one at a time, because the two <details> are an
@@ -180,21 +229,21 @@ def main():
                     opened = measure(binary, os.path.join(copy, page), w, h, menu=which)
                     if opened is None or not opened['panels']:
                         print('  FAIL   %s at %dx%d: menu %d opens nothing'
-                              % (page, w, h, which))
+                              % (page, vw, vh, which))
                         bad += 1
                         continue
                     for box in opened['panels']:
                         if box['left'] < 0 or box['right'] > vw:
                             print('  FAIL   %s at %dx%d: menu %d runs from x=%d to x=%d, off a '
-                                  '%d-wide screen' % (page, w, h, which, box['left'], box['right'], vw))
+                                  '%d-wide screen' % (page, vw, vh, which, box['left'], box['right'], vw))
                             bad += 1
                         elif box['bottom'] > vh:
                             print('  FAIL   %s at %dx%d: menu %d ends at y=%d, below the glass (%d)'
-                                  % (page, w, h, which, box['bottom'], vh))
+                                  % (page, vw, vh, which, box['bottom'], vh))
                             bad += 1
                         elif box['h'] <= 0 or box['w'] <= 0:
                             print('  FAIL   %s at %dx%d: menu %d opens to nothing (%dx%d)'
-                                  % (page, w, h, which, box['w'], box['h']))
+                                  % (page, vw, vh, which, box['w'], box['h']))
                             bad += 1
                     moved = [n for n in want
                              if got['items'].get(n) and opened['items'].get(n)
@@ -202,14 +251,14 @@ def main():
                     if moved:
                         n = moved[0]
                         print('  FAIL   %s at %dx%d: opening menu %d moved %s from y=%d to y=%d'
-                              % (page, w, h, which, n, got['items'][n]['top'],
+                              % (page, vw, vh, which, n, got['items'][n]['top'],
                                  opened['items'][n]['top']))
                         bad += 1
 
                 if not bad:
                     last = max(b['bottom'] for b in got['items'].values() if b)
                     print('  PASS   %-16s %4dx%-4d first screen ends at y=%d of %d%s'
-                          % (page, w, h, last, vh,
+                          % (page, vw, vh, last, vh,
                              ', %d menus open on the glass without moving it' % got['menus']
                              if got.get('menus') else ''))
     finally:

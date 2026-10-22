@@ -23,6 +23,12 @@ A page is where a number goes to drift. The four it makes:
      sentence for three of them and omitted the fourth.
   4. **the path** — Import → Scan → Review → Protect → Review what will leave →
      AI → Restore, said to be «as it appears in the app».
+  5. **the two fingerprints** — 103, and the only number on this site that is
+     not read off another file but computed: the sha256 of the real artefact in
+     the deploy tree, against what the three download pages print beside it.
+     With nothing signing the installer, that number is the only thing a
+     stranger has, so it is the one number here that is measured rather than
+     compared.
 
 Two words in the glossary are **not** printed by any screen, and they are named
 here rather than quietly allowed: a word that the product does not say is a word
@@ -311,8 +317,7 @@ def the_guide():
         #
         # So the day the pictures arrive, uncommenting the block is not
         # optional — this says so.
-        served = re.sub(r'<!--.*?-->', '', page, flags=re.S)
-        drawn = {src for src in re.findall(r'<img[^>]+src="([^"]+)"', served)
+        drawn = {src for src in re.findall(r'<img[^>]+src="([^"]+)"', served(page))
                  if 'assets/guide/' in src}
         named = set(re.findall(r'(\.\./\.\./assets/guide/[0-9A-Za-z._-]+)', page))
         shots[lang] = {os.path.basename(x) for x in named}
@@ -393,13 +398,363 @@ def the_guide():
     return bad
 
 
-def main():
+# **The download section** — paper 103, rules 81 and 81-أ, 22 October 2026.
+#
+# This is the one page of the site where a visitor is asked to run something,
+# so it is the one page where a wrong sentence costs more than a correction.
+# Three things can be known for certain about it, and all three go wrong
+# silently:
+#
+#   1. **the fingerprint is the file's.** It is printed so that a stranger can
+#      tell our installer from somebody else's, and nothing but the arithmetic
+#      can say whether it still is: so the guard hashes the real file in the
+#      deploy tree and compares. A page printing yesterday's fingerprint beside
+#      today's file teaches a careful person to distrust the one honest check
+#      they have.
+#   2. **the names are names the build really writes.** `package_linux.sh` and
+#      `zprivacy.iss` decide what the two files are called; the pages say it a
+#      second time. A renamed output is a 404 on publishing day, and a 404 is
+#      what a person sees after reading a paragraph about why the fingerprint
+#      matters.
+#   3. **every honest sentence is served in all three languages.** The
+#      SmartScreen paragraph is the product of a measurement on the owner's own
+#      machine, and a translation that quietly drops it leaves one language
+#      promising nothing unusual will happen. The sentences are therefore
+#      marked on the element that carries them — `data-fact="…"` — and the sets
+#      are compared, which is the guide's trick one floor down: the key is not
+#      translated, the prose is.
+#
+# And the **state** of the section, which is the fourth thing and the reason
+# this cannot be left to an eye. Until the published build's own files and
+# fingerprints land, every number on the pages is marked «(final hashes on
+# publishing day)». While one of those markers stands, a publishing run is red:
+# a half-filled download section may not go live, and the only way to make it
+# green is to put the real files in the deploy tree and the real fingerprints
+# on the pages.
+THE_DOWNLOAD_SPEAKS = ('en', 'de', 'ar')
+
+# The two files, and the other place each name is written down: the script that
+# writes it. Checked in that direction on purpose — the build is the fact and
+# the page is the claim.
+THE_ARTEFACTS = {
+    'zprivacy-v1-linux-x86_64.tar.gz': (
+        'scripts/package_linux.sh', r'^NAME="([^"]+)"', '.tar.gz'),
+    'zprivacy-v1-windows-x86_64-setup.exe': (
+        'packaging/windows/zprivacy.iss', r'^OutputBaseFilename=(\S+)', '.exe'),
+}
+
+# Where a deploy serves them from, and therefore where the guard looks for
+# them: `https://z-privacy.com/download/<file>`, rule 81's «from the site
+# itself». Nothing in that folder is committed — `site/download/.gitignore`
+# says why — so on an ordinary round there is nothing to hash, and the markers
+# are what keeps that state from being mistaken for a finished page.
+THE_DEPLOY_TREE = 'site/download'
+
+# Every sentence the section must carry, with the reason it is one of them.
+# A name is added here when the paper adds a fact, and the three pages then go
+# red until all three say it.
+THE_HONEST_SENTENCES = (
+    ('the-linux-bundle', 'what the Linux archive is, and that nothing is installed'),
+    ('verify-it-on-linux', 'the one line that checks the fingerprint, on Linux'),
+    ('the-windows-installer', 'per user, in the person’s own folder, two clicks'),
+    ('verify-it-on-windows', 'the one line that checks the fingerprint, on Windows'),
+    ('windows-will-warn-you', 'the blue page, because nothing has signed the installer'),
+    ('more-info-then-run-anyway', 'the way through it: two clicks, measured'),
+    ('no-administrator-is-asked', 'PrivilegesRequired=lowest, and measured as such'),
+    ('the-warning-comes-once', 'Windows takes the mark off the file after «Run anyway»'),
+    ('untick-launch-to-start-it-yourself',
+     'the installer’s last page starts the app with the box already ticked'),
+    ('the-fingerprint-is-how-you-know',
+     'with no signature, the fingerprint is the only thing that says the file is ours'),
+    ('the-signed-version-follows', 'the MSIX and a signed installer wait for a real certificate — rule 81-أ'),
+    ('the-claims-review-report', 'the outside model’s report belongs beside the download'),
+)
+
+# The owner's approved beta line, in the three languages it is approved in. It
+# says the build is not released yet, which was true of a site that offered
+# nothing to download and stops being true the moment this section carries the
+# published build's own fingerprints. The guard does not change his sentence —
+# it refuses the **pair**, and says so, because the day those two statements
+# are served together is the day one of them is a lie.
+NOT_RELEASED = {
+    'en': 'not yet released',
+    'de': 'noch nicht veröffentlicht',
+    'ar': 'لم تُطلَق بعد',
+}
+
+
+def served(page):
+    """The markup a browser gets: a comment is not served, and the guide's
+    pictures taught that a guard reading one is a guard reading a draft."""
+    return re.sub(r'<!--.*?-->', '', page, flags=re.S)
+
+
+def a_commit_this_repository_holds(sha):
+    """The terms page's rule, over the build line: a page naming a commit that
+    was rebased away sends a reader to nothing.
+
+    It answers None when git itself cannot be asked — a tree without history is
+    not a page telling a lie, and a gate that cannot tell those two apart is a
+    gate that goes red for the wrong cause."""
+    import subprocess
+    try:
+        subprocess.check_output(['git', '-C', ROOT, 'rev-parse', 'HEAD'],
+                                stderr=subprocess.DEVNULL)
+    except Exception:
+        return None
+    return subprocess.call(['git', '-C', ROOT, 'cat-file', '-e', sha + '^{commit}'],
+                           stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL) == 0
+
+
+def the_download(tree_only):
+    import hashlib
+
+    bad = 0
+    facts, shas, builds, markers = {}, {}, {}, {}
+    no_history = False
+    wanted = {name for name, _ in THE_HONEST_SENTENCES}
+
+    # The names, against the scripts that write the files.
+    for artefact, (where, pattern, suffix) in sorted(THE_ARTEFACTS.items()):
+        src = read(where)
+        found = re.search(pattern, src, re.M)
+        if not found:
+            say('FAIL', '%s no longer says what it names its output, so «%s» is '
+                        'a name nothing in this tree stands behind' % (where, artefact))
+            bad = 1
+        elif found.group(1) + suffix != artefact:
+            say('FAIL', '%s writes «%s» and the download pages offer «%s»'
+                % (where, found.group(1) + suffix, artefact))
+            bad = 1
+
+    for lang in THE_DOWNLOAD_SPEAKS:
+        rel = 'site/%s/download/index.html' % lang
+        if not os.path.exists(os.path.join(ROOT, rel)):
+            say('FAIL', 'there is no %s, and rule 81 says the download comes from '
+                        'the site itself in three languages' % rel)
+            bad = 1
+            continue
+        page = served(read(rel))
+
+        offered = set(re.findall(r'href="/download/([^"]+)"', page))
+        for artefact in sorted(set(THE_ARTEFACTS) - offered):
+            say('FAIL', '%s does not offer %s' % (rel, artefact))
+            bad = 1
+        for extra in sorted(offered - set(THE_ARTEFACTS)):
+            say('FAIL', '%s offers %s, which is not one of the two files this '
+                        'release carries' % (rel, extra))
+            bad = 1
+
+        printed = {}
+        for name, value in re.findall(r'data-of="([^"]+)"[^>]*>([^<]*)<', page):
+            value = value.strip()
+            if not re.fullmatch(r'[0-9a-f]{64}', value):
+                say('FAIL', '%s prints «%s» as the fingerprint of %s, and a sha256 is '
+                            '64 hexadecimal characters' % (rel, value[:20], name))
+                bad = 1
+                continue
+            printed[name] = value
+        for artefact in sorted(offered & set(THE_ARTEFACTS)):
+            if artefact not in printed:
+                say('FAIL', '%s offers %s and prints no fingerprint for it'
+                    % (rel, artefact))
+                bad = 1
+        shas[lang] = printed
+
+        # **Which build is this?** — the question a person who has the file
+        # cannot answer from its name, and the one the old gate in `gates.sh`
+        # has asked of a download page since the first one existed. The commit
+        # is printed beside the fingerprint, checked against this repository's
+        # own history, and it is what lets a reader match the page against the
+        # `BUILD-INFO.txt` inside the archive.
+        #
+        # The two files may name two commits while they are stand-ins — this
+        # machine builds no `.exe` — and the published pair comes from one
+        # green run. So what is held here is that each name is a real commit
+        # and that the three languages print the same one.
+        from_commit = {}
+        for name, value in re.findall(r'data-built-from="([^"]+)"[^>]*>([^<]*)<', page):
+            value = value.strip()
+            if not re.fullmatch(r'[0-9a-f]{7,40}', value):
+                say('FAIL', '%s says %s was built from «%s», and that is not a '
+                            'commit' % (rel, name, value[:20]))
+                bad = 1
+                continue
+            held = a_commit_this_repository_holds(value)
+            if held is None:
+                no_history = True
+            elif not held:
+                say('FAIL', '%s says %s was built from %s, and this repository has no '
+                            'such commit' % (rel, name, value))
+                bad = 1
+            from_commit[name] = value
+        for artefact in sorted(offered & set(THE_ARTEFACTS)):
+            if artefact not in from_commit:
+                say('FAIL', '%s offers %s and does not say which build it is'
+                    % (rel, artefact))
+                bad = 1
+        builds[lang] = from_commit
+
+        said = {}
+        for tag, key, inner in re.findall(
+                r'<(\w+)[^>]*data-fact="([^"]+)"[^>]*>(.*?)</\1>', page, re.S):
+            said[key] = re.sub(r'<[^>]+>', '', inner).strip()
+        for key in sorted(wanted - set(said)):
+            say('FAIL', '%s says nothing for «%s» — %s'
+                % (rel, key, dict(THE_HONEST_SENTENCES)[key]))
+            bad = 1
+        for key in sorted(set(said) - wanted):
+            say('FAIL', '%s carries the sentence «%s», which this section does not '
+                        'know about: a fact the other two languages do not say'
+                % (rel, key))
+            bad = 1
+        for key, text in sorted(said.items()):
+            if len(text) < 40:
+                say('FAIL', '%s marks «%s» on %d characters, which is not a sentence '
+                            'anybody can read' % (rel, key, len(text)))
+                bad = 1
+        facts[lang] = set(said)
+        markers[lang] = len(re.findall(r'class="[^"]*\bprovisional\b[^"]*"', page))
+
+        # **Every address this page sends a reader to answers.** The section
+        # holds a slot for the outside model's report, and the day somebody
+        # drops a link into that line it must point at something: a dead link
+        # on the one page that asks a reader to run a program is worse than an
+        # empty slot, which at least says what it is. Nothing else on this site
+        # checks a root-relative href — the network loop asks about absolute
+        # ones, and the privacy and terms pages about the files they name in a
+        # code span — so the pages that print fingerprints get it here.
+        #
+        # The two artefacts are left out: they are not in the tree until
+        # publishing day, which is the markers' business and measured above.
+        for href in sorted(set(re.findall(r'href="(/[^"#]*)"', page))):
+            if href.startswith('/download/'):
+                continue
+            target = os.path.join(ROOT, 'site', href.strip('/'))
+            there = (os.path.isfile(os.path.join(target, 'index.html'))
+                     if href.endswith('/') else os.path.isfile(target))
+            if not there:
+                say('FAIL', '%s sends a reader to %s, and there is no such page in '
+                            'the tree' % (rel, href))
+                bad = 1
+
+        front = read('site/%s/index.html' % lang)
+        if 'href="/%s/download/"' % lang not in front:
+            say('FAIL', 'site/%s/index.html does not send anybody to /%s/download/'
+                % (lang, lang))
+            bad = 1
+
+    # One language may not be shorter than another, and one may not print a
+    # different fingerprint for the same file: a reader who checks the German
+    # page is owed what a reader of the English page is owed.
+    if len(facts) == len(THE_DOWNLOAD_SPEAKS):
+        for lang in THE_DOWNLOAD_SPEAKS[1:]:
+            short = facts[THE_DOWNLOAD_SPEAKS[0]] - facts[lang]
+            extra = facts[lang] - facts[THE_DOWNLOAD_SPEAKS[0]]
+            if short or extra:
+                say('FAIL', 'site/%s/download/ says a different set of things than the '
+                            'English page: missing %s, extra %s'
+                    % (lang, sorted(short) or 'none', sorted(extra) or 'none'))
+                bad = 1
+        for artefact in sorted(THE_ARTEFACTS):
+            spellings = {shas[l].get(artefact) for l in THE_DOWNLOAD_SPEAKS}
+            if len(spellings) != 1:
+                say('FAIL', 'the three pages print %d different fingerprints for %s'
+                    % (len(spellings), artefact))
+                bad = 1
+            named = {builds[l].get(artefact) for l in THE_DOWNLOAD_SPEAKS}
+            if len(named) != 1:
+                say('FAIL', 'the three pages name %d different builds for %s: %s'
+                    % (len(named), artefact,
+                       ', '.join(sorted(x or 'nothing' for x in named))))
+                bad = 1
+        if len(set(markers.values())) != 1:
+            say('FAIL', 'the three pages carry %s provisional markers: a language whose '
+                        'numbers are marked and one whose are not'
+                % ' / '.join('%s %d' % (l, markers[l]) for l in THE_DOWNLOAD_SPEAKS))
+            bad = 1
+
+    # **The arithmetic.** Every file that is in the deploy tree is hashed and
+    # compared, in every mode: a file that is there is a file a visitor can
+    # download, and a wrong number beside it is wrong today and not on
+    # publishing day.
+    here, verified = {}, 0
+    for artefact in sorted(THE_ARTEFACTS):
+        path = os.path.join(ROOT, THE_DEPLOY_TREE, artefact)
+        if not os.path.exists(path):
+            continue
+        digest = hashlib.sha256()
+        with open(path, 'rb') as fh:
+            for chunk in iter(lambda: fh.read(1 << 20), b''):
+                digest.update(chunk)
+        here[artefact] = digest.hexdigest()
+        claimed = {shas[l].get(artefact) for l in shas}
+        if claimed != {here[artefact]}:
+            say('FAIL', '%s/%s hashes to %s, and the pages print %s'
+                % (THE_DEPLOY_TREE, artefact, here[artefact],
+                   ' and '.join(sorted(x or 'nothing' for x in claimed))))
+            bad = 1
+        else:
+            verified += 1
+
+    standing = sum(markers.values())
+    # **The publishing bar.** A round on a workstation is not a publishing run:
+    # the files are built by two jobs on two platforms and land in the deploy
+    # tree by hand, so `--tree-only` reports the state and does not fail on it.
+    # Without it, this script is being asked whether the site can go live, and
+    # the answer is no while any of it is provisional.
+    if not tree_only:
+        if standing:
+            say('FAIL', '%d «(final hashes on publishing day)» markers still stand, so '
+                        'this section is not the published build’s: put the final '
+                        'files in %s/ and their fingerprints on the three pages, then '
+                        'take the markers out' % (standing, THE_DEPLOY_TREE))
+            bad = 1
+        for artefact in sorted(THE_ARTEFACTS):
+            if artefact not in here:
+                say('FAIL', 'the pages offer %s and %s/ does not hold it, so the link '
+                            'is a 404 and the fingerprint beside it is about nothing'
+                    % (artefact, THE_DEPLOY_TREE))
+                bad = 1
+
+    # The pair the site may not serve at once. It is not about the mode: the
+    # moment the markers are gone, these pages claim to be the published
+    # build's, and the first screen still saying the build is not released is
+    # one of the two sentences being false. His word, not a guard's — but it
+    # cannot be forgotten this way.
+    if not standing and len(facts) == len(THE_DOWNLOAD_SPEAKS):
+        for lang in THE_DOWNLOAD_SPEAKS:
+            for rel in ('site/%s/index.html' % lang, 'site/index.html'):
+                line = re.search(r'<p class="beta"[^>]*>(.*?)</p>', read(rel), re.S)
+                if line and NOT_RELEASED[lang] in line.group(1):
+                    say('FAIL', '%s still says the build is «%s» while /%s/download/ '
+                                'offers the published build: one of the two sentences '
+                                'needs the owner’s word before this deploys'
+                        % (rel, NOT_RELEASED[lang], lang))
+                    bad = 1
+
+    if no_history:
+        say('PASS', 'the builds the pages name were not checked against the history, '
+                    'because git cannot be asked in this tree')
+    if not bad:
+        say('PASS', 'the download is one section in three languages: %d files named by '
+                    'the scripts that build them and by the commit they came from, %d '
+                    'honest sentences on each page, %d of %d fingerprints measured '
+                    'against the file in %s/, and %d markers still saying the numbers '
+                    'are a development build’s'
+            % (len(THE_ARTEFACTS), len(wanted), verified, len(THE_ARTEFACTS),
+               THE_DEPLOY_TREE, standing))
+    return bad
+
+
+def main(tree_only=False):
     lits = dart_strings()
     if len(lits) < 200:
         say('FAIL', 'only %d strings were read out of the app, so nothing was really compared' % len(lits))
         return 1
     bad = (crates() | fonts() | glossary(lits) | path(lits) | the_interface()
-           | the_guide())
+           | the_guide() | the_download(tree_only))
     print()
     print('every number on the site has a deed behind it' if not bad
           else 'A NUMBER ON THE SITE HAS NO DEED BEHIND IT')
@@ -407,4 +762,9 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    # `--tree-only` is handed down by `check_site.sh`, and means the same thing
+    # here as it does there: everything but what only the hand that publishes
+    # can answer. The two artefacts are built by two jobs on two platforms and
+    # land in the deploy tree by hand, so their absence is a state on a
+    # workstation and a refusal on a publishing run.
+    sys.exit(main('--tree-only' in sys.argv[1:]))
