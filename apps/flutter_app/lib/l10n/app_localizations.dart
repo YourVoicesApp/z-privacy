@@ -532,6 +532,12 @@ abstract class AppLocalizations {
   /// **'Another copy of Z Privacy changed this vault. Close that window, or lock and unlock here to take in its work.'**
   String get troubleVaultChangedElsewhere;
 
+  /// Paper 102 §3 — the session file's own «changed elsewhere». Two causes, one next move: another copy of Z Privacy wrote the file, or an older vault left a file at this session's number. The place is fine, so this must not read like a storage refusal.
+  ///
+  /// In en, this message translates to:
+  /// **'This session\'s file on your disk was not written by this window, so Z Privacy did not write over it. Close the other copy, or lock and unlock here to read what it wrote.'**
+  String get troubleSessionChangedElsewhere;
+
   /// A folder whose permissions would have to be changed to write in it: the program does not touch them, and says both ways out. The reason is the core's, lower-cased.
   ///
   /// In en, this message translates to:
@@ -1030,6 +1036,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last scan: {note}'**
   String lastScanNote(String note);
+
+  /// Paper 102 §4 — the badge over a request with no document above it. The scanner does run on what is typed (set_question reads it with the same packs and the vault), and the badge used to say «Not scanned yet» for ever because it read the document's scan origin and there was no document.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned as you typed'**
+  String get scannedAsYouTyped;
 
   /// The scan happened as the document came in.
   ///

@@ -540,6 +540,25 @@ class Workbench extends ChangeNotifier {
   String? trouble;
   bool busy = false;
 
+  /// **What the disk said about the last act that tried to write** — paper
+  /// 102 §2, read from the one snapshot every act already refreshes.
+  ///
+  /// It is a *state*: a copy whose vault another window changed refuses every
+  /// later write until a lock and an unlock, so a sentence that appeared once
+  /// and went would be gone by the next press — and the press after it would
+  /// answer «Protected as …» again over a file that never heard of the word.
+  /// The sentence is the core's own refusal through `humanMessage`, so the
+  /// cause names itself rather than borrowing the vault's words.
+  String? get diskTrouble {
+    final refused = snap?.theDiskRefused;
+    return refused == null ? null : humanMessage(refused);
+  }
+
+  /// What the band says: this act's own refusal first, and the disk's standing
+  /// verdict when the act itself had nothing to report. One line either way —
+  /// two stacked sentences about one press is a wall, not a warning.
+  String? get troubleToShow => trouble ?? diskTrouble;
+
   DocumentView? get document => snap?.document;
   List<Finding> get findings => snap?.findings ?? const [];
   List<TokenRow> get tokens => snap?.tokens ?? const [];

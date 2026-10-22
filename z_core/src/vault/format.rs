@@ -80,7 +80,7 @@ use super::model::{
 /// |---|---|---|
 /// | `crypto::FORMAT_VERSION` = 2 | the vault file's envelope | Argon2 params, the wrapped master key, the nonce. **Unmoved by 064:** the envelope does not change, only what the body says. |
 /// | `MODEL_VERSION` = 15 | the vault body, below | identities, values, lists, settings, credentials, the session records (064) — and the blocks with their exemptions (089, rule 59). |
-/// | `conversation::SESSION_FORMAT_VERSION` = 6 | each session's own file | one conversation's turns — since 089 rule 9 the documents its preview holds, and since rule 67 which chat each turn belongs to. A different format in a different file; it must never borrow this number. |
+/// | `conversation::SESSION_FORMAT_VERSION` = 7 | each session's own file | one conversation's turns — since 089 rule 9 the documents its preview holds, since rule 67 which chat each turn belongs to, and since rule 55-ز the request the person typed with the covers on it. A different format in a different file; it must never borrow this number. |
 ///
 /// **This table said 12 and 1 while the constants said 13 and 4** — 089 rule 8,
 /// the ed's note. Two of the three numbers it exists to fence were wrong in the

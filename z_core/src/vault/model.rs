@@ -597,9 +597,16 @@ impl Vault {
 
     /// The next session number. It only goes up, and a deleted one is spent.
     pub(crate) fn take_conversation_number(&mut self) -> u32 {
-        let number = self.next_conversation;
+        let number = self.next_conversation_number();
         self.next_conversation = self.next_conversation.saturating_add(1);
         number
+    }
+
+    /// **The number the next birth would spend, without spending it** — paper
+    /// 102 §3: a birth looks at the floor before it writes, and the only honest
+    /// way to look is to ask the same counter the taking asks.
+    pub(crate) fn next_conversation_number(&self) -> u32 {
+        self.next_conversation
     }
 
     pub(crate) fn conversation(&self, number: u32) -> Option<&Conversation> {

@@ -515,9 +515,29 @@ impl VaultStore {
     /// It takes `(kind, value, token)` and never a bench, because the bench is
     /// the caller's: `ops` reads the one place that knows which words this
     /// conversation has named and hands the list in.
-    pub(crate) fn remember_blocks(&mut self, words: &[(Kind, String, String)]) -> u32 {
-        if words.is_empty() || self.state() != VaultState::Unlocked {
-            return 0;
+    /// **Every word becomes a block, and a refusal to write one is said out
+    /// loud** — 089 rule 1, and paper 102 §2.
+    ///
+    /// This answered a bare count until 22 October 2026, and `0` meant two
+    /// different things: «this vault had nothing new to learn» and «the disk
+    /// refused me». The two-window round measured what the second one costs —
+    /// twenty-four minutes of work, eighteen tokens on the glass, «Protected
+    /// as …, in 5 places» under the person's hand, and a vault file that never
+    /// moved. The error was thrown away by `unwrap_or(0)` on the last line,
+    /// and the sentence that exists for exactly this («Another copy of Z
+    /// Privacy changed this vault…») had no way to be reached.
+    ///
+    /// So the answer is a result now: `Ok(n)` is «n words became blocks», and
+    /// an error is the disk's own refusal, carried to the one place that
+    /// records what the disk said (`ops::the_decisions_are_written`).
+    pub(crate) fn remember_blocks(&mut self, words: &[(Kind, String, String)]) -> ApiResult<u32> {
+        if words.is_empty() {
+            return Ok(0);
+        }
+        if self.state() != VaultState::Unlocked {
+            // Not «nothing to learn»: there is no key to write with, and the
+            // words are still in the bench's store waiting for one.
+            return Err(ApiError::VaultLocked);
         }
         // Asked before the write, so that a vault which has nothing to learn is
         // not resealed and rewritten for the asking.
@@ -529,11 +549,11 @@ impl VaultStore {
                     None => !value.trim().is_empty() && !token.is_empty(),
                 })
                 .count()
-        });
-        if matches!(wanted, Ok(0) | Err(_)) {
-            return 0;
+        })?;
+        if wanted == 0 {
+            return Ok(0);
         }
-        let made = self.with_open_mut(|vault| {
+        self.with_open_mut(|vault| {
             let mut made = 0u32;
             for (kind, value, token) in words {
                 if vault.remember_block(*kind, value, token) {
@@ -541,8 +561,7 @@ impl VaultStore {
                 }
             }
             Ok(made)
-        });
-        made.unwrap_or(0)
+        })
     }
 
     /// **Exempt a word's block from one conversation** — «In this
@@ -741,6 +760,12 @@ impl VaultStore {
 
     /// This session's key, for sealing its own file. Private to the crate and
     /// handed out nowhere else.
+    /// **What number the next birth would spend** — `None` while the vault is
+    /// shut, because the counter is in the sealed body.
+    pub(crate) fn the_next_conversation_number(&self) -> Option<u32> {
+        Some(self.open.as_ref()?.vault.next_conversation_number())
+    }
+
     pub(crate) fn conversation_key(&self, number: u32) -> Option<crypto::SecretKey> {
         let talk = self.open.as_ref()?.vault.conversation(number)?;
         Some(zeroize::Zeroizing::new(talk.key))

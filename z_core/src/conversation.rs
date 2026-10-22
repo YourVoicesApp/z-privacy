@@ -79,7 +79,15 @@ use crate::vault::crypto::{self, Purpose, SecretKey};
 ///   the same honest zero: the number was not written down when they were
 ///   asked, and rule 69's «sent · answered» is drawn from that number because
 ///   after rule 9 it is all that is left of a document that went out.
-pub(crate) const SESSION_FORMAT_VERSION: u16 = 6;
+/// * **7** — **the request the person typed, and the covers on it** (rule
+///   55-ز, 22 October 2026). A version 6 file reads with every kept record
+///   holding an **empty** request, which is the truth about it: nothing was
+///   written down because this house had nowhere to write it, and «documents
+///   are saved, typed text is not» was the owner's own sentence for that.
+///   Such a file **upgrades on its next write** — the writer always writes the
+///   current version — so a session opened by this build and acted on once is
+///   a version 7 file, and nothing in it moved.
+pub(crate) const SESSION_FORMAT_VERSION: u16 = 7;
 
 /// The folder each session's file sits in, under the data directory.
 const FOLDER: &str = "sessions";
@@ -242,6 +250,23 @@ pub(crate) struct Kept {
     /// again. The same list `Session::dismissed` holds.
     pub dismissed: Vec<String>,
     pub at: u64,
+    /// **The request as the person left it, and the covers on it** — format 7,
+    /// rule 55-ز (the owner, 22 October 2026).
+    ///
+    /// «Documents are saved, typed text is not» was his first sentence of the
+    /// two-window night, and it was structural: this record had no field for
+    /// either, so a bench whose whole work was a typed request had nothing a
+    /// writer could keep. The request is kept here beside the document it was
+    /// typed under — one record, because they are one bench and one act — and
+    /// a bench with no document at all keeps its request with `text` empty,
+    /// which is what a typed-only session is.
+    ///
+    /// The marks are the request's own, in the request's own offsets. They are
+    /// a second list and not the document's, because a token in the request
+    /// and a token in the document point into two different strings — the
+    /// trap 096 was built around.
+    pub request: String,
+    pub request_marks: Vec<KeptMark>,
 }
 
 /// **The persistence codes of a scope and a source**, for this file only.
@@ -440,22 +465,17 @@ impl Body {
             out.extend_from_slice(&kept.pages.to_be_bytes());
             out.extend_from_slice(&kept.bytes.to_be_bytes());
             out.extend_from_slice(&kept.readable.to_be_bytes());
-            out.extend_from_slice(&(kept.marks.len() as u32).to_be_bytes());
-            for mark in &kept.marks {
-                out.extend_from_slice(&mark.start.to_be_bytes());
-                out.extend_from_slice(&mark.end.to_be_bytes());
-                put_str(&mut out, &mark.token);
-                out.push(crate::vault::format::kind_code(mark.kind));
-                out.push(scope_code(mark.scope));
-                out.push(source_code(mark.source));
-                put_str(&mut out, &mark.detail);
-                out.push(u8::from(mark.decided));
-                out.push(u8::from(mark.orphaned));
-            }
+            put_marks(&mut out, &kept.marks);
             out.extend_from_slice(&(kept.dismissed.len() as u32).to_be_bytes());
             for value in &kept.dismissed {
                 put_str(&mut out, value);
             }
+            // Format 7 — the request and its own covers, at the end of this
+            // record, after everything format 6 wrote. A session written by an
+            // older build stops above and holds no request, which is the truth
+            // about it rather than a request that was lost.
+            put_str(&mut out, &kept.request);
+            put_marks(&mut out, &kept.request_marks);
         }
         // Format 6 — the chat that is open, last of all, after everything
         // format 5 wrote. Nothing already written moves, which is the rule
@@ -576,35 +596,20 @@ impl Body {
                 let pages = u32::from_be_bytes(array::<4>(bytes, &mut at)?);
                 let file_bytes = u32::from_be_bytes(array::<4>(bytes, &mut at)?);
                 let readable = u32::from_be_bytes(array::<4>(bytes, &mut at)?);
-                let marks_count = u32::from_be_bytes(array::<4>(bytes, &mut at)?);
-                let mut marks = Vec::new();
-                for _ in 0..marks_count {
-                    let start = u32::from_be_bytes(array::<4>(bytes, &mut at)?);
-                    let end = u32::from_be_bytes(array::<4>(bytes, &mut at)?);
-                    let token = string(bytes, &mut at)?;
-                    let kind = crate::vault::format::kind_of(array::<1>(bytes, &mut at)?[0])?;
-                    let scope = scope_of(array::<1>(bytes, &mut at)?[0])?;
-                    let source = source_of(array::<1>(bytes, &mut at)?[0])?;
-                    let detail = string(bytes, &mut at)?;
-                    let decided = array::<1>(bytes, &mut at)?[0] != 0;
-                    let orphaned = array::<1>(bytes, &mut at)?[0] != 0;
-                    marks.push(KeptMark {
-                        start,
-                        end,
-                        token,
-                        kind,
-                        scope,
-                        source,
-                        detail,
-                        decided,
-                        orphaned,
-                    });
-                }
+                let marks = read_marks(bytes, &mut at)?;
                 let dismissed_count = u32::from_be_bytes(array::<4>(bytes, &mut at)?);
                 let mut dismissed = Vec::new();
                 for _ in 0..dismissed_count {
                     dismissed.push(string(bytes, &mut at)?);
                 }
+                // Format 7. An older file ends this record here: no request
+                // and no covers on one, which is «nothing was typed under it»
+                // and reads correctly as that.
+                let (request, request_marks) = if version >= 7 {
+                    (string(bytes, &mut at)?, read_marks(bytes, &mut at)?)
+                } else {
+                    (String::new(), Vec::new())
+                };
                 kept.push(Kept {
                     number,
                     chat,
@@ -617,6 +622,8 @@ impl Body {
                     marks,
                     dismissed,
                     at: when,
+                    request,
+                    request_marks,
                 });
             }
         }
@@ -654,21 +661,41 @@ pub(crate) fn write(
     number: u32,
     key: &SecretKey,
     body: &Body,
-) -> ApiResult<()> {
+) -> ApiResult<Vec<u8>> {
     let folder = dir.join(FOLDER);
     crate::secure_file::secure_dir(&folder, "session")?;
     let sealed = crypto::seal_for(key, Purpose::SessionSeal, &body.to_bytes())?;
-    crate::secure_file::replace_atomically(&path(dir, number), "zs.new", &sealed, "session")
+    crate::secure_file::replace_atomically(&path(dir, number), "zs.new", &sealed, "session")?;
+    // **The bytes that are now on the disk, handed back** — paper 102 §3. The
+    // caller keeps them as «what this run last read», so the next write can
+    // tell its own work from another copy's without reading the file again.
+    Ok(sealed)
+}
+
+/// **What is on the disk at this session's path, unopened** — paper 102 §3.
+///
+/// The sealed bytes, which is all a compare-before-replace needs: whether the
+/// file *can* be opened is a different question, and a write may not destroy a
+/// file it cannot read either.
+pub(crate) fn bytes_on_disk(dir: &std::path::Path, number: u32) -> ApiResult<Option<Vec<u8>>> {
+    crate::secure_file::read_no_follow(&path(dir, number), "session")
 }
 
 /// Read one session's file back. `None` means there is no file — a session that
 /// was named and has not yet been written to, which is an ordinary state.
-pub(crate) fn read(dir: &std::path::Path, number: u32, key: &SecretKey) -> ApiResult<Option<Body>> {
-    let Some(sealed) = crate::secure_file::read_no_follow(&path(dir, number), "session")? else {
+pub(crate) fn read(
+    dir: &std::path::Path,
+    number: u32,
+    key: &SecretKey,
+) -> ApiResult<Option<(Body, Vec<u8>)>> {
+    let Some(sealed) = bytes_on_disk(dir, number)? else {
         return Ok(None);
     };
     let plain = crypto::open_for(key, Purpose::SessionSeal, &sealed)?;
-    Body::from_bytes(&plain).map(Some)
+    // The sealed bytes travel with the body: they are what the body *is* on
+    // the disk, and the writer compares against them rather than trusting that
+    // nothing moved in between (paper 102 §3).
+    Body::from_bytes(&plain).map(|body| Some((body, sealed)))
 }
 
 /// **Destroy one session's file.**
@@ -694,6 +721,44 @@ pub(crate) fn remove(dir: &std::path::Path, number: u32) -> ApiResult<()> {
             reason: format!("session {number} could not be deleted: {e}"),
         }),
     }
+}
+
+/// **One list of covers, written in one layout** — the document's and the
+/// request's both. Two copies of these ten lines would be two chances for the
+/// reader and the writer to disagree about one of them, and the second list
+/// arrived with format 7.
+fn put_marks(out: &mut Vec<u8>, marks: &[KeptMark]) {
+    out.extend_from_slice(&(marks.len() as u32).to_be_bytes());
+    for mark in marks {
+        out.extend_from_slice(&mark.start.to_be_bytes());
+        out.extend_from_slice(&mark.end.to_be_bytes());
+        put_str(out, &mark.token);
+        out.push(crate::vault::format::kind_code(mark.kind));
+        out.push(scope_code(mark.scope));
+        out.push(source_code(mark.source));
+        put_str(out, &mark.detail);
+        out.push(u8::from(mark.decided));
+        out.push(u8::from(mark.orphaned));
+    }
+}
+
+/// The same layout, read back.
+fn read_marks(bytes: &[u8], at: &mut usize) -> ApiResult<Vec<KeptMark>> {
+    let how_many = u32::from_be_bytes(array::<4>(bytes, at)?);
+    let mut marks = Vec::new();
+    for _ in 0..how_many {
+        let start = u32::from_be_bytes(array::<4>(bytes, at)?);
+        let end = u32::from_be_bytes(array::<4>(bytes, at)?);
+        let token = string(bytes, at)?;
+        let kind = crate::vault::format::kind_of(array::<1>(bytes, at)?[0])?;
+        let scope = scope_of(array::<1>(bytes, at)?[0])?;
+        let source = source_of(array::<1>(bytes, at)?[0])?;
+        let detail = string(bytes, at)?;
+        let decided = array::<1>(bytes, at)?[0] != 0;
+        let orphaned = array::<1>(bytes, at)?[0] != 0;
+        marks.push(KeptMark { start, end, token, kind, scope, source, detail, decided, orphaned });
+    }
+    Ok(marks)
 }
 
 fn put_str(out: &mut Vec<u8>, text: &str) {
@@ -859,7 +924,9 @@ mod tests {
     #[test]
     fn a_saved_document_keeps_its_decisions() {
         const TEXT: &str = "Hej Stefan Keller, ditt konto är öppet.";
+        const REQUEST: &str = "Was schuldet Stefan Keller?";
         let at = TEXT.find("Stefan Keller").expect("the fixture");
+        let in_request = REQUEST.find("Stefan Keller").expect("the fixture");
         let body = Body {
             turns: Vec::new(),
             kept: vec![Kept {
@@ -884,6 +951,18 @@ mod tests {
                 }],
                 dismissed: vec!["Stadtwerke".to_string()],
                 at: 1_760_000_000,
+                request: REQUEST.to_string(),
+                request_marks: vec![KeptMark {
+                    start: in_request as u32,
+                    end: (in_request + "Stefan Keller".len()) as u32,
+                    token: "__Z_F610_PERSON_343AD503__".to_string(),
+                    kind: crate::api::Kind::Person,
+                    scope: crate::api::Scope::Conversation,
+                    source: crate::api::Source::Hand,
+                    detail: "selected by you".to_string(),
+                    decided: true,
+                    orphaned: false,
+                }],
             }],
             next_doc: 4,
             next_chat: 1,
@@ -910,6 +989,81 @@ mod tests {
         assert_eq!(again.take_number(false), 4);
         assert_eq!(again.take_number(false), 5);
         assert_eq!(again.take_number(true), 1, "the two sequences are not one");
+        // **And the request the person typed under it survives with its
+        // covers** — format 7, rule 55-ز. The marks are the request's own
+        // offsets, into the request and not into the document.
+        let cover = kept.request_marks.first().expect("the request's own cover");
+        assert_eq!(
+            kept.request.get(cover.start as usize..cover.end as usize),
+            Some("Stefan Keller"),
+            "the request's cover no longer points at the word it was made on"
+        );
+    }
+
+    /// **A session written by a build with no request field reads, and upgrades
+    /// on its next write** — the migration of format 7, pinned rather than
+    /// asserted in prose.
+    ///
+    /// The old bytes are built from the new ones rather than typed out: a
+    /// version 6 writer wrote everything this writer writes except the two
+    /// fields at the end of each kept record, and for a record with no request
+    /// those two are exactly eight zero bytes — a string of length zero and a
+    /// mark count of zero. So the fixture is «today's bytes, minus that tail,
+    /// announced as 6», which is the one construction that cannot drift from
+    /// the writer it is imitating.
+    #[test]
+    fn a_format_six_file_reads_with_no_request_and_upgrades_on_its_next_write() {
+        let body = Body {
+            turns: Vec::new(),
+            kept: vec![Kept {
+                number: 1,
+                chat: false,
+                name: "Brev_Lindqvist.txt".to_string(),
+                text: "Hej Anna Lindqvist.".to_string(),
+                kind: crate::api::DocumentKind::Txt,
+                pages: 1,
+                bytes: 19,
+                readable: 100,
+                marks: Vec::new(),
+                dismissed: Vec::new(),
+                at: 1_760_000_000,
+                request: String::new(),
+                request_marks: Vec::new(),
+            }],
+            next_doc: 2,
+            next_chat: 1,
+            chat_now: 1,
+        };
+        let new_bytes = body.to_bytes();
+        // The four bytes of `chat_now` are the body's last field, so the
+        // record's own tail sits just before them.
+        let tail = new_bytes.len() - 4;
+        let mut old_bytes = Vec::new();
+        old_bytes.extend_from_slice(&6u16.to_be_bytes());
+        old_bytes.extend_from_slice(&new_bytes[2..tail - 8]);
+        old_bytes.extend_from_slice(&new_bytes[tail..]);
+        assert_eq!(
+            old_bytes.len() + 8,
+            new_bytes.len(),
+            "the fixture is not the new bytes minus the request's eight"
+        );
+
+        let read = Body::from_bytes(&old_bytes).expect("a version 6 file must open");
+        let kept = read.kept.first().expect("the document is in the old file");
+        assert_eq!(kept.name, "Brev_Lindqvist.txt", "the old record did not read");
+        assert!(kept.request.is_empty(), "an old file cannot hold a request");
+        assert!(kept.request_marks.is_empty(), "an old file cannot hold a cover on one");
+        assert_eq!(read.chat_now, 1, "the field after the record was read at the wrong offset");
+
+        // The upgrade: the writer writes today's version, and what it writes
+        // reads back as itself.
+        let written = read.to_bytes();
+        assert_eq!(
+            u16::from_be_bytes([written[0], written[1]]),
+            SESSION_FORMAT_VERSION,
+            "a file read from an older version was written back as the older version"
+        );
+        assert_eq!(Body::from_bytes(&written).expect("the upgraded file"), read);
     }
 
     /// **A session written before rule 9 holds no document, and says so.**

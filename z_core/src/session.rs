@@ -349,6 +349,59 @@ impl Session {
             });
         }
         self.protections.sort_by_key(|p| p.start);
+        // **And the request comes back as a request** — rule 55-ز, format 7.
+        //
+        // The copy carries what was typed under the document and the covers on
+        // it, in the request's own offsets, so this restores them where they
+        // belong: in the box the person wrote them in, and not as a second
+        // document. A typed-only session is the case this was written for —
+        // `kept.text` is empty there and the whole of the work is here.
+        //
+        // The token store is filled from these marks as it is from the
+        // document's, because the value of a cover is the text under it (there
+        // is one copy of every value and no second place for them to disagree)
+        // — and a word covered in both halves takes one entry, which is the
+        // same «one value, one token» the live bench keeps.
+        self.question = Secret::new(kept.request.clone());
+        self.question_protections.clear();
+        self.question_tokens.clear();
+        for mark in &kept.request_marks {
+            let (start, end) = (mark.start as usize, mark.end as usize);
+            let Some(value) = kept.request.get(start..end) else { continue };
+            if self.tokens.get(&mark.token).is_none() {
+                self.tokens.insert(
+                    mark.token.clone(),
+                    crate::tokens::TokenEntry {
+                        value: Secret::new(value.to_string()),
+                        aliases: Vec::new(),
+                        kind: mark.kind,
+                        scope: mark.scope,
+                        source: mark.source,
+                        decided: mark.decided,
+                        source_detail: mark.detail.clone(),
+                    },
+                );
+            }
+            self.question_protections.push(Protection {
+                start,
+                end,
+                token: mark.token.clone(),
+                act,
+                kind: mark.kind,
+                scope: mark.scope,
+                source: mark.source,
+                source_detail: mark.detail.clone(),
+                decided: mark.decided,
+                orphaned: mark.orphaned,
+            });
+            if !self.question_tokens.contains(&mark.token) {
+                self.question_tokens.push(mark.token.clone());
+            }
+        }
+        self.question_protections.sort_by_key(|p| p.start);
+        // Derived from the records, never remembered: the one function that
+        // builds what leaves builds it here too.
+        self.question_safe = self.the_request_as_it_leaves();
         // **Scanned, and the band must say so**: the marks on this document
         // were made by the scan that came with it and by hand, before it was
         // put away, so «not scanned yet» over a document full of marks would be
@@ -401,6 +454,25 @@ impl Session {
         for token in &mut self.question_tokens {
             if let Some(new) = moved.get(token.as_str()) {
                 *token = (*new).to_string();
+            }
+        }
+        // **The fourth list, and the one that was left behind** — paper 102 §5.
+        //
+        // The request's own records carry a token each, exactly as the
+        // document's do above, and they were the one list this rename never
+        // touched. What a session born at its first exit then did to a word
+        // protected by hand in the request afterwards: `question_safe` is
+        // derived from these records on every later act in the request
+        // (`the_request_as_it_leaves`), so the **pre-birth** name came back
+        // into what leaves — a token in the payload that this session's key
+        // cannot resolve and the door back cannot open.
+        //
+        // The same family as the traps in this house's own notes: a rule
+        // applied to a list of records and its sister left, measured four
+        // times before this one.
+        for protection in &mut self.question_protections {
+            if let Some(new) = moved.get(protection.token.as_str()) {
+                protection.token = (*new).to_string();
             }
         }
         for (old, new) in &pairs {
@@ -776,6 +848,37 @@ pub(crate) struct Core {
     /// data directory, for `chats_opened`'s own reason — session 1 here is not
     /// session 1 in another folder.
     pub conversation_before_the_lock: Option<u32>,
+    /// **What each session's file held when this run last read it** — paper
+    /// 102 §3, 22 October 2026, and the session file's own
+    /// `ensure_disk_unchanged`.
+    ///
+    /// The vault has had that guard since 050/A; `conversation::write`
+    /// replaced whatever was on the disk, and the two-window round measured
+    /// what that costs — a session file that held a document and eleven
+    /// decisions came back holding nothing at all. A write is now allowed only
+    /// when the bytes it is replacing are the bytes its body was read from, or
+    /// when there is nothing there to lose.
+    ///
+    /// `None` **as a value** means «there was no file when this was read»,
+    /// which is a different fact from a number that is absent from the map:
+    /// absent means this run has not read that session's file at all, and a
+    /// write with nothing read behind it may only create.
+    pub session_as_read: BTreeMap<u32, Option<Vec<u8>>>,
+    /// **What the disk said about the last act that tried to write** — paper
+    /// 102 §2.
+    ///
+    /// A state and not an event, because the fault it was written for is a
+    /// state: a copy whose vault fell behind refuses **every** write until it
+    /// is healed, and an answer that was only returned once would be gone by
+    /// the time the person pressed again. `None` is «everything landed», which
+    /// is also what a successful write puts back — the heal is measured, not
+    /// assumed.
+    ///
+    /// It holds the refusal itself rather than a flag, so the sentence the
+    /// glass shows is the one that names *this* cause: a vault another copy
+    /// changed, a session file this window does not own, a shut vault and a
+    /// folder that refused are four different next moves for a person.
+    pub the_disk_refused: Option<crate::api::ApiError>,
 }
 
 impl Core {
@@ -791,6 +894,8 @@ impl Core {
             open_conversation: None,
             chats_opened: Vec::new(),
             conversation_before_the_lock: None,
+            session_as_read: BTreeMap::new(),
+            the_disk_refused: None,
         }
     }
 
@@ -804,6 +909,20 @@ impl Core {
 
     pub(crate) fn bump_truth(&mut self) {
         self.state_revision = self.state_revision.saturating_add(1);
+    }
+
+    /// **What the disk said, remembered or forgotten** — paper 102 §2.
+    ///
+    /// Called by `ops::the_decisions_are_written` and by nobody else, which is
+    /// the same discipline the blocks and the preview's copy are written
+    /// under: one place where a verdict is recorded cannot disagree with
+    /// itself. A landed write clears it, so the state is the disk's and not a
+    /// memory of the worst thing that ever happened.
+    pub(crate) fn the_disk_said(&mut self, refusal: Option<crate::api::ApiError>) {
+        if self.the_disk_refused != refusal {
+            self.bump_truth();
+        }
+        self.the_disk_refused = refusal;
     }
 
     pub(crate) fn open(&mut self, profile_id: Option<String>, pack_id: String) -> u32 {

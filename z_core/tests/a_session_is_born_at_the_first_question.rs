@@ -223,6 +223,15 @@ fn the_room_shows_it_with_an_empty_kept_list_and_both_doors() {
 /// the exit and not at the typing. The snapshot builds a payload on every read
 /// of this surface (091), so a birth in the builder would make a session out
 /// of a question nobody sent.
+///
+/// **Its face changed with rule 55-ز (22 October 2026) and its body did not,
+/// which is the whole of why that rule is safe.** A birth now also happens at
+/// the first act worth keeping, and a cover the person's own **hand** put on
+/// the request is one. The question pasted below is protected the moment it is
+/// set — `set_question` scans it — so if «worth keeping» had been written as
+/// «the request has protections», this test would have reddened and the rule
+/// would have made a session out of typing. It is the hand that is the act: a
+/// scan is a reading, and the sibling test below protects by hand and is born.
 #[test]
 fn a_question_that_never_leaves_is_born_into_nothing() {
     let _g = serial();
@@ -236,6 +245,52 @@ fn a_question_that_never_leaves_is_born_into_nothing() {
     assert!(
         conversations().expect("the room").is_empty(),
         "a session was born of a question that never left"
+    );
+}
+
+/// **One cover the hand put on the request is an act worth keeping** — rule
+/// 55-ز, the owner's «نعم» of 22 October 2026, measured from the other side of
+/// the boundary the test above holds.
+///
+/// Nothing has left the machine here and nothing is sent: the person typed a
+/// sentence with no document and protected one word of it by hand. That is a
+/// decision, it is permanent (089 rule 1), and before this rule it was written
+/// nowhere at all — not the block, because the bench never took a session's
+/// naming, and not the file, because the writer asked only about a document.
+/// Thirteen minutes of the owner's own work, in two windows, with «Protected
+/// as …» on both glasses.
+#[test]
+fn one_cover_the_hand_put_on_the_request_is_born_into_a_session() {
+    let _g = serial();
+    fresh_vault("hand");
+    let s = an_empty_bench();
+    // **A word no list we ship knows**, so the cover below is the hand's own
+    // work and not a scan's: «Rückruf» is in no pack, which is why the request
+    // file uses it too. A word the scan already covers would come back
+    // `AlreadyProtected` and write no record of the person's at all — measured,
+    // the first time this test was written against «Keller», which the German
+    // pack protects after «Herr».
+    const BY_HAND: &str = "Bitte um Rückruf heute";
+    typed(s, BY_HAND);
+    assert!(
+        conversations().expect("the room").is_empty(),
+        "typing alone made a session, which is the very thing rule 55 forbids"
+    );
+
+    let at = BY_HAND.find("Rückruf").expect("the fixture");
+    let start = BY_HAND[..at].encode_utf16().count() as u32;
+    let span = Span { start, end: start + "Rückruf".encode_utf16().count() as u32 };
+    let outcome = protect(s, span, Scope::Conversation, Kind::Person).expect("the hand");
+    assert!(
+        matches!(outcome, ProtectOutcome::Applied { .. }),
+        "the press did not protect by hand, so nothing below measures a birth: {outcome:?}"
+    );
+
+    let row = the_only_session();
+    assert_eq!(row.turns, 0, "a session was born of an act, not of an exchange");
+    assert!(
+        vault_snapshot().expect("the vault room").block_count > 0,
+        "the session was born and the word the hand covered is still in no block"
     );
 }
 

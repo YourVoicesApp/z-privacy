@@ -41,6 +41,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnswerId dco_decode_box_autoadd_answer_id(dynamic raw);
 
   @protected
+  ApiError dco_decode_box_autoadd_api_error(dynamic raw);
+
+  @protected
   bool dco_decode_box_autoadd_bool(dynamic raw);
 
   @protected
@@ -314,6 +317,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnswerId? dco_decode_opt_box_autoadd_answer_id(dynamic raw);
 
   @protected
+  ApiError? dco_decode_opt_box_autoadd_api_error(dynamic raw);
+
+  @protected
   bool? dco_decode_opt_box_autoadd_bool(dynamic raw);
 
   @protected
@@ -534,6 +540,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   AnswerId sse_decode_box_autoadd_answer_id(SseDeserializer deserializer);
+
+  @protected
+  ApiError sse_decode_box_autoadd_api_error(SseDeserializer deserializer);
 
   @protected
   bool sse_decode_box_autoadd_bool(SseDeserializer deserializer);
@@ -841,6 +850,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnswerId? sse_decode_opt_box_autoadd_answer_id(SseDeserializer deserializer);
 
   @protected
+  ApiError? sse_decode_opt_box_autoadd_api_error(SseDeserializer deserializer);
+
+  @protected
   bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer);
 
   @protected
@@ -1081,6 +1093,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_answer_id(
     AnswerId self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_api_error(
+    ApiError self,
     SseSerializer serializer,
   );
 
@@ -1471,6 +1489,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_opt_box_autoadd_answer_id(
     AnswerId? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_api_error(
+    ApiError? self,
     SseSerializer serializer,
   );
 

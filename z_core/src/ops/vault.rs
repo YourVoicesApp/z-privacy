@@ -37,6 +37,16 @@ pub(crate) fn set_data_dir(dir: String) -> ApiResult<()> {
         // And the number a lock kept belongs to the folder it was open in, for
         // the same reason: session 1 here is not session 1 there.
         core.conversation_before_the_lock = None;
+        // **And what was read of session 1's file is about session 1 of that
+        // folder** — paper 102 §3. Left standing, a write in the new folder
+        // would be compared against another folder's bytes and refused, or —
+        // worse — a `None` from there would read as «there is nothing here» of
+        // a file that exists.
+        core.session_as_read.clear();
+        // A refusal belongs to the folder it happened in too: the person moved
+        // the data directory, and the sentence about the old one is no longer
+        // about anything they can act on.
+        core.the_disk_said(None);
         Ok(())
     })
 }
