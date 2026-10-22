@@ -26,6 +26,7 @@ Then read «What we do not claim» and answer two questions: is anything in it a
 Rules of this review:
 
 - **The guide pages are part of this review** (`site/en/guide/`, `site/de/guide/`, `site/ar/guide/`). Every sentence on them is a claim about how the product behaves. Each control they name is keyed to `apps/flutter_app/lib/l10n/app_en.arb` in a comment block at the top of the page: check that the control exists, that it does what the page says it does, and that the page promises nothing `docs/CLAIMS.md` does not.
+- **The three download pages are part of this review** (`site/en/download/`, `site/de/download/`, `site/ar/download/`): they print two fingerprints, a command to check them with and a paragraph about what Windows will say. A sentence there is read by somebody about to run an unsigned installer, so «is this measured?» and «does it promise more than it can?» are asked of every line of them.
 - Do not fix anything, do not open a pull request, do not push. A red is the report.
 - Grade by what is in the tree at this commit, not by what the commit message or the documentation says the authors intended.
 - A claim that holds only with a feature flag, a test build or a developer setting is **exaggerated** unless the limit line says so.
