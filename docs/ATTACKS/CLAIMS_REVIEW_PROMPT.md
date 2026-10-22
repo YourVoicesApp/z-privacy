@@ -21,10 +21,11 @@ For each claim, do these things and show your work:
 3. Try to break it. The ways that matter here: a text where the sentence the product shows would be false; an input the test never gives (another encoding, another language, a document with two of a thing, a second process, a locked vault, a session deleted mid-way); a path through the code the gate does not count. Where you need to run the app, run it against `z_core/tests/fixtures/` and a vault you create with a test passphrase; never a real document of yours.
 4. Read the limit line against the proof. A limit the authors did not write but should have is a finding of its own.
 
-Then read «What we do not claim» and answer two questions: is anything in it actually claimed elsewhere, on the first screen, in the settings rooms or on the website `z-privacy.com`? And is there something the product obviously implies that is in neither list?
+Then read «What we do not claim» and answer two questions: is anything in it actually claimed elsewhere, on the first screen, in the settings rooms, or on the website `z-privacy.com` — including `site/<lang>/guide/`, the usage guide, which quotes thirty-four of the product’s own control sentences and is the page that carries the most of them? And is there something the product obviously implies that is in neither list?
 
 Rules of this review:
 
+- **The guide pages are part of this review** (`site/en/guide/`, `site/de/guide/`, `site/ar/guide/`). Every sentence on them is a claim about how the product behaves. Each control they name is keyed to `apps/flutter_app/lib/l10n/app_en.arb` in a comment block at the top of the page: check that the control exists, that it does what the page says it does, and that the page promises nothing `docs/CLAIMS.md` does not.
 - Do not fix anything, do not open a pull request, do not push. A red is the report.
 - Grade by what is in the tree at this commit, not by what the commit message or the documentation says the authors intended.
 - A claim that holds only with a feature flag, a test build or a developer setting is **exaggerated** unless the limit line says so.
