@@ -1486,6 +1486,38 @@ if [ -f "$WINJOB" ]; then
     fail "G69 the package is no longer compared with the folder that was measured — missing:$G69_UNREAD"
   fi
 
+  # **And an unsigned package never reaches an upload.** The tool packs before
+  # it signs, so the run that died at the certificate question had already
+  # written a `.msix` that carries no signature, and `if: always()` uploaded it
+  # with the zip — a package Windows refuses, in an artefact named like a
+  # release. The step that reads it must exist, must ask the signature rather
+  # than the colour of the step above, must delete the package **and** the
+  # certificate that says nothing without it, must run `if: always()` because
+  # the case it exists for is a red above it, and must sit **before** the first
+  # upload: after one, it keeps nothing.
+  G69_SIG=$(awk '
+    /^      - name: An unsigned package is not handed to anybody/ {inside=1; next}
+    inside && /^      - name: / {inside=0}
+    inside && $0 !~ /^[[:space:]]*#/ {print}
+  ' "$WINJOB")
+  G69_UNASKED=""
+  for want in 'if: always()' Get-AuthenticodeSignature NotSigned Remove-Item '*.msix' .cer; do
+    printf '%s\n' "$G69_SIG" | grep -qF -- "$want" || G69_UNASKED="$G69_UNASKED «$want»"
+  done
+  G69_SIG_AT=$(grep -n '^      - name: An unsigned package is not handed to anybody$' "$WINJOB" | cut -d: -f1)
+  G69_UPLOAD_AT=$(awk '
+    /^  [a-zA-Z_-]+:/ {job=$0; sub(/^  /,"",job); sub(/:.*/,"",job)}
+    job == "app" && /uses: actions\/upload-artifact/ {print NR; exit}
+  ' "$WINJOB")
+  if [ -n "$G69_SIG_AT" ] && [ -n "$G69_UPLOAD_AT" ] && [ "$G69_SIG_AT" -gt "$G69_UPLOAD_AT" ]; then
+    G69_UNASKED="$G69_UNASKED «before the first upload, not after it»"
+  fi
+  if [ -n "$G69_SIG" ] && [ -z "$G69_UNASKED" ]; then
+    pass "G69 an unsigned MSIX is read and deleted before anything is uploaded, so what travels either installs or is absent"
+  else
+    fail "G69 nothing asks the package for its signature before the uploads — missing:$G69_UNASKED"
+  fi
+
   # **And no upload in that job can be thrown away by a red above it.** A step
   # is read whole and comment lines are dropped, because the paragraph that
   # explains `always()` sits between two steps and would otherwise answer for

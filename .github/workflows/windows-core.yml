@@ -811,6 +811,64 @@ jobs:
           }
           Write-Host "the six files in the package are the six that were staged, hash for hash"
 
+      # **And a package that cannot be installed is not handed to anybody** —
+      # 098 item 7, the Windows session's measurement of the `a70cfe9`
+      # artefact. `msix` packs and *then* signs, and it died at the
+      # certificate question in between, so `dist/` already held a `.msix`
+      # that `Get-AuthenticodeSignature` reads as `NotSigned`, with the `.cer`
+      # beside it — and the upload below runs `if: always()`, which is right
+      # for the zip and handed a person a package Windows will refuse, inside
+      # an artefact named like a release.
+      #
+      # **A measurement, not an `if` on the step above.** Asking whether step
+      # 17 went red is asking about a colour; this asks the file. Any `.msix`
+      # in `dist/` is read, an unsigned one is deleted out loud and its
+      # certificate with it — a `.cer` on its own is an instruction to trust a
+      # publisher for a package that is not there — and «How to install the
+      # MSIX» below then prints nothing, exactly as it already does when no
+      # MSIX was made.
+      #
+      # **Unsigned means `NotSigned`, not «not Valid».** The certificate is
+      # made in this job and its root is deliberately never installed, so a
+      # correctly signed package reads back as untrusted here: a check for
+      # `Valid` would delete the good one. What makes a package uninstallable
+      # is carrying no signature at all, and that is what is asked.
+      #
+      # `if: always()`, because the case this exists for is the step above
+      # failing after it packed.
+      - name: An unsigned package is not handed to anybody
+        if: always()
+        shell: pwsh
+        run: |
+          $dist = Join-Path $env:GITHUB_WORKSPACE "dist"
+          $packages = @(Get-ChildItem -LiteralPath $dist -Filter "*.msix" -ErrorAction SilentlyContinue)
+          if ($packages.Count -eq 0) {
+            Write-Host "no .msix in dist/, so nothing is uploaded that could fail to install"
+            exit 0
+          }
+
+          $deleted = @()
+          foreach ($package in $packages) {
+            $sig = Get-AuthenticodeSignature -LiteralPath $package.FullName
+            $signer = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { "nobody" }
+            Write-Host ("{0}: {1}, signed by {2}" -f $package.Name, $sig.Status, $signer)
+            if ($sig.Status -eq "NotSigned" -or -not $sig.SignerCertificate) {
+              Remove-Item -LiteralPath $package.FullName -Force
+              $deleted += $package.Name
+              $cer = Join-Path $dist "zprivacy-test-certificate.cer"
+              if (Test-Path $cer) {
+                Remove-Item -LiteralPath $cer -Force
+                Write-Host "and its certificate, which says nothing without it: zprivacy-test-certificate.cer"
+              }
+            }
+          }
+
+          if ($deleted.Count -gt 0) {
+            Write-Host "::error::$($deleted -join ', ') carries no signature: Windows refuses to install such a package, so it has been deleted rather than uploaded"
+            exit 1
+          }
+          Write-Host "the package carries a signature, so what is uploaded can be installed"
+
       - name: How to install the MSIX
         if: always()
         shell: bash
