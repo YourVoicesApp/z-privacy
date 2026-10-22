@@ -204,13 +204,27 @@ fi
 # An anchor that lands nowhere. The first screen's own button is a jump down
 # the page, so this stops being a detail: a button that scrolls nowhere is the
 # first thing a visitor would press.
+#
+# **And it counts what it walked** — 100, 22 October 2026. The first screen's
+# «How it works» was the one jump on this site, and it became a link to the
+# guide page; after that this loop ran over nothing and still said «every jump
+# lands on something», which is true of no jumps and reads like a measurement.
+# A control that no longer bites is a finding in this house, so the number is
+# in the sentence and a zero says so.
 JUMPS=0
-for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html; do
+WALKED=0
+for f in index.html en/index.html de/index.html ar/index.html license/index.html third-party/index.html \
+         en/guide/index.html de/guide/index.html ar/guide/index.html; do
   for a in $(grep -o 'href="#[A-Za-z0-9_-]*"' "$f" 2>/dev/null | sed -E 's/href="#//; s/"//' | sort -u); do
+    WALKED=$((WALKED + 1))
     grep -q "id=\"$a\"" "$f" || { say FAIL "$f jumps to #$a, and nothing on that page has that id"; FAIL=1; JUMPS=1; }
   done
 done
-[ "$JUMPS" = 0 ] && say PASS "every jump on every page lands on something"
+if [ "$JUMPS" = 0 ] && [ "$WALKED" = 0 ]; then
+  say PASS "no page carries an in-page jump at all — the first screen's own button went to the guide page in 100, so this walked none"
+elif [ "$JUMPS" = 0 ]; then
+  say PASS "every jump on every page lands on something ($WALKED walked)"
+fi
 
 # ---------------------------------------------------------------- the two menus
 #
@@ -226,6 +240,7 @@ MENUS=0
 for pair in "index.html:" "en/index.html:Help" "de/index.html:Hilfe" "ar/index.html:مساعدة" \
             "en/privacy/index.html:Help" "de/privacy/index.html:Hilfe" "ar/privacy/index.html:مساعدة" \
             "en/terms/index.html:Help" "de/terms/index.html:Hilfe" "ar/terms/index.html:مساعدة" \
+            "en/guide/index.html:Help" "de/guide/index.html:Hilfe" "ar/guide/index.html:مساعدة" \
             "license/index.html:Help" "third-party/index.html:Help"
 do
   f="${pair%%:*}"; help="${pair##*:}"
@@ -250,7 +265,7 @@ for f in en/index.html de/index.html ar/index.html; do
   [ "$n" = 1 ] || { say FAIL "$f holds $n vocabulary tables, and there should be one"; FAIL=1; MENUS=1; }
   grep -q '<div class="menu-panel wide">' "$f" || { say FAIL "$f does not keep its vocabulary under Help"; FAIL=1; MENUS=1; }
 done
-for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html license/index.html third-party/index.html; do
+for f in index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html license/index.html third-party/index.html; do
   grep -q '<div class="vocab">' "$f" && { say FAIL "$f carries a second copy of the vocabulary"; FAIL=1; MENUS=1; }
 done
 [ "$MENUS" = 0 ] && say PASS "two menus on every page but the chooser, and one vocabulary, under Help"
@@ -434,7 +449,7 @@ LEGAL=0
 if grep -rn 'yourvoices.app@mono-peak.com' --include='*.html' . 2>/dev/null; then
   say FAIL "the platform's mailbox is still on a Z page (above)"; FAIL=1; LEGAL=1
 fi
-for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html; do
+for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/privacy/index.html ar/privacy/index.html en/terms/index.html de/terms/index.html ar/terms/index.html en/guide/index.html de/guide/index.html ar/guide/index.html; do
   [ -f "$f" ] || continue
   # The country's name is translated on purpose — «Schweden» on the German page —
   # so the guarded part of the address is the street, the postcode and the city,
@@ -445,16 +460,16 @@ for f in en/index.html de/index.html ar/index.html en/privacy/index.html de/priv
 done
 # A language's two pages carry one block, byte for byte. The block is
 # translated, so the comparison is within a language and not across the three.
-# Three pages a language now, since 097's terms page: the block is one block
-# wherever a language states it, and the comparison is against that language's
-# first page in every case — so a drift names the two pages that disagree and
-# not a chain.
+# Four pages a language now — 097's terms page and 100's guide: the block is one
+# block wherever a language states it, and the comparison is against that
+# language's first page in every case, so a drift names the two pages that
+# disagree and not a chain.
 for page in en de ar; do
   a=$(grep -oE '<div class="legal">.*</div>' "$page/index.html" | head -1)
   if [ -z "$a" ]; then
     say FAIL "$page/index.html carries no publisher block at all"; FAIL=1; LEGAL=1; continue
   fi
-  for other in privacy terms; do
+  for other in privacy terms guide; do
     [ -f "$page/$other/index.html" ] || continue
     b=$(grep -oE '<div class="legal">.*</div>' "$page/$other/index.html" | head -1)
     if [ "$a" != "$b" ]; then

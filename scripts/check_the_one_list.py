@@ -56,6 +56,11 @@ MIGRATED = {
     'core/protected_pdf.dart',
     'core/session_state.dart',
     'core/the_clipboard.dart',
+    # Holds no sentence of its own and never will: it hands the machine an
+    # address and nothing a person reads. In the list for the same reason
+    # `going_to_a_word.dart` is — a file at zero belongs where zero is the law,
+    # not in a debt table that would let one be added.
+    'core/the_system_browser.dart',
     'screens/first_run.dart',
     'screens/settings.dart',
     'screens/shell.dart',
@@ -330,6 +335,14 @@ A_FILES_OWN_WORDS = (
     re.compile(r'[a-z_]+(?:,[a-z_]*)+\\n?'),                # name,type,source,licence
 )
 
+# **A command the machine reads is not a sentence.** `core/the_system_browser.dart`
+# hands `rundll32` the argument `url.dll,FileProtocolHandler` — the name of a
+# Windows system library and the entry point in it that opens an address. It is
+# read by the operating system and never by a person, and a German copy of it
+# would simply fail to open the browser. Named rather than shaped: there is one,
+# and a pattern wide enough to hold it would hold a sentence too.
+A_COMMAND_THE_MACHINE_READS = {'url.dll,FileProtocolHandler'}
+
 # An `intl` date pattern: only pattern letters, spaces and date punctuation.
 DATE_PATTERN = re.compile(r'[yMdEHhmsaz., /:-]+')
 
@@ -410,6 +423,8 @@ def sentences_in(path: pathlib.Path) -> list[str]:
             if AN_ADDRESS.fullmatch(v):               # an address, with its scheme
                 continue
             if v in A_NAME_BOTH_HALVES_SPELL:         # one name, two halves
+                continue
+            if v in A_COMMAND_THE_MACHINE_READS:      # an argument, not a word
                 continue            # **A date pattern is not a sentence.** `'d MMM y'` is what `intl`
             # is asked for, and the words it puts in it come from the locale's
             # own table — so the pattern is the shape and the sentence is
