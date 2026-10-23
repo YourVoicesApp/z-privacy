@@ -2946,9 +2946,13 @@ fi
 #     gate somebody turns off. The named exceptions are in the checker, each
 #     with its reason.
 #   * **G51** every key of the English file is in the German and the Swedish,
-#     and no German value is the English one — a copy is a key nobody
-#     translated. The Swedish **is** the English for now and the gate says why:
-#     56-أ, the first screen offers Svenska on the day those values differ.
+#     and no value in either is the English one — a copy is a key nobody
+#     translated. The Swedish **was** the English until 23 October 2026 (56-أ,
+#     which said the first screen offers Svenska on the day those values
+#     differ); paper 106 wrote the Swedish words on the owner's word, so the
+#     exception is gone and both languages answer the same rule. The few values
+#     a language really does share with the English are named in the checker,
+#     each with its reason.
 #
 # The checker is a file of its own because the question is about JSON, and the
 # reasons are prose that belongs beside the rule rather than inside a `case`.
@@ -3944,9 +3948,12 @@ if [ -d "$PACKS" ]; then
   # that line. A sentence that names must ask what it names, so the names are
   # read out of the registry and looked for in the sentence.
   #
-  # The interface line beside it is **not** checked against anything: rule 56-أ
-  # says the first screen shows no Swedish until the screens are translated, so
-  # «the interface is English» is a separate fact with its own owner.
+  # The interface line beside it is **not** checked against anything: it was
+  # rule 56-أ («the first screen shows no Swedish until the screens are
+  # translated»), and since paper 106 wrote the Swedish words it is the
+  # sentence about what a **native speaker has read** — the owner's own round.
+  # Either way «the interface is …» is a separate fact from the packs, with its
+  # own owner.
   RELEASE_README=packaging/linux/README.txt
   if [ -f "$RELEASE_README" ] && [ -f "$PACKS/mod.rs" ]; then
     MISSING=""

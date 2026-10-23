@@ -49,9 +49,9 @@ launcher and the icons back as well.
   BUILD-INFO.txt   which commit this was built from, and its hashes
   third-party/     everything else in here, and the licence it travels under
 
-The interface is English and German; every sentence it shows is gathered in one
-list, and the Swedish file carries the English words until somebody translates
-them.
+The interface is English, German and Swedish; every sentence it shows is
+gathered in one list. The Swedish words were written on 2026-10-23 and have not
+been read by a native speaker yet.
 The detection packs are German, English and Swedish.
 
 Faruk AB — Aktiebolag (AB), Sweden. Org.nr 559473-3494.

@@ -10,354 +10,356 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get theKeyIsBehindTheLockedVault =>
-      'Z Privacy cannot reach a key while the vault is locked. Unlock it, or give a key for this run.';
+      'Z Privacy kan inte nå någon nyckel så länge valvet är låst. Lås upp det, eller ange en nyckel bara för den här gången.';
 
   @override
   String get theChatKeepsNothing =>
-      'This answer is on your screen and nowhere else: no session is open to keep it, so closing the app ends it with the chat.';
+      'Det här svaret står på din skärm och ingen annanstans: ingen session är öppen som kan bevara det, så när du stänger appen försvinner det tillsammans med chatten.';
 
   @override
   String get theTokenIsAlreadyOurs =>
-      'This is already protected — Z put it there.';
+      'Det här är redan skyddat — Z satte det dit.';
 
   @override
   String get unnamedTrouble =>
-      'Something went wrong. Z Privacy did not complete the action.';
+      'Något gick fel. Z Privacy slutförde inte åtgärden.';
 
   @override
   String exactlyWhatWouldLeave(int replaced) {
-    return 'This is exactly what the AI will receive. $replaced values were replaced.';
+    return 'Det här är precis vad AI:n får. $replaced värden ersattes.';
   }
 
   @override
   String get noLanguageAndASessionIsOpen =>
-      'Nothing was read. A text is read with one language’s habits, and this session has never been given one — so Z Privacy did not choose for you. Read it again and answer, or give the session its language in Settings.';
+      'Ingenting lästes. En text läses med ett språks vanor, och den här sessionen har aldrig fått något — Z Privacy valde därför inte för dig. Läs den igen och svara, eller ge sessionen sitt språk i Inställningar.';
 
   @override
   String get noLanguageAndNoSession =>
-      'Nothing was read. A text is read with one language’s habits, and none was chosen — so nothing was read and no session was made. Try again and choose one.';
+      'Ingenting lästes. En text läses med ett språks vanor, och inget valdes — därför lästes ingenting och ingen session skapades. Försök igen och välj ett.';
 
   @override
   String get troubleNotImplemented =>
-      'This part of Z Privacy is not built yet.';
+      'Den här delen av Z Privacy är inte byggd än.';
 
   @override
   String get troubleInvalidSession =>
-      'That session is no longer open. Start a new one.';
+      'Den sessionen är inte öppen längre. Börja en ny.';
 
   @override
   String get troubleInvalidHandle =>
-      'This request is no longer current. Review the text again before sending.';
+      'Den här förfrågan är inte aktuell längre. Gå igenom texten igen innan du skickar.';
 
   @override
   String get troubleStalePayload =>
-      'The document changed after this request was prepared. Review it again, so that what you send is what you last saw.';
+      'Dokumentet ändrades efter att den här förfrågan förbereddes. Gå igenom det igen, så att det du skickar är det du senast såg.';
 
   @override
   String get troubleVaultLocked =>
-      'Your vault is locked. Unlock it to use what it knows.';
+      'Ditt valv är låst. Lås upp det för att använda vad det vet.';
 
   @override
   String get troubleVaultRequired =>
-      'Unlock or create your vault before saving this for future use.';
+      'Lås upp eller skapa ditt valv innan du sparar det här för framtida bruk.';
 
   @override
   String get troubleVaultAuthenticationFailed =>
-      'Could not unlock the vault. The passphrase may be incorrect, or the vault may be corrupted or modified.';
+      'Kunde inte låsa upp valvet. Lösenfrasen kan vara fel, eller valvet kan vara skadat eller ändrat.';
 
   @override
   String get troubleUnsupportedKdfParameters =>
-      'This vault uses unsupported security settings.';
+      'Det här valvet använder säkerhetsinställningar som inte stöds.';
 
   @override
   String get troubleTrailingVaultData =>
-      'This vault file has extra data after its end and was not opened.';
+      'Den här valvfilen har extra data efter sitt slut och öppnades inte.';
 
   @override
   String get troubleProviderUnavailable =>
-      'That AI provider is not available in this build.';
+      'Den AI-leverantören är inte tillgänglig i den här versionen.';
 
   @override
-  String get oneWordWaits => 'One word waits for your answer — nothing left Z.';
+  String get oneWordWaits =>
+      'Ett ord väntar på ditt svar — ingenting har lämnat Z.';
 
   @override
   String wordsWait(int count) {
-    return '$count words wait for your answer — nothing left Z.';
+    return '$count ord väntar på ditt svar — ingenting har lämnat Z.';
   }
 
   @override
   String get troubleVaultAbsent =>
-      'There is no vault on this device yet. Create one to keep anything for tomorrow.';
+      'Det finns inget valv på den här enheten än. Skapa ett för att bevara något till i morgon.';
 
   @override
   String get troubleVaultAlreadyExists =>
-      'A vault already exists on this device, and Z Privacy will not write over it.';
+      'Det finns redan ett valv på den här enheten, och Z Privacy skriver inte över det.';
 
   @override
   String troubleStorageRefused(String reason) {
-    return 'Z Privacy will not use that location — $reason';
+    return 'Z Privacy använder inte den platsen — $reason';
   }
 
   @override
   String get everyCellWasAlreadyProtected =>
-      'Every cell in that column was already protected.';
+      'Varje cell i den kolumnen var redan skyddad.';
 
   @override
   String protectedOneCell(String token) {
-    return 'Protected one cell, as $token.';
+    return 'Skyddade en cell, som $token.';
   }
 
   @override
   String protectedCellsDownTheColumn(int places, String token) {
-    return 'Protected $places cells down that column, the first as $token.';
+    return 'Skyddade $places celler nedåt i kolumnen, den första som $token.';
   }
 
   @override
   String protectedAs(String token) {
-    return 'Protected as $token.';
+    return 'Skyddat som $token.';
   }
 
   @override
   String protectedAsInPlaces(String token, int places) {
-    return 'Protected as $token, in $places places.';
+    return 'Skyddat som $token, på $places ställen.';
   }
 
   @override
   String alreadyProtectedBy(String token, String who) {
-    return 'Already protected as $token, by $who.';
+    return 'Redan skyddat som $token, av $who.';
   }
 
   @override
   String belongsToEntity(String entity, String token) {
-    return 'That belongs to $entity and keeps its token $token.';
+    return 'Det hör till $entity och behåller sin platshållare $token.';
   }
 
   @override
   String pressCutsIntoProtectedTextOne(String what) {
-    return '$what cuts into protected text, so nothing changed. It would snap to 1 whole item.';
+    return '$what skär in i skyddad text, därför ändrades ingenting. Den skulle utvidgas till 1 helt element.';
   }
 
   @override
   String pressCutsIntoProtectedTextMany(String what, int items) {
-    return '$what cuts into protected text, so nothing changed. It would snap to $items whole items.';
+    return '$what skär in i skyddad text, därför ändrades ingenting. Den skulle utvidgas till $items hela element.';
   }
 
   @override
-  String get theSelection => 'The selection';
+  String get theSelection => 'Markeringen';
 
   @override
-  String get thatCell => 'That cell';
+  String get thatCell => 'Den cellen';
 
   @override
-  String get thatPlace => 'That place';
+  String get thatPlace => 'Det stället';
 
   @override
-  String get sourceRule => 'Rule';
+  String get sourceRule => 'Regel';
 
   @override
-  String get sourcePack => 'Pack';
+  String get sourcePack => 'Språkpaket';
 
   @override
-  String get sourceVault => 'Vault';
+  String get sourceVault => 'Valv';
 
   @override
-  String get sourceYou => 'You';
+  String get sourceYou => 'Du';
 
   @override
-  String get answeredByHand => 'brought back by hand';
+  String get answeredByHand => 'återförd för hand';
 
   @override
-  String get answeredNotRecorded => 'not recorded';
+  String get answeredNotRecorded => 'inte antecknat';
 
   @override
-  String get oneNameCameBack => 'One name came back.';
+  String get oneNameCameBack => 'Ett namn kom tillbaka.';
 
   @override
   String namesCameBack(int count) {
-    return '$count names came back.';
+    return '$count namn kom tillbaka.';
   }
 
   @override
   String oneNameCameBackFrom(String sessions) {
-    return 'One name came back from $sessions.';
+    return 'Ett namn kom tillbaka från $sessions.';
   }
 
   @override
   String namesCameBackFrom(int count, String sessions) {
-    return '$count names came back from $sessions.';
+    return '$count namn kom tillbaka från $sessions.';
   }
 
   @override
   String thisDocumentCameBackFrom(String sessions) {
-    return 'This document came back from $sessions.';
+    return 'Det här dokumentet kom tillbaka från $sessions.';
   }
 
   @override
   String get oneNameIsStillATokenVaultShut =>
-      'One name is still a token: unlock or create your vault and Z can look for it.';
+      'Ett namn är fortfarande en platshållare: lås upp eller skapa ditt valv, då kan Z leta efter det.';
 
   @override
   String namesAreStillTokensVaultShut(int count) {
-    return '$count names are still tokens: unlock or create your vault and Z can look for them.';
+    return '$count namn är fortfarande platshållare: lås upp eller skapa ditt valv, då kan Z leta efter dem.';
   }
 
   @override
   String get oneNameStaysATokenTwoCauses =>
-      'One name stays as a token, and two different things do that: the word was protected before Z Privacy began keeping every protected word, or this token was changed after the file left. Open that document in its session and protect the name again — if it comes back from then on it was the first, and if it does not, this file is not the one Z Privacy wrote.';
+      'Ett namn förblir en platshållare, och två olika saker gör det: ordet skyddades innan Z Privacy började bevara varje skyddat ord, eller den här platshållaren ändrades efter att filen lämnade enheten. Öppna dokumentet i dess session och skydda namnet igen — kommer det tillbaka från då och framåt var det det första, och kommer det inte tillbaka är den här filen inte den som Z Privacy skrev.';
 
   @override
   String namesStayTokensTwoCauses(int count) {
-    return '$count names stay as tokens, and two different things do that: they were protected before Z Privacy began keeping every protected word, or the tokens were changed after the file left. Open those documents in their session and protect the names again — if they come back from then on it was the first, and if they do not, this file is not the one Z Privacy wrote.';
+    return '$count namn förblir platshållare, och två olika saker gör det: de skyddades innan Z Privacy började bevara varje skyddat ord, eller platshållarna ändrades efter att filen lämnade enheten. Öppna de dokumenten i deras session och skydda namnen igen — kommer de tillbaka från då och framåt var det det första, och kommer de inte tillbaka är den här filen inte den som Z Privacy skrev.';
   }
 
   @override
   String get refusalMalformedDocument =>
-      'This document is damaged or incomplete.';
+      'Det här dokumentet är skadat eller ofullständigt.';
 
   @override
   String get refusalEncryptedPdf =>
-      'This PDF is password-protected. Remove the password and try again.';
+      'Den här PDF-filen är skyddad med ett lösenord. Ta bort lösenordet och försök igen.';
 
   @override
   String get refusalScannedOnePage =>
-      'This PDF is a picture of a page with no text in it, so nothing could be read — and Z Privacy will not import a document it cannot see.';
+      'Den här PDF-filen är en bild av en sida utan text i, så ingenting kunde läsas — och Z Privacy importerar inte ett dokument det inte kan se.';
 
   @override
   String refusalScannedPages(int pages) {
-    return 'This PDF is $pages pages of pictures with no text in them, so nothing could be read.';
+    return 'Den här PDF-filen är $pages sidor med bilder utan text i, så ingenting kunde läsas.';
   }
 
   @override
   String refusalUnsupportedEncoding(int readablePercent, int page) {
-    return 'Only $readablePercent% of page $page decoded into characters, so this document is refused rather than half-read. Open it and save it as text, or paste the text in.';
+    return 'Bara $readablePercent% av sidan $page gick att omvandla till tecken, därför avvisas det här dokumentet i stället för att läsas till hälften. Öppna det och spara det som text, eller klistra in texten.';
   }
 
   @override
   String refusalUnreadableStructure(int page) {
-    return 'Page $page is built in a way this build cannot read.';
+    return 'Sidan $page är uppbyggd på ett sätt som den här versionen inte kan läsa.';
   }
 
   @override
   String refusalDocumentTooLarge(int mib, int limitMib) {
-    return 'This file is about $mib MiB, and Z Privacy opens documents up to $limitMib MiB.';
+    return 'Den här filen är omkring $mib MiB, och Z Privacy öppnar dokument upp till $limitMib MiB.';
   }
 
   @override
   String refusalTooManyPages(int pages, int limit) {
-    return 'This document has $pages pages, and Z Privacy opens up to $limit in one document.';
+    return 'Det här dokumentet har $pages sidor, och Z Privacy öppnar upp till $limit i ett dokument.';
   }
 
   @override
   String refusalTextTooLarge(int limitMib) {
-    return 'Unpacked, a part of this file is more than $limitMib MiB — more than Z Privacy reads in one document, so none of it was imported.';
+    return 'Uppackad är en del av den här filen större än $limitMib MiB — mer än Z Privacy läser i ett dokument, därför importerades ingenting av den.';
   }
 
   @override
   String refusalCompressionBomb(int ratio) {
-    return 'A part of this file unpacks to more than $ratio times the space it takes up. No real document does that, so Z Privacy stopped unpacking it instead of filling the machine.';
+    return 'En del av den här filen packas upp till mer än $ratio gånger den plats den tar. Inget verkligt dokument gör det, så Z Privacy slutade packa upp den i stället för att fylla datorn.';
   }
 
   @override
   String refusalTooManyParts(int parts, int limit) {
-    return 'This file lists $parts parts inside it, and a document has tens, not thousands — Z Privacy opens up to $limit.';
+    return 'Den här filen räknar upp $parts delar inuti sig, och ett dokument har tiotal, inte tusental — Z Privacy öppnar upp till $limit.';
   }
 
   @override
   String refusalTookTooLong(int seconds) {
-    return 'Reading this file was still going after $seconds seconds, so Z Privacy stopped. Nothing of it was imported.';
+    return 'Läsningen av den här filen pågick fortfarande efter $seconds sekunder, så Z Privacy slutade. Ingenting av den importerades.';
   }
 
   @override
   String get refusalEmptyDocument =>
-      'There is no text in this file for Z Privacy to protect.';
+      'Det finns ingen text i den här filen som Z Privacy kan skydda.';
 
   @override
   String get networkNotConnected =>
-      'No AI provider is connected. Add an address and a key first.';
+      'Ingen AI-leverantör är ansluten. Ange en adress och en nyckel först.';
 
   @override
-  String get networkInsecureUrl => 'That address is not safe to send to.';
+  String get networkInsecureUrl =>
+      'Det går inte att skicka säkert till den adressen.';
 
   @override
   String get networkRedirected =>
-      'That address sent us somewhere else. Z Privacy does not follow redirects with your text, so nothing was sent.';
+      'Den adressen skickade oss någon annanstans. Z Privacy följer inga omdirigeringar med din text, så ingenting skickades.';
 
   @override
   String networkBadStatus(int status) {
-    return 'The provider refused the request with status $status. Nothing of your document was kept by Z Privacy.';
+    return 'Leverantören avvisade förfrågan med status $status. Z Privacy bevarade ingenting av ditt dokument.';
   }
 
   @override
   String get networkTimeout =>
-      'The provider did not answer in time. Nothing else was sent.';
+      'Leverantören svarade inte i tid. Ingenting mer skickades.';
 
   @override
   String networkResponseTooLarge(int limitKib) {
-    return 'The answer was larger than $limitKib KiB and was not read.';
+    return 'Svaret var större än $limitKib KiB och lästes inte.';
   }
 
   @override
   String networkPayloadTooLarge(int kib, int limitKib) {
-    return 'This text is $kib KiB and the provider accepts $limitKib KiB in one request.';
+    return 'Den här texten är $kib KiB och leverantören tar emot $limitKib KiB i en förfrågan.';
   }
 
   @override
   String get networkUnreadable =>
-      'The provider answered with something that is not an answer.';
+      'Leverantören svarade med något som inte är ett svar.';
 
   @override
   String get networkUnreachable =>
-      'That address could not be reached at all — nothing answered. Check that you are online and that the address is right. Nothing was sent.';
+      'Den adressen gick inte att nå alls — ingenting svarade. Kontrollera att du är ansluten och att adressen är rätt. Ingenting skickades.';
 
   @override
   String get troubleVaultChangedElsewhere =>
-      'Another copy of Z Privacy changed this vault. Close that window, or lock and unlock here to take in its work.';
+      'En annan kopia av Z Privacy har ändrat det här valvet. Stäng det fönstret, eller lås och lås upp här för att ta in dess arbete.';
 
   @override
   String get troubleSessionChangedElsewhere =>
-      'This session\'s file on your disk was not written by this window, so Z Privacy did not write over it. Close the other copy, or lock and unlock here to read what it wrote.';
+      'Den här sessionens fil på din disk skrevs inte av det här fönstret, därför skrev Z Privacy inte över den. Stäng den andra kopian, eller lås och lås upp här för att läsa vad den skrev.';
 
   @override
   String troubleStoragePermissionsKept(String reason) {
-    return 'Z Privacy will not change a permission you set, so nothing was saved — $reason. Change the permission yourself, or choose another folder.';
+    return 'Z Privacy ändrar inte en behörighet du har satt, därför sparades ingenting — $reason. Ändra behörigheten själv, eller välj en annan mapp.';
   }
 
   @override
   String get troubleBadSpan =>
-      'That selection could not be read. Try selecting the words again.';
+      'Den markeringen kunde inte läsas. Försök markera orden igen.';
 
   @override
   String get troubleBetweenColumns =>
-      'That press landed in the space between two columns, so it names no value — and Z Privacy will not choose a column for you.';
+      'Klicket landade i utrymmet mellan två kolumner och namnger därför inget värde — och Z Privacy väljer ingen kolumn för dig.';
 
   @override
   String get troubleUnknownToken =>
-      'That protected value is not in this session.';
+      'Det skyddade värdet finns inte i den här sessionen.';
 
   @override
   String get troubleNothingToSend =>
-      'There is nothing to send yet. Bring in a document or write some text.';
+      'Det finns ingenting att skicka än. Ta in ett dokument eller skriv någon text.';
 
   @override
   String get troubleSessionWithoutItsDocument =>
-      'The session was not started, because Z Privacy could not tell which document you have open — and a session has to rename what is already protected on it. Nothing was changed. Open the document and start the session from there.';
+      'Sessionen startades inte, eftersom Z Privacy inte kunde avgöra vilket dokument du har öppet — och en session måste byta namn på det som redan är skyddat i det. Ingenting ändrades. Öppna dokumentet och starta sessionen därifrån.';
 
   @override
   String get troublePayloadAlreadySent =>
-      'This request was already sent. Prepare it again to send once more.';
+      'Den här förfrågan har redan skickats. Förbered den igen för att skicka en gång till.';
 
   @override
-  String get theReasonWasNotReported => 'the reason was not reported.';
+  String get theReasonWasNotReported => 'orsaken rapporterades inte.';
 
   @override
-  String get carriesFirst => 'This document carries';
+  String get carriesFirst => 'Det här dokumentet bär';
 
   @override
-  String get carriesAlso => 'It also carries';
+  String get carriesAlso => 'Det bär också';
 
   @override
   String carriesOneNameFromElsewhere(String also, String which) {
-    return '$also 1 name from a session this vault does not hold ($which). Nothing here can put it back: the key that made it is not in this vault.';
+    return '$also 1 namn från en session som det här valvet inte har ($which). Ingenting här kan återställa det: nyckeln som skapade det finns inte i det här valvet.';
   }
 
   @override
@@ -366,7 +368,7 @@ class AppLocalizationsSv extends AppLocalizations {
     int count,
     String which,
   ) {
-    return '$also $count names from a session this vault does not hold ($which). Nothing here can put them back: the key that made them is not in this vault.';
+    return '$also $count namn från en session som det här valvet inte har ($which). Ingenting här kan återställa dem: nyckeln som skapade dem finns inte i det här valvet.';
   }
 
   @override
@@ -375,7 +377,7 @@ class AppLocalizationsSv extends AppLocalizations {
     int count,
     String which,
   ) {
-    return '$also $count names from sessions this vault does not hold ($which). Nothing here can put them back: the keys that made them are not in this vault.';
+    return '$also $count namn från sessioner som det här valvet inte har ($which). Ingenting här kan återställa dem: nycklarna som skapade dem finns inte i det här valvet.';
   }
 
   @override
@@ -385,842 +387,843 @@ class AppLocalizationsSv extends AppLocalizations {
     String which,
     String keys,
   ) {
-    return '$also names from $whose ($which). Nothing here can put them back: $keys not in this vault.';
+    return '$also namn från $whose ($which). Ingenting här kan återställa dem: $keys inte i det här valvet.';
   }
 
   @override
   String get aSessionThisVaultDoesNotHold =>
-      'a session this vault does not hold';
+      'en session som det här valvet inte har';
 
   @override
   String get sessionsThisVaultDoesNotHold =>
-      'sessions this vault does not hold';
+      'sessioner som det här valvet inte har';
 
   @override
-  String get theKeyThatMadeThemIs => 'the keys that made them are';
+  String get theKeyThatMadeThemIs => 'nycklarna som skapade dem finns';
 
   @override
-  String get andBetweenNames => ' and ';
+  String get andBetweenNames => ' och ';
 
   @override
   String get thisLanguageName => 'Svenska';
 
   @override
-  String get languageWord => 'Language';
+  String get languageWord => 'Språk';
 
   @override
-  String get chooseALanguage => 'Choose a language to continue.';
+  String get chooseALanguage => 'Välj ett språk för att fortsätta.';
 
   @override
-  String get noAccount => 'No account.';
+  String get noAccount => 'Inget konto.';
 
   @override
-  String get noAds => 'No ads.';
+  String get noAds => 'Inga annonser.';
 
   @override
-  String get noAnalytics => 'No analytics.';
+  String get noAnalytics => 'Ingen analys- eller spårningsdata.';
 
   @override
-  String get noZPrivacyServer => 'No Z Privacy server.';
+  String get noZPrivacyServer => 'Ingen Z Privacy-server.';
 
   @override
   String get originalDataStaysHere =>
-      'Your original data stays on this device unless you explicitly copy restored content.';
+      'Dina originaldata stannar på den här enheten om du inte uttryckligen kopierar återställt innehåll.';
 
   @override
   String get onlyTheProtectedVersionIsSent =>
-      'Only the protected version is sent to AI through Z Privacy.';
+      'Bara den skyddade versionen skickas till AI:n via Z Privacy.';
 
   @override
   String get theseRulesWillBeEnabled =>
-      'The English privacy rules will be enabled.';
+      'De svenska integritetsreglerna aktiveras.';
 
   @override
-  String get start => 'Start';
+  String get start => 'Starta';
 
   @override
-  String get yourVault => 'Your vault';
+  String get yourVault => 'Ditt valv';
 
   @override
-  String get createAVault => 'Create a vault';
+  String get createAVault => 'Skapa ett valv';
 
   @override
   String get vaultWhy =>
-      'Every word you protect lives here, for as long as you keep this vault: the names you add, the values you teach, and the keys to any AI you connect. It stays on this computer, and nothing is written anywhere else.';
+      'Varje ord du skyddar lever här, så länge du behåller det här valvet: namnen du lägger till, värdena du lär ut, och nycklarna till varje AI du ansluter. Det stannar på den här datorn, och ingenting skrivs någon annanstans.';
 
   @override
   String get onePassphrase =>
-      'One passphrase, kept on this device. Everything Z learns while you work — your names, your lists, your decisions — is kept in it.';
+      'En lösenfras, bevarad på den här enheten. Allt Z lär sig medan du arbetar — dina namn, dina listor, dina beslut — bevaras i den.';
 
   @override
-  String get byYourVoices => 'by YourVoices';
+  String get byYourVoices => 'av YourVoices';
 
   @override
   String pageHasNothingMarked(int page) {
-    return 'Page $page has nothing the scanner marked.';
+    return 'På sidan $page har granskningen inte markerat något.';
   }
 
   @override
-  String get addADocumentPdfWordOrText => 'Add a document — PDF, Word or text';
+  String get addADocumentPdfWordOrText =>
+      'Lägg till ett dokument — PDF, Word eller text';
 
   @override
   String get addADocumentOrWriteToTheAi =>
-      'Add a document — or write to the AI in the first part, with no document at all.';
+      'Lägg till ett dokument — eller skriv till AI:n i den första delen, helt utan dokument.';
 
   @override
-  String get originalLocalOnly => 'Original — local only';
+  String get originalLocalOnly => 'Original — bara lokalt';
 
   @override
   String get neverSentToAiSendCannotRead =>
-      'Never sent to AI · Send cannot read this side';
+      'Skickas aldrig till AI:n · Skicka kan inte läsa den här sidan';
 
   @override
   String get yourDocumentArrivesHere =>
-      'Your document arrives here, as it is written. Nothing on this side can reach the network.';
+      'Ditt dokument kommer hit, så som det är skrivet. Ingenting på den här sidan kan nå nätet.';
 
   @override
-  String get safeAiWillReceive => 'Safe — AI will receive';
+  String get safeAiWillReceive => 'Skyddat — det här får AI:n';
 
   @override
   String get theRequestItselfNotAPreview =>
-      'The request itself, not a preview of it';
+      'Förfrågan själv, ingen förhandsvisning av den';
 
   @override
   String get whatAnAiWouldReceiveStandsHere =>
-      'What an AI would receive stands here beside the original, word for word, before anything is sent.';
+      'Vad en AI skulle få står här vid sidan av originalet, ord för ord, innan något skickas.';
 
   @override
-  String get theChatTitle => 'The chat';
+  String get theChatTitle => 'Chatten';
 
   @override
   String get yourQuestionsAndWhatCameBack =>
-      'Your questions, and what came back';
+      'Dina frågor, och vad som kom tillbaka';
 
   @override
   String get theChatOpensHereWithTheFirstAnswer =>
-      'The chat opens here with the first answer, and every question after it carries what was already said.';
+      'Chatten öppnas här med det första svaret, och varje fråga efter den bär med sig vad som redan sagts.';
 
   @override
-  String get typedText => 'Typed text';
+  String get typedText => 'Inskriven text';
 
   @override
-  String get onePage => '1 page';
+  String get onePage => '1 sida';
 
   @override
   String pagesCount(int pages) {
-    return '$pages pages';
+    return '$pages sidor';
   }
 
   @override
-  String get vaultLabel => 'Vault';
+  String get vaultLabel => 'Valv';
 
   @override
-  String get vaultIsUnlocked => 'Unlocked';
+  String get vaultIsUnlocked => 'Upplåst';
 
   @override
-  String get vaultIsLocked => 'Locked';
+  String get vaultIsLocked => 'Låst';
 
   @override
-  String get vaultIsNone => 'None';
+  String get vaultIsNone => 'Inget';
 
   @override
-  String get yourVaultIsIn => 'Your vault is in';
+  String get yourVaultIsIn => 'Ditt valv ligger i';
 
   @override
-  String get aVaultHereWouldBeIn => 'A vault here would be in';
+  String get aVaultHereWouldBeIn => 'Ett valv skulle här ligga i';
 
   @override
-  String get openZVault => 'Open Z Vault';
+  String get openZVault => 'Öppna Z-valvet';
 
   @override
-  String get lockNow => 'Lock now';
+  String get lockNow => 'Lås nu';
 
   @override
-  String get openZVaultOrLockItNow => 'Open Z Vault, or lock it now';
+  String get openZVaultOrLockItNow => 'Öppna Z-valvet, eller lås det nu';
 
   @override
-  String get goToAPage => 'Go to a page';
+  String get goToAPage => 'Gå till en sida';
 
   @override
   String pageNumber(int page) {
-    return 'Page $page';
+    return 'Sida $page';
   }
 
   @override
-  String get pageWord => 'Page';
+  String get pageWord => 'Sida';
 
   @override
-  String get chooseTheAiAndWhatTravels =>
-      'Choose the AI and what travels to it';
+  String get chooseTheAiAndWhatTravels => 'Välj AI:n och vad som går till den';
 
   @override
   String get readThisDocumentWithAnotherRuleSet =>
-      'Read this document with another rule set';
+      'Läs det här dokumentet med en annan regeluppsättning';
 
   @override
-  String get generalRulesOnly => 'General rules only';
+  String get generalRulesOnly => 'Bara allmänna regler';
 
   @override
-  String get packLabel => 'Pack';
+  String get packLabel => 'Språkpaket';
 
   @override
   String packWithGeneralRules(String pack) {
-    return '$pack · general rules';
+    return '$pack · allmänna regler';
   }
 
   @override
-  String get everywhere => 'Everywhere';
+  String get everywhere => 'Överallt';
 
   @override
-  String get profile => 'Profile';
+  String get profile => 'Profil';
 
   @override
-  String get profiles => 'Profiles';
+  String get profiles => 'Profiler';
 
   @override
   String get chooseWhichClientDictionary =>
-      'Choose which client dictionary this session uses. The profile ID stays inside the vault; the display name is what people see.';
+      'Välj vilket kundregister den här sessionen använder. Profil-ID:t stannar inne i valvet; visningsnamnet är vad människor ser.';
 
   @override
   String get onlyIdentitiesForEveryProfile =>
-      'Only identities and rules that apply to every profile.';
+      'Bara identiteter och regler som gäller för varje profil.';
 
   @override
-  String get createProfile => 'Create profile';
+  String get createProfile => 'Skapa profil';
 
   @override
-  String get done => 'Done';
+  String get done => 'Klart';
 
   @override
-  String get rename => 'Rename';
+  String get rename => 'Byt namn';
 
   @override
-  String get profileActive => 'Active';
+  String get profileActive => 'Aktiv';
 
   @override
-  String get profileSwitch => 'Switch';
+  String get profileSwitch => 'Byt';
 
   @override
-  String get readItBack => 'Read it back';
+  String get readItBack => 'Läs tillbaka';
 
   @override
-  String get scanning => 'Scanning…';
+  String get scanning => 'Granskar…';
 
   @override
-  String get notScannedYet => 'Not scanned yet';
+  String get notScannedYet => 'Inte granskat än';
 
   @override
-  String get asItWasKept => 'As it was kept';
+  String get asItWasKept => 'Som det bevarades';
 
   @override
   String lastScanNote(String note) {
-    return 'Last scan: $note';
+    return 'Senaste granskning: $note';
   }
 
   @override
-  String get scannedAsYouTyped => 'Scanned as you typed';
+  String get scannedAsYouTyped => 'Granskat medan du skrev';
 
   @override
-  String get scannedOnImport => 'Scanned on import';
+  String get scannedOnImport => 'Granskat vid import';
 
   @override
-  String get lastScanManualRescan => 'Last scan: manual rescan';
+  String get lastScanManualRescan =>
+      'Senaste granskning: granskad igen för hand';
 
   @override
   String alreadyProtectedNothingScanned(int marks) {
-    return '$marks already protected · nothing scanned in this run';
+    return '$marks redan skyddade · ingenting granskat i den här omgången';
   }
 
   @override
   String protectedAutomaticallyNeedYourWord(int auto, int open, int normal) {
-    return '$auto protected automatically · $open need your word · $normal normal';
+    return '$auto automatiskt skyddade · $open behöver ditt ord · $normal normala';
   }
 
   @override
   String get vaultLockedRulesAndPackRan =>
-      'Vault locked — rules and pack ran, the vault layer did not';
+      'Valvet låst — regler och språkpaket kördes, valvskiktet inte';
 
   @override
   String get noVaultNothingRecognisedByName =>
-      'No vault — nothing is recognised by name';
+      'Inget valv — ingenting känns igen på namnet';
 
   @override
-  String get unlock => 'Unlock';
+  String get unlock => 'Lås upp';
 
   @override
-  String get removeTheDocument => 'Remove the document';
+  String get removeTheDocument => 'Ta bort dokumentet';
 
   @override
-  String get nothingIsOpen => 'Nothing is open.';
+  String get nothingIsOpen => 'Ingenting är öppet.';
 
   @override
-  String get thereIsNothingToSendYet => 'There is nothing to send yet.';
+  String get thereIsNothingToSendYet => 'Det finns ingenting att skicka än.';
 
   @override
-  String get readingWhatThoseLinesHold => 'Reading what those lines hold…';
+  String get readingWhatThoseLinesHold => 'Läser vad de raderna innehåller…';
 
   @override
   String oneLineProtectedOpen(int protected, int open) {
-    return '1 line · $protected protected in it · $open open';
+    return '1 rad · $protected skyddade i den · $open öppna';
   }
 
   @override
   String linesProtectedOpen(int lines, int protected, int open) {
-    return '$lines lines · $protected protected in them · $open open';
+    return '$lines rader · $protected skyddade i dem · $open öppna';
   }
 
   @override
   String get pressAValueToProtectEveryHeldLine =>
-      'Press a value to protect the same cell in every held line.';
+      'Tryck på ett värde för att skydda samma cell i varje hållen rad.';
 
   @override
-  String get letTheLinesGo => 'Let the lines go';
+  String get letTheLinesGo => 'Släpp raderna';
 
   @override
-  String get inStep => 'In step';
+  String get inStep => 'I takt';
 
   @override
-  String get apart => 'Apart';
+  String get apart => 'Var för sig';
 
   @override
-  String get drawnAsChips => 'Chips';
+  String get drawnAsChips => 'Brickor';
 
   @override
-  String get drawnPlain => 'Plain';
+  String get drawnPlain => 'Enkel';
 
   @override
   String get oneSuggestionStillOpen =>
-      'One suggestion is still open. Until you answer it, it stands here as written — real text on this side.';
+      'Ett förslag är fortfarande öppet. Tills du svarar på det står det här som skrivet — verklig text på den här sidan.';
 
   @override
   String suggestionsStillOpen(int open) {
-    return '$open suggestions are still open. Until you answer them, they stand here as written — the only real text on this side.';
+    return '$open förslag är fortfarande öppna. Tills du svarar på dem står de här som skrivna — den enda verkliga texten på den här sidan.';
   }
 
   @override
-  String get chooseWhoAnswers => 'Choose who answers';
+  String get chooseWhoAnswers => 'Välj vem som svarar';
 
   @override
-  String get showTheChat => 'Show the chat';
+  String get showTheChat => 'Visa chatten';
 
   @override
-  String get whatWouldYouLikeToAskTheAi => 'What would you like to ask the AI?';
+  String get whatWouldYouLikeToAskTheAi => 'Vad vill du fråga AI:n?';
 
   @override
-  String get whatShouldTheAiDoWithThis => 'What should the AI do with this?';
+  String get whatShouldTheAiDoWithThis => 'Vad ska AI:n göra med det här?';
 
   @override
   String get askAQuestionOrPasteALetter =>
-      'Ask a question, or paste a whole letter here.';
+      'Ställ en fråga, eller klistra in ett helt brev här.';
 
   @override
   String get reconcileSectionAgainstSection =>
-      'Reconcile section A against section B and tell me where the difference is.';
+      'Jämför avsnitt A med avsnitt B och säg var skillnaden ligger.';
 
   @override
-  String get inWhatWillLeave => 'In what will leave';
+  String get inWhatWillLeave => 'I det som går ut';
 
   @override
-  String get addItToWhatWillLeave => 'Add it to what will leave';
+  String get addItToWhatWillLeave => 'Lägg till det i det som går ut';
 
   @override
   String get aDocumentCanBeSentWithNoRequest =>
-      'A document can be sent with no request, and then the model is given no instruction';
+      'Ett dokument kan skickas utan förfrågan, och då får modellen ingen instruktion';
 
   @override
-  String get takeItOut => 'Take it out';
+  String get takeItOut => 'Ta ut det';
 
   @override
   String get yourRequestNothingToProtect =>
-      'Your request is in the Safe column, with nothing in it to protect.';
+      'Din förfrågan står i den skyddade kolumnen, utan något i den att skydda.';
 
   @override
   String get yourRequestOneValueReplaced =>
-      'Your request is in the Safe column, with one value replaced.';
+      'Din förfrågan står i den skyddade kolumnen, med ett ersatt värde.';
 
   @override
   String yourRequestValuesReplaced(int count) {
-    return 'Your request is in the Safe column, with $count values replaced.';
+    return 'Din förfrågan står i den skyddade kolumnen, med $count ersatta värden.';
   }
 
   @override
   String get oneRequestAtATime =>
-      'One request at a time — a new question replaces this one, and the chat keeps every exchange.';
+      'En förfrågan i taget — en ny fråga ersätter den här, och chatten behåller varje utbyte.';
 
   @override
-  String get oneQuestionLeftGoToIt => '1 question left — go to it';
+  String get oneQuestionLeftGoToIt => '1 fråga kvar — gå dit';
 
   @override
   String questionsLeftGoToTheFirst(int open) {
-    return '$open questions left — go to the first';
+    return '$open frågor kvar — gå till den första';
   }
 
   @override
-  String get protectIt => 'Protect it';
+  String get protectIt => 'Skydda';
 
   @override
-  String get leaveItInTheClear => 'Leave it in the clear';
+  String get leaveItInTheClear => 'Lämna i klartext';
 
   @override
   String theOneLeftIsKind(String kind) {
-    return 'The one left is $kind.';
+    return 'Den som återstår är $kind.';
   }
 
   @override
-  String get showWhatTheAiWillReceive => 'Show what the AI will receive';
+  String get showWhatTheAiWillReceive => 'Visa vad AI:n får';
 
   @override
-  String get hideThisColumn => 'Hide this column';
+  String get hideThisColumn => 'Göm den här kolumnen';
 
   @override
-  String get narrowThisPanel => 'Narrow this panel';
+  String get narrowThisPanel => 'Gör det här fältet smalare';
 
   @override
-  String get widenThisPanel => 'Widen this panel';
+  String get widenThisPanel => 'Gör det här fältet bredare';
 
   @override
   String get oneExchangeCarriedIntoTheNext =>
-      'One exchange, carried into the next question.';
+      'Ett utbyte, som tas med in i nästa fråga.';
 
   @override
   String exchangesCarriedIntoTheNext(int count) {
-    return '$count exchanges, carried into the next question.';
+    return '$count frågor och svar, som tas med in i nästa fråga.';
   }
 
   @override
   String get putTheChatAwayItIsNotEnded =>
-      'Put the chat away — it is not ended';
+      'Lägg chatten åt sidan — den är inte avslutad';
 
   @override
   String get theFirstAnswerOpensTheChatHere =>
-      'The first answer opens the chat here. Every question after it carries what was already said.';
+      'Det första svaret öppnar chatten här. Varje fråga efter den bär med sig vad som redan sagts.';
 
   @override
-  String get askSomethingElseAboutThis => 'Ask something else about this…';
+  String get askSomethingElseAboutThis => 'Fråga något annat om det här…';
 
   @override
-  String get pasteTheAnswerYouWereGiven => 'Paste the answer you were given…';
+  String get pasteTheAnswerYouWereGiven => 'Klistra in svaret du fick…';
 
   @override
-  String get addItToTheChat => 'Add it to the chat';
+  String get addItToTheChat => 'Lägg till det i chatten';
 
   @override
-  String get notNow => 'Not now';
+  String get notNow => 'Inte nu';
 
   @override
-  String get copyTheChat => 'Copy the chat';
+  String get copyTheChat => 'Kopiera chatten';
 
   @override
-  String get addAnAnswer => 'Add an answer';
+  String get addAnAnswer => 'Lägg till ett svar';
 
   @override
-  String get endTheChat => 'End the chat';
+  String get endTheChat => 'Avsluta chatten';
 
   @override
   String get theChatIsOnYourClipboard =>
-      'The chat is on your clipboard, protected — bring the answer back with «Add an answer».';
+      'Chatten ligger skyddad i ditt urklipp — hämta tillbaka svaret med «Lägg till ett svar».';
 
   @override
-  String get couldNotReadTheClipboard =>
-      'Z Privacy could not read the clipboard.';
+  String get couldNotReadTheClipboard => 'Z Privacy kunde inte läsa urklippet.';
 
   @override
-  String get thereIsNoTextOnTheClipboard =>
-      'There is no text on the clipboard.';
+  String get thereIsNoTextOnTheClipboard => 'Det finns ingen text i urklippet.';
 
   @override
-  String get hideTheText => 'Hide the text';
+  String get hideTheText => 'Göm texten';
 
   @override
-  String get showTheText => 'Show the text';
+  String get showTheText => 'Visa texten';
 
   @override
   String get theTextWithYourNamesBack =>
-      'The text, with your names back — on this device';
+      'Texten, med dina namn tillbaka — på den här enheten';
 
   @override
   String get thisAnswerCarriesOneUnknownToken =>
-      'This answer carries 1 token this session does not know — it was made in another session.';
+      'Det här svaret innehåller 1 platshållare som den här sessionen inte känner — den skapades i en annan session.';
 
   @override
   String thisAnswerCarriesUnknownTokens(int count) {
-    return 'This answer carries $count tokens this session does not know — they were made in another session.';
+    return 'Det här svaret innehåller $count platshållare som den här sessionen inte känner — de skapades i en annan session.';
   }
 
   @override
-  String get copyRestored => 'Copy Restored';
+  String get copyRestored => 'Kopiera återställt';
 
   @override
   String get theMarkedWordsWerePutBackHere =>
-      'The marked words were put back here, on this device. The model never saw them.';
+      'De markerade orden sattes tillbaka här, på den här enheten. Modellen såg dem aldrig.';
 
   @override
   String get theDottedWordsWerePutBackHere =>
-      'The dotted words were put back here, on this device. The struck ones are tokens this session cannot put back.';
+      'De punktade orden sattes tillbaka här, på den här enheten. De överstrukna är platshållare som den här sessionen inte kan hämta tillbaka.';
 
   @override
-  String get copyRestoredTextQuestion => 'Copy restored text?';
+  String get copyRestoredTextQuestion => 'Kopiera återställd text?';
 
   @override
   String get thisWillPlaceTheRealValues =>
-      'This will place the real protected values on your system clipboard. Other applications may be able to read the clipboard.';
+      'Det här lägger de verkliga skyddade värdena i systemets urklipp. Andra program kan möjligen läsa urklippet.';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Avbryt';
 
   @override
   String get restoredTextCopied =>
-      'Restored text copied to the system clipboard.';
+      'Återställd text kopierad till systemets urklipp.';
 
   @override
   String get chooseWhoAnswersInTheMiddleFirst =>
-      'Choose who answers in the middle column first';
+      'Välj först i mittenkolumnen vem som svarar';
 
   @override
   String sendThisQuestionTo(String name) {
-    return 'Send this question to $name';
+    return 'Skicka den här frågan till $name';
   }
 
   @override
-  String get writeAQuestionFirst => 'Write a question first.';
+  String get writeAQuestionFirst => 'Skriv en fråga först.';
 
   @override
-  String get settings => 'Settings';
+  String get settings => 'Inställningar';
 
   @override
-  String get roomPrivacy => 'Privacy';
+  String get roomPrivacy => 'Integritet';
 
   @override
-  String get roomLanguageAndRules => 'Language & rules';
+  String get roomLanguageAndRules => 'Språk & regler';
 
   @override
-  String get roomVaultAndSecurity => 'Vault & security';
+  String get roomVaultAndSecurity => 'Valv & säkerhet';
 
   @override
-  String get roomSessions => 'Sessions';
+  String get roomSessions => 'Sessioner';
 
   @override
   String get languageAndRulesWhat =>
-      'A privacy pack is a detection engine, not the language of the interface — and more than one pack can run in a single scan, so this is a starting point rather than the only rules allowed.';
+      'Ett integritetspaket är en igenkänningsmotor, inte gränssnittets språk — och fler än ett paket kan köras i en och samma granskning, så det här är en utgångspunkt och inte de enda tillåtna reglerna.';
 
   @override
-  String get appLanguage => 'App language';
+  String get appLanguage => 'Appens språk';
 
   @override
   String get appLanguageWhat =>
-      'The language a session is read with when it has none of its own — and which habits the scanner knows in it: salutations, company forms, the way a customer number is written. A session created with a language of its own keeps that one; this is what every other text is read with. The interface follows this choice.';
+      'Språket en session läses med när den inte har något eget — och vilka vanor granskningen känner i det: hälsningar, bolagsformer, sättet ett kundnummer skrivs. En session som skapats med ett eget språk behåller det; allt annat läses med det här. Gränssnittet följer det här valet.';
 
   @override
   String theInterfaceIsEnglishUntilTranslated(String language) {
-    return '$language: the detection pack is $language; the interface is English until its sentences are translated.';
+    return '$language: igenkänningspaketet är $language; gränssnittet är engelskt tills dess satser är översatta.';
   }
 
   @override
-  String get myPrivacyRules => 'My privacy rules';
+  String get myPrivacyRules => 'Mina integritetsregler';
 
   @override
   String get myPrivacyRulesWhat =>
-      'Not built yet. Rules you write yourself — a customer number format only your office uses, a project codename — will live here, beside the pack rather than inside it.';
+      'Inte byggt än. Regler du skriver själv — ett kundnummerformat som bara ditt kontor använder, ett projektkodnamn — kommer att leva här, vid sidan av paketet och inte inuti det.';
 
   @override
   String get vaultAndSecurityWhat =>
-      'The key, the lock, and where a credential lives.';
+      'Nyckeln, låset, och var inloggningsuppgifter ligger.';
 
   @override
-  String get zVault => 'Z Vault';
+  String get zVault => 'Z-valvet';
 
   @override
   String get vaultOpenWhat =>
-      'Open. Your identities are loaded and the fourth detection layer is running.';
+      'Upplåst. Dina identiteter är inlästa och det fjärde igenkänningsskiktet körs.';
 
   @override
   String get vaultLockedWhat =>
-      'Locked. The rules and the pack still run — an IBAN is still caught — but not who it belongs to.';
+      'Låst. Reglerna och paketet körs fortfarande — ett IBAN fångas fortfarande — men inte vem det tillhör.';
 
   @override
   String get vaultAbsentWhat =>
-      'Not created on this device. Nothing is recognised by name.';
+      'Inte skapat på den här enheten. Ingenting känns igen på namnet.';
 
   @override
   String unlockedWithIdentities(int count) {
-    return 'Unlocked · $count identities';
+    return 'Upplåst · $count identiteter';
   }
 
   @override
-  String get zPdfReadBack => 'z-pdf — read a protected document back';
+  String get zPdfReadBack => 'z-pdf — läs tillbaka ett skyddat dokument';
 
   @override
   String get zPdfWhat =>
-      'The reverse act. A document that left this app with tokens in it is read back into its own names, here, from your vault — and it is never scanned, never protected and never put on a bench. Nothing of it is sent anywhere.';
+      'Den omvända handlingen. Ett dokument som lämnat den här appen med platshållare i läses här tillbaka till sina egna namn ur ditt valv — och det granskas aldrig, skyddas aldrig och läggs aldrig på en arbetsbänk. Ingenting av det skickas någonstans.';
 
   @override
   String get openThisPanelFromTheApp =>
-      'Open this panel from the app to choose a file.';
+      'Öppna det här fältet från appen för att välja en fil.';
 
   @override
-  String get chooseAZPdfFile => 'Choose a z-pdf file';
+  String get chooseAZPdfFile => 'Välj en z-pdf-fil';
 
   @override
-  String get lockTheVaultAfter => 'Lock the vault after';
+  String get lockTheVaultAfter => 'Lås valvet efter';
 
   @override
-  String get minutesUnusedZeroIsNever => 'minutes unused · 0 = never';
+  String get minutesUnusedZeroIsNever => 'minuter utan användning · 0 = aldrig';
 
   @override
   String get lockTheVaultAfterWhat =>
-      'Kept by the vault itself, not by a timer in a screen: every way into it checks the clock first, so a bug in the interface cannot leave it open.';
+      'Hålls av valvet självt, inte av en timer i en skärm: varje väg in i det läser klockan först, så ett fel i gränssnittet kan inte lämna det öppet.';
 
   @override
   String get encryptedLocalCredentialStorage =>
-      'Encrypted local credential storage';
+      'Krypterad lokal lagring av inloggningsuppgifter';
 
   @override
   String get credentialHomesWhat =>
-      'A provider key has two homes and no third: sealed inside the vault when one is open, or in memory for this run when there is none. Never a file in the clear, and never returned to the interface — there is no call in the whole contract that gives one back.';
+      'En leverantörsnyckel har två hem och inget tredje: förseglad inne i valvet när ett är öppet, eller i minnet så länge appen är öppen när det inte finns något. Aldrig en fil i klartext, och aldrig tillbaka till gränssnittet — det finns inget anrop i hela kontraktet som ger en tillbaka.';
 
   @override
-  String get credentialSealedInTheVault => 'sealed in the vault';
+  String get credentialSealedInTheVault => 'förseglad i valvet';
 
   @override
-  String get credentialInMemory => 'in memory, gone when the app closes';
+  String get credentialInMemory => 'i minnet, borta när appen stängs';
 
   @override
-  String get credentialNoKeyStored => 'no key stored';
+  String get credentialNoKeyStored => 'ingen nyckel sparad';
 
   @override
-  String get noProviderHoldsACredential => 'No provider holds a credential.';
+  String get noProviderHoldsACredential =>
+      'Ingen leverantör håller några inloggningsuppgifter.';
 
   @override
-  String get deviceBoundProtection => 'Device-bound protection';
+  String get deviceBoundProtection => 'Enhetsbundet skydd';
 
   @override
   String get deviceBoundWhat =>
-      'Not built yet. A key tied to this device’s own authentication would sit above the layer above, without changing what is stored — the same records, one more lock.';
+      'Inte byggt än. En nyckel som är bunden till den här enhetens egen autentisering skulle ligga ovanpå skiktet ovan, utan att ändra vad som lagras — samma uppgifter, ett lås till.';
 
   @override
   String get sessionsWhat =>
-      'A session keeps its own key, and the keys are in the vault.';
+      'En session har sin egen nyckel, och nycklarna ligger i valvet.';
 
   @override
   String get theVaultIsShutNoSessions =>
-      'The vault is shut, so there are no sessions to show. Open it and they come back — the conversations themselves were never in it.';
+      'Valvet är låst, så det finns inga sessioner att visa. Lås upp det och de kommer tillbaka — samtalen själva låg aldrig i det.';
 
   @override
   String get eachSessionHasItsOwnEncryption =>
-      'Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot.';
+      'Varje session har sin egen kryptering. Samma namn tar två olika platshållare i två sessioner, och i en session samma överallt — en session är alltså hur du väljer vad en AI kan lägga samman och vad den inte kan.';
 
   @override
-  String get newSession => 'New session';
+  String get newSession => 'Ny session';
 
   @override
   String get newSessionWhat =>
-      'A name and a language, both yours to choose: the language is how Z reads every text in this session, and it is asked once here. It becomes the session you are working in straight away. Anything already protected on the document in front of you is renamed into it — nothing has been sent yet, so nothing that left is affected.';
+      'Ett namn och ett språk, båda dina att välja: språket är hur Z läser varje text i den här sessionen, och det frågas en gång här. Den blir med en gång den session du arbetar i. Det som redan är skyddat på dokumentet framför dig byter namn in i den — ingenting har skickats än, så ingenting som lämnat enheten påverkas.';
 
   @override
-  String get whatIsThisOneAbout => 'What is this one about?';
+  String get whatIsThisOneAbout => 'Vad handlar den här om?';
 
   @override
-  String get begin => 'Begin';
+  String get begin => 'Börja';
 
   @override
-  String get noSessionsYet => 'No sessions yet';
+  String get noSessionsYet => 'Inga sessioner än';
 
   @override
   String get noSessionsYetWhat =>
-      'One is born the first time you copy safe text or ask for a PDF — it is not refused for want of a name, it takes its own number for one, and you can rename it here. You never have to make one by hand first.';
+      'En föds första gången du kopierar skyddad text eller ber om en PDF — den avvisas inte för att den saknar namn, den tar sitt eget nummer som namn, och du kan byta namn på den här. Du behöver aldrig skapa en för hand först.';
 
   @override
   String theOneYouAreIn(String when, String exchanges) {
-    return '$when · $exchanges · the one you are in';
+    return '$when · $exchanges · den du är i';
   }
 
   @override
-  String get workInThisSession => 'Work in this session';
+  String get workInThisSession => 'Arbeta i den här sessionen';
 
   @override
-  String get enter => 'Enter';
+  String get enter => 'Gå in';
 
   @override
-  String get renameThisSession => 'Rename this session';
+  String get renameThisSession => 'Byt namn på den här sessionen';
 
   @override
-  String get deleteThisSession => 'Delete this session';
+  String get deleteThisSession => 'Ta bort den här sessionen';
 
   @override
-  String get oneExchange => '1 exchange';
+  String get oneExchange => '1 utbyte';
 
   @override
   String exchangesCount(int count) {
-    return '$count exchanges';
+    return '$count frågor och svar';
   }
 
   @override
   String renameSessionNumber(int number) {
-    return 'Rename session $number?';
+    return 'Byt namn på session $number?';
   }
 
   @override
   String theNumberStaysWhatItIs(int number) {
-    return 'The number stays $number — it is what this session is, and nothing that was protected in it changes. Only the word on the row does.';
+    return 'Numret förblir $number — det är vad den här sessionen är, och ingenting som skyddades i den ändras. Bara ordet på raden gör det.';
   }
 
   @override
-  String get keepTheName => 'Keep the name';
+  String get keepTheName => 'Behåll namnet';
 
   @override
-  String get renameIt => 'Rename it';
+  String get renameIt => 'Byt namn';
 
   @override
   String deleteNamed(String name) {
-    return 'Delete «$name»?';
+    return 'Ta bort «$name»?';
   }
 
   @override
   String get thisDestroysTheKey =>
-      'This destroys the key this session was protected with.';
+      'Det här förstör nyckeln som den här sessionen skyddades med.';
 
   @override
   String get everyDocumentCanNeverBeUnprotected =>
-      'What has already left this session protected can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist. «Undo protection» takes a cover off the text in front of you, never off what has gone.';
+      'Det som redan har lämnat den här sessionen skyddat kan aldrig befrias från sitt skydd igen — inte av dig, och inte av Z Privacy. Nyckeln var det enda som hade kunnat göra det, och den kommer inte att finnas. «Ta tillbaka skyddet» tar bort en täckning från texten framför dig, aldrig från det som redan är borta.';
 
   @override
   String get anythingYouSentStaysAsItWas =>
-      'Anything you sent out of this session stays exactly as it was. What goes is the way back from it.';
+      'Det du har skickat ut ur den här sessionen förblir precis som det var. Det som försvinner är vägen tillbaka från det.';
 
   @override
-  String get keepIt => 'Keep it';
+  String get keepIt => 'Behåll';
 
   @override
-  String get deleteTheSession => 'Delete the session';
+  String get deleteTheSession => 'Ta bort sessionen';
 
   @override
-  String get oneProtectedPlace => '1 protected place';
+  String get oneProtectedPlace => '1 skyddat ställe';
 
   @override
   String protectedPlacesCount(int count) {
-    return '$count protected places';
+    return '$count skyddade ställen';
   }
 
   @override
-  String get renameThisDocument => 'Rename this document';
+  String get renameThisDocument => 'Byt namn på det här dokumentet';
 
   @override
   String renameHandle(String handle) {
-    return 'Rename $handle?';
+    return 'Byt namn på $handle?';
   }
 
   @override
   String theNameIsWhatYouRead(String handle) {
-    return 'The name is what you read in this list. $handle stays what it is: a number is spent once and never given to another document.';
+    return 'Namnet är vad du läser i den här listan. $handle förblir vad det är: ett nummer ges ut en gång och ges aldrig till ett annat dokument.';
   }
 
   @override
-  String get aNameForThisDocument => 'A name for this document';
+  String get aNameForThisDocument => 'Ett namn för det här dokumentet';
 
   @override
   String get roomAi => 'AI';
 
   @override
   String get aiWhat =>
-      'Three ways to ask a model. The first needs no account at all.';
+      'Tre vägar att fråga en modell. Den första behöver inget konto alls.';
 
   @override
-  String get manualAi => 'Manual AI';
+  String get manualAi => 'Manuell AI';
 
   @override
   String get manualAiWhat =>
-      'Use an AI chat you already have. Copy the safe text out of the Workspace, paste it into whatever model you use, and bring the answer back. Nothing to set up, nothing to pay for, and the restoring works exactly the same.';
+      'Använd en AI-chatt du redan har. Kopiera den skyddade texten ur arbetsytan, klistra in den i vilken modell du nu använder, och hämta tillbaka svaret. Ingenting att ställa in, ingenting att betala för, och återställningen fungerar precis likadant.';
 
   @override
   String get alwaysAvailableFirstDoor =>
-      'Always available — it is the «Choose who answers» sheet, first door.';
+      'Alltid tillgänglig — det är bladet «Välj vem som svarar», första dörren.';
 
   @override
-  String get directApi => 'Direct API';
+  String get directApi => 'Direkt API';
 
   @override
   String get directApiWhat =>
-      'Connect to a remote AI provider with your API credential. The key goes in once and never comes back out — no screen in this app can show it to you again.';
+      'Anslut till en AI-leverantör på distans med dina API-uppgifter. Nyckeln går in en gång och kommer aldrig ut igen — ingen skärm i den här appen kan visa den för dig på nytt.';
 
   @override
   String get atThisAddressNoCredential =>
-      'At this address no credential is needed.';
+      'På den här adressen behövs inga inloggningsuppgifter.';
 
   @override
-  String get protocol => 'Protocol';
+  String get protocol => 'Protokoll';
 
   @override
-  String get connectedKeySealed => 'Connected · key sealed in the vault';
+  String get connectedKeySealed => 'Ansluten · nyckeln förseglad i valvet';
 
   @override
   String get connectedKeyThisRunOnly =>
-      'Connected · key kept for this run only';
+      'Ansluten · nyckeln bevarad bara så länge appen är öppen';
 
   @override
-  String get connectedNoKeyNeeded => 'Connected · no key needed';
+  String get connectedNoKeyNeeded => 'Ansluten · ingen nyckel behövs';
 
   @override
-  String get notConnected => 'Not connected';
+  String get notConnected => 'Inte ansluten';
 
   @override
-  String get localAi => 'Local AI';
+  String get localAi => 'AI på den här datorn';
 
   @override
   String get localAiWhat =>
-      'Runs through an AI service on this computer — llama.cpp, Ollama, LM Studio, anything that answers the same shape. No key, no account, and the request never leaves this computer. Plain http is accepted only for a literal loopback address.';
+      'Körs genom en AI-tjänst på den här datorn — llama.cpp, Ollama, LM Studio, allt som svarar i samma form. Ingen nyckel, inget konto, och förfrågan lämnar aldrig den här datorn. Vanlig http accepteras bara för en bokstavlig loopback-adress.';
 
   @override
-  String get models => 'Models';
+  String get models => 'Modeller';
 
   @override
   String get privacyWhat =>
-      'What the app does by itself, and how far it goes without asking.';
+      'Vad appen gör av sig själv, och hur långt den går utan att fråga.';
 
   @override
   String get noVaultSoThisRunOnly =>
-      'There is no vault open, so these are for this run only — without a vault there is nothing to keep them in.';
+      'Det finns inget öppet valv, så det här gäller bara så länge appen är öppen — utan valv finns det ingenting att bevara det i.';
 
   @override
-  String get scanOnArrival => 'Scan a document the moment it arrives';
+  String get scanOnArrival =>
+      'Granska ett dokument i samma stund det kommer in';
 
   @override
   String get scanOnArrivalWhat =>
-      'No dialog, no button. Turning this off means a document sits unprotected until you press Rescan — which is exactly the moment the boards were written to avoid.';
+      'Ingen dialog, ingen knapp. Att stänga av det här betyder att ett dokument ligger oskyddat tills du trycker «Granska igen» — precis det ögonblick som utkasten skrevs för att undvika.';
 
   @override
-  String get answerEverySuggestion => 'Answer every suggestion before sending';
+  String get answerEverySuggestion => 'Svara på varje förslag innan du skickar';
 
   @override
   String get answerEverySuggestionWhat =>
-      'Not a setting. A suggestion that has not been answered is never quietly treated as safe, and there is no «send anyway» — not here, not in a hidden flag, not anywhere in the code.';
+      'Ingen inställning. Ett förslag som inte har besvarats behandlas aldrig tyst som säkert, och det finns inget «skicka ändå» — inte här, inte i en gömd inställning, ingenstans i koden.';
 
   @override
-  String get aRevealedValueStaysFor => 'A revealed value stays for';
+  String get aRevealedValueStaysFor => 'Ett avtäckt värde står kvar i';
 
   @override
   String get aRevealedValueStaysForWhat =>
-      'Revealing draws on the screen and never writes into what leaves. This is only how long it stays drawn.';
+      'Att avtäcka ritar på skärmen och skriver aldrig in i det som går ut. Det här är bara hur länge det står ritat.';
 
   @override
-  String get tokenRotation => 'Token rotation';
+  String get tokenRotation => 'Byte av platshållare';
 
   @override
   String get tokenRotationWhat =>
-      'Not built yet. When it is, it will live here: whether a permanent token keeps its number across sessions, or is drawn again each time so two sessions cannot be linked by it.';
+      'Inte byggt än. När det kommer kommer det att leva här: om en varaktig platshållare behåller sitt nummer över sessioner, eller dras på nytt varje gång så att två sessioner inte kan knytas samman genom den.';
 
   @override
-  String get back => 'Back';
+  String get back => 'Tillbaka';
 
   @override
-  String get allIdentities => 'All identities';
+  String get allIdentities => 'Alla identiteter';
 
   @override
   String identitiesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count identities',
-      one: '1 identity',
+      other: '$count identiteter',
+      one: '1 identitet',
     );
     return '$_temp0';
   }
@@ -1230,8 +1233,8 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count values',
-      one: '1 value',
+      other: '$count värden',
+      one: '1 värde',
     );
     return '$_temp0';
   }
@@ -1241,93 +1244,93 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count protected words',
-      one: '1 protected word',
+      other: '$count skyddade ord',
+      one: '1 skyddat ord',
     );
     return '$_temp0';
   }
 
   @override
-  String get notCreatedOnThisDevice => 'Not created on this device';
+  String get notCreatedOnThisDevice => 'Inte skapat på den här enheten';
 
   @override
-  String get changePassphrase => 'Change passphrase';
+  String get changePassphrase => 'Byt lösenfras';
 
   @override
-  String get lockTheVault => 'Lock';
+  String get lockTheVault => 'Lås';
 
   @override
-  String get theVaultIsLocked => 'The vault is locked';
+  String get theVaultIsLocked => 'Valvet är låst';
 
   @override
-  String get thereIsNoVaultYet => 'There is no vault yet';
+  String get thereIsNoVaultYet => 'Det finns inget valv än';
 
   @override
   String get yourIdentitiesAreSealed =>
-      'Your identities are on this device, sealed. Until it is open the scanner still runs its rules and its pack — an IBAN is still caught — but not who.';
+      'Dina identiteter ligger på den här enheten, förseglade. Tills det är öppet kör granskningen fortfarande sina regler och sitt språkpaket — ett IBAN fångas fortfarande — men inte vem.';
 
   @override
   String get yourNamesLiveInOneVaultFile =>
-      'Your names live in one encrypted vault file. It holds your people and their values, encrypted with a passphrase that never leaves this device. Without one, nothing is recognised by name.';
+      'Dina namn lever i en enda krypterad valvfil. Den innehåller dina människor och deras värden, krypterade med en lösenfras som aldrig lämnar den här enheten. Utan en känns ingenting igen på namnet.';
 
   @override
   String get searchThisDevice =>
-      'Search this device — names, values, spellings';
+      'Sök på den här enheten — namn, värden, skrivningar';
 
   @override
-  String get newIdentity => 'New identity';
+  String get newIdentity => 'Ny identitet';
 
   @override
-  String get filterAll => 'All';
+  String get filterAll => 'Alla';
 
   @override
-  String get sessionProfile => 'Session profile';
+  String get sessionProfile => 'Sessionens profil';
 
   @override
-  String get newProfile => 'New profile';
+  String get newProfile => 'Ny profil';
 
   @override
   String get noIdentitiesYet =>
-      'No identities yet. The first one is usually the client whose documents you work on.';
+      'Inga identiteter än. Den första är oftast kunden vars dokument du arbetar med.';
 
   @override
   String nothingMatchesQuery(String query) {
-    return 'Nothing on this device matches «$query».';
+    return 'Ingenting på den här enheten passar «$query».';
   }
 
   @override
-  String get valuesITaught => 'Values I taught';
+  String get valuesITaught => 'Värden jag lärt ut';
 
   @override
   String get valuesITaughtWhat =>
-      'names, companies, numbers — found by themselves from now on';
+      'namn, företag, nummer — hittas av sig själva från och med nu';
 
   @override
-  String get rulesITaught => 'Rules I taught';
+  String get rulesITaught => 'Regler jag lärt ut';
 
   @override
   String get rulesITaughtWhat =>
-      'words that say what follows them — «after Mandantenkennung → customer number»';
+      'ord som säger vad som kommer efter dem — «efter Mandantenkennung → kundnummer»';
 
   @override
-  String get exceptionsITaught => 'Exceptions I taught';
+  String get exceptionsITaught => 'Undantag jag lärt ut';
 
   @override
   String get exceptionsITaughtWhat =>
-      'values you explicitly excluded from protection';
+      'värden du uttryckligen har undantagit från skydd';
 
   @override
-  String get noTaughtValuesYet => 'No taught values yet.';
+  String get noTaughtValuesYet => 'Inga utlärda värden än.';
 
   @override
-  String get noRulesTaughtYet => 'No rules taught yet.';
+  String get noRulesTaughtYet => 'Inga utlärda regler än.';
 
   @override
-  String get noSavedExceptionsYet => 'No saved exceptions yet.';
+  String get noSavedExceptionsYet => 'Inga sparade undantag än.';
 
   @override
   String kindScopeTaughtOn(String kind, String scope, String date) {
-    return '$kind · $scope · Taught: $date';
+    return '$kind · $scope · Inlärt: $date';
   }
 
   @override
@@ -1336,373 +1339,373 @@ class AppLocalizationsSv extends AppLocalizations {
     String scope,
     String date,
   ) {
-    return 'Do not protect as $kind · $scope · Taught: $date';
+    return 'Skydda inte som $kind · $scope · Inlärt: $date';
   }
 
   @override
-  String get reveal => 'Reveal';
+  String get reveal => 'Avtäck';
 
   @override
-  String get hide => 'Hide';
+  String get hide => 'Dölj';
 
   @override
   String get theExceptionGoes =>
-      'the exception — this value will be offered for protection again';
+      'undantaget — det här värdet kommer att erbjudas för skydd igen';
 
   @override
   String get theRuleGoes =>
-      'the rule — Z Privacy will stop protecting what follows that word';
+      'regeln — Z Privacy slutar skydda det som kommer efter det ordet';
 
   @override
-  String get openIdentity => 'Open';
+  String get openIdentity => 'Öppna';
 
   @override
   String profileNamed(String name) {
-    return 'Profile: $name';
+    return 'Profil: $name';
   }
 
   @override
-  String get taughtOnUnknown => 'unknown';
+  String get taughtOnUnknown => 'okänt';
 
   @override
   String afterLabelProtectAs(String label, String kind) {
-    return 'After «$label:» → $kind';
+    return 'Efter «$label:» → $kind';
   }
 
   @override
-  String get teachARule => 'Teach a rule';
+  String get teachARule => 'Lär ut en regel';
 
   @override
-  String get kindClient => 'Client';
+  String get kindClient => 'Kund';
 
   @override
   String get kindPerson => 'Person';
 
   @override
-  String get kindCompany => 'Company';
+  String get kindCompany => 'Företag';
 
   @override
-  String get kindProject => 'Project';
+  String get kindProject => 'Projekt';
 
   @override
-  String get kindSomethingElse => 'Something else';
+  String get kindSomethingElse => 'Något annat';
 
   @override
   String vaultFileNotChanged(String said) {
-    return '$said Z Privacy has not changed the file. If you have a backup of the vault, put it back in place; otherwise move this file somewhere else and a new vault can be made here.';
+    return '$said Z Privacy har inte ändrat filen. Om du har en säkerhetskopia av valvet, lägg tillbaka den; annars flytta den här filen någon annanstans, och ett nytt valv kan skapas här.';
   }
 
   @override
-  String get changeThePassphrase => 'Change the passphrase';
+  String get changeThePassphrase => 'Byt lösenfrasen';
 
   @override
   String get onlyThirtyTwoBytes =>
-      'Only 32 bytes are re-wrapped — the vault itself is not decrypted and not rewritten. Everything in it stays exactly where it is.';
+      'Bara 32 byte packas om — valvet självt dekrypteras inte och skrivs inte om. Allt i det ligger kvar precis där det är.';
 
   @override
-  String get currentPassphrase => 'Current passphrase';
+  String get currentPassphrase => 'Nuvarande lösenfras';
 
   @override
-  String get passphrase => 'Passphrase';
+  String get passphrase => 'Lösenfras';
 
   @override
-  String get newPassphrase => 'New passphrase';
+  String get newPassphrase => 'Ny lösenfras';
 
   @override
-  String get confirmPassphrase => 'Confirm passphrase';
+  String get confirmPassphrase => 'Bekräfta lösenfrasen';
 
   @override
-  String get confirmNewPassphrase => 'Confirm new passphrase';
+  String get confirmNewPassphrase => 'Bekräfta den nya lösenfrasen';
 
   @override
-  String get passphrasesMatch => 'Passphrases match';
+  String get passphrasesMatch => 'Lösenfraserna stämmer';
 
   @override
-  String get passphrasesDoNotMatch => 'Passphrases do not match';
+  String get passphrasesDoNotMatch => 'Lösenfraserna stämmer inte';
 
   @override
   String atLeastCharacters(int count) {
-    return 'At least $count characters — the vault will not be made with fewer.';
+    return 'Minst $count tecken — med färre skapas inte valvet.';
   }
 
   @override
   String get thereIsNoWayBack =>
-      'There is no way back. Nobody holds a copy of this, and no reset exists — the passphrase never leaves this device and nothing on our side could recover the vault without it.';
+      'Det finns ingen väg tillbaka. Ingen har en kopia av den här, och det finns ingen återställning — lösenfrasen lämnar aldrig den här enheten, och ingenting på vår sida skulle kunna rädda valvet utan den.';
 
   @override
-  String get working => 'Working…';
+  String get working => 'Arbetar…';
 
   @override
-  String get changeIt => 'Change it';
+  String get changeIt => 'Byt';
 
   @override
-  String get createTheVault => 'Create the vault';
+  String get createTheVault => 'Skapa valvet';
 
   @override
-  String get unlockTheVault => 'Unlock';
+  String get unlockTheVault => 'Lås upp';
 
   @override
   String hideNamed(String label) {
-    return 'Hide $label';
+    return 'Dölj $label';
   }
 
   @override
   String showNamed(String label) {
-    return 'Show $label';
+    return 'Visa $label';
   }
 
   @override
-  String get aNewIdentity => 'A new identity';
+  String get aNewIdentity => 'En ny identitet';
 
   @override
   String get anIdentityIsHowAPersonThinks =>
-      'An identity is how a person thinks — «Client Nordstern» — and the values inside it are what the scanner matches.';
+      'En identitet är hur en människa tänker — «Kund Nordstern» — och värdena i den är vad granskningen känner igen.';
 
   @override
-  String get nameField => 'Name';
+  String get nameField => 'Namn';
 
   @override
-  String get sortField => 'Sort';
+  String get sortField => 'Typ';
 
   @override
-  String get loadedIn => 'Loaded in';
+  String get loadedIn => 'Inläst i';
 
   @override
-  String get exampleClientNordstern => 'Client Nordstern';
+  String get exampleClientNordstern => 'Kund Nordstern';
 
   @override
   String get exampleCompanyName => 'Nordstern Consulting GmbH';
 
   @override
-  String get cancelForm => 'Cancel';
+  String get cancelForm => 'Avbryt';
 
   @override
-  String get createIt => 'Create';
+  String get createIt => 'Skapa';
 
   @override
-  String get aNewValue => 'A new value';
+  String get aNewValue => 'Ett nytt värde';
 
   @override
-  String get editThisValue => 'Edit this value';
+  String get editThisValue => 'Redigera det här värdet';
 
   @override
-  String get theValue => 'The value';
+  String get theValue => 'Värdet';
 
   @override
-  String get readingItFromTheVault => 'reading it from the vault…';
+  String get readingItFromTheVault => 'läses ur valvet…';
 
   @override
-  String get whatItIs => 'What it is';
+  String get whatItIs => 'Vad det är';
 
   @override
-  String get howToTreatIt => 'How to treat it';
+  String get howToTreatIt => 'Hur det ska hanteras';
 
   @override
-  String get alwaysProtect => 'Always protect';
+  String get alwaysProtect => 'Skydda alltid';
 
   @override
   String get alwaysProtectWhat =>
-      'Found by itself and replaced, with no question.';
+      'Hittas av sig själv och ersätts, utan fråga.';
 
   @override
-  String get suggestPolicy => 'Suggest';
+  String get suggestPolicy => 'Föreslå';
 
   @override
   String get suggestPolicyWhat =>
-      'Found, and put to you before anything is sent.';
+      'Hittas och läggs fram för dig innan något skickas.';
 
   @override
-  String get keepDoNotHunt => 'Keep, do not hunt';
+  String get keepDoNotHunt => 'Behåll, leta inte';
 
   @override
   String get keepDoNotHuntWhat =>
-      'Kept so its spellings and its token stay stable — but not looked for.';
+      'Behålls så att dess skrivningar och dess platshållare förblir stabila — men letas inte efter.';
 
   @override
-  String get saveIt => 'Save';
+  String get saveIt => 'Spara';
 
   @override
-  String get aNewProfile => 'A new profile';
+  String get aNewProfile => 'En ny profil';
 
   @override
-  String get renameProfile => 'Rename profile';
+  String get renameProfile => 'Byt namn på profilen';
 
   @override
   String get oneDictionaryPerClient =>
-      'One dictionary per client. Only the identities of the profile you open are loaded — opening the vault is not a blank cheque.';
+      'Ett register per kund. Bara identiteterna i den profil du öppnar läses in — att öppna valvet är ingen blankocheck.';
 
   @override
   String get theProfileIdStaysTheSame =>
-      'The profile ID stays the same. Only the name a person reads changes.';
+      'Profil-ID:t förblir detsamma. Bara namnet en människa läser ändras.';
 
   @override
-  String get languagesUsedInDocuments => 'Languages used in documents';
+  String get languagesUsedInDocuments => 'Språk i dokumenten';
 
   @override
   String get moreThanOneMayBeOn =>
-      'More than one may be on. A document with a German label and an English one is read by both in a single scan.';
+      'Fler än ett kan vara på. Ett dokument med ett tyskt och ett engelskt fältnamn läses av båda i en och samma granskning.';
 
   @override
-  String get renameIt2 => 'Rename';
+  String get renameIt2 => 'Byt namn';
 
   @override
-  String get teachARuleHead => 'Teach a rule';
+  String get teachARuleHead => 'Lär ut en regel';
 
   @override
   String get aRuleIsAWordAndWhatComesAfter =>
-      'A rule is a word and what comes after it. Z Privacy protects the value that follows and stops at the end of that field.';
+      'En regel är ett ord och vad som kommer efter det. Z Privacy skyddar värdet som följer och slutar vid slutet av det fältet.';
 
   @override
-  String get whenZPrivacySees => 'When Z Privacy sees';
+  String get whenZPrivacySees => 'När Z Privacy ser';
 
   @override
   String get exampleMandantenkennung => 'Mandantenkennung';
 
   @override
-  String get protectTheValueAfterItAs => 'Protect the value after it as';
+  String get protectTheValueAfterItAs => 'Skydda värdet efter det som';
 
   @override
-  String get whereField => 'Where';
+  String get whereField => 'Var';
 
   @override
   String profileNamedDash(String name) {
-    return 'Profile — $name';
+    return 'Profil — $name';
   }
 
   @override
-  String get saveRule => 'Save rule';
+  String get saveRule => 'Spara regeln';
 
   @override
-  String get removeProtectionHere => 'Remove protection here';
+  String get removeProtectionHere => 'Ta bort skyddet här';
 
   @override
   String removeItInThisSession(int places) {
-    return 'Remove it in this session ($places places)';
+    return 'Ta bort det i den här sessionen ($places ställen)';
   }
 
   @override
-  String get forgetFromThisProfile => 'Forget from this profile';
+  String get forgetFromThisProfile => 'Glöm från den här profilen';
 
   @override
-  String get forgetEverywhere => 'Forget everywhere';
+  String get forgetEverywhere => 'Glöm överallt';
 
   @override
   String get protectThisColumnInTheLineHeld =>
-      'Protect this column in the line held';
+      'Skydda den här kolumnen i den hållna raden';
 
   @override
   String protectThisColumnInLinesHeld(int lines) {
-    return 'Protect this column in the $lines held lines';
+    return 'Skydda den här kolumnen i de $lines hållna raderna';
   }
 
   @override
-  String get whyIsThisProtected => 'Why is this protected?';
+  String get whyIsThisProtected => 'Varför är det här skyddat?';
 
   @override
   String get theSameCellOfEveryHeldLine =>
-      'The same cell of every held line, each value its own token. This one is protected already and stays as it is.';
+      'Samma cell i varje hållen rad, varje värde med sin egen platshållare. Den här är redan skyddad och förblir som den är.';
 
   @override
-  String get whatItIsRow => 'What it is';
+  String get whatItIsRow => 'Vad det är';
 
   @override
-  String get whereItApplies => 'Where it applies';
+  String get whereItApplies => 'Var det gäller';
 
   @override
-  String get decidedBy => 'Decided by';
+  String get decidedBy => 'Beslutat av';
 
   @override
-  String get decidedByYou => 'You';
+  String get decidedByYou => 'Du';
 
   @override
-  String get decidedByZPrivacy => 'Z Privacy, on its own';
+  String get decidedByZPrivacy => 'Z Privacy, av sig själv';
 
   @override
-  String get taughtOnRow => 'Taught on';
+  String get taughtOnRow => 'Inlärt den';
 
   @override
-  String get tokenRow => 'Token';
+  String get tokenRow => 'Platshållare';
 
   @override
   String otherSpellingsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count other spellings',
-      one: '1 other spelling',
+      other: '$count andra skrivningar',
+      one: '1 annan skrivning',
     );
     return '$_temp0';
   }
 
   @override
-  String get close => 'Close';
+  String get close => 'Stäng';
 
   @override
   String get uncoversThisOnePlace =>
-      'Uncovers this one place. Every other place keeps its protection, and its token.';
+      'Avtäcker det här enda stället. Varje annat ställe behåller sitt skydd, och sin platshållare.';
 
   @override
   String get theValueStaysInYourRules =>
-      'The value stays in your privacy rules and may be protected again later.';
+      'Värdet stannar i dina integritetsregler och kan skyddas igen senare.';
 
   @override
   String get uncoversEveryPlaceInThisSession =>
-      'Uncovers every place this token stands in, in this session.';
+      'Avtäcker varje ställe den här platshållaren står på, i den här sessionen.';
 
   @override
   String get thereIsNoEverywhere =>
-      'There is no «everywhere»: un-protection reaches no further than one session.';
+      'Det finns inget «överallt»: att ta bort skyddet räcker inte längre än en session.';
 
   @override
   String get removesWhatZLearnedForThisProfile =>
-      'Removes what Z Privacy learned for this profile.';
+      'Tar bort vad Z Privacy har lärt sig för den här profilen.';
 
   @override
   String get protectionAlreadyAppliedStays =>
-      'Protection already applied in this document stays in place.';
+      'Skydd som redan tillämpats i det här dokumentet ligger kvar.';
 
   @override
   String get removesWhatZLearnedEverywhere =>
-      'Removes what Z Privacy learned, in every profile.';
+      'Tar bort vad Z Privacy har lärt sig, i varje profil.';
 
   @override
-  String get forgetThisRule => 'Forget this rule';
+  String get forgetThisRule => 'Glöm den här regeln';
 
   @override
-  String get theRuleItselfIsKept => 'The rule itself is kept in your vault.';
+  String get theRuleItselfIsKept => 'Regeln själv behålls i ditt valv.';
 
   @override
   String get forgetItInZVaultRules =>
-      'Forget it in Z Vault → My Privacy Rules → Rules I taught.';
+      'Glöm den i Z-valvet → Mina integritetsregler → Regler jag lärt ut.';
 
   @override
   String get nothingWasLearnedYouProtectedIt =>
-      'Nothing was learned from this — you protected it here, and Undo takes it back.';
+      'Ingenting lärdes av det här — du skyddade det här, och «Ta tillbaka skyddet» tar tillbaka det.';
 
   @override
   String get nothingWasLearnedARuleSawIt =>
-      'Nothing was learned from this. A rule recognised the shape, and no record of it was kept.';
+      'Ingenting lärdes av det här. En regel kände igen formen, och ingenting av den bevarades.';
 
   @override
   String forgottenButStillKnownBy(String who) {
-    return 'Forgotten, but $who still recognises it. Please tell us — this should not be possible.';
+    return 'Glömt, men $who känner fortfarande igen det. Säg det till oss — det här ska inte vara möjligt.';
   }
 
   @override
   String forgetNamed(String what) {
-    return 'Forget «$what»?';
+    return 'Glöm «$what»?';
   }
 
   @override
-  String get thisWillRemove => 'This will remove';
+  String get thisWillRemove => 'Det här tar bort';
 
   @override
   String protectedValuesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count protected values',
-      one: '1 protected value',
+      other: '$count skyddade värden',
+      one: '1 skyddat värde',
     );
     return '$_temp0';
   }
@@ -1712,8 +1715,8 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count spellings',
-      one: '1 spelling',
+      other: '$count skrivningar',
+      one: '1 skrivning',
     );
     return '$_temp0';
   }
@@ -1723,130 +1726,131 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count identities',
-      one: '1 identity',
+      other: '$count identiteter',
+      one: '1 identitet',
     );
-    return '$_temp0 left holding nothing';
+    return '$_temp0 som då inte innehåller något';
   }
 
   @override
   String itsPlaceIn(String profile) {
-    return 'its place in $profile';
+    return 'dess plats i $profile';
   }
 
   @override
-  String get itWillNotChange => 'It will NOT change';
+  String get itWillNotChange => 'Det här ändrar det INTE';
 
   @override
   String get forgetRemovesFromThisVault =>
-      'Forget removes this value from the current vault and from future recognition by that vault. It does not remove protection already applied in this document, and an older valid copy of the vault may restore the value later.';
+      'Att glömma tar bort det här värdet ur det nuvarande valvet och ur valvets framtida igenkänning. Det tar inte bort skydd som redan tillämpats i det här dokumentet, och en äldre giltig kopia av valvet kan återställa värdet senare.';
 
   @override
   String wouldStillRecogniseIt(String who) {
-    return '$who would still recognise it — forgetting here does not reach into another client’s records.';
+    return '$who skulle fortfarande känna igen det — att glömma här räcker inte in i en annan kunds uppgifter.';
   }
 
   @override
-  String get thisCannotBeUndone => 'This cannot be undone.';
+  String get thisCannotBeUndone => 'Det här kan inte göras ogjort.';
 
   @override
   String get noValuesYet =>
-      'No values yet. A value is what the scanner matches — a name, a company, an IBAN.';
+      'Inga värden än. Ett värde är vad granskningen känner igen — ett namn, ett företag, ett IBAN.';
 
   @override
   String valuesEachWithItsOwnPolicy(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count values',
-      one: '1 value',
+      other: '$count värden',
+      one: '1 värde',
     );
-    return '$_temp0, each with its own spellings and its own policy.';
+    return '$_temp0, vart och ett med egna skrivningar och egen regel.';
   }
 
   @override
-  String get moveIt => 'Move';
+  String get moveIt => 'Flytta';
 
   @override
-  String get deleteIt => 'Delete';
+  String get deleteIt => 'Ta bort';
 
   @override
-  String get addAValue => 'Add a value';
+  String get addAValue => 'Lägg till ett värde';
 
   @override
-  String get policyKeptNotHunted => 'Kept, not hunted';
+  String get policyKeptNotHunted => 'Behålls, letas inte efter';
 
   @override
-  String get addASpelling => 'Add a spelling';
+  String get addASpelling => 'Lägg till en skrivning';
 
   @override
-  String get editIt => 'Edit';
+  String get editIt => 'Redigera';
 
   @override
-  String get alsoWritten => 'Also written';
+  String get alsoWritten => 'Skrivs också';
 
   @override
-  String get anotherSpelling => 'Another spelling';
+  String get anotherSpelling => 'En annan skrivning';
 
   @override
   String get anotherSpellingWhat =>
-      'The same value written differently — «Herr Müller», «T. Müller». Every spelling keeps the same token, so the model reads one person and not three.';
+      'Samma värde skrivet annorlunda — «Herr Müller», «T. Müller». Varje skrivning behåller samma platshållare, så att modellen läser en person och inte tre.';
 
   @override
   String get exampleSpelling => 'Herr Müller';
 
   @override
-  String get renameHead => 'Rename';
+  String get renameHead => 'Byt namn';
 
   @override
-  String get whatToCallThisIdentity => 'What to call this identity.';
+  String get whatToCallThisIdentity => 'Vad den här identiteten ska heta.';
 
   @override
-  String get moveThisIdentity => 'Move this identity';
+  String get moveThisIdentity => 'Flytta den här identiteten';
 
   @override
   String get anIdentityInAProfile =>
-      'An identity in a profile is loaded only when that profile is open. One that belongs everywhere is always loaded.';
+      'En identitet i en profil läses in bara när den profilen är öppen. En som hör överallt läses alltid in.';
 
   @override
-  String get deleteThisIdentity => 'Delete this identity?';
+  String get deleteThisIdentity => 'Ta bort den här identiteten?';
 
   @override
   String identityAndItsValuesAreRemoved(String name, String values) {
-    return '«$name» and its $values are removed from the vault. Documents already protected keep their tokens; the next document will not recognise these values again.';
+    return '«$name» och dess $values tas bort ur valvet. Redan skyddade dokument behåller sina platshållare; nästa dokument känner inte igen de här värdena på nytt.';
   }
 
   @override
-  String get keepItIdentity => 'Keep it';
+  String get keepItIdentity => 'Behåll';
 
   @override
-  String get noNamesToLookAt => 'No names to look at';
+  String get noNamesToLookAt => 'Inga namn att se på';
 
   @override
   String namesToLookAtCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count names to look at',
-      one: '1 name to look at',
+      other: '$count namn att se på',
+      one: '1 namn att se på',
     );
     return '$_temp0';
   }
 
   @override
-  String get zKnowsEveryName => 'Z knows every name this document uses.';
+  String get zKnowsEveryName =>
+      'Z känner varje namn det här dokumentet använder.';
 
   @override
   String get wordsThisDocumentUsesAsNames =>
-      'Words this document uses as names, that Z does not know yet.';
+      'Ord som det här dokumentet använder som namn, och som Z inte känner än.';
 
   @override
   String placesCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count places',
-      one: '1 place',
+      other: '$count ställen',
+      one: '1 ställe',
     );
     return '$_temp0';
   }
@@ -1856,45 +1860,45 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count pages',
-      one: '1 page',
+      other: '$count sidor',
+      one: '1 sida',
     );
     return '$_temp0';
   }
 
   @override
-  String get addAsFamilyName => 'Add as family name';
+  String get addAsFamilyName => 'Lägg till som efternamn';
 
   @override
-  String get addAsGivenName => 'Add as given name';
+  String get addAsGivenName => 'Lägg till som förnamn';
 
   @override
-  String get ignoreIt => 'Ignore';
+  String get ignoreIt => 'Förbigå';
 
   @override
-  String get unlockTheVaultAct => 'Unlock the vault';
+  String get unlockTheVaultAct => 'Lås upp valvet';
 
   @override
-  String get needsAVault => 'Needs a vault';
+  String get needsAVault => 'Behöver ett valv';
 
   @override
-  String get nameListsFileType => 'Name lists';
+  String get nameListsFileType => 'Namnlistor';
 
   @override
-  String get whichLanguageAreTheseNames => 'Which language are these names?';
+  String get whichLanguageAreTheseNames => 'Vilket språk är de här namnen på?';
 
   @override
-  String get yourNames => 'Your names';
+  String get yourNames => 'Dina namn';
 
   @override
   String get namesThisDeviceKnows =>
-      'Names this device knows because you said so. They are kept in your vault, on this computer.';
+      'Namn som den här enheten känner därför att du har sagt det. De bevaras i ditt valv, på den här datorn.';
 
   @override
-  String get addAName => 'Add a name';
+  String get addAName => 'Lägg till ett namn';
 
   @override
-  String get importAList => 'Import a list';
+  String get importAList => 'Importera en lista';
 
   @override
   String actNeedsTheVault(String act, String needs) {
@@ -1903,96 +1907,96 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get aListIsACsv =>
-      'A list is a CSV with a «name» and a «type» column: given, family, person or company.';
+      'En lista är en CSV med en kolumn «name» och en kolumn «type»: given, family, person eller company.';
 
   @override
   String get yourNamesLiveInTheVault =>
-      'Your names live in the vault, so adding one needs it open.';
+      'Dina namn lever i valvet, så att lägga till ett kräver att det är öppet.';
 
   @override
   String get exampleSurname => 'Lindqvist';
 
   @override
-  String get pickSuggest => 'Suggest';
+  String get pickSuggest => 'Föreslå';
 
   @override
-  String get pickAlways => 'Always';
+  String get pickAlways => 'Alltid';
 
   @override
   String get alwaysProtectedTheMoment =>
-      'Always: protected the moment it appears, in every document.';
+      'Alltid: skyddat i samma stund det dyker upp, i varje dokument.';
 
   @override
   String get suggestMarksAndWaits =>
-      'Suggest: Z marks it and waits for your word.';
+      'Föreslå: Z markerar det och väntar på ditt ord.';
 
   @override
-  String get addAct => 'Add';
+  String get addAct => 'Lägg till';
 
   @override
-  String get nothingYet => 'Nothing yet.';
+  String get nothingYet => 'Ingenting än.';
 
   @override
-  String get wholeNamesKeptInTheVault => 'Whole names, kept in the vault';
+  String get wholeNamesKeptInTheVault => 'Hela namn, bevarade i valvet';
 
   @override
   String get aWholePersonIsAValue =>
-      'A whole person or company is a value, not a dictionary word, so it is in no language list. Z Vault is where each one is managed.';
+      'En hel person eller ett helt företag är ett värde, inte ett ordboksord, och står därför i ingen språklista. Z-valvet är där var och en sköts.';
 
   @override
-  String get reachEverywhere => 'everywhere';
+  String get reachEverywhere => 'överallt';
 
   @override
-  String get reachThisClient => 'this client';
+  String get reachThisClient => 'den här kunden';
 
   @override
   String forgetNamedShort(String what) {
-    return 'Forget «$what»';
+    return 'Glöm «$what»';
   }
 
   @override
-  String get kindGivenName => 'given name';
+  String get kindGivenName => 'förnamn';
 
   @override
-  String get kindFamilyName => 'family name';
+  String get kindFamilyName => 'efternamn';
 
   @override
   String get kindPersonName => 'person';
 
   @override
-  String get kindCompanyName => 'company';
+  String get kindCompanyName => 'företag';
 
   @override
   String namesAndValuesInAList(String names, int values) {
-    return '$names · $values values';
+    return '$names · $values värden';
   }
 
   @override
-  String get listIsOff => 'off';
+  String get listIsOff => 'av';
 
   @override
-  String get stopUsingTheseNames => 'Stop using these names';
+  String get stopUsingTheseNames => 'Använd inte de här namnen längre';
 
   @override
-  String get useTheseNamesAgain => 'Use these names again';
+  String get useTheseNamesAgain => 'Använd de här namnen igen';
 
   @override
   String whatToDoWithList(String name) {
-    return 'What to do with «$name»';
+    return 'Vad som ska göras med «$name»';
   }
 
   @override
-  String get moveToDots => 'Move to…';
+  String get moveToDots => 'Flytta till…';
 
   @override
-  String get exportCsv => 'Export CSV';
+  String get exportCsv => 'Exportera CSV';
 
   @override
-  String get removeList => 'Remove list';
+  String get removeList => 'Ta bort listan';
 
   @override
   String removeNamedList(String name) {
-    return 'Remove «$name»?';
+    return 'Ta bort «$name»?';
   }
 
   @override
@@ -2000,61 +2004,61 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count names go with it. Nothing else is touched.',
-      one: 'One name goes with it. Nothing else is touched.',
+      other: '$count namn följer med. Ingenting annat berörs.',
+      one: 'Ett namn följer med. Ingenting annat berörs.',
     );
     return '$_temp0';
   }
 
   @override
-  String get removeAct => 'Remove';
+  String get removeAct => 'Ta bort';
 
   @override
   String moveNamesFromTo(int count, String from) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Move $count names from $from to…',
-      one: 'Move one name from $from to…',
+      other: 'Flytta $count namn från $from till…',
+      one: 'Flytta ett namn från $from till…',
     );
     return '$_temp0';
   }
 
   @override
-  String get howFarDoTheseNamesReach => 'How far do these names reach?';
+  String get howFarDoTheseNamesReach => 'Hur långt räcker de här namnen?';
 
   @override
   String get protectingThemMeans =>
-      'Protecting them means Z blackens them the moment they appear, with no question. Offering them means Z marks them and waits for you.';
+      'Att skydda dem betyder att Z svartar dem i samma stund de dyker upp, utan fråga. Att erbjuda dem betyder att Z markerar dem och väntar på dig.';
 
   @override
   String get youCanChangeAnyOneAfterwards =>
-      'You can change any one of them afterwards, name by name.';
+      'Du kan ändra vilket som helst av dem efteråt, namn för namn.';
 
   @override
-  String get offerThemAndIDecide => 'Offer them and I decide';
+  String get offerThemAndIDecide => 'Erbjud dem, och jag bestämmer';
 
   @override
-  String get protectThemEverywhere => 'Protect them everywhere';
+  String get protectThemEverywhere => 'Skydda dem överallt';
 
   @override
   String protectThemForClient(String client) {
-    return 'Protect them for $client';
+    return 'Skydda dem för $client';
   }
 
   @override
   String get couldNotBuildThePdf =>
-      'Z Privacy could not build the PDF — its answer page had no token. Nothing was written.';
+      'Z Privacy kunde inte skapa PDF:en — dess svarssida hade ingen platshållare. Ingenting skrevs.';
 
   @override
-  String get whoAnswers => 'Who answers';
+  String get whoAnswers => 'Vem som svarar';
 
   @override
-  String get thereIsNothingToSend => 'There is nothing to send.';
+  String get thereIsNothingToSend => 'Det finns ingenting att skicka.';
 
   @override
   String valuesReplacedCharacters(int values, int characters) {
-    return '$values values replaced · $characters characters would leave this device.';
+    return '$values värden ersatta · $characters tecken skulle lämna den här enheten.';
   }
 
   @override
@@ -2069,261 +2073,263 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String theseNamesAreThisSessions(String named) {
-    return '$named · these names are this session’s';
+    return '$named · de här namnen hör till den här sessionen';
   }
 
   @override
   String get noSessionNamesForThisDocument =>
-      'No session — these names were made for this document alone.';
+      'Ingen session — de här namnen skapades bara för det här dokumentet.';
 
   @override
   String get noSessionYetAnyDoorBeginsOne =>
-      'No session yet — any door here begins one.';
+      'Ingen session än — varje dörr här börjar en.';
 
   @override
-  String get nothingLeftTheMachine => 'Nothing left the machine.';
+  String get nothingLeftTheMachine => 'Ingenting har lämnat enheten.';
 
   @override
   String get oneSuggestionStillOpenSend =>
-      'One suggestion is still open. It stands in the text as written, and nothing can be sent until you answer it. There is no «send anyway».';
+      'Ett förslag är fortfarande öppet. Det står i texten som skrivet, och ingenting kan skickas förrän du svarar på det. Det finns inget «skicka ändå».';
 
   @override
   String suggestionsStillOpenSend(int open) {
-    return '$open suggestions are still open. They stand in the text as written, and nothing can be sent until you answer them. There is no «send anyway».';
+    return '$open förslag är fortfarande öppna. De står i texten som skrivna, och ingenting kan skickas förrän du svarar på dem. Det finns inget «skicka ändå».';
   }
 
   @override
   String get manualAiSheetWhat =>
-      'Use an AI chat you already have. Take the text above — to the clipboard, or as a PDF saved on this machine — paste it into any model you like, and bring the answer back with «Add an answer» under the chat. Restoring works the same either way — no account, no key. Neither way sends anything from here.';
+      'Använd en AI-chatt du redan har. Ta texten ovan — till urklippet, eller som en PDF sparad på den här datorn — klistra in den i vilken modell du vill, och hämta tillbaka svaret med «Lägg till ett svar» under chatten. Återställningen fungerar likadant båda vägarna — inget konto, ingen nyckel. Ingen av vägarna skickar något härifrån.';
 
   @override
-  String get copied => 'Copied';
+  String get copied => 'Kopierat';
 
   @override
-  String get copyProtected => 'Copy Protected';
+  String get copyProtected => 'Kopiera skyddad text';
 
   @override
-  String get saving => 'Saving…';
+  String get saving => 'Sparar…';
 
   @override
-  String get saveAsPdf => 'Save as PDF';
+  String get saveAsPdf => 'Spara som PDF';
 
   @override
   String savedToWhere(String where) {
-    return 'Saved to $where';
+    return 'Sparat till $where';
   }
 
   @override
   String get whatThePdfHolds =>
-      'The protected text, with the build stamp, the counts and a sha256 of that text in the footer, and a last page for the answer. Nothing was sent.';
+      'Den skyddade texten, med byggstämpeln, siffrorna och en sha256 av den texten i sidfoten, och en sista sida för svaret. Ingenting skickades.';
 
   @override
   String get directApiSheetWhatRemote =>
-      'Connect to a remote AI provider with your API credential. Only the text above would travel; the provider still sees the ordinary facts of a connection — your address, the time, the model.';
+      'Anslut till en AI-leverantör på distans med dina API-uppgifter. Bara texten ovan skulle resa; leverantören ser fortfarande de vanliga fakta om en anslutning — din adress, tiden, modellen.';
 
   @override
   String get directApiSheetWhatConnected =>
-      'The request goes from this app. Only the text above travels; the provider still sees the ordinary facts of a connection — your address, the time, the model.';
+      'Förfrågan går från den här appen. Bara texten ovan reser; leverantören ser fortfarande de vanliga fakta om en anslutning — din adress, tiden, modellen.';
 
   @override
   String get noProviderIsConnected =>
-      'No provider is connected. The address and the key are given once, in Settings — this screen never asks for them.';
+      'Ingen leverantör är ansluten. Adressen och nyckeln anges en gång, i Inställningar — den här skärmen frågar aldrig efter dem.';
 
   @override
-  String get sending => 'Sending…';
+  String get sending => 'Skickar…';
 
   @override
   String sendToNamed(String where) {
-    return 'Send to $where';
+    return 'Skicka till $where';
   }
 
   @override
-  String get providerKeyThisRunOnly => '  (key kept for this run only)';
+  String get providerKeyThisRunOnly =>
+      '   (nyckeln bevarad bara så länge appen är öppen)';
 
   @override
   String get theAddressTheModelTheKey =>
-      'The address, the model and the key are changed in Settings.';
+      'Adressen, modellen och nyckeln ändras i Inställningar.';
 
   @override
   String get localAiSheetWhat =>
-      'Use an AI service running on this computer — llama.cpp, Ollama, LM Studio, anything that answers the same shape. No key, no account, and the request never leaves this computer. It is the only route that sees none of the ordinary facts above.';
+      'Använd en AI-tjänst som körs på den här datorn — llama.cpp, Ollama, LM Studio, allt som svarar i samma form. Ingen nyckel, inget konto, och förfrågan lämnar aldrig den här datorn. Det är den enda vägen som inte ser något av de vanliga fakta ovan.';
 
   @override
   String get aModelOnThisComputer =>
-      'A model on this computer is set up in Settings — there is no key to give.';
+      'En modell på den här datorn ställs in i Inställningar — det finns ingen nyckel att ange.';
 
   @override
-  String get openSettings => 'Open Settings';
+  String get openSettings => 'Öppna Inställningar';
 
   @override
-  String get modelLabel => 'Model';
+  String get modelLabel => 'Modell';
 
   @override
-  String get fileKindDocuments => 'Documents';
+  String get fileKindDocuments => 'Dokument';
 
   @override
   String onlyTheseKindsAreRead(String name) {
-    return 'This build reads PDF, Word and text files. «$name» is none of those.';
+    return 'Den här versionen läser PDF-, Word- och textfiler. «$name» är ingen av dem.';
   }
 
   @override
   String get generalRulesOnlyNoDictionary =>
-      'General rules only — no dictionary yet';
+      'Bara allmänna regler — inget register än';
 
   @override
-  String get whichLanguageIsThisText => 'Which language is this text in?';
+  String get whichLanguageIsThisText => 'Vilket språk är den här texten på?';
 
   @override
   String get theSessionLanguageExplained =>
-      'Z reads it with that language’s habits: how people are greeted, how a company is written, how a customer number looks. This is the session’s language from now on, and you will not be asked again in it.';
+      'Z läser den med det språkets vanor: hur människor hälsas, hur ett företag skrivs, hur ett kundnummer ser ut. Det är sessionens språk från och med nu, och i den blir du inte frågad igen.';
 
   @override
   String allLinesHeld(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'All $count lines',
-      one: 'All 1 line',
+      other: 'Alla $count rader',
+      one: 'Alla 1 rad',
     );
     return '$_temp0';
   }
 
   @override
-  String get revealHidden => 'Hidden';
+  String get revealHidden => 'Dolt';
 
   @override
   String revealedForSeconds(int seconds) {
-    return 'Revealed · ${seconds}s';
+    return 'Avtäckt · ${seconds}s';
   }
 
   @override
-  String get alsoTheWordBefore => 'Also the word before';
+  String get alsoTheWordBefore => 'Även ordet före';
 
   @override
   String get alsoTheWordBeforeHint =>
-      'Takes the capitalised word in front of the selection too';
+      'Tar även med det stora ordet framför markeringen';
 
   @override
-  String get undoProtection => 'Undo protection';
+  String get undoProtection => 'Ta tillbaka skyddet';
 
   @override
-  String get nothingToUndoHint => 'Nothing to undo';
+  String get nothingToUndoHint => 'Ingenting att ta tillbaka';
 
   @override
-  String get rescanAct => 'Rescan';
+  String get rescanAct => 'Granska igen';
 
   @override
   String nextOfWaitingCount(int at, int total) {
-    return 'Next $at/$total';
+    return 'Nästa $at/$total';
   }
 
   @override
-  String get reviewAct => 'Review';
+  String get reviewAct => 'Gå igenom';
 
   @override
-  String get namesAct => 'Names';
+  String get namesAct => 'Namn';
 
   @override
-  String get zKnowsEveryNameHere => 'Z knows every name this document uses';
+  String get zKnowsEveryNameHere =>
+      'Z känner varje namn det här dokumentet använder';
 
   @override
-  String get tokensAct => 'Tokens';
+  String get tokensAct => 'Platshållare';
 
   @override
-  String get nothingIsProtectedYetHint => 'Nothing is protected yet';
+  String get nothingIsProtectedYetHint => 'Ingenting är skyddat än';
 
   @override
   String get selectionCutsIntoProtected =>
-      'That selection cuts into something already protected. Protect would take the whole item instead.';
+      'Den markeringen skär in i något som redan är skyddat. Skydda skulle ta hela elementet i stället.';
 
   @override
   String selectionSpansProtectedItems(int count) {
-    return 'That selection spans $count protected items. Protect would take each of them whole, under its own token.';
+    return 'Den markeringen omfattar $count skyddade element. Skydda skulle ta vart och ett av dem helt, under sin egen platshållare.';
   }
 
   @override
-  String get protectAct => 'Protect';
+  String get protectAct => 'Skydda';
 
   @override
-  String get selectTextThenProtect => 'Select text, then Protect';
+  String get selectTextThenProtect => 'Markera text, sedan Skydda';
 
   @override
-  String get alreadyProtectedSeeBelow => 'Already protected — see below';
+  String get alreadyProtectedSeeBelow => 'Redan skyddat — se nedan';
 
   @override
-  String get protectWholeItems => 'Protect whole items';
+  String get protectWholeItems => 'Skydda hela element';
 
   @override
-  String get thereWasNothingToUndo => 'There was nothing to undo.';
+  String get thereWasNothingToUndo => 'Det fanns ingenting att ta tillbaka.';
 
   @override
   String tookBackTokens(String tokens) {
-    return 'Took back $tokens.';
+    return 'Tog tillbaka $tokens.';
   }
 
   @override
   String tookBackTokensInPlaces(String tokens, int places) {
-    return 'Took back $tokens, in all $places places — it went in as one act, so it came out as one.';
+    return 'Tog tillbaka $tokens, på alla $places ställen — det gick in som ett steg, så det kom ut som ett.';
   }
 
   @override
   String tookBackTokensIdentityStays(String tokens, String identity) {
-    return 'Took back $tokens. The identity $identity is still in the vault.';
+    return 'Tog tillbaka $tokens. Identiteten $identity ligger kvar i valvet.';
   }
 
   @override
   String scannedAgainReport(int auto, int byYou, int waiting, int normal) {
-    return 'Scanned again: $auto protected automatically · $byYou by you · $waiting need your word · $normal normal.';
+    return 'Granskat igen: $auto automatiskt skyddade · $byYou av dig · $waiting behöver ditt ord · $normal normala.';
   }
 
   @override
   String alreadyProtectedAsTokens(String tokens) {
-    return 'Already protected as $tokens.';
+    return 'Redan skyddat som $tokens.';
   }
 
   @override
   String alreadyProtectedAsFrom(String tokens, String source, String detail) {
-    return 'Already protected as $tokens, from $source$detail.';
+    return 'Redan skyddat som $tokens, från $source$detail.';
   }
 
   @override
-  String get readBackPanel => 'Read back';
+  String get readBackPanel => 'Tillbakaläst';
 
   @override
-  String get whatStayedAToken => 'What stayed a token';
+  String get whatStayedAToken => 'Vad som förblev en platshållare';
 
   @override
   String theSearchWasRefused(String why) {
-    return 'The search was refused: $why';
+    return 'Sökningen avvisades: $why';
   }
 
   @override
-  String get findAWordInThisDocument => 'Find a word in this document';
+  String get findAWordInThisDocument => 'Hitta ett ord i det här dokumentet';
 
   @override
-  String get tabTakesIt => 'Tab takes it';
+  String get tabTakesIt => 'Tab tar det';
 
   @override
-  String get findAct => 'Find';
+  String get findAct => 'Sök';
 
   @override
   String notInThisDocument(String word) {
-    return '«$word» is not in this document';
+    return '«$word» står inte i det här dokumentet';
   }
 
   @override
   String countProtected(int count) {
-    return '$count protected';
+    return '$count skyddade';
   }
 
   @override
   String countWaiting(int count) {
-    return '$count waiting';
+    return '$count väntar';
   }
 
   @override
   String countInTheClear(int count) {
-    return '$count in the clear';
+    return '$count i klartext';
   }
 
   @override
@@ -2331,61 +2337,61 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count places are',
-      one: 'One place is',
+      other: '$count ställen ligger',
+      one: 'Ett ställe ligger',
     );
-    return '$_temp0 inside words that still wait for your word: $list. Protect leaves those to the review.';
+    return '$_temp0 i ord som fortfarande väntar på ditt ord: $list. Skydda lämnar dem till genomgången.';
   }
 
   @override
-  String get goToIt => 'Go to it';
+  String get goToIt => 'Gå dit';
 
   @override
-  String get unProtectHere => 'Un-protect here';
+  String get unProtectHere => 'Ta bort skyddet här';
 
   @override
   String unProtectInThisSession(int places) {
-    return 'Un-protect in this session ($places places)';
+    return 'Ta bort skyddet i den här sessionen ($places ställen)';
   }
 
   @override
-  String get nothingIsWaitingForYou => 'Nothing is waiting for you.';
+  String get nothingIsWaitingForYou => 'Ingenting väntar på dig.';
 
   @override
   String thingsWaitingForYourWord(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count things are waiting for your word.',
-      one: 'One thing is waiting for your word.',
+      other: '$count saker väntar på ditt ord.',
+      one: 'En sak väntar på ditt ord.',
     );
     return '$_temp0';
   }
 
   @override
   String get theScanFoundNothingHere =>
-      'The scan found nothing in this document.';
+      'Granskningen hittade ingenting i det här dokumentet.';
 
   @override
   String get nothingIsWaitingWhatIsProtected =>
-      'Nothing is waiting. What is protected is in the text, marked where it stands.';
+      'Ingenting väntar. Det som är skyddat står i texten, markerat där det står.';
 
   @override
   String foundBySource(String source) {
-    return 'found by $source';
+    return 'hittat av $source';
   }
 
   @override
-  String get youDecided => 'you decided';
+  String get youDecided => 'beslutat av dig';
 
   @override
   String pageAndParagraph(int page, int paragraph) {
-    return 'Page $page · ¶$paragraph';
+    return 'Sida $page · ¶$paragraph';
   }
 
   @override
   String inPlacesCount(int count) {
-    return 'in $count places';
+    return 'på $count ställen';
   }
 
   @override
@@ -2393,109 +2399,110 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count identities claim it',
-      one: 'One identity claims it',
+      other: '$count identiteter gör anspråk på det',
+      one: 'En identitet gör anspråk på det',
     );
     return '$_temp0';
   }
 
   @override
   String leaveWordsInTheClearQuestion(int count) {
-    return 'Leave $count words in the clear?';
+    return 'Lämna $count ord i klartext?';
   }
 
   @override
   String leaveAllInTheClearExplained(int count) {
-    return 'All $count of them will be sent exactly as they are written. Z will not replace any of them, in this document or in the request that leaves this computer.';
+    return 'Alla $count skickas precis som de är skrivna. Z ersätter inget av dem, varken i det här dokumentet eller i förfrågan som lämnar den här datorn.';
   }
 
   @override
   String yesLeaveAllInTheClear(int count) {
-    return 'Yes — leave all $count in the clear';
+    return 'Ja — lämna alla $count i klartext';
   }
 
   @override
-  String get protectAll => 'Protect all';
+  String get protectAll => 'Skydda alla';
 
   @override
-  String get skipAll => 'Skip all';
+  String get skipAll => 'Hoppa över alla';
 
   @override
-  String get leaveIt => 'Leave it';
+  String get leaveIt => 'Lämna så';
 
   @override
-  String get activeZTokens => 'Active Z tokens';
+  String get activeZTokens => 'Aktiva Z-platshållare';
 
   @override
-  String get nothingIsProtectedYetSentence => 'Nothing is protected yet.';
+  String get nothingIsProtectedYetSentence => 'Ingenting är skyddat än.';
 
   @override
   String valuesStandBehindTokens(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count values stand',
-      one: '1 value stands',
+      other: '$count värden står',
+      one: '1 värde står',
     );
-    return '$_temp0 behind a token in this session.';
+    return '$_temp0 bakom en platshållare i den här sessionen.';
   }
 
   @override
   String get aTokenAppearsWhenProtected =>
-      'A token appears here the moment something is protected.';
+      'En platshållare dyker upp här i samma stund något skyddas.';
 
   @override
   String get revealingChangesNothing =>
-      'Revealing shows a value on this screen for a moment. It changes nothing in the Safe column — what leaves the device is the same string before and after.';
+      'Att avtäcka visar ett värde på den här skärmen ett ögonblick. I den skyddade kolumnen ändrar det ingenting — vad som lämnar enheten är samma teckenföljd före och efter.';
 
   @override
-  String get copyTheToken => 'Copy the token';
+  String get copyTheToken => 'Kopiera platshållaren';
 
   @override
-  String get scopeJustHere => 'Just here';
+  String get scopeJustHere => 'Bara här';
 
   @override
-  String get scopeThisSession => 'This session';
+  String get scopeThisSession => 'Den här sessionen';
 
   @override
-  String get scopeRememberedForClient => 'Remembered for this client';
+  String get scopeRememberedForClient => 'Minns för den här kunden';
 
   @override
-  String get scopeRememberedEverywhere => 'Remembered everywhere';
+  String get scopeRememberedEverywhere => 'Minns överallt';
 
   @override
-  String get copyReport => 'Copy report';
+  String get copyReport => 'Kopiera rapporten';
 
   @override
   String sessionNamesAreThisSessions(int number) {
-    return 'Session $number · the names in this work are this session’s';
+    return 'Session $number · namnen i det här arbetet hör till den här sessionen';
   }
 
   @override
-  String get asEachProviderIsConfigured => 'As each provider is configured';
+  String get asEachProviderIsConfigured =>
+      'Beroende på hur varje leverantör är inställd';
 
   @override
-  String get noAiConnected => 'No AI connected';
+  String get noAiConnected => 'Ingen AI ansluten';
 
   @override
-  String get connectAnAiInSettings => 'Connect an AI in Settings';
+  String get connectAnAiInSettings => 'Anslut en AI i Inställningar';
 
   @override
-  String get chooseWhichModelAnswers => 'Choose which model answers';
+  String get chooseWhichModelAnswers => 'Välj vilken modell som svarar';
 
   @override
   String get nothingSentFromThisSessionYet =>
-      'Nothing has been sent from this session yet. What goes to a model and what comes back are written here, in this session’s own sealed file.';
+      'Ingenting har skickats från den här sessionen än. Vad som går till en modell och vad som kommer tillbaka står här, i sessionens egen förseglade fil.';
 
   @override
-  String get youAsked => 'You asked';
+  String get youAsked => 'Du frågade';
 
   @override
   String get nothingWasAskedDocumentWentAlone =>
-      'Nothing was asked — the document went on its own.';
+      'Ingenting frågades — dokumentet gick ensamt.';
 
   @override
-  String get itAnswered => 'It answered';
+  String get itAnswered => 'Den svarade';
 
   @override
   String namesBelongToAnotherSession(int count, String list) {
@@ -2503,32 +2510,32 @@ class AppLocalizationsSv extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count names in this exchange belong to another session and could not be restored: $list.',
+          '$count namn i det här utbytet hör till en annan session och kunde inte återställas: $list.',
       one:
-          'One name in this exchange belongs to another session and could not be restored: $list.',
+          'Ett namn i det här utbytet hör till en annan session och kunde inte återställas: $list.',
     );
     return '$_temp0';
   }
 
   @override
   String get andTheClipboardIsEmptySentence =>
-      'Nothing was copied — the clipboard is empty.';
+      'Ingenting kopierades — urklippet är tomt.';
 
   @override
-  String get nothingWasPasted => 'Nothing was pasted.';
+  String get nothingWasPasted => 'Ingenting klistrades in.';
 
   @override
   String get copyTheSafeTextFirst =>
-      'Copy the safe text first, so the answer can be tied to that payload.';
+      'Kopiera den skyddade texten först, så att svaret kan knytas till den sändningen.';
 
   @override
   String profileIsInUseAgain(String name) {
-    return '«$name» is in use again.';
+    return '«$name» är i bruk igen.';
   }
 
   @override
   String profileIsOffNamesRemain(String name) {
-    return '«$name» is off — its names are still here.';
+    return '«$name» är av — dess namn finns fortfarande här.';
   }
 
   @override
@@ -2536,8 +2543,8 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Moved $count names to $to.',
-      one: 'Moved one name to $to.',
+      other: 'Flyttade $count namn till $to.',
+      one: 'Flyttade ett namn till $to.',
     );
     return '$_temp0';
   }
@@ -2547,77 +2554,78 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count names',
-      one: '1 name',
+      other: '$count namn',
+      one: '1 namn',
     );
-    return 'Forgot «$name» and $_temp0.';
+    return 'Glömde «$name» och $_temp0.';
   }
 
   @override
   String addedValueNamed(String value) {
-    return 'Added «$value».';
+    return 'Lade till «$value».';
   }
 
   @override
   String forgotValueNamed(String value) {
-    return 'Forgot «$value».';
+    return 'Glömde «$value».';
   }
 
   @override
-  String get afterTheVaultOpened => 'after the vault opened';
+  String get afterTheVaultOpened => 'efter att valvet låstes upp';
 
   @override
   String importAddedCount(int count) {
-    return '$count added';
+    return '$count tillagda';
   }
 
   @override
   String importAlreadyKnownCount(int count) {
-    return '$count already known';
+    return '$count redan kända';
   }
 
   @override
   String importRefusedCount(int count) {
-    return '$count refused';
+    return '$count avvisade';
   }
 
   @override
   String importValuesCount(int count) {
-    return '$count values';
+    return '$count värden';
   }
 
   @override
   String get begunNoNameNeededRenaming =>
-      'Begun. No name on this document needed renaming.';
+      'Påbörjad. Inget namn i det här dokumentet behövde byta namn.';
 
   @override
   String get begunNoDocumentOpen =>
-      'Begun. No document is open, so there was nothing to rename.';
+      'Påbörjad. Inget dokument är öppet, så det fanns ingenting att byta namn på.';
 
   @override
   String begunAndNamesMovedIn(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'Begun, and $count names on this document moved into it.',
-      one: 'Begun, and one name on this document moved into it.',
+      other:
+          'Påbörjad, och $count namn i det här dokumentet flyttade in i den.',
+      one: 'Påbörjad, och ett namn i det här dokumentet flyttade in i den.',
     );
     return '$_temp0';
   }
 
   @override
   String get theSessionWasNotBegun =>
-      'The session was not begun, so nothing was taken out.';
+      'Sessionen påbörjades inte, så ingenting togs ut.';
 
   @override
   String get closeAndOpenAgain =>
-      'Close this and open it again — something changed while it was open.';
+      'Stäng det här och öppna det igen — något ändrades medan det var öppet.';
 
   @override
-  String get sentToAiAnswered => 'sent to AI · answered';
+  String get sentToAiAnswered => 'skickat till AI:n · besvarat';
 
   @override
-  String get sentToAiNoAnswerYet => 'sent to AI · no answer yet';
+  String get sentToAiNoAnswerYet => 'skickat till AI:n · inget svar än';
 
   @override
   String columnsNotUsedSaid(int count, String which) {
@@ -2625,88 +2633,90 @@ class AppLocalizationsSv extends AppLocalizations {
       count,
       locale: localeName,
       other:
-          '$count columns were not used: $which — name the kind for each, or they stay out.',
+          '$count kolumner användes inte: $which — namnge typen för var och en, annars stannar de utanför.',
       one:
-          'One column was not used: $which — name the kind for it, or it stays out.',
+          'En kolumn användes inte: $which — namnge dess typ, annars stannar den utanför.',
     );
     return '$_temp0';
   }
 
   @override
-  String get addressLabel => 'Address';
+  String get addressLabel => 'Adress';
 
   @override
   String get plainHttpOnlyLoopback =>
-      'Plain http is accepted only for a literal loopback address — 127.0.0.1 or ::1. A name like «localhost» is refused, because then a hosts file would be deciding whether plain text is safe.';
+      'Vanlig http accepteras bara för en bokstavlig loopback-adress — 127.0.0.1 eller ::1. Ett namn som «localhost» avvisas, för då skulle en hosts-fil avgöra om klartext är säkert.';
 
   @override
-  String get theModelToAsk => 'the model to ask';
+  String get theModelToAsk => 'modellen som frågas';
 
   @override
-  String get apiKeyLabel => 'API key';
+  String get apiKeyLabel => 'API-nyckel';
 
   @override
-  String get pastedOnceNeverShownAgain => 'pasted once, never shown again';
+  String get pastedOnceNeverShownAgain =>
+      'inklistrad en gång, visas aldrig igen';
 
   @override
-  String get thisKeyIsSealedInTheVault => 'This key is sealed in the vault.';
+  String get thisKeyIsSealedInTheVault =>
+      'Den här nyckeln är förseglad i valvet.';
 
   @override
   String get thisKeyIsInMemoryOnly =>
-      'This key is kept in memory for this run only — it is gone when the app closes.';
+      'Den här nyckeln hålls i minnet bara så länge appen är öppen — den är borta när appen stängs.';
 
   @override
-  String get noKeyIsNeededHere => 'No key is needed at this address.';
+  String get noKeyIsNeededHere => 'På den här adressen behövs ingen nyckel.';
 
   @override
   String get noKeyYetWillSeal =>
-      'No key is stored yet. Connecting will seal it in the vault.';
+      'Ingen nyckel är sparad än. Att ansluta förseglar den i valvet.';
 
   @override
   String get noKeyYetMemoryOnly =>
-      'No key is stored yet. Connecting will keep it in memory for this run only.';
+      'Ingen nyckel är sparad än. Att ansluta håller den i minnet bara så länge appen är öppen.';
 
   @override
-  String get connectingNow => 'Connecting…';
+  String get connectingNow => 'Ansluter…';
 
   @override
-  String get connectAct => 'Connect';
+  String get connectAct => 'Anslut';
 
   @override
-  String get forgetTheKey => 'Forget the key';
+  String get forgetTheKey => 'Glöm nyckeln';
 
   @override
-  String get disconnectAct => 'Disconnect';
+  String get disconnectAct => 'Koppla ifrån';
 
   @override
   String get couldNotTellWhereDocumentsFolderIs =>
-      'Z Privacy could not tell where your documents folder is, so it has not guessed. Nothing was written.';
+      'Z Privacy kunde inte avgöra var din dokumentmapp ligger, och har inte gissat. Ingenting skrevs.';
 
   @override
   String thereAreAlready200Files(String stem, String into) {
-    return 'There are already 200 files called $stem in $into.';
+    return 'Det finns redan 200 filer som heter $stem i $into.';
   }
 
   @override
   String couldNotWriteInto(String into, String why) {
-    return 'Z Privacy could not write into $into — $why.';
+    return 'Z Privacy kunde inte skriva i $into — $why.';
   }
 
   @override
   String couldNotBuildThePdfBecause(String why) {
-    return 'Z Privacy could not build the PDF — $why. Nothing was written.';
+    return 'Z Privacy kunde inte skapa PDF:en — $why. Ingenting skrevs.';
   }
 
   @override
-  String get zPdfProtectedCopy => 'z-pdf · protected copy';
+  String get zPdfProtectedCopy => 'z-pdf · skyddad kopia';
 
   @override
   String placesReplaced(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count places replaced',
-      one: '1 place replaced',
+      other: '$count ställen ersatta',
+      one: '1 ställe ersatt',
     );
     return '$_temp0';
   }
@@ -2716,18 +2726,18 @@ class AppLocalizationsSv extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count values ($kinds)',
-      one: '1 value ($kinds)',
+      other: '$count värden ($kinds)',
+      one: '1 värde ($kinds)',
     );
     return '$_temp0';
   }
 
   @override
-  String get noKindsAtAll => 'none';
+  String get noKindsAtAll => 'inga';
 
   @override
   String sha256OfTheProtectedText(String digest) {
-    return 'sha256 of the protected text $digest';
+    return 'sha256 av den skyddade texten $digest';
   }
 
   @override
@@ -2736,13 +2746,13 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String get howToUseZPrivacy => 'How to use Z Privacy';
+  String get howToUseZPrivacy => 'Så använder du Z Privacy';
 
   @override
   String get theGuideOpensInYourBrowser =>
-      'The page opens in your browser, in the language this interface is in. Nothing of your document or your vault goes with the press: your browser asks the site for a page, like any other visit.';
+      'Sidan öppnas i din webbläsare, på det språk det här gränssnittet är på. Med trycket går ingenting från ditt dokument och ingenting från ditt valv med: din webbläsare ber webbplatsen om en sida, som vid vilket annat besök som helst.';
 
   @override
   String get couldNotOpenYourBrowser =>
-      'Z Privacy could not open your browser. The address on the press opens in any browser by hand.';
+      'Z Privacy kunde inte öppna din webbläsare. Adressen på knappen går att öppna i vilken webbläsare som helst för hand.';
 }

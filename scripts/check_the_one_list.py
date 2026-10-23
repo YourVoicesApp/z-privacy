@@ -29,13 +29,21 @@ The named exceptions inside a migrated file, each with its reason:
   * **product names** — `'Z Privacy'`, `'z-pdf'`: the same in every language,
     and the paper says so.
 
-## G51 — the copies carry every key, and the German is German
+## G51 — the copies carry every key, and each one speaks its own language
 
-Every key in the English file is in the German and the Swedish. A German value
-identical to the English is a key nobody translated — refused, except for the
-named list below (product names, «OK», bare numbers). The **Swedish** is
-allowed to be identical, and that is 56-أ: the file exists so this gate can
-count it, and the first screen does not offer Svenska until the values differ.
+Every key in the English file is in the German and the Swedish, and a value
+identical to the English is a key nobody translated — refused in **both**
+files, except for the named list below (product names, «OK», bare numbers,
+and the few words a language really does spell the English way).
+
+The Swedish was allowed to be the English until 23 October 2026, which was
+56-أ: the file existed so this gate could count it. Paper 106 wrote the
+Swedish words on the owner's word, so the exception is gone and the rule is
+the same for both languages. What is **not** closed by that paper is the
+owner's own reading of them: he is the only native reviewer and his review is
+a round of its own, so nothing here or on the site says Swedish is reviewed —
+this gate measures that the words exist and are not the English, which is a
+statement about shape and not about quality.
 """
 import json
 import pathlib
@@ -189,6 +197,25 @@ SAME_IN_EVERY_LANGUAGE = re.compile(
     r'^(?:OK|Z Privacy|z-pdf|Grok|xAI|Person|Passphrase|Name'
     r'|Nordstern Consulting GmbH|Mandantenkennung|Herr Müller|Lindqvist'
     r'|\{act\} · \{needs\}|Z-pdf : \{token\}|\d+|[-—·]|)$'
+)
+
+# **And the four the Swedish adds, by name** — paper 106, each with the reason
+# it is not a skipped line:
+#
+#   * **`AI`** — Swedish says AI, exactly as English does. German's «KI» is the
+#     outlier here, not the Swedish. It is also the one word C-15's census
+#     cannot see, so it is named in two places on purpose.
+#   * **`person`** — the lower-case kind word. Swedish spells it the same, as
+#     German does the capitalised one above.
+#   * **`Session {number}`** and **`Session {number} «{name}»`** — the line the
+#     send sheet draws for a session nobody named. «Session» is the word the
+#     **core** writes as that name (`A_SESSION_CALLED`, which G37 measures
+#     against the Dart side), and Swedish happens to spell it the same — so in
+#     this one language the label on the glass and the name in the file agree.
+#     Translating it would be translating data, and the German file shows what
+#     that seam looks like when the two words differ.
+SAME_IN_SWEDISH = re.compile(
+    r'^(?:AI|person|Session \{number\}|Session \{number\} «\{name\}»)$'
 )
 
 # **Both of Dart's quotes**, and the honest account of why.
@@ -517,6 +544,11 @@ def g50() -> list[str]:
         if k in de and de[k] == en[k] and not SAME_IN_EVERY_LANGUAGE.match(en[k]):
             bad.append(f'«{k}» is the English sentence in the German file — '
                        f'nobody translated it')
+        if (k in sv and sv[k] == en[k]
+                and not SAME_IN_EVERY_LANGUAGE.match(en[k])
+                and not SAME_IN_SWEDISH.match(en[k])):
+            bad.append(f'«{k}» is the English sentence in the Swedish file — '
+                       f'nobody translated it (paper 106 closed 56-أ)')
     for extra in [k for k in de if not k.startswith('@') and k not in en]:
         bad.append(f'«{extra}» is in the German file and in no English key')
     return bad
@@ -574,6 +606,18 @@ def main() -> int:
         owed = sum(OWED.values())
         print(f'{len(keys)} sentences in the one list · {len(MIGRATED)} file(s) '
               f'migrated · {owed} sentences owed in {len(OWED)} files')
+        # **And what each copy actually says**, printed because paper 106 put
+        # the Swedish words in: «the file carries every key» and «the file is
+        # translated» are different facts, and the second one is the one a
+        # reader of the README wants. A value counted here is one that differs
+        # from the English, with the handful that legitimately do not named
+        # above — so these two numbers are «written», never «reviewed».
+        en_v = json.loads((L10N / 'app_en.arb').read_text(encoding='utf-8'))
+        for code in ('de', 'sv'):
+            other = json.loads((L10N / f'app_{code}.arb').read_text(encoding='utf-8'))
+            written = sum(1 for k in keys if other.get(k) != en_v.get(k))
+            print(f'  {code}: {written} of {len(keys)} values say something other '
+                  f'than the English (written, not reviewed)')
     return 1 if (instrument or nine or fifty) else 0
 
 
