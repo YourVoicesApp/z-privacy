@@ -180,7 +180,11 @@ class _ShellState extends State<ZShell> {
 
   Future<void> _start() async {
     // The vault lives beside the app's own data, and the core is told once where.
-    // It is the only file this program writes (gate G15).
+    // It is not the only file in there — the core writes each session's own
+    // file, a lock while it writes, and the settings, which is what gate G15
+    // counts and what C-06 names one by one. This comment said «the only file
+    // this program writes» until the outside review of 23 October 2026 caught
+    // the same words on the glass.
     //
     // The screen no longer decides where that is. It used to read HOME and fall
     // back to the temp directory, which was right on Linux and wrong on Windows,

@@ -43,7 +43,7 @@ Future<void> settle(WidgetTester tester, {int rounds = 4}) async {
 }
 
 void main() {
-  late Directory dir;
+  final dir = Directory('${Directory.systemTemp.path}/zprivacy-report-$pid');
   final copied = <String>[];
 
   setUpAll(() async {
@@ -51,7 +51,6 @@ void main() {
       throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
-    dir = Directory('${Directory.systemTemp.path}/zprivacy-report-$pid');
     removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
     // The clipboard is the platform's; in a test it is whatever we record.

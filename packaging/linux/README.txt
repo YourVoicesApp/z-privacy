@@ -12,8 +12,10 @@ core with it. It needs a Linux x86_64 desktop with GTK3, which every current
 Ubuntu, Debian and Fedora desktop already has.
 
 Your originals stay on this device unless you explicitly export restored text.
-The vault is one encrypted file, written under ~/.local/share/zprivacy and
-nowhere else. There is no account and no Z Privacy server for your documents.
+Your names live in one encrypted vault file, written under
+~/.local/share/zprivacy and nowhere else; beside it Z Privacy writes each
+session's own encrypted file and your settings. There is no account and no
+Z Privacy server for your documents.
 
 Z Privacy minimizes the sensitive content you send. It does not make you
 anonymous to the AI provider.
@@ -47,8 +49,9 @@ launcher and the icons back as well.
   BUILD-INFO.txt   which commit this was built from, and its hashes
   third-party/     everything else in here, and the licence it travels under
 
-The interface is English, German and Swedish for the sentences gathered in the
-one list; the screens not yet gathered show in English whatever is chosen.
+The interface is English and German; every sentence it shows is gathered in one
+list, and the Swedish file carries the English words until somebody translates
+them.
 The detection packs are German, English and Swedish.
 
 Faruk AB — Aktiebolag (AB), Sweden. Org.nr 559473-3494.

@@ -58,14 +58,13 @@ Span _spanOf(String needle, {int nth = 0}) {
 }
 
 void main() {
-  late Directory dir;
+  final dir = Directory('${Directory.systemTemp.path}/zprivacy-selection-$pid');
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
       throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
-    dir = Directory('${Directory.systemTemp.path}/zprivacy-selection-$pid');
     removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
   });

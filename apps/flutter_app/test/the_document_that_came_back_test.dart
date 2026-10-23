@@ -72,14 +72,13 @@ Span _spanOf(String doc, String needle) {
 }
 
 void main() {
-  late Directory dir;
+  final dir = Directory('${Directory.systemTemp.path}/zprivacy-came-back-$pid');
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
       throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
-    dir = Directory('${Directory.systemTemp.path}/zprivacy-came-back-$pid');
     removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
     // **A vault, open, for every test here but the last.** It is not scenery:

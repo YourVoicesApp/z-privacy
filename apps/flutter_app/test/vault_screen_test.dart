@@ -64,14 +64,13 @@ String isolated(String word) => '\u2068$word\u2069';
 String quoted(String word) => '«${isolated(word)}»';
 
 void main() {
-  late Directory dir;
+  final dir = Directory('${Directory.systemTemp.path}/zprivacy-vault-screen-$pid');
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
       throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
-    dir = Directory('${Directory.systemTemp.path}/zprivacy-vault-screen-$pid');
     removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
   });
@@ -94,7 +93,13 @@ void main() {
     // It does not pretend to be an empty list. It says what is missing.
     expect(ground.vault, VaultState.absent);
     expect(find.text(sentences.thereIsNoVaultYet), findsOneWidget);
-    expect(find.textContaining('the only file this app writes'), findsOneWidget);
+    // **A fragment and not the key**, on purpose: a finder that read
+    // `sentences.yourNamesLiveInOneVaultFile` could not notice the sentence
+    // being reworded, and this one is a claim's (C-06). It said «the only
+    // file this app writes» until the outside review of 23 October 2026 named
+    // that false — the app writes the session files and the settings too — so
+    // what is pinned here is what the room now promises.
+    expect(find.textContaining('one encrypted vault file'), findsOneWidget);
     expect(find.text(sentences.createTheVault), findsOneWidget);
 
     // ---------------------------------------------------------- made

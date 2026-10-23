@@ -93,14 +93,13 @@ String? _theWalkButton(WidgetTester tester) {
 }
 
 void main() {
-  late Directory dir;
+  final dir = Directory('${Directory.systemTemp.path}/zprivacy-two-forms-$pid');
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
       throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
-    dir = Directory('${Directory.systemTemp.path}/zprivacy-two-forms-$pid');
     removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
   });

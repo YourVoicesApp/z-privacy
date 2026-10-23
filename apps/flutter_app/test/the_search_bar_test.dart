@@ -123,14 +123,13 @@ String isolated(String word) => '\u2068$word\u2069';
 String quoted(String word) => '«${isolated(word)}»';
 
 void main() {
-  late Directory dir;
+  final dir = Directory('${Directory.systemTemp.path}/zprivacy-find-$pid');
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
       throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
-    dir = Directory('${Directory.systemTemp.path}/zprivacy-find-$pid');
     removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
   });
