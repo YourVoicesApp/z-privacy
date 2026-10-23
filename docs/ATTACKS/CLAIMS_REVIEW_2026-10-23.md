@@ -258,3 +258,9 @@ The important exception is not inside this list: the UI says “Undo protection�
 
 6. **The public proof gates are not all shape-neutral runtime tests.** G1/G5/G16, G43, G46 and the Windows G60/G61/G69 checks primarily grep source or workflow text. Their green result is evidence of repository shape, not a substitute for runtime network capture, Windows installation, or an independent security audit.
 
+
+---
+
+## Lead's addendum, 23 Oct — not the reviewer's text
+
+One count in finding 3 is corrected by measurement (e2, paper 105's round): the review names five provider adapters; the tree holds **six** — `z_core/src/providers/xai.rs` was missed. The finding's substance stands and was fixed by narrowing the site sentence; the measured truth behind the new sentence: all six providers take a caller-given base URL (`connect_provider`, ops/mod.rs:1361), https anywhere and plain http only for a literal loopback address, five of six speak OpenAI's chat-completions shape, a keyless local model at 127.0.0.1 is pinned by `truthfulness_regressions::lie_a_keyless_login_claims_a_key` and the whole send by `wire_capture`. Everything else in the review is left exactly as it came back.
