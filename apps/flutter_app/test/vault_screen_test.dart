@@ -377,6 +377,12 @@ void main() {
     expect(find.text('Starten'), findsOneWidget);
 
     // ------------------------------------------------ English, and back
+    // **Scrolled to first since 23 October 2026** (paper 106): the first page
+    // draws one promise block per offered language before a choice, and the
+    // third language put the language row below the fold of a 1000-tall
+    // window. The page scrolls; a tap at a fixed point does not.
+    await tester.ensureVisible(find.text('English'));
+    await settle(tester, rounds: 1);
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
     expect(find.text(sentences.noAccount), findsOneWidget);

@@ -361,6 +361,12 @@ class _Shown {
 /// language, then the vault — which is the only way on, because everything Z
 /// learns while they work is kept in it.
 Future<void> pastTheFirstRun(WidgetTester tester, {String language = 'English', String start = 'Start'}) async {
+  // **Scrolled to first since 23 October 2026** (paper 106): the first page
+  // draws one promise block per offered language before a choice, and the
+  // third language put the language row below the fold of a 1000-tall window.
+  // The page scrolls; a tap at a fixed point does not.
+  await tester.ensureVisible(find.text(language));
+  await settle(tester, rounds: 1);
   await tester.tap(find.text(language));
   await settle(tester, rounds: 1);
   await tester.tap(find.text(start));
