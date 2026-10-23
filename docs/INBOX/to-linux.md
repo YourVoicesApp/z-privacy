@@ -649,3 +649,93 @@ And the round-1 folder (the one the force-kills hit), for completeness: `session
 - **No `*.new`, no other temp file, nothing hidden** in either folder. The create-new-and-refuse-forever candidate is out for this folder.
 - Directory mtimes: `sessions\` 21:59 (its last entry change, the 21:59:20 write of `1.zs`); `ZPrivacy\` 21:35 (its last entry change — consistent with `vault.zv` being replaced through a rename at 21:35:03, A's last protect). Whether the 21:35:11 50-byte `1.zs` arrived by rename or by in-place truncate the listing cannot say now, since the 21:59 write refreshed the directory time.
 - Writers outside our code, named so they can be weighed: the folder lives under `C:\Users\anash\z\testdata\` — not under OneDrive, no sync client on it; Microsoft Defender real-time protection is on (`RealTimeProtectionEnabled=True`); the preference lists **one exclusion path**, whose value needs an administrator to read (`N/A: Must be an administrator to view exclusions`), so whether it covers this folder is not known; the folder itself was made by my `cp -r` of the round-1 folder at 21:29:07, *before* the timeline, and `1.zs` was already 50 bytes in the source then. Nothing of mine wrote into it after 21:29:07; the watcher only read.
+
+## 23 October 2026, 18:46–20:20 — paper 101, the move-in half: a Linux-made vault opens on Windows and gives back its 15 names; and the z-pdf export empties the session file
+
+Binary: the **Inno-installed** copy, `C:\Users\anash\AppData\Local\Programs\Z Privacy\zprivacy.exe`, sha256 `eeeddaad59293e64…` — byte-identical to the folder build of 78988fd used in all earlier rounds; its `BUILD-INFO.txt` reads `z_core 0.1.0 · 2026-10-22 · 78988fd`. Data folder overridden to `C:\Users\anash\z\testdata\78988fd\LocalAppData-101`. A 1-second size+mtime watcher ran on `…\LocalAppData-101\ZPrivacy` from 08:34:11 until 20:20. Fixtures only; the test passphrase is test material and appears nowhere here.
+
+**The payload, and that it was carried unchanged.** Pulled at papers head `0e600b4`. `docs/INBOX/vault-101-transfer/zprivacy/` → copied whole into the fresh folder as `ZPrivacy\`. sha256 the same on both sides, before and after the whole run: `vault.zv` 1405 B `ba9b24513e731b09…`, `sessions\1.zs` 50 B `1d361510cc8b1a6f…`, `settings.zcfg` 188 B `2af119c21ec9a8ec…`, and the z-pdf 15 699 B `fb99ca78c8e3c5d7…`. `git status` on the origin copy is empty at the end of the night: **nothing on this machine wrote back into it.**
+
+**That the app sat on the test folder, before any press.** Two independent witnesses. The disk: `writing.lock` 0 B appeared inside `…\LocalAppData-101\ZPrivacy` at 18:46:09, one second after launch, and the real `%LOCALAPPDATA%\ZPrivacy` did not move (179 B @07:31:15, 235 B @05:50:34, 0 B @01:16:52 — checked before the launch, between every step, and after the close). The app's own glass: Settings → Vault & security prints **«Your vault is in C:\Users\anash\z\testdata\78988fd\LocalAppData-101\ZPrivacy»** (screenshot 11). The Linux mistake of sitting on the real vault without an override cannot be made silently on this build — the path is on the screen.
+
+### The three things paper 101 asked for
+
+**1. It opens with the passphrase alone.** No second factor, no device question, no re-derivation. **And the open writes nothing**: from 18:46:10 to 18:50:02 the watcher logged not one change — `vault.zv` stayed at the 1405 bytes Linux wrote. The vault that answered is the one that travelled, not one rebuilt here.
+
+**2. The session list shows Session 1 with its Linux birth.** Verbatim from the Sessions panel at 20:19 (screenshot 13): **«Session 1 · 2026-10-22 22:48 · 0 exchanges · the one you are in»**. The 22:48 birth matches what Linux recorded.
+
+**3. The Linux z-pdf reads back with 15 names.** Verbatim on the bench at 20:13 (screenshot 12): **«15 names came back from «Session 1».»**, beside a «Read it back» button. Same number Linux measured, from a file made by a different build on a different operating system.
+
+The file is `Session 1-protected-2026-10-22.pdf`, and `pdftotext` reads its footer as:
+
+```
+z-pdf · geschützte Kopie · z_core 0.1.0 · 2026-10-22 · 9716773 · 19 Stellen ersetzt,
+15 Werte (Address ×3, BIC ×1, Company ×2, Contract ×1, Customer number ×1,
+E-mail ×1, IBAN ×1, Person ×4, Phone ×1) · sha256 des geschützten Textes
+1ebca008c1753cc8d65bcdd46d26ec97cc64160aa5b642ce9b4471920703846c
+```
+
+15 Werte in the file, 15 names back on Windows. (This also closes yesterday's small mystery: my `pdftotext` sweep found nothing because I grepped English words — the document is German.)
+
+**A fourth thing, not asked for and worth more than it looks: the moved vault kept its token identity.** When the owner protected `Brief_Weber.txt` on Windows, the IBAN came out as `__Z_235A_IBAN_60325DF6__` and the BIC as `__Z_235A_BIC_AE5D02CF__`. The Linux-made z-pdf, written yesterday on another machine, carries **those same two token names** for those same two values, plus a shared `__Z_235A_PERSON_02E31678__`. Same vault, same salt `235A`, same naming — across the move.
+
+### The presses, and where the writes landed
+
+Every byte of every press landed in the moved copy, and nowhere else.
+
+| time | vault.zv | sessions\1.zs | what the owner did |
+|---|---|---|---|
+| 18:46:10 | 1405 | 50 | launch; `writing.lock` created; baseline |
+| 18:46–18:50 | 1405 | 50 | unlock, Session 1 opened — **not one byte** |
+| 18:50:02 | **2960** | **3512** | imports `Brief_Weber.txt`: «Scanned on import · 29 protected automatically · 0 need your word · 160 normal»; safe side «32 values were replaced»; Names 1, Tokens 28 (screenshot 10) |
+| 18:50:30 | 3027 | 3626 | one hand-protect, on disk within 2 s (+67 B on the vault) |
+| 18:50:37–48 | 3027 | 3663→3796 | six more presses: the session file grows, **the vault does not** — these re-used blocks it already held |
+| 20:02:55 | 3027 | **50** | *see the finding below* |
+| 20:11:28 | 3082 | 2509 | imports the Linux z-pdf as a document: «Scanned on import · 4 protected automatically · 0 need your word · 186 normal» + the 15-names line |
+| 20:12:34 | 3151 | 2571 | hand-protect |
+| 20:12:38 / :43 / :59 | 3151 | 2509↔2571 | undo and redo of one protection: session file only, vault untouched |
+| 20:13:09 | 3212 | 2571 | hand-protect |
+| 20:13:13 | 3274 | 2633 | hand-protect |
+| 20:13:19 | 3274 | **50** | *see the finding below* |
+| 20:16:09 | **3344** | 2695 | one hand-protect (+70 B) |
+| 20:16:12 | 3344 | **50** | *see the finding below* |
+| ~20:17 | 3344 | 50 | window closed with the × button: **nothing written** |
+| 20:18:29 | 3344 | 50 | relaunch, unlock, open Session 1: **nothing written** |
+
+Real vault folder at the end: 179 / 235 / 0 B, the same three mtimes as at the start.
+
+### The finding: saving a protected copy empties the session file
+
+**Every z-pdf export overwrites `sessions\1.zs` with a 50-byte body, in the same moment, while `vault.zv` is not touched at all.** Four times, with no exception:
+
+| when | session file | the z-pdf written in that same second |
+|---|---|---|
+| 22 Oct 21:35:11 | 2937 → 50 | `Session 1-protected-2026-10-22.pdf` 16 751 B |
+| 23 Oct 20:02:55 | 3796 → 50 | `Session 1-protected-2026-10-23.pdf` 18 022 B |
+| 23 Oct 20:13:19 | 2633 → 50 | `Session 1-protected-2026-10-23-2.pdf` 16 237 B |
+| 23 Oct 20:16:12 | 2695 → 50 | `Session 1-protected-2026-10-23-3.pdf` 16 222 B |
+
+The last of the four was a **controlled repro**, asked for and performed with nothing else touched: protect one word, then save a protected copy, no other press. Sub-second mtimes give the order:
+
+```
+20:16:09.145  vault.zv   3274 → 3344     the protect press
+20:16:12.754  1.zs       2695 → 50       the session file is emptied
+20:16:12.809  Session 1-protected-2026-10-23-3.pdf  16 222 B written
+```
+
+**55 ms. The session file is emptied *before* the z-pdf is written**, so this is the save path doing it on its way out, not a crash, not a race with a closing window, not an interrupted write. No `.new` or other temp file is left behind. `vault.zv` keeps its mtime through all four.
+
+**What this costs the user, seen by eye and not inferred.** After the controlled export the owner closed the window with ×, I relaunched, he unlocked and opened the session. The Sessions panel: **«Session 1 · 2026-10-22 22:48 · 0 exchanges · the one you are in»**, and the bench back to its empty invitation, «Your document arrives here, as it is written.» (screenshot 13). Two documents had been imported into that session during the evening. The protected *values* survive — `vault.zv` is 3344 B and holds them — what is lost is the session's own content, its list of documents.
+
+**This dates back and corrects me.** Last night's report (step 5, finding 2) put the 21:35:11 collapse down to «A's × close or B's click on the session list, the disk cannot say which». Both are now ruled out: tonight's collapses happened in a **single window**, with no close, no lock, and the owner away from the machine between 18:50 and 20:02. The cause is the export. By the same token the owner's sentence «closing the app and reopening it emptied the session» was **right**, and my correction of it — I had attributed it wholly to my own wrong-folder launch at 22:02 — was only half right: that launch was a real mistake of mine, but a real mechanism was underneath it. It also explains `sessions\2.zs`, born 50 B at 21:16:26 and never larger: `Session 2-protected-2026-10-22.pdf` was written in that same second.
+
+### Two smaller measurements
+
+- **The data-folder override does not cover the export folder.** All three test z-pdfs of tonight were written to the owner's real `Documents\ZPrivacy\`, beside his own files, even though `LOCALAPPDATA` pointed elsewhere. Nothing of his was read or changed, and the three test files are left in place, named by today's date, for him to decide on. For a test bench this is a leak of isolation; for a user it is probably the wanted behaviour. Recording it, not judging it.
+- **`writing.lock` is not removed when the window closes.** It was created at 18:46:09, survived a clean × close, and was still 0 B at 20:20.
+
+### What was not measured, and one gap
+
+- The owner's **first** read-back attempt failed, and I do not have its sentence verbatim — a gap in this report. The cause is almost certainly a name collision rather than the file: `Documents\ZPrivacy\` already held a `Session 1-protected-2026-10-22.pdf` (16 751 B) written last night **from a different vault**, the file picker opens there, and the Linux file carries the identical name. He reports only that «the app did not decrypt it». Re-run with the Linux file copied under an unmistakable name succeeded immediately. If a refusal sentence exists on that path it is still uncaptured.
+- No refusal sentence appeared anywhere else tonight, at the open or at the read-back. The pre-102 vault (session format 6) was read by the pre-102 binary without a word of complaint, as predicted.
+- Typed-text-without-a-document was not re-run tonight; round 1 of 22 Oct already named it, and on this binary it is the known fault, not a 101 result.
