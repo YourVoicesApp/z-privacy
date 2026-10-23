@@ -7,10 +7,11 @@ The owner's rule for this round, in the lead's words: «لا رقمَ قبل ف�
 deed, and «every sentence is a measurement» holds for the site as it does for
 the footer.
 
-A page is where a number goes to drift. The four it makes:
+A page is where a number goes to drift. The five it makes:
 
-  1. **the crate table** — 142 names and versions of other people's work, which
-     is an attribution and not decoration. Checked against `Cargo.lock` in both
+  1. **the crate table** — every name and version of other people's work, which
+     is an attribution and not decoration. The count is not written here: it moves
+     with `Cargo.lock`, and a number in a docstring moves with nothing. Checked against `Cargo.lock` in both
      directions. On 9 October it was short by one row: `windows-sys 0.59.0` was
      in the lock and not on the page, while `0.52.0` was on both.
   2. **the font faces** — 6 · 18 · 12 · 10 per family, checked against the
@@ -33,6 +34,13 @@ A page is where a number goes to drift. The four it makes:
 Two words in the glossary are **not** printed by any screen, and they are named
 here rather than quietly allowed: a word that the product does not say is a word
 this page has to account for.
+
+And since 105, two **sentences** rather than numbers: the front page's answer to
+«which AI services?» and the guide's answer to «what if two copies write at
+once?» were both wider than this tree, so each is now marked with the fact it
+serves, in all three languages, and the wording it replaced is refused in the
+served page. The table is `THE_NARROWED`, and the comment above it says why a
+sentence needs a key at all.
 
   python3 scripts/check_site_claims.py        # the exit status is the verdict
 """
@@ -186,6 +194,66 @@ NOT_SPOKEN = {'en': ('Swedish',), 'de': ('Schwedisch',), 'ar': ('السويدي�
 TRANSLATED = {'de': 'German'}   # what the measurement must come back with
 
 
+# **Two sentences the outside review found larger than the tree** — paper 105,
+# 23 October 2026, findings 2 and 3 of `docs/ATTACKS/CLAIMS_REVIEW_2026-10-23.md`.
+#
+# The front page said «works with any AI service, including local models» and
+# the guide said «nothing is lost silently». Both were narrowed to what this
+# tree measures — six services in one catalogue reached at an address you can
+# change, and two copies of Z over one vault on one machine. Neither narrowing
+# guards itself: a sentence of prose widens again by one word, and a translator
+# can drop the half that carries the limit in one language with nobody the
+# wiser. That is the same pair of faults the download pages answered with
+# `data-fact=`, so this is the guide's trick a third time and not a control of
+# its own:
+#
+#   * the corrected sentence is **marked on the element that serves it**, and
+#     all three languages must mark it exactly once — so a page that loses the
+#     fact is a page that disagrees with its siblings;
+#   * the **retired wording is named, per language, and refused in the served
+#     page.** A comment may still quote it — the comments above both sentences
+#     do, because a correction whose reason nobody can read is a correction
+#     nobody will keep — and `served()` is why that is allowed.
+#
+# Both halves are needed. Without the first, dropping the sentence is silent;
+# without the second, writing «any AI service» back is.
+THE_NARROWED = {
+    'site/%s/index.html': ('which-services-z-speaks-to', {
+        'en': 'works with any AI service',
+        'de': 'arbeitet mit jedem KI-Dienst',
+        'ar': 'يعمل مع أيّ خدمة ذكاء',
+    }),
+    'site/%s/guide/index.html': ('a-vault-write-is-not-lost-in-silence', {
+        'en': 'nothing is lost silently',
+        'de': 'nichts geht stillschweigend verloren',
+        'ar': 'ولا يُفقَد شيءٌ في صمت',
+    }),
+}
+
+
+def a_narrowed_sentence(rel_pattern, langs):
+    """One corrected fact, in every language, and the old wording in none."""
+    key, retired = THE_NARROWED[rel_pattern]
+    bad = 0
+    for lang in langs:
+        rel = rel_pattern % lang
+        if not os.path.exists(os.path.join(ROOT, rel)):
+            continue   # the caller has already said so, in its own words
+        page = served(read(rel))
+        n = len(re.findall(r'data-fact="%s"' % re.escape(key), page))
+        if n != 1:
+            say('FAIL', '%s marks «%s» %d time(s), and each of the three carries it '
+                        'once — a language has dropped a corrected sentence or doubled it'
+                % (rel, key, n))
+            bad = 1
+        old = retired.get(lang)
+        if old and old in page:
+            say('FAIL', '%s serves «%s» again, and that wording was narrowed on '
+                        '23 October because this tree does not measure it' % (rel, old))
+            bad = 1
+    return bad
+
+
 def the_interface():
     import importlib.util
     import json
@@ -237,8 +305,11 @@ def the_interface():
                 say('FAIL', 'site/%s/index.html names «%s», and that list is still the English source'
                     % (lang, word))
                 bad = 1
+    bad |= a_narrowed_sentence('site/%s/index.html', ('en', 'de', 'ar'))
     if not bad:
-        say('PASS', 'the interface speaks what the lists really hold (%s), and the three pages owe the one list\u2019s own numbers: %d sentences in %d screens'
+        say('PASS', 'the interface speaks what the lists really hold (%s), the three pages name the '
+                    'services this tree really speaks to, and they owe the one list\u2019s own numbers: '
+                    '%d sentences in %d screens'
             % (', '.join('%s %d values' % (c, n) for c, n in sorted(speaks.items())), owed, owed_files))
     return bad
 
@@ -383,6 +454,7 @@ def the_guide():
                 say('FAIL', 'the application opens «%s» for %s, and the site\u2019s own '
                             'address for that page is «%s»' % (app, lang, HOST + want))
                 bad = 1
+    bad |= a_narrowed_sentence('site/%s/guide/index.html', THE_GUIDE_SPEAKS)
     if not bad:
         # Counted once over the four files and not once per language: the
         # three pages ask for the same four, from one folder.
@@ -392,8 +464,8 @@ def the_guide():
                           ROOT, 'site', 'assets', 'guide', shot)))
         say('PASS', 'the guide is one text in one place: %d controls named by key on three '
                     'pages, every one of them a sentence the application has, one spelling '
-                    'of the address in the app and on the site, and %d of %d pictures '
-                    'still to be taken'
+                    'of the address in the app and on the site, the write sentence carrying its '
+                    'measured boundary on all three, and %d of %d pictures still to be taken'
             % (len(sets[THE_GUIDE_SPEAKS[0]]), waiting, len(every)))
     return bad
 
