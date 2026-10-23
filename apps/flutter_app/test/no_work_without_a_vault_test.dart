@@ -66,6 +66,14 @@ void main() {
     await aFreshDevice(tester, 'first');
 
     expect(find.byType(FirstRunScreen), findsOneWidget);
+    // **Scrolled to first since 23 October 2026** (paper 106): the first page
+    // draws one promise block per offered language before a choice is made,
+    // and the third language put the row of language buttons below the fold of
+    // a 1000-tall window — «English» measured at y=1224. The page is a
+    // `SingleChildScrollView` and a person scrolls to it; a guard that taps a
+    // fixed point does not, so it says so here.
+    await tester.ensureVisible(find.text('English'));
+    await settle(tester, rounds: 1);
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
     await tester.tap(find.text(sentences.start));

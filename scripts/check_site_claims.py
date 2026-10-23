@@ -181,17 +181,33 @@ def path(lits):
 #
 # The third number is the claim itself. A list whose values are still the
 # English source is not a language the interface speaks — measured, not
-# declared: `sv` differs from English in exactly one value, `thisLanguageName`,
-# which is the language's own name. So the languages a page may name are the
-# ones whose list differs from the English in more values than it matches, and
-# a page naming one it does not have, or missing one it does, is a red.
+# declared. So the languages a page may name are the ones whose list differs
+# from the English in more values than it matches, and a page naming one it
+# does not have, or missing one it does, is a red.
+#
+# **Swedish moved across that line on 23 October 2026** (paper 106, the owner's
+# word): it differed from the English in exactly one value, `thisLanguageName`,
+# and now differs in 680 of 691. The measurement is what moved the pages, not
+# a hand — which is the whole design of this check. What the pages may **not**
+# say is that the Swedish is good: the owner is the only native reviewer and
+# his reading is a round of its own, so the sentence names the language and the
+# date and says that nobody has read it yet.
+#
+# **And the absent language is French, not Arabic.** The first draft of this
+# round reached for Arabic — the next language, untranslated on purpose — and
+# it cannot be the control: all three pages **name** Arabic in order to deny it
+# («Arabic is a reading pack and not a language of the interface»), so a
+# word-absence control over it would red on a correct page. French is named
+# nowhere in the three pages, there is no `app_fr.arb`, and `fr` is already the
+# control on the floor below — `theListIsWrittenIn('fr')` is the case that
+# keeps the app's own law biting. One language, both floors.
 SPEAKS = {
-    'en': ('English', 'German'),
-    'de': ('Englisch', 'Deutsch'),
-    'ar': ('الإنجليزيّة', 'الألمانيّة'),
+    'en': ('English', 'German', 'Swedish'),
+    'de': ('Englisch', 'Deutsch', 'Schwedisch'),
+    'ar': ('الإنجليزيّة', 'الألمانيّة', 'السويديّة'),
 }
-NOT_SPOKEN = {'en': ('Swedish',), 'de': ('Schwedisch',), 'ar': ('السويديّة',)}
-TRANSLATED = {'de': 'German'}   # what the measurement must come back with
+NOT_SPOKEN = {'en': ('French',), 'de': ('Französisch',), 'ar': ('الفرنسيّة',)}
+TRANSLATED = {'de': 'German', 'sv': 'Swedish'}   # what the measurement must come back with
 
 
 # **Two sentences the outside review found larger than the tree** — paper 105,

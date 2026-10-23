@@ -158,6 +158,12 @@ void main() {
     // way in rather than an offer. The passphrase goes in through the core:
     // a widget that awaits it does not resume under `testWidgets`, so no test
     // in this app presses «Create the vault» itself.
+    // **Scrolled to first since 23 October 2026** (paper 106): the first page
+    // draws one promise block per offered language before a choice, and the
+    // third language put the language row below the fold of a 1000-tall
+    // window. The page scrolls; a tap at a fixed point does not.
+    await tester.ensureVisible(find.text('English'));
+    await settle(tester, rounds: 1);
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
     await tester.tap(find.text(sentences.start));
@@ -228,6 +234,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: ZShell(dataDir: dir.path, ground: ground)));
     await settle(tester);
 
+    await tester.ensureVisible(find.text('English'));
+    await settle(tester, rounds: 1);
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
     await tester.tap(find.text(sentences.start));

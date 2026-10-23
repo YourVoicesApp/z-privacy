@@ -125,14 +125,15 @@ void main() {
     expect(none.zPdfProtectedCopy, sentences.zPdfProtectedCopy,
         reason: 'the fallback is not the source list');
 
-    // **An unwritten list is English, by the one law and not a second one.**
-    // Swedish is a scanner pack and not an interface (56-أ), so a file from a
-    // Swedish session carries the source's words rather than a column of
-    // English values claiming to be Swedish.
+    // **An unwritten list is English, by the one law and not a second one** —
+    // and since paper 106 (23 October 2026) Swedish is not one of them: a file
+    // that leaves a Swedish session is worded in Swedish, by the same reading
+    // of the same law. `fr` below is the law's remaining subject, which is why
+    // it is here and not only for symmetry.
     expect(theSentencesAFileCarries('sv').zPdfProtectedCopy,
-        none.zPdfProtectedCopy,
-        reason: 'a session whose interface list is not written yet is worded '
-            'from something other than the source');
+        isNot(none.zPdfProtectedCopy),
+        reason: 'the Swedish list is written, so a file from a Swedish session '
+            'may not carry the source list words');
     expect(theSentencesAFileCarries('fr').zPdfProtectedCopy,
         none.zPdfProtectedCopy,
         reason: 'a code with no list at all refused instead of answering English');

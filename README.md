@@ -39,10 +39,12 @@ Import → Scan → Review → Protect → Choose who answers → AI → Restore
 in one list, and no screen writes one of its own: the count is
 `python3 scripts/check_the_one_list.py`, where it is measured rather than
 remembered — C-15 in `docs/CLAIMS.md` is the one other place it is written
-down, and a gate holds that place to this command. The interface is English and
-German; the Swedish file carries the English words until somebody translates
-them, and the first screen offers Svenska on the day they differ. The detection
-packs are German, English and Swedish. Private beta.
+down, and a gate holds that place to this command. The interface is English,
+German and Swedish: the Swedish words were written on 23 October 2026 and the
+first screen offers Svenska because the gates measure that its sentences are
+not the English ones — **they have not been read by a native speaker yet**, and
+that review is a round of its own. The detection packs are German, English and
+Swedish. Private beta.
 
 Windows is built from git by `.github/workflows/windows-core.yml`, by hand from
 the Actions tab: the core's tests, the nine storage contracts, the one-writer

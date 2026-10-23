@@ -331,14 +331,14 @@ void main() {
     // The old wording promised more than the app does.
     expect(find.text('Your original data stays on this device.'), findsNothing);
     expect(find.text(AppLocalizationsEn().byYourVoices), findsOneWidget);
-    // **And Svenska is not offered here, which is rule 56-أ** — the Swedish
-    // list is still a copy of the English, so a button under that name would
-    // hand a person English promises. It is offered everywhere else a language
-    // is chosen (rule 56), and this page works it out from the list rather
-    // than holding a second opinion: the day the values differ, the button
-    // appears and this guard is the one that has to change.
-    expect(find.text(AppLocalizationsSv().thisLanguageName), findsNothing,
-        reason: 'the first page offers a language whose promises are English');
+    // **And Svenska is offered here since paper 106** — rule 56-أ, met on 23
+    // October 2026. The page never held an opinion of its own: it offers the
+    // languages whose list is written, so the button appeared the day the
+    // Swedish values stopped being the English ones, and this is the guard
+    // that said it would change. What it does not claim is that the Swedish
+    // reads well — that is the owner's own round.
+    expect(find.text(AppLocalizationsSv().thisLanguageName), findsOneWidget,
+        reason: 'the Swedish list is written, so the first page offers it');
     expect(offeredLanguages, contains('sv'),
         reason: 'Swedish left the offered list, and then this guard measures nothing');
     // No e-mail, no sign-up, nothing to fill in.
@@ -377,6 +377,12 @@ void main() {
     expect(find.text('Starten'), findsOneWidget);
 
     // ------------------------------------------------ English, and back
+    // **Scrolled to first since 23 October 2026** (paper 106): the first page
+    // draws one promise block per offered language before a choice, and the
+    // third language put the language row below the fold of a 1000-tall
+    // window. The page scrolls; a tap at a fixed point does not.
+    await tester.ensureVisible(find.text('English'));
+    await settle(tester, rounds: 1);
     await tester.tap(find.text('English'));
     await settle(tester, rounds: 1);
     expect(find.text(sentences.noAccount), findsOneWidget);

@@ -64,13 +64,46 @@ void main() {
     ]) {
       expect(sentence.trim(), isNotEmpty, reason: 'a German sentence is empty');
     }
-    // **The Swedish is the English, and that is the state 56-أ holds.** Not an
-    // oversight: the file exists so the gate can count it and so the day it is
-    // translated is a change to values and not a change to the tree. The first
-    // screen does not offer Svenska while this is true.
-    expect(sv.theChatKeepsNothing, en.theChatKeepsNothing,
-        reason: 'the Swedish values have started to differ from the English — '
-            'then 56-أ is satisfied and the first screen may offer Svenska');
+    // **And the Swedish, written on 23 October 2026** (paper 106). It was the
+    // English until that day, which was 56-أ: the file existed so the gate
+    // could count it and so the translation would be a change to values and
+    // not a change to the tree. It was exactly that.
+    for (final sentence in <String>[
+      sv.theKeyIsBehindTheLockedVault,
+      sv.theChatKeepsNothing,
+      sv.unnamedTrouble,
+      sv.troubleVaultLocked,
+      sv.refusalEncryptedPdf,
+      sv.networkUnreachable,
+    ]) {
+      expect(sentence.trim(), isNotEmpty, reason: 'a Swedish sentence is empty');
+    }
+    expect(sv.theChatKeepsNothing, isNot(en.theChatKeepsNothing),
+        reason: 'the Swedish value is the English again, so a person who '
+            'chooses Svenska reads English promises — 56-أ');
+  });
+
+  // ----------------------------------------------------------------- guard 2b
+  //
+  // **The Swedish is Swedish** — guard 2's own rule, applied to the second
+  // language the day it got one. The same three sentences and the same two
+  // words of house vocabulary, because a glossary that holds in one list and
+  // not the other is how «valv» and «Tresor» start describing different
+  // things.
+  test('the Swedish list says something other than the English', () {
+    final en = AppLocalizationsEn();
+    final sv = AppLocalizationsSv();
+    expect(sv.theKeyIsBehindTheLockedVault, isNot(en.theKeyIsBehindTheLockedVault));
+    expect(sv.troubleVaultLocked, isNot(en.troubleVaultLocked));
+    expect(sv.refusalEmptyDocument, isNot(en.refusalEmptyDocument));
+    // The glossary, chosen the way the German chose: a token is a
+    // «platshållare» (German «Platzhalter», never «Token»), and a vault is a
+    // «valv» (German «Tresor»).
+    expect(sv.belongsToEntity('Nordstern', '__Z_1234_PERSON_ABCD__'),
+        contains('platshållare'),
+        reason: 'the Swedish calls a token something other than «platshållare»');
+    expect(sv.troubleVaultLocked, contains('valv'),
+        reason: 'the Swedish calls the vault something other than «valv»');
   });
 
   // ------------------------------------------------------------------ guard 2
@@ -260,6 +293,19 @@ void main() {
   // One law, three readers, and this measures the law and two of the readers:
   // `theListIsWrittenIn` is the question, `theLocaleOf` is the fallback, and
   // the first screen's offer is guarded in `vault_screen_test`.
+  //
+  // **And on 23 October 2026 the Swedish values were written** (paper 106, the
+  // owner's word), which is the day this guard said it would change. Nothing
+  // in the product changed with them: the law is a **measurement** of the list
+  // — seven sentences compared with the English — so Svenska began carrying
+  // the interface because the sentences differ, and the Language room's «the
+  // interface is English until its sentences are translated» stopped being
+  // drawn for it by the same reading. `fr` stays as the control: a code with
+  // no list at all is still English, and the law still bites somewhere.
+  //
+  // What this guard does **not** say is that the Swedish is good: the owner is
+  // the only native reviewer and his reading is a round of its own. This
+  // measures that the words exist and are not the English.
   test('a language whose list is still the English source does not carry the interface', () {
     // German is written: its promise differs from the source's in every line.
     expect(theListIsWrittenIn('de'), isTrue,
@@ -267,25 +313,30 @@ void main() {
     // English is the source and is written by definition — nothing is compared
     // with itself.
     expect(theListIsWrittenIn('en'), isTrue);
-    // Swedish is not, and that is 56-أ's stated state rather than an oversight.
-    expect(theListIsWrittenIn('sv'), isFalse,
-        reason: 'the Swedish values have started to differ — then 56-أ is '
-            'satisfied, Svenska carries the interface, and this guard changes');
-    // A code nobody has a file for at all.
+    // Swedish is written since paper 106, which satisfies 56-أ.
+    expect(theListIsWrittenIn('sv'), isTrue,
+        reason: 'the Swedish values read as the English again — then a person '
+            'who chooses Svenska would read English promises, which is the '
+            'whole of what 56-أ forbade');
+    // A code nobody has a file for at all — the law's remaining subject.
     expect(theListIsWrittenIn('fr'), isFalse);
 
     // **And the fallback.** The locale the root applies is a language the glass
     // can speak, never the one it merely has a file for.
     expect(theLocaleOf('de'), const Locale('de'));
-    expect(theLocaleOf('sv'), const Locale('en'),
-        reason: 'the root would draw a Swedish list that is written in English');
+    expect(theLocaleOf('sv'), const Locale('sv'),
+        reason: 'the Swedish list is written, so the root draws it');
     expect(theLocaleOf('fr'), const Locale('en'));
 
     // The holder, asked the same question the root asks it: a code whose list
-    // is not written reaches the English sentences and not an empty screen.
-    theSentencesAreNow(theLocaleOf('sv'));
+    // is not written reaches the English sentences and not an empty screen —
+    // `fr` is that code now, and Swedish answers in Swedish beside it.
+    theSentencesAreNow(theLocaleOf('fr'));
     addTearDown(() => theSentencesAreNow(const Locale('en')));
     expect(sentences.noAccount, AppLocalizationsEn().noAccount);
+    theSentencesAreNow(theLocaleOf('sv'));
+    expect(sentences.noAccount, AppLocalizationsSv().noAccount);
+    expect(sentences.noAccount, isNot(AppLocalizationsEn().noAccount));
 
     // And the sentence the Language room draws for such a language exists in
     // every list, naming the language it is about.
