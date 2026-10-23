@@ -704,3 +704,150 @@ fn here_uncovers_every_place_the_selection_spans() {
     assert_eq!(clear, 1, "«here» left {clear} place(s) in the clear, not one");
     assert!(taken.text.contains("__Z_"), "«here» took the token off every place");
 }
+
+/// **A cover comes off before the words leave, and never after** — C-05's own
+/// boundary, from the outside claims review of 23 October 2026.
+///
+/// The reviewer graded C-05 **false** and built the counterexample out of our
+/// own tree: the glass carries «Undo protection» (`undoProtection`) and the
+/// guide says «Press a protected word and «Undo protection» takes it back»,
+/// while the claim's sentence said «can never be unprotected again — not by
+/// you». Both are true, of different moments, and nothing in the sentence said
+/// which. The sentence now carries the boundary — permanence begins where the
+/// hand's choice ends, which is when the words leave — and this guard is that
+/// boundary measured, with the reviewer's own counterexample as its first half.
+///
+/// **What is measured, and nothing else:** before anything has left, the door
+/// the button on the glass calls takes the cover back and the value stands in
+/// the clear again; once a message has left, **every** door this contract has
+/// that takes a cover back leaves what left exactly as it was — the stored
+/// form, character for character, and still so after a restart. And the block
+/// the press made outlives all of it (rule 2), which is why 102 and this round
+/// are a sentence and not a behaviour: «the block is never deleted» was never
+/// the same promise as «not by you».
+///
+/// **The boundary is what left, not the door.** Measured here rather than
+/// assumed: the three doors go on working after the send — the text in front
+/// of the person is still that text, and a cover on it comes off whenever the
+/// hand says so. What no door reaches is the message that has already gone.
+/// So the sentence says «what has already left», and not «until it leaves the
+/// button works», which would have been a promise about a control.
+///
+/// The three doors are **enumerated rather than reasoned about**: «no door
+/// un-protects what left» is a claim about all of them, and a door nobody
+/// called cannot be a control.
+#[test]
+fn a_cover_comes_off_before_it_leaves_and_never_after() {
+    let _guard = serial();
+    let ground = Ground::fresh("boundary");
+    connect_provider(ProviderId { id: "fake".to_string() }, "k".to_string(), None, None)
+        .expect("the echo provider");
+
+    // **The subject is the unlabelled identifier**, for the reason written at
+    // the top of this file: nothing in this build finds `8841-2270` with no
+    // label in front of it, so the hand's cover is the only thing that ever
+    // covers it here — and a cover taken back leaves the word standing in the
+    // clear instead of being found again by the next pass.
+    let held = Bench(open_session(None, "de".to_string()).expect("open"));
+    import_text(held.0, AGAIN.to_string()).expect("import");
+    conversation_begin("der Rückruf".to_string(), Some(held.0)).expect("begin");
+    let number = conversation_open().expect("open").expect("a session is open");
+    assert_eq!(
+        blocks(),
+        0,
+        "the fixture covered something by itself, so the hand is not the only cover in this guard"
+    );
+    let drawn = span_of(AGAIN, NUMBER);
+    assert!(
+        inspect_selection(held.0, drawn).expect("inspect").protected_by.is_none(),
+        "something already covers the word this guard is about"
+    );
+
+    match protect(held.0, drawn, Scope::Conversation, Kind::CustomerNo).expect("protect") {
+        ProtectOutcome::Applied { .. } => {}
+        other => panic!("the hand did not protect the word: {other:?}"),
+    }
+    let made = blocks();
+    assert_eq!(made, 1, "one press by hand made {made} blocks");
+
+    // **Before it leaves, the cover comes off** — the reviewer's
+    // counterexample, at the door `acts.dart`'s «Undo protection» calls.
+    match undo_last_protection(held.0).expect("undo") {
+        UndoOutcome::Undone { places, .. } => {
+            assert_eq!(places, 1, "the undo took {places} places off the one it covered");
+        }
+        other => panic!("«Undo protection» took nothing back before anything had left: {other:?}"),
+    }
+    // A view and not a door: nothing may leave in this half of the guard.
+    let bare = payload_view(build_payload(held.0).expect("build")).expect("view").text;
+    assert!(bare.contains(NUMBER), "the undo did not leave the word in the clear");
+    assert!(!bare.contains("__Z_"), "a token is still standing where the undo took the cover off");
+    assert_eq!(blocks(), made, "the undo deleted the block the press made");
+
+    // And now it leaves, protected again, by the send.
+    match protect(held.0, drawn, Scope::Conversation, Kind::CustomerNo).expect("protect again") {
+        ProtectOutcome::Applied { .. } => {}
+        other => panic!("the second press did not protect the word: {other:?}"),
+    }
+    set_question(held.0, "Worum geht es in diesem Brief?".to_string()).expect("question");
+    let handle = build_payload(held.0).expect("build");
+    ask_model(handle, ProviderId { id: "fake".to_string() }, None, Vec::new()).expect("ask");
+    let left = {
+        let rows = conversation_turns(number, Some(held.0)).expect("turns");
+        assert_eq!(rows.len(), 1, "the send wrote {} turns", rows.len());
+        let left = rows[0].question_as_it_left.clone();
+        assert!(left.contains("__Z_"), "what left carried no token, so nothing below measures anything");
+        assert!(!left.contains(NUMBER), "the word itself left this machine");
+        left
+    };
+
+    // **And after it left, every door that takes a cover back** — each one
+    // with a cover of its own in front of it.
+    //
+    // The cover is renewed before each door because the first one measured
+    // otherwise: the marks are **not** taken off the bench by the send — the
+    // preview's saved copy goes (rule 9), the decisions on the text in front
+    // of the person do not — so the first door took the mark and the two after
+    // it met an uncovered word and answered `NothingToUndo`. A door that found
+    // nothing to do is no control at all, so each is given something to take
+    // and has to say it took it.
+    let mut answers: Vec<String> = Vec::new();
+    for (name, which) in [("the last protection", 0u8), ("this place", 1), ("every place", 2)] {
+        if inspect_selection(held.0, drawn).expect("inspect").protected_by.is_none() {
+            match protect(held.0, drawn, Scope::Conversation, Kind::CustomerNo).expect("cover") {
+                ProtectOutcome::Applied { .. } => {}
+                other => panic!("the word could not be covered again for «{name}»: {other:?}"),
+            }
+        }
+        let outcome = match which {
+            0 => undo_last_protection(held.0),
+            1 => unprotect(held.0, drawn),
+            _ => unprotect_every_place(held.0, drawn),
+        };
+        answers.push(format!("{name}: {outcome:?}"));
+        assert!(
+            matches!(outcome, Ok(UndoOutcome::Undone { .. })),
+            "«{name}» had a cover in front of it and took nothing, so it is no control: {outcome:?}"
+        );
+    }
+    let answered = answers.join(" · ");
+    let after = conversation_turns(number, Some(held.0)).expect("turns");
+    assert_eq!(
+        after[0].question_as_it_left, left,
+        "a door changed what had already left — {answered}"
+    );
+    assert_eq!(blocks(), made, "a door after the send deleted the block — {answered}");
+
+    // The bench is gone and the vault is read from the file again: what left
+    // is what the file holds, and no door reached it there either.
+    drop(held);
+    ground.restart();
+    let stored = conversation_turns(number, None).expect("turns");
+    assert_eq!(
+        stored[0].question_as_it_left, left,
+        "the file holds something other than what left"
+    );
+    assert!(stored[0].question_as_it_left.contains("__Z_"), "the stored turn lost its token");
+    assert!(!stored[0].question_as_it_left.contains(NUMBER), "the word is in the file in the clear");
+    assert_eq!(blocks(), made, "a restart deleted the block");
+}

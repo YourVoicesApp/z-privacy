@@ -41,14 +41,13 @@ Future<void> settle(WidgetTester tester, {int rounds = 5}) async {
 }
 
 void main() {
-  late Directory dir;
+  final dir = Directory('${Directory.systemTemp.path}/zprivacy-shell-$pid');
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
       throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
-    dir = Directory('${Directory.systemTemp.path}/zprivacy-shell-$pid');
     removeWhenItLetsGo(dir);
   });
 

@@ -217,7 +217,7 @@ class _VaultScreenState extends State<VaultScreen> {
             const SizedBox(height: 8),
             Text(
               g.vault == VaultState.locked
-                  ? sentences.yourIdentitiesAreSealed: sentences.aVaultIsTheOnlyFile,
+                  ? sentences.yourIdentitiesAreSealed: sentences.yourNamesLiveInOneVaultFile,
               style: Zc.body,
             ),
             const SizedBox(height: 18),

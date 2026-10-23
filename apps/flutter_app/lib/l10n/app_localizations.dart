@@ -1805,10 +1805,10 @@ abstract class AppLocalizations {
   /// **'This destroys the key this session was protected with.'**
   String get thisDestroysTheKey;
 
-  /// What the act costs, said without softening: the one-way door of rule 59.
+  /// What the act costs, said without softening: the one-way door of rule 59 — with the boundary the outside review of 23 October 2026 asked for, because «Undo protection» is a door this product has and the sentence said «never, not by you». Measured in a_cover_comes_off_before_it_leaves_and_never_after.
   ///
   /// In en, this message translates to:
-  /// **'Every document and every message protected in it can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist.'**
+  /// **'What has already left this session protected can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist. «Undo protection» takes a cover off the text in front of you, never off what has gone.'**
   String get everyDocumentCanNeverBeUnprotected;
 
   /// The half a person needs in order not to fear the wrong thing: the delete reaches the key, not what already left.
@@ -1967,10 +1967,10 @@ abstract class AppLocalizations {
   /// **'What the app does by itself, and how far it goes without asking.'**
   String get privacyWhat;
 
-  /// Why a setting changed here will not be there tomorrow. G15's own promise, said to the person.
+  /// Why a setting changed here will not be there tomorrow. It carried «The vault is the one file this app writes» until the outside review of 23 October 2026 caught those words elsewhere on the glass: the file count was false (C-06) and was never this sentence's business.
   ///
   /// In en, this message translates to:
-  /// **'There is no vault open, so these are for this run only. The vault is the one file this app writes — without it, nothing is remembered.'**
+  /// **'There is no vault open, so these are for this run only — without a vault there is nothing to keep them in.'**
   String get noVaultSoThisRunOnly;
 
   /// The setting that scans on import.
@@ -2087,11 +2087,11 @@ abstract class AppLocalizations {
   /// **'Your identities are on this device, sealed. Until it is open the scanner still runs its rules and its pack — an IBAN is still caught — but not who.'**
   String get yourIdentitiesAreSealed;
 
-  /// G15's own promise, said to the person who has no vault yet.
+  /// What the vault is, said to the person who has no vault yet. It said «the only file this app writes» until the outside review of 23 October 2026 named that false: the app writes each session's own file and the settings too, which C-06 names one by one.
   ///
   /// In en, this message translates to:
-  /// **'A vault is the only file this app writes. It holds your people and their values, encrypted with a passphrase that never leaves this device. Without one, nothing is recognised by name.'**
-  String get aVaultIsTheOnlyFile;
+  /// **'Your names live in one encrypted vault file. It holds your people and their values, encrypted with a passphrase that never leaves this device. Without one, nothing is recognised by name.'**
+  String get yourNamesLiveInOneVaultFile;
 
   /// The box over the identity list. «this device», because nothing is asked of the network.
   ///

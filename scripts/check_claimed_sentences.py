@@ -78,7 +78,25 @@ PINNED: dict[str, tuple[str, str]] = {
     ),
     'everyDocumentCanNeverBeUnprotected': (
         'C-05',
-        'Every document and every message protected in it can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist.',
+        'What has already left this session protected can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist. «Undo protection» takes a cover off the text in front of you, never off what has gone.',
+    ),
+    # **The door the outside review of 23 October 2026 answered C-05 with**, and
+    # the reason that claim now has a boundary: this button exists, it takes a
+    # cover back inside the request, and a sentence that said «never, not by
+    # you» was false while it is drawn. Pinned by its own name, because C-05's
+    # boundary quotes it: rename the button and the claim quotes a control
+    # nobody can find.
+    'undoProtection': (
+        'C-05',
+        'Undo protection',
+    ),
+    # **The sentence that said «A vault is the only file this app writes»** —
+    # the second verdict of that review, false beside `sessions/*.zs` and
+    # `settings.zcfg`. It says what the vault is now, and it is pinned so that
+    # the shorter, false shape cannot come back as a tidy-up.
+    'yourNamesLiveInOneVaultFile': (
+        'C-06',
+        'Your names live in one encrypted vault file. It holds your people and their values, encrypted with a passphrase that never leaves this device. Without one, nothing is recognised by name.',
     ),
     'onePassphrase': (
         'C-06',

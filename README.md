@@ -21,7 +21,9 @@ never sent                     the only thing that leaves
 ```
 
 * Your originals stay on this device unless you explicitly export restored text.
-* The vault is one encrypted file, written here and nowhere else.
+* Your names live in one encrypted vault file, written here and nowhere else.
+  Beside it Z Privacy writes each session's own encrypted file and your
+  settings — `docs/CLAIMS.md` (C-06) names every one of them.
 * No account, and no Z Privacy server for your documents.
 * Once you copy restored text, the clipboard is outside Z Privacy.
 
@@ -33,18 +35,26 @@ Import → Scan → Review → Protect → Choose who answers → AI → Restore
 
 ## Status
 
-**V1.** Linux x86_64 desktop. The interface is English, German and Swedish for
-the 314 sentences gathered in the one list; 559 sentences in 22 screens are
-still written in place and show in English whatever is chosen — the count is
-`python3 scripts/check_the_one_list.py`, not a promise. The detection packs are
-German, English and Swedish. Private beta.
+**V1.** Linux x86_64 desktop. Every sentence the interface shows is gathered
+in one list, and no screen writes one of its own: the count is
+`python3 scripts/check_the_one_list.py`, where it is measured rather than
+remembered — C-15 in `docs/CLAIMS.md` is the one other place it is written
+down, and a gate holds that place to this command. The interface is English and
+German; the Swedish file carries the English words until somebody translates
+them, and the first screen offers Svenska on the day they differ. The detection
+packs are German, English and Swedish. Private beta.
 
 Windows is built from git by `.github/workflows/windows-core.yml`, by hand from
 the Actions tab: the core's tests, the nine storage contracts, the one-writer
 measurement and the whole Dart suite run there, and the job writes a zip, an
-installer and an MSIX. **No run of it has been measured into `docs/` yet**, so
-Linux is still the only platform with numbers. There is no macOS, iOS or
-Android build. A port is a platform, not a repackaging.
+installer and an MSIX. **Six of its runs are measured into `docs/CLAIMS.md`
+(C-14)**, one by one with the head each was built from: the last of them built
+and signed every artefact, with the Dart suite reading 414 · 0 there, and its
+core job was then cut off by a thirty-minute limit with every step green — the
+limit is sixty now, from three measured times. What is still Linux's alone is
+`docs/MEASURED_ON_LINUX.txt`, the numbers every gate run is compared against:
+no Windows run has written numbers of its own into it. There is no macOS, iOS
+or Android build. A port is a platform, not a repackaging.
 
 The site that carries the release is built in `site/` and is served at
 z-privacy.com — one static page in English, German and Arabic, no JavaScript,

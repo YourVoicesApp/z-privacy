@@ -1081,7 +1081,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get everyDocumentCanNeverBeUnprotected =>
-      'Every document and every message protected in it can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist.';
+      'What has already left this session protected can never be unprotected again — not by you, and not by Z Privacy. The key was the only thing that could have done it, and it will not exist. «Undo protection» takes a cover off the text in front of you, never off what has gone.';
 
   @override
   String get anythingYouSentStaysAsItWas =>
@@ -1178,7 +1178,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noVaultSoThisRunOnly =>
-      'There is no vault open, so these are for this run only. The vault is the one file this app writes — without it, nothing is remembered.';
+      'There is no vault open, so these are for this run only — without a vault there is nothing to keep them in.';
 
   @override
   String get scanOnArrival => 'Scan a document the moment it arrives';
@@ -1267,8 +1267,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your identities are on this device, sealed. Until it is open the scanner still runs its rules and its pack — an IBAN is still caught — but not who.';
 
   @override
-  String get aVaultIsTheOnlyFile =>
-      'A vault is the only file this app writes. It holds your people and their values, encrypted with a passphrase that never leaves this device. Without one, nothing is recognised by name.';
+  String get yourNamesLiveInOneVaultFile =>
+      'Your names live in one encrypted vault file. It holds your people and their values, encrypted with a passphrase that never leaves this device. Without one, nothing is recognised by name.';
 
   @override
   String get searchThisDevice =>

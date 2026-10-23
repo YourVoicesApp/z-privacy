@@ -1085,7 +1085,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get everyDocumentCanNeverBeUnprotected =>
-      'Jedes Dokument und jede Nachricht, die darin geschützt wurde, kann nie wieder von seinem Schutz befreit werden — nicht von Ihnen und nicht von Z Privacy. Der Schlüssel war das Einzige, was es hätte tun können, und er wird nicht mehr existieren.';
+      'Was diese Sitzung geschützt verlassen hat, kann nie wieder von seinem Schutz befreit werden — nicht von Ihnen und nicht von Z Privacy. Der Schlüssel war das Einzige, was es hätte tun können, und er wird nicht mehr existieren. «Schutz zurücknehmen» wirkt auf den Text vor Ihnen, nie auf das, was schon fort ist.';
 
   @override
   String get anythingYouSentStaysAsItWas =>
@@ -1182,7 +1182,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get noVaultSoThisRunOnly =>
-      'Es ist kein Tresor offen, das hier gilt also nur, solange die App offen ist. Der Tresor ist die eine Datei, die diese App schreibt — ohne ihn wird nichts erinnert.';
+      'Es ist kein Tresor offen, das hier gilt also nur, solange die App offen ist — ohne Tresor gibt es nichts, worin sie bewahrt werden könnten.';
 
   @override
   String get scanOnArrival => 'Ein Dokument prüfen, sobald es ankommt';
@@ -1272,8 +1272,8 @@ class AppLocalizationsDe extends AppLocalizations {
       'Ihre Identitäten sind auf diesem Gerät, versiegelt. Bis er offen ist, laufen die Regeln und das Sprachpaket weiter — eine IBAN wird weiter erkannt — aber nicht, zu wem sie gehört.';
 
   @override
-  String get aVaultIsTheOnlyFile =>
-      'Ein Tresor ist die einzige Datei, die diese App schreibt. Er enthält Ihre Menschen und ihre Werte, verschlüsselt mit einer Passphrase, die dieses Gerät nie verlässt. Ohne ihn wird nichts am Namen erkannt.';
+  String get yourNamesLiveInOneVaultFile =>
+      'Ihre Namen leben in einer einzigen verschlüsselten Tresordatei. Sie enthält Ihre Menschen und ihre Werte, verschlüsselt mit einer Passphrase, die dieses Gerät nie verlässt. Ohne sie wird nichts am Namen erkannt.';
 
   @override
   String get searchThisDevice =>

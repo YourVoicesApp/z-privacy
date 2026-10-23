@@ -38,6 +38,29 @@
 // the next run's own `existsSync` check deletes it; nothing is hidden and
 // nothing is asserted about a thing this house does not control.
 //
+// **And the folder is named where it cannot be left unset** — the outside
+// claims review of 23 October 2026, which ran C-02's own command on a fresh
+// clone:
+//
+// ```text
+// LateInitializationError: Local 'dir' has not been initialized
+//   copy_report_test.dart: (setUpAll)
+//   copy_report_test.dart: (tearDownAll)
+// ```
+//
+// There is no native library in a clone, so the `setUpAll` threw the sentence
+// that says which build to run — and then this teardown read a `late Directory
+// dir` that the line after the throw would have set, and spoke over it. The
+// reviewer reported the second error, which names nothing a stranger can act
+// on. The same shape stood in eleven files, and
+// `the_bridge_the_tests_speak_through.dart` had already counted five of them in
+// the Windows run of 20 October without closing it.
+//
+// So the folder is a `final` of the file, built from `systemTemp` and the
+// process id at `main()`, and `setUpAll` only acts on it. A teardown that runs
+// after a failed setup then removes a folder that may not exist, which this
+// function already does without a word.
+//
 // **56 other test files still delete their folder by hand** — 133 lines of it,
 // counted on this tree. They are the same race and the sweep is one line per
 // file; it is a debt rather than this round's work, written down in

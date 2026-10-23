@@ -26,14 +26,13 @@ final _libPath = theBridgeTheTestsSpeakThrough;
 const _doc = 'Kunde: Nordstern Consulting GmbH\nAnsprechpartner: Herr Thomas Müller\n';
 
 void main() {
-  late Directory dir;
+  final dir = Directory('${Directory.systemTemp.path}/zprivacy-gateway-$pid');
 
   setUpAll(() async {
     if (!File(_libPath).existsSync()) {
       throw StateError(buildTheBridgeFirst);
     }
     await RustLib.init();
-    dir = Directory('${Directory.systemTemp.path}/zprivacy-gateway-$pid');
     removeWhenItLetsGo(dir);
     await z.setDataDir(dir: dir.path);
   });
