@@ -131,6 +131,13 @@ for path in sorted(stage.rglob("*")):
 REDRAW
 
 cp -f "$ROOT/LICENSE" "$STAGE/LICENSE" 2>/dev/null || die "no LICENSE at the root"
+# **And the NOTICE beside it** — paper 113, the owner's licensing word of 24
+# October 2026: Apache 2.0 for anybody, companies included, on one condition —
+# that a product carrying this code says where it came from. Apache §4(d) is
+# the mechanism that makes that binding, and it binds only through a NOTICE
+# file that actually travels. An archive with our code and without our NOTICE
+# breaks our own condition, so this is `die` and not a warning.
+cp -f "$ROOT/NOTICE" "$STAGE/NOTICE" 2>/dev/null || die "no NOTICE at the root"
 cp -f "$ROOT/packaging/linux/README.txt" "$STAGE/README.txt" || die "no packaging/linux/README.txt"
 
 # ---------------------------------------------------------------- third party

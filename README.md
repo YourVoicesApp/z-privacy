@@ -142,7 +142,12 @@ site/                    z-privacy.com, static, three languages
 
 ## Licence
 
-Apache License 2.0 — the full text is in [`LICENSE`](LICENSE).
+Apache License 2.0 — the full text is in [`LICENSE`](LICENSE). Use it as you
+like, in a company or alone, with nobody to ask: the one condition is the one
+the licence already carries in [`NOTICE`](NOTICE) — a product built on this code
+says so where it lists what it is built on (Apache 2.0 §4(d)). That binds a
+product’s notices, its documentation or its «About» screen; it does not bind
+advertising, which is said here because it was asked and answered.
 
 Z Privacy ships and serves other people's work: the Flutter engine under
 BSD-3-Clause, 142 Rust crates under their own licences, and four typefaces
@@ -155,4 +160,5 @@ Faruk AB — Aktiebolag (AB), Sweden. Org.nr 559473-3494.
 Hotellgatan 3, 311 31 Falkenberg, Sweden.
 Contact: zprivacy@mono-peak.com
 
-© 2026 Faruk AB. Licensed under the Apache License 2.0.
+© 2026 Faruk AB. Licensed under the Apache License 2.0, and attributed as
+[`NOTICE`](NOTICE) asks.

@@ -507,6 +507,13 @@ jobs:
           # no longer under `packaging/linux/`.
           dest="$STAGE"
           cp -f ../../LICENSE "$dest/LICENSE"
+          # **The NOTICE travels with the licence** — paper 113, the owner's
+          # licensing word of 24 October 2026. Apache §4(d) binds attribution
+          # only through a NOTICE file that is actually in the distribution,
+          # and this folder is what the installer and the MSIX are both built
+          # from — so one copy here carries it into all three Windows
+          # artefacts.
+          cp -f ../../NOTICE "$dest/NOTICE"
           # **And the folder says what is in it** — 098: the three Microsoft
           # libraries are new in this release and a person who unzips it has a
           # right to know why a Microsoft DLL sits beside our program.
@@ -540,7 +547,7 @@ jobs:
 
           # Asked for by name, like the .exe above it. `set -e` would already
           # have stopped a missing copy; this says which promise was broken.
-          for f in LICENSE third-party/NOTICES.txt third-party/rust-crates.txt; do
+          for f in LICENSE NOTICE third-party/NOTICES.txt third-party/rust-crates.txt; do
             test -s "$dest/$f" || { echo "nothing staged at $f — the installer would ship without it"; exit 1; }
           done
 
@@ -821,8 +828,15 @@ jobs:
           $wrong = @()
           $zip = [System.IO.Compression.ZipFile]::OpenRead($msix)
           try {
+            # **NOTICE is in this list and it is the only file here that is
+            # not a binary** — paper 113. The other six answer «the package is
+            # the folder we measured»; this one answers «our own licensing
+            # condition left with it», and the MSIX is the one artefact no
+            # gate on Linux can open. Compared by hash like the rest, so a
+            # NOTICE that was edited on its way into the package is a red.
             foreach ($name in @("zprivacy.exe", "z_bridge.dll", "data/app.so",
-                                "vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll")) {
+                                "vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll",
+                                "NOTICE")) {
               $here = Join-Path $staged ($name -replace '/', '\')
               if (-not (Test-Path $here)) {
                 $wrong += "$name is not in the staged folder, so the package was compared with nothing"
