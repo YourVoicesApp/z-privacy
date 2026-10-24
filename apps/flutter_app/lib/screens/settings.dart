@@ -29,6 +29,7 @@ import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
+import 'package:zprivacy/core/the_address_to_write_to.dart';
 import 'package:zprivacy/core/the_system_browser.dart';
 import 'package:zprivacy/widgets/language_list.dart';
 import 'package:zprivacy/src/rust/api/core.dart';
@@ -103,7 +104,6 @@ class SettingsScreen extends StatefulWidget {
     this.room,
     this.bench,
     this.onOpenKept,
-    this.onReadBack,
     this.onFromZero,
   });
 
@@ -121,17 +121,13 @@ class SettingsScreen extends StatefulWidget {
   /// the panel with no shell behind it, as `onOpenKept` is.
   final VoidCallback? onFromZero;
 
-  /// **«z-pdf», the door back — and this is where it lives since rule 70.**
-  ///
-  /// It stood on the first screen, in the «+» menu beside «Add a document»,
-  /// and the first screen is gone: the owner's own placing, 17 October —
-  /// «نجعل الإعدادات تحتوي على إدخال z-pdf». The press travels exactly as
-  /// `onOpenKept` does, because only the shell may open a file chooser and
-  /// show the reading over everything.
-  ///
-  /// Null in a panel built with no shell behind it, and then the room draws no
-  /// press rather than a dead one — 083a.
-  final VoidCallback? onReadBack;
+  // **«z-pdf» does not travel through this panel any more** — paper 108 item
+  // 3, 24 October 2026. Rule 70 put the press here on 17 October («نجعل
+  // الإعدادات تحتوي على إدخال z-pdf») and the owner's own evenings answered
+  // that placing: «الآن مكانه مخفي». It is on the top bar, where the shell
+  // hands it to `WorkspaceScreen.onReadBack` for the same reason it used to
+  // hand it here — only the shell may open a file chooser. The Vault room
+  // keeps the sentence that says what a z-pdf is.
   final SettingsRoom? room;
 
   /// **The document open behind the panel, if there is one** — 064f.
@@ -252,7 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   SettingsRoom.ai => _AiRoom(ground: g, catalogue: _catalogue),
                   SettingsRoom.privacy => _PrivacyRoom(ground: g),
                   SettingsRoom.language => _LanguageRoom(ground: g),
-                  SettingsRoom.vault => _VaultRoom(ground: g, onReadBack: widget.onReadBack),
+                  SettingsRoom.vault => _VaultRoom(ground: g),
                   SettingsRoom.sessions => _SessionsRoom(
                     ground: g,
                     bench: widget.bench,
@@ -603,6 +599,26 @@ class _LanguageRoom extends StatelessWidget {
         // card above this one is what changes it, so the two stand together
         // and a reader can see that the page follows the choice.
         _GuideCard(ground: ground),
+        // **And the way to write to us, under the way to read the guide** —
+        // the owner, 24 October 2026 (paper 108 item 5): «نضع إيميل الفيدباك في
+        // التطبيق في الإعدادات… ونجعل zprivacy@mono-peak.com هو إيميل
+        // التواصل».
+        //
+        // Here because this is where a person is told how to use the product:
+        // the card above opens the guide, and this one says where to write when
+        // the guide does not answer. Help and how to ask for help stand
+        // together, and a person looking for one finds the other.
+        //
+        // **Not in the panel's head strip**, where the build stamp is: that
+        // strip's own rule is written above `_GuideCard`, and a person who is
+        // about to write to us wants the stamp *and* the address, which is one
+        // more reason for the address to be in a room a person reads rather
+        // than in the strip that shuts the panel.
+        //
+        // Unlike the card above it, this one is **no door**: nothing here
+        // starts another program. The owner narrowed the item to that on the
+        // day he gave it.
+        const _WriteToUsCard(),
         _Card(
           title: sentences.myPrivacyRules,
           what: sentences.myPrivacyRulesWhat,
@@ -685,23 +701,75 @@ class _GuideCardState extends State<_GuideCard> {
   }
 }
 
+/// **«Write to us» — one address, in a box, and no door at all** — paper 108
+/// item 5, the owner, 24 October 2026: «نضع إيميل الفيدباك في التطبيق في
+/// الإعدادات… ونجعل zprivacy@mono-peak.com هو إيميل التواصل».
+///
+/// **It is deliberately not a press.** The first shape of this item handed
+/// `mailto:` to the operating system through the same door the guide link uses;
+/// the owner narrowed it the same day, and the narrowing is the product: the
+/// address stands in a box a person can select and copy, and **this
+/// application opens nothing and sends nothing**. No form, no backend of ours,
+/// no network door, and not even a window of somebody else's — so there is no
+/// outcome to report, which is why this card has no state and no refusal
+/// sentence. The core promise (this program talks to nobody but the provider
+/// the person chose) is untouched because nothing was added to touch it.
+///
+/// `SelectableText` and not a `TextField`: a field would need a controller,
+/// which a stateless card has nowhere to dispose (the Sessions room's own
+/// measured lesson), and nothing here is editable. What a person needs is to
+/// take the characters, which selection gives them with the platform's own
+/// copy.
+///
+/// **And one line about what to put in a letter** — this product's own law
+/// applied to its own mailbox: describe the problem, do not send the document.
+/// We cannot protect what arrives in our mail, and what to send instead is
+/// already built: the copy-report press on the bar writes numbers about a
+/// document and no word of it.
+class _WriteToUsCard extends StatelessWidget {
+  const _WriteToUsCard();
+
+  /// The box, so a guard reaches the address by what it is and not by the
+  /// characters in it.
+  static const theBox = ValueKey<String>('settings-write-to-us');
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      title: sentences.writeToUs,
+      what: sentences.copyTheAddressAndWriteToUs,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            key: theBox,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: Zc.panel(fill: Zc.card, radius: 9),
+            child: SelectableText(
+              theContactAddress,
+              style: Zc.body.copyWith(fontFamily: Zc.mono, color: Zc.ink),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(sentences.describeTheProblemNotYourDocuments, style: Zc.small),
+        ],
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------- Vault
 
 class _VaultRoom extends StatelessWidget {
-  const _VaultRoom({required this.ground, this.onReadBack});
+  const _VaultRoom({required this.ground});
 
   final Ground ground;
 
-  /// **The door back, in the room that holds the key** — rule 70.
-  ///
-  /// It is here and not in Privacy because of 079 rule 8: the meaning of a
-  /// z-pdf lives in the vault, so a locked vault is a standing door and this
-  /// is the room that says what the vault is doing. Null means no shell, and
-  /// then no press is drawn.
-  final VoidCallback? onReadBack;
-
-  /// The press, so a guard can reach it by name rather than by its sentence.
-  static const theDoorBack = ValueKey<String>('settings-z-pdf');
+  // **The door back is not pressed from this room since 24 October 2026** —
+  // paper 108 item 3. It stood here from rule 70 (17 October) until the owner
+  // could not find it; the press is on the top bar, keyed
+  // `_TopBar.theDoorBack`, and what this room keeps is the sentence that says
+  // what a z-pdf is.
 
   @override
   Widget build(BuildContext context) {
@@ -767,33 +835,26 @@ class _VaultRoom extends StatelessWidget {
             ],
           ),
         ),
-        // **«z-pdf» — the door back, and the only way in that is not a way in**
-        // (079 rule 3, built as 089 rule 5; moved here by rule 70).
+        // **«z-pdf» — what it is; the press itself is at the top of the
+        // screen** (079 rule 3, built as 089 rule 5; brought here by rule 70
+        // on 17 October 2026, and **moved to the top bar on 24 October** by
+        // paper 108 item 3: «الآن مكانه مخفي»).
         //
-        // Directly under the vault's own state, because that state is what
-        // decides whether this press can mean anything: the names a z-pdf
-        // carries live in the vault, and with it locked the press opens the
-        // vault instead of a file (079 rule 8, held in the shell).
-        _Card(
+        // It stayed directly under the vault's own state because that state is
+        // what decides whether the act can mean anything — the names a z-pdf
+        // carries live in the vault — and that reason travelled with the
+        // press: the bar's door stands beside the bar's own vault fact, and a
+        // locked vault opens the vault there exactly as it did here (079 rule
+        // 8, held in the shell and untouched).
+        //
+        // **What is left is the fact and not a second door.** The room says
+        // what a z-pdf is, which is a privacy statement and the room's own
+        // job; one press in two places would be two things to keep true, and a
+        // sentence here naming where that press stands would be a third —
+        // rule 70's own placing is what this paper had to amend.
+        _Fixed(
           title: sentences.zPdfReadBack,
           what: sentences.zPdfWhat,
-          child: onReadBack == null
-              // A press with no shell behind it would open nothing: the room
-              // says what the door is and does not draw one.
-              ? Text(
-                  sentences.openThisPanelFromTheApp,
-                  style: Zc.small.copyWith(color: Zc.ink4),
-                )
-              : Align(
-                  alignment: Alignment.centerLeft,
-                  child: ZButton(
-                    key: theDoorBack,
-                    label: sentences.chooseAZPdfFile,
-                    icon: Icons.undo_outlined,
-                    tint: Zc.river,
-                    onPressed: onReadBack,
-                  ),
-                ),
         ),
         if (c != null)
           _Number(
@@ -1150,7 +1211,16 @@ class _SessionRow extends StatelessWidget {
                 // opens what the session kept.
                 InkWell(
                   key: ConversationView.door,
-                  onTap: () => showConversation(context, row, bench: bench),
+                  // **And the press goes to the session, not only to what it
+                  // kept** — the owner, 24 October 2026 (paper 108 item 1):
+                  // «عند الضغط على الجلسة يجب أن يظهر اسم الجلسة على الشاشة
+                  // الرئيسة». 075b made this name a door to the session's own
+                  // reading and left «which session is open» to the «Enter»
+                  // beside it; a person who pressed the name he could see came
+                  // back to a head naming the session he had left. The order is
+                  // in `goToTheSession`, where one function serves both presses
+                  // and a guard can drive it.
+                  onTap: () => goToTheSession(context, ground, row, bench: bench),
                   borderRadius: BorderRadius.circular(5),
                   child: Text(
                     row.name,
@@ -1189,7 +1259,15 @@ class _SessionRow extends StatelessWidget {
             Tooltip(
               message: sentences.workInThisSession,
               child: TextButton(
-                onPressed: () => ground.enterSession(row.number),
+                // **The bench travels, since 24 October 2026** (paper 108 item
+                // 1, found beside it). The core's own word for
+                // `conversation_enter` is «names the bench's tokens from that
+                // session's key», and this press passed none: the open session
+                // moved while the document in front of the person kept the
+                // names derived under the session before it — 064f's defect,
+                // at the one door that round did not read. The row already
+                // holds the bench for the reading beside it.
+                onPressed: () => ground.enterSession(row.number, bench: bench),
                 child: Text(sentences.enter, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
               ),
             ),

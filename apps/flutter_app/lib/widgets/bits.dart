@@ -532,7 +532,12 @@ class TheOpenSession extends StatelessWidget {
       message: sentences.sessionNamesAreThisSessions(row.number),
       child: InkWell(
         key: ConversationView.door,
-        onTap: () => showConversation(context, row, bench: bench),
+        // **The same press as the room's row** — paper 108 item 1, 24 October
+        // 2026. Here it is always a look: this chip draws the session that is
+        // open, so `goToTheSession` enters nothing and the reading comes up as
+        // it did. One function for the two presses, because the owner's rule is
+        // about the press and not about where it was made.
+        onTap: () => goToTheSession(context, ground, row, bench: bench),
         borderRadius: BorderRadius.circular(20),
         child: Container(
           key: mark,

@@ -26,7 +26,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String exactlyWhatWouldLeave(int replaced) {
-    return 'Genau das erhält die KI. $replaced Werte wurden ersetzt.';
+    return 'Das ist, was von Ihrem Dokument hinausgeht — und in der App reist der Austausch davor mit. $replaced Werte wurden ersetzt.';
   }
 
   @override
@@ -501,7 +501,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theChatOpensHereWithTheFirstAnswer =>
-      'Der Chat öffnet sich hier mit der ersten Antwort, und jede Frage danach trägt mit, was schon gesagt wurde.';
+      'Der Chat öffnet sich hier mit der ersten Antwort, und jede Frage danach trägt den Austausch davor mit.';
 
   @override
   String get typedText => 'Eingegebener Text';
@@ -796,7 +796,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theFirstAnswerOpensTheChatHere =>
-      'Die erste Antwort öffnet den Chat hier. Jede Frage danach trägt mit, was schon gesagt wurde.';
+      'Die erste Antwort öffnet den Chat hier. Jede Frage danach trägt den Austausch davor mit — nicht den ganzen Chat, und das Dokument nie wieder.';
 
   @override
   String get askSomethingElseAboutThis => 'Fragen Sie etwas anderes dazu…';
@@ -822,7 +822,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theChatIsOnYourClipboard =>
-      'Der Chat liegt geschützt in Ihrer Zwischenablage — bringen Sie die Antwort mit «Eine Antwort hinzufügen» zurück.';
+      'Was hinausgehen würde, liegt geschützt in Ihrer Zwischenablage — die Frage, wie eine KI sie erhalten würde. Bringen Sie die Antwort mit «Eine Antwort hinzufügen» zurück.';
 
   @override
   String get couldNotReadTheClipboard =>
@@ -1011,7 +1011,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get eachSessionHasItsOwnEncryption =>
-      'Jede Sitzung hat ihre eigene Verschlüsselung. Derselbe Name nimmt in zwei Sitzungen zwei verschiedene Platzhalter, und in einer Sitzung überall denselben — eine Sitzung ist also, wie Sie wählen, was eine KI zusammenführen kann und was nicht.';
+      'Jede Sitzung hat ihre eigene Verschlüsselung. Derselbe Name nimmt in zwei Sitzungen zwei verschiedene Platzhalter, und in einer Sitzung überall denselben — eine Sitzung ist also, wie Sie wählen, was eine KI zusammenführen kann und was nicht. Die Schlüssel liegen alle in Ihrem Tresor, also ist das Zurücklesen einer geschützten Datei die Tür des Tresors und nicht die einer Sitzung: Was aus irgendeiner Sitzung dieses Tresors gespeichert wurde, kommt in seinen echten Namen zurück, und das Zurücklesen sagt, aus welcher Sitzung sie stammen.';
 
   @override
   String get newSession => 'Neue Sitzung';
@@ -2748,6 +2748,43 @@ class AppLocalizationsDe extends AppLocalizations {
   String zPdfAnswerLine(String token) {
     return 'Z-pdf : $token';
   }
+
+  @override
+  String couldNotAskWhereToSaveIt(String why) {
+    return 'Z Privacy konnte den Speichern-Dialog Ihres Systems nicht öffnen — $why. Es wurde nichts geschrieben.';
+  }
+
+  @override
+  String get nameThisDocument => 'Diesem Dokument einen Namen geben';
+
+  @override
+  String get whatIsThisDocumentCalled => 'Wie heißt dieses Dokument?';
+
+  @override
+  String get theFileNameIsNotProtected =>
+      'Der Dateiname bleibt genau so, wie Sie ihn tippen. Er geht mit der Datei hinaus — schreiben Sie also keine echten Namen hinein.';
+
+  @override
+  String get aNameIsNeededForThisDocument =>
+      'Ein Name fehlt — die Datei wird danach benannt.';
+
+  @override
+  String get saveAsAPlainPdf => 'Als einfaches PDF speichern';
+
+  @override
+  String get aPlainPdfOfTheRestoredText =>
+      'Speichert das Dokument oben mit seinen Namen darin, als gewöhnliches PDF — keine Antwortseite, keine Fußzeile, nichts, was einen Schutz behauptet. Die Werte stehen im Klartext darin.';
+
+  @override
+  String get copyTheAddressAndWriteToUs =>
+      'Kopieren Sie diese Adresse und schreiben Sie uns von Ihrer eigenen E-Mail aus. Z Privacy öffnet nichts und sendet nichts: Hier gibt es kein Formular und keine Verbindung zu uns.';
+
+  @override
+  String get writeToUs => 'Schreiben Sie uns';
+
+  @override
+  String get describeTheProblemNotYourDocuments =>
+      'Beschreiben Sie das Problem und senden Sie Ihre Dokumente nicht mit: Was in unserem Postfach ankommt, können wir nicht schützen. «Bericht kopieren» in der Leiste über Ihrer Arbeit schreibt Zahlen über ein Dokument und kein Wort daraus.';
 
   @override
   String get howToUseZPrivacy => 'So benutzen Sie Z Privacy';

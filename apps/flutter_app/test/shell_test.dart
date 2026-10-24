@@ -317,7 +317,7 @@ void main() {
     // 4 · And the sentence under the column tells the truth about suggestions.
     expect(bench.payload!.openSuggestions, 0);
     expect(
-      find.textContaining('This is exactly what the AI will receive'),
+      find.textContaining('what leaves of your document'),
       findsOneWidget,
     );
 
@@ -1214,21 +1214,38 @@ void main() {
     // The panel had «As the model wrote it» over the whole of it and the coded
     // copy stood on that side. The thread draws the coded form by default now,
     // so there is nothing to switch to, and what takes it out is rule 65's own
-    // door at the foot of the chat: «Copy the chat», which carries every turn
-    // in the form it travelled in (A4). What was being measured here — **a
+    // door at the foot of the chat: «Copy the chat», which hands over the
+    // **payload** — what would leave by the app's own door, protected (the
+    // owner, 24 October 2026: «خارج التطبيق لا يأخذ إلا ما يراه المستخدم على
+    // الشاشة»). The in-app door sends that same payload with the exchange
+    // before it added on top; the clipboard is the payload alone. What was being measured here — **a
     // coded copy asks nothing and leaves no name behind** — is measured on
     // that door.
+    //
+    // **A question is typed first, and that is not scenery.** This walk never
+    // typed one — it copied the payload out and pasted an answer back — so
+    // under the law above there is nothing on the screen that would leave, and
+    // the press has nothing to take out: measured, the clipboard came back
+    // empty (the press empties first and writes only on success, 081). With a
+    // question in the box the claim this guard is about can be measured at
+    // all: **a coded copy asks nothing and leaves no name behind.** The name
+    // in it is the one the document taught, so `set_question` protects it with
+    // the same packs the document was read with (rule 72-ب).
     expect(find.text('As the model wrote it'), findsNothing,
         reason: 'the tab rule 66 deleted is back over the answer');
+    await tester.runAsync(() => bench.setQuestion('Was schuldet Thomas Müller?'));
+    await settle(tester, rounds: 2);
     await tester.tap(inPanel(find.text(sentences.copyTheChat)));
     await settle(tester, rounds: 4);
     expect(find.byType(AlertDialog), findsNothing,
         reason: 'taking the coded chat out asked a question it does not need to ask');
-    expect(clip.text, contains(raw),
-        reason: 'what left does not hold the answer as the model wrote it');
+    expect(clip.text, contains('__Z_'),
+        reason: 'what left carries no token, so it is not the payload: «${clip.text}»');
     expect(clip.text, isNot(contains('Thomas Müller')),
         reason: 'the chat that left holds a name the model never saw');
-    expect(clip.text, contains('__Z_'));
+    expect(clip.text, isNot(contains(raw)),
+        reason: 'the answer the model wrote left with the payload — the clipboard is '
+            'what would leave, and the exchange before it is the in-app door’s addition');
 
     bench.dispose();
   });
@@ -1781,11 +1798,19 @@ void main() {
       findsOneWidget,
     );
 
-    // The Safe column may not say «exactly what the AI will receive» while
-    // anything is open. It says the open count instead, and the count is the
-    // core's — this is the sentence that was wrong for five milestones.
+    // The Safe column may not say what leaves while anything is open. It says
+    // the open count instead, and the count is the core's — this is the
+    // sentence that was wrong for five milestones.
+    //
+    // **The words moved on 24 October 2026 and the law did not.** It said «This
+    // is exactly what the AI will receive» until the owner ruled that a
+    // follow-up carries the exchange before it as well (110): «exactly» was
+    // true of the clipboard, which is the payload itself, and not of the
+    // in-app door, which adds one exchange on top of it. What is asserted here
+    // is the fragment of the new sentence, so this guard measures the state the
+    // column is in and not the wording of the day.
     expect(
-      find.textContaining('This is exactly what the AI will receive'),
+      find.textContaining('what leaves of your document'),
       findsNothing,
     );
     expect(
@@ -1826,7 +1851,7 @@ void main() {
     expect(bench.report!.suggested, 0);
     expect(find.textContaining('suggestions are still open'), findsNothing);
     expect(
-      find.textContaining('This is exactly what the AI will receive'),
+      find.textContaining('what leaves of your document'),
       findsOneWidget,
     );
     expect(

@@ -46,6 +46,7 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'the_folder_lets_go.dart';
 import 'the_bridge_the_tests_speak_through.dart';
+import 'the_press_that_asks_for_a_name.dart';
 
 final _libPath = theBridgeTheTestsSpeakThrough;
 const _wide = Size(1500, 1000);
@@ -163,7 +164,7 @@ Future<File?> _pressSave(
   ));
   await tester.tap(find.text('Open the sheet'));
   await _settle(tester);
-  await tester.tap(find.text(sentences.saveAsPdf));
+  await saveAsPdfCalled(tester, 'Antwort');
   // **Until the press has finished, not until the file exists.** The bytes
   // reach the disk one step before the press binds the payload an answer is
   // tied to — measured: a file on the disk and `copiedPayload` still null —

@@ -225,7 +225,14 @@ impl SafePayload {
         let text = if session.question_safe.trim().is_empty() {
             text
         } else {
-            format!("{text}\n\n--- Request ---\n{}\n", session.question_safe)
+            // **The line is spelled once** — `Session::THE_REQUEST_LINE`, the
+            // same constant the entered text is built with. It was written out
+            // here as well until 110, and 110 is the round that made that a
+            // risk rather than a duplication: `the_chat_so_far` now **cuts** a
+            // carried question at this line to leave the document behind, so a
+            // label changed in one place and not the other would send the
+            // document into the next question in silence.
+            format!("{text}{}{}\n", crate::session::Session::THE_REQUEST_LINE, session.question_safe)
         };
         for token in &session.question_tokens {
             if !allowed_token_ids.iter().any(|t| t == token) {

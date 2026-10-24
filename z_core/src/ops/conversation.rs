@@ -407,6 +407,27 @@ pub(crate) fn record_in(
     Ok(body.turns.len() as u32)
 }
 
+/// **The request part of a question that carried a document** — 110.
+///
+/// A first turn's question is the payload as it left: the document, the request
+/// line, then the request. Carrying it whole would send the document a second
+/// time, which is the one thing rule 67's other half already forbids at the
+/// payload's own door — so what travels is what follows the line. A follow-up
+/// has no line in it and travels whole, which is also exactly what left.
+///
+/// **The last line and not the first.** A document may hold these very words
+/// itself. Cutting at the first would carry the tail of the document into the
+/// next question; cutting at the last can only ever carry *less* of the
+/// person's own request. Of the two ways to be wrong, one sends their document
+/// and the other sends less of their sentence.
+fn the_request_part(question: &str) -> &str {
+    const LINE: &str = crate::session::Session::THE_REQUEST_LINE;
+    match question.rfind(LINE) {
+        Some(at) => &question[at + LINE.len()..],
+        None => question,
+    }
+}
+
 /// **The label on an earlier request, and on an earlier answer.**
 ///
 /// English, like every other string that leaves this device — the payload's own
@@ -417,15 +438,35 @@ pub(crate) fn record_in(
 const AN_EARLIER_REQUEST: &str = "--- Earlier request ---";
 const AN_EARLIER_ANSWER: &str = "--- Earlier answer ---";
 
-/// **The turns of the chat that is open, in the form they travelled in** —
-/// rule 67, the owner's «لا أستطيع أن أتابع الشات معه على نفس الموضوع».
+/// **The one exchange before, in the form it travelled in** — rule 67 (the
+/// owner's «لا أستطيع أن أتابع الشات معه على نفس الموضوع», 17 October 2026),
+/// **amended by his ruling of 24 October 2026**: «نوقف إرسال الجلسة أو سياق
+/// الجلسة… فقط السؤال السابق مع الإجابة بدون الوثيقة… يكفي لأن الإجابة تُبنى
+/// بالتتابع».
 ///
-/// One entry per side of each turn, labelled, oldest first. **One builder and
-/// two readers**: the history a new question carries (`ops::ask_model`) and the
-/// copy a person takes away (`ops::chat_to_take_out`) are the same text, so
-/// they are the same function. Two of them would part company the first day
-/// somebody changed a label, and the person would be copying out something
-/// other than what the model was shown.
+/// Rule 67 as written on 17 October carried **every** earlier turn of the open
+/// chat, so what one chat sent grew with the square of its length: the tenth
+/// question carried nine exchanges, and the person paid a provider for every
+/// word of it. Since 110 the text is the **previous question and its answer**
+/// and nothing older — an answer is built in sequence, and the exchange just
+/// before is the context that matters.
+///
+/// **And never the document.** A first turn's question *is* the payload as it
+/// left — document, request line, request (`ingest_answer` says so where it
+/// stores it) — so what is carried from such a turn is its request part alone
+/// (`the_request_part`).
+///
+/// **Nothing older is lost**: every earlier turn stays in the sealed session
+/// file and is read there (rule 69). What changed is what leaves.
+///
+/// One entry per side of the one turn, labelled. **One builder, and one door
+/// that adds it**: `ops::ask_model`. Both doors send the same payload — the
+/// question as it would leave, protected — and the in-app one puts this one
+/// exchange on top of it, because the model holds nothing of the chat while a
+/// person's own chat holds its thread. `ops::chat_to_take_out` reads this
+/// answer for its **tokens and its anchor** (`allowed`, `kept`) and takes its
+/// text from the payload itself. One function assembles every history there
+/// is, which is what G46 holds.
 ///
 /// **Nothing is restored and nothing is protected again.** What the file holds
 /// is what travelled — the question as it left, the answer as it arrived — and
@@ -445,23 +486,40 @@ pub(crate) fn the_chat_so_far(core: &mut crate::session::Core) -> ApiResult<TheC
     let Some(number) = open_in(core) else { return Ok(TheChatSoFar::default()) };
     let Some(body) = body(core, number)? else { return Ok(TheChatSoFar::default()) };
     let mut out = TheChatSoFar::default();
-    for turn in body.turns.iter().filter(|t| t.chat_number == body.chat_now) {
+    let its: Vec<&crate::conversation::Turn> =
+        body.turns.iter().filter(|t| t.chat_number == body.chat_now).collect();
+    // **The text is the one exchange before, and nothing older** — 110. The
+    // last turn of the open chat: the question as it left, with the document
+    // cut off it, and the answer as it arrived.
+    if let Some(turn) = its.last() {
         if !turn.question.trim().is_empty() {
-            out.lines.push(format!("{AN_EARLIER_REQUEST}\n{}", turn.question));
+            out.lines.push(format!("{AN_EARLIER_REQUEST}\n{}", the_request_part(&turn.question)));
         }
         if !turn.answer.trim().is_empty() {
             out.lines.push(format!("{AN_EARLIER_ANSWER}\n{}", turn.answer));
         }
+    }
+    // **The tokens and the anchor are still read over the whole chat** — G9
+    // and rule 69, and this is the one place 110 does *not* narrow. What may
+    // come back is wider than what stands in the text: an answer the person
+    // brings back by hand against the copy may name a token born in the first
+    // question, and
+    // `an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name`
+    // measures that it comes home in their own name. Narrowing this list with
+    // the text reddened that guard at once, which is the measurement that
+    // settled the shape: the text narrows, the permission does not.
+    for turn in &its {
         for token in &turn.allowed {
             if !out.allowed.contains(token) {
                 out.allowed.push(token.clone());
             }
         }
         // **The document this chat began with** — rule 69, the first turn that
-        // names one. The transcript holds that document word for word (its
-        // first turn is the payload as it left), so a copy of the chat carries
-        // it and an answer brought back against that copy belongs under the
-        // same document in the session's room.
+        // names one. An answer brought back against the chat's copy belongs
+        // under the document the chat began with, and since 110 the copy no
+        // longer holds that document's text — so this handle is the whole of
+        // what anchors it, and it is read over every turn rather than off the
+        // one that is carried.
         if out.kept.is_none() && turn.kept_number > 0 {
             out.kept = Some(crate::session::KeptHandle {
                 session: number,
@@ -483,7 +541,16 @@ pub(crate) fn the_chat_so_far(core: &mut crate::session::Core) -> ApiResult<TheC
 /// name the model was never shown.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct TheChatSoFar {
-    /// One entry per side of each turn, labelled, oldest first.
+    /// **One entry per side of the one exchange before** — 110. The previous
+    /// question, with the document cut off it, and the previous answer.
+    ///
+    /// Read by `ask_model` alone: the clipboard door takes the current point
+    /// and not the history (the owner, 24 October 2026).
+    ///
+    /// It was every turn of the open chat until 24 October 2026 (rule 67 as
+    /// first written), which is why the field is a list and not a pair: the
+    /// shape outlived the law, and a pair would have to be unpacked again the
+    /// day a ruling widens it.
     pub lines: Vec<String>,
     /// **Every token the turns of this chat were allowed to carry** — G9.
     ///
@@ -1022,11 +1089,36 @@ fn take_the_names(
 /// **Replace this session's file, and only what this run has read** — paper
 /// 102 §3, the session file's own `ensure_disk_unchanged`.
 ///
-/// The vault has refused to write over bytes it had not read since 050/A; this
-/// file was replaced whatever was there, and the two-window round of
-/// 22 October measured the price: `sessions/1.zs` held a document and eleven
-/// decisions at 21:35:03 and held an empty body at 21:35:11, while `vault.zv`
-/// did not move at all. One of the two windows wrote a body it had not read.
+/// The vault has refused to write over bytes it had not read since 050/A, and
+/// this file was replaced whatever was there.
+///
+/// **The example that stood here was read wrong, and the owner named its author
+/// on 24 October 2026.** It said: `sessions/1.zs` held a document and eleven
+/// decisions at 21:35:03 and held an empty body at 21:35:11 while `vault.zv`
+/// did not move at all, so one of two windows wrote a body it had not read. In
+/// that same second he had saved a protected PDF — «أنا حفظت جميع الملفات عن
+/// طريق حفظ نسخة PDF» — and the Windows session's entry of 24 October
+/// (commit `e36c92c`) records the 16 751-byte z-pdf written into
+/// Documents\ZPrivacy at exactly 21:35:11. The PDF is a door, 089 rule 9 takes
+/// the preview's copy out at every door, and a session holding no turns and no
+/// copy **is** an empty body — `the_manual_door_takes_it_out` measures that
+/// door doing it. Nothing was lost there.
+///
+/// **The guard below is not weakened by losing that example**, because it
+/// answers a class and not an incident: a body written over bytes this run
+/// never read is another owner's file whatever happened in October.
+///
+/// **And this is what it reaches, said here because nobody had said it:** every
+/// writer of a body reads the file first, inside this same lock — `body()` a
+/// line or two above each call of this function — so what the guard catches is
+/// a read that went **stale between a read and a write**, and never a press
+/// that reads as it writes. A test built to drive it the other way round, by
+/// moving the file before the act, would assert a refusal that cannot happen
+/// and stay green for ever; the shape is held by a census instead, read by gate
+/// `G36`: this is the only function in `z_core/src` that calls
+/// `crate::conversation::write`. A guard whose stated reason turns out to be
+/// something else is a guard nobody can reason about later, which is why the
+/// reason is corrected here rather than quietly left standing.
 ///
 /// So a write is allowed in exactly two states, and in no third:
 ///

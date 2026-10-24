@@ -650,7 +650,11 @@ class _ShellState extends State<ZShell> {
       });
       await showDialog<void>(
         context: context,
-        builder: (_) => TheReading(seen: seen),
+        // **The chosen file's name travels with the reading** — paper 108 item
+        // 4, and only so the save dialog can suggest «…-restored.pdf» beside
+        // it. Nothing of the file's contents comes with it, and the name is
+        // the person's own: it is drawn nowhere and written into nothing.
+        builder: (_) => TheReading(seen: seen, cameFrom: chosen.file.name),
       );
     } on ApiError catch (e) {
       // A file that cannot be read is news here exactly as it is at the other
@@ -733,11 +737,12 @@ class _ShellState extends State<ZShell> {
               // here, exactly as the «+» and «z-pdf» presses do.
               onOpenKept: (number, which, chat) =>
                   unawaited(_openKept(number, which, chat)),
-              // **«z-pdf» — the door back, from the room it lives in now**
-              // (rule 70). The press travels here for the same reason
-              // `onOpenKept` does: only the shell may open a file chooser,
-              // and the reading stands over everything.
-              onReadBack: () => unawaited(_readBack()),
+              // **«z-pdf» is pressed from the top bar since 24 October 2026**
+              // — paper 108 item 3. It travelled through this panel from rule
+              // 70 until the owner could not find it; it goes to
+              // `WorkspaceScreen.onReadBack` now, for the same reason it came
+              // here at all: only the shell may open a file chooser, and the
+              // reading stands over everything.
               // **Rule 71's other two doors.** A session deleted from the room
               // and a new session opened both end a chat, and the surface then
               // starts from zero — the panel cannot do that itself, because
@@ -870,6 +875,12 @@ class _ShellState extends State<ZShell> {
           bench: _bench,
           ground: _ground,
           onImport: () => _begin(typing: false),
+          // **«z-pdf» stands at the top of the screen** — paper 108 item 3,
+          // the owner, 24 October 2026. The press travels here for the same
+          // reason the panel's did: only the shell may open a file chooser,
+          // and the reading stands over everything. `_readBack` itself is
+          // untouched, vault gate and all.
+          onReadBack: () => unawaited(_readBack()),
           // **Rule 72**: what is typed is the request, not a document. It was
           // `_begin(typing: true, text: …)` — an import — and the box that
           // called it that way is deleted (72-أ).

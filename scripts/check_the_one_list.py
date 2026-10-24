@@ -69,6 +69,10 @@ MIGRATED = {
     # `going_to_a_word.dart` is — a file at zero belongs where zero is the law,
     # not in a debt table that would let one be added.
     'core/the_system_browser.dart',
+    # One constant and its reason — the mailbox a person writes to (paper 108
+    # item 5). An address is not a sentence, and this file holds nothing else,
+    # so zero is its law from the day it was written.
+    'core/the_address_to_write_to.dart',
     'screens/first_run.dart',
     'screens/settings.dart',
     'screens/shell.dart',
@@ -83,6 +87,7 @@ MIGRATED = {
     'widgets/find_in_document.dart',
     'widgets/language_list.dart',
     'widgets/line_gutter.dart',
+    'widgets/the_name_for_the_file.dart',
     'widgets/name_review.dart',
     'widgets/reveal.dart',
     'widgets/review.dart',
@@ -335,7 +340,16 @@ A_NAME_BOTH_HALVES_SPELL = {'Session'}
 # as the shape of one — a German reader sees the same characters, because an
 # address is what it is. Matched whole and only with a scheme in front, so no
 # sentence can fall in here: none of them is a bare URL.
-AN_ADDRESS = re.compile(r'https?://\S*')
+#
+# **And a mailbox is an address too** — paper 108 item 5, 24 October 2026:
+# `core/the_address_to_write_to.dart` holds `zprivacy@mono-peak.com`, the one
+# address a person writes to, which the settings draw in a box to copy. It was
+# already exempt here by accident — `A_FILES_OWN_WORDS` reads `…@mono-peak.com`
+# as «a name built from an extension» — and an exemption that holds by accident
+# is one nobody can rely on, so it is named. No sentence can fall in: a mailbox
+# holds no space either, and the shape demands the `@` and a domain after it.
+AN_ADDRESS = re.compile(
+    r'https?://\S*|mailto:\S*|[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z]{2,})+')
 
 # Phrases the glass looks for **inside a sentence the core wrote**. Each is a
 # match and never a thing drawn — see the exception that reads this.

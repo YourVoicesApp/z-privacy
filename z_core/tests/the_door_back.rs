@@ -193,6 +193,73 @@ fn the_door_back_reads_a_file_with_no_bench_of_its_own() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// **A file one session protected is read back while another is open: the vault
+/// is the boundary, and the reading names the session** — the owner's own
+/// Windows test of 24 October 2026, brought into the tree by paper 111.
+///
+/// He built a second session in the test vault, saved a protected PDF from it,
+/// ended the process and started it again to rule out memory, unlocked, stood
+/// in **Session 1** — and read that file through this door. All twenty names
+/// came back, naming the session they came from. He had expected a wall, and
+/// our own sentence had let him expect one («Each session has its own
+/// encryption…»); his verdict on the behaviour was «I think the vault works
+/// excellently», so the behaviour stays and C-09's words moved. This is that
+/// measurement, here, where a sentence can be held to it.
+///
+/// The lock and unlock in the middle are his restart: the key is dropped and
+/// read from the file again, so nothing below is answered out of memory.
+#[test]
+fn the_door_back_reads_a_file_another_session_protected() {
+    let _guard = serial();
+    let dir = fresh_vault("othersession");
+    let (first, number, safe, page) = a_letter_that_has_left("die erste Mahnung");
+    let names = tokens_in(&safe);
+    assert!(!names.is_empty(), "the letter left with no names, so this measures nothing");
+    let back = what_came_back(&safe, &page);
+    drop(first);
+
+    // A second session, and it is the one that is open when the file is read.
+    let other_bench = Bench(open_session(None, "de".to_string()).expect("open"));
+    import_text(other_bench.0, "Ein zweiter Brief von Frau Katrin Sommer.".to_string())
+        .expect("import");
+    conversation_begin("die zweite Mahnung".to_string(), Some(other_bench.0)).expect("begin");
+    let other = conversation_open().expect("open").expect("a session is open");
+    assert_ne!(other, number, "no second session was born, so this measures nothing");
+
+    vault_lock().expect("lock");
+    vault_unlock_with_passphrase(PASS.to_string()).expect("unlock");
+
+    let seen = read_a_document_that_came_back(back.as_bytes().to_vec(), DocumentKind::Txt)
+        .expect("the door reads a file another session protected");
+
+    assert_eq!(
+        seen.brought_back,
+        names.len() as u32,
+        "{} of {} names came back from a file another session protected",
+        seen.brought_back,
+        names.len()
+    );
+    assert!(
+        seen.unresolved.is_empty(),
+        "names stayed tokens although the vault holds the session that made them: {:?}",
+        seen.unresolved
+    );
+    // **And the reading says which session they came from**, which is the half
+    // the owner read on his own screen.
+    assert_eq!(seen.conversations.len(), 1, "{:?}", seen.conversations);
+    assert_eq!(
+        seen.conversations[0].number, number,
+        "the reading names another session than the one that protected the file"
+    );
+    assert_eq!(seen.conversations[0].name, "die erste Mahnung");
+    let text = read(&seen.restored);
+    assert!(text.contains("Stefan Keller"), "the person's own name did not come back");
+    assert!(!text.contains("__Z_"), "a token is still standing in the reading");
+
+    drop(other_bench);
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 /// **The bench that minted the names is gone, and what the vault was taught
 /// still comes back** — 079 rule 8's other half, through this door.
 ///

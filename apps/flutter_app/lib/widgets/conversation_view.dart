@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/palette.dart';
+import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
@@ -227,4 +228,49 @@ Future<void> showConversation(
     context: context,
     builder: (_) => ConversationView(row: row, turns: turns, trouble: trouble),
   );
+}
+
+/// **Go to a session, and the main screen names it** — the owner, 24 October
+/// 2026, paper 108 item 1: «عند الضغط على الجلسة يجب أن يظهر اسم الجلسة على
+/// الشاشة الرئيسة».
+///
+/// Pressing a session's name was a **look** and nothing else — [showConversation]
+/// alone, since 075b. The owner pressed one on his own Windows evening, read
+/// what it kept, closed it, and found the head of the screen still naming the
+/// session he had left: the only act that moved «which session is open» was
+/// the row's own «Enter», which he had no reason to press after pressing the
+/// name. A press on a session is how a person says which direction of work
+/// they are in, so it **enters** it and then shows what it holds.
+///
+/// **The order lives here and not at the two presses**, which is the whole
+/// reason this function exists: the head's own chip and the room's row both go
+/// through it, and a guard can drive it — `beginThenRead`'s own reason, in the
+/// one place where two doors do one act.
+///
+/// **Nothing happens twice.** Entering is skipped where that session is
+/// already the open one, which is always the case for the head's own chip: a
+/// look at the session a person is already in costs no core call and no
+/// re-derivation.
+///
+/// **The bench travels with it**, because the core's own word for
+/// `conversation_enter` is «names the bench's tokens from that session's key».
+/// A document in front of the person is worked in the session that is open,
+/// and leaving its names derived under the one before is 064f's defect
+/// exactly: a payload that leaves wearing another session's names while
+/// claiming this one.
+///
+/// A refused enter is the ground's own sentence (`ground.trouble`), and the
+/// reading still opens: looking at what a session kept is not the act that was
+/// refused.
+Future<void> goToTheSession(
+  BuildContext context,
+  Ground ground,
+  ConversationRow row, {
+  SessionId? bench,
+}) async {
+  if (ground.openSession != row.number) {
+    await ground.enterSession(row.number, bench: bench);
+    if (!context.mounted) return;
+  }
+  await showConversation(context, row, bench: bench);
 }

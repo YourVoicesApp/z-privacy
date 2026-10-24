@@ -28,7 +28,6 @@ import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/protecting.dart';
 import 'package:zprivacy/core/session_state.dart';
-import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/workspace.dart';
 import 'package:zprivacy/widgets/the_way_back.dart';
 import 'package:zprivacy/src/rust/api/mirrors.dart';
@@ -439,13 +438,17 @@ void main() {
   // protected» is a state this screen cannot reach (G34, and
   // `z_core/tests/the_door_back.rs`).
 
-  // **Where the two doors live since rule 70**, and they are in two different
-  // places now: the way in is the «+» at the top of the one screen, one press
-  // and no menu, and the way back is a room in the settings — the owner's own
-  // placing, «نجعل الإعدادات تحتوي على إدخال z-pdf».
+  // **Where the two doors live since 24 October 2026**, and they stand side by
+  // side at the top of the one screen: the way in is the «+» in the strip, one
+  // press and no menu, and the way back is the «z-pdf» press on the bar above
+  // it. Rule 70 put the way back in the settings on 17 October by the owner's
+  // own word («نجعل الإعدادات تحتوي على إدخال z-pdf»); paper 108 item 3 amends
+  // that placing by his own word too («الآن مكانه مخفي»), and the room keeps
+  // the sentence that says what a z-pdf is.
   //
   // What this guard holds is the distinction 089 rule 5 exists for: they are
-  // two acts, and neither press reaches the other's act.
+  // two acts, and neither press reaches the other's act. Where the press
+  // stands is `the_door_back_is_at_the_top_test`'s.
   testWidgets('the way in and the way back are two presses, in two places', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1300, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -464,6 +467,7 @@ void main() {
         onAsk: (_) {},
         onVault: () {},
         onSettings: (_) {},
+        onReadBack: () => cameBack += 1,
       ),
     ));
     await settle(tester, rounds: 2);
@@ -475,27 +479,14 @@ void main() {
     await tester.tap(plus);
     await tester.pumpAndSettle();
     expect(toWorkOn, 1, reason: 'the + did not open the way in');
-    expect(find.text(sentences.zPdfReadBack), findsNothing,
-        reason: 'the way back is still offered at the way in');
+    expect(cameBack, 0, reason: 'the way in went through the way back');
 
-    // And the way back is a press of its own, in the room that holds the key
-    // the reading needs.
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SettingsScreen(
-          ground: ground,
-          room: SettingsRoom.vault,
-          onClose: () {},
-          onReadBack: () => cameBack += 1,
-        ),
-      ),
-    ));
-    await settle(tester, rounds: 2);
-    expect(find.text(sentences.zPdfReadBack), findsOneWidget,
-        reason: 'the vault room does not offer the way back');
-    await tester.tap(find.text(sentences.chooseAZPdfFile));
+    // And the way back is a press of its own, on the bar over the strip.
+    final back = find.byKey(const ValueKey<String>('top-bar-z-pdf'));
+    expect(back, findsOneWidget, reason: 'the top of the screen does not offer the way back');
+    await tester.tap(back);
     await tester.pumpAndSettle();
-    expect(cameBack, 1, reason: 'the press in the settings opened nothing');
+    expect(cameBack, 1, reason: 'the press at the top of the screen opened nothing');
     expect(toWorkOn, 1, reason: 'the way back went through the way in');
   });
 

@@ -106,9 +106,14 @@ PINNED: dict[str, tuple[str, str]] = {
         'C-07',
         'Another copy of Z Privacy changed this vault. Close that window, or lock and unlock here to take in its work.',
     ),
+    # **111, the owner's own Windows test of 24 October 2026.** The sentence
+    # kept what it says about tokens and lost what it let a reader expect: he
+    # stood in Session 1, read a z-pdf saved from another session, and twenty
+    # names came back. The last clause is the one that says where the wall is,
+    # and it is pinned so that a tidy-up cannot drop it again.
     'eachSessionHasItsOwnEncryption': (
         'C-09',
-        'Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot.',
+        'Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot. The keys are all in your vault, so reading a protected file back is the vault’s own door and not a session’s: anything saved from any session in this vault comes back in its real names, and the reading says which session they came from.',
     ),
     'languageAndRulesWhat': (
         'C-11',
@@ -118,9 +123,14 @@ PINNED: dict[str, tuple[str, str]] = {
         'C-11',
         'Not a setting. A suggestion that has not been answered is never quietly treated as safe, and there is no «send anyway» — not here, not in a hidden flag, not anywhere in the code.',
     ),
+    # **110, the owner's rulings of 24 October 2026.** Not «the chat»: both
+    # doors send one payload — the question as it would leave, protected — and
+    # the in-app door adds the exchange before it on top. A sentence that still
+    # said «the chat» would promise the whole conversation at the one door that
+    # hands over the payload.
     'theChatIsOnYourClipboard': (
         'C-13',
-        'The chat is on your clipboard, protected — bring the answer back with «Add an answer».',
+        'What would leave is on your clipboard, protected — the question as an AI would receive it. Bring the answer back with «Add an answer».',
     ),
 }
 

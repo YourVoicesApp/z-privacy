@@ -805,11 +805,36 @@ fn a_session_for_what_leaves(session: SessionId) -> ApiResult<()> {
 
 /// **The chat, for the person to take away** — rule 65's copy, the fourth door.
 ///
-/// Every turn of the open chat, the question as it left and the answer as it
-/// arrived, in the one form they are kept in. The text is built by
-/// `the_chat_so_far`, which is also what the next question carries as its
-/// history: **what a person copies out is what the model was shown**, and two
-/// builders would have made that two different texts.
+/// **The payload itself, which is what an outside model is shown** — the
+/// owner's ruling of 24 October 2026: «النسخ فقط ما هو موجود على الشاشة… خارج
+/// التطبيق لا يأخذ إلا ما يراه المستخدم على الشاشة؛ داخل التطبيق نرسل فقط
+/// السؤال السابق والنقطة الحالية».
+///
+/// **One payload, two doors, and the law has two sides rather than two texts:**
+///
+///   * what a person carries to a model of their own is the payload as it
+///     stands — the current question, protected, exactly what would leave by
+///     the app's own door. That side does not move: what leaves is what the
+///     person was shown;
+///   * **inside** the app the same payload travels with one **addition**: the
+///     exchange before it, put there by the core's one history function
+///     (`ops::conversation::the_chat_so_far`, read by `ask_model` alone). The
+///     model holds nothing of the chat, so that addition is what makes a
+///     follow-up answerable; a person's own chat holds its thread already, so
+///     outside the app the addition would be the same words twice.
+///
+/// Until this round the door handed over the chat's whole transcript, which is
+/// what the register records (C-13). **The cost is said rather than hidden:**
+/// no door hands a person their whole conversation now, and the whole of it
+/// stays readable in the session's own room (rule 69). The owner accepts that
+/// for now, and his intent is that the first development round closes it.
+///
+/// **The door is still the chat's** (rule 65): with no chat in the session
+/// there is nothing to take out, and it says so by name rather than handing
+/// over the bench. And **the list of tokens this copy may bring home is still
+/// the whole chat's**: an answer the person carries back may name a token born
+/// in any turn, and it comes home in their own name — the measurement in
+/// `an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name`.
 ///
 /// **It asks the one law** (`no_word_waits`, G28/C3): it is a door text leaves
 /// this machine by, and a door that carried its own exception is the shape this
@@ -844,16 +869,36 @@ pub(crate) fn chat_to_take_out(session: SessionId) -> ApiResult<crate::api::Chat
 /// The chat as one payload, kept like any other so that what leaves is named by
 /// a handle and read through one accessor.
 fn build_the_chat(session: SessionId) -> ApiResult<PayloadHandle> {
+    // **Is there a chat at all?** This is the chat's own door, and a session
+    // nobody has written in is nothing to take out — the law rule 65 gave it,
+    // unchanged by the ruling that changed *what* it hands over. `lines` is
+    // the one exchange before (110), so it is empty exactly when the open chat
+    // holds no turn.
+    let chat = with_core(crate::ops::conversation::the_chat_so_far)?;
+    if chat.lines.is_empty() {
+        return Err(ApiError::NothingToSend);
+    }
+    // **And what it hands over is the payload** — the one the app's own door
+    // would send from here, built by `the_question_alone`. There is always a
+    // chat at this door (the line above refuses otherwise), so the document
+    // has gone once with the question that carried it and rule 67 does not
+    // send it again: what would leave now is the question, protected.
+    //
+    // **Two readings of «what is on the screen», and this is the one that was
+    // chosen.** The Safe column is drawn with `build_payload`, so it shows the
+    // protected document **and** the request under it even in a follow-up. The
+    // clipboard takes the **payload** — the request alone — which is the
+    // reading that matches the ruling's own reason: the person's own chat
+    // already holds the document they pasted with the first question, and
+    // handing it over again is the waste this round removes.
+    //
+    // Nothing is assembled here: no history, and no sentence of ours around
+    // it. The addition of one earlier exchange belongs to the in-app door.
+    let question = with_core(|core| the_question_alone(core, session))?;
+    let what_will_leave = payload_view(question)?.text;
     with_core(|core| {
         let whose = the_session_this_belongs_to(core);
-        let chat = crate::ops::conversation::the_chat_so_far(core)?;
-        if chat.lines.is_empty() {
-            return Err(ApiError::NothingToSend);
-        }
-        // A plain divider: one blank line between the labelled halves, the same
-        // joining `gateway::instructions` does for the history, so the copy in
-        // a person's hand reads as the request the model read.
-        let text = chat.lines.join("\n\n");
+        let text = what_will_leave;
         let s = core.get(session.id).ok_or(ApiError::InvalidSession)?;
         let id = s.take_payload_id();
         let payload = SafePayload::of_the_chat(s, id, whose, text, chat.allowed, chat.kept);
@@ -960,7 +1005,9 @@ pub(crate) fn ask_model(
     with_core(|core| the_decisions_are_written(core, handle.session));
     allow_tokens(handle, &safe.tokens)?;
     let workspace = safe.text;
-    // **The earlier turns of this chat, built by the core** — rule 67.
+    // **The one exchange before this one, built by the core** — rule 67 as
+    // amended on 24 October 2026 (110): the previous question and its answer,
+    // without the document, and nothing older.
     //
     // Read here, one line before the send, so that what travels is what the
     // file holds at the moment of the send and not what it held when a screen

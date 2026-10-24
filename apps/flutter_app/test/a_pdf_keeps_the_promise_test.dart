@@ -53,6 +53,7 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'the_folder_lets_go.dart';
 import 'the_bridge_the_tests_speak_through.dart';
+import 'the_press_that_asks_for_a_name.dart';
 
 /// A sha256-shaped string that is not one: the control's footer must carry
 /// something of the right length without pretending to be a real digest.
@@ -233,7 +234,7 @@ void main() {
     expect(tokens, isNotEmpty);
 
     expect(find.text(sentences.saveAsPdf), findsOneWidget, reason: 'there is no second act');
-    await tester.tap(find.text(sentences.saveAsPdf));
+    await saveAsPdfCalled(tester, 'Mahnung');
     await settle(tester, rounds: 16);
 
     final written = out.listSync().whereType<File>().toList();
@@ -329,7 +330,7 @@ void main() {
     await settle(tester);
 
     // Save, and **do not** copy.
-    await tester.tap(find.text(sentences.saveAsPdf));
+    await saveAsPdfCalled(tester, 'Mahnung');
     await settle(tester, rounds: 16);
     expect(find.textContaining('Saved to'), findsOneWidget);
 
@@ -372,7 +373,7 @@ void main() {
     ));
     await settle(tester);
 
-    await tester.tap(find.text(sentences.saveAsPdf));
+    await saveAsPdfCalled(tester, 'Mahnung');
     await settle(tester, rounds: 16);
 
     expect(find.textContaining('Saved to'), findsNothing, reason: 'it claims a file it has not got');
@@ -610,7 +611,7 @@ void main() {
       home: Scaffold(body: SendSheet(bench: bench, ground: ground, saveFolder: arabicOut.path)),
     ));
     await settle(tester);
-    await tester.tap(find.text(sentences.saveAsPdf));
+    await saveAsPdfCalled(tester, 'Mahnung');
     await settle(tester, rounds: 16);
 
     expect(find.textContaining('backwards'), findsNothing, reason: 'it still refuses');

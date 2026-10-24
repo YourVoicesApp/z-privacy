@@ -26,7 +26,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String exactlyWhatWouldLeave(int replaced) {
-    return 'This is exactly what the AI will receive. $replaced values were replaced.';
+    return 'This is what leaves of your document — and inside the app, the exchange before it travels with it. $replaced values were replaced.';
   }
 
   @override
@@ -498,7 +498,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get theChatOpensHereWithTheFirstAnswer =>
-      'The chat opens here with the first answer, and every question after it carries what was already said.';
+      'The chat opens here with the first answer, and every question after it carries the exchange before it.';
 
   @override
   String get typedText => 'Typed text';
@@ -793,7 +793,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get theFirstAnswerOpensTheChatHere =>
-      'The first answer opens the chat here. Every question after it carries what was already said.';
+      'The first answer opens the chat here. Every question after it carries the exchange before it — not the whole chat, and never the document again.';
 
   @override
   String get askSomethingElseAboutThis => 'Ask something else about this…';
@@ -818,7 +818,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get theChatIsOnYourClipboard =>
-      'The chat is on your clipboard, protected — bring the answer back with «Add an answer».';
+      'What would leave is on your clipboard, protected — the question as an AI would receive it. Bring the answer back with «Add an answer».';
 
   @override
   String get couldNotReadTheClipboard =>
@@ -1007,7 +1007,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eachSessionHasItsOwnEncryption =>
-      'Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot.';
+      'Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot. The keys are all in your vault, so reading a protected file back is the vault’s own door and not a session’s: anything saved from any session in this vault comes back in its real names, and the reading says which session they came from.';
 
   @override
   String get newSession => 'New session';
@@ -2734,6 +2734,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String zPdfAnswerLine(String token) {
     return 'Z-pdf : $token';
   }
+
+  @override
+  String couldNotAskWhereToSaveIt(String why) {
+    return 'Z Privacy could not open your system’s save dialog — $why. Nothing was written.';
+  }
+
+  @override
+  String get nameThisDocument => 'Name this document';
+
+  @override
+  String get whatIsThisDocumentCalled => 'What is this document called?';
+
+  @override
+  String get theFileNameIsNotProtected =>
+      'The file name stays exactly as you type it. It leaves with the file, so don’t put real names in it.';
+
+  @override
+  String get aNameIsNeededForThisDocument =>
+      'A name is needed — the file is named after it.';
+
+  @override
+  String get saveAsAPlainPdf => 'Save as a plain PDF';
+
+  @override
+  String get aPlainPdfOfTheRestoredText =>
+      'This saves the document above with its names back in it, as an ordinary PDF — no answer page, no footer, nothing that claims a protection. The values are in it in the clear.';
+
+  @override
+  String get copyTheAddressAndWriteToUs =>
+      'Copy this address and write to us from your own e-mail. Z Privacy opens nothing and sends nothing: there is no form here and no connection to us.';
+
+  @override
+  String get writeToUs => 'Write to us';
+
+  @override
+  String get describeTheProblemNotYourDocuments =>
+      'Describe the problem, and don’t send your documents: what arrives in our mailbox is not something we can protect. «Copy report», on the bar over your work, writes numbers about a document and no word of it.';
 
   @override
   String get howToUseZPrivacy => 'How to use Z Privacy';

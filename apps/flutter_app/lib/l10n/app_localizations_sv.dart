@@ -26,7 +26,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String exactlyWhatWouldLeave(int replaced) {
-    return 'Det här är precis vad AI:n får. $replaced värden ersattes.';
+    return 'Det här är vad som lämnar ditt dokument — och inne i appen följer utbytet före det med. $replaced värden ersattes.';
   }
 
   @override
@@ -501,7 +501,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get theChatOpensHereWithTheFirstAnswer =>
-      'Chatten öppnas här med det första svaret, och varje fråga efter den bär med sig vad som redan sagts.';
+      'Chatten öppnas här med det första svaret, och varje fråga efter den bär med sig utbytet före den.';
 
   @override
   String get typedText => 'Inskriven text';
@@ -796,7 +796,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get theFirstAnswerOpensTheChatHere =>
-      'Det första svaret öppnar chatten här. Varje fråga efter den bär med sig vad som redan sagts.';
+      'Det första svaret öppnar chatten här. Varje fråga efter den bär med sig utbytet före den — inte hela chatten, och aldrig dokumentet igen.';
 
   @override
   String get askSomethingElseAboutThis => 'Fråga något annat om det här…';
@@ -821,7 +821,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get theChatIsOnYourClipboard =>
-      'Chatten ligger skyddad i ditt urklipp — hämta tillbaka svaret med «Lägg till ett svar».';
+      'Det som skulle lämna ligger skyddat i ditt urklipp — frågan som en AI skulle få den. Hämta tillbaka svaret med «Lägg till ett svar».';
 
   @override
   String get couldNotReadTheClipboard => 'Z Privacy kunde inte läsa urklippet.';
@@ -1009,7 +1009,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get eachSessionHasItsOwnEncryption =>
-      'Varje session har sin egen kryptering. Samma namn tar två olika platshållare i två sessioner, och i en session samma överallt — en session är alltså hur du väljer vad en AI kan lägga samman och vad den inte kan.';
+      'Varje session har sin egen kryptering. Samma namn tar två olika platshållare i två sessioner, och i en session samma överallt — en session är alltså hur du väljer vad en AI kan lägga samman och vad den inte kan. Nycklarna ligger alla i ditt valv, så att läsa tillbaka en skyddad fil är valvets egen dörr och inte en sessions: det som sparats från någon session i det här valvet kommer tillbaka i sina riktiga namn, och läsningen säger vilken session de kom från.';
 
   @override
   String get newSession => 'Ny session';
@@ -2744,6 +2744,43 @@ class AppLocalizationsSv extends AppLocalizations {
   String zPdfAnswerLine(String token) {
     return 'Z-pdf : $token';
   }
+
+  @override
+  String couldNotAskWhereToSaveIt(String why) {
+    return 'Z Privacy kunde inte öppna systemets spara-dialog — $why. Ingenting skrevs.';
+  }
+
+  @override
+  String get nameThisDocument => 'Ge det här dokumentet ett namn';
+
+  @override
+  String get whatIsThisDocumentCalled => 'Vad heter det här dokumentet?';
+
+  @override
+  String get theFileNameIsNotProtected =>
+      'Filnamnet står kvar precis som du skriver det. Det följer med filen ut — skriv därför inga verkliga namn i det.';
+
+  @override
+  String get aNameIsNeededForThisDocument =>
+      'Ett namn behövs — filen namnges efter det.';
+
+  @override
+  String get saveAsAPlainPdf => 'Spara som vanlig PDF';
+
+  @override
+  String get aPlainPdfOfTheRestoredText =>
+      'Sparar dokumentet ovan med namnen tillbaka i det, som en vanlig PDF — ingen svarssida, ingen fotrad, ingenting som påstår ett skydd. Värdena står i klartext i den.';
+
+  @override
+  String get copyTheAddressAndWriteToUs =>
+      'Kopiera den här adressen och skriv till oss från din egen e-post. Z Privacy öppnar ingenting och skickar ingenting: här finns inget formulär och ingen förbindelse till oss.';
+
+  @override
+  String get writeToUs => 'Skriv till oss';
+
+  @override
+  String get describeTheProblemNotYourDocuments =>
+      'Beskriv problemet, och skicka inte med dina dokument: det som kommer in i vår brevlåda kan vi inte skydda. «Kopiera rapporten» i listen över ditt arbete skriver tal om ett dokument och inte ett ord ur det.';
 
   @override
   String get howToUseZPrivacy => 'Så använder du Z Privacy';

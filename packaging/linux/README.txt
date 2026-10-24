@@ -14,7 +14,10 @@ Ubuntu, Debian and Fedora desktop already has.
 Your originals stay on this device unless you explicitly export restored text.
 Your names live in one encrypted vault file, written under
 ~/.local/share/zprivacy and nowhere else; beside it Z Privacy writes each
-session's own encrypted file and your settings. There is no account and no
+session's own encrypted file and your settings. Beside those, Z Privacy writes
+only what you ask for by name: a protected copy, and - since 24 October 2026 -
+the restored document as an ordinary PDF where you choose it, which holds your
+values in the clear and claims no protection. There is no account and no
 Z Privacy server for your documents.
 
 Z Privacy minimizes the sensitive content you send. It does not make you
