@@ -2736,6 +2736,43 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String couldNotAskWhereToSaveIt(String why) {
+    return 'Z Privacy could not open your system’s save dialog — $why. Nothing was written.';
+  }
+
+  @override
+  String get nameThisDocument => 'Name this document';
+
+  @override
+  String get whatIsThisDocumentCalled => 'What is this document called?';
+
+  @override
+  String get theFileNameIsNotProtected =>
+      'The file name stays exactly as you type it. It leaves with the file, so don’t put real names in it.';
+
+  @override
+  String get aNameIsNeededForThisDocument =>
+      'A name is needed — the file is named after it.';
+
+  @override
+  String get saveAsAPlainPdf => 'Save as a plain PDF';
+
+  @override
+  String get aPlainPdfOfTheRestoredText =>
+      'This saves the document above with its names back in it, as an ordinary PDF — no answer page, no footer, nothing that claims a protection. The values are in it in the clear.';
+
+  @override
+  String get copyTheAddressAndWriteToUs =>
+      'Copy this address and write to us from your own e-mail. Z Privacy opens nothing and sends nothing: there is no form here and no connection to us.';
+
+  @override
+  String get writeToUs => 'Write to us';
+
+  @override
+  String get describeTheProblemNotYourDocuments =>
+      'Describe the problem, and don’t send your documents: what arrives in our mailbox is not something we can protect. «Copy report», on the bar over your work, writes numbers about a document and no word of it.';
+
+  @override
   String get howToUseZPrivacy => 'How to use Z Privacy';
 
   @override

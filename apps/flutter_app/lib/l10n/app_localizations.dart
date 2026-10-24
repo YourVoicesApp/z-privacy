@@ -4245,6 +4245,66 @@ abstract class AppLocalizations {
   /// **'Z-pdf : {token}'**
   String zPdfAnswerLine(String token);
 
+  /// The save of a restored document could not even ask where to put it — paper 108 item 4. A press that goes quiet and stays «Saving…» for the rest of the session is a fault this house has already paid for once (`saveProtectedPdf`'s own catch), so the one call that leaves this program — the platform's save dialog — has a sentence of its own. «Nothing was written» is said because it is the thing the person needs to know.
+  ///
+  /// In en, this message translates to:
+  /// **'Z Privacy could not open your system’s save dialog — {why}. Nothing was written.'**
+  String couldNotAskWhereToSaveIt(String why);
+
+  /// The head of the dialog the PDF press opens — paper 108 item 2, the owner, 24 October 2026: «والحفظ يحتاج إلى كتابة اسم للوثيقة من قبل المستخدم». Asked before anything happens: closing it births no session and writes no file.
+  ///
+  /// In en, this message translates to:
+  /// **'Name this document'**
+  String get nameThisDocument;
+
+  /// The hint in the field. A question rather than «Name», because the answer is the person's own word for their work and the file is named after it.
+  ///
+  /// In en, this message translates to:
+  /// **'What is this document called?'**
+  String get whatIsThisDocumentCalled;
+
+  /// The one sentence this dialog must carry. A file name is the one thing about a protected copy that is **not** protected and cannot be: it stands in a folder listing, a backup, a sync, an attachment. 081 is why the app stopped taking the document's own name by itself; asking for one makes this the person's choice, and a privacy product that asks for a name without saying where it goes teaches the wrong lesson quietly.
+  ///
+  /// In en, this message translates to:
+  /// **'The file name stays exactly as you type it. It leaves with the file, so don’t put real names in it.'**
+  String get theFileNameIsNotProtected;
+
+  /// The refusal of an empty name, said in the dialog, which stays open. Never a silent default: a file named by nobody is how «which of these two is mine» begins. Said twice on purpose — the dialog refuses first, and `saveProtectedPdf` refuses again, because a door that can be called from two places will be.
+  ///
+  /// In en, this message translates to:
+  /// **'A name is needed — the file is named after it.'**
+  String get aNameIsNeededForThisDocument;
+
+  /// The press in the reading of a z-pdf — paper 108 item 4, the owner, 24 October 2026: «نجعل وثيقة z-pdf يمكننا حفظها بعد فك التشفير». Deliberately **not** the words of «Save as PDF» in the send sheet: that one writes a protected copy, this one writes the person's own document with their own values in it, and two acts that differ in exactly that may not share a label. Saving only — printing is out by his own word.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as a plain PDF'**
+  String get saveAsAPlainPdf;
+
+  /// What the file will be, said before the press rather than after it. It is a new file this app writes and the only one that holds values in the clear, so the sentence names each thing it does not carry: C-06 counts what is written, and this is the disclosure that stands where a person presses.
+  ///
+  /// In en, this message translates to:
+  /// **'This saves the document above with its names back in it, as an ordinary PDF — no answer page, no footer, nothing that claims a protection. The values are in it in the clear.'**
+  String get aPlainPdfOfTheRestoredText;
+
+  /// What the contact card says — paper 108 item 5, as the owner narrowed it on 24 October 2026. The first shape of the item was a press that handed `mailto:` to the operating system; the narrowing is the product, so the sentence says what this app does **not** do rather than describing a door. The address itself stands in a box beside it, which a person selects and copies.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy this address and write to us from your own e-mail. Z Privacy opens nothing and sends nothing: there is no form here and no connection to us.'**
+  String get copyTheAddressAndWriteToUs;
+
+  /// The contact card in Language & rules — paper 108 item 5, the owner, 24 October 2026: «نضع إيميل الفيدباك في التطبيق في الإعدادات… ونجعل zprivacy@mono-peak.com هو إيميل التواصل». Beside the guide card, because those two are the only doors in this app that leave it.
+  ///
+  /// In en, this message translates to:
+  /// **'Write to us'**
+  String get writeToUs;
+
+  /// This product's own law applied to its own mailbox. The second half names what to send instead, because «don't send that» without «send this» is advice nobody can follow: the press is already built and writes no word of the document. It is quoted by **its own label** (`copyReport`) in each language, the way the guide page quotes a control — «Copy report», «Bericht kopieren», «Kopiera rapporten» — so a sentence that points at a control cannot drift from the control it points at.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the problem, and don’t send your documents: what arrives in our mailbox is not something we can protect. «Copy report», on the bar over your work, writes numbers about a document and no word of it.'**
+  String get describeTheProblemNotYourDocuments;
+
   /// The card in Language & rules that opens the guide page on the site — paper 100, rule 83. One text in one place: the page is on z-privacy.com and the app carries the line that opens it, so there is no second copy of it to keep in step.
   ///
   /// In en, this message translates to:

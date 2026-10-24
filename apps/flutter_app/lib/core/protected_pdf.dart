@@ -477,6 +477,81 @@ Future<Uint8List> buildProtectedPdf({
   return Uint8List.fromList(await doc.save());
 }
 
+/// **The restored document, as an ordinary PDF** — the owner, 24 October 2026
+/// (paper 108 item 4): «نجعل وثيقة z-pdf يمكننا حفظها بعد فك التشفير… أعتقد فقط
+/// يكفي خيار حفظها في الذاكرة كوثيقة pdf».
+///
+/// This is **not** a z-pdf and nothing in it says it is one:
+///
+///   * **no answer page**, so a reader of this file finds no token to write an
+///     answer beside — it is not a file that goes to a model and comes back;
+///   * **no footer**, so no build stamp, no count of protected places and no
+///     digest. Every one of those is evidence *about a protection*, and there
+///     is none here;
+///   * **no mark.** `z-pdf · protected copy` is a claim about what a page is,
+///     and this page is the person's own document with their own values in it.
+///     A file that wears that mark and holds values in the clear is the worst
+///     thing this product could write.
+///
+/// So it carries **no sentence at all**, in any language: there is nothing in
+/// it but the person's own words. That is also why rule 80 does not reach it —
+/// a file with no sentence has no language to be in.
+///
+/// **The pieces are passed through as they came.** [restored] is
+/// `ReturnedDocument.restored`, the core's own list: the words as they
+/// arrived, the values put back, and the tokens that stayed tokens. Nothing
+/// here looks at `Piece`, searches for `__Z_`, or decides what a token was —
+/// a token that could not be resolved stays exactly the token the core handed
+/// over, because inventing a name for it would be the one lie this file could
+/// tell. One hand flattens the list, here, so no screen does it twice.
+///
+/// **Except the lines this application itself wrote into the file being read**
+/// — see [theDocumentWithoutOurOwnLines], which is where that is decided and
+/// why it has to be.
+Future<Uint8List> buildPlainPdf({
+  required List<Segment> restored,
+  bool compress = true,
+}) async {
+  final font = await _embeddedFont();
+  final doc = pw.Document(compress: compress);
+  final body = pw.TextStyle(font: font, fontSize: 10.5, lineSpacing: 2.2);
+  const margin = pw.EdgeInsets.fromLTRB(44, 44, 44, 52);
+  final text = theDocumentWithoutOurOwnLines(restored);
+
+  doc.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      margin: margin,
+      // **No `footer:`**, and that is the whole difference in this call. The
+      // body is built exactly as the protected one is — one Text per run of
+      // paragraphs that share a direction, inside a `Partition` so a long
+      // document pages itself and a right-aligned Arabic block aligns against
+      // the page. Both reasons are written out over `buildProtectedPdf` and
+      // were paid for there; this reuses the one function that holds them
+      // (`directionBlocks`) rather than keeping a second idea of how a page is
+      // laid out.
+      build: (_) => [
+        for (final block in directionBlocks(text))
+          pw.Partitions(
+            children: [
+              pw.Partition(
+                child: pw.Text(
+                  block.laidOut,
+                  style: body,
+                  textDirection:
+                      block.rtl ? pw.TextDirection.rtl : pw.TextDirection.ltr,
+                  textAlign: block.rtl ? pw.TextAlign.right : pw.TextAlign.left,
+                  overflow: pw.TextOverflow.span,
+                ),
+              ),
+            ],
+          ),
+      ],
+    ),
+  );
+  return Uint8List.fromList(await doc.save());
+}
+
 /// Where a save went, or why it did not happen.
 class PdfSaved {
   const PdfSaved.at(this.path) : trouble = null;
@@ -525,6 +600,24 @@ Future<PdfSaved> saveProtectedPdf({
   /// a session nobody named is «Session N», which says everything a file name
   /// needs to and nothing about anybody.
   required String sessionName,
+  /// **The name the person typed for this document** — the owner, 24 October
+  /// 2026 (paper 108 item 2): «نجعل اسم الجلسة داخل باسم الوثيقة. والحفظ يحتاج
+  /// إلى كتابة اسم للوثيقة من قبل المستخدم».
+  ///
+  /// 081 took the *document's own* file name out of here and left the session's
+  /// alone, and that is what Windows' first read-back fell into: two vaults'
+  /// files of one day are both `Session 1-protected-<date>.pdf` in
+  /// `Documents\ZPrivacy`, so the second one becomes `…-2.pdf` and nothing in
+  /// either name says which work it is. This is **not** 081 reversed: that
+  /// round was about a name the app took without being asked, and this is a
+  /// name the person is asked for, beside a sentence that says it is not
+  /// protected.
+  ///
+  /// **Empty is refused**, never defaulted: a silent fallback is how a file
+  /// gets a name nobody chose. The glass refuses it first — the dialog's Save
+  /// is what carries the sentence — and this refuses it again, because a door
+  /// that can be called from two places is a door that will be.
+  required String documentName,
   /// **The language of the session this file left**, or null where it left
   /// none — rule 80, the owner, 21 October 2026: «بلغة الجلسة التي خرج منها
   /// الملف، والإنجليزية حين لا لغة للجلسة».
@@ -547,7 +640,17 @@ Future<PdfSaved> saveProtectedPdf({
     return PdfSaved.trouble(sentences.couldNotTellWhereDocumentsFolderIs);
   }
   final day = _day(now ?? DateTime.now());
-  final stem = '${_fileStem(sessionName)}-protected-$day';
+  // **The person's own word first, then ours** — paper 108 item 2. A folder
+  // listing sorts by the first thing in the name, and the first thing a person
+  // looks for is the document they were working on; the session's name is what
+  // tells two vaults' files of one day apart, which is the collision the owner
+  // met. The date stays: it is what tells a Tuesday's copy from a Wednesday's,
+  // and the `-2` suffix below is for two copies of one day.
+  final typed = _clean(documentName);
+  if (typed.isEmpty) {
+    return PdfSaved.trouble(sentences.aNameIsNeededForThisDocument);
+  }
+  final stem = '$typed-${_fileStem(sessionName)}-protected-$day';
 
   try {
     final dir = Directory(into);
@@ -582,23 +685,180 @@ Future<PdfSaved> saveProtectedPdf({
   }
 }
 
+/// **The footer's own mark, and the answer page's own first line** — the two
+/// things *this application* wrote into a z-pdf, by the characters it wrote
+/// them with.
+///
+/// Both are safe to match in **any** language, and that is not luck: «z-pdf»
+/// is a product name, the same in every pack by the one list's own law
+/// (`check_the_one_list`'s `SAME_IN_EVERY_LANGUAGE` names it), and the
+/// punctuation after it is what `_footer` and `zPdfAnswerLine` put there. The
+/// three packs that exist today read «z-pdf · protected copy», «z-pdf ·
+/// geschützte Kopie» and «z-pdf · skyddad kopia», and the answer line is
+/// `Z-pdf : <token>` in all three. A guard holds those prefixes against the
+/// list, so the day a pack words the mark differently this is red rather than
+/// quietly blind.
+/// **The product's own name**, which is the same word in every pack by the one
+/// list's own law (`SAME_IN_EVERY_LANGUAGE` names it) — and the first thing
+/// both of the lines this file writes begin with. Spelled once here so that
+/// neither prefix below is a second copy of it.
+const _theProductName = 'z-pdf';
+
+/// The footer's mark as `_footer` writes it — «z-pdf · protected copy» and its
+/// two translations — and the answer page's top line as `zPdfAnswerLine` does,
+/// `«Z-pdf : <token>»`. The lines are compared **lower-cased**, which covers that
+/// line's own capital without a second spelling of the name to keep in step.
+const _theMarkWeWrite = '$_theProductName ·';
+const _theAnswerLineWeWrite = '$_theProductName :';
+
+/// A line of nothing but hexadecimal, which is the digest the footer wraps on
+/// to a line of its own. Matched **only** directly under a footer line, so a
+/// hash in somebody's own letter is their text and stays.
+final _aDigestOnItsOwnLine = RegExp(r'^[0-9a-f]{32,}$');
+
+/// **The person's document, without the two lines we put in the file they are
+/// reading back.**
+///
+/// Measured, 24 October 2026, and this function exists **because** of what the
+/// measurement said. `ReturnedDocument.restored` is not the body of the z-pdf:
+/// it is everything the reader read out of it, which includes the footer this
+/// file writes on every page — mark, build stamp, the count of protected
+/// places and the sha256 **of the protected text** — and the answer page's
+/// `Z-pdf : <token>` line. Written straight through, the plain copy would
+/// carry «z-pdf · protected copy … sha256 of the protected text» over values
+/// standing in the clear: a file claiming a protection it does not have, with
+/// a digest that no longer describes it. Paper 108's own rule for this item is
+/// that nothing in this file may claim protection, and this is what that costs.
+///
+/// **What is dropped is only ever ours**: a line that begins with the mark, a
+/// line that begins with the answer line, and the digest's own wrap directly
+/// under the mark. Everything else is the person's, whole and in order — a
+/// value, a token that stayed a token, a blank line they typed.
+///
+/// **The limits, named rather than hidden.** A line of the person's own that
+/// *begins* with «z-pdf ·» or «Z-pdf :» would be dropped with ours; that is
+/// the narrowest collision available without the core telling us where the
+/// body ends, and it is the honest trade for not writing a false claim. And
+/// a footer that wrapped on to more than the digest — a longer stamp, a
+/// narrower page — would leave its tail behind. **The real answer is a door in
+/// the core**: `read_a_document_that_came_back` knows it is reading our own
+/// file and could hand back a body with its own pages marked. That is a core
+/// round's and is written here so that whoever opens it finds this note.
+String theDocumentWithoutOurOwnLines(List<Segment> restored) {
+  final lines = restored.map((piece) => piece.text).join().split('\n');
+  final kept = <String>[];
+  var afterOurFooter = false;
+  for (final line in lines) {
+    final bare = line.trim();
+    final lowered = bare.toLowerCase();
+    if (lowered.startsWith(_theMarkWeWrite)) {
+      afterOurFooter = true;
+      continue;
+    }
+    if (lowered.startsWith(_theAnswerLineWeWrite)) {
+      afterOurFooter = false;
+      continue;
+    }
+    if (afterOurFooter && _aDigestOnItsOwnLine.hasMatch(bare)) {
+      continue;
+    }
+    afterOurFooter = false;
+    kept.add(line);
+  }
+  // The blank lines a page break left at the end are nobody's paragraph.
+  return kept.join('\n').trimRight();
+}
+
+/// **Write the restored document to the path the person chose.**
+///
+/// The path comes from the system's own save dialog, through the glass: this
+/// product does not decide where a person's own document goes, and there is no
+/// folder of ours in this call. A path that cannot be written is a sentence,
+/// as everywhere else in this file — never a silence and never a throw that
+/// leaves a press on «Saving…».
+///
+/// **It overwrites**, because the person named the file in their own system's
+/// dialog and that dialog is what asks about an existing file. The `…-2.pdf`
+/// dance above is for a name *this app* chose, where nobody was asked.
+Future<PdfSaved> savePlainPdf({
+  required List<Segment> restored,
+  required String path,
+}) async {
+  try {
+    final bytes = await buildPlainPdf(restored: restored);
+    await File(path).writeAsBytes(bytes, flush: true);
+    return PdfSaved.at(path);
+  } on FileSystemException catch (e) {
+    return PdfSaved.trouble(
+        sentences.couldNotWriteInto(path, e.osError?.message ?? e.message));
+  } catch (e) {
+    return PdfSaved.trouble(sentences.couldNotBuildThePdfBecause('$e'));
+  }
+}
+
+/// **What to call the file, before the person changes it.** The name of the
+/// z-pdf that was read, with `-restored` after it — so the two files stand
+/// beside each other in a folder and neither can be mistaken for the other,
+/// and so the suggestion is never the name of the file being read **back**:
+/// a save dialog proposing the z-pdf's own name is a save dialog proposing to
+/// overwrite it.
+///
+/// Null or nothing left after the cleaning gives `restored.pdf`, which names
+/// the act and nobody.
+String theNameForARestoredPdf(String? cameFrom) {
+  final stem = _clean(cameFrom ?? '');
+  return stem.isEmpty ? 'restored.pdf' : '$stem-restored.pdf';
+}
+
 String _day(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-'
     '${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
-/// A file name out of the session's name. A session with no name of its own
-/// reaches here empty — and a name a person typed may hold a slash or a dot,
-/// so neither it nor an empty one may decide where this is written.
-String _fileStem(String name) {
+/// **A name, made safe to be part of a file name — and nothing invented.**
+///
+/// Two names reach here now (paper 108 item 2): the session's, which is ours,
+/// and the one the person typed for their document. A name either of them
+/// wrote may hold a path separator, a dot, or a character this or the other
+/// platform's file system refuses — so one hand cleans both, and the empty
+/// result is handed back **as empty** for the caller to answer for.
+///
+///   * everything outside letters, digits, `.`, `_`, space and `-` becomes
+///     `-`, which takes `/` and `\` with it (`a_path_is_compared_in_one_spelling`)
+///     and the whole of Windows' own refused set — `: * ? " < > |` — in the
+///     same stroke, by allowing rather than by listing;
+///   * a trailing extension is dropped, so «Mahnung.pdf» does not become
+///     «Mahnung.pdf-…-protected-….pdf»;
+///   * no leading dot or dash: a hidden file, or a name a shell reads as a
+///     flag, is not what anybody asked for;
+///   * **40 characters each**, which is this round's own number: two names
+///     now share one stem with `-protected-` and a date after them, and
+///     60 + 60 + 21 + `.pdf` is 145 characters of file name before the folder
+///     it sits in — inside Linux's 255 bytes, and uncomfortably close to
+///     Windows' 260 for a whole path once `C:\Users\<somebody>\Documents\
+///     ZPrivacy\` is in front of it. 40 + 40 + 21 + 4 is 105.
+///
+/// **A reserved device name cannot come out of here**, which is Windows' other
+/// refusal: `NUL`, `CON`, `COM1` are refused as *whole* stems, and every stem
+/// this file builds carries `-protected-<date>` after the two names.
+String _clean(String name) {
   var stem = name.trim();
   final dot = stem.lastIndexOf('.');
   if (dot > 0) stem = stem.substring(0, dot);
   stem = stem.replaceAll(RegExp(r'[^\p{L}\p{N}._ -]', unicode: true), '-').trim();
-  // No leading dot: a hidden file is not what anyone asked for.
   while (stem.startsWith('.') || stem.startsWith('-')) {
     stem = stem.substring(1);
   }
-  if (stem.length > 60) stem = stem.substring(0, 60).trim();
+  if (stem.length > 40) stem = stem.substring(0, 40).trim();
+  // A name that was nothing but separators ends as a run of dashes; it names
+  // nothing, so it is nothing.
+  return stem.replaceAll(RegExp(r'^-+|-+$'), '').trim();
+}
+
+/// The session's half of the stem. A session nobody named is «Session N», so
+/// this is empty only where there is no session at all — and then the word is
+/// ours to choose, which is what it always was.
+String _fileStem(String name) {
+  final stem = _clean(name);
   return stem.isEmpty ? 'text' : stem;
 }

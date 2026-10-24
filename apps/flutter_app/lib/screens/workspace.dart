@@ -54,6 +54,7 @@ class WorkspaceScreen extends StatefulWidget {
     this.onRemoveDocument,
     this.onSettings,
     this.onFromZero,
+    this.onReadBack,
     this.settingsOpen = false,
   });
 
@@ -113,6 +114,21 @@ class WorkspaceScreen extends StatefulWidget {
   /// Workspace that cannot reach the vault has buttons that refuse into a
   /// sentence nobody sees, which is exactly what 041-B is about.
   final VoidCallback onVault;
+
+  /// **«z-pdf» — the door back, at the top of the screen** — the owner, 24
+  /// October 2026 (paper 108 item 3): «زر جلب وثيقة Z-PDF نجعله خياراً منفصلاً
+  /// في أعلى الشاشة؛ الآن مكانه مخفي».
+  ///
+  /// This **amends rule 70's placing** (17 October 2026), which put the press
+  /// in the Settings panel when the first screen's «+» menu was deleted with
+  /// the screen. It was reachable there and the owner could not find it, which
+  /// is the whole of what a hidden door is. Both dates stand because both are
+  /// his: the act did not change, only where it is pressed.
+  ///
+  /// Nullable for the reason `onSettings` is: only the shell may open a file
+  /// chooser, and a screen mounted by a guard about something else has nowhere
+  /// to send the press — so the bar draws no door rather than a dead one.
+  final VoidCallback? onReadBack;
 
   /// Open the settings panel, or shut it — one press does both, because the
   /// shell holds the state and this is the only thing that moves it.
@@ -480,6 +496,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               onVault: widget.onVault,
               onLockVault: () => unawaited(widget.ground.lockVault()),
               onSettings: _toTheSettings,
+              onReadBack: widget.onReadBack,
               settingsOpen: widget.settingsOpen,
             ),
             // **The way in for a file, at the top of the screen** — rule 70,
@@ -850,6 +867,7 @@ class _TopBar extends StatelessWidget {
     required this.onVault,
     required this.onLockVault,
     required this.onSettings,
+    required this.onReadBack,
     required this.settingsOpen,
   });
 
@@ -873,7 +891,17 @@ class _TopBar extends StatelessWidget {
   /// document. Null means this bar has nowhere to send a press, and then it
   /// draws no door rather than a dead one.
   final VoidCallback? onSettings;
+
+  /// **The door back** — paper 108 item 3. Null means no shell behind this
+  /// screen, and then no door is drawn: `WorkspaceScreen.onReadBack` carries
+  /// the whole of why.
+  final VoidCallback? onReadBack;
   final bool settingsOpen;
+
+  /// The door back, so a guard reaches it by what it is and not by the word on
+  /// it — the same reason `_VaultRoom.theDoorBack` had one in the room this
+  /// press came from.
+  static const theDoorBack = ValueKey<String>('top-bar-z-pdf');
 
   @override
   Widget build(BuildContext context) {
@@ -1068,6 +1096,42 @@ class _TopBar extends StatelessWidget {
                 ? sentences.openZVaultOrLockItNow
                 : sentences.openZVault,
           ),
+          // **«z-pdf» — the door back, beside the vault that gives it its
+          // meaning** (paper 108 item 3, the owner, 24 October 2026).
+          //
+          // Here rather than in the Settings panel, which is where rule 70 put
+          // it on 17 October: «الآن مكانه مخفي». The place is next to the
+          // vault's own state on purpose — the names a z-pdf carries live in
+          // the vault, and with it locked this press opens the vault instead
+          // of a file (079 rule 8, held in the shell, travelling unchanged).
+          //
+          // **Drawn with or without a document**, because the door takes no
+          // bench at all: a person who has a z-pdf on their disc and nothing
+          // on the surface is the ordinary case for it.
+          //
+          // The word is the product's own, which is why it is written here and
+          // not in the one list — «z-pdf» is the same in every language, and
+          // G50 names it as one of the two product names that may stand in a
+          // file (`'Z Privacy'` is the other, eight lines above).
+          if (onReadBack != null) ...[
+            const SizedBox(width: 10),
+            Tooltip(
+              message: sentences.chooseAZPdfFile,
+              child: TextButton.icon(
+                key: theDoorBack,
+                onPressed: onReadBack,
+                icon: const Icon(Icons.undo_outlined, size: 16),
+                label: const Text('z-pdf',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                style: TextButton.styleFrom(
+                  foregroundColor: Zc.river,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+          ],
           // **Which page.** The owner, 7 October: a page must show its
           // beginning and its end — and once it does, a person wants to go to
           // one. The column scrolls to the first finding on that page, or to
@@ -1595,7 +1659,12 @@ class _CameBack extends StatelessWidget {
               label: sentences.readItBack,
               onPressed: () => showDialog<void>(
                 context: context,
-                builder: (_) => TheReading(seen: seen),
+                // **The document's own name travels, for the save dialog's
+                // suggestion only** — paper 108 item 4. Through this door the
+                // reading is of the document on the bench, so its name is what
+                // a «…-restored.pdf» stands beside in a folder. It is drawn
+                // nowhere and written into nothing.
+                builder: (_) => TheReading(seen: seen, cameFrom: bench.document?.name),
               ),
             ),
           ],

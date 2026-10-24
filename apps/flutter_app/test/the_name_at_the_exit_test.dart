@@ -50,6 +50,7 @@ import 'package:zprivacy/widgets/bits.dart';
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'the_folder_lets_go.dart';
 import 'the_bridge_the_tests_speak_through.dart';
+import 'the_press_that_asks_for_a_name.dart';
 
 final _libPath = theBridgeTheTestsSpeakThrough;
 const _wide = Size(1200, 1000);
@@ -384,7 +385,7 @@ void main() {
     expect(out!.refused, isNull, reason: 'the nameless exit was refused: ${out.refused}');
     await tester.runAsync(() => g.bench.refresh());
     await _settle(tester);
-    await tester.tap(find.text(sentences.saveAsPdf));
+    await saveAsPdfCalled(tester, 'Brief');
     await _settle(tester, rounds: 16);
 
     final born = g.ground.openSession;

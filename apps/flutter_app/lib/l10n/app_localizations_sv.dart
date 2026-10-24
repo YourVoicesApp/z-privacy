@@ -2746,6 +2746,43 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
+  String couldNotAskWhereToSaveIt(String why) {
+    return 'Z Privacy kunde inte öppna systemets spara-dialog — $why. Ingenting skrevs.';
+  }
+
+  @override
+  String get nameThisDocument => 'Ge det här dokumentet ett namn';
+
+  @override
+  String get whatIsThisDocumentCalled => 'Vad heter det här dokumentet?';
+
+  @override
+  String get theFileNameIsNotProtected =>
+      'Filnamnet står kvar precis som du skriver det. Det följer med filen ut — skriv därför inga verkliga namn i det.';
+
+  @override
+  String get aNameIsNeededForThisDocument =>
+      'Ett namn behövs — filen namnges efter det.';
+
+  @override
+  String get saveAsAPlainPdf => 'Spara som vanlig PDF';
+
+  @override
+  String get aPlainPdfOfTheRestoredText =>
+      'Sparar dokumentet ovan med namnen tillbaka i det, som en vanlig PDF — ingen svarssida, ingen fotrad, ingenting som påstår ett skydd. Värdena står i klartext i den.';
+
+  @override
+  String get copyTheAddressAndWriteToUs =>
+      'Kopiera den här adressen och skriv till oss från din egen e-post. Z Privacy öppnar ingenting och skickar ingenting: här finns inget formulär och ingen förbindelse till oss.';
+
+  @override
+  String get writeToUs => 'Skriv till oss';
+
+  @override
+  String get describeTheProblemNotYourDocuments =>
+      'Beskriv problemet, och skicka inte med dina dokument: det som kommer in i vår brevlåda kan vi inte skydda. «Kopiera rapporten» i listen över ditt arbete skriver tal om ett dokument och inte ett ord ur det.';
+
+  @override
   String get howToUseZPrivacy => 'Så använder du Z Privacy';
 
   @override
