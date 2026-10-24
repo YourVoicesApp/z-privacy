@@ -344,10 +344,29 @@ THE_CHAT_SENDS_WORDS = {
 #   * the register holds neither → red in both, because then nobody can say
 #     what the pages are a reading of.
 #
-# `C_13_AFTER` is empty until somebody reads ed's own line and puts its words
-# here — **out of the register and never out of a paper's paraphrase**, which is
-# this item's own rule. The gate names that step in its own sentence rather than
-# leaving it to a memory.
+# **The states are read off the register, not off this table.** Filling
+# `C_13_AFTER` does not move the tree into state 1 — only the register does — and
+# an empty `C_13_AFTER` is «the words are owed by another seat», not «nobody
+# thought about it». The whole matrix, because this sentence has now crossed
+# three rulings in one day:
+#
+#   | register    | C_13_AFTER | verdict                                        |
+#   |-------------|------------|------------------------------------------------|
+#   | 110's words | filled     | asserted phrase by phrase — PASS in both runs  |
+#   | the line    | filled     | the binding is ready, the claim is not: a tree |
+#   | before it   |            | run reports it, a publishing run is red        |
+#   | the line    | empty      | the same, and the sentence says the words are  |
+#   | before it   |            | owed — a publishing run is red                 |
+#   | neither     | either     | red in both: nothing says what the pages are   |
+#   |             |            | a reading of                                   |
+#
+# **`C_13_AFTER` is empty again on purpose, 24 October 2026.** It was filled from
+# ed's own line at `43d0fe0`, and the owner then ruled on «Copy the chat» —
+# it carries only what is on the screen, the current question as it will leave —
+# so ed is writing C-13 a third time. Three phrases of a line that is being
+# rewritten is a binding to a sentence that will not exist, which is exactly
+# what this gate refuses everywhere else. The words come back here out of the
+# register, and never out of a paper's or a message's paraphrase.
 C_13_BEFORE = 'carries the earlier turns'
 C_13_AFTER = ()
 
@@ -426,17 +445,16 @@ def what_an_in_app_chat_sends(tree_only):
                     'what a chat sends is a reading of it')
         return 1
     after = bool(C_13_AFTER) and all(words in limit for words in C_13_AFTER)
-    if C_13_AFTER and not after:
-        for words in C_13_AFTER:
-            if words not in limit:
-                say('FAIL', 'C-13 no longer says «%s», and the site tells a visitor it does '
-                            '— read the claim and the pages together before either moves'
-                    % words)
-        return 1
-    if not after and C_13_BEFORE not in limit:
+    before = C_13_BEFORE in limit
+    if not after and not before:
+        # The register has moved and says neither line: either 110 reworded what
+        # it already wrote, or somebody edited C-13 without reading the pages.
+        # This is the state the other two exist to make impossible to pass.
+        missing = [w for w in C_13_AFTER if w not in limit]
         say('FAIL', 'C-13\u2019s limit says neither what this tree measured nor what paper 110 '
-                    'measures, so nothing says what the site\u2019s nine sentences are a reading '
-                    'of \u2014 put its words in C_13_AFTER')
+                    'measures \u2014 it is missing %s \u2014 so nothing says what the site\u2019s '
+                    'nine sentences are a reading of'
+            % (', '.join('\u00ab%s\u00bb' % w for w in missing) or 'both lines'))
         return 1
 
     if provisional and provisional != marked:
@@ -458,9 +476,12 @@ def what_an_in_app_chat_sends(tree_only):
             return 0
         # The pages are 110's and this tree's register is the line before it.
         said = ('what an in-app chat sends stands in %d places (%s × %s) and states what paper '
-                '110 measures, while this tree\u2019s C-13 is still the line before it: the '
-                'binding is named in C_13_AFTER and is asserted on the tip where both are in'
-                % (marked, ', '.join(langs), ', '.join(THE_CHAT_SENDS_PLACES)))
+                '110 measures, while this tree\u2019s C-13 is still the line before it and %s'
+                % (marked, ', '.join(langs), ', '.join(THE_CHAT_SENDS_PLACES),
+                   'the binding in C_13_AFTER is ready for the tip where both are in'
+                   if C_13_AFTER else
+                   'the words of the binding are owed: C-13 is being written a third time, '
+                   'for the owner\u2019s ruling on what «Copy the chat» carries'))
         if tree_only:
             say('PASS', said)
             return 0
