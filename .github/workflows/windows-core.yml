@@ -409,6 +409,71 @@ jobs:
             Copy-Item $from (Join-Path $out $dll) -Force
           }
 
+          # **And the two licence files, into the same folder and for the same
+          # reason** — paper 114, 24 October 2026, out of run 40128478018.
+          #
+          # The MSIX does **not** pack the staging: `msix:create` packs *this*
+          # folder, and the staging is what the zip and the installer are made
+          # from. Every MSIX ever built therefore went out with no LICENSE and
+          # no NOTICE in it — Apache §4(a) asks for the licence to travel with
+          # the work, §4(d) asks for the NOTICE, and neither was in that
+          # package. It took paper 113's own comparison one run to find, which
+          # is what a guard that compares the package with the folder is for.
+          #
+          # Here rather than in the MSIX step, so that the files are inside the
+          # folder **before** the needle search and the hashing read it: the
+          # job's own law is that the folder it measured is the folder that
+          # gets packed, and two files added after the measurement would be two
+          # files nobody measured.
+          foreach ($legal in @("LICENSE", "NOTICE")) {
+            $from = Join-Path "../.." $legal
+            if (-not (Test-Path $from)) { throw "no $legal at the repository root to ship" }
+            Copy-Item $from (Join-Path $out $legal) -Force
+          }
+
+          # **And other people's licences, which are not ours to leave out** —
+          # paper 114, shape 1. The same defect reached further than our own
+          # two files: `pdf` is Apache-2.0, DejaVu is embedded in every PDF
+          # this program writes, the Flutter engine is BSD, Material icons are
+          # Apache-2.0 and Microsoft's redistributable travels under a notice
+          # of its own. All six texts, and the engine's, have been in the zip
+          # and in the installer since the month «Save as PDF» was built; the
+          # MSIX had none of them, for exactly the reason it had no NOTICE.
+          #
+          # Copied here so the search and the hashing read them, and named one
+          # by one rather than by a wildcard: a notice that silently stops
+          # being copied is the fault this whole paper is about.
+          $tp = Join-Path $out "third-party"
+          New-Item -ItemType Directory -Force -Path $tp | Out-Null
+          foreach ($notice in @("NOTICES.txt", "flutter-sdk-LICENSE.txt",
+                                "material-icons-LICENSE.txt", "dejavu-LICENSE.txt",
+                                "dart-pdf-LICENSE.txt", "msvc-runtime-NOTICE.txt")) {
+            $from = Join-Path "../../packaging/third-party" $notice
+            if (-not (Test-Path $from)) { throw "no packaging/third-party/$notice to ship" }
+            Copy-Item $from (Join-Path $tp $notice) -Force
+          }
+          $engine = "../../site/third-party/flutter-engine-LICENSE.txt"
+          if (-not (Test-Path $engine)) { throw "no site/third-party/flutter-engine-LICENSE.txt to ship" }
+          Copy-Item $engine (Join-Path $tp "flutter-engine-LICENSE.txt") -Force
+          # And the folder's own listing, so an MSIX install says what is in it.
+          Copy-Item "../../packaging/windows/README.txt" (Join-Path $out "README.txt") -Force
+
+          # **What is still missing from the MSIX, written here because a debt
+          # in a message is a debt nobody finds** — paper 114, shape 2, which is
+          # its own paper: `third-party/rust-crates.txt` and `BUILD-INFO.txt`
+          # are **generated** in the staging step, after this folder has been
+          # searched and hashed, so they cannot be copied in here without
+          # becoming two files nobody measured. Moving their generation into
+          # this step is a restructure of two steps and was not done on
+          # publishing night.
+          #
+          # **The hard condition, until that paper is done: the MSIX may not be
+          # distributed anywhere — no Store, no sideload page, no link.** Today
+          # it is published nowhere: the site offers the `.tar.gz` and the
+          # `.exe`, and both are built from the staging, which carries all of
+          # it. The `.msix` is built, signed, read back and uploaded as a job
+          # artefact only.
+
       # **And the three are asserted where they will ship**, with the version
       # each one carries printed into the log: a copy nobody checked is a copy
       # nobody knows happened, and this job's own rule is that a missing file
@@ -828,15 +893,26 @@ jobs:
           $wrong = @()
           $zip = [System.IO.Compression.ZipFile]::OpenRead($msix)
           try {
-            # **NOTICE is in this list and it is the only file here that is
-            # not a binary** — paper 113. The other six answer «the package is
-            # the folder we measured»; this one answers «our own licensing
-            # condition left with it», and the MSIX is the one artefact no
-            # gate on Linux can open. Compared by hash like the rest, so a
-            # NOTICE that was edited on its way into the package is a red.
+            # **The two licence files are in this list and they are the only
+            # ones here that are not binaries** — paper 113 put NOTICE in it,
+            # and paper 114 put LICENSE beside it after the first run of this
+            # very comparison answered «NOTICE is in the MSIX 0 time(s), not
+            # once» (run 40128478018). The six binaries agreed because the
+            # staging copies them **from** the Release folder the MSIX packs;
+            # the two files the staging adds of its own were in no MSIX at all.
+            #
+            # The other six answer «the package is the folder we measured».
+            # These two answer «the obligations left with it»: §4(a) for the
+            # licence and §4(d) for the NOTICE. Compared by hash like the rest,
+            # so either of them edited on the way into the package is a red,
+            # and the MSIX is the one artefact no gate on Linux can open.
             foreach ($name in @("zprivacy.exe", "z_bridge.dll", "data/app.so",
                                 "vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll",
-                                "NOTICE")) {
+                                "LICENSE", "NOTICE",
+                                "third-party/NOTICES.txt", "third-party/flutter-sdk-LICENSE.txt",
+                                "third-party/material-icons-LICENSE.txt", "third-party/dejavu-LICENSE.txt",
+                                "third-party/dart-pdf-LICENSE.txt", "third-party/msvc-runtime-NOTICE.txt",
+                                "third-party/flutter-engine-LICENSE.txt", "README.txt")) {
               $here = Join-Path $staged ($name -replace '/', '\')
               if (-not (Test-Path $here)) {
                 $wrong += "$name is not in the staged folder, so the package was compared with nothing"
