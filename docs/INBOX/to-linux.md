@@ -754,3 +754,18 @@ The section above reports the session-file emptying as a finding with a cost. Th
 **One thing I do not understand, raised rather than settled.** A z-pdf of 16 751 B was written to `Documents\ZPrivacy` at **21:35:11** — the same second as the 22 Oct collapse, exactly as in all three of tonight's lawful ones. If a save happened in window A in that second, then by rule 9 that emptying was lawful too, and the two-window fault of 22 Oct may never have existed. The disk cannot say who pressed what; the owner was at the keyboard and can be asked. It is put here because it bears on what paper 102 §3's guard was built against, not to dispute the code.
 
 **Still open for the next run, deliberately.** Capture what the glass says on a z-pdf from a **foreign** vault — last night's same-named file in `Documents\ZPrivacy`. The lead's expectation from the code is not a refusal sentence but the true one, **«0 names came back.»**, its tokens naming blocks this vault does not hold. Anything else on that screen is a finding.
+
+## 24 October 2026 — the owner answers the 21:35:11 question: every save was a z-pdf save
+
+Asked by the lead and carried to the owner: «on 22 Oct at 21:35:11, in window A, did you press save-a-protected-copy?» His answer, in his own words:
+
+> «صديقي أنا حفظت جميع الملفات عن طريق حفظ نسخة PDF»
+> — "my friend, I saved all the files by saving a PDF copy"
+
+**Not that one press: all of them.** Saving a protected copy is how he saves his work, and it is the only save he used across both nights. The disk already carried the proof for that second — a 16 751 B z-pdf written to `Documents\ZPrivacy` at exactly 21:35:11 — and he confirms the hand behind it.
+
+**What this settles.** The 22 Oct 21:35:11 emptying has the same cause as the four measured on 23 Oct: it is paper 089 rule 9, «it has left», doing its work. Attribution in the 22 Oct report (step 5, finding 2) and anything downstream of it that reads 21:35:11 as a two-window fault now names as a fault what was the law. Per the lead, the 102 §3 guard stands either way — its two-states rule is sound against the real class, a run writing bytes it never read — and only the attribution moves, by a future paper rather than a quiet edit. This entry is that attribution travelling.
+
+**And the thing underneath it, which is the owner's, not the code's.** He used the one door that is defined as «the text has left this machine» as his everyday Save. Each time, the document left the session's list by design, and he met the empty list afterwards and read it as loss — his words on the night of 22 Oct, «closing the app and reopening it emptied the session», and again «the session was emptied and this we do not want». The rule did exactly what it promises. What he was never told, on the glass, is that saving a copy is a leaving. Recorded here as measurement, not as a proposal: the lead is carrying the question of the missing sentence to him directly.
+
+Nothing was run on this machine for this entry; no window was opened, no vault touched. Real `%LOCALAPPDATA%\ZPrivacy` unchanged (179 / 235 / 0 B, same mtimes). Test folder `LocalAppData-101` left as 23 Oct closed it: `vault.zv` 3344, `sessions\1.zs` 50, `settings.zcfg` 188, `writing.lock` 0.
