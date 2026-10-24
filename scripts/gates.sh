@@ -1605,6 +1605,92 @@ else
   skip "G69 the MSIX asks nobody and packs what was measured" "no $WINJOB in this tree"
 fi
 
+# ---------------------------------------------------------------- G71
+# **The NOTICE names the maker, and it travels** — paper 113, the owner's
+# licensing word of 24 October 2026: «إمكانية استخدام الكود في الشركات
+# والأفراد دون الرجوع إلى الشركة، ولكن يجب ذكر مصدر الكود والشركة المنتجة في
+# تعريف منتجاتهم. هذا هو الشرط الوحيد».
+#
+# Apache 2.0 does not change and nobody is asked for permission. The one
+# condition rides on the mechanism the licence already has: §4(d) binds anyone
+# who redistributes a work containing ours to carry **our NOTICE's**
+# attribution in their own notices, documentation or «About» screen. That
+# clause binds nothing at all unless a `NOTICE` file exists and actually
+# travels in the distribution — which is why this gate is not about a sentence
+# on a page but about a file in an artefact.
+#
+# Three things, and the third is the one a reader would forget:
+#
+#   1 — the file is there and is **the owner's own text, byte for byte**. Not a
+#       shape and not a few key words: he said «نعم» to five lines, and a gate
+#       that checked «does it mention Faruk AB» would let somebody reword the
+#       attribution a licence clause points at. The text is written out below
+#       so that this gate and the file can be read side by side; two places
+#       that must agree is the point, not an accident.
+#   2 — **every packaging path copies it beside LICENSE**: the Linux archive's
+#       own script, and the Windows job's staging step, which is the folder the
+#       Inno installer copies wholesale (`{#SourceDir}\*`) and the folder the
+#       MSIX is packed from — so one copy there is all three Windows artefacts.
+#   3 — **each of those paths asks for it by name afterwards.** A `cp` that
+#       fails under `set -e` stops the job, and the Linux script's `die` says
+#       which promise broke; the Windows job's own `for f in …` list and the
+#       MSIX's hash comparison are what turn «it was copied» into «it is in
+#       the thing people download». A gate that only read the `cp` would be
+#       green on a job that copied it and shipped an archive built before it.
+#
+# What this gate cannot do is open an `.msix` or a `.exe` on Linux, which is
+# why the Windows job carries its own two assertions and this reads that they
+# are there. The archive itself is read when one exists — `G14`'s own tar
+# listing — and paper 113's report carries the listing of each artefact.
+G71_TEXT=$(cat <<'THE_NOTICE'
+Z Privacy
+Copyright 2026 Faruk AB (Sweden, org.nr 559473-3494)
+https://z-privacy.com
+Source: https://github.com/YourVoicesApp/z-privacy
+
+This product includes software developed by Faruk AB.
+THE_NOTICE
+)
+G71_BAD=""
+if [ ! -f NOTICE ]; then
+  G71_BAD="there is no NOTICE at the root, so Apache §4(d) binds nobody to anything"
+elif [ "$(cat NOTICE)" != "$G71_TEXT" ]; then
+  G71_BAD="NOTICE is not the text the owner approved — $(diff <(printf '%s\n' "$G71_TEXT") NOTICE | tr '\n' ' ')"
+fi
+# The two places a copy has to be made, and the two places it has to be asked
+# for by name afterwards. Read as text, because the one platform that could run
+# the Windows half is not this one.
+if [ -z "$G71_BAD" ]; then
+  grep -q 'cp -f "$ROOT/NOTICE" "$STAGE/NOTICE"' scripts/package_linux.sh \
+    || G71_BAD="scripts/package_linux.sh does not put NOTICE in the archive"
+fi
+if [ -z "$G71_BAD" ] && [ -f "$WINJOB" ]; then
+  G71_WIN=$(grep -vE '^[[:space:]]*#' "$WINJOB")
+  grep -q 'cp -f ../../NOTICE "$dest/NOTICE"' <<< "$G71_WIN" \
+    || G71_BAD="the Windows job does not stage NOTICE, so neither the installer nor the MSIX carries it"
+  if [ -z "$G71_BAD" ]; then
+    grep -qE 'for f in LICENSE NOTICE ' <<< "$G71_WIN" \
+      || G71_BAD="the Windows job stages NOTICE and never asks for it by name — a copy nobody checks is a copy that can go missing in a reordered job"
+  fi
+  if [ -z "$G71_BAD" ]; then
+    grep -q '"NOTICE")) {' <<< "$G71_WIN" \
+      || G71_BAD="the MSIX is not compared against the staged NOTICE, and the MSIX is the artefact no gate here can open"
+  fi
+fi
+# And the folder says what is in it, on both platforms: a listing that names
+# LICENSE and not NOTICE is a folder lying about itself by omission.
+if [ -z "$G71_BAD" ]; then
+  for f in packaging/linux/README.txt packaging/windows/README.txt; do
+    grep -q '^  NOTICE' "$f" \
+      || G71_BAD="$f lists what is in the folder and does not name NOTICE"
+  done
+fi
+if [ -z "$G71_BAD" ]; then
+  pass "G71 the NOTICE names the maker and travels: the owner's six lines byte for byte, copied beside LICENSE by both packaging paths, asked for by name in each, compared against the MSIX, and named in both folder listings"
+else
+  fail "G71 $G71_BAD"
+fi
+
 # ---------------------------------------------------------------- G70
 # **The suite asks its own questions in a form with no writer to kill** —
 # paper 112, 24 October 2026, out of a false red that cost a round its trust.

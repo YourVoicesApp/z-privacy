@@ -49,6 +49,8 @@ If you ran install-shortcut.sh, ./install-shortcut.sh --remove takes the
 launcher and the icons back as well.
 
   LICENSE          Apache License 2.0, the whole text
+  NOTICE           who made this, and the one condition the licence carries:
+                   if you ship something built on this code, say so there
   BUILD-INFO.txt   which commit this was built from, and its hashes
   third-party/     everything else in here, and the licence it travels under
 

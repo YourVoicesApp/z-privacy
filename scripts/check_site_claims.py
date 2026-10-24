@@ -420,6 +420,132 @@ def the_language_trees():
         if os.path.exists(os.path.join(site, name, 'guide', 'index.html'))))
 
 
+# **The one condition on the code** — paper 113, the owner's licensing word of
+# 24 October 2026: Apache 2.0 for anybody, companies included, with nobody to
+# ask, and one condition — that a product built on this code says where the
+# code came from.
+#
+# The site says that where it names the licence: the three home pages and the
+# license page. What binds the page to the fact is **the NOTICE file itself**:
+# §4(d) binds a redistributor to carry *our NOTICE's* attribution, so the
+# attribution the pages quote has to be the one the file holds. The copyright
+# line is read out of `NOTICE` and required in every keyed element — the day
+# the owner changes the company, the year or the number, these pages red
+# instead of quietly quoting a line that no longer exists.
+#
+# `scripts/gates.sh`'s own `G71` holds the other end: that the file is the
+# owner's text byte for byte and that it travels inside every artefact. This
+# one is about the sentence a visitor reads.
+THE_ONE_CONDITION = ('the-one-condition-on-the-code', {
+    'en': ('\u00a74(d)', 'does not mean advertising'),
+    'de': ('\u00a74(d)', 'nicht gemeint ist Werbung'),
+    'ar': ('\u00a74(d)', '\u0648\u0644\u064a\u0633 \u0627\u0644\u0645\u0642\u0635\u0648\u062f\u064e \u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062a'),
+})
+
+
+def the_one_condition():
+    """One licensing sentence, in every language, quoting the file that binds it."""
+    key, halves = THE_ONE_CONDITION
+    bad = 0
+    notice = os.path.join(ROOT, 'NOTICE')
+    if not os.path.exists(notice):
+        say('FAIL', 'there is no NOTICE in the tree, and four pages tell a visitor that it is '
+                    'what the one condition is carried by')
+        return 1
+    lines = open(notice, encoding='utf-8').read().split('\n')
+    # The attribution itself, as the file holds it: «Copyright <year> <company>»
+    # without the registration that follows it in brackets, because that is the
+    # part a product's own notices are asked to carry.
+    whose = next((l.split(' (')[0].strip() for l in lines if l.startswith('Copyright ')), '')
+    if not whose:
+        say('FAIL', 'NOTICE carries no «Copyright …» line, so there is nothing for the pages to '
+                    'quote')
+        return 1
+    where = ['site/%s/index.html' % lang for lang in ('en', 'de', 'ar')]
+    where.append('site/license/index.html')
+    for rel in where:
+        if not os.path.exists(os.path.join(ROOT, rel)):
+            say('FAIL', '%s is not in the tree, and the licence is named on all four' % rel)
+            bad = 1
+            continue
+        page = served(read(rel))
+        held = re.findall(r'data-fact="%s"[^>]*>(.*?)</p>' % re.escape(key), page, re.S)
+        if len(held) != 1:
+            say('FAIL', '%s marks \u00ab%s\u00bb %d time(s) \u2014 every page that names the licence '
+                        'carries the condition once, or a reader of one is told what a reader '
+                        'of another is not' % (rel, key, len(held)))
+            bad = 1
+            continue
+        inside = held[0]
+        if whose not in inside:
+            say('FAIL', '%s quotes an attribution that is not NOTICE\u2019s own \u00ab%s\u00bb \u2014 '
+                        '\u00a74(d) binds what the file says and not what a page says it says'
+                % (rel, whose))
+            bad = 1
+        if 'NOTICE' not in inside:
+            say('FAIL', '%s states the condition and never names the file that carries it' % rel)
+            bad = 1
+        lang = rel.split('/')[1] if rel.startswith('site/') else 'en'
+        for words in halves.get(lang if lang in halves else 'en', ()):
+            if words not in inside:
+                say('FAIL', '%s says the one condition and not \u00ab%s\u00bb \u2014 the clause it '
+                            'rests on and the limit the owner accepted are both part of it'
+                    % (rel, words))
+                bad = 1
+    # **And the file itself is served, not only pointed at** — the publishing run
+    # found the reason: a link to the repository's own `NOTICE` is a 404 until
+    # the branch carrying it is pushed, and a licensing condition that answers
+    # 404 is worse than a download marker that does. So the license page holds
+    # the text as well, and it is held **byte for byte against the file** —
+    # which also makes the site's copy provably the one §4(d) points at.
+    rel = 'site/license/index.html'
+    page = served(read(rel))
+    import html as _html
+    served_text = re.findall(r'data-fact="the-notice-itself"[^>]*><code>(.*?)</code>',
+                             page, re.S)
+    if len(served_text) != 1:
+        say('FAIL', '%s serves the NOTICE %d time(s) — once, or a reader cannot tell which '
+                    'copy is the one the licence points at' % (rel, len(served_text)))
+        bad = 1
+    else:
+        want = open(notice, encoding='utf-8').read().rstrip('\n')
+        got = _html.unescape(served_text[0]).strip('\n')
+        if got != want:
+            say('FAIL', '%s serves a NOTICE that is not the file: %d line(s) against %d, and '
+                        'the first difference is «%s»'
+                % (rel, len(got.split('\n')), len(want.split('\n')),
+                   next((g for g, w in zip(got.split('\n'), want.split('\n')) if g != w),
+                        '(a missing or extra line)')))
+            bad = 1
+    if not bad:
+        say('PASS', 'the one condition on the code stands on all four pages that name the '
+                    'licence, each quoting NOTICE\u2019s own \u00ab%s\u00bb and naming the clause '
+                    'that binds it, and the license page serves the file\u2019s own six lines '
+                    'byte for byte' % whose)
+    return bad
+
+
+# **And what the two columns are** — the guide's own §h-columns paragraph, in
+# this table because it is the same claim seen from the other end.
+#
+# It used to say «What an AI would receive stands beside the original, word for
+# word, before anything is sent», and paper 110 made that wider than the tree:
+# what an AI receives at a **later** question is that column *and* the exchange
+# before it. The page says what the two columns **are** now — the request
+# itself, not a preview of it, standing beside the original — and points at the
+# section that says what travels, instead of answering it a second time in
+# words that would drift from it.
+#
+# So the needles are the two halves of that division: the app's own sentence
+# for what the column is, and the pointer that keeps «what travels» in exactly
+# one place on this page.
+THE_TWO_COLUMNS = ('what-the-two-columns-are', {
+    'en': ('not a preview of it', '#h-ask'),
+    'de': ('keine Vorschau davon', '#h-ask'),
+    'ar': ('not a preview of it', '#h-ask'),
+})
+
+
 def what_an_in_app_chat_sends(tree_only):
     """The owner's condition of publishing: the places, bound, in every language."""
     key = THE_CHAT_SENDS
@@ -498,6 +624,32 @@ def what_an_in_app_chat_sends(tree_only):
                     'says what a chat sends beside one that does not is the state this marker '
                     'exists to prevent' % (marked - provisional, marked))
         bad = 1
+    # **The columns paragraph, in the same pass** — one key per language, once,
+    # and both halves of the division it keeps.
+    col_key, col_halves = THE_TWO_COLUMNS
+    for lang in langs:
+        rel = 'site/%s/guide/index.html' % lang
+        if not os.path.exists(os.path.join(ROOT, rel)):
+            continue
+        page = served(read(rel))
+        held = re.findall(r'data-fact="%s"[^>]*>(.*?)</p>' % re.escape(col_key), page, re.S)
+        if len(held) != 1:
+            say('FAIL', '%s marks «%s» %d time(s) — the columns say what they are once on '
+                        'each page, or a language is describing a screen the others are not'
+                % (rel, col_key, len(held)))
+            bad = 1
+            continue
+        for words in col_halves.get(lang, ()):
+            if words not in held[0]:
+                say('FAIL', '%s says what the two columns are and not «%s» — the column is the '
+                            'request itself, and what travels beyond it belongs to the one '
+                            'section that says so' % (rel, words))
+                bad = 1
+    if not bad:
+        say('PASS', 'the two columns say what they are on %d pages, each quoting the app\u2019s own '
+                    'sentence for the right-hand one and leaving what travels to the section '
+                    'that measures it' % len(langs))
+
     if provisional and THE_CHAT_SENDS_WORDS:
         say('FAIL', 'the words are bound in the gate and %d place(s) still carry a marker — '
                     'the binding and the pages were filled in two different rounds' % provisional)
@@ -1110,7 +1262,7 @@ def main(tree_only=False):
         return 1
     bad = (crates() | fonts() | glossary(lits) | path(lits) | the_interface()
            | the_guide() | what_an_in_app_chat_sends(tree_only)
-           | the_download(tree_only))
+           | the_one_condition() | the_download(tree_only))
     print()
     print('every number on the site has a deed behind it' if not bad
           else 'A NUMBER ON THE SITE HAS NO DEED BEHIND IT')

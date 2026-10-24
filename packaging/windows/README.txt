@@ -16,6 +16,9 @@ What is in here
   msvcp140.dll            /
   data/                   fonts, icons and the application's own assets
   LICENSE                 Z Privacy's licence
+  NOTICE                  who made this, and the one condition the licence
+                          carries: if you ship something built on this code,
+                          say so in your own notices
   third-party/            everything in here that we did not write, with the
                           licence it travels under
   BUILD-INFO.txt          which commit this was built from, and the two
