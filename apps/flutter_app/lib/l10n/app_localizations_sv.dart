@@ -1009,7 +1009,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get eachSessionHasItsOwnEncryption =>
-      'Varje session har sin egen kryptering. Samma namn tar två olika platshållare i två sessioner, och i en session samma överallt — en session är alltså hur du väljer vad en AI kan lägga samman och vad den inte kan.';
+      'Varje session har sin egen kryptering. Samma namn tar två olika platshållare i två sessioner, och i en session samma överallt — en session är alltså hur du väljer vad en AI kan lägga samman och vad den inte kan. Nycklarna ligger alla i ditt valv, så att läsa tillbaka en skyddad fil är valvets egen dörr och inte en sessions: det som sparats från någon session i det här valvet kommer tillbaka i sina riktiga namn, och läsningen säger vilken session de kom från.';
 
   @override
   String get newSession => 'Ny session';

@@ -1011,7 +1011,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get eachSessionHasItsOwnEncryption =>
-      'Jede Sitzung hat ihre eigene Verschlüsselung. Derselbe Name nimmt in zwei Sitzungen zwei verschiedene Platzhalter, und in einer Sitzung überall denselben — eine Sitzung ist also, wie Sie wählen, was eine KI zusammenführen kann und was nicht.';
+      'Jede Sitzung hat ihre eigene Verschlüsselung. Derselbe Name nimmt in zwei Sitzungen zwei verschiedene Platzhalter, und in einer Sitzung überall denselben — eine Sitzung ist also, wie Sie wählen, was eine KI zusammenführen kann und was nicht. Die Schlüssel liegen alle in Ihrem Tresor, also ist das Zurücklesen einer geschützten Datei die Tür des Tresors und nicht die einer Sitzung: Was aus irgendeiner Sitzung dieses Tresors gespeichert wurde, kommt in seinen echten Namen zurück, und das Zurücklesen sagt, aus welcher Sitzung sie stammen.';
 
   @override
   String get newSession => 'Neue Sitzung';

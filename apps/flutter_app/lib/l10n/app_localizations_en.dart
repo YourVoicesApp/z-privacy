@@ -1007,7 +1007,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get eachSessionHasItsOwnEncryption =>
-      'Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot.';
+      'Each session has its own encryption. The same name in two sessions takes two different tokens, and in one session it takes the same one wherever it appears — so a session is how you choose what an AI can line up and what it cannot. The keys are all in your vault, so reading a protected file back is the vault’s own door and not a session’s: anything saved from any session in this vault comes back in its real names, and the reading says which session they came from.';
 
   @override
   String get newSession => 'New session';
