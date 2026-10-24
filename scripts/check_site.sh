@@ -619,7 +619,12 @@ while IFS= read -r f; do
     esac
     continue
   fi
-  printf '%s\n' "$mine" | awk '{print $2}' | grep -qxF "$me" \
+  # **No writer in front of `grep -q`** — paper 112: the reader exits at its
+  # first match and a writer still in the pipe takes SIGPIPE, which `pipefail`
+  # then reports as the pipeline's status. The column is taken first and the
+  # question is asked of a herestring, which has nothing to kill.
+  theirs=$(awk '{print $2}' <<< "$mine")
+  grep -qxF "$me" <<< "$theirs" \
     || h_fail "$rel lists language versions and leaves itself ($me) out of them"
   for a in $(printf '%s\n' "$mine" | awk '{print $2}' | sort -u); do
     tgt=".${a}index.html"

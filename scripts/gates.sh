@@ -79,7 +79,7 @@ else
 fi
 
 # G1d: the echo provider is for tests. It must never be a default feature.
-if grep -A3 '^\[features\]' z_core/Cargo.toml | grep -q '^default = \[\]'; then
+if ( set +o pipefail; grep -A3 '^\[features\]' z_core/Cargo.toml | grep -q '^default = \[\]' ); then
   pass "G1d the echo provider is not in z_core's default features"
 else
   fail "G1d z_core's default features are not empty — the echo provider may ship"
@@ -101,7 +101,7 @@ fi
 G27_READS=$(grep -Rn "config?\.packId\|config!\.packId" "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
             | grep -v '/src/rust/' | grep -vE ':[0-9]+: *//' || true)
 G27_N=$(printf '%s\n' "$G27_READS" | grep -c . || true)
-if [ "$G27_N" = "1" ] && printf '%s' "$G27_READS" | grep -q 'core/session_state.dart'; then
+if [ "$G27_N" = "1" ] && grep -q 'core/session_state.dart' <<< "$G27_READS"; then
   pass "G27 the app's language is read in one place, and it is the ground's own function"
 else
   fail "G27 the config's pack is read in $G27_N place(s), expected one in core/session_state.dart:"
@@ -164,7 +164,7 @@ G27_READERS=$(grep -Rn 'packForTheNextText(' "$FLUTTER_LIB" --include='*.dart' 2
               | grep -v '/src/rust/' | grep -vE ':[0-9]+: *//' \
               | grep -v 'String? packForTheNextText' || true)
 G27_RN=$(printf '%s\n' "$G27_READERS" | grep -c . || true)
-if [ "$G27_RN" = "1" ] && printf '%s' "$G27_READERS" | grep -q 'screens/shell.dart'; then
+if [ "$G27_RN" = "1" ] && grep -q 'screens/shell.dart' <<< "$G27_READERS"; then
   pass "G27 one reader asks for the language of the next text, and it is the hand that also asks the person"
 else
   fail "G27 the language of the next text is read in $G27_RN place(s), expected one in screens/shell.dart:"
@@ -310,7 +310,7 @@ for door in protect protect_all_matches protect_cell_in_lines; do
   ' "$DOORS")
   if [ -z "$BODY" ]; then
     G32_BAD="$G32_BAD $door(missing)"
-  elif ! printf '%s\n' "$BODY" | grep -q 'a_token_already_stands_there('; then
+  elif ! grep -q 'a_token_already_stands_there(' <<< "$BODY"; then
     G32_BAD="$G32_BAD $door"
   fi
 done
@@ -349,7 +349,7 @@ fi
 G32_DART=$(grep -Rn 'z\.returningDocument(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
            | grep -v '/src/rust/' || true)
 G32_DART_N=$(printf '%s\n' "$G32_DART" | grep -c . || true)
-if [ "$G32_DART_N" = "1" ] && printf '%s' "$G32_DART" | grep -q 'core/session_state.dart'; then
+if [ "$G32_DART_N" = "1" ] && grep -q 'core/session_state.dart' <<< "$G32_DART"; then
   pass "G32 one surface asks whether a document came back, and it is the bench"
 else
   fail "G32 the returning-document door is asked in $G32_DART_N place(s), expected one in core/session_state.dart:"
@@ -371,7 +371,7 @@ G32_KEYED=$(grep -c 'theTokenIsAlreadyOurs' apps/flutter_app/lib/l10n/app_en.arb
 G32_SAID_N=$(printf '%s\n' "$G32_SAID" | grep -c . || true)
 if [ "$G32_SAID_N" = "0" ] && [ "$G32_KEYED" != "0" ]; then
   pass "G32 «this is already protected — Z put it there» is worded in one place: the one list"
-elif [ "$G32_SAID_N" = "1" ] && printf '%s' "$G32_SAID" | grep -q 'core/messages.dart'; then
+elif [ "$G32_SAID_N" = "1" ] && grep -q 'core/messages.dart' <<< "$G32_SAID"; then
   pass "G32 «this is already protected — Z put it there» is worded in one place"
 else
   fail "G32 that sentence is written in $G32_SAID_N place(s), expected one in core/messages.dart:"
@@ -414,7 +414,7 @@ G33_STRAY_N=$(printf '%s\n' "$G33_STRAY" | grep -c . || true)
 if [ "$G33_STRAY_N" != "0" ]; then
   fail "G33 $G33_STRAY_N file(s) read a protect outcome outside core/messages.dart and core/protecting.dart:"
   printf '%s\n' "$G33_STRAY" | sed 's/^/        /'
-elif ! printf '%s\n' "$G33_FILES" | grep -q "^$FLUTTER_LIB/core/messages.dart$"; then
+elif ! grep -q "^$FLUTTER_LIB/core/messages.dart$" <<< "$G33_FILES"; then
   fail "G33 core/messages.dart matches no ProtectOutcome variant: the fold is gone, or it has stopped being exhaustive"
 else
   pass "G33 a protect outcome becomes a sentence in core/messages.dart and nowhere else"
@@ -883,7 +883,7 @@ fi
 G41_STALE=""
 while IFS= read -r allowed; do
   [ -z "$allowed" ] && continue
-  if ! printf '%s\n%s\n' "$G41_DART" "$G41_RUST" | grep -qE "$allowed"; then
+  if ! grep -qE "$allowed" <<< "$G41_DART"$'\n'"$G41_RUST"; then
     G41_STALE="$G41_STALE
         $allowed"
   fi
@@ -938,7 +938,7 @@ G46_BODY=$(awk '
   inside && /^}/ {print; inside=0; next}
   inside && $0 !~ /^[[:space:]]*\/\// {print}
 ' "$OPS_C")
-if printf '%s\n' "$G46_BODY" | grep -q 'the_chat_so_far'; then
+if grep -q 'the_chat_so_far' <<< "$G46_BODY"; then
   pass "G46 ask_model's own body builds the chat it carries"
 else
   fail "G46 ask_model reaches a model without asking for the chat so far — a second question would arrive alone again"
@@ -975,8 +975,8 @@ G46_STAMP=$(awk '
   inside && /^}/ {inside=0; next}
   inside && $0 !~ /^[[:space:]]*\/\// {print}
 ' "$OPS_C")
-if printf '%s\n' "$G46_STAMP" | grep -q 'p\.kept()' \
-   && ! printf '%s\n' "$G46_STAMP" | grep -qE '\bs\.kept\b'; then
+if grep -q 'p\.kept()' <<< "$G46_STAMP" \
+   && ! grep -qE '\bs\.kept\b' <<< "$G46_STAMP"; then
   pass "G46 the document a turn names is the one its payload carried, not whatever the bench holds when the answer lands"
 else
   fail "G46 ingest_answer takes the preview's handle off the bench — an answer carried back by hand would name no document, because the copy left before it came home"
@@ -1098,8 +1098,8 @@ if [ -f "$WINJOB" ]; then
   ' "$WINJOB")
   G60_MISSING=""
   for dll in $G60_DLLS; do
-    printf '%s\n' "$G60_COPY" | grep -qF "$dll" || G60_MISSING="$G60_MISSING copy:$dll"
-    printf '%s\n' "$G60_ASSERT" | grep -qF "$dll" || G60_MISSING="$G60_MISSING assert:$dll"
+    grep -qF "$dll" <<< "$G60_COPY" || G60_MISSING="$G60_MISSING copy:$dll"
+    grep -qF "$dll" <<< "$G60_ASSERT" || G60_MISSING="$G60_MISSING assert:$dll"
   done
   if [ -n "$G60_COPY" ] && [ -n "$G60_ASSERT" ] && [ -z "$G60_MISSING" ]; then
     pass "G60 the Windows job copies the three runtime libraries beside the application and asserts them (read as text: Linux cannot run that job)"
@@ -1120,7 +1120,7 @@ if [ -f "$WINJOB" ]; then
   # number is typed anywhere in the step. Comment lines are already dropped
   # above, which is what lets this paragraph name what it forbids.
   G60_TOOLSET=$(printf '%s\n' "$G60_COPY" | grep -cE 'Microsoft\.VC[0-9][0-9]*\.CRT' || true)
-  if printf '%s\n' "$G60_COPY" | grep -qF 'Microsoft.VC14*.CRT' && [ "$G60_TOOLSET" -eq 0 ]; then
+  if grep -qF 'Microsoft.VC14*.CRT' <<< "$G60_COPY" && [ "$G60_TOOLSET" -eq 0 ]; then
     pass "G60 the copy step asks the runner which CRT folder it has — one match by shape, and no toolset number typed"
   else
     fail "G60 the copy step names a toolset folder by hand ($G60_TOOLSET typed): the next runner image with a newer MSVC stops the release at the copy"
@@ -1169,10 +1169,10 @@ if [ -f "$WINJOB" ]; then
   ' "$WINJOB")
   printf '%s\n' "$G61_NEEDLES" | while IFS= read -r n; do
     [ -n "$n" ] || continue
-    printf '%s\n' "$G61_STEP" | grep -qF -- "$n" || printf 'job:%s\n' "$n"
+    grep -qF -- "$n" <<< "$G61_STEP" || printf 'job:%s\n' "$n"
   done > /tmp/g61.$$
   for f in $G61_OURS; do
-    printf '%s\n' "$G61_STEP" | grep -qF -- "$f" || printf 'job:%s\n' "$f" >> /tmp/g61.$$
+    grep -qF -- "$f" <<< "$G61_STEP" || printf 'job:%s\n' "$f" >> /tmp/g61.$$
   done
   # The remap's own half: read from the variables, not from a typed home.
   if ! grep -q 'cargo_home="$CARGO_HOME"' "$WINJOB"; then
@@ -1195,7 +1195,7 @@ if [ -f "$G61_SCRIPT" ]; then
   G61_LEFT=""
   printf '%s\n' "$G61_NEEDLES" | while IFS= read -r n; do
     [ -n "$n" ] || continue
-    printf '%s\n' "$G61_LIST" | grep -qF -- "$n" || printf 'script:%s\n' "$n"
+    grep -qF -- "$n" <<< "$G61_LIST" || printf 'script:%s\n' "$n"
   done > /tmp/g61s.$$
   G61_LEFT=$(tr '\n' ' ' < /tmp/g61s.$$)
   rm -f /tmp/g61s.$$
@@ -1225,8 +1225,8 @@ for f in scripts/package_linux.sh "$WINJOB"; do
   # census of what a file *does* may not read what it *says* — G53 and G60
   # learned the same lesson in this round.
   G61_DOES=$(grep -vE '^[[:space:]]*#' "$f")
-  printf '%s\n' "$G61_DOES" | grep -qF -- "$G61_STRIP" || G61_NOTICE="$G61_NOTICE $f:no-strip"
-  printf '%s\n' "$G61_DOES" | grep -qF -- "$G61_UNIX" && G61_NOTICE="$G61_NOTICE $f:unix-only"
+  grep -qF -- "$G61_STRIP" <<< "$G61_DOES" || G61_NOTICE="$G61_NOTICE $f:no-strip"
+  grep -qF -- "$G61_UNIX" <<< "$G61_DOES" && G61_NOTICE="$G61_NOTICE $f:unix-only"
 done
 if [ -z "$G61_NOTICE" ]; then
   pass "G61 both crate lists name the crate and not the folder it was built in, in one spelling"
@@ -1258,11 +1258,11 @@ if [ -f "$WINJOB" ]; then
   G63_WRONG=$(printf '%s\n' "$G63_DOING" \
     | grep -nE '(\.\./\.\./staging|-Path staging|path: staging|=staging[-/]|\$root\\staging)' || true)
   G63_MISSING=""
-  printf '%s\n' "$G63_DOING" | grep -q 'temp=${RUNNER_TEMP' || G63_MISSING="$G63_MISSING RUNNER_TEMP"
-  printf '%s\n' "$G63_DOING" | grep -q 'STAGE=\$temp/staging' || G63_MISSING="$G63_MISSING STAGE"
-  printf '%s\n' "$G63_DOING" | grep -q 'INSTALLER_OUT=\$temp/staging-installer' \
+  grep -q 'temp=${RUNNER_TEMP' <<< "$G63_DOING" || G63_MISSING="$G63_MISSING RUNNER_TEMP"
+  grep -q 'STAGE=\$temp/staging' <<< "$G63_DOING" || G63_MISSING="$G63_MISSING STAGE"
+  grep -q 'INSTALLER_OUT=\$temp/staging-installer' <<< "$G63_DOING" \
     || G63_MISSING="$G63_MISSING INSTALLER_OUT"
-  printf '%s\n' "$G63_DOING" | grep -q 'package_windows.sh "\$STAGE"' \
+  grep -q 'package_windows.sh "\$STAGE"' <<< "$G63_DOING" \
     || G63_MISSING="$G63_MISSING the-packaging-call"
   if [ -z "$G63_WRONG" ] && [ -z "$G63_MISSING" ]; then
     pass "G63 the Windows job stages under the runner's own temp, so the packaging script's clean-tree law cannot fire on the job's own folder"
@@ -1460,7 +1460,7 @@ if [ -f "$WINJOB" ]; then
   # `--` before the pattern: a switch is what is being looked for, and grep
   # would otherwise read `--install-certificate false` as an option of its own.
   for switch in --install-certificate --build-windows; do
-    printf '%s\n' "$G69_MSIX" | grep -qF -- "$switch false" \
+    grep -qF -- "$switch false" <<< "$G69_MSIX" \
       || G69_MISSING="$G69_MISSING «$switch false»"
   done
   if [ -n "$G69_MSIX" ] && [ -z "$G69_MISSING" ]; then
@@ -1489,11 +1489,11 @@ if [ -f "$WINJOB" ]; then
   # above the call quotes the switch this check forbids, and a gate that reds
   # on its own explanation measures nothing.
   G69_UNTIMED=""
-  printf '%s\n' "$G69_MSIX" | grep -qF -- '--signtool-options' \
+  grep -qF -- '--signtool-options' <<< "$G69_MSIX" \
     || G69_UNTIMED="$G69_UNTIMED «--signtool-options, or the tool writes the signing command itself and timestamps it»"
-  printf '%s\n' "$G69_MSIX" | grep -qF -- '/fd SHA256' \
+  grep -qF -- '/fd SHA256' <<< "$G69_MSIX" \
     || G69_UNTIMED="$G69_UNTIMED «/fd SHA256 inside those options»"
-  if printf '%s\n' "$G69_MSIX" | grep -qE '(^|[[:space:]"])/tr([[:space:]]|$)'; then
+  if grep -qE '(^|[[:space:]"])/tr([[:space:]]|$)' <<< "$G69_MSIX"; then
     G69_UNTIMED="$G69_UNTIMED «no /tr at all: a timestamp asked for a certificate that dies with this run»"
   fi
   if [ -n "$G69_MSIX" ] && [ -z "$G69_UNTIMED" ]; then
@@ -1511,7 +1511,7 @@ if [ -f "$WINJOB" ]; then
   ' "$WINJOB")
   G69_UNREAD=""
   for want in zprivacy.exe z_bridge.dll data/app.so vcruntime140.dll vcruntime140_1.dll msvcp140.dll ZipFile Get-FileHash 'env:STAGE'; do
-    printf '%s\n' "$G69_CMP" | grep -qF "$want" || G69_UNREAD="$G69_UNREAD $want"
+    grep -qF "$want" <<< "$G69_CMP" || G69_UNREAD="$G69_UNREAD $want"
   done
   if [ -n "$G69_CMP" ] && [ -z "$G69_UNREAD" ]; then
     pass "G69 the step after the MSIX opens the package as a zip and compares its six files with the staged copies, hash for hash"
@@ -1535,7 +1535,7 @@ if [ -f "$WINJOB" ]; then
   ' "$WINJOB")
   G69_UNASKED=""
   for want in 'if: always()' Get-AuthenticodeSignature NotSigned Remove-Item '*.msix' .cer; do
-    printf '%s\n' "$G69_SIG" | grep -qF -- "$want" || G69_UNASKED="$G69_UNASKED «$want»"
+    grep -qF -- "$want" <<< "$G69_SIG" || G69_UNASKED="$G69_UNASKED «$want»"
   done
   G69_SIG_AT=$(grep -n '^      - name: An unsigned package is not handed to anybody$' "$WINJOB" | cut -d: -f1)
   G69_UPLOAD_AT=$(awk '
@@ -1580,6 +1580,90 @@ if [ -f "$WINJOB" ]; then
   fi
 else
   skip "G69 the MSIX asks nobody and packs what was measured" "no $WINJOB in this tree"
+fi
+
+# ---------------------------------------------------------------- G70
+# **The suite asks its own questions in a form with no writer to kill** —
+# paper 112, 24 October 2026, out of a false red that cost a round its trust.
+#
+# `G63` reddened once on a tree it does not read — «the Windows job no longer
+# names: RUNNER_TEMP» — and passed on the run before it, on another seat's run
+# twenty minutes earlier, and on a second run of the same committed tree. The
+# shape was its own question: a writer piped into `grep -q` while this script
+# runs under `set -o pipefail`. The reader exits at its **first match**, the
+# writer still in the pipe takes SIGPIPE, and the pipeline's status becomes the
+# writer's 141 rather than the reader's 0 — so «is X present» answers «no»
+# about a file that holds it. Measured in the run's own shell: twenty attempts
+# each of that gate's four questions, and the one whose pattern matches
+# earliest missed **1 of 20** while the other three missed none. In a quiet
+# shell, 400 attempts missed none — which is the worst rate there is, because a
+# gate that reds once in twenty runs over nothing teaches every reader to
+# re-run it and believe the green.
+#
+# So the shape is gone from this suite — 44 questions became herestrings, 11
+# producers that must stay streams were wrapped in `( set +o pipefail; … )`,
+# and two more in `check_site.sh` and `check_storage_contracts.sh` went the
+# same way because the site gate runs on publishing day — and this is what
+# refuses the next one.
+#
+# **The rule, in a form a reader can hold:** a pipe into `grep -q` is allowed
+# only inside a subshell that turns `pipefail` off, and «inside» is read as
+# `set +o pipefail` on the same line or within the three lines above it.
+# Comment lines are dropped before anything is counted, because a gate that
+# quotes what it forbids fails on its own paragraph — this house has paid for
+# that four times in one round.
+#
+# **Its own limit, said out loud:** a `set +o pipefail` written three lines
+# above a pipeline but *outside* any subshell would satisfy this and disable
+# `pipefail` for everything after it. That is a worse thing than the one this
+# gate is about, it is visible in any diff of this file, and no text check can
+# tell a subshell from a scope without parsing shell — so it is named here
+# rather than guarded against.
+G70_SCRIPTS="scripts/gates.sh scripts/check_site.sh scripts/check_storage_contracts.sh"
+G70_BAD=""
+for f in $G70_SCRIPTS; do
+  [ -f "$f" ] || { G70_BAD="$G70_BAD
+$f: not in this tree, and the shape cannot be read out of a file that is not there"; continue; }
+  found=$(awk '
+    { line[NR] = $0 }
+    END {
+      for (i = 1; i <= NR; i++) {
+        s = line[i]
+        if (s ~ /^[ \t]*#/) continue
+        gsub(/\|\|/, "@@", s)              # «or» is not a pipe
+        if (s !~ /\|[ \t]*grep/) continue
+        if (s !~ /grep[^|]*-[A-Za-z]*q/) continue
+        ok = 0
+        for (j = i; j >= i - 3 && j >= 1; j--) {
+          if (line[j] ~ /set \+o pipefail/) ok = 1
+        }
+        if (!ok) printf "%d: %s\n", i, line[i]
+      }
+    }' "$f")
+  [ -n "$found" ] && G70_BAD="$G70_BAD
+$f
+$found"
+done
+if [ -z "$G70_BAD" ]; then
+  # **Counted off the code and never off the prose.** The first form of these
+  # two lines counted the phrase anywhere in the file and reported 15 wrapped
+  # streams where there are 11 — the other four are this paragraph and the line
+  # above. A counter that reads its own comment is the same fault as a gate
+  # that quotes what it forbids, one floor down, and it reached a PASS line.
+  # And each pattern is written so that **it cannot match the line it is
+  # written on**: the first wants whitespace on both sides of the redirection,
+  # the second wants the bracket at the start of a word — and both of these
+  # lines carry the shape inside quotes instead. The first form counted 15
+  # wrapped streams where there are 11, then 12 when the comment was dropped
+  # and the counter still read itself. A measuring tool that answers about
+  # itself is this house's oldest instrument fault, and it reached a PASS line
+  # twice in five minutes.
+  G70_HERE=$(grep -hvE '^[[:space:]]*#' $G70_SCRIPTS | grep -cE '[[:space:]]<<<[[:space:]]')
+  G70_WRAP=$(grep -hvE '^[[:space:]]*#' $G70_SCRIPTS | grep -cE '(^|[[:space:]])\( set \+o pipefail[[:space:]]*(;|$)')
+  pass "G70 no question in this suite is asked with a writer in front of «grep -q» — $G70_HERE herestring(s) and $G70_WRAP stream(s) wrapped where pipefail must stand aside"
+else
+  fail "G70 a writer is piped into «grep -q» under pipefail, and its answer can be the writer's:"
+  printf '        %s\n' "$G70_BAD"
 fi
 
 # ---------------------------------------------------------------- G56
@@ -1691,7 +1775,7 @@ G53_PACKS=$(printf '%s\n' "$G53_CODE" | grep -cE '^[[:space:]]*run: bash scripts
 G53_NEEDLE_LINE=$(grep -E '^for needle in ' "$PACK_WIN" 2>/dev/null | head -1)
 G53_NEEDLES=0
 for needle in 'D:\a\' 'C:\Users\runneradmin' '/home/'; do
-  printf '%s' "$G53_NEEDLE_LINE" | grep -qF -- "$needle" && G53_NEEDLES=$((G53_NEEDLES + 1))
+  grep -qF -- "$needle" <<< "$G53_NEEDLE_LINE" && G53_NEEDLES=$((G53_NEEDLES + 1))
 done
 if [ "$G53_PACKS" = "1" ] && [ "$G53_NEEDLES" = "3" ] && [ -f "$PACK_WIN" ]; then
   pass "G53 the Windows release is stamped and proved by one script, and it looks for the runner's own paths as well as «/home/»"
@@ -1756,8 +1840,8 @@ G49_BUILD=$(awk '
   inside && /^}/ {print; inside=0; next}
   inside && $0 !~ /^[[:space:]]*\/\// {print}
 ' "$BENCH" 2>/dev/null)
-if printf '%s\n' "$G49_BUILD" | grep -q 'what_would_leave' \
-   && ! printf '%s\n' "$G49_BUILD" | grep -q 'original.is_empty()'; then
+if grep -q 'what_would_leave' <<< "$G49_BUILD" \
+   && ! grep -q 'original.is_empty()' <<< "$G49_BUILD"; then
   pass "G49 the builder every door asks reads the bench once, and never the document alone"
 else
   fail "G49 build_payload decides for itself what is on the bench — an empty document closes three doors again while the fourth stays open"
@@ -1768,8 +1852,8 @@ G49_EXPORT=$(awk '
   inside && /^}/ {print; inside=0; next}
   inside && $0 !~ /^[[:space:]]*\/\// {print}
 ' "$BENCH" 2>/dev/null)
-if printf '%s\n' "$G49_EXPORT" | grep -q 'what_would_leave' \
-   && ! printf '%s\n' "$G49_EXPORT" | grep -q 'original.is_empty()'; then
+if grep -q 'what_would_leave' <<< "$G49_EXPORT" \
+   && ! grep -q 'original.is_empty()' <<< "$G49_EXPORT"; then
   pass "G49 the answer page is minted for whatever would leave, by that same reading"
 else
   fail "G49 the export door asks the document whether to mint an answer page — the PDF press then refuses a text the door let through («its answer page had no token»)"
@@ -1809,7 +1893,7 @@ G48_LAW=$(awk '
   inside && /^}/ {print; inside=0; next}
   inside && $0 !~ /^[[:space:]]*\/\// {print}
 ' "$SCAN_C" 2>/dev/null)
-if printf '%s\n' "$G48_LAW" | grep -q 'is_label_word'; then
+if grep -q 'is_label_word' <<< "$G48_LAW"; then
   pass "G48 no layer's candidate may be a word that names a field, asked once over the text"
 else
   fail "G48 the scanner settles its findings without asking whether one of them is a label — «IBAN» becomes a person again"
@@ -1996,8 +2080,8 @@ if [ -f "$G44_ARB" ]; then
       SITE_FILE=${SITE%%:*}
       SITE_REST=${SITE#*:}
       SITE_LINE=${SITE_REST%%:*}
-      if ! sed -n "${SITE_LINE},$((SITE_LINE + 3))p" "$SITE_FILE" 2>/dev/null \
-           | grep -q 'theirOwnWord'; then
+      if ! ( set +o pipefail; sed -n "${SITE_LINE},$((SITE_LINE + 3))p" "$SITE_FILE" \
+                 2>/dev/null | grep -q 'theirOwnWord' ); then
         G44_LIST_BAD="$G44_LIST_BAD$SITE
 "
       fi
@@ -2064,7 +2148,7 @@ G43_TAKERS=$(grep -Rn 'one_writer_at_a_time(' z_core/src --include='*.rs' 2>/dev
              | grep -v 'z_core/src/secure_file.rs:' \
              | grep -vE ':[0-9]+:[[:space:]]*(//|///)' || true)
 G43_N=$(printf '%s\n' "$G43_TAKERS" | grep -c . || true)
-if [ "$G43_N" = "1" ] && printf '%s' "$G43_TAKERS" | grep -q 'session.rs'; then
+if [ "$G43_N" = "1" ] && grep -q 'session.rs' <<< "$G43_TAKERS"; then
   pass "G43 one place takes the lock, and it is the boundary every write is inside"
 else
   fail "G43 the one-writer lock is taken in $G43_N place(s), expected one in session.rs — a second is a deadlock against the first:"
@@ -2508,7 +2592,7 @@ fi
 G36_DART=$(grep -Rn 'z\.openKeptDocument(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
            | grep -v '/src/rust/' || true)
 G36_DART_N=$(printf '%s\n' "$G36_DART" | grep -c . || true)
-if [ "$G36_DART_N" = "1" ] && printf '%s' "$G36_DART" | grep -q 'screens/shell.dart'; then
+if [ "$G36_DART_N" = "1" ] && grep -q 'screens/shell.dart' <<< "$G36_DART"; then
   pass "G36 one surface opens a saved document, and it is the shell"
 else
   fail "G36 a saved document is opened in $G36_DART_N place(s), expected one in screens/shell.dart:"
@@ -2614,7 +2698,8 @@ fi
 # bench like any other word because the owner asked for it to be protected like
 # any other — so the one place that lists the words a bench named has to drop
 # it by name, beside the store, where no caller can forget.
-if grep -A 12 'fn words_it_named' z_core/src/tokens.rs 2>/dev/null | grep -q 'ANSWER_PAGE_WORD'; then
+if ( set +o pipefail; grep -A 12 'fn words_it_named' z_core/src/tokens.rs 2>/dev/null \
+     | grep -q 'ANSWER_PAGE_WORD' ); then
   pass "G35 the answer page's own word is dropped where the words a bench named are listed"
 else
   fail "G35 nothing stops «Zprivacy-svara» becoming a block, which would protect our own word in every document for ever"
@@ -2687,7 +2772,7 @@ BACK=read_a_document_that_came_back
 G34_SIG=$(grep -n "^pub fn $BACK(" "$API_FILES_FIRST" 2>/dev/null || true)
 if [ "$(printf '%s\n' "$G34_SIG" | grep -c .)" != "1" ]; then
   fail "G34 the contract declares the door back $(printf '%s\n' "$G34_SIG" | grep -c .) time(s), expected one"
-elif printf '%s' "$G34_SIG" | grep -q 'SessionId'; then
+elif grep -q 'SessionId' <<< "$G34_SIG"; then
   fail "G34 the door back takes a session, so a returning document can be protected on one:"
   printf '%s\n' "$G34_SIG" | sed 's/^/        /'
 else
@@ -2732,7 +2817,7 @@ fi
 G34_DART=$(grep -Rn 'z\.readADocumentThatCameBack(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
            | grep -v '/src/rust/' || true)
 G34_DART_N=$(printf '%s\n' "$G34_DART" | grep -c . || true)
-if [ "$G34_DART_N" = "1" ] && printf '%s' "$G34_DART" | grep -q 'screens/shell.dart'; then
+if [ "$G34_DART_N" = "1" ] && grep -q 'screens/shell.dart' <<< "$G34_DART"; then
   pass "G34 one surface opens the door back, and it is the shell's «z-pdf» entry"
 else
   fail "G34 the door back is opened in $G34_DART_N place(s), expected one in screens/shell.dart:"
@@ -2768,7 +2853,7 @@ for door in import_text import_document; do
   ' "$DOORS")
   if [ -z "$BODY" ]; then
     G29_BAD="$G29_BAD $door(missing)"
-  elif ! printf '%s\n' "$BODY" | grep -q 'the_scan_that_arrives_with_the_document('; then
+  elif ! grep -q 'the_scan_that_arrives_with_the_document(' <<< "$BODY"; then
     G29_BAD="$G29_BAD $door"
   fi
 done
@@ -2783,7 +2868,7 @@ fi
 G29_DART=$(grep -Rn 'z\.scan(' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
            | grep -v '/src/rust/' || true)
 G29_DART_N=$(printf '%s\n' "$G29_DART" | grep -c . || true)
-if [ "$G29_DART_N" = "1" ] && printf '%s' "$G29_DART" | grep -q 'core/session_state.dart'; then
+if [ "$G29_DART_N" = "1" ] && grep -q 'core/session_state.dart' <<< "$G29_DART"; then
   pass "G29 one surface asks for a scan, and it is the bench's rescan"
 else
   fail "G29 the scan door is asked in $G29_DART_N place(s), expected one in core/session_state.dart:"
@@ -2837,7 +2922,7 @@ for door in $DOORS_OUT; do
   ' "$LAW")
   if [ -z "$BODY" ]; then
     G28_BAD="$G28_BAD $door(missing)"
-  elif ! printf '%s\n' "$BODY" | grep -q 'no_word_waits('; then
+  elif ! grep -q 'no_word_waits(' <<< "$BODY"; then
     G28_BAD="$G28_BAD $door"
   fi
 done
@@ -2853,7 +2938,7 @@ fi
 G28_DART=$(grep -Rn 'payloadToTakeOut' "$FLUTTER_LIB" --include='*.dart' 2>/dev/null \
            | grep -v '/src/rust/' || true)
 G28_DART_N=$(printf '%s\n' "$G28_DART" | grep -c . || true)
-if [ "$G28_DART_N" = "1" ] && printf '%s' "$G28_DART" | grep -q 'core/session_state.dart'; then
+if [ "$G28_DART_N" = "1" ] && grep -q 'core/session_state.dart' <<< "$G28_DART"; then
   pass "G28 one surface asks the core what may leave, and it is the order's own helper"
 else
   fail "G28 the exit door is asked in $G28_DART_N place(s), expected one in core/session_state.dart:"
@@ -3165,7 +3250,7 @@ fi
 WATCHERS=$(grep -RlE 'AppLifecycleListener|WidgetsBindingObserver|didChangeAppLifecycleState' \
              "$FLUTTER_LIB" --include='*.dart' 2>/dev/null | grep -v '/src/rust/' || true)
 WATCH_N=$(printf '%s' "$WATCHERS" | grep -c . || true)
-if [ "$WATCH_N" = "1" ] && printf '%s' "$WATCHERS" | grep -q 'screens/shell.dart'; then
+if [ "$WATCH_N" = "1" ] && grep -q 'screens/shell.dart' <<< "$WATCHERS"; then
   pass "G24 one place watches the window, and it is the shell"
 else
   fail "G24 the window is watched in $WATCH_N place(s), expected the shell alone:"
@@ -3202,7 +3287,7 @@ else
   fail "G23 the test clock is named outside z_core:"; printf '%s\n' "$G23_OUT" | sed 's/^/        /'
 fi
 
-if printf '%s' "$TEST_FEATURES" | grep -q 'test_clock'; then
+if grep -q 'test_clock' <<< "$TEST_FEATURES"; then
   pass "G23 the suite runs with the clock, so its tests cannot vanish silently"
 else
   fail "G23 TEST_FEATURES does not name test_clock — the clock tests are being skipped"
@@ -3483,7 +3568,7 @@ while IFS= read -r line; do
   REST=${line#*:}
   NUM=${REST%%:*}
   PREV=$((NUM - 1))
-  if sed -n "${PREV}p" "$FILE" 2>/dev/null | grep -qE 'G15-ok|G15-cfg'; then
+  if ( set +o pipefail; sed -n "${PREV}p" "$FILE" 2>/dev/null | grep -qE 'G15-ok|G15-cfg' ); then
     continue
   fi
   FS_BAD="$FS_BAD$line
@@ -3575,7 +3660,7 @@ fi
 # Two preconditions, each with its own sentence: a skip that cannot say which
 # tool is missing is a skip nobody acts on.
 WIN_TARGET=x86_64-pc-windows-gnu
-if ! rustup target list --installed 2>/dev/null | grep -qx "$WIN_TARGET"; then
+if ! ( set +o pipefail; rustup target list --installed 2>/dev/null | grep -qx "$WIN_TARGET" ); then
   skip "G4c the Windows half compiles, warnings included" "no $WIN_TARGET (rustup target add $WIN_TARGET)"
 elif ! command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
   skip "G4c the Windows half compiles, warnings included" "no cross C compiler (apt install gcc-mingw-w64-x86-64)"
@@ -3834,7 +3919,8 @@ if [ -f scripts/build_brand.py ] && [ -f brand/source.png ]; then
   # somebody's home.
   RUNNER=apps/flutter_app/linux/runner/my_application.cc
   if grep -q 'gtk_window_set_icon_list' "$RUNNER" 2>/dev/null \
-     && ! grep -nE '"/home/|g_get_home_dir' "$RUNNER" 2>/dev/null | grep -q .; then
+     && ! ( set +o pipefail
+            grep -nE '"/home/|g_get_home_dir' "$RUNNER" 2>/dev/null | grep -q . ); then
     pass "  the Linux window takes its icon from the bundle, relative to the executable"
   else
     fail "  the window icon is missing or is read from a home path ($RUNNER)"
@@ -3901,12 +3987,16 @@ if [ -f "$GW" ]; then
   else
     fail "  the gateway's request no longer carries a handle, or carries text beside it: $GW"
   fi
-  if grep -nE '"(de|sv|en)"|German|Swedish|Deutsch' "$GW" | grep -vE '^[0-9]+:\s*(//|///)|//!' | grep -q .; then
+  if ( set +o pipefail
+       grep -nE '"(de|sv|en)"|German|Swedish|Deutsch' "$GW" \
+         | grep -vE '^[0-9]+:\s*(//|///)|//!' | grep -q . ); then
     fail "the gateway names a language: $GW"
   else
     pass "  the gateway knows no language"
   fi
-  if grep -nE '\b(openai|anthropic)\b' "$GW" | grep -vE '^[0-9]+:\s*(//|///)|//!' | grep -q .; then
+  if ( set +o pipefail
+       grep -nE '\b(openai|anthropic)\b' "$GW" \
+         | grep -vE '^[0-9]+:\s*(//|///)|//!' | grep -q . ); then
     fail "the gateway names a provider: adding one would mean editing the door"
   else
     pass "  the gateway names no provider: $(grep -c 'Box::new' z_core/src/providers/mod.rs) listed in the registry"
@@ -3988,7 +4078,8 @@ fi
 # protection on its own.
 DISC=z_core/src/scanner/packs/de.rs
 if [ -f "$DISC" ]; then
-  if sed -n '/fn discover_names/,/^}/p' "$DISC" | grep -qE 'Confidence::|candidate\('; then
+  if ( set +o pipefail
+       sed -n '/fn discover_names/,/^}/p' "$DISC" | grep -qE 'Confidence::|candidate\(' ); then
     fail "discovery builds a protection: a candidate must only ever be a candidate ($DISC)"
   else
     pass "candidate discovery protects nothing by itself"
@@ -4031,7 +4122,9 @@ else
   skip "the name bank" "no generator yet"
 fi
 if grep -q 'Confidence::Suggest' z_core/src/scanner/packs/de.rs 2>/dev/null \
-   && ! grep -A6 'fn dictionary_names' z_core/src/scanner/packs/de.rs 2>/dev/null | grep -q 'Confidence::Auto'; then
+   && ! ( set +o pipefail
+          grep -A6 'fn dictionary_names' z_core/src/scanner/packs/de.rs 2>/dev/null \
+            | grep -q 'Confidence::Auto' ); then
   pass "  the name dictionary never protects by itself"
 else
   fail "  the name dictionary can raise a word to Auto on a list match alone"
@@ -4122,7 +4215,7 @@ ARCHIVE=$(ls -t dist/zprivacy-v1-linux-*.tar.gz 2>/dev/null | head -1)
 if [ -n "$ARCHIVE" ] && [ -f "$ARCHIVE" ]; then
   # Every byte of every file in it, read back out of the archive itself: the
   # binaries, the notices, BUILD-INFO, the crate list.
-  if tar xzOf "$ARCHIVE" 2>/dev/null | grep -qa '/home/'; then
+  if ( set +o pipefail; tar xzOf "$ARCHIVE" 2>/dev/null | grep -qa '/home/' ); then
     fail "  the archive carries a path from this machine ($ARCHIVE)"
   else
     pass "  no «/home/» anywhere in $(basename "$ARCHIVE")"

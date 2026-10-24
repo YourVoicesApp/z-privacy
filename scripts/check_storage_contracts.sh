@@ -118,7 +118,9 @@ for entry in "${CONTRACTS[@]}"; do
   done
   # An integration test lists as its bare name, a unit test as
   # `secure_file::tests::<name>` — one contract, one name, either spelling.
-  if printf '%s\n' "$LISTED" | grep -qE "(^|::)${name}\$"; then
+  # A herestring, not a pipe: see paper 112 — `grep -q` exits at its first
+  # match and a writer still in the pipe takes SIGPIPE under `pipefail`.
+  if grep -qE "(^|::)${name}\$" <<< "$LISTED"; then
     if [ -n "$owed_paper" ]; then
       # The debt was paid. Good news, and still a failure: a list that keeps
       # naming a debt somebody settled is a list nobody reads.
