@@ -34,13 +34,13 @@ Owner: «نضع إيميل الفيدباك في التطبيق في الإعد�
 
 So Settings gains **one copyable text box** holding `zprivacy@mono-peak.com`, and one sentence beside it: copy the address and write to us from your own email. Add «describe the problem, don't send your documents» if it fits in the same sentence. **No `mailto:` press, no form, no window, no network door.** The app sends nothing and opens nothing. C-03 («no Z Privacy server») and its gates stand untouched. Copying is selectable text or a copy press that puts the address on the clipboard, your call. If it is a press, it is the one clipboard write this item makes, and it carries the address alone. The site is **not** touched for this item, because the address already stands there.
 
-## 6 · The site says what an in-app chat sends: the owner's condition for publishing
+## 6 · The site says what an in-app chat sends
 
-Owner, 24 Oct: we publish **without** the new context memory (model-written defining words per turn, the next round), **on one condition he will not give up**: «أن نكتب في الويب أن الجلسات ترسل للنموذج داخل التطبيق كما يتم الآن، وأن هذه المشكلة تُحل في التطوير القادم».
+Owner, 24 Oct: we publish **without** the context-words memory (the next round), **on one condition he will not give up**: the site says plainly what an in-app chat sends to the model. Then, the same morning, he changed what it sends (paper 110, ed): **a later question carries only the exchange before it, the previous question and its answer in protected form, and never the document.** So the site states that new truth, taken from C-13's line once ed fixes it. Do not write it from this paper's paraphrase.
 
-The measured truth is C-13's own limit line, so the site sentence says exactly that and no more. **When you ask inside the app, every later question carries the session's earlier questions and answers with it to the model, in their protected form. A long chat sends more, not less. The document itself is sent once.** Then the next step as intent, said plainly and never dated: the next version changes this so that a later question carries a few context words per earlier exchange instead of the whole history. Word it as what we are building, not as a guarantee.
+In substance: when you ask inside the app, each later question carries only the question before it and its answer, protected. The document is sent once, and older exchanges stay in your session and are not sent. If a sentence about the next step still fits (context words for older exchanges), word it as what we are building, never dated, never a guarantee.
 
-Where: the home page where in-app asking is described, the guide's chat section, and the privacy page if it describes what reaches a provider. Your call, but name every place, since the same fact in four tongues is the 12-identical-sentences doctrine. All four languages (en, de, ar, sv). `check_site_claims.py` must bind the new sentence to C-13. Say in your report how it binds, and if C-13 needs a line for it, send that line to the lead for ed. **The final wording comes to the lead before merge, and the owner sees it before the site goes up.**
+Where: the home page where in-app asking is described, the guide's chat section, and the privacy page if it describes what reaches a provider. Name every place. Use the same fact in en, de, ar and sv. `check_site_claims.py` binds the sentence to C-13. **This item waits for 110's C-13 line, and the final wording comes to the lead before merge. The owner sees it before the site goes up.**
 
 ## The one list
 
