@@ -769,3 +769,43 @@ Asked by the lead and carried to the owner: «on 22 Oct at 21:35:11, in window A
 **And the thing underneath it, which is the owner's, not the code's.** He used the one door that is defined as «the text has left this machine» as his everyday Save. Each time, the document left the session's list by design, and he met the empty list afterwards and read it as loss — his words on the night of 22 Oct, «closing the app and reopening it emptied the session», and again «the session was emptied and this we do not want». The rule did exactly what it promises. What he was never told, on the glass, is that saving a copy is a leaving. Recorded here as measurement, not as a proposal: the lead is carrying the question of the missing sentence to him directly.
 
 Nothing was run on this machine for this entry; no window was opened, no vault touched. Real `%LOCALAPPDATA%\ZPrivacy` unchanged (179 / 235 / 0 B, same mtimes). Test folder `LocalAppData-101` left as 23 Oct closed it: `vault.zv` 3344, `sessions\1.zs` 50, `settings.zcfg` 188, `writing.lock` 0.
+
+## 24 October 2026, 08:45–11:01 — the foreign z-pdf, and the owner's own question: is the key in the session or in the vault?
+
+Same bench as 23 Oct: Inno-installed 78988fd, `LOCALAPPDATA` pointed at `…\LocalAppData-101`, 1-second watcher, fixtures only. The owner put the question himself: «bringing a document from a different session — the decryption key is supposed to be in the session, so it should not be decryptable». Two halves, and they do not answer the same way.
+
+### Half one — a z-pdf from another VAULT: it refuses, and it says why
+
+Staged under an unmistakable name: the 22 Oct lock-test export, 16 751 B, token root `6466`, against this vault's root `235A`. Verbatim on the glass (screenshot 14):
+
+> **«This document carries 19 names from a session this vault does not hold (6466). Nothing here can put them back: the key that made them is not in this vault.»**
+
+Better than the sentence the lead expected from the code («0 names came back.»): it names the foreign root and says what is missing. **No byte was written, no scan ran, nothing reached a bench** — `vault.zv` sat at 3344 across the whole attempt.
+
+**The 19 against the file's own 18.** The footer says «23 places replaced, 18 values», the sentence says 19 names, and the two are both right over different scopes — the owner named the distinction himself before I could measure it («places are the blocks' places, not the count of words, because a word may repeat»). Counted from the file:
+
+| | places | values |
+|---|---|---|
+| page 1, the document body | 23 | 18 |
+| page 2, the document's own name, protected: `Z-pdf : __Z_6466_CUSTOM_66C4A18B__` | 1 | 1 |
+| what the read-back counted | 24 | **19** |
+
+So the footer counts the body, the sentence counts the file. Both honest, and side by side on one screen they read as a contradiction. Small, and the lead's to weigh.
+
+### Half two — a z-pdf from another SESSION of the SAME vault: it reads back in full
+
+Built on the bench: `الجلسة الثانية` born 09:46:02, a fixture imported 09:50:20, hand-protects to 09:53:52, saved 09:54:16. Its tokens carry root **`3FEE`**, against Session 1's **`235A`** — so the app's own claim that «each session has its own encryption» is true in the naming. Then, to rule out memory, **the process was ended and a new one started** (pid 2528, 09:58:33), the vault unlocked again, and the file read back **in Session 1**. Verbatim (screenshot 15):
+
+> **«20 names came back from «الجلسة الثانية».»**
+
+All 20 values, across a restart, from a session the reader is not in. The sentence names the **originating** session, not the current one — the app knows whose file it is and says so.
+
+**So the boundary is the vault, not the session.** The key that opens a z-pdf is held by the vault; the session decides only how a value is *named*. The owner's expectation was the opposite, and he had read it from the Sessions panel's own words («Each session has its own encryption. The same name in two sessions takes two different tokens»). That sentence is true and still leaves him expecting isolation he does not have. His verdict on the behaviour itself: «I think the vault works excellently.» Recorded as measurement; what the glass should say about it is his and the lead's.
+
+**One side effect, noted not judged.** Reading a z-pdf by importing it as a *document* (rather than through the read-back door) makes the reading session treat the foreign tokens as values and protect them again under its own root: the safe column showed `__Z_235A_BIC_2CB8F794__` where the file carried a `3FEE` token. Import wrote 29 B to `vault.zv` (4407 → 4436) and 3076 B to `sessions\1.zs` at 10:05:07.
+
+### A refinement of the 23 Oct save finding
+
+The save at 09:54:16 took `sessions\2.zs` from 6601 B to **3747 B**, not to 50 — and 3747 is exactly its size at 09:50:20, before that document entered. So rule 9 lifts **the document that left**, not the session. On 23 Oct it looked like a full emptying only because the session held one document. The 50-byte floor is an empty body, not a wipe.
+
+Disk at the close: `vault.zv` 4436, `sessions\1.zs` 3076, `sessions\2.zs` 3747, `settings.zcfg` 188, `writing.lock` 0. Real `%LOCALAPPDATA%\ZPrivacy` unchanged throughout: 179 / 235 / 0 B on their old mtimes.
