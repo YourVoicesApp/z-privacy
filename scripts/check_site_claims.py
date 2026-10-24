@@ -368,13 +368,29 @@ THE_CHAT_SENDS_WORDS = {
 # the hour between the second ruling and the third is what that costs when it
 # is guessed at.
 #
-# **The candidates, so the next hand has one look and not a search** — from the
-# substance as the lead passed it over, to be replaced by whatever ed's own
-# words turn out to be: «the payload as it stands», «the exchange before it»,
-# «sent once». Confirm each against `docs/CLAIMS.md`'s C-13 on the merged tip
-# before putting it here; the gate's own state-2 sentence says this is owed.
+# **Filled, by the hand that wrote the line** — paper 110's own seat, on the
+# assembled tip where the register and the pages are in one tree. Three phrases,
+# one per side of the owner's law, each read out of the committed limit line and
+# not typed from memory:
+#
+#   * «the payload as it stands» — what a person carries to a model of their own,
+#     which is the clipboard's whole half;
+#   * «one exchange before it» — what the in-app door **adds** on top of that
+#     same payload, and the words «one» and «before» are the fact: not two, and
+#     not what came after;
+#   * «sent once» — the document, which is what neither door sends twice.
+#
+# The fourth phrase the pages are checked by («nothing older is lost») is in the
+# line too and is deliberately not here: these three are the binding, and a
+# binding that quoted the whole sentence would red on any rewording of any part
+# of it rather than on a change of the fact.
+#
+# Two of the lead's three candidates were byte-exact and one was not — «the
+# exchange before it» is «the **one** exchange before it» in the register — which
+# is the whole reason this table is read off the line instead of off a summary
+# of it.
 C_13_BEFORE = 'carries the earlier turns'
-C_13_AFTER = ()
+C_13_AFTER = ('the payload as it stands', 'one exchange before it', 'sent once')
 
 
 def the_language_trees():
