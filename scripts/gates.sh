@@ -2446,6 +2446,32 @@ else
   printf '%s\n' "$G36_GONE" | sed 's/^/        /'
 fi
 
+# **And one function writes a session's file** — paper 102 §3's shape, read
+# here because paper 109 measured what that guard actually reaches: every
+# writer of a body reads the file first inside the same lock, so the guard
+# catches a read that went stale *between* a read and a write, and no first
+# press can redden it. So what holds the shape is this census — one writer, in
+# the one place the guard is. A second writer would be a write nobody checks,
+# which is the same shape as a second hand removing a copy above.
+#
+# **It reads code and not comments**, because the sentence above `write_body`
+# names this very call: a gate that quotes what it counts counts its own
+# prose, and the function it would then name is whichever one happens to sit
+# above the doc block.
+G36_WRITER=$(awk '
+  /^[[:space:]]*(\/\/|\*)/ { next }
+  /^(pub\(crate\) )?fn [a-z_]+/ { match($0, /fn [a-z_]+/); here = substr($0, RSTART + 3, RLENGTH - 3) }
+  /crate::conversation::write\(/ { print here }
+' "$KEPT" | sort -u | tr '\n' ' ' | sed 's/ $//')
+G36_ELSEWHERE=$(grep -rn 'conversation::write(' z_core/src --include='*.rs' \
+                  | grep -v "^$KEPT:" | grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|\*)' || true)
+if [ "$G36_WRITER" = "write_body" ] && [ -z "$G36_ELSEWHERE" ]; then
+  pass "G36 one function writes a session's file, and it is the one that refuses another owner's bytes (102 §3)"
+else
+  fail "G36 a session's file is written by «$G36_WRITER» and from outside $KEPT, so a write can get past the 102 §3 guard"
+  printf '%s\n' "$G36_ELSEWHERE" | sed 's/^/        /'
+fi
+
 # **The session file's own version moved, and the table says so.** The third of
 # the three numbers, and the one rule 9 spends: a saved document is in the
 # conversation's file, not in the vault's body.

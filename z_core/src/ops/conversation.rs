@@ -1022,11 +1022,36 @@ fn take_the_names(
 /// **Replace this session's file, and only what this run has read** — paper
 /// 102 §3, the session file's own `ensure_disk_unchanged`.
 ///
-/// The vault has refused to write over bytes it had not read since 050/A; this
-/// file was replaced whatever was there, and the two-window round of
-/// 22 October measured the price: `sessions/1.zs` held a document and eleven
-/// decisions at 21:35:03 and held an empty body at 21:35:11, while `vault.zv`
-/// did not move at all. One of the two windows wrote a body it had not read.
+/// The vault has refused to write over bytes it had not read since 050/A, and
+/// this file was replaced whatever was there.
+///
+/// **The example that stood here was read wrong, and the owner named its author
+/// on 24 October 2026.** It said: `sessions/1.zs` held a document and eleven
+/// decisions at 21:35:03 and held an empty body at 21:35:11 while `vault.zv`
+/// did not move at all, so one of two windows wrote a body it had not read. In
+/// that same second he had saved a protected PDF — «أنا حفظت جميع الملفات عن
+/// طريق حفظ نسخة PDF» — and the Windows session's entry of 24 October
+/// (commit `e36c92c`) records the 16 751-byte z-pdf written into
+/// Documents\ZPrivacy at exactly 21:35:11. The PDF is a door, 089 rule 9 takes
+/// the preview's copy out at every door, and a session holding no turns and no
+/// copy **is** an empty body — `the_manual_door_takes_it_out` measures that
+/// door doing it. Nothing was lost there.
+///
+/// **The guard below is not weakened by losing that example**, because it
+/// answers a class and not an incident: a body written over bytes this run
+/// never read is another owner's file whatever happened in October.
+///
+/// **And this is what it reaches, said here because nobody had said it:** every
+/// writer of a body reads the file first, inside this same lock — `body()` a
+/// line or two above each call of this function — so what the guard catches is
+/// a read that went **stale between a read and a write**, and never a press
+/// that reads as it writes. A test built to drive it the other way round, by
+/// moving the file before the act, would assert a refusal that cannot happen
+/// and stay green for ever; the shape is held by a census instead, read by gate
+/// `G36`: this is the only function in `z_core/src` that calls
+/// `crate::conversation::write`. A guard whose stated reason turns out to be
+/// something else is a guard nobody can reason about later, which is why the
+/// reason is corrected here rather than quietly left standing.
 ///
 /// So a write is allowed in exactly two states, and in no third:
 ///
