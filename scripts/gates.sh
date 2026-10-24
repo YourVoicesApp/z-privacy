@@ -1627,16 +1627,28 @@ fi
 #       attribution a licence clause points at. The text is written out below
 #       so that this gate and the file can be read side by side; two places
 #       that must agree is the point, not an accident.
-#   2 — **every packaging path copies it beside LICENSE**: the Linux archive's
-#       own script, and the Windows job's staging step, which is the folder the
-#       Inno installer copies wholesale (`{#SourceDir}\*`) and the folder the
-#       MSIX is packed from — so one copy there is all three Windows artefacts.
+#   2 — **every packaging path copies it beside LICENSE, and there are two of
+#       them on Windows, not one.** This gate said «the staging, which is what
+#       the installer copies wholesale and what the MSIX is packed from», and
+#       the second half was **wrong** — found by paper 113's own MSIX
+#       comparison on its first real run (40128478018): «NOTICE is in the MSIX
+#       0 time(s), not once», with the six binaries agreeing. `msix:create
+#       --build-windows false` packs the runner's **Release** folder; the
+#       staging is what the zip and the Inno installer are made from, and the
+#       six binaries matched only because the staging copies them *from*
+#       Release. So the two files the staging adds of its own — LICENSE and
+#       NOTICE — were in no MSIX ever built. Paper 114 copies both into Release
+#       in the step that puts the C++ runtime there, before the needle search
+#       and the hashing read that folder, and this gate reads all three places:
+#       the Linux archive's script, the Windows staging, and Release.
 #   3 — **each of those paths asks for it by name afterwards.** A `cp` that
 #       fails under `set -e` stops the job, and the Linux script's `die` says
 #       which promise broke; the Windows job's own `for f in …` list and the
 #       MSIX's hash comparison are what turn «it was copied» into «it is in
 #       the thing people download». A gate that only read the `cp` would be
-#       green on a job that copied it and shipped an archive built before it.
+#       green on a job that copied it and shipped an archive built before it —
+#       and a gate that reads only the staging would be green on a job whose
+#       MSIX carries neither file, which is exactly what happened.
 #
 # What this gate cannot do is open an `.msix` or a `.exe` on Linux, which is
 # why the Windows job carries its own two assertions and this reads that they
@@ -1673,8 +1685,22 @@ if [ -z "$G71_BAD" ] && [ -f "$WINJOB" ]; then
       || G71_BAD="the Windows job stages NOTICE and never asks for it by name — a copy nobody checks is a copy that can go missing in a reordered job"
   fi
   if [ -z "$G71_BAD" ]; then
-    grep -q '"NOTICE")) {' <<< "$G71_WIN" \
-      || G71_BAD="the MSIX is not compared against the staged NOTICE, and the MSIX is the artefact no gate here can open"
+    # **Anchored, because paper 114 gave this file two lines that read alike.**
+    # The copy into Release is `foreach ($legal in @("LICENSE", "NOTICE"))` and
+    # the comparison's list ends `… "LICENSE", "NOTICE")) {` on a line of its
+    # own — so a pattern without the anchor was green on either of them, and
+    # the pin that was supposed to prove the comparison bites found it by
+    # matching twice. One of the two places is enough to satisfy a loose
+    # pattern, which is a gate measuring the wrong half.
+    grep -qE '^[[:space:]]+"LICENSE", "NOTICE"\)\) \{' <<< "$G71_WIN" \
+      || G71_BAD="the MSIX comparison does not name LICENSE and NOTICE together, and the MSIX is the artefact no gate here can open"
+  fi
+  # **And the folder the MSIX actually packs carries them** — paper 114. The
+  # staging is the installer's; Release is the MSIX's, and a copy into one is
+  # not a copy into the other.
+  if [ -z "$G71_BAD" ]; then
+    grep -q 'foreach ($legal in @("LICENSE", "NOTICE"))' <<< "$G71_WIN" \
+      || G71_BAD="nothing puts LICENSE and NOTICE into the Release folder, which is what msix:create packs — the staging is the installer's folder, not the MSIX's"
   fi
 fi
 # And the folder says what is in it, on both platforms: a listing that names
@@ -1686,7 +1712,7 @@ if [ -z "$G71_BAD" ]; then
   done
 fi
 if [ -z "$G71_BAD" ]; then
-  pass "G71 the NOTICE names the maker and travels: the owner's six lines byte for byte, copied beside LICENSE by both packaging paths, asked for by name in each, compared against the MSIX, and named in both folder listings"
+  pass "G71 the NOTICE names the maker and travels: the owner's six lines byte for byte, into the archive, into the installer's staging and into the Release folder the MSIX packs, asked for by name in each, both licence files compared against the MSIX itself, and named in both folder listings"
 else
   fail "G71 $G71_BAD"
 fi
