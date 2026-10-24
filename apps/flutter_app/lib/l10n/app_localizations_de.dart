@@ -501,7 +501,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theChatOpensHereWithTheFirstAnswer =>
-      'Der Chat öffnet sich hier mit der ersten Antwort, und jede Frage danach trägt mit, was schon gesagt wurde.';
+      'Der Chat öffnet sich hier mit der ersten Antwort, und jede Frage danach trägt den Austausch davor mit.';
 
   @override
   String get typedText => 'Eingegebener Text';
@@ -796,7 +796,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theFirstAnswerOpensTheChatHere =>
-      'Die erste Antwort öffnet den Chat hier. Jede Frage danach trägt mit, was schon gesagt wurde.';
+      'Die erste Antwort öffnet den Chat hier. Jede Frage danach trägt den Austausch davor mit — nicht den ganzen Chat, und das Dokument nie wieder.';
 
   @override
   String get askSomethingElseAboutThis => 'Fragen Sie etwas anderes dazu…';
@@ -822,7 +822,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theChatIsOnYourClipboard =>
-      'Der Chat liegt geschützt in Ihrer Zwischenablage — bringen Sie die Antwort mit «Eine Antwort hinzufügen» zurück.';
+      'Der letzte Austausch liegt geschützt in Ihrer Zwischenablage — bringen Sie die Antwort mit «Eine Antwort hinzufügen» zurück.';
 
   @override
   String get couldNotReadTheClipboard =>

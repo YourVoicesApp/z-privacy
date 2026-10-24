@@ -4435,7 +4435,9 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_reason_that_quotes_a_persons_word_isolates_it \
          a_document_that_arrives_with_the_vault_shut_has_no_session \
          a_refused_press_leaves_the_blocks_working \
-         a_second_question_carries_the_first_turn_as_it_left \
+         a_second_question_carries_the_turn_before_it_without_the_document \
+         a_third_question_carries_only_the_exchange_before_it \
+         the_copy_is_one_exchange_and_still_brings_home_a_name_from_the_first_turn \
          a_follow_up_question_leaves_without_the_document \
          a_follow_up_with_no_question_in_it_is_refused \
          a_chat_that_ended_is_not_carried_into_the_next_one \

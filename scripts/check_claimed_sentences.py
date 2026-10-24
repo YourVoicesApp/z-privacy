@@ -118,9 +118,13 @@ PINNED: dict[str, tuple[str, str]] = {
         'C-11',
         'Not a setting. A suggestion that has not been answered is never quietly treated as safe, and there is no «send anyway» — not here, not in a hidden flag, not anywhere in the code.',
     ),
+    # **110, the owner's ruling of 24 October 2026.** «The last exchange», not
+    # «the chat»: the copy narrowed with the history it is built from, and a
+    # sentence that still said «the chat» would promise the whole conversation
+    # at the one door that no longer hands it over.
     'theChatIsOnYourClipboard': (
         'C-13',
-        'The chat is on your clipboard, protected — bring the answer back with «Add an answer».',
+        'The last exchange is on your clipboard, protected — bring the answer back with «Add an answer».',
     ),
 }
 

@@ -1214,10 +1214,15 @@ void main() {
     // The panel had «As the model wrote it» over the whole of it and the coded
     // copy stood on that side. The thread draws the coded form by default now,
     // so there is nothing to switch to, and what takes it out is rule 65's own
-    // door at the foot of the chat: «Copy the chat», which carries every turn
-    // in the form it travelled in (A4). What was being measured here — **a
+    // door at the foot of the chat: «Copy the chat», which carries the exchange
+    // before in the form it travelled in (A4). What was being measured here — **a
     // coded copy asks nothing and leaves no name behind** — is measured on
     // that door.
+    //
+    // **Since 110 that door carries the one exchange before, not every turn**
+    // (the owner, 24 October 2026). This chat holds one, so what is measured
+    // here is unchanged: the answer as the model wrote it leaves, the name
+    // does not, and a token does.
     expect(find.text('As the model wrote it'), findsNothing,
         reason: 'the tab rule 66 deleted is back over the answer');
     await tester.tap(inPanel(find.text(sentences.copyTheChat)));

@@ -140,6 +140,24 @@ fn the_earlier_request(told: &str) -> String {
         .to_string()
 }
 
+/// **The instructions as the echo was handed them, read from the first byte.**
+///
+/// [the_instructions] reads the text *between* the first two `[instructions: `
+/// markers and then cuts at a `]\n`, which is right for a history that carries
+/// one plain answer. From the **third** question of a chat it reads an empty
+/// string, and that is not a fault in the law: the answer of the second turn
+/// is the echo's own text, and the echo repeats what it was told — so the
+/// instructions of the third question **contain a nested** `[instructions: …]`
+/// block, and the slice between the first two markers holds no closing `]\n`
+/// at all. Measured, with 110's law working perfectly.
+///
+/// So this reads from the first marker to the end and lets the assertions say
+/// where the text begins: what this house assembles is at the top, and nothing
+/// a model says can forge the first bytes.
+fn the_instructions_from_the_top(said: &str) -> String {
+    said.split_once("[instructions: ").map_or(String::new(), |(_, rest)| rest.to_string())
+}
+
 /// **As close to closing the application as one process gets.**
 ///
 /// The folder is set again, which reloads the vault from disk and empties the
@@ -155,19 +173,29 @@ fn close_the_app_and_reopen(dir: &std::path::Path, bench: SessionId) {
 
 // ------------------------------------------------------------------ A1
 
-/// **The second question carries the first turn, as it left** — rule 67.
+/// **The second question carries the turn before it, without the document** —
+/// rule 67 (17 October 2026), **as amended by the owner on 24 October 2026**.
 ///
-/// The one assertion this round exists for. The second request's instructions
-/// hold the first payload **as the model saw it** — the document, the
-/// `--- Request ---` line and the request — and the first answer **as the model
-/// wrote it**. Nothing is restored on the way in: the name is in neither half,
-/// the token is in both.
+/// **This guard was reversed in 110, and the two sentences it used to carry are
+/// kept here on purpose.** It asserted that the earlier request in the history
+/// held «the payload as it left» — the document, the `--- Request ---` line and
+/// the request — and its reason was written into the failure message: «the
+/// model is being asked a follow-up about a letter it cannot see». That was a
+/// true cost and the owner has now chosen to pay it: «فقط السؤال السابق مع
+/// الإجابة بدون الوثيقة… يكفي لأن الإجابة تُبنى بالتتابع». An answer is built in
+/// sequence; the document is sent once, with the question that first carried
+/// it; and a chat stops paying a provider for the same letter at every turn.
+///
+/// So what is measured now is the other half of the same sentence: the first
+/// turn's **request** is there, its **document** is not, and the answer is
+/// there as the model wrote it. Nothing is restored on the way in: the name is
+/// in neither half.
 ///
 /// And nothing *more*: one earlier request and one earlier answer, counted,
 /// because a history that grew by itself would be the model paying for text
 /// twice.
 #[test]
-fn a_second_question_carries_the_first_turn_as_it_left() {
+fn a_second_question_carries_the_turn_before_it_without_the_document() {
     let _g = serial();
     let dir = fresh_vault("carries");
     let (held, number) = ready("en");
@@ -187,14 +215,14 @@ fn a_second_question_carries_the_first_turn_as_it_left() {
     // echo's own repetition of the payload and would answer for it.
     let asked = the_earlier_request(&told);
     assert!(
-        asked.contains("--- Request ---"),
-        "the earlier request in the history is not the payload as it left: the \
-         document and the request travelled together and the history holds only half of it"
+        !asked.contains("--- Request ---"),
+        "the earlier request carries the payload's own request line, so it was taken \
+         whole and the document came with it (110)"
     );
     assert!(
-        asked.contains("Payroll run, February"),
-        "the document the first question carried is not in the history, so the \
-         model is being asked a follow-up about a letter it cannot see"
+        !asked.contains("Payroll run"),
+        "the document the first question carried rode into the second question — the \
+         person put it in once, and pays for it twice (110)"
     );
     assert!(
         asked.contains("What does this letter say?"),
@@ -209,9 +237,14 @@ fn a_second_question_carries_the_first_turn_as_it_left() {
         "a name was restored on its way into the history — the protection of the \
          document was theatre from the second question onwards"
     );
+    // **The token is in the answer half** — and it is asked of that half by
+    // name since 110: the request this history carries is the person's own
+    // sentence, which need hold no token at all, so asking the whole text
+    // would let a history that had lost its tokens pass on the strength of
+    // the echo's repetition.
     assert!(
-        told.contains("__Z_"),
-        "the history carries no token at all, so it is not the text that left"
+        told.split("--- Earlier answer ---").nth(1).unwrap_or("").contains("__Z_"),
+        "the answer in the history carries no token at all, so it is not the text that came back"
     );
     assert_eq!(
         told.matches("--- Earlier request ---").count(),
@@ -228,6 +261,66 @@ fn a_second_question_carries_the_first_turn_as_it_left() {
         "the two turns of one chat are not in one chat"
     );
     assert_eq!(the_open_chat(number).expect("the open chat"), 1);
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **The third question carries the second exchange, and not the first** —
+/// 110's red-first pin, the owner's ruling of 24 October 2026.
+///
+/// Three questions in one chat. Before this round the third carried both
+/// earlier turns (and the tenth carried nine), so what a chat sent grew with
+/// the square of its length. Now it carries the one exchange before it.
+///
+/// **Asked of the request half, and that is not a convenience.** The echo
+/// repeats what it was told, so the *answer* of the second turn holds the
+/// history the second question carried — which holds the first question and
+/// the document. That is the answer as it arrived and it is kept raw by rule
+/// 65; what this round is about is what **we** assemble, and that is the
+/// request half. A real model's answer would hold whatever it chose to quote.
+#[test]
+fn a_third_question_carries_only_the_exchange_before_it() {
+    let _g = serial();
+    let dir = fresh_vault("third");
+    let (held, _) = ready("en");
+    let bench = held.0;
+
+    ask_with_the_document(bench, "What does this letter say?");
+    ask_the_question_alone(bench, "And the amount?");
+    let said = ask_the_question_alone(bench, "And who prepared it?");
+    let told = the_instructions_from_the_top(&said);
+
+    // **Read from the first byte, and the labels are not counted.** The echo
+    // repeats what it was told, so the *answer* of the second turn holds the
+    // history that went with the second question — labels and all. Counting
+    // «--- Earlier request ---» over the whole text therefore counts the
+    // echo's own quotation and not what this house assembled: measured, and
+    // the count was 2 with the law working perfectly. What cannot be forged by
+    // anything the model says is the **beginning**: the history is assembled
+    // oldest first, so the first bytes are the oldest exchange this house put
+    // in. Under the old law they were the first question's whole payload.
+    assert!(
+        told.starts_with("--- Earlier request ---\nAnd the amount?"),
+        "the third question's history does not begin with the exchange before it:\n{told}"
+    );
+    let asked = the_earlier_request(&told);
+    assert!(
+        asked.contains("And the amount?"),
+        "the exchange the third question carries is not the one before it: «{asked}»"
+    );
+    assert!(
+        !asked.contains("What does this letter say?"),
+        "the first question is still being carried at the third, so a long chat still \
+         sends more with every question"
+    );
+    assert!(
+        !asked.contains("Payroll run"),
+        "the document rode into the third question"
+    );
+    assert!(
+        !told.contains(NAME),
+        "a name was restored on its way into the history"
+    );
 
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -431,6 +524,83 @@ fn the_chat_a_person_takes_away_is_the_text_the_model_was_shown() {
         "the copy in a person's hand and the history the model is shown are two \
          different texts"
     );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// **The copy is the one exchange the next question would carry — and it still
+/// brings home a name born in the first turn** — 110, the lead's own pin of
+/// 24 October 2026.
+///
+/// Two halves, and they are the whole of the shape that was chosen over
+/// splitting the builder:
+///
+///   * **the text narrows** with the history, because the clipboard is a chat
+///     for a person who has no provider and «less text leaves» is true at both
+///     doors. What the copy holds is the exchange the *next* question would
+///     carry, which is the last one stored — that is the invariant
+///     `the_chat_a_person_takes_away_is_the_text_the_model_was_shown` reads,
+///     and it is why «the copy after the third question» is the third
+///     exchange and not the second;
+///   * **the permission does not narrow.** An answer the person brings back
+///     may name a token born in any turn of the chat, and it comes home in
+///     their own name. Narrowing `allowed` with the text reddened
+///     `an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name`
+///     at once, which is the measurement that settled this.
+#[test]
+fn the_copy_is_one_exchange_and_still_brings_home_a_name_from_the_first_turn() {
+    let _g = serial();
+    let dir = fresh_vault("copyone");
+    let (held, number) = ready("en");
+    let bench = held.0;
+
+    // Turn one carries the document, so the name's token is born there.
+    ask_with_the_document(bench, "What does this letter say?");
+    let first = conversation_turns(number, Some(bench)).expect("turns")[0]
+        .question_as_it_left
+        .clone();
+    let born_first: Vec<String> = first
+        .split_whitespace()
+        .filter(|w| w.starts_with("__Z_"))
+        .map(|w| w.trim_end_matches(|c: char| !c.is_alphanumeric() && c != '_').to_string())
+        .collect();
+    assert!(!born_first.is_empty(), "the document protected nobody, so this measures nothing");
+
+    ask_the_question_alone(bench, "And the amount?");
+    ask_the_question_alone(bench, "And who prepared it?");
+
+    let out = chat_to_take_out(bench).expect("the chat");
+    // The same instrument as the pin above, and for the same reason: the
+    // labels inside an answer are the echo's words, and the first bytes are
+    // ours.
+    assert!(
+        out.what_leaves.text.starts_with("--- Earlier request ---\nAnd who prepared it?"),
+        "the copy does not begin with the exchange the next question would carry:\n{}",
+        out.what_leaves.text
+    );
+    let asked = the_earlier_request(&out.what_leaves.text);
+    assert!(
+        asked.contains("And who prepared it?"),
+        "the copy is not the exchange the next question would carry: «{asked}»"
+    );
+    assert!(
+        !asked.contains("Payroll run") && !out.what_leaves.text.contains(NAME),
+        "the document or the name left this machine on the clipboard"
+    );
+
+    // **And the permission is whole**: a hand-carried answer that names the
+    // token born in the first turn comes home as the name.
+    let answered = format!("{} is the person who prepared it.", born_first[0]);
+    ingest_answer(out.handle, answered).expect("paste");
+    let rows = conversation_turns(number, Some(bench)).expect("turns");
+    let turn = rows.last().expect("the pasted turn");
+    let restored: String = turn.answer.iter().map(|s| s.text.as_str()).collect();
+    assert!(
+        !restored.contains("__Z_"),
+        "a token born in the first turn came home as a token, so narrowing the copy's \
+         text narrowed its permission too: {restored}"
+    );
+    assert!(turn.unresolved.is_empty(), "the turn names a token it could not place");
 
     let _ = std::fs::remove_dir_all(&dir);
 }

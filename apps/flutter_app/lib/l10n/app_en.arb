@@ -707,7 +707,7 @@
   "@yourQuestionsAndWhatCameBack": {
     "description": "The third part's rule line."
   },
-  "theChatOpensHereWithTheFirstAnswer": "The chat opens here with the first answer, and every question after it carries what was already said.",
+  "theChatOpensHereWithTheFirstAnswer": "The chat opens here with the first answer, and every question after it carries the exchange before it.",
   "@theChatOpensHereWithTheFirstAnswer": {
     "description": "The third part when it is empty — rule 68's own promise, said before it is true."
   },
@@ -1123,7 +1123,7 @@
   "@putTheChatAwayItIsNotEnded": {
     "description": "Rule 71: hiding the third part is not ending the chat, and the tooltip says so rather than letting a person guess."
   },
-  "theFirstAnswerOpensTheChatHere": "The first answer opens the chat here. Every question after it carries what was already said.",
+  "theFirstAnswerOpensTheChatHere": "The first answer opens the chat here. Every question after it carries the exchange before it — not the whole chat, and never the document again.",
   "@theFirstAnswerOpensTheChatHere": {
     "description": "The chat panel with no turn in it yet."
   },
@@ -1155,7 +1155,7 @@
   "@endTheChat": {
     "description": "Rule 71: the chat ends and the surface starts from zero inside the same session."
   },
-  "theChatIsOnYourClipboard": "The chat is on your clipboard, protected — bring the answer back with «Add an answer».",
+  "theChatIsOnYourClipboard": "The last exchange is on your clipboard, protected — bring the answer back with «Add an answer».",
   "@theChatIsOnYourClipboard": {
     "description": "After «Copy the chat»: what is on the clipboard and what to do next."
   },

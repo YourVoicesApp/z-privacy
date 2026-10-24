@@ -805,11 +805,22 @@ fn a_session_for_what_leaves(session: SessionId) -> ApiResult<()> {
 
 /// **The chat, for the person to take away** — rule 65's copy, the fourth door.
 ///
-/// Every turn of the open chat, the question as it left and the answer as it
-/// arrived, in the one form they are kept in. The text is built by
-/// `the_chat_so_far`, which is also what the next question carries as its
-/// history: **what a person copies out is what the model was shown**, and two
-/// builders would have made that two different texts.
+/// The one exchange before, the question as it left and the answer as it
+/// arrived, in the one form they are kept in — **since 110** (the owner's
+/// ruling of 24 October 2026, amending rule 67), where it was every turn of the
+/// open chat. The text is built by `the_chat_so_far`, which is also what the
+/// next question carries as its history: **what a person copies out is what the
+/// model was shown**, and two builders would have made that two different
+/// texts. So this door narrowed with the other one, by the lead's word, and the
+/// cost is said rather than hidden: there is no door left that hands a person
+/// their whole conversation, and the whole of it stays readable in the
+/// session's own room (rule 69).
+///
+/// **What did not narrow is the list of tokens this copy may bring home.** An
+/// answer the person carries back may name a token born in any turn of the
+/// chat, and it comes home in their own name — the measurement that settled
+/// the shape, in
+/// `an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name`.
 ///
 /// **It asks the one law** (`no_word_waits`, G28/C3): it is a door text leaves
 /// this machine by, and a door that carried its own exception is the shape this
@@ -960,7 +971,9 @@ pub(crate) fn ask_model(
     with_core(|core| the_decisions_are_written(core, handle.session));
     allow_tokens(handle, &safe.tokens)?;
     let workspace = safe.text;
-    // **The earlier turns of this chat, built by the core** — rule 67.
+    // **The one exchange before this one, built by the core** — rule 67 as
+    // amended on 24 October 2026 (110): the previous question and its answer,
+    // without the document, and nothing older.
     //
     // Read here, one line before the send, so that what travels is what the
     // file holds at the moment of the send and not what it held when a screen

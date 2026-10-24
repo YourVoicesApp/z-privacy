@@ -498,7 +498,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get theChatOpensHereWithTheFirstAnswer =>
-      'The chat opens here with the first answer, and every question after it carries what was already said.';
+      'The chat opens here with the first answer, and every question after it carries the exchange before it.';
 
   @override
   String get typedText => 'Typed text';
@@ -793,7 +793,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get theFirstAnswerOpensTheChatHere =>
-      'The first answer opens the chat here. Every question after it carries what was already said.';
+      'The first answer opens the chat here. Every question after it carries the exchange before it — not the whole chat, and never the document again.';
 
   @override
   String get askSomethingElseAboutThis => 'Ask something else about this…';
@@ -818,7 +818,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get theChatIsOnYourClipboard =>
-      'The chat is on your clipboard, protected — bring the answer back with «Add an answer».';
+      'The last exchange is on your clipboard, protected — bring the answer back with «Add an answer».';
 
   @override
   String get couldNotReadTheClipboard =>

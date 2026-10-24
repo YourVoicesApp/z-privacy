@@ -501,7 +501,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get theChatOpensHereWithTheFirstAnswer =>
-      'Chatten öppnas här med det första svaret, och varje fråga efter den bär med sig vad som redan sagts.';
+      'Chatten öppnas här med det första svaret, och varje fråga efter den bär med sig utbytet före den.';
 
   @override
   String get typedText => 'Inskriven text';
@@ -796,7 +796,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get theFirstAnswerOpensTheChatHere =>
-      'Det första svaret öppnar chatten här. Varje fråga efter den bär med sig vad som redan sagts.';
+      'Det första svaret öppnar chatten här. Varje fråga efter den bär med sig utbytet före den — inte hela chatten, och aldrig dokumentet igen.';
 
   @override
   String get askSomethingElseAboutThis => 'Fråga något annat om det här…';
@@ -821,7 +821,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get theChatIsOnYourClipboard =>
-      'Chatten ligger skyddad i ditt urklipp — hämta tillbaka svaret med «Lägg till ett svar».';
+      'Det senaste utbytet ligger skyddat i ditt urklipp — hämta tillbaka svaret med «Lägg till ett svar».';
 
   @override
   String get couldNotReadTheClipboard => 'Z Privacy kunde inte läsa urklippet.';

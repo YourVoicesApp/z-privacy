@@ -407,6 +407,27 @@ pub(crate) fn record_in(
     Ok(body.turns.len() as u32)
 }
 
+/// **The request part of a question that carried a document** — 110.
+///
+/// A first turn's question is the payload as it left: the document, the request
+/// line, then the request. Carrying it whole would send the document a second
+/// time, which is the one thing rule 67's other half already forbids at the
+/// payload's own door — so what travels is what follows the line. A follow-up
+/// has no line in it and travels whole, which is also exactly what left.
+///
+/// **The last line and not the first.** A document may hold these very words
+/// itself. Cutting at the first would carry the tail of the document into the
+/// next question; cutting at the last can only ever carry *less* of the
+/// person's own request. Of the two ways to be wrong, one sends their document
+/// and the other sends less of their sentence.
+fn the_request_part(question: &str) -> &str {
+    const LINE: &str = crate::session::Session::THE_REQUEST_LINE;
+    match question.rfind(LINE) {
+        Some(at) => &question[at + LINE.len()..],
+        None => question,
+    }
+}
+
 /// **The label on an earlier request, and on an earlier answer.**
 ///
 /// English, like every other string that leaves this device — the payload's own
@@ -417,15 +438,36 @@ pub(crate) fn record_in(
 const AN_EARLIER_REQUEST: &str = "--- Earlier request ---";
 const AN_EARLIER_ANSWER: &str = "--- Earlier answer ---";
 
-/// **The turns of the chat that is open, in the form they travelled in** —
-/// rule 67, the owner's «لا أستطيع أن أتابع الشات معه على نفس الموضوع».
+/// **The one exchange before, in the form it travelled in** — rule 67 (the
+/// owner's «لا أستطيع أن أتابع الشات معه على نفس الموضوع», 17 October 2026),
+/// **amended by his ruling of 24 October 2026**: «نوقف إرسال الجلسة أو سياق
+/// الجلسة… فقط السؤال السابق مع الإجابة بدون الوثيقة… يكفي لأن الإجابة تُبنى
+/// بالتتابع».
 ///
-/// One entry per side of each turn, labelled, oldest first. **One builder and
-/// two readers**: the history a new question carries (`ops::ask_model`) and the
+/// Rule 67 as written on 17 October carried **every** earlier turn of the open
+/// chat, so what one chat sent grew with the square of its length: the tenth
+/// question carried nine exchanges, and the person paid a provider for every
+/// word of it. Since 110 the text is the **previous question and its answer**
+/// and nothing older — an answer is built in sequence, and the exchange just
+/// before is the context that matters.
+///
+/// **And never the document.** A first turn's question *is* the payload as it
+/// left — document, request line, request (`ingest_answer` says so where it
+/// stores it) — so what is carried from such a turn is its request part alone
+/// (`the_request_part`).
+///
+/// **Nothing older is lost**: every earlier turn stays in the sealed session
+/// file and is read there (rule 69). What changed is what leaves.
+///
+/// One entry per side of the one turn, labelled. **One builder and two
+/// readers**: the history a new question carries (`ops::ask_model`) and the
 /// copy a person takes away (`ops::chat_to_take_out`) are the same text, so
 /// they are the same function. Two of them would part company the first day
 /// somebody changed a label, and the person would be copying out something
-/// other than what the model was shown.
+/// other than what the model was shown. The lead's ruling of 24 October keeps
+/// it that way: the clipboard is a chat for a person who has no provider, so
+/// «less text leaves» is true at both doors, and a person who wants the whole
+/// conversation reads it in the session's own room.
 ///
 /// **Nothing is restored and nothing is protected again.** What the file holds
 /// is what travelled — the question as it left, the answer as it arrived — and
@@ -445,23 +487,40 @@ pub(crate) fn the_chat_so_far(core: &mut crate::session::Core) -> ApiResult<TheC
     let Some(number) = open_in(core) else { return Ok(TheChatSoFar::default()) };
     let Some(body) = body(core, number)? else { return Ok(TheChatSoFar::default()) };
     let mut out = TheChatSoFar::default();
-    for turn in body.turns.iter().filter(|t| t.chat_number == body.chat_now) {
+    let its: Vec<&crate::conversation::Turn> =
+        body.turns.iter().filter(|t| t.chat_number == body.chat_now).collect();
+    // **The text is the one exchange before, and nothing older** — 110. The
+    // last turn of the open chat: the question as it left, with the document
+    // cut off it, and the answer as it arrived.
+    if let Some(turn) = its.last() {
         if !turn.question.trim().is_empty() {
-            out.lines.push(format!("{AN_EARLIER_REQUEST}\n{}", turn.question));
+            out.lines.push(format!("{AN_EARLIER_REQUEST}\n{}", the_request_part(&turn.question)));
         }
         if !turn.answer.trim().is_empty() {
             out.lines.push(format!("{AN_EARLIER_ANSWER}\n{}", turn.answer));
         }
+    }
+    // **The tokens and the anchor are still read over the whole chat** — G9
+    // and rule 69, and this is the one place 110 does *not* narrow. What may
+    // come back is wider than what stands in the text: an answer the person
+    // brings back by hand against the copy may name a token born in the first
+    // question, and
+    // `an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name`
+    // measures that it comes home in their own name. Narrowing this list with
+    // the text reddened that guard at once, which is the measurement that
+    // settled the shape: the text narrows, the permission does not.
+    for turn in &its {
         for token in &turn.allowed {
             if !out.allowed.contains(token) {
                 out.allowed.push(token.clone());
             }
         }
         // **The document this chat began with** — rule 69, the first turn that
-        // names one. The transcript holds that document word for word (its
-        // first turn is the payload as it left), so a copy of the chat carries
-        // it and an answer brought back against that copy belongs under the
-        // same document in the session's room.
+        // names one. An answer brought back against the chat's copy belongs
+        // under the document the chat began with, and since 110 the copy no
+        // longer holds that document's text — so this handle is the whole of
+        // what anchors it, and it is read over every turn rather than off the
+        // one that is carried.
         if out.kept.is_none() && turn.kept_number > 0 {
             out.kept = Some(crate::session::KeptHandle {
                 session: number,
@@ -483,7 +542,13 @@ pub(crate) fn the_chat_so_far(core: &mut crate::session::Core) -> ApiResult<TheC
 /// name the model was never shown.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct TheChatSoFar {
-    /// One entry per side of each turn, labelled, oldest first.
+    /// **One entry per side of the one exchange before** — 110. The previous
+    /// question, with the document cut off it, and the previous answer.
+    ///
+    /// It was every turn of the open chat until 24 October 2026 (rule 67 as
+    /// first written), which is why the field is a list and not a pair: the
+    /// shape outlived the law, and a pair would have to be unpacked again the
+    /// day a ruling widens it.
     pub lines: Vec<String>,
     /// **Every token the turns of this chat were allowed to carry** — G9.
     ///

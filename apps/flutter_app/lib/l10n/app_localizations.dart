@@ -824,7 +824,7 @@ abstract class AppLocalizations {
   /// The third part when it is empty — rule 68's own promise, said before it is true.
   ///
   /// In en, this message translates to:
-  /// **'The chat opens here with the first answer, and every question after it carries what was already said.'**
+  /// **'The chat opens here with the first answer, and every question after it carries the exchange before it.'**
   String get theChatOpensHereWithTheFirstAnswer;
 
   /// The name of a document that came in through the box rather than from a file.
@@ -1328,7 +1328,7 @@ abstract class AppLocalizations {
   /// The chat panel with no turn in it yet.
   ///
   /// In en, this message translates to:
-  /// **'The first answer opens the chat here. Every question after it carries what was already said.'**
+  /// **'The first answer opens the chat here. Every question after it carries the exchange before it — not the whole chat, and never the document again.'**
   String get theFirstAnswerOpensTheChatHere;
 
   /// The box at the foot of the thread: the next question of this chat.
@@ -1376,7 +1376,7 @@ abstract class AppLocalizations {
   /// After «Copy the chat»: what is on the clipboard and what to do next.
   ///
   /// In en, this message translates to:
-  /// **'The chat is on your clipboard, protected — bring the answer back with «Add an answer».'**
+  /// **'The last exchange is on your clipboard, protected — bring the answer back with «Add an answer».'**
   String get theChatIsOnYourClipboard;
 
   /// The platform refused the read.
