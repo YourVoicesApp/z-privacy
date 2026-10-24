@@ -47,6 +47,7 @@ import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/send_sheet.dart';
 import 'the_bridge_the_tests_speak_through.dart';
 import 'the_folder_lets_go.dart';
+import 'the_press_that_asks_for_a_name.dart';
 
 final _libPath = theBridgeTheTestsSpeakThrough;
 
@@ -280,7 +281,7 @@ void main() {
     await _settle(tester);
     // The press itself, which births the session on its way — the door the
     // owner actually uses, and the only one that proves the thread.
-    await tester.tap(find.text(sentences.saveAsPdf));
+    await saveAsPdfCalled(tester, 'Rechnung');
     await _settle(tester, rounds: 16);
 
     final born = ground.openSession;
@@ -343,7 +344,7 @@ void main() {
       ),
     ));
     await _settle(tester);
-    await tester.tap(find.text(sentences.saveAsPdf));
+    await saveAsPdfCalled(tester, 'Rechnung');
     await _settle(tester, rounds: 16);
 
     expect(ground.openSession, isNull,

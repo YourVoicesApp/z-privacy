@@ -2750,6 +2750,43 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String couldNotAskWhereToSaveIt(String why) {
+    return 'Z Privacy konnte den Speichern-Dialog Ihres Systems nicht öffnen — $why. Es wurde nichts geschrieben.';
+  }
+
+  @override
+  String get nameThisDocument => 'Diesem Dokument einen Namen geben';
+
+  @override
+  String get whatIsThisDocumentCalled => 'Wie heißt dieses Dokument?';
+
+  @override
+  String get theFileNameIsNotProtected =>
+      'Der Dateiname bleibt genau so, wie Sie ihn tippen. Er geht mit der Datei hinaus — schreiben Sie also keine echten Namen hinein.';
+
+  @override
+  String get aNameIsNeededForThisDocument =>
+      'Ein Name fehlt — die Datei wird danach benannt.';
+
+  @override
+  String get saveAsAPlainPdf => 'Als einfaches PDF speichern';
+
+  @override
+  String get aPlainPdfOfTheRestoredText =>
+      'Speichert das Dokument oben mit seinen Namen darin, als gewöhnliches PDF — keine Antwortseite, keine Fußzeile, nichts, was einen Schutz behauptet. Die Werte stehen im Klartext darin.';
+
+  @override
+  String get copyTheAddressAndWriteToUs =>
+      'Kopieren Sie diese Adresse und schreiben Sie uns von Ihrer eigenen E-Mail aus. Z Privacy öffnet nichts und sendet nichts: Hier gibt es kein Formular und keine Verbindung zu uns.';
+
+  @override
+  String get writeToUs => 'Schreiben Sie uns';
+
+  @override
+  String get describeTheProblemNotYourDocuments =>
+      'Beschreiben Sie das Problem und senden Sie Ihre Dokumente nicht mit: Was in unserem Postfach ankommt, können wir nicht schützen. «Bericht kopieren» in der Leiste über Ihrer Arbeit schreibt Zahlen über ein Dokument und kein Wort daraus.';
+
+  @override
   String get howToUseZPrivacy => 'So benutzen Sie Z Privacy';
 
   @override

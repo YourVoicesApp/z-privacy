@@ -115,8 +115,12 @@ void main() {
         reason: 'the first screen’s own vault button is still on the glass');
     expect(find.textContaining('identities the app knows'), findsNothing,
         reason: 'the first screen’s tallies are still drawn');
+    // The room's own sentence about z-pdf is not drawn here. The **press** is
+    // on the bar above this strip since 24 October 2026 (paper 108 item 3),
+    // keyed and measured in `the_door_back_is_at_the_top_test`; this screen is
+    // mounted with no `onReadBack`, so no door is drawn at all.
     expect(find.text(sentences.zPdfReadBack), findsNothing,
-        reason: 'the door back is still offered at the way in — it is in Settings now');
+        reason: 'the room’s own sentence about the door back is drawn at the way in');
 
     // Both presses reach the shell, which is the only thing that can open a
     // session.

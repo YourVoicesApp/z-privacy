@@ -45,6 +45,7 @@ import 'package:flutter/services.dart';
 
 import 'package:zprivacy/core/palette.dart';
 import 'package:zprivacy/core/sentences.dart';
+import 'package:zprivacy/widgets/the_name_for_the_file.dart';
 import 'package:zprivacy/core/messages.dart';
 import 'package:zprivacy/core/protected_pdf.dart';
 import 'package:zprivacy/core/session_state.dart';
@@ -232,7 +233,7 @@ class _SendSheetState extends State<SendSheet> {
   /// fully protected document** — a file whose every name was hidden,
   /// described as hiding none. One source cannot disagree with itself; two can
   /// only be unlikely to.
-  Future<void> _savePdf(PayloadView payload) async {
+  Future<void> _savePdf(PayloadView payload, String documentName) async {
     setState(() {
       _saving = true;
       _trouble = null;
@@ -259,6 +260,11 @@ class _SendSheetState extends State<SendSheet> {
       // from this text. And never `bench.document.name`, which is the person's
       // own file name (081).
       sessionName: payload.session?.name ?? '',
+      // **The person's own word for this document** — paper 108 item 2. It is
+      // in the **file name** and nowhere inside the file: 081 took the
+      // document's own name out of the PDF and that stands. What this fixes is
+      // two vaults' copies of one day arriving under one name.
+      documentName: documentName,
       // **And the language the file carries, from the same session** — rule
       // 80, the owner, 21 October 2026. The sentences that go *into* a z-pdf
       // are in the language of the session it left, so the one place that
@@ -577,6 +583,15 @@ class _SendSheetState extends State<SendSheet> {
                       onPressed: payload == null || _saving
                           ? null
                           : () async {
+                              // **The name first, and before anything else
+                              // happens** — paper 108 item 2, the owner, 24
+                              // October 2026. Asked before `beginThenRead`
+                              // deliberately: that call **births a session**
+                              // when none is open, and a person who closes
+                              // this dialog has pressed nothing. Nothing is
+                              // born, nothing is read, nothing is written.
+                              final named = await askForTheNameOfTheDocument(context);
+                              if (named == null || !mounted) return;
                               final out = await beginThenRead(
                                 widget.ground,
                                 widget.bench,
@@ -593,7 +608,7 @@ class _SendSheetState extends State<SendSheet> {
                               // and the footer's per-kind counts are built from
                               // its text, so a stale one would have counted
                               // nothing over fully protected text.
-                              await _savePdf(out.view!);
+                              await _savePdf(out.view!, named);
                             },
                     ),
                     // **«Paste AI answer» moved to the chat** — rule 65: the

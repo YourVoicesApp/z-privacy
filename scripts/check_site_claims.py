@@ -270,6 +270,237 @@ def a_narrowed_sentence(rel_pattern, langs):
     return bad
 
 
+# **What an in-app chat sends** — paper 108 §6, the owner, 24 October 2026, and
+# a **condition of publishing** in his own word: we publish without the
+# context-words memory, and the site says plainly what an in-app chat sends to
+# the model.
+#
+# **And then he changed what it sends, the same morning.** Paper 110 (ed) makes
+# a later question carry only the exchange before it — the previous question
+# and its answer, protected — and never the document. So the sentence this
+# gate holds is **not written yet**, and it will be taken from C-13's own line
+# once that round has rewritten it. Not from a paraphrase of a paper: the
+# register is where the measurement lives, and a site sentence written from
+# anything else is a claim with nothing behind it.
+#
+# ## What stands today: the places, and the marker
+#
+# The three places the paper names, each in every language the site really
+# has: the home page where in-app asking is described, the guide's chat
+# section, and the privacy page, which does describe what reaches a provider.
+# Each carries the fact's key once and, until the words arrive, the download
+# section's own instrument — `class="provisional"`. That is deliberate reuse:
+# a publishing run is red while one marker stands, a tree run reports the
+# state, and the owner's condition therefore cannot be published around.
+#
+# ## The languages are discovered, not listed
+#
+# The paper asks for this fact in **en, de, ar and sv**, and the site has three
+# language trees: there is no `site/sv/` in this tree at all. Hard-coding four
+# would red on a page set nobody has written; hard-coding three would let a
+# Swedish tree arrive one day without this sentence in it. So the languages are
+# **read from the tree** — a directory with a guide in it is a language — and
+# the day a fourth lands it must carry this fact on all three of its pages or
+# this is red. The fourth language is a page set and not a sentence, and that
+# is a paper of its own.
+#
+# ## Both directions, when the words come
+#
+# Filling them is one guarded edit: the prose on nine pages, the per-language
+# needles in `THE_CHAT_SENDS_WORDS`, and the phrases of C-13's own limit in
+# `C_13_MEASURES`. The gate refuses every half of that — words on the pages
+# with nothing binding them to the claim, a binding with the markers still
+# standing, a language that holds one half of the fact and not the other, and a
+# year inside the element, because the sentence about what we are building next
+# is an intent and an intent with a date on it is a promise.
+THE_CHAT_SENDS = 'what-an-in-app-chat-sends'
+THE_CHAT_SENDS_PLACES = ('index.html', 'guide/index.html', 'privacy/index.html')
+
+# **The words, per language** — three short phrases out of each page's own
+# sentence, which is `a_narrowed_sentence`'s doctrine: a key says a language
+# dropped the fact, and a needle says it dropped a **half** of it. `None` would
+# be «the marker still stands», and the gate holds the two states apart rather
+# than letting a half-filled set of pages look like either one.
+THE_CHAT_SENDS_WORDS = {
+    'en': ('only the exchange before it', 'never sent twice', 'nothing older is lost'),
+    'de': ('nur den Austausch davor', 'nie zweimal gesendet',
+           'nichts \u00c4lteres geht verloren'),
+    'ar': ('\u0627\u0644\u062a\u0628\u0627\u062f\u0644\u064e \u0627\u0644\u0630\u064a \u0642\u0628\u0644\u0647',
+           '\u0644\u0627 \u062a\u064f\u0631\u0633\u064e\u0644 \u0645\u0631\u0651\u062a\u064a\u0646',
+           '\u0648\u0644\u0627 \u064a\u064f\u0641\u0642\u064e\u062f \u0623\u0642\u062f\u0645\u064f \u0645\u0646\u0647'),
+}
+
+# **The register's own two states, because this sentence crosses two branches.**
+#
+# The pages state what paper **110** measures — a later question carries only
+# the exchange before it — and the C-13 in *this* tree is still the line before
+# that round. So the claim side has three answers and not two:
+#
+#   * the register holds 110's words → they are asserted, phrase by phrase, and
+#     the pages and the claim are bound as tightly as C-07's are;
+#   * the register still holds the line before it → this tree is pre-110: the
+#     state is reported in a tree run and a **publishing run is red**, because a
+#     site may not go live stating what the tree it ships with has not got;
+#   * the register holds neither → red in both, because then nobody can say
+#     what the pages are a reading of.
+#
+# **The states are read off the register, not off this table.** Filling
+# `C_13_AFTER` does not move the tree into state 1 — only the register does — and
+# an empty `C_13_AFTER` is «the words are owed by another seat», not «nobody
+# thought about it». The whole matrix, because this sentence has now crossed
+# three rulings in one day:
+#
+#   | register    | C_13_AFTER | verdict                                        |
+#   |-------------|------------|------------------------------------------------|
+#   | 110's words | filled     | asserted phrase by phrase — PASS in both runs  |
+#   | the line    | filled     | the binding is ready, the claim is not: a tree |
+#   | before it   |            | run reports it, a publishing run is red        |
+#   | the line    | empty      | the same, and the sentence says the words are  |
+#   | before it   |            | owed — a publishing run is red                 |
+#   | neither     | either     | red in both: nothing says what the pages are   |
+#   |             |            | a reading of                                   |
+#
+# **`C_13_AFTER` is empty again on purpose, 24 October 2026.** It was filled from
+# ed's own line at `43d0fe0`, and the owner then ruled on «Copy the chat» —
+# it carries only what is on the screen, the current question as it will leave —
+# so ed is writing C-13 a third time. Three phrases of a line that is being
+# rewritten is a binding to a sentence that will not exist, which is exactly
+# what this gate refuses everywhere else. The words come back here out of the
+# register, and never out of a paper's or a message's paraphrase.
+C_13_BEFORE = 'carries the earlier turns'
+C_13_AFTER = ()
+
+
+def the_language_trees():
+    """Every language the site really has — a directory with a guide in it.
+
+    Read from the tree rather than listed, so that a fourth language cannot
+    arrive without the facts the three have, and a fourth that does not exist
+    yet cannot red a gate for not carrying them.
+    """
+    site = os.path.join(ROOT, 'site')
+    return tuple(sorted(
+        name for name in os.listdir(site)
+        if os.path.exists(os.path.join(site, name, 'guide', 'index.html'))))
+
+
+def what_an_in_app_chat_sends(tree_only):
+    """The owner's condition of publishing: the places, bound, in every language."""
+    key = THE_CHAT_SENDS
+    bad = 0
+    langs = the_language_trees()
+    marked, provisional = 0, 0
+    for lang in langs:
+        for place in THE_CHAT_SENDS_PLACES:
+            rel = 'site/%s/%s' % (lang, place)
+            if not os.path.exists(os.path.join(ROOT, rel)):
+                say('FAIL', '%s is not in the tree, and the three places this fact stands in '
+                            'are the same three in every language' % rel)
+                bad = 1
+                continue
+            page = served(read(rel))
+            held = re.findall(
+                r'<(?:p|li)([^>]*\bdata-fact="%s"[^>]*)>(.*?)</(?:p|li)>' % re.escape(key),
+                page, re.S)
+            if len(held) != 1:
+                say('FAIL', '%s marks «%s» %d time(s) — every one of the three places carries '
+                            'it once, in every language, or a reader of one page is told '
+                            'something a reader of another is not' % (rel, key, len(held)))
+                bad = 1
+                continue
+            marked += 1
+            attrs, inside = held[0]
+            waiting = 'provisional' in attrs
+            provisional += 1 if waiting else 0
+            if waiting:
+                continue
+            if not THE_CHAT_SENDS_WORDS:
+                say('FAIL', '%s states what an in-app chat sends and nothing binds it to a '
+                            'claim — the words were written and the gate was not told which '
+                            'measurement they come from' % rel)
+                bad = 1
+                continue
+            for words in THE_CHAT_SENDS_WORDS.get(lang, ()):
+                if words not in inside:
+                    say('FAIL', '%s says what a chat sends and not «%s» — a language that '
+                                'drops a half of it promises a cost the program does not have'
+                        % (rel, words))
+                    bad = 1
+            year = re.search(r'\b(?:19|20)\d\d\b', inside)
+            if year:
+                say('FAIL', '%s dates what we are building next («%s»), and an intent with a '
+                            'date on it is a promise' % (rel, year.group(0)))
+                bad = 1
+
+    # **The claim's own end of the binding** — see `C_13_BEFORE`/`C_13_AFTER`
+    # above for why there are three answers here and not two.
+    limit = ''
+    for block in read('docs/CLAIMS.md').split('\n## '):
+        if block.startswith('C-13'):
+            for line in block.split('\n'):
+                if line.startswith('**The limit:**'):
+                    limit = line
+    if not limit:
+        say('FAIL', 'docs/CLAIMS.md has no C-13 limit line, and the site\u2019s sentence about '
+                    'what a chat sends is a reading of it')
+        return 1
+    after = bool(C_13_AFTER) and all(words in limit for words in C_13_AFTER)
+    before = C_13_BEFORE in limit
+    if not after and not before:
+        # The register has moved and says neither line: either 110 reworded what
+        # it already wrote, or somebody edited C-13 without reading the pages.
+        # This is the state the other two exist to make impossible to pass.
+        missing = [w for w in C_13_AFTER if w not in limit]
+        say('FAIL', 'C-13\u2019s limit says neither what this tree measured nor what paper 110 '
+                    'measures \u2014 it is missing %s \u2014 so nothing says what the site\u2019s '
+                    'nine sentences are a reading of'
+            % (', '.join('\u00ab%s\u00bb' % w for w in missing) or 'both lines'))
+        return 1
+
+    if provisional and provisional != marked:
+        say('FAIL', '%d of %d places carry the words and the rest carry a marker: a page that '
+                    'says what a chat sends beside one that does not is the state this marker '
+                    'exists to prevent' % (marked - provisional, marked))
+        bad = 1
+    if provisional and THE_CHAT_SENDS_WORDS:
+        say('FAIL', 'the words are bound in the gate and %d place(s) still carry a marker — '
+                    'the binding and the pages were filled in two different rounds' % provisional)
+        bad = 1
+    if bad:
+        return bad
+    if not provisional:
+        if after:
+            say('PASS', 'what an in-app chat sends stands in %d places — %s × %s — each bound '
+                        'to C-13\u2019s own measured words and dating nothing'
+                % (marked, ', '.join(langs), ', '.join(THE_CHAT_SENDS_PLACES)))
+            return 0
+        # The pages are 110's and this tree's register is the line before it.
+        said = ('what an in-app chat sends stands in %d places (%s × %s) and states what paper '
+                '110 measures, while this tree\u2019s C-13 is still the line before it and %s'
+                % (marked, ', '.join(langs), ', '.join(THE_CHAT_SENDS_PLACES),
+                   'the binding in C_13_AFTER is ready for the tip where both are in'
+                   if C_13_AFTER else
+                   'the words of the binding are owed: C-13 is being written a third time, '
+                   'for the owner\u2019s ruling on what «Copy the chat» carries'))
+        if tree_only:
+            say('PASS', said)
+            return 0
+        say('FAIL', said + ' \u2014 a site may not go live saying what the tree it ships with '
+                           'has not got')
+        return 1
+    # The state, in tree mode; the refusal, in a publishing run. The owner's
+    # condition is not a thing a deploy may walk past.
+    said = ('the place for what an in-app chat sends is built in %d of %d places (%s) and '
+            'every one of them is still a marker: the words come from C-13 after paper 110 '
+            'changes what a later question carries' % (provisional, marked, ', '.join(langs)))
+    if tree_only:
+        say('PASS', said)
+        return 0
+    say('FAIL', said + ' — the owner made this sentence a condition of publishing, so this '
+                       'site is not ready until the words are on the pages')
+    return 1
+
+
 def the_interface():
     import importlib.util
     import json
@@ -842,7 +1073,8 @@ def main(tree_only=False):
         say('FAIL', 'only %d strings were read out of the app, so nothing was really compared' % len(lits))
         return 1
     bad = (crates() | fonts() | glossary(lits) | path(lits) | the_interface()
-           | the_guide() | the_download(tree_only))
+           | the_guide() | what_an_in_app_chat_sends(tree_only)
+           | the_download(tree_only))
     print()
     print('every number on the site has a deed behind it' if not bad
           else 'A NUMBER ON THE SITE HAS NO DEED BEHIND IT')
