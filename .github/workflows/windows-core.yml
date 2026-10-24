@@ -431,6 +431,49 @@ jobs:
             Copy-Item $from (Join-Path $out $legal) -Force
           }
 
+          # **And other people's licences, which are not ours to leave out** —
+          # paper 114, shape 1. The same defect reached further than our own
+          # two files: `pdf` is Apache-2.0, DejaVu is embedded in every PDF
+          # this program writes, the Flutter engine is BSD, Material icons are
+          # Apache-2.0 and Microsoft's redistributable travels under a notice
+          # of its own. All six texts, and the engine's, have been in the zip
+          # and in the installer since the month «Save as PDF» was built; the
+          # MSIX had none of them, for exactly the reason it had no NOTICE.
+          #
+          # Copied here so the search and the hashing read them, and named one
+          # by one rather than by a wildcard: a notice that silently stops
+          # being copied is the fault this whole paper is about.
+          $tp = Join-Path $out "third-party"
+          New-Item -ItemType Directory -Force -Path $tp | Out-Null
+          foreach ($notice in @("NOTICES.txt", "flutter-sdk-LICENSE.txt",
+                                "material-icons-LICENSE.txt", "dejavu-LICENSE.txt",
+                                "dart-pdf-LICENSE.txt", "msvc-runtime-NOTICE.txt")) {
+            $from = Join-Path "../../packaging/third-party" $notice
+            if (-not (Test-Path $from)) { throw "no packaging/third-party/$notice to ship" }
+            Copy-Item $from (Join-Path $tp $notice) -Force
+          }
+          $engine = "../../site/third-party/flutter-engine-LICENSE.txt"
+          if (-not (Test-Path $engine)) { throw "no site/third-party/flutter-engine-LICENSE.txt to ship" }
+          Copy-Item $engine (Join-Path $tp "flutter-engine-LICENSE.txt") -Force
+          # And the folder's own listing, so an MSIX install says what is in it.
+          Copy-Item "../../packaging/windows/README.txt" (Join-Path $out "README.txt") -Force
+
+          # **What is still missing from the MSIX, written here because a debt
+          # in a message is a debt nobody finds** — paper 114, shape 2, which is
+          # its own paper: `third-party/rust-crates.txt` and `BUILD-INFO.txt`
+          # are **generated** in the staging step, after this folder has been
+          # searched and hashed, so they cannot be copied in here without
+          # becoming two files nobody measured. Moving their generation into
+          # this step is a restructure of two steps and was not done on
+          # publishing night.
+          #
+          # **The hard condition, until that paper is done: the MSIX may not be
+          # distributed anywhere — no Store, no sideload page, no link.** Today
+          # it is published nowhere: the site offers the `.tar.gz` and the
+          # `.exe`, and both are built from the staging, which carries all of
+          # it. The `.msix` is built, signed, read back and uploaded as a job
+          # artefact only.
+
       # **And the three are asserted where they will ship**, with the version
       # each one carries printed into the log: a copy nobody checked is a copy
       # nobody knows happened, and this job's own rule is that a missing file
@@ -865,7 +908,11 @@ jobs:
             # and the MSIX is the one artefact no gate on Linux can open.
             foreach ($name in @("zprivacy.exe", "z_bridge.dll", "data/app.so",
                                 "vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll",
-                                "LICENSE", "NOTICE")) {
+                                "LICENSE", "NOTICE",
+                                "third-party/NOTICES.txt", "third-party/flutter-sdk-LICENSE.txt",
+                                "third-party/material-icons-LICENSE.txt", "third-party/dejavu-LICENSE.txt",
+                                "third-party/dart-pdf-LICENSE.txt", "third-party/msvc-runtime-NOTICE.txt",
+                                "third-party/flutter-engine-LICENSE.txt", "README.txt")) {
               $here = Join-Path $staged ($name -replace '/', '\')
               if (-not (Test-Path $here)) {
                 $wrong += "$name is not in the staged folder, so the package was compared with nothing"

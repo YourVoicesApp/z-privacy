@@ -1684,23 +1684,71 @@ if [ -z "$G71_BAD" ] && [ -f "$WINJOB" ]; then
     grep -qE 'for f in LICENSE NOTICE ' <<< "$G71_WIN" \
       || G71_BAD="the Windows job stages NOTICE and never asks for it by name — a copy nobody checks is a copy that can go missing in a reordered job"
   fi
+  # **Read out of the comparison's own block, not out of the file** — paper
+  # 114, twice over. The first form of this check looked for
+  # `"NOTICE")) {` anywhere in the workflow; shape 1 then made the list six
+  # lines long and the pattern went stale, and an anchored version of it had
+  # already been green on the **wrong** line (the copy into Release reads
+  # alike). A name is in the comparison when it is inside the comparison, so
+  # the block is cut out first and every name is asked of that.
   if [ -z "$G71_BAD" ]; then
-    # **Anchored, because paper 114 gave this file two lines that read alike.**
-    # The copy into Release is `foreach ($legal in @("LICENSE", "NOTICE"))` and
-    # the comparison's list ends `… "LICENSE", "NOTICE")) {` on a line of its
-    # own — so a pattern without the anchor was green on either of them, and
-    # the pin that was supposed to prove the comparison bites found it by
-    # matching twice. One of the two places is enough to satisfy a loose
-    # pattern, which is a gate measuring the wrong half.
-    grep -qE '^[[:space:]]+"LICENSE", "NOTICE"\)\) \{' <<< "$G71_WIN" \
-      || G71_BAD="the MSIX comparison does not name LICENSE and NOTICE together, and the MSIX is the artefact no gate here can open"
+    G71_CMP=$(awk '
+      /foreach \(\$name in @\(/ { inside = 1 }
+      inside { out = out $0 "\n" }
+      inside && /\)\) \{/ { exit }
+      END { printf "%s", out }
+    ' <<< "$G71_WIN")
+    [ -n "$G71_CMP" ] \
+      || G71_BAD="the Windows job has no «foreach (\$name in @(…))» comparing the MSIX with the folder it was packed from"
+    if [ -z "$G71_BAD" ]; then
+      for want in '"LICENSE"' '"NOTICE"'; do
+        grep -qF -- "$want" <<< "$G71_CMP" \
+          || G71_BAD="the MSIX comparison does not name $want, and the MSIX is the artefact no gate here can open"
+      done
+    fi
   fi
-  # **And the folder the MSIX actually packs carries them** — paper 114. The
-  # staging is the installer's; Release is the MSIX's, and a copy into one is
-  # not a copy into the other.
+  # **And every notice in the tree travels in the MSIX too** — paper 114's
+  # shape 1, read off `packaging/third-party/` rather than off a list in this
+  # gate: the folder of notices is the fact, and the day a seventh is added it
+  # has to reach the package or this reds. Other people's licences are not ours
+  # to leave out of one artefact.
+  #
+  # **And the engine's licence is in the set, which a pin had to find.** It is
+  # the one notice that does not live in `packaging/third-party/` — the site
+  # serves it too, so it is kept in `site/third-party/` and copied from there —
+  # and a census that read one folder was green on an MSIX comparison with the
+  # engine's licence taken out of it. The rule written for six files, not
+  # applied to the seventh. So the name is **derived from the script that has
+  # always shipped it**, the Linux archive's own, rather than typed here.
   if [ -z "$G71_BAD" ]; then
-    grep -q 'foreach ($legal in @("LICENSE", "NOTICE"))' <<< "$G71_WIN" \
-      || G71_BAD="nothing puts LICENSE and NOTICE into the Release folder, which is what msix:create packs — the staging is the installer's folder, not the MSIX's"
+    G71_ENGINE=$(grep -oE 'site/third-party/[A-Za-z0-9._-]+' scripts/package_linux.sh | head -1)
+    [ -n "$G71_ENGINE" ] \
+      || G71_BAD="scripts/package_linux.sh no longer names a notice under site/third-party/, so this gate cannot tell which one the MSIX owes"
+    for n in packaging/third-party/* ${G71_ENGINE:-}; do
+      b=$(basename "$n")
+      grep -qF "\"$b\"" <<< "$G71_WIN" \
+        || G71_BAD="$n is a notice this tree ships and the Windows job never names it, so one of the three artefacts goes out without it"
+      grep -qF "\"third-party/$b\"" <<< "$G71_CMP" \
+        || G71_BAD="the MSIX comparison does not name third-party/$b, and the MSIX is the artefact no gate here can open"
+    done
+  fi
+  # The one debt this round did not pay, named in the file it is about: the
+  # paper that moves `rust-crates.txt` and `BUILD-INFO.txt` into the measured
+  # folder is still owed, and until it is done the MSIX may be distributed
+  # nowhere. A condition that lives only in a message is a condition nobody
+  # finds, so this reads that the workflow still carries it in writing.
+  #
+  # **Read out of the prose and not out of the code**, which cost two reds to
+  # get right: `$G71_WIN` has the comments **stripped** — it is what the job
+  # does, and this condition is something the job *says* — and the sentence
+  # wraps across two lines, as any sentence in a comment eventually will. So
+  # the comment lines are taken on their own, their `#` and their indentation
+  # dropped, and joined into one line before the phrase is looked for. A check
+  # on a sentence must read it the way a person does.
+  if [ -z "$G71_BAD" ]; then
+    G71_SAYS=$(grep -E '^[[:space:]]*#' "$WINJOB" | sed -E 's/^[[:space:]]*#[[:space:]]?//' | tr '\n' ' ')
+    grep -q 'the MSIX may not be distributed anywhere' <<< "$G71_SAYS" \
+      || G71_BAD="the workflow no longer carries the condition that the MSIX may not be distributed until rust-crates.txt and BUILD-INFO.txt are inside it — if that paper is done, take this check out with it"
   fi
 fi
 # And the folder says what is in it, on both platforms: a listing that names
@@ -1712,7 +1760,8 @@ if [ -z "$G71_BAD" ]; then
   done
 fi
 if [ -z "$G71_BAD" ]; then
-  pass "G71 the NOTICE names the maker and travels: the owner's six lines byte for byte, into the archive, into the installer's staging and into the Release folder the MSIX packs, asked for by name in each, both licence files compared against the MSIX itself, and named in both folder listings"
+  G71_NOTICES=$(( $(ls packaging/third-party/ | wc -l) + 1 ))
+  pass "G71 the NOTICE names the maker and travels, and so do other people's: the owner's six lines byte for byte, into the archive, into the installer's staging and into the Release folder the MSIX packs, with all $G71_NOTICES third-party notices beside them (the engine's among them, derived from the archive's own script), every one named in the MSIX's own comparison, and the one debt that is left written in the workflow it is about"
 else
   fail "G71 $G71_BAD"
 fi
