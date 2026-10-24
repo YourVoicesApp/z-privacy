@@ -30,7 +30,9 @@ Rules:
 
 ## 5 · The contact address in Settings
 
-Owner: «نضع إيميل الفيدباك في التطبيق في الإعدادات… ونجعل zprivacy@mono-peak.com هو إيميل التواصل». Settings gains a contact line: `zprivacy@mono-peak.com`. The press opens the person's mail program (`mailto:`, subject «Feedback») through the same system door Settings already uses for browser links. **The app sends nothing itself. No form, no network door.** The core promise (the app talks to no one but the provider the person chose) and its gates stand. One sentence beside it: describe the problem, don't send your documents. The site gets the same line in its four languages. The address already stands there 36 times, so this is one sentence, not a new contact.
+Owner: «نضع إيميل الفيدباك في التطبيق في الإعدادات… ونجعل zprivacy@mono-peak.com هو إيميل التواصل». **Narrowed by the owner the same morning, and this narrowing governs:** «لا نحتاج إلى أي نافذة؛ نجعل بريد الفيدباك مستطيل نص قابل للنسخ، ونشرح: انسخ الإيميل وأرسل من إيميلك مباشرةً… لا نافذة ولا أي شيء».
+
+So Settings gains **one copyable text box** holding `zprivacy@mono-peak.com`, and one sentence beside it: copy the address and write to us from your own email. Add «describe the problem, don't send your documents» if it fits in the same sentence. **No `mailto:` press, no form, no window, no network door.** The app sends nothing and opens nothing. C-03 («no Z Privacy server») and its gates stand untouched. Copying is selectable text or a copy press that puts the address on the clipboard, your call. If it is a press, it is the one clipboard write this item makes, and it carries the address alone. The site is **not** touched for this item, because the address already stands there.
 
 ## The one list
 
