@@ -492,10 +492,36 @@ def the_one_condition():
                             'rests on and the limit the owner accepted are both part of it'
                     % (rel, words))
                 bad = 1
+    # **And the file itself is served, not only pointed at** — the publishing run
+    # found the reason: a link to the repository's own `NOTICE` is a 404 until
+    # the branch carrying it is pushed, and a licensing condition that answers
+    # 404 is worse than a download marker that does. So the license page holds
+    # the text as well, and it is held **byte for byte against the file** —
+    # which also makes the site's copy provably the one §4(d) points at.
+    rel = 'site/license/index.html'
+    page = served(read(rel))
+    import html as _html
+    served_text = re.findall(r'data-fact="the-notice-itself"[^>]*><code>(.*?)</code>',
+                             page, re.S)
+    if len(served_text) != 1:
+        say('FAIL', '%s serves the NOTICE %d time(s) — once, or a reader cannot tell which '
+                    'copy is the one the licence points at' % (rel, len(served_text)))
+        bad = 1
+    else:
+        want = open(notice, encoding='utf-8').read().rstrip('\n')
+        got = _html.unescape(served_text[0]).strip('\n')
+        if got != want:
+            say('FAIL', '%s serves a NOTICE that is not the file: %d line(s) against %d, and '
+                        'the first difference is «%s»'
+                % (rel, len(got.split('\n')), len(want.split('\n')),
+                   next((g for g, w in zip(got.split('\n'), want.split('\n')) if g != w),
+                        '(a missing or extra line)')))
+            bad = 1
     if not bad:
         say('PASS', 'the one condition on the code stands on all four pages that name the '
                     'licence, each quoting NOTICE\u2019s own \u00ab%s\u00bb and naming the clause '
-                    'that binds it' % whose)
+                    'that binds it, and the license page serves the file\u2019s own six lines '
+                    'byte for byte' % whose)
     return bad
 
 
