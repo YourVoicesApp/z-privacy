@@ -1851,11 +1851,21 @@ fi
 # **And the question alone is assembled once**, reached by the door that lets
 # text out and by the instrument that draws it, or what leaves and what is
 # drawn are two texts that agree only by luck.
+#
+# **A third road since the owner's ruling of 24 October 2026**, and it declares
+# itself here the way a fifth reader does above: `build_the_chat`, the clipboard,
+# which hands a person the payload as it stands — «خارج التطبيق لا يأخذ إلا ما
+# يراه المستخدم على الشاشة». It is the same builder on purpose: the whole point
+# of that ruling is that what a person carries to a model of their own is what
+# would leave, so a second assembler there would be the one place those two
+# texts could drift apart. The in-app door adds the exchange before it **on
+# top** of this payload, which is the history's own function and not a second
+# assembly of the question.
 G49_BUILDER=$(grep -c 'the_question_alone(core, session)' "$BENCH" 2>/dev/null || echo 0)
-if [ "$G49_BUILDER" = "2" ]; then
-  pass "G49 one builder assembles the question alone, reached by the door and by the instrument"
+if [ "$G49_BUILDER" = "3" ]; then
+  pass "G49 one builder assembles the question alone, reached by three roads: the door, the instrument and the clipboard"
 else
-  fail "G49 the question alone is assembled from $G49_BUILDER place(s) — expected the one builder, reached by both roads"
+  fail "G49 the question alone is assembled from $G49_BUILDER place(s) — expected the one builder, reached by the door, the instrument and the clipboard; a fourth road declares itself here"
 fi
 
 G49_BUILD=$(awk '

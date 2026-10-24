@@ -389,6 +389,20 @@ THE_CHAT_SENDS_WORDS = {
 # exchange before it» is «the **one** exchange before it» in the register — which
 # is the whole reason this table is read off the line instead of off a summary
 # of it.
+# **And `C_13_BEFORE` stays, although nothing in the tree matches it any more.**
+# e2 asked for it to be retired on the merged line, and the reason was good: it
+# is the recogniser for «this tree's register is still the line before 110», and
+# state 2 was real for exactly one day — 24 October 2026, the hours when his
+# branch carried the pages and ed's carried the register. On this line it is
+# `False` for ever.
+#
+# It is kept because `False` for ever is what a regression detector looks like
+# from the inside. The day this needle matches again, something has taken C-13
+# back to «carries the earlier turns» — a revert, a bad merge, a resolved
+# conflict that chose the older hunk — and the matrix answers «the binding is
+# ready, the claim is not» instead of passing in silence. Three lines for that
+# is a bargain, and the sentence that would have to be written after a silent
+# pass is not.
 C_13_BEFORE = 'carries the earlier turns'
 C_13_AFTER = ('the payload as it stands', 'one exchange before it', 'sent once')
 
