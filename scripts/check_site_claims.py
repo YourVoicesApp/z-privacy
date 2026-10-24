@@ -316,34 +316,29 @@ def a_narrowed_sentence(rel_pattern, langs):
 THE_CHAT_SENDS = 'what-an-in-app-chat-sends'
 THE_CHAT_SENDS_PLACES = ('index.html', 'guide/index.html', 'privacy/index.html')
 
-# **The words, per language** — three short phrases out of each page's own
-# sentence, which is `a_narrowed_sentence`'s doctrine: a key says a language
-# dropped the fact, and a needle says it dropped a **half** of it. `None` would
-# be «the marker still stands», and the gate holds the two states apart rather
-# than letting a half-filled set of pages look like either one.
+# **The words, per language** — four short phrases out of each page's own
+# sentence, which is `a_narrowed_sentence`'s doctrine one step further: a key
+# says a language dropped the fact, and a needle says it dropped a **part** of
+# it. The four are the four halves of the owner's «one payload, two sides of one
+# law» (24 October 2026): what the app adds when it asks again (the exchange
+# before it), what it never sends twice (the document, sent once), what stays
+# where it was (nothing older is lost), and what the clipboard carries (the
+# question, and nothing earlier). Each is a literal substring of the page it is
+# checked against — taken out of the written prose rather than typed from
+# memory, because an Arabic needle that differs from the page by one vowel mark
+# reds on a page that is right, which is exactly what the first set of these
+# did.
 THE_CHAT_SENDS_WORDS = {
-    'en': ('only the exchange before it', 'never sent twice', 'nothing older is lost'),
-    'de': ('nur den Austausch davor', 'nie zweimal gesendet',
-           'nichts \u00c4lteres geht verloren'),
-    'ar': ('\u0627\u0644\u062a\u0628\u0627\u062f\u0644\u064e \u0627\u0644\u0630\u064a \u0642\u0628\u0644\u0647',
-           '\u0644\u0627 \u062a\u064f\u0631\u0633\u064e\u0644 \u0645\u0631\u0651\u062a\u064a\u0646',
-           '\u0648\u0644\u0627 \u064a\u064f\u0641\u0642\u064e\u062f \u0623\u0642\u062f\u0645\u064f \u0645\u0646\u0647'),
+    'en': ('the exchange before it', 'sent once', 'nothing older is lost',
+           'and nothing earlier'),
+    'de': ('Austausch davor', 'einmal gesendet', 'nichts \u00c4lteres geht verloren',
+           'und nichts davor'),
+    'ar': ('\u0627\u0644\u062a\u0628\u0627\u062f\u0644\u064f \u0627\u0644\u0630\u064a \u0642\u0628\u0644\u0647',
+           '\u062a\u064f\u0631\u0633\u064e\u0644 \u0645\u0631\u0651\u0629\u064b \u0648\u0627\u062d\u062f\u0629',
+           '\u0648\u0644\u0627 \u064a\u064f\u0641\u0642\u064e\u062f',
+           '\u0644\u0627 \u0634\u064a\u0621\u064e \u0642\u0628\u0644\u0647'),
 }
 
-# **The register's own two states, because this sentence crosses two branches.**
-#
-# The pages state what paper **110** measures — a later question carries only
-# the exchange before it — and the C-13 in *this* tree is still the line before
-# that round. So the claim side has three answers and not two:
-#
-#   * the register holds 110's words → they are asserted, phrase by phrase, and
-#     the pages and the claim are bound as tightly as C-07's are;
-#   * the register still holds the line before it → this tree is pre-110: the
-#     state is reported in a tree run and a **publishing run is red**, because a
-#     site may not go live stating what the tree it ships with has not got;
-#   * the register holds neither → red in both, because then nobody can say
-#     what the pages are a reading of.
-#
 # **The states are read off the register, not off this table.** Filling
 # `C_13_AFTER` does not move the tree into state 1 — only the register does — and
 # an empty `C_13_AFTER` is «the words are owed by another seat», not «nobody
@@ -360,13 +355,24 @@ THE_CHAT_SENDS_WORDS = {
 #   | neither     | either     | red in both: nothing says what the pages are   |
 #   |             |            | a reading of                                   |
 #
-# **`C_13_AFTER` is empty again on purpose, 24 October 2026.** It was filled from
-# ed's own line at `43d0fe0`, and the owner then ruled on «Copy the chat» —
-# it carries only what is on the screen, the current question as it will leave —
-# so ed is writing C-13 a third time. Three phrases of a line that is being
-# rewritten is a binding to a sentence that will not exist, which is exactly
-# what this gate refuses everywhere else. The words come back here out of the
-# register, and never out of a paper's or a message's paraphrase.
+# **`C_13_AFTER` is empty on purpose, and this is the third time in one day.**
+# It was filled from ed's own line at `43d0fe0`; the owner then ruled on «Copy
+# the chat» — it carries the payload as it stands, the current question and
+# nothing earlier — and C-13 was written again. The pages carry that ruling
+# now; the binding does not, because **a binding is a byte-for-byte quotation
+# of the register** and ed's final line is not committed anywhere this tree can
+# read: his branch tip is still `43d0fe0`, which is the line before it.
+#
+# Three phrases of a line that is being rewritten is a binding to a sentence
+# that does not exist, which is what this gate refuses everywhere else — and
+# the hour between the second ruling and the third is what that costs when it
+# is guessed at.
+#
+# **The candidates, so the next hand has one look and not a search** — from the
+# substance as the lead passed it over, to be replaced by whatever ed's own
+# words turn out to be: «the payload as it stands», «the exchange before it»,
+# «sent once». Confirm each against `docs/CLAIMS.md`'s C-13 on the merged tip
+# before putting it here; the gate's own state-2 sentence says this is owed.
 C_13_BEFORE = 'carries the earlier turns'
 C_13_AFTER = ()
 
