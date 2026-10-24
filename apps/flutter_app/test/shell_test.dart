@@ -317,7 +317,7 @@ void main() {
     // 4 · And the sentence under the column tells the truth about suggestions.
     expect(bench.payload!.openSuggestions, 0);
     expect(
-      find.textContaining('This is exactly what the AI will receive'),
+      find.textContaining('what leaves of your document'),
       findsOneWidget,
     );
 
@@ -1798,11 +1798,19 @@ void main() {
       findsOneWidget,
     );
 
-    // The Safe column may not say «exactly what the AI will receive» while
-    // anything is open. It says the open count instead, and the count is the
-    // core's — this is the sentence that was wrong for five milestones.
+    // The Safe column may not say what leaves while anything is open. It says
+    // the open count instead, and the count is the core's — this is the
+    // sentence that was wrong for five milestones.
+    //
+    // **The words moved on 24 October 2026 and the law did not.** It said «This
+    // is exactly what the AI will receive» until the owner ruled that a
+    // follow-up carries the exchange before it as well (110): «exactly» was
+    // true of the clipboard, which is the payload itself, and not of the
+    // in-app door, which adds one exchange on top of it. What is asserted here
+    // is the fragment of the new sentence, so this guard measures the state the
+    // column is in and not the wording of the day.
     expect(
-      find.textContaining('This is exactly what the AI will receive'),
+      find.textContaining('what leaves of your document'),
       findsNothing,
     );
     expect(
@@ -1843,7 +1851,7 @@ void main() {
     expect(bench.report!.suggested, 0);
     expect(find.textContaining('suggestions are still open'), findsNothing);
     expect(
-      find.textContaining('This is exactly what the AI will receive'),
+      find.textContaining('what leaves of your document'),
       findsOneWidget,
     );
     expect(

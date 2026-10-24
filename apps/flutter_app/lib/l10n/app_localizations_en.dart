@@ -26,7 +26,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String exactlyWhatWouldLeave(int replaced) {
-    return 'This is exactly what the AI will receive. $replaced values were replaced.';
+    return 'This is what leaves of your document — and inside the app, the exchange before it travels with it. $replaced values were replaced.';
   }
 
   @override

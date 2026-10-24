@@ -4,7 +4,7 @@
   "theChatKeepsNothing": "Det här svaret står på din skärm och ingen annanstans: ingen session är öppen som kan bevara det, så när du stänger appen försvinner det tillsammans med chatten.",
   "theTokenIsAlreadyOurs": "Det här är redan skyddat — Z satte det dit.",
   "unnamedTrouble": "Något gick fel. Z Privacy slutförde inte åtgärden.",
-  "exactlyWhatWouldLeave": "Det här är precis vad AI:n får. {replaced} värden ersattes.",
+  "exactlyWhatWouldLeave": "Det här är vad som lämnar ditt dokument — och inne i appen följer utbytet före det med. {replaced} värden ersattes.",
   "noLanguageAndASessionIsOpen": "Ingenting lästes. En text läses med ett språks vanor, och den här sessionen har aldrig fått något — Z Privacy valde därför inte för dig. Läs den igen och svara, eller ge sessionen sitt språk i Inställningar.",
   "noLanguageAndNoSession": "Ingenting lästes. En text läses med ett språks vanor, och inget valdes — därför lästes ingenting och ingen session skapades. Försök igen och välj ett.",
   "troubleNotImplemented": "Den här delen av Z Privacy är inte byggd än.",

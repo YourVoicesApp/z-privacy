@@ -124,10 +124,10 @@ abstract class AppLocalizations {
   /// **'Something went wrong. Z Privacy did not complete the action.'**
   String get unnamedTrouble;
 
-  /// Beside a preview side — the work surface's Safe column and the chat's own band — about the text it draws. One sentence for both, so two screens cannot word one fact two ways.
+  /// Beside a preview side — the work surface's Safe column and the chat's own band — about the text it draws. One sentence for both, so two screens cannot word one fact two ways. It said «This is exactly what the AI will receive» until the owner's ruling of 24 October 2026: inside the app the exchange before it travels with the payload (110), so «exactly» was true of the clipboard, which is the payload itself, and not of a follow-up. The key keeps its older name on purpose — a rename is a four-file sweep and the sentence is the fact.
   ///
   /// In en, this message translates to:
-  /// **'This is exactly what the AI will receive. {replaced} values were replaced.'**
+  /// **'This is what leaves of your document — and inside the app, the exchange before it travels with it. {replaced} values were replaced.'**
   String exactlyWhatWouldLeave(int replaced);
 
   /// Rule 57-د, when «Not now» answers the language question and a session is already open: what did not happen, and the two ways to make it happen.

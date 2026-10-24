@@ -26,7 +26,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String exactlyWhatWouldLeave(int replaced) {
-    return 'Det här är precis vad AI:n får. $replaced värden ersattes.';
+    return 'Det här är vad som lämnar ditt dokument — och inne i appen följer utbytet före det med. $replaced värden ersattes.';
   }
 
   @override

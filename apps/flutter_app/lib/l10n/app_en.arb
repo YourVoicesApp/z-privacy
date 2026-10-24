@@ -17,9 +17,9 @@
   "@unnamedTrouble": {
     "description": "The last resort for an outcome no sentence names: what did not happen, never «invalid call»."
   },
-  "exactlyWhatWouldLeave": "This is exactly what the AI will receive. {replaced} values were replaced.",
+  "exactlyWhatWouldLeave": "This is what leaves of your document — and inside the app, the exchange before it travels with it. {replaced} values were replaced.",
   "@exactlyWhatWouldLeave": {
-    "description": "Beside a preview side — the work surface's Safe column and the chat's own band — about the text it draws. One sentence for both, so two screens cannot word one fact two ways.",
+    "description": "Beside a preview side — the work surface's Safe column and the chat's own band — about the text it draws. One sentence for both, so two screens cannot word one fact two ways. It said «This is exactly what the AI will receive» until the owner's ruling of 24 October 2026: inside the app the exchange before it travels with the payload (110), so «exactly» was true of the clipboard, which is the payload itself, and not of a follow-up. The key keeps its older name on purpose — a rename is a four-file sweep and the sentence is the fact.",
     "placeholders": {
       "replaced": {
         "type": "int"

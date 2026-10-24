@@ -4,7 +4,7 @@
   "theChatKeepsNothing": "Diese Antwort steht auf Ihrem Bildschirm und nirgendwo sonst: Es ist keine Sitzung offen, die sie aufbewahren könnte — mit dem Schließen der App endet sie zusammen mit dem Chat.",
   "theTokenIsAlreadyOurs": "Das ist bereits geschützt — Z hat es dort eingesetzt.",
   "unnamedTrouble": "Etwas ist schiefgegangen. Z Privacy hat die Aktion nicht abgeschlossen.",
-  "exactlyWhatWouldLeave": "Genau das erhält die KI. {replaced} Werte wurden ersetzt.",
+  "exactlyWhatWouldLeave": "Das ist, was von Ihrem Dokument hinausgeht — und in der App reist der Austausch davor mit. {replaced} Werte wurden ersetzt.",
   "noLanguageAndASessionIsOpen": "Es wurde nichts gelesen. Ein Text wird mit den Gewohnheiten einer Sprache gelesen, und diese Sitzung hat noch keine erhalten — Z Privacy hat deshalb nicht für Sie gewählt. Lesen Sie ihn erneut und antworten Sie, oder geben Sie der Sitzung ihre Sprache in den Einstellungen.",
   "noLanguageAndNoSession": "Es wurde nichts gelesen. Ein Text wird mit den Gewohnheiten einer Sprache gelesen, und es wurde keine gewählt — es wurde deshalb nichts gelesen und keine Sitzung angelegt. Versuchen Sie es erneut und wählen Sie eine.",
   "troubleNotImplemented": "Dieser Teil von Z Privacy ist noch nicht gebaut.",
