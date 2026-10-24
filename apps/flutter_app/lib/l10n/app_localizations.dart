@@ -1376,7 +1376,7 @@ abstract class AppLocalizations {
   /// After «Copy the chat»: what is on the clipboard and what to do next.
   ///
   /// In en, this message translates to:
-  /// **'The last exchange is on your clipboard, protected — bring the answer back with «Add an answer».'**
+  /// **'What would leave is on your clipboard, protected — the question as an AI would receive it. Bring the answer back with «Add an answer».'**
   String get theChatIsOnYourClipboard;
 
   /// The platform refused the read.

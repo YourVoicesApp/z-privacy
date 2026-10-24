@@ -494,9 +494,26 @@ fn entering_the_same_session_again_in_one_run_keeps_its_chat() {
 
 // ------------------------------------------------------------------ A4
 
-/// **What a person copies out is what the model was shown** — rule 65's copy.
+/// **What a person takes away is the payload itself** — the owner's ruling of
+/// 24 October 2026: «خارج التطبيق لا يأخذ إلا ما يراه المستخدم على الشاشة…
+/// داخل التطبيق نرسل فقط السؤال السابق والنقطة الحالية».
+///
+/// **One payload and two sides of one law.** What a person carries to a model
+/// of their own is the payload as it stands — the current question, protected,
+/// exactly what would leave by the app's own door — and the in-app door sends
+/// that same payload with one **addition**: the exchange before it. The model
+/// holds nothing of the chat and needs that addition; a person's own chat holds
+/// its thread already, so outside the app it would be the same words twice.
+///
+/// Until this round the door handed over the chat's whole transcript, and this
+/// guard asserted it as `told.starts_with(&out.what_leaves.text)` — which is
+/// why the assertions below are written the other way round. What has not moved
+/// is the half that was never about the text, and it is what G46 holds: the
+/// copy is built **in the core**, read through the one payload accessor, with
+/// nothing on the glass assembling anything and no restored word able to leave
+/// by it.
 #[test]
-fn the_chat_a_person_takes_away_is_the_text_the_model_was_shown() {
+fn the_chat_a_person_takes_away_is_what_would_leave_now() {
     let _g = serial();
     let dir = fresh_vault("copy");
     let (held, _) = ready("en");
@@ -505,50 +522,65 @@ fn the_chat_a_person_takes_away_is_the_text_the_model_was_shown() {
     ask_with_the_document(bench, "What does this letter say?");
     let out = chat_to_take_out(bench).expect("the chat");
 
-    assert!(out.what_leaves.text.contains("--- Earlier request ---"), "the copy has no turn in it");
-    assert!(out.what_leaves.text.contains("What does this letter say?"), "the question is not in the copy");
-    assert!(out.what_leaves.text.contains("Ende der Antwort"), "the answer is not in the copy");
+    // **No history at all**, which is the whole of what the ruling changed.
+    assert!(
+        !out.what_leaves.text.contains("--- Earlier request ---")
+            && !out.what_leaves.text.contains("--- Earlier answer ---"),
+        "the copy carries an earlier exchange: «{}»",
+        out.what_leaves.text
+    );
+    // **And no document either**: there is a chat at this door, so the document
+    // has been sent once and rule 67 does not send it again.
+    assert!(
+        !out.what_leaves.text.contains("Payroll run"),
+        "the document left on the clipboard a second time: «{}»",
+        out.what_leaves.text
+    );
+    assert_eq!(
+        out.what_leaves.text.trim(),
+        "What does this letter say?",
+        "the copy is not the question as it would leave"
+    );
     assert!(
         !out.what_leaves.text.contains(NAME),
         "the name left this machine on the clipboard, which is the one thing this \
          program exists to prevent"
     );
-    assert!(out.what_leaves.text.contains("__Z_"), "the copy carries no token, so it is not what left");
 
-    // The same text the next question would carry, built by the one function:
-    // the echo repeats the history, so the two can be compared in full.
+    // **And the model is still shown the exchange before** — the other door,
+    // and the two texts are not the same one any more.
     let said = ask_the_question_alone(bench, "And the amount?");
     let told = the_instructions(&said);
     assert!(
-        told.starts_with(&out.what_leaves.text),
-        "the copy in a person's hand and the history the model is shown are two \
-         different texts"
+        told.contains("--- Earlier request ---"),
+        "the model was shown no history, so the two doors cannot be told apart here"
+    );
+    assert_ne!(
+        told, out.what_leaves.text,
+        "the clipboard and the model's history are one text again"
     );
 
     let _ = std::fs::remove_dir_all(&dir);
 }
 
-/// **The copy is the one exchange the next question would carry — and it still
-/// brings home a name born in the first turn** — 110, the lead's own pin of
-/// 24 October 2026.
+/// **The copy is the payload as it stands — and it still brings home a name
+/// born in the first turn** — the lead's pin of 24 October 2026.
 ///
-/// Two halves, and they are the whole of the shape that was chosen over
-/// splitting the builder:
+/// Two halves, and together they are the shape one payload for two doors
+/// takes:
 ///
-///   * **the text narrows** with the history, because the clipboard is a chat
-///     for a person who has no provider and «less text leaves» is true at both
-///     doors. What the copy holds is the exchange the *next* question would
-///     carry, which is the last one stored — that is the invariant
-///     `the_chat_a_person_takes_away_is_the_text_the_model_was_shown` reads,
-///     and it is why «the copy after the third question» is the third
-///     exchange and not the second;
-///   * **the permission does not narrow.** An answer the person brings back
-///     may name a token born in any turn of the chat, and it comes home in
-///     their own name. Narrowing `allowed` with the text reddened
+///   * **the text is the payload.** Three questions asked, and what the
+///     clipboard holds is the third one, protected: no earlier exchange — that
+///     is the in-app door's addition — and not the document, which went once
+///     with the question that carried it;
+///   * **the permission is the whole chat's.** An answer the person brings back
+///     may name a token born in any turn, and it comes home in their own name.
+///     Narrowing `allowed` with the text reddened
 ///     `an_answer_against_the_chats_own_copy_asks_nothing_new_and_restores_every_name`
-///     at once, which is the measurement that settled this.
+///     at once — the measurement that settled this half before the ruling
+///     narrowed the text further, and it holds for the same reason it did then.
 #[test]
-fn the_copy_is_one_exchange_and_still_brings_home_a_name_from_the_first_turn() {
+fn the_copy_is_the_current_point_and_still_brings_home_a_name_from_the_first_turn() {
     let _g = serial();
     let dir = fresh_vault("copyone");
     let (held, number) = ready("en");
@@ -570,21 +602,18 @@ fn the_copy_is_one_exchange_and_still_brings_home_a_name_from_the_first_turn() {
     ask_the_question_alone(bench, "And who prepared it?");
 
     let out = chat_to_take_out(bench).expect("the chat");
-    // The same instrument as the pin above, and for the same reason: the
-    // labels inside an answer are the echo's words, and the first bytes are
-    // ours.
-    assert!(
-        out.what_leaves.text.starts_with("--- Earlier request ---\nAnd who prepared it?"),
-        "the copy does not begin with the exchange the next question would carry:\n{}",
-        out.what_leaves.text
-    );
-    let asked = the_earlier_request(&out.what_leaves.text);
-    assert!(
-        asked.contains("And who prepared it?"),
-        "the copy is not the exchange the next question would carry: «{asked}»"
+    assert_eq!(
+        out.what_leaves.text.trim(),
+        "And who prepared it?",
+        "the copy is not the question as it would leave"
     );
     assert!(
-        !asked.contains("Payroll run") && !out.what_leaves.text.contains(NAME),
+        !out.what_leaves.text.contains("--- Earlier request ---")
+            && !out.what_leaves.text.contains("--- Earlier answer ---"),
+        "the copy carries an earlier exchange after three questions"
+    );
+    assert!(
+        !out.what_leaves.text.contains("Payroll run") && !out.what_leaves.text.contains(NAME),
         "the document or the name left this machine on the clipboard"
     );
 

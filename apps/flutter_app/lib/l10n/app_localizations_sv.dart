@@ -821,7 +821,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get theChatIsOnYourClipboard =>
-      'Det senaste utbytet ligger skyddat i ditt urklipp — hämta tillbaka svaret med «Lägg till ett svar».';
+      'Det som skulle lämna ligger skyddat i ditt urklipp — frågan som en AI skulle få den. Hämta tillbaka svaret med «Lägg till ett svar».';
 
   @override
   String get couldNotReadTheClipboard => 'Z Privacy kunde inte läsa urklippet.';

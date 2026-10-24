@@ -822,7 +822,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get theChatIsOnYourClipboard =>
-      'Der letzte Austausch liegt geschützt in Ihrer Zwischenablage — bringen Sie die Antwort mit «Eine Antwort hinzufügen» zurück.';
+      'Was hinausgehen würde, liegt geschützt in Ihrer Zwischenablage — die Frage, wie eine KI sie erhalten würde. Bringen Sie die Antwort mit «Eine Antwort hinzufügen» zurück.';
 
   @override
   String get couldNotReadTheClipboard =>

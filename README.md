@@ -23,7 +23,10 @@ never sent                     the only thing that leaves
 * Your originals stay on this device unless you explicitly export restored text.
 * Your names live in one encrypted vault file, written here and nowhere else.
   Beside it Z Privacy writes each session's own encrypted file and your
-  settings — `docs/CLAIMS.md` (C-06) names every one of them.
+  settings — `docs/CLAIMS.md` (C-06) names every one of them. Beside those,
+  Z Privacy writes only what you ask for by name: a protected copy, and — since
+  24 October 2026 — the restored document as an ordinary PDF where you choose
+  it, which holds your values in the clear and claims no protection.
 * No account, and no Z Privacy server for your documents.
 * Once you copy restored text, the clipboard is outside Z Privacy.
 

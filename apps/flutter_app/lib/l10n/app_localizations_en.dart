@@ -818,7 +818,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get theChatIsOnYourClipboard =>
-      'The last exchange is on your clipboard, protected — bring the answer back with «Add an answer».';
+      'What would leave is on your clipboard, protected — the question as an AI would receive it. Bring the answer back with «Add an answer».';
 
   @override
   String get couldNotReadTheClipboard =>

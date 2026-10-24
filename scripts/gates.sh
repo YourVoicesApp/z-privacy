@@ -912,9 +912,14 @@ fi
 #  1 — the contract takes no history from anybody;
 #  2 — `ask_model`'s own body asks the builder, read from the body and not from
 #      the file, so a call in a neighbouring function cannot answer for it;
-#  3 — the builder is **one** function, and the copy a person takes away is
-#      built from it too: what leaves on the clipboard is what the model was
-#      shown, and two builders would have made those two different texts;
+#  3 — the builder is **one** function, and **both doors send one payload**:
+#      what a person carries to a model of their own is the payload as it
+#      stands, and the in-app door sends that same payload with one earlier
+#      exchange **added** on top of it, built by that one function. So the copy
+#      is built in the core, from a payload read through the one accessor, with
+#      nothing of it assembled at the door and no restored word able to leave
+#      by it — and two builders would have made the two doors disagree about
+#      what the person was shown;
 #  4 — nothing on the glass assembles a history.
 API_C=z_core/src/api.rs
 OPS_C=z_core/src/ops/mod.rs
@@ -956,6 +961,24 @@ if [ "$G46_BUILT" = "1" ] && [ "$G46_FILLS" = "1" ] \
   pass "G46 one builder makes the chat, and its readers are the three that need it: ask_model, build_the_chat, the_question_alone"
 else
   fail "G46 the chat is built in $G46_BUILT place(s), the context is filled in $G46_FILLS, and the readers are «$G46_READERS» — expected one, one, and «ask_model build_the_chat the_question_alone»"
+fi
+
+# **And the copy assembles nothing of its own** — point 3's own half. The door
+# hands over a payload's text, read through the one accessor; the day it starts
+# joining lines again is the day a second assembler exists for text that leaves
+# this machine, and the day the two doors can disagree about what the person was
+# shown.
+if awk '
+  /^fn build_the_chat\(/ { inside = 1 }
+  inside && /^}/ { inside = 0 }
+  inside && $0 ~ /^[[:space:]]*\/\// { next }
+  inside && /chat\.lines\.join|chat\.lines\[|lines\.join\(/ { bad = 1 }
+  inside && /payload_view\(/ { read_through = 1 }
+  END { exit((bad || !read_through) ? 1 : 0) }
+' "$OPS_C"; then
+  pass "G46 the copy a person takes away is a payload read through the one accessor, assembled nowhere"
+else
+  fail "G46 the copy a person takes away assembles its own text, or no longer reads one through the payload accessor (the owner, 24 October 2026)"
 fi
 
 # `^[^/]*` so that a line of prose about the argument that was deleted is not
@@ -4387,6 +4410,7 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          the_door_only_reads \
          an_ordinary_document_is_not_one \
          the_door_back_reads_a_file_with_no_bench_of_its_own \
+         the_door_back_reads_a_file_another_session_protected \
          the_door_back_brings_a_taught_value_back_after_the_bench_is_gone \
          the_door_back_reads_a_pdf_and_a_text_file_the_same_way \
          the_door_back_leaves_the_bench_and_the_vault_untouched \
@@ -4437,13 +4461,13 @@ for t in no_leak stale_payload round_trip session_namespace g11_ g12_ golden_ ru
          a_refused_press_leaves_the_blocks_working \
          a_second_question_carries_the_turn_before_it_without_the_document \
          a_third_question_carries_only_the_exchange_before_it \
-         the_copy_is_one_exchange_and_still_brings_home_a_name_from_the_first_turn \
+         the_copy_is_the_current_point_and_still_brings_home_a_name_from_the_first_turn \
          a_follow_up_question_leaves_without_the_document \
          a_follow_up_with_no_question_in_it_is_refused \
          a_chat_that_ended_is_not_carried_into_the_next_one \
          a_new_run_does_not_continue_the_chat_it_finds \
          entering_the_same_session_again_in_one_run_keeps_its_chat \
-         the_chat_a_person_takes_away_is_the_text_the_model_was_shown \
+         the_chat_a_person_takes_away_is_what_would_leave_now \
          copying_the_chat_leaves_a_document_that_never_left_in_the_preview \
          the_chat_does_not_leave_while_a_word_waits \
          a_session_with_no_chat_in_it_has_nothing_to_take_out \

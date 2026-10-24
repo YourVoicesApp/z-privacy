@@ -459,15 +459,14 @@ const AN_EARLIER_ANSWER: &str = "--- Earlier answer ---";
 /// **Nothing older is lost**: every earlier turn stays in the sealed session
 /// file and is read there (rule 69). What changed is what leaves.
 ///
-/// One entry per side of the one turn, labelled. **One builder and two
-/// readers**: the history a new question carries (`ops::ask_model`) and the
-/// copy a person takes away (`ops::chat_to_take_out`) are the same text, so
-/// they are the same function. Two of them would part company the first day
-/// somebody changed a label, and the person would be copying out something
-/// other than what the model was shown. The lead's ruling of 24 October keeps
-/// it that way: the clipboard is a chat for a person who has no provider, so
-/// «less text leaves» is true at both doors, and a person who wants the whole
-/// conversation reads it in the session's own room.
+/// One entry per side of the one turn, labelled. **One builder, and one door
+/// that adds it**: `ops::ask_model`. Both doors send the same payload — the
+/// question as it would leave, protected — and the in-app one puts this one
+/// exchange on top of it, because the model holds nothing of the chat while a
+/// person's own chat holds its thread. `ops::chat_to_take_out` reads this
+/// answer for its **tokens and its anchor** (`allowed`, `kept`) and takes its
+/// text from the payload itself. One function assembles every history there
+/// is, which is what G46 holds.
 ///
 /// **Nothing is restored and nothing is protected again.** What the file holds
 /// is what travelled — the question as it left, the answer as it arrived — and
@@ -544,6 +543,9 @@ pub(crate) fn the_chat_so_far(core: &mut crate::session::Core) -> ApiResult<TheC
 pub(crate) struct TheChatSoFar {
     /// **One entry per side of the one exchange before** — 110. The previous
     /// question, with the document cut off it, and the previous answer.
+    ///
+    /// Read by `ask_model` alone: the clipboard door takes the current point
+    /// and not the history (the owner, 24 October 2026).
     ///
     /// It was every turn of the open chat until 24 October 2026 (rule 67 as
     /// first written), which is why the field is a list and not a pair: the

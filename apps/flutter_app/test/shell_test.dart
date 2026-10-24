@@ -1214,26 +1214,38 @@ void main() {
     // The panel had «As the model wrote it» over the whole of it and the coded
     // copy stood on that side. The thread draws the coded form by default now,
     // so there is nothing to switch to, and what takes it out is rule 65's own
-    // door at the foot of the chat: «Copy the chat», which carries the exchange
-    // before in the form it travelled in (A4). What was being measured here — **a
+    // door at the foot of the chat: «Copy the chat», which hands over the
+    // **payload** — what would leave by the app's own door, protected (the
+    // owner, 24 October 2026: «خارج التطبيق لا يأخذ إلا ما يراه المستخدم على
+    // الشاشة»). The in-app door sends that same payload with the exchange
+    // before it added on top; the clipboard is the payload alone. What was being measured here — **a
     // coded copy asks nothing and leaves no name behind** — is measured on
     // that door.
     //
-    // **Since 110 that door carries the one exchange before, not every turn**
-    // (the owner, 24 October 2026). This chat holds one, so what is measured
-    // here is unchanged: the answer as the model wrote it leaves, the name
-    // does not, and a token does.
+    // **A question is typed first, and that is not scenery.** This walk never
+    // typed one — it copied the payload out and pasted an answer back — so
+    // under the law above there is nothing on the screen that would leave, and
+    // the press has nothing to take out: measured, the clipboard came back
+    // empty (the press empties first and writes only on success, 081). With a
+    // question in the box the claim this guard is about can be measured at
+    // all: **a coded copy asks nothing and leaves no name behind.** The name
+    // in it is the one the document taught, so `set_question` protects it with
+    // the same packs the document was read with (rule 72-ب).
     expect(find.text('As the model wrote it'), findsNothing,
         reason: 'the tab rule 66 deleted is back over the answer');
+    await tester.runAsync(() => bench.setQuestion('Was schuldet Thomas Müller?'));
+    await settle(tester, rounds: 2);
     await tester.tap(inPanel(find.text(sentences.copyTheChat)));
     await settle(tester, rounds: 4);
     expect(find.byType(AlertDialog), findsNothing,
         reason: 'taking the coded chat out asked a question it does not need to ask');
-    expect(clip.text, contains(raw),
-        reason: 'what left does not hold the answer as the model wrote it');
+    expect(clip.text, contains('__Z_'),
+        reason: 'what left carries no token, so it is not the payload: «${clip.text}»');
     expect(clip.text, isNot(contains('Thomas Müller')),
         reason: 'the chat that left holds a name the model never saw');
-    expect(clip.text, contains('__Z_'));
+    expect(clip.text, isNot(contains(raw)),
+        reason: 'the answer the model wrote left with the payload — the clipboard is '
+            'what would leave, and the exchange before it is the in-app door’s addition');
 
     bench.dispose();
   });
