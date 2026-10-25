@@ -12,6 +12,21 @@ here, locally.
 > anonymous to the AI provider.** The provider still sees the ordinary facts of
 > a connection — your address, the time, the model.
 
+## Download
+
+The first public beta was published on 25 October 2026. Download it from
+https://z-privacy.com/en/download/, or from this repository's
+[Releases](https://github.com/YourVoicesApp/z-privacy/releases).
+
+| File | SHA-256 |
+|---|---|
+| `zprivacy-v1-linux-x86_64.tar.gz` — Linux x86_64 (GTK3) | `c07d9bc8d939e4ba4aa2cff6e3cec01697bc31bc820e0a223326b525188801d5` |
+| `zprivacy-v1-windows-x86_64-setup.exe` — Windows 10/11 x86_64 | `f4b2dcfe33b7859d1f9fafb7417032ff8571a1495d5371573ae663d22ed75885` |
+
+Both were built from `e38bc78`. The Windows installer is not signed yet, so
+Windows shows «Windows protected your PC» the first time: «More info», then
+«Run anyway». The fingerprint is what says the file is ours.
+
 ## What stays, and what leaves
 
 ```text
@@ -38,7 +53,8 @@ Import → Scan → Review → Protect → Choose who answers → AI → Restore
 
 ## Status
 
-**V1.** Linux x86_64 desktop. Every sentence the interface shows is gathered
+**V1, public beta** since 25 October 2026, for Linux x86_64 and Windows 10/11
+x86_64. Every sentence the interface shows is gathered
 in one list, and no screen writes one of its own: the count is
 `python3 scripts/check_the_one_list.py`, where it is measured rather than
 remembered — C-15 in `docs/CLAIMS.md` is the one other place it is written
@@ -47,22 +63,21 @@ German and Swedish: the Swedish words were written on 23 October 2026 and the
 first screen offers Svenska because the gates measure that its sentences are
 not the English ones — **they have not been read by a native speaker yet**, and
 that review is a round of its own. The detection packs are German, English and
-Swedish. Private beta.
+Swedish. **Arabic is being built**: the interface's sentences and a name library.
 
 Windows is built from git by `.github/workflows/windows-core.yml`, by hand from
-the Actions tab: the core's tests, the nine storage contracts, the one-writer
+the Actions tab. The core's tests, the nine storage contracts, the one-writer
 measurement and the whole Dart suite run there, and the job writes a zip, an
-installer and an MSIX. **Six of its runs are measured into `docs/CLAIMS.md`
-(C-14)**, one by one with the head each was built from: the last of them built
-and signed every artefact, with the Dart suite reading 414 · 0 there, and its
-core job was then cut off by a thirty-minute limit with every step green — the
-limit is sixty now, from three measured times. What is still Linux's alone is
-`docs/MEASURED_ON_LINUX.txt`, the numbers every gate run is compared against:
-no Windows run has written numbers of its own into it. There is no macOS, iOS
-or Android build. A port is a platform, not a repackaging.
+installer and an MSIX. The published installer comes from run 40164955026, on
+the same commit as the Linux archive. The MSIX is not distributed: it does not
+yet carry every file the installer does, and the workflow says so. What is
+still Linux's alone is `docs/MEASURED_ON_LINUX.txt`, the numbers every gate run
+is compared against: no Windows run has written numbers of its own into it.
+There is no macOS, iOS or Android build. A port is a platform, not a
+repackaging.
 
 The site that carries the release is built in `site/` and is served at
-z-privacy.com — one static page in English, German and Arabic, no JavaScript,
+z-privacy.com: static pages in English, German and Arabic, no JavaScript,
 no analytics, and no third-party request.
 
 ## Build from source
@@ -102,17 +117,20 @@ things that fail the build.
 bash scripts/gates.sh              # exit status is the verdict
 ```
 
-108 checks, and none of them reviewed by eye. 32 are the gates themselves —
-one HTTP client in one package, no send function that accepts text, every
-contract function returning a typed result, no key in any signature, nothing in
-the core that prints, every type holding the user's words redacting its own
-`Debug`, no filesystem access outside the vault and the settings file, and the
-whole contract called from Dart without a panic. The other 76 check that named
-tests still exist, because a green suite proves nothing if the test that held
-an invariant was quietly deleted with it. What each gate defends is written in
+None of the checks is reviewed by eye. Some are the gates themselves: one HTTP
+client in one package, no send function that accepts text, every contract
+function returning a typed result, no key in any signature, nothing in the core
+that prints, every type holding the user's words redacting its own `Debug`, no
+filesystem access outside the files the app names, and the whole contract
+called from Dart without a panic. The rest check that named tests still exist,
+because a green suite proves nothing if the test that held an invariant was
+quietly deleted with it. What each gate defends is written in
 `docs/SECURITY_INVARIANTS.md`.
 
-Under them: 251 Rust tests and 62 Dart tests. The Dart ones pump the
+The numbers are not typed here, because a typed number goes stale: they live in
+`docs/MEASURED_ON_LINUX.txt`, written by the hand that merges and compared
+against every run. At the first public release they read 643 checks, 844 Rust
+tests and 445 Dart tests, with 0 failed. The Dart tests pump the
 real screens against the real library and compare what is drawn with what the
 core says when asked directly — because the rule for the interface is that no
 number on screen is invented in Dart.
@@ -127,11 +145,8 @@ with the tests that now make each one impossible.
 
 ```text
 z_core/                 the core, in Rust — scanning, tokens, vault, providers
-  src/                  13,568 lines
-  tests/                 6,063 lines
 bridges/native/z_bridge/ the FFI bridge; its mirrors are generated, not written
-apps/flutter_app/        the Linux desktop app
-  lib/                   9,527 lines of Dart
+apps/flutter_app/        the desktop app, in Flutter (Linux and Windows)
 scripts/gates.sh         the gates
 scripts/gen_mirrors.py   regenerates the bridge mirrors from the contract
 docs/                    the working record, including the human run
