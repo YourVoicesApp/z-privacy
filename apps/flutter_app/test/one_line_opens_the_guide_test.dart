@@ -35,6 +35,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'the_bridge_the_tests_speak_through.dart';
+import 'the_folder_lets_go.dart';
 
 final _libPath = theBridgeTheTestsSpeakThrough;
 
@@ -170,20 +171,16 @@ void main() {
     final ground = Ground();
     await tester.runAsync(() async {
       await z.vaultLock();
+      removeWhenItLetsGo(dir);
       await z.setDataDir(dir: dir.path);
       await z.vaultCreateWithPassphrase(passphrase: 'en fras för panelen');
       await ground.refresh();
     });
-    addTearDown(() {
-      if (dir.existsSync()) {
-        try {
-          dir.deleteSync(recursive: true);
-        } on FileSystemException {
-          // The core may still hold the vault file; a leftover temp folder is
-          // not a finding and must not redden a guard about an address.
-        }
-      }
-    });
+    // The core may still be writing into it when this runs, so the folder is
+    // removed **when it lets go** — G54, and the reason is in
+    // `the_folder_lets_go.dart`: a teardown that throws reds a guard that has
+    // nothing to do with it.
+    addTearDown(() => removeWhenItLetsGo(dir));
 
     for (final (language, address) in [
       ('ar', 'https://z-privacy.com/ar/guide/'),

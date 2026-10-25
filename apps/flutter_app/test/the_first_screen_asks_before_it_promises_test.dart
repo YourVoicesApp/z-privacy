@@ -41,6 +41,7 @@ import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/language_list.dart' show offeredLanguages;
 import 'the_bridge_the_tests_speak_through.dart';
+import 'the_folder_lets_go.dart';
 
 final _libPath = theBridgeTheTestsSpeakThrough;
 
@@ -59,15 +60,12 @@ Future<Ground> _ready(WidgetTester tester, String name) async {
   final ground = Ground();
   await tester.runAsync(() async {
     final own = Directory('${Directory.systemTemp.path}/zprivacy-first-$name-$pid');
-    if (own.existsSync()) own.deleteSync(recursive: true);
+    // The core is a live library in this process and may be writing into the
+    // folder while a teardown reads it — `the_folder_lets_go` is the one hand
+    // that waits for it, and G54 holds every test to it.
+    removeWhenItLetsGo(own);
     own.createSync(recursive: true);
-    addTearDown(() {
-      try {
-        if (own.existsSync()) own.deleteSync(recursive: true);
-      } on FileSystemException {
-        // A folder the core still holds is not a finding about a screen.
-      }
-    });
+    addTearDown(() => removeWhenItLetsGo(own));
     await z.vaultLock();
     await z.setDataDir(dir: own.path);
     await ground.refresh();
