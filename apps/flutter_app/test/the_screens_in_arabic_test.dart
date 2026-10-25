@@ -43,6 +43,7 @@ import 'package:zprivacy/l10n/app_localizations.dart';
 import 'package:zprivacy/screens/first_run.dart';
 import 'package:zprivacy/screens/settings.dart';
 import 'package:zprivacy/screens/workspace.dart';
+import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
 import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'the_folder_lets_go.dart';
@@ -247,11 +248,43 @@ void main() {
     await _aPictureOf(tester, 'the-one-screen');
   }, skip: _facesMissing.isNotEmpty);
 
+  // **With the setting really set to Arabic** — the lead, 117: the first
+  // picture of this panel stood over a **fresh** config, whose language is
+  // `en`, so the guide link in it read `/en/guide/` and the owner read that
+  // as a fault. It was the fixture. The config is written here before the
+  // panel is drawn, so the picture is of a person who chose العربية rather
+  // than of a person who chose nothing.
   testWidgets('the settings, in Arabic', (tester) async {
     await tester.binding.setSurfaceSize(const Size(520, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final ground = Ground();
-    await tester.runAsync(() => ground.refresh());
+    await tester.runAsync(() async {
+      final own = Directory('${Directory.systemTemp.path}/zprivacy-ar-settings-$pid');
+      removeWhenItLetsGo(own);
+      own.createSync(recursive: true);
+      addTearDown(() => removeWhenItLetsGo(own));
+      await z.vaultLock();
+      await z.setDataDir(dir: own.path);
+      await z.vaultCreateWithPassphrase(passphrase: 'كلمة مرور للوحة');
+      final now = await z.settings();
+      await ground.saveConfig(Settings(
+        originalPanePercent: now.originalPanePercent,
+        columnsInStep: now.columnsInStep,
+        safeColumnOpen: now.safeColumnOpen,
+        reviewPanelWide: now.reviewPanelWide,
+        scanOnImport: now.scanOnImport,
+        revealSeconds: now.revealSeconds,
+        autoLockMinutes: now.autoLockMinutes,
+        // One choice writes both, as the card itself does (080).
+        packId: 'ar',
+        language: 'ar',
+        firstRunDone: true,
+        sessionOnly: now.sessionOnly,
+      ));
+      await ground.refresh();
+    });
+    expect(ground.config?.language, 'ar',
+        reason: 'the panel is about to be photographed over a config that is not Arabic');
     await tester.pumpWidget(_inArabic(Scaffold(
       backgroundColor: Zc.paper,
       body: SettingsScreen(ground: ground, onClose: () {}, room: SettingsRoom.language),
