@@ -412,7 +412,10 @@ pub(crate) fn pack() -> LanguagePack {
     LanguagePack {
         locale: "ar-SA",
         id: "ar",
-        label: "العربية",
+        // **With its code, like every other row** — paper 117 item 2. This is
+        // the label the glass draws for a language whose knowledge is a name
+        // pack and no rule set, so it carries what the sets' labels carry.
+        label: "العربية (AR)",
         in_english: "Arabic",
         version: "1",
         salutations: SALUTATIONS,

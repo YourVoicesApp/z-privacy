@@ -30,7 +30,9 @@ import 'package:zprivacy/core/sentences.dart';
 import 'package:zprivacy/core/session_state.dart';
 import 'package:zprivacy/core/the_system_browser.dart';
 import 'package:zprivacy/screens/settings.dart';
+import 'package:zprivacy/src/rust/api/mirrors.dart';
 import 'package:zprivacy/src/rust/frb_generated.dart';
+import 'package:zprivacy/src/rust/third_party/z_core/api.dart' as z;
 import 'package:zprivacy/widgets/bits.dart';
 import 'the_bridge_the_tests_speak_through.dart';
 
@@ -143,5 +145,78 @@ void main() {
     expect(find.text(sentences.couldNotOpenYourBrowser), findsNothing,
         reason: 'the room says the browser could not be opened before anybody '
             'pressed anything');
+  });
+
+  // ------------------------------------------------------------------ guard 4
+  //
+  // **The address follows the interface, measured through the setting** —
+  // paper 117 item 3, from the owner's look at the Arabic screens, where the
+  // press read `/en/guide/`.
+  //
+  // It read that because the panel in the picture stood over a **fresh**
+  // config, whose language is `en`; `theGuideAddress` has answered `ar` since
+  // paper 100 and guard 1 above has said so all along. What was missing was a
+  // guard that crosses from the stored setting to the drawn label — the two
+  // halves were each right and nothing held them together, which is the shape
+  // this house pays for most. So this writes the setting and reads the glass.
+  //
+  // Swedish is the other half and not an afterthought: its list is written,
+  // so the interface really speaks it, and the site has no `site/sv/` tree at
+  // all. A person reading Svenska gets the English page rather than a 404.
+  testWidgets('the press follows the language the setting holds', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1100, 950));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final dir = Directory('${Directory.systemTemp.path}/zprivacy-guide-lang-$pid');
+    final ground = Ground();
+    await tester.runAsync(() async {
+      await z.vaultLock();
+      await z.setDataDir(dir: dir.path);
+      await z.vaultCreateWithPassphrase(passphrase: 'en fras för panelen');
+      await ground.refresh();
+    });
+    addTearDown(() {
+      if (dir.existsSync()) {
+        try {
+          dir.deleteSync(recursive: true);
+        } on FileSystemException {
+          // The core may still hold the vault file; a leftover temp folder is
+          // not a finding and must not redden a guard about an address.
+        }
+      }
+    });
+
+    for (final (language, address) in [
+      ('ar', 'https://z-privacy.com/ar/guide/'),
+      ('de', 'https://z-privacy.com/de/guide/'),
+      ('sv', 'https://z-privacy.com/en/guide/'),
+      ('en', 'https://z-privacy.com/en/guide/'),
+    ]) {
+      await tester.runAsync(() async {
+        final now = await z.settings();
+        await ground.saveConfig(Settings(
+          originalPanePercent: now.originalPanePercent,
+          columnsInStep: now.columnsInStep,
+          safeColumnOpen: now.safeColumnOpen,
+          reviewPanelWide: now.reviewPanelWide,
+          scanOnImport: now.scanOnImport,
+          revealSeconds: now.revealSeconds,
+          autoLockMinutes: now.autoLockMinutes,
+          packId: now.packId,
+          language: language,
+          firstRunDone: true,
+          sessionOnly: now.sessionOnly,
+        ));
+      });
+      await tester.pumpWidget(MaterialApp(
+        home: SettingsScreen(
+            ground: ground, onClose: () {}, room: SettingsRoom.language),
+      ));
+      await tester.pumpAndSettle();
+
+      final press = find.byKey(const ValueKey<String>('settings-the-guide'));
+      expect(press, findsOneWidget, reason: 'no press in the room at «$language»');
+      expect(tester.widget<ZButton>(press).label, theMachinesOwnWord(address),
+          reason: 'the interface is «$language» and the press goes somewhere else');
+    }
   });
 }

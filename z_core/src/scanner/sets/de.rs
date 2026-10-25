@@ -127,7 +127,12 @@ const HONORIFICS: &[&str] = &["herr", "herrn", "frau", "fr.", "hr.", "dr.", "dr"
 pub(crate) fn set() -> RuleSet {
     RuleSet {
         id: "de",
-        label: "German (DE)",
+        // **A language is named in its own words** — paper 117 item 2, the
+        // owner's look at the Arabic screens: beside «English (EN)»,
+        // «Svenska (SV)» and «العربية (AR)», German alone was named in
+        // English. A person scanning a list for their own language looks for
+        // the word **they** would write.
+        label: "Deutsch (DE)",
         honorifics: HONORIFICS.iter().map(|h| (*h).to_string()).collect(),
         rules: ROWS
             .iter()

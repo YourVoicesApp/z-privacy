@@ -66,13 +66,11 @@ Future<Ground> inTheRoom(WidgetTester tester, String name) async {
 
   await tester.pumpWidget(MaterialApp(home: ZShell(dataDir: own.path, ground: ground)));
   await settle(tester);
-  // **Scrolled to first since 23 October 2026** (paper 106): the first page
-  // draws one promise block per offered language before a choice, and the
-  // third language put the language row below the fold of a 1000-tall
-  // window. The page scrolls; a tap at a fixed point does not.
-  await tester.ensureVisible(find.text('English'));
+  // **The name carries its code since 117**, and the row stands at the top of
+  // the page: the promise block that used to push it below the fold is drawn
+  // only for the language that was pressed, so nothing has to be scrolled to.
   await settle(tester, rounds: 1);
-  await tester.tap(find.text('English'));
+  await tester.tap(find.text(aLanguageInItsOwnWords('en')));
   await settle(tester, rounds: 1);
   await tester.tap(find.text(sentences.start));
   await settle(tester);
@@ -177,9 +175,9 @@ Future<Ground> withADocumentBehindThePanel(WidgetTester tester, String name) asy
 
   await tester.pumpWidget(MaterialApp(home: ZShell(dataDir: own.path, ground: ground)));
   await settle(tester);
-  await tester.ensureVisible(find.text('English'));
+  await tester.ensureVisible(find.text(aLanguageInItsOwnWords('en')));
   await settle(tester, rounds: 1);
-  await tester.tap(find.text('English'));
+  await tester.tap(find.text(aLanguageInItsOwnWords('en')));
   await settle(tester, rounds: 1);
   await tester.tap(find.text(sentences.start));
   await settle(tester);

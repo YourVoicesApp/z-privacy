@@ -72,9 +72,9 @@ void main() {
     // a 1000-tall window — «English» measured at y=1224. The page is a
     // `SingleChildScrollView` and a person scrolls to it; a guard that taps a
     // fixed point does not, so it says so here.
-    await tester.ensureVisible(find.text('English'));
+    await tester.ensureVisible(find.text(aLanguageInItsOwnWords('en')));
     await settle(tester, rounds: 1);
-    await tester.tap(find.text('English'));
+    await tester.tap(find.text(aLanguageInItsOwnWords('en')));
     await settle(tester, rounds: 1);
     await tester.tap(find.text(sentences.start));
     await settle(tester);

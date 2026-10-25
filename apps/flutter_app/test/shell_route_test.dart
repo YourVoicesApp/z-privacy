@@ -253,7 +253,17 @@ void main() {
     expect(find.byType(FirstRunScreen), findsOneWidget,
         reason: 'the shell must show the first-run page while the core says it is due');
     expect(find.byType(WorkspaceScreen), findsNothing);
-    expect(find.text(sentences.noZPrivacyServer), findsOneWidget);
+    // **The promise follows the choice, since 117.** This page asked the
+    // question under four answers; it asks it first now, and the four lines of
+    // what this product does not do stand under the language that was pressed.
+    // So the line is measured on both sides of the press, which is also what
+    // keeps this from being a test of nothing.
+    expect(find.text(sentences.noZPrivacyServer), findsNothing,
+        reason: 'a promise stands before anybody chose the language to read it in');
+    await tester.tap(find.text(aLanguageInItsOwnWords('en')));
+    await settle(tester, rounds: 1);
+    expect(find.text(sentences.noZPrivacyServer), findsOneWidget,
+        reason: 'choosing English did not put the English promise on the page');
 
     // **Passing it leaves for the one screen** — rule 70, in this run at
     // least: the lasting answer needs a vault to be written into, and this
@@ -360,14 +370,14 @@ class _Shown {
 /// Past the first run, the way a person goes through it since 041-N: the
 /// language, then the vault — which is the only way on, because everything Z
 /// learns while they work is kept in it.
-Future<void> pastTheFirstRun(WidgetTester tester, {String language = 'English', String start = 'Start'}) async {
-  // **Scrolled to first since 23 October 2026** (paper 106): the first page
-  // draws one promise block per offered language before a choice, and the
-  // third language put the language row below the fold of a 1000-tall window.
-  // The page scrolls; a tap at a fixed point does not.
-  await tester.ensureVisible(find.text(language));
-  await settle(tester, rounds: 1);
-  await tester.tap(find.text(language));
+Future<void> pastTheFirstRun(WidgetTester tester, {String language = 'en', String start = 'Start'}) async {
+  // **A name and a press, since 117.** The page drew one promise block per
+  // offered language before a choice, so with four written languages the
+  // names sat below the fold and this scrolled to them first. The names stand
+  // at the top now and one block is drawn under the one that was pressed, so
+  // there is nothing to scroll to — and a language is named one way in this
+  // product, code and all.
+  await tester.tap(find.text(aLanguageInItsOwnWords(language)));
   await settle(tester, rounds: 1);
   await tester.tap(find.text(start));
   await settle(tester);
