@@ -134,7 +134,17 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
     final languages = _languagesThisPageSpeaks();
     final chosen = _language == null ? null : _promiseOf(_language!);
     final t = _language == null ? null : lookupAppLocalizations(Locale(_language!));
-    return Scaffold(
+    // **And the page turns round with the choice** — 117, found while taking
+    // the picture item 6 asked for: everything on it was Arabic and all of it
+    // was laid out left to right, because this is the one screen that runs
+    // before there is a locale for `MaterialApp` to wrap the tree in (116).
+    // So it asks for itself, once a language is chosen; before that it is
+    // speaking every language at once and keeps the direction it is built in.
+    return Directionality(
+      textDirection: _language == null
+          ? Directionality.of(context)
+          : theWayALanguageIsRead(_language!),
+      child: Scaffold(
       body: Stack(
         children: [
           Center(
@@ -216,16 +226,28 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
                 if (chosen != null) _Block(chosen),
 
                 if (chosen == null)
-                  // Why there is no Start yet, in both languages — a control
-                  // that is absent has to be accounted for, like a disabled one.
-                  Text(
-                    // One line per language on offer, each in its own: a page
-                    // that asked in one language would be asking the question
-                    // in the answer.
-                    languages
-                        .map((c) => lookupAppLocalizations(Locale(c)).chooseALanguage)
-                        .join('\n'),
-                    style: Zc.small,
+                  // Why there is no Start yet, in every language on offer — a
+                  // control that is absent has to be accounted for, like a
+                  // disabled one, and a page that asked in one language would
+                  // be asking the question in the answer.
+                  //
+                  // **One `Text` per language, and each reads its own way** —
+                  // 117. They were one string joined by newlines, so the
+                  // Arabic line was laid out in the page's own left-to-right
+                  // and its full stop stood at the wrong end. A line is in one
+                  // language; the page, until somebody chooses, is not.
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final code in languages)
+                        Directionality(
+                          textDirection: theWayALanguageIsRead(code),
+                          child: Text(
+                            lookupAppLocalizations(Locale(code)).chooseALanguage,
+                            style: Zc.small,
+                          ),
+                        ),
+                    ],
                   )
                 else ...[
                   Container(
@@ -299,6 +321,7 @@ class _FirstRunScreenState extends State<FirstRunScreen> {
           // One picture per screen, never two: the reason the old sentence gave
           // still holds against a badge in every corner.
         ],
+      ),
       ),
     );
   }

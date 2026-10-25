@@ -106,17 +106,13 @@ void main() {
       expect(find.text(lookupAppLocalizations(Locale(code)).noAccount), findsNothing,
           reason: 'the promise in «$code» stands before anybody chose a language');
     }
-    // And the page says what it is waiting for, in every language it offers.
+    // And the page says what it is waiting for, in every language it offers —
+    // one line each, so that each can be read the way its own language is.
     for (final code in _offered) {
       expect(find.text(lookupAppLocalizations(Locale(code)).chooseALanguage),
-          findsNothing,
-          reason: 'the lines are joined into one Text, so each must be found inside it');
+          findsOneWidget,
+          reason: 'the page does not ask for a language in «$code»');
     }
-    expect(
-      find.textContaining(lookupAppLocalizations(const Locale('ar')).chooseALanguage),
-      findsOneWidget,
-      reason: 'the page does not ask for a language in Arabic',
-    );
   });
 
   // ------------------------------------------------------------------ guard 2
