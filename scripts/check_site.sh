@@ -199,7 +199,10 @@ for f in en/index.html de/index.html ar/index.html; do
   grep -q 'class="hero-word"' "$f" || { say FAIL "$f does not say that nothing leaves without the reader's word"; FAIL=1; SAID=1; }
   grep -q 'class="beta"' "$f" || { say FAIL "$f says nothing about the state of the build"; FAIL=1; SAID=1; }
 done
-if ! grep -q 'Linux build, in beta — not yet released' en/index.html 2>/dev/null; then
+# The owner's word of 25 October 2026, publishing day: «not yet released» went
+# when the download section began to offer the published build, and the line
+# names both platforms because both are offered. «In beta» stays.
+if ! grep -q 'Linux and Windows builds, in beta' en/index.html 2>/dev/null; then
   say FAIL "the English beta line is not the sentence that was approved"; FAIL=1; SAID=1
 fi
 [ "$SAID" = 0 ] && say PASS "the first screen carries the idea, the word, and the state of the build"
